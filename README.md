@@ -98,6 +98,52 @@ wasmtime run target/wasm32-wasip2/release/suss_composed.wasm -e "(+ 10 20)"
 wasmtime run --dir=. target/wasm32-wasip2/release/suss_composed.wasm script.suss
 ```
 
+### Static Compilation (Suss → WASM)
+
+Suss can compile source code directly to standalone WASM components that implement user-specified WIT worlds:
+
+```bash
+# Compile a Suss file to WASM
+cargo run -p suss-cli -- compile src.suss -w world.wit -o out.wasm
+
+# Run the compiled component
+wasmtime run --invoke add out.wasm 3 5
+```
+
+Example source (`add.suss`):
+
+```clojure
+(defn ^:export add [a b]
+  (+ a b))
+```
+
+Example WIT world (`world.wit`):
+
+```wit
+package example:math;
+
+world calculator {
+    export add: func(a: s32, b: s32) -> s32;
+}
+```
+
+The `^:export` metadata marks functions for export in the WIT world.
+
+#### Compilable Subset
+
+The static compiler supports a subset of Suss suitable for ahead-of-time compilation:
+
+| Feature | Supported | Notes |
+|---------|-----------|-------|
+| `def` | Yes | Top-level constants |
+| `defn` | Yes | Named functions (use `^:export` for WIT exports) |
+| `fn` | Yes | Lambda expressions (no mutable capture) |
+| `let`, `if`, `do` | Yes | Control flow |
+| `loop/recur` | Yes | Maps to WASM loops |
+| Numbers | Yes | i32, i64, f64 (no BigInt) |
+| Strings | Yes | Linear memory |
+| `eval`, macros | No | Requires interpreter |
+
 ## Architecture
 
 Suss is built as composable WASM components:
@@ -121,6 +167,7 @@ Suss is built as composable WASM components:
 - **suss-core**: Core types (Sexp, Env, Interner)
 - **suss-reader**: Clojure/EDN parser with WIT interface
 - **suss-eval**: Tree-walking interpreter with WIT interface
+- **suss-compile**: Static compiler (Suss → WASM)
 - **suss-cli**: Command-line interface
 
 ## Suss is Clojure
