@@ -8,6 +8,8 @@ use suss_core::SymbolId;
 /// A compiled module containing all definitions
 #[derive(Debug)]
 pub struct Module {
+    /// Imported functions from WIT interfaces
+    pub imports: Vec<Import>,
     /// All function definitions
     pub functions: Vec<Function>,
     /// Global constant definitions
@@ -16,9 +18,25 @@ pub struct Module {
     pub strings: Vec<String>,
 }
 
+/// An imported function from a WIT interface
+#[derive(Debug, Clone)]
+pub struct Import {
+    /// Local binding name (alias from :as or function name from :refer)
+    pub local_name: String,
+    /// Full WIT interface path (e.g., "wasi:random/random")
+    pub wit_interface: String,
+    /// Function name in the WIT interface
+    pub function_name: String,
+    /// Parameter types
+    pub params: Vec<Type>,
+    /// Return type
+    pub return_type: Type,
+}
+
 impl Module {
     pub fn new() -> Self {
         Self {
+            imports: Vec::new(),
             functions: Vec::new(),
             globals: Vec::new(),
             strings: Vec::new(),

@@ -106,14 +106,66 @@ impl Compiler {
     }
 
     /// Compile from file paths
+    ///
+    /// This method handles WIT deps automatically by looking for a `deps` folder
+    /// in the same directory as the WIT file.
     pub fn compile_files(&mut self, source_path: &str, wit_path: &str) -> CompileResult<Vec<u8>> {
+        use std::path::Path;
+
         let source = std::fs::read_to_string(source_path)
             .map_err(|e| CompileError::Io(format!("Failed to read {}: {}", source_path, e)))?;
 
-        let wit_source = std::fs::read_to_string(wit_path)
-            .map_err(|e| CompileError::Io(format!("Failed to read {}: {}", wit_path, e)))?;
+        // Parse the Suss source
+        let mut parser_state = ParserState::new("suss");
+        parser_state.interner = std::mem::take(&mut self.interner);
 
-        self.compile(&source, &wit_source)
+        let exprs = suss_reader::parse_all_and_intern(&source, &mut parser_state)
+            .map_err(|e| CompileError::Parse(e.to_string()))?;
+
+        self.interner = parser_state.interner;
+
+        // Parse WIT - check for deps directory first
+        let wit_path = Path::new(wit_path);
+        let mut resolve = Resolve::new();
+
+        // Check if there's a deps folder next to the WIT file
+        if let Some(parent) = wit_path.parent() {
+            let deps_dir = parent.join("deps");
+            if deps_dir.is_dir() {
+                // Push each package in deps first
+                for entry in std::fs::read_dir(&deps_dir)
+                    .map_err(|e| CompileError::Io(format!("Failed to read deps: {}", e)))?
+                {
+                    let entry = entry.map_err(|e| CompileError::Io(format!("Failed to read entry: {}", e)))?;
+                    let path = entry.path();
+                    if path.is_dir() {
+                        // Push the package directory
+                        let _ = resolve.push_path(&path);
+                    }
+                }
+            }
+        }
+
+        // Push the main WIT file
+        let (pkg_id, _source_map) = resolve
+            .push_path(wit_path)
+            .map_err(|e| CompileError::Wit(e.to_string()))?;
+
+        // Get the world from the package
+        let pkg = &resolve.packages[pkg_id];
+        let world_id = pkg.worlds.values().next()
+            .ok_or_else(|| CompileError::Wit("No world found in WIT file".to_string()))?;
+
+        // Analyze the source
+        let module = analyze::analyze(&exprs, &self.interner, &resolve, *world_id)?;
+
+        // Lower to IR
+        let ir = lower::lower(&module, &self.interner)?;
+
+        // Generate WASM
+        let wasm = codegen::generate(&ir, &resolve, *world_id)?;
+
+        Ok(wasm)
     }
 }
 

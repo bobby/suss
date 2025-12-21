@@ -15,8 +15,24 @@ use crate::ir::Type;
 /// Analyzed module ready for lowering
 #[derive(Debug)]
 pub struct AnalyzedModule {
+    pub imports: Vec<AnalyzedImport>,
     pub functions: Vec<AnalyzedFunction>,
     pub globals: Vec<AnalyzedGlobal>,
+}
+
+/// An analyzed import from a WIT interface
+#[derive(Debug, Clone)]
+pub struct AnalyzedImport {
+    /// Alias for qualified access (e.g., "random" for random/get-random-u64)
+    pub alias: String,
+    /// Full WIT interface path
+    pub wit_interface: String,
+    /// Function name in the interface
+    pub function_name: String,
+    /// Parameter types
+    pub params: Vec<Type>,
+    /// Return type
+    pub return_type: Type,
 }
 
 #[derive(Debug)]
@@ -51,6 +67,7 @@ struct Analyzer<'a> {
     interner: &'a Interner,
     resolve: &'a Resolve,
     world_id: WorldId,
+    imports: Vec<AnalyzedImport>,
     functions: Vec<AnalyzedFunction>,
     globals: Vec<AnalyzedGlobal>,
 }
@@ -61,6 +78,7 @@ impl<'a> Analyzer<'a> {
             interner,
             resolve,
             world_id,
+            imports: Vec::new(),
             functions: Vec::new(),
             globals: Vec::new(),
         }
@@ -76,6 +94,7 @@ impl<'a> Analyzer<'a> {
         self.validate_exports()?;
 
         Ok(AnalyzedModule {
+            imports: std::mem::take(&mut self.imports),
             functions: std::mem::take(&mut self.functions),
             globals: std::mem::take(&mut self.globals),
         })
@@ -89,6 +108,7 @@ impl<'a> Analyzer<'a> {
                     match name {
                         "def" => self.analyze_def(items)?,
                         "defn" => self.analyze_defn(items)?,
+                        "require" => self.analyze_require(items)?,
                         _ => {
                             // Top-level expression - ignore for now
                         }
@@ -166,6 +186,187 @@ impl<'a> Analyzer<'a> {
         });
 
         Ok(())
+    }
+
+    fn analyze_require(&mut self, items: &[Sexp]) -> CompileResult<()> {
+        // (require '[wasi:random/random :as random])
+        // (require '[wasi:cli/stdout :refer [print]])
+        if items.len() < 2 {
+            return Err(CompileError::Parse("require needs a spec".into()));
+        }
+
+        // The spec should be a quoted vector: '[...]
+        let spec = match &items[1] {
+            Sexp::List(quote_items) if quote_items.len() == 2 => {
+                // Check if first element is 'quote symbol
+                if let Sexp::Symbol(sym) = &quote_items[0] {
+                    let name = self.interner.symbol_name(*sym);
+                    if name == "quote" {
+                        if let Sexp::Vector(vec_items) = &quote_items[1] {
+                            vec_items
+                        } else {
+                            return Err(CompileError::Parse("require spec must be a vector".into()));
+                        }
+                    } else {
+                        return Err(CompileError::Parse("require spec must be quoted".into()));
+                    }
+                } else {
+                    return Err(CompileError::Parse("require spec must be quoted".into()));
+                }
+            }
+            Sexp::Vector(vec_items) => vec_items, // Allow unquoted for simplicity
+            _ => return Err(CompileError::Parse("require spec must be a vector".into())),
+        };
+
+        if spec.is_empty() {
+            return Err(CompileError::Parse("require spec cannot be empty".into()));
+        }
+
+        // First element is the interface name
+        let interface_name = match &spec[0] {
+            Sexp::Symbol(sym) => self.interner.symbol_name(*sym).to_string(),
+            _ => return Err(CompileError::Parse("require spec first element must be interface name".into())),
+        };
+
+        // Parse options (:as alias or :refer [fns])
+        let mut alias: Option<String> = None;
+        let mut refer_fns: Vec<String> = Vec::new();
+        let mut i = 1;
+
+        while i < spec.len() {
+            match &spec[i] {
+                Sexp::Keyword(kw) => {
+                    let kw_name = self.interner.keyword_name(*kw);
+                    match kw_name {
+                        "as" => {
+                            i += 1;
+                            if i >= spec.len() {
+                                return Err(CompileError::Parse(":as requires an alias".into()));
+                            }
+                            if let Sexp::Symbol(sym) = &spec[i] {
+                                alias = Some(self.interner.symbol_name(*sym).to_string());
+                            } else {
+                                return Err(CompileError::Parse(":as alias must be a symbol".into()));
+                            }
+                        }
+                        "refer" => {
+                            i += 1;
+                            if i >= spec.len() {
+                                return Err(CompileError::Parse(":refer requires a vector of names".into()));
+                            }
+                            if let Sexp::Vector(fns) = &spec[i] {
+                                for f in fns {
+                                    if let Sexp::Symbol(sym) = f {
+                                        refer_fns.push(self.interner.symbol_name(*sym).to_string());
+                                    } else {
+                                        return Err(CompileError::Parse(":refer elements must be symbols".into()));
+                                    }
+                                }
+                            } else {
+                                return Err(CompileError::Parse(":refer requires a vector".into()));
+                            }
+                        }
+                        _ => {
+                            return Err(CompileError::Parse(format!("Unknown require option :{}", kw_name)));
+                        }
+                    }
+                }
+                _ => {
+                    return Err(CompileError::Parse("Expected keyword option in require spec".into()));
+                }
+            }
+            i += 1;
+        }
+
+        // Look up the interface in the WIT world imports
+        let world = &self.resolve.worlds[self.world_id];
+        let interface_id = self.find_interface_import(&interface_name, world)?;
+
+        // Get functions from the interface
+        let interface = &self.resolve.interfaces[interface_id];
+
+        if let Some(ref alias_name) = alias {
+            // :as - import all functions with alias prefix
+            for (func_name, func) in &interface.functions {
+                let params = func.params.iter()
+                    .map(|(_, ty)| wit_type_to_ir(self.resolve, ty))
+                    .collect();
+                let return_type = match &func.results {
+                    wit_parser::Results::Named(results) if results.is_empty() => Type::Unit,
+                    wit_parser::Results::Named(results) => {
+                        wit_type_to_ir(self.resolve, &results[0].1)
+                    }
+                    wit_parser::Results::Anon(ty) => wit_type_to_ir(self.resolve, &ty),
+                };
+
+                self.imports.push(AnalyzedImport {
+                    alias: alias_name.clone(),
+                    wit_interface: interface_name.clone(),
+                    function_name: func_name.clone(),
+                    params,
+                    return_type,
+                });
+            }
+        } else if !refer_fns.is_empty() {
+            // :refer - import specific functions without prefix
+            for func_name in &refer_fns {
+                let func = interface.functions.get(func_name)
+                    .ok_or_else(|| CompileError::Parse(
+                        format!("Function '{}' not found in interface '{}'", func_name, interface_name)
+                    ))?;
+                let params = func.params.iter()
+                    .map(|(_, ty)| wit_type_to_ir(self.resolve, ty))
+                    .collect();
+                let return_type = match &func.results {
+                    wit_parser::Results::Named(results) if results.is_empty() => Type::Unit,
+                    wit_parser::Results::Named(results) => {
+                        wit_type_to_ir(self.resolve, &results[0].1)
+                    }
+                    wit_parser::Results::Anon(ty) => wit_type_to_ir(self.resolve, &ty),
+                };
+
+                self.imports.push(AnalyzedImport {
+                    alias: String::new(), // No alias for :refer
+                    wit_interface: interface_name.clone(),
+                    function_name: func_name.clone(),
+                    params,
+                    return_type,
+                });
+            }
+        } else {
+            return Err(CompileError::Parse("require needs :as or :refer".into()));
+        }
+
+        Ok(())
+    }
+
+    fn find_interface_import(&self, name: &str, world: &wit_parser::World) -> CompileResult<wit_parser::InterfaceId> {
+        // Look for the interface in world imports
+        for (_key, item) in &world.imports {
+            if let WorldItem::Interface { id, .. } = item {
+                // Check if this matches the requested interface name
+                let interface = &self.resolve.interfaces[*id];
+                if let Some(ref iface_name) = interface.name {
+                    // Build full interface path
+                    let full_name = if let Some(pkg_id) = interface.package {
+                        let pkg = &self.resolve.packages[pkg_id];
+                        format!("{}:{}/{}", pkg.name.namespace, pkg.name.name, iface_name)
+                    } else {
+                        iface_name.clone()
+                    };
+
+                    if full_name == name || iface_name == name {
+                        return Ok(*id);
+                    }
+                }
+            }
+        }
+
+        Err(CompileError::Parse(format!(
+            "Interface '{}' not found in world imports. Available imports: {:?}",
+            name,
+            world.imports.keys().collect::<Vec<_>>()
+        )))
     }
 
     fn parse_name_with_metadata(&self, items: &[Sexp]) -> CompileResult<(SymbolId, Vec<&str>, usize)> {
@@ -273,7 +474,21 @@ impl<'a> Analyzer<'a> {
                         }
                         "<" | ">" | "<=" | ">=" | "=" | "not=" => Ok(Type::Bool),
                         "and" | "or" | "not" => Ok(Type::Bool),
-                        _ => Ok(Type::Unknown),
+                        _ => {
+                            // Check if it's a qualified import call (e.g., "random/get-random-u64")
+                            if let Some(slash_pos) = name.find('/') {
+                                let alias = &name[..slash_pos];
+                                let func_name = &name[slash_pos + 1..];
+
+                                // Look up in imports
+                                for import in &self.imports {
+                                    if import.alias == alias && import.function_name == func_name {
+                                        return Ok(import.return_type.clone());
+                                    }
+                                }
+                            }
+                            Ok(Type::Unknown)
+                        }
                     }
                 } else {
                     Ok(Type::Unknown)
@@ -312,7 +527,7 @@ impl<'a> Analyzer<'a> {
         Ok(())
     }
 
-    fn get_or_intern_symbol(&self, name: &str) -> SymbolId {
+    fn get_or_intern_symbol(&self, _name: &str) -> SymbolId {
         // This is a bit of a hack - we need a mutable interner
         // For now, assume common symbols are already interned
         // In practice, we'd need to handle this differently

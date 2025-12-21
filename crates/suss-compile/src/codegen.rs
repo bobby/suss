@@ -4,8 +4,8 @@
 
 use wasm_encoder::{
     Module as WasmModule, CodeSection, FunctionSection, TypeSection, ExportSection,
-    MemorySection, DataSection, GlobalSection,
-    Function, Instruction, ValType, MemoryType, GlobalType,
+    MemorySection, DataSection, GlobalSection, ImportSection,
+    Function, Instruction, ValType, MemoryType, GlobalType, EntityType,
     ExportKind, DataSegment, DataSegmentMode,
 };
 use wit_parser::{Resolve, WorldId};
@@ -25,6 +25,8 @@ struct CodeGen<'a> {
     world_id: WorldId,
     /// String data offset in memory
     string_offset: u32,
+    /// Number of imported functions
+    num_imports: u32,
 }
 
 impl<'a> CodeGen<'a> {
@@ -34,31 +36,56 @@ impl<'a> CodeGen<'a> {
             resolve,
             world_id,
             string_offset: 0,
+            num_imports: ir.imports.len() as u32,
         }
     }
 
     fn generate(&mut self) -> CompileResult<Vec<u8>> {
         let mut module = WasmModule::new();
 
-        // Type section - function signatures
+        // Type section - function signatures (imports first, then local functions)
         let mut types = TypeSection::new();
+
+        // Import function types first
+        for import in &self.ir.imports {
+            let params: Vec<ValType> = import.params.iter()
+                .flat_map(|ty| self.type_to_valtypes(ty))
+                .collect();
+            let results = if import.return_type == Type::Unit {
+                vec![]
+            } else {
+                self.type_to_valtypes(&import.return_type)
+            };
+            types.ty().function(params, results);
+        }
+
+        // Local function types
         for func in &self.ir.functions {
             let params: Vec<ValType> = func.params.iter()
-                .map(|(_, ty)| self.type_to_valtype(ty))
+                .flat_map(|(_, ty)| self.type_to_valtypes(ty))
                 .collect();
-            let results = vec![self.type_to_valtype(&func.return_type)];
+            let results = self.type_to_valtypes(&func.return_type);
             types.ty().function(params, results);
         }
         module.section(&types);
 
-        // Import section (for now empty - will add WASI imports later)
-        // let imports = ImportSection::new();
-        // module.section(&imports);
+        // Import section
+        if !self.ir.imports.is_empty() {
+            let mut imports = ImportSection::new();
+            for (idx, import) in self.ir.imports.iter().enumerate() {
+                imports.import(
+                    &import.wit_interface,
+                    &import.function_name,
+                    EntityType::Function(idx as u32),
+                );
+            }
+            module.section(&imports);
+        }
 
-        // Function section - declares functions
+        // Function section - declares local functions (type indices start after imports)
         let mut functions = FunctionSection::new();
         for (idx, _) in self.ir.functions.iter().enumerate() {
-            functions.function(idx as u32);
+            functions.function((self.num_imports + idx as u32) as u32);
         }
         module.section(&functions);
 
@@ -93,7 +120,8 @@ impl<'a> CodeGen<'a> {
         for (idx, func) in self.ir.functions.iter().enumerate() {
             if func.exported {
                 let name = func.export_name.as_deref().unwrap_or("unknown");
-                exports.export(name, ExportKind::Func, idx as u32);
+                // Function indices: imports come first, then local functions
+                exports.export(name, ExportKind::Func, self.num_imports + idx as u32);
             }
         }
         module.section(&exports);
@@ -352,17 +380,31 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::StrConcat(parts) => {
-                // String concatenation requires runtime support
-                // For now, just return the first part if there is one
                 if parts.is_empty() {
+                    // Empty string: (ptr=0, len=0)
                     f.instruction(&Instruction::I32Const(0));
                     f.instruction(&Instruction::I32Const(0));
                 } else if parts.len() == 1 {
+                    // Single part: just return it
                     self.generate_expr(&parts[0], f)?;
                 } else {
-                    // TODO: Implement proper string concatenation
+                    // Multi-part string concatenation
+                    // Strategy:
+                    // 1. Evaluate all parts and collect (ptr, len) pairs
+                    // 2. Calculate total length
+                    // 3. Allocate memory from heap
+                    // 4. Copy each part into allocated buffer
+                    // 5. Return (result_ptr, total_len)
+
+                    // Runtime string concatenation requires heap allocation
+                    // This is complex because WASM needs locals declared upfront
+                    // and strings are (ptr, len) pairs on the stack
+                    //
+                    // For now, only compile-time concatenation (all literals) is supported
+                    // The lowering phase handles this optimization
                     return Err(CompileError::Unsupported(
-                        "String concatenation not yet implemented".into()
+                        "Runtime string concatenation not yet implemented. \
+                         Use string literals only, e.g., (str \"Hello\" \" World\")".into()
                     ));
                 }
             }
@@ -399,10 +441,19 @@ impl<'a> CodeGen<'a> {
             Type::Unit | Type::Bool | Type::I32 => ValType::I32,
             Type::I64 => ValType::I64,
             Type::F64 => ValType::F64,
-            Type::String => ValType::I32, // Pointer
+            Type::String => ValType::I32, // Pointer (first of pair)
             Type::List(_) | Type::Vector(_) => ValType::I32, // Pointer
             Type::Func { .. } => ValType::I32, // Table index
             Type::Unknown => ValType::I32, // Default to i32
+        }
+    }
+
+    /// Returns all ValTypes needed for a type (strings need ptr+len pair)
+    fn type_to_valtypes(&self, ty: &Type) -> Vec<ValType> {
+        match ty {
+            Type::String => vec![ValType::I32, ValType::I32], // ptr, len
+            Type::List(_) => vec![ValType::I32, ValType::I32], // ptr, len
+            _ => vec![self.type_to_valtype(ty)],
         }
     }
 }

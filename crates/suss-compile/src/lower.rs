@@ -8,7 +8,7 @@ use suss_core::{Sexp, Interner, SymbolId};
 
 use crate::analyze::{AnalyzedModule, AnalyzedFunction, AnalyzedGlobal};
 use crate::error::{CompileError, CompileResult};
-use crate::ir::{Module, Function, Global, Expr, Type, BinOp, UnOp};
+use crate::ir::{Module, Function, Global, Import, Expr, Type, BinOp, UnOp};
 
 /// Lower analyzed module to IR
 pub fn lower(module: &AnalyzedModule, interner: &Interner) -> CompileResult<Module> {
@@ -23,8 +23,12 @@ struct Lowerer<'a> {
     locals: HashMap<SymbolId, u32>,
     /// Next local index
     next_local: u32,
-    /// Function index map
+    /// Function index map (indices start after imports)
     func_indices: HashMap<SymbolId, u32>,
+    /// Import index map: (alias, function_name) -> import index
+    import_indices: HashMap<(String, String), u32>,
+    /// Number of imports (for calculating function indices)
+    num_imports: u32,
 }
 
 impl<'a> Lowerer<'a> {
@@ -35,16 +39,34 @@ impl<'a> Lowerer<'a> {
             locals: HashMap::new(),
             next_local: 0,
             func_indices: HashMap::new(),
+            import_indices: HashMap::new(),
+            num_imports: 0,
         }
     }
 
     fn lower_module(&mut self, analyzed: &AnalyzedModule) -> CompileResult<Module> {
-        // Build function index map
+        // Lower imports first - they occupy the first function indices
+        for (idx, import) in analyzed.imports.iter().enumerate() {
+            self.import_indices.insert(
+                (import.alias.clone(), import.function_name.clone()),
+                idx as u32,
+            );
+            self.module.imports.push(Import {
+                local_name: import.alias.clone(),
+                wit_interface: import.wit_interface.clone(),
+                function_name: import.function_name.clone(),
+                params: import.params.clone(),
+                return_type: import.return_type.clone(),
+            });
+        }
+        self.num_imports = analyzed.imports.len() as u32;
+
+        // Build function index map - indices start after imports
         for (idx, func) in analyzed.functions.iter().enumerate() {
-            self.func_indices.insert(func.name, idx as u32);
+            self.func_indices.insert(func.name, self.num_imports + idx as u32);
         }
 
-        // Lower globals first
+        // Lower globals
         for global in &analyzed.globals {
             let lowered = self.lower_global(global)?;
             self.module.globals.push(lowered);
@@ -158,7 +180,7 @@ impl<'a> Lowerer<'a> {
                 }
             }
 
-            Sexp::Vector(items) => {
+            Sexp::Vector(_items) => {
                 // Lower to a sequence that builds a vector
                 Err(CompileError::Unsupported("Vectors not yet supported".into()))
             }
@@ -385,6 +407,22 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_str(&mut self, args: &[Sexp]) -> CompileResult<Expr> {
+        // First try compile-time concatenation for all-literal strings
+        let all_literals = args.iter().all(|arg| matches!(arg, Sexp::String(_)));
+
+        if all_literals && !args.is_empty() {
+            // Concatenate at compile time
+            let mut result = String::new();
+            for arg in args {
+                if let Sexp::String(s) = arg {
+                    result.push_str(s);
+                }
+            }
+            let idx = self.module.intern_string(&result);
+            return Ok(Expr::String(idx));
+        }
+
+        // Fall back to runtime concatenation
         let parts: Vec<Expr> = args
             .iter()
             .map(|e| self.lower_expr(e))
@@ -393,10 +431,44 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_func_call(&mut self, name: &str, args: &[Sexp]) -> CompileResult<Expr> {
-        // Look up function by name
-        let func_sym = SymbolId(0); // Placeholder - need proper symbol lookup
+        // Check if it's a qualified import call (e.g., "random/get-random-u64")
+        if let Some(slash_pos) = name.find('/') {
+            let alias = &name[..slash_pos];
+            let func_name = &name[slash_pos + 1..];
 
-        // For now, just look through our function indices
+            // Look up in import indices
+            if let Some(&idx) = self.import_indices.get(&(alias.to_string(), func_name.to_string())) {
+                let lowered_args: Vec<Expr> = args
+                    .iter()
+                    .map(|e| self.lower_expr(e))
+                    .collect::<CompileResult<_>>()?;
+
+                return Ok(Expr::Call {
+                    func: idx,
+                    args: lowered_args,
+                });
+            } else {
+                return Err(CompileError::Undefined(format!(
+                    "Import function '{}' not found (alias: '{}', function: '{}')",
+                    name, alias, func_name
+                )));
+            }
+        }
+
+        // Check if it's a direct :refer import (no alias)
+        if let Some(&idx) = self.import_indices.get(&(String::new(), name.to_string())) {
+            let lowered_args: Vec<Expr> = args
+                .iter()
+                .map(|e| self.lower_expr(e))
+                .collect::<CompileResult<_>>()?;
+
+            return Ok(Expr::Call {
+                func: idx,
+                args: lowered_args,
+            });
+        }
+
+        // Look up local function by name
         let func_idx = self.func_indices.iter()
             .find(|(sym, _)| self.interner.symbol_name(**sym) == name)
             .map(|(_, idx)| *idx);

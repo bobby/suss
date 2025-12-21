@@ -61,18 +61,13 @@ cargo test
 
 ### Building WASM Components
 
-Suss can be built as WASM components for WASI Preview 1 or WASI 0.2.
-
-#### WASI Preview 1 (single module)
-
-```bash
-cargo build -p suss-cli --target wasm32-wasip1 --release
-wasmtime run target/wasm32-wasip1/release/suss.wasm -e "(+ 1 2)"
-```
+Suss can be built as a WASM component for WASI 0.2.
 
 #### WASI 0.2 (Component Model)
 
-Build individual components:
+The Suss interpreter can run as a WASI 0.2 component, allowing it to be embedded in any WASM runtime that supports the component model.
+
+**Step 1: Build individual components**
 
 ```bash
 cargo build -p suss-reader --target wasm32-wasip2 --features component --release
@@ -80,7 +75,7 @@ cargo build -p suss-eval --target wasm32-wasip2 --features component --release
 cargo build -p suss-cli --target wasm32-wasip2 --features component --release
 ```
 
-Compose into a single component:
+**Step 2: Compose into a single component**
 
 ```bash
 wac compose \
@@ -91,12 +86,20 @@ wac compose \
   compose.wac
 ```
 
-Run the composed component:
+**Step 3: Run the WASI 0.2 REPL**
 
 ```bash
-wasmtime run target/wasm32-wasip2/release/suss_composed.wasm -e "(+ 10 20)"
-wasmtime run --dir=. target/wasm32-wasip2/release/suss_composed.wasm script.suss
+# Start the REPL
+wasmtime run target/wasm32-wasip2/release/suss_composed.wasm
+
+# Evaluate an expression
+wasmtime run target/wasm32-wasip2/release/suss_composed.wasm -- -e "(+ 10 20)"
+
+# Run a script file (requires --dir for filesystem access)
+wasmtime run --dir=. target/wasm32-wasip2/release/suss_composed.wasm -- script.suss
 ```
+
+The composed component includes the reader, evaluator, and CLI - a fully self-contained Suss environment running as pure WASM.
 
 ### Static Compilation (Suss → WASM)
 
@@ -129,6 +132,58 @@ world calculator {
 
 The `^:export` metadata marks functions for export in the WIT world.
 
+#### WIT Imports
+
+Suss supports importing functions from WIT interfaces using Clojure-style `require`:
+
+```clojure
+;; Import with alias - access via alias/function-name
+(require '[wasi:random/random :as random])
+
+(defn ^:export get-random []
+  (random/get-random-u64))
+
+;; Import specific functions directly (no prefix needed)
+(require '[wasi:cli/stdout :refer [print]])
+
+(defn ^:export greet []
+  (print "Hello from Suss!"))
+```
+
+The corresponding WIT world must declare the imports:
+
+```wit
+package myapp:example;
+
+world app {
+    import wasi:random/random@0.2.0;
+    export get-random: func() -> u64;
+}
+```
+
+For external WIT packages (like WASI), place the WIT definitions in a `deps/` folder next to your world file:
+
+```
+myproject/
+  world.wit       # Your world definition
+  app.suss        # Your Suss source
+  deps/
+    random/       # WASI random package
+      random.wit
+      world.wit
+```
+
+#### String Concatenation
+
+The `str` function concatenates strings. When all arguments are string literals, concatenation happens at compile time:
+
+```clojure
+;; Compile-time concatenation (optimized)
+(defn ^:export greeting []
+  (str "Hello" ", " "World" "!"))
+;; Produces: "Hello, World!" in the WASM data section
+```
+
 #### Compilable Subset
 
 The static compiler supports a subset of Suss suitable for ahead-of-time compilation:
@@ -140,8 +195,10 @@ The static compiler supports a subset of Suss suitable for ahead-of-time compila
 | `fn` | Yes | Lambda expressions (no mutable capture) |
 | `let`, `if`, `do` | Yes | Control flow |
 | `loop/recur` | Yes | Maps to WASM loops |
+| `require` | Yes | Import WIT interfaces (`:as` alias or `:refer` direct) |
+| `str` | Partial | Compile-time literal concatenation only |
 | Numbers | Yes | i32, i64, f64 (no BigInt) |
-| Strings | Yes | Linear memory |
+| Strings | Yes | Linear memory (ptr, len pairs) |
 | `eval`, macros | No | Requires interpreter |
 
 ## Architecture
