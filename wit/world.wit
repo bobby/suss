@@ -1,0 +1,8 @@
+package suss:lang;
+
+/// The main REPL world that composes reader and evaluator
+/// Note: WASI imports are added by the CLI component separately
+world repl {
+    import reader;
+    import evaluator;
+}

@@ -1,0 +1,60 @@
+package suss:lang;
+
+/// Reader interface for parsing Suss source code
+interface reader {
+    use types.{sexp, parse-error, symbol-id, keyword-id, number};
+
+    /// Read a string into an s-expression
+    /// Returns an owned sexp handle
+    read-string: func(input: string, platform: string) -> result<sexp, parse-error>;
+
+    /// Read all expressions from a string (for files with multiple forms)
+    read-all: func(input: string, platform: string) -> result<list<sexp>, parse-error>;
+
+    /// Intern a symbol string, returning its ID
+    intern-symbol: func(name: string) -> symbol-id;
+
+    /// Get the string for an interned symbol
+    symbol-name: func(id: symbol-id) -> string;
+
+    /// Intern a keyword string (without leading colon), returning its ID
+    intern-keyword: func(name: string) -> keyword-id;
+
+    /// Get the string for an interned keyword (without leading colon)
+    keyword-name: func(id: keyword-id) -> string;
+
+    // === Factory functions for creating sexp values ===
+    // These are used by the evaluator to create return values
+
+    /// Create a nil sexp
+    make-nil: func() -> sexp;
+
+    /// Create a boolean sexp
+    make-bool: func(b: bool) -> sexp;
+
+    /// Create a number sexp
+    make-number: func(n: number) -> sexp;
+
+    /// Create a symbol sexp
+    make-symbol: func(id: symbol-id) -> sexp;
+
+    /// Create a keyword sexp
+    make-keyword: func(id: keyword-id) -> sexp;
+
+    /// Create a string sexp
+    make-string: func(s: string) -> sexp;
+
+    /// Create a character sexp
+    make-char: func(c: char) -> sexp;
+
+    /// Create a list sexp from items
+    make-list: func(items: list<sexp>) -> sexp;
+
+    /// Create a vector sexp from items
+    make-vector: func(items: list<sexp>) -> sexp;
+}
+
+world reader-world {
+    export types;
+    export reader;
+}

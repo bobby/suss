@@ -1,0 +1,23 @@
+[package]
+name = "suss-reader"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+suss-core = { workspace = true }
+chumsky = { workspace = true }
+ariadne = { workspace = true }
+num-bigint = { workspace = true }
+num-rational = { workspace = true }
+wit-bindgen = { workspace = true, optional = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+
+[features]
+default = []
+component = ["dep:wit-bindgen", "suss-core/component"]

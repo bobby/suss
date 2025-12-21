@@ -1,0 +1,17 @@
+[package]
+name = "suss-compile"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Static compiler for Suss - compiles to WASM components"
+
+[dependencies]
+suss-core = { workspace = true }
+suss-reader = { path = "../suss-reader" }
+wasm-encoder = { workspace = true }
+wit-parser = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+wasmtime = { workspace = true }
+pretty_assertions = { workspace = true }

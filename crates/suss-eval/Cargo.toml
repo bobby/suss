@@ -1,0 +1,26 @@
+[package]
+name = "suss-eval"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+suss-core = { workspace = true }
+suss-reader = { path = "../suss-reader" }
+num-bigint = { workspace = true }
+num-rational = { workspace = true }
+num-traits = { workspace = true }
+wit-bindgen = { workspace = true, optional = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+
+[features]
+default = []
+# Note: component builds suss-eval as a separate WASM component.
+# It imports the reader interface but doesn't include reader's component implementation.
+# The components get composed together at link time using wac or similar.
+component = ["dep:wit-bindgen", "suss-core/component"]

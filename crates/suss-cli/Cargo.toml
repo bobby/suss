@@ -1,0 +1,25 @@
+[package]
+name = "suss-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "suss"
+path = "src/main.rs"
+
+[dependencies]
+suss-reader = { path = "../suss-reader" }
+suss-eval = { path = "../suss-eval" }
+suss-compile = { path = "../suss-compile" }
+ariadne = { workspace = true }
+lexopt = "0.3"
+wit-bindgen = { workspace = true, optional = true }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+rustyline = { workspace = true }
+
+[features]
+default = []
+# Component build - uses WIT bindings instead of direct library calls
+component = ["dep:wit-bindgen"]

@@ -1,0 +1,43 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/suss-core",
+    "crates/suss-reader",
+    "crates/suss-eval",
+    "crates/suss-cli",
+    "crates/suss-compile",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/bobby/suss"
+
+[workspace.dependencies]
+# Core types
+suss-core = { path = "crates/suss-core" }
+
+# Parser
+chumsky = "1.0.0-alpha.7"
+ariadne = "0.4"
+
+# Numerics
+num-bigint = "0.4"
+num-rational = "0.4"
+num-traits = "0.2"
+
+# WASM Component Model
+wit-bindgen = "0.36"
+
+# Compiler
+wasm-encoder = "0.221"
+wit-parser = "0.221"
+thiserror = "2"
+
+# CLI (native only)
+rustyline = "14"
+
+# Testing
+pretty_assertions = "1.4"
+wasmtime = "28"

@@ -1,0 +1,28 @@
+package suss:lang;
+
+/// Evaluator interface for executing Suss code
+interface evaluator {
+    use types.{sexp, eval-error};
+
+    /// Evaluate a single expression in the current environment
+    /// Takes a borrowed sexp (owned by reader), returns a new owned sexp
+    eval: func(expr: borrow<sexp>) -> result<sexp, eval-error>;
+
+    /// Evaluate an expression and return its string representation
+    eval-to-string: func(expr: borrow<sexp>) -> result<string, eval-error>;
+
+    /// Define a value in the current namespace
+    define: func(name: string, value: borrow<sexp>) -> result<sexp, eval-error>;
+
+    /// Look up a value by name
+    lookup: func(name: string) -> option<sexp>;
+
+    /// Reset the environment to initial state
+    reset: func();
+}
+
+world evaluator-world {
+    import types;
+    import reader;
+    export evaluator;
+}
