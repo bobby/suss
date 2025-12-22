@@ -93,7 +93,7 @@ wac compose \
 wasmtime run target/wasm32-wasip2/release/suss_composed.wasm
 
 # Evaluate an expression
-wasmtime run target/wasm32-wasip2/release/suss_composed.wasm -- -e "(+ 10 20)"
+wasmtime run target/wasm32-wasip2/release/suss_composed.wasm -e "(+ 10 20)"
 
 # Run a script file (requires --dir for filesystem access)
 wasmtime run --dir=. target/wasm32-wasip2/release/suss_composed.wasm -- script.suss
@@ -101,12 +101,69 @@ wasmtime run --dir=. target/wasm32-wasip2/release/suss_composed.wasm -- script.s
 
 The composed component includes the reader, evaluator, and CLI - a fully self-contained Suss environment running as pure WASM.
 
-### Static Compilation (Suss → WASM)
+### Static Compilation (Suss → WASM Components)
 
-Suss can compile source code directly to standalone WASM components that implement user-specified WIT worlds:
+Suss compiles source code directly to standalone WASM components that implement user-specified WIT worlds.
+
+#### Project-Based Compilation (Recommended)
+
+For projects with multiple worlds or organized source trees, use `deps.suss`:
 
 ```bash
-# Compile a Suss file to WASM
+# Compile all worlds defined in deps.suss
+cargo run -p suss-cli -- compile
+
+# Compile a specific world
+cargo run -p suss-cli -- compile --world :my-app/v1
+
+# Use a custom config file
+cargo run -p suss-cli -- compile -c path/to/deps.suss
+```
+
+**Project structure:**
+
+```
+myproject/
+  deps.suss           # Project configuration
+  wit/
+    v1.wit            # WIT world definitions
+    v2.wit
+  src/
+    core.suss         # Source files with (gen-world ...)
+    utils.suss
+  target/             # Compiled output
+```
+
+**deps.suss** (EDN format, like Clojure's deps.edn):
+
+```clojure
+{:worlds
+ {:my-app/v1 {:wit "wit/v1.wit"
+              :output "target/v1.wasm"}
+  :my-app/v2 {:wit "wit/v2.wit"
+              :output "target/v2.wasm"}}
+ :src-paths ["src"]}
+```
+
+**Source file with namespace and world target:**
+
+```clojure
+(ns my-app.core
+  (gen-world :my-app/v1))
+
+(defn ^:export add [a b]
+  (+ a b))
+
+(defn helper [x]  ; Not exported (no ^:export)
+  (* x 2))
+```
+
+#### Single-File Compilation
+
+For quick one-off compilation without project setup:
+
+```bash
+# Compile a single file
 cargo run -p suss-cli -- compile src.suss -w world.wit -o out.wasm
 
 # Run the compiled component
@@ -130,7 +187,7 @@ world calculator {
 }
 ```
 
-The `^:export` metadata marks functions for export in the WIT world.
+The `^:export` metadata marks functions for export in the WIT world. Functions without `^:export` are compiled but remain internal.
 
 #### WIT Imports
 

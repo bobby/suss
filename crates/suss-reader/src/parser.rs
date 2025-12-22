@@ -2,8 +2,8 @@
 //!
 //! Provides a full EDN parser with error recovery for REPL use.
 
-use suss_core::{Interner, Number, Sexp};
 use chumsky::prelude::*;
+use suss_core::{Edn, Keyword, Number, Symbol};
 
 /// A parse error with source location and recovery hints
 #[derive(Debug, Clone)]
@@ -21,28 +21,26 @@ impl std::fmt::Display for ParseError {
 
 impl std::error::Error for ParseError {}
 
-/// Parser state holding the interner
+/// Parser state (simplified - no longer needs interner)
 pub struct ParserState {
-    pub interner: Interner,
     pub platform: String,
 }
 
 impl ParserState {
     pub fn new(platform: impl Into<String>) -> Self {
         Self {
-            interner: Interner::new(),
             platform: platform.into(),
         }
     }
 }
 
 /// Parse a single s-expression from a string
-pub fn parse(input: &str, state: &mut ParserState) -> Result<Sexp, ParseError> {
-    let (sexp, errors) = parse_inner(input, state);
+pub fn parse(input: &str, state: &mut ParserState) -> Result<Edn, ParseError> {
+    let (edn, errors) = parse_inner(input, state);
 
-    if let Some(sexp) = sexp {
+    if let Some(edn) = edn {
         if errors.is_empty() {
-            return Ok(sexp);
+            return Ok(edn);
         }
     }
 
@@ -56,19 +54,19 @@ pub fn parse(input: &str, state: &mut ParserState) -> Result<Sexp, ParseError> {
 }
 
 /// Parse all s-expressions from a string
-pub fn parse_all(input: &str, state: &mut ParserState) -> Result<Vec<Sexp>, ParseError> {
-    let (sexps, errors) = parse_all_inner(input, state);
+pub fn parse_all(input: &str, state: &mut ParserState) -> Result<Vec<Edn>, ParseError> {
+    let (edns, errors) = parse_all_inner(input, state);
 
     if errors.is_empty() {
-        Ok(sexps)
+        Ok(edns)
     } else {
         let err = errors.into_iter().next().unwrap();
         Err(err)
     }
 }
 
-fn parse_inner(input: &str, state: &mut ParserState) -> (Option<Sexp>, Vec<ParseError>) {
-    let parser = sexp_parser(state);
+fn parse_inner(input: &str, state: &mut ParserState) -> (Option<Edn>, Vec<ParseError>) {
+    let parser = edn_parser(state);
     let (result, errors) = parser.parse(input).into_output_errors();
 
     let parse_errors: Vec<ParseError> = errors
@@ -86,8 +84,8 @@ fn parse_inner(input: &str, state: &mut ParserState) -> (Option<Sexp>, Vec<Parse
     (result, parse_errors)
 }
 
-fn parse_all_inner(input: &str, state: &mut ParserState) -> (Vec<Sexp>, Vec<ParseError>) {
-    let parser = sexp_parser(state).repeated().collect::<Vec<_>>();
+fn parse_all_inner(input: &str, state: &mut ParserState) -> (Vec<Edn>, Vec<ParseError>) {
+    let parser = edn_parser(state).repeated().collect::<Vec<_>>();
     let (result, errors) = parser.parse(input).into_output_errors();
 
     let parse_errors: Vec<ParseError> = errors
@@ -105,9 +103,9 @@ fn parse_all_inner(input: &str, state: &mut ParserState) -> (Vec<Sexp>, Vec<Pars
     (result.unwrap_or_default(), parse_errors)
 }
 
-/// Build the s-expression parser
-fn sexp_parser<'a>(_state: &'a mut ParserState) -> impl Parser<'a, &'a str, Sexp, extra::Err<Rich<'a, char>>> {
-    recursive(|sexp| {
+/// Build the EDN parser
+fn edn_parser<'a>(_state: &'a mut ParserState) -> impl Parser<'a, &'a str, Edn, extra::Err<Rich<'a, char>>> {
+    recursive(|edn| {
         // Whitespace characters (at least one)
         let ws = one_of(" \t\n\r,").repeated().at_least(1);
 
@@ -123,12 +121,12 @@ fn sexp_parser<'a>(_state: &'a mut ParserState) -> impl Parser<'a, &'a str, Sexp
         let padding = ws_item.repeated();
 
         // nil
-        let nil = text::keyword("nil").to(Sexp::Nil);
+        let nil = text::keyword("nil").to(Edn::Nil);
 
         // Booleans
         let boolean = choice((
-            text::keyword("true").to(Sexp::Bool(true)),
-            text::keyword("false").to(Sexp::Bool(false)),
+            text::keyword("true").to(Edn::Bool(true)),
+            text::keyword("false").to(Edn::Bool(false)),
         ));
 
         // Character literals
@@ -139,7 +137,7 @@ fn sexp_parser<'a>(_state: &'a mut ParserState) -> impl Parser<'a, &'a str, Sexp
             text::keyword("tab").to('\t'),
             any(),
         )))
-        .map(Sexp::Char);
+        .map(Edn::Char);
 
         // String literals
         let escape = just('\\').ignore_then(choice((
@@ -155,7 +153,7 @@ fn sexp_parser<'a>(_state: &'a mut ParserState) -> impl Parser<'a, &'a str, Sexp
             .repeated()
             .collect::<String>()
             .delimited_by(just('"'), just('"'))
-            .map(Sexp::String);
+            .map(Edn::String);
 
         // Symbol characters
         let symbol_start = any().filter(|c: &char| {
@@ -188,13 +186,13 @@ fn sexp_parser<'a>(_state: &'a mut ParserState) -> impl Parser<'a, &'a str, Sexp
                 Number::parse_float(s)
                     .ok_or_else(|| Rich::custom(span, format!("Invalid float: {}", s)))
             })
-            .map(Sexp::Number);
+            .map(Edn::Number);
 
         // Special floats
         let special_float = choice((
-            just("##Inf").to(Sexp::Number(Number::Float(f64::INFINITY))),
-            just("##-Inf").to(Sexp::Number(Number::Float(f64::NEG_INFINITY))),
-            just("##NaN").to(Sexp::Number(Number::Float(f64::NAN))),
+            just("##Inf").to(Edn::Number(Number::Float(f64::INFINITY))),
+            just("##-Inf").to(Edn::Number(Number::Float(f64::NEG_INFINITY))),
+            just("##NaN").to(Edn::Number(Number::Float(f64::NAN))),
         ));
 
         // Ratio: 1/3, -5/7
@@ -207,7 +205,7 @@ fn sexp_parser<'a>(_state: &'a mut ParserState) -> impl Parser<'a, &'a str, Sexp
                 Number::parse_ratio(s)
                     .ok_or_else(|| Rich::custom(span, format!("Invalid ratio: {}", s)))
             })
-            .map(Sexp::Number);
+            .map(Edn::Number);
 
         // Integer: 42, -17, 0xFF, 2r1010
         let hex_int = just("0x")
@@ -237,7 +235,7 @@ fn sexp_parser<'a>(_state: &'a mut ParserState) -> impl Parser<'a, &'a str, Sexp
                 Number::parse_integer(s)
                     .ok_or_else(|| Rich::custom(span, format!("Invalid integer: {}", s)))
             })
-            .map(Sexp::Number);
+            .map(Edn::Number);
 
         // Number: try floats and ratios before integers
         let number = choice((special_float, float, ratio, integer));
@@ -249,81 +247,74 @@ fn sexp_parser<'a>(_state: &'a mut ParserState) -> impl Parser<'a, &'a str, Sexp
                     .then(symbol_char.repeated())
                     .to_slice(),
             )
-            .map(|name: &str| {
-                // We need interior mutability or cell for the interner
-                // For now, return the raw name and intern later
-                Sexp::String(format!(":{}", name)) // Placeholder - we'll fix this
-            });
+            .map(|name: &str| Edn::Keyword(Keyword::parse(name)));
 
         // Symbol: foo, bar/baz
         let symbol = symbol_start
             .then(symbol_char.repeated())
             .to_slice()
-            .map(|name: &str| {
-                // Placeholder - we'll fix the interning
-                Sexp::String(format!("sym:{}", name))
-            });
+            .map(|name: &str| Edn::Symbol(Symbol::parse(name)));
 
         // List: (a b c)
-        let list = sexp
+        let list = edn
             .clone()
             .padded_by(padding.clone())
             .repeated()
             .collect::<Vec<_>>()
             .delimited_by(just('('), just(')'))
-            .map(Sexp::List);
+            .map(Edn::List);
 
         // Vector: [a b c]
-        let vector = sexp
+        let vector = edn
             .clone()
             .padded_by(padding.clone())
             .repeated()
             .collect::<Vec<_>>()
             .delimited_by(just('['), just(']'))
-            .map(Sexp::Vector);
+            .map(Edn::Vector);
 
         // Set: #{a b c}
-        let set = sexp
+        let set = edn
             .clone()
             .padded_by(padding.clone())
             .repeated()
             .collect::<Vec<_>>()
             .delimited_by(just("#{"), just('}'))
-            .map(Sexp::Set);
+            .map(Edn::Set);
 
         // Map: {k v k v}
-        let map_pair = sexp
+        let map_pair = edn
             .clone()
             .padded_by(padding.clone())
-            .then(sexp.clone().padded_by(padding.clone()));
+            .then(edn.clone().padded_by(padding.clone()));
 
         let map = map_pair
             .repeated()
             .collect::<Vec<_>>()
             .delimited_by(just('{'), just('}'))
-            .map(Sexp::Map);
+            .map(Edn::Map);
 
         // Quote: 'x -> (quote x)
         let quote = just('\'')
-            .ignore_then(sexp.clone())
-            .map(|x| Sexp::List(vec![Sexp::String("sym:quote".to_string()), x]));
+            .ignore_then(edn.clone())
+            .map(|x| Edn::List(vec![Edn::Symbol(Symbol::new("quote")), x]));
 
-        // Syntax quote, unquote, etc. (simplified for MVP)
+        // Syntax quote, unquote, etc.
         let syntax_quote = just('`')
-            .ignore_then(sexp.clone())
-            .map(|x| Sexp::List(vec![Sexp::String("sym:syntax-quote".to_string()), x]));
-
-        let unquote = just('~')
-            .ignore_then(sexp.clone())
-            .map(|x| Sexp::List(vec![Sexp::String("sym:unquote".to_string()), x]));
+            .ignore_then(edn.clone())
+            .map(|x| Edn::List(vec![Edn::Symbol(Symbol::new("syntax-quote")), x]));
 
         let unquote_splice = just("~@")
-            .ignore_then(sexp.clone())
-            .map(|x| Sexp::List(vec![Sexp::String("sym:unquote-splicing".to_string()), x]));
+            .ignore_then(edn.clone())
+            .map(|x| Edn::List(vec![Edn::Symbol(Symbol::new("unquote-splicing")), x]));
+
+        let unquote = just('~')
+            .ignore_then(edn.clone())
+            .map(|x| Edn::List(vec![Edn::Symbol(Symbol::new("unquote")), x]));
 
         let deref = just('@')
-            .ignore_then(sexp.clone())
-            .map(|x| Sexp::List(vec![Sexp::String("sym:deref".to_string()), x]));
+            .ignore_then(edn.clone())
+            .map(|x| Edn::List(vec![Edn::Symbol(Symbol::new("deref")), x]));
 
         // All atoms and compounds
         choice((
@@ -356,14 +347,14 @@ mod tests {
     fn test_parse_nil() {
         let mut state = ParserState::new("suss");
         let result = parse("nil", &mut state).unwrap();
-        assert_eq!(result, Sexp::Nil);
+        assert_eq!(result, Edn::Nil);
     }
 
     #[test]
     fn test_parse_bool() {
         let mut state = ParserState::new("suss");
-        assert_eq!(parse("true", &mut state).unwrap(), Sexp::Bool(true));
-        assert_eq!(parse("false", &mut state).unwrap(), Sexp::Bool(false));
+        assert_eq!(parse("true", &mut state).unwrap(), Edn::Bool(true));
+        assert_eq!(parse("false", &mut state).unwrap(), Edn::Bool(false));
     }
 
     #[test]
@@ -371,14 +362,14 @@ mod tests {
         let mut state = ParserState::new("suss");
         assert_eq!(
             parse("\"hello\"", &mut state).unwrap(),
-            Sexp::String("hello".to_string())
+            Edn::String("hello".to_string())
         );
     }
 
     #[test]
     fn test_parse_number() {
         let mut state = ParserState::new("suss");
-        if let Sexp::Number(Number::Integer(n)) = parse("42", &mut state).unwrap() {
+        if let Edn::Number(Number::Integer(n)) = parse("42", &mut state).unwrap() {
             assert_eq!(n.to_string(), "42");
         } else {
             panic!("Expected integer");
@@ -386,10 +377,38 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_symbol() {
+        let mut state = ParserState::new("suss");
+        let result = parse("foo", &mut state).unwrap();
+        assert_eq!(result, Edn::Symbol(Symbol::new("foo")));
+    }
+
+    #[test]
+    fn test_parse_namespaced_symbol() {
+        let mut state = ParserState::new("suss");
+        let result = parse("bar/baz", &mut state).unwrap();
+        assert_eq!(result, Edn::Symbol(Symbol::namespaced("bar", "baz")));
+    }
+
+    #[test]
+    fn test_parse_keyword() {
+        let mut state = ParserState::new("suss");
+        let result = parse(":foo", &mut state).unwrap();
+        assert_eq!(result, Edn::Keyword(Keyword::new("foo")));
+    }
+
+    #[test]
+    fn test_parse_namespaced_keyword() {
+        let mut state = ParserState::new("suss");
+        let result = parse(":bar/baz", &mut state).unwrap();
+        assert_eq!(result, Edn::Keyword(Keyword::namespaced("bar", "baz")));
+    }
+
+    #[test]
     fn test_parse_list() {
         let mut state = ParserState::new("suss");
         let result = parse("(1 2 3)", &mut state).unwrap();
-        if let Sexp::List(items) = result {
+        if let Edn::List(items) = result {
             assert_eq!(items.len(), 3);
         } else {
             panic!("Expected list");
@@ -400,7 +419,7 @@ mod tests {
     fn test_parse_vector() {
         let mut state = ParserState::new("suss");
         let result = parse("[1 2 3]", &mut state).unwrap();
-        if let Sexp::Vector(items) = result {
+        if let Edn::Vector(items) = result {
             assert_eq!(items.len(), 3);
         } else {
             panic!("Expected vector");
@@ -411,8 +430,10 @@ mod tests {
     fn test_parse_nested() {
         let mut state = ParserState::new("suss");
         let result = parse("(+ 1 (* 2 3))", &mut state).unwrap();
-        if let Sexp::List(items) = result {
+        if let Edn::List(items) = result {
             assert_eq!(items.len(), 3);
+            // First item should be symbol +
+            assert_eq!(items[0], Edn::Symbol(Symbol::new("+")));
         } else {
             panic!("Expected list");
         }
@@ -423,16 +444,47 @@ mod tests {
         let mut state = ParserState::new("suss");
         // ^:export should be parsed as a symbol
         let result = parse("(defn ^:export greet [name] name)", &mut state).unwrap();
-        if let Sexp::List(items) = result {
+        if let Edn::List(items) = result {
             assert_eq!(items.len(), 5); // defn, ^:export, greet, [name], name
             // Check that ^:export is parsed as a symbol
-            if let Sexp::String(s) = &items[1] {
-                assert!(s.starts_with("sym:^:"));
-            } else {
-                panic!("Expected ^:export to be a symbol");
-            }
+            assert_eq!(items[1], Edn::Symbol(Symbol::new("^:export")));
         } else {
             panic!("Expected list");
+        }
+    }
+
+    #[test]
+    fn test_parse_quote() {
+        let mut state = ParserState::new("suss");
+        let result = parse("'foo", &mut state).unwrap();
+        if let Edn::List(items) = result {
+            assert_eq!(items.len(), 2);
+            assert_eq!(items[0], Edn::Symbol(Symbol::new("quote")));
+            assert_eq!(items[1], Edn::Symbol(Symbol::new("foo")));
+        } else {
+            panic!("Expected list");
+        }
+    }
+
+    #[test]
+    fn test_parse_map() {
+        let mut state = ParserState::new("suss");
+        let result = parse("{:a 1 :b 2}", &mut state).unwrap();
+        if let Edn::Map(pairs) = result {
+            assert_eq!(pairs.len(), 2);
+        } else {
+            panic!("Expected map");
+        }
+    }
+
+    #[test]
+    fn test_parse_set() {
+        let mut state = ParserState::new("suss");
+        let result = parse("#{1 2 3}", &mut state).unwrap();
+        if let Edn::Set(items) = result {
+            assert_eq!(items.len(), 3);
+        } else {
+            panic!("Expected set");
         }
     }
 }

@@ -14,11 +14,18 @@ pub enum Command {
     Eval { expr: String },
     /// Run a file
     RunFile { path: String },
-    /// Compile a source file to a WASM component
-    Compile {
+    /// Compile a source file to a WASM component (file mode)
+    CompileFile {
         source: String,
         world_wit: String,
         output: String,
+    },
+    /// Compile a project from deps.suss
+    CompileProject {
+        /// Optional specific world to compile (if None, compile all)
+        world: Option<String>,
+        /// Optional config file path (defaults to deps.suss)
+        config_path: Option<String>,
     },
     /// Print help message
     Help,
@@ -59,18 +66,32 @@ pub fn parse_args() -> Result<Command, lexopt::Error> {
 }
 
 /// Parse the compile subcommand arguments
+///
+/// Supports two modes:
+/// 1. File mode: `suss compile src.suss -w world.wit -o out.wasm`
+/// 2. Project mode: `suss compile` or `suss compile --world :app/v1`
 fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
     let mut source: Option<String> = None;
     let mut world_wit: Option<String> = None;
     let mut output: Option<String> = None;
+    let mut world_target: Option<String> = None;
+    let mut config_path: Option<String> = None;
 
     while let Some(arg) = parser.next()? {
         match arg {
-            Short('w') | Long("world") => {
+            Short('w') | Long("wit") => {
+                // -w/--wit for WIT file in file mode
                 world_wit = Some(parser.value()?.string()?);
+            }
+            Long("world") => {
+                // --world for world name in project mode
+                world_target = Some(parser.value()?.string()?);
             }
             Short('o') | Long("output") => {
                 output = Some(parser.value()?.string()?);
+            }
+            Short('c') | Long("config") => {
+                config_path = Some(parser.value()?.string()?);
             }
             Value(path) if source.is_none() => {
                 source = Some(path.string()?);
@@ -79,21 +100,30 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
         }
     }
 
-    let source = source.ok_or_else(|| lexopt::Error::MissingValue {
-        option: Some("source file".to_string()),
-    })?;
-    let world_wit = world_wit.ok_or_else(|| lexopt::Error::MissingValue {
-        option: Some("-w/--world".to_string()),
-    })?;
-    let output = output.ok_or_else(|| lexopt::Error::MissingValue {
-        option: Some("-o/--output".to_string()),
-    })?;
-
-    Ok(Command::Compile {
-        source,
-        world_wit,
-        output,
-    })
+    // Determine mode based on arguments
+    if source.is_some() && world_wit.is_some() && output.is_some() {
+        // File mode: explicit source, WIT, and output
+        Ok(Command::CompileFile {
+            source: source.unwrap(),
+            world_wit: world_wit.unwrap(),
+            output: output.unwrap(),
+        })
+    } else if source.is_none() || (source.is_some() && world_wit.is_none()) {
+        // Project mode: no source file, or source without -w (treat as config path)
+        if source.is_some() && config_path.is_none() {
+            // Treat the positional arg as config path if no -c specified
+            config_path = source;
+        }
+        Ok(Command::CompileProject {
+            world: world_target,
+            config_path,
+        })
+    } else {
+        // Invalid combination
+        Err(lexopt::Error::MissingValue {
+            option: Some("-o/--output (required for file mode)".to_string()),
+        })
+    }
 }
 
 /// Print help message
@@ -104,7 +134,8 @@ Suss - A Clojure dialect for WASM
 
 USAGE:
     suss [OPTIONS] [FILE]
-    suss compile <FILE> -w <WORLD.wit> -o <OUTPUT.wasm>
+    suss compile [OPTIONS]                              (project mode)
+    suss compile <FILE> -w <WORLD.wit> -o <OUTPUT.wasm> (file mode)
 
 OPTIONS:
     -r              Start the REPL (default if no arguments)
@@ -113,15 +144,23 @@ OPTIONS:
     -V, --version   Print version information
 
 COMMANDS:
-    compile         Compile Suss source to a WASM component
-        -w, --world <FILE>   WIT world definition file
+    compile         Compile Suss source to WASM components
+
+    Project mode (reads deps.suss):
+        --world <NAME>       Compile specific world (e.g., :my-app/v1)
+        -c, --config <FILE>  Config file path (default: deps.suss)
+
+    File mode (single file compilation):
+        -w, --wit <FILE>     WIT world definition file
         -o, --output <FILE>  Output WASM file path
 
 EXAMPLES:
     suss                           Start the REPL
     suss -e '(+ 1 2)'              Evaluate an expression
     suss script.suss               Run a file
-    suss compile main.suss -w world.wit -o out.wasm
+    suss compile                   Compile all worlds from deps.suss
+    suss compile --world :app/v1   Compile specific world from deps.suss
+    suss compile src.suss -w world.wit -o out.wasm  (file mode)
 "
     );
 }

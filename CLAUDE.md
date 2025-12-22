@@ -13,9 +13,15 @@ cargo run -p suss-cli -- -e "(+ 1 2)"  # Evaluate expression
 cargo run -p suss-cli -- script.suss   # Run file
 ```
 
-### Static Compilation (Suss → WASM)
+### Static Compilation (Suss → WASM Components)
 
 ```bash
+# Project-based compilation (reads deps.suss)
+cargo run -p suss-cli -- compile                    # Compile all worlds
+cargo run -p suss-cli -- compile --world :app/v1    # Compile specific world
+cargo run -p suss-cli -- compile -c path/deps.suss  # Custom config
+
+# Single-file compilation
 cargo run -p suss-cli -- compile src.suss -w world.wit -o out.wasm
 wasmtime run --invoke func_name out.wasm
 ```
@@ -42,35 +48,24 @@ wasmtime run target/wasm32-wasip2/release/suss_composed.wasm
 
 ## Architecture
 
-Suss is a Clojure dialect targeting WASM/WASI with two execution paths:
+Suss is a Clojure dialect targeting WASM/WASI. All execution goes through WASM compilation:
 
-### Interpreter Path (REPL/scripting)
 ```
-suss-core (Sexp, Number, Interner, Env)
+suss-core (Edn, Number, Symbol, Keyword)
     ↓
-suss-reader (chumsky parser → AST)
+suss-reader (chumsky parser → EDN AST)
     ↓
-suss-eval (tree-walking interpreter)
+suss-compile (analyze → IR → wasm-encoder → WASM Component)
     ↓
-suss-cli (REPL, file execution)
-```
-
-### Compiler Path (static WASM generation)
-```
-suss-core + suss-reader
-    ↓
-suss-compile (analyze → IR → wasm-encoder → .wasm)
-    ↓
-suss-cli (compile command)
+suss-cli (compile command, REPL via wasmtime)
 ```
 
 ### Crate Responsibilities
 
-- **suss-core**: `Sexp` enum, `Number` (BigInt/Ratio/Float), `Interner` for symbols/keywords, `Env` for scopes
+- **suss-core**: `Edn` enum, `Number` (BigInt/Ratio/Float), `Symbol`, `Keyword`
 - **suss-reader**: Chumsky-based parser with EDN + reader conditionals (`#?(:suss ... :default ...)`)
-- **suss-eval**: Tree-walking interpreter, special forms (quote, if, do, def, let, fn), primitives
-- **suss-compile**: Static compiler with IR, semantic analysis, WASM codegen via wasm-encoder
-- **suss-cli**: CLI parsing (lexopt), REPL (rustyline), command dispatch
+- **suss-compile**: Static compiler with IR, semantic analysis, WASM Component output via wit-component
+- **suss-cli**: CLI parsing (lexopt), REPL (rustyline + wasmtime), compile command
 
 ### WIT Component Model
 
@@ -109,3 +104,32 @@ Use `require` with `:as` alias or `:refer`:
 
 ### Bundled WASI
 WASI 0.2.4 WIT files are bundled. When world.wit imports `wasi:*`, they're auto-loaded. No deps/ folder needed for WASI packages.
+
+### Project Configuration (deps.suss)
+
+Multi-world projects use `deps.suss` (EDN format like Clojure's deps.edn):
+
+```clojure
+{:worlds
+ {:my-app/v1 {:wit "wit/v1.wit"
+              :output "target/v1.wasm"}
+  :my-app/v2 {:wit "wit/v2.wit"
+              :output "target/v2.wasm"}}
+ :src-paths ["src"]}
+```
+
+Source files declare their target world with `gen-world` in the namespace:
+
+```clojure
+(ns my-app.core
+  (gen-world :my-app/v1))
+
+(defn ^:export add [a b] (+ a b))
+(defn helper [x] (* x 2))  ; Internal, not exported
+```
+
+### Key Types
+
+- `SussConfig` - Loaded from deps.suss, contains worlds and src-paths
+- `WorldConfig` - WIT path and output path for a world
+- `AnalyzedModule` - Parsed source with namespace, world_target, functions

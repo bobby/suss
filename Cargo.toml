@@ -3,7 +3,6 @@ resolver = "2"
 members = [
     "crates/suss-core",
     "crates/suss-reader",
-    "crates/suss-eval",
     "crates/suss-cli",
     "crates/suss-compile",
 ]
@@ -33,6 +32,7 @@ wit-bindgen = "0.36"
 # Compiler
 wasm-encoder = "0.221"
 wit-parser = "0.221"
+wit-component = "0.221"
 thiserror = "2"
 
 # CLI (native only)
@@ -40,4 +40,6 @@ rustyline = "14"
 
 # Testing
 pretty_assertions = "1.4"
-wasmtime = "28"
+wasmtime = "39"
+wasmtime-wasi = "39"
+tempfile = "3"

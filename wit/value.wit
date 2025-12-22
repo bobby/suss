@@ -1,0 +1,90 @@
+package suss:lang;
+
+/// EDN/Clojure value types - self-describing, printable, readable
+///
+/// NOTE: WIT does NOT support recursive types (even through list<T>).
+/// See: https://github.com/WebAssembly/component-model/issues/56
+///      https://github.com/WebAssembly/component-model/issues/430
+///
+/// This interface defines the IDEAL structure but CANNOT be used directly
+/// with wit-bindgen until the Component Model adds recursive type support.
+///
+/// Current workarounds:
+/// 1. Use `resource` (opaque handle) - see types.wit for this approach
+/// 2. Serialize EDN to string and parse on each side
+/// 3. Manual node/index flattening (poor ergonomics)
+///
+/// The Rust `Edn` type in suss-core works fine internally - this limitation
+/// only affects crossing component boundaries via WIT.
+interface value {
+    /// Symbol with optional namespace (e.g., foo, bar/baz)
+    record symbol {
+        namespace: option<string>,
+        name: string,
+    }
+
+    /// Keyword with optional namespace (e.g., :foo, :bar/baz)
+    record keyword {
+        namespace: option<string>,
+        name: string,
+    }
+
+    /// Arbitrary precision integer (two's complement, little-endian bytes)
+    record bigint {
+        bytes: list<u8>,
+        negative: bool,
+    }
+
+    /// Exact ratio of two bigints
+    record ratio {
+        numer: bigint,
+        denom: bigint,
+    }
+
+    /// EDN value - the core data type for Suss/Clojure
+    /// Supports read-print isomorphism: any printed value can be read back
+    ///
+    /// Recursion is achieved through list<edn> which WIT supports.
+    /// Maps use alternating key/value pairs in a flat list.
+    /// Tagged values use a 2-element list [tag-symbol, value].
+    ///
+    /// Note: Variant names avoid WIT keywords (bool, char, string, list, etc.)
+    variant edn {
+        /// nil - the empty/null value
+        edn-nil,
+        /// Boolean true or false
+        edn-bool(bool),
+        /// Arbitrary precision integer
+        edn-integer(bigint),
+        /// Exact ratio (e.g., 1/3)
+        edn-ratio(ratio),
+        /// IEEE 754 float
+        edn-float(f64),
+        /// Unicode character (e.g., \a, \newline)
+        edn-char(char),
+        /// String literal
+        edn-string(string),
+        /// Symbol (e.g., foo, bar/baz)
+        edn-symbol(symbol),
+        /// Keyword (e.g., :foo, :bar/baz)
+        edn-keyword(keyword),
+        /// List - linked list semantics (...)
+        edn-list(list<edn>),
+        /// Vector - indexed access [...]
+        edn-vector(list<edn>),
+        /// Set - unique elements #{...}
+        edn-set(list<edn>),
+        /// Map - alternating [k1, v1, k2, v2, ...] pairs
+        edn-map(list<edn>),
+        /// Tagged literal - [tag-symbol, value] pair
+        edn-tagged(list<edn>),
+    }
+
+    /// Print EDN value to string with read-print isomorphism (pr-str semantics)
+    /// The output can be read back by a Clojure/EDN reader
+    pr-str: func(val: edn) -> string;
+
+    /// Print EDN value for human display (print-str semantics)
+    /// May not be readable (e.g., functions print as #<function>)
+    print-str: func(val: edn) -> string;
+}

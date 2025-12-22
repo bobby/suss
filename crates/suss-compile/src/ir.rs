@@ -3,8 +3,6 @@
 //! The IR is a simplified, typed representation of Suss code that maps
 //! closely to WASM instructions.
 
-use suss_core::SymbolId;
-
 /// A compiled module containing all definitions
 #[derive(Debug)]
 pub struct Module {
@@ -63,14 +61,14 @@ impl Default for Module {
 /// A function definition
 #[derive(Debug)]
 pub struct Function {
-    /// Function name (symbol)
-    pub name: SymbolId,
+    /// Function name
+    pub name: String,
     /// Whether this function is exported via WIT
     pub exported: bool,
     /// Export name (may differ from internal name)
     pub export_name: Option<String>,
-    /// Parameter types
-    pub params: Vec<(SymbolId, Type)>,
+    /// Parameter types (name, type)
+    pub params: Vec<(String, Type)>,
     /// Return type
     pub return_type: Type,
     /// Local variable types (including parameters)
@@ -83,7 +81,7 @@ pub struct Function {
 #[derive(Debug)]
 pub struct Global {
     /// Name
-    pub name: SymbolId,
+    pub name: String,
     /// Type
     pub ty: Type,
     /// Initializer (must be constant)

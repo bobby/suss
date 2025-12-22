@@ -1,16 +1,16 @@
 //! Environment for variable bindings
 
-use crate::{Sexp, SymbolId};
+use crate::Edn;
 use std::collections::HashMap;
 
 /// A scope in the environment chain
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 struct Scope {
-    bindings: HashMap<SymbolId, Sexp>,
+    bindings: HashMap<String, Edn>,
 }
 
 /// The evaluation environment
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Env {
     scopes: Vec<Scope>,
 }
@@ -40,23 +40,23 @@ impl Env {
     }
 
     /// Define a binding in the current scope
-    pub fn define(&mut self, name: SymbolId, value: Sexp) {
+    pub fn define(&mut self, name: impl Into<String>, value: Edn) {
         if let Some(scope) = self.scopes.last_mut() {
-            scope.bindings.insert(name, value);
+            scope.bindings.insert(name.into(), value);
         }
     }
 
     /// Define a binding in the global (root) scope
-    pub fn define_global(&mut self, name: SymbolId, value: Sexp) {
+    pub fn define_global(&mut self, name: impl Into<String>, value: Edn) {
         if let Some(scope) = self.scopes.first_mut() {
-            scope.bindings.insert(name, value);
+            scope.bindings.insert(name.into(), value);
         }
     }
 
     /// Look up a binding by name, searching from innermost to outermost scope
-    pub fn lookup(&self, name: SymbolId) -> Option<&Sexp> {
+    pub fn lookup(&self, name: &str) -> Option<&Edn> {
         for scope in self.scopes.iter().rev() {
-            if let Some(value) = scope.bindings.get(&name) {
+            if let Some(value) = scope.bindings.get(name) {
                 return Some(value);
             }
         }
@@ -64,10 +64,10 @@ impl Env {
     }
 
     /// Set a binding (must already exist)
-    pub fn set(&mut self, name: SymbolId, value: Sexp) -> bool {
+    pub fn set(&mut self, name: &str, value: Edn) -> bool {
         for scope in self.scopes.iter_mut().rev() {
-            if scope.bindings.contains_key(&name) {
-                scope.bindings.insert(name, value);
+            if scope.bindings.contains_key(name) {
+                scope.bindings.insert(name.to_string(), value);
                 return true;
             }
         }

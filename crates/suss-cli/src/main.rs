@@ -1,18 +1,12 @@
 //! Suss CLI - Command-line interface for the Suss language
 //!
-//! The main entry point for the Suss language.
+//! Uses WASM compilation + wasmtime for all expression evaluation.
 
 mod args;
 
 #[cfg(all(feature = "component", target_family = "wasm"))]
 mod component;
 
-#[cfg(not(all(feature = "component", target_family = "wasm")))]
-use suss_eval::Runtime;
-#[cfg(not(all(feature = "component", target_family = "wasm")))]
-use suss_reader::print_sexp;
-
-#[cfg(not(target_family = "wasm"))]
 use rustyline::{error::ReadlineError, DefaultEditor};
 
 fn main() {
@@ -45,22 +39,22 @@ fn run_command(cmd: args::Command) {
             #[cfg(not(all(feature = "component", target_family = "wasm")))]
             run_file(&path);
         }
-        args::Command::Compile { source, world_wit, output } => {
-            compile(&source, &world_wit, &output);
+        args::Command::CompileFile { source, world_wit, output } => {
+            compile_file(&source, &world_wit, &output);
+        }
+        args::Command::CompileProject { world, config_path } => {
+            compile_project(world.as_deref(), config_path.as_deref());
         }
         args::Command::Help => args::print_help(),
         args::Command::Version => println!("suss {}", env!("CARGO_PKG_VERSION")),
     }
 }
 
-/// Evaluate a single expression and print the result
+/// Evaluate a single expression using WASM compilation and wasmtime
 #[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn run_eval(expr: &str) {
-    let mut runtime = Runtime::new();
-    match runtime.eval_string(expr) {
-        Ok(result) => {
-            println!("{}", print_sexp(&result, &runtime.interner));
-        }
+    match run_eval_wasm(expr) {
+        Ok(()) => {}
         Err(e) => {
             eprintln!("Error: {}", e);
             std::process::exit(1);
@@ -68,7 +62,80 @@ fn run_eval(expr: &str) {
     }
 }
 
-/// Run a Suss file
+/// Run expression via WASM compilation + wasmtime
+///
+/// Note: Currently generates core WASM modules without WASI imports.
+/// Future work: generate WASM components for WASI 0.2 support.
+fn run_eval_wasm(expr: &str) -> Result<(), String> {
+    use wasmtime::{Engine, Linker, Module, Store, Val};
+
+    // Compile expression to WASM
+    let mut compiler = suss_compile::Compiler::new();
+    let wasm_bytes = compiler.compile_expr(expr)
+        .map_err(|e| format!("{}", e))?;
+
+    // Create wasmtime engine and module
+    let engine = Engine::default();
+    let module = Module::new(&engine, &wasm_bytes)
+        .map_err(|e| format!("WASM module error: {}", e))?;
+
+    // Create store (no WASI context needed for pure expressions)
+    let mut store = Store::new(&engine, ());
+
+    // Create linker for future WASI support
+    let linker: Linker<()> = Linker::new(&engine);
+
+    // Instantiate via linker
+    let instance = linker.instantiate(&mut store, &module)
+        .map_err(|e| format!("Instantiation error: {}", e))?;
+
+    // Get the eval function
+    let eval_fn = instance.get_func(&mut store, "eval")
+        .ok_or_else(|| "eval function not found".to_string())?;
+
+    // Call the function and get result
+    let func_ty = eval_fn.ty(&store);
+    let results_len = func_ty.results().len();
+
+    let mut results = vec![Val::I32(0); results_len];
+    eval_fn.call(&mut store, &[], &mut results)
+        .map_err(|e| format!("Call error: {}", e))?;
+
+    // Print result based on type
+    if results.is_empty() {
+        println!("nil");
+    } else if results.len() == 1 {
+        match &results[0] {
+            Val::I32(v) => println!("{}", v),
+            Val::I64(v) => println!("{}", v),
+            Val::F32(v) => println!("{}", f32::from_bits(*v)),
+            Val::F64(v) => println!("{}", f64::from_bits(*v)),
+            _ => println!("{:?}", results[0]),
+        }
+    } else if results.len() == 2 {
+        // String result: (ptr, len) pair
+        if let (Val::I32(ptr), Val::I32(len)) = (&results[0], &results[1]) {
+            let memory = instance.get_memory(&mut store, "memory")
+                .ok_or_else(|| "memory not found".to_string())?;
+
+            let mut buf = vec![0u8; *len as usize];
+            memory.read(&store, *ptr as usize, &mut buf)
+                .map_err(|e| format!("Memory read error: {}", e))?;
+
+            let s = String::from_utf8(buf)
+                .map_err(|e| format!("UTF-8 error: {}", e))?;
+            println!("\"{}\"", s);
+        } else {
+            println!("{:?}", results);
+        }
+    } else {
+        println!("{:?}", results);
+    }
+
+    Ok(())
+}
+
+/// Run a Suss file using WASM compilation
 #[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn run_file(path: &str) {
     let contents = match std::fs::read_to_string(path) {
@@ -79,13 +146,11 @@ fn run_file(path: &str) {
         }
     };
 
-    let mut runtime = Runtime::new();
-
-    // Parse all expressions in the file
+    // For now, evaluate each expression independently via WASM
+    // TODO: Compile entire file as a module with shared state
     let mut state = suss_reader::ParserState::new("suss");
-    state.interner = std::mem::take(&mut runtime.interner);
 
-    let exprs = match suss_reader::parse_all_and_intern(&contents, &mut state) {
+    let exprs = match suss_reader::parse_all(&contents, &mut state) {
         Ok(exprs) => exprs,
         Err(e) => {
             eprintln!("Parse error in '{}': {}", path, e);
@@ -93,28 +158,18 @@ fn run_file(path: &str) {
         }
     };
 
-    runtime.interner = state.interner;
-
-    // Evaluate each expression
-    let mut last_result = None;
+    // Evaluate each expression via WASM
     for expr in exprs {
-        match runtime.eval(&expr) {
-            Ok(result) => last_result = Some(result),
-            Err(e) => {
-                eprintln!("Error: {}", e);
-                std::process::exit(1);
-            }
+        let expr_str = format!("{}", expr);
+        if let Err(e) = run_eval_wasm(&expr_str) {
+            eprintln!("Error: {}", e);
+            std::process::exit(1);
         }
-    }
-
-    // Print the last result (if any)
-    if let Some(result) = last_result {
-        println!("{}", print_sexp(&result, &runtime.interner));
     }
 }
 
-/// Compile a Suss file to a WASM component
-fn compile(source_path: &str, wit_path: &str, output_path: &str) {
+/// Compile a Suss file to a WASM component (file mode)
+fn compile_file(source_path: &str, wit_path: &str, output_path: &str) {
     let mut compiler = suss_compile::Compiler::new();
 
     match compiler.compile_files(source_path, wit_path) {
@@ -132,6 +187,67 @@ fn compile(source_path: &str, wit_path: &str, output_path: &str) {
     }
 }
 
+/// Compile a project from deps.suss configuration
+fn compile_project(world: Option<&str>, config_path: Option<&str>) {
+    use std::path::Path;
+
+    let config_path = config_path.unwrap_or("deps.suss");
+
+    // Load configuration
+    let config = match suss_compile::SussConfig::load(Path::new(config_path)) {
+        Ok(cfg) => cfg,
+        Err(e) => {
+            eprintln!("Error loading config '{}': {}", config_path, e);
+            std::process::exit(1);
+        }
+    };
+
+    let mut compiler = suss_compile::Compiler::new();
+
+    // Compile project
+    match compiler.compile_project(&config, world) {
+        Ok(results) => {
+            for (world_name, wasm) in &results {
+                // Get the output path from config
+                match config.output_path(world_name) {
+                    Ok(output_path) => {
+                        // Create parent directories if needed
+                        if let Some(parent) = output_path.parent() {
+                            if !parent.exists() {
+                                if let Err(e) = std::fs::create_dir_all(parent) {
+                                    eprintln!("Error creating directory '{}': {}", parent.display(), e);
+                                    std::process::exit(1);
+                                }
+                            }
+                        }
+
+                        if let Err(e) = std::fs::write(&output_path, wasm) {
+                            eprintln!("Error writing '{}': {}", output_path.display(), e);
+                            std::process::exit(1);
+                        }
+                        println!("Compiled {} -> {} ({} bytes)",
+                                 world_name, output_path.display(), wasm.len());
+                    }
+                    Err(e) => {
+                        eprintln!("Error: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+
+            if results.is_empty() {
+                println!("No worlds to compile");
+            } else {
+                println!("\nSuccessfully compiled {} world(s)", results.len());
+            }
+        }
+        Err(e) => {
+            eprintln!("Compilation error: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
+
 /// Start the REPL
 #[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn run_repl() {
@@ -139,16 +255,6 @@ fn run_repl() {
     println!("Type (help) for help, Ctrl-C to exit");
     println!();
 
-    #[cfg(not(target_family = "wasm"))]
-    run_repl_native();
-
-    #[cfg(all(target_family = "wasm", not(feature = "component")))]
-    run_repl_wasm();
-}
-
-#[cfg(not(target_family = "wasm"))]
-fn run_repl_native() {
-    let mut runtime = Runtime::new();
     let mut rl = match DefaultEditor::new() {
         Ok(editor) => editor,
         Err(e) => {
@@ -166,10 +272,9 @@ fn run_repl_native() {
 
                 let _ = rl.add_history_entry(&line);
 
-                match runtime.eval_string(&line) {
-                    Ok(result) => {
-                        println!("{}", print_sexp(&result, &runtime.interner));
-                    }
+                // Compile and run via WASM
+                match run_eval_wasm(&line) {
+                    Ok(()) => {}
                     Err(e) => {
                         eprintln!("Error: {}", e);
                     }
@@ -185,49 +290,6 @@ fn run_repl_native() {
             }
             Err(e) => {
                 eprintln!("Error: {}", e);
-                break;
-            }
-        }
-    }
-}
-
-#[cfg(all(target_family = "wasm", not(feature = "component")))]
-fn run_repl_wasm() {
-    // Simplified REPL for WASM environment
-    // Uses stdin/stdout directly
-    use std::io::{self, BufRead, Write};
-
-    let mut runtime = Runtime::new();
-    let stdin = io::stdin();
-    let mut stdout = io::stdout();
-
-    loop {
-        print!("suss> ");
-        let _ = stdout.flush();
-
-        let mut line = String::new();
-        match stdin.lock().read_line(&mut line) {
-            Ok(0) => {
-                println!("Goodbye!");
-                break;
-            }
-            Ok(_) => {
-                let line = line.trim();
-                if line.is_empty() {
-                    continue;
-                }
-
-                match runtime.eval_string(line) {
-                    Ok(result) => {
-                        println!("{}", print_sexp(&result, &runtime.interner));
-                    }
-                    Err(e) => {
-                        eprintln!("Error: {}", e);
-                    }
-                }
-            }
-            Err(e) => {
-                eprintln!("Error reading input: {}", e);
                 break;
             }
         }

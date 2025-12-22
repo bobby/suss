@@ -6,7 +6,8 @@
 //! - Export detection (^:export metadata)
 //! - Validation against WIT world
 
-use suss_core::{Sexp, Interner, SymbolId};
+use num_traits::ToPrimitive;
+use suss_core::Edn;
 use wit_parser::{Resolve, WorldId, WorldItem, TypeDefKind, WorldKey};
 
 use crate::error::{CompileError, CompileResult};
@@ -15,6 +16,10 @@ use crate::ir::Type;
 /// Analyzed module ready for lowering
 #[derive(Debug)]
 pub struct AnalyzedModule {
+    /// Namespace name (from ns declaration)
+    pub namespace: Option<String>,
+    /// Target world (from gen-world in ns declaration)
+    pub world_target: Option<String>,
     pub imports: Vec<AnalyzedImport>,
     pub functions: Vec<AnalyzedFunction>,
     pub globals: Vec<AnalyzedGlobal>,
@@ -37,54 +42,163 @@ pub struct AnalyzedImport {
 
 #[derive(Debug)]
 pub struct AnalyzedFunction {
-    pub name: SymbolId,
+    pub name: String,
     pub exported: bool,
     pub export_name: Option<String>,
-    pub params: Vec<(SymbolId, Type)>,
+    pub params: Vec<(String, Type)>,
     pub return_type: Type,
-    pub body: Sexp,
+    pub body: Edn,
 }
 
 #[derive(Debug)]
 pub struct AnalyzedGlobal {
-    pub name: SymbolId,
+    pub name: String,
     pub ty: Type,
-    pub init: Sexp,
+    pub init: Edn,
 }
 
 /// Analyze Suss expressions and validate against WIT world
 pub fn analyze(
-    exprs: &[Sexp],
-    interner: &Interner,
+    exprs: &[Edn],
     resolve: &Resolve,
     world_id: WorldId,
 ) -> CompileResult<AnalyzedModule> {
-    let mut analyzer = Analyzer::new(interner, resolve, world_id);
+    let mut analyzer = Analyzer::new(resolve, world_id);
     analyzer.analyze_module(exprs)
 }
 
+/// Infer the type of a standalone expression (without WIT context)
+///
+/// This is used by `compile_expr()` to determine the return type of an expression
+/// when compiling without a WIT world definition.
+pub fn infer_expr_type(expr: &Edn) -> CompileResult<Type> {
+    infer_type_standalone(expr)
+}
+
+/// Standalone type inference without WIT context
+fn infer_type_standalone(expr: &Edn) -> CompileResult<Type> {
+    match expr {
+        Edn::Nil => Ok(Type::Unit),
+        Edn::Bool(_) => Ok(Type::Bool),
+        Edn::Number(n) => {
+            use suss_core::Number;
+            match n {
+                Number::Integer(i) => {
+                    // Check if it fits in i32
+                    if let Some(val) = i.to_i64() {
+                        if val >= i32::MIN as i64 && val <= i32::MAX as i64 {
+                            Ok(Type::I32)
+                        } else {
+                            Ok(Type::I64)
+                        }
+                    } else {
+                        // BigInt too large for i64
+                        Err(CompileError::Unsupported("Integer too large for WASM".into()))
+                    }
+                }
+                Number::Float(_) => Ok(Type::F64),
+                Number::Ratio(_) => {
+                    Err(CompileError::Unsupported("Ratios not supported in static compilation".into()))
+                }
+            }
+        }
+        Edn::String(_) => Ok(Type::String),
+        Edn::Char(_) => Ok(Type::I32),
+        Edn::Symbol(_) => Ok(Type::Unknown),
+        Edn::Keyword(_) => Ok(Type::Unknown),
+        Edn::Vector(_) => {
+            // Collections are serialized to EDN strings in lowering
+            Ok(Type::String)
+        }
+        Edn::Map(_) => {
+            // Maps are serialized to EDN strings in lowering
+            Ok(Type::String)
+        }
+        Edn::Set(_) => {
+            // Sets are serialized to EDN strings in lowering
+            Ok(Type::String)
+        }
+        Edn::List(items) if !items.is_empty() => {
+            if let Edn::Symbol(sym) = &items[0] {
+                match sym.name.as_str() {
+                    "if" => {
+                        if items.len() >= 3 {
+                            infer_type_standalone(&items[2])
+                        } else {
+                            Ok(Type::Unknown)
+                        }
+                    }
+                    "do" => {
+                        if items.len() > 1 {
+                            infer_type_standalone(items.last().unwrap())
+                        } else {
+                            Ok(Type::Unit)
+                        }
+                    }
+                    "let" => {
+                        if items.len() > 2 {
+                            infer_type_standalone(items.last().unwrap())
+                        } else {
+                            Ok(Type::Unit)
+                        }
+                    }
+                    "str" => Ok(Type::String),
+                    "+" | "-" | "*" | "/" | "rem" | "mod" => {
+                        // Numeric - infer from operands
+                        if items.len() > 1 {
+                            infer_type_standalone(&items[1])
+                        } else {
+                            Ok(Type::I32)
+                        }
+                    }
+                    "<" | ">" | "<=" | ">=" | "=" | "not=" => Ok(Type::Bool),
+                    "and" | "or" | "not" => Ok(Type::Bool),
+                    "loop" => {
+                        // Loop returns the type of its body (when it exits via recur target)
+                        // For now, return Unknown - will be refined in lowering
+                        Ok(Type::Unknown)
+                    }
+                    "fn" => {
+                        // Lambda - return function type
+                        Ok(Type::Func {
+                            params: Vec::new(),
+                            result: Box::new(Type::Unknown),
+                        })
+                    }
+                    _ => Ok(Type::Unknown),
+                }
+            } else {
+                Ok(Type::Unknown)
+            }
+        }
+        _ => Ok(Type::Unknown),
+    }
+}
+
 struct Analyzer<'a> {
-    interner: &'a Interner,
     resolve: &'a Resolve,
     world_id: WorldId,
+    namespace: Option<String>,
+    world_target: Option<String>,
     imports: Vec<AnalyzedImport>,
     functions: Vec<AnalyzedFunction>,
     globals: Vec<AnalyzedGlobal>,
 }
 
 impl<'a> Analyzer<'a> {
-    fn new(interner: &'a Interner, resolve: &'a Resolve, world_id: WorldId) -> Self {
+    fn new(resolve: &'a Resolve, world_id: WorldId) -> Self {
         Self {
-            interner,
             resolve,
             world_id,
+            namespace: None,
+            world_target: None,
             imports: Vec::new(),
             functions: Vec::new(),
             globals: Vec::new(),
         }
     }
 
-    fn analyze_module(&mut self, exprs: &[Sexp]) -> CompileResult<AnalyzedModule> {
+    fn analyze_module(&mut self, exprs: &[Edn]) -> CompileResult<AnalyzedModule> {
         // First pass: collect all definitions
         for expr in exprs {
             self.analyze_top_level(expr)?;
@@ -94,18 +208,20 @@ impl<'a> Analyzer<'a> {
         self.validate_exports()?;
 
         Ok(AnalyzedModule {
+            namespace: self.namespace.take(),
+            world_target: self.world_target.take(),
             imports: std::mem::take(&mut self.imports),
             functions: std::mem::take(&mut self.functions),
             globals: std::mem::take(&mut self.globals),
         })
     }
 
-    fn analyze_top_level(&mut self, expr: &Sexp) -> CompileResult<()> {
+    fn analyze_top_level(&mut self, expr: &Edn) -> CompileResult<()> {
         match expr {
-            Sexp::List(items) if !items.is_empty() => {
-                if let Sexp::Symbol(sym) = &items[0] {
-                    let name = self.interner.symbol_name(*sym);
-                    match name {
+            Edn::List(items) if !items.is_empty() => {
+                if let Edn::Symbol(sym) = &items[0] {
+                    match sym.name.as_str() {
+                        "ns" => self.analyze_ns(items)?,
                         "def" => self.analyze_def(items)?,
                         "defn" => self.analyze_defn(items)?,
                         "require" => self.analyze_require(items)?,
@@ -122,19 +238,86 @@ impl<'a> Analyzer<'a> {
         Ok(())
     }
 
-    fn analyze_def(&mut self, items: &[Sexp]) -> CompileResult<()> {
+    /// Analyze namespace declaration
+    /// (ns my-app.core (gen-world :my-app/v1))
+    fn analyze_ns(&mut self, items: &[Edn]) -> CompileResult<()> {
+        if items.len() < 2 {
+            return Err(CompileError::Parse("ns requires a namespace name".into()));
+        }
+
+        // Parse namespace name
+        match &items[1] {
+            Edn::Symbol(sym) => {
+                self.namespace = Some(sym.name.clone());
+            }
+            _ => return Err(CompileError::Parse("ns name must be a symbol".into())),
+        }
+
+        // Parse optional clauses: (gen-world :world-name), (require ...), etc.
+        for item in &items[2..] {
+            if let Edn::List(clause) = item {
+                if clause.is_empty() {
+                    continue;
+                }
+                if let Edn::Symbol(sym) = &clause[0] {
+                    match sym.name.as_str() {
+                        "gen-world" => {
+                            self.parse_gen_world(clause)?;
+                        }
+                        "require" => {
+                            // ns-style require: (require '[foo :as f])
+                            // For now, just delegate to the regular require handler
+                            // with the clause items minus "require"
+                            let require_items: Vec<Edn> = std::iter::once(Edn::Symbol(suss_core::Symbol::new("require")))
+                                .chain(clause[1..].iter().cloned())
+                                .collect();
+                            self.analyze_require(&require_items)?;
+                        }
+                        _ => {
+                            // Unknown clause - ignore for forward compatibility
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Parse (gen-world :world-name) clause
+    fn parse_gen_world(&mut self, clause: &[Edn]) -> CompileResult<()> {
+        if clause.len() < 2 {
+            return Err(CompileError::Parse("gen-world requires a world name".into()));
+        }
+
+        match &clause[1] {
+            Edn::Keyword(kw) => {
+                // Store the full keyword string including the colon
+                self.world_target = Some(kw.to_string());
+            }
+            _ => {
+                return Err(CompileError::Parse(
+                    "gen-world world name must be a keyword".into(),
+                ))
+            }
+        }
+
+        Ok(())
+    }
+
+    fn analyze_def(&mut self, items: &[Edn]) -> CompileResult<()> {
         // (def name value) or (def ^:export name value)
         if items.len() < 3 {
             return Err(CompileError::Parse("def requires name and value".into()));
         }
 
-        let (name_sym, _metadata, value_idx) = self.parse_name_with_metadata(&items[1..])?;
+        let (name, _metadata, value_idx) = self.parse_name_with_metadata(&items[1..])?;
         let value = &items[value_idx + 1];
 
         let ty = self.infer_type(value)?;
 
         self.globals.push(AnalyzedGlobal {
-            name: name_sym,
+            name,
             ty,
             init: value.clone(),
         });
@@ -142,17 +325,17 @@ impl<'a> Analyzer<'a> {
         Ok(())
     }
 
-    fn analyze_defn(&mut self, items: &[Sexp]) -> CompileResult<()> {
+    fn analyze_defn(&mut self, items: &[Edn]) -> CompileResult<()> {
         // (defn name [params] body) or (defn ^:export name [params] body)
         if items.len() < 4 {
             return Err(CompileError::Parse("defn requires name, params, and body".into()));
         }
 
-        let (name_sym, metadata, next_idx) = self.parse_name_with_metadata(&items[1..])?;
+        let (name, metadata, next_idx) = self.parse_name_with_metadata(&items[1..])?;
 
-        let exported = metadata.contains(&"export");
+        let exported = metadata.iter().any(|s| s == "export");
         let export_name = if exported {
-            Some(self.interner.symbol_name(name_sym).to_string())
+            Some(name.clone())
         } else {
             None
         };
@@ -167,17 +350,17 @@ impl<'a> Analyzer<'a> {
             items[params_idx + 1].clone()
         } else {
             // Wrap multiple body forms in (do ...)
-            let do_sym = Sexp::Symbol(self.get_or_intern_symbol("do"));
+            let do_sym = Edn::Symbol(suss_core::Symbol::new("do"));
             let mut body_items = vec![do_sym];
             body_items.extend(items[params_idx + 1..].iter().cloned());
-            Sexp::List(body_items)
+            Edn::List(body_items)
         };
 
         // Infer return type from body
         let return_type = self.infer_type(&body)?;
 
         self.functions.push(AnalyzedFunction {
-            name: name_sym,
+            name,
             exported,
             export_name,
             params,
@@ -188,7 +371,7 @@ impl<'a> Analyzer<'a> {
         Ok(())
     }
 
-    fn analyze_require(&mut self, items: &[Sexp]) -> CompileResult<()> {
+    fn analyze_require(&mut self, items: &[Edn]) -> CompileResult<()> {
         // (require '[wasi:random/random :as random])
         // (require '[wasi:cli/stdout :refer [print]])
         if items.len() < 2 {
@@ -197,12 +380,11 @@ impl<'a> Analyzer<'a> {
 
         // The spec should be a quoted vector: '[...]
         let spec = match &items[1] {
-            Sexp::List(quote_items) if quote_items.len() == 2 => {
+            Edn::List(quote_items) if quote_items.len() == 2 => {
                 // Check if first element is 'quote symbol
-                if let Sexp::Symbol(sym) = &quote_items[0] {
-                    let name = self.interner.symbol_name(*sym);
-                    if name == "quote" {
-                        if let Sexp::Vector(vec_items) = &quote_items[1] {
+                if let Edn::Symbol(sym) = &quote_items[0] {
+                    if sym.name == "quote" {
+                        if let Edn::Vector(vec_items) = &quote_items[1] {
                             vec_items
                         } else {
                             return Err(CompileError::Parse("require spec must be a vector".into()));
@@ -214,7 +396,7 @@ impl<'a> Analyzer<'a> {
                     return Err(CompileError::Parse("require spec must be quoted".into()));
                 }
             }
-            Sexp::Vector(vec_items) => vec_items, // Allow unquoted for simplicity
+            Edn::Vector(vec_items) => vec_items, // Allow unquoted for simplicity
             _ => return Err(CompileError::Parse("require spec must be a vector".into())),
         };
 
@@ -224,7 +406,7 @@ impl<'a> Analyzer<'a> {
 
         // First element is the interface name
         let interface_name = match &spec[0] {
-            Sexp::Symbol(sym) => self.interner.symbol_name(*sym).to_string(),
+            Edn::Symbol(sym) => sym.name.clone(),
             _ => return Err(CompileError::Parse("require spec first element must be interface name".into())),
         };
 
@@ -235,16 +417,15 @@ impl<'a> Analyzer<'a> {
 
         while i < spec.len() {
             match &spec[i] {
-                Sexp::Keyword(kw) => {
-                    let kw_name = self.interner.keyword_name(*kw);
-                    match kw_name {
+                Edn::Keyword(kw) => {
+                    match kw.name.as_str() {
                         "as" => {
                             i += 1;
                             if i >= spec.len() {
                                 return Err(CompileError::Parse(":as requires an alias".into()));
                             }
-                            if let Sexp::Symbol(sym) = &spec[i] {
-                                alias = Some(self.interner.symbol_name(*sym).to_string());
+                            if let Edn::Symbol(sym) = &spec[i] {
+                                alias = Some(sym.name.clone());
                             } else {
                                 return Err(CompileError::Parse(":as alias must be a symbol".into()));
                             }
@@ -254,10 +435,10 @@ impl<'a> Analyzer<'a> {
                             if i >= spec.len() {
                                 return Err(CompileError::Parse(":refer requires a vector of names".into()));
                             }
-                            if let Sexp::Vector(fns) = &spec[i] {
+                            if let Edn::Vector(fns) = &spec[i] {
                                 for f in fns {
-                                    if let Sexp::Symbol(sym) = f {
-                                        refer_fns.push(self.interner.symbol_name(*sym).to_string());
+                                    if let Edn::Symbol(sym) = f {
+                                        refer_fns.push(sym.name.clone());
                                     } else {
                                         return Err(CompileError::Parse(":refer elements must be symbols".into()));
                                     }
@@ -266,8 +447,8 @@ impl<'a> Analyzer<'a> {
                                 return Err(CompileError::Parse(":refer requires a vector".into()));
                             }
                         }
-                        _ => {
-                            return Err(CompileError::Parse(format!("Unknown require option :{}", kw_name)));
+                        other => {
+                            return Err(CompileError::Parse(format!("Unknown require option :{}", other)));
                         }
                     }
                 }
@@ -296,7 +477,7 @@ impl<'a> Analyzer<'a> {
                     wit_parser::Results::Named(results) => {
                         wit_type_to_ir(self.resolve, &results[0].1)
                     }
-                    wit_parser::Results::Anon(ty) => wit_type_to_ir(self.resolve, &ty),
+                    wit_parser::Results::Anon(ty) => wit_type_to_ir(self.resolve, ty),
                 };
 
                 self.imports.push(AnalyzedImport {
@@ -322,7 +503,7 @@ impl<'a> Analyzer<'a> {
                     wit_parser::Results::Named(results) => {
                         wit_type_to_ir(self.resolve, &results[0].1)
                     }
-                    wit_parser::Results::Anon(ty) => wit_type_to_ir(self.resolve, &ty),
+                    wit_parser::Results::Anon(ty) => wit_type_to_ir(self.resolve, ty),
                 };
 
                 self.imports.push(AnalyzedImport {
@@ -369,16 +550,15 @@ impl<'a> Analyzer<'a> {
         )))
     }
 
-    fn parse_name_with_metadata(&self, items: &[Sexp]) -> CompileResult<(SymbolId, Vec<&str>, usize)> {
+    fn parse_name_with_metadata(&self, items: &[Edn]) -> CompileResult<(String, Vec<String>, usize)> {
         let mut metadata = Vec::new();
         let mut idx = 0;
 
         // Check for metadata (^:keyword)
         while idx < items.len() {
-            if let Sexp::Symbol(sym) = &items[idx] {
-                let name = self.interner.symbol_name(*sym);
-                if name.starts_with("^:") {
-                    metadata.push(&name[2..]);
+            if let Edn::Symbol(sym) = &items[idx] {
+                if sym.name.starts_with("^:") {
+                    metadata.push(sym.name[2..].to_string());
                     idx += 1;
                 } else {
                     break;
@@ -393,21 +573,21 @@ impl<'a> Analyzer<'a> {
         }
 
         match &items[idx] {
-            Sexp::Symbol(sym) => Ok((*sym, metadata, idx)),
+            Edn::Symbol(sym) => Ok((sym.name.clone(), metadata, idx)),
             _ => Err(CompileError::Parse("Expected symbol for name".into())),
         }
     }
 
-    fn parse_params(&self, params: &Sexp) -> CompileResult<Vec<(SymbolId, Type)>> {
+    fn parse_params(&self, params: &Edn) -> CompileResult<Vec<(String, Type)>> {
         match params {
-            Sexp::Vector(items) => {
+            Edn::Vector(items) => {
                 items
                     .iter()
                     .map(|item| {
                         match item {
-                            Sexp::Symbol(sym) => {
+                            Edn::Symbol(sym) => {
                                 // Type will be inferred from WIT or usage
-                                Ok((*sym, Type::Unknown))
+                                Ok((sym.name.clone(), Type::Unknown))
                             }
                             _ => Err(CompileError::Parse("Expected symbol in parameter list".into())),
                         }
@@ -418,11 +598,11 @@ impl<'a> Analyzer<'a> {
         }
     }
 
-    fn infer_type(&self, expr: &Sexp) -> CompileResult<Type> {
+    fn infer_type(&self, expr: &Edn) -> CompileResult<Type> {
         match expr {
-            Sexp::Nil => Ok(Type::Unit),
-            Sexp::Bool(_) => Ok(Type::Bool),
-            Sexp::Number(n) => {
+            Edn::Nil => Ok(Type::Unit),
+            Edn::Bool(_) => Ok(Type::Bool),
+            Edn::Number(n) => {
                 use suss_core::Number;
                 match n {
                     Number::Integer(_) => Ok(Type::I32), // Default to i32 for WIT compatibility
@@ -433,13 +613,12 @@ impl<'a> Analyzer<'a> {
                     }
                 }
             }
-            Sexp::String(_) => Ok(Type::String),
-            Sexp::Char(_) => Ok(Type::I32), // chars as i32
-            Sexp::Symbol(_) => Ok(Type::Unknown), // Need context
-            Sexp::List(items) if !items.is_empty() => {
-                if let Sexp::Symbol(sym) = &items[0] {
-                    let name = self.interner.symbol_name(*sym);
-                    match name {
+            Edn::String(_) => Ok(Type::String),
+            Edn::Char(_) => Ok(Type::I32), // chars as i32
+            Edn::Symbol(_) => Ok(Type::Unknown), // Need context
+            Edn::List(items) if !items.is_empty() => {
+                if let Edn::Symbol(sym) = &items[0] {
+                    match sym.name.as_str() {
                         "if" => {
                             if items.len() >= 3 {
                                 // Type is the type of the then branch
@@ -476,9 +655,9 @@ impl<'a> Analyzer<'a> {
                         "and" | "or" | "not" => Ok(Type::Bool),
                         _ => {
                             // Check if it's a qualified import call (e.g., "random/get-random-u64")
-                            if let Some(slash_pos) = name.find('/') {
-                                let alias = &name[..slash_pos];
-                                let func_name = &name[slash_pos + 1..];
+                            if let Some(slash_pos) = sym.name.find('/') {
+                                let alias = &sym.name[..slash_pos];
+                                let func_name = &sym.name[slash_pos + 1..];
 
                                 // Look up in imports
                                 for import in &self.imports {
@@ -525,13 +704,6 @@ impl<'a> Analyzer<'a> {
         }
 
         Ok(())
-    }
-
-    fn get_or_intern_symbol(&self, _name: &str) -> SymbolId {
-        // This is a bit of a hack - we need a mutable interner
-        // For now, assume common symbols are already interned
-        // In practice, we'd need to handle this differently
-        SymbolId(0) // Placeholder
     }
 }
 

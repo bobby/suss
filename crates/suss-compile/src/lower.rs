@@ -4,37 +4,36 @@
 
 use std::collections::HashMap;
 
-use suss_core::{Sexp, Interner, SymbolId};
+use num_traits::ToPrimitive;
+use suss_core::{Edn, Number};
 
 use crate::analyze::{AnalyzedModule, AnalyzedFunction, AnalyzedGlobal};
 use crate::error::{CompileError, CompileResult};
 use crate::ir::{Module, Function, Global, Import, Expr, Type, BinOp, UnOp};
 
 /// Lower analyzed module to IR
-pub fn lower(module: &AnalyzedModule, interner: &Interner) -> CompileResult<Module> {
-    let mut lowerer = Lowerer::new(interner);
+pub fn lower(module: &AnalyzedModule) -> CompileResult<Module> {
+    let mut lowerer = Lowerer::new();
     lowerer.lower_module(module)
 }
 
-struct Lowerer<'a> {
-    interner: &'a Interner,
+struct Lowerer {
     module: Module,
-    /// Map from symbol to local index for current function
-    locals: HashMap<SymbolId, u32>,
+    /// Map from symbol name to local index for current function
+    locals: HashMap<String, u32>,
     /// Next local index
     next_local: u32,
     /// Function index map (indices start after imports)
-    func_indices: HashMap<SymbolId, u32>,
+    func_indices: HashMap<String, u32>,
     /// Import index map: (alias, function_name) -> import index
     import_indices: HashMap<(String, String), u32>,
     /// Number of imports (for calculating function indices)
     num_imports: u32,
 }
 
-impl<'a> Lowerer<'a> {
-    fn new(interner: &'a Interner) -> Self {
+impl Lowerer {
+    fn new() -> Self {
         Self {
-            interner,
             module: Module::new(),
             locals: HashMap::new(),
             next_local: 0,
@@ -63,7 +62,7 @@ impl<'a> Lowerer<'a> {
 
         // Build function index map - indices start after imports
         for (idx, func) in analyzed.functions.iter().enumerate() {
-            self.func_indices.insert(func.name, self.num_imports + idx as u32);
+            self.func_indices.insert(func.name.clone(), self.num_imports + idx as u32);
         }
 
         // Lower globals
@@ -84,7 +83,7 @@ impl<'a> Lowerer<'a> {
     fn lower_global(&mut self, global: &AnalyzedGlobal) -> CompileResult<Global> {
         let init = self.lower_expr(&global.init)?;
         Ok(Global {
-            name: global.name,
+            name: global.name.clone(),
             ty: global.ty.clone(),
             init,
         })
@@ -97,11 +96,11 @@ impl<'a> Lowerer<'a> {
 
         // Add parameters as locals
         let mut params = Vec::new();
-        for (sym, ty) in &func.params {
+        for (name, ty) in &func.params {
             let idx = self.next_local;
-            self.locals.insert(*sym, idx);
+            self.locals.insert(name.clone(), idx);
             self.next_local += 1;
-            params.push((*sym, ty.clone()));
+            params.push((name.clone(), ty.clone()));
         }
 
         // Lower body
@@ -109,14 +108,14 @@ impl<'a> Lowerer<'a> {
 
         // Collect local types
         let mut locals = vec![Type::Unknown; self.next_local as usize];
-        for (sym, ty) in &params {
-            if let Some(&idx) = self.locals.get(sym) {
+        for (name, ty) in &params {
+            if let Some(&idx) = self.locals.get(name) {
                 locals[idx as usize] = ty.clone();
             }
         }
 
         Ok(Function {
-            name: func.name,
+            name: func.name.clone(),
             exported: func.exported,
             export_name: func.export_name.clone(),
             params,
@@ -126,13 +125,13 @@ impl<'a> Lowerer<'a> {
         })
     }
 
-    fn lower_expr(&mut self, expr: &Sexp) -> CompileResult<Expr> {
+    fn lower_expr(&mut self, expr: &Edn) -> CompileResult<Expr> {
         match expr {
-            Sexp::Nil => Ok(Expr::Unit),
+            Edn::Nil => Ok(Expr::Unit),
 
-            Sexp::Bool(b) => Ok(Expr::Bool(*b)),
+            Edn::Bool(b) => Ok(Expr::Bool(*b)),
 
-            Sexp::Number(n) => {
+            Edn::Number(n) => {
                 use suss_core::Number;
                 match n {
                     Number::Integer(i) => {
@@ -149,29 +148,27 @@ impl<'a> Lowerer<'a> {
                 }
             }
 
-            Sexp::String(s) => {
+            Edn::String(s) => {
                 let idx = self.module.intern_string(s);
                 Ok(Expr::String(idx))
             }
 
-            Sexp::Char(c) => Ok(Expr::Int(*c as i64)),
+            Edn::Char(c) => Ok(Expr::Int(*c as i64)),
 
-            Sexp::Symbol(sym) => {
+            Edn::Symbol(sym) => {
                 // Check if it's a local
-                if let Some(&idx) = self.locals.get(sym) {
+                if let Some(&idx) = self.locals.get(&sym.name) {
                     Ok(Expr::LocalGet(idx))
                 } else {
-                    let name = self.interner.symbol_name(*sym);
-                    Err(CompileError::Undefined(name.to_string()))
+                    Err(CompileError::Undefined(sym.name.clone()))
                 }
             }
 
-            Sexp::List(items) if items.is_empty() => Ok(Expr::Unit),
+            Edn::List(items) if items.is_empty() => Ok(Expr::Unit),
 
-            Sexp::List(items) => {
-                if let Sexp::Symbol(sym) = &items[0] {
-                    let name = self.interner.symbol_name(*sym);
-                    self.lower_call(name, &items[1..])
+            Edn::List(items) => {
+                if let Edn::Symbol(sym) = &items[0] {
+                    self.lower_call(&sym.name, &items[1..])
                 } else {
                     // Function expression call
                     Err(CompileError::Unsupported(
@@ -180,9 +177,25 @@ impl<'a> Lowerer<'a> {
                 }
             }
 
-            Sexp::Vector(_items) => {
-                // Lower to a sequence that builds a vector
-                Err(CompileError::Unsupported("Vectors not yet supported".into()))
+            Edn::Vector(items) => {
+                // Serialize vector to EDN string: [1 2 3] -> "[1 2 3]"
+                let edn_str = format!("{}", Edn::Vector(items.clone()));
+                let idx = self.module.intern_string(&edn_str);
+                Ok(Expr::String(idx))
+            }
+
+            Edn::Map(pairs) => {
+                // Serialize map to EDN string: {:a 1} -> "{:a 1}"
+                let edn_str = format!("{}", Edn::Map(pairs.clone()));
+                let idx = self.module.intern_string(&edn_str);
+                Ok(Expr::String(idx))
+            }
+
+            Edn::Set(items) => {
+                // Serialize set to EDN string: #{1 2 3} -> "#{1 2 3}"
+                let edn_str = format!("{}", Edn::Set(items.clone()));
+                let idx = self.module.intern_string(&edn_str);
+                Ok(Expr::String(idx))
             }
 
             _ => Err(CompileError::Unsupported(format!(
@@ -192,14 +205,55 @@ impl<'a> Lowerer<'a> {
         }
     }
 
-    fn lower_call(&mut self, name: &str, args: &[Sexp]) -> CompileResult<Expr> {
+    /// Infer the numeric type from operands
+    fn infer_numeric_type(&self, args: &[Edn]) -> Type {
+        if args.is_empty() {
+            return Type::I32;
+        }
+        // Check all arguments for floats - if any is float, use F64
+        for arg in args {
+            if let Edn::Number(Number::Float(_)) = arg {
+                return Type::F64;
+            }
+        }
+        // Check if any integer is too large for i32
+        for arg in args {
+            if let Edn::Number(Number::Integer(i)) = arg {
+                if let Some(v) = i.to_i64() {
+                    if v < i32::MIN as i64 || v > i32::MAX as i64 {
+                        return Type::I64;
+                    }
+                } else {
+                    return Type::I64;
+                }
+            }
+        }
+        Type::I32
+    }
+
+    fn lower_call(&mut self, name: &str, args: &[Edn]) -> CompileResult<Expr> {
         match name {
-            // Arithmetic (default to i32 for WIT compatibility)
-            "+" => self.lower_binop_chain(BinOp::Add, args, Type::I32),
-            "-" => self.lower_binop_chain(BinOp::Sub, args, Type::I32),
-            "*" => self.lower_binop_chain(BinOp::Mul, args, Type::I32),
-            "/" => self.lower_binop_chain(BinOp::Div, args, Type::I32),
-            "rem" | "mod" => self.lower_binop(BinOp::Rem, args, Type::I32),
+            // Arithmetic - infer type from operands
+            "+" => {
+                let ty = self.infer_numeric_type(args);
+                self.lower_binop_chain(BinOp::Add, args, ty)
+            }
+            "-" => {
+                let ty = self.infer_numeric_type(args);
+                self.lower_binop_chain(BinOp::Sub, args, ty)
+            }
+            "*" => {
+                let ty = self.infer_numeric_type(args);
+                self.lower_binop_chain(BinOp::Mul, args, ty)
+            }
+            "/" => {
+                let ty = self.infer_numeric_type(args);
+                self.lower_binop_chain(BinOp::Div, args, ty)
+            }
+            "rem" | "mod" => {
+                let ty = self.infer_numeric_type(args);
+                self.lower_binop(BinOp::Rem, args, ty)
+            }
 
             // Comparison
             "=" => self.lower_binop(BinOp::Eq, args, Type::Bool),
@@ -239,7 +293,7 @@ impl<'a> Lowerer<'a> {
         }
     }
 
-    fn lower_binop(&mut self, op: BinOp, args: &[Sexp], ty: Type) -> CompileResult<Expr> {
+    fn lower_binop(&mut self, op: BinOp, args: &[Edn], ty: Type) -> CompileResult<Expr> {
         if args.len() != 2 {
             return Err(CompileError::Parse(format!(
                 "Binary operator requires exactly 2 arguments, got {}",
@@ -256,7 +310,7 @@ impl<'a> Lowerer<'a> {
         })
     }
 
-    fn lower_binop_chain(&mut self, op: BinOp, args: &[Sexp], ty: Type) -> CompileResult<Expr> {
+    fn lower_binop_chain(&mut self, op: BinOp, args: &[Edn], ty: Type) -> CompileResult<Expr> {
         if args.is_empty() {
             return Err(CompileError::Parse("Operator requires at least 1 argument".into()));
         }
@@ -277,7 +331,7 @@ impl<'a> Lowerer<'a> {
         Ok(result)
     }
 
-    fn lower_if(&mut self, args: &[Sexp]) -> CompileResult<Expr> {
+    fn lower_if(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         if args.len() < 2 {
             return Err(CompileError::Parse("if requires condition and then branch".into()));
         }
@@ -298,7 +352,7 @@ impl<'a> Lowerer<'a> {
         })
     }
 
-    fn lower_do(&mut self, args: &[Sexp]) -> CompileResult<Expr> {
+    fn lower_do(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         let exprs: Vec<Expr> = args
             .iter()
             .map(|e| self.lower_expr(e))
@@ -306,14 +360,14 @@ impl<'a> Lowerer<'a> {
         Ok(Expr::Block(exprs))
     }
 
-    fn lower_let(&mut self, args: &[Sexp]) -> CompileResult<Expr> {
+    fn lower_let(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         if args.is_empty() {
             return Err(CompileError::Parse("let requires bindings".into()));
         }
 
         // Parse bindings vector
         let bindings_vec = match &args[0] {
-            Sexp::Vector(items) => items,
+            Edn::Vector(items) => items,
             _ => return Err(CompileError::Parse("let bindings must be a vector".into())),
         };
 
@@ -324,7 +378,7 @@ impl<'a> Lowerer<'a> {
         let mut bindings = Vec::new();
         for chunk in bindings_vec.chunks(2) {
             let name = match &chunk[0] {
-                Sexp::Symbol(sym) => *sym,
+                Edn::Symbol(sym) => sym.name.clone(),
                 _ => return Err(CompileError::Parse("let binding name must be a symbol".into())),
             };
 
@@ -352,14 +406,14 @@ impl<'a> Lowerer<'a> {
         })
     }
 
-    fn lower_loop(&mut self, args: &[Sexp]) -> CompileResult<Expr> {
+    fn lower_loop(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         if args.is_empty() {
             return Err(CompileError::Parse("loop requires bindings".into()));
         }
 
         // Parse bindings (same as let)
         let bindings_vec = match &args[0] {
-            Sexp::Vector(items) => items,
+            Edn::Vector(items) => items,
             _ => return Err(CompileError::Parse("loop bindings must be a vector".into())),
         };
 
@@ -370,7 +424,7 @@ impl<'a> Lowerer<'a> {
         let mut bindings = Vec::new();
         for chunk in bindings_vec.chunks(2) {
             let name = match &chunk[0] {
-                Sexp::Symbol(sym) => *sym,
+                Edn::Symbol(sym) => sym.name.clone(),
                 _ => return Err(CompileError::Parse("loop binding name must be a symbol".into())),
             };
 
@@ -398,7 +452,7 @@ impl<'a> Lowerer<'a> {
         })
     }
 
-    fn lower_recur(&mut self, args: &[Sexp]) -> CompileResult<Expr> {
+    fn lower_recur(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         let values: Vec<Expr> = args
             .iter()
             .map(|e| self.lower_expr(e))
@@ -406,15 +460,15 @@ impl<'a> Lowerer<'a> {
         Ok(Expr::Recur(values))
     }
 
-    fn lower_str(&mut self, args: &[Sexp]) -> CompileResult<Expr> {
+    fn lower_str(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         // First try compile-time concatenation for all-literal strings
-        let all_literals = args.iter().all(|arg| matches!(arg, Sexp::String(_)));
+        let all_literals = args.iter().all(|arg| matches!(arg, Edn::String(_)));
 
         if all_literals && !args.is_empty() {
             // Concatenate at compile time
             let mut result = String::new();
             for arg in args {
-                if let Sexp::String(s) = arg {
+                if let Edn::String(s) = arg {
                     result.push_str(s);
                 }
             }
@@ -430,7 +484,7 @@ impl<'a> Lowerer<'a> {
         Ok(Expr::StrConcat(parts))
     }
 
-    fn lower_func_call(&mut self, name: &str, args: &[Sexp]) -> CompileResult<Expr> {
+    fn lower_func_call(&mut self, name: &str, args: &[Edn]) -> CompileResult<Expr> {
         // Check if it's a qualified import call (e.g., "random/get-random-u64")
         if let Some(slash_pos) = name.find('/') {
             let alias = &name[..slash_pos];
@@ -469,9 +523,7 @@ impl<'a> Lowerer<'a> {
         }
 
         // Look up local function by name
-        let func_idx = self.func_indices.iter()
-            .find(|(sym, _)| self.interner.symbol_name(**sym) == name)
-            .map(|(_, idx)| *idx);
+        let func_idx = self.func_indices.get(name).copied();
 
         if let Some(idx) = func_idx {
             let lowered_args: Vec<Expr> = args

@@ -9,8 +9,8 @@ wit_bindgen::generate!({
     path: "../../wit",
 });
 
-use crate::{parse_and_intern, parse_all_and_intern, ParseError as InternalParseError, ParserState};
-use suss_core::{print_sexp, Number as InternalNumber, Sexp as InternalSexp, KeywordId, SymbolId};
+use crate::{parse, parse_all, ParseError as InternalParseError, ParserState};
+use suss_core::{Edn, Number as InternalNumber, Symbol, Keyword};
 use num_bigint::BigInt;
 
 // Types from the exported types interface
@@ -22,28 +22,29 @@ use exports::suss::lang::types::Guest as TypesGuest;
 // Global state for the reader component
 thread_local! {
     static STATE: RefCell<ParserState> = RefCell::new(ParserState::new("suss"));
+    // Simple symbol/keyword interning for component compatibility
+    static SYMBOLS: RefCell<Vec<String>> = RefCell::new(Vec::new());
+    static KEYWORDS: RefCell<Vec<String>> = RefCell::new(Vec::new());
 }
 
-/// Resource wrapper for internal Sexp
-/// This is an opaque handle that owns the parsed s-expression
+/// Resource wrapper for Edn
+/// This is an opaque handle that owns the parsed expression
 pub struct SexpResource {
-    inner: InternalSexp,
+    inner: Edn,
 }
 
 impl GuestSexp for SexpResource {
     fn to_string(&self) -> String {
-        STATE.with(|state| {
-            let state = state.borrow();
-            print_sexp(&self.inner, &state.interner)
-        })
+        // Edn implements Display for EDN representation
+        format!("{}", self.inner)
     }
 
     fn is_nil(&self) -> bool {
-        matches!(self.inner, InternalSexp::Nil)
+        matches!(self.inner, Edn::Nil)
     }
 
     fn is_truthy(&self) -> bool {
-        !matches!(self.inner, InternalSexp::Nil | InternalSexp::Bool(false))
+        !matches!(self.inner, Edn::Nil | Edn::Bool(false))
     }
 }
 
@@ -61,8 +62,8 @@ impl ReaderGuest for Component {
             let mut state = state.borrow_mut();
             state.platform = platform;
 
-            match parse_and_intern(&input, &mut state) {
-                Ok(sexp) => Ok(WitSexp::new(SexpResource { inner: sexp })),
+            match parse(&input, &mut state) {
+                Ok(edn) => Ok(WitSexp::new(SexpResource { inner: edn })),
                 Err(e) => Err(internal_error_to_wit(e)),
             }
         })
@@ -73,10 +74,10 @@ impl ReaderGuest for Component {
             let mut state = state.borrow_mut();
             state.platform = platform;
 
-            match parse_all_and_intern(&input, &mut state) {
-                Ok(sexps) => Ok(sexps
+            match parse_all(&input, &mut state) {
+                Ok(edns) => Ok(edns
                     .into_iter()
-                    .map(|sexp| WitSexp::new(SexpResource { inner: sexp }))
+                    .map(|edn| WitSexp::new(SexpResource { inner: edn }))
                     .collect()),
                 Err(e) => Err(internal_error_to_wit(e)),
             }
@@ -84,85 +85,108 @@ impl ReaderGuest for Component {
     }
 
     fn intern_symbol(name: String) -> u32 {
-        STATE.with(|state| {
-            let mut state = state.borrow_mut();
-            state.interner.intern_symbol(&name).0
+        SYMBOLS.with(|symbols| {
+            let mut symbols = symbols.borrow_mut();
+            // Check if already interned
+            if let Some(idx) = symbols.iter().position(|s| s == &name) {
+                return idx as u32;
+            }
+            // Add new symbol
+            let idx = symbols.len() as u32;
+            symbols.push(name);
+            idx
         })
     }
 
     fn symbol_name(id: u32) -> String {
-        STATE.with(|state| {
-            let state = state.borrow();
-            state.interner.symbol_name(SymbolId(id)).to_string()
+        SYMBOLS.with(|symbols| {
+            let symbols = symbols.borrow();
+            symbols.get(id as usize).cloned().unwrap_or_default()
         })
     }
 
     fn intern_keyword(name: String) -> u32 {
-        STATE.with(|state| {
-            let mut state = state.borrow_mut();
-            state.interner.intern_keyword(&name).0
+        KEYWORDS.with(|keywords| {
+            let mut keywords = keywords.borrow_mut();
+            // Check if already interned
+            if let Some(idx) = keywords.iter().position(|k| k == &name) {
+                return idx as u32;
+            }
+            // Add new keyword
+            let idx = keywords.len() as u32;
+            keywords.push(name);
+            idx
         })
     }
 
     fn keyword_name(id: u32) -> String {
-        STATE.with(|state| {
-            let state = state.borrow();
-            state.interner.keyword_name(KeywordId(id)).to_string()
+        KEYWORDS.with(|keywords| {
+            let keywords = keywords.borrow();
+            keywords.get(id as usize).cloned().unwrap_or_default()
         })
     }
 
     // === Factory functions ===
 
     fn make_nil() -> WitSexp {
-        WitSexp::new(SexpResource { inner: InternalSexp::Nil })
+        WitSexp::new(SexpResource { inner: Edn::Nil })
     }
 
     fn make_bool(b: bool) -> WitSexp {
-        WitSexp::new(SexpResource { inner: InternalSexp::Bool(b) })
+        WitSexp::new(SexpResource { inner: Edn::Bool(b) })
     }
 
     fn make_number(n: WitNumber) -> WitSexp {
-        WitSexp::new(SexpResource { inner: InternalSexp::Number(wit_to_internal_number(n)) })
+        WitSexp::new(SexpResource { inner: Edn::Number(wit_to_internal_number(n)) })
     }
 
     fn make_symbol(id: u32) -> WitSexp {
-        WitSexp::new(SexpResource { inner: InternalSexp::Symbol(SymbolId(id)) })
+        // Look up the symbol name and create an Edn::Symbol
+        let name = SYMBOLS.with(|symbols| {
+            let symbols = symbols.borrow();
+            symbols.get(id as usize).cloned().unwrap_or_default()
+        });
+        WitSexp::new(SexpResource { inner: Edn::Symbol(Symbol { namespace: None, name }) })
     }
 
     fn make_keyword(id: u32) -> WitSexp {
-        WitSexp::new(SexpResource { inner: InternalSexp::Keyword(KeywordId(id)) })
+        // Look up the keyword name and create an Edn::Keyword
+        let name = KEYWORDS.with(|keywords| {
+            let keywords = keywords.borrow();
+            keywords.get(id as usize).cloned().unwrap_or_default()
+        });
+        WitSexp::new(SexpResource { inner: Edn::Keyword(Keyword { namespace: None, name }) })
     }
 
     fn make_string(s: String) -> WitSexp {
-        WitSexp::new(SexpResource { inner: InternalSexp::String(s) })
+        WitSexp::new(SexpResource { inner: Edn::String(s) })
     }
 
     fn make_char(c: char) -> WitSexp {
-        WitSexp::new(SexpResource { inner: InternalSexp::Char(c) })
+        WitSexp::new(SexpResource { inner: Edn::Char(c) })
     }
 
     fn make_list(items: Vec<WitSexp>) -> WitSexp {
-        let internal_items: Vec<InternalSexp> = items
+        let internal_items: Vec<Edn> = items
             .into_iter()
             .map(|s| {
-                // Extract the inner sexp from the resource
-                // This consumes the resource and takes ownership of the inner sexp
+                // Extract the inner edn from the resource
                 let resource: SexpResource = s.into_inner();
                 resource.inner
             })
             .collect();
-        WitSexp::new(SexpResource { inner: InternalSexp::List(internal_items) })
+        WitSexp::new(SexpResource { inner: Edn::List(internal_items) })
     }
 
     fn make_vector(items: Vec<WitSexp>) -> WitSexp {
-        let internal_items: Vec<InternalSexp> = items
+        let internal_items: Vec<Edn> = items
             .into_iter()
             .map(|s| {
                 let resource: SexpResource = s.into_inner();
                 resource.inner
             })
             .collect();
-        WitSexp::new(SexpResource { inner: InternalSexp::Vector(internal_items) })
+        WitSexp::new(SexpResource { inner: Edn::Vector(internal_items) })
     }
 }
 

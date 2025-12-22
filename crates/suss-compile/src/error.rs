@@ -39,4 +39,12 @@ pub enum CompileError {
     /// Code generation error
     #[error("Codegen error: {0}")]
     Codegen(String),
+
+    /// Component encoding error
+    #[error("Component error: {0}")]
+    Component(String),
+
+    /// Configuration error (deps.suss)
+    #[error("Config error: {0}")]
+    Config(String),
 }
