@@ -41,8 +41,12 @@ mod analyze;
 mod lower;
 mod codegen;
 mod error;
+mod wasi;
 
 pub use error::{CompileError, CompileResult};
+
+/// Bundled WASI version
+pub const BUNDLED_WASI_VERSION: &str = wasi::WASI_VERSION;
 
 use suss_core::Interner;
 use suss_reader::ParserState;
@@ -107,13 +111,21 @@ impl Compiler {
 
     /// Compile from file paths
     ///
-    /// This method handles WIT deps automatically by looking for a `deps` folder
-    /// in the same directory as the WIT file.
+    /// This method automatically loads bundled WASI definitions when it detects
+    /// `wasi:*` imports in the world.wit file. Users don't need to set up a deps/
+    /// folder for WASI packages.
+    ///
+    /// User-provided deps/ folders are still supported and take precedence over
+    /// bundled WASI for custom packages.
     pub fn compile_files(&mut self, source_path: &str, wit_path: &str) -> CompileResult<Vec<u8>> {
         use std::path::Path;
 
         let source = std::fs::read_to_string(source_path)
             .map_err(|e| CompileError::Io(format!("Failed to read {}: {}", source_path, e)))?;
+
+        // Read the WIT file content for WASI detection
+        let wit_source = std::fs::read_to_string(wit_path)
+            .map_err(|e| CompileError::Io(format!("Failed to read {}: {}", wit_path, e)))?;
 
         // Parse the Suss source
         let mut parser_state = ParserState::new("suss");
@@ -124,31 +136,36 @@ impl Compiler {
 
         self.interner = parser_state.interner;
 
-        // Parse WIT - check for deps directory first
         let wit_path = Path::new(wit_path);
         let mut resolve = Resolve::new();
 
-        // Check if there's a deps folder next to the WIT file
+        // Auto-detect and load bundled WASI packages
+        let needed_wasi = wasi::detect_needed_packages(&wit_source);
+        for pkg_name in &needed_wasi {
+            if let Some(combined) = wasi::get_combined_package(pkg_name) {
+                let _ = resolve.push_str(&format!("wasi-{}.wit", pkg_name), &combined);
+            }
+        }
+
+        // Check if there's a user-provided deps folder (for custom packages)
         if let Some(parent) = wit_path.parent() {
             let deps_dir = parent.join("deps");
             if deps_dir.is_dir() {
-                // Push each package in deps first
                 for entry in std::fs::read_dir(&deps_dir)
                     .map_err(|e| CompileError::Io(format!("Failed to read deps: {}", e)))?
                 {
                     let entry = entry.map_err(|e| CompileError::Io(format!("Failed to read entry: {}", e)))?;
                     let path = entry.path();
                     if path.is_dir() {
-                        // Push the package directory
                         let _ = resolve.push_path(&path);
                     }
                 }
             }
         }
 
-        // Push the main WIT file
-        let (pkg_id, _source_map) = resolve
-            .push_path(wit_path)
+        // Push the main WIT file as a string (since we already read it)
+        let pkg_id = resolve
+            .push_str(wit_path.to_string_lossy().as_ref(), &wit_source)
             .map_err(|e| CompileError::Wit(e.to_string()))?;
 
         // Get the world from the package

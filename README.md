@@ -161,16 +161,33 @@ world app {
 }
 ```
 
-For external WIT packages (like WASI), place the WIT definitions in a `deps/` folder next to your world file:
+#### Bundled WASI Support
+
+WASI 0.2.4 WIT definitions are bundled with the compiler. When your world.wit imports `wasi:*` packages, they are automatically detected and loaded - no `deps/` folder needed:
+
+```
+myproject/
+  world.wit       # Just import wasi:random/random - it works!
+  app.suss
+```
+
+Supported bundled packages:
+- `wasi:random` - Random number generation
+- `wasi:cli` - stdin, stdout, stderr, environment
+- `wasi:clocks` - Wall clock and monotonic clock
+- `wasi:io` - Streams and polling
+- `wasi:filesystem` - File and directory operations
+- `wasi:sockets` - TCP/UDP networking
+
+For custom (non-WASI) WIT packages, place them in a `deps/` folder next to your world file:
 
 ```
 myproject/
   world.wit       # Your world definition
   app.suss        # Your Suss source
   deps/
-    random/       # WASI random package
-      random.wit
-      world.wit
+    mypackage/    # Custom WIT packages
+      types.wit
 ```
 
 #### String Concatenation
