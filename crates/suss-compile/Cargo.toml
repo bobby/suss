@@ -10,6 +10,7 @@ suss-core = { workspace = true }
 suss-reader = { path = "../suss-reader" }
 num-traits = { workspace = true }
 wasm-encoder = { workspace = true }
+wasmparser = { workspace = true }
 wit-parser = { workspace = true }
 wit-component = { workspace = true }
 thiserror = { workspace = true }

@@ -11,6 +11,13 @@ become a first-class compile-to WASM language like Grain or Moonbit,
 capable of hosting complete applications and running anywhere WASM can run:
 browsers, servers, infrastructure.
 
+### Prior art
+
+Others have looked into the relationship of Clojure and WASM:
+
+* https://romanliutikov.com/blog/running-clojure-in-wasm
+* https://github.com/kanaka/clj.wasm
+
 ## Getting Started
 
 ### Prerequisites
@@ -166,8 +173,8 @@ For quick one-off compilation without project setup:
 # Compile a single file
 cargo run -p suss-cli -- compile src.suss -w world.wit -o out.wasm
 
-# Run the compiled component
-wasmtime run --invoke add out.wasm 3 5
+# Run the compiled component using suss run
+cargo run -p suss-cli -- run out.wasm --invoke add 3 5
 ```
 
 Example source (`add.suss`):
@@ -274,6 +281,25 @@ The static compiler supports a subset of Suss suitable for ahead-of-time compila
 | Numbers | Yes | i32, i64, f64 (no BigInt) |
 | Strings | Yes | Linear memory (ptr, len pairs) |
 | `eval`, macros | No | Requires interpreter |
+
+#### Running Compiled Components
+
+Use `suss run` to execute compiled WASM components with WASI support:
+
+```bash
+# Run a component and invoke an exported function
+cargo run -p suss-cli -- run component.wasm --invoke add 3 5
+
+# Output: 8
+```
+
+The `suss run` command:
+- Loads WASM components (not core modules)
+- Provides WASI 0.2 runtime support
+- Parses arguments as i32 values (more types coming)
+- Prints function return values
+
+This is equivalent to `wasmtime run --invoke` but with WASI pre-configured.
 
 ## Architecture
 

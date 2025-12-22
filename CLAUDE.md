@@ -23,7 +23,9 @@ cargo run -p suss-cli -- compile -c path/deps.suss  # Custom config
 
 # Single-file compilation
 cargo run -p suss-cli -- compile src.suss -w world.wit -o out.wasm
-wasmtime run --invoke func_name out.wasm
+
+# Run compiled components with WASI support
+cargo run -p suss-cli -- run out.wasm --invoke add 3 5
 ```
 
 ### WASM Component Builds

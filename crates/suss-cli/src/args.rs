@@ -27,6 +27,15 @@ pub enum Command {
         /// Optional config file path (defaults to deps.suss)
         config_path: Option<String>,
     },
+    /// Run a compiled WASM component
+    Run {
+        /// Path to the WASM component
+        component_path: String,
+        /// Function to invoke
+        invoke: String,
+        /// Arguments to pass to the function
+        args: Vec<String>,
+    },
     /// Print help message
     Help,
     /// Print version
@@ -57,6 +66,7 @@ pub fn parse_args() -> Result<Command, lexopt::Error> {
             match val_str.as_str() {
                 "repl" => Ok(Command::Repl),
                 "compile" => parse_compile(&mut parser),
+                "run" => parse_run(&mut parser),
                 _ => Ok(Command::RunFile { path: val_str }),
             }
         }
@@ -126,6 +136,44 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
     }
 }
 
+/// Parse the run subcommand arguments
+///
+/// Usage: `suss run component.wasm --invoke func_name [args...]`
+fn parse_run(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
+    let mut component_path: Option<String> = None;
+    let mut invoke: Option<String> = None;
+    let mut args: Vec<String> = Vec::new();
+
+    while let Some(arg) = parser.next()? {
+        match arg {
+            Long("invoke") => {
+                invoke = Some(parser.value()?.string()?);
+            }
+            Value(v) if component_path.is_none() => {
+                component_path = Some(v.string()?);
+            }
+            Value(v) => {
+                args.push(v.string()?);
+            }
+            _ => return Err(arg.unexpected()),
+        }
+    }
+
+    let component_path = component_path.ok_or_else(|| lexopt::Error::MissingValue {
+        option: Some("component path".to_string()),
+    })?;
+
+    let invoke = invoke.ok_or_else(|| lexopt::Error::MissingValue {
+        option: Some("--invoke".to_string()),
+    })?;
+
+    Ok(Command::Run {
+        component_path,
+        invoke,
+        args,
+    })
+}
+
 /// Print help message
 pub fn print_help() {
     println!(
@@ -136,6 +184,7 @@ USAGE:
     suss [OPTIONS] [FILE]
     suss compile [OPTIONS]                              (project mode)
     suss compile <FILE> -w <WORLD.wit> -o <OUTPUT.wasm> (file mode)
+    suss run <COMPONENT.wasm> --invoke <FUNC> [ARGS...] (run component)
 
 OPTIONS:
     -r              Start the REPL (default if no arguments)
@@ -145,14 +194,19 @@ OPTIONS:
 
 COMMANDS:
     compile         Compile Suss source to WASM components
+    run             Run a compiled WASM component
 
-    Project mode (reads deps.suss):
+    compile - Project mode (reads deps.suss):
         --world <NAME>       Compile specific world (e.g., :my-app/v1)
         -c, --config <FILE>  Config file path (default: deps.suss)
 
-    File mode (single file compilation):
+    compile - File mode (single file compilation):
         -w, --wit <FILE>     WIT world definition file
         -o, --output <FILE>  Output WASM file path
+
+    run - Execute a WASM component:
+        --invoke <FUNC>      Function to invoke (required)
+        [ARGS...]            Arguments to pass to the function
 
 EXAMPLES:
     suss                           Start the REPL
@@ -161,6 +215,7 @@ EXAMPLES:
     suss compile                   Compile all worlds from deps.suss
     suss compile --world :app/v1   Compile specific world from deps.suss
     suss compile src.suss -w world.wit -o out.wasm  (file mode)
+    suss run out.wasm --invoke add 3 5             (run component)
 "
     );
 }

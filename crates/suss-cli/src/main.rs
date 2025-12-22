@@ -45,6 +45,9 @@ fn run_command(cmd: args::Command) {
         args::Command::CompileProject { world, config_path } => {
             compile_project(world.as_deref(), config_path.as_deref());
         }
+        args::Command::Run { component_path, invoke, args } => {
+            run_component(&component_path, &invoke, &args);
+        }
         args::Command::Help => args::print_help(),
         args::Command::Version => println!("suss {}", env!("CARGO_PKG_VERSION")),
     }
@@ -64,25 +67,35 @@ fn run_eval(expr: &str) {
 
 /// Run expression via WASM compilation + wasmtime
 ///
-/// Note: Currently generates core WASM modules without WASI imports.
-/// Future work: generate WASM components for WASI 0.2 support.
+/// Automatically detects WASI calls and uses component model when needed.
 fn run_eval_wasm(expr: &str) -> Result<(), String> {
-    use wasmtime::{Engine, Linker, Module, Store, Val};
-
     // Compile expression to WASM
     let mut compiler = suss_compile::Compiler::new();
-    let wasm_bytes = compiler.compile_expr(expr)
+    let compiled = compiler.compile_expr_with_info(expr)
         .map_err(|e| format!("{}", e))?;
+
+    if compiled.is_component {
+        // WASI expression - use component model runtime
+        run_eval_component(&compiled.wasm)
+    } else {
+        // Pure expression - use core module runtime
+        run_eval_core_module(&compiled.wasm)
+    }
+}
+
+/// Run a compiled core module (no WASI)
+fn run_eval_core_module(wasm_bytes: &[u8]) -> Result<(), String> {
+    use wasmtime::{Engine, Linker, Module, Store, Val};
 
     // Create wasmtime engine and module
     let engine = Engine::default();
-    let module = Module::new(&engine, &wasm_bytes)
+    let module = Module::new(&engine, wasm_bytes)
         .map_err(|e| format!("WASM module error: {}", e))?;
 
     // Create store (no WASI context needed for pure expressions)
     let mut store = Store::new(&engine, ());
 
-    // Create linker for future WASI support
+    // Create linker
     let linker: Linker<()> = Linker::new(&engine);
 
     // Instantiate via linker
@@ -130,6 +143,94 @@ fn run_eval_wasm(expr: &str) -> Result<(), String> {
         }
     } else {
         println!("{:?}", results);
+    }
+
+    Ok(())
+}
+
+/// Run a compiled component with WASI support (for expressions using wasi.*)
+fn run_eval_component(wasm_bytes: &[u8]) -> Result<(), String> {
+    use wasmtime::{Config, Engine, Store};
+    use wasmtime::component::{Component, Linker, ResourceTable, Val};
+    use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
+
+    // State for the component store - implements WasiView
+    struct EvalState {
+        wasi: WasiCtx,
+        table: ResourceTable,
+    }
+
+    impl WasiView for EvalState {
+        fn ctx(&mut self) -> WasiCtxView<'_> {
+            WasiCtxView {
+                ctx: &mut self.wasi,
+                table: &mut self.table,
+            }
+        }
+    }
+
+    // Enable component model
+    let mut config = Config::new();
+    config.wasm_component_model(true);
+    let engine = Engine::new(&config)
+        .map_err(|e| format!("Failed to create engine: {}", e))?;
+
+    // Load component
+    let component = Component::new(&engine, wasm_bytes)
+        .map_err(|e| format!("Failed to load component: {}", e))?;
+
+    // Create WASI context
+    let state = EvalState {
+        wasi: WasiCtxBuilder::new()
+            .inherit_stdio()
+            .inherit_env()
+            .build(),
+        table: ResourceTable::new(),
+    };
+
+    // Create store with WASI state
+    let mut store = Store::new(&engine, state);
+
+    // Create linker and add WASI
+    let mut linker: Linker<EvalState> = Linker::new(&engine);
+    wasmtime_wasi::p2::add_to_linker_sync(&mut linker)
+        .map_err(|e| format!("Failed to add WASI to linker: {}", e))?;
+
+    // Instantiate component
+    let instance = linker.instantiate(&mut store, &component)
+        .map_err(|e| format!("Failed to instantiate component: {}", e))?;
+
+    // Get eval function
+    let eval_fn = instance.get_func(&mut store, "eval")
+        .ok_or_else(|| "eval function not found in component".to_string())?;
+
+    // Call with no args
+    let func_ty = eval_fn.ty(&store);
+    let results_len = func_ty.results().len();
+    let mut results = vec![Val::S32(0); results_len];
+
+    eval_fn.call(&mut store, &[], &mut results)
+        .map_err(|e| format!("Call error: {}", e))?;
+
+    // Print result
+    if results.is_empty() {
+        println!("nil");
+    } else if results.len() == 1 {
+        match &results[0] {
+            Val::S32(v) => println!("{}", v),
+            Val::S64(v) => println!("{}", v),
+            Val::U32(v) => println!("{}", v),
+            Val::U64(v) => println!("{}", v),
+            Val::Float32(v) => println!("{}", v),
+            Val::Float64(v) => println!("{}", v),
+            Val::Bool(v) => println!("{}", v),
+            Val::Char(v) => println!("{}", v),
+            Val::String(v) => println!("\"{}\"", v),
+            _ => println!("{:?}", results[0]),
+        }
+    } else {
+        let parts: Vec<String> = results.iter().map(|v| format!("{:?}", v)).collect();
+        println!("({})", parts.join(", "));
     }
 
     Ok(())
@@ -246,6 +347,118 @@ fn compile_project(world: Option<&str>, config_path: Option<&str>) {
             std::process::exit(1);
         }
     }
+}
+
+/// Run a compiled WASM component with WASI support
+#[cfg(not(all(feature = "component", target_family = "wasm")))]
+fn run_component(path: &str, invoke: &str, args: &[String]) {
+    match run_component_impl(path, invoke, args) {
+        Ok(()) => {}
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
+
+/// Implementation of component runner with wasmtime
+#[cfg(not(all(feature = "component", target_family = "wasm")))]
+fn run_component_impl(path: &str, invoke: &str, args: &[String]) -> Result<(), String> {
+    use wasmtime::{Config, Engine, Store};
+    use wasmtime::component::{Component, Linker, ResourceTable, Val};
+    use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
+
+    // State for the component store - implements WasiView
+    struct ComponentState {
+        wasi: WasiCtx,
+        table: ResourceTable,
+    }
+
+    impl WasiView for ComponentState {
+        fn ctx(&mut self) -> WasiCtxView<'_> {
+            WasiCtxView {
+                ctx: &mut self.wasi,
+                table: &mut self.table,
+            }
+        }
+    }
+
+    // Enable component model
+    let mut config = Config::new();
+    config.wasm_component_model(true);
+    let engine = Engine::new(&config)
+        .map_err(|e| format!("Failed to create engine: {}", e))?;
+
+    // Load component from file
+    let component = Component::from_file(&engine, path)
+        .map_err(|e| format!("Failed to load component '{}': {}", path, e))?;
+
+    // Create WASI context
+    let state = ComponentState {
+        wasi: WasiCtxBuilder::new()
+            .inherit_stdio()
+            .inherit_env()
+            .build(),
+        table: ResourceTable::new(),
+    };
+
+    // Create store with WASI state
+    let mut store = Store::new(&engine, state);
+
+    // Create linker and add WASI
+    let mut linker: Linker<ComponentState> = Linker::new(&engine);
+    wasmtime_wasi::p2::add_to_linker_sync(&mut linker)
+        .map_err(|e| format!("Failed to add WASI to linker: {}", e))?;
+
+    // Instantiate component
+    let instance = linker.instantiate(&mut store, &component)
+        .map_err(|e| format!("Failed to instantiate component: {}", e))?;
+
+    // Get exported function
+    let func = instance.get_func(&mut store, invoke)
+        .ok_or_else(|| format!("Function '{}' not found in component", invoke))?;
+
+    // Parse arguments as i32 values (for now, simple integer args)
+    let func_args: Vec<Val> = args.iter()
+        .map(|s| {
+            // Try parsing as i32, fall back to 0
+            let v: i32 = s.parse().unwrap_or(0);
+            Val::S32(v)
+        })
+        .collect();
+
+    // Prepare results buffer based on function type
+    let func_ty = func.ty(&store);
+    let results_len = func_ty.results().len();
+    let mut results = vec![Val::S32(0); results_len];
+
+    // Call the function
+    func.call(&mut store, &func_args, &mut results)
+        .map_err(|e| format!("Failed to call '{}': {}", invoke, e))?;
+
+    // Print result
+    if results.is_empty() {
+        // No return value
+    } else if results.len() == 1 {
+        match &results[0] {
+            Val::S32(v) => println!("{}", v),
+            Val::S64(v) => println!("{}", v),
+            Val::U32(v) => println!("{}", v),
+            Val::U64(v) => println!("{}", v),
+            Val::Float32(v) => println!("{}", v),
+            Val::Float64(v) => println!("{}", v),
+            Val::Bool(v) => println!("{}", v),
+            Val::Char(v) => println!("{}", v),
+            Val::String(v) => println!("{}", v),
+            _ => println!("{:?}", results[0]),
+        }
+    } else {
+        // Multiple results - print as tuple
+        let parts: Vec<String> = results.iter().map(|v| format!("{:?}", v)).collect();
+        println!("({})", parts.join(", "));
+    }
+
+    Ok(())
 }
 
 /// Start the REPL

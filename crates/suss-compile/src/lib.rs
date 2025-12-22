@@ -48,6 +48,15 @@ mod wasi;
 pub use config::{SussConfig, WorldConfig};
 pub use error::{CompileError, CompileResult};
 
+/// Result of compiling an expression
+#[derive(Debug)]
+pub struct CompiledExpr {
+    /// The compiled WASM bytes
+    pub wasm: Vec<u8>,
+    /// Whether this is a WASM Component (true) or core module (false)
+    pub is_component: bool,
+}
+
 /// Bundled WASI version
 pub const BUNDLED_WASI_VERSION: &str = wasi::WASI_VERSION;
 
@@ -63,10 +72,13 @@ impl Compiler {
         Self
     }
 
-    /// Compile a single expression to a WASM module
+    /// Compile a single expression to a WASM module or component
     ///
     /// This creates a minimal WASM module with a single exported function `eval`
     /// that returns the result of the expression. No WIT file is required.
+    ///
+    /// If the expression contains WASI calls (e.g., `(wasi.random/get-random-u64)`),
+    /// returns a WASM Component with appropriate imports. Otherwise returns a core module.
     ///
     /// # Example
     ///
@@ -76,11 +88,35 @@ impl Compiler {
     /// // Run with wasmtime, call `eval` function, get result
     /// ```
     pub fn compile_expr(&mut self, expr_source: &str) -> CompileResult<Vec<u8>> {
+        let result = self.compile_expr_with_info(expr_source)?;
+        Ok(result.wasm)
+    }
+
+    /// Compile a single expression and return info about the result
+    ///
+    /// Returns both the WASM bytes and whether it's a component (WASI) or core module.
+    pub fn compile_expr_with_info(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
         // Parse the expression
         let mut parser_state = ParserState::new("suss");
         let expr = suss_reader::parse(expr_source, &mut parser_state)
             .map_err(|e| CompileError::Parse(e.to_string()))?;
 
+        // Detect WASI calls in the expression
+        let wasi_calls = wasi::collect_wasi_calls(&expr);
+
+        if wasi_calls.is_empty() {
+            // No WASI calls - compile as core module (existing behavior)
+            let wasm = self.compile_expr_core(expr)?;
+            Ok(CompiledExpr { wasm, is_component: false })
+        } else {
+            // WASI calls detected - compile as component with imports
+            let wasm = self.compile_expr_with_wasi(expr, wasi_calls)?;
+            Ok(CompiledExpr { wasm, is_component: true })
+        }
+    }
+
+    /// Compile expression as core WASM module (no WASI imports)
+    fn compile_expr_core(&mut self, expr: suss_core::Edn) -> CompileResult<Vec<u8>> {
         // Infer the return type
         let return_type = analyze::infer_expr_type(&expr)?;
 
@@ -104,9 +140,105 @@ impl Compiler {
         let ir = lower::lower(&analyzed)?;
 
         // Generate WASM (no WIT needed for expression compilation)
-        let wasm = codegen::generate_module(&ir)?;
+        codegen::generate_module(&ir)
+    }
 
-        Ok(wasm)
+    /// Compile expression as WASM Component with WASI imports
+    fn compile_expr_with_wasi(
+        &mut self,
+        expr: suss_core::Edn,
+        wasi_calls: Vec<wasi::WasiFunctionInfo>,
+    ) -> CompileResult<Vec<u8>> {
+        // Infer the return type (may need to check WASI return types)
+        let return_type = self.infer_expr_type_with_wasi(&expr, &wasi_calls)?;
+
+        // Convert WASI calls to AnalyzedImports
+        // Use "wasi.PACKAGE" as the alias so wasi.random/get-random-u64 maps to alias="wasi.random"
+        let imports: Vec<analyze::AnalyzedImport> = wasi_calls.iter().map(|info| {
+            // Extract package from interface (e.g., "wasi:random/random@0.2.0" -> "random")
+            let package = info.wit_interface
+                .split(':').nth(1)
+                .and_then(|s| s.split('/').next())
+                .unwrap_or("unknown");
+
+            analyze::AnalyzedImport {
+                alias: format!("wasi.{}", package),
+                wit_interface: info.wit_interface.clone(),
+                function_name: info.function_name.clone(),
+                params: info.params.clone(),
+                return_type: info.return_type.clone(),
+            }
+        }).collect();
+
+        // Create a synthetic analyzed module with imports
+        let analyzed = analyze::AnalyzedModule {
+            namespace: None,
+            world_target: None,
+            imports,
+            functions: vec![analyze::AnalyzedFunction {
+                name: "__eval".to_string(),
+                exported: true,
+                export_name: Some("eval".to_string()),
+                params: Vec::new(),
+                return_type,
+                body: expr,
+            }],
+            globals: Vec::new(),
+        };
+
+        // Lower to IR
+        let ir = lower::lower(&analyzed)?;
+
+        // Generate WASM Component with imports
+        codegen::generate_component_with_imports(&ir)
+    }
+
+    /// Infer expression type, taking WASI return types into account
+    fn infer_expr_type_with_wasi(
+        &self,
+        expr: &suss_core::Edn,
+        wasi_calls: &[wasi::WasiFunctionInfo],
+    ) -> CompileResult<ir::Type> {
+        use suss_core::Edn;
+
+        match expr {
+            Edn::List(items) if !items.is_empty() => {
+                if let Edn::Symbol(sym) = &items[0] {
+                    // Check if it's a WASI call (handle namespaced symbols)
+                    let full_name = if let Some(ns) = &sym.namespace {
+                        format!("{}/{}", ns, sym.name)
+                    } else {
+                        sym.name.clone()
+                    };
+                    if let Some(info) = wasi::parse_wasi_call(&full_name) {
+                        return Ok(info.return_type);
+                    }
+                    // Check standard forms
+                    match sym.name.as_str() {
+                        "if" => {
+                            if items.len() >= 3 {
+                                return self.infer_expr_type_with_wasi(&items[2], wasi_calls);
+                            }
+                        }
+                        "do" => {
+                            if items.len() > 1 {
+                                return self.infer_expr_type_with_wasi(items.last().unwrap(), wasi_calls);
+                            }
+                        }
+                        "let" => {
+                            if items.len() > 2 {
+                                return self.infer_expr_type_with_wasi(items.last().unwrap(), wasi_calls);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        // Fall back to standard inference
+        analyze::infer_expr_type(expr)
     }
 
     /// Compile Suss source code to a WASM component

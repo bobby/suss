@@ -168,7 +168,14 @@ impl Lowerer {
 
             Edn::List(items) => {
                 if let Edn::Symbol(sym) = &items[0] {
-                    self.lower_call(&sym.name, &items[1..])
+                    // Check if it's a namespaced symbol (e.g., wasi.random/get-random-u64)
+                    if let Some(ns) = &sym.namespace {
+                        // Reconstruct the full qualified name
+                        let full_name = format!("{}/{}", ns, sym.name);
+                        self.lower_call(&full_name, &items[1..])
+                    } else {
+                        self.lower_call(&sym.name, &items[1..])
+                    }
                 } else {
                     // Function expression call
                     Err(CompileError::Unsupported(
@@ -485,7 +492,7 @@ impl Lowerer {
     }
 
     fn lower_func_call(&mut self, name: &str, args: &[Edn]) -> CompileResult<Expr> {
-        // Check if it's a qualified import call (e.g., "random/get-random-u64")
+        // Check if it's a qualified import call (e.g., "random/get-random-u64" or "wasi.random/get-random-u64")
         if let Some(slash_pos) = name.find('/') {
             let alias = &name[..slash_pos];
             let func_name = &name[slash_pos + 1..];
@@ -501,6 +508,15 @@ impl Lowerer {
                     func: idx,
                     args: lowered_args,
                 });
+            }
+
+            // Not found in imports - if this is a wasi.* call, provide helpful error
+            if alias.starts_with("wasi.") {
+                return Err(CompileError::Undefined(format!(
+                    "WASI function '{}' not found. Make sure the function is supported. \
+                     Available: wasi.random/get-random-u64",
+                    name
+                )));
             } else {
                 return Err(CompileError::Undefined(format!(
                     "Import function '{}' not found (alias: '{}', function: '{}')",
