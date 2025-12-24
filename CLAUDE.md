@@ -50,7 +50,11 @@ wasmtime run target/wasm32-wasip2/release/suss_composed.wasm
 
 ## Architecture
 
-Suss is a Clojure dialect targeting WASM/WASI. All execution goes through WASM compilation:
+Suss is a Clojure dialect targeting WASM/WASI, which follows the
+ClojureScript implementation closely. A local reference copy of the
+ClojureScript core library is found in `reference/cljs.core.clj`.
+
+All execution goes through WASM compilation:
 
 ```
 suss-core (Edn, Number, Symbol, Keyword)

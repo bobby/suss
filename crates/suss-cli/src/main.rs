@@ -83,12 +83,29 @@ fn run_eval_wasm(expr: &str) -> Result<(), String> {
     }
 }
 
+/// GC sentinel values for decoding i31refs
+mod gc_sentinels {
+    pub const NIL_SENTINEL: i32 = 0;
+    pub const FALSE_SENTINEL: i32 = 2;
+    pub const TRUE_SENTINEL: i32 = 4;
+
+    pub fn decode_i31(raw: i32) -> i64 {
+        (raw >> 1) as i64
+    }
+}
+
 /// Run a compiled core module (no WASI)
 fn run_eval_core_module(wasm_bytes: &[u8]) -> Result<(), String> {
-    use wasmtime::{Engine, Linker, Module, Store, Val};
+    use wasmtime::{Config, Engine, Linker, Module, Store, Val};
 
-    // Create wasmtime engine and module
-    let engine = Engine::default();
+    // Create wasmtime engine with GC and related features enabled
+    let mut config = Config::new();
+    config.wasm_gc(true);
+    config.wasm_function_references(true);
+    config.wasm_tail_call(true);
+    let engine = Engine::new(&config)
+        .map_err(|e| format!("Engine creation error: {}", e))?;
+
     let module = Module::new(&engine, wasm_bytes)
         .map_err(|e| format!("WASM module error: {}", e))?;
 
@@ -106,43 +123,63 @@ fn run_eval_core_module(wasm_bytes: &[u8]) -> Result<(), String> {
     let eval_fn = instance.get_func(&mut store, "eval")
         .ok_or_else(|| "eval function not found".to_string())?;
 
-    // Call the function and get result
-    let func_ty = eval_fn.ty(&store);
-    let results_len = func_ty.results().len();
-
-    let mut results = vec![Val::I32(0); results_len];
+    // Call the function with eqref result
+    let mut results = vec![Val::null_any_ref()];
     eval_fn.call(&mut store, &[], &mut results)
         .map_err(|e| format!("Call error: {}", e))?;
 
-    // Print result based on type
-    if results.is_empty() {
-        println!("nil");
-    } else if results.len() == 1 {
-        match &results[0] {
-            Val::I32(v) => println!("{}", v),
-            Val::I64(v) => println!("{}", v),
-            Val::F32(v) => println!("{}", f32::from_bits(*v)),
-            Val::F64(v) => println!("{}", f64::from_bits(*v)),
-            _ => println!("{:?}", results[0]),
+    // Print result based on GC type
+    match &results[0] {
+        Val::AnyRef(Some(anyref)) => {
+            // Try to extract as i31
+            match anyref.as_i31(&store) {
+                Ok(Some(i31)) => {
+                    let raw = i31.get_i32();
+                    match raw {
+                        gc_sentinels::NIL_SENTINEL => println!("nil"),
+                        gc_sentinels::FALSE_SENTINEL => println!("false"),
+                        gc_sentinels::TRUE_SENTINEL => println!("true"),
+                        _ => {
+                            // Small integer
+                            let val = gc_sentinels::decode_i31(raw);
+                            println!("{}", val);
+                        }
+                    }
+                }
+                Ok(None) => {
+                    // Struct or array - try to extract as FLOAT struct
+                    match anyref.as_struct(&store) {
+                        Ok(Some(struct_ref)) => {
+                            // GC type 1 is FLOAT (single f64 field)
+                            // Try to read field 0 as f64
+                            match struct_ref.field(&mut store, 0) {
+                                Ok(wasmtime::Val::F64(bits)) => {
+                                    let f = f64::from_bits(bits);
+                                    if f.fract() == 0.0 {
+                                        println!("{}.0", f as i64);
+                                    } else {
+                                        println!("{}", f);
+                                    }
+                                }
+                                Ok(wasmtime::Val::I64(v)) => {
+                                    // LARGE_INT struct (type 0)
+                                    println!("{}", v);
+                                }
+                                _ => println!("<gc-struct>"),
+                            }
+                        }
+                        Ok(None) => {
+                            // Array - could be STRING (type 2)
+                            println!("<gc-array>");
+                        }
+                        Err(_) => println!("<gc-object>"),
+                    }
+                }
+                Err(e) => return Err(format!("Error extracting i31: {}", e)),
+            }
         }
-    } else if results.len() == 2 {
-        // String result: (ptr, len) pair
-        if let (Val::I32(ptr), Val::I32(len)) = (&results[0], &results[1]) {
-            let memory = instance.get_memory(&mut store, "memory")
-                .ok_or_else(|| "memory not found".to_string())?;
-
-            let mut buf = vec![0u8; *len as usize];
-            memory.read(&store, *ptr as usize, &mut buf)
-                .map_err(|e| format!("Memory read error: {}", e))?;
-
-            let s = String::from_utf8(buf)
-                .map_err(|e| format!("UTF-8 error: {}", e))?;
-            println!("\"{}\"", s);
-        } else {
-            println!("{:?}", results);
-        }
-    } else {
-        println!("{:?}", results);
+        Val::AnyRef(None) => println!("nil"),
+        _ => println!("{:?}", results[0]),
     }
 
     Ok(())

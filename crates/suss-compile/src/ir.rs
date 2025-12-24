@@ -3,6 +3,358 @@
 //! The IR is a simplified, typed representation of Suss code that maps
 //! closely to WASM instructions.
 
+/// WASM GC type definitions for Clojure's immutable persistent data structures.
+///
+/// Uses native WASM GC types (i31ref, structref, arrayref) instead of
+/// tagged i64 values. This enables proper garbage collection and
+/// eliminates the need for a custom allocator.
+///
+/// Value representation:
+/// - nil, false, true: i31ref with sentinel values
+/// - small integers: i31ref (30-bit signed, shifted)
+/// - large integers: struct { i64 }
+/// - floats: struct { f64 }
+/// - strings: array<i8>
+/// - vectors: PersistentVector (32-way bit-partitioned trie)
+/// - lists: cons cells (struct { first, rest })
+/// - maps: PersistentMap (HAMT with bitmap compression)
+/// - sets: PersistentSet (HAMT with bitmap compression)
+pub mod gc_types {
+    // =========================================================================
+    // GC Type Indices
+    // These are indices into the WASM type section, assigned during codegen.
+    // The actual type definitions are emitted by CodeGen::emit_gc_type_section.
+    // =========================================================================
+
+    /// struct { i64 } - for integers that don't fit in i31ref
+    pub const LARGE_INT: u32 = 0;
+
+    /// struct { f64 } - all floats are boxed
+    pub const FLOAT: u32 = 1;
+
+    /// array<i8> - UTF-8 string bytes (mutable for construction)
+    pub const STRING: u32 = 2;
+
+    /// array<eqref> - 32-element trie node for persistent vectors
+    /// Used as internal nodes and leaf arrays in the bit-partitioned trie
+    pub const TRIE_NODE: u32 = 3;
+
+    /// struct { first: eqref, rest: eqref } - cons cell for persistent lists
+    pub const CONS: u32 = 4;
+
+    /// struct { bitmap: i32, children: array<eqref> } - HAMT node for maps/sets
+    /// bitmap indicates which of 32 slots are occupied
+    /// children array is sparse (only occupied slots)
+    pub const HAMT_NODE: u32 = 5;
+
+    /// struct { cnt: i32, shift: i32, root: eqref, tail: eqref }
+    /// ClojureScript-style 32-way bit-partitioned vector trie
+    pub const PERSISTENT_VECTOR: u32 = 6;
+
+    /// struct { cnt: i32, root: eqref }
+    /// Hash Array Mapped Trie (HAMT) for O(log32 n) operations
+    pub const PERSISTENT_MAP: u32 = 7;
+
+    /// struct { cnt: i32, root: eqref }
+    /// HAMT-based set (same structure as map but entries are keys only)
+    pub const PERSISTENT_SET: u32 = 8;
+
+    /// Number of GC types defined (for type index offset calculation)
+    pub const NUM_GC_TYPES: u32 = 9;
+
+    // =========================================================================
+    // i31ref Sentinel Values
+    // These are stored directly in i31ref (31-bit signed integer reference).
+    //
+    // Encoding scheme:
+    // - Sentinels use EVEN values (0, 2, 4): nil=0, false=2, true=4
+    // - Small integers use ODD values: (n << 1) | 1
+    //
+    // This allows efficient discrimination:
+    // - is_small_int: (x & 1) != 0
+    // - is_falsy: x == 0 || x == 2 (nil or false)
+    // =========================================================================
+
+    /// nil sentinel value in i31ref
+    pub const NIL_SENTINEL: i32 = 0;
+
+    /// false sentinel value in i31ref
+    pub const FALSE_SENTINEL: i32 = 2;
+
+    /// true sentinel value in i31ref
+    pub const TRUE_SENTINEL: i32 = 4;
+
+    // =========================================================================
+    // Small Integer Encoding
+    // Small integers are stored in i31ref with tag bit 0 set.
+    // Format: (value << 1) | 1
+    // This gives us 30 bits of signed integer range.
+    // =========================================================================
+
+    /// Minimum value that fits in a small integer (i31ref)
+    pub const SMALL_INT_MIN: i64 = -(1 << 29); // -536,870,912
+
+    /// Maximum value that fits in a small integer (i31ref)
+    pub const SMALL_INT_MAX: i64 = (1 << 29) - 1; // 536,870,911
+
+    /// Check if an integer fits in a small integer (i31ref)
+    #[inline]
+    pub const fn fits_in_small_int(n: i64) -> bool {
+        n >= SMALL_INT_MIN && n <= SMALL_INT_MAX
+    }
+
+    /// Encode a small integer for i31ref storage
+    /// Returns the i32 value to pass to ref.i31
+    #[inline]
+    pub const fn encode_small_int(n: i64) -> i32 {
+        ((n as i32) << 1) | 1
+    }
+
+    /// Decode a small integer from i31ref
+    /// Takes the i32 value from i31.get_s
+    #[inline]
+    pub const fn decode_small_int(encoded: i32) -> i64 {
+        (encoded >> 1) as i64
+    }
+
+    /// Check if an i31ref value is a small integer (has tag bit 0 set)
+    #[inline]
+    pub const fn is_small_int(i31_value: i32) -> bool {
+        (i31_value & 1) != 0
+    }
+
+    /// Check if an i31ref value is truthy (not nil and not false)
+    /// Falsy values are 0 (nil) and 2 (false), all others truthy
+    #[inline]
+    pub const fn is_truthy_sentinel(i31_value: i32) -> bool {
+        // Small integers (odd) are always truthy
+        // Even values: 0 (nil) and 2 (false) are falsy, 4 (true) and higher are truthy
+        i31_value != NIL_SENTINEL && i31_value != FALSE_SENTINEL
+    }
+
+    // =========================================================================
+    // xxHash32 Constants (for HAMT operations)
+    // Used for hashing values in persistent maps and sets.
+    // See: https://xxhash.com/ and ROADMAP.md Phase 1
+    // =========================================================================
+
+    /// xxHash32 prime constant 1
+    pub const PRIME32_1: u32 = 0x9E3779B1;
+    /// xxHash32 prime constant 2
+    pub const PRIME32_2: u32 = 0x85EBCA77;
+    /// xxHash32 prime constant 3
+    pub const PRIME32_3: u32 = 0xC2B2AE3D;
+    /// xxHash32 prime constant 4
+    pub const PRIME32_4: u32 = 0x27D4EB2F;
+    /// xxHash32 prime constant 5
+    pub const PRIME32_5: u32 = 0x165667B1;
+
+    /// Hash value for true (Java convention)
+    pub const HASH_TRUE: i32 = 1231;
+    /// Hash value for false (Java convention)
+    pub const HASH_FALSE: i32 = 1237;
+
+    /// Combine two hashes for ordered collections
+    /// Uses rotl(h1, 5) ^ (h2 * PRIME32_1)
+    #[inline]
+    pub const fn hash_combine(h1: i32, h2: i32) -> i32 {
+        h1.rotate_left(5) ^ h2.wrapping_mul(PRIME32_1 as i32)
+    }
+
+    /// Combine two hashes for unordered collections (commutative)
+    /// Simple addition is commutative, suitable for sets/maps
+    #[inline]
+    pub const fn hash_unordered(h1: i32, h2: i32) -> i32 {
+        h1.wrapping_add(h2)
+    }
+
+    // =========================================================================
+    // Collection Field Indices
+    // For accessing struct fields in codegen
+    // =========================================================================
+
+    /// All dispatchable types have type_id as field 0
+    /// This enables O(1) type lookup for protocol dispatch
+    pub const TYPE_ID: u32 = 0;
+
+    /// PERSISTENT_VECTOR field indices (after type_id)
+    pub const PV_CNT: u32 = 1;   // was 0
+    pub const PV_SHIFT: u32 = 2; // was 1
+    pub const PV_ROOT: u32 = 3;  // was 2
+    pub const PV_TAIL: u32 = 4;  // was 3
+
+    /// PERSISTENT_MAP field indices (after type_id)
+    pub const PM_CNT: u32 = 1;   // was 0
+    pub const PM_ROOT: u32 = 2;  // was 1
+
+    /// PERSISTENT_SET field indices (after type_id)
+    pub const PS_CNT: u32 = 1;   // was 0
+    pub const PS_ROOT: u32 = 2;  // was 1
+
+    /// CONS field indices (after type_id)
+    pub const CONS_FIRST: u32 = 1; // was 0
+    pub const CONS_REST: u32 = 2;  // was 1
+
+    /// LARGE_INT field indices (after type_id)
+    pub const LI_VALUE: u32 = 1; // was 0 (the i64 value)
+
+    /// FLOAT field indices (after type_id)
+    pub const FL_VALUE: u32 = 1; // was 0 (the f64 value)
+
+    /// STRING field indices (after type_id)
+    pub const STR_PTR: u32 = 1;  // was 0
+    pub const STR_LEN: u32 = 2;  // was 1
+}
+
+/// Type IDs for protocol dispatch.
+///
+/// These match the GC type indices for built-in types, enabling efficient
+/// type-based dispatch via `ref.test` followed by table lookup.
+pub mod type_ids {
+    /// i31ref values (nil, bool, small int) - not dispatchable to most protocols
+    pub const I31REF: i32 = -1;
+
+    // Built-in types use their GC type indices
+    pub const LARGE_INT: i32 = super::gc_types::LARGE_INT as i32;
+    pub const FLOAT: i32 = super::gc_types::FLOAT as i32;
+    pub const STRING: i32 = super::gc_types::STRING as i32;
+    pub const TRIE_NODE: i32 = super::gc_types::TRIE_NODE as i32;
+    pub const CONS: i32 = super::gc_types::CONS as i32;
+    pub const HAMT_NODE: i32 = super::gc_types::HAMT_NODE as i32;
+    pub const PERSISTENT_VECTOR: i32 = super::gc_types::PERSISTENT_VECTOR as i32;
+    pub const PERSISTENT_MAP: i32 = super::gc_types::PERSISTENT_MAP as i32;
+    pub const PERSISTENT_SET: i32 = super::gc_types::PERSISTENT_SET as i32;
+
+    /// User-defined types start at 256 (room for future built-ins)
+    pub const USER_TYPE_BASE: i32 = 256;
+}
+
+/// Protocol method IDs for dispatch table indexing.
+///
+/// Built-in protocol methods use IDs 0-99.
+/// User-defined protocol methods start at 100.
+pub mod method_ids {
+    /// ILookup/-lookup: (coll, key) -> value
+    pub const LOOKUP: u32 = 0;
+    /// IAssociative/-assoc: (coll, key, val) -> coll'
+    pub const ASSOC: u32 = 1;
+    /// ICounted/-count: (coll) -> i32
+    pub const COUNT: u32 = 2;
+    /// IIndexed/-nth: (coll, index) -> value
+    pub const NTH: u32 = 3;
+    /// ICollection/-conj: (coll, val) -> coll'
+    pub const CONJ: u32 = 4;
+    /// ISeq/-first: (seq) -> value
+    pub const FIRST: u32 = 5;
+    /// ISeq/-rest: (seq) -> seq
+    pub const REST: u32 = 6;
+    /// ISeqable/-seq: (coll) -> seq
+    pub const SEQ: u32 = 7;
+    /// IHash/-hash: (value) -> i32
+    pub const HASH: u32 = 8;
+    /// IEquiv/-equiv: (a, b) -> bool
+    pub const EQUIV: u32 = 9;
+
+    /// Number of built-in protocol methods
+    pub const NUM_BUILTIN: u32 = 10;
+
+    /// User-defined protocol methods start here
+    pub const USER_START: u32 = 100;
+}
+
+/// Protocol function type indices for call_ref.
+///
+/// These are offsets from the base protocol type index in the type section.
+/// Actual type indices are calculated as: GC_TYPES + HELPER_TYPES + offset
+pub mod protocol_types {
+    /// (eqref) -> eqref - for first, rest, seq
+    pub const ARITY_1_REF: u32 = 0;
+    /// (eqref) -> i32 - for count, hash
+    pub const ARITY_1_I32: u32 = 1;
+    /// (eqref, eqref) -> eqref - for lookup, nth, conj
+    pub const ARITY_2_REF: u32 = 2;
+    /// (eqref, eqref) -> i32 - for equiv
+    pub const ARITY_2_I32: u32 = 3;
+    /// (eqref, eqref, eqref) -> eqref - for assoc
+    pub const ARITY_3_REF: u32 = 4;
+
+    /// Number of protocol function types
+    pub const NUM_PROTOCOL_TYPES: u32 = 5;
+
+    /// Get the protocol type index for a method ID
+    pub const fn type_for_method(method_id: u32) -> u32 {
+        use super::method_ids;
+        match method_id {
+            method_ids::LOOKUP => ARITY_2_REF, // (coll, key) -> value
+            method_ids::ASSOC => ARITY_3_REF,  // (coll, key, val) -> coll'
+            method_ids::COUNT => ARITY_1_I32,  // (coll) -> i32
+            method_ids::NTH => ARITY_2_REF,    // (coll, index) -> value
+            method_ids::CONJ => ARITY_2_REF,   // (coll, val) -> coll'
+            method_ids::FIRST => ARITY_1_REF,  // (seq) -> value
+            method_ids::REST => ARITY_1_REF,   // (seq) -> seq
+            method_ids::SEQ => ARITY_1_REF,    // (coll) -> seq
+            method_ids::HASH => ARITY_1_I32,   // (value) -> i32
+            method_ids::EQUIV => ARITY_2_I32,  // (a, b) -> bool
+            _ => ARITY_1_REF,                  // Default for user methods
+        }
+    }
+}
+
+/// Dispatch table configuration for protocol method dispatch.
+///
+/// The dispatch table is a WASM funcref table indexed by:
+/// `type_id * NUM_BUILTIN_METHODS + method_id`
+pub mod dispatch_table {
+    use super::method_ids;
+
+    /// Number of type slots in the dispatch table.
+    /// Provides room for built-in types (0-8) and some future expansion.
+    pub const NUM_TYPE_SLOTS: u32 = 16;
+
+    /// Total size of the dispatch table (type slots × methods per type)
+    pub const TABLE_SIZE: u32 = NUM_TYPE_SLOTS * method_ids::NUM_BUILTIN;
+
+    /// Index of the dispatch table in the module's table section
+    pub const TABLE_INDEX: u32 = 0;
+
+    /// Calculate dispatch table index for a (type_id, method_id) pair.
+    ///
+    /// # Arguments
+    /// * `type_id` - Runtime type ID (from $get-type-id)
+    /// * `method_id` - Protocol method ID
+    ///
+    /// # Returns
+    /// Index into the dispatch table funcref array
+    #[inline]
+    pub const fn index(type_id: u32, method_id: u32) -> u32 {
+        type_id * method_ids::NUM_BUILTIN + method_id
+    }
+}
+
+// =========================================================================
+// Protocol Definitions
+// =========================================================================
+
+/// A protocol definition with its methods
+#[derive(Debug, Clone)]
+pub struct ProtocolDef {
+    /// Protocol name (e.g., "IJsonable")
+    pub name: String,
+    /// Methods: (name, method_id)
+    pub methods: Vec<(String, u32)>,
+}
+
+/// A dispatch table entry mapping (type_id, method_id) to a function
+#[derive(Debug, Clone)]
+pub struct DispatchEntry {
+    /// Type ID (from type_ids module)
+    pub type_id: u32,
+    /// Method ID (from method_ids module or user-defined)
+    pub method_id: u32,
+    /// Function index in the module
+    pub func_idx: u32,
+}
+
 /// A compiled module containing all definitions
 #[derive(Debug)]
 pub struct Module {
@@ -14,6 +366,10 @@ pub struct Module {
     pub globals: Vec<Global>,
     /// String literals (stored in data section)
     pub strings: Vec<String>,
+    /// Protocol definitions (user-defined protocols)
+    pub protocols: Vec<ProtocolDef>,
+    /// Dispatch table entries for protocol methods
+    pub dispatch_entries: Vec<DispatchEntry>,
 }
 
 /// An imported function from a WIT interface
@@ -38,6 +394,8 @@ impl Module {
             functions: Vec::new(),
             globals: Vec::new(),
             strings: Vec::new(),
+            protocols: Vec::new(),
+            dispatch_entries: Vec::new(),
         }
     }
 
@@ -107,11 +465,21 @@ pub enum Type {
     List(Box<Type>),
     /// Fixed-size vector
     Vector(Box<Type>),
+    /// Map type
+    Map(Box<Type>, Box<Type>),
+    /// Set type
+    Set(Box<Type>),
     /// Function type
     Func {
         params: Vec<Type>,
         result: Box<Type>,
     },
+    /// Tagged runtime value (i64 with Fressian tag in high byte)
+    /// Used for polymorphic values that need runtime type dispatch
+    Tagged,
+    /// GC reference type (eqref in WASM GC)
+    /// Used for all values in GC mode - nil, bools, ints, floats, collections
+    GcRef,
     /// Unknown type (for type inference)
     Unknown,
 }
@@ -127,7 +495,11 @@ impl Type {
             Type::String => 8, // ptr + len
             Type::List(_) => 8, // ptr + len
             Type::Vector(_) => 8, // ptr + len
+            Type::Map(_, _) => 8, // ptr + len
+            Type::Set(_) => 8, // ptr + len
             Type::Func { .. } => 4, // function table index
+            Type::Tagged => 8, // i64 tagged value
+            Type::GcRef => 4, // GC reference (eqref)
             Type::Unknown => 0,
         }
     }
@@ -135,6 +507,94 @@ impl Type {
     /// Check if this is a numeric type
     pub fn is_numeric(&self) -> bool {
         matches!(self, Type::I32 | Type::I64 | Type::F64)
+    }
+}
+
+impl Expr {
+    /// Get the type of this expression (for truthiness checks)
+    ///
+    /// Returns the known type when determinable at compile time,
+    /// or Type::Unknown when the type cannot be statically determined.
+    pub fn expr_type(&self) -> Type {
+        match self {
+            Expr::Unit => Type::Unit,
+            Expr::Bool(_) => Type::Bool,
+            Expr::Int(n) => {
+                if *n >= i32::MIN as i64 && *n <= i32::MAX as i64 {
+                    Type::I32
+                } else {
+                    Type::I64
+                }
+            }
+            Expr::RawI32(_) => Type::I32,
+            Expr::Float(_) => Type::F64,
+            Expr::String(_) => Type::String,
+            Expr::BinOp { ty, .. } => ty.clone(),
+            Expr::UnOp { ty, .. } => ty.clone(),
+            Expr::If { ty, .. } => ty.clone(),
+            Expr::Coerce { to, .. } => to.clone(),
+            Expr::StrConcat(_) => Type::String,
+            // LocalGet/Set now carry type info
+            Expr::LocalGet { ty, .. } => ty.clone(),
+            Expr::LocalSet { ty, .. } => ty.clone(),
+            // These require context to determine type
+            Expr::GlobalGet(_) | Expr::GlobalSet(_, _) => Type::Unknown,
+            Expr::Call { .. } | Expr::TailCall { .. } => Type::Unknown,
+            Expr::Block(exprs) => exprs.last().map(|e| e.expr_type()).unwrap_or(Type::Unit),
+            Expr::Let { body, .. } => body.expr_type(),
+            Expr::Loop { body, .. } => body.expr_type(),
+            Expr::Recur(_) => Type::Unknown, // Never returns normally
+            // Tagged value operations always produce/consume i64
+            Expr::MakeTagged { .. } => Type::Tagged,
+            Expr::GetTag(_) => Type::I32, // Tag is 8-bit but stored in i32
+            Expr::GetPayload(_) => Type::I64, // 56-bit payload as i64
+            // Heap operations
+            Expr::Alloc(_) => Type::I32, // Heap pointer fits in i32
+            Expr::HeapStore { .. } => Type::Unit,
+            Expr::HeapLoad { .. } => Type::I64,
+
+            // GC operations - all produce GC references or i32
+            Expr::I31New(_) => Type::GcRef,
+            Expr::I31GetS(_) => Type::I32,
+            Expr::StructNew { .. } => Type::GcRef,
+            Expr::StructGet { .. } => Type::GcRef, // Field could be any type, but in GC mode it's eqref
+            Expr::ArrayNew { .. } => Type::GcRef,
+            Expr::ArrayNewData { .. } => Type::GcRef,
+            Expr::ArrayLen(_) => Type::I32,
+            Expr::ArrayGet { .. } => Type::GcRef,
+            Expr::ArraySet { .. } => Type::Unit,
+            Expr::RefTestI31(_) => Type::I32, // Boolean result
+            Expr::RefTest { .. } => Type::I32, // Boolean result
+            Expr::RefNull(_) => Type::GcRef,
+            Expr::RefIsNull(_) => Type::I32, // Boolean result
+
+            // Persistent collections all return GC refs
+            Expr::VecNew(_) => Type::GcRef,
+            Expr::VecNth { .. } => Type::GcRef,
+            Expr::VecConj { .. } => Type::GcRef,
+            Expr::VecCount(_) => Type::I32,
+
+            Expr::MapNew(_) => Type::GcRef,
+            Expr::MapGet { .. } => Type::GcRef,
+            Expr::MapAssoc { .. } => Type::GcRef,
+            Expr::MapCount(_) => Type::I32,
+
+            Expr::SetNew(_) => Type::GcRef,
+            Expr::SetContains { .. } => Type::I32, // Boolean result
+            Expr::SetConj { .. } => Type::GcRef,
+            Expr::SetCount(_) => Type::I32,
+
+            Expr::ListFirst(_) => Type::GcRef,
+            Expr::ListRest(_) => Type::GcRef,
+
+            // Hash returns i32 internally, wrapped as GcRef for user code
+            Expr::Hash(_) => Type::GcRef,
+
+            // Protocol dispatch returns GcRef (the method result)
+            Expr::ProtocolDispatch { .. } => Type::GcRef,
+            // GetTypeId returns i32 type ID
+            Expr::GetTypeId(_) => Type::I32,
+        }
     }
 }
 
@@ -150,17 +610,20 @@ pub enum Expr {
     /// Integer literal (fits in i64)
     Int(i64),
 
+    /// Raw i32 constant (not GC-encoded, for struct fields like type_id)
+    RawI32(i32),
+
     /// Float literal
     Float(f64),
 
     /// String literal (index into string table)
     String(u32),
 
-    /// Local variable reference
-    LocalGet(u32),
+    /// Local variable reference with type info for proper truthiness
+    LocalGet { local: u32, ty: Type },
 
     /// Local variable assignment
-    LocalSet(u32, Box<Expr>),
+    LocalSet { local: u32, value: Box<Expr>, ty: Type },
 
     /// Global variable reference
     GlobalGet(u32),
@@ -189,6 +652,12 @@ pub enum Expr {
         args: Vec<Expr>,
     },
 
+    /// Tail call (uses return_call instruction for TCO)
+    TailCall {
+        func: u32, // function index
+        args: Vec<Expr>,
+    },
+
     /// Conditional
     If {
         cond: Box<Expr>,
@@ -212,8 +681,8 @@ pub enum Expr {
         body: Box<Expr>,
     },
 
-    /// Recur (jump back to loop)
-    Recur(Vec<Expr>),
+    /// Recur (jump back to loop) - includes target local indices
+    Recur(Vec<(u32, Expr)>),
 
     /// String concatenation
     StrConcat(Vec<Expr>),
@@ -224,6 +693,236 @@ pub enum Expr {
         from: Type,
         to: Type,
     },
+
+    // Tagged value operations
+    /// Create a tagged value from tag byte and payload expression
+    MakeTagged {
+        tag: u8,
+        payload: Box<Expr>,
+    },
+
+    /// Extract the 8-bit tag from a tagged i64 value
+    GetTag(Box<Expr>),
+
+    /// Extract the 56-bit payload from a tagged i64 value
+    GetPayload(Box<Expr>),
+
+    // Heap operations
+    /// Allocate bytes on the heap, returns heap pointer
+    Alloc(Box<Expr>),
+
+    /// Store an i64 value to heap memory
+    HeapStore {
+        base: Box<Expr>,
+        offset: u32,
+        value: Box<Expr>,
+    },
+
+    /// Load an i64 value from heap memory
+    HeapLoad {
+        base: Box<Expr>,
+        offset: u32,
+    },
+
+    // =========================================================================
+    // WASM GC Operations
+    // These use native GC types instead of tagged i64 values.
+    // =========================================================================
+
+    /// Create i31ref from i32 value (for small ints and sentinels)
+    /// The i32 should already be encoded (shifted for ints, or sentinel value)
+    I31New(Box<Expr>),
+
+    /// Extract signed i32 from i31ref
+    I31GetS(Box<Expr>),
+
+    /// Create a GC struct instance
+    /// Fields are evaluated in order and passed to struct.new
+    StructNew {
+        type_idx: u32,
+        fields: Vec<Expr>,
+    },
+
+    /// Get a field from a GC struct
+    StructGet {
+        type_idx: u32,
+        field_idx: u32,
+        value: Box<Expr>,
+    },
+
+    /// Create a GC array with given elements
+    ArrayNew {
+        type_idx: u32,
+        elements: Vec<Expr>,
+    },
+
+    /// Create a GC array from data section (for string literals)
+    ArrayNewData {
+        type_idx: u32,
+        data_idx: u32,
+        offset: Box<Expr>,
+        length: Box<Expr>,
+    },
+
+    /// Get array length
+    ArrayLen(Box<Expr>),
+
+    /// Get array element at index
+    ArrayGet {
+        type_idx: u32,
+        array: Box<Expr>,
+        index: Box<Expr>,
+    },
+
+    /// Set array element at index
+    ArraySet {
+        type_idx: u32,
+        array: Box<Expr>,
+        index: Box<Expr>,
+        value: Box<Expr>,
+    },
+
+    /// Test if a reference is an i31ref (returns i32 boolean)
+    RefTestI31(Box<Expr>),
+
+    /// Test if a reference is a specific struct/array type
+    RefTest {
+        type_idx: u32,
+        value: Box<Expr>,
+    },
+
+    /// Null reference of a given type
+    RefNull(u32),
+
+    /// Test if reference is null
+    RefIsNull(Box<Expr>),
+
+    // =========================================================================
+    // Persistent Vector Operations
+    // ClojureScript-style 32-way bit-partitioned trie
+    // =========================================================================
+
+    /// Create a new persistent vector from elements
+    /// Builds proper trie structure based on element count
+    VecNew(Vec<Expr>),
+
+    /// Get element at index from persistent vector
+    /// Uses tail optimization + trie traversal
+    VecNth {
+        vec: Box<Expr>,
+        index: Box<Expr>,
+    },
+
+    /// Add element to end of persistent vector (returns new vector)
+    /// Structural sharing via path copying
+    VecConj {
+        vec: Box<Expr>,
+        val: Box<Expr>,
+    },
+
+    /// Get count of persistent vector
+    VecCount(Box<Expr>),
+
+    // =========================================================================
+    // Persistent Map Operations
+    // HAMT (Hash Array Mapped Trie)
+    // =========================================================================
+
+    /// Create a new persistent map from key-value pairs
+    MapNew(Vec<(Expr, Expr)>),
+
+    /// Get value for key from persistent map (returns nil if not found)
+    MapGet {
+        map: Box<Expr>,
+        key: Box<Expr>,
+    },
+
+    /// Associate key with value in map (returns new map)
+    MapAssoc {
+        map: Box<Expr>,
+        key: Box<Expr>,
+        val: Box<Expr>,
+    },
+
+    /// Get count of persistent map
+    MapCount(Box<Expr>),
+
+    // =========================================================================
+    // Persistent Set Operations
+    // HAMT-based (same structure as map, keys only)
+    // =========================================================================
+
+    /// Create a new persistent set from elements
+    SetNew(Vec<Expr>),
+
+    /// Test if set contains element
+    SetContains {
+        set: Box<Expr>,
+        key: Box<Expr>,
+    },
+
+    /// Add element to set (returns new set)
+    SetConj {
+        set: Box<Expr>,
+        val: Box<Expr>,
+    },
+
+    /// Get count of persistent set
+    SetCount(Box<Expr>),
+
+    // =========================================================================
+    // List Operations (cons cells)
+    // =========================================================================
+
+    /// Get first element of list
+    ListFirst(Box<Expr>),
+
+    /// Get rest of list (cdr)
+    ListRest(Box<Expr>),
+
+    // =========================================================================
+    // Hash Operations
+    // =========================================================================
+
+    /// Hash a value using xxHash32
+    /// Returns hash code wrapped in i31ref for user code,
+    /// or raw i32 for internal HAMT operations.
+    Hash(Box<Expr>),
+
+    // =========================================================================
+    // Protocol Dispatch Operations
+    // =========================================================================
+
+    /// Polymorphic protocol method dispatch (slow path).
+    ///
+    /// At runtime:
+    /// 1. Evaluates obj to get the target value
+    /// 2. Calls $get-type-id to determine the type
+    /// 3. Looks up (type_id, method_id) in dispatch table
+    /// 4. Calls the implementation via call_ref
+    ///
+    /// Use this when the type is not known at compile time.
+    /// For known types, use direct IR operations (VecNth, MapGet, etc.)
+    ProtocolDispatch {
+        /// The object to dispatch on (becomes 'this' argument)
+        obj: Box<Expr>,
+        /// Protocol method ID (from method_ids module)
+        method_id: u32,
+        /// Additional arguments after 'this'
+        args: Vec<Expr>,
+        /// Whether this dispatch is in tail position (enables return_call optimization)
+        in_tail_position: bool,
+    },
+
+    /// Get the runtime type ID of a value.
+    ///
+    /// Returns an i32 type ID:
+    /// - -1 for i31ref values (nil, bool, small int)
+    /// - 0-8 for built-in GC types
+    /// - 256+ for user-defined types
+    ///
+    /// Used internally by ProtocolDispatch; rarely needed directly.
+    GetTypeId(Box<Expr>),
 }
 
 /// Binary operators
@@ -254,4 +953,85 @@ pub enum BinOp {
 pub enum UnOp {
     Neg,
     Not,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::gc_types;
+
+    #[test]
+    fn test_gc_small_int_range() {
+        // Test boundary values
+        assert!(gc_types::fits_in_small_int(0));
+        assert!(gc_types::fits_in_small_int(1));
+        assert!(gc_types::fits_in_small_int(-1));
+        assert!(gc_types::fits_in_small_int(gc_types::SMALL_INT_MAX));
+        assert!(gc_types::fits_in_small_int(gc_types::SMALL_INT_MIN));
+
+        // Just outside range
+        assert!(!gc_types::fits_in_small_int(gc_types::SMALL_INT_MAX + 1));
+        assert!(!gc_types::fits_in_small_int(gc_types::SMALL_INT_MIN - 1));
+
+        // Large values
+        assert!(!gc_types::fits_in_small_int(i64::MAX));
+        assert!(!gc_types::fits_in_small_int(i64::MIN));
+    }
+
+    #[test]
+    fn test_gc_small_int_encode_decode() {
+        // Test round-trip encoding
+        for n in [-1000, -1, 0, 1, 42, 1000, gc_types::SMALL_INT_MAX, gc_types::SMALL_INT_MIN] {
+            let encoded = gc_types::encode_small_int(n);
+            let decoded = gc_types::decode_small_int(encoded);
+            assert_eq!(decoded, n, "round-trip failed for {}", n);
+        }
+    }
+
+    #[test]
+    fn test_gc_small_int_tag_bit() {
+        // Encoded small ints should have tag bit set
+        assert!(gc_types::is_small_int(gc_types::encode_small_int(0)));
+        assert!(gc_types::is_small_int(gc_types::encode_small_int(42)));
+        assert!(gc_types::is_small_int(gc_types::encode_small_int(-1)));
+
+        // Sentinels should NOT have tag bit set
+        assert!(!gc_types::is_small_int(gc_types::NIL_SENTINEL));
+        assert!(!gc_types::is_small_int(gc_types::FALSE_SENTINEL));
+        assert!(!gc_types::is_small_int(gc_types::TRUE_SENTINEL));
+    }
+
+    #[test]
+    fn test_gc_sentinel_truthiness() {
+        // nil and false are falsy
+        assert!(!gc_types::is_truthy_sentinel(gc_types::NIL_SENTINEL));
+        assert!(!gc_types::is_truthy_sentinel(gc_types::FALSE_SENTINEL));
+
+        // true is truthy
+        assert!(gc_types::is_truthy_sentinel(gc_types::TRUE_SENTINEL));
+
+        // All small integers (with tag bit) are truthy, including 0
+        assert!(gc_types::is_truthy_sentinel(gc_types::encode_small_int(0)));
+        assert!(gc_types::is_truthy_sentinel(gc_types::encode_small_int(42)));
+        assert!(gc_types::is_truthy_sentinel(gc_types::encode_small_int(-1)));
+    }
+
+    #[test]
+    fn test_gc_type_indices() {
+        // Verify type indices are unique and contiguous
+        let indices = [
+            gc_types::LARGE_INT,
+            gc_types::FLOAT,
+            gc_types::STRING,
+            gc_types::TRIE_NODE,
+            gc_types::CONS,
+            gc_types::HAMT_NODE,
+            gc_types::PERSISTENT_VECTOR,
+            gc_types::PERSISTENT_MAP,
+            gc_types::PERSISTENT_SET,
+        ];
+        for (i, idx) in indices.iter().enumerate() {
+            assert_eq!(*idx, i as u32, "type index {} should be {}", idx, i);
+        }
+        assert_eq!(gc_types::NUM_GC_TYPES, indices.len() as u32);
+    }
 }
