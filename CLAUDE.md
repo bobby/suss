@@ -205,3 +205,19 @@ wasm-tools print /tmp/debug.wasm > /tmp/debug.wat
 wasm-tools parse /tmp/debug.wat -o /tmp/debug_round.wasm
 ~/.wasmtime/bin/wasmtime run -W gc --invoke eval /tmp/debug_round.wasm
 ```
+
+### WASM GC Structural Typing Gotcha
+
+**Important:** WASM GC uses structural typing for `ref.test`. Two struct types with identical field layouts are indistinguishable at runtime, even if they have different type indices.
+
+For example, if PersistentMap and PersistentSet both have:
+```
+struct { type_id: i32, cnt: i32, root: eqref }
+```
+
+Then `ref.test (ref $PersistentMap)` will return true for a PersistentSet! The solution is to add a marker field to make structs structurally distinct:
+```
+PersistentSet: struct { type_id: i32, cnt: i32, root: eqref, _marker: i32 }
+```
+
+This affects `get_type_id` which uses `ref.test` chains to determine type.

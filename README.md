@@ -280,6 +280,10 @@ The static compiler supports a subset of Suss suitable for ahead-of-time compila
 | `str` | Partial | Compile-time literal concatenation only |
 | Numbers | Yes | i32, i64, f64 (no BigInt) |
 | Strings | Yes | Linear memory (ptr, len pairs) |
+| Vectors | Yes | Persistent 32-way trie, `nth`, `conj`, `count` |
+| Maps | Yes | HAMT-based, `get`, `assoc`, `count`, `contains?` |
+| Sets | Yes | HAMT-based, `conj`, `count`, `contains?` |
+| Lists | Yes | Cons cells, `first`, `rest`, `cons` |
 | `eval`, macros | No | Requires interpreter |
 
 #### Running Compiled Components
@@ -331,7 +335,11 @@ Suss is built as composable WASM components:
 
 * Can (optionally) run a REPL
 * Supports EDN data literals
-* Immutable data structures
+* Immutable persistent data structures:
+  - Vectors (32-way branching trie, O(log32 n) access)
+  - Maps (HAMT - Hash Array Mapped Trie)
+  - Sets (HAMT-based)
+  - Lists (cons cells)
 * Standard library (follows ClojureScript's implementation)
 
 Obviously, the primary compilation target will be static as a WASM/WASI application, so some of the more dynamic features of Clojure may need to be curtailed or made optional at compile-time.

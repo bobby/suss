@@ -126,7 +126,6 @@ Use seed=0 for deterministic hashing across all platforms. This ensures:
 **Remaining:**
 - User-defined protocols (`defprotocol`, `extend-type`)
 - Vector `rest` returning proper seq (requires ChunkedSeq/IndexedSeq types)
-- Map/Set polymorphic operations (requires HAMT - Phase 4)
 
 ### 2.1 Design: Hybrid Dispatch
 
@@ -306,7 +305,7 @@ table[6][100] = vec-to-json-fn   ;; type_id=6 (PersistentVector), method_id=100
 
 **Lowerer changes:**
 - [x] Change `nth` to emit polymorphic dispatch (not just VecNth)
-- [ ] Change `get` to emit polymorphic dispatch (not just MapGet) - needs HAMT
+- [x] Change `get` to emit polymorphic dispatch (MapGet with HAMT)
 - [x] Change `count` to emit polymorphic dispatch
 - [x] Change `conj` to emit polymorphic dispatch
 - [x] Change `first`/`rest` to emit polymorphic dispatch
@@ -483,13 +482,13 @@ PersistentVector = struct {
 
 ---
 
-## Phase 4: HAMT for Maps and Sets
+## Phase 4: HAMT for Maps and Sets ✓ COMPLETE
 
-Current state: Stub implementation, returns nil/empty.
+Full HAMT (Hash Array Mapped Trie) implementation following ClojureScript patterns.
 
 **Protocol integration:**
-- PersistentMap (type_id=7): `ILookup/-lookup`, `IAssociative/-assoc`, `ICounted/-count`
-- PersistentSet (type_id=8): `ILookup/-lookup`, `ICollection/-conj`, `ICounted/-count`
+- PersistentMap (type_id=9): `ILookup/-lookup`, `IAssociative/-assoc`, `ICounted/-count`
+- PersistentSet (type_id=10): `ILookup/-lookup`, `ICollection/-conj`, `ICounted/-count`
 
 ### 4.1 Node Types (from ClojureScript)
 
@@ -604,27 +603,27 @@ Update gc_types:
 
 ### 4.4 Implementation Tasks
 
-- [ ] Add ARRAY_NODE, HASH_COLLISION_NODE to gc_types
-- [ ] Implement `i32.popcnt` wrapper
-- [ ] Implement equality check (equiv) for keys
-- [ ] `inode-find` for BitmapIndexedNode
-- [ ] `inode-find` for ArrayNode
-- [ ] `inode-find` for HashCollisionNode
-- [ ] `inode-assoc` for BitmapIndexedNode
-- [ ] `inode-assoc` for ArrayNode
-- [ ] `inode-assoc` for HashCollisionNode
-- [ ] Promotion: BitmapIndexedNode → ArrayNode
-- [ ] create-node for hash collisions
-- [ ] `inode-dissoc` (remove key)
-- [ ] Wire up `generate_map_get` and `generate_map_assoc`
+- [x] Add ARRAY_NODE, HASH_COLLISION_NODE to gc_types
+- [x] Implement `i32.popcnt` wrapper
+- [x] Implement equality check (equiv) for keys
+- [x] `inode-find` for BitmapIndexedNode
+- [x] `inode-find` for ArrayNode
+- [x] `inode-find` for HashCollisionNode
+- [x] `inode-assoc` for BitmapIndexedNode
+- [x] `inode-assoc` for ArrayNode
+- [x] `inode-assoc` for HashCollisionNode
+- [x] Promotion: BitmapIndexedNode → ArrayNode
+- [x] create-node for hash collisions
+- [ ] `inode-dissoc` (remove key) - Future work
+- [x] Wire up `generate_map_get` and `generate_map_assoc`
 
 ### 4.5 Set Implementation
 
 Sets reuse HAMT but store only keys (or key=value):
-- [ ] `generate_set_contains` via inode-find
-- [ ] `generate_set_conj` via inode-assoc
-- [ ] `generate_set_disj` via inode-dissoc
-- [ ] Register PersistentMap and PersistentSet protocol implementations in dispatch table
+- [x] `generate_set_contains` via inode-find
+- [x] `generate_set_conj` via inode-assoc
+- [ ] `generate_set_disj` via inode-dissoc - Future work
+- [x] Register PersistentMap and PersistentSet protocol implementations in dispatch table
 
 ---
 
