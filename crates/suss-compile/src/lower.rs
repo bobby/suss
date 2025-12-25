@@ -1492,8 +1492,12 @@ impl Lowerer {
                 "contains? requires exactly 2 arguments: set and key".into(),
             ));
         }
+        // Arguments to contains? are never in tail position
+        let was_tail = self.in_tail_position;
+        self.in_tail_position = false;
         let set = self.lower_expr(&args[0])?;
         let key = self.lower_expr(&args[1])?;
+        self.in_tail_position = was_tail;
         Ok(Expr::SetContains {
             set: Box::new(set),
             key: Box::new(key),

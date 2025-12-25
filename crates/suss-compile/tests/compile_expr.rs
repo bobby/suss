@@ -132,6 +132,40 @@ fn run_expr_f64(expr: &str) -> f64 {
     }
 }
 
+fn run_expr_bool(expr: &str) -> bool {
+    let mut compiler = Compiler::new();
+    let wasm_bytes = compiler.compile_expr(expr).expect("compilation failed");
+
+    let engine = gc_engine();
+    let module = Module::new(&engine, &wasm_bytes).expect("module creation failed");
+    let mut store = Store::new(&engine, ());
+    let instance = Instance::new(&mut store, &module, &[]).expect("instantiation failed");
+
+    let eval_fn = instance.get_func(&mut store, "eval").expect("eval function not found");
+    let mut results = vec![Val::null_any_ref()];
+    eval_fn.call(&mut store, &[], &mut results).expect("call failed");
+
+    match &results[0] {
+        Val::AnyRef(Some(anyref)) => {
+            match anyref.as_i31(&store) {
+                Ok(Some(i31)) => {
+                    let raw = i31.get_i32();
+                    match raw {
+                        TRUE_SENTINEL => true,
+                        FALSE_SENTINEL => false,
+                        NIL_SENTINEL => false, // nil is falsy
+                        _ => panic!("Expected boolean sentinel, got {}", raw),
+                    }
+                }
+                Ok(None) => panic!("Expected i31ref boolean, got struct/array"),
+                Err(e) => panic!("Error extracting i31: {:?}", e),
+            }
+        }
+        Val::AnyRef(None) => panic!("Got null anyref for bool"),
+        _ => panic!("Unexpected value type for bool: {:?}", results[0]),
+    }
+}
+
 #[test]
 fn test_integer_literal() {
     assert_eq!(run_expr_i32("42"), 42);
@@ -319,6 +353,19 @@ fn test_map_literal() {
 fn test_empty_map() {
     assert!(run_expr_is_gc_struct("{}"));
 }
+
+#[test]
+fn test_map_get() {
+    // Get should return the value for a key
+    assert_eq!(run_expr_i32("(get {1 2} 1)"), 2);
+}
+
+#[test]
+fn test_map_get_empty() {
+    // Get on empty map returns nil (encoded as 0)
+    assert_eq!(run_expr_i32("(get {} 1)"), 0);
+}
+
 
 #[test]
 fn test_set_literal() {
@@ -1013,6 +1060,56 @@ fn test_get_on_vector() {
 }
 
 // =========================================================
+// Polymorphic Collection Operations
+// =========================================================
+
+#[test]
+fn test_polymorphic_first_on_vector() {
+    // first should work on vectors via protocol dispatch
+    assert_eq!(run_expr_i32("(first [42 1 2])"), 42);
+    assert_eq!(run_expr_i32("(first [99])"), 99);
+}
+
+#[test]
+fn test_polymorphic_first_on_empty_vector() {
+    // first on empty vector returns nil (encoded as 0)
+    assert_eq!(run_expr_i32("(first [])"), 0);
+}
+
+#[test]
+fn test_polymorphic_count_on_list() {
+    // count should work on cons lists via protocol dispatch
+    assert_eq!(run_expr_i32("(count (cons 1 nil))"), 1);
+    assert_eq!(run_expr_i32("(count (cons 1 (cons 2 nil)))"), 2);
+    assert_eq!(run_expr_i32("(count (cons 1 (cons 2 (cons 3 nil))))"), 3);
+}
+
+#[test]
+fn test_polymorphic_nth_on_list() {
+    // nth should work on cons lists via protocol dispatch (O(n) traversal)
+    assert_eq!(run_expr_i32("(nth (cons 10 (cons 20 (cons 30 nil))) 0)"), 10);
+    assert_eq!(run_expr_i32("(nth (cons 10 (cons 20 (cons 30 nil))) 1)"), 20);
+    assert_eq!(run_expr_i32("(nth (cons 10 (cons 20 (cons 30 nil))) 2)"), 30);
+}
+
+#[test]
+fn test_polymorphic_mixed_operations() {
+    // Verify operations work correctly on both types in same expression
+    // first on vector + first on list
+    let expr = "(+ (first [100]) (first (cons 23 nil)))";
+    assert_eq!(run_expr_i32(expr), 123);
+}
+
+#[test]
+fn test_polymorphic_count_dispatches_correctly() {
+    // Verify count dispatches to the right implementation
+    // Vector: O(1) field access
+    // List: O(n) traversal
+    assert_eq!(run_expr_i32("(count [1 2 3 4 5])"), 5);
+    assert_eq!(run_expr_i32("(count (cons 1 (cons 2 (cons 3 (cons 4 (cons 5 nil))))))"), 5);
+}
+
+// =========================================================
 // Loop/Recur Tests
 // =========================================================
 
@@ -1100,3 +1197,174 @@ fn test_conj_past_32_boundary() {
     assert_eq!(run_expr_i32(&expr), 33);
 }
 
+// =========================================================
+// HAMT Map Tests
+// =========================================================
+
+#[test]
+fn test_map_get_multiple_entries() {
+    // Get from map with multiple entries
+    assert_eq!(run_expr_i32("(get {1 10 2 20 3 30} 2)"), 20);
+}
+
+#[test]
+fn test_map_get_first_entry() {
+    assert_eq!(run_expr_i32("(get {1 10 2 20 3 30} 1)"), 10);
+}
+
+#[test]
+fn test_map_get_last_entry() {
+    assert_eq!(run_expr_i32("(get {1 10 2 20 3 30} 3)"), 30);
+}
+
+#[test]
+fn test_map_get_missing_key() {
+    // Missing key returns nil (decoded as 0)
+    assert_eq!(run_expr_i32("(get {1 2 3 4} 5)"), 0);
+}
+
+#[test]
+fn test_map_assoc_new_key() {
+    // Assoc adds a new key-value pair
+    assert_eq!(run_expr_i32("(get (assoc {1 2} 3 4) 3)"), 4);
+}
+
+#[test]
+fn test_map_assoc_preserves_existing() {
+    // Assoc preserves existing entries
+    assert_eq!(run_expr_i32("(get (assoc {1 2} 3 4) 1)"), 2);
+}
+
+#[test]
+fn test_map_assoc_update_existing() {
+    // Assoc updates existing key
+    assert_eq!(run_expr_i32("(get (assoc {1 2} 1 99) 1)"), 99);
+}
+
+#[test]
+fn test_map_count() {
+    assert_eq!(run_expr_i32("(count {1 2 3 4 5 6})"), 3);
+}
+
+#[test]
+fn test_map_count_empty() {
+    assert_eq!(run_expr_i32("(count {})"), 0);
+}
+
+#[test]
+fn test_map_let_bound_get() {
+    // Tests protocol dispatch for map lookup
+    assert_eq!(run_expr_i32("(let [m {1 2}] (get m 1))"), 2);
+}
+
+#[test]
+fn test_map_let_bound_assoc() {
+    // Tests protocol dispatch with assoc
+    assert_eq!(run_expr_i32("(let [m {1 2}] (get (assoc m 3 4) 3))"), 4);
+}
+
+#[test]
+fn test_map_chained_assoc() {
+    // Multiple assoc operations
+    assert_eq!(
+        run_expr_i32("(get (assoc (assoc {1 2} 3 4) 5 6) 5)"),
+        6
+    );
+}
+
+// =========================================================
+// HAMT Set Tests
+// =========================================================
+
+#[test]
+fn test_set_contains_true() {
+    // Element is in set
+    assert_eq!(run_expr_bool("(contains? #{1 2 3} 2)"), true);
+}
+
+#[test]
+fn test_set_contains_false() {
+    // Element is not in set
+    assert_eq!(run_expr_bool("(contains? #{1 2 3} 5)"), false);
+}
+
+#[test]
+fn test_set_contains_empty() {
+    // Empty set never contains anything
+    assert_eq!(run_expr_bool("(contains? #{} 1)"), false);
+}
+
+#[test]
+fn test_set_conj_new_element() {
+    // Conj adds a new element
+    assert_eq!(run_expr_bool("(contains? (conj #{1 2} 3) 3)"), true);
+}
+
+#[test]
+fn test_set_conj_preserves_existing() {
+    // Conj preserves existing elements
+    assert_eq!(run_expr_bool("(contains? (conj #{1 2} 3) 1)"), true);
+}
+
+#[test]
+fn test_set_count() {
+    assert_eq!(run_expr_i32("(count #{1 2 3 4 5})"), 5);
+}
+
+#[test]
+fn test_set_count_empty() {
+    assert_eq!(run_expr_i32("(count #{})"), 0);
+}
+
+#[test]
+fn test_set_let_bound_contains() {
+    // Tests protocol dispatch for set contains
+    assert_eq!(run_expr_bool("(let [s #{1 2 3}] (contains? s 2))"), true);
+}
+
+#[test]
+fn test_set_let_bound_conj() {
+    // Tests protocol dispatch with conj
+    assert_eq!(
+        run_expr_bool("(let [s #{1 2}] (contains? (conj s 3) 3))"),
+        true
+    );
+}
+
+#[test]
+fn test_set_chained_conj() {
+    // Multiple conj operations
+    assert_eq!(
+        run_expr_i32("(count (conj (conj (conj #{} 1) 2) 3))"),
+        3
+    );
+}
+
+
+#[test]
+fn dump_wasm_for_debug() {
+    let expr = "(conj (conj #{} 1) 2)";
+    let mut compiler = Compiler::new();
+    let wasm = compiler.compile_expr(expr).unwrap();
+    std::fs::write("/tmp/set_conj.wasm", &wasm).unwrap();
+    eprintln!("Wrote {} bytes to /tmp/set_conj.wasm", wasm.len());
+}
+
+#[test]
+fn dump_vec_wasm_for_debug() {
+    let expr = "(conj (conj [] 1) 2)";
+    let mut compiler = Compiler::new();
+    let wasm = compiler.compile_expr(expr).unwrap();
+    std::fs::write("/tmp/vec_conj.wasm", &wasm).unwrap();
+    eprintln!("Wrote {} bytes to /tmp/vec_conj.wasm", wasm.len());
+}
+
+#[test]
+fn dump_set_count_dispatch_for_debug() {
+    // This test goes through dispatch for count on a non-literal set
+    let expr = "(let [s #{1}] (count s))";
+    let mut compiler = Compiler::new();
+    let wasm = compiler.compile_expr(expr).unwrap();
+    std::fs::write("/tmp/set_count_dispatch.wasm", &wasm).unwrap();
+    eprintln!("Wrote {} bytes to /tmp/set_count_dispatch.wasm", wasm.len());
+}

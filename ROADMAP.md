@@ -119,10 +119,14 @@ Use seed=0 for deterministic hashing across all platforms. This ensures:
 - get-type-id function: O(n) ref.test chain (O(1) needs struct subtyping)
 - Dispatch table infrastructure with call_indirect
 - Table-based dispatch for all protocol methods
+- Polymorphic lowerer: `nth`, `count`, `first`, `rest` work on vectors AND lists
+  - Vector: `first` returns element 0 or nil; `rest` returns nil (TODO: proper seq)
+  - Cons: `count` and `nth` via O(n) traversal
 
 **Remaining:**
 - User-defined protocols (`defprotocol`, `extend-type`)
-- Polymorphic lowerer (make `nth`/`get`/`count` work on any collection type)
+- Vector `rest` returning proper seq (requires ChunkedSeq/IndexedSeq types)
+- Map/Set polymorphic operations (requires HAMT - Phase 4)
 
 ### 2.1 Design: Hybrid Dispatch
 
@@ -289,23 +293,23 @@ table[6][100] = vec-to-json-fn   ;; type_id=6 (PersistentVector), method_id=100
 ### 2.8 Implementation Tasks
 
 **Core infrastructure:**
-- [ ] Define `$UserValue` struct type with `$tag` field
-- [ ] Implement `$get-type-id` function
-- [ ] Create dispatch table in module
-- [ ] Implement `$dispatch` lookup function
+- [ ] Define `$UserValue` struct type with `$tag` field (for user-defined types)
+- [x] Implement `$get-type-id` function
+- [x] Create dispatch table in module
+- [x] Implement `$dispatch` lookup function (via call_indirect)
 
 **Built-in protocol dispatch:**
-- [ ] Add method IDs for core protocols (ILookup, ICounted, IIndexed, etc.)
-- [ ] Populate dispatch table for built-in types
-- [ ] Implement fast-path detection in codegen (type known at compile time)
-- [ ] Generate slow-path dispatch for unknown types
+- [x] Add method IDs for core protocols (ILookup, ICounted, IIndexed, etc.)
+- [x] Populate dispatch table for built-in types
+- [x] Implement fast-path detection in codegen (type known at compile time)
+- [x] Generate slow-path dispatch for unknown types
 
 **Lowerer changes:**
-- [ ] Change `nth` to emit polymorphic dispatch (not just VecNth)
-- [ ] Change `get` to emit polymorphic dispatch (not just MapGet)
-- [ ] Change `count` to emit polymorphic dispatch
-- [ ] Change `conj` to emit polymorphic dispatch
-- [ ] Change `first`/`rest` to emit polymorphic dispatch
+- [x] Change `nth` to emit polymorphic dispatch (not just VecNth)
+- [ ] Change `get` to emit polymorphic dispatch (not just MapGet) - needs HAMT
+- [x] Change `count` to emit polymorphic dispatch
+- [x] Change `conj` to emit polymorphic dispatch
+- [x] Change `first`/`rest` to emit polymorphic dispatch
 
 **User protocol support:**
 - [ ] Parse `defprotocol` form

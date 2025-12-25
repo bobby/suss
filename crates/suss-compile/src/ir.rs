@@ -42,25 +42,42 @@ pub mod gc_types {
     /// struct { first: eqref, rest: eqref } - cons cell for persistent lists
     pub const CONS: u32 = 4;
 
-    /// struct { bitmap: i32, children: array<eqref> } - HAMT node for maps/sets
-    /// bitmap indicates which of 32 slots are occupied
-    /// children array is sparse (only occupied slots)
-    pub const HAMT_NODE: u32 = 5;
+    // =========================================================================
+    // HAMT Node Types (for maps and sets)
+    // =========================================================================
 
-    /// struct { cnt: i32, shift: i32, root: eqref, tail: eqref }
+    /// struct { type_id: i32, bitmap: i32, arr: eqref }
+    /// Sparse HAMT node with ≤16 entries
+    /// arr contains [key0, val0, key1, val1, ..., null, child, ...]
+    pub const BITMAP_INDEXED_NODE: u32 = 5;
+
+    /// struct { type_id: i32, cnt: i32, arr: eqref }
+    /// Dense HAMT node with >16 entries (32 slots, direct indexing)
+    pub const ARRAY_NODE: u32 = 6;
+
+    /// struct { type_id: i32, hash: i32, cnt: i32, arr: eqref }
+    /// Collision node for keys with same hash
+    /// arr contains [key0, val0, key1, val1, ...] for linear scan
+    pub const HASH_COLLISION_NODE: u32 = 7;
+
+    // =========================================================================
+    // Collection Types
+    // =========================================================================
+
+    /// struct { type_id: i32, cnt: i32, shift: i32, root: eqref, tail: eqref }
     /// ClojureScript-style 32-way bit-partitioned vector trie
-    pub const PERSISTENT_VECTOR: u32 = 6;
+    pub const PERSISTENT_VECTOR: u32 = 8;
 
-    /// struct { cnt: i32, root: eqref }
+    /// struct { type_id: i32, cnt: i32, root: eqref }
     /// Hash Array Mapped Trie (HAMT) for O(log32 n) operations
-    pub const PERSISTENT_MAP: u32 = 7;
+    pub const PERSISTENT_MAP: u32 = 9;
 
-    /// struct { cnt: i32, root: eqref }
+    /// struct { type_id: i32, cnt: i32, root: eqref }
     /// HAMT-based set (same structure as map but entries are keys only)
-    pub const PERSISTENT_SET: u32 = 8;
+    pub const PERSISTENT_SET: u32 = 10;
 
     /// Number of GC types defined (for type index offset calculation)
-    pub const NUM_GC_TYPES: u32 = 9;
+    pub const NUM_GC_TYPES: u32 = 11;
 
     // =========================================================================
     // i31ref Sentinel Values
@@ -191,6 +208,22 @@ pub mod gc_types {
     pub const PS_CNT: u32 = 1;   // was 0
     pub const PS_ROOT: u32 = 2;  // was 1
 
+    /// BITMAP_INDEXED_NODE field indices
+    pub const BIN_TYPE_ID: u32 = 0;
+    pub const BIN_BITMAP: u32 = 1;
+    pub const BIN_ARR: u32 = 2;
+
+    /// ARRAY_NODE field indices
+    pub const AN_TYPE_ID: u32 = 0;
+    pub const AN_CNT: u32 = 1;
+    pub const AN_ARR: u32 = 2;
+
+    /// HASH_COLLISION_NODE field indices
+    pub const HCN_TYPE_ID: u32 = 0;
+    pub const HCN_HASH: u32 = 1;
+    pub const HCN_CNT: u32 = 2;
+    pub const HCN_ARR: u32 = 3;
+
     /// CONS field indices (after type_id)
     pub const CONS_FIRST: u32 = 1; // was 0
     pub const CONS_REST: u32 = 2;  // was 1
@@ -220,7 +253,13 @@ pub mod type_ids {
     pub const STRING: i32 = super::gc_types::STRING as i32;
     pub const TRIE_NODE: i32 = super::gc_types::TRIE_NODE as i32;
     pub const CONS: i32 = super::gc_types::CONS as i32;
-    pub const HAMT_NODE: i32 = super::gc_types::HAMT_NODE as i32;
+
+    // HAMT node types
+    pub const BITMAP_INDEXED_NODE: i32 = super::gc_types::BITMAP_INDEXED_NODE as i32;
+    pub const ARRAY_NODE: i32 = super::gc_types::ARRAY_NODE as i32;
+    pub const HASH_COLLISION_NODE: i32 = super::gc_types::HASH_COLLISION_NODE as i32;
+
+    // Collection types
     pub const PERSISTENT_VECTOR: i32 = super::gc_types::PERSISTENT_VECTOR as i32;
     pub const PERSISTENT_MAP: i32 = super::gc_types::PERSISTENT_MAP as i32;
     pub const PERSISTENT_SET: i32 = super::gc_types::PERSISTENT_SET as i32;
@@ -1024,7 +1063,9 @@ mod tests {
             gc_types::STRING,
             gc_types::TRIE_NODE,
             gc_types::CONS,
-            gc_types::HAMT_NODE,
+            gc_types::BITMAP_INDEXED_NODE,
+            gc_types::ARRAY_NODE,
+            gc_types::HASH_COLLISION_NODE,
             gc_types::PERSISTENT_VECTOR,
             gc_types::PERSISTENT_MAP,
             gc_types::PERSISTENT_SET,

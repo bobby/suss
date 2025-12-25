@@ -139,3 +139,69 @@ Source files declare their target world with `gen-world` in the namespace:
 - `SussConfig` - Loaded from deps.suss, contains worlds and src-paths
 - `WorldConfig` - WIT path and output path for a world
 - `AnalyzedModule` - Parsed source with namespace, world_target, functions
+
+## Debugging WASM Issues
+
+### Dumping WASM for Inspection
+
+Add a test in `compile_expr.rs` to dump WASM to a file:
+```rust
+#[test]
+fn dump_wasm_for_debug() {
+    let expr = "(your expression here)";
+    let mut compiler = Compiler::new();
+    let wasm = compiler.compile_expr(expr).unwrap();
+    std::fs::write("/tmp/debug.wasm", &wasm).unwrap();
+}
+```
+
+Then run: `RUSTFLAGS="-A warnings" cargo test -p suss-compile --test compile_expr dump_wasm`
+
+### Inspecting WASM
+
+```bash
+# Validate WASM
+wasm-tools validate --features gc /tmp/debug.wasm
+
+# Disassemble to WAT format
+wasm-tools print /tmp/debug.wasm > /tmp/debug.wat
+
+# Print with instruction offsets (for backtrace debugging)
+wasm-tools print --print-offsets /tmp/debug.wasm
+
+# Show section overview
+wasm-tools objdump /tmp/debug.wasm
+
+# Run directly with wasmtime
+~/.wasmtime/bin/wasmtime run -W gc --invoke eval /tmp/debug.wasm
+```
+
+### Debugging Dispatch Table Issues
+
+When debugging `call_indirect` issues with the protocol dispatch table:
+
+1. **Verify element sections**: `grep "(elem" /tmp/debug.wat`
+2. **Check table size**: `grep "(table" /tmp/debug.wat`
+3. **Verify function types**: `grep "type (;N;)" /tmp/debug.wat`
+4. **Compare with working case**: Dump both working and failing WASM and diff them
+
+Key dispatch table facts:
+- Table size: 160 (16 type slots × 10 method slots)
+- Index formula: `type_id * 10 + method_id`
+- Common indices: VEC_CONJ=84, SET_COUNT=102, SET_CONJ=104
+
+### Isolating Runtime Issues
+
+To test if an issue is with the computed index vs the table itself:
+1. Modify the WAT to use hardcoded index: replace dynamic calculation with `i32.const <index>`
+2. If hardcoded works but dynamic fails, the issue is in index calculation
+3. If hardcoded also fails, the issue is in table initialization
+
+### Roundtripping Through WAT
+
+```bash
+# Convert WASM → WAT → WASM to verify encoding
+wasm-tools print /tmp/debug.wasm > /tmp/debug.wat
+wasm-tools parse /tmp/debug.wat -o /tmp/debug_round.wasm
+~/.wasmtime/bin/wasmtime run -W gc --invoke eval /tmp/debug_round.wasm
+```
