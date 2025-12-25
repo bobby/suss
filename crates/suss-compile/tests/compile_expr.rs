@@ -1339,32 +1339,3 @@ fn test_set_chained_conj() {
         3
     );
 }
-
-
-#[test]
-fn dump_wasm_for_debug() {
-    let expr = "(conj (conj #{} 1) 2)";
-    let mut compiler = Compiler::new();
-    let wasm = compiler.compile_expr(expr).unwrap();
-    std::fs::write("/tmp/set_conj.wasm", &wasm).unwrap();
-    eprintln!("Wrote {} bytes to /tmp/set_conj.wasm", wasm.len());
-}
-
-#[test]
-fn dump_vec_wasm_for_debug() {
-    let expr = "(conj (conj [] 1) 2)";
-    let mut compiler = Compiler::new();
-    let wasm = compiler.compile_expr(expr).unwrap();
-    std::fs::write("/tmp/vec_conj.wasm", &wasm).unwrap();
-    eprintln!("Wrote {} bytes to /tmp/vec_conj.wasm", wasm.len());
-}
-
-#[test]
-fn dump_set_count_dispatch_for_debug() {
-    // This test goes through dispatch for count on a non-literal set
-    let expr = "(let [s #{1}] (count s))";
-    let mut compiler = Compiler::new();
-    let wasm = compiler.compile_expr(expr).unwrap();
-    std::fs::write("/tmp/set_count_dispatch.wasm", &wasm).unwrap();
-    eprintln!("Wrote {} bytes to /tmp/set_count_dispatch.wasm", wasm.len());
-}

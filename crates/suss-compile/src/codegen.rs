@@ -5657,23 +5657,8 @@ impl<'a> CodeGen<'a> {
         }
 
         // Add scratch locals for internal codegen (protocol dispatch, set conj, etc.)
-        // Index starts at: num_params (converted eqref params) + body_locals
-        // But WIT functions have an extra layer: WIT params are at 0..num_params,
-        // converted params at num_params..2*num_params
-        // So scratch_base = num_params + body_locals_count = num_params + (func.locals.len() - num_params) = func.locals.len()
-        // But we need to account for the converted params too:
-        // Final layout: wit_params, converted_params, body_locals, scratch
-        // Scratch starts at: num_params (converted) + body_locals.len = num_params + (func.locals.len() - num_params) = func.locals.len()
-        // Wait, local indices in the generated code:
-        //   0..num_params = WIT params (params)
-        //   num_params..2*num_params = converted eqref (first locals we declared)
-        //   2*num_params..(2*num_params + body_count) = body locals
-        // So scratch_base = num_params + body_count = num_params + (func.locals.len() - num_params) = func.locals.len()
-        // But local_types only includes declared locals, not params!
-        // local_types has: converted_params (num_params) + body_locals (func.locals.len() - num_params)
-        // = func.locals.len() entries before scratch
-        // Local indices: 0..num_params are params, then local_types indices start
-        // So scratch_base = num_params + local_types.len() so far
+        // Local layout: [WIT params | converted params | body locals | scratch]
+        // scratch_base = num_params + local_types.len() (params + declared locals so far)
         let scratch_base = num_params + local_types.len() as u32;
         self.scratch_local.set(scratch_base);
 
