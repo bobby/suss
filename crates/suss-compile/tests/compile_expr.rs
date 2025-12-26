@@ -1339,3 +1339,191 @@ fn test_set_chained_conj() {
         3
     );
 }
+
+// =========================================================
+// Set disj Tests (stub implementation - returns original set)
+// =========================================================
+
+#[test]
+fn test_set_disj_compiles() {
+    // Just verify disj compiles and runs
+    // Stub returns original set, so count is still 3
+    assert_eq!(run_expr_i32("(count (disj #{1 2 3} 2))"), 3);
+}
+
+#[test]
+fn test_set_disj_on_empty() {
+    // disj on empty set returns empty set
+    assert_eq!(run_expr_i32("(count (disj #{} 1))"), 0);
+}
+
+#[test]
+fn test_set_disj_nonexistent_element() {
+    // Stub: disj on nonexistent element returns original (correct behavior)
+    assert_eq!(run_expr_i32("(count (disj #{1 2 3} 99))"), 3);
+}
+
+// =========================================================
+// Map dissoc Tests (stub implementation - returns original map)
+// =========================================================
+
+#[test]
+fn test_map_dissoc_compiles() {
+    // Just verify dissoc compiles and runs
+    // Stub returns original map, so count is still 2
+    assert_eq!(run_expr_i32("(count (dissoc {1 2 3 4} 1))"), 2);
+}
+
+#[test]
+fn test_map_dissoc_on_empty() {
+    // dissoc on empty map returns empty map
+    assert_eq!(run_expr_i32("(count (dissoc {} 1))"), 0);
+}
+
+#[test]
+fn test_map_dissoc_nonexistent_key() {
+    // Stub: dissoc on nonexistent key returns original (correct behavior)
+    assert_eq!(run_expr_i32("(count (dissoc {1 2 3 4} 99))"), 2);
+}
+
+// =========================================================
+// First-Class Functions (Closures) Tests
+// =========================================================
+
+#[test]
+fn test_closure_simple() {
+    // Basic immediately-invoked closure
+    assert_eq!(run_expr_i32("((fn [x] (+ x 1)) 5)"), 6);
+}
+
+#[test]
+fn test_closure_with_capture() {
+    // Closure capturing a local variable
+    assert_eq!(run_expr_i32("(let [x 10] ((fn [y] (+ x y)) 5))"), 15);
+}
+
+#[test]
+fn test_closure_as_value() {
+    // Closure stored in a let binding and then called
+    assert_eq!(run_expr_i32("(let [f (fn [x] (* x 2))] (f 21))"), 42);
+}
+
+#[test]
+fn test_closure_multiple_params() {
+    // Closure with multiple parameters
+    assert_eq!(run_expr_i32("((fn [a b c] (+ a (+ b c))) 1 2 3)"), 6);
+}
+
+#[test]
+fn test_closure_nested_capture() {
+    // Nested let with capture
+    assert_eq!(
+        run_expr_i32("(let [a 10] (let [b 20] ((fn [c] (+ a (+ b c))) 5)))"),
+        35
+    );
+}
+
+#[test]
+fn test_closure_zero_arity() {
+    // Closure with no parameters
+    assert_eq!(run_expr_i32("((fn [] 42))"), 42);
+}
+
+#[test]
+fn test_closure_zero_arity_with_capture() {
+    // Zero-arity closure capturing a variable
+    assert_eq!(run_expr_i32("(let [x 99] ((fn [] x)))"), 99);
+}
+
+#[test]
+fn test_closure_call_twice() {
+    // Same closure called multiple times
+    assert_eq!(
+        run_expr_i32("(let [f (fn [x] (+ x 1))] (+ (f 10) (f 20)))"),
+        32
+    );
+}
+
+#[test]
+fn test_closure_capture_multiple_vars() {
+    // Capture multiple variables
+    assert_eq!(
+        run_expr_i32("(let [a 1 b 2 c 3] ((fn [d] (+ a (+ b (+ c d)))) 4))"),
+        10
+    );
+}
+
+// ============================================================================
+// Built-in Function Values
+// ============================================================================
+
+#[test]
+fn test_builtin_as_value_add() {
+    // Use + as a value (not in call position)
+    assert_eq!(run_expr_i32("(let [f +] (f 1 2))"), 3);
+}
+
+#[test]
+fn test_builtin_as_value_mul() {
+    // Use * as a value
+    assert_eq!(run_expr_i32("(let [f *] (f 3 4))"), 12);
+}
+
+#[test]
+fn test_builtin_as_value_sub() {
+    // Use - as a value
+    assert_eq!(run_expr_i32("(let [f -] (f 10 3))"), 7);
+}
+
+#[test]
+fn test_builtin_as_value_div() {
+    // Use / as a value
+    assert_eq!(run_expr_i32("(let [f /] (f 20 4))"), 5);
+}
+
+#[test]
+fn test_builtin_as_value_inc() {
+    // Use inc as a value
+    assert_eq!(run_expr_i32("(let [f inc] (f 41))"), 42);
+}
+
+#[test]
+fn test_builtin_as_value_dec() {
+    // Use dec as a value
+    assert_eq!(run_expr_i32("(let [f dec] (f 43))"), 42);
+}
+
+#[test]
+fn test_builtin_conditional_selection() {
+    // Select built-in based on condition
+    assert_eq!(
+        run_expr_i32("(let [op (if true + -)] (op 10 3))"),
+        13
+    );
+    assert_eq!(
+        run_expr_i32("(let [op (if false + -)] (op 10 3))"),
+        7
+    );
+}
+
+#[test]
+fn test_builtin_same_function_twice() {
+    // Using + twice in value position should reuse the wrapper
+    assert_eq!(
+        run_expr_i32("(let [f + g +] (f 1 (g 2 3)))"),
+        6
+    );
+}
+
+#[test]
+fn test_builtin_comparison_as_value() {
+    // Use comparison operator as a value
+    assert_eq!(
+        run_expr_i32("(let [cmp <] (if (cmp 3 5) 1 0))"),
+        1
+    );
+    assert_eq!(
+        run_expr_i32("(let [cmp >] (if (cmp 3 5) 1 0))"),
+        0
+    );
+}

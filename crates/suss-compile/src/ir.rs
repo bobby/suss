@@ -76,8 +76,93 @@ pub mod gc_types {
     /// HAMT-based set (same structure as map but entries are keys only)
     pub const PERSISTENT_SET: u32 = 10;
 
+    // =========================================================================
+    // Closure Function Types (typed funcrefs for efficient call_ref)
+    // Must be defined BEFORE closure structs so structs can reference them.
+    // Signature: (env: eqref, args...) -> eqref
+    // =========================================================================
+
+    /// Function type for closure arity 0: (env) -> result
+    pub const CLOSURE_FN_0: u32 = 11;
+    /// Function type for closure arity 1: (env, arg1) -> result
+    pub const CLOSURE_FN_1: u32 = 12;
+    /// Function type for closure arity 2: (env, arg1, arg2) -> result
+    pub const CLOSURE_FN_2: u32 = 13;
+    /// Function type for closure arity 3
+    pub const CLOSURE_FN_3: u32 = 14;
+    /// Function type for closure arity 4
+    pub const CLOSURE_FN_4: u32 = 15;
+    /// Function type for closure arity 5
+    pub const CLOSURE_FN_5: u32 = 16;
+    /// Function type for closure arity 6
+    pub const CLOSURE_FN_6: u32 = 17;
+    /// Function type for closure arity 7
+    pub const CLOSURE_FN_7: u32 = 18;
+    /// Function type for closure arity 8
+    pub const CLOSURE_FN_8: u32 = 19;
+
+    /// Get the closure function type index for a given arity (0-8)
+    #[inline]
+    pub const fn closure_fn_type_for_arity(arity: u32) -> u32 {
+        debug_assert!(arity <= 8, "Closure arity must be 0-8");
+        CLOSURE_FN_0 + arity
+    }
+
+    // =========================================================================
+    // Closure Struct Types (per-arity for typed function references)
+    // Each closure has: type_id, env (captured values), fn (typed funcref)
+    // Using typed non-null funcrefs avoids runtime type checks on call_ref
+    // =========================================================================
+
+    /// struct { type_id: i32, env: (ref null $trie_node), fn: (ref $closure_fn_0) }
+    /// Closure struct with arity 0 (no arguments)
+    pub const CLOSURE_0: u32 = 20;
+
+    /// Closure struct with arity 1
+    pub const CLOSURE_1: u32 = 21;
+
+    /// Closure struct with arity 2
+    pub const CLOSURE_2: u32 = 22;
+
+    /// Closure struct with arity 3
+    pub const CLOSURE_3: u32 = 23;
+
+    /// Closure struct with arity 4
+    pub const CLOSURE_4: u32 = 24;
+
+    /// Closure struct with arity 5
+    pub const CLOSURE_5: u32 = 25;
+
+    /// Closure struct with arity 6
+    pub const CLOSURE_6: u32 = 26;
+
+    /// Closure struct with arity 7
+    pub const CLOSURE_7: u32 = 27;
+
+    /// Closure struct with arity 8
+    pub const CLOSURE_8: u32 = 28;
+
     /// Number of GC types defined (for type index offset calculation)
-    pub const NUM_GC_TYPES: u32 = 11;
+    /// Includes: 11 base types + 9 closure fn types + 9 closure struct types = 29
+    pub const NUM_GC_TYPES: u32 = 29;
+
+    /// Get the closure struct type index for a given arity (0-8)
+    #[inline]
+    pub const fn closure_type_for_arity(arity: u32) -> u32 {
+        debug_assert!(arity <= 8, "Closure arity must be 0-8");
+        CLOSURE_0 + arity
+    }
+
+    // =========================================================================
+    // Closure Field Indices
+    // =========================================================================
+
+    /// Closure type_id field (identifies arity for protocol dispatch)
+    pub const CL_TYPE_ID: u32 = 0;
+    /// Closure environment field (array of captured values)
+    pub const CL_ENV: u32 = 1;
+    /// Closure function field (typed funcref)
+    pub const CL_FN: u32 = 2;
 
     // =========================================================================
     // i31ref Sentinel Values
@@ -263,6 +348,17 @@ pub mod type_ids {
     pub const PERSISTENT_VECTOR: i32 = super::gc_types::PERSISTENT_VECTOR as i32;
     pub const PERSISTENT_MAP: i32 = super::gc_types::PERSISTENT_MAP as i32;
     pub const PERSISTENT_SET: i32 = super::gc_types::PERSISTENT_SET as i32;
+
+    // Closure types (one per arity for IFn protocol dispatch)
+    pub const CLOSURE_0: i32 = super::gc_types::CLOSURE_0 as i32;
+    pub const CLOSURE_1: i32 = super::gc_types::CLOSURE_1 as i32;
+    pub const CLOSURE_2: i32 = super::gc_types::CLOSURE_2 as i32;
+    pub const CLOSURE_3: i32 = super::gc_types::CLOSURE_3 as i32;
+    pub const CLOSURE_4: i32 = super::gc_types::CLOSURE_4 as i32;
+    pub const CLOSURE_5: i32 = super::gc_types::CLOSURE_5 as i32;
+    pub const CLOSURE_6: i32 = super::gc_types::CLOSURE_6 as i32;
+    pub const CLOSURE_7: i32 = super::gc_types::CLOSURE_7 as i32;
+    pub const CLOSURE_8: i32 = super::gc_types::CLOSURE_8 as i32;
 
     /// User-defined types start at 256 (room for future built-ins)
     pub const USER_TYPE_BASE: i32 = 256;
@@ -513,9 +609,6 @@ pub enum Type {
         params: Vec<Type>,
         result: Box<Type>,
     },
-    /// Tagged runtime value (i64 with Fressian tag in high byte)
-    /// Used for polymorphic values that need runtime type dispatch
-    Tagged,
     /// GC reference type (eqref in WASM GC)
     /// Used for all values in GC mode - nil, bools, ints, floats, collections
     GcRef,
@@ -537,7 +630,6 @@ impl Type {
             Type::Map(_, _) => 8, // ptr + len
             Type::Set(_) => 8, // ptr + len
             Type::Func { .. } => 4, // function table index
-            Type::Tagged => 8, // i64 tagged value
             Type::GcRef => 4, // GC reference (eqref)
             Type::Unknown => 0,
         }
@@ -583,14 +675,6 @@ impl Expr {
             Expr::Let { body, .. } => body.expr_type(),
             Expr::Loop { body, .. } => body.expr_type(),
             Expr::Recur(_) => Type::Unknown, // Never returns normally
-            // Tagged value operations always produce/consume i64
-            Expr::MakeTagged { .. } => Type::Tagged,
-            Expr::GetTag(_) => Type::I32, // Tag is 8-bit but stored in i32
-            Expr::GetPayload(_) => Type::I64, // 56-bit payload as i64
-            // Heap operations
-            Expr::Alloc(_) => Type::I32, // Heap pointer fits in i32
-            Expr::HeapStore { .. } => Type::Unit,
-            Expr::HeapLoad { .. } => Type::I64,
 
             // GC operations - all produce GC references or i32
             Expr::I31New(_) => Type::GcRef,
@@ -616,11 +700,13 @@ impl Expr {
             Expr::MapNew(_) => Type::GcRef,
             Expr::MapGet { .. } => Type::GcRef,
             Expr::MapAssoc { .. } => Type::GcRef,
+            Expr::MapDissoc { .. } => Type::GcRef,
             Expr::MapCount(_) => Type::I32,
 
             Expr::SetNew(_) => Type::GcRef,
             Expr::SetContains { .. } => Type::I32, // Boolean result
             Expr::SetConj { .. } => Type::GcRef,
+            Expr::SetDisj { .. } => Type::GcRef,
             Expr::SetCount(_) => Type::I32,
 
             Expr::ListFirst(_) => Type::GcRef,
@@ -633,6 +719,10 @@ impl Expr {
             Expr::ProtocolDispatch { .. } => Type::GcRef,
             // GetTypeId returns i32 type ID
             Expr::GetTypeId(_) => Type::I32,
+
+            // Closure operations return GcRef
+            Expr::ClosureNew { .. } => Type::GcRef,
+            Expr::ClosureCall { .. } => Type::GcRef,
         }
     }
 }
@@ -731,36 +821,6 @@ pub enum Expr {
         expr: Box<Expr>,
         from: Type,
         to: Type,
-    },
-
-    // Tagged value operations
-    /// Create a tagged value from tag byte and payload expression
-    MakeTagged {
-        tag: u8,
-        payload: Box<Expr>,
-    },
-
-    /// Extract the 8-bit tag from a tagged i64 value
-    GetTag(Box<Expr>),
-
-    /// Extract the 56-bit payload from a tagged i64 value
-    GetPayload(Box<Expr>),
-
-    // Heap operations
-    /// Allocate bytes on the heap, returns heap pointer
-    Alloc(Box<Expr>),
-
-    /// Store an i64 value to heap memory
-    HeapStore {
-        base: Box<Expr>,
-        offset: u32,
-        value: Box<Expr>,
-    },
-
-    /// Load an i64 value from heap memory
-    HeapLoad {
-        base: Box<Expr>,
-        offset: u32,
     },
 
     // =========================================================================
@@ -883,6 +943,12 @@ pub enum Expr {
         val: Box<Expr>,
     },
 
+    /// Remove key from map (returns new map)
+    MapDissoc {
+        map: Box<Expr>,
+        key: Box<Expr>,
+    },
+
     /// Get count of persistent map
     MapCount(Box<Expr>),
 
@@ -902,6 +968,12 @@ pub enum Expr {
 
     /// Add element to set (returns new set)
     SetConj {
+        set: Box<Expr>,
+        val: Box<Expr>,
+    },
+
+    /// Remove element from set (returns new set)
+    SetDisj {
         set: Box<Expr>,
         val: Box<Expr>,
     },
@@ -962,6 +1034,44 @@ pub enum Expr {
     ///
     /// Used internally by ProtocolDispatch; rarely needed directly.
     GetTypeId(Box<Expr>),
+
+    // =========================================================================
+    // First-Class Functions (Closures)
+    // Uses WASM 3.0 typed function references for efficient invocation
+    // =========================================================================
+
+    /// Create a closure from a function index and captured values.
+    ///
+    /// The wrapper function has signature: (env: eqref, args...) -> eqref
+    /// where env is an array containing the captured values.
+    ///
+    /// Generates:
+    /// 1. Create env array from captures
+    /// 2. Create Closure struct with typed funcref
+    ClosureNew {
+        /// Index of the wrapper function (takes env as first param)
+        func_idx: u32,
+        /// Number of parameters (excluding env)
+        arity: u32,
+        /// Expressions for values to capture in the environment
+        captures: Vec<Expr>,
+    },
+
+    /// Call a closure value.
+    ///
+    /// At runtime:
+    /// 1. Extract env and fn from closure struct
+    /// 2. Push env as first argument
+    /// 3. Push actual arguments
+    /// 4. call_ref with typed funcref (no runtime type check!)
+    ClosureCall {
+        /// Expression that evaluates to a closure
+        closure: Box<Expr>,
+        /// Arguments to pass to the closure
+        args: Vec<Expr>,
+        /// Whether this call is in tail position (enables return_call_ref)
+        in_tail_position: bool,
+    },
 }
 
 /// Binary operators
@@ -1058,6 +1168,7 @@ mod tests {
     fn test_gc_type_indices() {
         // Verify type indices are unique and contiguous
         let indices = [
+            // Base types (0-10)
             gc_types::LARGE_INT,
             gc_types::FLOAT,
             gc_types::STRING,
@@ -1069,10 +1180,44 @@ mod tests {
             gc_types::PERSISTENT_VECTOR,
             gc_types::PERSISTENT_MAP,
             gc_types::PERSISTENT_SET,
+            // Closure function types (11-19)
+            gc_types::CLOSURE_FN_0,
+            gc_types::CLOSURE_FN_1,
+            gc_types::CLOSURE_FN_2,
+            gc_types::CLOSURE_FN_3,
+            gc_types::CLOSURE_FN_4,
+            gc_types::CLOSURE_FN_5,
+            gc_types::CLOSURE_FN_6,
+            gc_types::CLOSURE_FN_7,
+            gc_types::CLOSURE_FN_8,
+            // Closure struct types (20-28)
+            gc_types::CLOSURE_0,
+            gc_types::CLOSURE_1,
+            gc_types::CLOSURE_2,
+            gc_types::CLOSURE_3,
+            gc_types::CLOSURE_4,
+            gc_types::CLOSURE_5,
+            gc_types::CLOSURE_6,
+            gc_types::CLOSURE_7,
+            gc_types::CLOSURE_8,
         ];
         for (i, idx) in indices.iter().enumerate() {
             assert_eq!(*idx, i as u32, "type index {} should be {}", idx, i);
         }
         assert_eq!(gc_types::NUM_GC_TYPES, indices.len() as u32);
+    }
+
+    #[test]
+    fn test_closure_type_for_arity() {
+        // Closure function types
+        assert_eq!(gc_types::closure_fn_type_for_arity(0), gc_types::CLOSURE_FN_0);
+        assert_eq!(gc_types::closure_fn_type_for_arity(1), gc_types::CLOSURE_FN_1);
+        assert_eq!(gc_types::closure_fn_type_for_arity(8), gc_types::CLOSURE_FN_8);
+
+        // Closure struct types
+        assert_eq!(gc_types::closure_type_for_arity(0), gc_types::CLOSURE_0);
+        assert_eq!(gc_types::closure_type_for_arity(1), gc_types::CLOSURE_1);
+        assert_eq!(gc_types::closure_type_for_arity(2), gc_types::CLOSURE_2);
+        assert_eq!(gc_types::closure_type_for_arity(8), gc_types::CLOSURE_8);
     }
 }

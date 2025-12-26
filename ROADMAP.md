@@ -1,6 +1,284 @@
 # Suss Roadmap
 
+> **Suss requires WASM GC.** All execution uses WASM GC types (structs, arrays, i31ref). There is no non-GC fallback mode.
+
 This roadmap aligns with ClojureScript's proven persistent data structure implementations.
+
+---
+
+## 🎯 Priority Zero: Compositional Primitives
+
+> **Goal:** Stop modifying the compiler for each new feature. Build the primitives that let Suss extend itself.
+
+### The Problem
+
+Currently, every new control-flow construct requires Rust code changes:
+
+```
+lower_cond()    → 50 lines of Rust in lower.rs
+lower_when()    → 30 lines of Rust in lower.rs
+lower_and()     → 30 lines of Rust in lower.rs
+lower_case()    → 55 lines of Rust in lower.rs
+```
+
+In Clojure, these are all **macros** - code that writes code, written in Clojure itself. We're doing the compiler's job by hand for each one.
+
+### The Solution: Four Fundamental Primitives
+
+Once we have these, new features become library code, not compiler changes:
+
+| Primitive | Enables | Status |
+|-----------|---------|--------|
+| **First-class functions** | `map`, `filter`, `reduce`, higher-order programming | ❌ Missing |
+| **apply** | `(apply + [1 2 3])`, variadic dispatch | ❌ Missing |
+| **Macros** | `cond`, `when`, `->`, `for`, `core.async` | ❌ Missing |
+| **User protocols** | `defprotocol`, `extend-type`, abstraction | 🔶 Partial |
+
+### P0.1: First-Class Functions (Closures)
+
+Functions must become **values** that can be passed, returned, and stored.
+
+**Key WASM features:** WASM 3.0 Typed Function References (`ref.func`, `call_ref`) enable efficient first-class functions without runtime type checks. See [References](#references) below.
+
+**Current limitation:**
+```clojure
+;; This doesn't work - functions aren't values
+(let [f (if condition + -)]
+  (f 1 2))
+
+(map inc [1 2 3])  ;; Can't pass `inc` as argument
+```
+
+**WASM 3.0 implementation using Typed Function References:**
+```wasm
+;; Closure struct: captures environment + typed function reference
+(type $closure_fn (func (param (ref eq)) (param eqref) (result eqref)))
+(type $Closure (struct
+  (field $env (ref eq))              ;; captured variables (array or struct)
+  (field $fn (ref $closure_fn))))    ;; typed funcref - no runtime check needed
+
+;; Create closure with ref.func (non-null typed reference)
+(struct.new $Closure
+  (local.get $env)
+  (ref.func $my_function))           ;; typed, non-null function reference
+
+;; Call closure with call_ref (no table lookup, no runtime type check)
+(call_ref $closure_fn
+  (struct.get $Closure $env ...)
+  (local.get $arg)
+  (struct.get $Closure $fn ...))
+```
+
+**Advantages over call_indirect:**
+- No dispatch table needed for closures
+- No runtime type check (typed references)
+- Non-null references eliminate null checks
+- Functions don't need table slots to be callable
+
+**Required changes:**
+- [ ] Add `$Closure` GC type for function values
+- [ ] `fn` forms compile to closure structs (not just WASM functions)
+- [ ] Function application checks: is callee a closure? → extract fn + env, call
+- [ ] Lambda lifting: identify free variables, capture in env struct
+- [ ] Implement `IFn` protocol with `-invoke` method
+
+**IR additions:**
+```rust
+// New Expr variants
+ClosureNew { func_idx: u32, captures: Vec<Expr> },
+ClosureCall { closure: Box<Expr>, args: Vec<Expr> },
+```
+
+### P0.2: apply
+
+Dynamic function invocation with argument list.
+
+```clojure
+(apply + [1 2 3])        ;; → 6
+(apply f args)           ;; Call f with elements of args
+(apply f a b [c d e])    ;; Mixed fixed + rest args
+```
+
+**Implementation approach:**
+1. For known arities: generate dispatch based on collection length
+2. For IFn protocol: call `-invoke` with appropriate arity
+3. Requires first-class functions (P0.1)
+
+**Required changes:**
+- [ ] Parse `apply` special form
+- [ ] Generate arity-dispatching code
+- [ ] Handle rest args (`& more` in fn signatures)
+
+### P0.3: Macros (defmacro)
+
+Code that writes code, expanded at compile time.
+
+**Goal:** Move these OUT of `lower.rs` and INTO Suss:
+```clojure
+(defmacro when [test & body]
+  `(if ~test (do ~@body) nil))
+
+(defmacro cond [& clauses]
+  (when (seq clauses)
+    `(if ~(first clauses)
+       ~(second clauses)
+       (cond ~@(nnext clauses)))))
+
+(defmacro -> [x & forms]
+  (loop [x x, forms forms]
+    (if forms
+      (let [form (first forms)
+            threaded (if (seq? form)
+                       `(~(first form) ~x ~@(next form))
+                       (list form x))]
+        (recur threaded (next forms)))
+      x)))
+```
+
+**Implementation phases:**
+
+**Phase A: Quote & Syntax-Quote**
+- [ ] `quote` - prevent evaluation: `'(+ 1 2)` → list, not 3
+- [ ] `syntax-quote` (`) - quasi-quote with namespace resolution
+- [ ] `unquote` (~) - evaluate inside syntax-quote
+- [ ] `unquote-splicing` (~@) - splice collection
+
+**Phase B: Macro Expansion**
+- [ ] `defmacro` form in analyzer
+- [ ] Macro functions stored in compile-time environment
+- [ ] Expand macros before lowering to IR
+- [ ] Support recursive macro expansion
+
+**Phase C: Bootstrap Core Macros**
+- [ ] Implement `when`, `when-not`, `when-let` as macros
+- [ ] Implement `cond`, `condp`, `case` as macros
+- [ ] Implement `and`, `or` as macros
+- [ ] Implement `->`, `->>`, `as->` as macros
+- [ ] Implement `for`, `doseq` as macros
+- [ ] Remove corresponding `lower_xxx` functions from Rust
+
+**The payoff:** After Phase C, `core.async` becomes possible as a library.
+
+### P0.4: User-Defined Protocols
+
+Allow users to define their own abstractions.
+
+```clojure
+(defprotocol IJsonable
+  (-to-json [this]))
+
+(extend-type PersistentVector
+  IJsonable
+  (-to-json [this]
+    (str "[" (clojure.string/join "," (map -to-json this)) "]")))
+```
+
+**Current state:** Protocol dispatch infrastructure exists, but:
+- Protocol definitions are hardcoded in `ir.rs`
+- Users cannot define new protocols
+- Users cannot extend existing types
+
+**Required changes:**
+- [ ] Parse `defprotocol` → assign method IDs (100+)
+- [ ] Parse `extend-type` / `extend-protocol`
+- [ ] Generate dispatch table entries for user extensions
+- [ ] Support extending built-in types with user protocols
+
+### Dependency Graph
+
+```
+                    ┌─────────────────┐
+                    │ User Protocols  │ ← enables abstraction
+                    └────────┬────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              │                             │
+              ▼                             ▼
+     ┌─────────────────┐           ┌─────────────────┐
+     │     Macros      │           │     apply       │
+     └────────┬────────┘           └────────┬────────┘
+              │                             │
+              │   requires                  │ requires
+              │                             │
+              └──────────────┬──────────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │ First-Class Fns     │ ← foundation
+                  │ (Closures)          │
+                  └─────────────────────┘
+```
+
+### Implementation Order
+
+1. **First-class functions** - Everything else depends on this
+2. **apply** - Needed for variadic macros
+3. **Quote/Syntax-quote** - Needed for macro bodies
+4. **defmacro** - Compile-time expansion
+5. **Bootstrap core macros** - Move `lower_xxx` to Suss
+6. **User protocols** - Can be parallel with 3-5
+
+### Success Criteria
+
+**Before:** Adding `when-some` requires:
+- Modify `lower.rs` (add `lower_when_some` function)
+- Add pattern match in `lower_call`
+- Rebuild compiler
+
+**After:** Adding `when-some` requires:
+```clojure
+(defmacro when-some [[sym expr] & body]
+  `(let [val# ~expr]
+     (when (some? val#)
+       (let [~sym val#]
+         ~@body))))
+```
+
+No compiler changes. Just library code.
+
+### The IR After Compositional Primitives
+
+The IR stays **small and fixed**:
+
+```rust
+enum Expr {
+    // Literals
+    Unit, Bool, Int, Float, String,
+
+    // Variables
+    LocalGet, LocalSet, GlobalGet, GlobalSet,
+
+    // Control flow (irreducible - can't be macros)
+    If, Loop, Recur, Block,
+
+    // Functions
+    Call,           // static call by index
+    TailCall,       // TCO static call
+    ClosureNew,     // NEW: create closure value
+    ClosureCall,    // NEW: call closure value
+    Apply,          // NEW: dynamic invocation
+
+    // GC operations
+    StructNew, StructGet, ArrayNew, ArrayGet, ArraySet, ...
+
+    // Collections (protocol-dispatched)
+    ProtocolDispatch { obj, method_id, args },
+
+    // Types
+    Coerce, RefTest, RefNull, RefIsNull,
+}
+```
+
+**What's NOT in the IR:**
+- `cond` → macro, expands to nested `if`
+- `when` → macro, expands to `if`
+- `and`/`or` → macros, expand to `if` + `let`
+- `->` → macro, expands to nested calls
+- `for` → macro, expands to `loop`/`recur`
+
+The compiler handles ~25 IR node types. Everything else is library code.
+
+---
 
 ## Phase 1: Core Hash Function (Prerequisite) ✓ COMPLETE
 
@@ -627,14 +905,16 @@ Sets reuse HAMT but store only keys (or key=value):
 
 ---
 
-## Phase 5: Wire Up GC Mode End-to-End
+## Phase 5: Verify GC Mode End-to-End ✓ COMPLETE
 
-- [ ] Add GC mode flag to Lowerer
-- [ ] Propagate flag through codegen
-- [ ] Enable wasmtime GC for compiled components
-- [ ] Test with vectors >32 elements
-- [ ] Test with maps containing data
-- [ ] Verify protocol dispatch works for all collection types
+GC mode is now the only mode. Legacy tagged i64 code has been removed.
+
+- [x] ~~Add GC mode flag to Lowerer~~ (not needed - GC is always on)
+- [x] ~~Propagate flag through codegen~~ (not needed - GC is always on)
+- [x] Enable wasmtime GC for compiled components
+- [x] Test with vectors >32 elements
+- [x] Test with maps containing data
+- [x] Verify protocol dispatch works for all collection types
 
 ---
 
@@ -655,12 +935,14 @@ Convert between internal GC refs and WIT primitives at export boundaries:
 
 ---
 
-## Phase 7: Cleanup (After GC Mode Stable)
+## Phase 7: Cleanup ✓ COMPLETE
 
-- [ ] Remove `tags` module (legacy tagged i64 approach)
-- [ ] Remove tagged i64 IR variants
-- [ ] Remove bump allocator code
-- [ ] Make GC mode the default
+Legacy non-GC code has been removed. GC is now the only mode.
+
+- [x] ~~Remove `tags` module~~ (never existed as separate module)
+- [x] Remove tagged i64 IR variants (`Type::Tagged`, `Expr::MakeTagged`, etc.)
+- [x] Remove heap operation IR variants (`Expr::Alloc`, `Expr::HeapStore`, `Expr::HeapLoad`)
+- [x] GC mode is the default (and only) mode
 
 ---
 
@@ -733,19 +1015,34 @@ Implementation:
 
 ## Implementation Order (Recommended)
 
-1. **Hash function** - Prerequisite for HAMT and IHash protocol
-2. **Protocol infrastructure** - `get-type-id`, dispatch table, `$dispatch` function
-3. **Built-in protocol registration** - ILookup, ICounted, IIndexed, ICollection for all types
-4. **Vector >32** - Full trie with IIndexed/-nth, ICounted/-count, ICollection/-conj
-5. **HAMT for maps** - ILookup/-lookup, IAssociative/-assoc, ICounted/-count
-6. **HAMT for sets** - ILookup/-lookup, ICollection/-conj, ICounted/-count
-7. **Polymorphic lowerer** - `nth`, `get`, `count`, `conj` emit protocol dispatch
-8. **GC mode integration** - Test everything end-to-end
-9. **User protocols** - `defprotocol`, `extend-type`, `extend-protocol`
+### 🎯 PRIORITY: Compositional Primitives (see Priority Zero above)
+
+**Current focus - enables self-extending language:**
+
+1. **First-class functions (closures)** ← START HERE
+2. **apply** - dynamic invocation
+3. **Quote/Syntax-quote** - code as data
+4. **defmacro** - compile-time expansion
+5. **Bootstrap core macros** - move `lower_xxx` to Suss
+6. **User protocols** - `defprotocol`, `extend-type`
+
+### Completed Foundation
+
+1. ✓ **Hash function** - Prerequisite for HAMT and IHash protocol
+2. ✓ **Protocol infrastructure** - `get-type-id`, dispatch table, `$dispatch` function
+3. ✓ **Built-in protocol registration** - ILookup, ICounted, IIndexed, ICollection for all types
+4. ✓ **Vector >32** - Full trie with IIndexed/-nth, ICounted/-count, ICollection/-conj
+5. ✓ **HAMT for maps** - ILookup/-lookup, IAssociative/-assoc, ICounted/-count
+6. ✓ **HAMT for sets** - ILookup/-lookup, ICollection/-conj, ICounted/-count
+7. ✓ **Polymorphic lowerer** - `nth`, `get`, `count`, `conj` emit protocol dispatch
+8. ✓ **GC mode integration** - GC is the only mode; legacy code removed
+9. ✓ **Cleanup** - Legacy non-GC code removed
+
+### After Compositional Primitives
+
 10. **WIT marshaling** - Required for component exports
-11. **Cleanup** - Remove legacy static dispatch code
-12. **Transients** - ITransientCollection, ITransientAssociative
-13. **wasm-opt** - Final optimization pass
+11. **Transients** - ITransientCollection, ITransientAssociative (optimization)
+12. **wasm-opt** - Final optimization pass
 
 ---
 
@@ -764,7 +1061,24 @@ Additionally:
 
 ---
 
-## Reference Implementation
+## References
+
+### WASM Specifications
+
+**WASM 3.0 (targeting):**
+- [WASM 3.0 Core Specification](https://webassembly.github.io/spec/core/bikeshed/) - Full spec including GC and function references
+- [Typed Function References Proposal](https://github.com/WebAssembly/spec/blob/wasm-3.0/proposals/function-references/Overview.md) - `ref.func`, `call_ref`, typed funcref
+- [GC Proposal](https://github.com/WebAssembly/gc/blob/main/proposals/gc/Overview.md) - Structs, arrays, i31ref
+
+**Key features for Suss:**
+| Feature | WASM Instructions | Used For |
+|---------|------------------|----------|
+| Typed function refs | `ref.func`, `call_ref` | First-class functions, closures |
+| GC structs | `struct.new`, `struct.get` | Closures, persistent collections |
+| GC arrays | `array.new`, `array.get` | Vectors, HAMT nodes |
+| i31ref | `ref.i31`, `i31.get_s` | Small ints, nil/bool sentinels |
+
+### ClojureScript Reference Implementation
 
 ClojureScript source locations for reference:
 - `src/main/cljs/cljs/core.cljs` - All persistent collections

@@ -17,6 +17,18 @@ pub fn lower(module: &AnalyzedModule) -> CompileResult<Module> {
     lowerer.lower_module(module)
 }
 
+/// Represents a closure wrapper function to be generated
+struct ClosureWrapper {
+    /// Unique name for the wrapper function
+    name: String,
+    /// Names of captured variables (env[0], env[1], ...)
+    captures: Vec<String>,
+    /// Parameter names (excluding env)
+    params: Vec<String>,
+    /// Body expression (original fn body)
+    body: Edn,
+}
+
 struct Lowerer {
     module: Module,
     /// Map from symbol name to (local index, type) for current function
@@ -35,6 +47,15 @@ struct Lowerer {
     in_tail_position: bool,
     /// Current loop binding local indices (for recur)
     loop_binding_locals: Vec<u32>,
+    /// Counter for generating unique closure wrapper names
+    closure_counter: u32,
+    /// Closure wrappers to be generated after main function lowering
+    pending_closures: Vec<ClosureWrapper>,
+    /// Total number of analyzed (module-level) functions
+    /// Used to calculate closure wrapper indices correctly
+    num_analyzed_funcs: u32,
+    /// Cached indices for built-in wrapper functions: builtin_name -> func_idx
+    builtin_wrappers: HashMap<String, u32>,
 }
 
 impl Lowerer {
@@ -49,6 +70,10 @@ impl Lowerer {
             num_imports: 0,
             in_tail_position: false,
             loop_binding_locals: Vec::new(),
+            closure_counter: 0,
+            pending_closures: Vec::new(),
+            num_analyzed_funcs: 0,
+            builtin_wrappers: HashMap::new(),
         }
     }
 
@@ -68,6 +93,7 @@ impl Lowerer {
             });
         }
         self.num_imports = analyzed.imports.len() as u32;
+        self.num_analyzed_funcs = analyzed.functions.len() as u32;
 
         // Build function index map - indices start after imports
         for (idx, func) in analyzed.functions.iter().enumerate() {
@@ -86,7 +112,96 @@ impl Lowerer {
             self.module.functions.push(lowered);
         }
 
+        // Generate closure wrapper functions
+        // We need to process these iteratively since lowering a closure body
+        // might create more closures
+        while !self.pending_closures.is_empty() {
+            let closures = std::mem::take(&mut self.pending_closures);
+            for closure in closures {
+                let wrapper = self.lower_closure_wrapper(&closure)?;
+                self.module.functions.push(wrapper);
+            }
+        }
+
         Ok(std::mem::take(&mut self.module))
+    }
+
+    /// Generate a wrapper function for a closure
+    /// Wrapper signature: (env: eqref, params...) -> eqref
+    fn lower_closure_wrapper(&mut self, closure: &ClosureWrapper) -> CompileResult<Function> {
+        use crate::ir::gc_types;
+
+        // Reset locals for new function
+        self.locals.clear();
+        self.local_types.clear();
+        self.next_local = 0;
+
+        // First parameter is always env (array of captured values)
+        let env_idx = self.next_local;
+        self.next_local += 1;
+        self.local_types.insert(env_idx, Type::GcRef);
+
+        // Add regular parameters
+        let mut params = vec![("$env".to_string(), Type::GcRef)];
+        for param_name in &closure.params {
+            let idx = self.next_local;
+            self.locals.insert(param_name.clone(), (idx, Type::GcRef));
+            self.local_types.insert(idx, Type::GcRef);
+            self.next_local += 1;
+            params.push((param_name.clone(), Type::GcRef));
+        }
+
+        // Add captured variables as synthetic locals that read from env
+        // We'll create let bindings at the start of the body
+        let mut capture_bindings = Vec::new();
+        for (cap_idx, cap_name) in closure.captures.iter().enumerate() {
+            let local_idx = self.next_local;
+            self.locals.insert(cap_name.clone(), (local_idx, Type::GcRef));
+            self.local_types.insert(local_idx, Type::GcRef);
+            self.next_local += 1;
+
+            // env[cap_idx] - ArrayGet from env
+            let env_get = Expr::ArrayGet {
+                type_idx: gc_types::TRIE_NODE,
+                array: Box::new(Expr::LocalGet {
+                    local: env_idx,
+                    ty: Type::GcRef,
+                }),
+                index: Box::new(Expr::RawI32(cap_idx as i32)),
+            };
+            capture_bindings.push((local_idx, env_get));
+        }
+
+        // Lower the body with captures in scope
+        self.in_tail_position = true;
+        let body_expr = self.lower_expr(&closure.body)?;
+        self.in_tail_position = false;
+
+        // Wrap body with capture bindings if any
+        let final_body = if capture_bindings.is_empty() {
+            body_expr
+        } else {
+            Expr::Let {
+                bindings: capture_bindings,
+                body: Box::new(body_expr),
+            }
+        };
+
+        // Collect local types
+        let mut locals = vec![Type::Unknown; self.next_local as usize];
+        for (&idx, ty) in &self.local_types {
+            locals[idx as usize] = ty.clone();
+        }
+
+        Ok(Function {
+            name: closure.name.clone(),
+            exported: false,
+            export_name: None,
+            params,
+            return_type: Type::GcRef,
+            locals,
+            body: final_body,
+        })
     }
 
     fn lower_global(&mut self, global: &AnalyzedGlobal) -> CompileResult<Global> {
@@ -170,6 +285,9 @@ impl Lowerer {
                 // Check if it's a local
                 if let Some(&(idx, ref ty)) = self.locals.get(&sym.name) {
                     Ok(Expr::LocalGet { local: idx, ty: ty.clone() })
+                } else if let Some(arity) = self.builtin_arity(&sym.name) {
+                    // It's a built-in in value position - wrap it as a closure
+                    self.lower_builtin_as_closure(&sym.name, arity)
                 } else {
                     Err(CompileError::Undefined(sym.name.clone()))
                 }
@@ -188,10 +306,23 @@ impl Lowerer {
                         self.lower_call(&sym.name, &items[1..])
                     }
                 } else {
-                    // Function expression call
-                    Err(CompileError::Unsupported(
-                        "Function expression calls not yet supported".into()
-                    ))
+                    // Expression in call position - treat as closure call
+                    // Examples: ((fn [x] x) 5), ((if cond + -) a b)
+                    let was_tail = self.in_tail_position;
+                    self.in_tail_position = false;
+
+                    let closure = self.lower_expr(&items[0])?;
+                    let args: Vec<Expr> = items[1..]
+                        .iter()
+                        .map(|e| self.lower_expr(e))
+                        .collect::<CompileResult<_>>()?;
+
+                    self.in_tail_position = was_tail;
+                    Ok(Expr::ClosureCall {
+                        closure: Box::new(closure),
+                        args,
+                        in_tail_position: was_tail,
+                    })
                 }
             }
 
@@ -320,6 +451,9 @@ impl Lowerer {
             "when-not" => self.lower_when_not(args),
             "case" => self.lower_case(args),
 
+            // First-class functions
+            "fn" => self.lower_fn(args),
+
             // String
             "str" => self.lower_str(args),
 
@@ -332,7 +466,9 @@ impl Lowerer {
             "count" => self.lower_count(args),
             "get" => self.lower_get(args),
             "assoc" => self.lower_assoc(args),
+            "dissoc" => self.lower_dissoc(args),
             "contains?" => self.lower_contains(args),
+            "disj" => self.lower_disj(args),
 
             // Hashing
             "hash" => self.lower_hash(args),
@@ -494,6 +630,173 @@ impl Lowerer {
         })
     }
 
+    /// Lower anonymous function to closure
+    /// (fn [params] body) → ClosureNew { func_idx, arity, captures }
+    fn lower_fn(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.is_empty() {
+            return Err(CompileError::Parse("fn requires params vector".into()));
+        }
+
+        // Parse params vector
+        let params_vec = match &args[0] {
+            Edn::Vector(items) => items,
+            _ => return Err(CompileError::Parse("fn params must be a vector".into())),
+        };
+
+        let mut params = Vec::new();
+        for param in params_vec {
+            match param {
+                Edn::Symbol(sym) => params.push(sym.name.clone()),
+                _ => return Err(CompileError::Parse("fn param must be a symbol".into())),
+            }
+        }
+
+        // Body is everything after params, wrapped in do if multiple
+        let body = if args.len() == 2 {
+            args[1].clone()
+        } else if args.len() > 2 {
+            let do_sym = Edn::Symbol(suss_core::Symbol::new("do"));
+            let mut body_items = vec![do_sym];
+            body_items.extend(args[1..].iter().cloned());
+            Edn::List(body_items)
+        } else {
+            Edn::Nil
+        };
+
+        // Collect free variables in body that aren't params
+        let free_vars = self.collect_free_vars(&body, &params);
+
+        // Generate unique wrapper function name
+        let wrapper_name = format!("$closure_{}", self.closure_counter);
+        self.closure_counter += 1;
+
+        // Calculate wrapper function index in IR
+        // Closures are added after all analyzed functions, so the index is:
+        // num_analyzed_funcs + number of pending closures (before this one)
+        let num_pending = self.pending_closures.len() as u32;
+        let wrapper_idx = self.num_analyzed_funcs + num_pending;
+
+        // Register wrapper function name for the index
+        self.func_indices.insert(wrapper_name.clone(), wrapper_idx);
+
+        // Store closure wrapper for later generation
+        self.pending_closures.push(ClosureWrapper {
+            name: wrapper_name,
+            captures: free_vars.clone(),
+            params,
+            body,
+        });
+
+        // Generate capture expressions (LocalGet for each captured variable)
+        let captures: Vec<Expr> = free_vars
+            .iter()
+            .map(|name| {
+                if let Some(&(idx, ref ty)) = self.locals.get(name) {
+                    Ok(Expr::LocalGet {
+                        local: idx,
+                        ty: ty.clone(),
+                    })
+                } else {
+                    Err(CompileError::Undefined(name.clone()))
+                }
+            })
+            .collect::<CompileResult<Vec<_>>>()?;
+
+        let arity = self.pending_closures.last().unwrap().params.len() as u32;
+
+        Ok(Expr::ClosureNew {
+            func_idx: wrapper_idx,
+            arity,
+            captures,
+        })
+    }
+
+    /// Collect free variables in an expression that aren't in the given bound set
+    fn collect_free_vars(&self, expr: &Edn, bound: &[String]) -> Vec<String> {
+        let mut free = Vec::new();
+        self.collect_free_vars_inner(expr, bound, &mut free);
+        // Remove duplicates while preserving order
+        let mut seen = std::collections::HashSet::new();
+        free.retain(|x| seen.insert(x.clone()));
+        free
+    }
+
+    fn collect_free_vars_inner(&self, expr: &Edn, bound: &[String], free: &mut Vec<String>) {
+        match expr {
+            Edn::Symbol(sym) => {
+                let name = &sym.name;
+                // Check if it's a free variable:
+                // - Not in bound list
+                // - Is a local in current scope (not a global or function)
+                if !bound.contains(name) && self.locals.contains_key(name) {
+                    free.push(name.clone());
+                }
+            }
+            Edn::List(items) | Edn::Vector(items) => {
+                if let Some((first, rest)) = items.split_first() {
+                    // Check for binding forms that introduce new bindings
+                    if let Edn::Symbol(sym) = first {
+                        match sym.name.as_str() {
+                            "let" | "loop" => {
+                                // (let [x 1 y 2] body) - bindings introduce new scope
+                                if let Some(Edn::Vector(bindings)) = rest.first() {
+                                    let mut new_bound: Vec<String> = bound.to_vec();
+                                    for chunk in bindings.chunks(2) {
+                                        if let Some(Edn::Symbol(bsym)) = chunk.first() {
+                                            new_bound.push(bsym.name.clone());
+                                        }
+                                        // Also check the value expression with current bindings
+                                        if let Some(val) = chunk.get(1) {
+                                            self.collect_free_vars_inner(val, &new_bound, free);
+                                        }
+                                    }
+                                    // Check body with extended bindings
+                                    for body_expr in rest.iter().skip(1) {
+                                        self.collect_free_vars_inner(body_expr, &new_bound, free);
+                                    }
+                                    return;
+                                }
+                            }
+                            "fn" => {
+                                // Nested fn - its params are bound in its body
+                                if let Some(Edn::Vector(params)) = rest.first() {
+                                    let mut new_bound: Vec<String> = bound.to_vec();
+                                    for p in params {
+                                        if let Edn::Symbol(psym) = p {
+                                            new_bound.push(psym.name.clone());
+                                        }
+                                    }
+                                    for body_expr in rest.iter().skip(1) {
+                                        self.collect_free_vars_inner(body_expr, &new_bound, free);
+                                    }
+                                    return;
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                // Default: recurse into all items
+                for item in items {
+                    self.collect_free_vars_inner(item, bound, free);
+                }
+            }
+            Edn::Map(entries) => {
+                for (k, v) in entries {
+                    self.collect_free_vars_inner(k, bound, free);
+                    self.collect_free_vars_inner(v, bound, free);
+                }
+            }
+            Edn::Set(items) => {
+                for item in items {
+                    self.collect_free_vars_inner(item, bound, free);
+                }
+            }
+            // Literals don't contain free variables
+            _ => {}
+        }
+    }
+
     fn lower_loop(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         if args.is_empty() {
             return Err(CompileError::Parse("loop requires bindings".into()));
@@ -594,7 +897,14 @@ impl Lowerer {
         let n = self.lower_expr(&args[0])?;
         self.in_tail_position = was_tail;
         let ty = n.expr_type();
-        let one = match &ty {
+        // GcRef means boxed value - treat as I32 for arithmetic
+        let result_ty = match &ty {
+            Type::I64 => Type::I64,
+            Type::F64 => Type::F64,
+            Type::GcRef | Type::Unknown => Type::I32,
+            _ => Type::I32,
+        };
+        let one = match &result_ty {
             Type::I64 => Expr::Int(1),
             Type::F64 => Expr::Float(1.0),
             _ => Expr::Int(1),
@@ -603,7 +913,7 @@ impl Lowerer {
             op: BinOp::Add,
             left: Box::new(n),
             right: Box::new(one),
-            ty: if ty == Type::Unknown { Type::I32 } else { ty },
+            ty: result_ty,
         })
     }
 
@@ -618,7 +928,14 @@ impl Lowerer {
         let n = self.lower_expr(&args[0])?;
         self.in_tail_position = was_tail;
         let ty = n.expr_type();
-        let one = match &ty {
+        // GcRef means boxed value - treat as I32 for arithmetic
+        let result_ty = match &ty {
+            Type::I64 => Type::I64,
+            Type::F64 => Type::F64,
+            Type::GcRef | Type::Unknown => Type::I32,
+            _ => Type::I32,
+        };
+        let one = match &result_ty {
             Type::I64 => Expr::Int(1),
             Type::F64 => Expr::Float(1.0),
             _ => Expr::Int(1),
@@ -627,7 +944,7 @@ impl Lowerer {
             op: BinOp::Sub,
             left: Box::new(n),
             right: Box::new(one),
-            ty: if ty == Type::Unknown { Type::I32 } else { ty },
+            ty: result_ty,
         })
     }
 
@@ -1147,6 +1464,29 @@ impl Lowerer {
                     args: lowered_args,
                 })
             }
+        } else if let Some(&(local_idx, ref ty)) = self.locals.get(name) {
+            // It's a local variable - could be a closure
+            // Clone values before mutable borrow
+            let ty = ty.clone();
+
+            // Emit ClosureCall
+            let was_tail = self.in_tail_position;
+            self.in_tail_position = false;
+            let lowered_args: Vec<Expr> = args
+                .iter()
+                .map(|e| self.lower_expr(e))
+                .collect::<CompileResult<_>>()?;
+
+            let result = Ok(Expr::ClosureCall {
+                closure: Box::new(Expr::LocalGet {
+                    local: local_idx,
+                    ty,
+                }),
+                args: lowered_args,
+                in_tail_position: was_tail,
+            });
+            self.in_tail_position = was_tail;
+            result
         } else {
             Err(CompileError::Undefined(name.to_string()))
         }
@@ -1504,6 +1844,44 @@ impl Lowerer {
         })
     }
 
+    /// Lower (disj set val) -> SetDisj
+    fn lower_disj(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 2 {
+            return Err(CompileError::Parse(
+                "disj requires exactly 2 arguments: set and value".into(),
+            ));
+        }
+        // Arguments are never in tail position
+        let was_tail = self.in_tail_position;
+        self.in_tail_position = false;
+        let set = self.lower_expr(&args[0])?;
+        let val = self.lower_expr(&args[1])?;
+        self.in_tail_position = was_tail;
+        Ok(Expr::SetDisj {
+            set: Box::new(set),
+            val: Box::new(val),
+        })
+    }
+
+    /// Lower (dissoc map key) -> MapDissoc
+    fn lower_dissoc(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 2 {
+            return Err(CompileError::Parse(
+                "dissoc requires exactly 2 arguments: map and key".into(),
+            ));
+        }
+        // Arguments are never in tail position
+        let was_tail = self.in_tail_position;
+        self.in_tail_position = false;
+        let map = self.lower_expr(&args[0])?;
+        let key = self.lower_expr(&args[1])?;
+        self.in_tail_position = was_tail;
+        Ok(Expr::MapDissoc {
+            map: Box::new(map),
+            key: Box::new(key),
+        })
+    }
+
     // ========================================================================
     // Hash Operations
     // ========================================================================
@@ -1518,5 +1896,80 @@ impl Lowerer {
         }
         let value = self.lower_expr(&args[0])?;
         Ok(Expr::Hash(Box::new(value)))
+    }
+
+    // ========================================================================
+    // Built-in Function Wrappers
+    // ========================================================================
+
+    /// Returns the arity of a built-in function if it exists.
+    /// Used to detect built-ins in value position.
+    fn builtin_arity(&self, name: &str) -> Option<u32> {
+        match name {
+            // Binary arithmetic
+            "+" | "-" | "*" | "/" | "rem" | "mod" => Some(2),
+            // Binary comparison
+            "=" | "not=" | "<" | "<=" | ">" | ">=" => Some(2),
+            // Unary
+            "inc" | "dec" | "not" => Some(1),
+            _ => None,
+        }
+    }
+
+    /// Create a closure wrapper for a built-in function used in value position.
+    /// Example: `(let [f +] (f 1 2))` - here `+` is in value position.
+    fn lower_builtin_as_closure(&mut self, name: &str, arity: u32) -> CompileResult<Expr> {
+        // Check if we already have a wrapper for this built-in
+        if let Some(&func_idx) = self.builtin_wrappers.get(name) {
+            return Ok(Expr::ClosureNew {
+                func_idx,
+                arity,
+                captures: vec![], // no captures needed for built-ins
+            });
+        }
+
+        // Generate wrapper function name
+        let wrapper_name = format!("$builtin_{}", name.replace(|c: char| !c.is_alphanumeric(), "_"));
+
+        // Calculate wrapper function index
+        let num_pending = self.pending_closures.len() as u32;
+        let wrapper_idx = self.num_analyzed_funcs + num_pending;
+
+        // Register wrapper function
+        self.func_indices.insert(wrapper_name.clone(), wrapper_idx);
+        self.builtin_wrappers.insert(name.to_string(), wrapper_idx);
+
+        // Generate wrapper body: a call expression to the built-in
+        // For binary ops: (fn [a b] (+ a b))
+        // For unary ops: (fn [a] (inc a))
+        let param_names: Vec<String> = (0..arity)
+            .map(|i| format!("$arg{}", i))
+            .collect();
+
+        let body = self.make_builtin_call_body(name, &param_names);
+
+        // Store closure wrapper for later generation
+        self.pending_closures.push(ClosureWrapper {
+            name: wrapper_name,
+            captures: vec![], // no captures
+            params: param_names,
+            body,
+        });
+
+        Ok(Expr::ClosureNew {
+            func_idx: wrapper_idx,
+            arity,
+            captures: vec![], // no captures needed for built-ins
+        })
+    }
+
+    /// Create the body expression for a built-in wrapper function.
+    /// Returns an Edn expression like `(+ $arg0 $arg1)`.
+    fn make_builtin_call_body(&self, name: &str, params: &[String]) -> Edn {
+        let mut items = vec![Edn::Symbol(suss_core::Symbol::new(name))];
+        for param in params {
+            items.push(Edn::Symbol(suss_core::Symbol::new(param)));
+        }
+        Edn::List(items)
     }
 }

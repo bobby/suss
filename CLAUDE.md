@@ -93,7 +93,9 @@ All symbols and keywords go through `Interner` for O(1) equality. Use `SymbolId`
 
 ### Static Compiler Subset
 Compilable: `def`, `defn`, `fn`, `let`, `if`, `do`, `loop/recur`, numbers (i32/i64/f64), strings, vectors.
-Not compilable: `eval`, macros, BigInt (use i64).
+Not yet compilable: first-class functions (closures), `apply`, macros, BigInt (use i64).
+
+See ROADMAP.md "Priority Zero: Compositional Primitives" for the path to closures and macros.
 
 ### WIT Exports
 Mark functions for export with `^:export` metadata:
@@ -221,3 +223,16 @@ PersistentSet: struct { type_id: i32, cnt: i32, root: eqref, _marker: i32 }
 ```
 
 This affects `get_type_id` which uses `ref.test` chains to determine type.
+
+## References
+
+### WASM Specifications
+
+- [WASM 3.0 Core Specification](https://webassembly.github.io/spec/core/bikeshed/) - Full spec (GC + function references)
+- [Typed Function References](https://github.com/WebAssembly/spec/blob/wasm-3.0/proposals/function-references/Overview.md) - `ref.func`, `call_ref` for closures
+- [GC Proposal](https://github.com/WebAssembly/gc/blob/main/proposals/gc/Overview.md) - Structs, arrays, i31ref
+
+### Clojure References
+
+- `reference/cljs.core.clj` - Local copy of ClojureScript core
+- [ClojureScript Source](https://github.com/clojure/clojurescript) - Persistent data structure implementations

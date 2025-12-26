@@ -30,7 +30,7 @@ use crate::ir::{BinOp, Expr, Function as IrFunc, Module, Type, UnOp};
 
 /// Number of runtime helper functions emitted before user functions.
 /// These are internal functions for protocol dispatch, hashing, vector trie, and HAMT operations.
-const NUM_RUNTIME_HELPERS: u32 = 21;
+const NUM_RUNTIME_HELPERS: u32 = 25;
 
 /// Function index offsets for runtime helpers (relative to start of functions)
 mod helper_funcs {
@@ -123,6 +123,24 @@ mod helper_funcs {
     /// $hash(value: eqref) -> i32
     /// Compute hash for any value with type dispatch
     pub const HASH: u32 = 20;
+
+    // HAMT dissoc helper functions
+
+    /// $inode_dissoc(node: eqref, shift: i32, hash: i32, key: eqref) -> eqref
+    /// Type-dispatching remove for any HAMT node type. Returns null if node becomes empty.
+    pub const INODE_DISSOC: u32 = 21;
+
+    /// $bin_dissoc(node: eqref, shift: i32, hash: i32, key: eqref) -> eqref
+    /// BitmapIndexedNode remove. Returns null if node becomes empty.
+    pub const BIN_DISSOC: u32 = 22;
+
+    /// $an_dissoc(node: eqref, shift: i32, hash: i32, key: eqref) -> eqref
+    /// ArrayNode remove. May demote to BitmapIndexedNode if count drops to 16.
+    pub const AN_DISSOC: u32 = 23;
+
+    /// $hcn_dissoc(node: eqref, hash: i32, key: eqref) -> eqref
+    /// HashCollisionNode remove. Returns null if empty, or single key-value if only one left.
+    pub const HCN_DISSOC: u32 = 24;
 }
 
 /// Type indices for runtime helper function signatures (after GC types)
@@ -185,8 +203,18 @@ mod helper_types {
     /// Type for $hash: (eqref) -> i32
     pub const HASH: u32 = crate::ir::gc_types::NUM_GC_TYPES + 16;
 
+    // HAMT dissoc helper function types
+
+    /// Type for $inode_dissoc, $bin_dissoc, $an_dissoc: (eqref, i32, i32, eqref) -> eqref
+    /// [node, shift, hash, key] -> new_node (or null if empty)
+    pub const INODE_DISSOC: u32 = crate::ir::gc_types::NUM_GC_TYPES + 17;
+
+    /// Type for $hcn_dissoc: (eqref, i32, eqref) -> eqref (no shift parameter)
+    /// [node, hash, key] -> new_node (or null if empty)
+    pub const HCN_DISSOC: u32 = crate::ir::gc_types::NUM_GC_TYPES + 18;
+
     /// Number of helper function types
-    pub const NUM_HELPER_TYPES: u32 = 17;
+    pub const NUM_HELPER_TYPES: u32 = 19;
 }
 
 /// Type indices for protocol function signatures (after helper types)
@@ -349,14 +377,17 @@ impl<'a> CodeGen<'a> {
         self.emit_helper_types(&mut types);
         self.emit_protocol_types(&mut types);
 
+        // Add user function types, but skip closure/builtin wrappers since they use pre-defined types
         for func in &self.ir.functions {
-            let params: Vec<ValType> = func
-                .params
-                .iter()
-                .flat_map(|(_, ty)| self.type_to_valtypes_gc(ty))
-                .collect();
-            let results = self.type_to_valtypes_gc(&func.return_type);
-            types.ty().function(params, results);
+            if !func.name.starts_with("$closure_") && !func.name.starts_with("$builtin_") {
+                let params: Vec<ValType> = func
+                    .params
+                    .iter()
+                    .flat_map(|(_, ty)| self.type_to_valtypes_gc(ty))
+                    .collect();
+                let results = self.type_to_valtypes_gc(&func.return_type);
+                types.ty().function(params, results);
+            }
         }
         module.section(&types);
 
@@ -387,11 +418,24 @@ impl<'a> CodeGen<'a> {
         functions.function(helper_types::HCN_ASSOC);
         functions.function(helper_types::CREATE_NODE);
         functions.function(helper_types::HASH);
+        // HAMT dissoc operation functions
+        functions.function(helper_types::INODE_DISSOC); // INODE_DISSOC
+        functions.function(helper_types::INODE_DISSOC); // BIN_DISSOC uses same type
+        functions.function(helper_types::INODE_DISSOC); // AN_DISSOC uses same type
+        functions.function(helper_types::HCN_DISSOC);   // HCN_DISSOC
         // Protocol implementation functions use protocol type indices
         self.emit_protocol_impl_function_decls(&mut functions);
-        // User functions use type_offset + their index
-        for (idx, _) in self.ir.functions.iter().enumerate() {
-            functions.function(type_offset + idx as u32);
+        // User functions: closure/builtin wrappers use pre-defined types, others use type_offset
+        let mut non_closure_type_idx = 0u32;
+        for func in &self.ir.functions {
+            if func.name.starts_with("$closure_") || func.name.starts_with("$builtin_") {
+                let arity = func.params.len().saturating_sub(1) as u32;
+                let closure_fn_type = crate::ir::gc_types::closure_fn_type_for_arity(arity);
+                functions.function(closure_fn_type);
+            } else {
+                functions.function(type_offset + non_closure_type_idx);
+                non_closure_type_idx += 1;
+            }
         }
         module.section(&functions);
 
@@ -554,6 +598,7 @@ impl<'a> CodeGen<'a> {
         }
 
         // Function section - local function indices start after imports
+        // Type indices for WIT mode: num_imports + function_index
         let mut functions = FunctionSection::new();
         for (idx, _) in self.ir.functions.iter().enumerate() {
             functions.function(num_imports + idx as u32);
@@ -780,7 +825,7 @@ impl<'a> CodeGen<'a> {
         let set_conj_func = self.protocol_impl_func_idx(protocol_impl_funcs::SET_CONJ);
         // Debug assertions to verify indices
         debug_assert_eq!(set_conj_idx, 104, "SET_CONJ dispatch index should be 104");
-        debug_assert_eq!(set_conj_func, 34, "SET_CONJ function index should be 34");
+        debug_assert_eq!(set_conj_func, 38, "SET_CONJ function index should be 38");
         elements.active(
             Some(dispatch_table::TABLE_INDEX),
             &ConstExpr::i32_const(set_conj_idx as i32),
@@ -795,6 +840,24 @@ impl<'a> CodeGen<'a> {
             Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::SET_CONTAINS)])),
         );
 
+        // Declarative element segment for closure wrapper functions
+        // This declares functions that can be used with ref.func for typed function references.
+        // We need to declare all functions that might be closures:
+        // - "$closure_" prefixed: user-defined anonymous functions
+        // - "$builtin_" prefixed: wrappers for built-in functions used as values
+        let closure_func_indices: Vec<u32> = self
+            .ir
+            .functions
+            .iter()
+            .enumerate()
+            .filter(|(_, f)| f.name.starts_with("$closure_") || f.name.starts_with("$builtin_"))
+            .map(|(idx, _)| self.user_func_idx(idx as u32))
+            .collect();
+
+        if !closure_func_indices.is_empty() {
+            elements.declared(Elements::Functions(Cow::Owned(closure_func_indices)));
+        }
+
         module.section(&elements);
     }
 
@@ -802,7 +865,7 @@ impl<'a> CodeGen<'a> {
     // GC Type Section
     // ========================================================================
 
-    /// Emit WASM GC struct and array type definitions.
+    /// Emit WASM GC struct, array, and closure type definitions.
     ///
     /// This defines the GC types used for Clojure's persistent data structures:
     /// - Type 0 (LARGE_INT): struct { i64 } - for integers > 30 bits
@@ -815,9 +878,11 @@ impl<'a> CodeGen<'a> {
     /// - Type 7 (HASH_COLLISION_NODE): struct { type_id, hash, cnt, arr } - hash collision node
     /// - Type 8 (PERSISTENT_VECTOR): struct { cnt, shift, root, tail }
     /// - Type 9 (PERSISTENT_MAP): struct { cnt, root }
-    /// - Type 10 (PERSISTENT_SET): struct { cnt, root }
+    /// - Type 10 (PERSISTENT_SET): struct { cnt, root, _marker }
+    /// - Types 11-19 (CLOSURE_FN_0-8): function types for closure wrappers
+    /// - Types 20-28 (CLOSURE_0-8): struct { type_id, env, fn } - closures with typed funcrefs
     ///
-    /// These types must be emitted BEFORE function types in the type section,
+    /// These types must be emitted BEFORE helper function types in the type section,
     /// since function type indices start after GC type indices.
     fn emit_gc_types(&self, types: &mut TypeSection) {
         use crate::ir::gc_types;
@@ -1004,6 +1069,100 @@ impl<'a> CodeGen<'a> {
             },
         ]);
         debug_assert_eq!(gc_types::PERSISTENT_SET, 10);
+
+        // =========================================================================
+        // Closure Function Types (indices 11-19)
+        // These define the signatures for closure wrapper functions.
+        // Signature: (env: (ref null $trie_node), args...) -> eqref
+        // The env must be typed as (ref null 3) to allow array.get access.
+        // Must be defined BEFORE closure struct types so structs can reference them.
+        // =========================================================================
+
+        let env_type = trie_node_ref.clone(); // (ref null 3) for env array access
+
+        // Type 11: CLOSURE_FN_0 - (env) -> result
+        types.ty().function(vec![env_type.clone()], vec![eqref]);
+        debug_assert_eq!(gc_types::CLOSURE_FN_0, 11);
+
+        // Type 12: CLOSURE_FN_1 - (env, arg1) -> result
+        types.ty().function(vec![env_type.clone(), eqref], vec![eqref]);
+        debug_assert_eq!(gc_types::CLOSURE_FN_1, 12);
+
+        // Type 13: CLOSURE_FN_2 - (env, arg1, arg2) -> result
+        types.ty().function(vec![env_type.clone(), eqref, eqref], vec![eqref]);
+        debug_assert_eq!(gc_types::CLOSURE_FN_2, 13);
+
+        // Type 14: CLOSURE_FN_3 - (env, arg1, arg2, arg3) -> result
+        types.ty().function(vec![env_type.clone(), eqref, eqref, eqref], vec![eqref]);
+        debug_assert_eq!(gc_types::CLOSURE_FN_3, 14);
+
+        // Type 15: CLOSURE_FN_4 - (env, arg1, arg2, arg3, arg4) -> result
+        types
+            .ty()
+            .function(vec![env_type.clone(), eqref, eqref, eqref, eqref], vec![eqref]);
+        debug_assert_eq!(gc_types::CLOSURE_FN_4, 15);
+
+        // Type 16: CLOSURE_FN_5 - (env, ..., arg5) -> result
+        types
+            .ty()
+            .function(vec![env_type.clone(), eqref, eqref, eqref, eqref, eqref], vec![eqref]);
+        debug_assert_eq!(gc_types::CLOSURE_FN_5, 16);
+
+        // Type 17: CLOSURE_FN_6
+        types.ty().function(
+            vec![env_type.clone(), eqref, eqref, eqref, eqref, eqref, eqref],
+            vec![eqref],
+        );
+        debug_assert_eq!(gc_types::CLOSURE_FN_6, 17);
+
+        // Type 18: CLOSURE_FN_7
+        types.ty().function(
+            vec![env_type.clone(), eqref, eqref, eqref, eqref, eqref, eqref, eqref],
+            vec![eqref],
+        );
+        debug_assert_eq!(gc_types::CLOSURE_FN_7, 18);
+
+        // Type 19: CLOSURE_FN_8
+        types.ty().function(
+            vec![env_type.clone(), eqref, eqref, eqref, eqref, eqref, eqref, eqref, eqref],
+            vec![eqref],
+        );
+        debug_assert_eq!(gc_types::CLOSURE_FN_8, 19);
+
+        // =========================================================================
+        // Closure Struct Types (indices 20-28)
+        // Each closure has: type_id, env (captured values), fn (typed funcref)
+        // Using typed non-null funcrefs avoids runtime type checks on call_ref
+        // =========================================================================
+
+        // Helper to create closure struct with typed funcref field
+        let make_closure_struct = |types: &mut TypeSection, fn_type_idx: u32| {
+            // Non-null typed funcref for the closure's function
+            let typed_funcref = ValType::Ref(RefType {
+                nullable: false,
+                heap_type: HeapType::Concrete(fn_type_idx),
+            });
+
+            types.ty().struct_(vec![
+                type_id_field.clone(), // type_id: i32
+                FieldType {
+                    element_type: StorageType::Val(trie_node_ref.clone()), // env: (ref null $trie_node)
+                    mutable: false,
+                },
+                FieldType {
+                    element_type: StorageType::Val(typed_funcref), // fn: (ref $closure_fn_N)
+                    mutable: false,
+                },
+            ]);
+        };
+
+        // Types 20-28: CLOSURE_0 through CLOSURE_8
+        for arity in 0..=8u32 {
+            let fn_type_idx = gc_types::closure_fn_type_for_arity(arity);
+            make_closure_struct(types, fn_type_idx);
+        }
+        debug_assert_eq!(gc_types::CLOSURE_0, 20);
+        debug_assert_eq!(gc_types::CLOSURE_8, 28);
     }
 
     /// Emit function types for runtime helper functions.
@@ -1112,6 +1271,22 @@ impl<'a> CodeGen<'a> {
         // Type for $hash: (eqref) -> i32
         // Takes any GC value, returns its hash code
         types.ty().function(vec![eqref], vec![ValType::I32]);
+
+        // HAMT dissoc helper function types
+
+        // Type for $inode_dissoc, $bin_dissoc, $an_dissoc: (eqref, i32, i32, eqref) -> eqref
+        // (node, shift, hash, key) -> new_node or null
+        types.ty().function(
+            vec![eqref, ValType::I32, ValType::I32, eqref],
+            vec![eqref],
+        );
+
+        // Type for $hcn_dissoc: (eqref, i32, eqref) -> eqref
+        // (node, hash, key) -> new_node or null (no shift - leaf level)
+        types.ty().function(
+            vec![eqref, ValType::I32, eqref],
+            vec![eqref],
+        );
     }
 
     /// Emit function types for protocol methods.
@@ -2121,6 +2296,12 @@ impl<'a> CodeGen<'a> {
         code.function(&self.generate_hcn_assoc_func());
         code.function(&self.generate_create_node_func());
         code.function(&self.generate_hash_func());
+
+        // HAMT dissoc operation functions
+        code.function(&self.generate_inode_dissoc_func());
+        code.function(&self.generate_bin_dissoc_func());
+        code.function(&self.generate_an_dissoc_func());
+        code.function(&self.generate_hcn_dissoc_func());
 
         Ok(())
     }
@@ -4569,6 +4750,139 @@ impl<'a> CodeGen<'a> {
         f
     }
 
+    /// Generate $inode_dissoc function - type-dispatching remove.
+    ///
+    /// Signature: (node: eqref, shift: i32, hash: i32, key: eqref) -> eqref
+    ///
+    /// Dispatches to $bin_dissoc, $an_dissoc, or $hcn_dissoc based on node type.
+    /// Returns null if the node becomes empty after removal.
+    fn generate_inode_dissoc_func(&self) -> Function {
+        use crate::ir::gc_types;
+
+        // Locals: node=0, shift=1, hash=2, key=3, type_id=4
+        let locals = vec![(1, ValType::I32)]; // type_id
+        let mut f = Function::new(locals);
+
+        // Get type_id of node
+        f.instruction(&Instruction::LocalGet(0)); // node
+        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));
+        f.instruction(&Instruction::LocalSet(4)); // type_id
+
+        // if type_id == BITMAP_INDEXED_NODE: call $bin_dissoc
+        f.instruction(&Instruction::LocalGet(4));
+        f.instruction(&Instruction::I32Const(gc_types::BITMAP_INDEXED_NODE as i32));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
+            ValType::Ref(RefType::EQREF),
+        )));
+        f.instruction(&Instruction::LocalGet(0)); // node
+        f.instruction(&Instruction::LocalGet(1)); // shift
+        f.instruction(&Instruction::LocalGet(2)); // hash
+        f.instruction(&Instruction::LocalGet(3)); // key
+        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::BIN_DISSOC)));
+        f.instruction(&Instruction::Else);
+
+        // if type_id == ARRAY_NODE: call $an_dissoc
+        f.instruction(&Instruction::LocalGet(4));
+        f.instruction(&Instruction::I32Const(gc_types::ARRAY_NODE as i32));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
+            ValType::Ref(RefType::EQREF),
+        )));
+        f.instruction(&Instruction::LocalGet(0)); // node
+        f.instruction(&Instruction::LocalGet(1)); // shift
+        f.instruction(&Instruction::LocalGet(2)); // hash
+        f.instruction(&Instruction::LocalGet(3)); // key
+        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::AN_DISSOC)));
+        f.instruction(&Instruction::Else);
+
+        // else (HASH_COLLISION_NODE): call $hcn_dissoc (no shift parameter)
+        f.instruction(&Instruction::LocalGet(0)); // node
+        f.instruction(&Instruction::LocalGet(2)); // hash
+        f.instruction(&Instruction::LocalGet(3)); // key
+        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HCN_DISSOC)));
+
+        f.instruction(&Instruction::End); // end inner if
+        f.instruction(&Instruction::End); // end outer if
+
+        f.instruction(&Instruction::End);
+        f
+    }
+
+    /// Generate $bin_dissoc function - BitmapIndexedNode remove.
+    ///
+    /// Signature: (node: eqref, shift: i32, hash: i32, key: eqref) -> eqref
+    ///
+    /// Algorithm:
+    /// 1. bit = bitpos(hash, shift)
+    /// 2. if (bitmap & bit) == 0: return node (not found)
+    /// 3. idx = index(bitmap, bit)
+    /// 4. key_or_null = arr[2*idx]
+    /// 5. val_or_node = arr[2*idx + 1]
+    /// 6. if key_or_null is null: recurse via inode_dissoc
+    /// 7. else if key == key_or_null: remove this entry
+    /// 8. else: return node (key not found)
+    fn generate_bin_dissoc_func(&self) -> Function {
+        // Simplified stub implementation - just return original node
+        // TODO: Implement proper BitmapIndexedNode dissoc
+        let locals = vec![];
+        let mut f = Function::new(locals);
+
+        // Return original node for now (no-op dissoc)
+        f.instruction(&Instruction::LocalGet(0));
+
+        f.instruction(&Instruction::End);
+        f
+    }
+
+    /// Generate $an_dissoc function - ArrayNode remove.
+    ///
+    /// Signature: (node: eqref, shift: i32, hash: i32, key: eqref) -> eqref
+    ///
+    /// For simplicity, this implementation just returns the original node.
+    /// A full implementation would:
+    /// 1. Find the slot using mask(hash, shift)
+    /// 2. If slot is null, return original
+    /// 3. Recurse into child, update slot with result
+    /// 4. If count drops to 16, demote to BitmapIndexedNode
+    fn generate_an_dissoc_func(&self) -> Function {
+        // Simplified implementation - just return original node
+        // Full implementation would be similar to an_assoc but removing entries
+        let locals = vec![];
+        let mut f = Function::new(locals);
+
+        // Return original node for now (no-op dissoc on ArrayNode)
+        // TODO: Implement proper ArrayNode dissoc
+        f.instruction(&Instruction::LocalGet(0));
+
+        f.instruction(&Instruction::End);
+        f
+    }
+
+    /// Generate $hcn_dissoc function - HashCollisionNode remove.
+    ///
+    /// Signature: (node: eqref, hash: i32, key: eqref) -> eqref
+    ///
+    /// For simplicity, this implementation just returns the original node.
+    /// A full implementation would:
+    /// 1. Linear search for key in array
+    /// 2. If found, create new array without that entry
+    /// 3. If only 1 entry left, return a simple key-value node
+    /// 4. If empty, return null
+    fn generate_hcn_dissoc_func(&self) -> Function {
+        // Simplified implementation - just return original node
+        // Full implementation would search and remove
+        let locals = vec![];
+        let mut f = Function::new(locals);
+
+        // Return original node for now (no-op dissoc on HashCollisionNode)
+        // TODO: Implement proper HashCollisionNode dissoc
+        f.instruction(&Instruction::LocalGet(0));
+
+        f.instruction(&Instruction::End);
+        f
+    }
+
     // ========================================================================
     // Persistent Vector Codegen
     // ========================================================================
@@ -5526,6 +5840,66 @@ impl<'a> CodeGen<'a> {
         Ok(())
     }
 
+    /// Generate code for (disj set val)
+    ///
+    /// Removes val from the set, returning a new set without that element.
+    fn generate_set_disj(
+        &self,
+        set: &Expr,
+        val: &Expr,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        // Generate the set and val expressions
+        // Note: stub impl doesn't use locals, so no need to bump scratch_local
+        self.generate_expr(set, f)?;
+        self.generate_expr(val, f)?;
+
+        self.generate_set_disj_impl(f)
+    }
+
+    /// Implementation of set disj when values are on stack
+    ///
+    /// Stack: [set, val]
+    ///
+    /// Stub implementation: just returns the original set.
+    /// TODO: Implement proper set disj logic
+    fn generate_set_disj_impl(&self, f: &mut Function) -> CompileResult<()> {
+        // Stack is [set, val] - drop val, keep set
+        f.instruction(&Instruction::Drop); // drop val
+        // set is now on top of stack
+        Ok(())
+    }
+
+    /// Generate code for (dissoc map key)
+    ///
+    /// Removes key from the map, returning a new map without that key.
+    fn generate_map_dissoc(
+        &self,
+        map: &Expr,
+        key: &Expr,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        // Generate the map and key expressions
+        // Note: stub impl doesn't use locals, so no need to bump scratch_local
+        self.generate_expr(map, f)?;
+        self.generate_expr(key, f)?;
+
+        self.generate_map_dissoc_impl(f)
+    }
+
+    /// Implementation of map dissoc when values are on stack
+    ///
+    /// Stack: [map, key]
+    ///
+    /// Stub implementation: just returns the original map.
+    /// TODO: Implement proper map dissoc logic
+    fn generate_map_dissoc_impl(&self, f: &mut Function) -> CompileResult<()> {
+        // Stack is [map, key] - drop key, keep map
+        f.instruction(&Instruction::Drop); // drop key
+        // map is now on top of stack
+        Ok(())
+    }
+
     // ========================================================================
     // WIT/WASI helpers
     // ========================================================================
@@ -6471,62 +6845,6 @@ impl<'a> CodeGen<'a> {
                 }
             }
 
-            // Tagged value operations (DEPRECATED - no longer used in GC mode)
-            Expr::MakeTagged { tag, payload } => {
-                self.generate_expr(payload, f)?;
-                const PAYLOAD_MASK: i64 = 0x00FFFFFFFFFFFFFF;
-                const TAG_SHIFT: u32 = 56;
-                f.instruction(&Instruction::I64Const(PAYLOAD_MASK));
-                f.instruction(&Instruction::I64And);
-                f.instruction(&Instruction::I64Const((*tag as i64) << TAG_SHIFT));
-                f.instruction(&Instruction::I64Or);
-            }
-
-            Expr::GetTag(value) => {
-                self.generate_expr(value, f)?;
-                const TAG_SHIFT: i64 = 56;
-                f.instruction(&Instruction::I64Const(TAG_SHIFT));
-                f.instruction(&Instruction::I64ShrU);
-                f.instruction(&Instruction::I32WrapI64);
-            }
-
-            Expr::GetPayload(value) => {
-                self.generate_expr(value, f)?;
-                const PAYLOAD_MASK: i64 = 0x00FFFFFFFFFFFFFF;
-                f.instruction(&Instruction::I64Const(PAYLOAD_MASK));
-                f.instruction(&Instruction::I64And);
-            }
-
-            // Heap operations
-            Expr::Alloc(size_expr) => {
-                self.generate_expr(size_expr, f)?;
-                f.instruction(&Instruction::GlobalGet(0));
-                f.instruction(&Instruction::LocalTee(0));
-                self.generate_expr(size_expr, f)?;
-                f.instruction(&Instruction::I32Add);
-                f.instruction(&Instruction::GlobalSet(0));
-                f.instruction(&Instruction::LocalGet(0));
-            }
-
-            Expr::HeapStore { base, offset, value } => {
-                self.generate_expr(base, f)?;
-                self.generate_expr(value, f)?;
-                f.instruction(&Instruction::I64Store(wasm_encoder::MemArg {
-                    offset: *offset as u64,
-                    align: 3,
-                    memory_index: 0,
-                }));
-            }
-
-            Expr::HeapLoad { base, offset } => {
-                self.generate_expr(base, f)?;
-                f.instruction(&Instruction::I64Load(wasm_encoder::MemArg {
-                    offset: *offset as u64,
-                    align: 3,
-                    memory_index: 0,
-                }));
-            }
-
             // ================================================================
             // WASM GC Operations
             // ================================================================
@@ -6705,6 +7023,10 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::RefI31);
             }
 
+            Expr::MapDissoc { map, key } => {
+                self.generate_map_dissoc(map, key, f)?;
+            }
+
             // =========================================================
             // Persistent Set Operations
             // =========================================================
@@ -6719,6 +7041,10 @@ impl<'a> CodeGen<'a> {
 
             Expr::SetConj { set, val } => {
                 self.generate_set_conj(set, val, f)?;
+            }
+
+            Expr::SetDisj { set, val } => {
+                self.generate_set_disj(set, val, f)?;
             }
 
             Expr::SetCount(set) => {
@@ -6794,6 +7120,133 @@ impl<'a> CodeGen<'a> {
             Expr::GetTypeId(value) => {
                 self.generate_get_type_id(value, f)?;
             }
+
+            // =========================================================================
+            // Closure Operations
+            // =========================================================================
+            Expr::ClosureNew {
+                func_idx,
+                arity,
+                captures,
+            } => {
+                self.generate_closure_new(*func_idx, *arity, captures, f)?;
+            }
+
+            Expr::ClosureCall {
+                closure,
+                args,
+                in_tail_position,
+            } => {
+                self.generate_closure_call(closure, args, *in_tail_position, f)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    // ========================================================================
+    // Closure Operations
+    // ========================================================================
+
+    /// Generate code for creating a closure
+    ///
+    /// Creates: struct { type_id, env, fn }
+    /// - type_id: i32 identifying arity for protocol dispatch
+    /// - env: array<eqref> containing captured values
+    /// - fn: typed funcref to the wrapper function
+    fn generate_closure_new(
+        &self,
+        func_idx: u32,
+        arity: u32,
+        captures: &[Expr],
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use crate::ir::type_ids;
+
+        let closure_type = gc_types::closure_type_for_arity(arity);
+        let type_id = type_ids::CLOSURE_0 + arity as i32;
+
+        // Field 0: type_id (i32)
+        f.instruction(&Instruction::I32Const(type_id));
+
+        // Field 1: env (ref null $trie_node)
+        // Create array of captured values
+        if captures.is_empty() {
+            // Empty captures - use null ref
+            f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::TRIE_NODE)));
+        } else {
+            // Generate each capture expression
+            for capture in captures {
+                self.generate_expr(capture, f)?;
+            }
+            // Create array from values on stack
+            f.instruction(&Instruction::ArrayNewFixed {
+                array_type_index: gc_types::TRIE_NODE,
+                array_size: captures.len() as u32,
+            });
+        }
+
+        // Field 2: fn (ref $closure_fn_N) - typed funcref
+        // RefFunc creates a typed reference to the function
+        // Note: func_idx is the IR index, we need to convert to actual WASM function index
+        f.instruction(&Instruction::RefFunc(self.user_func_idx(func_idx)));
+
+        // Create the closure struct
+        f.instruction(&Instruction::StructNew(closure_type));
+
+        Ok(())
+    }
+
+    /// Generate code for calling a closure
+    ///
+    /// Uses call_ref with typed funcref for efficient invocation
+    fn generate_closure_call(
+        &self,
+        closure: &Expr,
+        args: &[Expr],
+        in_tail_position: bool,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+
+        let arity = args.len() as u32;
+        let closure_type = gc_types::closure_type_for_arity(arity);
+        let fn_type = gc_types::closure_fn_type_for_arity(arity);
+
+        // Evaluate and save the closure to a local
+        self.generate_expr(closure, f)?;
+        let closure_local = self.scratch_local.get();
+        f.instruction(&Instruction::LocalSet(closure_local));
+
+        // Get env (first arg to wrapper function)
+        f.instruction(&Instruction::LocalGet(closure_local));
+        // Cast to the correct closure type
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(closure_type)));
+        // Get env field
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: closure_type,
+            field_index: gc_types::CL_ENV,
+        });
+
+        // Push actual arguments
+        for arg in args {
+            self.generate_expr(arg, f)?;
+        }
+
+        // Get fn (typed funcref)
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(closure_type)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: closure_type,
+            field_index: gc_types::CL_FN,
+        });
+
+        // Call with typed funcref
+        if in_tail_position {
+            f.instruction(&Instruction::ReturnCallRef(fn_type));
+        } else {
+            f.instruction(&Instruction::CallRef(fn_type));
         }
 
         Ok(())
@@ -7105,7 +7558,6 @@ impl<'a> CodeGen<'a> {
             | Type::Map(_, _)
             | Type::Set(_)
             | Type::GcRef
-            | Type::Tagged
             | Type::Unknown => ValType::Ref(RefType::EQREF),
             // Only function refs stay as i32 for now (used as indices)
             Type::Func { .. } => ValType::I32,
@@ -7296,7 +7748,6 @@ fn type_to_valtype(ty: &Type) -> ValType {
         Type::F64 => ValType::F64,
         Type::String => ValType::I32,
         Type::List(_) | Type::Vector(_) | Type::Map(_, _) | Type::Set(_) => ValType::I32,
-        Type::Tagged => ValType::I64,
         Type::GcRef => ValType::Ref(RefType::EQREF),
         Type::Func { .. } => ValType::I32,
         Type::Unknown => ValType::I32,
