@@ -27,6 +27,8 @@ struct ClosureWrapper {
     params: Vec<String>,
     /// Body expression (original fn body)
     body: Edn,
+    /// True for variadic builtin wrappers which don't take an env parameter
+    is_variadic: bool,
 }
 
 struct Lowerer {
@@ -127,7 +129,8 @@ impl Lowerer {
     }
 
     /// Generate a wrapper function for a closure
-    /// Wrapper signature: (env: eqref, params...) -> eqref
+    /// Regular closure signature: (env: eqref, params...) -> eqref
+    /// Variadic closure signature: (params...) -> eqref (no env)
     fn lower_closure_wrapper(&mut self, closure: &ClosureWrapper) -> CompileResult<Function> {
         use crate::ir::gc_types;
 
@@ -136,13 +139,21 @@ impl Lowerer {
         self.local_types.clear();
         self.next_local = 0;
 
-        // First parameter is always env (array of captured values)
-        let env_idx = self.next_local;
-        self.next_local += 1;
-        self.local_types.insert(env_idx, Type::GcRef);
+        let mut params = Vec::new();
+        let env_idx: Option<u32>;
+
+        if closure.is_variadic {
+            // Variadic wrappers don't have an env parameter
+            env_idx = None;
+        } else {
+            // First parameter is always env (array of captured values)
+            env_idx = Some(self.next_local);
+            self.next_local += 1;
+            self.local_types.insert(env_idx.unwrap(), Type::GcRef);
+            params.push(("$env".to_string(), Type::GcRef));
+        }
 
         // Add regular parameters
-        let mut params = vec![("$env".to_string(), Type::GcRef)];
         for param_name in &closure.params {
             let idx = self.next_local;
             self.locals.insert(param_name.clone(), (idx, Type::GcRef));
@@ -152,24 +163,26 @@ impl Lowerer {
         }
 
         // Add captured variables as synthetic locals that read from env
-        // We'll create let bindings at the start of the body
+        // (only for non-variadic closures with env)
         let mut capture_bindings = Vec::new();
-        for (cap_idx, cap_name) in closure.captures.iter().enumerate() {
-            let local_idx = self.next_local;
-            self.locals.insert(cap_name.clone(), (local_idx, Type::GcRef));
-            self.local_types.insert(local_idx, Type::GcRef);
-            self.next_local += 1;
+        if let Some(env) = env_idx {
+            for (cap_idx, cap_name) in closure.captures.iter().enumerate() {
+                let local_idx = self.next_local;
+                self.locals.insert(cap_name.clone(), (local_idx, Type::GcRef));
+                self.local_types.insert(local_idx, Type::GcRef);
+                self.next_local += 1;
 
-            // env[cap_idx] - ArrayGet from env
-            let env_get = Expr::ArrayGet {
-                type_idx: gc_types::TRIE_NODE,
-                array: Box::new(Expr::LocalGet {
-                    local: env_idx,
-                    ty: Type::GcRef,
-                }),
-                index: Box::new(Expr::RawI32(cap_idx as i32)),
-            };
-            capture_bindings.push((local_idx, env_get));
+                // env[cap_idx] - ArrayGet from env
+                let env_get = Expr::ArrayGet {
+                    type_idx: gc_types::TRIE_NODE,
+                    array: Box::new(Expr::LocalGet {
+                        local: env,
+                        ty: Type::GcRef,
+                    }),
+                    index: Box::new(Expr::RawI32(cap_idx as i32)),
+                };
+                capture_bindings.push((local_idx, env_get));
+            }
         }
 
         // Lower the body with captures in scope
@@ -402,8 +415,8 @@ impl Lowerer {
                 self.lower_binop_chain(BinOp::Mul, args, ty)
             }
             "/" => {
-                let ty = self.infer_numeric_type(args);
-                self.lower_binop_chain(BinOp::Div, args, ty)
+                // Division always produces F64 (Clojure semantics: / returns ratio/float)
+                self.lower_binop_chain(BinOp::Div, args, Type::F64)
             }
             "rem" | "mod" => {
                 let ty = self.infer_numeric_type(args);
@@ -453,6 +466,7 @@ impl Lowerer {
 
             // First-class functions
             "fn" => self.lower_fn(args),
+            "apply" => self.lower_apply(args),
 
             // String
             "str" => self.lower_str(args),
@@ -503,11 +517,46 @@ impl Lowerer {
     }
 
     fn lower_binop_chain(&mut self, op: BinOp, args: &[Edn], ty: Type) -> CompileResult<Expr> {
+        // Handle zero-arg cases: (+) → 0, (*) → 1
         if args.is_empty() {
-            return Err(CompileError::Parse("Operator requires at least 1 argument".into()));
+            return match op {
+                BinOp::Add => Ok(Expr::Int(0)),
+                BinOp::Mul => Ok(Expr::Int(1)),
+                _ => Err(CompileError::Parse(
+                    format!("{:?} requires at least 1 argument", op),
+                )),
+            };
         }
+
+        // Handle single-arg cases
         if args.len() == 1 {
-            return self.lower_expr(&args[0]);
+            // Arguments to binary operations are never in tail position
+            let was_tail = self.in_tail_position;
+            self.in_tail_position = false;
+            let x = self.lower_expr(&args[0])?;
+            self.in_tail_position = was_tail;
+
+            return match op {
+                // (- x) → negate: 0 - x
+                BinOp::Sub => Ok(Expr::BinOp {
+                    op: BinOp::Sub,
+                    left: Box::new(Expr::Int(0)),
+                    right: Box::new(x),
+                    ty,
+                }),
+                // (/ x) → reciprocal: 1.0 / x
+                BinOp::Div => {
+                    let x_float = Self::coerce_to_float(x);
+                    Ok(Expr::BinOp {
+                        op: BinOp::Div,
+                        left: Box::new(Expr::Float(1.0)),
+                        right: Box::new(x_float),
+                        ty: Type::F64,
+                    })
+                }
+                // (+ x) and (* x) just return x
+                _ => Ok(x),
+            };
         }
 
         // Arguments to binary operations are never in tail position
@@ -515,8 +564,17 @@ impl Lowerer {
         self.in_tail_position = false;
 
         let mut result = self.lower_expr(&args[0])?;
+        // For division, coerce operands to float
+        if op == BinOp::Div {
+            result = Self::coerce_to_float(result);
+        }
+
         for arg in &args[1..] {
-            let right = self.lower_expr(arg)?;
+            let mut right = self.lower_expr(arg)?;
+            // For division, coerce operands to float
+            if op == BinOp::Div {
+                right = Self::coerce_to_float(right);
+            }
             result = Expr::BinOp {
                 op,
                 left: Box::new(result),
@@ -527,6 +585,15 @@ impl Lowerer {
 
         self.in_tail_position = was_tail;
         Ok(result)
+    }
+
+    /// Coerce an expression to float. If it's an integer literal, convert it.
+    /// For other expressions, wrap in a ToFloat conversion.
+    fn coerce_to_float(expr: Expr) -> Expr {
+        match expr {
+            Expr::Int(i) => Expr::Float(i as f64),
+            other => Expr::ToFloat(Box::new(other)),
+        }
     }
 
     fn lower_if(&mut self, args: &[Edn]) -> CompileResult<Expr> {
@@ -685,6 +752,7 @@ impl Lowerer {
             captures: free_vars.clone(),
             params,
             body,
+            is_variadic: false,
         });
 
         // Generate capture expressions (LocalGet for each captured variable)
@@ -708,6 +776,32 @@ impl Lowerer {
             func_idx: wrapper_idx,
             arity,
             captures,
+        })
+    }
+
+    /// Lower (apply func args-vec) to Apply expression.
+    ///
+    /// Supports the simple two-argument form:
+    /// (apply + [1 2 3]) -> calls + with three arguments from the vector
+    fn lower_apply(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 2 {
+            return Err(CompileError::Parse(
+                "apply requires exactly 2 arguments: function and arg collection".into(),
+            ));
+        }
+
+        // Arguments are never in tail position
+        let was_tail = self.in_tail_position;
+        self.in_tail_position = false;
+
+        let func = self.lower_expr(&args[0])?;
+        let arg_coll = self.lower_expr(&args[1])?;
+
+        self.in_tail_position = was_tail;
+
+        Ok(Expr::Apply {
+            func: Box::new(func),
+            args: Box::new(arg_coll),
         })
     }
 
@@ -1906,8 +2000,10 @@ impl Lowerer {
     /// Used to detect built-ins in value position.
     fn builtin_arity(&self, name: &str) -> Option<u32> {
         match name {
+            // Variadic arithmetic (handled specially when used as values)
+            "+" | "-" | "*" | "/" => Some(2), // default arity for direct calls
             // Binary arithmetic
-            "+" | "-" | "*" | "/" | "rem" | "mod" => Some(2),
+            "rem" | "mod" => Some(2),
             // Binary comparison
             "=" | "not=" | "<" | "<=" | ">" | ">=" => Some(2),
             // Unary
@@ -1916,9 +2012,19 @@ impl Lowerer {
         }
     }
 
+    /// Check if a built-in is variadic (supports 0-8 args via apply).
+    fn is_variadic_builtin(&self, name: &str) -> bool {
+        matches!(name, "+" | "-" | "*" | "/")
+    }
+
     /// Create a closure wrapper for a built-in function used in value position.
     /// Example: `(let [f +] (f 1 2))` - here `+` is in value position.
     fn lower_builtin_as_closure(&mut self, name: &str, arity: u32) -> CompileResult<Expr> {
+        // For variadic builtins, create a VARIADIC_CLOSURE instead
+        if self.is_variadic_builtin(name) {
+            return self.lower_variadic_builtin_as_closure(name);
+        }
+
         // Check if we already have a wrapper for this built-in
         if let Some(&func_idx) = self.builtin_wrappers.get(name) {
             return Ok(Expr::ClosureNew {
@@ -1954,6 +2060,7 @@ impl Lowerer {
             captures: vec![], // no captures
             params: param_names,
             body,
+            is_variadic: false,
         });
 
         Ok(Expr::ClosureNew {
@@ -1961,6 +2068,103 @@ impl Lowerer {
             arity,
             captures: vec![], // no captures needed for built-ins
         })
+    }
+
+    /// Create a variadic closure for variadic builtins (+, *, -, /).
+    /// Generates 9 wrapper functions (arities 0-8) and returns a VariadicClosureNew.
+    fn lower_variadic_builtin_as_closure(&mut self, name: &str) -> CompileResult<Expr> {
+        // Check if we already have wrappers for this variadic builtin
+        // Use a special key for variadic wrappers
+        let cache_key = format!("variadic_{}", name);
+        if let Some(&base_idx) = self.builtin_wrappers.get(&cache_key) {
+            // We stored the base index; the 9 funcs are at base_idx..base_idx+9
+            let func_indices: [u32; 9] = std::array::from_fn(|i| base_idx + i as u32);
+            return Ok(Expr::VariadicClosureNew {
+                op: name.to_string(),
+                func_indices,
+            });
+        }
+
+        // Generate 9 wrapper functions (one per arity 0-8)
+        let base_idx = self.num_analyzed_funcs + self.pending_closures.len() as u32;
+
+        for arity in 0..=8u32 {
+            let wrapper_name = format!(
+                "$variadic_{}_{}",
+                name.replace(|c: char| !c.is_alphanumeric(), "_"),
+                arity
+            );
+
+            // Calculate function index
+            let func_idx = base_idx + arity;
+            self.func_indices.insert(wrapper_name.clone(), func_idx);
+
+            // Generate parameter names
+            let param_names: Vec<String> = (0..arity)
+                .map(|i| format!("$arg{}", i))
+                .collect();
+
+            // Generate body based on arity and operation
+            let body = self.make_variadic_builtin_body(name, &param_names);
+
+            // Store wrapper for later generation
+            // Mark as variadic for special codegen (no env parameter)
+            self.pending_closures.push(ClosureWrapper {
+                name: wrapper_name,
+                captures: vec![], // no captures
+                params: param_names,
+                body,
+                is_variadic: true, // Variadic wrappers don't take env
+            });
+        }
+
+        // Cache the base index for future lookups
+        self.builtin_wrappers.insert(cache_key, base_idx);
+
+        let func_indices: [u32; 9] = std::array::from_fn(|i| base_idx + i as u32);
+        Ok(Expr::VariadicClosureNew {
+            op: name.to_string(),
+            func_indices,
+        })
+    }
+
+    /// Create the body expression for a variadic built-in wrapper function.
+    /// Handles special cases for 0-arg and 1-arg calls.
+    fn make_variadic_builtin_body(&self, name: &str, params: &[String]) -> Edn {
+        match (name, params.len()) {
+            // Zero-arg cases
+            ("+", 0) => Edn::Number(suss_core::Number::Integer(0.into())),
+            ("*", 0) => Edn::Number(suss_core::Number::Integer(1.into())),
+            ("-", 0) | ("/", 0) => {
+                // These shouldn't happen in practice, but return 0 as fallback
+                Edn::Number(suss_core::Number::Integer(0.into()))
+            }
+
+            // Single-arg cases
+            ("+", 1) | ("*", 1) => {
+                // Just return the argument
+                Edn::Symbol(suss_core::Symbol::new(&params[0]))
+            }
+            ("-", 1) => {
+                // Negate: (- 0 x)
+                Edn::List(vec![
+                    Edn::Symbol(suss_core::Symbol::new("-")),
+                    Edn::Number(suss_core::Number::Integer(0.into())),
+                    Edn::Symbol(suss_core::Symbol::new(&params[0])),
+                ])
+            }
+            ("/", 1) => {
+                // Reciprocal: (/ 1.0 x)
+                Edn::List(vec![
+                    Edn::Symbol(suss_core::Symbol::new("/")),
+                    Edn::Number(suss_core::Number::Float(1.0)),
+                    Edn::Symbol(suss_core::Symbol::new(&params[0])),
+                ])
+            }
+
+            // Two+ args: chain the operations
+            _ => self.make_builtin_call_body(name, params),
+        }
     }
 
     /// Create the body expression for a built-in wrapper function.

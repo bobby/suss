@@ -12,7 +12,7 @@
 //! This consolidation enables cleaner GC support when we add WASM GC types.
 
 use wasm_encoder::{
-    AbstractHeapType, CodeSection, ConstExpr, CustomSection, DataSection, DataSegment,
+    AbstractHeapType, BlockType, CodeSection, ConstExpr, CustomSection, DataSection, DataSegment,
     DataSegmentMode, ElementSection, Elements, EntityType, ExportKind, ExportSection, FieldType,
     Function, FunctionSection, GlobalSection, GlobalType, HeapType, ImportSection, Instruction,
     MemorySection, MemoryType, Module as WasmModule, RawSection, RefType, StorageType,
@@ -429,9 +429,15 @@ impl<'a> CodeGen<'a> {
         let mut non_closure_type_idx = 0u32;
         for func in &self.ir.functions {
             if func.name.starts_with("$closure_") || func.name.starts_with("$builtin_") {
+                // Regular closures have env as first param, so arity = params.len() - 1
                 let arity = func.params.len().saturating_sub(1) as u32;
                 let closure_fn_type = crate::ir::gc_types::closure_fn_type_for_arity(arity);
                 functions.function(closure_fn_type);
+            } else if func.name.starts_with("$variadic_") {
+                // Variadic wrappers have no env param, so arity = params.len()
+                let arity = func.params.len() as u32;
+                let variadic_fn_type = crate::ir::gc_types::variadic_fn_type_for_arity(arity);
+                functions.function(variadic_fn_type);
             } else {
                 functions.function(type_offset + non_closure_type_idx);
                 non_closure_type_idx += 1;
@@ -845,12 +851,17 @@ impl<'a> CodeGen<'a> {
         // We need to declare all functions that might be closures:
         // - "$closure_" prefixed: user-defined anonymous functions
         // - "$builtin_" prefixed: wrappers for built-in functions used as values
+        // - "$variadic_" prefixed: wrappers for variadic builtins (+, *, -, /)
         let closure_func_indices: Vec<u32> = self
             .ir
             .functions
             .iter()
             .enumerate()
-            .filter(|(_, f)| f.name.starts_with("$closure_") || f.name.starts_with("$builtin_"))
+            .filter(|(_, f)| {
+                f.name.starts_with("$closure_")
+                    || f.name.starts_with("$builtin_")
+                    || f.name.starts_with("$variadic_")
+            })
             .map(|(idx, _)| self.user_func_idx(idx as u32))
             .collect();
 
@@ -1163,6 +1174,76 @@ impl<'a> CodeGen<'a> {
         }
         debug_assert_eq!(gc_types::CLOSURE_0, 20);
         debug_assert_eq!(gc_types::CLOSURE_8, 28);
+
+        // =========================================================================
+        // Variadic Function Types (indices 29-37)
+        // These define signatures for variadic builtin wrappers like +, *, -, /.
+        // Unlike closure function types, these don't take an env parameter.
+        // Signature: (args...) -> eqref
+        // =========================================================================
+
+        // Type 29: VARIADIC_FN_0 - () -> result
+        types.ty().function(vec![], vec![eqref]);
+        debug_assert_eq!(gc_types::VARIADIC_FN_0, 29);
+
+        // Type 30: VARIADIC_FN_1 - (arg1) -> result
+        types.ty().function(vec![eqref], vec![eqref]);
+        debug_assert_eq!(gc_types::VARIADIC_FN_1, 30);
+
+        // Type 31: VARIADIC_FN_2 - (arg1, arg2) -> result
+        types.ty().function(vec![eqref, eqref], vec![eqref]);
+        debug_assert_eq!(gc_types::VARIADIC_FN_2, 31);
+
+        // Type 32: VARIADIC_FN_3 - (arg1, arg2, arg3) -> result
+        types.ty().function(vec![eqref, eqref, eqref], vec![eqref]);
+        debug_assert_eq!(gc_types::VARIADIC_FN_3, 32);
+
+        // Type 33: VARIADIC_FN_4 - (arg1, arg2, arg3, arg4) -> result
+        types.ty().function(vec![eqref, eqref, eqref, eqref], vec![eqref]);
+        debug_assert_eq!(gc_types::VARIADIC_FN_4, 33);
+
+        // Type 34: VARIADIC_FN_5
+        types.ty().function(vec![eqref, eqref, eqref, eqref, eqref], vec![eqref]);
+        debug_assert_eq!(gc_types::VARIADIC_FN_5, 34);
+
+        // Type 35: VARIADIC_FN_6
+        types.ty().function(vec![eqref, eqref, eqref, eqref, eqref, eqref], vec![eqref]);
+        debug_assert_eq!(gc_types::VARIADIC_FN_6, 35);
+
+        // Type 36: VARIADIC_FN_7
+        types
+            .ty()
+            .function(vec![eqref, eqref, eqref, eqref, eqref, eqref, eqref], vec![eqref]);
+        debug_assert_eq!(gc_types::VARIADIC_FN_7, 36);
+
+        // Type 37: VARIADIC_FN_8
+        types.ty().function(
+            vec![eqref, eqref, eqref, eqref, eqref, eqref, eqref, eqref],
+            vec![eqref],
+        );
+        debug_assert_eq!(gc_types::VARIADIC_FN_8, 37);
+
+        // =========================================================================
+        // Variadic Closure Struct Type (index 38)
+        // Contains 9 funcrefs, one for each arity 0-8.
+        // Used for variadic builtins like +, *, -, / when used as values.
+        // =========================================================================
+
+        // Build the struct fields: type_id + 9 typed funcrefs
+        let mut variadic_fields = vec![type_id_field.clone()];
+        for arity in 0..=8u32 {
+            let fn_type_idx = gc_types::variadic_fn_type_for_arity(arity);
+            let typed_funcref = ValType::Ref(RefType {
+                nullable: false,
+                heap_type: HeapType::Concrete(fn_type_idx),
+            });
+            variadic_fields.push(FieldType {
+                element_type: StorageType::Val(typed_funcref),
+                mutable: false,
+            });
+        }
+        types.ty().struct_(variadic_fields);
+        debug_assert_eq!(gc_types::VARIADIC_CLOSURE, 38);
     }
 
     /// Emit function types for runtime helper functions.
@@ -6596,11 +6677,15 @@ impl<'a> CodeGen<'a> {
                     (BinOp::Div, Type::F64) => {
                         f.instruction(&Instruction::I32Const(type_ids::FLOAT));
                         self.generate_expr(left, f)?;
+                        // Cast to FLOAT struct before extracting value
+                        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT)));
                         f.instruction(&Instruction::StructGet {
                             struct_type_index: gc_types::FLOAT,
                             field_index: gc_types::FL_VALUE,
                         });
                         self.generate_expr(right, f)?;
+                        // Cast to FLOAT struct before extracting value
+                        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT)));
                         f.instruction(&Instruction::StructGet {
                             struct_type_index: gc_types::FLOAT,
                             field_index: gc_types::FL_VALUE,
@@ -7132,12 +7217,24 @@ impl<'a> CodeGen<'a> {
                 self.generate_closure_new(*func_idx, *arity, captures, f)?;
             }
 
+            Expr::VariadicClosureNew { op: _, func_indices } => {
+                self.generate_variadic_closure_new(func_indices, f)?;
+            }
+
             Expr::ClosureCall {
                 closure,
                 args,
                 in_tail_position,
             } => {
                 self.generate_closure_call(closure, args, *in_tail_position, f)?;
+            }
+
+            Expr::Apply { func, args } => {
+                self.generate_apply(func, args, f)?;
+            }
+
+            Expr::ToFloat(inner) => {
+                self.generate_to_float(inner, f)?;
             }
         }
 
@@ -7198,9 +7295,37 @@ impl<'a> CodeGen<'a> {
         Ok(())
     }
 
+    /// Generate code for creating a variadic closure
+    ///
+    /// Creates: struct { type_id, fn0, fn1, ..., fn8 }
+    /// - type_id: i32 identifying as VARIADIC_CLOSURE
+    /// - fn0..fn8: typed funcrefs for each arity
+    fn generate_variadic_closure_new(
+        &self,
+        func_indices: &[u32; 9],
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use crate::ir::type_ids;
+
+        // Field 0: type_id (i32)
+        f.instruction(&Instruction::I32Const(type_ids::VARIADIC_CLOSURE));
+
+        // Fields 1-9: fn0 through fn8 (typed funcrefs)
+        for &func_idx in func_indices {
+            f.instruction(&Instruction::RefFunc(self.user_func_idx(func_idx)));
+        }
+
+        // Create the variadic closure struct
+        f.instruction(&Instruction::StructNew(gc_types::VARIADIC_CLOSURE));
+
+        Ok(())
+    }
+
     /// Generate code for calling a closure
     ///
-    /// Uses call_ref with typed funcref for efficient invocation
+    /// Uses call_ref with typed funcref for efficient invocation.
+    /// Handles both regular closures and variadic closures.
     fn generate_closure_call(
         &self,
         closure: &Expr,
@@ -7211,13 +7336,47 @@ impl<'a> CodeGen<'a> {
         use crate::ir::gc_types;
 
         let arity = args.len() as u32;
-        let closure_type = gc_types::closure_type_for_arity(arity);
-        let fn_type = gc_types::closure_fn_type_for_arity(arity);
 
         // Evaluate and save the closure to a local
         self.generate_expr(closure, f)?;
         let closure_local = self.scratch_local.get();
         f.instruction(&Instruction::LocalSet(closure_local));
+
+        // Check if it's a variadic closure
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(
+            gc_types::VARIADIC_CLOSURE,
+        )));
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+
+        // Variadic closure path
+        self.generate_variadic_closure_call(closure_local, args, arity, in_tail_position, f)?;
+
+        f.instruction(&Instruction::Else);
+
+        // Regular closure path
+        self.generate_regular_closure_call(closure_local, args, arity, in_tail_position, f)?;
+
+        f.instruction(&Instruction::End);
+
+        Ok(())
+    }
+
+    /// Generate code for calling a regular closure (with env parameter).
+    fn generate_regular_closure_call(
+        &self,
+        closure_local: u32,
+        args: &[Expr],
+        arity: u32,
+        in_tail_position: bool,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+
+        let closure_type = gc_types::closure_type_for_arity(arity);
+        let fn_type = gc_types::closure_fn_type_for_arity(arity);
 
         // Get env (first arg to wrapper function)
         f.instruction(&Instruction::LocalGet(closure_local));
@@ -7248,6 +7407,507 @@ impl<'a> CodeGen<'a> {
         } else {
             f.instruction(&Instruction::CallRef(fn_type));
         }
+
+        Ok(())
+    }
+
+    /// Generate code for calling a variadic closure (no env parameter).
+    fn generate_variadic_closure_call(
+        &self,
+        closure_local: u32,
+        args: &[Expr],
+        arity: u32,
+        in_tail_position: bool,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+
+        let fn_type = gc_types::variadic_fn_type_for_arity(arity);
+        let fn_field = gc_types::VC_FN0 + arity; // VC_FN0=1, VC_FN1=2, etc.
+
+        // Push actual arguments (no env for variadic closures)
+        for arg in args {
+            self.generate_expr(arg, f)?;
+        }
+
+        // Get fnN (typed funcref) from variadic closure struct
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
+            gc_types::VARIADIC_CLOSURE,
+        )));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: gc_types::VARIADIC_CLOSURE,
+            field_index: fn_field,
+        });
+
+        // Call with typed funcref
+        if in_tail_position {
+            f.instruction(&Instruction::ReturnCallRef(fn_type));
+        } else {
+            f.instruction(&Instruction::CallRef(fn_type));
+        }
+
+        Ok(())
+    }
+
+    /// Generate code for dynamic function application.
+    ///
+    /// (apply f coll) calls f with elements of coll as arguments.
+    /// At runtime, we dispatch based on the vector count (0-8).
+    fn generate_apply(
+        &self,
+        func: &Expr,
+        args: &Expr,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+
+        // Scratch locals matching layout: +0: eqref, +1: i32, +2: eqref, +3: eqref, +4: eqref
+        let scratch_base = self.scratch_local.get();
+        let closure_local = scratch_base; // eqref at +0
+        let count_local = scratch_base + 1; // i32 at +1
+        let vec_local = scratch_base + 2; // eqref at +2
+
+        // Evaluate and store closure
+        self.generate_expr(func, f)?;
+        f.instruction(&Instruction::LocalSet(closure_local));
+
+        // Evaluate and store args vector
+        self.generate_expr(args, f)?;
+        f.instruction(&Instruction::LocalSet(vec_local));
+
+        // Get vector count as raw i32
+        f.instruction(&Instruction::LocalGet(vec_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
+            gc_types::PERSISTENT_VECTOR,
+        )));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            field_index: gc_types::PV_CNT,
+        });
+        f.instruction(&Instruction::LocalSet(count_local));
+
+        // Check if it's a variadic closure by testing the type
+        // We use ref.test to check if it's a VARIADIC_CLOSURE struct
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(
+            gc_types::VARIADIC_CLOSURE,
+        )));
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+
+        // Variadic closure path
+        self.generate_apply_variadic_dispatch(closure_local, vec_local, count_local, f)?;
+
+        f.instruction(&Instruction::Else);
+
+        // Regular closure path
+        self.generate_apply_dispatch(closure_local, vec_local, count_local, f)?;
+
+        f.instruction(&Instruction::End);
+
+        Ok(())
+    }
+
+    /// Generate code to convert a boxed numeric value to a boxed FLOAT.
+    ///
+    /// Handles:
+    /// - FLOAT struct -> return as-is
+    /// - LARGE_INT struct -> extract i64, convert to f64, box as FLOAT
+    /// - i31ref small int -> decode, convert to f64, box as FLOAT
+    ///
+    /// Returns eqref (FLOAT struct) on the stack.
+    fn generate_to_float(&self, inner: &Expr, f: &mut Function) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use crate::ir::type_ids;
+        use wasm_encoder::{AbstractHeapType, BlockType, HeapType, Instruction, RefType, ValType};
+
+        let eqref = RefType {
+            nullable: true,
+            heap_type: HeapType::Abstract {
+                shared: false,
+                ty: AbstractHeapType::Eq,
+            },
+        };
+
+        // Generate the inner expression
+        self.generate_expr(inner, f)?;
+
+        // Store in a local to test multiple times
+        let scratch_base = self.scratch_local.get();
+        let val_local = scratch_base;
+        self.scratch_local.set(scratch_base + 1);
+        f.instruction(&Instruction::LocalSet(val_local));
+
+        // Check if it's already a FLOAT struct - if so, return it as-is
+        f.instruction(&Instruction::LocalGet(val_local));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::FLOAT)));
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(eqref))));
+        {
+            // It's already a FLOAT - return it unchanged
+            f.instruction(&Instruction::LocalGet(val_local));
+        }
+        f.instruction(&Instruction::Else);
+        {
+            // Check if it's a LARGE_INT struct
+            f.instruction(&Instruction::LocalGet(val_local));
+            f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::LARGE_INT)));
+            f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(eqref))));
+            {
+                // It's a LARGE_INT - extract i64, convert to f64, wrap in FLOAT
+                f.instruction(&Instruction::I32Const(type_ids::FLOAT));
+                f.instruction(&Instruction::LocalGet(val_local));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::LARGE_INT)));
+                f.instruction(&Instruction::StructGet {
+                    struct_type_index: gc_types::LARGE_INT,
+                    field_index: gc_types::LI_VALUE,
+                });
+                f.instruction(&Instruction::F64ConvertI64S);
+                f.instruction(&Instruction::StructNew(gc_types::FLOAT));
+            }
+            f.instruction(&Instruction::Else);
+            {
+                // Must be i31ref small int - decode, convert, wrap in FLOAT
+                f.instruction(&Instruction::I32Const(type_ids::FLOAT));
+                f.instruction(&Instruction::LocalGet(val_local));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                // Small ints are stored shifted by 1, so unshift
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrU);
+                // Convert i32 to f64
+                f.instruction(&Instruction::F64ConvertI32S);
+                f.instruction(&Instruction::StructNew(gc_types::FLOAT));
+            }
+            f.instruction(&Instruction::End);
+        }
+        f.instruction(&Instruction::End);
+
+        // Restore scratch local
+        self.scratch_local.set(scratch_base);
+
+        Ok(())
+    }
+
+    /// Generate the nested if-else dispatch for apply based on vector count.
+    fn generate_apply_dispatch(
+        &self,
+        closure_local: u32,
+        vec_local: u32,
+        count_local: u32,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        // count == 0?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Eqz);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_call_arity(closure_local, vec_local, 0, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 1?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_call_arity(closure_local, vec_local, 1, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 2?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(2));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_call_arity(closure_local, vec_local, 2, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 3?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(3));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_call_arity(closure_local, vec_local, 3, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 4?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(4));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_call_arity(closure_local, vec_local, 4, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 5?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(5));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_call_arity(closure_local, vec_local, 5, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 6?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(6));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_call_arity(closure_local, vec_local, 6, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 7?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(7));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_call_arity(closure_local, vec_local, 7, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 8?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(8));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_call_arity(closure_local, vec_local, 8, f)?;
+        f.instruction(&Instruction::Else);
+
+        // Unsupported arity - trap
+        f.instruction(&Instruction::Unreachable);
+
+        // Close all 9 if-else blocks (one for each arity 0-8)
+        for _ in 0..9 {
+            f.instruction(&Instruction::End);
+        }
+
+        Ok(())
+    }
+
+    /// Generate code to call a closure with a specific arity, extracting args from vector.
+    fn generate_apply_call_arity(
+        &self,
+        closure_local: u32,
+        vec_local: u32,
+        arity: u32,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+
+        let closure_type = gc_types::closure_type_for_arity(arity);
+        let fn_type = gc_types::closure_fn_type_for_arity(arity);
+
+        // Get env (first arg to wrapper function)
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(closure_type)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: closure_type,
+            field_index: gc_types::CL_ENV,
+        });
+
+        // Extract each argument from the vector
+        for i in 0..arity {
+            self.generate_vec_nth_raw(vec_local, i, f)?;
+        }
+
+        // Get fn (typed funcref)
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(closure_type)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: closure_type,
+            field_index: gc_types::CL_FN,
+        });
+
+        // Call with call_ref (not tail call for now - apply result needs to bubble up)
+        f.instruction(&Instruction::CallRef(fn_type));
+
+        Ok(())
+    }
+
+    /// Generate code to get vector element at a raw i32 index.
+    ///
+    /// This is a simplified version for small vectors (≤32 elements)
+    /// that directly accesses the tail. For apply with vectors typically
+    /// containing few elements, this is the common case.
+    fn generate_vec_nth_raw(
+        &self,
+        vec_local: u32,
+        index: u32,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+
+        // Call $vec_array_for(vec, index) to get the leaf array
+        f.instruction(&Instruction::LocalGet(vec_local));
+        f.instruction(&Instruction::I32Const(index as i32));
+        f.instruction(&Instruction::Call(
+            self.helper_func_idx(helper_funcs::VEC_ARRAY_FOR),
+        ));
+
+        // Cast result to TRIE_NODE for array.get
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
+            gc_types::TRIE_NODE,
+        )));
+
+        // Get element at index & 0x1f
+        f.instruction(&Instruction::I32Const((index & 0x1F) as i32));
+        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
+
+        Ok(())
+    }
+
+    /// Generate the nested if-else dispatch for variadic apply based on vector count.
+    fn generate_apply_variadic_dispatch(
+        &self,
+        closure_local: u32,
+        vec_local: u32,
+        count_local: u32,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        // Same structure as regular dispatch, but calls variadic version
+        // count == 0?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Eqz);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_variadic_call_arity(closure_local, vec_local, 0, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 1?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_variadic_call_arity(closure_local, vec_local, 1, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 2?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(2));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_variadic_call_arity(closure_local, vec_local, 2, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 3?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(3));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_variadic_call_arity(closure_local, vec_local, 3, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 4?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(4));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_variadic_call_arity(closure_local, vec_local, 4, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 5?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(5));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_variadic_call_arity(closure_local, vec_local, 5, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 6?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(6));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_variadic_call_arity(closure_local, vec_local, 6, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 7?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(7));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_variadic_call_arity(closure_local, vec_local, 7, f)?;
+        f.instruction(&Instruction::Else);
+
+        // count == 8?
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(8));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+            RefType::EQREF,
+        ))));
+        self.generate_apply_variadic_call_arity(closure_local, vec_local, 8, f)?;
+        f.instruction(&Instruction::Else);
+
+        // Unsupported arity - trap
+        f.instruction(&Instruction::Unreachable);
+
+        // Close all 9 if-else blocks (one for each arity 0-8)
+        for _ in 0..9 {
+            f.instruction(&Instruction::End);
+        }
+
+        Ok(())
+    }
+
+    /// Generate code to call a variadic closure with a specific arity, extracting args from vector.
+    fn generate_apply_variadic_call_arity(
+        &self,
+        closure_local: u32,
+        vec_local: u32,
+        arity: u32,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+
+        let variadic_type = gc_types::VARIADIC_CLOSURE;
+        let fn_type = gc_types::variadic_fn_type_for_arity(arity);
+        let fn_field = gc_types::VC_FN0 + arity; // VC_FN0=1, VC_FN1=2, etc.
+
+        // Extract each argument from the vector (no env for variadic closures)
+        for i in 0..arity {
+            self.generate_vec_nth_raw(vec_local, i, f)?;
+        }
+
+        // Get fnN (typed funcref) from variadic closure struct
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(variadic_type)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: variadic_type,
+            field_index: fn_field,
+        });
+
+        // Call with call_ref
+        f.instruction(&Instruction::CallRef(fn_type));
 
         Ok(())
     }

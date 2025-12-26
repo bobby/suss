@@ -142,9 +142,76 @@ pub mod gc_types {
     /// Closure struct with arity 8
     pub const CLOSURE_8: u32 = 28;
 
+    // =========================================================================
+    // Variadic Function Types (for variadic builtin wrappers like +, *, -, /)
+    // Unlike closure function types, these don't take an env parameter.
+    // Signature: (args...) -> eqref
+    // =========================================================================
+
+    /// Function type for variadic arity 0: () -> result
+    pub const VARIADIC_FN_0: u32 = 29;
+    /// Function type for variadic arity 1: (arg1) -> result
+    pub const VARIADIC_FN_1: u32 = 30;
+    /// Function type for variadic arity 2: (arg1, arg2) -> result
+    pub const VARIADIC_FN_2: u32 = 31;
+    /// Function type for variadic arity 3
+    pub const VARIADIC_FN_3: u32 = 32;
+    /// Function type for variadic arity 4
+    pub const VARIADIC_FN_4: u32 = 33;
+    /// Function type for variadic arity 5
+    pub const VARIADIC_FN_5: u32 = 34;
+    /// Function type for variadic arity 6
+    pub const VARIADIC_FN_6: u32 = 35;
+    /// Function type for variadic arity 7
+    pub const VARIADIC_FN_7: u32 = 36;
+    /// Function type for variadic arity 8
+    pub const VARIADIC_FN_8: u32 = 37;
+
+    /// Get the variadic function type index for a given arity (0-8)
+    #[inline]
+    pub const fn variadic_fn_type_for_arity(arity: u32) -> u32 {
+        debug_assert!(arity <= 8, "Variadic arity must be 0-8");
+        VARIADIC_FN_0 + arity
+    }
+
+    // =========================================================================
+    // Variadic Closure Struct Type (for variadic builtins used as values)
+    // Contains 9 funcrefs, one for each arity 0-8.
+    // =========================================================================
+
+    /// struct { type_id: i32, fn0: (ref $variadic_fn_0), ..., fn8: (ref $variadic_fn_8) }
+    /// Variadic closure struct with all 9 arities
+    pub const VARIADIC_CLOSURE: u32 = 38;
+
+    // =========================================================================
+    // Variadic Closure Field Indices
+    // =========================================================================
+
+    /// Variadic closure type_id field
+    pub const VC_TYPE_ID: u32 = 0;
+    /// Variadic closure fn0 field (arity 0)
+    pub const VC_FN0: u32 = 1;
+    /// Variadic closure fn1 field (arity 1)
+    pub const VC_FN1: u32 = 2;
+    /// Variadic closure fn2 field (arity 2)
+    pub const VC_FN2: u32 = 3;
+    /// Variadic closure fn3 field (arity 3)
+    pub const VC_FN3: u32 = 4;
+    /// Variadic closure fn4 field (arity 4)
+    pub const VC_FN4: u32 = 5;
+    /// Variadic closure fn5 field (arity 5)
+    pub const VC_FN5: u32 = 6;
+    /// Variadic closure fn6 field (arity 6)
+    pub const VC_FN6: u32 = 7;
+    /// Variadic closure fn7 field (arity 7)
+    pub const VC_FN7: u32 = 8;
+    /// Variadic closure fn8 field (arity 8)
+    pub const VC_FN8: u32 = 9;
+
     /// Number of GC types defined (for type index offset calculation)
-    /// Includes: 11 base types + 9 closure fn types + 9 closure struct types = 29
-    pub const NUM_GC_TYPES: u32 = 29;
+    /// Includes: 11 base types + 9 closure fn types + 9 closure struct types
+    ///         + 9 variadic fn types + 1 variadic closure struct = 39
+    pub const NUM_GC_TYPES: u32 = 39;
 
     /// Get the closure struct type index for a given arity (0-8)
     #[inline]
@@ -359,6 +426,9 @@ pub mod type_ids {
     pub const CLOSURE_6: i32 = super::gc_types::CLOSURE_6 as i32;
     pub const CLOSURE_7: i32 = super::gc_types::CLOSURE_7 as i32;
     pub const CLOSURE_8: i32 = super::gc_types::CLOSURE_8 as i32;
+
+    // Variadic closure (for variadic builtins like +, *, -, /)
+    pub const VARIADIC_CLOSURE: i32 = super::gc_types::VARIADIC_CLOSURE as i32;
 
     /// User-defined types start at 256 (room for future built-ins)
     pub const USER_TYPE_BASE: i32 = 256;
@@ -722,7 +792,12 @@ impl Expr {
 
             // Closure operations return GcRef
             Expr::ClosureNew { .. } => Type::GcRef,
+            Expr::VariadicClosureNew { .. } => Type::GcRef,
             Expr::ClosureCall { .. } => Type::GcRef,
+            Expr::Apply { .. } => Type::GcRef,
+
+            // Type conversions
+            Expr::ToFloat(_) => Type::GcRef, // Returns boxed FLOAT
         }
     }
 }
@@ -1072,6 +1147,48 @@ pub enum Expr {
         /// Whether this call is in tail position (enables return_call_ref)
         in_tail_position: bool,
     },
+
+    /// Create a variadic closure for builtin operators like +, *, -, /.
+    ///
+    /// Unlike regular closures, variadic closures contain 9 funcrefs (one per arity 0-8),
+    /// allowing them to be called with any number of arguments via apply.
+    ///
+    /// Generates:
+    /// 1. Create VARIADIC_CLOSURE struct with type_id and 9 funcrefs
+    VariadicClosureNew {
+        /// Which variadic builtin this is ("+", "*", "-", "/")
+        op: String,
+        /// Function indices for arities 0-8 (9 indices total)
+        func_indices: [u32; 9],
+    },
+
+    /// Dynamic function application with argument vector.
+    ///
+    /// At runtime:
+    /// 1. Evaluate func to get a closure
+    /// 2. Evaluate args to get a vector
+    /// 3. Extract vector count (determines arity)
+    /// 4. Dispatch to appropriate closure call based on arity
+    ///
+    /// Example: (apply + [1 2 3]) calls + with three args from the vector.
+    Apply {
+        /// Expression that evaluates to a closure
+        func: Box<Expr>,
+        /// Expression that evaluates to a vector of arguments
+        args: Box<Expr>,
+    },
+
+    // =========================================================================
+    // Type Conversions
+    // =========================================================================
+
+    /// Convert a boxed numeric value to float (f64).
+    ///
+    /// At runtime:
+    /// 1. Check if value is INTEGER -> extract and convert to f64
+    /// 2. Check if value is FLOAT -> extract f64 directly
+    /// 3. Check if value is i31ref small int -> decode and convert to f64
+    ToFloat(Box<Expr>),
 }
 
 /// Binary operators

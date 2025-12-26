@@ -203,7 +203,8 @@ fn test_multiplication() {
 
 #[test]
 fn test_division() {
-    assert_eq!(run_expr_i32("(/ 21 3)"), 7);
+    // Division always returns float (Clojure semantics)
+    assert_eq!(run_expr_f64("(/ 21 3)"), 7.0);
 }
 
 #[test]
@@ -1477,8 +1478,8 @@ fn test_builtin_as_value_sub() {
 
 #[test]
 fn test_builtin_as_value_div() {
-    // Use / as a value
-    assert_eq!(run_expr_i32("(let [f /] (f 20 4))"), 5);
+    // Use / as a value (division always returns float)
+    assert_eq!(run_expr_f64("(let [f /] (f 20 4))"), 5.0);
 }
 
 #[test]
@@ -1527,3 +1528,243 @@ fn test_builtin_comparison_as_value() {
         0
     );
 }
+
+// ============================================================================
+// Apply - Dynamic Function Invocation
+// ============================================================================
+
+#[test]
+fn test_apply_basic_add() {
+    // Apply with built-in +
+    assert_eq!(run_expr_i32("(apply + [1 2])"), 3);
+}
+
+#[test]
+fn test_apply_basic_mul() {
+    // Apply with built-in *
+    assert_eq!(run_expr_i32("(apply * [3 4])"), 12);
+}
+
+#[test]
+fn test_apply_closure() {
+    // Apply with user-defined closure
+    assert_eq!(run_expr_i32("(apply (fn [a b] (+ a b)) [10 5])"), 15);
+}
+
+#[test]
+fn test_apply_zero_arity() {
+    // Apply with zero-arity closure
+    assert_eq!(run_expr_i32("(apply (fn [] 42) [])"), 42);
+}
+
+#[test]
+fn test_apply_one_arity() {
+    // Apply with single-arg closure
+    assert_eq!(run_expr_i32("(apply (fn [x] (+ x 10)) [32])"), 42);
+}
+
+#[test]
+fn test_apply_captured_closure() {
+    // Apply with closure that captures a variable
+    assert_eq!(
+        run_expr_i32("(let [x 10] (apply (fn [y] (+ x y)) [5]))"),
+        15
+    );
+}
+
+#[test]
+fn test_apply_closure_as_value() {
+    // Apply with closure stored in a let binding
+    assert_eq!(
+        run_expr_i32("(let [f (fn [a b] (* a b))] (apply f [6 7]))"),
+        42
+    );
+}
+
+#[test]
+fn test_apply_vector_from_expr() {
+    // Apply with vector constructed from expression
+    assert_eq!(
+        run_expr_i32("(let [v [3 4]] (apply + v))"),
+        7
+    );
+}
+
+#[test]
+fn test_apply_three_args() {
+    // Apply with 3-arity function
+    assert_eq!(
+        run_expr_i32("(apply (fn [a b c] (+ a (+ b c))) [1 2 3])"),
+        6
+    );
+}
+
+// =============================================================================
+// Variadic Arithmetic Edge Cases (Part 1)
+// =============================================================================
+
+#[test]
+fn test_add_zero_args() {
+    // (+) returns identity element 0
+    assert_eq!(run_expr_i32("(+)"), 0);
+}
+
+#[test]
+fn test_mul_zero_args() {
+    // (*) returns identity element 1
+    assert_eq!(run_expr_i32("(*)"), 1);
+}
+
+#[test]
+fn test_unary_negate() {
+    // (- x) negates x
+    assert_eq!(run_expr_i32("(- 5)"), -5);
+    assert_eq!(run_expr_i32("(- 0)"), 0);
+    assert_eq!(run_expr_i32("(- -3)"), 3);
+}
+
+#[test]
+fn test_unary_reciprocal() {
+    // (/ x) returns 1/x
+    assert_eq!(run_expr_f64("(/ 2.0)"), 0.5);
+    assert_eq!(run_expr_f64("(/ 4.0)"), 0.25);
+    assert_eq!(run_expr_f64("(/ 0.5)"), 2.0);
+}
+
+#[test]
+fn test_add_single_arg() {
+    // (+ x) returns x unchanged
+    assert_eq!(run_expr_i32("(+ 42)"), 42);
+}
+
+#[test]
+fn test_mul_single_arg() {
+    // (* x) returns x unchanged
+    assert_eq!(run_expr_i32("(* 42)"), 42);
+}
+
+#[test]
+fn test_variadic_add_chain() {
+    // Verify multi-arg addition still works
+    assert_eq!(run_expr_i32("(+ 1 2 3 4 5)"), 15);
+    assert_eq!(run_expr_i32("(+ 10 20 30)"), 60);
+}
+
+#[test]
+fn test_variadic_mul_chain() {
+    // Verify multi-arg multiplication still works
+    assert_eq!(run_expr_i32("(* 2 3 4)"), 24);
+    assert_eq!(run_expr_i32("(* 1 2 3 4 5)"), 120);
+}
+
+#[test]
+fn test_variadic_sub_chain() {
+    // (- a b c) = a - b - c (left-fold)
+    assert_eq!(run_expr_i32("(- 10 3 2)"), 5);
+    assert_eq!(run_expr_i32("(- 100 10 20 30)"), 40);
+}
+
+#[test]
+fn test_variadic_div_chain() {
+    // (/ a b c) = a / b / c (left-fold)
+    assert_eq!(run_expr_f64("(/ 24.0 2.0 3.0)"), 4.0);
+    assert_eq!(run_expr_f64("(/ 100.0 2.0 5.0)"), 10.0);
+}
+
+#[test]
+fn dump_div_wasm() {
+    let mut compiler = suss_compile::Compiler::new();
+    let wasm = compiler.compile_expr("(let [f /] (f 20 4))").unwrap();
+    std::fs::write("/tmp/div_test.wasm", &wasm).unwrap();
+}
+
+// =============================================================================
+// Variadic Apply Tests (Part 2)
+// =============================================================================
+
+#[test]
+fn test_apply_variadic_add_zero_args() {
+    // (apply + []) returns identity 0
+    assert_eq!(run_expr_i32("(apply + [])"), 0);
+}
+
+#[test]
+fn test_apply_variadic_add_one_arg() {
+    // (apply + [x]) returns x
+    assert_eq!(run_expr_i32("(apply + [42])"), 42);
+}
+
+#[test]
+fn test_apply_variadic_add_many_args() {
+    // (apply + [a b c ...]) sums all
+    assert_eq!(run_expr_i32("(apply + [1 2 3])"), 6);
+    assert_eq!(run_expr_i32("(apply + [1 2 3 4 5])"), 15);
+    assert_eq!(run_expr_i32("(apply + [10 20 30 40])"), 100);
+}
+
+#[test]
+fn test_apply_variadic_mul_zero_args() {
+    // (apply * []) returns identity 1
+    assert_eq!(run_expr_i32("(apply * [])"), 1);
+}
+
+#[test]
+fn test_apply_variadic_mul_one_arg() {
+    // (apply * [x]) returns x
+    assert_eq!(run_expr_i32("(apply * [7])"), 7);
+}
+
+#[test]
+fn test_apply_variadic_mul_many_args() {
+    // (apply * [a b c ...]) multiplies all
+    assert_eq!(run_expr_i32("(apply * [2 3 4])"), 24);
+    assert_eq!(run_expr_i32("(apply * [1 2 3 4 5])"), 120);
+}
+
+#[test]
+fn test_apply_variadic_sub_one_arg() {
+    // (apply - [x]) negates x
+    assert_eq!(run_expr_i32("(apply - [5])"), -5);
+    assert_eq!(run_expr_i32("(apply - [-3])"), 3);
+}
+
+#[test]
+fn test_apply_variadic_sub_two_args() {
+    // (apply - [a b]) = a - b
+    assert_eq!(run_expr_i32("(apply - [10 3])"), 7);
+}
+
+#[test]
+fn test_apply_variadic_sub_many_args() {
+    // (apply - [a b c ...]) = a - b - c - ... (left-fold)
+    assert_eq!(run_expr_i32("(apply - [10 3 2])"), 5);
+    assert_eq!(run_expr_i32("(apply - [100 10 20 30])"), 40);
+}
+
+#[test]
+fn test_apply_variadic_div_one_arg() {
+    // (apply / [x]) = 1/x (reciprocal)
+    assert_eq!(run_expr_f64("(apply / [2.0])"), 0.5);
+    assert_eq!(run_expr_f64("(apply / [4.0])"), 0.25);
+}
+
+#[test]
+fn test_apply_variadic_div_two_args() {
+    // (apply / [a b]) = a / b
+    assert_eq!(run_expr_f64("(apply / [12.0 3.0])"), 4.0);
+}
+
+#[test]
+fn test_apply_variadic_div_many_args() {
+    // (apply / [a b c ...]) = a / b / c / ... (left-fold)
+    assert_eq!(run_expr_f64("(apply / [24.0 2.0 3.0])"), 4.0);
+    assert_eq!(run_expr_f64("(apply / [100.0 2.0 5.0])"), 10.0);
+}
+
+#[test]
+fn test_apply_variadic_let_bound() {
+    // Variadic builtin bound to variable then applied
+    assert_eq!(run_expr_i32("(let [f +] (apply f [1 2 3 4]))"), 10);
+    assert_eq!(run_expr_i32("(let [f *] (apply f [2 3 4]))"), 24);
+}
+
