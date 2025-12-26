@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build Commands
 
+Don't set `RUSTFLAGS=\"-A warnings\"` when invoking `Bash` commands, as we've set that environment variable in the local Claude `env`.
+
 ```bash
 cargo build                    # Build all crates
 cargo test                     # Run all tests
@@ -110,7 +112,7 @@ Pipeline: Parse → [Expand] → Analyze → Lower → Codegen
 - `crates/suss-compile/src/expand.rs` - MacroEnv, MacroDef, syntax-quote expansion, gensym
 - `crates/suss-compile/src/eval.rs` - Tree-walking interpreter for macro bodies (~30 primitives)
 
-**Built-in core macros:** `when`, `when-not`, `and`, `or`, `cond`, `case`
+**Built-in core macros:** `when`, `when-not`, `and`, `or`, `cond`, `case`, `->`, `->>`, `when-let`, `if-let`
 
 **Key structures:**
 ```rust
@@ -131,6 +133,75 @@ pub struct MacroEnv {
 ```
 
 **Gensym:** `symbol#` in syntax-quote expands to `symbol__N__auto__` where N is unique.
+
+### Protocol System
+
+Suss supports ClojureScript-style protocols and type extensions:
+
+**Defining Protocols:**
+```clojure
+(defprotocol IJsonable
+  (-to-json [this]))
+
+(defprotocol ICounted
+  (-count [coll]))
+```
+
+**Extending Types:**
+```clojure
+(extend-type PersistentVector
+  IJsonable
+  (-to-json [coll] 42)  ; Protocol method implementations
+
+  ICounted
+  (-count [coll] (.-cnt coll)))
+```
+
+**Key files:**
+- `crates/suss-compile/src/analyze.rs` - Protocol/extension parsing (`AnalyzedProtocol`, `AnalyzedExtension`)
+- `crates/suss-compile/src/lower.rs` - Protocol lowering, dispatch entry generation
+- `crates/suss-compile/src/codegen.rs` - Dispatch table population
+
+**Built-in protocol methods** (method_ids 0-9):
+- `-lookup` (0), `-assoc` (1), `-count` (2), `-nth` (3), `-conj` (4)
+- `-first` (5), `-rest` (6), `-seq` (7), `-hash` (8), `-equiv` (9)
+
+**User-defined methods** start at method_id 100+.
+
+**Dispatch table:** `type_id * 10 + method_id` indexes into a funcref table of 160 entries (16 types × 10 methods).
+
+### Low-Level Primitives
+
+WASM GC operations exposed to Suss:
+
+**Struct field access:**
+```clojure
+(.-cnt vec)    ; struct.get PersistentVector.cnt → i32
+(.-shift vec)  ; struct.get PersistentVector.shift → i32
+(.-root vec)   ; struct.get PersistentVector.root → eqref
+(.-tail vec)   ; struct.get PersistentVector.tail → eqref
+(.-first cons) ; struct.get Cons.first
+(.-rest cons)  ; struct.get Cons.rest
+```
+
+**Type checking:**
+```clojure
+(instance? PersistentVector obj)  ; ref.test
+(instance? PersistentMap obj)
+(instance? PersistentSet obj)
+(instance? Cons obj)
+(instance? String obj)
+```
+
+**Bit manipulation:**
+```clojure
+(bit-and 0xFF 0x0F)           ; i32.and → 15
+(bit-or 0x01 0x02)            ; i32.or → 3
+(bit-xor 0xFF 0x0F)           ; i32.xor → 240
+(bit-shift-left x 5)          ; i32.shl
+(bit-shift-right x 5)         ; i32.shr_s (arithmetic)
+(unsigned-bit-shift-right x 5) ; i32.shr_u (logical)
+```
 
 ### Variadic Arithmetic
 Arithmetic operators match ClojureScript semantics:
@@ -199,7 +270,7 @@ fn dump_wasm_for_debug() {
 }
 ```
 
-Then run: `RUSTFLAGS="-A warnings" cargo test -p suss-compile --test compile_expr dump_wasm`
+Then run: `cargo test -p suss-compile --test compile_expr dump_wasm`
 
 ### Inspecting WASM
 

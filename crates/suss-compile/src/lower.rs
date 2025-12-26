@@ -7,9 +7,15 @@ use std::collections::HashMap;
 use num_traits::ToPrimitive;
 use suss_core::{Edn, Number};
 
-use crate::analyze::{AnalyzedModule, AnalyzedFunction, AnalyzedGlobal};
+use crate::analyze::{
+    AnalyzedModule, AnalyzedFunction, AnalyzedGlobal,
+    AnalyzedProtocol, AnalyzedExtension, AnalyzedMethodImpl,
+};
 use crate::error::{CompileError, CompileResult};
-use crate::ir::{Module, Function, Global, Import, Expr, Type, BinOp, UnOp};
+use crate::ir::{
+    Module, Function, Global, Import, Expr, Type, BinOp, UnOp,
+    gc_types, type_ids, method_ids, ProtocolDef, DispatchEntry,
+};
 
 /// Lower analyzed module to IR
 pub fn lower(module: &AnalyzedModule) -> CompileResult<Module> {
@@ -58,6 +64,10 @@ struct Lowerer {
     num_analyzed_funcs: u32,
     /// Cached indices for built-in wrapper functions: builtin_name -> func_idx
     builtin_wrappers: HashMap<String, u32>,
+    /// User-defined protocol method IDs: "ProtocolName/-method-name" -> method_id
+    user_method_ids: HashMap<String, u32>,
+    /// Next user-defined method ID (starts at method_ids::USER_START)
+    next_user_method_id: u32,
 }
 
 impl Lowerer {
@@ -76,6 +86,8 @@ impl Lowerer {
             pending_closures: Vec::new(),
             num_analyzed_funcs: 0,
             builtin_wrappers: HashMap::new(),
+            user_method_ids: HashMap::new(),
+            next_user_method_id: method_ids::USER_START,
         }
     }
 
@@ -113,6 +125,12 @@ impl Lowerer {
             let lowered = self.lower_function(func)?;
             self.module.functions.push(lowered);
         }
+
+        // Lower protocol definitions
+        self.lower_protocols(&analyzed.protocols)?;
+
+        // Lower extend-type declarations (generates dispatch table entries)
+        self.lower_extensions(&analyzed.extensions)?;
 
         // Generate closure wrapper functions
         // We need to process these iteratively since lowering a closure body
@@ -481,9 +499,100 @@ impl Lowerer {
             // Hashing
             "hash" => self.lower_hash(args),
 
+            // Bit manipulation
+            "bit-and" => self.lower_binop(BinOp::BitAnd, args, Type::I32),
+            "bit-or" => self.lower_binop(BinOp::BitOr, args, Type::I32),
+            "bit-xor" => self.lower_binop(BinOp::BitXor, args, Type::I32),
+            "bit-shift-left" => self.lower_binop(BinOp::Shl, args, Type::I32),
+            "bit-shift-right" => self.lower_binop(BinOp::ShrS, args, Type::I32),
+            "unsigned-bit-shift-right" => self.lower_binop(BinOp::ShrU, args, Type::I32),
+
+            // Type checking
+            "instance?" => self.lower_instance_check(args),
+
+            // Field access (.-field syntax)
+            _ if name.starts_with(".-") => self.lower_field_access(name, args),
+
             // Function call
             _ => self.lower_func_call(name, args),
         }
+    }
+
+    /// Lower field access: (.-field obj)
+    /// Field names are mapped based on known struct types.
+    fn lower_field_access(&mut self, name: &str, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse(format!(
+                "Field access requires exactly 1 argument, got {}",
+                args.len()
+            )));
+        }
+
+        let field_name = &name[2..]; // Strip ".-" prefix
+        let obj = self.lower_expr(&args[0])?;
+
+        // Map field names to (type_idx, field_idx) pairs
+        // For now, we use runtime type checking to determine the struct type
+        // This generates code that:
+        // 1. Checks if the object is a PersistentVector, Map, Set, or Cons
+        // 2. Casts to the appropriate type
+        // 3. Accesses the field
+
+        // PersistentVector: { type_id: 0, cnt: 1, shift: 2, root: 3, tail: 4 }
+        // PersistentMap: { type_id: 0, cnt: 1, root: 2 }
+        // PersistentSet: { type_id: 0, cnt: 1, root: 2, _marker: 3 }
+        // Cons: { type_id: 0, first: 1, rest: 2 }
+
+        let (type_idx, field_idx) = match field_name {
+            // Vector fields
+            "cnt" => (gc_types::PERSISTENT_VECTOR, 1),
+            "shift" => (gc_types::PERSISTENT_VECTOR, 2),
+            "root" => (gc_types::PERSISTENT_VECTOR, 3),
+            "tail" => (gc_types::PERSISTENT_VECTOR, 4),
+            // Cons fields (type_id is at 0)
+            "first" => (gc_types::CONS, 1),
+            "rest" => (gc_types::CONS, 2),
+            // Add more as needed
+            _ => return Err(CompileError::Undefined(format!("Unknown field: {}", field_name))),
+        };
+
+        Ok(Expr::StructGet {
+            type_idx,
+            field_idx,
+            value: Box::new(obj),
+        })
+    }
+
+    /// Lower instance check: (instance? TypeName obj)
+    fn lower_instance_check(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 2 {
+            return Err(CompileError::Parse(format!(
+                "instance? requires exactly 2 arguments, got {}",
+                args.len()
+            )));
+        }
+
+        let type_name = match &args[0] {
+            Edn::Symbol(sym) => &sym.name,
+            _ => return Err(CompileError::Parse("instance? first arg must be a type name symbol".into())),
+        };
+
+        let obj = self.lower_expr(&args[1])?;
+
+        // Map type names to GC type indices
+        let type_idx = match type_name.as_str() {
+            "PersistentVector" => gc_types::PERSISTENT_VECTOR,
+            "PersistentMap" => gc_types::PERSISTENT_MAP,
+            "PersistentSet" => gc_types::PERSISTENT_SET,
+            "Cons" => gc_types::CONS,
+            "String" => gc_types::STRING,
+            _ => return Err(CompileError::Undefined(format!("Unknown type: {}", type_name))),
+        };
+
+        Ok(Expr::RefTest {
+            type_idx,
+            value: Box::new(obj),
+        })
     }
 
     fn lower_binop(&mut self, op: BinOp, args: &[Edn], ty: Type) -> CompileResult<Expr> {
@@ -1917,5 +2026,187 @@ impl Lowerer {
             items.push(Edn::Symbol(suss_core::Symbol::new(param)));
         }
         Edn::List(items)
+    }
+
+    // =========================================================================
+    // Protocol Lowering
+    // =========================================================================
+
+    /// Lower protocol definitions to IR ProtocolDefs.
+    /// Assigns method IDs to each protocol method.
+    fn lower_protocols(&mut self, protocols: &[AnalyzedProtocol]) -> CompileResult<()> {
+        for protocol in protocols {
+            let mut methods = Vec::new();
+
+            for method in &protocol.methods {
+                // Check if this is a built-in method
+                let method_id = self.get_or_assign_method_id(&protocol.name, &method.name);
+                methods.push((method.name.clone(), method_id));
+            }
+
+            self.module.protocols.push(ProtocolDef {
+                name: protocol.name.clone(),
+                methods,
+            });
+        }
+
+        Ok(())
+    }
+
+    /// Get the method ID for a protocol method, or assign a new one if user-defined.
+    fn get_or_assign_method_id(&mut self, protocol_name: &str, method_name: &str) -> u32 {
+        // Check built-in methods first
+        if let Some(id) = self.builtin_method_id(method_name) {
+            return id;
+        }
+
+        // Check if we already assigned an ID
+        let key = format!("{}/{}", protocol_name, method_name);
+        if let Some(&id) = self.user_method_ids.get(&key) {
+            return id;
+        }
+
+        // Assign new ID
+        let id = self.next_user_method_id;
+        self.next_user_method_id += 1;
+        self.user_method_ids.insert(key, id);
+        id
+    }
+
+    /// Map built-in method names to their method IDs.
+    fn builtin_method_id(&self, method_name: &str) -> Option<u32> {
+        match method_name {
+            "-lookup" => Some(method_ids::LOOKUP),
+            "-assoc" => Some(method_ids::ASSOC),
+            "-count" => Some(method_ids::COUNT),
+            "-nth" => Some(method_ids::NTH),
+            "-conj" => Some(method_ids::CONJ),
+            "-first" => Some(method_ids::FIRST),
+            "-rest" => Some(method_ids::REST),
+            "-seq" => Some(method_ids::SEQ),
+            "-hash" => Some(method_ids::HASH),
+            "-equiv" => Some(method_ids::EQUIV),
+            _ => None,
+        }
+    }
+
+    /// Lower extend-type declarations to dispatch table entries.
+    /// Each method implementation becomes a wrapper function registered in the dispatch table.
+    fn lower_extensions(&mut self, extensions: &[AnalyzedExtension]) -> CompileResult<()> {
+        for extension in extensions {
+            let type_id = self.type_name_to_type_id(&extension.type_name)?;
+
+            for impl_ in &extension.implementations {
+                for method in &impl_.methods {
+                    let method_id = self.get_or_assign_method_id(&impl_.protocol_name, &method.name);
+
+                    // Generate wrapper function for this method implementation
+                    let func_idx = self.lower_protocol_method_impl(
+                        &extension.type_name,
+                        &impl_.protocol_name,
+                        method,
+                    )?;
+
+                    // Add dispatch table entry
+                    self.module.dispatch_entries.push(DispatchEntry {
+                        type_id,
+                        method_id,
+                        func_idx,
+                    });
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Convert a type name to its runtime type ID.
+    fn type_name_to_type_id(&self, type_name: &str) -> CompileResult<u32> {
+        match type_name {
+            "PersistentVector" => Ok(type_ids::PERSISTENT_VECTOR as u32),
+            "PersistentMap" => Ok(type_ids::PERSISTENT_MAP as u32),
+            "PersistentSet" => Ok(type_ids::PERSISTENT_SET as u32),
+            "Cons" => Ok(type_ids::CONS as u32),
+            "String" => Ok(type_ids::STRING as u32),
+            "LargeInt" => Ok(type_ids::LARGE_INT as u32),
+            "Float" => Ok(type_ids::FLOAT as u32),
+            _ => Err(CompileError::Undefined(format!(
+                "Unknown type for protocol extension: {}",
+                type_name
+            ))),
+        }
+    }
+
+    /// Lower a protocol method implementation to a wrapper function.
+    /// Returns the function index.
+    fn lower_protocol_method_impl(
+        &mut self,
+        type_name: &str,
+        protocol_name: &str,
+        method: &AnalyzedMethodImpl,
+    ) -> CompileResult<u32> {
+        // Generate unique function name
+        let func_name = format!(
+            "$protocol_{}_{}_{}",
+            type_name,
+            protocol_name.replace(['/', '-'], "_"),
+            method.name.replace('-', "_")
+        );
+
+        // Calculate function index
+        let func_idx = self.num_imports
+            + self.num_analyzed_funcs
+            + self.pending_closures.len() as u32
+            + self.module.functions.len() as u32;
+
+        // Register function
+        self.func_indices.insert(func_name.clone(), func_idx);
+
+        // Reset locals for new function
+        self.locals.clear();
+        self.local_types.clear();
+        self.next_local = 0;
+
+        // Set up parameters - protocol methods take (self, args...)
+        // All parameters are eqref
+        let mut params = Vec::new();
+        for param_name in &method.params {
+            let idx = self.next_local;
+            self.locals.insert(param_name.clone(), (idx, Type::GcRef));
+            self.local_types.insert(idx, Type::GcRef);
+            self.next_local += 1;
+            params.push((param_name.clone(), Type::GcRef));
+        }
+
+        // Lower the body
+        self.in_tail_position = true;
+        let body = self.lower_expr(&method.body)?;
+        self.in_tail_position = false;
+
+        // Create function
+        let function = Function {
+            name: func_name,
+            params,
+            return_type: Type::GcRef,
+            locals: self.collect_locals(),
+            body,
+            exported: false,
+            export_name: None,
+        };
+
+        self.module.functions.push(function);
+
+        Ok(func_idx)
+    }
+
+    /// Collect local variable types for the current function.
+    fn collect_locals(&self) -> Vec<Type> {
+        let mut locals: Vec<_> = self.locals.iter()
+            .map(|(_, (idx, ty))| (*idx, ty.clone()))
+            .collect();
+        locals.sort_by_key(|(idx, _)| *idx);
+        locals.into_iter()
+            .map(|(_, ty)| ty)
+            .collect()
     }
 }

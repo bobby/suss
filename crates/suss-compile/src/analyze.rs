@@ -23,6 +23,57 @@ pub struct AnalyzedModule {
     pub imports: Vec<AnalyzedImport>,
     pub functions: Vec<AnalyzedFunction>,
     pub globals: Vec<AnalyzedGlobal>,
+    /// Protocol definitions
+    pub protocols: Vec<AnalyzedProtocol>,
+    /// Type extensions (extend-type declarations)
+    pub extensions: Vec<AnalyzedExtension>,
+}
+
+/// A protocol definition
+#[derive(Debug, Clone)]
+pub struct AnalyzedProtocol {
+    /// Protocol name (e.g., "ICounted")
+    pub name: String,
+    /// Method signatures: (name, arities) where arities are the parameter counts for each arity
+    pub methods: Vec<AnalyzedProtocolMethod>,
+}
+
+/// A protocol method signature
+#[derive(Debug, Clone)]
+pub struct AnalyzedProtocolMethod {
+    /// Method name (e.g., "-count")
+    pub name: String,
+    /// Parameter lists for each arity (e.g., [[coll], [coll n], [coll n not-found]])
+    pub arities: Vec<Vec<String>>,
+}
+
+/// An extend-type declaration
+#[derive(Debug, Clone)]
+pub struct AnalyzedExtension {
+    /// Type name being extended (e.g., "PersistentVector")
+    pub type_name: String,
+    /// Protocol implementations
+    pub implementations: Vec<AnalyzedProtocolImpl>,
+}
+
+/// Implementation of a protocol for a type
+#[derive(Debug, Clone)]
+pub struct AnalyzedProtocolImpl {
+    /// Protocol name (e.g., "ICounted")
+    pub protocol_name: String,
+    /// Method implementations
+    pub methods: Vec<AnalyzedMethodImpl>,
+}
+
+/// Implementation of a single protocol method
+#[derive(Debug, Clone)]
+pub struct AnalyzedMethodImpl {
+    /// Method name (e.g., "-count")
+    pub name: String,
+    /// Parameter names
+    pub params: Vec<String>,
+    /// Method body
+    pub body: Edn,
 }
 
 /// An analyzed import from a WIT interface
@@ -183,6 +234,8 @@ struct Analyzer<'a> {
     imports: Vec<AnalyzedImport>,
     functions: Vec<AnalyzedFunction>,
     globals: Vec<AnalyzedGlobal>,
+    protocols: Vec<AnalyzedProtocol>,
+    extensions: Vec<AnalyzedExtension>,
 }
 
 impl<'a> Analyzer<'a> {
@@ -195,6 +248,8 @@ impl<'a> Analyzer<'a> {
             imports: Vec::new(),
             functions: Vec::new(),
             globals: Vec::new(),
+            protocols: Vec::new(),
+            extensions: Vec::new(),
         }
     }
 
@@ -213,6 +268,8 @@ impl<'a> Analyzer<'a> {
             imports: std::mem::take(&mut self.imports),
             functions: std::mem::take(&mut self.functions),
             globals: std::mem::take(&mut self.globals),
+            protocols: std::mem::take(&mut self.protocols),
+            extensions: std::mem::take(&mut self.extensions),
         })
     }
 
@@ -225,6 +282,8 @@ impl<'a> Analyzer<'a> {
                         "def" => self.analyze_def(items)?,
                         "defn" => self.analyze_defn(items)?,
                         "require" => self.analyze_require(items)?,
+                        "defprotocol" => self.analyze_defprotocol(items)?,
+                        "extend-type" => self.analyze_extend_type(items)?,
                         _ => {
                             // Top-level expression - ignore for now
                         }
@@ -675,6 +734,154 @@ impl<'a> Analyzer<'a> {
             }
             _ => Ok(Type::Unknown),
         }
+    }
+
+    /// Analyze defprotocol declaration
+    /// (defprotocol ICounted (-count [coll]))
+    /// (defprotocol IIndexed (-nth [coll n] [coll n not-found]))
+    fn analyze_defprotocol(&mut self, items: &[Edn]) -> CompileResult<()> {
+        if items.len() < 2 {
+            return Err(CompileError::Parse("defprotocol requires a name".into()));
+        }
+
+        // Parse protocol name
+        let name = match &items[1] {
+            Edn::Symbol(s) => s.name.clone(),
+            _ => return Err(CompileError::Parse("defprotocol name must be a symbol".into())),
+        };
+
+        // Parse method signatures
+        let mut methods = Vec::new();
+        for item in &items[2..] {
+            if let Edn::List(method_items) = item {
+                if method_items.is_empty() {
+                    continue;
+                }
+
+                // Method name
+                let method_name = match &method_items[0] {
+                    Edn::Symbol(s) => s.name.clone(),
+                    _ => return Err(CompileError::Parse("method name must be a symbol".into())),
+                };
+
+                // Parse arities - each remaining item should be a vector of params
+                let mut arities = Vec::new();
+                for arity_item in &method_items[1..] {
+                    if let Edn::Vector(params) = arity_item {
+                        let param_names: Vec<String> = params.iter()
+                            .filter_map(|p| {
+                                if let Edn::Symbol(s) = p {
+                                    Some(s.name.clone())
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect();
+                        arities.push(param_names);
+                    }
+                }
+
+                methods.push(AnalyzedProtocolMethod {
+                    name: method_name,
+                    arities,
+                });
+            }
+        }
+
+        self.protocols.push(AnalyzedProtocol { name, methods });
+        Ok(())
+    }
+
+    /// Analyze extend-type declaration
+    /// (extend-type PersistentVector
+    ///   ICounted
+    ///   (-count [coll] (.-cnt coll))
+    ///   IIndexed
+    ///   (-nth [coll n] ...))
+    fn analyze_extend_type(&mut self, items: &[Edn]) -> CompileResult<()> {
+        if items.len() < 2 {
+            return Err(CompileError::Parse("extend-type requires a type name".into()));
+        }
+
+        // Parse type name
+        let type_name = match &items[1] {
+            Edn::Symbol(s) => s.name.clone(),
+            _ => return Err(CompileError::Parse("extend-type type must be a symbol".into())),
+        };
+
+        // Parse protocol implementations
+        let mut implementations = Vec::new();
+        let mut current_protocol: Option<String> = None;
+        let mut current_methods: Vec<AnalyzedMethodImpl> = Vec::new();
+
+        for item in &items[2..] {
+            match item {
+                // Protocol name (bare symbol)
+                Edn::Symbol(s) => {
+                    // Save previous protocol if any
+                    if let Some(protocol_name) = current_protocol.take() {
+                        implementations.push(AnalyzedProtocolImpl {
+                            protocol_name,
+                            methods: std::mem::take(&mut current_methods),
+                        });
+                    }
+                    current_protocol = Some(s.name.clone());
+                }
+                // Method implementation
+                Edn::List(method_items) if !method_items.is_empty() => {
+                    // (method-name [params] body)
+                    let method_name = match &method_items[0] {
+                        Edn::Symbol(s) => s.name.clone(),
+                        _ => return Err(CompileError::Parse("method name must be a symbol".into())),
+                    };
+
+                    if method_items.len() < 3 {
+                        return Err(CompileError::Parse("method requires params and body".into()));
+                    }
+
+                    // Parse params
+                    let params = match &method_items[1] {
+                        Edn::Vector(p) => p.iter()
+                            .filter_map(|x| if let Edn::Symbol(s) = x { Some(s.name.clone()) } else { None })
+                            .collect(),
+                        _ => return Err(CompileError::Parse("method params must be a vector".into())),
+                    };
+
+                    // Body is everything after params wrapped in do
+                    let body = if method_items.len() == 3 {
+                        method_items[2].clone()
+                    } else {
+                        Edn::List(
+                            std::iter::once(Edn::Symbol(suss_core::Symbol::new("do")))
+                                .chain(method_items[2..].iter().cloned())
+                                .collect()
+                        )
+                    };
+
+                    current_methods.push(AnalyzedMethodImpl {
+                        name: method_name,
+                        params,
+                        body,
+                    });
+                }
+                _ => {}
+            }
+        }
+
+        // Save last protocol
+        if let Some(protocol_name) = current_protocol {
+            implementations.push(AnalyzedProtocolImpl {
+                protocol_name,
+                methods: current_methods,
+            });
+        }
+
+        self.extensions.push(AnalyzedExtension {
+            type_name,
+            implementations,
+        });
+
+        Ok(())
     }
 
     fn validate_exports(&self) -> CompileResult<()> {

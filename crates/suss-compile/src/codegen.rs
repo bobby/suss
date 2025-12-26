@@ -545,13 +545,19 @@ impl<'a> CodeGen<'a> {
 
     /// Generate a core WASM module with import section (shared by WIT and WASI modes)
     fn generate_core_with_imports(&self) -> CompileResult<Vec<u8>> {
+        use crate::ir::gc_types;
+
         let mut module = WasmModule::new();
         let num_imports = self.num_imports();
 
-        // Type section - import function types first, then local function types
+        // Type section - GC types first, then import function types, then local function types
+        // This ensures GC type indices (0..NUM_GC_TYPES-1) are preserved for struct/array ops.
         let mut types = TypeSection::new();
 
-        // Import function types
+        // GC types (indices 0..NUM_GC_TYPES-1) - required for .-field, instance?, etc.
+        self.emit_gc_types(&mut types);
+
+        // Import function types (indices NUM_GC_TYPES..NUM_GC_TYPES+num_imports-1)
         for import in &self.ir.imports {
             let params: Vec<ValType> = import
                 .params
@@ -566,7 +572,7 @@ impl<'a> CodeGen<'a> {
             types.ty().function(params, results);
         }
 
-        // Local function types
+        // Local function types (indices NUM_GC_TYPES+num_imports..)
         // Exported functions use WIT types (for component model compatibility)
         // Non-exported functions use GC types (eqref)
         for func in &self.ir.functions {
@@ -591,23 +597,24 @@ impl<'a> CodeGen<'a> {
         module.section(&types);
 
         // Import section - WASI functions
+        // Type indices are offset by NUM_GC_TYPES
         if !self.ir.imports.is_empty() {
             let mut imports = ImportSection::new();
             for (idx, import) in self.ir.imports.iter().enumerate() {
                 imports.import(
                     &import.wit_interface,
                     &import.function_name,
-                    EntityType::Function(idx as u32),
+                    EntityType::Function(gc_types::NUM_GC_TYPES + idx as u32),
                 );
             }
             module.section(&imports);
         }
 
         // Function section - local function indices start after imports
-        // Type indices for WIT mode: num_imports + function_index
+        // Type indices: NUM_GC_TYPES + num_imports + function_index
         let mut functions = FunctionSection::new();
         for (idx, _) in self.ir.functions.iter().enumerate() {
-            functions.function(num_imports + idx as u32);
+            functions.function(gc_types::NUM_GC_TYPES + num_imports + idx as u32);
         }
         module.section(&functions);
 
@@ -846,12 +853,25 @@ impl<'a> CodeGen<'a> {
             Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::SET_CONTAINS)])),
         );
 
+        // User-defined protocol implementations from extend-type
+        for entry in &self.ir.dispatch_entries {
+            let table_idx = dispatch_table::index(entry.type_id, entry.method_id);
+            // User-defined protocol methods use user_func_idx because they're lowered as regular functions
+            let func_idx = self.user_func_idx(entry.func_idx);
+            elements.active(
+                Some(dispatch_table::TABLE_INDEX),
+                &ConstExpr::i32_const(table_idx as i32),
+                Elements::Functions(Cow::Owned(vec![func_idx])),
+            );
+        }
+
         // Declarative element segment for closure wrapper functions
         // This declares functions that can be used with ref.func for typed function references.
         // We need to declare all functions that might be closures:
         // - "$closure_" prefixed: user-defined anonymous functions
         // - "$builtin_" prefixed: wrappers for built-in functions used as values
         // - "$variadic_" prefixed: wrappers for variadic builtins (+, *, -, /)
+        // - "$protocol_" prefixed: protocol method implementations from extend-type
         let closure_func_indices: Vec<u32> = self
             .ir
             .functions
@@ -861,6 +881,7 @@ impl<'a> CodeGen<'a> {
                 f.name.starts_with("$closure_")
                     || f.name.starts_with("$builtin_")
                     || f.name.starts_with("$variadic_")
+                    || f.name.starts_with("$protocol_")
             })
             .map(|(idx, _)| self.user_func_idx(idx as u32))
             .collect();
@@ -6365,7 +6386,14 @@ impl<'a> CodeGen<'a> {
                 BinOp::Mul => { f.instruction(&Instruction::I32Mul); }
                 BinOp::Div => { f.instruction(&Instruction::I32DivS); }
                 BinOp::Rem => { f.instruction(&Instruction::I32RemS); }
-                _ => unreachable!("arithmetic binop only: {:?}", op)
+                // Bitwise operations
+                BinOp::BitAnd => { f.instruction(&Instruction::I32And); }
+                BinOp::BitOr => { f.instruction(&Instruction::I32Or); }
+                BinOp::BitXor => { f.instruction(&Instruction::I32Xor); }
+                BinOp::Shl => { f.instruction(&Instruction::I32Shl); }
+                BinOp::ShrS => { f.instruction(&Instruction::I32ShrS); }
+                BinOp::ShrU => { f.instruction(&Instruction::I32ShrU); }
+                _ => unreachable!("arithmetic/bitwise binop only: {:?}", op)
             }
 
             // Wrap result as i31ref
@@ -6740,6 +6768,35 @@ impl<'a> CodeGen<'a> {
                         f.instruction(&Instruction::RefI31);
                     }
 
+                    // Bitwise operations on integers
+                    (BinOp::BitAnd, Type::I32) | (BinOp::BitOr, Type::I32) |
+                    (BinOp::BitXor, Type::I32) | (BinOp::Shl, Type::I32) |
+                    (BinOp::ShrS, Type::I32) | (BinOp::ShrU, Type::I32) => {
+                        // Unbox operands, perform bit op, rebox result
+                        self.generate_expr(left, f)?;
+                        generate_unwrap_i31(f);
+                        self.generate_expr(right, f)?;
+                        generate_unwrap_i31(f);
+
+                        let instr = match op {
+                            BinOp::BitAnd => Instruction::I32And,
+                            BinOp::BitOr => Instruction::I32Or,
+                            BinOp::BitXor => Instruction::I32Xor,
+                            BinOp::Shl => Instruction::I32Shl,
+                            BinOp::ShrS => Instruction::I32ShrS,
+                            BinOp::ShrU => Instruction::I32ShrU,
+                            _ => unreachable!()
+                        };
+                        f.instruction(&instr);
+
+                        // Encode result as i31ref
+                        f.instruction(&Instruction::I32Const(1));
+                        f.instruction(&Instruction::I32Shl);
+                        f.instruction(&Instruction::I32Const(1));
+                        f.instruction(&Instruction::I32Or);
+                        f.instruction(&Instruction::RefI31);
+                    }
+
                     _ => {
                         return Err(CompileError::Codegen(format!(
                             "Unsupported binop {:?} for type {:?}",
@@ -6957,10 +7014,34 @@ impl<'a> CodeGen<'a> {
                 value,
             } => {
                 self.generate_expr(value, f)?;
+                // Cast eqref to the specific struct type
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
                 f.instruction(&Instruction::StructGet {
                     struct_type_index: *type_idx,
                     field_index: *field_idx,
                 });
+                // Determine if the field is i32 (needs wrapping) or eqref (already reference)
+                // PersistentVector: { type_id: 0, cnt: 1, shift: 2, root: 3, tail: 4 }
+                // PersistentMap/Set: { type_id: 0, cnt: 1, root: 2, ... }
+                // Cons: { first: 0, rest: 1 } - both eqref
+                let needs_i32_wrap = match (*type_idx, *field_idx) {
+                    // Vector i32 fields
+                    (gc_types::PERSISTENT_VECTOR, 1) => true,  // cnt
+                    (gc_types::PERSISTENT_VECTOR, 2) => true,  // shift
+                    // Map/Set i32 fields
+                    (gc_types::PERSISTENT_MAP, 1) => true,     // cnt
+                    (gc_types::PERSISTENT_SET, 1) => true,     // cnt
+                    // All other fields are eqref
+                    _ => false,
+                };
+                if needs_i32_wrap {
+                    // Encode i32 as small int
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Shl);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Or);
+                    f.instruction(&Instruction::RefI31);
+                }
             }
 
             Expr::ArrayNew { type_idx, elements } => {
@@ -7027,6 +7108,14 @@ impl<'a> CodeGen<'a> {
             Expr::RefTest { type_idx, value } => {
                 self.generate_expr(value, f)?;
                 f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(*type_idx)));
+                // Convert i32 boolean (0/1) to GC boolean sentinel
+                f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::Ref(RefType::EQREF))));
+                f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                f.instruction(&Instruction::Else);
+                f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                f.instruction(&Instruction::End);
             }
 
             Expr::RefNull(type_idx) => {

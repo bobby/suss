@@ -82,6 +82,10 @@ impl MacroEvaluator {
         primitives.insert("_or_impl".into(), prim_or_impl);
         primitives.insert("_cond_impl".into(), prim_cond_impl);
         primitives.insert("_case_impl".into(), prim_case_impl);
+        primitives.insert("_thread_first_impl".into(), prim_thread_first_impl);
+        primitives.insert("_thread_last_impl".into(), prim_thread_last_impl);
+        primitives.insert("_when_let_impl".into(), prim_when_let_impl);
+        primitives.insert("_if_let_impl".into(), prim_if_let_impl);
 
         Self { primitives }
     }
@@ -1372,6 +1376,198 @@ fn prim_case_impl(args: &[Edn]) -> CompileResult<Edn> {
     }
 
     Ok(result)
+}
+
+/// Implement (-> x forms...) macro expansion (thread-first)
+/// (-> x) => x
+/// (-> x (f a b)) => (f x a b)
+/// (-> x f) => (f x)
+/// (-> x (f a) (g b)) => (g (f x a) b)
+fn prim_thread_first_impl(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() < 2 {
+        return Err(CompileError::MacroEval("_thread_first_impl expects x and forms".into()));
+    }
+
+    let x = args[0].clone();
+    let forms = match &args[1] {
+        Edn::List(v) => v.clone(),
+        Edn::Nil => vec![],
+        _ => return Err(CompileError::MacroEval("_thread_first_impl forms must be a list".into())),
+    };
+
+    if forms.is_empty() {
+        return Ok(x);
+    }
+
+    // Thread x through each form
+    let mut result = x;
+    for form in forms {
+        result = match form {
+            Edn::List(items) if !items.is_empty() => {
+                // (f a b) with x becomes (f x a b)
+                let mut new_items = vec![items[0].clone(), result.clone()];
+                new_items.extend(items[1..].iter().cloned());
+                Edn::List(new_items)
+            }
+            Edn::Symbol(_) => {
+                // f becomes (f x)
+                Edn::List(vec![form, result])
+            }
+            _ => {
+                return Err(CompileError::MacroEval(
+                    "-> form must be a symbol or list".into()
+                ));
+            }
+        };
+    }
+
+    Ok(result)
+}
+
+/// Implement (->> x forms...) macro expansion (thread-last)
+/// (->> x) => x
+/// (->> x (f a b)) => (f a b x)
+/// (->> x f) => (f x)
+/// (->> x (f a) (g b)) => (g b (f a x))
+fn prim_thread_last_impl(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() < 2 {
+        return Err(CompileError::MacroEval("_thread_last_impl expects x and forms".into()));
+    }
+
+    let x = args[0].clone();
+    let forms = match &args[1] {
+        Edn::List(v) => v.clone(),
+        Edn::Nil => vec![],
+        _ => return Err(CompileError::MacroEval("_thread_last_impl forms must be a list".into())),
+    };
+
+    if forms.is_empty() {
+        return Ok(x);
+    }
+
+    // Thread x through each form
+    let mut result = x;
+    for form in forms {
+        result = match form {
+            Edn::List(items) if !items.is_empty() => {
+                // (f a b) with x becomes (f a b x)
+                let mut new_items = items.clone();
+                new_items.push(result);
+                Edn::List(new_items)
+            }
+            Edn::Symbol(_) => {
+                // f becomes (f x)
+                Edn::List(vec![form, result])
+            }
+            _ => {
+                return Err(CompileError::MacroEval(
+                    "->> form must be a symbol or list".into()
+                ));
+            }
+        };
+    }
+
+    Ok(result)
+}
+
+/// Implement (when-let [sym expr] body...) macro expansion
+/// (when-let [x expr] body...) => (let [temp expr] (when temp (let [x temp] body...)))
+fn prim_when_let_impl(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() < 2 {
+        return Err(CompileError::MacroEval("_when_let_impl expects binding and body".into()));
+    }
+
+    // Parse binding vector [sym expr]
+    let binding = match &args[0] {
+        Edn::Vector(v) if v.len() >= 2 => v,
+        _ => return Err(CompileError::MacroEval("when-let requires [sym expr] binding".into())),
+    };
+
+    let sym = binding[0].clone();
+    let expr = binding[1].clone();
+
+    let body = match &args[1] {
+        Edn::List(v) => v.clone(),
+        Edn::Nil => vec![],
+        _ => return Err(CompileError::MacroEval("_when_let_impl body must be a list".into())),
+    };
+
+    // Generate: (let [temp# expr] (when temp# (let [sym temp#] body...)))
+    let temp_sym = suss_core::Symbol::new("temp__when_let__");
+
+    // Build (let [sym temp#] (do body...))
+    let inner_let = {
+        let mut do_forms = vec![Edn::Symbol(suss_core::Symbol::new("do"))];
+        do_forms.extend(body);
+        Edn::List(vec![
+            Edn::Symbol(suss_core::Symbol::new("let")),
+            Edn::Vector(vec![sym, Edn::Symbol(temp_sym.clone())]),
+            Edn::List(do_forms),
+        ])
+    };
+
+    // Build (when temp# inner_let)
+    let when_form = Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("when")),
+        Edn::Symbol(temp_sym.clone()),
+        inner_let,
+    ]);
+
+    // Build outer (let [temp# expr] when_form)
+    Ok(Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("let")),
+        Edn::Vector(vec![Edn::Symbol(temp_sym), expr]),
+        when_form,
+    ]))
+}
+
+/// Implement (if-let [sym expr] then else?) macro expansion
+/// (if-let [x expr] then else) => (let [temp expr] (if temp (let [x temp] then) else))
+fn prim_if_let_impl(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() < 2 {
+        return Err(CompileError::MacroEval("_if_let_impl expects binding and then".into()));
+    }
+
+    // Parse binding vector [sym expr]
+    let binding = match &args[0] {
+        Edn::Vector(v) if v.len() >= 2 => v,
+        _ => return Err(CompileError::MacroEval("if-let requires [sym expr] binding".into())),
+    };
+
+    let sym = binding[0].clone();
+    let expr = binding[1].clone();
+    let then_clause = args[1].clone();
+
+    // else clause is optional (first element of rest list, or nil)
+    let else_clause = match &args[2] {
+        Edn::List(v) => v.first().cloned().unwrap_or(Edn::Nil),
+        _ => Edn::Nil,
+    };
+
+    // Generate: (let [temp# expr] (if temp# (let [sym temp#] then) else))
+    let temp_sym = suss_core::Symbol::new("temp__if_let__");
+
+    // Build (let [sym temp#] then)
+    let inner_let = Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("let")),
+        Edn::Vector(vec![sym, Edn::Symbol(temp_sym.clone())]),
+        then_clause,
+    ]);
+
+    // Build (if temp# inner_let else)
+    let if_form = Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("if")),
+        Edn::Symbol(temp_sym.clone()),
+        inner_let,
+        else_clause,
+    ]);
+
+    // Build outer (let [temp# expr] if_form)
+    Ok(Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("let")),
+        Edn::Vector(vec![Edn::Symbol(temp_sym), expr]),
+        if_form,
+    ]))
 }
 
 #[cfg(test)]

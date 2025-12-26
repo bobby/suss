@@ -162,6 +162,61 @@ impl MacroEnv {
                 Edn::Symbol(Symbol::new("clauses")),
             ]),
         });
+
+        // Threading macros
+        // (defmacro -> [x & forms]
+        //   (_thread_first_impl x forms))
+        self.define_macro(MacroDef {
+            name: "->".to_string(),
+            params: vec!["x".to_string()],
+            rest_param: Some("forms".to_string()),
+            body: Edn::List(vec![
+                Edn::Symbol(Symbol::new("_thread_first_impl")),
+                Edn::Symbol(Symbol::new("x")),
+                Edn::Symbol(Symbol::new("forms")),
+            ]),
+        });
+
+        // (defmacro ->> [x & forms]
+        //   (_thread_last_impl x forms))
+        self.define_macro(MacroDef {
+            name: "->>".to_string(),
+            params: vec!["x".to_string()],
+            rest_param: Some("forms".to_string()),
+            body: Edn::List(vec![
+                Edn::Symbol(Symbol::new("_thread_last_impl")),
+                Edn::Symbol(Symbol::new("x")),
+                Edn::Symbol(Symbol::new("forms")),
+            ]),
+        });
+
+        // Conditional binding macros
+        // (defmacro when-let [[sym expr] & body]
+        //   (_when_let_impl sym expr body))
+        self.define_macro(MacroDef {
+            name: "when-let".to_string(),
+            params: vec!["binding".to_string()],
+            rest_param: Some("body".to_string()),
+            body: Edn::List(vec![
+                Edn::Symbol(Symbol::new("_when_let_impl")),
+                Edn::Symbol(Symbol::new("binding")),
+                Edn::Symbol(Symbol::new("body")),
+            ]),
+        });
+
+        // (defmacro if-let [[sym expr] then else]
+        //   (_if_let_impl binding then else))
+        self.define_macro(MacroDef {
+            name: "if-let".to_string(),
+            params: vec!["binding".to_string(), "then".to_string()],
+            rest_param: Some("else_clause".to_string()),
+            body: Edn::List(vec![
+                Edn::Symbol(Symbol::new("_if_let_impl")),
+                Edn::Symbol(Symbol::new("binding")),
+                Edn::Symbol(Symbol::new("then")),
+                Edn::Symbol(Symbol::new("else_clause")),
+            ]),
+        });
     }
 
     /// Set the current namespace
@@ -663,6 +718,124 @@ mod tests {
                 assert_eq!(s.name, "do");
             } else {
                 panic!("Expected symbol 'do'");
+            }
+        } else {
+            panic!("Expected list");
+        }
+    }
+
+    #[test]
+    fn test_thread_first_simple() {
+        let mut env = MacroEnv::new();
+        // (-> 1 inc) should expand to (inc 1)
+        let result = env.expand(parse("(-> 1 inc)")).unwrap();
+        if let Edn::List(items) = result {
+            assert_eq!(items.len(), 2);
+            if let Edn::Symbol(s) = &items[0] {
+                assert_eq!(s.name, "inc");
+            }
+            assert!(matches!(&items[1], Edn::Number(_)));
+        } else {
+            panic!("Expected list");
+        }
+    }
+
+    #[test]
+    fn test_thread_first_with_args() {
+        let mut env = MacroEnv::new();
+        // (-> 1 (+ 2)) should expand to (+ 1 2)
+        let result = env.expand(parse("(-> 1 (+ 2))")).unwrap();
+        if let Edn::List(items) = result {
+            assert_eq!(items.len(), 3);
+            if let Edn::Symbol(s) = &items[0] {
+                assert_eq!(s.name, "+");
+            }
+        } else {
+            panic!("Expected list");
+        }
+    }
+
+    #[test]
+    fn test_thread_first_chained() {
+        let mut env = MacroEnv::new();
+        // (-> 1 (+ 2) (* 3)) should expand to (* (+ 1 2) 3)
+        let result = env.expand(parse("(-> 1 (+ 2) (* 3))")).unwrap();
+        if let Edn::List(items) = result {
+            assert_eq!(items.len(), 3);
+            if let Edn::Symbol(s) = &items[0] {
+                assert_eq!(s.name, "*");
+            }
+            // Second arg should be (+ 1 2)
+            if let Edn::List(inner) = &items[1] {
+                if let Edn::Symbol(s) = &inner[0] {
+                    assert_eq!(s.name, "+");
+                }
+            }
+        } else {
+            panic!("Expected list");
+        }
+    }
+
+    #[test]
+    fn test_thread_last_simple() {
+        let mut env = MacroEnv::new();
+        // (->> 1 inc) should expand to (inc 1)
+        let result = env.expand(parse("(->> 1 inc)")).unwrap();
+        if let Edn::List(items) = result {
+            assert_eq!(items.len(), 2);
+            if let Edn::Symbol(s) = &items[0] {
+                assert_eq!(s.name, "inc");
+            }
+        } else {
+            panic!("Expected list");
+        }
+    }
+
+    #[test]
+    fn test_thread_last_with_args() {
+        let mut env = MacroEnv::new();
+        // (->> 1 (+ 2 3)) should expand to (+ 2 3 1)
+        let result = env.expand(parse("(->> 1 (+ 2 3))")).unwrap();
+        if let Edn::List(items) = result {
+            assert_eq!(items.len(), 4); // + 2 3 1
+            if let Edn::Symbol(s) = &items[0] {
+                assert_eq!(s.name, "+");
+            }
+            // Last arg should be 1
+            assert!(matches!(&items[3], Edn::Number(n) if n.to_i64() == Some(1)));
+        } else {
+            panic!("Expected list");
+        }
+    }
+
+    #[test]
+    fn test_when_let_expansion() {
+        let mut env = MacroEnv::new();
+        // (when-let [x 42] x) should expand to a let/when form
+        let result = env.expand(parse("(when-let [x 42] x)")).unwrap();
+        // Should be (let [temp expr] (when temp (let [x temp] (do x))))
+        if let Edn::List(items) = result {
+            if let Edn::Symbol(s) = &items[0] {
+                assert_eq!(s.name, "let");
+            } else {
+                panic!("Expected let");
+            }
+        } else {
+            panic!("Expected list");
+        }
+    }
+
+    #[test]
+    fn test_if_let_expansion() {
+        let mut env = MacroEnv::new();
+        // (if-let [x 42] x 0) should expand to a let/if form
+        let result = env.expand(parse("(if-let [x 42] x 0)")).unwrap();
+        // Should be (let [temp expr] (if temp (let [x temp] then) else))
+        if let Edn::List(items) = result {
+            if let Edn::Symbol(s) = &items[0] {
+                assert_eq!(s.name, "let");
+            } else {
+                panic!("Expected let");
             }
         } else {
             panic!("Expected list");

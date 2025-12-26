@@ -141,6 +141,8 @@ impl Compiler {
                 body: expr,
             }],
             globals: Vec::new(),
+            protocols: Vec::new(),
+            extensions: Vec::new(),
         };
 
         // Lower to IR
@@ -191,6 +193,8 @@ impl Compiler {
                 body: expr,
             }],
             globals: Vec::new(),
+            protocols: Vec::new(),
+            extensions: Vec::new(),
         };
 
         // Lower to IR

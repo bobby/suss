@@ -1212,6 +1212,14 @@ pub enum BinOp {
     // Logical
     And,
     Or,
+
+    // Bitwise
+    BitAnd,
+    BitOr,
+    BitXor,
+    Shl,    // Left shift
+    ShrS,   // Signed right shift (arithmetic)
+    ShrU,   // Unsigned right shift (logical)
 }
 
 /// Unary operators
