@@ -92,6 +92,69 @@ impl Number {
             Number::Float(f) => *f == 1.0,
         }
     }
+
+    /// Check if this number is a float
+    pub fn is_float(&self) -> bool {
+        matches!(self, Number::Float(_))
+    }
+
+    /// Check if this number is an integer
+    pub fn is_integer(&self) -> bool {
+        matches!(self, Number::Integer(_))
+    }
+
+    /// Check if this number is a ratio
+    pub fn is_ratio(&self) -> bool {
+        matches!(self, Number::Ratio(_))
+    }
+
+    /// Try to convert to i64, returns None if the value doesn't fit
+    pub fn to_i64(&self) -> Option<i64> {
+        use num_traits::ToPrimitive;
+        match self {
+            Number::Integer(n) => n.to_i64(),
+            Number::Ratio(r) => {
+                // Only convert if it's a whole number
+                if r.is_integer() {
+                    r.to_integer().to_i64()
+                } else {
+                    None
+                }
+            }
+            Number::Float(f) => {
+                // Only convert if it's a whole number that fits
+                if f.fract() == 0.0 && *f >= i64::MIN as f64 && *f <= i64::MAX as f64 {
+                    Some(*f as i64)
+                } else {
+                    None
+                }
+            }
+        }
+    }
+
+    /// Convert to f64 (may lose precision for large integers or ratios)
+    pub fn to_f64(&self) -> f64 {
+        use num_traits::ToPrimitive;
+        match self {
+            Number::Integer(n) => n.to_f64().unwrap_or(f64::NAN),
+            Number::Ratio(r) => {
+                let numer = r.numer().to_f64().unwrap_or(f64::NAN);
+                let denom = r.denom().to_f64().unwrap_or(f64::NAN);
+                numer / denom
+            }
+            Number::Float(f) => *f,
+        }
+    }
+
+    /// Create a Number from an i64
+    pub fn from_i64(n: i64) -> Self {
+        Number::Integer(BigInt::from(n))
+    }
+
+    /// Create a Number from an f64
+    pub fn from_f64(n: f64) -> Self {
+        Number::Float(n)
+    }
 }
 
 impl fmt::Display for Number {

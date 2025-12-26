@@ -44,6 +44,8 @@ mod component;
 mod config;
 mod error;
 mod wasi;
+mod eval;
+mod expand;
 
 pub use config::{SussConfig, WorldConfig};
 pub use error::{CompileError, CompileResult};
@@ -100,6 +102,11 @@ impl Compiler {
         let mut parser_state = ParserState::new("suss");
         let expr = suss_reader::parse(expr_source, &mut parser_state)
             .map_err(|e| CompileError::Parse(e.to_string()))?;
+
+        // Expand macros (wrap single expr in vector, unwrap result)
+        let expanded = expand::expand_all(vec![expr], None)?;
+        let expr = expanded.into_iter().next()
+            .ok_or_else(|| CompileError::MacroExpansion("Expression was consumed by macro".into()))?;
 
         // Detect WASI calls in the expression
         let wasi_calls = wasi::collect_wasi_calls(&expr);
@@ -257,6 +264,9 @@ impl Compiler {
         let exprs = suss_reader::parse_all(source, &mut parser_state)
             .map_err(|e| CompileError::Parse(e.to_string()))?;
 
+        // Expand macros
+        let exprs = expand::expand_all(exprs, None)?;
+
         // Parse the WIT definition
         let mut resolve = Resolve::new();
         let pkg_id = resolve
@@ -303,6 +313,9 @@ impl Compiler {
         let mut parser_state = ParserState::new("suss");
         let exprs = suss_reader::parse_all(&source, &mut parser_state)
             .map_err(|e| CompileError::Parse(e.to_string()))?;
+
+        // Expand macros
+        let exprs = expand::expand_all(exprs, None)?;
 
         let wit_path = Path::new(wit_path);
         let mut resolve = Resolve::new();
@@ -445,6 +458,9 @@ impl Compiler {
                 .map_err(|e| CompileError::Parse(e.to_string()))?;
             all_exprs.extend(exprs);
         }
+
+        // Expand macros
+        let all_exprs = expand::expand_all(all_exprs, None)?;
 
         // Read WIT file
         let wit_source = std::fs::read_to_string(wit_path)

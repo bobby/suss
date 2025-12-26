@@ -92,10 +92,45 @@ All symbols and keywords go through `Interner` for O(1) equality. Use `SymbolId`
 `Number` enum: `Integer(BigInt)` → `Ratio(BigRational)` → `Float(f64)`. Supports Clojure radix literals (`2r1010`, `16rFF`).
 
 ### Static Compiler Subset
-Compilable: `def`, `defn`, `fn` (closures with capture), `apply`, `let`, `if`, `do`, `loop/recur`, numbers (i32/i64/f64), strings, vectors.
-Not yet compilable: macros, BigInt (use i64).
+Compilable: `def`, `defn`, `fn` (closures with capture), `apply`, `let`, `if`, `do`, `loop/recur`, numbers (i32/i64/f64), strings, vectors, macros.
+Not yet compilable: BigInt (use i64).
 
-See ROADMAP.md "Priority Zero: Compositional Primitives" for the path to macros.
+### Macro System
+
+Suss has ClojureScript-style compile-time macros:
+
+**Architecture:**
+```
+Pipeline: Parse → [Expand] → Analyze → Lower → Codegen
+                    ↑
+            expand.rs + eval.rs
+```
+
+**Key files:**
+- `crates/suss-compile/src/expand.rs` - MacroEnv, MacroDef, syntax-quote expansion, gensym
+- `crates/suss-compile/src/eval.rs` - Tree-walking interpreter for macro bodies (~30 primitives)
+
+**Built-in core macros:** `when`, `when-not`, `and`, `or`, `cond`, `case`
+
+**Key structures:**
+```rust
+// expand.rs
+pub struct MacroDef {
+    pub name: String,
+    pub params: Vec<String>,
+    pub rest_param: Option<String>,  // Name after &
+    pub body: Edn,
+}
+
+pub struct MacroEnv {
+    macros: HashMap<String, MacroDef>,
+    gensym_counter: u64,
+    current_ns: Option<String>,
+    evaluator: MacroEvaluator,
+}
+```
+
+**Gensym:** `symbol#` in syntax-quote expands to `symbol__N__auto__` where N is unique.
 
 ### Variadic Arithmetic
 Arithmetic operators match ClojureScript semantics:
@@ -230,6 +265,36 @@ PersistentSet: struct { type_id: i32, cnt: i32, root: eqref, _marker: i32 }
 ```
 
 This affects `get_type_id` which uses `ref.test` chains to determine type.
+
+### Debugging Macro Expansion
+
+When macros produce unexpected results:
+
+1. **Check expansion output:** Add debug prints in `expand.rs`:
+   ```rust
+   // In expand_call after macro expansion:
+   eprintln!("Macro {} expanded to: {:?}", name, result);
+   ```
+
+2. **Verify syntax-quote:** Test quote expansion in isolation:
+   ```rust
+   // expand_syntax_quote should handle:
+   // - `sym` → (quote sym)
+   // - `~expr` → evaluate expr
+   // - `~@coll` → splice coll elements
+   // - `sym#` → gensym
+   ```
+
+3. **Test macro evaluator:** The `MacroEvaluator` in `eval.rs` supports:
+   - Special forms: `quote`, `if`, `let`, `do`, `fn`, `loop/recur`
+   - Core primitives: `list`, `cons`, `first`, `rest`, `seq`, `concat`, `=`, `+`, `-`, `*`, `/`, etc.
+   - If a primitive is missing, add it to `MacroEvaluator::new()`
+
+4. **Common issues:**
+   - `Symbol.name` is a field, not a method (use `sym.name` not `sym.name()`)
+   - `Keyword.name` is a field, not a method (use `k.name` not `k.name()`)
+   - `Env.define()` creates new bindings, `Env.set()` only updates existing ones
+   - `Number` needs conversion methods (`to_i64()`, `from_i64()`, etc.)
 
 ## References
 

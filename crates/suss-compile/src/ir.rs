@@ -1317,6 +1317,18 @@ mod tests {
             gc_types::CLOSURE_6,
             gc_types::CLOSURE_7,
             gc_types::CLOSURE_8,
+            // Variadic function types (29-37)
+            gc_types::VARIADIC_FN_0,
+            gc_types::VARIADIC_FN_1,
+            gc_types::VARIADIC_FN_2,
+            gc_types::VARIADIC_FN_3,
+            gc_types::VARIADIC_FN_4,
+            gc_types::VARIADIC_FN_5,
+            gc_types::VARIADIC_FN_6,
+            gc_types::VARIADIC_FN_7,
+            gc_types::VARIADIC_FN_8,
+            // Variadic closure struct (38)
+            gc_types::VARIADIC_CLOSURE,
         ];
         for (i, idx) in indices.iter().enumerate() {
             assert_eq!(*idx, i as u32, "type index {} should be {}", idx, i);

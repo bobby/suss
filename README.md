@@ -269,6 +269,38 @@ The `str` function concatenates strings. When all arguments are string literals,
 ;; Produces: "Hello, World!" in the WASM data section
 ```
 
+#### Macros
+
+Suss supports ClojureScript-style compile-time macros with syntax-quote, unquote, and unquote-splicing:
+
+```clojure
+;; Define a macro
+(defmacro unless [test & body]
+  `(if (not ~test)
+     (do ~@body)
+     nil))
+
+;; Use it
+(unless (empty? items)
+  (process items)
+  (log "done"))
+```
+
+**Built-in core macros:**
+- `when`, `when-not` - Conditional execution
+- `and`, `or` - Short-circuit boolean operators
+- `cond` - Multi-branch conditional
+- `case` - Value dispatch
+
+**Macro features:**
+- Syntax-quote (`` ` ``) with automatic symbol qualification
+- Unquote (`~`) to evaluate expressions inside syntax-quote
+- Unquote-splicing (`~@`) to splice collections
+- Gensym (`symbol#`) for hygienic symbols → `symbol__N__auto__`
+- Rest parameters (`& body`) for variadic macros
+
+Macros are expanded at compile time before code generation. The expansion uses a tree-walking interpreter to evaluate macro bodies.
+
 #### Compilable Subset
 
 The static compiler supports a subset of Suss suitable for ahead-of-time compilation:
@@ -289,7 +321,8 @@ The static compiler supports a subset of Suss suitable for ahead-of-time compila
 | Maps | Yes | HAMT-based, `get`, `assoc`, `count`, `contains?` |
 | Sets | Yes | HAMT-based, `conj`, `count`, `contains?` |
 | Lists | Yes | Cons cells, `first`, `rest`, `cons` |
-| `eval`, macros | No | Requires interpreter |
+| Macros | Yes | `defmacro` with syntax-quote, core macros built-in |
+| `eval` | No | Requires runtime interpreter |
 
 #### Running Compiled Components
 
@@ -345,6 +378,7 @@ Suss is built as composable WASM components:
   - Maps (HAMT - Hash Array Mapped Trie)
   - Sets (HAMT-based)
   - Lists (cons cells)
+* Compile-time macros (`defmacro` with syntax-quote, unquote, unquote-splicing)
 * Standard library (follows ClojureScript's implementation)
 
 Obviously, the primary compilation target will be static as a WASM/WASI application, so some of the more dynamic features of Clojure may need to be curtailed or made optional at compile-time.

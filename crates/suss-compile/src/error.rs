@@ -47,4 +47,12 @@ pub enum CompileError {
     /// Configuration error (deps.suss)
     #[error("Config error: {0}")]
     Config(String),
+
+    /// Macro expansion error
+    #[error("Macro expansion error: {0}")]
+    MacroExpansion(String),
+
+    /// Compile-time macro evaluation error
+    #[error("Macro evaluation error: {0}")]
+    MacroEval(String),
 }

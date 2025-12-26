@@ -10,9 +10,9 @@ This roadmap aligns with ClojureScript's proven persistent data structure implem
 
 > **Goal:** Stop modifying the compiler for each new feature. Build the primitives that let Suss extend itself.
 
-### The Problem
+### The Problem (SOLVED ✓)
 
-Currently, every new control-flow construct requires Rust code changes:
+Previously, every new control-flow construct required Rust code changes:
 
 ```
 lower_cond()    → 50 lines of Rust in lower.rs
@@ -21,7 +21,13 @@ lower_and()     → 30 lines of Rust in lower.rs
 lower_case()    → 55 lines of Rust in lower.rs
 ```
 
-In Clojure, these are all **macros** - code that writes code, written in Clojure itself. We're doing the compiler's job by hand for each one.
+In Clojure, these are all **macros** - code that writes code, written in Clojure itself.
+
+**Solution implemented:** ClojureScript-style compile-time macros with:
+- `expand.rs` - Macro expansion phase with syntax-quote, gensym, defmacro parsing
+- `eval.rs` - Tree-walking interpreter for evaluating macro bodies at compile time
+- Built-in core macros: `when`, `when-not`, `and`, `or`, `cond`, `case`
+- All `lower_xxx` functions for these forms have been removed from Rust
 
 ### The Solution: Four Fundamental Primitives
 
@@ -31,7 +37,7 @@ Once we have these, new features become library code, not compiler changes:
 |-----------|---------|--------|
 | **First-class functions** | `map`, `filter`, `reduce`, higher-order programming | ✓ COMPLETE |
 | **apply** | `(apply + [1 2 3])`, variadic dispatch | ✓ COMPLETE |
-| **Macros** | `cond`, `when`, `->`, `for`, `core.async` | ❌ Missing |
+| **Macros** | `cond`, `when`, `->`, `for`, `core.async` | ✓ COMPLETE |
 | **User protocols** | `defprotocol`, `extend-type`, abstraction | 🔶 Partial |
 
 ### P0.1: First-Class Functions (Closures)
@@ -142,25 +148,26 @@ Code that writes code, expanded at compile time.
 
 **Implementation phases:**
 
-**Phase A: Quote & Syntax-Quote**
-- [ ] `quote` - prevent evaluation: `'(+ 1 2)` → list, not 3
-- [ ] `syntax-quote` (`) - quasi-quote with namespace resolution
-- [ ] `unquote` (~) - evaluate inside syntax-quote
-- [ ] `unquote-splicing` (~@) - splice collection
+**Phase A: Quote & Syntax-Quote** ✓ COMPLETE
+- [x] `quote` - prevent evaluation: `'(+ 1 2)` → list, not 3
+- [x] `syntax-quote` (`) - quasi-quote with namespace resolution
+- [x] `unquote` (~) - evaluate inside syntax-quote
+- [x] `unquote-splicing` (~@) - splice collection
 
-**Phase B: Macro Expansion**
-- [ ] `defmacro` form in analyzer
-- [ ] Macro functions stored in compile-time environment
-- [ ] Expand macros before lowering to IR
-- [ ] Support recursive macro expansion
+**Phase B: Macro Expansion** ✓ COMPLETE
+- [x] `defmacro` form in analyzer
+- [x] Macro functions stored in compile-time environment
+- [x] Expand macros before lowering to IR
+- [x] Support recursive macro expansion
 
-**Phase C: Bootstrap Core Macros**
-- [ ] Implement `when`, `when-not`, `when-let` as macros
-- [ ] Implement `cond`, `condp`, `case` as macros
-- [ ] Implement `and`, `or` as macros
+**Phase C: Bootstrap Core Macros** (Partial)
+- [x] Implement `when`, `when-not` as macros
+- [x] Implement `cond`, `case` as macros
+- [x] Implement `and`, `or` as macros
+- [x] Remove corresponding `lower_xxx` functions from Rust
+- [ ] Implement `when-let`, `condp` as macros
 - [ ] Implement `->`, `->>`, `as->` as macros
 - [ ] Implement `for`, `doseq` as macros
-- [ ] Remove corresponding `lower_xxx` functions from Rust
 
 **The payoff:** After Phase C, `core.async` becomes possible as a library.
 
@@ -223,14 +230,14 @@ Allow users to define their own abstractions.
 5. **Bootstrap core macros** - Move `lower_xxx` to Suss
 6. **User protocols** - Can be parallel with 3-5
 
-### Success Criteria
+### Success Criteria ✓ ACHIEVED
 
-**Before:** Adding `when-some` requires:
+**Before:** Adding `when-some` required:
 - Modify `lower.rs` (add `lower_when_some` function)
 - Add pattern match in `lower_call`
 - Rebuild compiler
 
-**After:** Adding `when-some` requires:
+**After (now implemented!):** Adding `when-some` requires:
 ```clojure
 (defmacro when-some [[sym expr] & body]
   `(let [val# ~expr]
@@ -240,6 +247,11 @@ Allow users to define their own abstractions.
 ```
 
 No compiler changes. Just library code.
+
+**Implementation details:**
+- `expand.rs` - MacroEnv, MacroDef, syntax-quote expansion, gensym (`symbol#` → `symbol__N__auto__`)
+- `eval.rs` - Tree-walking interpreter with ~30 primitives for compile-time macro evaluation
+- Pipeline: Parse → **Expand** → Analyze → Lower → Codegen
 
 ### The IR After Compositional Primitives
 
@@ -1026,10 +1038,10 @@ Implementation:
 
 1. ✓ **First-class functions (closures)** - COMPLETE
 2. ✓ **apply** - dynamic invocation - COMPLETE
-3. **Quote/Syntax-quote** - code as data ← NEXT
-4. **defmacro** - compile-time expansion
-5. **Bootstrap core macros** - move `lower_xxx` to Suss
-6. **User protocols** - `defprotocol`, `extend-type`
+3. ✓ **Quote/Syntax-quote** - code as data - COMPLETE
+4. ✓ **defmacro** - compile-time expansion - COMPLETE
+5. ✓ **Bootstrap core macros** - `when`, `when-not`, `and`, `or`, `cond`, `case` - COMPLETE
+6. **User protocols** - `defprotocol`, `extend-type` ← NEXT
 
 ### Completed Foundation
 
