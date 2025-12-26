@@ -1,0 +1,423 @@
+;; ClojureScript Performance Benchmarks
+;; Adapted from clojurescript/benchmark/cljs/benchmark_runner.cljs
+;; EPL 1.0 License - See README.md
+
+;; Benchmark format:
+;; {:name - Unique identifier
+;;  :category - Grouping
+;;  :setup - Expression to create test data (run once)
+;;  :expr - Expression to benchmark (run N times)
+;;  :iterations - Suggested iteration count}
+
+[
+ ;; =============================================================================
+ ;; Vector Operations
+ ;; =============================================================================
+
+ {:name "vector-create-empty"
+  :category :vectors
+  :setup nil
+  :expr "[]"
+  :iterations 1000000}
+
+ {:name "vector-create-3"
+  :category :vectors
+  :setup nil
+  :expr "[1 2 3]"
+  :iterations 1000000}
+
+ {:name "vector-conj"
+  :category :vectors
+  :setup "[1 2 3]"
+  :expr "(conj coll 4)"
+  :iterations 1000000}
+
+ {:name "vector-nth"
+  :category :vectors
+  :setup "[1 2 3]"
+  :expr "(nth coll 1)"
+  :iterations 1000000}
+
+ {:name "vector-first"
+  :category :vectors
+  :setup "[1 2 3]"
+  :expr "(first coll)"
+  :iterations 1000000}
+
+ {:name "vector-rest"
+  :category :vectors
+  :setup "[1 2 3]"
+  :expr "(rest coll)"
+  :iterations 1000000}
+
+ {:name "vector-count"
+  :category :vectors
+  :setup "[1 2 3]"
+  :expr "(count coll)"
+  :iterations 1000000}
+
+ {:name "vector-peek"
+  :category :vectors
+  :setup "[1 2 3]"
+  :expr "(peek coll)"
+  :iterations 1000000}
+
+ {:name "vector-pop"
+  :category :vectors
+  :setup "[1 2 3]"
+  :expr "(pop coll)"
+  :iterations 1000000}
+
+ ;; Large vector operations
+ {:name "vector-build-100"
+  :category :vectors
+  :setup nil
+  :expr "(loop [v [] i 0] (if (< i 100) (recur (conj v i) (+ i 1)) v))"
+  :iterations 1000}
+
+ {:name "vector-build-1000"
+  :category :vectors
+  :setup nil
+  :expr "(loop [v [] i 0] (if (< i 1000) (recur (conj v i) (+ i 1)) v))"
+  :iterations 100}
+
+ {:name "vector-large-nth"
+  :category :vectors
+  :setup "(loop [v [] i 0] (if (< i 1000) (recur (conj v i) (+ i 1)) v))"
+  :expr "(nth coll 500)"
+  :iterations 100000}
+
+ {:name "vector-large-count"
+  :category :vectors
+  :setup "(loop [v [] i 0] (if (< i 1000) (recur (conj v i) (+ i 1)) v))"
+  :expr "(count coll)"
+  :iterations 100000}
+
+ ;; =============================================================================
+ ;; Map Operations
+ ;; =============================================================================
+
+ {:name "map-create-empty"
+  :category :maps
+  :setup nil
+  :expr "{}"
+  :iterations 1000000}
+
+ {:name "map-create-3"
+  :category :maps
+  :setup nil
+  :expr "{:a 1 :b 2 :c 3}"
+  :iterations 1000000}
+
+ {:name "map-get"
+  :category :maps
+  :setup "{:a 1 :b 2 :c 3}"
+  :expr "(get coll :b)"
+  :iterations 1000000}
+
+ {:name "map-get-missing"
+  :category :maps
+  :setup "{:a 1 :b 2 :c 3}"
+  :expr "(get coll :z)"
+  :iterations 1000000}
+
+ {:name "map-assoc"
+  :category :maps
+  :setup "{:a 1 :b 2 :c 3}"
+  :expr "(assoc coll :d 4)"
+  :iterations 1000000}
+
+ {:name "map-assoc-update"
+  :category :maps
+  :setup "{:a 1 :b 2 :c 3}"
+  :expr "(assoc coll :a 10)"
+  :iterations 1000000}
+
+ {:name "map-dissoc"
+  :category :maps
+  :setup "{:a 1 :b 2 :c 3}"
+  :expr "(dissoc coll :b)"
+  :iterations 1000000}
+
+ {:name "map-count"
+  :category :maps
+  :setup "{:a 1 :b 2 :c 3}"
+  :expr "(count coll)"
+  :iterations 1000000}
+
+ {:name "map-contains"
+  :category :maps
+  :setup "{:a 1 :b 2 :c 3}"
+  :expr "(contains? coll :b)"
+  :iterations 1000000}
+
+ ;; Large map operations
+ {:name "map-build-50"
+  :category :maps
+  :setup nil
+  :expr "(loop [m {} i 0] (if (< i 50) (recur (assoc m i i) (+ i 1)) m))"
+  :iterations 1000}
+
+ {:name "map-large-get"
+  :category :maps
+  :setup "(loop [m {} i 0] (if (< i 100) (recur (assoc m i i) (+ i 1)) m))"
+  :expr "(get coll 50)"
+  :iterations 100000}
+
+ {:name "map-large-assoc"
+  :category :maps
+  :setup "(loop [m {} i 0] (if (< i 100) (recur (assoc m i i) (+ i 1)) m))"
+  :expr "(assoc coll 200 200)"
+  :iterations 100000}
+
+ ;; =============================================================================
+ ;; Set Operations
+ ;; =============================================================================
+
+ {:name "set-create-empty"
+  :category :sets
+  :setup nil
+  :expr "#{}"
+  :iterations 1000000}
+
+ {:name "set-create-3"
+  :category :sets
+  :setup nil
+  :expr "#{1 2 3}"
+  :iterations 1000000}
+
+ {:name "set-conj"
+  :category :sets
+  :setup "#{1 2 3}"
+  :expr "(conj coll 4)"
+  :iterations 1000000}
+
+ {:name "set-conj-existing"
+  :category :sets
+  :setup "#{1 2 3}"
+  :expr "(conj coll 2)"
+  :iterations 1000000}
+
+ {:name "set-contains"
+  :category :sets
+  :setup "#{1 2 3}"
+  :expr "(contains? coll 2)"
+  :iterations 1000000}
+
+ {:name "set-contains-missing"
+  :category :sets
+  :setup "#{1 2 3}"
+  :expr "(contains? coll 10)"
+  :iterations 1000000}
+
+ {:name "set-disj"
+  :category :sets
+  :setup "#{1 2 3}"
+  :expr "(disj coll 2)"
+  :iterations 1000000}
+
+ {:name "set-count"
+  :category :sets
+  :setup "#{1 2 3}"
+  :expr "(count coll)"
+  :iterations 1000000}
+
+ ;; Large set operations
+ {:name "set-build-50"
+  :category :sets
+  :setup nil
+  :expr "(loop [s #{} i 0] (if (< i 50) (recur (conj s i) (+ i 1)) s))"
+  :iterations 1000}
+
+ {:name "set-large-contains"
+  :category :sets
+  :setup "(loop [s #{} i 0] (if (< i 100) (recur (conj s i) (+ i 1)) s))"
+  :expr "(contains? coll 50)"
+  :iterations 100000}
+
+ ;; =============================================================================
+ ;; Arithmetic
+ ;; =============================================================================
+
+ {:name "add-2"
+  :category :arithmetic
+  :setup nil
+  :expr "(+ 1 2)"
+  :iterations 1000000}
+
+ {:name "add-5"
+  :category :arithmetic
+  :setup nil
+  :expr "(+ 1 2 3 4 5)"
+  :iterations 1000000}
+
+ {:name "mul-2"
+  :category :arithmetic
+  :setup nil
+  :expr "(* 3 4)"
+  :iterations 1000000}
+
+ {:name "div-2"
+  :category :arithmetic
+  :setup nil
+  :expr "(/ 10 3)"
+  :iterations 1000000}
+
+ {:name "inc"
+  :category :arithmetic
+  :setup nil
+  :expr "(inc 5)"
+  :iterations 1000000}
+
+ {:name "dec"
+  :category :arithmetic
+  :setup nil
+  :expr "(dec 5)"
+  :iterations 1000000}
+
+ ;; =============================================================================
+ ;; Function Calls
+ ;; =============================================================================
+
+ {:name "fn-call-0"
+  :category :functions
+  :setup nil
+  :expr "((fn [] 42))"
+  :iterations 1000000}
+
+ {:name "fn-call-1"
+  :category :functions
+  :setup nil
+  :expr "((fn [x] x) 42)"
+  :iterations 1000000}
+
+ {:name "fn-call-2"
+  :category :functions
+  :setup nil
+  :expr "((fn [a b] (+ a b)) 1 2)"
+  :iterations 1000000}
+
+ {:name "fn-call-3"
+  :category :functions
+  :setup nil
+  :expr "((fn [a b c] (+ a b c)) 1 2 3)"
+  :iterations 1000000}
+
+ {:name "closure-capture"
+  :category :functions
+  :setup nil
+  :expr "(let [x 10] ((fn [y] (+ x y)) 5))"
+  :iterations 1000000}
+
+ ;; =============================================================================
+ ;; Control Flow
+ ;; =============================================================================
+
+ {:name "if-true"
+  :category :control
+  :setup nil
+  :expr "(if true 1 2)"
+  :iterations 1000000}
+
+ {:name "if-false"
+  :category :control
+  :setup nil
+  :expr "(if false 1 2)"
+  :iterations 1000000}
+
+ {:name "cond-first"
+  :category :control
+  :setup nil
+  :expr "(cond true 1 true 2 :else 3)"
+  :iterations 1000000}
+
+ {:name "cond-third"
+  :category :control
+  :setup nil
+  :expr "(cond false 1 false 2 :else 3)"
+  :iterations 1000000}
+
+ {:name "case-match"
+  :category :control
+  :setup nil
+  :expr "(case 2 1 :one 2 :two 3 :three :default)"
+  :iterations 1000000}
+
+ ;; =============================================================================
+ ;; Loop/Recur
+ ;; =============================================================================
+
+ {:name "loop-sum-10"
+  :category :loop
+  :setup nil
+  :expr "(loop [i 0 sum 0] (if (< i 10) (recur (+ i 1) (+ sum i)) sum))"
+  :iterations 100000}
+
+ {:name "loop-sum-100"
+  :category :loop
+  :setup nil
+  :expr "(loop [i 0 sum 0] (if (< i 100) (recur (+ i 1) (+ sum i)) sum))"
+  :iterations 10000}
+
+ {:name "loop-sum-1000"
+  :category :loop
+  :setup nil
+  :expr "(loop [i 0 sum 0] (if (< i 1000) (recur (+ i 1) (+ sum i)) sum))"
+  :iterations 1000}
+
+ {:name "loop-factorial-10"
+  :category :loop
+  :setup nil
+  :expr "(loop [n 10 acc 1] (if (<= n 1) acc (recur (- n 1) (* acc n))))"
+  :iterations 100000}
+
+ ;; =============================================================================
+ ;; Apply
+ ;; =============================================================================
+
+ {:name "apply-plus-3"
+  :category :apply
+  :setup nil
+  :expr "(apply + [1 2 3])"
+  :iterations 1000000}
+
+ {:name "apply-plus-10"
+  :category :apply
+  :setup nil
+  :expr "(apply + [1 2 3 4 5 6 7 8 9 10])"
+  :iterations 100000}
+
+ {:name "apply-fn"
+  :category :apply
+  :setup nil
+  :expr "(apply (fn [a b c] (+ a b c)) [1 2 3])"
+  :iterations 1000000}
+
+ ;; =============================================================================
+ ;; Hash Functions
+ ;; =============================================================================
+
+ {:name "hash-integer"
+  :category :hash
+  :setup nil
+  :expr "(hash 42)"
+  :iterations 1000000}
+
+ {:name "hash-keyword"
+  :category :hash
+  :setup nil
+  :expr "(hash :foo)"
+  :iterations 1000000}
+
+ {:name "hash-string"
+  :category :hash
+  :setup nil
+  :expr "(hash \"hello\")"
+  :iterations 1000000}
+
+ {:name "hash-vector"
+  :category :hash
+  :setup nil
+  :expr "(hash [1 2 3])"
+  :iterations 100000}
+]
