@@ -58,6 +58,10 @@ suss> ((fn [x y] (+ x y)) 3 4)
 7
 suss> (let [a 10 b 20] (+ a b))
 30
+suss> (apply + [1 2 3 4 5])
+15
+suss> (let [f (fn [x] (* x 2))] (f 21))
+42
 ```
 
 ### Running Tests
@@ -273,7 +277,8 @@ The static compiler supports a subset of Suss suitable for ahead-of-time compila
 |---------|-----------|-------|
 | `def` | Yes | Top-level constants |
 | `defn` | Yes | Named functions (use `^:export` for WIT exports) |
-| `fn` | Yes | Lambda expressions (no mutable capture) |
+| `fn` | Yes | First-class closures with variable capture |
+| `apply` | Yes | Dynamic dispatch for arities 0-8 |
 | `let`, `if`, `do` | Yes | Control flow |
 | `loop/recur` | Yes | Maps to WASM loops |
 | `require` | Yes | Import WIT interfaces (`:as` alias or `:refer` direct) |

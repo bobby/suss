@@ -29,8 +29,8 @@ Once we have these, new features become library code, not compiler changes:
 
 | Primitive | Enables | Status |
 |-----------|---------|--------|
-| **First-class functions** | `map`, `filter`, `reduce`, higher-order programming | ❌ Missing |
-| **apply** | `(apply + [1 2 3])`, variadic dispatch | ❌ Missing |
+| **First-class functions** | `map`, `filter`, `reduce`, higher-order programming | ✓ COMPLETE |
+| **apply** | `(apply + [1 2 3])`, variadic dispatch | ✓ COMPLETE |
 | **Macros** | `cond`, `when`, `->`, `for`, `core.async` | ❌ Missing |
 | **User protocols** | `defprotocol`, `extend-type`, abstraction | 🔶 Partial |
 
@@ -76,11 +76,11 @@ Functions must become **values** that can be passed, returned, and stored.
 - Functions don't need table slots to be callable
 
 **Required changes:**
-- [ ] Add `$Closure` GC type for function values
-- [ ] `fn` forms compile to closure structs (not just WASM functions)
-- [ ] Function application checks: is callee a closure? → extract fn + env, call
-- [ ] Lambda lifting: identify free variables, capture in env struct
-- [ ] Implement `IFn` protocol with `-invoke` method
+- [x] Add `$Closure` GC type for function values (CLOSURE_0 through CLOSURE_8 for arities)
+- [x] `fn` forms compile to closure structs (not just WASM functions)
+- [x] Function application checks: is callee a closure? → extract fn + env, call
+- [x] Lambda lifting: identify free variables, capture in env struct
+- [ ] Implement `IFn` protocol with `-invoke` method (closures work without protocol)
 
 **IR additions:**
 ```rust
@@ -105,9 +105,14 @@ Dynamic function invocation with argument list.
 3. Requires first-class functions (P0.1)
 
 **Required changes:**
-- [ ] Parse `apply` special form
-- [ ] Generate arity-dispatching code
+- [x] Parse `apply` special form
+- [x] Generate arity-dispatching code (0-8 args via VARIADIC_CLOSURE)
 - [ ] Handle rest args (`& more` in fn signatures)
+
+**Variadic operator semantics (ClojureScript-compatible):**
+- `(+)` → 0, `(*)` → 1 (identity elements)
+- `(- x)` → negation, `(/ x)` → reciprocal
+- `(apply + [1 2 3])` → 6
 
 ### P0.3: Macros (defmacro)
 
@@ -1019,9 +1024,9 @@ Implementation:
 
 **Current focus - enables self-extending language:**
 
-1. **First-class functions (closures)** ← START HERE
-2. **apply** - dynamic invocation
-3. **Quote/Syntax-quote** - code as data
+1. ✓ **First-class functions (closures)** - COMPLETE
+2. ✓ **apply** - dynamic invocation - COMPLETE
+3. **Quote/Syntax-quote** - code as data ← NEXT
 4. **defmacro** - compile-time expansion
 5. **Bootstrap core macros** - move `lower_xxx` to Suss
 6. **User protocols** - `defprotocol`, `extend-type`

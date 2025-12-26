@@ -92,10 +92,17 @@ All symbols and keywords go through `Interner` for O(1) equality. Use `SymbolId`
 `Number` enum: `Integer(BigInt)` → `Ratio(BigRational)` → `Float(f64)`. Supports Clojure radix literals (`2r1010`, `16rFF`).
 
 ### Static Compiler Subset
-Compilable: `def`, `defn`, `fn`, `let`, `if`, `do`, `loop/recur`, numbers (i32/i64/f64), strings, vectors.
-Not yet compilable: first-class functions (closures), `apply`, macros, BigInt (use i64).
+Compilable: `def`, `defn`, `fn` (closures with capture), `apply`, `let`, `if`, `do`, `loop/recur`, numbers (i32/i64/f64), strings, vectors.
+Not yet compilable: macros, BigInt (use i64).
 
-See ROADMAP.md "Priority Zero: Compositional Primitives" for the path to closures and macros.
+See ROADMAP.md "Priority Zero: Compositional Primitives" for the path to macros.
+
+### Variadic Arithmetic
+Arithmetic operators match ClojureScript semantics:
+- `(+)` → 0, `(*)` → 1 (identity elements)
+- `(- x)` → negation, `(/ x)` → reciprocal
+- Division always returns float: `(/ 10 4)` → 2.5
+- `(apply + [1 2 3])` → 6 (works for arities 0-8)
 
 ### WIT Exports
 Mark functions for export with `^:export` metadata:
