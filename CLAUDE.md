@@ -307,4 +307,73 @@ When macros produce unexpected results:
 ### Clojure References
 
 - `reference/cljs.core.clj` - Local copy of ClojureScript core
+- `reference/cljs-tests/` - Conformance test cases adapted from ClojureScript
 - [ClojureScript Source](https://github.com/clojure/clojurescript) - Persistent data structure implementations
+
+## Conformance & Performance Testing
+
+### Conformance Tests
+
+Test cases adapted from ClojureScript's test suite to verify Suss semantics:
+
+```bash
+# Run all conformance tests
+cargo test -p suss-compile --test conformance -- --nocapture
+
+# Run specific category
+cargo test -p suss-compile --test conformance test_conformance_collections -- --nocapture
+cargo test -p suss-compile --test conformance test_conformance_core -- --nocapture
+```
+
+Test files in `reference/cljs-tests/`:
+- `collections.suss` - Vectors, maps, sets (76 tests)
+- `core.suss` - Arithmetic, logic, control flow, functions (125 tests)
+- `benchmarks.suss` - Performance benchmark definitions
+
+Test format (EDN):
+```clojure
+{:name "vector-conj"
+ :category :vectors
+ :expr "(conj [1 2] 3)"
+ :expected [1 2 3]
+ :skip false}  ; Optional, skip unimplemented features
+```
+
+### Performance Benchmarks
+
+Criterion-based benchmarks measuring compilation and execution performance:
+
+```bash
+# Run all benchmarks
+cargo bench -p suss-compile --bench performance
+
+# Run specific groups
+cargo bench -p suss-compile --bench performance -- compilation
+cargo bench -p suss-compile --bench performance -- execution
+cargo bench -p suss-compile --bench performance -- wasm_size
+cargo bench -p suss-compile --bench performance -- vector_scaling
+
+# Quick validation (verify benchmarks run)
+cargo bench -p suss-compile --bench performance -- --test
+```
+
+Benchmark categories:
+- **compilation** - Time to compile expressions to WASM
+- **execution** - Time to instantiate and run WASM modules
+- **wasm_size** - Binary size of compiled output
+- **vector_scaling** - Performance scaling with collection size
+
+## Sample Programs
+
+The `samples/` directory contains classic Clojure programs as implementation targets. These document idiomatic patterns we're working toward supporting.
+
+| Sample | Features Needed | Status |
+|--------|-----------------|--------|
+| `fibonacci.suss` | loop/recur | Partial |
+| `factorial.suss` | loop/recur, reduce, range | Partial |
+| `game_of_life.suss` | for, mapcat, frequencies, destructuring, sets | Needs HOFs |
+| `primes.suss` | filter, some, range, sets, Math/sqrt | Needs HOFs |
+| `quicksort.suss` | filter, concat | Needs filter, concat |
+| `tree_traversal.suss` | map keyword access, concat | Needs concat |
+
+These programs are valid Clojure code and serve as progress markers. When a sample runs correctly, it demonstrates that feature set is complete.

@@ -67,7 +67,27 @@ suss> (let [f (fn [x] (* x 2))] (f 21))
 ### Running Tests
 
 ```bash
+# Run all unit tests
 cargo test
+
+# Run conformance tests (verifies ClojureScript semantics)
+cargo test -p suss-compile --test conformance -- --nocapture
+
+# Run specific conformance category
+cargo test -p suss-compile --test conformance test_conformance_collections -- --nocapture
+cargo test -p suss-compile --test conformance test_conformance_core -- --nocapture
+```
+
+### Running Benchmarks
+
+```bash
+# Run all performance benchmarks
+cargo bench -p suss-compile --bench performance
+
+# Run specific benchmark groups
+cargo bench -p suss-compile --bench performance -- compilation
+cargo bench -p suss-compile --bench performance -- execution
+cargo bench -p suss-compile --bench performance -- wasm_size
 ```
 
 ### Building WASM Components
@@ -378,10 +398,26 @@ Suss is built as composable WASM components:
   - Maps (HAMT - Hash Array Mapped Trie)
   - Sets (HAMT-based)
   - Lists (cons cells)
+* First-class functions (closures with variable capture)
 * Compile-time macros (`defmacro` with syntax-quote, unquote, unquote-splicing)
 * Standard library (follows ClojureScript's implementation)
 
 Obviously, the primary compilation target will be static as a WASM/WASI application, so some of the more dynamic features of Clojure may need to be curtailed or made optional at compile-time.
+
+## Sample Programs
+
+The `samples/` directory contains classic Clojure programs that serve as implementation targets:
+
+| Sample | Description | Status |
+|--------|-------------|--------|
+| `fibonacci.suss` | Fibonacci (naive, tail-recursive, sequence) | Partial |
+| `factorial.suss` | Factorial implementations | Partial |
+| `game_of_life.suss` | Conway's Game of Life (Christophe Grand's elegant version) | Needs HOFs |
+| `primes.suss` | Prime number algorithms (trial division, sieve) | Needs HOFs |
+| `quicksort.suss` | Functional quicksort | Needs filter, concat |
+| `tree_traversal.suss` | Binary tree operations using maps | Needs concat |
+
+These programs document the path toward full Clojure compatibility. See `samples/README.md` for details.
 
 ## Suss targets WASM/WASI
 

@@ -1,0 +1,53 @@
+;; Prime Number Algorithms
+;; Various approaches to finding and testing prime numbers
+
+;; -----------------------------------------------------------------------------
+;; Trial Division
+;; Check if n is divisible by any number from 2 to sqrt(n)
+;; -----------------------------------------------------------------------------
+(defn prime? [n]
+  (and (> n 1)
+       (not (some (fn [d] (= 0 (mod n d)))
+                  (range 2 (inc (int (Math/sqrt n))))))))
+
+;; -----------------------------------------------------------------------------
+;; Generate primes up to n using filter
+;; Simple but not the most efficient
+;; -----------------------------------------------------------------------------
+(defn primes-to [n]
+  (filter prime? (range 2 (inc n))))
+
+;; -----------------------------------------------------------------------------
+;; Sieve of Eratosthenes
+;; Classic algorithm using sets for efficiency
+;; -----------------------------------------------------------------------------
+(defn sieve [n]
+  (loop [candidates (set (range 2 (inc n)))
+         primes []]
+    (if (empty? candidates)
+      primes
+      (let [p (apply min candidates)
+            multiples (set (range (* p p) (inc n) p))]
+        (recur (disj (apply disj candidates multiples) p)
+               (conj primes p))))))
+
+;; -----------------------------------------------------------------------------
+;; Prime factorization
+;; Returns a vector of prime factors
+;; -----------------------------------------------------------------------------
+(defn prime-factors [n]
+  (loop [n n factors [] d 2]
+    (cond
+      (< n 2) factors
+      (= 0 (mod n d)) (recur (/ n d) (conj factors d) d)
+      :else (recur n factors (inc d)))))
+
+;; -----------------------------------------------------------------------------
+;; Examples
+;; -----------------------------------------------------------------------------
+;; (prime? 2)          ; => true
+;; (prime? 17)         ; => true
+;; (prime? 18)         ; => false
+;; (primes-to 20)      ; => (2 3 5 7 11 13 17 19)
+;; (sieve 20)          ; => [2 3 5 7 11 13 17 19]
+;; (prime-factors 60)  ; => [2 2 3 5]
