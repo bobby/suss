@@ -36,16 +36,16 @@
 //! let wasm = compiler.compile(source, wit)?;
 //! ```
 
-mod ir;
 mod analyze;
-mod lower;
 mod codegen;
 mod component;
 mod config;
 mod error;
-mod wasi;
 mod eval;
 mod expand;
+mod ir;
+mod lower;
+mod wasi;
 
 pub use config::{SussConfig, WorldConfig};
 pub use error::{CompileError, CompileResult};
@@ -62,11 +62,36 @@ pub struct CompiledExpr {
 /// Bundled WASI version
 pub const BUNDLED_WASI_VERSION: &str = wasi::WASI_VERSION;
 
+use suss_core::Edn;
 use suss_reader::ParserState;
 use wit_parser::Resolve;
 
+/// Bundled core.suss source - automatically loaded before user code (per Clojure semantics)
+const CORE_SOURCE: &str = include_str!("core.suss");
+
 /// The Suss static compiler
 pub struct Compiler;
+
+/// Parse core.suss and return its expressions
+fn load_core_exprs() -> CompileResult<Vec<Edn>> {
+    // Handle empty/comments-only core.suss gracefully
+    let trimmed = CORE_SOURCE
+        .lines()
+        .filter(|line| {
+            let line = line.trim();
+            !line.is_empty() && !line.starts_with(";;")
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    if trimmed.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let mut parser_state = ParserState::new("core");
+    suss_reader::parse_all(CORE_SOURCE, &mut parser_state)
+        .map_err(|e| CompileError::Parse(format!("core.suss: {}", e)))
+}
 
 impl Compiler {
     /// Create a new compiler instance
@@ -98,51 +123,246 @@ impl Compiler {
     ///
     /// Returns both the WASM bytes and whether it's a component (WASI) or core module.
     pub fn compile_expr_with_info(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
-        // Parse the expression
+        // Load core.suss (auto-injected before user code per Clojure semantics)
+        let core_exprs = load_core_exprs()?;
+
+        // Parse all expressions in the source
         let mut parser_state = ParserState::new("suss");
-        let expr = suss_reader::parse(expr_source, &mut parser_state)
+        let user_exprs = suss_reader::parse_all(expr_source, &mut parser_state)
             .map_err(|e| CompileError::Parse(e.to_string()))?;
 
-        // Expand macros (wrap single expr in vector, unwrap result)
-        let expanded = expand::expand_all(vec![expr], None)?;
-        let expr = expanded.into_iter().next()
-            .ok_or_else(|| CompileError::MacroExpansion("Expression was consumed by macro".into()))?;
+        // Combine core + user expressions
+        let mut all_exprs = core_exprs;
+        all_exprs.extend(user_exprs);
+
+        // Expand macros on combined expressions
+        let expanded = expand::expand_all(all_exprs, None)?;
+
+        // Separate defn/deftype forms from the final expression
+        let (core_fns, deftypes, user_expr) = Self::extract_core_definitions(expanded)?;
 
         // Detect WASI calls in the expression
-        let wasi_calls = wasi::collect_wasi_calls(&expr);
+        let wasi_calls = wasi::collect_wasi_calls(&user_expr);
 
         if wasi_calls.is_empty() {
             // No WASI calls - compile as core module (existing behavior)
-            let wasm = self.compile_expr_core(expr)?;
-            Ok(CompiledExpr { wasm, is_component: false })
+            let wasm = self.compile_expr_core(user_expr, core_fns, deftypes)?;
+            Ok(CompiledExpr {
+                wasm,
+                is_component: false,
+            })
         } else {
             // WASI calls detected - compile as component with imports
-            let wasm = self.compile_expr_with_wasi(expr, wasi_calls)?;
-            Ok(CompiledExpr { wasm, is_component: true })
+            let wasm = self.compile_expr_with_wasi(user_expr, wasi_calls, core_fns, deftypes)?;
+            Ok(CompiledExpr {
+                wasm,
+                is_component: true,
+            })
         }
     }
 
+    /// Extract defn and deftype forms from expressions
+    /// Returns (functions, deftypes, final_expr)
+    /// Skips defprotocol and extend-type (handled during full module analysis)
+    fn extract_core_definitions(
+        exprs: Vec<Edn>,
+    ) -> CompileResult<(
+        Vec<analyze::AnalyzedFunction>,
+        Vec<analyze::AnalyzedDeftype>,
+        Edn,
+    )> {
+        let mut functions = Vec::new();
+        let mut deftypes = Vec::new();
+        let mut remaining = Vec::new();
+
+        for expr in exprs {
+            if let Edn::List(ref items) = expr {
+                if let Some(Edn::Symbol(sym)) = items.first() {
+                    // Skip protocol declaration forms
+                    if matches!(sym.name.as_str(), "defprotocol" | "extend-type") {
+                        continue;
+                    }
+                    // Extract deftype forms
+                    if sym.name == "deftype" && items.len() >= 3 {
+                        if let Some(deftype) = Self::extract_deftype(items)? {
+                            deftypes.push(deftype);
+                            continue;
+                        }
+                    }
+                    if sym.name == "defn" && items.len() >= 3 {
+                        // Extract: (defn name [params...] body...)
+                        //      or: (defn name "docstring" [params...] body...)
+                        if let Edn::Symbol(name_sym) = &items[1] {
+                            // Find params vector (skip optional docstring)
+                            let (params_idx, body_start) = if matches!(&items[2], Edn::String(_)) {
+                                // Has docstring: (defn name "doc" [params] body...)
+                                (3, 4)
+                            } else {
+                                // No docstring: (defn name [params] body...)
+                                (2, 3)
+                            };
+
+                            if params_idx < items.len() {
+                                if let Edn::Vector(params_vec) = &items[params_idx] {
+                                    let params: Vec<(String, ir::Type)> = params_vec
+                                        .iter()
+                                        .filter_map(|p| {
+                                            if let Edn::Symbol(s) = p {
+                                                Some((s.name.clone(), ir::Type::GcRef))
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                        .collect();
+
+                                    // Body is either single expr or implicit do
+                                    let body = if items.len() == body_start + 1 {
+                                        items[body_start].clone()
+                                    } else if items.len() > body_start {
+                                        // Wrap multiple body expressions in do
+                                        Edn::List(
+                                            std::iter::once(Edn::Symbol(suss_core::Symbol::new(
+                                                "do",
+                                            )))
+                                            .chain(items[body_start..].iter().cloned())
+                                            .collect(),
+                                        )
+                                    } else {
+                                        // No body - return nil
+                                        Edn::Nil
+                                    };
+
+                                    functions.push(analyze::AnalyzedFunction {
+                                        name: name_sym.name.clone(),
+                                        exported: false,
+                                        export_name: None,
+                                        params,
+                                        return_type: ir::Type::GcRef,
+                                        body,
+                                    });
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            remaining.push(expr);
+        }
+
+        // The final expression is all remaining expressions combined
+        let user_expr = if remaining.is_empty() {
+            return Err(CompileError::MacroExpansion(
+                "Expression was consumed by macro".into(),
+            ));
+        } else if remaining.len() == 1 {
+            remaining.pop().unwrap()
+        } else {
+            // Wrap multiple expressions in a do block
+            Edn::List(
+                std::iter::once(Edn::Symbol(suss_core::Symbol::new("do")))
+                    .chain(remaining.into_iter())
+                    .collect(),
+            )
+        };
+
+        Ok((functions, deftypes, user_expr))
+    }
+
+    /// Extract a deftype form into an AnalyzedDeftype
+    fn extract_deftype(items: &[Edn]) -> CompileResult<Option<analyze::AnalyzedDeftype>> {
+        // (deftype Name [fields...])
+        // (deftype ^:type-id N Name [fields...])
+        let mut idx = 1;
+        let mut reserved_type_id = None;
+
+        // Check for ^:type-id metadata
+        if idx < items.len() {
+            if let Edn::Symbol(sym) = &items[idx] {
+                if sym.name == "^:type-id" {
+                    idx += 1;
+                    if idx >= items.len() {
+                        return Err(CompileError::Parse("^:type-id requires a number".into()));
+                    }
+                    if let Edn::Number(n) = &items[idx] {
+                        reserved_type_id = n.to_i64().map(|v| v as u32);
+                    }
+                    idx += 1;
+                }
+            }
+        }
+
+        // Parse type name
+        let name = match items.get(idx) {
+            Some(Edn::Symbol(s)) => s.name.clone(),
+            _ => return Ok(None),
+        };
+        idx += 1;
+
+        // Parse fields vector
+        let fields = match items.get(idx) {
+            Some(Edn::Vector(field_items)) => {
+                let mut fields = Vec::new();
+                let mut pending_type_hint = None;
+
+                for item in field_items {
+                    if let Edn::Symbol(sym) = item {
+                        if sym.name.starts_with('^') {
+                            let hint = &sym.name[1..];
+                            if matches!(hint, "i32" | "i64" | "f64" | "eqref") {
+                                pending_type_hint = Some(hint.to_string());
+                            }
+                        } else {
+                            fields.push(analyze::DeftypeField {
+                                name: sym.name.clone(),
+                                type_hint: pending_type_hint.take(),
+                            });
+                        }
+                    }
+                }
+                fields
+            }
+            _ => return Ok(None),
+        };
+
+        Ok(Some(analyze::AnalyzedDeftype {
+            name,
+            fields,
+            implementations: Vec::new(), // No protocol impls in expression context
+            reserved_type_id,
+        }))
+    }
+
     /// Compile expression as core WASM module (no WASI imports)
-    fn compile_expr_core(&mut self, expr: suss_core::Edn) -> CompileResult<Vec<u8>> {
+    fn compile_expr_core(
+        &mut self,
+        expr: suss_core::Edn,
+        core_fns: Vec<analyze::AnalyzedFunction>,
+        deftypes: Vec<analyze::AnalyzedDeftype>,
+    ) -> CompileResult<Vec<u8>> {
         // Infer the return type
         let return_type = analyze::infer_expr_type(&expr)?;
 
-        // Create a synthetic analyzed module with one function
+        // Create a synthetic analyzed module with core functions + eval
+        let mut functions = core_fns;
+        functions.push(analyze::AnalyzedFunction {
+            name: "__eval".to_string(),
+            exported: true,
+            export_name: Some("eval".to_string()),
+            params: Vec::new(),
+            return_type,
+            body: expr,
+        });
+
         let analyzed = analyze::AnalyzedModule {
             namespace: None,
             world_target: None,
             imports: Vec::new(),
-            functions: vec![analyze::AnalyzedFunction {
-                name: "__eval".to_string(),
-                exported: true,
-                export_name: Some("eval".to_string()),
-                params: Vec::new(),
-                return_type,
-                body: expr,
-            }],
+            functions,
             globals: Vec::new(),
             protocols: Vec::new(),
             extensions: Vec::new(),
+            deftypes,
         };
 
         // Lower to IR
@@ -157,44 +377,55 @@ impl Compiler {
         &mut self,
         expr: suss_core::Edn,
         wasi_calls: Vec<wasi::WasiFunctionInfo>,
+        core_fns: Vec<analyze::AnalyzedFunction>,
+        deftypes: Vec<analyze::AnalyzedDeftype>,
     ) -> CompileResult<Vec<u8>> {
         // Infer the return type (may need to check WASI return types)
         let return_type = self.infer_expr_type_with_wasi(&expr, &wasi_calls)?;
 
         // Convert WASI calls to AnalyzedImports
         // Use "wasi.PACKAGE" as the alias so wasi.random/get-random-u64 maps to alias="wasi.random"
-        let imports: Vec<analyze::AnalyzedImport> = wasi_calls.iter().map(|info| {
-            // Extract package from interface (e.g., "wasi:random/random@0.2.0" -> "random")
-            let package = info.wit_interface
-                .split(':').nth(1)
-                .and_then(|s| s.split('/').next())
-                .unwrap_or("unknown");
+        let imports: Vec<analyze::AnalyzedImport> = wasi_calls
+            .iter()
+            .map(|info| {
+                // Extract package from interface (e.g., "wasi:random/random@0.2.0" -> "random")
+                let package = info
+                    .wit_interface
+                    .split(':')
+                    .nth(1)
+                    .and_then(|s| s.split('/').next())
+                    .unwrap_or("unknown");
 
-            analyze::AnalyzedImport {
-                alias: format!("wasi.{}", package),
-                wit_interface: info.wit_interface.clone(),
-                function_name: info.function_name.clone(),
-                params: info.params.clone(),
-                return_type: info.return_type.clone(),
-            }
-        }).collect();
+                analyze::AnalyzedImport {
+                    alias: format!("wasi.{}", package),
+                    wit_interface: info.wit_interface.clone(),
+                    function_name: info.function_name.clone(),
+                    params: info.params.clone(),
+                    return_type: info.return_type.clone(),
+                }
+            })
+            .collect();
 
-        // Create a synthetic analyzed module with imports
+        // Create a synthetic analyzed module with core functions + eval
+        let mut functions = core_fns;
+        functions.push(analyze::AnalyzedFunction {
+            name: "__eval".to_string(),
+            exported: true,
+            export_name: Some("eval".to_string()),
+            params: Vec::new(),
+            return_type,
+            body: expr,
+        });
+
         let analyzed = analyze::AnalyzedModule {
             namespace: None,
             world_target: None,
             imports,
-            functions: vec![analyze::AnalyzedFunction {
-                name: "__eval".to_string(),
-                exported: true,
-                export_name: Some("eval".to_string()),
-                params: Vec::new(),
-                return_type,
-                body: expr,
-            }],
+            functions,
             globals: Vec::new(),
             protocols: Vec::new(),
             extensions: Vec::new(),
+            deftypes,
         };
 
         // Lower to IR
@@ -233,12 +464,14 @@ impl Compiler {
                         }
                         "do" => {
                             if items.len() > 1 {
-                                return self.infer_expr_type_with_wasi(items.last().unwrap(), wasi_calls);
+                                return self
+                                    .infer_expr_type_with_wasi(items.last().unwrap(), wasi_calls);
                             }
                         }
                         "let" => {
                             if items.len() > 2 {
-                                return self.infer_expr_type_with_wasi(items.last().unwrap(), wasi_calls);
+                                return self
+                                    .infer_expr_type_with_wasi(items.last().unwrap(), wasi_calls);
                             }
                         }
                         _ => {}
@@ -263,13 +496,20 @@ impl Compiler {
     ///
     /// The compiled WASM component bytes
     pub fn compile(&mut self, source: &str, wit_source: &str) -> CompileResult<Vec<u8>> {
+        // Load core.suss (auto-injected before user code per Clojure semantics)
+        let core_exprs = load_core_exprs()?;
+
         // Parse the Suss source
         let mut parser_state = ParserState::new("suss");
-        let exprs = suss_reader::parse_all(source, &mut parser_state)
+        let user_exprs = suss_reader::parse_all(source, &mut parser_state)
             .map_err(|e| CompileError::Parse(e.to_string()))?;
 
+        // Combine core + user expressions
+        let mut all_exprs = core_exprs;
+        all_exprs.extend(user_exprs);
+
         // Expand macros
-        let exprs = expand::expand_all(exprs, None)?;
+        let exprs = expand::expand_all(all_exprs, None)?;
 
         // Parse the WIT definition
         let mut resolve = Resolve::new();
@@ -279,7 +519,10 @@ impl Compiler {
 
         // Get the world from the package
         let pkg = &resolve.packages[pkg_id];
-        let world_id = pkg.worlds.values().next()
+        let world_id = pkg
+            .worlds
+            .values()
+            .next()
             .ok_or_else(|| CompileError::Wit("No world found in WIT file".to_string()))?;
 
         // Analyze the source
@@ -306,6 +549,9 @@ impl Compiler {
     pub fn compile_files(&mut self, source_path: &str, wit_path: &str) -> CompileResult<Vec<u8>> {
         use std::path::Path;
 
+        // Load core.suss (auto-injected before user code per Clojure semantics)
+        let core_exprs = load_core_exprs()?;
+
         let source = std::fs::read_to_string(source_path)
             .map_err(|e| CompileError::Io(format!("Failed to read {}: {}", source_path, e)))?;
 
@@ -315,11 +561,15 @@ impl Compiler {
 
         // Parse the Suss source
         let mut parser_state = ParserState::new("suss");
-        let exprs = suss_reader::parse_all(&source, &mut parser_state)
+        let user_exprs = suss_reader::parse_all(&source, &mut parser_state)
             .map_err(|e| CompileError::Parse(e.to_string()))?;
 
+        // Combine core + user expressions
+        let mut all_exprs = core_exprs;
+        all_exprs.extend(user_exprs);
+
         // Expand macros
-        let exprs = expand::expand_all(exprs, None)?;
+        let exprs = expand::expand_all(all_exprs, None)?;
 
         let wit_path = Path::new(wit_path);
         let mut resolve = Resolve::new();
@@ -339,7 +589,8 @@ impl Compiler {
                 for entry in std::fs::read_dir(&deps_dir)
                     .map_err(|e| CompileError::Io(format!("Failed to read deps: {}", e)))?
                 {
-                    let entry = entry.map_err(|e| CompileError::Io(format!("Failed to read entry: {}", e)))?;
+                    let entry = entry
+                        .map_err(|e| CompileError::Io(format!("Failed to read entry: {}", e)))?;
                     let path = entry.path();
                     if path.is_dir() {
                         let _ = resolve.push_path(&path);
@@ -355,7 +606,10 @@ impl Compiler {
 
         // Get the world from the package
         let pkg = &resolve.packages[pkg_id];
-        let world_id = pkg.worlds.values().next()
+        let world_id = pkg
+            .worlds
+            .values()
+            .next()
             .ok_or_else(|| CompileError::Wit("No world found in WIT file".to_string()))?;
 
         // Analyze the source
@@ -432,10 +686,7 @@ impl Compiler {
             }
 
             // Compile this world
-            let wasm = self.compile_world(
-                &world_sources,
-                &config.wit_path(world_name)?,
-            )?;
+            let wasm = self.compile_world(&world_sources, &config.wit_path(world_name)?)?;
 
             results.insert(world_name.to_string(), wasm);
         }
@@ -454,8 +705,9 @@ impl Compiler {
         // Read and parse all source files
         let mut all_exprs = Vec::new();
         for path in source_files {
-            let source = std::fs::read_to_string(path)
-                .map_err(|e| CompileError::Io(format!("Failed to read {}: {}", path.display(), e)))?;
+            let source = std::fs::read_to_string(path).map_err(|e| {
+                CompileError::Io(format!("Failed to read {}: {}", path.display(), e))
+            })?;
 
             let mut parser_state = ParserState::new("suss");
             let exprs = suss_reader::parse_all(&source, &mut parser_state)
@@ -467,8 +719,9 @@ impl Compiler {
         let all_exprs = expand::expand_all(all_exprs, None)?;
 
         // Read WIT file
-        let wit_source = std::fs::read_to_string(wit_path)
-            .map_err(|e| CompileError::Io(format!("Failed to read {}: {}", wit_path.display(), e)))?;
+        let wit_source = std::fs::read_to_string(wit_path).map_err(|e| {
+            CompileError::Io(format!("Failed to read {}: {}", wit_path.display(), e))
+        })?;
 
         // Parse WIT
         let mut resolve = Resolve::new();
@@ -488,7 +741,8 @@ impl Compiler {
                 for entry in std::fs::read_dir(&deps_dir)
                     .map_err(|e| CompileError::Io(format!("Failed to read deps: {}", e)))?
                 {
-                    let entry = entry.map_err(|e| CompileError::Io(format!("Failed to read entry: {}", e)))?;
+                    let entry = entry
+                        .map_err(|e| CompileError::Io(format!("Failed to read entry: {}", e)))?;
                     let path = entry.path();
                     if path.is_dir() {
                         let _ = resolve.push_path(&path);
@@ -504,7 +758,10 @@ impl Compiler {
 
         // Get the world from the package
         let pkg = &resolve.packages[pkg_id];
-        let world_id = pkg.worlds.values().next()
+        let world_id = pkg
+            .worlds
+            .values()
+            .next()
             .ok_or_else(|| CompileError::Wit("No world found in WIT file".to_string()))?;
 
         // Analyze the source
@@ -573,8 +830,9 @@ impl Compiler {
         let mut result: HashMap<String, Vec<std::path::PathBuf>> = HashMap::new();
 
         for path in files {
-            let source = std::fs::read_to_string(path)
-                .map_err(|e| CompileError::Io(format!("Failed to read {}: {}", path.display(), e)))?;
+            let source = std::fs::read_to_string(path).map_err(|e| {
+                CompileError::Io(format!("Failed to read {}: {}", path.display(), e))
+            })?;
 
             // Quick parse to find world_target
             let world_target = self.extract_world_target(&source)?;
@@ -627,5 +885,52 @@ impl Compiler {
 impl Default for Compiler {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod deftype_tests {
+    use super::*;
+
+    #[test]
+    fn test_deftype_basic() {
+        let mut compiler = Compiler::new();
+        let source = "(deftype Point [x y]) 42";
+        let result = compiler.compile_expr(source);
+        if let Err(e) = &result {
+            eprintln!("Compilation error: {:?}", e);
+        }
+        assert!(result.is_ok(), "Should compile successfully");
+
+        let wasm = result.unwrap();
+        std::fs::write("/tmp/deftype_test.wasm", &wasm).unwrap();
+    }
+
+    #[test]
+    fn test_deftype_constructor() {
+        let mut compiler = Compiler::new();
+        let source = "(deftype Point [x y]) (->Point 10 20)";
+        let result = compiler.compile_expr(source);
+        if let Err(e) = &result {
+            eprintln!("Compilation error: {:?}", e);
+        }
+        assert!(result.is_ok(), "Should compile successfully");
+
+        let wasm = result.unwrap();
+        std::fs::write("/tmp/deftype_constructor.wasm", &wasm).unwrap();
+    }
+
+    #[test]
+    fn test_deftype_field_access() {
+        let mut compiler = Compiler::new();
+        let source = "(deftype Point [x y]) (.-x (->Point 10 20))";
+        let result = compiler.compile_expr(source);
+        if let Err(e) = &result {
+            eprintln!("Compilation error: {:?}", e);
+        }
+        assert!(result.is_ok(), "Should compile successfully");
+
+        let wasm = result.unwrap();
+        std::fs::write("/tmp/deftype_field.wasm", &wasm).unwrap();
     }
 }

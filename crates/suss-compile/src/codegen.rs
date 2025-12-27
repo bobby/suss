@@ -22,7 +22,7 @@ use wit_component::{metadata, ComponentEncoder, StringEncoding};
 use wit_parser::{Resolve, WorldId};
 
 use crate::error::{CompileError, CompileResult};
-use crate::ir::{BinOp, Expr, Function as IrFunc, Module, Type, UnOp};
+use crate::ir::{BinOp, Expr, Function as IrFunc, Module, Type, UnOp, FieldType as IrFieldType};
 
 // ============================================================================
 // Runtime Helper Function Indices
@@ -143,101 +143,96 @@ mod helper_funcs {
     pub const HCN_DISSOC: u32 = 24;
 }
 
-/// Type indices for runtime helper function signatures (after GC types)
-mod helper_types {
+/// Relative offsets for helper function signatures (added to helper_type_base())
+mod helper_type_offsets {
     /// Type for $hash_string: (i32, i32) -> i32
-    pub const HASH_STRING: u32 = crate::ir::gc_types::NUM_GC_TYPES;
+    pub const HASH_STRING: u32 = 0;
 
     /// Type for $get_type_id: (eqref) -> i32
-    pub const GET_TYPE_ID: u32 = crate::ir::gc_types::NUM_GC_TYPES + 1;
+    pub const GET_TYPE_ID: u32 = 1;
 
     // Vector trie helper function types
 
     /// Type for $vec_aclone: (eqref) -> eqref
-    pub const VEC_ACLONE: u32 = crate::ir::gc_types::NUM_GC_TYPES + 2;
+    pub const VEC_ACLONE: u32 = 2;
 
     /// Type for $vec_tail_off: (eqref) -> i32
-    pub const VEC_TAIL_OFF: u32 = crate::ir::gc_types::NUM_GC_TYPES + 3;
+    pub const VEC_TAIL_OFF: u32 = 3;
 
     /// Type for $vec_new_path: (i32, eqref) -> eqref
-    pub const VEC_NEW_PATH: u32 = crate::ir::gc_types::NUM_GC_TYPES + 4;
+    pub const VEC_NEW_PATH: u32 = 4;
 
     /// Type for $vec_array_for: (eqref, i32) -> eqref
-    pub const VEC_ARRAY_FOR: u32 = crate::ir::gc_types::NUM_GC_TYPES + 5;
+    pub const VEC_ARRAY_FOR: u32 = 5;
 
     /// Type for $vec_push_tail: (eqref, i32, eqref, eqref) -> eqref
-    pub const VEC_PUSH_TAIL: u32 = crate::ir::gc_types::NUM_GC_TYPES + 6;
+    pub const VEC_PUSH_TAIL: u32 = 6;
 
     /// Type for $equiv: (eqref, eqref) -> i32
-    pub const EQUIV: u32 = crate::ir::gc_types::NUM_GC_TYPES + 7;
+    pub const EQUIV: u32 = 7;
 
     // HAMT helper function types
 
     /// Type for $hamt_mask: (i32, i32) -> i32
-    pub const HAMT_MASK: u32 = crate::ir::gc_types::NUM_GC_TYPES + 8;
+    pub const HAMT_MASK: u32 = 8;
 
     /// Type for $hamt_bitpos: (i32, i32) -> i32
-    pub const HAMT_BITPOS: u32 = crate::ir::gc_types::NUM_GC_TYPES + 9;
+    pub const HAMT_BITPOS: u32 = 9;
 
     /// Type for $hamt_index: (i32, i32) -> i32
-    pub const HAMT_INDEX: u32 = crate::ir::gc_types::NUM_GC_TYPES + 10;
+    pub const HAMT_INDEX: u32 = 10;
 
     // HAMT node operation function types
 
     /// Type for $inode_find, $bin_find, $an_find: (eqref, i32, i32, eqref, eqref) -> eqref
-    pub const INODE_FIND: u32 = crate::ir::gc_types::NUM_GC_TYPES + 11;
+    pub const INODE_FIND: u32 = 11;
 
     /// Type for $inode_assoc, $bin_assoc, $an_assoc: (eqref, i32, i32, eqref, eqref) -> eqref
     /// Same signature as INODE_FIND, but we keep separate for clarity
-    pub const INODE_ASSOC: u32 = crate::ir::gc_types::NUM_GC_TYPES + 12;
+    pub const INODE_ASSOC: u32 = 12;
 
     /// Type for $hcn_find: (eqref, i32, eqref, eqref) -> eqref (no shift parameter)
-    pub const HCN_FIND: u32 = crate::ir::gc_types::NUM_GC_TYPES + 13;
+    pub const HCN_FIND: u32 = 13;
 
     /// Type for $hcn_assoc: (eqref, i32, eqref, eqref) -> eqref (no shift parameter)
-    pub const HCN_ASSOC: u32 = crate::ir::gc_types::NUM_GC_TYPES + 14;
+    pub const HCN_ASSOC: u32 = 14;
 
     /// Type for $create_node: (i32, eqref, eqref, i32, eqref, eqref) -> eqref
-    pub const CREATE_NODE: u32 = crate::ir::gc_types::NUM_GC_TYPES + 15;
+    pub const CREATE_NODE: u32 = 15;
 
     /// Type for $hash: (eqref) -> i32
-    pub const HASH: u32 = crate::ir::gc_types::NUM_GC_TYPES + 16;
+    pub const HASH: u32 = 16;
 
     // HAMT dissoc helper function types
 
     /// Type for $inode_dissoc, $bin_dissoc, $an_dissoc: (eqref, i32, i32, eqref) -> eqref
     /// [node, shift, hash, key] -> new_node (or null if empty)
-    pub const INODE_DISSOC: u32 = crate::ir::gc_types::NUM_GC_TYPES + 17;
+    pub const INODE_DISSOC: u32 = 17;
 
     /// Type for $hcn_dissoc: (eqref, i32, eqref) -> eqref (no shift parameter)
     /// [node, hash, key] -> new_node (or null if empty)
-    pub const HCN_DISSOC: u32 = crate::ir::gc_types::NUM_GC_TYPES + 18;
-
-    /// Number of helper function types
-    pub const NUM_HELPER_TYPES: u32 = 19;
+    pub const HCN_DISSOC: u32 = 18;
 }
 
-/// Type indices for protocol function signatures (after helper types)
-mod protocol_type_indices {
-    use super::helper_types;
+/// Number of helper function types
+const NUM_HELPER_TYPES: u32 = 19;
 
-    /// Base index for protocol types in the type section
-    pub const BASE: u32 = crate::ir::gc_types::NUM_GC_TYPES + helper_types::NUM_HELPER_TYPES;
-
+/// Relative offsets for protocol function signatures (added to protocol_type_base())
+mod protocol_type_offsets {
     /// (eqref) -> eqref - for first, rest, seq
-    pub const ARITY_1_REF: u32 = BASE + 0;
+    pub const ARITY_1_REF: u32 = 0;
 
     /// (eqref) -> i32 - for count, hash
-    pub const ARITY_1_I32: u32 = BASE + 1;
+    pub const ARITY_1_I32: u32 = 1;
 
     /// (eqref, eqref) -> eqref - for lookup, nth, conj
-    pub const ARITY_2_REF: u32 = BASE + 2;
+    pub const ARITY_2_REF: u32 = 2;
 
     /// (eqref, eqref) -> i32 - for equiv
-    pub const ARITY_2_I32: u32 = BASE + 3;
+    pub const ARITY_2_I32: u32 = 3;
 
     /// (eqref, eqref, eqref) -> eqref - for assoc
-    pub const ARITY_3_REF: u32 = BASE + 4;
+    pub const ARITY_3_REF: u32 = 4;
 }
 
 /// Protocol implementation function indices.
@@ -341,10 +336,30 @@ impl<'a> CodeGen<'a> {
         self.ir.imports.len() as u32
     }
 
-    /// Get the type index offset for user function types (after GC types + helper types + protocol types)
+    /// Get the base type index for helper function types (after GC types + user deftypes)
+    fn helper_type_base(&self) -> u32 {
+        crate::ir::gc_types::NUM_GC_TYPES + self.ir.deftypes.len() as u32
+    }
+
+    /// Get the type index for a helper function signature
+    fn helper_type(&self, offset: u32) -> u32 {
+        self.helper_type_base() + offset
+    }
+
+    /// Get the base type index for protocol function types (after GC types + user deftypes + helper types)
+    fn protocol_type_base(&self) -> u32 {
+        self.helper_type_base() + NUM_HELPER_TYPES
+    }
+
+    /// Get the type index for a protocol signature
+    fn protocol_type(&self, offset: u32) -> u32 {
+        self.protocol_type_base() + offset
+    }
+
+    /// Get the type index offset for user function types (after GC types + user deftypes + helper types + protocol types)
     fn func_type_offset(&self) -> u32 {
         use crate::ir::protocol_types;
-        crate::ir::gc_types::NUM_GC_TYPES + helper_types::NUM_HELPER_TYPES + protocol_types::NUM_PROTOCOL_TYPES
+        self.protocol_type_base() + protocol_types::NUM_PROTOCOL_TYPES
     }
 
     /// Get the function index for a user function (after imports + helper functions + protocol impl functions)
@@ -393,36 +408,36 @@ impl<'a> CodeGen<'a> {
 
         // Function section - helper functions first, then protocol impls, then user functions
         let mut functions = FunctionSection::new();
-        // Helper functions use their dedicated type indices
-        functions.function(helper_types::HASH_STRING);
-        functions.function(helper_types::GET_TYPE_ID);
+        // Helper functions use their dedicated type indices (offset by user deftypes)
+        functions.function(self.helper_type(helper_type_offsets::HASH_STRING));
+        functions.function(self.helper_type(helper_type_offsets::GET_TYPE_ID));
         // Vector trie helper functions
-        functions.function(helper_types::VEC_ACLONE);
-        functions.function(helper_types::VEC_TAIL_OFF);
-        functions.function(helper_types::VEC_NEW_PATH);
-        functions.function(helper_types::VEC_ARRAY_FOR);
-        functions.function(helper_types::VEC_PUSH_TAIL);
+        functions.function(self.helper_type(helper_type_offsets::VEC_ACLONE));
+        functions.function(self.helper_type(helper_type_offsets::VEC_TAIL_OFF));
+        functions.function(self.helper_type(helper_type_offsets::VEC_NEW_PATH));
+        functions.function(self.helper_type(helper_type_offsets::VEC_ARRAY_FOR));
+        functions.function(self.helper_type(helper_type_offsets::VEC_PUSH_TAIL));
         // HAMT/equality helper functions
-        functions.function(helper_types::EQUIV);
-        functions.function(helper_types::HAMT_MASK);
-        functions.function(helper_types::HAMT_BITPOS);
-        functions.function(helper_types::HAMT_INDEX);
+        functions.function(self.helper_type(helper_type_offsets::EQUIV));
+        functions.function(self.helper_type(helper_type_offsets::HAMT_MASK));
+        functions.function(self.helper_type(helper_type_offsets::HAMT_BITPOS));
+        functions.function(self.helper_type(helper_type_offsets::HAMT_INDEX));
         // HAMT node operation functions
-        functions.function(helper_types::INODE_FIND);
-        functions.function(helper_types::INODE_ASSOC);
-        functions.function(helper_types::INODE_FIND); // BIN_FIND uses same type
-        functions.function(helper_types::INODE_ASSOC); // BIN_ASSOC uses same type
-        functions.function(helper_types::INODE_FIND); // AN_FIND uses same type
-        functions.function(helper_types::INODE_ASSOC); // AN_ASSOC uses same type
-        functions.function(helper_types::HCN_FIND);
-        functions.function(helper_types::HCN_ASSOC);
-        functions.function(helper_types::CREATE_NODE);
-        functions.function(helper_types::HASH);
+        functions.function(self.helper_type(helper_type_offsets::INODE_FIND));
+        functions.function(self.helper_type(helper_type_offsets::INODE_ASSOC));
+        functions.function(self.helper_type(helper_type_offsets::INODE_FIND)); // BIN_FIND uses same type
+        functions.function(self.helper_type(helper_type_offsets::INODE_ASSOC)); // BIN_ASSOC uses same type
+        functions.function(self.helper_type(helper_type_offsets::INODE_FIND)); // AN_FIND uses same type
+        functions.function(self.helper_type(helper_type_offsets::INODE_ASSOC)); // AN_ASSOC uses same type
+        functions.function(self.helper_type(helper_type_offsets::HCN_FIND));
+        functions.function(self.helper_type(helper_type_offsets::HCN_ASSOC));
+        functions.function(self.helper_type(helper_type_offsets::CREATE_NODE));
+        functions.function(self.helper_type(helper_type_offsets::HASH));
         // HAMT dissoc operation functions
-        functions.function(helper_types::INODE_DISSOC); // INODE_DISSOC
-        functions.function(helper_types::INODE_DISSOC); // BIN_DISSOC uses same type
-        functions.function(helper_types::INODE_DISSOC); // AN_DISSOC uses same type
-        functions.function(helper_types::HCN_DISSOC);   // HCN_DISSOC
+        functions.function(self.helper_type(helper_type_offsets::INODE_DISSOC)); // INODE_DISSOC
+        functions.function(self.helper_type(helper_type_offsets::INODE_DISSOC)); // BIN_DISSOC uses same type
+        functions.function(self.helper_type(helper_type_offsets::INODE_DISSOC)); // AN_DISSOC uses same type
+        functions.function(self.helper_type(helper_type_offsets::HCN_DISSOC));   // HCN_DISSOC
         // Protocol implementation functions use protocol type indices
         self.emit_protocol_impl_function_decls(&mut functions);
         // User functions: closure/builtin wrappers use pre-defined types, others use type_offset
@@ -1265,6 +1280,30 @@ impl<'a> CodeGen<'a> {
         }
         types.ty().struct_(variadic_fields);
         debug_assert_eq!(gc_types::VARIADIC_CLOSURE, 38);
+
+        // =========================================================================
+        // User-Defined Types (from deftype)
+        // These come after all built-in types. Each has type_id at field 0.
+        // =========================================================================
+
+        for deftype in &self.ir.deftypes {
+            let mut fields = vec![type_id_field.clone()]; // Field 0: type_id
+
+            for field in &deftype.fields {
+                let storage_type = match field.field_type {
+                    IrFieldType::I32 => StorageType::Val(ValType::I32),
+                    IrFieldType::I64 => StorageType::Val(ValType::I64),
+                    IrFieldType::F64 => StorageType::Val(ValType::F64),
+                    IrFieldType::GcRef => StorageType::Val(eqref),
+                };
+                fields.push(FieldType {
+                    element_type: storage_type,
+                    mutable: false,
+                });
+            }
+
+            types.ty().struct_(fields);
+        }
     }
 
     /// Emit function types for runtime helper functions.
@@ -1394,7 +1433,7 @@ impl<'a> CodeGen<'a> {
     /// Emit function types for protocol methods.
     ///
     /// These come after helper types but before user function types.
-    /// Order must match protocol_type_indices module constants.
+    /// Order must match protocol_type_offsets module constants.
     fn emit_protocol_types(&self, types: &mut TypeSection) {
         let eqref = ValType::Ref(RefType::EQREF);
 
@@ -1423,46 +1462,46 @@ impl<'a> CodeGen<'a> {
     /// Order must match protocol_impl_funcs constants!
     fn emit_protocol_impl_function_decls(&self, functions: &mut FunctionSection) {
         // 0: VEC_NTH: (eqref, eqref) -> eqref
-        functions.function(protocol_type_indices::ARITY_2_REF);
+        functions.function(self.protocol_type(protocol_type_offsets::ARITY_2_REF));
 
         // 1: VEC_COUNT: (eqref) -> i32
-        functions.function(protocol_type_indices::ARITY_1_I32);
+        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_I32));
 
         // 2: VEC_CONJ: (eqref, eqref) -> eqref
-        functions.function(protocol_type_indices::ARITY_2_REF);
+        functions.function(self.protocol_type(protocol_type_offsets::ARITY_2_REF));
 
         // 3: VEC_FIRST: (eqref) -> eqref
-        functions.function(protocol_type_indices::ARITY_1_REF);
+        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_REF));
 
         // 4: VEC_REST: (eqref) -> eqref
-        functions.function(protocol_type_indices::ARITY_1_REF);
+        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_REF));
 
         // 5: CONS_FIRST: (eqref) -> eqref
-        functions.function(protocol_type_indices::ARITY_1_REF);
+        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_REF));
 
         // 6: CONS_REST: (eqref) -> eqref
-        functions.function(protocol_type_indices::ARITY_1_REF);
+        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_REF));
 
         // 7: CONS_COUNT: (eqref) -> i32
-        functions.function(protocol_type_indices::ARITY_1_I32);
+        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_I32));
 
         // 8: CONS_NTH: (eqref, eqref) -> eqref
-        functions.function(protocol_type_indices::ARITY_2_REF);
+        functions.function(self.protocol_type(protocol_type_offsets::ARITY_2_REF));
 
         // 9: MAP_COUNT: (eqref) -> i32
-        functions.function(protocol_type_indices::ARITY_1_I32);
+        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_I32));
 
         // 10: MAP_LOOKUP: (eqref, eqref) -> eqref
-        functions.function(protocol_type_indices::ARITY_2_REF);
+        functions.function(self.protocol_type(protocol_type_offsets::ARITY_2_REF));
 
         // 11: SET_COUNT: (eqref) -> i32
-        functions.function(protocol_type_indices::ARITY_1_I32);
+        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_I32));
 
         // 12: SET_CONTAINS: (eqref, eqref) -> eqref
-        functions.function(protocol_type_indices::ARITY_2_REF);
+        functions.function(self.protocol_type(protocol_type_offsets::ARITY_2_REF));
 
         // 13: SET_CONJ: (eqref, eqref) -> eqref
-        functions.function(protocol_type_indices::ARITY_2_REF);
+        functions.function(self.protocol_type(protocol_type_offsets::ARITY_2_REF));
     }
 
     /// Emit code for protocol implementation wrapper functions.
@@ -6326,6 +6365,110 @@ impl<'a> CodeGen<'a> {
                 // (the function's exit marshaling handles return value conversion)
                 Ok(())
             }
+            // Array operations with proper WIT local offset handling
+            Expr::ArrayLen(array) => {
+                self.generate_expr_wit(array, f, param_offset)?;
+                // Cast eqref to array type before array.len
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
+                f.instruction(&Instruction::ArrayLen);
+                // Box result as i31ref: (n << 1) | 1
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32Shl);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32Or);
+                f.instruction(&Instruction::RefI31);
+                Ok(())
+            }
+            Expr::ArrayGet { type_idx, array, index } => {
+                self.generate_expr_wit(array, f, param_offset)?;
+                // Cast eqref to array type
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                // Unbox index from i31ref
+                self.generate_expr_wit(index, f, param_offset)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+                f.instruction(&Instruction::ArrayGet(*type_idx));
+                Ok(())
+            }
+            Expr::ArraySet { type_idx, array, index, value } => {
+                self.generate_expr_wit(array, f, param_offset)?;
+                // Cast eqref to array type
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                // Unbox index from i31ref
+                self.generate_expr_wit(index, f, param_offset)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+                self.generate_expr_wit(value, f, param_offset)?;
+                // Duplicate value to return after set
+                let scratch = self.scratch_local.get();
+                f.instruction(&Instruction::LocalTee(scratch));
+                f.instruction(&Instruction::ArraySet(*type_idx));
+                // Return the value that was set
+                f.instruction(&Instruction::LocalGet(scratch));
+                Ok(())
+            }
+            Expr::ArrayNewDefault { type_idx, size } => {
+                // Unbox size from i31ref
+                self.generate_expr_wit(size, f, param_offset)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+                f.instruction(&Instruction::ArrayNewDefault(*type_idx));
+                Ok(())
+            }
+            Expr::ArrayClone { type_idx, array } => {
+                // Clone by creating new array and copying
+                // Scratch layout: +0: eqref, +1: i32, +2: eqref, +3: eqref, +4: eqref
+                let scratch = self.scratch_local.get();
+                let src_arr_local = scratch;     // eqref at +0
+                let new_arr_local = scratch + 2; // eqref at +2 (NOT +1 which is i32!)
+
+                self.generate_expr_wit(array, f, param_offset)?;
+                // Cast eqref to array type
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                // NOTE: local.tee returns the local's type (eqref), so we must cast after!
+                f.instruction(&Instruction::LocalTee(src_arr_local));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                f.instruction(&Instruction::ArrayLen);
+                f.instruction(&Instruction::ArrayNewDefault(*type_idx));
+                f.instruction(&Instruction::LocalTee(new_arr_local));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                f.instruction(&Instruction::I32Const(0));
+                // Note: scratch locals are eqref, so we must cast again after LocalGet
+                f.instruction(&Instruction::LocalGet(src_arr_local));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                f.instruction(&Instruction::I32Const(0));
+                f.instruction(&Instruction::LocalGet(src_arr_local));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                f.instruction(&Instruction::ArrayLen);
+                f.instruction(&Instruction::ArrayCopy {
+                    array_type_index_dst: *type_idx,
+                    array_type_index_src: *type_idx,
+                });
+                f.instruction(&Instruction::LocalGet(new_arr_local));
+                Ok(())
+            }
+            Expr::BitCount(value) => {
+                // Unbox i31ref, compute popcnt, rebox as i31ref
+                self.generate_expr_wit(value, f, param_offset)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+                f.instruction(&Instruction::I32Popcnt);
+                // Encode result: (n << 1) | 1
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32Shl);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32Or);
+                f.instruction(&Instruction::RefI31);
+                Ok(())
+            }
             // For simple expressions that don't contain sub-expressions, delegate to normal gen
             _ => self.generate_expr(expr, f),
         }
@@ -7031,6 +7174,16 @@ impl<'a> CodeGen<'a> {
                     // Map/Set i32 fields
                     (gc_types::PERSISTENT_MAP, 1) => true,     // cnt
                     (gc_types::PERSISTENT_SET, 1) => true,     // cnt
+                    // BitmapIndexedNode i32 fields: { type_id: 0, bitmap: 1, arr: 2 }
+                    (gc_types::BITMAP_INDEXED_NODE, 0) => true, // type_id
+                    (gc_types::BITMAP_INDEXED_NODE, 1) => true, // bitmap
+                    // ArrayNode i32 fields: { type_id: 0, cnt: 1, arr: 2 }
+                    (gc_types::ARRAY_NODE, 0) => true,          // type_id
+                    (gc_types::ARRAY_NODE, 1) => true,          // cnt
+                    // HashCollisionNode i32 fields: { type_id: 0, hash: 1, cnt: 2, arr: 3 }
+                    (gc_types::HASH_COLLISION_NODE, 0) => true, // type_id
+                    (gc_types::HASH_COLLISION_NODE, 1) => true, // hash
+                    (gc_types::HASH_COLLISION_NODE, 2) => true, // cnt
                     // All other fields are eqref
                     _ => false,
                 };
@@ -7074,8 +7227,17 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::ArrayLen(array) => {
+                use crate::ir::gc_types;
                 self.generate_expr(array, f)?;
+                // Cast eqref to array type before array.len
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
                 f.instruction(&Instruction::ArrayLen);
+                // Box result as i31ref: (n << 1) | 1
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32Shl);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32Or);
+                f.instruction(&Instruction::RefI31);
             }
 
             Expr::ArrayGet {
@@ -7084,7 +7246,14 @@ impl<'a> CodeGen<'a> {
                 index,
             } => {
                 self.generate_expr(array, f)?;
+                // Cast eqref to array type
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                // Unbox index from i31ref
                 self.generate_expr(index, f)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS); // Decode tagged value
                 f.instruction(&Instruction::ArrayGet(*type_idx));
             }
 
@@ -7095,9 +7264,123 @@ impl<'a> CodeGen<'a> {
                 value,
             } => {
                 self.generate_expr(array, f)?;
+                // Cast eqref to array type
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                // Unbox index from i31ref
                 self.generate_expr(index, f)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS); // Decode tagged value
                 self.generate_expr(value, f)?;
+                // Duplicate value to return after set
+                let scratch = self.scratch_local.get();
+                f.instruction(&Instruction::LocalTee(scratch));
                 f.instruction(&Instruction::ArraySet(*type_idx));
+                // Return the value that was set
+                f.instruction(&Instruction::LocalGet(scratch));
+            }
+
+            Expr::ArrayNewDefault { type_idx, size } => {
+                // Unbox size from i31ref
+                self.generate_expr(size, f)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS); // Decode tagged value
+                f.instruction(&Instruction::ArrayNewDefault(*type_idx));
+            }
+
+            Expr::ArrayClone { type_idx, array } => {
+                // Clone by creating new array and copying
+                // Stack: array -> new_array
+                // Scratch layout: +0: eqref, +1: i32, +2: eqref, +3: eqref, +4: eqref
+                let scratch = self.scratch_local.get();
+                let src_arr_local = scratch;     // eqref at +0
+                let new_arr_local = scratch + 2; // eqref at +2 (NOT +1 which is i32!)
+
+                self.generate_expr(array, f)?;
+                // Cast eqref to array type and store
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                // NOTE: local.tee returns the local's type (eqref), so we must cast after!
+                f.instruction(&Instruction::LocalTee(src_arr_local));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                f.instruction(&Instruction::ArrayLen);
+                // Create new array with same length
+                f.instruction(&Instruction::ArrayNewDefault(*type_idx));
+                // Stack: new_array
+                // Copy: array.copy dst_arr dst_offset src_arr src_offset len
+                f.instruction(&Instruction::LocalTee(new_arr_local)); // save new_arr
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                f.instruction(&Instruction::I32Const(0)); // dst_offset
+                // Note: scratch locals are eqref, so we must cast again after LocalGet
+                f.instruction(&Instruction::LocalGet(src_arr_local)); // src_arr
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                f.instruction(&Instruction::I32Const(0)); // src_offset
+                f.instruction(&Instruction::LocalGet(src_arr_local)); // src_arr for len
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                f.instruction(&Instruction::ArrayLen);
+                f.instruction(&Instruction::ArrayCopy {
+                    array_type_index_dst: *type_idx,
+                    array_type_index_src: *type_idx,
+                });
+                // Return the new array
+                f.instruction(&Instruction::LocalGet(new_arr_local));
+            }
+
+            Expr::BitCount(value) => {
+                // Unbox i31ref, compute popcnt, rebox as i31ref
+                self.generate_expr(value, f)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS); // Decode tagged value
+                f.instruction(&Instruction::I32Popcnt);
+                // Encode result: (n << 1) | 1
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32Shl);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32Or);
+                f.instruction(&Instruction::RefI31);
+            }
+
+            Expr::NilCheck(value) => {
+                // Check if value is nil (i31ref(0) = NIL_SENTINEL)
+                // Use scratch local to store value
+                let scratch = self.scratch_local.get();
+
+                self.generate_expr(value, f)?;
+                f.instruction(&Instruction::LocalSet(scratch));
+
+                // Check if it's an i31ref
+                f.instruction(&Instruction::LocalGet(scratch));
+                f.instruction(&Instruction::RefTestNonNull(HeapType::I31));
+                f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::Ref(
+                    RefType::EQREF,
+                ))));
+
+                // It's an i31ref - get value and check if 0
+                f.instruction(&Instruction::LocalGet(scratch));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Eqz); // Is it 0?
+
+                // Convert boolean to sentinel
+                f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::Ref(
+                    RefType::EQREF,
+                ))));
+                f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                f.instruction(&Instruction::Else);
+                f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                f.instruction(&Instruction::End);
+
+                f.instruction(&Instruction::Else);
+                // Not an i31ref, so not nil
+                f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                f.instruction(&Instruction::End);
             }
 
             Expr::RefTestI31(value) => {
@@ -8451,19 +8734,20 @@ impl<'a> CodeGen<'a> {
     fn protocol_type_index_for_method(&self, method_id: u32) -> u32 {
         use crate::ir::method_ids;
 
-        match method_id {
-            method_ids::LOOKUP => protocol_type_indices::ARITY_2_REF,  // (coll, key) -> value
-            method_ids::ASSOC => protocol_type_indices::ARITY_3_REF,   // (coll, key, val) -> coll'
-            method_ids::COUNT => protocol_type_indices::ARITY_1_I32,   // (coll) -> i32
-            method_ids::NTH => protocol_type_indices::ARITY_2_REF,     // (coll, index) -> value
-            method_ids::CONJ => protocol_type_indices::ARITY_2_REF,    // (coll, val) -> coll'
-            method_ids::FIRST => protocol_type_indices::ARITY_1_REF,   // (seq) -> value
-            method_ids::REST => protocol_type_indices::ARITY_1_REF,    // (seq) -> seq
-            method_ids::SEQ => protocol_type_indices::ARITY_1_REF,     // (coll) -> seq
-            method_ids::HASH => protocol_type_indices::ARITY_1_I32,    // (value) -> i32
-            method_ids::EQUIV => protocol_type_indices::ARITY_2_I32,   // (a, b) -> bool
-            _ => protocol_type_indices::ARITY_1_REF,                   // Default for user methods
-        }
+        let offset = match method_id {
+            method_ids::LOOKUP => protocol_type_offsets::ARITY_2_REF,  // (coll, key) -> value
+            method_ids::ASSOC => protocol_type_offsets::ARITY_3_REF,   // (coll, key, val) -> coll'
+            method_ids::COUNT => protocol_type_offsets::ARITY_1_I32,   // (coll) -> i32
+            method_ids::NTH => protocol_type_offsets::ARITY_2_REF,     // (coll, index) -> value
+            method_ids::CONJ => protocol_type_offsets::ARITY_2_REF,    // (coll, val) -> coll'
+            method_ids::FIRST => protocol_type_offsets::ARITY_1_REF,   // (seq) -> value
+            method_ids::REST => protocol_type_offsets::ARITY_1_REF,    // (seq) -> seq
+            method_ids::SEQ => protocol_type_offsets::ARITY_1_REF,     // (coll) -> seq
+            method_ids::HASH => protocol_type_offsets::ARITY_1_I32,    // (value) -> i32
+            method_ids::EQUIV => protocol_type_offsets::ARITY_2_I32,   // (a, b) -> bool
+            _ => protocol_type_offsets::ARITY_1_REF,                   // Default for user methods
+        };
+        self.protocol_type(offset)
     }
 
     /// Generate code to get the runtime type ID of a value.
@@ -8738,14 +9022,14 @@ mod tests {
         assert!(found_types, "No type section found");
         // Should have GC types (11) + helper types (16) + protocol types (5) + 1 function type = 33 types
         use crate::ir::protocol_types;
-        let expected_types = gc_types::NUM_GC_TYPES + helper_types::NUM_HELPER_TYPES + protocol_types::NUM_PROTOCOL_TYPES + 1;
+        let expected_types = gc_types::NUM_GC_TYPES + NUM_HELPER_TYPES + protocol_types::NUM_PROTOCOL_TYPES + 1;
         assert_eq!(
             type_count,
             expected_types,
             "Expected {} types ({} GC + {} helper + {} protocol + 1 func), found {}",
             expected_types,
             gc_types::NUM_GC_TYPES,
-            helper_types::NUM_HELPER_TYPES,
+            NUM_HELPER_TYPES,
             protocol_types::NUM_PROTOCOL_TYPES,
             type_count
         );
@@ -8874,7 +9158,7 @@ mod tests {
         // Function types come after GC types, helper types, and protocol types
         assert_eq!(
             codegen.func_type_offset(),
-            gc_types::NUM_GC_TYPES + helper_types::NUM_HELPER_TYPES + protocol_types::NUM_PROTOCOL_TYPES
+            gc_types::NUM_GC_TYPES + NUM_HELPER_TYPES + protocol_types::NUM_PROTOCOL_TYPES
         );
     }
 }

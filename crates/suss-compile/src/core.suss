@@ -1,0 +1,191 @@
+;; core.suss - Suss core library
+;;
+;; This file is automatically loaded before user code (per Clojure semantics).
+;; Contains protocol definitions and implementations for built-in types.
+;;
+;; NOTE: No (ns ...) declaration - all definitions are at top level.
+
+;; ============================================================
+;; Protocol Definitions
+;; ============================================================
+
+(defprotocol ICounted
+  "Protocol for countable collections."
+  (-count [coll]))
+
+(defprotocol IIndexed
+  "Protocol for indexed random access."
+  (-nth [coll n] [coll n not-found]))
+
+(defprotocol ISeq
+  "Protocol for sequential access."
+  (-first [coll])
+  (-rest [coll]))
+
+(defprotocol ISeqable
+  "Protocol for conversion to seq."
+  (-seq [coll]))
+
+(defprotocol ILookup
+  "Protocol for key-based lookup."
+  (-lookup [coll key] [coll key not-found]))
+
+(defprotocol IAssociative
+  "Protocol for associative structures."
+  (-assoc [coll key val])
+  (-contains-key [coll key]))
+
+(defprotocol ICollection
+  "Protocol for adding elements."
+  (-conj [coll o]))
+
+(defprotocol IEquiv
+  "Protocol for equality testing."
+  (-equiv [x y]))
+
+(defprotocol IHash
+  "Protocol for hashing."
+  (-hash [o]))
+
+;; ============================================================
+;; Helper Functions for Vector Trie Operations
+;; ============================================================
+
+(defn tail-off
+  "Calculate the start index of the tail array for a vector.
+   For vectors with < 32 elements, tail starts at 0.
+   For larger vectors, tail starts at the last 32-aligned boundary."
+  [cnt]
+  (if (< cnt 32)
+    0
+    (bit-shift-left (unsigned-bit-shift-right (- cnt 1) 5) 5)))
+
+(defn array-for
+  "Get the leaf array containing the element at index i.
+   Traverses from root down through 32-way trie levels."
+  [pv i]
+  (let [cnt (.-cnt pv)
+        tail (.-tail pv)]
+    (if (>= i (tail-off cnt))
+      ;; Element is in the tail
+      tail
+      ;; Element is in the tree - traverse down
+      (loop [node (.-root pv)
+             level (.-shift pv)]
+        (if (> level 0)
+          (recur (aget node (bit-and (unsigned-bit-shift-right i level) 31))
+                 (- level 5))
+          node)))))
+
+(defn new-path
+  "Create a path of trie nodes from the given level down to the leaf node.
+   Each level creates a 32-slot array with the child at index 0."
+  [level node]
+  (if (= level 0)
+    node
+    (let [ret (make-array 32)]
+      (aset ret 0 (new-path (- level 5) node))
+      ret)))
+
+(defn push-tail
+  "Push a tail node into the tree, growing it if necessary.
+   Returns the new root node."
+  [pv level parent tailnode]
+  (let [subidx (bit-and (unsigned-bit-shift-right (- (.-cnt pv) 1) level) 31)
+        ret (aclone parent)]
+    (if (= level 5)
+      ;; At the deepest internal level - insert tailnode directly
+      (do (aset ret subidx tailnode) ret)
+      ;; Higher level - recurse down
+      (let [child (aget parent subidx)]
+        (if (nil? child)
+          ;; No child exists - create new path
+          (do (aset ret subidx (new-path (- level 5) tailnode)) ret)
+          ;; Child exists - recurse into it
+          (do (aset ret subidx (push-tail pv (- level 5) child tailnode)) ret))))))
+
+;; ============================================================
+;; HAMT Helper Functions (for maps and sets)
+;; ============================================================
+
+(defn hamt-mask
+  "Extract 5 bits from hash at the given shift level (0, 5, 10, ...)."
+  [hash shift]
+  (bit-and (unsigned-bit-shift-right hash shift) 31))
+
+(defn hamt-bitpos
+  "Calculate bit position for a hash value at a given shift level."
+  [hash shift]
+  (bit-shift-left 1 (hamt-mask hash shift)))
+
+(defn hamt-index
+  "Calculate index into the array for a given bitmap and bit position.
+   Uses population count to find how many entries precede this position."
+  [bitmap bit]
+  (bit-count (bit-and bitmap (- bit 1))))
+
+;; ============================================================
+;; HAMT Node Traversal Functions
+;; ============================================================
+
+;; Forward declarations for mutual recursion
+;; (inode-find is called by bin-find and an-find)
+
+(defn bin-find
+  "BitmapIndexedNode lookup.
+   arr layout: [key0, val0, key1, val1, ..., nil, child, ...]
+   If key-or-nil is nil, val-or-node is a child node to recurse into."
+  [node shift hash key not-found]
+  (let [bit (hamt-bitpos hash shift)
+        bitmap (.-bitmap node)]
+    (if (= (bit-and bitmap bit) 0)
+      ;; Bit not set - key not found
+      not-found
+      ;; Bit set - look up in array
+      (let [idx (hamt-index bitmap bit)
+            arr (.-bin-arr node)
+            key-or-nil (aget arr (* 2 idx))
+            val-or-node (aget arr (+ (* 2 idx) 1))]
+        (if (nil? key-or-nil)
+          ;; key-or-nil is nil means val-or-node is a child node
+          (inode-find val-or-node (+ shift 5) hash key not-found)
+          ;; key-or-nil is a key - check if it matches
+          (if (= key key-or-nil)
+            val-or-node
+            not-found))))))
+
+(defn an-find
+  "ArrayNode lookup.
+   arr layout: 32 slots, direct indexing by (mask hash shift).
+   Each slot is either nil or a child node."
+  [node shift hash key not-found]
+  (let [idx (hamt-mask hash shift)
+        arr (.-an-arr node)
+        child (aget arr idx)]
+    (if (nil? child)
+      not-found
+      (inode-find child (+ shift 5) hash key not-found))))
+
+(defn hcn-find
+  "HashCollisionNode lookup.
+   arr layout: [key0, val0, key1, val1, ...] - linear scan."
+  [node hash key not-found]
+  (let [cnt (.-hcn-cnt node)
+        arr (.-hcn-arr node)]
+    (loop [i 0]
+      (if (>= i cnt)
+        not-found
+        (if (= key (aget arr (* 2 i)))
+          (aget arr (+ (* 2 i) 1))
+          (recur (+ i 1)))))))
+
+(defn inode-find
+  "Type-dispatching lookup for any HAMT node type."
+  [node shift hash key not-found]
+  (cond
+    (nil? node) not-found
+    (instance? BitmapIndexedNode node) (bin-find node shift hash key not-found)
+    (instance? ArrayNode node) (an-find node shift hash key not-found)
+    (instance? HashCollisionNode node) (hcn-find node hash key not-found)
+    :else not-found))
+

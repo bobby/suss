@@ -10,11 +10,13 @@ use suss_core::{Edn, Number};
 use crate::analyze::{
     AnalyzedModule, AnalyzedFunction, AnalyzedGlobal,
     AnalyzedProtocol, AnalyzedExtension, AnalyzedMethodImpl,
+    AnalyzedDeftype, DeftypeField,
 };
 use crate::error::{CompileError, CompileResult};
 use crate::ir::{
     Module, Function, Global, Import, Expr, Type, BinOp, UnOp,
     gc_types, type_ids, method_ids, ProtocolDef, DispatchEntry,
+    DeftypeDef, DeftypeFieldDef, FieldType,
 };
 
 /// Lower analyzed module to IR
@@ -35,6 +37,21 @@ struct ClosureWrapper {
     body: Edn,
     /// True for variadic builtin wrappers which don't take an env parameter
     is_variadic: bool,
+}
+
+/// Information about a user-defined type field
+#[derive(Clone)]
+struct UserTypeField {
+    name: String,
+    field_type: FieldType,
+}
+
+/// Information about a user-defined type
+#[derive(Clone)]
+struct UserTypeInfo {
+    gc_type_idx: u32,
+    type_id: i32,
+    fields: Vec<UserTypeField>,
 }
 
 struct Lowerer {
@@ -68,6 +85,12 @@ struct Lowerer {
     user_method_ids: HashMap<String, u32>,
     /// Next user-defined method ID (starts at method_ids::USER_START)
     next_user_method_id: u32,
+    /// User-defined types: name -> type info
+    user_types: HashMap<String, UserTypeInfo>,
+    /// Next GC type index for user types (starts at NUM_GC_TYPES)
+    next_user_gc_type: u32,
+    /// Next type ID for user types (starts at USER_TYPE_BASE)
+    next_user_type_id: i32,
 }
 
 impl Lowerer {
@@ -88,6 +111,9 @@ impl Lowerer {
             builtin_wrappers: HashMap::new(),
             user_method_ids: HashMap::new(),
             next_user_method_id: method_ids::USER_START,
+            user_types: HashMap::new(),
+            next_user_gc_type: gc_types::NUM_GC_TYPES,
+            next_user_type_id: type_ids::USER_TYPE_BASE,
         }
     }
 
@@ -109,9 +135,16 @@ impl Lowerer {
         self.num_imports = analyzed.imports.len() as u32;
         self.num_analyzed_funcs = analyzed.functions.len() as u32;
 
-        // Build function index map - indices start after imports
+        // Lower deftypes first - assigns GC type indices and type IDs
+        // This creates constructor functions which are added first
+        self.lower_deftypes(&analyzed.deftypes)?;
+        let num_deftype_constructors = analyzed.deftypes.len() as u32;
+
+        // Build function index map - indices start after imports + runtime helpers + protocol impls + deftype constructors
+        use crate::ir::gc_types;
         for (idx, func) in analyzed.functions.iter().enumerate() {
-            self.func_indices.insert(func.name.clone(), self.num_imports + idx as u32);
+            let func_idx = self.num_imports + gc_types::USER_FUNC_OFFSET + num_deftype_constructors + idx as u32;
+            self.func_indices.insert(func.name.clone(), func_idx);
         }
 
         // Lower globals
@@ -469,6 +502,16 @@ impl Lowerer {
                 })
             }
 
+            // nil? - check if value is nil (compares with NIL_SENTINEL)
+            "nil?" => {
+                if args.len() != 1 {
+                    return Err(CompileError::Parse("nil? requires exactly 1 argument".into()));
+                }
+                let operand = self.lower_expr(&args[0])?;
+                // nil? returns true if operand equals nil sentinel (i31ref(0))
+                Ok(Expr::NilCheck(Box::new(operand)))
+            }
+
             // Control flow
             "if" => self.lower_if(args),
             "do" => self.lower_do(args),
@@ -506,6 +549,14 @@ impl Lowerer {
             "bit-shift-left" => self.lower_binop(BinOp::Shl, args, Type::I32),
             "bit-shift-right" => self.lower_binop(BinOp::ShrS, args, Type::I32),
             "unsigned-bit-shift-right" => self.lower_binop(BinOp::ShrU, args, Type::I32),
+            "bit-count" => self.lower_bit_count(args),
+
+            // Array operations (ClojureScript naming: aget, aset, alength, aclone)
+            "aget" => self.lower_aget(args),
+            "aset" => self.lower_aset(args),
+            "alength" => self.lower_alength(args),
+            "aclone" => self.lower_aclone(args),
+            "make-array" => self.lower_make_array(args),
 
             // Type checking
             "instance?" => self.lower_instance_check(args),
@@ -529,15 +580,65 @@ impl Lowerer {
         }
 
         let field_name = &name[2..]; // Strip ".-" prefix
+
+        // The object expression is not in tail position - we still need to access its field
+        let was_tail = self.in_tail_position;
+        self.in_tail_position = false;
         let obj = self.lower_expr(&args[0])?;
+        self.in_tail_position = was_tail;
 
-        // Map field names to (type_idx, field_idx) pairs
-        // For now, we use runtime type checking to determine the struct type
-        // This generates code that:
-        // 1. Checks if the object is a PersistentVector, Map, Set, or Cons
-        // 2. Casts to the appropriate type
-        // 3. Accesses the field
+        // Check user-defined types first
+        if let Some((type_idx, field_idx, field_type)) = self.lookup_user_field(field_name) {
+            let raw_access = Expr::StructGet {
+                type_idx,
+                field_idx,
+                value: Box::new(obj),
+            };
 
+            // Box primitive fields on access
+            let boxed = match field_type {
+                FieldType::I32 => {
+                    // Wrap i32 as i31ref: (ref.i31 (i32.shl value 1) | 1)
+                    // Actually, we need to use the small int encoding
+                    Expr::I31New(Box::new(Expr::BinOp {
+                        op: BinOp::BitOr,
+                        left: Box::new(Expr::BinOp {
+                            op: BinOp::Shl,
+                            left: Box::new(raw_access),
+                            right: Box::new(Expr::RawI32(1)),
+                            ty: Type::I32,
+                        }),
+                        right: Box::new(Expr::RawI32(1)),
+                        ty: Type::I32,
+                    }))
+                }
+                FieldType::I64 => {
+                    // Wrap i64 as LARGE_INT struct
+                    Expr::StructNew {
+                        type_idx: gc_types::LARGE_INT,
+                        fields: vec![
+                            Expr::RawI32(gc_types::LARGE_INT as i32), // type_id
+                            raw_access, // the i64 value
+                        ],
+                    }
+                }
+                FieldType::F64 => {
+                    // Wrap f64 as FLOAT struct
+                    Expr::StructNew {
+                        type_idx: gc_types::FLOAT,
+                        fields: vec![
+                            Expr::RawI32(gc_types::FLOAT as i32), // type_id
+                            raw_access, // the f64 value
+                        ],
+                    }
+                }
+                FieldType::GcRef => raw_access,
+            };
+
+            return Ok(boxed);
+        }
+
+        // Map field names to (type_idx, field_idx) pairs for built-in types
         // PersistentVector: { type_id: 0, cnt: 1, shift: 2, root: 3, tail: 4 }
         // PersistentMap: { type_id: 0, cnt: 1, root: 2 }
         // PersistentSet: { type_id: 0, cnt: 1, root: 2, _marker: 3 }
@@ -552,6 +653,22 @@ impl Lowerer {
             // Cons fields (type_id is at 0)
             "first" => (gc_types::CONS, 1),
             "rest" => (gc_types::CONS, 2),
+            // BitmapIndexedNode fields: { type_id: 0, bitmap: 1, arr: 2 }
+            "bitmap" => (gc_types::BITMAP_INDEXED_NODE, 1),
+            "bin-arr" => (gc_types::BITMAP_INDEXED_NODE, 2),
+            // ArrayNode fields: { type_id: 0, cnt: 1, arr: 2 }
+            "an-cnt" => (gc_types::ARRAY_NODE, 1),
+            "an-arr" => (gc_types::ARRAY_NODE, 2),
+            // HashCollisionNode fields: { type_id: 0, hash: 1, cnt: 2, arr: 3 }
+            "hash" => (gc_types::HASH_COLLISION_NODE, 1),
+            "hcn-cnt" => (gc_types::HASH_COLLISION_NODE, 2),
+            "hcn-arr" => (gc_types::HASH_COLLISION_NODE, 3),
+            // PersistentMap fields: { type_id: 0, cnt: 1, root: 2 }
+            "map-cnt" => (gc_types::PERSISTENT_MAP, 1),
+            "map-root" => (gc_types::PERSISTENT_MAP, 2),
+            // PersistentSet fields: { type_id: 0, cnt: 1, root: 2, _marker: 3 }
+            "set-cnt" => (gc_types::PERSISTENT_SET, 1),
+            "set-root" => (gc_types::PERSISTENT_SET, 2),
             // Add more as needed
             _ => return Err(CompileError::Undefined(format!("Unknown field: {}", field_name))),
         };
@@ -561,6 +678,21 @@ impl Lowerer {
             field_idx,
             value: Box::new(obj),
         })
+    }
+
+    /// Look up a field in user-defined types.
+    /// Returns (gc_type_idx, field_idx, field_type) if found.
+    /// Field index is offset by 1 to account for type_id at field 0.
+    fn lookup_user_field(&self, field_name: &str) -> Option<(u32, u32, FieldType)> {
+        for info in self.user_types.values() {
+            for (idx, field) in info.fields.iter().enumerate() {
+                if field.name == field_name {
+                    // Field 0 is type_id, so user fields start at index 1
+                    return Some((info.gc_type_idx, (idx + 1) as u32, field.field_type));
+                }
+            }
+        }
+        None
     }
 
     /// Lower instance check: (instance? TypeName obj)
@@ -577,15 +709,31 @@ impl Lowerer {
             _ => return Err(CompileError::Parse("instance? first arg must be a type name symbol".into())),
         };
 
+        // The object expression is not in tail position - we still need to test it
+        let was_tail = self.in_tail_position;
+        self.in_tail_position = false;
         let obj = self.lower_expr(&args[1])?;
+        self.in_tail_position = was_tail;
 
-        // Map type names to GC type indices
+        // Check user-defined types first
+        if let Some(info) = self.user_types.get(type_name.as_str()) {
+            return Ok(Expr::RefTest {
+                type_idx: info.gc_type_idx,
+                value: Box::new(obj),
+            });
+        }
+
+        // Map type names to GC type indices for built-in types
         let type_idx = match type_name.as_str() {
             "PersistentVector" => gc_types::PERSISTENT_VECTOR,
             "PersistentMap" => gc_types::PERSISTENT_MAP,
             "PersistentSet" => gc_types::PERSISTENT_SET,
             "Cons" => gc_types::CONS,
             "String" => gc_types::STRING,
+            // HAMT node types for map/set implementations
+            "BitmapIndexedNode" => gc_types::BITMAP_INDEXED_NODE,
+            "ArrayNode" => gc_types::ARRAY_NODE,
+            "HashCollisionNode" => gc_types::HASH_COLLISION_NODE,
             _ => return Err(CompileError::Undefined(format!("Unknown type: {}", type_name))),
         };
 
@@ -2090,6 +2238,194 @@ impl Lowerer {
         }
     }
 
+    /// Lower deftype declarations.
+    /// Assigns GC type indices, generates constructors, handles protocol implementations.
+    fn lower_deftypes(&mut self, deftypes: &[AnalyzedDeftype]) -> CompileResult<()> {
+        for deftype in deftypes {
+            // Determine GC type index
+            let gc_type_idx = if let Some(reserved) = deftype.reserved_type_id {
+                // Use reserved index - this is for bootstrap types like BitmapIndexedNode
+                reserved
+            } else {
+                let idx = self.next_user_gc_type;
+                self.next_user_gc_type += 1;
+                idx
+            };
+
+            // Determine runtime type ID
+            let type_id = if deftype.reserved_type_id.is_some() {
+                // Reserved types use their GC type index as type ID
+                gc_type_idx as i32
+            } else {
+                let id = self.next_user_type_id;
+                self.next_user_type_id += 1;
+                id
+            };
+
+            // Convert fields
+            let fields: Vec<UserTypeField> = deftype.fields.iter().map(|f| {
+                let field_type = match f.type_hint.as_deref() {
+                    Some("i32") => FieldType::I32,
+                    Some("i64") => FieldType::I64,
+                    Some("f64") => FieldType::F64,
+                    Some("eqref") | None => FieldType::GcRef,
+                    Some(other) => {
+                        // This shouldn't happen if analysis is correct
+                        eprintln!("Warning: unknown type hint '{}', using eqref", other);
+                        FieldType::GcRef
+                    }
+                };
+                UserTypeField {
+                    name: f.name.clone(),
+                    field_type,
+                }
+            }).collect();
+
+            // Register in user_types map
+            self.user_types.insert(deftype.name.clone(), UserTypeInfo {
+                gc_type_idx,
+                type_id,
+                fields: fields.clone(),
+            });
+
+            // Create DeftypeDef for codegen
+            let deftype_def = DeftypeDef {
+                name: deftype.name.clone(),
+                fields: fields.iter().map(|f| DeftypeFieldDef {
+                    name: f.name.clone(),
+                    field_type: f.field_type,
+                }).collect(),
+                gc_type_idx,
+                type_id,
+            };
+            self.module.deftypes.push(deftype_def);
+
+            // Generate constructor function ->TypeName
+            self.lower_deftype_constructor(&deftype.name, gc_type_idx, type_id, &fields)?;
+
+            // Handle protocol implementations (similar to extend-type)
+            for impl_ in &deftype.implementations {
+                for method in &impl_.methods {
+                    let method_id = self.get_or_assign_method_id(&impl_.protocol_name, &method.name);
+
+                    // Generate wrapper function for this method implementation
+                    let func_idx = self.lower_protocol_method_impl(
+                        &deftype.name,
+                        &impl_.protocol_name,
+                        method,
+                    )?;
+
+                    // Add dispatch table entry
+                    self.module.dispatch_entries.push(DispatchEntry {
+                        type_id: type_id as u32,
+                        method_id,
+                        func_idx,
+                    });
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Generate constructor function for a deftype: (fn [x y] (struct.new $Type type_id x y))
+    fn lower_deftype_constructor(
+        &mut self,
+        type_name: &str,
+        gc_type_idx: u32,
+        type_id: i32,
+        fields: &[UserTypeField],
+    ) -> CompileResult<()> {
+        let constructor_name = format!("->{}", type_name);
+
+        // Calculate function index - constructors come first, before analyzed functions
+        // This matches the order in which functions are added to module.functions:
+        // 1. deftype constructors (added in lower_deftypes)
+        // 2. analyzed functions (added after lower_deftypes)
+        // 3. closures (added after analyzed functions)
+        let func_idx = self.num_imports
+            + gc_types::USER_FUNC_OFFSET
+            + self.module.functions.len() as u32;
+
+        self.func_indices.insert(constructor_name.clone(), func_idx);
+
+        // Reset locals for new function
+        self.locals.clear();
+        self.local_types.clear();
+        self.next_local = 0;
+
+        // Set up parameters - one per field
+        let mut params = Vec::new();
+        for field in fields {
+            let idx = self.next_local;
+            self.locals.insert(field.name.clone(), (idx, Type::GcRef));
+            self.local_types.insert(idx, Type::GcRef);
+            self.next_local += 1;
+            params.push((field.name.clone(), Type::GcRef));
+        }
+
+        // Build struct.new expression
+        // Field 0 is always type_id (raw i32)
+        let mut struct_fields = vec![Expr::RawI32(type_id)];
+
+        // Add field values from parameters
+        for (idx, field) in fields.iter().enumerate() {
+            let local_get = Expr::LocalGet {
+                local: idx as u32,
+                ty: Type::GcRef,
+            };
+
+            // For primitive types, unbox the input value
+            let field_value = match field.field_type {
+                FieldType::I32 => {
+                    // Unbox: (i31.get_s (ref.cast i31 arg))
+                    Expr::I31GetS(Box::new(local_get))
+                }
+                FieldType::I64 => {
+                    // Unbox: (struct.get $LARGE_INT 1 (ref.cast ... arg))
+                    Expr::StructGet {
+                        type_idx: gc_types::LARGE_INT,
+                        field_idx: gc_types::LI_VALUE,
+                        value: Box::new(local_get),
+                    }
+                }
+                FieldType::F64 => {
+                    // Unbox: (struct.get $FLOAT 1 (ref.cast ... arg))
+                    Expr::StructGet {
+                        type_idx: gc_types::FLOAT,
+                        field_idx: gc_types::FL_VALUE,
+                        value: Box::new(local_get),
+                    }
+                }
+                FieldType::GcRef => {
+                    // No unboxing needed
+                    local_get
+                }
+            };
+
+            struct_fields.push(field_value);
+        }
+
+        let body = Expr::StructNew {
+            type_idx: gc_type_idx,
+            fields: struct_fields,
+        };
+
+        let function = Function {
+            name: constructor_name,
+            exported: false,
+            export_name: None,
+            params,
+            return_type: Type::GcRef,
+            locals: vec![Type::GcRef; fields.len()],
+            body,
+        };
+
+        self.module.functions.push(function);
+
+        Ok(())
+    }
+
     /// Lower extend-type declarations to dispatch table entries.
     /// Each method implementation becomes a wrapper function registered in the dispatch table.
     fn lower_extensions(&mut self, extensions: &[AnalyzedExtension]) -> CompileResult<()> {
@@ -2122,19 +2458,27 @@ impl Lowerer {
 
     /// Convert a type name to its runtime type ID.
     fn type_name_to_type_id(&self, type_name: &str) -> CompileResult<u32> {
+        // Check built-in types first
         match type_name {
-            "PersistentVector" => Ok(type_ids::PERSISTENT_VECTOR as u32),
-            "PersistentMap" => Ok(type_ids::PERSISTENT_MAP as u32),
-            "PersistentSet" => Ok(type_ids::PERSISTENT_SET as u32),
-            "Cons" => Ok(type_ids::CONS as u32),
-            "String" => Ok(type_ids::STRING as u32),
-            "LargeInt" => Ok(type_ids::LARGE_INT as u32),
-            "Float" => Ok(type_ids::FLOAT as u32),
-            _ => Err(CompileError::Undefined(format!(
-                "Unknown type for protocol extension: {}",
-                type_name
-            ))),
+            "PersistentVector" => return Ok(type_ids::PERSISTENT_VECTOR as u32),
+            "PersistentMap" => return Ok(type_ids::PERSISTENT_MAP as u32),
+            "PersistentSet" => return Ok(type_ids::PERSISTENT_SET as u32),
+            "Cons" => return Ok(type_ids::CONS as u32),
+            "String" => return Ok(type_ids::STRING as u32),
+            "LargeInt" => return Ok(type_ids::LARGE_INT as u32),
+            "Float" => return Ok(type_ids::FLOAT as u32),
+            _ => {}
         }
+
+        // Check user-defined types
+        if let Some(info) = self.user_types.get(type_name) {
+            return Ok(info.type_id as u32);
+        }
+
+        Err(CompileError::Undefined(format!(
+            "Unknown type for protocol extension: {}",
+            type_name
+        )))
     }
 
     /// Lower a protocol method implementation to a wrapper function.
@@ -2208,5 +2552,127 @@ impl Lowerer {
         locals.into_iter()
             .map(|(_, ty)| ty)
             .collect()
+    }
+
+    // ========================================================================
+    // Array operations (ClojureScript-style primitives)
+    // ========================================================================
+
+    /// Lower (aget arr idx) -> ArrayGet
+    /// Gets an element from a TRIE_NODE array at the given index.
+    fn lower_aget(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 2 {
+            return Err(CompileError::Parse(
+                "aget requires exactly 2 arguments: array and index".into(),
+            ));
+        }
+        let was_tail = self.in_tail_position;
+        self.in_tail_position = false;
+        let array = self.lower_expr(&args[0])?;
+        let index = self.lower_expr(&args[1])?;
+        self.in_tail_position = was_tail;
+
+        // Use TRIE_NODE as the default array type
+        Ok(Expr::ArrayGet {
+            type_idx: gc_types::TRIE_NODE,
+            array: Box::new(array),
+            index: Box::new(index),
+        })
+    }
+
+    /// Lower (aset arr idx val) -> ArraySet
+    /// Sets an element in a TRIE_NODE array at the given index.
+    fn lower_aset(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 3 {
+            return Err(CompileError::Parse(
+                "aset requires exactly 3 arguments: array, index, and value".into(),
+            ));
+        }
+        let was_tail = self.in_tail_position;
+        self.in_tail_position = false;
+        let array = self.lower_expr(&args[0])?;
+        let index = self.lower_expr(&args[1])?;
+        let value = self.lower_expr(&args[2])?;
+        self.in_tail_position = was_tail;
+
+        // Use TRIE_NODE as the default array type
+        Ok(Expr::ArraySet {
+            type_idx: gc_types::TRIE_NODE,
+            array: Box::new(array),
+            index: Box::new(index),
+            value: Box::new(value),
+        })
+    }
+
+    /// Lower (alength arr) -> ArrayLen
+    /// Gets the length of a TRIE_NODE array.
+    fn lower_alength(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse(
+                "alength requires exactly 1 argument: array".into(),
+            ));
+        }
+        let was_tail = self.in_tail_position;
+        self.in_tail_position = false;
+        let array = self.lower_expr(&args[0])?;
+        self.in_tail_position = was_tail;
+
+        Ok(Expr::ArrayLen(Box::new(array)))
+    }
+
+    /// Lower (aclone arr) -> ArrayClone
+    /// Creates a shallow copy of a TRIE_NODE array.
+    fn lower_aclone(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse(
+                "aclone requires exactly 1 argument: array".into(),
+            ));
+        }
+        let was_tail = self.in_tail_position;
+        self.in_tail_position = false;
+        let array = self.lower_expr(&args[0])?;
+        self.in_tail_position = was_tail;
+
+        // Use TRIE_NODE as the default array type
+        Ok(Expr::ArrayClone {
+            type_idx: gc_types::TRIE_NODE,
+            array: Box::new(array),
+        })
+    }
+
+    /// Lower (make-array size) -> ArrayNewDefault
+    /// Creates a new TRIE_NODE array with null values.
+    fn lower_make_array(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse(
+                "make-array requires exactly 1 argument: size".into(),
+            ));
+        }
+        let was_tail = self.in_tail_position;
+        self.in_tail_position = false;
+        let size = self.lower_expr(&args[0])?;
+        self.in_tail_position = was_tail;
+
+        // Use TRIE_NODE as the default array type
+        Ok(Expr::ArrayNewDefault {
+            type_idx: gc_types::TRIE_NODE,
+            size: Box::new(size),
+        })
+    }
+
+    /// Lower (bit-count x) -> BitCount
+    /// Returns the population count (number of 1 bits) of an integer.
+    fn lower_bit_count(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse(
+                "bit-count requires exactly 1 argument".into(),
+            ));
+        }
+        let was_tail = self.in_tail_position;
+        self.in_tail_position = false;
+        let value = self.lower_expr(&args[0])?;
+        self.in_tail_position = was_tail;
+
+        Ok(Expr::BitCount(Box::new(value)))
     }
 }

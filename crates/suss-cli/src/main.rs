@@ -284,25 +284,11 @@ fn run_file(path: &str) {
         }
     };
 
-    // For now, evaluate each expression independently via WASM
-    // TODO: Compile entire file as a module with shared state
-    let mut state = suss_reader::ParserState::new("suss");
-
-    let exprs = match suss_reader::parse_all(&contents, &mut state) {
-        Ok(exprs) => exprs,
-        Err(e) => {
-            eprintln!("Parse error in '{}': {}", path, e);
-            std::process::exit(1);
-        }
-    };
-
-    // Evaluate each expression via WASM
-    for expr in exprs {
-        let expr_str = format!("{}", expr);
-        if let Err(e) = run_eval_wasm(&expr_str) {
-            eprintln!("Error: {}", e);
-            std::process::exit(1);
-        }
+    // Compile entire file as a single expression
+    // This allows deftype and other definitions to be visible to later expressions
+    if let Err(e) = run_eval_wasm(&contents) {
+        eprintln!("Error: {}", e);
+        std::process::exit(1);
     }
 }
 

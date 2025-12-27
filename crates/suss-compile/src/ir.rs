@@ -389,6 +389,23 @@ pub mod gc_types {
     /// STRING field indices (after type_id)
     pub const STR_PTR: u32 = 1;  // was 0
     pub const STR_LEN: u32 = 2;  // was 1
+
+    // =========================================================================
+    // Function Index Offsets
+    // User-defined functions are emitted after runtime helper and protocol
+    // implementation functions. These constants are used by the lowerer to
+    // calculate correct function indices.
+    // =========================================================================
+
+    /// Number of runtime helper functions emitted before user functions.
+    /// These include: hash_string, get_type_id, vector trie helpers, HAMT helpers, etc.
+    pub const NUM_RUNTIME_HELPERS: u32 = 25;
+
+    /// Number of protocol implementation wrapper functions (vec_count, map_lookup, etc.)
+    pub const NUM_PROTOCOL_IMPLS: u32 = 14;
+
+    /// Total offset for user-defined functions (after imports)
+    pub const USER_FUNC_OFFSET: u32 = NUM_RUNTIME_HELPERS + NUM_PROTOCOL_IMPLS;
 }
 
 /// Type IDs for protocol dispatch.
@@ -560,6 +577,45 @@ pub struct DispatchEntry {
     pub func_idx: u32,
 }
 
+// =========================================================================
+// User-Defined Types (deftype)
+// =========================================================================
+
+/// Field storage type for deftype fields
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FieldType {
+    /// 32-bit integer (stored directly, boxed on access as i31ref)
+    I32,
+    /// 64-bit integer (stored directly, boxed on access as LARGE_INT)
+    I64,
+    /// 64-bit float (stored directly, boxed on access as FLOAT)
+    F64,
+    /// GC reference (stored and accessed as eqref)
+    GcRef,
+}
+
+/// A field in a deftype definition
+#[derive(Debug, Clone)]
+pub struct DeftypeFieldDef {
+    /// Field name (e.g., "x")
+    pub name: String,
+    /// Field storage type
+    pub field_type: FieldType,
+}
+
+/// A user-defined type from deftype
+#[derive(Debug, Clone)]
+pub struct DeftypeDef {
+    /// Type name (e.g., "Point")
+    pub name: String,
+    /// Fields with types
+    pub fields: Vec<DeftypeFieldDef>,
+    /// WASM GC struct type index (assigned during lowering)
+    pub gc_type_idx: u32,
+    /// Runtime type ID for protocol dispatch (256+ for user types)
+    pub type_id: i32,
+}
+
 /// A compiled module containing all definitions
 #[derive(Debug)]
 pub struct Module {
@@ -575,6 +631,8 @@ pub struct Module {
     pub protocols: Vec<ProtocolDef>,
     /// Dispatch table entries for protocol methods
     pub dispatch_entries: Vec<DispatchEntry>,
+    /// User-defined types (from deftype declarations)
+    pub deftypes: Vec<DeftypeDef>,
 }
 
 /// An imported function from a WIT interface
@@ -601,6 +659,7 @@ impl Module {
             strings: Vec::new(),
             protocols: Vec::new(),
             dispatch_entries: Vec::new(),
+            deftypes: Vec::new(),
         }
     }
 
@@ -753,13 +812,17 @@ impl Expr {
             Expr::StructGet { .. } => Type::GcRef, // Field could be any type, but in GC mode it's eqref
             Expr::ArrayNew { .. } => Type::GcRef,
             Expr::ArrayNewData { .. } => Type::GcRef,
-            Expr::ArrayLen(_) => Type::I32,
+            Expr::ArrayLen(_) => Type::GcRef, // Returns boxed i31ref
             Expr::ArrayGet { .. } => Type::GcRef,
-            Expr::ArraySet { .. } => Type::Unit,
+            Expr::ArraySet { .. } => Type::GcRef, // Returns the value that was set
+            Expr::ArrayNewDefault { .. } => Type::GcRef,
+            Expr::ArrayClone { .. } => Type::GcRef,
+            Expr::BitCount(_) => Type::GcRef, // Returns boxed i31ref
             Expr::RefTestI31(_) => Type::I32, // Boolean result
             Expr::RefTest { .. } => Type::I32, // Boolean result
             Expr::RefNull(_) => Type::GcRef,
             Expr::RefIsNull(_) => Type::I32, // Boolean result
+            Expr::NilCheck(_) => Type::GcRef, // Returns boxed boolean (true/false as i31ref)
 
             // Persistent collections all return GC refs
             Expr::VecNew(_) => Type::GcRef,
@@ -956,6 +1019,21 @@ pub enum Expr {
         value: Box<Expr>,
     },
 
+    /// Create an array with default values (null/0) of given size
+    ArrayNewDefault {
+        type_idx: u32,
+        size: Box<Expr>,
+    },
+
+    /// Clone an array (shallow copy)
+    ArrayClone {
+        type_idx: u32,
+        array: Box<Expr>,
+    },
+
+    /// Population count (number of 1 bits) - for HAMT bitmap operations
+    BitCount(Box<Expr>),
+
     /// Test if a reference is an i31ref (returns i32 boolean)
     RefTestI31(Box<Expr>),
 
@@ -970,6 +1048,10 @@ pub enum Expr {
 
     /// Test if reference is null
     RefIsNull(Box<Expr>),
+
+    /// Check if value is nil (compares with NIL_SENTINEL i31ref(0))
+    /// Returns true (boxed) if value is nil, false otherwise
+    NilCheck(Box<Expr>),
 
     // =========================================================================
     // Persistent Vector Operations

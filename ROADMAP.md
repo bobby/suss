@@ -2,36 +2,103 @@
 
 > **Suss requires WASM GC.** All execution uses WASM GC types (structs, arrays, i31ref). There is no non-GC fallback mode.
 
-This roadmap aligns with ClojureScript's proven persistent data structure implementations.
+This roadmap is organized around **self-hosting**: implementing Suss's persistent data structures and core library in Suss itself, with the compiler providing only irreducible primitives.
 
 ---
 
-## 🎯 Priority Zero: Compositional Primitives
+## Architecture: Self-Hosting via deftype
+
+### The Goal
+
+The compiler should be **minimal**. All collection algorithms and protocol implementations should live in `core.suss`, not in Rust codegen. This makes Suss self-extending: adding new collection operations requires only Suss code.
+
+### The Bootstrap Problem
+
+Collection literals `[1 2 3]`, `{:a 1}`, `#{1 2}` need type indices at compile time. If PersistentVector/Map/Set were pure `deftype` definitions in core.suss, we'd have a circular dependency.
+
+**Solution: Struct shapes in compiler, behaviors in Suss**
+- Collection struct layouts (field order, type indices 8-10) stay in compiler
+- ALL algorithms, ALL protocol implementations move to core.suss
+- HAMT nodes (BitmapIndexedNode, etc.) can be pure deftype (no literal syntax)
+- User-defined types start at index 256+
+
+### Irreducible Primitives (Must Stay in Compiler)
+
+| Category | What | Why Irreducible |
+|----------|------|-----------------|
+| **Atomic Values** | i31ref (nil/bool/small int), boxed i64, boxed f64, strings | WASM GC fundamentals |
+| **Generic Struct Ops** | deftype → struct.new/get | Need WASM type generation |
+| **Generic Array Ops** | make-array, aget, aset, alength, aclone | WASM GC array primitives |
+| **Control Flow** | if, let, loop/recur, do | Core language semantics |
+| **Closures** | fn, apply, call_ref | Function references |
+| **Type Checking** | instance?, ref.test | Runtime dispatch |
+| **Primitives** | i32/i64/f64 arithmetic, bit-ops, popcnt | CPU operations |
+| **Protocol Dispatch** | get-type-id, dispatch table, call_indirect | Polymorphism mechanism |
+| **Reserved Types** | Collection struct shapes (PersistentVector/Map/Set) | Bootstrap literals |
+
+### What Moves to core.suss
+
+| What | Currently | After Self-Hosting |
+|------|-----------|-------------------|
+| **HAMT Nodes** | Hardcoded structs in ir.rs | `(deftype BitmapIndexedNode ...)` |
+| **Vector Trie Ops** | 5 Rust functions in codegen.rs | Pure Suss |
+| **HAMT Ops** | 13 Rust functions in codegen.rs | Pure Suss |
+| **Protocol Impls** | 14 wrapper functions in codegen.rs | `(extend-type ...)` |
+| **Collection Algorithms** | Mixed Rust/Suss | All Suss |
+
+### How core.suss Functions Are Called
+
+core.suss is compiled **before** user code. Functions defined there get known indices:
+
+```
+Function Index Layout:
+  0..N-1              : WASI/WIT imports (if any)
+  N..N+H-1            : Runtime helper functions (hash, get-type-id, etc.)
+  N+H..N+H+P-1        : Protocol implementation wrappers
+  N+H+P..N+H+P+C-1    : core.suss functions (tail-off, inode-find, etc.)
+  N+H+P+C..           : User functions
+```
+
+**Calling convention:** When lowering `(inode-find ...)`, the compiler:
+1. Looks up `inode-find` in the function index map (populated when core.suss is lowered)
+2. Emits `call $inode-find` with the resolved index
+3. No special handling needed - same as any user function call
+
+**Key invariant:** core.suss functions are lowered first, so their indices are known when lowering user code or when codegen needs to call them.
+
+---
+
+## Current Status
+
+### Completed
+- [x] First-class functions (closures with `call_ref`)
+- [x] `apply` for variadic dispatch (arities 0-8)
+- [x] Compile-time macros (`defmacro`, syntax-quote, gensym)
+- [x] User protocols (`defprotocol`, `extend-type`)
+- [x] xxHash32 for consistent hashing
+- [x] Protocol dispatch table with `call_indirect`
+- [x] core.suss auto-loading infrastructure
+
+### In Progress
+- [x] Array primitives: `aget`, `aset`, `alength`, `aclone`, `make-array`
+- [x] `bit-count` (popcnt for HAMT bitmap indexing)
+- [x] `nil?` check
+- [x] Parser fix for `nil?`, `true?`, `false?` symbols
+- [x] `deftype` basic implementation (Phase 3.1 - fields, constructor, field access, instance?)
+- [ ] End-to-end verification of complex trie operations
+- [ ] `deftype` with inline protocols (Phase 3.2)
+- [ ] Reserved type indices for bootstrap (Phase 3.3)
+
+### Blocking Issues
+- `aclone` codegen needs verification (scratch local casting)
+
+---
+
+## Priority Zero: Compositional Primitives ✓ COMPLETE
 
 > **Goal:** Stop modifying the compiler for each new feature. Build the primitives that let Suss extend itself.
 
-### The Problem (SOLVED ✓)
-
-Previously, every new control-flow construct required Rust code changes:
-
-```
-lower_cond()    → 50 lines of Rust in lower.rs
-lower_when()    → 30 lines of Rust in lower.rs
-lower_and()     → 30 lines of Rust in lower.rs
-lower_case()    → 55 lines of Rust in lower.rs
-```
-
-In Clojure, these are all **macros** - code that writes code, written in Clojure itself.
-
-**Solution implemented:** ClojureScript-style compile-time macros with:
-- `expand.rs` - Macro expansion phase with syntax-quote, gensym, defmacro parsing
-- `eval.rs` - Tree-walking interpreter for evaluating macro bodies at compile time
-- Built-in core macros: `when`, `when-not`, `and`, `or`, `cond`, `case`
-- All `lower_xxx` functions for these forms have been removed from Rust
-
-### The Solution: Four Fundamental Primitives
-
-Once we have these, new features become library code, not compiler changes:
+### The Four Fundamental Primitives
 
 | Primitive | Enables | Status |
 |-----------|---------|--------|
@@ -40,142 +107,53 @@ Once we have these, new features become library code, not compiler changes:
 | **Macros** | `cond`, `when`, `->`, `for`, `core.async` | ✓ COMPLETE |
 | **User protocols** | `defprotocol`, `extend-type`, abstraction | ✓ COMPLETE |
 
-### P0.1: First-Class Functions (Closures)
+### P0.1: First-Class Functions (Closures) ✓ COMPLETE
 
-Functions must become **values** that can be passed, returned, and stored.
-
-**Key WASM features:** WASM 3.0 Typed Function References (`ref.func`, `call_ref`) enable efficient first-class functions without runtime type checks. See [References](#references) below.
-
-**Current limitation:**
-```clojure
-;; This doesn't work - functions aren't values
-(let [f (if condition + -)]
-  (f 1 2))
-
-(map inc [1 2 3])  ;; Can't pass `inc` as argument
-```
+Functions are **values** that can be passed, returned, and stored.
 
 **WASM 3.0 implementation using Typed Function References:**
 ```wasm
 ;; Closure struct: captures environment + typed function reference
 (type $closure_fn (func (param (ref eq)) (param eqref) (result eqref)))
 (type $Closure (struct
-  (field $env (ref eq))              ;; captured variables (array or struct)
-  (field $fn (ref $closure_fn))))    ;; typed funcref - no runtime check needed
-
-;; Create closure with ref.func (non-null typed reference)
-(struct.new $Closure
-  (local.get $env)
-  (ref.func $my_function))           ;; typed, non-null function reference
+  (field $env (ref eq))              ;; captured variables
+  (field $fn (ref $closure_fn))))    ;; typed funcref - no runtime check
 
 ;; Call closure with call_ref (no table lookup, no runtime type check)
-(call_ref $closure_fn
-  (struct.get $Closure $env ...)
-  (local.get $arg)
-  (struct.get $Closure $fn ...))
+(call_ref $closure_fn ...)
 ```
 
-**Advantages over call_indirect:**
-- No dispatch table needed for closures
-- No runtime type check (typed references)
-- Non-null references eliminate null checks
-- Functions don't need table slots to be callable
+**Completed:**
+- [x] `$Closure` GC types for arities 0-8
+- [x] `fn` forms compile to closure structs
+- [x] Lambda lifting: identify free variables, capture in env
+- [x] Closure invocation via `call_ref`
 
-**Required changes:**
-- [x] Add `$Closure` GC type for function values (CLOSURE_0 through CLOSURE_8 for arities)
-- [x] `fn` forms compile to closure structs (not just WASM functions)
-- [x] Function application checks: is callee a closure? → extract fn + env, call
-- [x] Lambda lifting: identify free variables, capture in env struct
-- [ ] Implement `IFn` protocol with `-invoke` method (closures work without protocol)
+### P0.2: apply ✓ COMPLETE
 
-**IR additions:**
-```rust
-// New Expr variants
-ClosureNew { func_idx: u32, captures: Vec<Expr> },
-ClosureCall { closure: Box<Expr>, args: Vec<Expr> },
-```
-
-### P0.2: apply
-
-Dynamic function invocation with argument list.
+Dynamic function invocation with argument vector.
 
 ```clojure
 (apply + [1 2 3])        ;; → 6
-(apply f args)           ;; Call f with elements of args
 (apply f a b [c d e])    ;; Mixed fixed + rest args
 ```
 
-**Implementation approach:**
-1. For known arities: generate dispatch based on collection length
-2. For IFn protocol: call `-invoke` with appropriate arity
-3. Requires first-class functions (P0.1)
-
-**Required changes:**
+**Completed:**
 - [x] Parse `apply` special form
 - [x] Generate arity-dispatching code (0-8 args via VARIADIC_CLOSURE)
-- [ ] Handle rest args (`& more` in fn signatures)
 
-**Variadic operator semantics (ClojureScript-compatible):**
-- `(+)` → 0, `(*)` → 1 (identity elements)
-- `(- x)` → negation, `(/ x)` → reciprocal
-- `(apply + [1 2 3])` → 6
-
-### P0.3: Macros (defmacro)
+### P0.3: Macros (defmacro) ✓ COMPLETE
 
 Code that writes code, expanded at compile time.
 
-**Goal:** Move these OUT of `lower.rs` and INTO Suss:
-```clojure
-(defmacro when [test & body]
-  `(if ~test (do ~@body) nil))
+**Implementation:**
+- `expand.rs` - MacroEnv, syntax-quote expansion, gensym (`symbol#` → `symbol__N__auto__`)
+- `eval.rs` - Tree-walking interpreter with ~30 primitives for compile-time evaluation
+- Pipeline: Parse → **Expand** → Analyze → Lower → Codegen
 
-(defmacro cond [& clauses]
-  (when (seq clauses)
-    `(if ~(first clauses)
-       ~(second clauses)
-       (cond ~@(nnext clauses)))))
-
-(defmacro -> [x & forms]
-  (loop [x x, forms forms]
-    (if forms
-      (let [form (first forms)
-            threaded (if (seq? form)
-                       `(~(first form) ~x ~@(next form))
-                       (list form x))]
-        (recur threaded (next forms)))
-      x)))
-```
-
-**Implementation phases:**
-
-**Phase A: Quote & Syntax-Quote** ✓ COMPLETE
-- [x] `quote` - prevent evaluation: `'(+ 1 2)` → list, not 3
-- [x] `syntax-quote` (`) - quasi-quote with namespace resolution
-- [x] `unquote` (~) - evaluate inside syntax-quote
-- [x] `unquote-splicing` (~@) - splice collection
-
-**Phase B: Macro Expansion** ✓ COMPLETE
-- [x] `defmacro` form in analyzer
-- [x] Macro functions stored in compile-time environment
-- [x] Expand macros before lowering to IR
-- [x] Support recursive macro expansion
-
-**Phase C: Bootstrap Core Macros** ✓ MOSTLY COMPLETE
-- [x] Implement `when`, `when-not` as macros
-- [x] Implement `cond`, `case` as macros
-- [x] Implement `and`, `or` as macros
-- [x] Remove corresponding `lower_xxx` functions from Rust
-- [x] Implement `when-let`, `if-let` as macros
-- [x] Implement `->`, `->>` as macros
-- [ ] Implement `as->`, `some->`, `some->>` as macros
-- [ ] Implement `condp` as macro
-- [ ] Implement `for`, `doseq` as macros
-
-**The payoff:** After Phase C, `core.async` becomes possible as a library.
+**Built-in core macros:** `when`, `when-not`, `and`, `or`, `cond`, `case`, `->`, `->>`, `when-let`, `if-let`, `doto`, `..`
 
 ### P0.4: User-Defined Protocols ✓ COMPLETE
-
-Allow users to define their own abstractions.
 
 ```clojure
 (defprotocol IJsonable
@@ -186,764 +164,477 @@ Allow users to define their own abstractions.
   (-to-json [coll] 42))
 ```
 
-**Implementation complete:**
-- [x] Parse `defprotocol` → assign method IDs (100+ for user protocols)
-- [x] Parse `extend-type` with protocol implementations
-- [x] Generate dispatch table entries for user extensions
-- [x] Support extending built-in types with user protocols
-- [x] Low-level primitives: `.-field`, `instance?`, bit manipulation
-
-**Key files:**
-- `analyze.rs` - `AnalyzedProtocol`, `AnalyzedExtension` parsing
-- `lower.rs` - `lower_protocols()`, `lower_extensions()`, dispatch entry generation
-- `codegen.rs` - User dispatch entries in element section
-
 **Built-in method IDs (0-9):** `-lookup`, `-assoc`, `-count`, `-nth`, `-conj`, `-first`, `-rest`, `-seq`, `-hash`, `-equiv`
 
 **User method IDs:** Start at 100+, assigned dynamically per protocol
 
-### Dependency Graph
-
-```
-                    ┌─────────────────┐
-                    │ User Protocols  │ ← enables abstraction
-                    └────────┬────────┘
-                             │
-              ┌──────────────┴──────────────┐
-              │                             │
-              ▼                             ▼
-     ┌─────────────────┐           ┌─────────────────┐
-     │     Macros      │           │     apply       │
-     └────────┬────────┘           └────────┬────────┘
-              │                             │
-              │   requires                  │ requires
-              │                             │
-              └──────────────┬──────────────┘
-                             │
-                             ▼
-                  ┌─────────────────────┐
-                  │ First-Class Fns     │ ← foundation
-                  │ (Closures)          │
-                  └─────────────────────┘
-```
-
-### Implementation Order
-
-1. **First-class functions** - Everything else depends on this
-2. **apply** - Needed for variadic macros
-3. **Quote/Syntax-quote** - Needed for macro bodies
-4. **defmacro** - Compile-time expansion
-5. **Bootstrap core macros** - Move `lower_xxx` to Suss
-6. **User protocols** - Can be parallel with 3-5
-
-### Success Criteria ✓ ACHIEVED
-
-**Before:** Adding `when-some` required:
-- Modify `lower.rs` (add `lower_when_some` function)
-- Add pattern match in `lower_call`
-- Rebuild compiler
-
-**After (now implemented!):** Adding `when-some` requires:
-```clojure
-(defmacro when-some [[sym expr] & body]
-  `(let [val# ~expr]
-     (when (some? val#)
-       (let [~sym val#]
-         ~@body))))
-```
-
-No compiler changes. Just library code.
-
-**Implementation details:**
-- `expand.rs` - MacroEnv, MacroDef, syntax-quote expansion, gensym (`symbol#` → `symbol__N__auto__`)
-- `eval.rs` - Tree-walking interpreter with ~30 primitives for compile-time macro evaluation
-- Pipeline: Parse → **Expand** → Analyze → Lower → Codegen
-
-### The IR After Compositional Primitives
-
-The IR stays **small and fixed**:
-
-```rust
-enum Expr {
-    // Literals
-    Unit, Bool, Int, Float, String,
-
-    // Variables
-    LocalGet, LocalSet, GlobalGet, GlobalSet,
-
-    // Control flow (irreducible - can't be macros)
-    If, Loop, Recur, Block,
-
-    // Functions
-    Call,           // static call by index
-    TailCall,       // TCO static call
-    ClosureNew,     // NEW: create closure value
-    ClosureCall,    // NEW: call closure value
-    Apply,          // NEW: dynamic invocation
-
-    // GC operations
-    StructNew, StructGet, ArrayNew, ArrayGet, ArraySet, ...
-
-    // Collections (protocol-dispatched)
-    ProtocolDispatch { obj, method_id, args },
-
-    // Types
-    Coerce, RefTest, RefNull, RefIsNull,
-}
-```
-
-**What's NOT in the IR:**
-- `cond` → macro, expands to nested `if`
-- `when` → macro, expands to `if`
-- `and`/`or` → macros, expand to `if` + `let`
-- `->` → macro, expands to nested calls
-- `for` → macro, expands to `loop`/`recur`
-
-The compiler handles ~25 IR node types. Everything else is library code.
-
 ---
 
-## Phase 1: Core Hash Function (Prerequisite) ✓ COMPLETE
+## Phase 1: Core Hash Function ✓ COMPLETE
 
-All HAMT operations require consistent hashing.
-
-### Algorithm Selection: xxHash32
-
-**Why xxHash32 over alternatives:**
-
-| Hash | WASM Suitability | Quality | Notes |
-|------|-----------------|---------|-------|
-| **xxHash32** ✓ | Excellent | Excellent | Pure 32-bit ops, WASM has native `i32.rotl` |
-| wyhash | Poor | Excellent | Requires 128-bit multiply (slow in WASM) |
-| wyhash (32-bit mode) | Okay | Good | Different hashes than 64-bit, breaks consistency |
-| Murmur3-32 | Good | Good | Slower than xxHash32 for same quality |
-| FxHash | Excellent | Poor | Bad distribution for inputs >16 bytes |
-
-**WASM considerations:**
-- 128-bit widening multiply is emulated (2-7x slower than native)
-- wyhash relies on folded 128-bit multiply as its core operation
-- xxHash32 uses only 32-bit ops + rotl (native WASM instruction)
-- Proven: xxhash-wasm shows 90x speedup over JS implementation
-
-**References:**
-- [xxHash official](https://xxhash.com/) - passes all SMHasher tests
-- [xxhash-wasm](https://github.com/jungomi/xxhash-wasm) - proven WASM implementation
-- [Rust hash benchmarks](https://medium.com/@tprodanov/benchmarking-non-cryptographic-hash-functions-in-rust-2e6091077d11)
-- [WASM 128-bit multiply issue](https://github.com/WebAssembly/design/issues/1522)
-
-### xxHash32 Implementation
-
-Core algorithm (from xxHash spec):
-```
-PRIME32_1 = 0x9E3779B1
-PRIME32_2 = 0x85EBCA77
-PRIME32_3 = 0xC2B2AE3D
-PRIME32_4 = 0x27D4EB2F
-PRIME32_5 = 0x165667B1
-
-xxh32(input, seed):
-  if len >= 16:
-    // Process 16-byte chunks with 4 accumulators
-    v1 = seed + PRIME32_1 + PRIME32_2
-    v2 = seed + PRIME32_2
-    v3 = seed
-    v4 = seed - PRIME32_1
-    for each 16-byte chunk:
-      v1 = round(v1, chunk[0..4])
-      v2 = round(v2, chunk[4..8])
-      v3 = round(v3, chunk[8..12])
-      v4 = round(v4, chunk[12..16])
-    acc = rotl(v1,1) + rotl(v2,7) + rotl(v3,12) + rotl(v4,18)
-  else:
-    acc = seed + PRIME32_5
-
-  acc += len
-  // Process remaining bytes
-  // Final avalanche
-  acc ^= acc >> 15
-  acc *= PRIME32_2
-  acc ^= acc >> 13
-  acc *= PRIME32_3
-  acc ^= acc >> 16
-  return acc
-
-round(acc, input):
-  acc += input * PRIME32_2
-  acc = rotl(acc, 13)
-  acc *= PRIME32_1
-  return acc
-```
-
-### Type-Specific Hashing
-
-```
-hash(value) → i32
-
-Type dispatch:
-- nil      → 0
-- boolean  → true=1231, false=1237 (Java convention)
-- i31ref int → value itself (already well-distributed)
-- i64      → xxh32(bytes, 0)
-- f64      → xxh32(bit-repr, 0)
-- string   → xxh32(utf8-bytes, 0)
-- keyword  → cached hash from interned string
-- symbol   → xxh32(name-bytes, namespace-hash)
-- vector   → ordered hash combining element hashes
-- map      → unordered hash of entry hashes
-- set      → unordered hash of element hashes
-```
-
-### Implementation Tasks
-
-- [x] Implement xxHash32 core in WASM (use `i32.rotl` instruction)
-- [x] `hash-bytes` - xxHash32 over byte array (for strings)
-- [x] `hash-i64` - hash 64-bit integer
-- [x] `hash-f64` - hash float via bit representation
-- [x] `hash-combine` - for ordered collections: `rotl(h1, 5) ^ (h2 * PRIME32_1)`
-- [x] `hash-unordered` - for maps/sets: `(+ h1 h2)` (commutative)
-- [x] Type dispatch wrapper matching i31ref encoding
-- [x] IHash protocol method registration for all built-in types
-
-### Seed Strategy
-
-Use seed=0 for deterministic hashing across all platforms. This ensures:
-- Same value → same hash on all WASM runtimes
-- Reproducible behavior for tests
-- No HashDoS protection (acceptable for non-adversarial inputs)
-
----
-
-## Phase 2: Protocol System & Polymorphic Dispatch (PARTIAL)
+All HAMT operations require consistent hashing. xxHash32 chosen for WASM efficiency.
 
 **Completed:**
-- Type ID system: All GC structs have type_id in field 0
-- get-type-id function: O(n) ref.test chain (O(1) needs struct subtyping)
-- Dispatch table infrastructure with call_indirect
-- Table-based dispatch for all protocol methods
-- Polymorphic lowerer: `nth`, `count`, `first`, `rest` work on vectors AND lists
-  - Vector: `first` returns element 0 or nil; `rest` returns nil (TODO: proper seq)
-  - Cons: `count` and `nth` via O(n) traversal
+- [x] xxHash32 core in WASM (uses native `i32.rotl`)
+- [x] Type-specific hashing for all value types
+- [x] `hash-combine` for ordered collections
+- [x] `hash-unordered` for maps/sets
+- [x] IHash protocol method registration
+
+---
+
+## Phase 2: Protocol System & Polymorphic Dispatch ✓ MOSTLY COMPLETE
+
+**Completed:**
+- [x] Type ID system: All GC structs have type_id in field 0
+- [x] `get-type-id` function via `ref.test` chain
+- [x] Dispatch table infrastructure with `call_indirect`
+- [x] Table-based dispatch for all protocol methods
+- [x] Polymorphic `nth`, `count`, `first`, `rest`, `get`, `conj`
 
 **Remaining:**
-- User-defined protocols (`defprotocol`, `extend-type`)
-- Vector `rest` returning proper seq (requires ChunkedSeq/IndexedSeq types)
+- [ ] `ISeqable/-seq` for vectors, maps, sets (returns proper seq)
+- [ ] ChunkedSeq/IndexedSeq types for vector sequences
 
-### 2.1 Design: Hybrid Dispatch
+### Dispatch Table
 
-Use a two-tier approach:
-1. **Fast path**: Built-in protocols on built-in types → inline `ref.test` + direct struct ops
-2. **Slow path**: Everything else → `get-type-id` + dispatch table + `call_ref`
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Protocol Call Site                    │
-├─────────────────────────────────────────────────────────┤
-│  Built-in protocol + built-in type (compile-time known)? │
-│    YES → inline fast path (ref.test + direct struct ops) │
-│    NO  → call get-type-id → dispatch table → call_ref    │
-└─────────────────────────────────────────────────────────┘
-```
-
-This enables:
-- Fast operations for common cases (nth on vector, get on map)
-- Full Clojure-style extensibility (extend any type with any protocol)
-- Users can extend built-in types with user-defined protocols
-
-### 2.2 Type ID System
-
-Built-in types have implicit IDs derived via `ref.test`. User types store explicit tags.
-
-**Built-in type IDs** (match gc_types constants):
-| Type | ID |
-|------|----|
-| LargeInt | 0 |
-| Float | 1 |
-| String | 2 |
-| TrieNode | 3 |
-| Cons | 4 |
-| HamtNode | 5 |
-| PersistentVector | 6 |
-| PersistentMap | 7 |
-| PersistentSet | 8 |
-
-**User types**: Start at ID 256+ (room for future built-ins). Store tag as first struct field.
-
-```wasm
-(type $UserValue (struct (field $tag i32) ...))
-```
-
-### 2.3 `get-type-id` Function
-
-```wasm
-(func $get-type-id (param $obj (ref eq)) (result i32)
-  ;; Built-ins: derive type ID from ref.test
-  (if (ref.test (ref $PersistentVector) (local.get $obj))
-    (then (return (i32.const 6))))
-
-  (if (ref.test (ref $PersistentMap) (local.get $obj))
-    (then (return (i32.const 7))))
-
-  (if (ref.test (ref $PersistentSet) (local.get $obj))
-    (then (return (i32.const 8))))
-
-  (if (ref.test (ref $Cons) (local.get $obj))
-    (then (return (i32.const 4))))
-
-  (if (ref.test (ref $String) (local.get $obj))
-    (then (return (i32.const 2))))
-
-  ;; i31ref values (nil, bool, small int)
-  (if (ref.test i31 (local.get $obj))
-    (then (return (i32.const -1))))  ;; special: not dispatchable
-
-  ;; User types: read tag from struct field
-  (struct.get $UserValue $tag
-    (ref.cast (ref $UserValue) (local.get $obj)))
-)
-```
-
-### 2.4 Dispatch Table
-
-2D table indexed by `[type_id, method_id]`:
-
-```wasm
-;; Flattened: index = type_id * NUM_METHODS + method_id
-(table $protocol_dispatch funcref (elem ...))
-
-(func $dispatch (param $obj (ref eq)) (param $method_id i32) (result (ref func))
-  (local $type_id i32)
-  (local.set $type_id (call $get-type-id (local.get $obj)))
-
-  (table.get $protocol_dispatch
-    (i32.add
-      (i32.mul (local.get $type_id) (i32.const $NUM_METHODS))
-      (local.get $method_id)))
-)
-```
-
-### 2.5 Built-in Protocols
-
-Define core protocols with method IDs:
-
-| Protocol | Method | ID |
-|----------|--------|----|
-| ILookup | -lookup | 0 |
-| IAssociative | -assoc | 1 |
-| ICounted | -count | 2 |
-| IIndexed | -nth | 3 |
-| ICollection | -conj | 4 |
-| ISeq | -first | 5 |
-| ISeq | -rest | 6 |
-| ISeqable | -seq | 7 |
-| IHash | -hash | 8 |
-| IEquiv | -equiv | 9 |
-
-### 2.6 Polymorphic Core Functions
-
-Replace static dispatch with protocol calls:
-
-```clojure
-;; Current (static):
-(nth coll i) → Expr::VecNth  ; always vector
-
-;; New (polymorphic):
-(nth coll i)
-  → if coll is PersistentVector at compile-time: fast path
-  → else: (invoke IIndexed/-nth coll i)
-```
-
-**Fast path example** (compile-time known vector):
-```wasm
-;; (nth known-vec 5)
-local.get $known_vec
-ref.cast (ref $PersistentVector)  ;; elided if type already proven
-call $vec_nth_impl                 ;; direct call, no dispatch
-```
-
-**Slow path example** (unknown collection type):
-```wasm
-;; (nth unknown-coll 5)
-local.get $unknown_coll
-i32.const 5
-local.get $unknown_coll
-i32.const 3                        ;; IIndexed/-nth method ID
-call $dispatch                     ;; get funcref from table
-call_ref                           ;; indirect call
-```
-
-### 2.7 User-Defined Protocols
-
-```clojure
-(defprotocol IJsonable
-  (-to-json [this]))
-```
-
-Compiler assigns method ID (e.g., 100) from user protocol namespace.
-
-```clojure
-(extend-type PersistentVector IJsonable
-  (-to-json [this] ...))
-```
-
-At compile time, populate dispatch table:
-```
-table[6][100] = vec-to-json-fn   ;; type_id=6 (PersistentVector), method_id=100
-```
-
-### 2.8 Implementation Tasks
-
-**Core infrastructure:**
-- [ ] Define `$UserValue` struct type with `$tag` field (for user-defined types)
-- [x] Implement `$get-type-id` function
-- [x] Create dispatch table in module
-- [x] Implement `$dispatch` lookup function (via call_indirect)
-
-**Built-in protocol dispatch:**
-- [x] Add method IDs for core protocols (ILookup, ICounted, IIndexed, etc.)
-- [x] Populate dispatch table for built-in types
-- [x] Implement fast-path detection in codegen (type known at compile time)
-- [x] Generate slow-path dispatch for unknown types
-
-**Lowerer changes:**
-- [x] Change `nth` to emit polymorphic dispatch (not just VecNth)
-- [x] Change `get` to emit polymorphic dispatch (MapGet with HAMT)
-- [x] Change `count` to emit polymorphic dispatch
-- [x] Change `conj` to emit polymorphic dispatch
-- [x] Change `first`/`rest` to emit polymorphic dispatch
-
-**User protocol support:**
-- [ ] Parse `defprotocol` form
-- [ ] Assign method IDs to user protocol methods
-- [ ] Parse `extend-type` / `extend-protocol` forms
-- [ ] Generate dispatch table entries for extensions
-- [ ] Support extending built-in types with user protocols
-
-### 2.9 Dispatch Matrix
-
-| Call Site | Type Known | Protocol | Dispatch |
-|-----------|------------|----------|----------|
-| `(nth vec 0)` | Yes (vector) | Built-in | **Fast**: inline |
-| `(nth coll 0)` | No | Built-in | **Slow**: table lookup |
-| `(-to-json vec)` | Yes (vector) | User | **Slow**: table lookup |
-| `(-to-json obj)` | No | User | **Slow**: table lookup |
-| `(-to-json rec)` | Yes (user type) | User | **Slow**: table lookup |
-
-Note: User protocols always use slow path (no inline fast path), but built-in types can still be extended via the dispatch table.
+| Call Site | Type Known | Dispatch |
+|-----------|------------|----------|
+| `(nth vec 0)` | Yes (vector) | **Fast**: inline struct access |
+| `(nth coll 0)` | No | **Slow**: table lookup via type_id |
+| `(-to-json obj)` | Any | **Slow**: user protocol dispatch |
 
 ---
 
-## Phase 3: Full Vector Trie (>32 elements) ✓ COMPLETE
+## Phase 3: deftype - User-Defined Types
 
-Large vectors (>32 elements) now work with full trie implementation:
-- `nth` traverses trie to find leaf node
-- `conj` handles tail overflow and tree growth
-- `count` returns element count in O(1)
+> **Central enabler for self-hosting.** Once deftype works, HAMT nodes and collection algorithms can move to core.suss.
+>
+> **Dependency:** Requires working array primitives (aget, aset, aclone) for HAMT field access.
 
-All helper functions implemented: `vec_tail_off`, `vec_array_for`, `vec_new_path`, `vec_push_tail`, `vec_aclone`.
+### 3.1 Basic deftype (Fields Only) ✓ COMPLETE
 
-### 3.1 Trie Node Structure
-```
-TRIE_NODE = array<eqref>[32]  ; Already defined
-
-PersistentVector = struct {
-  cnt: i32,           ; total element count
-  shift: i32,         ; depth * 5 (5 bits per level)
-  root: ref TRIE_NODE ; null for ≤32 elements
-  tail: ref TRIE_NODE ; rightmost leaf (≤32 elements)
-}
-```
-
-### 3.2 Helper Functions (from ClojureScript)
-
-**tail-off**: Index where tail begins
 ```clojure
-(defn tail-off [v]
-  (if (< (.-cnt v) 32)
-    0
-    (bit-shift-left (unsigned-bit-shift-right (dec (.-cnt v)) 5) 5)))
-```
-- [ ] Implement as WASM helper function
+(deftype Point [x y])
 
-**array-for**: Get the array containing index
+;; Usage:
+(def p (->Point 10 20))
+(.-x p)  ;; → 10
+(.-y p)  ;; → 20
+(instance? Point p)  ;; → true
+```
+
+**Implementation (completed):**
+- [x] Parse `deftype` form in analyzer → `AnalyzedDeftype` struct
+- [x] Allocate type ID from user pool (256+) in lowerer
+- [x] Generate WASM GC struct type: `(type $Point (struct (field $type_id i32) (field $x eqref) (field $y eqref)))`
+- [x] Generate constructor function `->Point` that calls `struct.new`
+- [x] Register field names in deftype registry for `.-field` access
+- [x] Register type name in deftype registry for `instance?` checks
+- [x] Handle type index offsets when user deftypes shift subsequent types
+- [x] Fix tail-call optimization in field access and instance? checks
+
+**Key files modified:**
+- `analyze.rs` - Added `AnalyzedDeftype`, `DeftypeField`, `analyze_deftype()`
+- `ir.rs` - Added `DeftypeDef`, `FieldType`, `DeftypeFieldDef` to Module
+- `lower.rs` - Added `UserTypeInfo`, `lower_deftypes()`, `lower_deftype_constructor()`, `lookup_user_field()`
+- `codegen.rs` - Emit user struct types after built-in GC types, dynamic type offset calculation
+- `lib.rs` - Extract deftype forms from source, handle multi-expression parsing
+
+**Passing tests:**
 ```clojure
-(defn array-for [v i]
-  (if (>= i (tail-off v))
-    (.-tail v)
-    (loop [node (.-root v)
-           level (.-shift v)]
-      (if (pos? level)
-        (recur (aget node (bit-and (unsigned-bit-shift-right i level) 0x1f))
-               (- level 5))
-        node))))
-```
-- [ ] Implement trie traversal with loop
+;; Test 1: Constructor and field access
+(.-x (->Point 10 20))  ;; → 10
 
-**nth**: Element access
+;; Test 2: Multiple fields
+(+ (.-x (->Point 10 20)) (.-y (->Point 10 20)))  ;; → 30
+
+;; Test 3: instance? check
+(instance? Point (->Point 1 2))  ;; → true
+(instance? Point [1 2])  ;; → false
+```
+
+### 3.2 deftype with Inline Protocols
+
 ```clojure
-(defn -nth [v i]
-  (aget (array-for v i) (bit-and i 0x1f)))
+(deftype Point [x y]
+  IEquiv
+  (-equiv [this other]
+    (and (instance? Point other)
+         (= (.-x this) (.-x other))
+         (= (.-y this) (.-y other))))
+
+  IHash
+  (-hash [this]
+    (hash-combine (hash (.-x this)) (hash (.-y this)))))
 ```
-- [ ] Update `generate_vec_nth` to use array-for
 
-### 3.3 Trie Modification Functions
+**Implementation tasks:**
+- [ ] Parse protocol implementations after field vector (reuse extend-type parsing)
+- [ ] `this` parameter refers to the newly constructed instance
+- [ ] Generate wrapper functions for each method (same as extend-type)
+- [ ] Create dispatch table entries mapping type_id → method implementations
+- [ ] Ensure deftype's type_id is available during protocol method lowering
 
-**new-path**: Create path from root to new node
+**Acceptance tests:**
 ```clojure
-(defn new-path [level node]
-  (if (zero? level)
-    node
-    (let [ret (make-array 32)]
-      (aset ret 0 (new-path (- level 5) node))
-      ret)))
-```
-- [ ] Implement path construction
+;; Test 1: Protocol method dispatch
+(let [p (->Point 10 20)] (-count p))  ;; if ICounted implemented
 
-**push-tail**: Insert tail into trie
+;; Test 2: Equality via protocol
+(= (->Point 1 2) (->Point 1 2))  ;; → true (if IEquiv implemented)
+(= (->Point 1 2) (->Point 1 3))  ;; → false
+
+;; Test 3: Hash consistency
+(= (hash (->Point 1 2)) (hash (->Point 1 2)))  ;; → true
+```
+
+### 3.3 Reserved Type Indices (Bootstrap Support)
+
 ```clojure
-(defn push-tail [v level parent tail-node]
-  (let [subidx (bit-and (unsigned-bit-shift-right (dec (.-cnt v)) level) 0x1f)
-        ret (aclone parent)]
-    (if (= level 5)
-      (aset ret subidx tail-node)
-      (let [child (aget parent subidx)]
-        (if child
-          (aset ret subidx (push-tail v (- level 5) child tail-node))
-          (aset ret subidx (new-path (- level 5) tail-node)))))
-    ret))
+;; Metadata to specify fixed type index for core types
+(deftype ^{:type-id 5} BitmapIndexedNode [bitmap arr])
 ```
-- [ ] Implement with structural sharing (aclone = array.copy)
 
-**conj** (full implementation):
+This enables core.suss to define HAMT node types at the **same indices** currently hardcoded in `ir.rs`, ensuring backward compatibility during the transition.
+
+**Implementation tasks:**
+- [ ] Parse `^{:type-id N}` metadata on deftype name
+- [ ] Use specified index instead of allocating from user pool
+- [ ] Validate index doesn't conflict with other reserved types
+- [ ] Update `instance?` to check deftype registry before hardcoded types
+
+**Acceptance tests:**
 ```clojure
-(defn conj [v val]
-  (if (< (- (.-cnt v) (tail-off v)) 32)
-    ;; Room in tail
-    (let [new-tail (aclone (.-tail v))]
-      (aset new-tail (bit-and (.-cnt v) 0x1f) val)
-      (PersistentVector. (inc (.-cnt v)) (.-shift v) (.-root v) new-tail))
-    ;; Tail full - push into trie
-    (let [new-root (if (> (unsigned-bit-shift-right (.-cnt v) 5)
-                          (bit-shift-left 1 (.-shift v)))
-                     ;; Root overflow - grow tree
-                     (let [new-root (make-array 32)]
-                       (aset new-root 0 (.-root v))
-                       (aset new-root 1 (new-path (.-shift v) (.-tail v)))
-                       new-root)
-                     ;; Fits in current tree
-                     (push-tail v (.-shift v) (.-root v) (.-tail v)))
-          new-shift (if (> (unsigned-bit-shift-right (.-cnt v) 5)
-                           (bit-shift-left 1 (.-shift v)))
-                      (+ (.-shift v) 5)
-                      (.-shift v))]
-      (PersistentVector. (inc (.-cnt v)) new-shift new-root (array val)))))
+;; Test 1: Reserved index is respected
+(deftype ^{:type-id 5} TestNode [data])
+;; Internal: struct type at index 5, not 256+
+
+;; Test 2: instance? works with reserved types
+(instance? BitmapIndexedNode (->BitmapIndexedNode 0 (make-array 0)))  ;; → true
 ```
-- [ ] Implement full conj with root overflow handling
-- [ ] Handle tree growth (shift += 5)
 
-### 3.4 Additional Vector Operations
+### 3.4 Implementation Checklist
 
-**assoc-n**: Update element at index
-```clojure
-(defn do-assoc [v level node i val]
-  (let [ret (aclone node)]
-    (if (zero? level)
-      (aset ret (bit-and i 0x1f) val)
-      (let [subidx (bit-and (unsigned-bit-shift-right i level) 0x1f)]
-        (aset ret subidx (do-assoc v (- level 5) (aget node subidx) i val))))
-    ret))
-```
-- [ ] Implement with path copying
-
-**pop**: Remove last element
-```clojure
-(defn pop-tail [v level node]
-  (let [subidx (bit-and (unsigned-bit-shift-right (- (.-cnt v) 2) level) 0x1f)]
-    (cond
-      (> level 5)
-      (let [new-child (pop-tail v (- level 5) (aget node subidx))]
-        (if (and (nil? new-child) (zero? subidx))
-          nil
-          (let [ret (aclone node)]
-            (aset ret subidx new-child)
-            ret)))
-      (zero? subidx) nil
-      :else (let [ret (aclone node)]
-              (aset ret subidx nil)
-              ret))))
-```
-- [ ] Implement pop with tree shrinkage
-
-### 3.5 Implementation Tasks
-- [ ] Add helper locals to codegen for trie traversal
-- [ ] Implement `array.copy` for structural sharing
-- [ ] Add loop/br_if for traversal
-- [ ] Update `generate_vec_new_large` to build proper trie
-- [ ] Remove error from `generate_vec_conj_inplace`
-- [ ] Register PersistentVector protocol implementations in dispatch table
+| Sub-phase | Blocking? | Status |
+|-----------|-----------|--------|
+| 3.1 Basic deftype | Yes - enables Phase 4 | ✓ COMPLETE |
+| 3.2 Inline protocols | No - extend-type works | Pending |
+| 3.3 Reserved indices | Yes - enables Phase 4 | Pending |
 
 ---
 
-## Phase 4: HAMT for Maps and Sets ✓ COMPLETE
+## Phase 4: Bootstrap HAMT Nodes in core.suss
 
-Full HAMT (Hash Array Mapped Trie) implementation following ClojureScript patterns.
+> **Dependency:** Requires Phase 3.1 (basic deftype) and Phase 3.3 (reserved type indices).
 
-**Protocol integration:**
-- PersistentMap (type_id=9): `ILookup/-lookup`, `IAssociative/-assoc`, `ICounted/-count`
-- PersistentSet (type_id=10): `ILookup/-lookup`, `ICollection/-conj`, `ICounted/-count`
+Move HAMT node types from hardcoded Rust to deftype in core.suss.
 
-### 4.1 Node Types (from ClojureScript)
-
-ClojureScript uses three node types:
-
-**BitmapIndexedNode** (sparse, ≤16 entries):
-```
-struct {
-  bitmap: i32,              ; which of 32 slots are occupied
-  arr: array<eqref>         ; 2*popcount(bitmap) entries: [k0,v0,k1,v1,...]
-}
+### Current State (Hardcoded in ir.rs)
+```rust
+pub const BITMAP_INDEXED_NODE: u32 = 5;  // struct { type_id, bitmap, arr }
+pub const ARRAY_NODE: u32 = 6;           // struct { type_id, cnt, arr }
+pub const HASH_COLLISION_NODE: u32 = 7;  // struct { type_id, hash, cnt, arr }
 ```
 
-**ArrayNode** (dense, >16 entries):
-```
-struct {
-  cnt: i32,                 ; number of non-null children
-  arr: array<eqref>[32]     ; direct indexing, null for empty slots
-}
-```
-
-**HashCollisionNode** (same hash, different keys):
-```
-struct {
-  hash: i32,                ; shared hash value
-  cnt: i32,                 ; number of entries
-  arr: array<eqref>         ; [k0,v0,k1,v1,...] linear scan
-}
-```
-
-Update gc_types:
-- [ ] Change HAMT_NODE to BitmapIndexedNode structure
-- [ ] Add ARRAY_NODE type index
-- [ ] Add HASH_COLLISION_NODE type index
-
-### 4.2 Core HAMT Functions
-
-**mask**: Extract 5-bit index from hash at level
+### Target State (core.suss)
 ```clojure
-(defn mask [hash shift]
-  (bit-and (unsigned-bit-shift-right hash shift) 0x1f))
+(deftype ^{:type-id 5} BitmapIndexedNode [bitmap arr])
+
+(deftype ^{:type-id 6} ArrayNode [cnt arr])
+
+(deftype ^{:type-id 7} HashCollisionNode [hash cnt arr])
 ```
 
-**bitpos**: Convert index to bitmap position
+**Implementation tasks:**
+- [ ] Add deftype declarations to core.suss (at top, before functions that use them)
+- [ ] Remove BITMAP_INDEXED_NODE, ARRAY_NODE, HASH_COLLISION_NODE from ir.rs gc_types
+- [ ] Update `instance?` to check deftype registry
+- [ ] Verify existing HAMT algorithms work with deftype field accessors
+
+**Acceptance tests:**
 ```clojure
-(defn bitpos [hash shift]
-  (bit-shift-left 1 (mask hash shift)))
+;; Test 1: Construct HAMT node via deftype
+(->BitmapIndexedNode 0 (make-array 0))  ;; → BitmapIndexedNode instance
+
+;; Test 2: Field access works
+(.-bitmap (->BitmapIndexedNode 42 (make-array 0)))  ;; → 42
+
+;; Test 3: instance? dispatches correctly
+(instance? BitmapIndexedNode (->BitmapIndexedNode 0 (make-array 0)))  ;; → true
+(instance? ArrayNode (->BitmapIndexedNode 0 (make-array 0)))  ;; → false
+
+;; Test 4: Existing inode-find still works
+(let [node (->BitmapIndexedNode 1 (make-array 2))]
+  (inode-find node 0 12345 :key nil))  ;; → nil (empty node)
 ```
-
-**bitmap-indexed-node-index**: Sparse array index
-```clojure
-(defn bitmap-indexed-node-index [bitmap bit]
-  (bit-count (bit-and bitmap (dec bit))))
-```
-- [ ] Implement `i32.popcnt` for bit-count
-
-### 4.3 Map Operations
-
-**inode-find** (lookup):
-```clojure
-;; BitmapIndexedNode
-(inode-find [this shift hash key not-found]
-  (let [bit (bitpos hash shift)]
-    (if (zero? (bit-and bitmap bit))
-      not-found
-      (let [idx (bitmap-indexed-node-index bitmap bit)
-            key-or-nil (aget arr (* 2 idx))
-            val-or-node (aget arr (inc (* 2 idx)))]
-        (cond
-          (nil? key-or-nil)
-          (inode-find val-or-node (+ shift 5) hash key not-found)
-
-          (= key key-or-nil)
-          val-or-node
-
-          :else
-          not-found)))))
-```
-- [ ] Implement with type dispatch on node kind
-
-**inode-assoc** (insert/update):
-```clojure
-(inode-assoc [this shift hash key val added-leaf?]
-  (let [bit (bitpos hash shift)
-        idx (bitmap-indexed-node-index bitmap bit)]
-    (if (zero? (bit-and bitmap bit))
-      ;; New entry
-      (let [n (bit-count bitmap)]
-        (if (>= n 16)
-          ;; Promote to ArrayNode
-          (promote-to-array-node ...)
-          ;; Add to BitmapIndexedNode
-          (let [new-arr (array-copy-insert arr (* 2 idx) key val)]
-            (BitmapIndexedNode. (bit-or bitmap bit) new-arr))))
-      ;; Existing slot
-      (let [key-or-nil (aget arr (* 2 idx))
-            val-or-node (aget arr (inc (* 2 idx)))]
-        (cond
-          (nil? key-or-nil)
-          ;; Recurse into child node
-          (let [n (inode-assoc val-or-node (+ shift 5) hash key val added-leaf?)]
-            (BitmapIndexedNode. bitmap (aset-copy arr (inc (* 2 idx)) n)))
-
-          (= key key-or-nil)
-          ;; Update existing
-          (BitmapIndexedNode. bitmap (aset-copy arr (inc (* 2 idx)) val))
-
-          :else
-          ;; Hash collision - create subtree
-          (create-node (+ shift 5) key-or-nil val-or-node hash key val))))))
-```
-
-### 4.4 Implementation Tasks
-
-- [x] Add ARRAY_NODE, HASH_COLLISION_NODE to gc_types
-- [x] Implement `i32.popcnt` wrapper
-- [x] Implement equality check (equiv) for keys
-- [x] `inode-find` for BitmapIndexedNode
-- [x] `inode-find` for ArrayNode
-- [x] `inode-find` for HashCollisionNode
-- [x] `inode-assoc` for BitmapIndexedNode
-- [x] `inode-assoc` for ArrayNode
-- [x] `inode-assoc` for HashCollisionNode
-- [x] Promotion: BitmapIndexedNode → ArrayNode
-- [x] create-node for hash collisions
-- [ ] `inode-dissoc` (remove key) - Future work
-- [x] Wire up `generate_map_get` and `generate_map_assoc`
-
-### 4.5 Set Implementation
-
-Sets reuse HAMT but store only keys (or key=value):
-- [x] `generate_set_contains` via inode-find
-- [x] `generate_set_conj` via inode-assoc
-- [ ] `generate_set_disj` via inode-dissoc - Future work
-- [x] Register PersistentMap and PersistentSet protocol implementations in dispatch table
 
 ---
 
-## Phase 5: Verify GC Mode End-to-End ✓ COMPLETE
+## Phase 5: Pure Suss Collection Algorithms
 
-GC mode is now the only mode. Legacy tagged i64 code has been removed.
+> **Dependency:** Requires Phase 4 (HAMT nodes as deftype) for `.-field` access on nodes.
+> Can be done incrementally - each function can be migrated independently.
 
-- [x] ~~Add GC mode flag to Lowerer~~ (not needed - GC is always on)
-- [x] ~~Propagate flag through codegen~~ (not needed - GC is always on)
-- [x] Enable wasmtime GC for compiled components
-- [x] Test with vectors >32 elements
-- [x] Test with maps containing data
-- [x] Verify protocol dispatch works for all collection types
+Move all collection algorithms from Rust codegen to core.suss.
+
+### HAMT Find Functions (Already in core.suss)
+
+core.suss already has Suss implementations:
+- `bin-find` - BitmapIndexedNode lookup
+- `an-find` - ArrayNode lookup
+- `hcn-find` - HashCollisionNode lookup
+- `inode-find` - Type-dispatching wrapper
+
+**Task:** Remove duplicate Rust implementations from codegen.rs:
+- [ ] Remove helper_funcs::BIN_FIND, AN_FIND, HCN_FIND, INODE_FIND
+- [ ] Wire `generate_map_get` to call core.suss `inode-find`
+
+**Acceptance tests:**
+```clojure
+;; Test: Map lookup uses core.suss inode-find
+(get {:a 1 :b 2} :a)  ;; → 1
+(get {:a 1 :b 2} :c)  ;; → nil
+(get {:a 1 :b 2} :c :default)  ;; → :default
+```
+
+### HAMT Assoc Functions (Move to core.suss)
+
+```clojure
+;; Add to core.suss:
+(defn bin-assoc [node shift hash key val]
+  (let [bit (hamt-bitpos hash shift)
+        idx (hamt-index (.-bitmap node) bit)]
+    ...))
+
+(defn an-assoc [node shift hash key val] ...)
+(defn hcn-assoc [node hash key val] ...)
+(defn inode-assoc [node shift hash key val] ...)
+(defn create-node [shift key1 val1 hash2 key2 val2] ...)
+```
+
+**Tasks:**
+- [ ] Implement `inode-assoc`, `bin-assoc`, `an-assoc`, `hcn-assoc` in core.suss
+- [ ] Implement `create-node` for hash collisions
+- [ ] Remove Rust versions from codegen.rs
+
+**Acceptance tests:**
+```clojure
+;; Test 1: Basic assoc
+(assoc {} :a 1)  ;; → {:a 1}
+
+;; Test 2: Assoc to existing key (update)
+(assoc {:a 1} :a 2)  ;; → {:a 2}
+
+;; Test 3: Multiple assocs
+(-> {} (assoc :a 1) (assoc :b 2) (assoc :c 3))  ;; → {:a 1 :b 2 :c 3}
+
+;; Test 4: Hash collision handling (requires keys with same hash)
+;; (implementation-specific test)
+```
+
+### HAMT Dissoc Functions (Move to core.suss)
+
+- [ ] Implement `inode-dissoc`, `bin-dissoc`, `an-dissoc`, `hcn-dissoc`
+- [ ] Remove Rust versions
+
+**Acceptance tests:**
+```clojure
+(dissoc {:a 1 :b 2} :a)  ;; → {:b 2}
+(dissoc {:a 1} :a)  ;; → {}
+(dissoc {} :a)  ;; → {}
+```
+
+### Vector Trie Functions (Partially in core.suss)
+
+core.suss already has:
+- `tail-off` - Calculate tail start index
+- `hamt-mask`, `hamt-bitpos`, `hamt-index` - HAMT helpers
+
+**Still needed in core.suss:**
+- [ ] `array-for` - Get leaf array for index (trie traversal)
+- [ ] `new-path` - Create path from root to node
+- [ ] `push-tail` - Insert tail into trie
+
+**Task:** Remove duplicate Rust implementations:
+- [ ] Remove helper_funcs::VEC_TAIL_OFF, VEC_ARRAY_FOR, VEC_NEW_PATH, VEC_PUSH_TAIL
+- [ ] Wire vector operations to use core.suss functions
+
+**Acceptance tests:**
+```clojure
+;; Test 1: Vector with >32 elements uses trie
+(nth (into [] (range 100)) 50)  ;; → 50
+
+;; Test 2: conj on large vector
+(count (conj (into [] (range 100)) :new))  ;; → 101
+
+;; Test 3: Nested trie access
+(nth (into [] (range 2000)) 1500)  ;; → 1500
+```
 
 ---
 
-## Phase 6: WIT Boundary Marshaling
+## Phase 6: Collection Protocol Impls in core.suss
 
-Convert between internal GC refs and WIT primitives at export boundaries:
+> **Dependency:** Requires Phase 5 (pure Suss algorithms) for `array-for`, `inode-find`, etc.
+> Can be done incrementally - each extend-type can be migrated independently.
+
+Move the 14 protocol implementation wrapper functions from Rust to `extend-type` in core.suss.
+
+### Current State (codegen.rs protocol_impl_funcs)
+```rust
+VEC_NTH, VEC_COUNT, VEC_CONJ, VEC_FIRST, VEC_REST,
+CONS_FIRST, CONS_REST, CONS_COUNT, CONS_NTH,
+MAP_COUNT, MAP_LOOKUP,
+SET_COUNT, SET_CONTAINS, SET_CONJ
+```
+
+### Target State (core.suss)
+```clojure
+(extend-type PersistentVector
+  ICounted
+  (-count [v] (.-cnt v))
+
+  IIndexed
+  (-nth [v n]
+    (aget (array-for v n) (bit-and n 31)))
+
+  ICollection
+  (-conj [v val]
+    ;; Full vector conj implementation
+    ...))
+
+(extend-type PersistentMap
+  ICounted
+  (-count [m] (.-cnt m))
+
+  ILookup
+  (-lookup [m k]
+    (let [root (.-root m)]
+      (if (nil? root)
+        nil
+        (inode-find root 0 (hash k) k nil))))
+
+  IAssociative
+  (-assoc [m k v]
+    ...))
+
+(extend-type PersistentSet
+  ICounted
+  (-count [s] (.-cnt s))
+
+  ILookup
+  (-lookup [s k]
+    ...)
+
+  ICollection
+  (-conj [s v]
+    ...))
+
+(extend-type Cons
+  ISeq
+  (-first [c] (.-first c))
+  (-rest [c] (.-rest c))
+
+  ICounted
+  (-count [c]
+    (loop [n 0, c c]
+      (if (nil? c) n (recur (+ n 1) (.-rest c))))))
+```
+
+**Tasks:**
+- [ ] Add `extend-type` declarations to core.suss
+- [ ] Remove protocol_impl_funcs from codegen.rs
+- [ ] Dispatch table now populated from core.suss extend-type declarations
+
+**Acceptance tests:**
+```clojure
+;; Test 1: Vector protocols from core.suss
+(count [1 2 3])  ;; → 3
+(nth [10 20 30] 1)  ;; → 20
+(conj [1 2] 3)  ;; → [1 2 3]
+(first [1 2 3])  ;; → 1
+(rest [1 2 3])  ;; → (2 3)
+
+;; Test 2: Map protocols from core.suss
+(count {:a 1 :b 2})  ;; → 2
+(get {:a 1} :a)  ;; → 1
+(assoc {:a 1} :b 2)  ;; → {:a 1 :b 2}
+
+;; Test 3: Set protocols from core.suss
+(count #{1 2 3})  ;; → 3
+(contains? #{1 2} 1)  ;; → true
+(conj #{1 2} 3)  ;; → #{1 2 3}
+
+;; Test 4: Cons protocols from core.suss
+(first (cons 1 nil))  ;; → 1
+(rest (cons 1 (cons 2 nil)))  ;; → (2)
+(count (cons 1 (cons 2 nil)))  ;; → 2
+
+;; Test 5: Polymorphic dispatch works
+(let [colls [[1 2 3] {:a 1} #{1 2}]]
+  (map count colls))  ;; → (3 2 2)
+```
+
+---
+
+## Phase 7: Minimize Compiler
+
+> **Dependency:** Requires Phases 4-6 complete (all behaviors in core.suss).
+> This is the "victory lap" - removing now-dead Rust code.
+
+Remove all collection-specific code from the Rust compiler.
+
+### Remove from codegen.rs
+
+**Runtime helper functions (25 functions):**
+- [ ] Remove `helper_funcs` module entirely
+- [ ] Remove `generate_runtime_helpers()` function
+- [ ] Remove `helper_types` module
+
+**Protocol implementations (14 functions):**
+- [ ] Remove `protocol_impl_funcs` module
+- [ ] Remove `generate_protocol_impls()` function
+
+**Collection generation functions:**
+- [ ] Remove or simplify `generate_vec_conj_impl`, `generate_map_assoc_impl`, etc.
+- [ ] Keep only struct.new for literals (shape, not behavior)
+
+### Reduce ir.rs gc_types
+
+**Keep:**
+- LARGE_INT, FLOAT, STRING (atomic values)
+- TRIE_NODE (array type)
+- PERSISTENT_VECTOR, PERSISTENT_MAP, PERSISTENT_SET (struct shapes for literals)
+- CLOSURE_* types (closures)
+- VARIADIC_* types (variadic functions)
+
+**Remove:**
+- BITMAP_INDEXED_NODE, ARRAY_NODE, HASH_COLLISION_NODE (now deftype in core.suss)
+
+### What Remains in Compiler
+
+After Phase 7, the compiler provides only:
+1. **Primitive value boxing** - i31ref, LARGE_INT, FLOAT, STRING
+2. **Generic struct.new/get** - via deftype
+3. **Array primitives** - make-array, aget, aset, alength, aclone
+4. **Closure machinery** - fn, apply, call_ref
+5. **Protocol dispatch** - get-type-id, dispatch table, call_indirect
+6. **Collection literal → struct.new** - shape only, behavior from core.suss
+
+### Validation
+
+**Metric:** Lines of code in `codegen.rs`
+- Before: ~7000 lines (estimate)
+- After: ~3000 lines (target ~40% reduction)
+
+**All existing tests must still pass** - the behavior hasn't changed, just moved to core.suss.
+
+---
+
+## Phase 8: WIT Boundary Marshaling
+
+Convert between internal GC refs and WIT primitives at export boundaries.
 
 | WIT Type | To GC Ref | From GC Ref |
 |----------|-----------|-------------|
@@ -952,71 +643,46 @@ Convert between internal GC refs and WIT primitives at export boundaries:
 | f64 | `struct.new $FLOAT` | `struct.get` |
 | string | `array.new_data $STRING` | extract bytes |
 
+**Tasks:**
 - [ ] Implement marshaling for all primitive types
 - [ ] Implement list<T> ↔ vector marshaling
 - [ ] Implement record ↔ map marshaling (if needed)
 
 ---
 
-## Phase 7: Cleanup ✓ COMPLETE
+## Phase 9: Transient Collections (Performance Optimization)
 
-Legacy non-GC code has been removed. GC is now the only mode.
-
-- [x] ~~Remove `tags` module~~ (never existed as separate module)
-- [x] Remove tagged i64 IR variants (`Type::Tagged`, `Expr::MakeTagged`, etc.)
-- [x] Remove heap operation IR variants (`Expr::Alloc`, `Expr::HeapStore`, `Expr::HeapLoad`)
-- [x] GC mode is the default (and only) mode
-
----
-
-## Phase 8: Transient Collections (Optional, Performance)
-
-ClojureScript provides mutable "transient" variants for batch construction:
+Mutable "transient" variants for batch construction:
 
 ```clojure
 (persistent! (conj! (conj! (transient []) 1) 2))
 ```
 
-### TransientVector
-- Mutable tail and root arrays
-- `conj!` mutates in place
-- `persistent!` freezes and returns immutable
-
-### TransientHashMap
-- Mutable HAMT nodes with edit-id for ownership
-- `assoc!` mutates if owner matches
-- Path copying only when ownership differs
-
-Implementation priority: LOW (optimization)
+**Tasks:**
 - [ ] TransientVector with mutable tail
 - [ ] TransientHashMap with edit tracking
 - [ ] `transient`, `conj!`, `assoc!`, `persistent!` special forms
 
-**Protocol integration:** Transients implement `ITransientCollection/-conj!`, `ITransientAssociative/-assoc!`, etc. Same dispatch mechanism.
+Low priority - optimization only.
 
 ---
 
-## Phase 9: Optimization
+## Phase 10: wasm-opt Integration
 
-### wasm-opt Integration
-Run Binaryen's optimizer on compiled output:
+Run Binaryen's optimizer on compiled output.
+
+**Tasks:**
 - [ ] Add `--optimize` / `-O` flag to compile command
 - [ ] Shell out to `wasm-opt -O3` on generated `.wasm` files
 - [ ] Optionally bundle wasm-opt or require it in PATH
 
 Expected benefit: ~1.9x speedup on WasmGC code (per V8 benchmarks).
 
-### Collection-Specific Optimizations
-- [ ] Inline small vector operations (≤32 elements)
-- [ ] Specialize nth/get for known-small collections
-- [ ] Escape analysis for local-only collections
-
 ---
 
-## Phase 10: WASI CLI Commands
+## Phase 11: WASI CLI Commands
 
-### `-main` Convention
-Functions named `-main` compile to `wasi:cli/run` command components:
+Functions named `-main` compile to `wasi:cli/run` command components.
 
 ```clojure
 (ns my-app.core
@@ -1027,60 +693,102 @@ Functions named `-main` compile to `wasi:cli/run` command components:
   0)  ; exit code
 ```
 
-Implementation:
+**Tasks:**
 - [ ] Detect `-main` in analyzed module
 - [ ] Generate synthetic WIT world importing `wasi:cli/*`
 - [ ] Wire `-main` to `wasi:cli/run.run` export
 - [ ] Handle args via `wasi:cli/environment.get-arguments`
-- [ ] Handle exit code as return value
 
 ---
 
-## Implementation Order (Recommended)
+## Phase 12: List/Seq Operations
 
-### 🎯 PRIORITY: Compositional Primitives (see Priority Zero above)
+Proper sequence abstraction for all collections.
 
-**Current focus - enables self-extending language:**
-
-1. ✓ **First-class functions (closures)** - COMPLETE
-2. ✓ **apply** - dynamic invocation - COMPLETE
-3. ✓ **Quote/Syntax-quote** - code as data - COMPLETE
-4. ✓ **defmacro** - compile-time expansion - COMPLETE
-5. ✓ **Bootstrap core macros** - `when`, `when-not`, `and`, `or`, `cond`, `case` - COMPLETE
-6. **User protocols** - `defprotocol`, `extend-type` ← NEXT
-
-### Completed Foundation
-
-1. ✓ **Hash function** - Prerequisite for HAMT and IHash protocol
-2. ✓ **Protocol infrastructure** - `get-type-id`, dispatch table, `$dispatch` function
-3. ✓ **Built-in protocol registration** - ILookup, ICounted, IIndexed, ICollection for all types
-4. ✓ **Vector >32** - Full trie with IIndexed/-nth, ICounted/-count, ICollection/-conj
-5. ✓ **HAMT for maps** - ILookup/-lookup, IAssociative/-assoc, ICounted/-count
-6. ✓ **HAMT for sets** - ILookup/-lookup, ICollection/-conj, ICounted/-count
-7. ✓ **Polymorphic lowerer** - `nth`, `get`, `count`, `conj` emit protocol dispatch
-8. ✓ **GC mode integration** - GC is the only mode; legacy code removed
-9. ✓ **Cleanup** - Legacy non-GC code removed
-
-### After Compositional Primitives
-
-10. **WIT marshaling** - Required for component exports
-11. **Transients** - ITransientCollection, ITransientAssociative (optimization)
-12. **wasm-opt** - Final optimization pass
-
----
-
-## Phase 11: List/Seq Operations
-
-**Protocol integration:** Cons cells (type_id=4) implement:
-- `ISeq/-first`, `ISeq/-rest` - Core sequence operations
-- `ISeqable/-seq` - Returns self
-- `ICounted/-count` - Linear traversal (or cached)
-
-Additionally:
-- [ ] Implement `ISeqable/-seq` for PersistentVector (returns chunked seq or indexed seq)
+**Tasks:**
+- [ ] Implement `ISeqable/-seq` for PersistentVector (returns indexed seq)
 - [ ] Implement `ISeqable/-seq` for PersistentMap (returns entry seq)
 - [ ] Implement `ISeqable/-seq` for PersistentSet (returns element seq)
-- [ ] `first`, `rest`, `seq` in lowerer emit ISeq/ISeqable dispatch
+- [ ] `first`, `rest`, `seq` emit ISeq/ISeqable dispatch
+
+---
+
+## Implementation Order
+
+### Completed Foundation
+1. ✓ **Compositional primitives** - closures, apply, macros, protocols
+2. ✓ **Hash function** - xxHash32
+3. ✓ **Protocol dispatch** - dispatch table, polymorphic operations
+4. ✓ **core.suss infrastructure** - auto-loaded, parser fixes
+5. 🔶 **Array primitives** - aget, aset, alength, aclone, make-array (in progress)
+
+### Self-Hosting Phases (Current Focus)
+
+```
+Phase 3.1 ──→ Phase 3.3 ──→ Phase 4 ──→ Phase 5 ──→ Phase 6 ──→ Phase 7
+(deftype)    (reserved)   (HAMT nodes) (algorithms) (protocols) (cleanup)
+              ↓
+           Phase 3.2
+           (inline protocols)
+```
+
+| Phase | What | Blocking? | Est. Effort |
+|-------|------|-----------|-------------|
+| **3.1** | Basic deftype (fields only) | Yes | Medium |
+| **3.2** | deftype with inline protocols | No | Low |
+| **3.3** | Reserved type indices | Yes | Low |
+| **4** | HAMT nodes as deftype | Yes | Low |
+| **5** | Pure Suss algorithms | Incremental | Medium |
+| **6** | Protocol impls in core.suss | Incremental | Medium |
+| **7** | Minimize compiler | No | Low |
+
+### After Self-Hosting
+8. **Phase 8: WIT marshaling** - Component exports
+9. **Phase 9: Transients** - Performance optimization
+10. **Phase 10: wasm-opt** - Binary optimization
+11. **Phase 11: WASI CLI** - Command components
+12. **Phase 12: List/Seq** - Sequence abstraction
+
+---
+
+## Success Criteria
+
+### Phase 3 Complete When:
+- [ ] `(->Point 10 20)` creates a user-defined struct
+- [ ] `(.-x p)` accesses fields on user types
+- [ ] `(instance? Point p)` works for user types
+- [ ] `(deftype Foo [...] IBar (-method ...))` compiles and dispatches correctly
+- [ ] `^{:type-id N}` reserves specific type indices
+
+### Phase 4 Complete When:
+- [ ] `BitmapIndexedNode`, `ArrayNode`, `HashCollisionNode` defined in core.suss
+- [ ] `ir.rs` no longer contains these type definitions
+- [ ] All existing map/set tests still pass
+
+### Phase 5-6 Complete When:
+- [ ] `codegen.rs` `helper_funcs` module is empty or removed
+- [ ] `codegen.rs` `protocol_impl_funcs` module is empty or removed
+- [ ] All collection operations dispatch to core.suss implementations
+
+### Phase 7 Complete When:
+- [ ] `codegen.rs` reduced by ~40% (target: ~3000 lines from ~7000)
+- [ ] All existing tests pass without modification
+- [ ] New collection operations can be added purely in core.suss
+
+### Ultimate Success:
+```clojure
+;; This should work with ZERO compiler changes:
+(defprotocol IMyCollection
+  (-my-op [coll]))
+
+(deftype MyQueue [head tail]
+  IMyCollection
+  (-my-op [q] ...))
+
+(extend-type PersistentVector
+  IMyCollection
+  (-my-op [v] ...))
+```
 
 ---
 

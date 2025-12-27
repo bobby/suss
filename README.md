@@ -321,6 +321,72 @@ Suss supports ClojureScript-style compile-time macros with syntax-quote, unquote
 
 Macros are expanded at compile time before code generation. The expansion uses a tree-walking interpreter to evaluate macro bodies.
 
+#### Protocols and User-Defined Types
+
+Suss supports ClojureScript-style protocols for polymorphic dispatch:
+
+```clojure
+;; Define a protocol
+(defprotocol IJsonable
+  "Protocol for JSON serialization"
+  (-to-json [this]))
+
+;; Extend built-in types
+(extend-type PersistentVector
+  IJsonable
+  (-to-json [coll]
+    ;; Implementation here
+    42))
+
+;; Use protocol methods
+(-to-json [1 2 3])
+```
+
+#### User-Defined Types (deftype)
+
+Create custom WASM GC struct types with `deftype`:
+
+```clojure
+;; Define a type with fields
+(deftype Point [x y])
+
+;; Create instances with auto-generated constructor
+(def p (->Point 10 20))
+
+;; Access fields with .-field syntax
+(.-x p)  ;; → 10
+(.-y p)  ;; → 20
+
+;; Type checking with instance?
+(instance? Point p)       ;; → true
+(instance? Point [1 2])   ;; → false
+```
+
+User-defined types compile to WASM GC structs with automatic:
+- Constructor function (`->TypeName`)
+- Field accessors (`.-field`)
+- Type identity for `instance?` checks
+
+**Built-in protocols** (defined in `core.suss`, auto-loaded before user code):
+- `ICounted` - `-count` for countable collections
+- `IIndexed` - `-nth` for indexed access
+- `ISeq` - `-first`, `-rest` for sequential access
+- `ISeqable` - `-seq` for conversion to sequences
+- `ILookup` - `-lookup` for key-based lookup
+- `IAssociative` - `-assoc`, `-contains-key` for associative structures
+- `ICollection` - `-conj` for adding elements
+- `IEquiv` - `-equiv` for equality testing
+- `IHash` - `-hash` for hashing
+
+**Low-level primitives** for protocol implementations:
+- `(.-field struct)` - Access struct fields (e.g., `(.-cnt vec)`)
+- `(nil? x)` - Check if value is nil
+- `(aget arr idx)` - Array element access
+- `(aset arr idx val)` - Array element mutation (internal use)
+- `(aclone arr)` - Clone array (for structural sharing)
+- `(make-array n)` - Create array of size n
+- `(bit-count x)` - Population count (for HAMT)
+
 #### Compilable Subset
 
 The static compiler supports a subset of Suss suitable for ahead-of-time compilation:
@@ -342,6 +408,8 @@ The static compiler supports a subset of Suss suitable for ahead-of-time compila
 | Sets | Yes | HAMT-based, `conj`, `count`, `contains?` |
 | Lists | Yes | Cons cells, `first`, `rest`, `cons` |
 | Macros | Yes | `defmacro` with syntax-quote, core macros built-in |
+| Protocols | Yes | `defprotocol`, `extend-type` for user-defined abstractions |
+| `deftype` | Yes | User-defined WASM GC struct types with constructors |
 | `eval` | No | Requires runtime interpreter |
 
 #### Running Compiled Components

@@ -94,7 +94,7 @@ All symbols and keywords go through `Interner` for O(1) equality. Use `SymbolId`
 `Number` enum: `Integer(BigInt)` → `Ratio(BigRational)` → `Float(f64)`. Supports Clojure radix literals (`2r1010`, `16rFF`).
 
 ### Static Compiler Subset
-Compilable: `def`, `defn`, `fn` (closures with capture), `apply`, `let`, `if`, `do`, `loop/recur`, numbers (i32/i64/f64), strings, vectors, macros.
+Compilable: `def`, `defn`, `fn` (closures with capture), `apply`, `let`, `if`, `do`, `loop/recur`, numbers (i32/i64/f64), strings, vectors, macros, `defprotocol`, `extend-type`, `deftype`.
 Not yet compilable: BigInt (use i64).
 
 ### Macro System
@@ -112,7 +112,7 @@ Pipeline: Parse → [Expand] → Analyze → Lower → Codegen
 - `crates/suss-compile/src/expand.rs` - MacroEnv, MacroDef, syntax-quote expansion, gensym
 - `crates/suss-compile/src/eval.rs` - Tree-walking interpreter for macro bodies (~30 primitives)
 
-**Built-in core macros:** `when`, `when-not`, `and`, `or`, `cond`, `case`, `->`, `->>`, `when-let`, `if-let`
+**Built-in core macros:** `when`, `when-not`, `and`, `or`, `cond`, `case`, `->`, `->>`, `when-let`, `if-let`, `doto`, `..`
 
 **Key structures:**
 ```rust
@@ -170,9 +170,75 @@ Suss supports ClojureScript-style protocols and type extensions:
 
 **Dispatch table:** `type_id * 10 + method_id` indexes into a funcref table of 160 entries (16 types × 10 methods).
 
+### User-Defined Types (deftype)
+
+Suss supports `deftype` for user-defined WASM GC struct types:
+
+**Basic usage:**
+```clojure
+(deftype Point [x y])
+(def p (->Point 10 20))
+(.-x p)  ;; → 10
+(instance? Point p)  ;; → true
+```
+
+**Key files:**
+- `crates/suss-compile/src/analyze.rs` - `AnalyzedDeftype` parsing
+- `crates/suss-compile/src/ir.rs` - `DeftypeDef` intermediate representation
+- `crates/suss-compile/src/lower.rs` - Constructor generation, field access lowering
+- `crates/suss-compile/src/codegen.rs` - WASM GC struct type emission
+
+**Type indices:**
+- Built-in GC types: indices 0-38 (see `gc_types` module)
+- User deftypes: indices 39+ (assigned at lowering time)
+- Helper types follow user types
+- Type IDs: built-in 0-10, user types start at 256 (`USER_TYPE_BASE`)
+
+**Key structures:**
+```rust
+// analyze.rs
+pub struct AnalyzedDeftype {
+    pub name: String,
+    pub fields: Vec<DeftypeField>,
+    pub implementations: Vec<AnalyzedProtocolImpl>,
+    pub reserved_type_id: Option<u32>,
+}
+
+// ir.rs
+pub struct DeftypeDef {
+    pub name: String,
+    pub fields: Vec<DeftypeFieldDef>,
+    pub gc_type_idx: u32,    // WASM GC type index
+    pub type_id: i32,        // Runtime type ID (256+)
+}
+```
+
+**Implementation notes:**
+- Constructors (`->TypeName`) are regular functions emitted before user functions
+- Field 0 of every struct is `type_id: i32` for protocol dispatch
+- `.-field` access uses `struct.get` with dynamically resolved field index
+- `instance?` uses `ref.test` against the GC type index
+- User types shift helper type indices (use `helper_type()` method for dynamic offset calculation)
+
+### core.suss (Auto-Loaded Library)
+
+Following ClojureScript semantics, `core.suss` is automatically loaded before user code. It contains:
+- Protocol definitions (ICounted, IIndexed, ISeq, ISeqable, ILookup, IAssociative, ICollection, IEquiv, IHash)
+- Vector trie helper functions (`tail-off`, `array-for`, `new-path`, `push-tail`)
+- HAMT helper functions (`hamt-mask`, `hamt-bitpos`, `hamt-index`)
+
+**Key file:** `crates/suss-compile/src/core.suss`
+
+**How it works:**
+1. `lib.rs` includes core.suss via `include_str!`
+2. Before compiling user code, core.suss is parsed and analyzed
+3. Protocol definitions and helper functions become available to all user code
+
+**Note:** core.suss has NO `(ns ...)` declaration - all definitions are at top level.
+
 ### Low-Level Primitives
 
-WASM GC operations exposed to Suss:
+WASM GC operations exposed to Suss for implementing protocols:
 
 **Struct field access:**
 ```clojure
@@ -182,6 +248,22 @@ WASM GC operations exposed to Suss:
 (.-tail vec)   ; struct.get PersistentVector.tail → eqref
 (.-first cons) ; struct.get Cons.first
 (.-rest cons)  ; struct.get Cons.rest
+(.-x point)    ; struct.get for user-defined types (deftype Point [x y])
+```
+
+**Array operations (WASM GC arrays):**
+```clojure
+(aget arr idx)       ; array.get - get element at index
+(aset arr idx val)   ; array.set - set element (internal use for construction)
+(alength arr)        ; array.len - get array length
+(aclone arr)         ; array.copy to new array (for structural sharing)
+(make-array n)       ; array.new with nil initialization
+```
+
+**Null/nil checking:**
+```clojure
+(nil? x)             ; true if x is nil, false otherwise
+                     ; Uses ref.test i31 + i31.get_s check for NIL_SENTINEL
 ```
 
 **Type checking:**
@@ -191,16 +273,18 @@ WASM GC operations exposed to Suss:
 (instance? PersistentSet obj)
 (instance? Cons obj)
 (instance? String obj)
+(instance? MyDeftype obj)         ; works with user-defined types
 ```
 
 **Bit manipulation:**
 ```clojure
-(bit-and 0xFF 0x0F)           ; i32.and → 15
-(bit-or 0x01 0x02)            ; i32.or → 3
-(bit-xor 0xFF 0x0F)           ; i32.xor → 240
-(bit-shift-left x 5)          ; i32.shl
-(bit-shift-right x 5)         ; i32.shr_s (arithmetic)
+(bit-and 0xFF 0x0F)            ; i32.and → 15
+(bit-or 0x01 0x02)             ; i32.or → 3
+(bit-xor 0xFF 0x0F)            ; i32.xor → 240
+(bit-shift-left x 5)           ; i32.shl
+(bit-shift-right x 5)          ; i32.shr_s (arithmetic)
 (unsigned-bit-shift-right x 5) ; i32.shr_u (logical)
+(bit-count x)                  ; i32.popcnt - population count (for HAMT)
 ```
 
 ### Variadic Arithmetic

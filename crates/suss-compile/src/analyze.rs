@@ -27,6 +27,8 @@ pub struct AnalyzedModule {
     pub protocols: Vec<AnalyzedProtocol>,
     /// Type extensions (extend-type declarations)
     pub extensions: Vec<AnalyzedExtension>,
+    /// User-defined types (deftype declarations)
+    pub deftypes: Vec<AnalyzedDeftype>,
 }
 
 /// A protocol definition
@@ -74,6 +76,28 @@ pub struct AnalyzedMethodImpl {
     pub params: Vec<String>,
     /// Method body
     pub body: Edn,
+}
+
+/// A field in a deftype declaration
+#[derive(Debug, Clone)]
+pub struct DeftypeField {
+    /// Field name (e.g., "x")
+    pub name: String,
+    /// Type hint (e.g., Some("i32"), Some("f64"), None for eqref)
+    pub type_hint: Option<String>,
+}
+
+/// A deftype declaration
+#[derive(Debug, Clone)]
+pub struct AnalyzedDeftype {
+    /// Type name (e.g., "Point")
+    pub name: String,
+    /// Fields with optional type hints
+    pub fields: Vec<DeftypeField>,
+    /// Protocol implementations (same structure as extend-type)
+    pub implementations: Vec<AnalyzedProtocolImpl>,
+    /// Reserved type ID via ^:type-id N metadata
+    pub reserved_type_id: Option<u32>,
 }
 
 /// An analyzed import from a WIT interface
@@ -236,6 +260,7 @@ struct Analyzer<'a> {
     globals: Vec<AnalyzedGlobal>,
     protocols: Vec<AnalyzedProtocol>,
     extensions: Vec<AnalyzedExtension>,
+    deftypes: Vec<AnalyzedDeftype>,
 }
 
 impl<'a> Analyzer<'a> {
@@ -250,6 +275,7 @@ impl<'a> Analyzer<'a> {
             globals: Vec::new(),
             protocols: Vec::new(),
             extensions: Vec::new(),
+            deftypes: Vec::new(),
         }
     }
 
@@ -270,6 +296,7 @@ impl<'a> Analyzer<'a> {
             globals: std::mem::take(&mut self.globals),
             protocols: std::mem::take(&mut self.protocols),
             extensions: std::mem::take(&mut self.extensions),
+            deftypes: std::mem::take(&mut self.deftypes),
         })
     }
 
@@ -284,6 +311,7 @@ impl<'a> Analyzer<'a> {
                         "require" => self.analyze_require(items)?,
                         "defprotocol" => self.analyze_defprotocol(items)?,
                         "extend-type" => self.analyze_extend_type(items)?,
+                        "deftype" => self.analyze_deftype(items)?,
                         _ => {
                             // Top-level expression - ignore for now
                         }
@@ -882,6 +910,167 @@ impl<'a> Analyzer<'a> {
         });
 
         Ok(())
+    }
+
+    /// Analyze deftype declaration
+    /// (deftype Point [x y])
+    /// (deftype ^:type-id 5 Point [^i32 x ^i32 y])
+    /// (deftype Point [x y] IEquiv (-equiv [this other] ...))
+    fn analyze_deftype(&mut self, items: &[Edn]) -> CompileResult<()> {
+        if items.len() < 3 {
+            return Err(CompileError::Parse("deftype requires name and fields".into()));
+        }
+
+        let mut idx = 1;
+        let mut reserved_type_id: Option<u32> = None;
+
+        // Check for ^:type-id N metadata
+        if idx < items.len() {
+            if let Edn::Symbol(sym) = &items[idx] {
+                if sym.name == "^:type-id" {
+                    idx += 1;
+                    if idx >= items.len() {
+                        return Err(CompileError::Parse("^:type-id requires a number".into()));
+                    }
+                    if let Edn::Number(n) = &items[idx] {
+                        reserved_type_id = n.to_i64().map(|v| v as u32);
+                    } else {
+                        return Err(CompileError::Parse("^:type-id value must be a number".into()));
+                    }
+                    idx += 1;
+                }
+            }
+        }
+
+        // Parse type name
+        let name = match &items[idx] {
+            Edn::Symbol(s) => s.name.clone(),
+            _ => return Err(CompileError::Parse("deftype name must be a symbol".into())),
+        };
+        idx += 1;
+
+        // Parse fields vector
+        let fields = match &items[idx] {
+            Edn::Vector(field_items) => self.parse_deftype_fields(field_items)?,
+            _ => return Err(CompileError::Parse("deftype fields must be a vector".into())),
+        };
+        idx += 1;
+
+        // Parse protocol implementations (same as extend-type)
+        let mut implementations = Vec::new();
+        let mut current_protocol: Option<String> = None;
+        let mut current_methods: Vec<AnalyzedMethodImpl> = Vec::new();
+
+        for item in &items[idx..] {
+            match item {
+                // Protocol name (bare symbol)
+                Edn::Symbol(s) => {
+                    // Save previous protocol if any
+                    if let Some(protocol_name) = current_protocol.take() {
+                        implementations.push(AnalyzedProtocolImpl {
+                            protocol_name,
+                            methods: std::mem::take(&mut current_methods),
+                        });
+                    }
+                    current_protocol = Some(s.name.clone());
+                }
+                // Method implementation
+                Edn::List(method_items) if !method_items.is_empty() => {
+                    let method_name = match &method_items[0] {
+                        Edn::Symbol(s) => s.name.clone(),
+                        _ => return Err(CompileError::Parse("method name must be a symbol".into())),
+                    };
+
+                    if method_items.len() < 3 {
+                        return Err(CompileError::Parse("method requires params and body".into()));
+                    }
+
+                    let params = match &method_items[1] {
+                        Edn::Vector(p) => p.iter()
+                            .filter_map(|x| if let Edn::Symbol(s) = x { Some(s.name.clone()) } else { None })
+                            .collect(),
+                        _ => return Err(CompileError::Parse("method params must be a vector".into())),
+                    };
+
+                    let body = if method_items.len() == 3 {
+                        method_items[2].clone()
+                    } else {
+                        Edn::List(
+                            std::iter::once(Edn::Symbol(suss_core::Symbol::new("do")))
+                                .chain(method_items[2..].iter().cloned())
+                                .collect()
+                        )
+                    };
+
+                    current_methods.push(AnalyzedMethodImpl {
+                        name: method_name,
+                        params,
+                        body,
+                    });
+                }
+                _ => {}
+            }
+        }
+
+        // Save last protocol
+        if let Some(protocol_name) = current_protocol {
+            implementations.push(AnalyzedProtocolImpl {
+                protocol_name,
+                methods: current_methods,
+            });
+        }
+
+        self.deftypes.push(AnalyzedDeftype {
+            name,
+            fields,
+            implementations,
+            reserved_type_id,
+        });
+
+        Ok(())
+    }
+
+    /// Parse deftype fields with optional type hints
+    /// [x y] or [^i32 x ^i64 y z]
+    fn parse_deftype_fields(&self, items: &[Edn]) -> CompileResult<Vec<DeftypeField>> {
+        let mut fields = Vec::new();
+        let mut pending_type_hint: Option<String> = None;
+
+        for item in items {
+            match item {
+                Edn::Symbol(sym) => {
+                    // Check for type hint metadata (^i32, ^i64, ^f64, ^eqref)
+                    if sym.name.starts_with('^') {
+                        let hint = &sym.name[1..];
+                        match hint {
+                            "i32" | "i64" | "f64" | "eqref" => {
+                                pending_type_hint = Some(hint.to_string());
+                            }
+                            _ => {
+                                return Err(CompileError::Parse(
+                                    format!("Unknown type hint ^{}, expected ^i32, ^i64, ^f64, or ^eqref", hint)
+                                ));
+                            }
+                        }
+                    } else {
+                        // Regular field name
+                        fields.push(DeftypeField {
+                            name: sym.name.clone(),
+                            type_hint: pending_type_hint.take(),
+                        });
+                    }
+                }
+                _ => {
+                    return Err(CompileError::Parse("deftype field must be a symbol".into()));
+                }
+            }
+        }
+
+        if pending_type_hint.is_some() {
+            return Err(CompileError::Parse("Type hint without field name".into()));
+        }
+
+        Ok(fields)
     }
 
     fn validate_exports(&self) -> CompileResult<()> {

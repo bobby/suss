@@ -120,13 +120,26 @@ fn edn_parser<'a>(_state: &'a mut ParserState) -> impl Parser<'a, &'a str, Edn, 
         // Zero or more whitespace items
         let padding = ws_item.repeated();
 
-        // nil
-        let nil = text::keyword("nil").to(Edn::Nil);
+        // Helper: check if a character is a valid symbol continuation character
+        // This is needed because Clojure allows symbols like nil?, true?, empty?
+        let is_symbol_char = |c: &char| {
+            c.is_alphanumeric()
+                || matches!(c, '*' | '+' | '!' | '-' | '_' | '?' | '\'' | '<' | '>' | '=' | '&' | '.' | '/' | ':' | '#')
+        };
 
-        // Booleans
+        // nil - but NOT if followed by symbol characters (e.g., nil? is a symbol)
+        let nil = just("nil")
+            .then(any().filter(is_symbol_char).not().rewind().or(end()))
+            .to(Edn::Nil);
+
+        // Booleans - but NOT if followed by symbol characters
         let boolean = choice((
-            text::keyword("true").to(Edn::Bool(true)),
-            text::keyword("false").to(Edn::Bool(false)),
+            just("true")
+                .then(any().filter(is_symbol_char).not().rewind().or(end()))
+                .to(Edn::Bool(true)),
+            just("false")
+                .then(any().filter(is_symbol_char).not().rewind().or(end()))
+                .to(Edn::Bool(false)),
         ));
 
         // Character literals
@@ -486,5 +499,29 @@ mod tests {
         } else {
             panic!("Expected set");
         }
+    }
+
+    #[test]
+    fn test_parse_symbols_with_question_mark() {
+        let mut state = ParserState::new("suss");
+
+        // nil? should be a symbol, not nil followed by ?
+        let result = parse("nil?", &mut state).unwrap();
+        assert_eq!(result, Edn::Symbol(Symbol::new("nil?")));
+
+        // empty? should be a symbol
+        let result = parse("empty?", &mut state).unwrap();
+        assert_eq!(result, Edn::Symbol(Symbol::new("empty?")));
+
+        // -contains-key? should be a symbol
+        let result = parse("-contains-key?", &mut state).unwrap();
+        assert_eq!(result, Edn::Symbol(Symbol::new("-contains-key?")));
+
+        // true? and false? should be symbols
+        let result = parse("true?", &mut state).unwrap();
+        assert_eq!(result, Edn::Symbol(Symbol::new("true?")));
+
+        let result = parse("false?", &mut state).unwrap();
+        assert_eq!(result, Edn::Symbol(Symbol::new("false?")));
     }
 }
