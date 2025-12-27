@@ -24,6 +24,10 @@ pub enum CompileError {
     #[error("Type error: {0}")]
     Type(String),
 
+    /// Semantic error (e.g., recur not in tail position)
+    #[error("Semantic error: {0}")]
+    Semantic(String),
+
     /// Unknown or undefined symbol
     #[error("Undefined symbol: {0}")]
     Undefined(String),

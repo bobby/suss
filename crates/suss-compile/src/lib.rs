@@ -933,4 +933,82 @@ mod deftype_tests {
         let wasm = result.unwrap();
         std::fs::write("/tmp/deftype_field.wasm", &wasm).unwrap();
     }
+
+    #[test]
+    fn test_deftype_typed_i32_fields() {
+        let mut compiler = Compiler::new();
+        let source = "(deftype Vec2 [^i32 x ^i32 y]) (+ (.-x (->Vec2 100 200)) (.-y (->Vec2 100 200)))";
+        let result = compiler.compile_expr(source);
+        if let Err(e) = &result {
+            eprintln!("Compilation error: {:?}", e);
+        }
+        assert!(result.is_ok(), "Should compile typed i32 fields");
+
+        let wasm = result.unwrap();
+        std::fs::write("/tmp/deftype_typed_i32.wasm", &wasm).unwrap();
+    }
+
+    #[test]
+    fn test_deftype_typed_f64_field() {
+        let mut compiler = Compiler::new();
+        let source = "(deftype Floaty [^f64 val]) (.-val (->Floaty 3.14))";
+        let result = compiler.compile_expr(source);
+        if let Err(e) = &result {
+            eprintln!("Compilation error: {:?}", e);
+        }
+        assert!(result.is_ok(), "Should compile typed f64 field");
+
+        let wasm = result.unwrap();
+        std::fs::write("/tmp/deftype_typed_f64.wasm", &wasm).unwrap();
+    }
+
+    #[test]
+    fn test_deftype_mixed_fields() {
+        let mut compiler = Compiler::new();
+        // Mixed: i32 typed field + eqref (default) field
+        let source = r#"(deftype Mixed [^i32 count name]) (.-count (->Mixed 42 "test"))"#;
+        let result = compiler.compile_expr(source);
+        if let Err(e) = &result {
+            eprintln!("Compilation error: {:?}", e);
+        }
+        assert!(result.is_ok(), "Should compile mixed field types");
+
+        let wasm = result.unwrap();
+        std::fs::write("/tmp/deftype_mixed.wasm", &wasm).unwrap();
+    }
+
+    #[test]
+    fn test_deftype_with_protocol() {
+        let mut compiler = Compiler::new();
+        // Define a type with protocol implementation
+        let source = r#"
+            (deftype Counter [^i32 value]
+              ICounted
+              (-count [this] (.-value this)))
+            (-count (->Counter 42))
+        "#;
+        let result = compiler.compile_expr(source);
+        if let Err(e) = &result {
+            eprintln!("Compilation error: {:?}", e);
+        }
+        assert!(result.is_ok(), "Should compile deftype with protocol");
+
+        let wasm = result.unwrap();
+        std::fs::write("/tmp/deftype_protocol.wasm", &wasm).unwrap();
+    }
+
+    #[test]
+    fn test_deftype_reserved_type_id() {
+        let mut compiler = Compiler::new();
+        // Use reserved type ID (for core.suss bootstrap types)
+        let source = "(deftype ^:type-id 39 CustomNode [data]) (instance? CustomNode (->CustomNode 42))";
+        let result = compiler.compile_expr(source);
+        if let Err(e) = &result {
+            eprintln!("Compilation error: {:?}", e);
+        }
+        assert!(result.is_ok(), "Should compile deftype with reserved type-id");
+
+        let wasm = result.unwrap();
+        std::fs::write("/tmp/deftype_reserved.wasm", &wasm).unwrap();
+    }
 }

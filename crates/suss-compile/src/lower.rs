@@ -70,6 +70,8 @@ struct Lowerer {
     num_imports: u32,
     /// Whether current expression is in tail position (for TCO)
     in_tail_position: bool,
+    /// Whether current expression is in tail position within a loop (for recur validation)
+    in_loop_tail: bool,
     /// Current loop binding local indices (for recur)
     loop_binding_locals: Vec<u32>,
     /// Counter for generating unique closure wrapper names
@@ -81,8 +83,11 @@ struct Lowerer {
     num_analyzed_funcs: u32,
     /// Cached indices for built-in wrapper functions: builtin_name -> func_idx
     builtin_wrappers: HashMap<String, u32>,
-    /// User-defined protocol method IDs: "ProtocolName/-method-name" -> method_id
+    /// User-defined protocol method IDs: "ProtocolName/method_name/arity" -> method_id
     user_method_ids: HashMap<String, u32>,
+    /// Reverse lookup: method_name -> set of (protocol_name, arity) pairs
+    /// Used to identify protocol method calls at call sites
+    method_protocols: HashMap<String, Vec<(String, usize)>>,
     /// Next user-defined method ID (starts at method_ids::USER_START)
     next_user_method_id: u32,
     /// User-defined types: name -> type info
@@ -95,6 +100,37 @@ struct Lowerer {
 
 impl Lowerer {
     fn new() -> Self {
+        // Pre-populate method_protocols with built-in protocol methods
+        // Format: method_name -> [(protocol_name, arity), ...]
+        let mut method_protocols = HashMap::new();
+
+        // Built-in protocol methods with their arities (including 'this' param)
+        // ICounted: -count [coll] -> arity 1
+        method_protocols.insert("-count".to_string(), vec![("ICounted".to_string(), 1)]);
+        // IIndexed: -nth [coll n] or [coll n not-found] -> arities 2, 3
+        method_protocols.insert("-nth".to_string(), vec![
+            ("IIndexed".to_string(), 2),
+            ("IIndexed".to_string(), 3),
+        ]);
+        // ISeq: -first [seq], -rest [seq] -> arity 1
+        method_protocols.insert("-first".to_string(), vec![("ISeq".to_string(), 1)]);
+        method_protocols.insert("-rest".to_string(), vec![("ISeq".to_string(), 1)]);
+        // ISeqable: -seq [coll] -> arity 1
+        method_protocols.insert("-seq".to_string(), vec![("ISeqable".to_string(), 1)]);
+        // ILookup: -lookup [coll key] or [coll key not-found] -> arities 2, 3
+        method_protocols.insert("-lookup".to_string(), vec![
+            ("ILookup".to_string(), 2),
+            ("ILookup".to_string(), 3),
+        ]);
+        // IAssociative: -assoc [coll key val] -> arity 3
+        method_protocols.insert("-assoc".to_string(), vec![("IAssociative".to_string(), 3)]);
+        // ICollection: -conj [coll val] -> arity 2
+        method_protocols.insert("-conj".to_string(), vec![("ICollection".to_string(), 2)]);
+        // IHash: -hash [o] -> arity 1
+        method_protocols.insert("-hash".to_string(), vec![("IHash".to_string(), 1)]);
+        // IEquiv: -equiv [o other] -> arity 2
+        method_protocols.insert("-equiv".to_string(), vec![("IEquiv".to_string(), 2)]);
+
         Self {
             module: Module::new(),
             locals: HashMap::new(),
@@ -104,12 +140,14 @@ impl Lowerer {
             import_indices: HashMap::new(),
             num_imports: 0,
             in_tail_position: false,
+            in_loop_tail: false,
             loop_binding_locals: Vec::new(),
             closure_counter: 0,
             pending_closures: Vec::new(),
             num_analyzed_funcs: 0,
             builtin_wrappers: HashMap::new(),
             user_method_ids: HashMap::new(),
+            method_protocols,
             next_user_method_id: method_ids::USER_START,
             user_types: HashMap::new(),
             next_user_gc_type: gc_types::NUM_GC_TYPES,
@@ -373,7 +411,9 @@ impl Lowerer {
                     // Expression in call position - treat as closure call
                     // Examples: ((fn [x] x) 5), ((if cond + -) a b)
                     let was_tail = self.in_tail_position;
+                    let was_loop_tail = self.in_loop_tail;
                     self.in_tail_position = false;
+                    self.in_loop_tail = false;
 
                     let closure = self.lower_expr(&items[0])?;
                     let args: Vec<Expr> = items[1..]
@@ -382,6 +422,7 @@ impl Lowerer {
                         .collect::<CompileResult<_>>()?;
 
                     self.in_tail_position = was_tail;
+                    self.in_loop_tail = was_loop_tail;
                     Ok(Expr::ClosureCall {
                         closure: Box::new(closure),
                         args,
@@ -564,6 +605,11 @@ impl Lowerer {
             // Field access (.-field syntax)
             _ if name.starts_with(".-") => self.lower_field_access(name, args),
 
+            // Protocol method calls (dispatched via protocol table)
+            _ if self.is_protocol_method(name) => {
+                self.lower_protocol_method_call(name, args)
+            }
+
             // Function call
             _ => self.lower_func_call(name, args),
         }
@@ -583,9 +629,12 @@ impl Lowerer {
 
         // The object expression is not in tail position - we still need to access its field
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let obj = self.lower_expr(&args[0])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         // Check user-defined types first
         if let Some((type_idx, field_idx, field_type)) = self.lookup_user_field(field_name) {
@@ -711,9 +760,12 @@ impl Lowerer {
 
         // The object expression is not in tail position - we still need to test it
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let obj = self.lower_expr(&args[1])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         // Check user-defined types first
         if let Some(info) = self.user_types.get(type_name.as_str()) {
@@ -753,12 +805,15 @@ impl Lowerer {
 
         // Arguments to binary operations are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
 
         let left = self.lower_expr(&args[0])?;
         let right = self.lower_expr(&args[1])?;
 
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         Ok(Expr::BinOp {
             op,
             left: Box::new(left),
@@ -783,9 +838,12 @@ impl Lowerer {
         if args.len() == 1 {
             // Arguments to binary operations are never in tail position
             let was_tail = self.in_tail_position;
+            let was_loop_tail = self.in_loop_tail;
             self.in_tail_position = false;
+            self.in_loop_tail = false;
             let x = self.lower_expr(&args[0])?;
             self.in_tail_position = was_tail;
+            self.in_loop_tail = was_loop_tail;
 
             return match op {
                 // (- x) → negate: 0 - x
@@ -812,7 +870,9 @@ impl Lowerer {
 
         // Arguments to binary operations are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
 
         let mut result = self.lower_expr(&args[0])?;
         // For division, coerce operands to float
@@ -835,6 +895,7 @@ impl Lowerer {
         }
 
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         Ok(result)
     }
 
@@ -852,13 +913,16 @@ impl Lowerer {
             return Err(CompileError::Parse("if requires condition and then branch".into()));
         }
 
-        // Condition is never in tail position
+        // Condition is never in tail position (neither TCO nor loop tail)
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let cond = self.lower_expr(&args[0])?;
 
-        // Both branches inherit parent's tail position
+        // Both branches inherit parent's tail positions
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         let then_branch = self.lower_expr(&args[1])?;
         let else_branch = if args.len() > 2 {
             self.lower_expr(&args[2])?
@@ -880,16 +944,19 @@ impl Lowerer {
         }
 
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         let mut exprs = Vec::with_capacity(args.len());
 
-        // All but the last expression are NOT in tail position
+        // All but the last expression are NOT in tail position (neither TCO nor loop tail)
         for arg in &args[..args.len() - 1] {
             self.in_tail_position = false;
+            self.in_loop_tail = false;
             exprs.push(self.lower_expr(arg)?);
         }
 
-        // Last expression inherits tail position
+        // Last expression inherits tail positions
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         exprs.push(self.lower_expr(args.last().unwrap())?);
 
         Ok(Expr::Block(exprs))
@@ -910,9 +977,11 @@ impl Lowerer {
             return Err(CompileError::Parse("let bindings must have even number of forms".into()));
         }
 
-        // Bindings are NOT in tail position
+        // Bindings are NOT in tail position (neither TCO nor loop tail)
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
 
         let mut bindings = Vec::new();
         for chunk in bindings_vec.chunks(2) {
@@ -930,8 +999,9 @@ impl Lowerer {
             bindings.push((idx, value));
         }
 
-        // Body inherits tail position
+        // Body inherits tail positions
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         let body = if args.len() > 1 {
             if args.len() == 2 {
                 self.lower_expr(&args[1])?
@@ -1043,12 +1113,15 @@ impl Lowerer {
 
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
 
         let func = self.lower_expr(&args[0])?;
         let arg_coll = self.lower_expr(&args[1])?;
 
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         Ok(Expr::Apply {
             func: Box::new(func),
@@ -1186,7 +1259,11 @@ impl Lowerer {
         // Set loop binding locals for recur to use
         self.loop_binding_locals = binding_locals;
 
-        // Lower body (not in tail position - loop uses WASM loop/br, not return_call)
+        // Save and set loop tail position - body IS in loop tail position (recur is valid there)
+        let was_loop_tail = self.in_loop_tail;
+        self.in_loop_tail = true;
+
+        // Lower body (not in TCO tail position, but in loop tail position for recur)
         let body = if args.len() > 1 {
             if args.len() == 2 {
                 self.lower_expr(&args[1])?
@@ -1197,9 +1274,10 @@ impl Lowerer {
             Expr::Unit
         };
 
-        // Restore old loop bindings and tail position
+        // Restore old loop bindings and tail positions
         self.loop_binding_locals = old_loop_bindings;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         Ok(Expr::Loop {
             bindings,
@@ -1208,6 +1286,20 @@ impl Lowerer {
     }
 
     fn lower_recur(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        // Check that we're inside a loop
+        if self.loop_binding_locals.is_empty() {
+            return Err(CompileError::Semantic(
+                "recur can only appear inside a loop".into()
+            ));
+        }
+
+        // Check that we're in tail position of the loop (ClojureScript semantics)
+        if !self.in_loop_tail {
+            return Err(CompileError::Semantic(
+                "recur can only appear in tail position of loop".into()
+            ));
+        }
+
         if args.len() != self.loop_binding_locals.len() {
             return Err(CompileError::Parse(format!(
                 "recur requires {} arguments, got {}",
@@ -1238,9 +1330,12 @@ impl Lowerer {
         }
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let n = self.lower_expr(&args[0])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         let ty = n.expr_type();
         // GcRef means boxed value - treat as I32 for arithmetic
         let result_ty = match &ty {
@@ -1269,9 +1364,12 @@ impl Lowerer {
         }
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let n = self.lower_expr(&args[0])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         let ty = n.expr_type();
         // GcRef means boxed value - treat as I32 for arithmetic
         let result_ty = match &ty {
@@ -1300,9 +1398,12 @@ impl Lowerer {
         }
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let n = self.lower_expr(&args[0])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         let ty = n.expr_type();
         let result_ty = if ty == Type::Unknown { Type::I32 } else { ty.clone() };
 
@@ -1349,7 +1450,9 @@ impl Lowerer {
 
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
 
         // For 2+ args: (min a b c) -> (let [t1 a t2 b] (if (< t1 t2) (min t1 c) (min t2 c)))
         // Simplified: chain of binary comparisons
@@ -1385,6 +1488,7 @@ impl Lowerer {
         }
 
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         Ok(result)
     }
 
@@ -1399,7 +1503,9 @@ impl Lowerer {
 
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
 
         let mut result = self.lower_expr(&args[0])?;
         let ty = result.expr_type();
@@ -1432,6 +1538,7 @@ impl Lowerer {
         }
 
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         Ok(result)
     }
 
@@ -1454,12 +1561,15 @@ impl Lowerer {
         // Fall back to runtime concatenation
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let parts: Vec<Expr> = args
             .iter()
             .map(|e| self.lower_expr(e))
             .collect::<CompileResult<_>>()?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         Ok(Expr::StrConcat(parts))
     }
 
@@ -1473,12 +1583,15 @@ impl Lowerer {
             if let Some(&idx) = self.import_indices.get(&(alias.to_string(), func_name.to_string())) {
                 // Arguments are never in tail position
                 let was_tail = self.in_tail_position;
+                let was_loop_tail = self.in_loop_tail;
                 self.in_tail_position = false;
+                self.in_loop_tail = false;
                 let lowered_args: Vec<Expr> = args
                     .iter()
                     .map(|e| self.lower_expr(e))
                     .collect::<CompileResult<_>>()?;
                 self.in_tail_position = was_tail;
+                self.in_loop_tail = was_loop_tail;
 
                 // Imports can be tail calls too
                 return if self.in_tail_position {
@@ -1513,12 +1626,15 @@ impl Lowerer {
         if let Some(&idx) = self.import_indices.get(&(String::new(), name.to_string())) {
             // Arguments are never in tail position
             let was_tail = self.in_tail_position;
+            let was_loop_tail = self.in_loop_tail;
             self.in_tail_position = false;
+            self.in_loop_tail = false;
             let lowered_args: Vec<Expr> = args
                 .iter()
                 .map(|e| self.lower_expr(e))
                 .collect::<CompileResult<_>>()?;
             self.in_tail_position = was_tail;
+            self.in_loop_tail = was_loop_tail;
 
             return if self.in_tail_position {
                 Ok(Expr::TailCall {
@@ -1539,12 +1655,15 @@ impl Lowerer {
         if let Some(idx) = func_idx {
             // Arguments are never in tail position
             let was_tail = self.in_tail_position;
+            let was_loop_tail = self.in_loop_tail;
             self.in_tail_position = false;
+            self.in_loop_tail = false;
             let lowered_args: Vec<Expr> = args
                 .iter()
                 .map(|e| self.lower_expr(e))
                 .collect::<CompileResult<_>>()?;
             self.in_tail_position = was_tail;
+            self.in_loop_tail = was_loop_tail;
 
             if self.in_tail_position {
                 Ok(Expr::TailCall {
@@ -1564,7 +1683,9 @@ impl Lowerer {
 
             // Emit ClosureCall
             let was_tail = self.in_tail_position;
+            let was_loop_tail = self.in_loop_tail;
             self.in_tail_position = false;
+            self.in_loop_tail = false;
             let lowered_args: Vec<Expr> = args
                 .iter()
                 .map(|e| self.lower_expr(e))
@@ -1579,6 +1700,7 @@ impl Lowerer {
                 in_tail_position: was_tail,
             });
             self.in_tail_position = was_tail;
+            self.in_loop_tail = was_loop_tail;
             result
         } else {
             Err(CompileError::Undefined(name.to_string()))
@@ -1625,10 +1747,13 @@ impl Lowerer {
 
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let coll = self.lower_expr(&args[0])?;
         let index = self.lower_expr(&args[1])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         // Fast path: if we know the collection type at compile time
         if let Some(type_id) = self.infer_collection_type(&args[0]) {
@@ -1666,9 +1791,12 @@ impl Lowerer {
 
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let coll = self.lower_expr(&args[0])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         // Fast path: if we know the collection is a CONS (list)
         if let Some(type_id) = self.infer_collection_type(&args[0]) {
@@ -1701,9 +1829,12 @@ impl Lowerer {
 
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let coll = self.lower_expr(&args[0])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         // Fast path: if we know the collection is a CONS (list)
         if let Some(type_id) = self.infer_collection_type(&args[0]) {
@@ -1736,10 +1867,13 @@ impl Lowerer {
 
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let coll = self.lower_expr(&args[0])?;
         let val = self.lower_expr(&args[1])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         // Fast path: if we know the collection type at compile time
         if let Some(type_id) = self.infer_collection_type(&args[0]) {
@@ -1786,10 +1920,13 @@ impl Lowerer {
         }
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let val = self.lower_expr(&args[0])?;
         let coll = self.lower_expr(&args[1])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         // cons creates a new cons cell with type_id, val as first, and coll as rest
         use crate::ir::{gc_types, type_ids};
         Ok(Expr::StructNew {
@@ -1818,9 +1955,12 @@ impl Lowerer {
 
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let coll = self.lower_expr(&args[0])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         // Fast path: if we know the collection type at compile time
         if let Some(type_id) = self.infer_collection_type(&args[0]) {
@@ -1864,10 +2004,13 @@ impl Lowerer {
 
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let coll = self.lower_expr(&args[0])?;
         let key = self.lower_expr(&args[1])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         // Fast path: if we know the collection type at compile time
         if let Some(type_id) = self.infer_collection_type(&args[0]) {
@@ -1927,10 +2070,13 @@ impl Lowerer {
         }
         // Arguments to contains? are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let set = self.lower_expr(&args[0])?;
         let key = self.lower_expr(&args[1])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         Ok(Expr::SetContains {
             set: Box::new(set),
             key: Box::new(key),
@@ -1946,10 +2092,13 @@ impl Lowerer {
         }
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let set = self.lower_expr(&args[0])?;
         let val = self.lower_expr(&args[1])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         Ok(Expr::SetDisj {
             set: Box::new(set),
             val: Box::new(val),
@@ -1965,10 +2114,13 @@ impl Lowerer {
         }
         // Arguments are never in tail position
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let map = self.lower_expr(&args[0])?;
         let key = self.lower_expr(&args[1])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
         Ok(Expr::MapDissoc {
             map: Box::new(map),
             key: Box::new(key),
@@ -2181,15 +2333,28 @@ impl Lowerer {
     // =========================================================================
 
     /// Lower protocol definitions to IR ProtocolDefs.
-    /// Assigns method IDs to each protocol method.
+    /// Assigns method IDs to each protocol method for each arity.
     fn lower_protocols(&mut self, protocols: &[AnalyzedProtocol]) -> CompileResult<()> {
         for protocol in protocols {
             let mut methods = Vec::new();
 
             for method in &protocol.methods {
-                // Check if this is a built-in method
-                let method_id = self.get_or_assign_method_id(&protocol.name, &method.name);
-                methods.push((method.name.clone(), method_id));
+                // Register each arity of this method
+                for arity_params in &method.arities {
+                    let arity = arity_params.len();
+                    let method_id = self.get_or_assign_method_id(&protocol.name, &method.name, arity);
+                    // Only add to methods list once (for the first arity we see)
+                    if !methods.iter().any(|(name, _)| name == &method.name) {
+                        methods.push((method.name.clone(), method_id));
+                    }
+                }
+                // If no arities defined, this is an error in the protocol definition
+                if method.arities.is_empty() {
+                    return Err(CompileError::Semantic(format!(
+                        "Protocol method {} has no arities defined",
+                        method.name
+                    )));
+                }
             }
 
             self.module.protocols.push(ProtocolDef {
@@ -2202,17 +2367,23 @@ impl Lowerer {
     }
 
     /// Get the method ID for a protocol method, or assign a new one if user-defined.
-    fn get_or_assign_method_id(&mut self, protocol_name: &str, method_name: &str) -> u32 {
-        // Check built-in methods first
+    fn get_or_assign_method_id(&mut self, protocol_name: &str, method_name: &str, arity: usize) -> u32 {
+        // Check built-in methods first - they have fixed IDs regardless of arity
         if let Some(id) = self.builtin_method_id(method_name) {
             return id;
         }
 
-        // Check if we already assigned an ID
-        let key = format!("{}/{}", protocol_name, method_name);
+        // Check if we already assigned an ID for this protocol/method/arity
+        let key = format!("{}/{}/{}", protocol_name, method_name, arity);
         if let Some(&id) = self.user_method_ids.get(&key) {
             return id;
         }
+
+        // Register this method in method_protocols for call-site lookup
+        self.method_protocols
+            .entry(method_name.to_string())
+            .or_insert_with(Vec::new)
+            .push((protocol_name.to_string(), arity));
 
         // Assign new ID
         let id = self.next_user_method_id;
@@ -2236,6 +2407,84 @@ impl Lowerer {
             "-equiv" => Some(method_ids::EQUIV),
             _ => None,
         }
+    }
+
+    /// Check if a name is a known protocol method.
+    /// Uses the method_protocols map which is populated from defprotocol definitions.
+    fn is_protocol_method(&self, name: &str) -> bool {
+        self.method_protocols.contains_key(name)
+    }
+
+    /// Lower direct protocol method calls: (-count obj), (-first seq), etc.
+    /// These are dispatched via the protocol dispatch table at runtime.
+    fn lower_protocol_method_call(&mut self, name: &str, args: &[Edn]) -> CompileResult<Expr> {
+        if args.is_empty() {
+            return Err(CompileError::Parse(format!(
+                "Protocol method {} requires at least one argument (the object)",
+                name
+            )));
+        }
+
+        let arity = args.len();
+
+        // Look up the method ID using arity
+        let method_id = if let Some(id) = self.builtin_method_id(name) {
+            // Built-in methods have fixed IDs regardless of arity
+            id
+        } else {
+            // For user-defined protocol methods, look up by method name + arity
+            // First find the protocol that defines this method with this arity
+            let protocol_name = self.method_protocols.get(name)
+                .and_then(|entries| {
+                    entries.iter()
+                        .find(|(_, a)| *a == arity)
+                        .map(|(p, _)| p.clone())
+                });
+
+            match protocol_name {
+                Some(protocol) => {
+                    // Look up the method_id for this protocol/method/arity
+                    let key = format!("{}/{}/{}", protocol, name, arity);
+                    match self.user_method_ids.get(&key) {
+                        Some(&id) => id,
+                        None => {
+                            return Err(CompileError::Undefined(format!(
+                                "Protocol method {} with arity {} not implemented",
+                                name, arity
+                            )));
+                        }
+                    }
+                }
+                None => {
+                    return Err(CompileError::Undefined(format!(
+                        "Unknown protocol method {} with arity {}",
+                        name, arity
+                    )));
+                }
+            }
+        };
+
+        // First argument is the object to dispatch on
+        let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
+        self.in_tail_position = false;
+        self.in_loop_tail = false;
+        let obj = self.lower_expr(&args[0])?;
+
+        // Remaining arguments are passed to the method
+        let mut method_args = Vec::new();
+        for arg in &args[1..] {
+            method_args.push(self.lower_expr(arg)?);
+        }
+        self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
+
+        Ok(Expr::ProtocolDispatch {
+            obj: Box::new(obj),
+            method_id,
+            args: method_args,
+            in_tail_position: self.in_tail_position,
+        })
     }
 
     /// Lower deftype declarations.
@@ -2306,7 +2555,8 @@ impl Lowerer {
             // Handle protocol implementations (similar to extend-type)
             for impl_ in &deftype.implementations {
                 for method in &impl_.methods {
-                    let method_id = self.get_or_assign_method_id(&impl_.protocol_name, &method.name);
+                    let arity = method.params.len();
+                    let method_id = self.get_or_assign_method_id(&impl_.protocol_name, &method.name, arity);
 
                     // Generate wrapper function for this method implementation
                     let func_idx = self.lower_protocol_method_impl(
@@ -2434,7 +2684,8 @@ impl Lowerer {
 
             for impl_ in &extension.implementations {
                 for method in &impl_.methods {
-                    let method_id = self.get_or_assign_method_id(&impl_.protocol_name, &method.name);
+                    let arity = method.params.len();
+                    let method_id = self.get_or_assign_method_id(&impl_.protocol_name, &method.name, arity);
 
                     // Generate wrapper function for this method implementation
                     let func_idx = self.lower_protocol_method_impl(
@@ -2567,10 +2818,13 @@ impl Lowerer {
             ));
         }
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let array = self.lower_expr(&args[0])?;
         let index = self.lower_expr(&args[1])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         // Use TRIE_NODE as the default array type
         Ok(Expr::ArrayGet {
@@ -2589,11 +2843,14 @@ impl Lowerer {
             ));
         }
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let array = self.lower_expr(&args[0])?;
         let index = self.lower_expr(&args[1])?;
         let value = self.lower_expr(&args[2])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         // Use TRIE_NODE as the default array type
         Ok(Expr::ArraySet {
@@ -2613,9 +2870,12 @@ impl Lowerer {
             ));
         }
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let array = self.lower_expr(&args[0])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         Ok(Expr::ArrayLen(Box::new(array)))
     }
@@ -2629,9 +2889,12 @@ impl Lowerer {
             ));
         }
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let array = self.lower_expr(&args[0])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         // Use TRIE_NODE as the default array type
         Ok(Expr::ArrayClone {
@@ -2649,9 +2912,12 @@ impl Lowerer {
             ));
         }
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let size = self.lower_expr(&args[0])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         // Use TRIE_NODE as the default array type
         Ok(Expr::ArrayNewDefault {
@@ -2669,9 +2935,12 @@ impl Lowerer {
             ));
         }
         let was_tail = self.in_tail_position;
+        let was_loop_tail = self.in_loop_tail;
         self.in_tail_position = false;
+        self.in_loop_tail = false;
         let value = self.lower_expr(&args[0])?;
         self.in_tail_position = was_tail;
+        self.in_loop_tail = was_loop_tail;
 
         Ok(Expr::BitCount(Box::new(value)))
     }

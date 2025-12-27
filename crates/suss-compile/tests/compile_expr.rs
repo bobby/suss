@@ -1128,6 +1128,68 @@ fn test_simple_loop_countdown() {
 }
 
 // =========================================================
+// Recur Validation Tests (ClojureScript semantics)
+// =========================================================
+
+#[test]
+fn test_recur_not_in_tail_position_rejected() {
+    // recur as argument to + is NOT in tail position - should be rejected
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_expr("(loop [x 0] (+ 1 (recur x)))");
+    assert!(result.is_err());
+    let err_msg = format!("{}", result.unwrap_err());
+    assert!(err_msg.contains("tail position"), "Expected 'tail position' error, got: {}", err_msg);
+}
+
+#[test]
+fn test_recur_outside_loop_rejected() {
+    // recur outside of loop should be rejected
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_expr("(recur 1)");
+    assert!(result.is_err());
+    let err_msg = format!("{}", result.unwrap_err());
+    assert!(err_msg.contains("inside a loop"), "Expected 'inside a loop' error, got: {}", err_msg);
+}
+
+#[test]
+fn test_recur_in_let_binding_rejected() {
+    // recur in let binding (not tail position) should be rejected
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_expr("(loop [x 0] (let [y (recur (+ x 1))] y))");
+    assert!(result.is_err());
+    let err_msg = format!("{}", result.unwrap_err());
+    assert!(err_msg.contains("tail position"), "Expected 'tail position' error, got: {}", err_msg);
+}
+
+#[test]
+fn test_recur_in_if_branches_allowed() {
+    // recur in if branch IS in tail position - should work
+    assert_eq!(run_expr_i32("(loop [x 0] (if (< x 5) (recur (+ x 1)) x))"), 5);
+}
+
+#[test]
+fn test_recur_in_do_last_expr_allowed() {
+    // recur in last expression of do IS in tail position
+    assert_eq!(run_expr_i32("(loop [x 0] (do (+ 1 1) (if (< x 3) (recur (+ x 1)) x)))"), 3);
+}
+
+#[test]
+fn test_recur_in_do_non_last_rejected() {
+    // recur NOT in last expression of do is NOT in tail position
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_expr("(loop [x 0] (do (recur (+ x 1)) x))");
+    assert!(result.is_err());
+    let err_msg = format!("{}", result.unwrap_err());
+    assert!(err_msg.contains("tail position"), "Expected 'tail position' error, got: {}", err_msg);
+}
+
+#[test]
+fn test_recur_in_let_body_allowed() {
+    // recur in let body IS in tail position - should work
+    assert_eq!(run_expr_i32("(loop [x 0] (let [y (+ x 1)] (if (< y 5) (recur y) y)))"), 5);
+}
+
+// =========================================================
 // Large Vector Tests (>32 elements - trie required)
 // =========================================================
 
