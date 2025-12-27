@@ -338,7 +338,14 @@ impl<'a> CodeGen<'a> {
 
     /// Get the base type index for helper function types (after GC types + user deftypes)
     fn helper_type_base(&self) -> u32 {
-        crate::ir::gc_types::NUM_GC_TYPES + self.ir.deftypes.len() as u32
+        // Count only deftypes that are actually emitted (not reserved types)
+        let emitted_deftypes = self
+            .ir
+            .deftypes
+            .iter()
+            .filter(|dt| dt.gc_type_idx >= crate::ir::gc_types::NUM_GC_TYPES)
+            .count() as u32;
+        crate::ir::gc_types::NUM_GC_TYPES + emitted_deftypes
     }
 
     /// Get the type index for a helper function signature
@@ -1284,9 +1291,15 @@ impl<'a> CodeGen<'a> {
         // =========================================================================
         // User-Defined Types (from deftype)
         // These come after all built-in types. Each has type_id at field 0.
+        // Skip deftypes with reserved type IDs (they reuse hardcoded built-in types).
         // =========================================================================
 
         for deftype in &self.ir.deftypes {
+            // Skip deftypes with reserved type IDs - their GC types are already emitted above
+            if deftype.gc_type_idx < gc_types::NUM_GC_TYPES {
+                continue;
+            }
+
             let mut fields = vec![type_id_field.clone()]; // Field 0: type_id
 
             for field in &deftype.fields {

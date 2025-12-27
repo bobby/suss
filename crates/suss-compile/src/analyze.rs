@@ -414,6 +414,7 @@ impl<'a> Analyzer<'a> {
 
     fn analyze_defn(&mut self, items: &[Edn]) -> CompileResult<()> {
         // (defn name [params] body) or (defn ^:export name [params] body)
+        // or (defn name "docstring" [params] body)
         if items.len() < 4 {
             return Err(CompileError::Parse("defn requires name, params, and body".into()));
         }
@@ -428,8 +429,21 @@ impl<'a> Analyzer<'a> {
         };
 
         // Parse parameters
-        // next_idx is relative to items[1..], so params are at items[1 + next_idx + 1]
-        let params_idx = next_idx + 2;
+        // next_idx is relative to items[1..], so name is at items[1 + next_idx]
+        // After name, there may be an optional docstring, then params vector
+        let mut params_idx = next_idx + 2; // Start looking after name
+
+        // Skip docstring if present
+        if params_idx < items.len() {
+            if let Edn::String(_) = &items[params_idx] {
+                params_idx += 1;
+            }
+        }
+
+        if params_idx >= items.len() {
+            return Err(CompileError::Parse("defn requires parameters vector".into()));
+        }
+
         let params = self.parse_params(&items[params_idx])?;
 
         // Body is everything after params

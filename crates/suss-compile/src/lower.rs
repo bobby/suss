@@ -19,9 +19,24 @@ use crate::ir::{
     DeftypeDef, DeftypeFieldDef, FieldType,
 };
 
-/// Lower analyzed module to IR
+/// Lowering mode - controls whether runtime helpers are included in function indices
+#[derive(Clone, Copy, PartialEq)]
+pub enum LoweringMode {
+    /// Full mode: Runtime helpers and protocol impls are included (for REPL/eval)
+    Full,
+    /// Component mode: No runtime helpers, user functions start at index 0 (for compile_files)
+    Component,
+}
+
+/// Lower analyzed module to IR with full runtime helpers
 pub fn lower(module: &AnalyzedModule) -> CompileResult<Module> {
-    let mut lowerer = Lowerer::new();
+    let mut lowerer = Lowerer::new(LoweringMode::Full);
+    lowerer.lower_module(module)
+}
+
+/// Lower analyzed module to IR for component output (no runtime helpers)
+pub fn lower_for_component(module: &AnalyzedModule) -> CompileResult<Module> {
+    let mut lowerer = Lowerer::new(LoweringMode::Component);
     lowerer.lower_module(module)
 }
 
@@ -56,6 +71,8 @@ struct UserTypeInfo {
 
 struct Lowerer {
     module: Module,
+    /// Lowering mode - controls function index calculation
+    mode: LoweringMode,
     /// Map from symbol name to (local index, type) for current function
     locals: HashMap<String, (u32, Type)>,
     /// Type info for anonymous locals (created by or, min, max, abs, etc.)
@@ -99,7 +116,7 @@ struct Lowerer {
 }
 
 impl Lowerer {
-    fn new() -> Self {
+    fn new(mode: LoweringMode) -> Self {
         // Pre-populate method_protocols with built-in protocol methods
         // Format: method_name -> [(protocol_name, arity), ...]
         let mut method_protocols = HashMap::new();
@@ -133,6 +150,7 @@ impl Lowerer {
 
         Self {
             module: Module::new(),
+            mode,
             locals: HashMap::new(),
             local_types: HashMap::new(),
             next_local: 0,
@@ -206,13 +224,27 @@ impl Lowerer {
 
         // Lower deftypes first - assigns GC type indices and type IDs
         // This creates constructor functions which are added first
+        // Built-in types (reserved_type_id < NUM_GC_TYPES) skip constructor generation
         self.lower_deftypes(&analyzed.deftypes)?;
-        let num_deftype_constructors = analyzed.deftypes.len() as u32;
+        let num_deftype_constructors = analyzed
+            .deftypes
+            .iter()
+            .filter(|dt| {
+                // Count only deftypes that generate constructors
+                dt.reserved_type_id.map_or(true, |id| id >= gc_types::NUM_GC_TYPES)
+            })
+            .count() as u32;
 
-        // Build function index map - indices start after imports + runtime helpers + protocol impls + deftype constructors
+        // Build function index map
+        // In Full mode: indices start after imports + runtime helpers + protocol impls + deftype constructors
+        // In Component mode: indices start after imports + deftype constructors (no runtime helpers)
         use crate::ir::gc_types;
+        let func_offset = match self.mode {
+            LoweringMode::Full => gc_types::USER_FUNC_OFFSET,
+            LoweringMode::Component => 0,
+        };
         for (idx, func) in analyzed.functions.iter().enumerate() {
-            let func_idx = self.num_imports + gc_types::USER_FUNC_OFFSET + num_deftype_constructors + idx as u32;
+            let func_idx = self.num_imports + func_offset + num_deftype_constructors + idx as u32;
             self.func_indices.insert(func.name.clone(), func_idx);
         }
 
@@ -293,13 +325,15 @@ impl Lowerer {
                 self.next_local += 1;
 
                 // env[cap_idx] - ArrayGet from env
+                // Note: index must be a boxed integer (Int), not RawI32,
+                // because codegen for ArrayGet expects an i31ref to unbox
                 let env_get = Expr::ArrayGet {
                     type_idx: gc_types::TRIE_NODE,
                     array: Box::new(Expr::LocalGet {
                         local: env,
                         ty: Type::GcRef,
                     }),
-                    index: Box::new(Expr::RawI32(cap_idx as i32)),
+                    index: Box::new(Expr::Int(cap_idx as i64)),
                 };
                 capture_bindings.push((local_idx, env_get));
             }
@@ -752,8 +786,15 @@ impl Lowerer {
     /// Look up a field in user-defined types.
     /// Returns (gc_type_idx, field_idx, field_type) if found.
     /// Field index is offset by 1 to account for type_id at field 0.
+    ///
+    /// Note: Skips types with reserved IDs (gc_type_idx < NUM_GC_TYPES) as their
+    /// fields are handled by hardcoded mappings with different boxing semantics.
     fn lookup_user_field(&self, field_name: &str) -> Option<(u32, u32, FieldType)> {
         for info in self.user_types.values() {
+            // Skip reserved types - their fields use hardcoded mappings
+            if info.gc_type_idx < gc_types::NUM_GC_TYPES {
+                continue;
+            }
             for (idx, field) in info.fields.iter().enumerate() {
                 if field.name == field_name {
                     // Field 0 is type_id, so user fields start at index 1
@@ -2412,7 +2453,11 @@ impl Lowerer {
             self.module.deftypes.push(deftype_def);
 
             // Generate constructor function ->TypeName
-            self.lower_deftype_constructor(&deftype.name, gc_type_idx, type_id, &fields)?;
+            // Skip constructors for built-in types (gc_type_idx < NUM_GC_TYPES) since they
+            // use hardcoded struct layouts with specific field types
+            if gc_type_idx >= gc_types::NUM_GC_TYPES {
+                self.lower_deftype_constructor(&deftype.name, gc_type_idx, type_id, &fields)?;
+            }
 
             // Handle protocol implementations (similar to extend-type)
             for impl_ in &deftype.implementations {
@@ -2455,9 +2500,11 @@ impl Lowerer {
         // 1. deftype constructors (added in lower_deftypes)
         // 2. analyzed functions (added after lower_deftypes)
         // 3. closures (added after analyzed functions)
-        let func_idx = self.num_imports
-            + gc_types::USER_FUNC_OFFSET
-            + self.module.functions.len() as u32;
+        let func_offset = match self.mode {
+            LoweringMode::Full => gc_types::USER_FUNC_OFFSET,
+            LoweringMode::Component => 0,
+        };
+        let func_idx = self.num_imports + func_offset + self.module.functions.len() as u32;
 
         self.func_indices.insert(constructor_name.clone(), func_idx);
 

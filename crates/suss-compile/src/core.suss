@@ -125,6 +125,16 @@
   (bit-count (bit-and bitmap (- bit 1))))
 
 ;; ============================================================
+;; HAMT Node Types (Bootstrap - reserved type indices)
+;; ============================================================
+;; These types are used by the runtime HAMT helpers in codegen.rs.
+;; The ^:type-id metadata reserves indices 5-7 for backward compatibility.
+
+(deftype ^:type-id 5 BitmapIndexedNode [^i32 bitmap arr])
+(deftype ^:type-id 6 ArrayNode [^i32 cnt arr])
+(deftype ^:type-id 7 HashCollisionNode [^i32 hash ^i32 cnt arr])
+
+;; ============================================================
 ;; HAMT Node Traversal Functions
 ;; ============================================================
 

@@ -528,8 +528,8 @@ impl Compiler {
         // Analyze the source
         let module = analyze::analyze(&exprs, &resolve, *world_id)?;
 
-        // Lower to IR
-        let ir = lower::lower(&module)?;
+        // Lower to IR (Component mode - no runtime helpers in output)
+        let ir = lower::lower_for_component(&module)?;
 
         // Generate core WASM module
         let core_wasm = codegen::generate(&ir, &resolve, *world_id)?;
@@ -615,8 +615,8 @@ impl Compiler {
         // Analyze the source
         let module = analyze::analyze(&exprs, &resolve, *world_id)?;
 
-        // Lower to IR
-        let ir = lower::lower(&module)?;
+        // Lower to IR (Component mode - no runtime helpers in output)
+        let ir = lower::lower_for_component(&module)?;
 
         // Generate core WASM module
         let core_wasm = codegen::generate(&ir, &resolve, *world_id)?;
@@ -767,8 +767,8 @@ impl Compiler {
         // Analyze the source
         let module = analyze::analyze(&all_exprs, &resolve, *world_id)?;
 
-        // Lower to IR
-        let ir = lower::lower(&module)?;
+        // Lower to IR (Component mode - no runtime helpers in output)
+        let ir = lower::lower_for_component(&module)?;
 
         // Generate core WASM module
         let core_wasm = codegen::generate(&ir, &resolve, *world_id)?;
