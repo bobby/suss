@@ -1001,13 +1001,17 @@ impl<'a> CodeGen<'a> {
         ]);
         debug_assert_eq!(gc_types::CONS, 4);
 
-        // Type 5: BITMAP_INDEXED_NODE - struct { type_id: i32, bitmap: i32, arr: ref array<eqref> }
-        // Sparse HAMT node with ≤16 entries
-        // arr contains [key0, val0, key1, val1, ..., null, child, ...]
+        // Define trie_node_ref for HAMT node arr fields
+        // Using specific (ref null 3) type makes HAMT nodes structurally distinct
+        // from PersistentMap, avoiding WASM GC structural typing confusion
         let trie_node_ref = ValType::Ref(RefType {
             nullable: true,
             heap_type: HeapType::Concrete(gc_types::TRIE_NODE),
         });
+
+        // Type 5: BITMAP_INDEXED_NODE - struct { type_id: i32, bitmap: i32, arr: ref array<eqref> }
+        // Sparse HAMT node with ≤16 entries
+        // arr contains [key0, val0, key1, val1, ..., null, child, ...]
         types.ty().struct_(vec![
             type_id_field.clone(),
             FieldType {
@@ -1132,6 +1136,7 @@ impl<'a> CodeGen<'a> {
         // Must be defined BEFORE closure struct types so structs can reference them.
         // =========================================================================
 
+        // Use trie_node_ref (already defined above) for closure env array access
         let env_type = trie_node_ref.clone(); // (ref null 3) for env array access
 
         // Type 11: CLOSURE_FN_0 - (env) -> result
@@ -6466,6 +6471,48 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::LocalGet(new_arr_local));
                 Ok(())
             }
+            Expr::ArrayCopy {
+                type_idx,
+                dst,
+                dst_offset,
+                src,
+                src_offset,
+                len,
+            } => {
+                // Emit array.copy instruction
+                // Stack: dst dst_offset src src_offset len -> (nothing)
+                // Returns nil after the copy
+                self.generate_expr_wit(dst, f, param_offset)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                self.generate_expr_wit(dst_offset, f, param_offset)?;
+                // Unbox dst_offset from i31ref to i32
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+                self.generate_expr_wit(src, f, param_offset)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                self.generate_expr_wit(src_offset, f, param_offset)?;
+                // Unbox src_offset from i31ref to i32
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+                self.generate_expr_wit(len, f, param_offset)?;
+                // Unbox len from i31ref to i32
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+                f.instruction(&Instruction::ArrayCopy {
+                    array_type_index_dst: *type_idx,
+                    array_type_index_src: *type_idx,
+                });
+                // Return nil
+                f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                Ok(())
+            }
             Expr::BitCount(value) => {
                 // Unbox i31ref, compute popcnt, rebox as i31ref
                 self.generate_expr_wit(value, f, param_offset)?;
@@ -7157,6 +7204,14 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::I31GetS);
             }
 
+            Expr::RefCastI31(value) => {
+                self.generate_expr(value, f)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Abstract {
+                    shared: false,
+                    ty: AbstractHeapType::I31,
+                }));
+            }
+
             Expr::StructNew { type_idx, fields } => {
                 for field in fields {
                     self.generate_expr(field, f)?;
@@ -7339,6 +7394,48 @@ impl<'a> CodeGen<'a> {
                 });
                 // Return the new array
                 f.instruction(&Instruction::LocalGet(new_arr_local));
+            }
+
+            Expr::ArrayCopy {
+                type_idx,
+                dst,
+                dst_offset,
+                src,
+                src_offset,
+                len,
+            } => {
+                // Emit array.copy instruction
+                // Stack: dst dst_offset src src_offset len -> (nothing)
+                // Returns nil after the copy
+                self.generate_expr(dst, f)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                self.generate_expr(dst_offset, f)?;
+                // Unbox dst_offset from i31ref to i32
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+                self.generate_expr(src, f)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                self.generate_expr(src_offset, f)?;
+                // Unbox src_offset from i31ref to i32
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+                self.generate_expr(len, f)?;
+                // Unbox len from i31ref to i32
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+                f.instruction(&Instruction::ArrayCopy {
+                    array_type_index_dst: *type_idx,
+                    array_type_index_src: *type_idx,
+                });
+                // Return nil
+                f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+                f.instruction(&Instruction::RefI31);
             }
 
             Expr::BitCount(value) => {

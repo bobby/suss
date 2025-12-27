@@ -135,6 +135,20 @@
 (deftype ^:type-id 7 HashCollisionNode [^i32 hash ^i32 cnt arr])
 
 ;; ============================================================
+;; Built-in Collection Types (reserved type indices)
+;; ============================================================
+;; These enable ->TypeName constructors for core collection types.
+;; Field layouts match the hardcoded structs in codegen.rs.
+
+(deftype ^:type-id 4 Cons [first rest])
+
+(deftype ^:type-id 8 PersistentVector [^i32 cnt ^i32 shift root tail])
+
+(deftype ^:type-id 9 PersistentMap [^i32 map-cnt map-root])
+
+(deftype ^:type-id 10 PersistentSet [^i32 set-cnt set-root ^i32 _marker])
+
+;; ============================================================
 ;; HAMT Node Traversal Functions
 ;; ============================================================
 
@@ -199,3 +213,28 @@
     (instance? HashCollisionNode node) (hcn-find node hash key not-found)
     :else not-found))
 
+;; ============================================================
+;; Protocol Implementations
+;; ============================================================
+
+(extend-type PersistentVector
+  IIndexed
+  (-nth [v idx]
+    (aget (array-for v idx) (bit-and idx 31)))
+
+  ISeq
+  ;; NOTE: Inlined array-for call instead of calling (-nth v 0) because
+  ;; protocol-from-protocol calls have a bug in Component lowering mode.
+  ;; TODO: Fix the underlying issue and restore (-nth v 0) call.
+  (-first [v]
+    (if (> (.-cnt v) 0)
+      (aget (array-for v 0) 0)
+      nil))
+  (-rest [v] nil))  ;; TODO: ChunkedSeq/IndexedSeq
+
+;; ICollection/-conj implementation is blocked by a codegen bug in WIT mode.
+;; In generate_expr_wit_inner, the fallthrough to generate_expr at line 6533
+;; loses the param_offset context, causing StructNew and other expressions
+;; to use incorrect local indices in the WIT local layout.
+;; See: VEC_CONJ migration blocked in Phase 5.
+;; For now, VEC_CONJ remains in codegen.rs as a hardcoded wrapper.

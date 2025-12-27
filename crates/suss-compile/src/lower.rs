@@ -98,6 +98,9 @@ struct Lowerer {
     /// Total number of analyzed (module-level) functions
     /// Used to calculate closure wrapper indices correctly
     num_analyzed_funcs: u32,
+    /// Number of deftype constructor functions
+    /// Used to calculate closure wrapper indices correctly
+    num_deftype_constructors: u32,
     /// Cached indices for built-in wrapper functions: builtin_name -> func_idx
     builtin_wrappers: HashMap<String, u32>,
     /// User-defined protocol method IDs: "ProtocolName/method_name/arity" -> method_id
@@ -163,6 +166,7 @@ impl Lowerer {
             closure_counter: 0,
             pending_closures: Vec::new(),
             num_analyzed_funcs: 0,
+            num_deftype_constructors: 0,
             builtin_wrappers: HashMap::new(),
             user_method_ids: HashMap::new(),
             method_protocols,
@@ -223,17 +227,19 @@ impl Lowerer {
         self.num_analyzed_funcs = analyzed.functions.len() as u32;
 
         // Lower deftypes first - assigns GC type indices and type IDs
-        // This creates constructor functions which are added first
-        // Built-in types (reserved_type_id < NUM_GC_TYPES) skip constructor generation
+        // This creates constructor functions for deftypes (skipping HAMT nodes 5-7)
         self.lower_deftypes(&analyzed.deftypes)?;
-        let num_deftype_constructors = analyzed
+        // Count only deftypes that generate constructors (skip HAMT nodes 5-7)
+        self.num_deftype_constructors = analyzed
             .deftypes
             .iter()
             .filter(|dt| {
-                // Count only deftypes that generate constructors
-                dt.reserved_type_id.map_or(true, |id| id >= gc_types::NUM_GC_TYPES)
+                use crate::ir::gc_types;
+                let gc_type_idx = dt.reserved_type_id.unwrap_or(gc_types::NUM_GC_TYPES);
+                gc_type_idx < gc_types::BITMAP_INDEXED_NODE || gc_type_idx > gc_types::HASH_COLLISION_NODE
             })
             .count() as u32;
+        let num_deftype_constructors = self.num_deftype_constructors;
 
         // Build function index map
         // In Full mode: indices start after imports + runtime helpers + protocol impls + deftype constructors
@@ -657,6 +663,7 @@ impl Lowerer {
             "aset" => self.lower_aset(args),
             "alength" => self.lower_alength(args),
             "aclone" => self.lower_aclone(args),
+            "acopy" => self.lower_acopy(args),
             "make-array" => self.lower_make_array(args),
 
             // Type checking
@@ -1077,10 +1084,10 @@ impl Lowerer {
         self.closure_counter += 1;
 
         // Calculate wrapper function index in IR
-        // Closures are added after all analyzed functions, so the index is:
-        // num_analyzed_funcs + number of pending closures (before this one)
+        // Closures are added after deftype constructors and analyzed functions, so the index is:
+        // num_deftype_constructors + num_analyzed_funcs + number of pending closures (before this one)
         let num_pending = self.pending_closures.len() as u32;
-        let wrapper_idx = self.num_analyzed_funcs + num_pending;
+        let wrapper_idx = self.num_deftype_constructors + self.num_analyzed_funcs + num_pending;
 
         // Register wrapper function name for the index
         self.func_indices.insert(wrapper_name.clone(), wrapper_idx);
@@ -2097,7 +2104,7 @@ impl Lowerer {
 
         // Calculate wrapper function index
         let num_pending = self.pending_closures.len() as u32;
-        let wrapper_idx = self.num_analyzed_funcs + num_pending;
+        let wrapper_idx = self.num_deftype_constructors + self.num_analyzed_funcs + num_pending;
 
         // Register wrapper function
         self.func_indices.insert(wrapper_name.clone(), wrapper_idx);
@@ -2144,7 +2151,7 @@ impl Lowerer {
         }
 
         // Generate 9 wrapper functions (one per arity 0-8)
-        let base_idx = self.num_analyzed_funcs + self.pending_closures.len() as u32;
+        let base_idx = self.num_deftype_constructors + self.num_analyzed_funcs + self.pending_closures.len() as u32;
 
         for arity in 0..=8u32 {
             let wrapper_name = format!(
@@ -2453,9 +2460,9 @@ impl Lowerer {
             self.module.deftypes.push(deftype_def);
 
             // Generate constructor function ->TypeName
-            // Skip constructors for built-in types (gc_type_idx < NUM_GC_TYPES) since they
-            // use hardcoded struct layouts with specific field types
-            if gc_type_idx >= gc_types::NUM_GC_TYPES {
+            // Skip constructors for HAMT node types (gc_type_idx 5-7) since they use
+            // specific array types (ref $TRIE_NODE) that require special handling
+            if gc_type_idx < gc_types::BITMAP_INDEXED_NODE || gc_type_idx > gc_types::HASH_COLLISION_NODE {
                 self.lower_deftype_constructor(&deftype.name, gc_type_idx, type_id, &fields)?;
             }
 
@@ -2538,7 +2545,8 @@ impl Lowerer {
             let field_value = match field.field_type {
                 FieldType::I32 => {
                     // Unbox: (i31.get_s (ref.cast i31 arg))
-                    Expr::I31GetS(Box::new(local_get))
+                    // Need to cast eqref to i31ref before calling i31.get_s
+                    Expr::I31GetS(Box::new(Expr::RefCastI31(Box::new(local_get))))
                 }
                 FieldType::I64 => {
                     // Unbox: (struct.get $LARGE_INT 1 (ref.cast ... arg))
@@ -2790,6 +2798,31 @@ impl Lowerer {
         Ok(Expr::ArrayClone {
             type_idx: gc_types::TRIE_NODE,
             array: Box::new(array),
+        })
+    }
+
+    /// Lower (acopy dst dst-offset src src-offset len) -> ArrayCopy
+    /// Copies elements between TRIE_NODE arrays. Returns nil.
+    fn lower_acopy(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 5 {
+            return Err(CompileError::Parse(
+                "acopy requires exactly 5 arguments: dst dst-offset src src-offset len".into(),
+            ));
+        }
+        let dst = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        let dst_offset = self.with_tail_disabled(|l| l.lower_expr(&args[1]))?;
+        let src = self.with_tail_disabled(|l| l.lower_expr(&args[2]))?;
+        let src_offset = self.with_tail_disabled(|l| l.lower_expr(&args[3]))?;
+        let len = self.with_tail_disabled(|l| l.lower_expr(&args[4]))?;
+
+        // Use TRIE_NODE as the default array type
+        Ok(Expr::ArrayCopy {
+            type_idx: gc_types::TRIE_NODE,
+            dst: Box::new(dst),
+            dst_offset: Box::new(dst_offset),
+            src: Box::new(src),
+            src_offset: Box::new(src_offset),
+            len: Box::new(len),
         })
     }
 

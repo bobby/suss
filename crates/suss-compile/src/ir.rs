@@ -808,6 +808,7 @@ impl Expr {
             // GC operations - all produce GC references or i32
             Expr::I31New(_) => Type::GcRef,
             Expr::I31GetS(_) => Type::I32,
+            Expr::RefCastI31(_) => Type::GcRef, // Ref cast to i31 returns GcRef (specifically i31ref subtype)
             Expr::StructNew { .. } => Type::GcRef,
             Expr::StructGet { .. } => Type::GcRef, // Field could be any type, but in GC mode it's eqref
             Expr::ArrayNew { .. } => Type::GcRef,
@@ -817,6 +818,7 @@ impl Expr {
             Expr::ArraySet { .. } => Type::GcRef, // Returns the value that was set
             Expr::ArrayNewDefault { .. } => Type::GcRef,
             Expr::ArrayClone { .. } => Type::GcRef,
+            Expr::ArrayCopy { .. } => Type::GcRef, // Returns nil (side-effect only)
             Expr::BitCount(_) => Type::GcRef, // Returns boxed i31ref
             Expr::RefTestI31(_) => Type::I32, // Boolean result
             Expr::RefTest { .. } => Type::I32, // Boolean result
@@ -973,6 +975,10 @@ pub enum Expr {
     /// Extract signed i32 from i31ref
     I31GetS(Box<Expr>),
 
+    /// Cast an eqref to i31ref (ref.cast i31)
+    /// Used when we know the value is an i31 but have an eqref
+    RefCastI31(Box<Expr>),
+
     /// Create a GC struct instance
     /// Fields are evaluated in order and passed to struct.new
     StructNew {
@@ -1029,6 +1035,17 @@ pub enum Expr {
     ArrayClone {
         type_idx: u32,
         array: Box<Expr>,
+    },
+
+    /// Copy elements between arrays (WASM GC array.copy)
+    /// Returns nil (the statement has side effects only)
+    ArrayCopy {
+        type_idx: u32,
+        dst: Box<Expr>,
+        dst_offset: Box<Expr>,
+        src: Box<Expr>,
+        src_offset: Box<Expr>,
+        len: Box<Expr>,
     },
 
     /// Population count (number of 1 bits) - for HAMT bitmap operations

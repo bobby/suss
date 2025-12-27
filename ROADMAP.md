@@ -93,6 +93,11 @@ Function Index Layout:
 ### Blocking Issues
 - None currently blocking
 
+### Known Bugs
+- **Protocol-from-protocol calls in Component mode**: Calling a protocol method from within another protocol method implementation (e.g., `-first` calling `-nth`) generates invalid WASM in `LoweringMode::Component`. The workaround is to inline the implementation. Works correctly in `LoweringMode::Full` (expression mode). Issue manifests as "type mismatch: expected eqref but nothing on stack" during WASM validation. Root cause likely in scratch local allocation during `generate_protocol_dispatch_table`.
+
+- **WIT param_offset not propagated in expression fallthrough**: In `generate_expr_wit_inner` (codegen.rs:6533), the fallthrough to `generate_expr` loses the `param_offset` context. This causes expressions like `StructNew`, `ArrayNew`, etc. to use incorrect local indices when executed in WIT mode. Symptom: "type mismatch: expected i32, found eqref" errors. This blocks migrating VEC_CONJ to core.suss. Fix requires either passing param_offset through all generate_expr calls, or implementing WIT-aware versions of all expression types.
+
 ---
 
 ## Priority Zero: Compositional Primitives ✓ COMPLETE
@@ -357,115 +362,17 @@ The reserved type ID approach ensures:
 
 ---
 
-## Phase 5: Pure Suss Collection Algorithms
+## Phase 5: Protocol Impls in core.suss (MOVED UP - was Phase 6)
 
-> **Dependency:** Requires Phase 4 (HAMT nodes as deftype) for `.-field` access on nodes.
-> Can be done incrementally - each function can be migrated independently.
+> **Dependency:** Requires Phase 4 (HAMT nodes as deftype).
+> **CRITICAL:** This phase must come BEFORE algorithm migration (old Phase 5, now Phase 6).
+>
+> **Why this order matters:** The Rust protocol wrappers (`VEC_NTH`, `VEC_CONJ`, etc.) pass raw i32 values
+> to helper functions. Core.suss functions expect boxed eqref values. If we try to remove helpers first,
+> we get type mismatches. By moving protocol impls to core.suss first, they naturally use boxed values,
+> and then the raw helper versions become unnecessary.
 
-Move all collection algorithms from Rust codegen to core.suss.
-
-### HAMT Find Functions (Already in core.suss)
-
-core.suss already has Suss implementations:
-- `bin-find` - BitmapIndexedNode lookup
-- `an-find` - ArrayNode lookup
-- `hcn-find` - HashCollisionNode lookup
-- `inode-find` - Type-dispatching wrapper
-
-**Task:** Remove duplicate Rust implementations from codegen.rs:
-- [ ] Remove helper_funcs::BIN_FIND, AN_FIND, HCN_FIND, INODE_FIND
-- [ ] Wire `generate_map_get` to call core.suss `inode-find`
-
-**Acceptance tests:**
-```clojure
-;; Test: Map lookup uses core.suss inode-find
-(get {:a 1 :b 2} :a)  ;; → 1
-(get {:a 1 :b 2} :c)  ;; → nil
-(get {:a 1 :b 2} :c :default)  ;; → :default
-```
-
-### HAMT Assoc Functions (Move to core.suss)
-
-```clojure
-;; Add to core.suss:
-(defn bin-assoc [node shift hash key val]
-  (let [bit (hamt-bitpos hash shift)
-        idx (hamt-index (.-bitmap node) bit)]
-    ...))
-
-(defn an-assoc [node shift hash key val] ...)
-(defn hcn-assoc [node hash key val] ...)
-(defn inode-assoc [node shift hash key val] ...)
-(defn create-node [shift key1 val1 hash2 key2 val2] ...)
-```
-
-**Tasks:**
-- [ ] Implement `inode-assoc`, `bin-assoc`, `an-assoc`, `hcn-assoc` in core.suss
-- [ ] Implement `create-node` for hash collisions
-- [ ] Remove Rust versions from codegen.rs
-
-**Acceptance tests:**
-```clojure
-;; Test 1: Basic assoc
-(assoc {} :a 1)  ;; → {:a 1}
-
-;; Test 2: Assoc to existing key (update)
-(assoc {:a 1} :a 2)  ;; → {:a 2}
-
-;; Test 3: Multiple assocs
-(-> {} (assoc :a 1) (assoc :b 2) (assoc :c 3))  ;; → {:a 1 :b 2 :c 3}
-
-;; Test 4: Hash collision handling (requires keys with same hash)
-;; (implementation-specific test)
-```
-
-### HAMT Dissoc Functions (Move to core.suss)
-
-- [ ] Implement `inode-dissoc`, `bin-dissoc`, `an-dissoc`, `hcn-dissoc`
-- [ ] Remove Rust versions
-
-**Acceptance tests:**
-```clojure
-(dissoc {:a 1 :b 2} :a)  ;; → {:b 2}
-(dissoc {:a 1} :a)  ;; → {}
-(dissoc {} :a)  ;; → {}
-```
-
-### Vector Trie Functions (Partially in core.suss)
-
-core.suss already has:
-- `tail-off` - Calculate tail start index
-- `hamt-mask`, `hamt-bitpos`, `hamt-index` - HAMT helpers
-
-**Still needed in core.suss:**
-- [ ] `array-for` - Get leaf array for index (trie traversal)
-- [ ] `new-path` - Create path from root to node
-- [ ] `push-tail` - Insert tail into trie
-
-**Task:** Remove duplicate Rust implementations:
-- [ ] Remove helper_funcs::VEC_TAIL_OFF, VEC_ARRAY_FOR, VEC_NEW_PATH, VEC_PUSH_TAIL
-- [ ] Wire vector operations to use core.suss functions
-
-**Acceptance tests:**
-```clojure
-;; Test 1: Vector with >32 elements uses trie
-(nth (into [] (range 100)) 50)  ;; → 50
-
-;; Test 2: conj on large vector
-(count (conj (into [] (range 100)) :new))  ;; → 101
-
-;; Test 3: Nested trie access
-(nth (into [] (range 2000)) 1500)  ;; → 1500
-```
-
----
-
-## Phase 6: Collection Protocol Impls in core.suss
-
-> **Dependency:** Requires Phase 5 (pure Suss algorithms) for `array-for`, `inode-find`, etc.
-> Can be done incrementally - each extend-type can be migrated independently.
-
-Move the 14 protocol implementation wrapper functions from Rust to `extend-type` in core.suss.
+Move the protocol implementation wrapper functions from Rust to `extend-type` in core.suss.
 
 ### Current State (codegen.rs protocol_impl_funcs)
 ```rust
@@ -528,10 +435,15 @@ SET_COUNT, SET_CONTAINS, SET_CONJ
       (if (nil? c) n (recur (+ n 1) (.-rest c))))))
 ```
 
-**Tasks:**
-- [ ] Add `extend-type` declarations to core.suss
-- [ ] Remove protocol_impl_funcs from codegen.rs
-- [ ] Dispatch table now populated from core.suss extend-type declarations
+**Progress:**
+- [x] Add `extend-type` declarations to core.suss for PersistentVector (IIndexed/-nth, ISeq/-first/-rest)
+- [x] Add built-in type deftypes to core.suss (Cons, PersistentVector, PersistentMap, PersistentSet)
+- [x] Enable constructor generation for reserved deftypes (`->PersistentVector`, etc.)
+- [x] Add `acopy` primitive for efficient array copying (WASM array.copy)
+- [ ] Migrate VEC_CONJ to core.suss (**BLOCKED** - see Known Bugs: WIT param_offset)
+- [ ] Migrate SET_CONJ to core.suss (requires inode-assoc helper from Phase 6)
+- [ ] Remove remaining protocol_impl_funcs from codegen.rs
+- [ ] Dispatch table fully populated from core.suss extend-type declarations
 
 **Acceptance tests:**
 ```clojure
@@ -560,6 +472,127 @@ SET_COUNT, SET_CONTAINS, SET_CONJ
 ;; Test 5: Polymorphic dispatch works
 (let [colls [[1 2 3] {:a 1} #{1 2}]]
   (map count colls))  ;; → (3 2 2)
+```
+
+---
+
+## Phase 6: Pure Suss Collection Algorithms
+
+> **Dependency:** Requires Phase 5 (protocol impls in core.suss).
+> **Note:** After Phase 5, protocol impls use boxed eqref values consistently, so these helpers can migrate cleanly.
+
+Move collection algorithm helpers from hardcoded Rust to pure Suss in core.suss.
+
+### Current State (codegen.rs helper_funcs)
+
+**Vector Trie Operations (4 functions):**
+```rust
+VEC_TAIL_OFF    // Calculate tail offset from count
+VEC_NEW_PATH    // Create new trie path during growth
+VEC_ARRAY_FOR   // Navigate trie to find leaf array
+VEC_PUSH_TAIL   // Add element to tail, growing tree if needed
+```
+
+**HAMT Operations (16 functions):**
+```rust
+// Core HAMT algorithms
+HAMT_BITPOS     // Calculate bit position from hash
+HAMT_INDEX      // Calculate array index using popcount
+
+// Find operations
+INODE_FIND      // Type dispatch for find
+BIN_FIND        // BitmapIndexedNode find
+AN_FIND         // ArrayNode find
+HCN_FIND        // HashCollisionNode find
+
+// Assoc operations
+INODE_ASSOC     // Type dispatch for assoc
+BIN_ASSOC       // BitmapIndexedNode insert
+AN_ASSOC        // ArrayNode insert
+HCN_ASSOC       // HashCollisionNode insert
+CREATE_NODE     // Create appropriate node type
+
+// Dissoc operations
+INODE_DISSOC    // Type dispatch for dissoc
+BIN_DISSOC      // BitmapIndexedNode remove
+AN_DISSOC       // ArrayNode remove
+HCN_DISSOC      // HashCollisionNode remove
+```
+
+### Target State (core.suss)
+
+Many of these are already in core.suss but have duplicate hardcoded versions:
+
+```clojure
+;; Already in core.suss (need to remove hardcoded duplicates):
+(defn tail-off [cnt] ...)
+(defn new-path [level node] ...)
+(defn array-for [v i] ...)
+(defn push-tail [v level parent tailnode] ...)
+
+(defn hamt-mask [hash shift] ...)
+(defn hamt-bitpos [hash shift] ...)
+(defn hamt-index [bitmap bit] ...)
+
+(defn bin-find [node shift hash key not-found] ...)
+(defn an-find [node shift hash key not-found] ...)
+(defn hcn-find [node hash key not-found] ...)
+(defn inode-find [node shift hash key not-found] ...)
+
+;; Need to add (currently hardcoded only):
+(defn bin-assoc [node shift hash key val added-leaf] ...)
+(defn an-assoc [node shift hash key val added-leaf] ...)
+(defn hcn-assoc [node hash key val added-leaf] ...)
+(defn inode-assoc [node shift hash key val added-leaf] ...)
+(defn create-node [shift key1 val1 key2 val2] ...)
+
+(defn bin-dissoc [node shift hash key] ...)
+(defn an-dissoc [node shift hash key] ...)
+(defn hcn-dissoc [node hash key] ...)
+(defn inode-dissoc [node shift hash key] ...)
+```
+
+### Migration Challenge
+
+The challenge is that protocol impls (Phase 5) call these helpers:
+- `VEC_CONJ` calls `tail-off`, `new-path`, `push-tail`
+- `VEC_NTH` calls `array-for`
+- `MAP_LOOKUP` calls `inode-find`
+- `MAP_ASSOC` calls `inode-assoc`
+- `SET_CONJ` calls `inode-assoc`
+
+**Solution:** After Phase 5, protocol impls are in core.suss and naturally use the core.suss helper functions. Then we can delete the hardcoded duplicates.
+
+### Tasks
+
+**Phase 6a - Remove duplicate helpers (already in core.suss):**
+- [ ] Switch protocol callers from `helper_func_idx()` to `core_func_idx()`
+- [ ] Remove `VEC_TAIL_OFF`, `VEC_NEW_PATH`, `VEC_ARRAY_FOR`, `VEC_PUSH_TAIL`
+- [ ] Remove `HAMT_BITPOS`, `HAMT_INDEX`
+- [ ] Remove `INODE_FIND`, `BIN_FIND`, `AN_FIND`, `HCN_FIND`
+
+**Phase 6b - Add assoc helpers to core.suss:**
+- [ ] Implement `bin-assoc`, `an-assoc`, `hcn-assoc`, `inode-assoc`, `create-node`
+- [ ] Remove hardcoded versions from codegen.rs
+
+**Phase 6c - Add dissoc helpers to core.suss:**
+- [ ] Implement `bin-dissoc`, `an-dissoc`, `hcn-dissoc`, `inode-dissoc`
+- [ ] Remove hardcoded versions from codegen.rs
+
+### Acceptance Tests
+
+```clojure
+;; All existing collection tests must pass
+(conj [1 2 3] 4)  ;; → [1 2 3 4]
+(nth [10 20 30] 1)  ;; → 20
+(get {:a 1} :a)  ;; → 1
+(assoc {:a 1} :b 2)  ;; → {:a 1 :b 2}
+(dissoc {:a 1 :b 2} :a)  ;; → {:b 2}
+(conj #{1 2} 3)  ;; → #{1 2 3}
+(disj #{1 2 3} 2)  ;; → #{1 3}
+
+;; Large collections (stress tests)
+(count (loop [v [] i 0] (if (< i 1000) (recur (conj v i) (+ i 1)) v)))  ;; → 1000
 ```
 
 ---
@@ -712,11 +745,16 @@ Proper sequence abstraction for all collections.
 
 ```
 Phase 3.1 ──→ Phase 3.3 ──→ Phase 4 ──→ Phase 5 ──→ Phase 6 ──→ Phase 7
-(deftype)    (reserved)   (HAMT nodes) (algorithms) (protocols) (cleanup)
+(deftype)    (reserved)   (HAMT nodes) (protocols) (algorithms) (cleanup)
               ↓
            Phase 3.2
            (inline protocols)
 ```
+
+**Why Phase 5 before Phase 6:**
+The Rust protocol wrappers pass raw i32 values to helper functions. Core.suss functions expect boxed eqref.
+By moving protocol impls to core.suss first (Phase 5), they naturally use boxed values.
+Then the raw i32 helper functions become dead code that can be removed (Phase 6).
 
 | Phase | What | Blocking? | Status |
 |-------|------|-----------|--------|
@@ -724,8 +762,8 @@ Phase 3.1 ──→ Phase 3.3 ──→ Phase 4 ──→ Phase 5 ──→ Phas
 | **3.2** | deftype with inline protocols | No | Pending |
 | **3.3** | Reserved type indices | Yes | ✓ COMPLETE |
 | **4** | HAMT nodes as deftype | Yes | ✓ COMPLETE |
-| **5** | Pure Suss algorithms | Incremental | Next |
-| **6** | Protocol impls in core.suss | Incremental | Pending |
+| **5** | Protocol impls in core.suss | Yes | **NEXT** |
+| **6** | Pure Suss algorithms | Incremental | Pending |
 | **7** | Minimize compiler | No | Pending |
 
 ### After Self-Hosting
@@ -751,10 +789,16 @@ Phase 3.1 ──→ Phase 3.3 ──→ Phase 4 ──→ Phase 5 ──→ Phas
 - [x] Types use reserved IDs matching ir.rs constants (5, 6, 7)
 - [x] All existing map/set tests still pass (207+ tests passing)
 
-### Phase 5-6 Complete When:
-- [ ] `codegen.rs` `helper_funcs` module is empty or removed
+### Phase 5 Complete When:
 - [ ] `codegen.rs` `protocol_impl_funcs` module is empty or removed
-- [ ] All collection operations dispatch to core.suss implementations
+- [ ] All collection protocol methods dispatch via core.suss `extend-type` declarations
+- [ ] PersistentVector, PersistentMap, PersistentSet, Cons protocols in core.suss
+
+### Phase 6 Complete When:
+- [ ] `codegen.rs` `helper_funcs` module has only truly irreducible helpers
+- [ ] Vector trie helpers (tail-off, array-for, new-path, push-tail) removed from Rust
+- [ ] HAMT find/assoc/dissoc helpers removed from Rust
+- [ ] Only HASH_STRING, VEC_ACLONE remain (need WASM primitives)
 
 ### Phase 7 Complete When:
 - [ ] `codegen.rs` reduced by ~40% (target: ~3000 lines from ~7000)

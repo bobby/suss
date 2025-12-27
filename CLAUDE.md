@@ -232,13 +232,16 @@ pub enum LoweringMode {
 - `.-field` access uses `struct.get` with dynamically resolved field index
 - `instance?` uses `ref.test` against the GC type index
 - User types shift helper type indices (use `helper_type()` method for dynamic offset calculation)
-- Reserved types (gc_type_idx < NUM_GC_TYPES) skip constructor generation and use hardcoded field mappings
+- Reserved types (gc_type_idx < NUM_GC_TYPES) now generate constructors (`->PersistentVector`, etc.)
+- Built-in types are declared in core.suss with `^:type-id N` metadata for bootstrap compatibility
 
 ### core.suss (Auto-Loaded Library)
 
 Following ClojureScript semantics, `core.suss` is automatically loaded before user code. It contains:
+- **Built-in collection types** with reserved type IDs (Cons, PersistentVector, PersistentMap, PersistentSet)
 - **HAMT node types** with reserved type IDs (BitmapIndexedNode, ArrayNode, HashCollisionNode)
 - Protocol definitions (ICounted, IIndexed, ISeq, ISeqable, ILookup, IAssociative, ICollection, IEquiv, IHash)
+- Protocol implementations via `extend-type` (PersistentVector: -nth, -first, -rest)
 - Vector trie helper functions (`tail-off`, `array-for`, `new-path`, `push-tail`)
 - HAMT helper functions (`hamt-mask`, `hamt-bitpos`, `hamt-index`, `bin-find`, `an-find`, `hcn-find`, `inode-find`)
 
@@ -274,6 +277,7 @@ WASM GC operations exposed to Suss for implementing protocols:
 (alength arr)        ; array.len - get array length
 (aclone arr)         ; array.copy to new array (for structural sharing)
 (make-array n)       ; array.new with nil initialization
+(acopy dst dst-off src src-off len) ; array.copy - copy elements between arrays
 ```
 
 **Null/nil checking:**

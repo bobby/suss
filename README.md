@@ -385,6 +385,7 @@ User-defined types compile to WASM GC structs with automatic:
 - `(aset arr idx val)` - Array element mutation (internal use)
 - `(aclone arr)` - Clone array (for structural sharing)
 - `(make-array n)` - Create array of size n
+- `(acopy dst dst-off src src-off len)` - Copy elements between arrays
 - `(bit-count x)` - Population count (for HAMT)
 
 #### Compilable Subset
