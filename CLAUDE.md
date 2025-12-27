@@ -182,14 +182,21 @@ Suss supports `deftype` for user-defined WASM GC struct types:
 (instance? Point p)  ;; → true
 ```
 
+**Reserved type IDs (for bootstrap types):**
+```clojure
+;; Use ^:type-id N to reserve a specific GC type index
+(deftype ^:type-id 5 BitmapIndexedNode [^i32 bitmap arr])
+```
+
 **Key files:**
 - `crates/suss-compile/src/analyze.rs` - `AnalyzedDeftype` parsing
 - `crates/suss-compile/src/ir.rs` - `DeftypeDef` intermediate representation
-- `crates/suss-compile/src/lower.rs` - Constructor generation, field access lowering
+- `crates/suss-compile/src/lower.rs` - Constructor generation, field access lowering, `LoweringMode`
 - `crates/suss-compile/src/codegen.rs` - WASM GC struct type emission
 
 **Type indices:**
 - Built-in GC types: indices 0-38 (see `gc_types` module)
+- Reserved deftypes: indices 5-7 (HAMT nodes defined in core.suss)
 - User deftypes: indices 39+ (assigned at lowering time)
 - Helper types follow user types
 - Type IDs: built-in 0-10, user types start at 256 (`USER_TYPE_BASE`)
@@ -211,6 +218,12 @@ pub struct DeftypeDef {
     pub gc_type_idx: u32,    // WASM GC type index
     pub type_id: i32,        // Runtime type ID (256+)
 }
+
+// lower.rs
+pub enum LoweringMode {
+    Full,      // REPL: includes runtime helper offset (39)
+    Component, // compile_files: no runtime helpers
+}
 ```
 
 **Implementation notes:**
@@ -219,13 +232,15 @@ pub struct DeftypeDef {
 - `.-field` access uses `struct.get` with dynamically resolved field index
 - `instance?` uses `ref.test` against the GC type index
 - User types shift helper type indices (use `helper_type()` method for dynamic offset calculation)
+- Reserved types (gc_type_idx < NUM_GC_TYPES) skip constructor generation and use hardcoded field mappings
 
 ### core.suss (Auto-Loaded Library)
 
 Following ClojureScript semantics, `core.suss` is automatically loaded before user code. It contains:
+- **HAMT node types** with reserved type IDs (BitmapIndexedNode, ArrayNode, HashCollisionNode)
 - Protocol definitions (ICounted, IIndexed, ISeq, ISeqable, ILookup, IAssociative, ICollection, IEquiv, IHash)
 - Vector trie helper functions (`tail-off`, `array-for`, `new-path`, `push-tail`)
-- HAMT helper functions (`hamt-mask`, `hamt-bitpos`, `hamt-index`)
+- HAMT helper functions (`hamt-mask`, `hamt-bitpos`, `hamt-index`, `bin-find`, `an-find`, `hcn-find`, `inode-find`)
 
 **Key file:** `crates/suss-compile/src/core.suss`
 
@@ -233,6 +248,7 @@ Following ClojureScript semantics, `core.suss` is automatically loaded before us
 1. `lib.rs` includes core.suss via `include_str!`
 2. Before compiling user code, core.suss is parsed and analyzed
 3. Protocol definitions and helper functions become available to all user code
+4. HAMT node deftypes use reserved type IDs to match hardcoded ir.rs constants
 
 **Note:** core.suss has NO `(ns ...)` declaration - all definitions are at top level.
 
