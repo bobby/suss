@@ -287,9 +287,8 @@ impl<'a> CodeGen<'a> {
                     .iter()
                     .flat_map(|(_, ty)| self.type_to_valtypes_gc(ty))
                     .collect();
-                // Only protocol method implementations get explicit type hints respected
-                // They have names like "$TypeName/-methodname"
-                let results = if func.name.contains("/-") {
+                // Functions with explicit return type hints get unboxed primitive types
+                let results = if func.has_explicit_return_type {
                     self.type_to_valtypes_for_signature(&func.return_type)
                 } else {
                     self.type_to_valtypes_gc(&func.return_type)
@@ -471,9 +470,8 @@ impl<'a> CodeGen<'a> {
                     .iter()
                     .flat_map(|(_, ty)| self.type_to_valtypes_gc(ty))
                     .collect();
-                // Only protocol method implementations get explicit type hints respected
-                // They have names like "$TypeName/-methodname"
-                let results = if func.name.contains("/-") {
+                // Functions with explicit return type hints get unboxed primitive types
+                let results = if func.has_explicit_return_type {
                     self.type_to_valtypes_for_signature(&func.return_type)
                 } else {
                     self.type_to_valtypes_gc(&func.return_type)
@@ -2501,9 +2499,8 @@ impl<'a> CodeGen<'a> {
         let mut f = Function::new(local_types);
         self.generate_expr(&func.body, &mut f)?;
 
-        // Protocol method implementations with explicit primitive return type hints
-        // need to unbox the result. They have names like "$TypeName/-methodname".
-        if func.name.contains("/-") {
+        // Functions with explicit primitive return type hints need to unbox the result
+        if func.has_explicit_return_type {
             match &func.return_type {
                 Type::I32 => {
                     // Unbox i31ref to i32: ref.cast (ref i31), i31.get_s, i32.const 1, i32.shr_s
@@ -5591,6 +5588,7 @@ mod tests {
             export_name: None,
             params: vec![],
             return_type: Type::GcRef,
+            has_explicit_return_type: false,
             locals: vec![],
             // Return nil sentinel as i31ref
             body: Expr::I31New(Box::new(Expr::Int(gc_types::NIL_SENTINEL as i64))),
@@ -5648,6 +5646,7 @@ mod tests {
             export_name: None,
             params: vec![],
             return_type: Type::GcRef,
+            has_explicit_return_type: false,
             locals: vec![],
             // Return a large int boxed in a struct
             body: Expr::StructNew {
@@ -5711,6 +5710,7 @@ mod tests {
             export_name: None,
             params: vec![],
             return_type: Type::GcRef,
+            has_explicit_return_type: false,
             locals: vec![],
             // Expr::Int(42) encodes as (42 << 1) | 1 = 85, wrapped in ref.i31
             body: Expr::Int(42),

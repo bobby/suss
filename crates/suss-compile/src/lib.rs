@@ -251,6 +251,7 @@ impl Compiler {
                                         export_name: None,
                                         params,
                                         return_type: ir::Type::GcRef,
+                                        return_type_hint: None,
                                         body,
                                     });
                                     continue;
@@ -542,6 +543,7 @@ impl Compiler {
             export_name: Some("eval".to_string()),
             params: Vec::new(),
             return_type,
+            return_type_hint: None,
             body: expr,
         });
 
@@ -607,6 +609,7 @@ impl Compiler {
             export_name: Some("eval".to_string()),
             params: Vec::new(),
             return_type,
+            return_type_hint: None,
             body: expr,
         });
 

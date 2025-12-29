@@ -396,6 +396,7 @@ impl Lowerer {
             export_name: None,
             params,
             return_type: Type::GcRef,
+            has_explicit_return_type: false,
             locals,
             body: final_body,
         })
@@ -437,12 +438,27 @@ impl Lowerer {
             locals[idx as usize] = ty.clone();
         }
 
+        // Determine return type and whether it was explicitly hinted
+        let (return_type, has_explicit_return_type) = if let Some(ref hint) = func.return_type_hint {
+            let ty = match hint.as_str() {
+                "i32" => Type::I32,
+                "i64" => Type::I64,
+                "f64" => Type::F64,
+                "eqref" => Type::GcRef,
+                _ => func.return_type.clone(), // Unknown hint, use inferred
+            };
+            (ty, true)
+        } else {
+            (func.return_type.clone(), false)
+        };
+
         Ok(Function {
             name: func.name.clone(),
             exported: func.exported,
             export_name: func.export_name.clone(),
             params,
-            return_type: func.return_type.clone(),
+            return_type,
+            has_explicit_return_type,
             locals,
             body,
         })
@@ -2619,6 +2635,7 @@ impl Lowerer {
             export_name: None,
             params,
             return_type: Type::GcRef,
+            has_explicit_return_type: false,
             locals: vec![Type::GcRef; fields.len()],
             body,
         };
@@ -2768,14 +2785,18 @@ impl Lowerer {
 
         // Determine return type from protocol definition (via type hints)
         // Falls back to GcRef if no hint provided
-        let return_type = self.get_protocol_method_return_type(&method.name)
-            .unwrap_or(Type::GcRef);
+        let (return_type, has_explicit_return_type) =
+            match self.get_protocol_method_return_type(&method.name) {
+                Some(ty) => (ty, true),
+                None => (Type::GcRef, false),
+            };
 
         // Create function
         let function = Function {
             name: func_name,
             params,
             return_type,
+            has_explicit_return_type,
             locals: self.collect_locals(),
             body,
             exported: false,

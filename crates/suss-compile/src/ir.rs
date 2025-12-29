@@ -733,6 +733,10 @@ pub struct Function {
     pub params: Vec<(String, Type)>,
     /// Return type
     pub return_type: Type,
+    /// Whether the return type was explicitly specified via ^type hint
+    /// When true, codegen emits unboxed primitive types (i32, i64, f64)
+    /// When false, all returns are boxed as eqref
+    pub has_explicit_return_type: bool,
     /// Local variable types (including parameters)
     pub locals: Vec<Type>,
     /// Function body

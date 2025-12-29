@@ -133,6 +133,8 @@ pub struct AnalyzedFunction {
     pub export_name: Option<String>,
     pub params: Vec<(String, Type)>,
     pub return_type: Type,
+    /// Explicit return type hint from ^type metadata (e.g., "i32", "i64", "f64")
+    pub return_type_hint: Option<String>,
     pub body: Edn,
 }
 
@@ -409,7 +411,7 @@ impl<'a> Analyzer<'a> {
             return Err(CompileError::Parse("def requires name and value".into()));
         }
 
-        let (name, _metadata, value_idx) = self.parse_name_with_metadata(&items[1..])?;
+        let (name, _metadata, _return_type_hint, value_idx) = self.parse_name_with_metadata(&items[1..])?;
         let value = &items[value_idx + 1];
 
         let ty = self.infer_type(value)?;
@@ -430,7 +432,7 @@ impl<'a> Analyzer<'a> {
             return Err(CompileError::Parse("defn requires name, params, and body".into()));
         }
 
-        let (name, metadata, next_idx) = self.parse_name_with_metadata(&items[1..])?;
+        let (name, metadata, return_type_hint, next_idx) = self.parse_name_with_metadata(&items[1..])?;
 
         let exported = metadata.iter().any(|s| s == "export");
         let export_name = if exported {
@@ -477,6 +479,7 @@ impl<'a> Analyzer<'a> {
             export_name,
             params,
             return_type,
+            return_type_hint,
             body,
         });
 
@@ -662,15 +665,25 @@ impl<'a> Analyzer<'a> {
         )))
     }
 
-    fn parse_name_with_metadata(&self, items: &[Edn]) -> CompileResult<(String, Vec<String>, usize)> {
+    /// Parse function name with metadata prefixes.
+    /// Returns (name, keyword_metadata, return_type_hint, idx)
+    /// - `^:keyword` goes into keyword_metadata vector (e.g., "export")
+    /// - `^type` without colon is a return type hint (e.g., "i32", "i64", "f64")
+    fn parse_name_with_metadata(&self, items: &[Edn]) -> CompileResult<(String, Vec<String>, Option<String>, usize)> {
         let mut metadata = Vec::new();
+        let mut return_type_hint = None;
         let mut idx = 0;
 
-        // Check for metadata (^:keyword)
+        // Check for metadata (^:keyword) and type hints (^type)
         while idx < items.len() {
             if let Edn::Symbol(sym) = &items[idx] {
                 if sym.name.starts_with("^:") {
+                    // ^:keyword - keyword metadata like ^:export
                     metadata.push(sym.name[2..].to_string());
+                    idx += 1;
+                } else if sym.name.starts_with('^') && sym.name.len() > 1 {
+                    // ^type - return type hint like ^i32, ^i64, ^f64
+                    return_type_hint = Some(sym.name[1..].to_string());
                     idx += 1;
                 } else {
                     break;
@@ -685,7 +698,7 @@ impl<'a> Analyzer<'a> {
         }
 
         match &items[idx] {
-            Edn::Symbol(sym) => Ok((sym.name.clone(), metadata, idx)),
+            Edn::Symbol(sym) => Ok((sym.name.clone(), metadata, return_type_hint, idx)),
             _ => Err(CompileError::Parse("Expected symbol for name".into())),
         }
     }
