@@ -1830,3 +1830,89 @@ fn test_apply_variadic_let_bound() {
     assert_eq!(run_expr_i32("(let [f *] (apply f [2 3 4]))"), 24);
 }
 
+#[test]
+#[ignore]
+fn dump_apply_wasm() {
+    let mut compiler = Compiler::new();
+    let wasm = compiler.compile_expr("(apply + [1 2])").unwrap();
+    std::fs::write("/tmp/apply_debug.wasm", &wasm).unwrap();
+    eprintln!("WASM written to /tmp/apply_debug.wasm");
+}
+
+#[test]
+#[ignore]
+fn dump_closure_wasm() {
+    let mut compiler = Compiler::new();
+    let wasm = compiler.compile_expr("((fn [x] (+ x 1)) 5)").unwrap();
+    std::fs::write("/tmp/closure_debug.wasm", &wasm).unwrap();
+    eprintln!("WASM written to /tmp/closure_debug.wasm");
+}
+
+#[test]
+#[ignore]
+fn dump_count_wasm() {
+    let mut compiler = Compiler::new();
+    let wasm = compiler.compile_expr("(count [1 2 3])").unwrap();
+    std::fs::write("/tmp/count_debug.wasm", &wasm).unwrap();
+    eprintln!("WASM written to /tmp/count_debug.wasm");
+}
+
+#[test]
+#[ignore]
+fn dump_cons_wasm() {
+    let mut compiler = Compiler::new();
+    let wasm = compiler.compile_expr("(first (cons 1 nil))").unwrap();
+    std::fs::write("/tmp/cons_debug.wasm", &wasm).unwrap();
+    eprintln!("WASM written to /tmp/cons_debug.wasm");
+}
+
+#[test]
+#[ignore]
+fn dump_conj_wasm() {
+    let mut compiler = Compiler::new();
+    let wasm = compiler.compile_expr("(conj [1 2] 3)").unwrap();
+    std::fs::write("/tmp/conj_debug.wasm", &wasm).unwrap();
+    eprintln!("WASM written to /tmp/conj_debug.wasm");
+}
+
+
+#[test]
+#[ignore]
+fn dump_closure_wasm_for_debug() {
+    let expr = "(conj [1 2] 3)";
+    let mut compiler = Compiler::new();
+    let wasm_bytes = compiler.compile_expr(expr).expect("compilation failed");
+    std::fs::write("/tmp/conj_debug.wasm", &wasm_bytes).expect("write failed");
+    println!("Wrote {} bytes to /tmp/conj_debug.wasm", wasm_bytes.len());
+}
+
+#[test]
+#[ignore]
+fn dump_map_wasm_for_debug() {
+    let expr = "{1 10}";
+    let mut compiler = Compiler::new();
+    let wasm = compiler.compile_expr(expr).unwrap();
+    std::fs::write("/tmp/debug_map.wasm", &wasm).unwrap();
+    eprintln!("Written to /tmp/debug_map.wasm");
+}
+
+#[test]
+#[ignore]
+fn dump_map_get_wasm_for_debug() {
+    let expr = "(get {1 2} 1)";
+    let mut compiler = Compiler::new();
+    let wasm = compiler.compile_expr(expr).unwrap();
+    std::fs::write("/tmp/debug_map_get.wasm", &wasm).unwrap();
+    eprintln!("Written to /tmp/debug_map_get.wasm");
+}
+
+#[test]
+#[ignore]
+fn dump_set_count_wasm_for_debug() {
+    let expr = "(count (conj #{} 1))";
+    let mut compiler = Compiler::new();
+    let wasm = compiler.compile_expr(expr).unwrap();
+    std::fs::write("/tmp/debug_set_count.wasm", &wasm).unwrap();
+    eprintln!("Written to /tmp/debug_set_count.wasm");
+}
+

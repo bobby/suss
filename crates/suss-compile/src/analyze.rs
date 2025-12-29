@@ -40,13 +40,24 @@ pub struct AnalyzedProtocol {
     pub methods: Vec<AnalyzedProtocolMethod>,
 }
 
+/// A parameter in a protocol method with optional type hint
+#[derive(Debug, Clone)]
+pub struct ProtocolParam {
+    /// Parameter name (e.g., "coll")
+    pub name: String,
+    /// Type hint (e.g., Some("i32"), Some("eqref"), None for default eqref)
+    pub type_hint: Option<String>,
+}
+
 /// A protocol method signature
 #[derive(Debug, Clone)]
 pub struct AnalyzedProtocolMethod {
     /// Method name (e.g., "-count")
     pub name: String,
-    /// Parameter lists for each arity (e.g., [[coll], [coll n], [coll n not-found]])
-    pub arities: Vec<Vec<String>>,
+    /// Parameter lists for each arity with typed params (e.g., [[coll], [coll n]])
+    pub arities: Vec<Vec<ProtocolParam>>,
+    /// Return type hint (e.g., Some("i32") for -count, None for eqref default)
+    pub return_type: Option<String>,
 }
 
 /// An extend-type declaration
@@ -779,8 +790,8 @@ impl<'a> Analyzer<'a> {
     }
 
     /// Analyze defprotocol declaration
-    /// (defprotocol ICounted (-count [coll]))
-    /// (defprotocol IIndexed (-nth [coll n] [coll n not-found]))
+    /// (defprotocol ICounted (^i32 -count [^eqref coll]))
+    /// (defprotocol IIndexed (^eqref -nth [^eqref coll ^i32 n]))
     fn analyze_defprotocol(&mut self, items: &[Edn]) -> CompileResult<()> {
         if items.len() < 2 {
             return Err(CompileError::Parse("defprotocol requires a name".into()));
@@ -800,38 +811,72 @@ impl<'a> Analyzer<'a> {
                     continue;
                 }
 
-                // Method name
-                let method_name = match &method_items[0] {
-                    Edn::Symbol(s) => s.name.clone(),
+                // Parse method with optional return type hint
+                // Format: (^type -method [params]) or (-method [params])
+                let (method_name, return_type, start_idx) = match &method_items[0] {
+                    Edn::Symbol(s) if s.name.starts_with('^') => {
+                        // ^type hint before method name
+                        let type_hint = s.name[1..].to_string();
+                        if method_items.len() < 2 {
+                            return Err(CompileError::Parse("Expected method name after type hint".into()));
+                        }
+                        let name = match &method_items[1] {
+                            Edn::Symbol(s) => s.name.clone(),
+                            _ => return Err(CompileError::Parse("method name must be a symbol".into())),
+                        };
+                        (name, Some(type_hint), 2)
+                    }
+                    Edn::Symbol(s) => (s.name.clone(), None, 1),
                     _ => return Err(CompileError::Parse("method name must be a symbol".into())),
                 };
 
                 // Parse arities - each remaining item should be a vector of params
                 let mut arities = Vec::new();
-                for arity_item in &method_items[1..] {
+                for arity_item in &method_items[start_idx..] {
                     if let Edn::Vector(params) = arity_item {
-                        let param_names: Vec<String> = params.iter()
-                            .filter_map(|p| {
-                                if let Edn::Symbol(s) = p {
-                                    Some(s.name.clone())
-                                } else {
-                                    None
-                                }
-                            })
-                            .collect();
-                        arities.push(param_names);
+                        let typed_params = self.parse_typed_params(params)?;
+                        arities.push(typed_params);
                     }
                 }
 
                 methods.push(AnalyzedProtocolMethod {
                     name: method_name,
                     arities,
+                    return_type,
                 });
             }
         }
 
         self.protocols.push(AnalyzedProtocol { name, methods });
         Ok(())
+    }
+
+    /// Parse typed parameters from a vector
+    /// Format: [^type param ^type param ...] or [param param ...]
+    fn parse_typed_params(&self, params: &[Edn]) -> CompileResult<Vec<ProtocolParam>> {
+        let mut result = Vec::new();
+        let mut pending_type_hint: Option<String> = None;
+
+        for item in params {
+            if let Edn::Symbol(s) = item {
+                if s.name.starts_with('^') {
+                    // Type hint for next parameter
+                    pending_type_hint = Some(s.name[1..].to_string());
+                } else {
+                    // Parameter name
+                    result.push(ProtocolParam {
+                        name: s.name.clone(),
+                        type_hint: pending_type_hint.take(),
+                    });
+                }
+            }
+        }
+
+        if pending_type_hint.is_some() {
+            return Err(CompileError::Parse("Type hint without following parameter".into()));
+        }
+
+        Ok(result)
     }
 
     /// Analyze extend-type declaration

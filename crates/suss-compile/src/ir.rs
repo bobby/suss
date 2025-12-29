@@ -3,222 +3,160 @@
 //! The IR is a simplified, typed representation of Suss code that maps
 //! closely to WASM instructions.
 
-/// WASM GC type definitions for Clojure's immutable persistent data structures.
+/// WASM GC type definitions for Suss - Irreducible Primitives Only.
 ///
-/// Uses native WASM GC types (i31ref, structref, arrayref) instead of
-/// tagged i64 values. This enables proper garbage collection and
-/// eliminates the need for a custom allocator.
+/// The compiler provides ONLY the types that cannot be defined in Suss itself:
+/// - Numeric primitives (SmallInt via i31ref, Int64, Float64)
+/// - Storage primitives (String, Array, I32Array)
+/// - Closure machinery (function types and structs)
+///
+/// All collection types (Cons, PersistentVector, PersistentMap, etc.) and
+/// extended numeric types (BigInt, Ratio, BigDecimal) are defined in core.suss
+/// via deftype.
 ///
 /// Value representation:
-/// - nil, false, true: i31ref with sentinel values
-/// - small integers: i31ref (30-bit signed, shifted)
-/// - large integers: struct { i64 }
-/// - floats: struct { f64 }
-/// - strings: array<i8>
-/// - vectors: PersistentVector (32-way bit-partitioned trie)
-/// - lists: cons cells (struct { first, rest })
-/// - maps: PersistentMap (HAMT with bitmap compression)
-/// - sets: PersistentSet (HAMT with bitmap compression)
+/// - nil, false, true: i31ref with sentinel values (0, 2, 4)
+/// - small integers: i31ref (30-bit signed, encoded as (n << 1) | 1)
+/// - large integers: Int64 struct (when > 30 bits)
+/// - floats: Float64 struct (boxed f64)
+/// - strings: array<i8> (UTF-8 bytes)
+/// - arrays: array<eqref> (universal mutable storage for collections)
 pub mod gc_types {
     // =========================================================================
-    // GC Type Indices
+    // GC Type Indices - IRREDUCIBLE PRIMITIVES ONLY
     // These are indices into the WASM type section, assigned during codegen.
-    // The actual type definitions are emitted by CodeGen::emit_gc_type_section.
+    // All collection types are now deftypes in core.suss.
     // =========================================================================
 
-    /// struct { i64 } - for integers that don't fit in i31ref
-    pub const LARGE_INT: u32 = 0;
+    // === Numeric Primitives (0-1) ===
 
-    /// struct { f64 } - all floats are boxed
-    pub const FLOAT: u32 = 1;
+    /// struct { type_id: i32, value: i64 } - for integers that don't fit in i31ref
+    pub const INT64: u32 = 0;
 
-    /// array<i8> - UTF-8 string bytes (mutable for construction)
+    /// struct { type_id: i32, value: f64 } - all floats are boxed
+    pub const FLOAT64: u32 = 1;
+
+    // === Storage Primitives (2-4) ===
+
+    /// array<i8> - UTF-8 string bytes
     pub const STRING: u32 = 2;
 
-    /// array<eqref> - 32-element trie node for persistent vectors
-    /// Used as internal nodes and leaf arrays in the bit-partitioned trie
-    pub const TRIE_NODE: u32 = 3;
+    /// array<eqref> - Universal mutable storage for collections
+    /// Used by: vector nodes, HAMT nodes, any array-based data structure
+    pub const ARRAY: u32 = 3;
 
-    /// struct { first: eqref, rest: eqref } - cons cell for persistent lists
-    pub const CONS: u32 = 4;
-
-    // =========================================================================
-    // HAMT Node Types (for maps and sets)
-    // =========================================================================
-
-    /// struct { type_id: i32, bitmap: i32, arr: eqref }
-    /// Sparse HAMT node with ≤16 entries
-    /// arr contains [key0, val0, key1, val1, ..., null, child, ...]
-    pub const BITMAP_INDEXED_NODE: u32 = 5;
-
-    /// struct { type_id: i32, cnt: i32, arr: eqref }
-    /// Dense HAMT node with >16 entries (32 slots, direct indexing)
-    pub const ARRAY_NODE: u32 = 6;
-
-    /// struct { type_id: i32, hash: i32, cnt: i32, arr: eqref }
-    /// Collision node for keys with same hash
-    /// arr contains [key0, val0, key1, val1, ...] for linear scan
-    pub const HASH_COLLISION_NODE: u32 = 7;
+    /// array<i32> - For BigInt magnitude storage (defined in core.suss)
+    pub const I32_ARRAY: u32 = 4;
 
     // =========================================================================
-    // Collection Types
-    // =========================================================================
-
-    /// struct { type_id: i32, cnt: i32, shift: i32, root: eqref, tail: eqref }
-    /// ClojureScript-style 32-way bit-partitioned vector trie
-    pub const PERSISTENT_VECTOR: u32 = 8;
-
-    /// struct { type_id: i32, cnt: i32, root: eqref }
-    /// Hash Array Mapped Trie (HAMT) for O(log32 n) operations
-    pub const PERSISTENT_MAP: u32 = 9;
-
-    /// struct { type_id: i32, cnt: i32, root: eqref }
-    /// HAMT-based set (same structure as map but entries are keys only)
-    pub const PERSISTENT_SET: u32 = 10;
-
-    // =========================================================================
-    // Closure Function Types (typed funcrefs for efficient call_ref)
-    // Must be defined BEFORE closure structs so structs can reference them.
+    // Closure Function Types (optimized for arities 0-4, apply-style for 5+)
     // Signature: (env: eqref, args...) -> eqref
     // =========================================================================
 
     /// Function type for closure arity 0: (env) -> result
-    pub const CLOSURE_FN_0: u32 = 11;
+    pub const CLOSURE_FN_0: u32 = 5;
     /// Function type for closure arity 1: (env, arg1) -> result
-    pub const CLOSURE_FN_1: u32 = 12;
+    pub const CLOSURE_FN_1: u32 = 6;
     /// Function type for closure arity 2: (env, arg1, arg2) -> result
-    pub const CLOSURE_FN_2: u32 = 13;
+    pub const CLOSURE_FN_2: u32 = 7;
     /// Function type for closure arity 3
-    pub const CLOSURE_FN_3: u32 = 14;
+    pub const CLOSURE_FN_3: u32 = 8;
     /// Function type for closure arity 4
-    pub const CLOSURE_FN_4: u32 = 15;
+    pub const CLOSURE_FN_4: u32 = 9;
     /// Function type for closure arity 5
-    pub const CLOSURE_FN_5: u32 = 16;
+    pub const CLOSURE_FN_5: u32 = 10;
     /// Function type for closure arity 6
-    pub const CLOSURE_FN_6: u32 = 17;
+    pub const CLOSURE_FN_6: u32 = 11;
     /// Function type for closure arity 7
-    pub const CLOSURE_FN_7: u32 = 18;
+    pub const CLOSURE_FN_7: u32 = 12;
     /// Function type for closure arity 8
-    pub const CLOSURE_FN_8: u32 = 19;
+    pub const CLOSURE_FN_8: u32 = 13;
+    /// Function type for closure arity N (9+): (env, args_array) -> result
+    /// Uses apply-style dispatch for higher arities
+    pub const CLOSURE_FN_N: u32 = 14;
 
-    /// Get the closure function type index for a given arity (0-8)
+    /// Get the closure function type index for a given arity
+    /// Regular closures: arities 0-4 have dedicated types, 5+ use CLOSURE_FN_N
     #[inline]
     pub const fn closure_fn_type_for_arity(arity: u32) -> u32 {
-        debug_assert!(arity <= 8, "Closure arity must be 0-8");
-        CLOSURE_FN_0 + arity
+        if arity <= 4 {
+            CLOSURE_FN_0 + arity
+        } else {
+            CLOSURE_FN_N
+        }
+    }
+
+    /// Get the variadic function type index for a given arity
+    /// Variadic builtins: arities 0-8 have dedicated types
+    #[inline]
+    pub const fn variadic_fn_type_for_arity_new(arity: u32) -> u32 {
+        match arity {
+            0 => CLOSURE_FN_0,
+            1 => CLOSURE_FN_1,
+            2 => CLOSURE_FN_2,
+            3 => CLOSURE_FN_3,
+            4 => CLOSURE_FN_4,
+            5 => CLOSURE_FN_5,
+            6 => CLOSURE_FN_6,
+            7 => CLOSURE_FN_7,
+            8 => CLOSURE_FN_8,
+            _ => CLOSURE_FN_N,
+        }
     }
 
     // =========================================================================
     // Closure Struct Types (per-arity for typed function references)
     // Each closure has: type_id, env (captured values), fn (typed funcref)
-    // Using typed non-null funcrefs avoids runtime type checks on call_ref
     // =========================================================================
 
-    /// struct { type_id: i32, env: (ref null $trie_node), fn: (ref $closure_fn_0) }
-    /// Closure struct with arity 0 (no arguments)
-    pub const CLOSURE_0: u32 = 20;
-
+    /// struct { type_id: i32, env: (ref null $array), fn: (ref $closure_fn_0) }
+    pub const CLOSURE_0: u32 = 15;
     /// Closure struct with arity 1
-    pub const CLOSURE_1: u32 = 21;
-
+    pub const CLOSURE_1: u32 = 16;
     /// Closure struct with arity 2
-    pub const CLOSURE_2: u32 = 22;
-
+    pub const CLOSURE_2: u32 = 17;
     /// Closure struct with arity 3
-    pub const CLOSURE_3: u32 = 23;
-
+    pub const CLOSURE_3: u32 = 18;
     /// Closure struct with arity 4
-    pub const CLOSURE_4: u32 = 24;
+    pub const CLOSURE_4: u32 = 19;
+    /// Closure struct for arity 5+ (uses apply-style dispatch)
+    pub const CLOSURE_N: u32 = 20;
 
-    /// Closure struct with arity 5
-    pub const CLOSURE_5: u32 = 25;
-
-    /// Closure struct with arity 6
-    pub const CLOSURE_6: u32 = 26;
-
-    /// Closure struct with arity 7
-    pub const CLOSURE_7: u32 = 27;
-
-    /// Closure struct with arity 8
-    pub const CLOSURE_8: u32 = 28;
-
-    // =========================================================================
-    // Variadic Function Types (for variadic builtin wrappers like +, *, -, /)
-    // Unlike closure function types, these don't take an env parameter.
-    // Signature: (args...) -> eqref
-    // =========================================================================
-
-    /// Function type for variadic arity 0: () -> result
-    pub const VARIADIC_FN_0: u32 = 29;
-    /// Function type for variadic arity 1: (arg1) -> result
-    pub const VARIADIC_FN_1: u32 = 30;
-    /// Function type for variadic arity 2: (arg1, arg2) -> result
-    pub const VARIADIC_FN_2: u32 = 31;
-    /// Function type for variadic arity 3
-    pub const VARIADIC_FN_3: u32 = 32;
-    /// Function type for variadic arity 4
-    pub const VARIADIC_FN_4: u32 = 33;
-    /// Function type for variadic arity 5
-    pub const VARIADIC_FN_5: u32 = 34;
-    /// Function type for variadic arity 6
-    pub const VARIADIC_FN_6: u32 = 35;
-    /// Function type for variadic arity 7
-    pub const VARIADIC_FN_7: u32 = 36;
-    /// Function type for variadic arity 8
-    pub const VARIADIC_FN_8: u32 = 37;
-
-    /// Get the variadic function type index for a given arity (0-8)
-    #[inline]
-    pub const fn variadic_fn_type_for_arity(arity: u32) -> u32 {
-        debug_assert!(arity <= 8, "Variadic arity must be 0-8");
-        VARIADIC_FN_0 + arity
-    }
-
-    // =========================================================================
-    // Variadic Closure Struct Type (for variadic builtins used as values)
-    // Contains 9 funcrefs, one for each arity 0-8.
-    // =========================================================================
-
-    /// struct { type_id: i32, fn0: (ref $variadic_fn_0), ..., fn8: (ref $variadic_fn_8) }
-    /// Variadic closure struct with all 9 arities
-    pub const VARIADIC_CLOSURE: u32 = 38;
-
-    // =========================================================================
-    // Variadic Closure Field Indices
-    // =========================================================================
-
-    /// Variadic closure type_id field
-    pub const VC_TYPE_ID: u32 = 0;
-    /// Variadic closure fn0 field (arity 0)
-    pub const VC_FN0: u32 = 1;
-    /// Variadic closure fn1 field (arity 1)
-    pub const VC_FN1: u32 = 2;
-    /// Variadic closure fn2 field (arity 2)
-    pub const VC_FN2: u32 = 3;
-    /// Variadic closure fn3 field (arity 3)
-    pub const VC_FN3: u32 = 4;
-    /// Variadic closure fn4 field (arity 4)
-    pub const VC_FN4: u32 = 5;
-    /// Variadic closure fn5 field (arity 5)
-    pub const VC_FN5: u32 = 6;
-    /// Variadic closure fn6 field (arity 6)
-    pub const VC_FN6: u32 = 7;
-    /// Variadic closure fn7 field (arity 7)
-    pub const VC_FN7: u32 = 8;
-    /// Variadic closure fn8 field (arity 8)
-    pub const VC_FN8: u32 = 9;
-
-    /// Number of GC types defined (for type index offset calculation)
-    /// Includes: 11 base types + 9 closure fn types + 9 closure struct types
-    ///         + 9 variadic fn types + 1 variadic closure struct = 39
-    pub const NUM_GC_TYPES: u32 = 39;
-
-    /// Get the closure struct type index for a given arity (0-8)
+    /// Get the closure struct type index for a given arity
+    /// Arities 0-4 have dedicated types, 5+ use CLOSURE_N
     #[inline]
     pub const fn closure_type_for_arity(arity: u32) -> u32 {
-        debug_assert!(arity <= 8, "Closure arity must be 0-8");
-        CLOSURE_0 + arity
+        if arity <= 4 {
+            CLOSURE_0 + arity
+        } else {
+            CLOSURE_N
+        }
     }
+
+    // =========================================================================
+    // Variadic Function Type (for variadic builtins like +, *, -, /)
+    // Single type handles all arities via runtime dispatch
+    // =========================================================================
+
+    /// Function type for variadic functions: () -> result (arity 0 fallback)
+    pub const VARIADIC_FN: u32 = 21;
+
+    /// struct { type_id: i32, fn0..fn8: funcrefs }
+    /// Variadic closure struct (for when +, *, etc. used as values)
+    /// Contains typed funcrefs for arities 0-8 using CLOSURE_FN_* types
+    pub const VARIADIC_CLOSURE: u32 = 22;
+
+    /// Get the variadic function type index (always VARIADIC_FN)
+    /// This is a compatibility shim - variadic functions now use a single type
+    #[deprecated(note = "Use VARIADIC_FN directly - all arities use the same type")]
+    #[inline]
+    pub const fn variadic_fn_type_for_arity(_arity: u32) -> u32 {
+        VARIADIC_FN
+    }
+
+    /// Number of GC types defined (for type index offset calculation)
+    /// 5 primitives + 10 closure fn types + 6 closure struct types + 2 variadic = 23
+    pub const NUM_GC_TYPES: u32 = 23;
 
     // =========================================================================
     // Closure Field Indices
@@ -230,6 +168,15 @@ pub mod gc_types {
     pub const CL_ENV: u32 = 1;
     /// Closure function field (typed funcref)
     pub const CL_FN: u32 = 2;
+
+    // =========================================================================
+    // Variadic Closure Field Indices
+    // =========================================================================
+
+    /// Variadic closure type_id field
+    pub const VC_TYPE_ID: u32 = 0;
+    /// Variadic closure fn field
+    pub const VC_FN: u32 = 1;
 
     // =========================================================================
     // i31ref Sentinel Values
@@ -338,71 +285,145 @@ pub mod gc_types {
     }
 
     // =========================================================================
-    // Collection Field Indices
-    // For accessing struct fields in codegen
+    // Primitive Type Field Indices
+    // Collection types are now deftypes - their field indices come from core.suss
     // =========================================================================
 
     /// All dispatchable types have type_id as field 0
     /// This enables O(1) type lookup for protocol dispatch
     pub const TYPE_ID: u32 = 0;
 
-    /// PERSISTENT_VECTOR field indices (after type_id)
-    pub const PV_CNT: u32 = 1;   // was 0
-    pub const PV_SHIFT: u32 = 2; // was 1
-    pub const PV_ROOT: u32 = 3;  // was 2
-    pub const PV_TAIL: u32 = 4;  // was 3
+    /// INT64 field indices
+    pub const I64_VALUE: u32 = 1; // the i64 value
 
-    /// PERSISTENT_MAP field indices (after type_id)
-    pub const PM_CNT: u32 = 1;   // was 0
-    pub const PM_ROOT: u32 = 2;  // was 1
+    /// FLOAT64 field indices
+    pub const F64_VALUE: u32 = 1; // the f64 value
 
-    /// PERSISTENT_SET field indices (after type_id)
-    pub const PS_CNT: u32 = 1;   // was 0
-    pub const PS_ROOT: u32 = 2;  // was 1
+    // =========================================================================
+    // LEGACY ALIASES - TO BE REMOVED
+    // These exist for backward compatibility during the type system migration.
+    // Collection types are now deftypes in core.suss, not compiler primitives.
+    // =========================================================================
 
-    /// BITMAP_INDEXED_NODE field indices
-    pub const BIN_TYPE_ID: u32 = 0;
+    // Renamed types
+    #[deprecated(note = "Use INT64 instead")]
+    pub const LARGE_INT: u32 = INT64;
+    #[deprecated(note = "Use FLOAT64 instead")]
+    pub const FLOAT: u32 = FLOAT64;
+    #[deprecated(note = "Use ARRAY instead")]
+    pub const TRIE_NODE: u32 = ARRAY;
+
+    // Renamed field indices
+    #[deprecated(note = "Use I64_VALUE instead")]
+    pub const LI_VALUE: u32 = I64_VALUE;
+    #[deprecated(note = "Use F64_VALUE instead")]
+    pub const FL_VALUE: u32 = F64_VALUE;
+
+    // Collection types - NOW DEFTYPES IN CORE.SUSS
+    // These placeholders keep codegen compiling during migration.
+    // They map to indices that will be overwritten by deftype registration.
+    // TODO: Remove once codegen resolves these from DeftypeDefs.
+    #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
+    pub const CONS: u32 = 100;
+    #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
+    pub const BITMAP_INDEXED_NODE: u32 = 101;
+    #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
+    pub const ARRAY_NODE: u32 = 102;
+    #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
+    pub const HASH_COLLISION_NODE: u32 = 103;
+    #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
+    pub const PERSISTENT_VECTOR: u32 = 104;
+    #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
+    pub const PERSISTENT_MAP: u32 = 105;
+    #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
+    pub const PERSISTENT_SET: u32 = 106;
+
+    // Collection field indices - DEPRECATED
+    // These should come from DeftypeDef.fields at compile time.
+    // TODO: Remove once codegen resolves field indices dynamically.
+
+    // PersistentVector fields: type_id(0), cnt(1), shift(2), root(3), tail(4)
+    #[deprecated(note = "Resolve from DeftypeDef")]
+    pub const PV_CNT: u32 = 1;
+    #[deprecated(note = "Resolve from DeftypeDef")]
+    pub const PV_SHIFT: u32 = 2;
+    #[deprecated(note = "Resolve from DeftypeDef")]
+    pub const PV_ROOT: u32 = 3;
+    #[deprecated(note = "Resolve from DeftypeDef")]
+    pub const PV_TAIL: u32 = 4;
+
+    // Cons fields: type_id(0), first(1), rest(2)
+    #[deprecated(note = "Resolve from DeftypeDef")]
+    pub const CONS_FIRST: u32 = 1;
+    #[deprecated(note = "Resolve from DeftypeDef")]
+    pub const CONS_REST: u32 = 2;
+
+    // PersistentMap fields: type_id(0), cnt(1), root(2)
+    #[deprecated(note = "Resolve from DeftypeDef")]
+    pub const PM_CNT: u32 = 1;
+    #[deprecated(note = "Resolve from DeftypeDef")]
+    pub const PM_ROOT: u32 = 2;
+
+    // PersistentSet fields: type_id(0), cnt(1), root(2), _marker(3)
+    #[deprecated(note = "Resolve from DeftypeDef")]
+    pub const PS_CNT: u32 = 1;
+    #[deprecated(note = "Resolve from DeftypeDef")]
+    pub const PS_ROOT: u32 = 2;
+
+    // BitmapIndexedNode fields: type_id(0), bitmap(1), arr(2)
+    #[deprecated(note = "Resolve from DeftypeDef")]
     pub const BIN_BITMAP: u32 = 1;
+    #[deprecated(note = "Resolve from DeftypeDef")]
     pub const BIN_ARR: u32 = 2;
 
-    /// ARRAY_NODE field indices
-    pub const AN_TYPE_ID: u32 = 0;
+    // ArrayNode fields: type_id(0), cnt(1), arr(2)
+    #[deprecated(note = "Resolve from DeftypeDef")]
     pub const AN_CNT: u32 = 1;
+    #[deprecated(note = "Resolve from DeftypeDef")]
     pub const AN_ARR: u32 = 2;
 
-    /// HASH_COLLISION_NODE field indices
-    pub const HCN_TYPE_ID: u32 = 0;
+    // HashCollisionNode fields: type_id(0), hash(1), cnt(2), arr(3)
+    #[deprecated(note = "Resolve from DeftypeDef")]
     pub const HCN_HASH: u32 = 1;
+    #[deprecated(note = "Resolve from DeftypeDef")]
     pub const HCN_CNT: u32 = 2;
+    #[deprecated(note = "Resolve from DeftypeDef")]
     pub const HCN_ARR: u32 = 3;
 
-    /// CONS field indices (after type_id)
-    pub const CONS_FIRST: u32 = 1; // was 0
-    pub const CONS_REST: u32 = 2;  // was 1
-
-    /// LARGE_INT field indices (after type_id)
-    pub const LI_VALUE: u32 = 1; // was 0 (the i64 value)
-
-    /// FLOAT field indices (after type_id)
-    pub const FL_VALUE: u32 = 1; // was 0 (the f64 value)
-
-    /// STRING field indices (after type_id)
-    pub const STR_PTR: u32 = 1;  // was 0
-    pub const STR_LEN: u32 = 2;  // was 1
+    // Variadic closure field indices - DEPRECATED
+    // Now uses single VC_FN field instead of per-arity fields
+    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
+    pub const VC_FN0: u32 = VC_FN;
+    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
+    pub const VC_FN1: u32 = VC_FN;
+    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
+    pub const VC_FN2: u32 = VC_FN;
+    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
+    pub const VC_FN3: u32 = VC_FN;
+    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
+    pub const VC_FN4: u32 = VC_FN;
+    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
+    pub const VC_FN5: u32 = VC_FN;
+    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
+    pub const VC_FN6: u32 = VC_FN;
+    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
+    pub const VC_FN7: u32 = VC_FN;
+    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
+    pub const VC_FN8: u32 = VC_FN;
 
     // =========================================================================
     // Function Index Offsets
-    // User-defined functions are emitted after runtime helper and protocol
-    // implementation functions. These constants are used by the lowerer to
-    // calculate correct function indices.
+    // With collection algorithms in core.suss, these are greatly reduced.
+    // User functions now start right after imports and core.suss functions.
     // =========================================================================
 
     /// Number of runtime helper functions emitted before user functions.
-    /// These include: hash_string, get_type_id, vector trie helpers, HAMT helpers, etc.
-    pub const NUM_RUNTIME_HELPERS: u32 = 25;
+    /// Reduced: only hash_string and get_type_id remain in codegen.
+    pub const NUM_RUNTIME_HELPERS: u32 = 2;
 
-    /// Number of protocol implementation wrapper functions (vec_count, map_lookup, etc.)
-    pub const NUM_PROTOCOL_IMPLS: u32 = 14;
+    /// Number of protocol implementation wrapper functions
+    /// Reduced: protocol impls now in core.suss via extend-type
+    pub const NUM_PROTOCOL_IMPLS: u32 = 0;
 
     /// Total offset for user-defined functions (after imports)
     pub const USER_FUNC_OFFSET: u32 = NUM_RUNTIME_HELPERS + NUM_PROTOCOL_IMPLS;
@@ -410,45 +431,64 @@ pub mod gc_types {
 
 /// Type IDs for protocol dispatch.
 ///
-/// These match the GC type indices for built-in types, enabling efficient
-/// type-based dispatch via `ref.test` followed by table lookup.
+/// Compiler primitives have fixed type IDs matching their GC type indices.
+/// Collection types (Cons, PersistentVector, etc.) are deftypes in core.suss
+/// and get type IDs starting at USER_TYPE_BASE (256).
 pub mod type_ids {
     /// i31ref values (nil, bool, small int) - not dispatchable to most protocols
     pub const I31REF: i32 = -1;
 
-    // Built-in types use their GC type indices
-    pub const LARGE_INT: i32 = super::gc_types::LARGE_INT as i32;
-    pub const FLOAT: i32 = super::gc_types::FLOAT as i32;
+    // === Compiler Primitives (type_id = gc_type index) ===
+    pub const INT64: i32 = super::gc_types::INT64 as i32;
+    pub const FLOAT64: i32 = super::gc_types::FLOAT64 as i32;
     pub const STRING: i32 = super::gc_types::STRING as i32;
-    pub const TRIE_NODE: i32 = super::gc_types::TRIE_NODE as i32;
-    pub const CONS: i32 = super::gc_types::CONS as i32;
+    pub const ARRAY: i32 = super::gc_types::ARRAY as i32;
+    pub const I32_ARRAY: i32 = super::gc_types::I32_ARRAY as i32;
 
-    // HAMT node types
-    pub const BITMAP_INDEXED_NODE: i32 = super::gc_types::BITMAP_INDEXED_NODE as i32;
-    pub const ARRAY_NODE: i32 = super::gc_types::ARRAY_NODE as i32;
-    pub const HASH_COLLISION_NODE: i32 = super::gc_types::HASH_COLLISION_NODE as i32;
-
-    // Collection types
-    pub const PERSISTENT_VECTOR: i32 = super::gc_types::PERSISTENT_VECTOR as i32;
-    pub const PERSISTENT_MAP: i32 = super::gc_types::PERSISTENT_MAP as i32;
-    pub const PERSISTENT_SET: i32 = super::gc_types::PERSISTENT_SET as i32;
-
-    // Closure types (one per arity for IFn protocol dispatch)
+    // === Closure Types (for IFn protocol dispatch) ===
     pub const CLOSURE_0: i32 = super::gc_types::CLOSURE_0 as i32;
     pub const CLOSURE_1: i32 = super::gc_types::CLOSURE_1 as i32;
     pub const CLOSURE_2: i32 = super::gc_types::CLOSURE_2 as i32;
     pub const CLOSURE_3: i32 = super::gc_types::CLOSURE_3 as i32;
     pub const CLOSURE_4: i32 = super::gc_types::CLOSURE_4 as i32;
-    pub const CLOSURE_5: i32 = super::gc_types::CLOSURE_5 as i32;
-    pub const CLOSURE_6: i32 = super::gc_types::CLOSURE_6 as i32;
-    pub const CLOSURE_7: i32 = super::gc_types::CLOSURE_7 as i32;
-    pub const CLOSURE_8: i32 = super::gc_types::CLOSURE_8 as i32;
+    pub const CLOSURE_N: i32 = super::gc_types::CLOSURE_N as i32;
 
     // Variadic closure (for variadic builtins like +, *, -, /)
     pub const VARIADIC_CLOSURE: i32 = super::gc_types::VARIADIC_CLOSURE as i32;
 
-    /// User-defined types start at 256 (room for future built-ins)
-    pub const USER_TYPE_BASE: i32 = 256;
+    /// User-defined types start at 5 (after INT64=0, FLOAT64=1, STRING=2, ARRAY=3, I32_ARRAY=4).
+    /// Type IDs 5-14 are available for deftypes (before CLOSURE_0 at 15).
+    /// This includes: Cons, PersistentVector, PersistentMap, PersistentSet,
+    /// BitmapIndexedNode, ArrayNode, HashCollisionNode (7 types = IDs 5-11).
+    pub const USER_TYPE_BASE: i32 = 5;
+
+    // =========================================================================
+    // LEGACY TYPE IDS - TO BE REMOVED
+    // Collection types are now deftypes with dynamic type IDs.
+    // These placeholders keep codegen compiling during migration.
+    // =========================================================================
+
+    #[deprecated(note = "Use INT64 instead")]
+    pub const LARGE_INT: i32 = INT64;
+    #[deprecated(note = "Use FLOAT64 instead")]
+    pub const FLOAT: i32 = FLOAT64;
+    #[deprecated(note = "Use ARRAY instead")]
+    pub const TRIE_NODE: i32 = ARRAY;
+
+    #[deprecated(note = "Now a deftype - resolve dynamically")]
+    pub const CONS: i32 = 260;
+    #[deprecated(note = "Now a deftype - resolve dynamically")]
+    pub const BITMAP_INDEXED_NODE: i32 = 261;
+    #[deprecated(note = "Now a deftype - resolve dynamically")]
+    pub const ARRAY_NODE: i32 = 262;
+    #[deprecated(note = "Now a deftype - resolve dynamically")]
+    pub const HASH_COLLISION_NODE: i32 = 263;
+    #[deprecated(note = "Now a deftype - resolve dynamically")]
+    pub const PERSISTENT_VECTOR: i32 = 264;
+    #[deprecated(note = "Now a deftype - resolve dynamically")]
+    pub const PERSISTENT_MAP: i32 = 265;
+    #[deprecated(note = "Now a deftype - resolve dynamically")]
+    pub const PERSISTENT_SET: i32 = 266;
 }
 
 /// Protocol method IDs for dispatch table indexing.
@@ -566,11 +606,11 @@ pub struct ProtocolDef {
     pub methods: Vec<(String, u32)>,
 }
 
-/// A dispatch table entry mapping (type_id, method_id) to a function
+/// A dispatch table entry mapping (dispatch_slot, method_id) to a function
 #[derive(Debug, Clone)]
 pub struct DispatchEntry {
-    /// Type ID (from type_ids module)
-    pub type_id: u32,
+    /// Dispatch table slot (0-4 for primitives, 5+ for deftypes in definition order)
+    pub dispatch_slot: u32,
     /// Method ID (from method_ids module or user-defined)
     pub method_id: u32,
     /// Function index in the module
@@ -787,6 +827,7 @@ impl Expr {
                 }
             }
             Expr::RawI32(_) => Type::I32,
+            Expr::Unbox32(_) => Type::I32,
             Expr::Float(_) => Type::F64,
             Expr::String(_) => Type::String,
             Expr::BinOp { ty, .. } => ty.clone(),
@@ -811,6 +852,7 @@ impl Expr {
             Expr::RefCastI31(_) => Type::GcRef, // Ref cast to i31 returns GcRef (specifically i31ref subtype)
             Expr::StructNew { .. } => Type::GcRef,
             Expr::StructGet { .. } => Type::GcRef, // Field could be any type, but in GC mode it's eqref
+            Expr::StructGetI32 { .. } => Type::GcRef, // Returns encoded i31ref
             Expr::ArrayNew { .. } => Type::GcRef,
             Expr::ArrayNewData { .. } => Type::GcRef,
             Expr::ArrayLen(_) => Type::GcRef, // Returns boxed i31ref
@@ -881,6 +923,10 @@ pub enum Expr {
 
     /// Raw i32 constant (not GC-encoded, for struct fields like type_id)
     RawI32(i32),
+
+    /// Unbox a tagged integer to raw i32: (>> (i31.get_s (ref.cast i31 x)) 1)
+    /// Used for extracting values for ^i32 struct fields
+    Unbox32(Box<Expr>),
 
     /// Float literal
     Float(f64),
@@ -988,6 +1034,15 @@ pub enum Expr {
 
     /// Get a field from a GC struct
     StructGet {
+        type_idx: u32,
+        field_idx: u32,
+        value: Box<Expr>,
+    },
+
+    /// Get an i32 field from a GC struct and encode as tagged i31ref
+    /// This is used for user-defined type fields with ^i32 type annotation.
+    /// Codegen will: struct.get -> encode (value << 1) | 1 -> ref.i31
+    StructGetI32 {
         type_idx: u32,
         field_idx: u32,
         value: Box<Expr>,
@@ -1390,21 +1445,15 @@ mod tests {
 
     #[test]
     fn test_gc_type_indices() {
-        // Verify type indices are unique and contiguous
+        // Verify type indices are unique and contiguous (23 types total)
         let indices = [
-            // Base types (0-10)
-            gc_types::LARGE_INT,
-            gc_types::FLOAT,
+            // Primitive types (0-4)
+            gc_types::INT64,
+            gc_types::FLOAT64,
             gc_types::STRING,
-            gc_types::TRIE_NODE,
-            gc_types::CONS,
-            gc_types::BITMAP_INDEXED_NODE,
-            gc_types::ARRAY_NODE,
-            gc_types::HASH_COLLISION_NODE,
-            gc_types::PERSISTENT_VECTOR,
-            gc_types::PERSISTENT_MAP,
-            gc_types::PERSISTENT_SET,
-            // Closure function types (11-19)
+            gc_types::ARRAY,
+            gc_types::I32_ARRAY,
+            // Closure function types (5-14)
             gc_types::CLOSURE_FN_0,
             gc_types::CLOSURE_FN_1,
             gc_types::CLOSURE_FN_2,
@@ -1414,27 +1463,16 @@ mod tests {
             gc_types::CLOSURE_FN_6,
             gc_types::CLOSURE_FN_7,
             gc_types::CLOSURE_FN_8,
-            // Closure struct types (20-28)
+            gc_types::CLOSURE_FN_N,
+            // Closure struct types (15-20)
             gc_types::CLOSURE_0,
             gc_types::CLOSURE_1,
             gc_types::CLOSURE_2,
             gc_types::CLOSURE_3,
             gc_types::CLOSURE_4,
-            gc_types::CLOSURE_5,
-            gc_types::CLOSURE_6,
-            gc_types::CLOSURE_7,
-            gc_types::CLOSURE_8,
-            // Variadic function types (29-37)
-            gc_types::VARIADIC_FN_0,
-            gc_types::VARIADIC_FN_1,
-            gc_types::VARIADIC_FN_2,
-            gc_types::VARIADIC_FN_3,
-            gc_types::VARIADIC_FN_4,
-            gc_types::VARIADIC_FN_5,
-            gc_types::VARIADIC_FN_6,
-            gc_types::VARIADIC_FN_7,
-            gc_types::VARIADIC_FN_8,
-            // Variadic closure struct (38)
+            gc_types::CLOSURE_N,
+            // Variadic types (21-22)
+            gc_types::VARIADIC_FN,
             gc_types::VARIADIC_CLOSURE,
         ];
         for (i, idx) in indices.iter().enumerate() {
@@ -1445,15 +1483,26 @@ mod tests {
 
     #[test]
     fn test_closure_type_for_arity() {
-        // Closure function types
+        // Regular closure function types (0-4 have dedicated types, 5+ use CLOSURE_FN_N)
         assert_eq!(gc_types::closure_fn_type_for_arity(0), gc_types::CLOSURE_FN_0);
         assert_eq!(gc_types::closure_fn_type_for_arity(1), gc_types::CLOSURE_FN_1);
-        assert_eq!(gc_types::closure_fn_type_for_arity(8), gc_types::CLOSURE_FN_8);
+        assert_eq!(gc_types::closure_fn_type_for_arity(4), gc_types::CLOSURE_FN_4);
+        assert_eq!(gc_types::closure_fn_type_for_arity(5), gc_types::CLOSURE_FN_N);
+        assert_eq!(gc_types::closure_fn_type_for_arity(8), gc_types::CLOSURE_FN_N);
 
-        // Closure struct types
+        // Variadic function types (0-8 have dedicated types, 9+ use CLOSURE_FN_N)
+        assert_eq!(gc_types::variadic_fn_type_for_arity_new(0), gc_types::CLOSURE_FN_0);
+        assert_eq!(gc_types::variadic_fn_type_for_arity_new(1), gc_types::CLOSURE_FN_1);
+        assert_eq!(gc_types::variadic_fn_type_for_arity_new(4), gc_types::CLOSURE_FN_4);
+        assert_eq!(gc_types::variadic_fn_type_for_arity_new(5), gc_types::CLOSURE_FN_5);
+        assert_eq!(gc_types::variadic_fn_type_for_arity_new(8), gc_types::CLOSURE_FN_8);
+        assert_eq!(gc_types::variadic_fn_type_for_arity_new(9), gc_types::CLOSURE_FN_N);
+
+        // Closure struct types (0-4 have dedicated types, 5+ use CLOSURE_N)
         assert_eq!(gc_types::closure_type_for_arity(0), gc_types::CLOSURE_0);
         assert_eq!(gc_types::closure_type_for_arity(1), gc_types::CLOSURE_1);
-        assert_eq!(gc_types::closure_type_for_arity(2), gc_types::CLOSURE_2);
-        assert_eq!(gc_types::closure_type_for_arity(8), gc_types::CLOSURE_8);
+        assert_eq!(gc_types::closure_type_for_arity(4), gc_types::CLOSURE_4);
+        assert_eq!(gc_types::closure_type_for_arity(5), gc_types::CLOSURE_N);
+        assert_eq!(gc_types::closure_type_for_arity(8), gc_types::CLOSURE_N);
     }
 }

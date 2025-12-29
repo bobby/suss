@@ -87,6 +87,7 @@ Function Index Layout:
 - [x] `deftype` basic implementation (Phase 3.1 - fields, constructor, field access, instance?)
 - [x] Reserved type indices for bootstrap (Phase 3.3)
 - [x] Bootstrap HAMT nodes in core.suss (Phase 4)
+- [x] Protocol method return type hints (`^i32` on `-count`, `-hash`, etc.)
 - [ ] End-to-end verification of complex trie operations
 - [ ] `deftype` with inline protocols (Phase 3.2)
 
@@ -841,8 +842,8 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 
 ### ClojureScript Reference Implementation
 
-ClojureScript source locations for reference:
-- `src/main/cljs/cljs/core.cljs` - All persistent collections
+ClojureScript is included as a Git submodule in `clojurescript/`. Key source locations:
+- `clojurescript/src/main/clojure/cljs/core.cljc` - All persistent collections
 - `PersistentVector` - lines ~4000-4400
 - `PersistentHashMap` - lines ~5000-5800
 - `BitmapIndexedNode` - lines ~5100-5400

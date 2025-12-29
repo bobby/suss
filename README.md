@@ -368,15 +368,17 @@ User-defined types compile to WASM GC structs with automatic:
 - Type identity for `instance?` checks
 
 **Built-in protocols** (defined in `core.suss`, auto-loaded before user code):
-- `ICounted` - `-count` for countable collections
+- `ICounted` - `^i32 -count` for countable collections
 - `IIndexed` - `-nth` for indexed access
 - `ISeq` - `-first`, `-rest` for sequential access
 - `ISeqable` - `-seq` for conversion to sequences
 - `ILookup` - `-lookup` for key-based lookup
-- `IAssociative` - `-assoc`, `-contains-key` for associative structures
+- `IAssociative` - `-assoc`, `^i32 -contains-key` for associative structures
 - `ICollection` - `-conj` for adding elements
-- `IEquiv` - `-equiv` for equality testing
-- `IHash` - `-hash` for hashing
+- `IEquiv` - `^i32 -equiv` for equality testing
+- `IHash` - `^i32 -hash` for hashing
+
+**Return type hints:** Methods with `^i32` return unboxed i32 values (for dispatch table type matching). Methods without hints return boxed `eqref`.
 
 **Low-level primitives** for protocol implementations:
 - `(.-field struct)` - Access struct fields (e.g., `(.-cnt vec)`)

@@ -138,22 +138,22 @@ impl Compiler {
         // Expand macros on combined expressions
         let expanded = expand::expand_all(all_exprs, None)?;
 
-        // Separate defn/deftype forms from the final expression
-        let (core_fns, deftypes, user_expr) = Self::extract_core_definitions(expanded)?;
+        // Separate defn/deftype/extend-type forms from the final expression
+        let (core_fns, deftypes, protocols, extensions, user_expr) = Self::extract_core_definitions(expanded)?;
 
         // Detect WASI calls in the expression
         let wasi_calls = wasi::collect_wasi_calls(&user_expr);
 
         if wasi_calls.is_empty() {
             // No WASI calls - compile as core module (existing behavior)
-            let wasm = self.compile_expr_core(user_expr, core_fns, deftypes)?;
+            let wasm = self.compile_expr_core(user_expr, core_fns, deftypes, protocols, extensions)?;
             Ok(CompiledExpr {
                 wasm,
                 is_component: false,
             })
         } else {
             // WASI calls detected - compile as component with imports
-            let wasm = self.compile_expr_with_wasi(user_expr, wasi_calls, core_fns, deftypes)?;
+            let wasm = self.compile_expr_with_wasi(user_expr, wasi_calls, core_fns, deftypes, protocols, extensions)?;
             Ok(CompiledExpr {
                 wasm,
                 is_component: true,
@@ -161,26 +161,39 @@ impl Compiler {
         }
     }
 
-    /// Extract defn and deftype forms from expressions
-    /// Returns (functions, deftypes, final_expr)
-    /// Skips defprotocol and extend-type (handled during full module analysis)
+    /// Extract defn, deftype, defprotocol, and extend-type forms from expressions
+    /// Returns (functions, deftypes, protocols, extensions, final_expr)
     fn extract_core_definitions(
         exprs: Vec<Edn>,
     ) -> CompileResult<(
         Vec<analyze::AnalyzedFunction>,
         Vec<analyze::AnalyzedDeftype>,
+        Vec<analyze::AnalyzedProtocol>,
+        Vec<analyze::AnalyzedExtension>,
         Edn,
     )> {
         let mut functions = Vec::new();
         let mut deftypes = Vec::new();
+        let mut protocols = Vec::new();
+        let mut extensions = Vec::new();
         let mut remaining = Vec::new();
 
         for expr in exprs {
             if let Edn::List(ref items) = expr {
                 if let Some(Edn::Symbol(sym)) = items.first() {
-                    // Skip protocol declaration forms
-                    if matches!(sym.name.as_str(), "defprotocol" | "extend-type") {
-                        continue;
+                    // Extract protocol declarations (needed for return type hints)
+                    if sym.name == "defprotocol" {
+                        if let Some(protocol) = Self::extract_protocol(items)? {
+                            protocols.push(protocol);
+                            continue;
+                        }
+                    }
+                    // Extract extend-type forms
+                    if sym.name == "extend-type" && items.len() >= 2 {
+                        if let Some(extension) = Self::extract_extension(items)? {
+                            extensions.push(extension);
+                            continue;
+                        }
                     }
                     // Extract deftype forms
                     if sym.name == "deftype" && items.len() >= 3 {
@@ -266,7 +279,183 @@ impl Compiler {
             )
         };
 
-        Ok((functions, deftypes, user_expr))
+        Ok((functions, deftypes, protocols, extensions, user_expr))
+    }
+
+    /// Extract a defprotocol form into an AnalyzedProtocol
+    fn extract_protocol(items: &[Edn]) -> CompileResult<Option<analyze::AnalyzedProtocol>> {
+        // (defprotocol Name
+        //   "optional docstring"
+        //   (^type -method [params]))
+        if items.len() < 2 {
+            return Ok(None);
+        }
+
+        // Parse protocol name
+        let name = match &items[1] {
+            Edn::Symbol(s) => s.name.clone(),
+            _ => return Ok(None),
+        };
+
+        // Parse method signatures (skip docstrings)
+        let mut methods = Vec::new();
+        for item in &items[2..] {
+            if let Edn::List(method_items) = item {
+                if method_items.is_empty() {
+                    continue;
+                }
+
+                // Parse method with optional return type hint
+                // Format: (^type -method [params]) or (-method [params])
+                let (method_name, return_type, start_idx) = match &method_items[0] {
+                    Edn::Symbol(s) if s.name.starts_with('^') => {
+                        // ^type hint before method name
+                        let type_hint = s.name[1..].to_string();
+                        if method_items.len() < 2 {
+                            continue;
+                        }
+                        let name = match &method_items[1] {
+                            Edn::Symbol(s) => s.name.clone(),
+                            _ => continue,
+                        };
+                        (name, Some(type_hint), 2)
+                    }
+                    Edn::Symbol(s) => (s.name.clone(), None, 1),
+                    _ => continue,
+                };
+
+                // Parse arities with typed params
+                let mut arities = Vec::new();
+                for arity_item in &method_items[start_idx..] {
+                    if let Edn::Vector(params) = arity_item {
+                        let typed_params = Self::extract_typed_params(params);
+                        arities.push(typed_params);
+                    }
+                }
+
+                methods.push(analyze::AnalyzedProtocolMethod {
+                    name: method_name,
+                    arities,
+                    return_type,
+                });
+            }
+        }
+
+        Ok(Some(analyze::AnalyzedProtocol { name, methods }))
+    }
+
+    /// Parse typed parameters from a vector [^type param ^type param ...]
+    fn extract_typed_params(params: &[Edn]) -> Vec<analyze::ProtocolParam> {
+        let mut result = Vec::new();
+        let mut pending_type_hint: Option<String> = None;
+
+        for item in params {
+            if let Edn::Symbol(s) = item {
+                if s.name.starts_with('^') {
+                    pending_type_hint = Some(s.name[1..].to_string());
+                } else {
+                    result.push(analyze::ProtocolParam {
+                        name: s.name.clone(),
+                        type_hint: pending_type_hint.take(),
+                    });
+                }
+            }
+        }
+
+        result
+    }
+
+    /// Extract an extend-type form into an AnalyzedExtension
+    fn extract_extension(items: &[Edn]) -> CompileResult<Option<analyze::AnalyzedExtension>> {
+        // (extend-type TypeName
+        //   ProtocolName
+        //   (method [args] body)
+        //   ...)
+        if items.len() < 2 {
+            return Ok(None);
+        }
+
+        // Parse type name
+        let type_name = match &items[1] {
+            Edn::Symbol(s) => s.name.clone(),
+            _ => return Ok(None),
+        };
+
+        // Parse protocol implementations
+        let mut implementations = Vec::new();
+        let mut current_protocol: Option<String> = None;
+        let mut current_methods: Vec<analyze::AnalyzedMethodImpl> = Vec::new();
+
+        for item in &items[2..] {
+            match item {
+                // Protocol name (bare symbol)
+                Edn::Symbol(s) => {
+                    // Save previous protocol if any
+                    if let Some(protocol_name) = current_protocol.take() {
+                        if !current_methods.is_empty() {
+                            implementations.push(analyze::AnalyzedProtocolImpl {
+                                protocol_name,
+                                methods: std::mem::take(&mut current_methods),
+                            });
+                        }
+                    }
+                    current_protocol = Some(s.name.clone());
+                }
+                // Method implementation
+                Edn::List(method_items) if !method_items.is_empty() => {
+                    if current_protocol.is_none() {
+                        continue;
+                    }
+                    // Parse method: (method-name [params] body...)
+                    if let Some(Edn::Symbol(method_sym)) = method_items.first() {
+                        if let Some(Edn::Vector(params_vec)) = method_items.get(1) {
+                            let params: Vec<String> = params_vec
+                                .iter()
+                                .filter_map(|p| match p {
+                                    Edn::Symbol(s) => Some(s.name.clone()),
+                                    _ => None,
+                                })
+                                .collect();
+
+                            // Body is remaining items wrapped in do if multiple
+                            let body = if method_items.len() == 3 {
+                                method_items[2].clone()
+                            } else if method_items.len() > 3 {
+                                Edn::List(
+                                    std::iter::once(Edn::Symbol(suss_core::Symbol::new("do")))
+                                        .chain(method_items[2..].iter().cloned())
+                                        .collect(),
+                                )
+                            } else {
+                                Edn::Nil
+                            };
+
+                            current_methods.push(analyze::AnalyzedMethodImpl {
+                                name: method_sym.name.clone(),
+                                params,
+                                body,
+                            });
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        // Save final protocol
+        if let Some(protocol_name) = current_protocol {
+            if !current_methods.is_empty() {
+                implementations.push(analyze::AnalyzedProtocolImpl {
+                    protocol_name,
+                    methods: current_methods,
+                });
+            }
+        }
+
+        Ok(Some(analyze::AnalyzedExtension {
+            type_name,
+            implementations,
+        }))
     }
 
     /// Extract a deftype form into an AnalyzedDeftype
@@ -339,6 +528,8 @@ impl Compiler {
         expr: suss_core::Edn,
         core_fns: Vec<analyze::AnalyzedFunction>,
         deftypes: Vec<analyze::AnalyzedDeftype>,
+        protocols: Vec<analyze::AnalyzedProtocol>,
+        extensions: Vec<analyze::AnalyzedExtension>,
     ) -> CompileResult<Vec<u8>> {
         // Infer the return type
         let return_type = analyze::infer_expr_type(&expr)?;
@@ -360,8 +551,8 @@ impl Compiler {
             imports: Vec::new(),
             functions,
             globals: Vec::new(),
-            protocols: Vec::new(),
-            extensions: Vec::new(),
+            protocols,
+            extensions,
             deftypes,
         };
 
@@ -379,6 +570,8 @@ impl Compiler {
         wasi_calls: Vec<wasi::WasiFunctionInfo>,
         core_fns: Vec<analyze::AnalyzedFunction>,
         deftypes: Vec<analyze::AnalyzedDeftype>,
+        protocols: Vec<analyze::AnalyzedProtocol>,
+        extensions: Vec<analyze::AnalyzedExtension>,
     ) -> CompileResult<Vec<u8>> {
         // Infer the return type (may need to check WASI return types)
         let return_type = self.infer_expr_type_with_wasi(&expr, &wasi_calls)?;
@@ -423,8 +616,8 @@ impl Compiler {
             imports,
             functions,
             globals: Vec::new(),
-            protocols: Vec::new(),
-            extensions: Vec::new(),
+            protocols,
+            extensions,
             deftypes,
         };
 
@@ -1010,5 +1203,18 @@ mod deftype_tests {
 
         let wasm = result.unwrap();
         std::fs::write("/tmp/deftype_reserved.wasm", &wasm).unwrap();
+    }
+
+    #[test]
+    fn dump_apply_wasm() {
+        let source = "(apply + [1 2])";
+        let mut compiler = Compiler::new();
+        match compiler.compile_expr(source) {
+            Ok(wasm) => {
+                std::fs::write("/tmp/apply_debug.wasm", &wasm).unwrap();
+                eprintln!("WASM written to /tmp/apply_debug.wasm");
+            }
+            Err(e) => eprintln!("Compile error: {:?}", e),
+        }
     }
 }

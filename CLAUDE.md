@@ -53,8 +53,8 @@ wasmtime run target/wasm32-wasip2/release/suss_composed.wasm
 ## Architecture
 
 Suss is a Clojure dialect targeting WASM/WASI, which follows the
-ClojureScript implementation closely. A local reference copy of the
-ClojureScript core library is found in `reference/cljs.core.clj`.
+ClojureScript implementation closely. The ClojureScript source is
+included as a Git submodule in `clojurescript/`.
 
 All execution goes through WASM compilation:
 
@@ -144,8 +144,22 @@ Suss supports ClojureScript-style protocols and type extensions:
   (-to-json [this]))
 
 (defprotocol ICounted
-  (-count [coll]))
+  (^i32 -count [coll]))  ; ^i32 return type hint
 ```
+
+**Return Type Hints:** Protocol methods can have explicit return type hints using ClojureScript-style metadata. This is critical for protocol dispatch where the WASM function signature must match.
+
+```clojure
+;; Methods returning raw i32 (not boxed eqref):
+(defprotocol ICounted (^i32 -count [coll]))
+(defprotocol IHash (^i32 -hash [o]))
+(defprotocol IEquiv (^i32 -equiv [x y]))
+
+;; Methods returning boxed values (default, no hint needed):
+(defprotocol ISeq (-first [coll]) (-rest [coll]))
+```
+
+Without `^i32`, methods return boxed `eqref`. With `^i32`, codegen generates unboxed i32 return and adds unboxing code to the function body.
 
 **Extending Types:**
 ```clojure
@@ -158,9 +172,9 @@ Suss supports ClojureScript-style protocols and type extensions:
 ```
 
 **Key files:**
-- `crates/suss-compile/src/analyze.rs` - Protocol/extension parsing (`AnalyzedProtocol`, `AnalyzedExtension`)
-- `crates/suss-compile/src/lower.rs` - Protocol lowering, dispatch entry generation
-- `crates/suss-compile/src/codegen.rs` - Dispatch table population
+- `crates/suss-compile/src/analyze.rs` - Protocol/extension parsing (`AnalyzedProtocol`, `AnalyzedProtocolMethod`, `ProtocolParam`)
+- `crates/suss-compile/src/lower.rs` - Protocol lowering, return type hints via `method_return_types` HashMap
+- `crates/suss-compile/src/codegen.rs` - Dispatch table population, `type_to_valtype_for_signature()` for type hints
 
 **Built-in protocol methods** (method_ids 0-9):
 - `-lookup` (0), `-assoc` (1), `-count` (2), `-nth` (3), `-conj` (4)
@@ -481,9 +495,10 @@ When macros produce unexpected results:
 
 ### Clojure References
 
-- `reference/cljs.core.clj` - Local copy of ClojureScript core
+- `clojurescript/` - ClojureScript source (Git submodule)
+  - `src/main/clojure/cljs/core.cljc` - Core library implementation
+  - `src/test/cljs/` - ClojureScript test suite
 - `reference/cljs-tests/` - Conformance test cases adapted from ClojureScript
-- [ClojureScript Source](https://github.com/clojure/clojurescript) - Persistent data structure implementations
 
 ## Conformance & Performance Testing
 
@@ -500,10 +515,12 @@ cargo test -p suss-compile --test conformance test_conformance_collections -- --
 cargo test -p suss-compile --test conformance test_conformance_core -- --nocapture
 ```
 
-Test files in `reference/cljs-tests/`:
+Suss conformance test files in `reference/cljs-tests/`:
 - `collections.suss` - Vectors, maps, sets (76 tests)
 - `core.suss` - Arithmetic, logic, control flow, functions (125 tests)
 - `benchmarks.suss` - Performance benchmark definitions
+
+For the original ClojureScript tests, see `clojurescript/src/test/cljs/`.
 
 Test format (EDN):
 ```clojure

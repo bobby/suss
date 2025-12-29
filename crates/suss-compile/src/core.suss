@@ -7,11 +7,14 @@
 
 ;; ============================================================
 ;; Protocol Definitions
+;;
+;; Type hints: ^i32 for methods returning raw i32 (count, hash, equiv)
+;;             ^eqref for methods returning boxed values (default)
 ;; ============================================================
 
 (defprotocol ICounted
   "Protocol for countable collections."
-  (-count [coll]))
+  (^i32 -count [coll]))
 
 (defprotocol IIndexed
   "Protocol for indexed random access."
@@ -33,7 +36,7 @@
 (defprotocol IAssociative
   "Protocol for associative structures."
   (-assoc [coll key val])
-  (-contains-key [coll key]))
+  (^i32 -contains-key [coll key]))
 
 (defprotocol ICollection
   "Protocol for adding elements."
@@ -41,11 +44,11 @@
 
 (defprotocol IEquiv
   "Protocol for equality testing."
-  (-equiv [x y]))
+  (^i32 -equiv [x y]))
 
 (defprotocol IHash
   "Protocol for hashing."
-  (-hash [o]))
+  (^i32 -hash [o]))
 
 ;; ============================================================
 ;; Helper Functions for Vector Trie Operations
@@ -125,28 +128,32 @@
   (bit-count (bit-and bitmap (- bit 1))))
 
 ;; ============================================================
-;; HAMT Node Types (Bootstrap - reserved type indices)
+;; Core Collection Types (dynamically assigned GC type indices)
 ;; ============================================================
-;; These types are used by the runtime HAMT helpers in codegen.rs.
-;; The ^:type-id metadata reserves indices 5-7 for backward compatibility.
+;; These types get GC indices starting at NUM_GC_TYPES (19).
+;; The compiler no longer has hardcoded struct layouts for collections.
 
-(deftype ^:type-id 5 BitmapIndexedNode [^i32 bitmap arr])
-(deftype ^:type-id 6 ArrayNode [^i32 cnt arr])
-(deftype ^:type-id 7 HashCollisionNode [^i32 hash ^i32 cnt arr])
+;; Cons cell for lists
+(deftype Cons [first rest])
+
+;; Persistent Vector (32-way trie with tail optimization)
+(deftype PersistentVector [^i32 cnt ^i32 shift root tail])
+
+;; Persistent Map (HAMT)
+(deftype PersistentMap [^i32 map-cnt map-root])
+
+;; Persistent Set (HAMT with marker for structural distinction)
+(deftype PersistentSet [^i32 set-cnt set-root ^i32 _marker])
 
 ;; ============================================================
-;; Built-in Collection Types (reserved type indices)
+;; HAMT Node Types (for maps and sets)
 ;; ============================================================
-;; These enable ->TypeName constructors for core collection types.
-;; Field layouts match the hardcoded structs in codegen.rs.
+;; Field names are prefixed to disambiguate when accessed via .-field
+;; since multiple types have fields named "arr" and "cnt".
 
-(deftype ^:type-id 4 Cons [first rest])
-
-(deftype ^:type-id 8 PersistentVector [^i32 cnt ^i32 shift root tail])
-
-(deftype ^:type-id 9 PersistentMap [^i32 map-cnt map-root])
-
-(deftype ^:type-id 10 PersistentSet [^i32 set-cnt set-root ^i32 _marker])
+(deftype BitmapIndexedNode [^i32 bitmap bin-arr])
+(deftype ArrayNode [^i32 an-cnt an-arr])
+(deftype HashCollisionNode [^i32 hash ^i32 hcn-cnt hcn-arr])
 
 ;; ============================================================
 ;; HAMT Node Traversal Functions
@@ -214,8 +221,110 @@
     :else not-found))
 
 ;; ============================================================
+;; User-Facing Collection Functions
+;; ============================================================
+
+(defn cons
+  "Returns a new seq with x as the first element and coll as the rest."
+  [x coll]
+  (->Cons x coll))
+
+(defn hash
+  "Returns a hash code for x.
+   For integers, returns the value itself.
+   For nil, returns 0. For true/false, returns fixed values."
+  [x]
+  ;; Simple implementation: just use the value as-is for integers
+  ;; This works because our integers are already small enough to hash
+  (cond
+    (nil? x) 0
+    (= x true) 1231
+    (= x false) 1237
+    :else x))  ;; For integers, use the value as hash
+
+;; ============================================================
+;; HAMT Assoc Functions
+;; ============================================================
+
+(defn bin-assoc
+  "Associate a key-value pair into a BitmapIndexedNode.
+   Returns a new node with the entry added or updated."
+  [node shift hash key val]
+  (let [bit (hamt-bitpos hash shift)
+        bitmap (.-bitmap node)
+        arr (.-bin-arr node)
+        idx (hamt-index bitmap bit)]
+    (if (not= 0 (bit-and bitmap bit))
+      ;; Bit is set - key might already exist
+      (let [key-or-nil (aget arr (* 2 idx))
+            val-or-node (aget arr (+ (* 2 idx) 1))]
+        (if (nil? key-or-nil)
+          ;; Subtree - recurse into child node
+          (let [new-child (inode-assoc val-or-node (+ shift 5) hash key val)
+                new-arr (aclone arr)]
+            (aset new-arr (+ (* 2 idx) 1) new-child)
+            (->BitmapIndexedNode bitmap new-arr))
+          ;; Leaf entry
+          (if (= key key-or-nil)
+            ;; Same key - update value
+            (let [new-arr (aclone arr)]
+              (aset new-arr (+ (* 2 idx) 1) val)
+              (->BitmapIndexedNode bitmap new-arr))
+            ;; Hash collision or different key at this slot
+            ;; Create a new subtree with both entries
+            (let [new-child (inode-assoc
+                              (inode-assoc nil (+ shift 5) (hash key-or-nil) key-or-nil val-or-node)
+                              (+ shift 5) hash key val)
+                  new-arr (aclone arr)]
+              (aset new-arr (* 2 idx) nil)  ;; Mark as subtree
+              (aset new-arr (+ (* 2 idx) 1) new-child)
+              (->BitmapIndexedNode bitmap new-arr)))))
+      ;; Bit is not set - add new entry
+      (let [n (bit-count bitmap)
+            new-arr (make-array (* 2 (+ n 1)))]
+        ;; Copy entries before new slot
+        (acopy new-arr 0 arr 0 (* 2 idx))
+        ;; Insert new key-value
+        (aset new-arr (* 2 idx) key)
+        (aset new-arr (+ (* 2 idx) 1) val)
+        ;; Copy entries after new slot
+        (acopy new-arr (* 2 (+ idx 1)) arr (* 2 idx) (* 2 (- n idx)))
+        (->BitmapIndexedNode (bit-or bitmap bit) new-arr)))))
+
+(defn inode-assoc
+  "Type-dispatching assoc for any HAMT node type.
+   Handles nil (empty), BitmapIndexedNode, ArrayNode, HashCollisionNode."
+  [node shift hash key val]
+  (cond
+    (nil? node)
+    ;; Empty - create single-entry BitmapIndexedNode
+    (let [bit (hamt-bitpos hash shift)
+          arr (make-array 2)]
+      (aset arr 0 key)
+      (aset arr 1 val)
+      (->BitmapIndexedNode bit arr))
+
+    (instance? BitmapIndexedNode node)
+    (bin-assoc node shift hash key val)
+
+    ;; TODO: ArrayNode and HashCollisionNode assoc
+    :else node))
+
+;; ============================================================
 ;; Protocol Implementations
 ;; ============================================================
+
+(extend-type Cons
+  ISeq
+  (-first [c] (.-first c))
+  (-rest [c] (.-rest c))
+
+  ICounted
+  (-count [c]
+    (loop [coll c cnt 0]
+      (if (nil? coll)
+        cnt
+        (recur (.-rest coll) (+ cnt 1))))))
 
 (extend-type PersistentVector
   IIndexed
@@ -238,3 +347,25 @@
 ;; to use incorrect local indices in the WIT local layout.
 ;; See: VEC_CONJ migration blocked in Phase 5.
 ;; For now, VEC_CONJ remains in codegen.rs as a hardcoded wrapper.
+
+(extend-type PersistentMap
+  ILookup
+  (-lookup [m key]
+    (let [root (.-map-root m)]
+      (if (nil? root)
+        nil
+        (inode-find root 0 (hash key) key nil))))
+
+  ICounted
+  (-count [m] (.-map-cnt m)))
+
+(extend-type PersistentSet
+  ILookup
+  (-lookup [s key]
+    (let [root (.-set-root s)]
+      (if (nil? root)
+        nil
+        (inode-find root 0 (hash key) key nil))))
+
+  ICounted
+  (-count [s] (.-set-cnt s)))

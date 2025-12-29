@@ -29,8 +29,9 @@ use crate::ir::{BinOp, Expr, Function as IrFunc, Module, Type, UnOp, FieldType a
 // ============================================================================
 
 /// Number of runtime helper functions emitted before user functions.
-/// These are internal functions for protocol dispatch, hashing, vector trie, and HAMT operations.
-const NUM_RUNTIME_HELPERS: u32 = 25;
+/// Reduced to 2: only hash_string and get_type_id remain in codegen.
+/// Collection algorithms (vector trie, HAMT) are now implemented in core.suss.
+const NUM_RUNTIME_HELPERS: u32 = 2;
 
 /// Function index offsets for runtime helpers (relative to start of functions)
 mod helper_funcs {
@@ -42,105 +43,58 @@ mod helper_funcs {
     /// Returns the runtime type ID of a GC value
     pub const GET_TYPE_ID: u32 = 1;
 
-    // Vector trie helper functions (for vectors >32 elements)
+    // =========================================================================
+    // DEPRECATED STUBS - These functions are now in core.suss
+    // All point to HASH_STRING (0) to allow compilation during migration.
+    // Calling these will NOT work correctly.
+    // =========================================================================
 
-    /// $vec_aclone(src: eqref) -> eqref
-    /// Clone a TRIE_NODE array using array.copy
-    pub const VEC_ACLONE: u32 = 2;
-
-    /// $vec_tail_off(vec: eqref) -> i32
-    /// Returns the index where the tail begins: (cnt < 32) ? 0 : ((cnt-1) >>> 5) << 5
-    pub const VEC_TAIL_OFF: u32 = 3;
-
-    /// $vec_new_path(level: i32, node: eqref) -> eqref
-    /// Create a path from root level down to node (for tree growth)
-    pub const VEC_NEW_PATH: u32 = 4;
-
-    /// $vec_array_for(vec: eqref, i: i32) -> eqref
-    /// Get the leaf array containing index i (trie traversal)
-    pub const VEC_ARRAY_FOR: u32 = 5;
-
-    /// $vec_push_tail(vec: eqref, level: i32, parent: eqref, tailnode: eqref) -> eqref
-    /// Insert tail node into trie with path copying (recursive)
-    pub const VEC_PUSH_TAIL: u32 = 6;
-
-    /// $equiv(a: eqref, b: eqref) -> i32
-    /// Structural equality comparison for any two values
-    pub const EQUIV: u32 = 7;
-
-    // HAMT helper functions
-
-    /// $hamt_mask(hash: i32, shift: i32) -> i32
-    /// Extract 5-bit index from hash at given shift level: (hash >>> shift) & 0x1f
-    pub const HAMT_MASK: u32 = 8;
-
-    /// $hamt_bitpos(hash: i32, shift: i32) -> i32
-    /// Get bitmap position for hash at shift level: 1 << mask(hash, shift)
-    pub const HAMT_BITPOS: u32 = 9;
-
-    /// $hamt_index(bitmap: i32, bit: i32) -> i32
-    /// Count set bits below bit position: popcnt(bitmap & (bit - 1))
-    pub const HAMT_INDEX: u32 = 10;
-
-    // HAMT node operation functions
-
-    /// $inode_find(node: eqref, shift: i32, hash: i32, key: eqref, not_found: eqref) -> eqref
-    /// Type-dispatching lookup for any HAMT node type
-    pub const INODE_FIND: u32 = 11;
-
-    /// $inode_assoc(node: eqref, shift: i32, hash: i32, key: eqref, val: eqref) -> eqref
-    /// Type-dispatching insert/update for any HAMT node type
-    pub const INODE_ASSOC: u32 = 12;
-
-    /// $bin_find(node: eqref, shift: i32, hash: i32, key: eqref, not_found: eqref) -> eqref
-    /// BitmapIndexedNode lookup
-    pub const BIN_FIND: u32 = 13;
-
-    /// $bin_assoc(node: eqref, shift: i32, hash: i32, key: eqref, val: eqref) -> eqref
-    /// BitmapIndexedNode insert/update
-    pub const BIN_ASSOC: u32 = 14;
-
-    /// $an_find(node: eqref, shift: i32, hash: i32, key: eqref, not_found: eqref) -> eqref
-    /// ArrayNode lookup
-    pub const AN_FIND: u32 = 15;
-
-    /// $an_assoc(node: eqref, shift: i32, hash: i32, key: eqref, val: eqref) -> eqref
-    /// ArrayNode insert/update
-    pub const AN_ASSOC: u32 = 16;
-
-    /// $hcn_find(node: eqref, hash: i32, key: eqref, not_found: eqref) -> eqref
-    /// HashCollisionNode lookup (no shift - always at leaf level)
-    pub const HCN_FIND: u32 = 17;
-
-    /// $hcn_assoc(node: eqref, hash: i32, key: eqref, val: eqref) -> eqref
-    /// HashCollisionNode insert/update (no shift - always at leaf level)
-    pub const HCN_ASSOC: u32 = 18;
-
-    /// $create_node(shift: i32, key1: eqref, val1: eqref, hash2: i32, key2: eqref, val2: eqref) -> eqref
-    /// Create subtree when two different keys collide at same level
-    pub const CREATE_NODE: u32 = 19;
-
-    /// $hash(value: eqref) -> i32
-    /// Compute hash for any value with type dispatch
-    pub const HASH: u32 = 20;
-
-    // HAMT dissoc helper functions
-
-    /// $inode_dissoc(node: eqref, shift: i32, hash: i32, key: eqref) -> eqref
-    /// Type-dispatching remove for any HAMT node type. Returns null if node becomes empty.
-    pub const INODE_DISSOC: u32 = 21;
-
-    /// $bin_dissoc(node: eqref, shift: i32, hash: i32, key: eqref) -> eqref
-    /// BitmapIndexedNode remove. Returns null if node becomes empty.
-    pub const BIN_DISSOC: u32 = 22;
-
-    /// $an_dissoc(node: eqref, shift: i32, hash: i32, key: eqref) -> eqref
-    /// ArrayNode remove. May demote to BitmapIndexedNode if count drops to 16.
-    pub const AN_DISSOC: u32 = 23;
-
-    /// $hcn_dissoc(node: eqref, hash: i32, key: eqref) -> eqref
-    /// HashCollisionNode remove. Returns null if empty, or single key-value if only one left.
-    pub const HCN_DISSOC: u32 = 24;
+    #[deprecated(note = "Now in core.suss")]
+    pub const VEC_ACLONE: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const VEC_TAIL_OFF: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const VEC_NEW_PATH: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const VEC_ARRAY_FOR: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const VEC_PUSH_TAIL: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const EQUIV: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const HAMT_MASK: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const HAMT_BITPOS: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const HAMT_INDEX: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const INODE_FIND: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const INODE_ASSOC: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const BIN_FIND: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const BIN_ASSOC: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const AN_FIND: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const AN_ASSOC: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const HCN_FIND: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const HCN_ASSOC: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const CREATE_NODE: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const HASH: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const INODE_DISSOC: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const BIN_DISSOC: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const AN_DISSOC: u32 = 0;
+    #[deprecated(note = "Now in core.suss")]
+    pub const HCN_DISSOC: u32 = 0;
 }
 
 /// Relative offsets for helper function signatures (added to helper_type_base())
@@ -151,71 +105,11 @@ mod helper_type_offsets {
     /// Type for $get_type_id: (eqref) -> i32
     pub const GET_TYPE_ID: u32 = 1;
 
-    // Vector trie helper function types
-
-    /// Type for $vec_aclone: (eqref) -> eqref
-    pub const VEC_ACLONE: u32 = 2;
-
-    /// Type for $vec_tail_off: (eqref) -> i32
-    pub const VEC_TAIL_OFF: u32 = 3;
-
-    /// Type for $vec_new_path: (i32, eqref) -> eqref
-    pub const VEC_NEW_PATH: u32 = 4;
-
-    /// Type for $vec_array_for: (eqref, i32) -> eqref
-    pub const VEC_ARRAY_FOR: u32 = 5;
-
-    /// Type for $vec_push_tail: (eqref, i32, eqref, eqref) -> eqref
-    pub const VEC_PUSH_TAIL: u32 = 6;
-
-    /// Type for $equiv: (eqref, eqref) -> i32
-    pub const EQUIV: u32 = 7;
-
-    // HAMT helper function types
-
-    /// Type for $hamt_mask: (i32, i32) -> i32
-    pub const HAMT_MASK: u32 = 8;
-
-    /// Type for $hamt_bitpos: (i32, i32) -> i32
-    pub const HAMT_BITPOS: u32 = 9;
-
-    /// Type for $hamt_index: (i32, i32) -> i32
-    pub const HAMT_INDEX: u32 = 10;
-
-    // HAMT node operation function types
-
-    /// Type for $inode_find, $bin_find, $an_find: (eqref, i32, i32, eqref, eqref) -> eqref
-    pub const INODE_FIND: u32 = 11;
-
-    /// Type for $inode_assoc, $bin_assoc, $an_assoc: (eqref, i32, i32, eqref, eqref) -> eqref
-    /// Same signature as INODE_FIND, but we keep separate for clarity
-    pub const INODE_ASSOC: u32 = 12;
-
-    /// Type for $hcn_find: (eqref, i32, eqref, eqref) -> eqref (no shift parameter)
-    pub const HCN_FIND: u32 = 13;
-
-    /// Type for $hcn_assoc: (eqref, i32, eqref, eqref) -> eqref (no shift parameter)
-    pub const HCN_ASSOC: u32 = 14;
-
-    /// Type for $create_node: (i32, eqref, eqref, i32, eqref, eqref) -> eqref
-    pub const CREATE_NODE: u32 = 15;
-
-    /// Type for $hash: (eqref) -> i32
-    pub const HASH: u32 = 16;
-
-    // HAMT dissoc helper function types
-
-    /// Type for $inode_dissoc, $bin_dissoc, $an_dissoc: (eqref, i32, i32, eqref) -> eqref
-    /// [node, shift, hash, key] -> new_node (or null if empty)
-    pub const INODE_DISSOC: u32 = 17;
-
-    /// Type for $hcn_dissoc: (eqref, i32, eqref) -> eqref (no shift parameter)
-    /// [node, hash, key] -> new_node (or null if empty)
-    pub const HCN_DISSOC: u32 = 18;
+    // Collection helper types removed - now in core.suss
 }
 
-/// Number of helper function types
-const NUM_HELPER_TYPES: u32 = 19;
+/// Number of helper function types (reduced from 19 to 2)
+const NUM_HELPER_TYPES: u32 = 2;
 
 /// Relative offsets for protocol function signatures (added to protocol_type_base())
 mod protocol_type_offsets {
@@ -237,47 +131,13 @@ mod protocol_type_offsets {
 
 /// Protocol implementation function indices.
 ///
-/// These are wrapper functions that implement protocol methods for each type.
-/// They have protocol signatures (eqref args) and cast internally to concrete types.
+/// Collection protocol implementations are now in core.suss via extend-type.
+/// This module is kept for compatibility but contains no implementations.
 mod protocol_impl_funcs {
-    /// Number of protocol implementation wrapper functions
-    pub const NUM_PROTOCOL_IMPLS: u32 = 14;
+    /// Number of protocol implementation wrapper functions (reduced from 14 to 0)
+    pub const NUM_PROTOCOL_IMPLS: u32 = 0;
 
-    // Vector implementations
-    /// vec_nth: (eqref, eqref) -> eqref - IIndexed/-nth for PersistentVector
-    pub const VEC_NTH: u32 = 0;
-    /// vec_count: (eqref) -> i32 - ICounted/-count for PersistentVector
-    pub const VEC_COUNT: u32 = 1;
-    /// vec_conj: (eqref, eqref) -> eqref - ICollection/-conj for PersistentVector
-    pub const VEC_CONJ: u32 = 2;
-    /// vec_first: (eqref) -> eqref - ISeq/-first for PersistentVector
-    pub const VEC_FIRST: u32 = 3;
-    /// vec_rest: (eqref) -> eqref - ISeq/-rest for PersistentVector (TODO: returns nil)
-    pub const VEC_REST: u32 = 4;
-
-    // List (Cons) implementations
-    /// cons_first: (eqref) -> eqref - ISeq/-first for Cons
-    pub const CONS_FIRST: u32 = 5;
-    /// cons_rest: (eqref) -> eqref - ISeq/-rest for Cons
-    pub const CONS_REST: u32 = 6;
-    /// cons_count: (eqref) -> i32 - ICounted/-count for Cons (O(n) traversal)
-    pub const CONS_COUNT: u32 = 7;
-    /// cons_nth: (eqref, eqref) -> eqref - IIndexed/-nth for Cons (O(n) traversal)
-    pub const CONS_NTH: u32 = 8;
-
-    // Map implementations
-    /// map_count: (eqref) -> i32 - ICounted/-count for PersistentMap
-    pub const MAP_COUNT: u32 = 9;
-    /// map_lookup: (eqref, eqref) -> eqref - ILookup/-lookup for PersistentMap
-    pub const MAP_LOOKUP: u32 = 10;
-
-    // Set implementations
-    /// set_count: (eqref) -> i32 - ICounted/-count for PersistentSet
-    pub const SET_COUNT: u32 = 11;
-    /// set_contains: (eqref, eqref) -> eqref - ILookup/-lookup for PersistentSet (returns key or nil)
-    pub const SET_CONTAINS: u32 = 12;
-    /// set_conj: (eqref, eqref) -> eqref - ICollection/-conj for PersistentSet
-    pub const SET_CONJ: u32 = 13;
+    // All collection protocol implementations removed - now in core.suss via extend-type
 }
 
 // ============================================================================
@@ -384,6 +244,26 @@ impl<'a> CodeGen<'a> {
         self.num_imports() + NUM_RUNTIME_HELPERS + impl_idx
     }
 
+    /// Look up a deftype's GC type index by name.
+    /// Returns None if the deftype is not found.
+    fn deftype_gc_type_idx(&self, name: &str) -> Option<u32> {
+        self.ir.deftypes.iter().find(|dt| dt.name == name).map(|dt| dt.gc_type_idx)
+    }
+
+    /// Look up a deftype's type_id (runtime type discriminant) by name.
+    /// Returns None if the deftype is not found.
+    fn deftype_type_id(&self, name: &str) -> Option<i32> {
+        self.ir.deftypes.iter().find(|dt| dt.name == name).map(|dt| dt.type_id)
+    }
+
+    /// Look up a function's index by name.
+    /// Returns the WASM function index for the named function from ir.functions.
+    fn func_idx_by_name(&self, name: &str) -> Option<u32> {
+        self.ir.functions.iter().enumerate()
+            .find(|(_, f)| f.name == name)
+            .map(|(idx, _)| self.user_func_idx(idx as u32))
+    }
+
     // ========================================================================
     // Module generation modes
     // ========================================================================
@@ -407,46 +287,24 @@ impl<'a> CodeGen<'a> {
                     .iter()
                     .flat_map(|(_, ty)| self.type_to_valtypes_gc(ty))
                     .collect();
-                let results = self.type_to_valtypes_gc(&func.return_type);
+                // Only protocol method implementations get explicit type hints respected
+                // They have names like "$TypeName/-methodname"
+                let results = if func.name.contains("/-") {
+                    self.type_to_valtypes_for_signature(&func.return_type)
+                } else {
+                    self.type_to_valtypes_gc(&func.return_type)
+                };
                 types.ty().function(params, results);
             }
         }
         module.section(&types);
 
-        // Function section - helper functions first, then protocol impls, then user functions
+        // Function section - helper functions first, then user functions
+        // Collection helpers (vector trie, HAMT) removed - now in core.suss
         let mut functions = FunctionSection::new();
-        // Helper functions use their dedicated type indices (offset by user deftypes)
+        // Runtime helper functions: just hash_string and get_type_id
         functions.function(self.helper_type(helper_type_offsets::HASH_STRING));
         functions.function(self.helper_type(helper_type_offsets::GET_TYPE_ID));
-        // Vector trie helper functions
-        functions.function(self.helper_type(helper_type_offsets::VEC_ACLONE));
-        functions.function(self.helper_type(helper_type_offsets::VEC_TAIL_OFF));
-        functions.function(self.helper_type(helper_type_offsets::VEC_NEW_PATH));
-        functions.function(self.helper_type(helper_type_offsets::VEC_ARRAY_FOR));
-        functions.function(self.helper_type(helper_type_offsets::VEC_PUSH_TAIL));
-        // HAMT/equality helper functions
-        functions.function(self.helper_type(helper_type_offsets::EQUIV));
-        functions.function(self.helper_type(helper_type_offsets::HAMT_MASK));
-        functions.function(self.helper_type(helper_type_offsets::HAMT_BITPOS));
-        functions.function(self.helper_type(helper_type_offsets::HAMT_INDEX));
-        // HAMT node operation functions
-        functions.function(self.helper_type(helper_type_offsets::INODE_FIND));
-        functions.function(self.helper_type(helper_type_offsets::INODE_ASSOC));
-        functions.function(self.helper_type(helper_type_offsets::INODE_FIND)); // BIN_FIND uses same type
-        functions.function(self.helper_type(helper_type_offsets::INODE_ASSOC)); // BIN_ASSOC uses same type
-        functions.function(self.helper_type(helper_type_offsets::INODE_FIND)); // AN_FIND uses same type
-        functions.function(self.helper_type(helper_type_offsets::INODE_ASSOC)); // AN_ASSOC uses same type
-        functions.function(self.helper_type(helper_type_offsets::HCN_FIND));
-        functions.function(self.helper_type(helper_type_offsets::HCN_ASSOC));
-        functions.function(self.helper_type(helper_type_offsets::CREATE_NODE));
-        functions.function(self.helper_type(helper_type_offsets::HASH));
-        // HAMT dissoc operation functions
-        functions.function(self.helper_type(helper_type_offsets::INODE_DISSOC)); // INODE_DISSOC
-        functions.function(self.helper_type(helper_type_offsets::INODE_DISSOC)); // BIN_DISSOC uses same type
-        functions.function(self.helper_type(helper_type_offsets::INODE_DISSOC)); // AN_DISSOC uses same type
-        functions.function(self.helper_type(helper_type_offsets::HCN_DISSOC));   // HCN_DISSOC
-        // Protocol implementation functions use protocol type indices
-        self.emit_protocol_impl_function_decls(&mut functions);
         // User functions: closure/builtin wrappers use pre-defined types, others use type_offset
         let mut non_closure_type_idx = 0u32;
         for func in &self.ir.functions {
@@ -456,9 +314,10 @@ impl<'a> CodeGen<'a> {
                 let closure_fn_type = crate::ir::gc_types::closure_fn_type_for_arity(arity);
                 functions.function(closure_fn_type);
             } else if func.name.starts_with("$variadic_") {
-                // Variadic wrappers have no env param, so arity = params.len()
-                let arity = func.params.len() as u32;
-                let variadic_fn_type = crate::ir::gc_types::variadic_fn_type_for_arity(arity);
+                // Variadic wrappers have explicit types for arities 0-8
+                // Uses variadic_fn_type_for_arity_new which returns CLOSURE_FN_5-8 for arities 5-8
+                let arity = func.params.len().saturating_sub(1) as u32;
+                let variadic_fn_type = crate::ir::gc_types::variadic_fn_type_for_arity_new(arity);
                 functions.function(variadic_fn_type);
             } else {
                 functions.function(type_offset + non_closure_type_idx);
@@ -612,7 +471,13 @@ impl<'a> CodeGen<'a> {
                     .iter()
                     .flat_map(|(_, ty)| self.type_to_valtypes_gc(ty))
                     .collect();
-                let results = self.type_to_valtypes_gc(&func.return_type);
+                // Only protocol method implementations get explicit type hints respected
+                // They have names like "$TypeName/-methodname"
+                let results = if func.name.contains("/-") {
+                    self.type_to_valtypes_for_signature(&func.return_type)
+                } else {
+                    self.type_to_valtypes_gc(&func.return_type)
+                };
                 types.ty().function(params, results);
             }
         }
@@ -728,16 +593,27 @@ impl<'a> CodeGen<'a> {
 
     /// Emit the table section with a funcref table for protocol dispatch.
     ///
-    /// The table size is TABLE_SIZE (160 = 16 types × 10 methods).
+    /// The table size is calculated dynamically based on the number of deftypes:
+    /// - 5 primitive type slots (0-4)
+    /// - N deftype slots (5 to 5+N-1)
+    /// - Total slots = 5 + num_deftypes
+    /// - Table size = (5 + num_deftypes) * NUM_BUILTIN
+    ///
     /// Table index 0 is used for the dispatch table.
     fn emit_table_section(&self, module: &mut WasmModule) {
-        use crate::ir::dispatch_table;
+        use crate::ir::method_ids;
+
+        // Calculate dynamic table size based on number of deftypes
+        const PRIMITIVE_SLOTS: u32 = 5; // slots 0-4 for INT64, FLOAT64, STRING, ARRAY, I32_ARRAY
+        let num_deftype_slots = self.ir.deftypes.len() as u32;
+        let total_slots = PRIMITIVE_SLOTS + num_deftype_slots;
+        let table_size = total_slots * method_ids::NUM_BUILTIN;
 
         let mut tables = TableSection::new();
         tables.table(TableType {
             element_type: RefType::FUNCREF,
-            minimum: dispatch_table::TABLE_SIZE as u64,
-            maximum: Some(dispatch_table::TABLE_SIZE as u64),
+            minimum: table_size as u64,
+            maximum: Some(table_size as u64),
             table64: false,
             shared: false,
         });
@@ -746,138 +622,29 @@ impl<'a> CodeGen<'a> {
 
     /// Emit the element section to populate the dispatch table.
     ///
-    /// Registers built-in protocol implementations at their computed indices:
-    /// - index = type_id * NUM_BUILTIN + method_id
+    /// Registers protocol implementations at their computed slot indices:
+    /// - index = dispatch_slot * NUM_BUILTIN + method_id
+    ///
+    /// Slot mapping (set by lowerer):
+    /// - Primitive types: slots 0-4
+    /// - User deftypes: slots 5+ (in definition order)
     fn emit_element_section(&self, module: &mut WasmModule) {
         use crate::ir::dispatch_table;
-        use crate::ir::method_ids;
-        use crate::ir::type_ids;
         use std::borrow::Cow;
 
         let mut elements = ElementSection::new();
 
-        // For each protocol implementation, we add it at its dispatch table index
-        // We use active element segments with offset to place each at the right index
-
-        // VEC_NTH at (PERSISTENT_VECTOR=6, NTH=3) → index 63
-        let vec_nth_idx = dispatch_table::index(type_ids::PERSISTENT_VECTOR as u32, method_ids::NTH);
-        elements.active(
-            Some(dispatch_table::TABLE_INDEX),
-            &ConstExpr::i32_const(vec_nth_idx as i32),
-            Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::VEC_NTH)])),
-        );
-
-        // VEC_COUNT at (PERSISTENT_VECTOR=6, COUNT=2) → index 62
-        let vec_count_idx = dispatch_table::index(type_ids::PERSISTENT_VECTOR as u32, method_ids::COUNT);
-        elements.active(
-            Some(dispatch_table::TABLE_INDEX),
-            &ConstExpr::i32_const(vec_count_idx as i32),
-            Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::VEC_COUNT)])),
-        );
-
-        // VEC_CONJ at (PERSISTENT_VECTOR=6, CONJ=4) → index 64
-        let vec_conj_idx = dispatch_table::index(type_ids::PERSISTENT_VECTOR as u32, method_ids::CONJ);
-        elements.active(
-            Some(dispatch_table::TABLE_INDEX),
-            &ConstExpr::i32_const(vec_conj_idx as i32),
-            Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::VEC_CONJ)])),
-        );
-
-        // VEC_FIRST at (PERSISTENT_VECTOR=6, FIRST=5) → index 65
-        let vec_first_idx = dispatch_table::index(type_ids::PERSISTENT_VECTOR as u32, method_ids::FIRST);
-        elements.active(
-            Some(dispatch_table::TABLE_INDEX),
-            &ConstExpr::i32_const(vec_first_idx as i32),
-            Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::VEC_FIRST)])),
-        );
-
-        // VEC_REST at (PERSISTENT_VECTOR=6, REST=6) → index 66
-        let vec_rest_idx = dispatch_table::index(type_ids::PERSISTENT_VECTOR as u32, method_ids::REST);
-        elements.active(
-            Some(dispatch_table::TABLE_INDEX),
-            &ConstExpr::i32_const(vec_rest_idx as i32),
-            Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::VEC_REST)])),
-        );
-
-        // CONS_FIRST at (CONS=4, FIRST=5) → index 45
-        let cons_first_idx = dispatch_table::index(type_ids::CONS as u32, method_ids::FIRST);
-        elements.active(
-            Some(dispatch_table::TABLE_INDEX),
-            &ConstExpr::i32_const(cons_first_idx as i32),
-            Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::CONS_FIRST)])),
-        );
-
-        // CONS_REST at (CONS=4, REST=6) → index 46
-        let cons_rest_idx = dispatch_table::index(type_ids::CONS as u32, method_ids::REST);
-        elements.active(
-            Some(dispatch_table::TABLE_INDEX),
-            &ConstExpr::i32_const(cons_rest_idx as i32),
-            Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::CONS_REST)])),
-        );
-
-        // CONS_COUNT at (CONS=4, COUNT=2) → index 42
-        let cons_count_idx = dispatch_table::index(type_ids::CONS as u32, method_ids::COUNT);
-        elements.active(
-            Some(dispatch_table::TABLE_INDEX),
-            &ConstExpr::i32_const(cons_count_idx as i32),
-            Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::CONS_COUNT)])),
-        );
-
-        // CONS_NTH at (CONS=4, NTH=3) → index 43
-        let cons_nth_idx = dispatch_table::index(type_ids::CONS as u32, method_ids::NTH);
-        elements.active(
-            Some(dispatch_table::TABLE_INDEX),
-            &ConstExpr::i32_const(cons_nth_idx as i32),
-            Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::CONS_NTH)])),
-        );
-
-        // MAP_COUNT at (PERSISTENT_MAP=7, COUNT=2) → index 72
-        let map_count_idx = dispatch_table::index(type_ids::PERSISTENT_MAP as u32, method_ids::COUNT);
-        elements.active(
-            Some(dispatch_table::TABLE_INDEX),
-            &ConstExpr::i32_const(map_count_idx as i32),
-            Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::MAP_COUNT)])),
-        );
-
-        // MAP_LOOKUP at (PERSISTENT_MAP=9, LOOKUP=0)
-        let map_lookup_idx = dispatch_table::index(type_ids::PERSISTENT_MAP as u32, method_ids::LOOKUP);
-        elements.active(
-            Some(dispatch_table::TABLE_INDEX),
-            &ConstExpr::i32_const(map_lookup_idx as i32),
-            Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::MAP_LOOKUP)])),
-        );
-
-        // SET_COUNT at (PERSISTENT_SET=10, COUNT=2)
-        let set_count_idx = dispatch_table::index(type_ids::PERSISTENT_SET as u32, method_ids::COUNT);
-        elements.active(
-            Some(dispatch_table::TABLE_INDEX),
-            &ConstExpr::i32_const(set_count_idx as i32),
-            Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::SET_COUNT)])),
-        );
-
-        // SET_CONJ at (PERSISTENT_SET=10, CONJ=4) - moved before SET_CONTAINS
-        let set_conj_idx = dispatch_table::index(type_ids::PERSISTENT_SET as u32, method_ids::CONJ);
-        let set_conj_func = self.protocol_impl_func_idx(protocol_impl_funcs::SET_CONJ);
-        // Debug assertions to verify indices
-        debug_assert_eq!(set_conj_idx, 104, "SET_CONJ dispatch index should be 104");
-        debug_assert_eq!(set_conj_func, 38, "SET_CONJ function index should be 38");
-        elements.active(
-            Some(dispatch_table::TABLE_INDEX),
-            &ConstExpr::i32_const(set_conj_idx as i32),
-            Elements::Functions(Cow::Owned(vec![set_conj_func])),
-        );
-
-        // SET_CONTAINS at (PERSISTENT_SET=10, LOOKUP=0)
-        let set_contains_idx = dispatch_table::index(type_ids::PERSISTENT_SET as u32, method_ids::LOOKUP);
-        elements.active(
-            Some(dispatch_table::TABLE_INDEX),
-            &ConstExpr::i32_const(set_contains_idx as i32),
-            Elements::Functions(Cow::Owned(vec![self.protocol_impl_func_idx(protocol_impl_funcs::SET_CONTAINS)])),
-        );
+        // =========================================================================
+        // Protocol dispatch table entries
+        // Collection types (Cons, PersistentVector, PersistentMap, PersistentSet)
+        // are now deftypes in core.suss. Their protocol implementations come from
+        // extend-type declarations and are added via the dispatch_entries loop.
+        // =========================================================================
 
         // User-defined protocol implementations from extend-type
         for entry in &self.ir.dispatch_entries {
-            let table_idx = dispatch_table::index(entry.type_id, entry.method_id);
+            // dispatch_slot is already set correctly by the lowerer
+            let table_idx = dispatch_table::index(entry.dispatch_slot, entry.method_id);
             // User-defined protocol methods use user_func_idx because they're lowered as regular functions
             let func_idx = self.user_func_idx(entry.func_idx);
             elements.active(
@@ -938,6 +705,15 @@ impl<'a> CodeGen<'a> {
     ///
     /// These types must be emitted BEFORE helper function types in the type section,
     /// since function type indices start after GC type indices.
+    ///
+    /// NEW LAYOUT (19 types):
+    /// - 0-1: INT64, FLOAT64 (numeric primitives)
+    /// - 2-4: STRING, ARRAY, I32_ARRAY (storage primitives)
+    /// - 5-10: CLOSURE_FN_0 to CLOSURE_FN_4, CLOSURE_FN_N (closure function types)
+    /// - 11-16: CLOSURE_0 to CLOSURE_4, CLOSURE_N (closure struct types)
+    /// - 17-18: VARIADIC_FN, VARIADIC_CLOSURE (variadic)
+    ///
+    /// Collection types (Cons, PersistentVector, etc.) are now deftypes in core.suss.
     fn emit_gc_types(&self, types: &mut TypeSection) {
         use crate::ir::gc_types;
 
@@ -945,13 +721,16 @@ impl<'a> CodeGen<'a> {
         let eqref = ValType::Ref(RefType::EQREF);
 
         // All dispatchable struct types have type_id as field 0 for O(1) dispatch.
-        // Field 0 is always i32 containing the type's gc_type index.
         let type_id_field = FieldType {
             element_type: StorageType::Val(ValType::I32),
             mutable: false,
         };
 
-        // Type 0: LARGE_INT - struct { type_id: i32, value: i64 }
+        // =========================================================================
+        // Numeric Primitives (0-1)
+        // =========================================================================
+
+        // Type 0: INT64 - struct { type_id: i32, value: i64 }
         // For integers that don't fit in i31ref (> 30 bits)
         types.ty().struct_(vec![
             type_id_field.clone(),
@@ -960,9 +739,9 @@ impl<'a> CodeGen<'a> {
                 mutable: false,
             },
         ]);
-        debug_assert_eq!(gc_types::LARGE_INT, 0);
+        debug_assert_eq!(gc_types::INT64, 0);
 
-        // Type 1: FLOAT - struct { type_id: i32, value: f64 }
+        // Type 1: FLOAT64 - struct { type_id: i32, value: f64 }
         // All floats are boxed since f64 doesn't fit in i31ref
         types.ty().struct_(vec![
             type_id_field.clone(),
@@ -971,332 +750,136 @@ impl<'a> CodeGen<'a> {
                 mutable: false,
             },
         ]);
-        debug_assert_eq!(gc_types::FLOAT, 1);
+        debug_assert_eq!(gc_types::FLOAT64, 1);
+
+        // =========================================================================
+        // Storage Primitives (2-4)
+        // =========================================================================
 
         // Type 2: STRING - array<i8>
         // UTF-8 string bytes, mutable for construction
-        // Note: Arrays don't have type_id field (not used in protocol dispatch)
         types.ty().array(&StorageType::I8, true);
         debug_assert_eq!(gc_types::STRING, 2);
 
-        // Type 3: TRIE_NODE - array<eqref>
-        // 32-element array for bit-partitioned vector trie nodes
-        // Used for both internal nodes (children) and leaf arrays (values)
-        // Note: Arrays don't have type_id field (internal implementation detail)
+        // Type 3: ARRAY - array<eqref>
+        // Universal mutable storage for collections (replaces TRIE_NODE)
         types.ty().array(&StorageType::Val(eqref), true);
-        debug_assert_eq!(gc_types::TRIE_NODE, 3);
+        debug_assert_eq!(gc_types::ARRAY, 3);
 
-        // Type 4: CONS - struct { type_id: i32, first: eqref, rest: eqref }
-        // Cons cell for persistent linked lists
-        types.ty().struct_(vec![
-            type_id_field.clone(),
-            FieldType {
-                element_type: StorageType::Val(eqref),
-                mutable: false,
-            },
-            FieldType {
-                element_type: StorageType::Val(eqref),
-                mutable: false,
-            },
-        ]);
-        debug_assert_eq!(gc_types::CONS, 4);
+        // Type 4: I32_ARRAY - array<i32>
+        // For BigInt magnitude storage (defined in core.suss)
+        types.ty().array(&StorageType::Val(ValType::I32), true);
+        debug_assert_eq!(gc_types::I32_ARRAY, 4);
 
-        // Define trie_node_ref for HAMT node arr fields
-        // Using specific (ref null 3) type makes HAMT nodes structurally distinct
-        // from PersistentMap, avoiding WASM GC structural typing confusion
-        let trie_node_ref = ValType::Ref(RefType {
+        // =========================================================================
+        // Closure Function Types (5-10)
+        // Signature: (env: (ref null $array), args...) -> eqref
+        // Arities 0-4 have dedicated types, 5+ use CLOSURE_FN_N with apply-style
+        // =========================================================================
+
+        // Use ARRAY type reference for closure env
+        let env_type = ValType::Ref(RefType {
             nullable: true,
-            heap_type: HeapType::Concrete(gc_types::TRIE_NODE),
+            heap_type: HeapType::Concrete(gc_types::ARRAY),
         });
 
-        // Type 5: BITMAP_INDEXED_NODE - struct { type_id: i32, bitmap: i32, arr: ref array<eqref> }
-        // Sparse HAMT node with ≤16 entries
-        // arr contains [key0, val0, key1, val1, ..., null, child, ...]
-        types.ty().struct_(vec![
-            type_id_field.clone(),
-            FieldType {
-                element_type: StorageType::Val(ValType::I32), // bitmap
-                mutable: false,
-            },
-            FieldType {
-                element_type: StorageType::Val(trie_node_ref.clone()), // arr
-                mutable: false,
-            },
-        ]);
-        debug_assert_eq!(gc_types::BITMAP_INDEXED_NODE, 5);
+        // Types 5-13: CLOSURE_FN_0 through CLOSURE_FN_8
+        // Each takes env plus N arguments
+        for arity in 0..=8u32 {
+            let mut params = vec![env_type.clone()];
+            for _ in 0..arity {
+                params.push(eqref);
+            }
+            types.ty().function(params, vec![eqref]);
+        }
+        debug_assert_eq!(gc_types::CLOSURE_FN_0, 5);
+        debug_assert_eq!(gc_types::CLOSURE_FN_8, 13);
 
-        // Type 6: ARRAY_NODE - struct { type_id: i32, cnt: i32, arr: ref array<eqref> }
-        // Dense HAMT node with >16 entries (32 slots, direct indexing)
-        types.ty().struct_(vec![
-            type_id_field.clone(),
-            FieldType {
-                element_type: StorageType::Val(ValType::I32), // cnt (non-null children)
-                mutable: false,
-            },
-            FieldType {
-                element_type: StorageType::Val(trie_node_ref.clone()), // arr (32 slots)
-                mutable: false,
-            },
-        ]);
-        debug_assert_eq!(gc_types::ARRAY_NODE, 6);
-
-        // Type 7: HASH_COLLISION_NODE - struct { type_id: i32, hash: i32, cnt: i32, arr: ref array<eqref> }
-        // Collision node for keys with same hash
-        // arr contains [key0, val0, key1, val1, ...] for linear scan
-        types.ty().struct_(vec![
-            type_id_field.clone(),
-            FieldType {
-                element_type: StorageType::Val(ValType::I32), // hash
-                mutable: false,
-            },
-            FieldType {
-                element_type: StorageType::Val(ValType::I32), // cnt
-                mutable: false,
-            },
-            FieldType {
-                element_type: StorageType::Val(trie_node_ref.clone()), // arr
-                mutable: false,
-            },
-        ]);
-        debug_assert_eq!(gc_types::HASH_COLLISION_NODE, 7);
-
-        // Type 8: PERSISTENT_VECTOR - struct { type_id: i32, cnt, shift, root, tail }
-        // ClojureScript-style 32-way bit-partitioned vector trie
-        // cnt: total element count
-        // shift: depth * 5 (5 bits per level, 32 = 2^5)
-        // root: null or TRIE_NODE (internal trie structure)
-        // tail: TRIE_NODE (rightmost leaf, partial for O(1) conj)
-        types.ty().struct_(vec![
-            type_id_field.clone(),
-            FieldType {
-                element_type: StorageType::Val(ValType::I32), // cnt
-                mutable: false,
-            },
-            FieldType {
-                element_type: StorageType::Val(ValType::I32), // shift
-                mutable: false,
-            },
-            FieldType {
-                element_type: StorageType::Val(eqref), // root (nullable trie)
-                mutable: false,
-            },
-            FieldType {
-                element_type: StorageType::Val(eqref), // tail (trie node)
-                mutable: false,
-            },
-        ]);
-        debug_assert_eq!(gc_types::PERSISTENT_VECTOR, 8);
-
-        // Type 9: PERSISTENT_MAP - struct { type_id: i32, cnt, root }
-        // HAMT-based persistent map
-        // cnt: number of key-value pairs
-        // root: null or BitmapIndexedNode/ArrayNode/HashCollisionNode
-        types.ty().struct_(vec![
-            type_id_field.clone(),
-            FieldType {
-                element_type: StorageType::Val(ValType::I32), // cnt
-                mutable: false,
-            },
-            FieldType {
-                element_type: StorageType::Val(eqref), // root (nullable HAMT)
-                mutable: false,
-            },
-        ]);
-        debug_assert_eq!(gc_types::PERSISTENT_MAP, 9);
-
-        // Type 10: PERSISTENT_SET - struct { type_id: i32, cnt, root, _marker }
-        // HAMT-based persistent set
-        // cnt: number of elements
-        // root: null or BitmapIndexedNode/ArrayNode/HashCollisionNode
-        // _marker: dummy field to make struct structurally different from PERSISTENT_MAP
-        //          WASM GC uses structural typing for ref.test, so identical structs
-        //          cannot be distinguished at runtime without this marker.
-        types.ty().struct_(vec![
-            type_id_field.clone(),
-            FieldType {
-                element_type: StorageType::Val(ValType::I32), // cnt
-                mutable: false,
-            },
-            FieldType {
-                element_type: StorageType::Val(eqref), // root (nullable HAMT)
-                mutable: false,
-            },
-            FieldType {
-                element_type: StorageType::Val(ValType::I32), // _marker (always 0)
-                mutable: false,
-            },
-        ]);
-        debug_assert_eq!(gc_types::PERSISTENT_SET, 10);
+        // Type 14: CLOSURE_FN_N - (env, args_array) -> result
+        // Apply-style for arities 9+
+        let array_ref = ValType::Ref(RefType {
+            nullable: true,
+            heap_type: HeapType::Concrete(gc_types::ARRAY),
+        });
+        types.ty().function(vec![env_type.clone(), array_ref.clone()], vec![eqref]);
+        debug_assert_eq!(gc_types::CLOSURE_FN_N, 14);
 
         // =========================================================================
-        // Closure Function Types (indices 11-19)
-        // These define the signatures for closure wrapper functions.
-        // Signature: (env: (ref null $trie_node), args...) -> eqref
-        // The env must be typed as (ref null 3) to allow array.get access.
-        // Must be defined BEFORE closure struct types so structs can reference them.
-        // =========================================================================
-
-        // Use trie_node_ref (already defined above) for closure env array access
-        let env_type = trie_node_ref.clone(); // (ref null 3) for env array access
-
-        // Type 11: CLOSURE_FN_0 - (env) -> result
-        types.ty().function(vec![env_type.clone()], vec![eqref]);
-        debug_assert_eq!(gc_types::CLOSURE_FN_0, 11);
-
-        // Type 12: CLOSURE_FN_1 - (env, arg1) -> result
-        types.ty().function(vec![env_type.clone(), eqref], vec![eqref]);
-        debug_assert_eq!(gc_types::CLOSURE_FN_1, 12);
-
-        // Type 13: CLOSURE_FN_2 - (env, arg1, arg2) -> result
-        types.ty().function(vec![env_type.clone(), eqref, eqref], vec![eqref]);
-        debug_assert_eq!(gc_types::CLOSURE_FN_2, 13);
-
-        // Type 14: CLOSURE_FN_3 - (env, arg1, arg2, arg3) -> result
-        types.ty().function(vec![env_type.clone(), eqref, eqref, eqref], vec![eqref]);
-        debug_assert_eq!(gc_types::CLOSURE_FN_3, 14);
-
-        // Type 15: CLOSURE_FN_4 - (env, arg1, arg2, arg3, arg4) -> result
-        types
-            .ty()
-            .function(vec![env_type.clone(), eqref, eqref, eqref, eqref], vec![eqref]);
-        debug_assert_eq!(gc_types::CLOSURE_FN_4, 15);
-
-        // Type 16: CLOSURE_FN_5 - (env, ..., arg5) -> result
-        types
-            .ty()
-            .function(vec![env_type.clone(), eqref, eqref, eqref, eqref, eqref], vec![eqref]);
-        debug_assert_eq!(gc_types::CLOSURE_FN_5, 16);
-
-        // Type 17: CLOSURE_FN_6
-        types.ty().function(
-            vec![env_type.clone(), eqref, eqref, eqref, eqref, eqref, eqref],
-            vec![eqref],
-        );
-        debug_assert_eq!(gc_types::CLOSURE_FN_6, 17);
-
-        // Type 18: CLOSURE_FN_7
-        types.ty().function(
-            vec![env_type.clone(), eqref, eqref, eqref, eqref, eqref, eqref, eqref],
-            vec![eqref],
-        );
-        debug_assert_eq!(gc_types::CLOSURE_FN_7, 18);
-
-        // Type 19: CLOSURE_FN_8
-        types.ty().function(
-            vec![env_type.clone(), eqref, eqref, eqref, eqref, eqref, eqref, eqref, eqref],
-            vec![eqref],
-        );
-        debug_assert_eq!(gc_types::CLOSURE_FN_8, 19);
-
-        // =========================================================================
-        // Closure Struct Types (indices 20-28)
+        // Closure Struct Types (15-20)
         // Each closure has: type_id, env (captured values), fn (typed funcref)
-        // Using typed non-null funcrefs avoids runtime type checks on call_ref
         // =========================================================================
 
-        // Helper to create closure struct with typed funcref field
-        let make_closure_struct = |types: &mut TypeSection, fn_type_idx: u32| {
-            // Non-null typed funcref for the closure's function
+        let make_closure_struct = |types: &mut TypeSection, fn_type_idx: u32, env_type: &ValType| {
             let typed_funcref = ValType::Ref(RefType {
                 nullable: false,
                 heap_type: HeapType::Concrete(fn_type_idx),
             });
-
             types.ty().struct_(vec![
-                type_id_field.clone(), // type_id: i32
+                type_id_field.clone(),
                 FieldType {
-                    element_type: StorageType::Val(trie_node_ref.clone()), // env: (ref null $trie_node)
+                    element_type: StorageType::Val(env_type.clone()),
                     mutable: false,
                 },
                 FieldType {
-                    element_type: StorageType::Val(typed_funcref), // fn: (ref $closure_fn_N)
+                    element_type: StorageType::Val(typed_funcref),
                     mutable: false,
                 },
             ]);
         };
 
-        // Types 20-28: CLOSURE_0 through CLOSURE_8
-        for arity in 0..=8u32 {
+        // Types 15-19: CLOSURE_0 through CLOSURE_4
+        for arity in 0..=4u32 {
             let fn_type_idx = gc_types::closure_fn_type_for_arity(arity);
-            make_closure_struct(types, fn_type_idx);
+            make_closure_struct(types, fn_type_idx, &env_type);
         }
-        debug_assert_eq!(gc_types::CLOSURE_0, 20);
-        debug_assert_eq!(gc_types::CLOSURE_8, 28);
+        debug_assert_eq!(gc_types::CLOSURE_0, 15);
+        debug_assert_eq!(gc_types::CLOSURE_4, 19);
+
+        // Type 20: CLOSURE_N (for arities 5+)
+        make_closure_struct(types, gc_types::CLOSURE_FN_N, &env_type);
+        debug_assert_eq!(gc_types::CLOSURE_N, 20);
 
         // =========================================================================
-        // Variadic Function Types (indices 29-37)
-        // These define signatures for variadic builtin wrappers like +, *, -, /.
-        // Unlike closure function types, these don't take an env parameter.
-        // Signature: (args...) -> eqref
+        // Variadic Types (21-22)
+        // Single function type handles all arities via runtime dispatch
         // =========================================================================
 
-        // Type 29: VARIADIC_FN_0 - () -> result
+        // Type 21: VARIADIC_FN - () -> result
+        // Base variadic function type (arity 0). Also used as fallback.
         types.ty().function(vec![], vec![eqref]);
-        debug_assert_eq!(gc_types::VARIADIC_FN_0, 29);
+        debug_assert_eq!(gc_types::VARIADIC_FN, 21);
 
-        // Type 30: VARIADIC_FN_1 - (arg1) -> result
-        types.ty().function(vec![eqref], vec![eqref]);
-        debug_assert_eq!(gc_types::VARIADIC_FN_1, 30);
-
-        // Type 31: VARIADIC_FN_2 - (arg1, arg2) -> result
-        types.ty().function(vec![eqref, eqref], vec![eqref]);
-        debug_assert_eq!(gc_types::VARIADIC_FN_2, 31);
-
-        // Type 32: VARIADIC_FN_3 - (arg1, arg2, arg3) -> result
-        types.ty().function(vec![eqref, eqref, eqref], vec![eqref]);
-        debug_assert_eq!(gc_types::VARIADIC_FN_3, 32);
-
-        // Type 33: VARIADIC_FN_4 - (arg1, arg2, arg3, arg4) -> result
-        types.ty().function(vec![eqref, eqref, eqref, eqref], vec![eqref]);
-        debug_assert_eq!(gc_types::VARIADIC_FN_4, 33);
-
-        // Type 34: VARIADIC_FN_5
-        types.ty().function(vec![eqref, eqref, eqref, eqref, eqref], vec![eqref]);
-        debug_assert_eq!(gc_types::VARIADIC_FN_5, 34);
-
-        // Type 35: VARIADIC_FN_6
-        types.ty().function(vec![eqref, eqref, eqref, eqref, eqref, eqref], vec![eqref]);
-        debug_assert_eq!(gc_types::VARIADIC_FN_6, 35);
-
-        // Type 36: VARIADIC_FN_7
-        types
-            .ty()
-            .function(vec![eqref, eqref, eqref, eqref, eqref, eqref, eqref], vec![eqref]);
-        debug_assert_eq!(gc_types::VARIADIC_FN_7, 36);
-
-        // Type 37: VARIADIC_FN_8
-        types.ty().function(
-            vec![eqref, eqref, eqref, eqref, eqref, eqref, eqref, eqref],
-            vec![eqref],
-        );
-        debug_assert_eq!(gc_types::VARIADIC_FN_8, 37);
-
-        // =========================================================================
-        // Variadic Closure Struct Type (index 38)
-        // Contains 9 funcrefs, one for each arity 0-8.
-        // Used for variadic builtins like +, *, -, / when used as values.
-        // =========================================================================
-
-        // Build the struct fields: type_id + 9 typed funcrefs
-        let mut variadic_fields = vec![type_id_field.clone()];
-        for arity in 0..=8u32 {
-            let fn_type_idx = gc_types::variadic_fn_type_for_arity(arity);
-            let typed_funcref = ValType::Ref(RefType {
-                nullable: false,
-                heap_type: HeapType::Concrete(fn_type_idx),
-            });
-            variadic_fields.push(FieldType {
-                element_type: StorageType::Val(typed_funcref),
+        // Type 22: VARIADIC_CLOSURE - struct { type_id: i32, fn0..fn8: funcrefs }
+        // Contains 9 funcrefs, one per arity (0-8), for variadic builtins like +, *, -, /
+        // Each funcref uses CLOSURE_FN_* types with individual params.
+        // Note: CLOSURE_FN_* types have env as first param, but variadics ignore it.
+        let make_variadic_funcref = |fn_type: u32| -> FieldType {
+            FieldType {
+                element_type: StorageType::Val(ValType::Ref(RefType {
+                    nullable: false,
+                    heap_type: HeapType::Concrete(fn_type),
+                })),
                 mutable: false,
-            });
-        }
-        types.ty().struct_(variadic_fields);
-        debug_assert_eq!(gc_types::VARIADIC_CLOSURE, 38);
+            }
+        };
+        types.ty().struct_(vec![
+            type_id_field.clone(),                           // type_id
+            make_variadic_funcref(gc_types::CLOSURE_FN_0),   // fn0 (arity 0): (env) -> result
+            make_variadic_funcref(gc_types::CLOSURE_FN_1),   // fn1 (arity 1): (env, arg) -> result
+            make_variadic_funcref(gc_types::CLOSURE_FN_2),   // fn2 (arity 2)
+            make_variadic_funcref(gc_types::CLOSURE_FN_3),   // fn3 (arity 3)
+            make_variadic_funcref(gc_types::CLOSURE_FN_4),   // fn4 (arity 4)
+            make_variadic_funcref(gc_types::CLOSURE_FN_5),   // fn5 (arity 5)
+            make_variadic_funcref(gc_types::CLOSURE_FN_6),   // fn6 (arity 6)
+            make_variadic_funcref(gc_types::CLOSURE_FN_7),   // fn7 (arity 7)
+            make_variadic_funcref(gc_types::CLOSURE_FN_8),   // fn8 (arity 8)
+        ]);
+        debug_assert_eq!(gc_types::VARIADIC_CLOSURE, 22);
 
         // =========================================================================
         // User-Defined Types (from deftype)
         // These come after all built-in types. Each has type_id at field 0.
-        // Skip deftypes with reserved type IDs (they reuse hardcoded built-in types).
+        // Collection types are now regular deftypes defined in core.suss.
         // =========================================================================
 
         for deftype in &self.ir.deftypes {
@@ -1328,124 +911,23 @@ impl<'a> CodeGen<'a> {
     ///
     /// These come after GC types but before protocol function types.
     /// Order must match helper_types module constants.
+    ///
+    /// NOTE: Reduced to 2 types - vector and HAMT helpers are now in core.suss.
     fn emit_helper_types(&self, types: &mut TypeSection) {
         let eqref = ValType::Ref(RefType::EQREF);
 
-        // Type for $hash_string: (i32, i32) -> i32
+        // Type 0: $hash_string: (i32, i32) -> i32
         // Takes (ptr, len) pointing to linear memory, returns hash
         types.ty().function(
             vec![ValType::I32, ValType::I32],
             vec![ValType::I32],
         );
 
-        // Type for $get_type_id: (eqref) -> i32
+        // Type 1: $get_type_id: (eqref) -> i32
         // Takes any GC value, returns its type ID
         types.ty().function(vec![eqref], vec![ValType::I32]);
 
-        // Vector trie helper function types
-
-        // Type for $vec_aclone: (eqref) -> eqref
-        // Clone a TRIE_NODE array
-        types.ty().function(vec![eqref], vec![eqref]);
-
-        // Type for $vec_tail_off: (eqref) -> i32
-        // Calculate tail offset from vector
-        types.ty().function(vec![eqref], vec![ValType::I32]);
-
-        // Type for $vec_new_path: (i32, eqref) -> eqref
-        // Create path from level to node
-        types.ty().function(vec![ValType::I32, eqref], vec![eqref]);
-
-        // Type for $vec_array_for: (eqref, i32) -> eqref
-        // Get leaf array containing index
-        types.ty().function(vec![eqref, ValType::I32], vec![eqref]);
-
-        // Type for $vec_push_tail: (eqref, i32, eqref, eqref) -> eqref
-        // Insert tail into trie with path copying
-        types
-            .ty()
-            .function(vec![eqref, ValType::I32, eqref, eqref], vec![eqref]);
-
-        // Type for $equiv: (eqref, eqref) -> i32
-        // Structural equality comparison
-        types.ty().function(vec![eqref, eqref], vec![ValType::I32]);
-
-        // HAMT helper function types
-
-        // Type for $hamt_mask: (i32, i32) -> i32
-        // Extract 5-bit index from hash
-        types
-            .ty()
-            .function(vec![ValType::I32, ValType::I32], vec![ValType::I32]);
-
-        // Type for $hamt_bitpos: (i32, i32) -> i32
-        // Get bitmap position
-        types
-            .ty()
-            .function(vec![ValType::I32, ValType::I32], vec![ValType::I32]);
-
-        // Type for $hamt_index: (i32, i32) -> i32
-        // Count set bits below position
-        types
-            .ty()
-            .function(vec![ValType::I32, ValType::I32], vec![ValType::I32]);
-
-        // HAMT node operation function types
-
-        // Type for $inode_find, $bin_find, $an_find: (eqref, i32, i32, eqref, eqref) -> eqref
-        // (node, shift, hash, key, not_found) -> result
-        types.ty().function(
-            vec![eqref, ValType::I32, ValType::I32, eqref, eqref],
-            vec![eqref],
-        );
-
-        // Type for $inode_assoc, $bin_assoc, $an_assoc: (eqref, i32, i32, eqref, eqref) -> eqref
-        // (node, shift, hash, key, val) -> new_node
-        types.ty().function(
-            vec![eqref, ValType::I32, ValType::I32, eqref, eqref],
-            vec![eqref],
-        );
-
-        // Type for $hcn_find: (eqref, i32, eqref, eqref) -> eqref
-        // (node, hash, key, not_found) -> result (no shift - leaf level)
-        types.ty().function(
-            vec![eqref, ValType::I32, eqref, eqref],
-            vec![eqref],
-        );
-
-        // Type for $hcn_assoc: (eqref, i32, eqref, eqref) -> eqref
-        // (node, hash, key, val) -> new_node (no shift - leaf level)
-        types.ty().function(
-            vec![eqref, ValType::I32, eqref, eqref],
-            vec![eqref],
-        );
-
-        // Type for $create_node: (i32, eqref, eqref, i32, eqref, eqref) -> eqref
-        // (shift, key1, val1, hash2, key2, val2) -> new_node
-        types.ty().function(
-            vec![ValType::I32, eqref, eqref, ValType::I32, eqref, eqref],
-            vec![eqref],
-        );
-
-        // Type for $hash: (eqref) -> i32
-        // Takes any GC value, returns its hash code
-        types.ty().function(vec![eqref], vec![ValType::I32]);
-
-        // HAMT dissoc helper function types
-
-        // Type for $inode_dissoc, $bin_dissoc, $an_dissoc: (eqref, i32, i32, eqref) -> eqref
-        // (node, shift, hash, key) -> new_node or null
-        types.ty().function(
-            vec![eqref, ValType::I32, ValType::I32, eqref],
-            vec![eqref],
-        );
-
-        // Type for $hcn_dissoc: (eqref, i32, eqref) -> eqref
-        // (node, hash, key) -> new_node or null (no shift - leaf level)
-        types.ty().function(
-            vec![eqref, ValType::I32, eqref],
-            vec![eqref],
-        );
+        // Vector trie and HAMT helper types removed - now defined via defn in core.suss
     }
 
     /// Emit function types for protocol methods.
@@ -1473,53 +955,10 @@ impl<'a> CodeGen<'a> {
 
     /// Emit function declarations for protocol implementation wrappers.
     ///
-    /// Each protocol implementation has a specific type matching its arity:
-    /// - count: ARITY_1_I32 (eqref) -> i32
-    /// - nth, first, rest: ARITY_1_REF or ARITY_2_REF
-    ///
-    /// Order must match protocol_impl_funcs constants!
-    fn emit_protocol_impl_function_decls(&self, functions: &mut FunctionSection) {
-        // 0: VEC_NTH: (eqref, eqref) -> eqref
-        functions.function(self.protocol_type(protocol_type_offsets::ARITY_2_REF));
-
-        // 1: VEC_COUNT: (eqref) -> i32
-        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_I32));
-
-        // 2: VEC_CONJ: (eqref, eqref) -> eqref
-        functions.function(self.protocol_type(protocol_type_offsets::ARITY_2_REF));
-
-        // 3: VEC_FIRST: (eqref) -> eqref
-        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_REF));
-
-        // 4: VEC_REST: (eqref) -> eqref
-        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_REF));
-
-        // 5: CONS_FIRST: (eqref) -> eqref
-        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_REF));
-
-        // 6: CONS_REST: (eqref) -> eqref
-        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_REF));
-
-        // 7: CONS_COUNT: (eqref) -> i32
-        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_I32));
-
-        // 8: CONS_NTH: (eqref, eqref) -> eqref
-        functions.function(self.protocol_type(protocol_type_offsets::ARITY_2_REF));
-
-        // 9: MAP_COUNT: (eqref) -> i32
-        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_I32));
-
-        // 10: MAP_LOOKUP: (eqref, eqref) -> eqref
-        functions.function(self.protocol_type(protocol_type_offsets::ARITY_2_REF));
-
-        // 11: SET_COUNT: (eqref) -> i32
-        functions.function(self.protocol_type(protocol_type_offsets::ARITY_1_I32));
-
-        // 12: SET_CONTAINS: (eqref, eqref) -> eqref
-        functions.function(self.protocol_type(protocol_type_offsets::ARITY_2_REF));
-
-        // 13: SET_CONJ: (eqref, eqref) -> eqref
-        functions.function(self.protocol_type(protocol_type_offsets::ARITY_2_REF));
+    /// Collection protocol implementations are now in core.suss via extend-type.
+    fn emit_protocol_impl_function_decls(&self, _functions: &mut FunctionSection) {
+        // All collection protocol declarations removed - now in core.suss
+        // This function is empty but kept for structural compatibility
     }
 
     /// Emit code for protocol implementation wrapper functions.
@@ -1530,938 +969,27 @@ impl<'a> CodeGen<'a> {
     /// 3. Perform the operation
     /// 4. Return result (as eqref or i32 depending on method)
     ///
-    /// Order must match protocol_impl_funcs constants!
-    fn emit_protocol_impl_functions(&self, code: &mut CodeSection) -> CompileResult<()> {
-        // 0: VEC_NTH: (vec: eqref, idx: eqref) -> eqref
-        code.function(&self.generate_vec_nth_wrapper());
-
-        // 1: VEC_COUNT: (vec: eqref) -> i32
-        code.function(&self.generate_vec_count_wrapper());
-
-        // 2: VEC_CONJ: (vec: eqref, val: eqref) -> eqref
-        code.function(&self.generate_vec_conj_wrapper()?);
-
-        // 3: VEC_FIRST: (vec: eqref) -> eqref
-        code.function(&self.generate_vec_first_wrapper());
-
-        // 4: VEC_REST: (vec: eqref) -> eqref (TODO: returns nil)
-        code.function(&self.generate_vec_rest_wrapper());
-
-        // 5: CONS_FIRST: (list: eqref) -> eqref
-        code.function(&self.generate_cons_first_wrapper());
-
-        // 6: CONS_REST: (list: eqref) -> eqref
-        code.function(&self.generate_cons_rest_wrapper());
-
-        // 7: CONS_COUNT: (list: eqref) -> i32
-        code.function(&self.generate_cons_count_wrapper());
-
-        // 8: CONS_NTH: (list: eqref, idx: eqref) -> eqref
-        code.function(&self.generate_cons_nth_wrapper());
-
-        // 9: MAP_COUNT: (map: eqref) -> i32
-        code.function(&self.generate_map_count_wrapper());
-
-        // 10: MAP_LOOKUP: (map: eqref, key: eqref) -> eqref
-        code.function(&self.generate_map_lookup_wrapper());
-
-        // 11: SET_COUNT: (set: eqref) -> i32
-        code.function(&self.generate_set_count_wrapper());
-
-        // 12: SET_CONTAINS: (set: eqref, key: eqref) -> eqref (returns key or nil)
-        code.function(&self.generate_set_contains_wrapper());
-
-        // 13: SET_CONJ: (set: eqref, val: eqref) -> eqref
-        code.function(&self.generate_set_conj_wrapper()?);
-
+    /// Collection protocol implementations are now in core.suss via extend-type.
+    fn emit_protocol_impl_functions(&self, _code: &mut CodeSection) -> CompileResult<()> {
+        // All collection protocol implementations removed - now in core.suss
+        // This function is empty but kept for structural compatibility
         Ok(())
     }
 
-    /// Generate VEC_NTH wrapper: (vec: eqref, idx: eqref) -> eqref
-    fn generate_vec_nth_wrapper(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Locals: idx_local (i32) for decoded index
-        let mut f = Function::new(vec![(1, ValType::I32)]);
-        let idx_local: u32 = 2;
-
-        // Decode index from i31ref (param 1) to i32
-        f.instruction(&Instruction::LocalGet(1));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-        f.instruction(&Instruction::I31GetS);
-        // Decode: encoded >> 1
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32ShrS);
-        f.instruction(&Instruction::LocalSet(idx_local));
-
-        // Call $vec_array_for(vec, idx) to get the leaf array
-        f.instruction(&Instruction::LocalGet(0)); // vec
-        f.instruction(&Instruction::LocalGet(idx_local)); // idx
-        f.instruction(&Instruction::Call(
-            self.helper_func_idx(helper_funcs::VEC_ARRAY_FOR),
-        ));
-
-        // Cast result to TRIE_NODE for array.get
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-
-        // Get element at idx & 0x1f
-        f.instruction(&Instruction::LocalGet(idx_local));
-        f.instruction(&Instruction::I32Const(0x1F));
-        f.instruction(&Instruction::I32And);
-
-        // array.get leaf[index]
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate VEC_COUNT wrapper: (vec: eqref) -> i32
-    fn generate_vec_count_wrapper(&self) -> Function {
-        use crate::ir::gc_types;
-
-        let mut f = Function::new(vec![]);
-
-        // Cast to PersistentVector
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-
-        // Get cnt field (field 1, after type_id)
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_CNT,
-        });
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate VEC_CONJ wrapper: (vec: eqref, val: eqref) -> eqref
-    ///
-    /// This wrapper performs the full VecConj operation:
-    /// - If room in tail: clone tail, append element
-    /// - If tail full: push old tail into trie, create new single-element tail
-    fn generate_vec_conj_wrapper(&self) -> CompileResult<Function> {
-        use crate::ir::gc_types;
-        use crate::ir::type_ids;
-
-        // Locals layout:
-        // 0: vec (eqref) - parameter
-        // 1: val (eqref) - parameter
-        // 2: cnt (i32)
-        // 3: new_tail/new_root (eqref)
-        let mut f = Function::new(vec![
-            (1, ValType::I32),                  // cnt (local 2)
-            (1, ValType::Ref(RefType::EQREF)),  // new_tail/new_root (local 3)
-        ]);
-
-        let vec_local: u32 = 0;
-        let val_local: u32 = 1;
-        let cnt_local: u32 = 2;
-        let new_tail_local: u32 = 3;
-
-        // Get count from vec
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_CNT,
-        });
-        f.instruction(&Instruction::LocalSet(cnt_local));
-
-        // Check: (cnt - tail_off) < 32 means room in tail
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::Call(
-            self.helper_func_idx(helper_funcs::VEC_TAIL_OFF),
-        ));
-        f.instruction(&Instruction::I32Sub);
-        f.instruction(&Instruction::I32Const(32));
-        f.instruction(&Instruction::I32LtU);
-
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-
-        // === Room in tail: create larger tail, copy elements, add new element ===
-        // Create new array of size (cnt & 0x1f) + 1, filled with null
-        f.instruction(&Instruction::RefNull(HeapType::Abstract {
-            shared: false,
-            ty: AbstractHeapType::Eq,
-        }));
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(0x1f));
-        f.instruction(&Instruction::I32And);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::ArrayNew(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(new_tail_local));
-
-        // Copy old tail elements to new tail
-        f.instruction(&Instruction::LocalGet(new_tail_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_TAIL,
-        });
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(0x1f));
-        f.instruction(&Instruction::I32And);
-        f.instruction(&Instruction::ArrayCopy {
-            array_type_index_dst: gc_types::TRIE_NODE,
-            array_type_index_src: gc_types::TRIE_NODE,
-        });
-
-        // Set new element at index (cnt & 0x1f)
-        f.instruction(&Instruction::LocalGet(new_tail_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(0x1f));
-        f.instruction(&Instruction::I32And);
-        f.instruction(&Instruction::LocalGet(val_local)); // val from parameter
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-
-        // Create new vector: type_id, (inc cnt), shift, root, new_tail
-        f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_VECTOR));
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_SHIFT,
-        });
-
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_ROOT,
-        });
-
-        f.instruction(&Instruction::LocalGet(new_tail_local));
-        f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_VECTOR));
-
-        f.instruction(&Instruction::Else);
-
-        // === Tail full: push into trie ===
-        // Check root overflow: (cnt >>> 5) > (1 << shift)
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32ShrU);
-
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_SHIFT,
-        });
-        f.instruction(&Instruction::I32Shl);
-        f.instruction(&Instruction::I32GtU);
-
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-
-        // === Root overflow: grow tree ===
-        // new_root = [old_root, new_path(shift, tail)]
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_ROOT,
-        });
-
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_SHIFT,
-        });
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_TAIL,
-        });
-        f.instruction(&Instruction::Call(
-            self.helper_func_idx(helper_funcs::VEC_NEW_PATH),
-        ));
-
-        f.instruction(&Instruction::ArrayNewFixed {
-            array_type_index: gc_types::TRIE_NODE,
-            array_size: 2,
-        });
-        f.instruction(&Instruction::LocalSet(new_tail_local));
-
-        // Build result: type_id, (inc cnt), (shift + 5), new_root, [val]
-        f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_VECTOR));
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_SHIFT,
-        });
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Add);
-
-        f.instruction(&Instruction::LocalGet(new_tail_local));
-
-        f.instruction(&Instruction::LocalGet(val_local)); // val
-        f.instruction(&Instruction::ArrayNewFixed {
-            array_type_index: gc_types::TRIE_NODE,
-            array_size: 1,
-        });
-
-        f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_VECTOR));
-
-        f.instruction(&Instruction::Else);
-
-        // === No overflow: push tail into existing tree ===
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_ROOT,
-        });
-        f.instruction(&Instruction::RefIsNull);
-
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-
-        // Root is null: new_root = new_path(shift, tail)
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_SHIFT,
-        });
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_TAIL,
-        });
-        f.instruction(&Instruction::Call(
-            self.helper_func_idx(helper_funcs::VEC_NEW_PATH),
-        ));
-
-        f.instruction(&Instruction::Else);
-
-        // Root is not null: push_tail(vec, shift, root, tail)
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_SHIFT,
-        });
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_ROOT,
-        });
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_TAIL,
-        });
-        f.instruction(&Instruction::Call(
-            self.helper_func_idx(helper_funcs::VEC_PUSH_TAIL),
-        ));
-
-        f.instruction(&Instruction::End); // end if (root is null)
-
-        f.instruction(&Instruction::LocalSet(new_tail_local));
-
-        // Build result: type_id, (inc cnt), shift, new_root, [val]
-        f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_VECTOR));
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_SHIFT,
-        });
-
-        f.instruction(&Instruction::LocalGet(new_tail_local));
-
-        f.instruction(&Instruction::LocalGet(val_local)); // val
-        f.instruction(&Instruction::ArrayNewFixed {
-            array_type_index: gc_types::TRIE_NODE,
-            array_size: 1,
-        });
-
-        f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_VECTOR));
-
-        f.instruction(&Instruction::End); // end if (root overflow)
-        f.instruction(&Instruction::End); // end if (room in tail)
-
-        f.instruction(&Instruction::End);
-        Ok(f)
-    }
-
-    /// Generate CONS_FIRST wrapper: (list: eqref) -> eqref
-    fn generate_cons_first_wrapper(&self) -> Function {
-        use crate::ir::gc_types;
-
-        let mut f = Function::new(vec![]);
-
-        // Cast to Cons
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::CONS)));
-
-        // Get first field (field 1, after type_id)
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::CONS,
-            field_index: gc_types::CONS_FIRST,
-        });
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate CONS_REST wrapper: (list: eqref) -> eqref
-    fn generate_cons_rest_wrapper(&self) -> Function {
-        use crate::ir::gc_types;
-
-        let mut f = Function::new(vec![]);
-
-        // Cast to Cons
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::CONS)));
-
-        // Get rest field (field 2, after type_id)
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::CONS,
-            field_index: gc_types::CONS_REST,
-        });
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate MAP_COUNT wrapper: (map: eqref) -> i32 (placeholder)
-    fn generate_map_count_wrapper(&self) -> Function {
-        use crate::ir::gc_types;
-
-        let mut f = Function::new(vec![]);
-
-        // Cast to PersistentMap
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_MAP)));
-
-        // Get cnt field (field 1, after type_id)
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_MAP,
-            field_index: gc_types::PM_CNT,
-        });
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate SET_COUNT wrapper: (set: eqref) -> i32 (placeholder)
-    fn generate_set_count_wrapper(&self) -> Function {
-        use crate::ir::gc_types;
-
-        let mut f = Function::new(vec![]);
-
-        // Cast to PersistentSet
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_SET)));
-
-        // Get cnt field (field 1, after type_id)
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_SET,
-            field_index: gc_types::PS_CNT,
-        });
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate MAP_LOOKUP wrapper: (map: eqref, key: eqref) -> eqref
-    ///
-    /// Looks up key in map, returns value or nil if not found.
-    fn generate_map_lookup_wrapper(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Locals: map=0, key=1, root=2
-        let eqref = ValType::Ref(RefType::EQREF);
-        let mut f = Function::new(vec![(1, eqref)]);
-        let root_local: u32 = 2;
-
-        // Get root from map
-        f.instruction(&Instruction::LocalGet(0)); // map
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_MAP)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_MAP,
-            field_index: gc_types::PM_ROOT,
-        });
-        f.instruction(&Instruction::LocalSet(root_local));
-
-        // Check if root is null
-        f.instruction(&Instruction::LocalGet(root_local));
-        f.instruction(&Instruction::RefIsNull);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-
-        // Root is null - return nil
-        f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-        f.instruction(&Instruction::RefI31);
-
-        f.instruction(&Instruction::Else);
-
-        // Root exists - call inode_find(root, 0, hash(key), key, nil)
-        f.instruction(&Instruction::LocalGet(root_local)); // root
-        f.instruction(&Instruction::I32Const(0)); // shift = 0
-
-        // hash(key)
-        f.instruction(&Instruction::LocalGet(1)); // key
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH)));
-
-        f.instruction(&Instruction::LocalGet(1)); // key
-
-        // not_found = nil
-        f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-        f.instruction(&Instruction::RefI31);
-
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::INODE_FIND)));
-
-        f.instruction(&Instruction::End); // end null check
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate SET_CONTAINS wrapper: (set: eqref, key: eqref) -> eqref
-    ///
-    /// Returns key if found in set, nil otherwise.
-    fn generate_set_contains_wrapper(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Locals: set=0, key=1, root=2
-        let eqref = ValType::Ref(RefType::EQREF);
-        let mut f = Function::new(vec![(1, eqref)]);
-        let root_local: u32 = 2;
-
-        // Get root from set
-        f.instruction(&Instruction::LocalGet(0)); // set
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_SET)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_SET,
-            field_index: gc_types::PS_ROOT,
-        });
-        f.instruction(&Instruction::LocalSet(root_local));
-
-        // Check if root is null
-        f.instruction(&Instruction::LocalGet(root_local));
-        f.instruction(&Instruction::RefIsNull);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-
-        // Root is null - return nil
-        f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-        f.instruction(&Instruction::RefI31);
-
-        f.instruction(&Instruction::Else);
-
-        // Root exists - call inode_find(root, 0, hash(key), key, nil)
-        // For sets, the value stored is the key itself, so if found we return the key
-        f.instruction(&Instruction::LocalGet(root_local)); // root
-        f.instruction(&Instruction::I32Const(0)); // shift = 0
-
-        // hash(key)
-        f.instruction(&Instruction::LocalGet(1)); // key
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH)));
-
-        f.instruction(&Instruction::LocalGet(1)); // key
-
-        // not_found = nil
-        f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-        f.instruction(&Instruction::RefI31);
-
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::INODE_FIND)));
-
-        f.instruction(&Instruction::End); // end null check
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate SET_CONJ wrapper: (set: eqref, val: eqref) -> eqref
-    ///
-    /// Adds val to the set, returns new set.
-    fn generate_set_conj_wrapper(&self) -> CompileResult<Function> {
-        use crate::ir::gc_types;
-        use crate::ir::type_ids;
-
-        // Locals layout:
-        // 0: set (eqref) - parameter
-        // 1: val (eqref) - parameter
-        // 2: cnt (i32)
-        // 3: root (eqref)
-        // 4: new_root (eqref)
-        let eqref = ValType::Ref(RefType::EQREF);
-        let mut f = Function::new(vec![
-            (1, ValType::I32),  // cnt (local 2)
-            (2, eqref),         // root, new_root (locals 3, 4)
-        ]);
-
-        let set_local: u32 = 0;
-        let val_local: u32 = 1;
-        let cnt_local: u32 = 2;
-        let root_local: u32 = 3;
-        let new_root_local: u32 = 4;
-
-        // Get root and cnt from set
-        f.instruction(&Instruction::LocalGet(set_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_SET)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_SET,
-            field_index: gc_types::PS_ROOT,
-        });
-        f.instruction(&Instruction::LocalSet(root_local));
-
-        f.instruction(&Instruction::LocalGet(set_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_SET)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_SET,
-            field_index: gc_types::PS_CNT,
-        });
-        f.instruction(&Instruction::LocalSet(cnt_local));
-
-        // Check if root is null
-        f.instruction(&Instruction::LocalGet(root_local));
-        f.instruction(&Instruction::RefIsNull);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-
-        // Root is null - create BitmapIndexedNode with single entry
-        // BitmapIndexedNode(bitpos(hash, 0), [val, val]) - key=val, val=val
-        f.instruction(&Instruction::I32Const(type_ids::BITMAP_INDEXED_NODE));
-
-        // bitpos(hash, 0)
-        f.instruction(&Instruction::LocalGet(val_local));
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH)));
-        f.instruction(&Instruction::I32Const(0)); // shift = 0
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HAMT_BITPOS)));
-
-        // [val, val] - key and value are the same for sets
-        f.instruction(&Instruction::LocalGet(val_local));
-        f.instruction(&Instruction::LocalGet(val_local));
-        f.instruction(&Instruction::ArrayNewFixed {
-            array_type_index: gc_types::TRIE_NODE,
-            array_size: 2,
-        });
-        f.instruction(&Instruction::StructNew(gc_types::BITMAP_INDEXED_NODE));
-
-        f.instruction(&Instruction::Else);
-
-        // Root exists - call inode_assoc(root, 0, hash(val), val, val)
-        f.instruction(&Instruction::LocalGet(root_local)); // root
-        f.instruction(&Instruction::I32Const(0)); // shift = 0
-
-        // hash(val)
-        f.instruction(&Instruction::LocalGet(val_local));
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH)));
-
-        f.instruction(&Instruction::LocalGet(val_local)); // key = val
-        f.instruction(&Instruction::LocalGet(val_local)); // val = val
-
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::INODE_ASSOC)));
-
-        f.instruction(&Instruction::End); // end null check
-
-        // Stack now has new_root
-        f.instruction(&Instruction::LocalSet(new_root_local));
-
-        // Create new PersistentSet(type_id, cnt+1, new_root, marker)
-        f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_SET));
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add); // cnt + 1
-        f.instruction(&Instruction::LocalGet(new_root_local));
-        f.instruction(&Instruction::I32Const(0)); // marker field
-        f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_SET));
-
-        f.instruction(&Instruction::End);
-        Ok(f)
-    }
-
-    /// Generate VEC_FIRST wrapper: (vec: eqref) -> eqref
-    ///
-    /// Returns the first element of the vector, or nil if empty.
-    fn generate_vec_first_wrapper(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Locals: cnt (i32)
-        let mut f = Function::new(vec![(1, ValType::I32)]);
-        let cnt_local: u32 = 1;
-
-        // Get count from vector
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_CNT,
-        });
-        f.instruction(&Instruction::LocalSet(cnt_local));
-
-        // If count == 0, return nil
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Eqz);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        // Return nil (i31ref 0)
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::RefI31);
-        f.instruction(&Instruction::Return);
-        f.instruction(&Instruction::End);
-
-        // Otherwise, call vec_array_for(vec, 0) to get the first leaf
-        f.instruction(&Instruction::LocalGet(0)); // vec
-        f.instruction(&Instruction::I32Const(0)); // idx = 0
-        f.instruction(&Instruction::Call(
-            self.helper_func_idx(helper_funcs::VEC_ARRAY_FOR),
-        ));
-
-        // Cast to TRIE_NODE and get element at index 0
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate VEC_REST wrapper: (vec: eqref) -> eqref
-    ///
-    /// TODO: Should return a seq over the rest of the vector.
-    /// For now, returns nil as a placeholder.
-    fn generate_vec_rest_wrapper(&self) -> Function {
-        let mut f = Function::new(vec![]);
-
-        // TODO: Proper implementation requires ChunkedSeq or IndexedSeq types
-        // For now, just return nil
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::RefI31);
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate CONS_COUNT wrapper: (list: eqref) -> i32
-    ///
-    /// O(n) traversal to count cons cells.
-    fn generate_cons_count_wrapper(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Locals: curr (eqref), count (i32)
-        let eqref = ValType::Ref(RefType::EQREF);
-        let mut f = Function::new(vec![(1, eqref), (1, ValType::I32)]);
-        let curr_local: u32 = 1;
-        let count_local: u32 = 2;
-
-        // Initialize: curr = param 0, count = 0
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::LocalSet(curr_local));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalSet(count_local));
-
-        // Loop: while curr is a Cons, increment count and move to rest
-        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Empty)); // outer block for break
-        f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
-
-        // Check if curr is nil (i31ref with value 0)
-        f.instruction(&Instruction::LocalGet(curr_local));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::I31));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        // It's an i31ref - check if it's nil (value 0)
-        f.instruction(&Instruction::LocalGet(curr_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-        f.instruction(&Instruction::I31GetS);
-        f.instruction(&Instruction::I32Eqz);
-        f.instruction(&Instruction::BrIf(2)); // break to outer block if nil
-        f.instruction(&Instruction::End);
-
-        // Check if curr is a Cons
-        f.instruction(&Instruction::LocalGet(curr_local));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::CONS)));
-        f.instruction(&Instruction::I32Eqz);
-        f.instruction(&Instruction::BrIf(1)); // break if not a Cons
-
-        // Increment count
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::LocalSet(count_local));
-
-        // curr = curr.rest
-        f.instruction(&Instruction::LocalGet(curr_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::CONS)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::CONS,
-            field_index: gc_types::CONS_REST,
-        });
-        f.instruction(&Instruction::LocalSet(curr_local));
-
-        // Continue loop
-        f.instruction(&Instruction::Br(0));
-
-        f.instruction(&Instruction::End); // end loop
-        f.instruction(&Instruction::End); // end block
-
-        // Return count
-        f.instruction(&Instruction::LocalGet(count_local));
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate CONS_NTH wrapper: (list: eqref, idx: eqref) -> eqref
-    ///
-    /// O(n) traversal to get element at index.
-    fn generate_cons_nth_wrapper(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Locals: curr (eqref), remaining_idx (i32)
-        let eqref = ValType::Ref(RefType::EQREF);
-        let mut f = Function::new(vec![(1, eqref), (1, ValType::I32)]);
-        let curr_local: u32 = 2;
-        let idx_local: u32 = 3;
-
-        // Initialize: curr = param 0
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::LocalSet(curr_local));
-
-        // Decode index from i31ref (param 1) to i32
-        f.instruction(&Instruction::LocalGet(1));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-        f.instruction(&Instruction::I31GetS);
-        // Decode: encoded >> 1
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32ShrS);
-        f.instruction(&Instruction::LocalSet(idx_local));
-
-        // Loop: traverse until idx reaches 0
-        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Empty)); // outer block for break
-        f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
-
-        // If idx == 0, return first of curr
-        f.instruction(&Instruction::LocalGet(idx_local));
-        f.instruction(&Instruction::I32Eqz);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        // Return curr.first
-        f.instruction(&Instruction::LocalGet(curr_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::CONS)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::CONS,
-            field_index: gc_types::CONS_FIRST,
-        });
-        f.instruction(&Instruction::Return);
-        f.instruction(&Instruction::End);
-
-        // Check if curr is a Cons (if not, we've run off the end - return nil)
-        f.instruction(&Instruction::LocalGet(curr_local));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::CONS)));
-        f.instruction(&Instruction::I32Eqz);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        // Return nil (index out of bounds)
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::RefI31);
-        f.instruction(&Instruction::Return);
-        f.instruction(&Instruction::End);
-
-        // Decrement idx
-        f.instruction(&Instruction::LocalGet(idx_local));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Sub);
-        f.instruction(&Instruction::LocalSet(idx_local));
-
-        // curr = curr.rest
-        f.instruction(&Instruction::LocalGet(curr_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::CONS)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::CONS,
-            field_index: gc_types::CONS_REST,
-        });
-        f.instruction(&Instruction::LocalSet(curr_local));
-
-        // Continue loop
-        f.instruction(&Instruction::Br(0));
-
-        f.instruction(&Instruction::End); // end loop
-        f.instruction(&Instruction::End); // end block
-
-        // Should never reach here, but return nil just in case
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::RefI31);
-
-        f.instruction(&Instruction::End);
-        f
-    }
 
     /// Emit code for runtime helper functions.
     ///
     /// These come before user functions in the code section.
     fn emit_helper_functions(&self, code: &mut CodeSection) -> CompileResult<()> {
-        // $hash_string
+        // Only 2 runtime helpers remain - collection algorithms are now in core.suss
+
+        // $hash_string - xxHash32 for string hashing
         code.function(&self.generate_hash_string_func());
 
-        // $get_type_id
+        // $get_type_id - runtime type dispatch
         code.function(&self.generate_get_type_id_func());
 
-        // Vector trie helper functions
-        code.function(&self.generate_vec_aclone_func());
-        code.function(&self.generate_vec_tail_off_func());
-        code.function(&self.generate_vec_new_path_func());
-        code.function(&self.generate_vec_array_for_func());
-        code.function(&self.generate_vec_push_tail_func());
-
-        // HAMT/equality helper functions
-        code.function(&self.generate_equiv_func());
-        code.function(&self.generate_hamt_mask_func());
-        code.function(&self.generate_hamt_bitpos_func());
-        code.function(&self.generate_hamt_index_func());
-
-        // HAMT node operation functions
-        code.function(&self.generate_inode_find_func());
-        code.function(&self.generate_inode_assoc_func());
-        code.function(&self.generate_bin_find_func());
-        code.function(&self.generate_bin_assoc_func());
-        code.function(&self.generate_an_find_func());
-        code.function(&self.generate_an_assoc_func());
-        code.function(&self.generate_hcn_find_func());
-        code.function(&self.generate_hcn_assoc_func());
-        code.function(&self.generate_create_node_func());
-        code.function(&self.generate_hash_func());
-
-        // HAMT dissoc operation functions
-        code.function(&self.generate_inode_dissoc_func());
-        code.function(&self.generate_bin_dissoc_func());
-        code.function(&self.generate_an_dissoc_func());
-        code.function(&self.generate_hcn_dissoc_func());
-
+        // Vector trie and HAMT helpers removed - now in core.suss
         Ok(())
     }
 
@@ -2615,29 +1143,32 @@ impl<'a> CodeGen<'a> {
         f
     }
 
-    /// Generate $get_type_id function - returns runtime type ID for protocol dispatch.
+    /// Generate $get_type_id function - returns dispatch table slot index for protocol dispatch.
     ///
     /// Signature: (value: eqref) -> i32
     ///
-    /// Type ID mapping:
-    /// - i31ref (nil, bool, small int): -1
-    /// - LargeInt: 0
-    /// - Float: 1
-    /// - String: 2
-    /// - TrieNode: 3
-    /// - Cons: 4
-    /// - HamtNode: 5
-    /// - PersistentVector: 6
-    /// - PersistentMap: 7
-    /// - PersistentSet: 8
+    /// IMPORTANT: Returns a dispatch table SLOT INDEX, not the raw type_id.
+    /// This is used for indexing into the dispatch table: slot * NUM_BUILTIN + method_id
     ///
-    /// Uses ref.test chain for type dispatch. Future optimization: use struct
-    /// subtyping to enable O(1) field 0 access for all dispatchable struct types.
+    /// Slot mapping:
+    /// - i31ref (nil, bool, small int): -1 (non-dispatchable)
+    /// - Primitive types (INT64, FLOAT64, STRING, ARRAY, I32_ARRAY): 0-4
+    /// - User deftypes: 5, 6, 7, ... (in order of definition)
+    ///
+    /// Uses ref.test chain for type dispatch.
     fn generate_get_type_id_func(&self) -> Function {
         use crate::ir::gc_types;
-        use crate::ir::type_ids;
 
-        // No extra locals needed (param is local 0)
+        // Primitive types get slots 0-4, deftypes get slots 5+
+        const SLOT_I31REF: i32 = -1;
+        const SLOT_INT64: i32 = 0;
+        const SLOT_FLOAT64: i32 = 1;
+        const SLOT_STRING: i32 = 2;
+        const SLOT_ARRAY: i32 = 3;
+        const SLOT_I32_ARRAY: i32 = 4;
+        const DEFTYPE_SLOT_BASE: i32 = 5; // deftypes start at slot 5
+
+        // Locals: none needed
         let locals = vec![];
         let mut f = Function::new(locals);
 
@@ -2648,2402 +1179,68 @@ impl<'a> CodeGen<'a> {
             ty: AbstractHeapType::I31,
         }));
         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(type_ids::I31REF));
+        f.instruction(&Instruction::I32Const(SLOT_I31REF));
         f.instruction(&Instruction::Else);
 
-        // Test for PersistentVector (most common collection)
+        // Test for FLOAT64 (boxed f64)
         f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::PERSISTENT_VECTOR)));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::FLOAT64)));
         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_VECTOR));
+        f.instruction(&Instruction::I32Const(SLOT_FLOAT64));
         f.instruction(&Instruction::Else);
 
-        // Test for Cons (common for lists)
+        // Test for INT64 (boxed i64)
         f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::CONS)));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::INT64)));
         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(type_ids::CONS));
+        f.instruction(&Instruction::I32Const(SLOT_INT64));
         f.instruction(&Instruction::Else);
 
-        // Test for PersistentMap
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::PERSISTENT_MAP)));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_MAP));
-        f.instruction(&Instruction::Else);
-
-        // Test for PersistentSet
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::PERSISTENT_SET)));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_SET));
-        f.instruction(&Instruction::Else);
-
-        // Test for Float
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::FLOAT)));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(type_ids::FLOAT));
-        f.instruction(&Instruction::Else);
-
-        // Test for LargeInt
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::LARGE_INT)));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(type_ids::LARGE_INT));
-        f.instruction(&Instruction::Else);
-
-        // Test for String (array type)
+        // Test for STRING (array type)
         f.instruction(&Instruction::LocalGet(0));
         f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::STRING)));
         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(type_ids::STRING));
+        f.instruction(&Instruction::I32Const(SLOT_STRING));
         f.instruction(&Instruction::Else);
 
-        // Test for TrieNode (array type, internal)
+        // Test for ARRAY (array type, universal storage)
         f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::ARRAY)));
         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(type_ids::TRIE_NODE));
+        f.instruction(&Instruction::I32Const(SLOT_ARRAY));
         f.instruction(&Instruction::Else);
 
-        // Test for BitmapIndexedNode (HAMT internal)
+        // Test for I32_ARRAY (for BigInt magnitude)
         f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::BITMAP_INDEXED_NODE)));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::I32_ARRAY)));
         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(type_ids::BITMAP_INDEXED_NODE));
+        f.instruction(&Instruction::I32Const(SLOT_I32_ARRAY));
         f.instruction(&Instruction::Else);
 
-        // Test for ArrayNode (HAMT internal)
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::ARRAY_NODE)));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(type_ids::ARRAY_NODE));
-        f.instruction(&Instruction::Else);
+        // Test for user deftypes - each gets a sequential slot starting at DEFTYPE_SLOT_BASE
+        let deftype_count = self.ir.deftypes.len();
+        for (idx, deftype) in self.ir.deftypes.iter().enumerate() {
+            f.instruction(&Instruction::LocalGet(0));
+            f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(deftype.gc_type_idx)));
+            f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
+            // Return the dispatch slot index, not the raw type_id
+            f.instruction(&Instruction::I32Const(DEFTYPE_SLOT_BASE + idx as i32));
+            f.instruction(&Instruction::Else);
+        }
 
-        // Test for HashCollisionNode (HAMT internal)
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::HASH_COLLISION_NODE)));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(type_ids::HASH_COLLISION_NODE));
-        f.instruction(&Instruction::Else);
-
-        // Unknown type - return -2 as error indicator
+        // Unknown type (closures, etc.) - return -2
         f.instruction(&Instruction::I32Const(-2));
 
-        // Close all the if/else chains (12 nested ifs)
-        for _ in 0..12 {
+        // Close all the if/else chains (6 primitive + deftype_count nested ifs)
+        for _ in 0..(6 + deftype_count) {
             f.instruction(&Instruction::End);
         }
 
+        // End function body
         f.instruction(&Instruction::End);
         f
     }
 
-    // ========================================================================
-    // Vector Trie Helper Functions
-    // ========================================================================
-
-    /// Generate $vec_aclone function - clone a TRIE_NODE array.
-    ///
-    /// Signature: (src: eqref) -> eqref
-    ///
-    /// Creates a new array with the same length and copies all elements.
-    fn generate_vec_aclone_func(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Locals: dst (eqref), len (i32)
-        let locals = vec![
-            (1, ValType::Ref(RefType::EQREF)), // dst (local 1)
-            (1, ValType::I32),                 // len (local 2)
-        ];
-        let mut f = Function::new(locals);
-
-        // Get source length
-        f.instruction(&Instruction::LocalGet(0)); // src
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::ArrayLen);
-        f.instruction(&Instruction::LocalSet(2)); // len
-
-        // Create new array of same length, filled with null
-        f.instruction(&Instruction::RefNull(HeapType::Abstract {
-            shared: false,
-            ty: AbstractHeapType::Eq,
-        }));
-        f.instruction(&Instruction::LocalGet(2)); // len
-        f.instruction(&Instruction::ArrayNew(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(1)); // dst
-
-        // array.copy dst[0..len] = src[0..len]
-        f.instruction(&Instruction::LocalGet(1)); // dst
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0)); // dst_offset
-        f.instruction(&Instruction::LocalGet(0)); // src
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0)); // src_offset
-        f.instruction(&Instruction::LocalGet(2)); // len
-        f.instruction(&Instruction::ArrayCopy {
-            array_type_index_dst: gc_types::TRIE_NODE,
-            array_type_index_src: gc_types::TRIE_NODE,
-        });
-
-        // Return dst
-        f.instruction(&Instruction::LocalGet(1));
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $vec_tail_off function - calculate where the tail begins.
-    ///
-    /// Signature: (vec: eqref) -> i32
-    ///
-    /// Algorithm: (cnt < 32) ? 0 : ((cnt - 1) >>> 5) << 5
-    fn generate_vec_tail_off_func(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Locals: cnt (i32)
-        let locals = vec![(1, ValType::I32)]; // cnt (local 1)
-        let mut f = Function::new(locals);
-
-        // Get cnt from vector
-        f.instruction(&Instruction::LocalGet(0)); // vec
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_CNT,
-        });
-        f.instruction(&Instruction::LocalSet(1)); // save cnt
-
-        // if (cnt < 32) return 0
-        f.instruction(&Instruction::LocalGet(1)); // cnt
-        f.instruction(&Instruction::I32Const(32));
-        f.instruction(&Instruction::I32LtU);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::I32,
-        )));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::Else);
-
-        // ((cnt - 1) >>> 5) << 5
-        f.instruction(&Instruction::LocalGet(1)); // cnt
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Sub); // cnt - 1
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32ShrU); // >>> 5
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Shl); // << 5
-
-        f.instruction(&Instruction::End); // end if
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $vec_new_path function - create path from root level down to node.
-    ///
-    /// Signature: (level: i32, node: eqref) -> eqref
-    ///
-    /// Algorithm (iterative, working from bottom up):
-    /// while (level > 0) { node = [node]; level -= 5; }
-    /// return node
-    fn generate_vec_new_path_func(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Params: level (0), node (1)
-        // Locals: ret (eqref) for the new array
-        let locals = vec![(1, ValType::Ref(RefType::EQREF))];
-        let mut f = Function::new(locals);
-        let ret_local: u32 = 2;
-
-        // Loop: while level > 0, wrap node in new 32-element array (with node at index 0)
-        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-        f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
-
-        // if level <= 0, break and return node
-        f.instruction(&Instruction::LocalGet(0)); // level
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::I32LeS);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        f.instruction(&Instruction::LocalGet(1)); // node
-        f.instruction(&Instruction::Br(2)); // break to outer block with result
-        f.instruction(&Instruction::End);
-
-        // Create new 32-element array filled with null
-        f.instruction(&Instruction::RefNull(HeapType::Abstract {
-            shared: false,
-            ty: AbstractHeapType::Eq,
-        }));
-        f.instruction(&Instruction::I32Const(32));
-        f.instruction(&Instruction::ArrayNew(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(ret_local));
-
-        // Set ret[0] = node
-        f.instruction(&Instruction::LocalGet(ret_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(1)); // current node
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-
-        // node = ret
-        f.instruction(&Instruction::LocalGet(ret_local));
-        f.instruction(&Instruction::LocalSet(1));
-
-        // level -= 5
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Sub);
-        f.instruction(&Instruction::LocalSet(0));
-
-        f.instruction(&Instruction::Br(0)); // continue loop
-        f.instruction(&Instruction::End); // end loop
-
-        // This is unreachable but needed for block structure
-        f.instruction(&Instruction::LocalGet(1));
-        f.instruction(&Instruction::End); // end block
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $vec_array_for function - get the leaf array containing index i.
-    ///
-    /// Signature: (vec: eqref, i: i32) -> eqref
-    ///
-    /// Algorithm:
-    /// if (i >= tail_off(vec)) return vec.tail
-    /// else traverse trie: node = root, level = shift
-    ///   while (level > 0) { node = node[(i >>> level) & 0x1f]; level -= 5 }
-    ///   return node
-    fn generate_vec_array_for_func(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Params: vec (0), i (1)
-        // Locals: node (eqref), level (i32), tail_off (i32)
-        let locals = vec![
-            (1, ValType::Ref(RefType::EQREF)), // node (local 2)
-            (2, ValType::I32),                 // level (local 3), tail_off (local 4)
-        ];
-        let mut f = Function::new(locals);
-
-        // Calculate tail_off
-        f.instruction(&Instruction::LocalGet(0)); // vec
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::VEC_TAIL_OFF)));
-        f.instruction(&Instruction::LocalSet(4)); // tail_off
-
-        // if (i >= tail_off) return tail
-        f.instruction(&Instruction::LocalGet(1)); // i
-        f.instruction(&Instruction::LocalGet(4)); // tail_off
-        f.instruction(&Instruction::I32GeU);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-
-        // Return tail
-        f.instruction(&Instruction::LocalGet(0)); // vec
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_TAIL,
-        });
-
-        f.instruction(&Instruction::Else);
-
-        // Trie traversal: node = root, level = shift
-        f.instruction(&Instruction::LocalGet(0)); // vec
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_ROOT,
-        });
-        f.instruction(&Instruction::LocalSet(2)); // node = root
-
-        f.instruction(&Instruction::LocalGet(0)); // vec
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_SHIFT,
-        });
-        f.instruction(&Instruction::LocalSet(3)); // level = shift
-
-        // Loop while level > 0
-        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-        f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
-
-        // if (level <= 0) break, return node
-        f.instruction(&Instruction::LocalGet(3)); // level
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::I32LeS);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        f.instruction(&Instruction::LocalGet(2)); // node
-        f.instruction(&Instruction::Br(2)); // break to outer block with result
-        f.instruction(&Instruction::End);
-
-        // subidx = (i >>> level) & 0x1f
-        // node = node[subidx]
-        f.instruction(&Instruction::LocalGet(2)); // node
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(1)); // i
-        f.instruction(&Instruction::LocalGet(3)); // level
-        f.instruction(&Instruction::I32ShrU);
-        f.instruction(&Instruction::I32Const(0x1f));
-        f.instruction(&Instruction::I32And);
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(2)); // node = node[subidx]
-
-        // level -= 5
-        f.instruction(&Instruction::LocalGet(3));
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Sub);
-        f.instruction(&Instruction::LocalSet(3));
-
-        f.instruction(&Instruction::Br(0)); // continue loop
-        f.instruction(&Instruction::End); // end loop
-
-        // Unreachable but needed for block structure
-        f.instruction(&Instruction::LocalGet(2));
-        f.instruction(&Instruction::End); // end block
-
-        f.instruction(&Instruction::End); // end if (i >= tail_off)
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $vec_push_tail function - insert tail node into trie with path copying.
-    ///
-    /// Signature: (vec: eqref, level: i32, parent: eqref, tailnode: eqref) -> eqref
-    ///
-    /// Algorithm:
-    /// subidx = ((cnt - 1) >>> level) & 0x1f
-    /// ret = aclone(parent)
-    /// if (level == 5) { ret[subidx] = tailnode; return ret }
-    /// child = parent[subidx]
-    /// if (child == null) { ret[subidx] = new_path(level-5, tailnode) }
-    /// else { ret[subidx] = push_tail(vec, level-5, child, tailnode) }
-    /// return ret
-    fn generate_vec_push_tail_func(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Params: vec (0), level (1), parent (2), tailnode (3)
-        // Locals: subidx (i32), ret (eqref), child (eqref)
-        let locals = vec![
-            (1, ValType::I32),                 // subidx (local 4)
-            (2, ValType::Ref(RefType::EQREF)), // ret (local 5), child (local 6)
-        ];
-        let mut f = Function::new(locals);
-
-        // subidx = ((cnt - 1) >>> level) & 0x1f
-        f.instruction(&Instruction::LocalGet(0)); // vec
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_CNT,
-        });
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Sub); // cnt - 1
-        f.instruction(&Instruction::LocalGet(1)); // level
-        f.instruction(&Instruction::I32ShrU);
-        f.instruction(&Instruction::I32Const(0x1f));
-        f.instruction(&Instruction::I32And);
-        f.instruction(&Instruction::LocalSet(4)); // subidx
-
-        // ret = aclone(parent)
-        f.instruction(&Instruction::LocalGet(2)); // parent
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::VEC_ACLONE)));
-        f.instruction(&Instruction::LocalSet(5)); // ret
-
-        // if (level == 5)
-        f.instruction(&Instruction::LocalGet(1)); // level
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-
-        // ret[subidx] = tailnode; return ret
-        f.instruction(&Instruction::LocalGet(5)); // ret
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(4)); // subidx
-        f.instruction(&Instruction::LocalGet(3)); // tailnode
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalGet(5)); // ret
-
-        f.instruction(&Instruction::Else);
-
-        // child = parent[subidx]
-        f.instruction(&Instruction::LocalGet(2)); // parent
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(4)); // subidx
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(6)); // child
-
-        // if (child == null)
-        f.instruction(&Instruction::LocalGet(6)); // child
-        f.instruction(&Instruction::RefIsNull);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-
-        // ret[subidx] = new_path(level-5, tailnode)
-        f.instruction(&Instruction::LocalGet(1)); // level
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Sub);
-        f.instruction(&Instruction::LocalGet(3)); // tailnode
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::VEC_NEW_PATH)));
-        f.instruction(&Instruction::LocalSet(6)); // store result temporarily
-
-        f.instruction(&Instruction::LocalGet(5)); // ret
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(4)); // subidx
-        f.instruction(&Instruction::LocalGet(6)); // new child
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalGet(5)); // ret
-
-        f.instruction(&Instruction::Else);
-
-        // ret[subidx] = push_tail(vec, level-5, child, tailnode)
-        f.instruction(&Instruction::LocalGet(0)); // vec
-        f.instruction(&Instruction::LocalGet(1)); // level
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Sub);
-        f.instruction(&Instruction::LocalGet(6)); // child
-        f.instruction(&Instruction::LocalGet(3)); // tailnode
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::VEC_PUSH_TAIL)));
-        f.instruction(&Instruction::LocalSet(6)); // store result temporarily
-
-        f.instruction(&Instruction::LocalGet(5)); // ret
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(4)); // subidx
-        f.instruction(&Instruction::LocalGet(6)); // new child
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalGet(5)); // ret
-
-        f.instruction(&Instruction::End); // end if (child == null)
-        f.instruction(&Instruction::End); // end if (level == 5)
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    // ========================================================================
-    // HAMT/Equality Helper Functions
-    // ========================================================================
-
-    /// Generate $equiv function - structural equality comparison.
-    ///
-    /// Signature: (a: eqref, b: eqref) -> i32
-    ///
-    /// Compares two values for structural equality:
-    /// 1. If same reference → true (1)
-    /// 2. If different types → false (0)
-    /// 3. For i31ref: compare values directly (handled by ref.eq)
-    /// 4. For LARGE_INT: compare i64 values
-    /// 5. For FLOAT: compare f64 values (NaN != NaN per IEEE)
-    /// 6. For STRING: reference equality (interned at compile time)
-    /// 7. For collections: reference equality (step 1)
-    fn generate_equiv_func(&self) -> Function {
-        use crate::ir::gc_types;
-        use crate::ir::type_ids;
-
-        // Locals: a=0 (param), b=1 (param), type_a=2, type_b=3, a_is_i31=4, b_is_i31=5
-        let locals = vec![
-            (1, ValType::I32), // type_a (local 2)
-            (1, ValType::I32), // type_b (local 3)
-            (1, ValType::I32), // a_is_i31 (local 4)
-            (1, ValType::I32), // b_is_i31 (local 5)
-        ];
-        let mut f = Function::new(locals);
-
-        // Block for early return pattern
-        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Result(
-            ValType::I32,
-        )));
-
-        // Fast path: same reference → true
-        f.instruction(&Instruction::LocalGet(0)); // a
-        f.instruction(&Instruction::LocalGet(1)); // b
-        f.instruction(&Instruction::RefEq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        f.instruction(&Instruction::I32Const(1)); // true
-        f.instruction(&Instruction::Br(1)); // break to outer block
-        f.instruction(&Instruction::End);
-
-        // Check if a is i31
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::I31));
-        f.instruction(&Instruction::LocalSet(4)); // a_is_i31
-
-        // Check if b is i31
-        f.instruction(&Instruction::LocalGet(1));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::I31));
-        f.instruction(&Instruction::LocalSet(5)); // b_is_i31
-
-        // If a is i31
-        f.instruction(&Instruction::LocalGet(4));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        // If b is also i31, compare values
-        f.instruction(&Instruction::LocalGet(5));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        // Both are i31 - compare values
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-        f.instruction(&Instruction::I31GetS);
-        f.instruction(&Instruction::LocalGet(1));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-        f.instruction(&Instruction::I31GetS);
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::Br(2)); // return to outer block
-        f.instruction(&Instruction::End);
-        // a is i31, b is not - not equal
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::Br(1)); // return to outer block
-        f.instruction(&Instruction::End);
-
-        // a is not i31, check if b is
-        f.instruction(&Instruction::LocalGet(5));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        // a is not i31, b is i31 - not equal
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::Br(1)); // return to outer block
-        f.instruction(&Instruction::End);
-
-        // Neither is i31 - continue with type comparison
-        // Get type_id for both values
-        f.instruction(&Instruction::LocalGet(0)); // a
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));
-        f.instruction(&Instruction::LocalSet(2)); // type_a
-
-        f.instruction(&Instruction::LocalGet(1)); // b
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));
-        f.instruction(&Instruction::LocalSet(3)); // type_b
-
-        // Different types → false
-        f.instruction(&Instruction::LocalGet(2)); // type_a
-        f.instruction(&Instruction::LocalGet(3)); // type_b
-        f.instruction(&Instruction::I32Ne);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        f.instruction(&Instruction::I32Const(0)); // false
-        f.instruction(&Instruction::Br(1)); // break to outer block
-        f.instruction(&Instruction::End);
-
-        // Same type - compare based on type
-        // Check for LARGE_INT
-        f.instruction(&Instruction::LocalGet(2)); // type_a
-        f.instruction(&Instruction::I32Const(type_ids::LARGE_INT));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        // Compare i64 values
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::LARGE_INT)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::LARGE_INT,
-            field_index: 1, // value field (after type_id)
-        });
-        f.instruction(&Instruction::LocalGet(1));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::LARGE_INT)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::LARGE_INT,
-            field_index: 1,
-        });
-        f.instruction(&Instruction::I64Eq);
-        f.instruction(&Instruction::Br(1)); // return result
-        f.instruction(&Instruction::End);
-
-        // Check for FLOAT
-        f.instruction(&Instruction::LocalGet(2)); // type_a
-        f.instruction(&Instruction::I32Const(type_ids::FLOAT));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        // Compare f64 values (NaN != NaN per IEEE 754)
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::FLOAT,
-            field_index: 1, // value field
-        });
-        f.instruction(&Instruction::LocalGet(1));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::FLOAT,
-            field_index: 1,
-        });
-        f.instruction(&Instruction::F64Eq);
-        f.instruction(&Instruction::Br(1)); // return result
-        f.instruction(&Instruction::End);
-
-        // Check for STRING - use reference equality (strings are interned)
-        f.instruction(&Instruction::LocalGet(2)); // type_a
-        f.instruction(&Instruction::I32Const(type_ids::STRING));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::LocalGet(1));
-        f.instruction(&Instruction::RefEq);
-        f.instruction(&Instruction::Br(1));
-        f.instruction(&Instruction::End);
-
-        // All other types: reference equality was checked at top
-        // Different refs of same type = not equal
-        f.instruction(&Instruction::I32Const(0));
-
-        f.instruction(&Instruction::End); // end outer block
-
-        f.instruction(&Instruction::End); // end function body
-        f
-    }
-
-    /// Generate $hamt_mask function - extract 5-bit index from hash.
-    ///
-    /// Signature: (hash: i32, shift: i32) -> i32
-    ///
-    /// Returns (hash >>> shift) & 0x1f
-    /// This gives the 5-bit index into a 32-slot node at the given trie level.
-    fn generate_hamt_mask_func(&self) -> Function {
-        let locals = vec![];
-        let mut f = Function::new(locals);
-
-        // (hash >>> shift) & 0x1f
-        f.instruction(&Instruction::LocalGet(0)); // hash
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::I32ShrU); // hash >>> shift
-        f.instruction(&Instruction::I32Const(0x1f)); // 31 = 0b11111
-        f.instruction(&Instruction::I32And); // & 0x1f
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $hamt_bitpos function - get bitmap position for hash.
-    ///
-    /// Signature: (hash: i32, shift: i32) -> i32
-    ///
-    /// Returns 1 << mask(hash, shift)
-    /// This gives the bit to check/set in a BitmapIndexedNode's bitmap.
-    fn generate_hamt_bitpos_func(&self) -> Function {
-        let locals = vec![];
-        let mut f = Function::new(locals);
-
-        // 1 << mask(hash, shift)
-        f.instruction(&Instruction::I32Const(1));
-        // Inline mask calculation: (hash >>> shift) & 0x1f
-        f.instruction(&Instruction::LocalGet(0)); // hash
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::I32ShrU);
-        f.instruction(&Instruction::I32Const(0x1f));
-        f.instruction(&Instruction::I32And);
-        // 1 << mask
-        f.instruction(&Instruction::I32Shl);
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $hamt_index function - count set bits below position.
-    ///
-    /// Signature: (bitmap: i32, bit: i32) -> i32
-    ///
-    /// Returns popcnt(bitmap & (bit - 1))
-    /// This gives the array index in a BitmapIndexedNode for a given bit position.
-    fn generate_hamt_index_func(&self) -> Function {
-        let locals = vec![];
-        let mut f = Function::new(locals);
-
-        // popcnt(bitmap & (bit - 1))
-        f.instruction(&Instruction::LocalGet(0)); // bitmap
-        f.instruction(&Instruction::LocalGet(1)); // bit
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Sub); // bit - 1
-        f.instruction(&Instruction::I32And); // bitmap & (bit - 1)
-        f.instruction(&Instruction::I32Popcnt); // popcnt
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    // ========================================================================
-    // HAMT Node Operations
-    // ========================================================================
-
-    /// Generate $inode_find function - type-dispatching lookup.
-    ///
-    /// Signature: (node: eqref, shift: i32, hash: i32, key: eqref, not_found: eqref) -> eqref
-    ///
-    /// Dispatches to $bin_find, $an_find, or $hcn_find based on node type.
-    fn generate_inode_find_func(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Locals: node=0, shift=1, hash=2, key=3, not_found=4, type_id=5
-        let locals = vec![(1, ValType::I32)]; // type_id
-        let mut f = Function::new(locals);
-
-        // Get type_id of node
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));
-        f.instruction(&Instruction::LocalSet(5)); // type_id
-
-        // if type_id == BITMAP_INDEXED_NODE: call $bin_find
-        f.instruction(&Instruction::LocalGet(5));
-        f.instruction(&Instruction::I32Const(gc_types::BITMAP_INDEXED_NODE as i32));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::LocalGet(4)); // not_found
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::BIN_FIND)));
-        f.instruction(&Instruction::Else);
-
-        // if type_id == ARRAY_NODE: call $an_find
-        f.instruction(&Instruction::LocalGet(5));
-        f.instruction(&Instruction::I32Const(gc_types::ARRAY_NODE as i32));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::LocalGet(4)); // not_found
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::AN_FIND)));
-        f.instruction(&Instruction::Else);
-
-        // else (HASH_COLLISION_NODE): call $hcn_find (no shift parameter)
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::LocalGet(4)); // not_found
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HCN_FIND)));
-
-        f.instruction(&Instruction::End); // end inner if
-        f.instruction(&Instruction::End); // end outer if
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $inode_assoc function - type-dispatching insert/update.
-    ///
-    /// Signature: (node: eqref, shift: i32, hash: i32, key: eqref, val: eqref) -> eqref
-    ///
-    /// Dispatches to $bin_assoc, $an_assoc, or $hcn_assoc based on node type.
-    fn generate_inode_assoc_func(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Locals: node=0, shift=1, hash=2, key=3, val=4, type_id=5
-        let locals = vec![(1, ValType::I32)]; // type_id
-        let mut f = Function::new(locals);
-
-        // Get type_id of node
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));
-        f.instruction(&Instruction::LocalSet(5)); // type_id
-
-        // if type_id == BITMAP_INDEXED_NODE: call $bin_assoc
-        f.instruction(&Instruction::LocalGet(5));
-        f.instruction(&Instruction::I32Const(gc_types::BITMAP_INDEXED_NODE as i32));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::LocalGet(4)); // val
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::BIN_ASSOC)));
-        f.instruction(&Instruction::Else);
-
-        // if type_id == ARRAY_NODE: call $an_assoc
-        f.instruction(&Instruction::LocalGet(5));
-        f.instruction(&Instruction::I32Const(gc_types::ARRAY_NODE as i32));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::LocalGet(4)); // val
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::AN_ASSOC)));
-        f.instruction(&Instruction::Else);
-
-        // else (HASH_COLLISION_NODE): call $hcn_assoc (no shift parameter)
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::LocalGet(4)); // val
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HCN_ASSOC)));
-
-        f.instruction(&Instruction::End); // end inner if
-        f.instruction(&Instruction::End); // end outer if
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $bin_find function - BitmapIndexedNode lookup.
-    ///
-    /// Signature: (node: eqref, shift: i32, hash: i32, key: eqref, not_found: eqref) -> eqref
-    ///
-    /// Algorithm:
-    /// 1. bit = bitpos(hash, shift)
-    /// 2. if (bitmap & bit) == 0: return not_found
-    /// 3. idx = index(bitmap, bit)
-    /// 4. key_or_null = arr[2*idx]
-    /// 5. val_or_node = arr[2*idx + 1]
-    /// 6. if key_or_null == null: return inode_find(val_or_node, shift+5, hash, key, not_found)
-    /// 7. if equiv(key, key_or_null): return val_or_node
-    /// 8. return not_found
-    fn generate_bin_find_func(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Locals: node=0, shift=1, hash=2, key=3, not_found=4
-        //         bit=5, bitmap=6, idx=7, arr=8, key_or_null=9, val_or_node=10
-        let eqref = ValType::Ref(RefType::EQREF);
-        let locals = vec![
-            (3, ValType::I32), // bit, bitmap, idx
-            (3, eqref),        // arr, key_or_null, val_or_node
-        ];
-        let mut f = Function::new(locals);
-
-        // bit = bitpos(hash, shift)
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HAMT_BITPOS)));
-        f.instruction(&Instruction::LocalSet(5)); // bit
-
-        // bitmap = node.bitmap (field 1 of BitmapIndexedNode)
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::BITMAP_INDEXED_NODE)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::BITMAP_INDEXED_NODE,
-            field_index: 1, // bitmap
-        });
-        f.instruction(&Instruction::LocalSet(6)); // bitmap
-
-        // if (bitmap & bit) == 0: return not_found
-        f.instruction(&Instruction::LocalGet(6)); // bitmap
-        f.instruction(&Instruction::LocalGet(5)); // bit
-        f.instruction(&Instruction::I32And);
-        f.instruction(&Instruction::I32Eqz);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-        f.instruction(&Instruction::LocalGet(4)); // not_found
-        f.instruction(&Instruction::Else);
-
-        // idx = index(bitmap, bit)
-        f.instruction(&Instruction::LocalGet(6)); // bitmap
-        f.instruction(&Instruction::LocalGet(5)); // bit
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HAMT_INDEX)));
-        f.instruction(&Instruction::LocalSet(7)); // idx
-
-        // arr = node.arr (field 2 of BitmapIndexedNode)
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::BITMAP_INDEXED_NODE)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::BITMAP_INDEXED_NODE,
-            field_index: 2, // arr
-        });
-        f.instruction(&Instruction::LocalSet(8)); // arr
-
-        // key_or_null = arr[2*idx]
-        f.instruction(&Instruction::LocalGet(8)); // arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul); // 2*idx
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(9)); // key_or_null
-
-        // val_or_node = arr[2*idx + 1]
-        f.instruction(&Instruction::LocalGet(8)); // arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add); // 2*idx + 1
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(10)); // val_or_node
-
-        // if key_or_null == null: recurse via inode_find
-        f.instruction(&Instruction::LocalGet(9)); // key_or_null
-        f.instruction(&Instruction::RefIsNull);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-        // return inode_find(val_or_node, shift+5, hash, key, not_found)
-        f.instruction(&Instruction::LocalGet(10)); // val_or_node (child node)
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Add); // shift + 5
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::LocalGet(4)); // not_found
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::INODE_FIND)));
-        f.instruction(&Instruction::Else);
-
-        // if equiv(key, key_or_null): return val_or_node
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::LocalGet(9)); // key_or_null
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::EQUIV)));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-        f.instruction(&Instruction::LocalGet(10)); // val_or_node
-        f.instruction(&Instruction::Else);
-        // else: return not_found
-        f.instruction(&Instruction::LocalGet(4)); // not_found
-        f.instruction(&Instruction::End); // end equiv if
-        f.instruction(&Instruction::End); // end null check if
-        f.instruction(&Instruction::End); // end bitmap check if
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $bin_assoc function - BitmapIndexedNode insert/update.
-    ///
-    /// Signature: (node: eqref, shift: i32, hash: i32, key: eqref, val: eqref) -> eqref
-    ///
-    /// Algorithm:
-    /// 1. bit = bitpos(hash, shift)
-    /// 2. idx = index(bitmap, bit)
-    /// 3. if (bitmap & bit) == 0:
-    ///    - If popcnt(bitmap) >= 16: promote to ArrayNode (TODO)
-    ///    - new_arr = clone_and_insert(arr, 2*idx, key, val)
-    ///    - return BitmapIndexedNode(bitmap | bit, new_arr)
-    /// 4. else (existing slot):
-    ///    - key_or_null = arr[2*idx]
-    ///    - val_or_node = arr[2*idx + 1]
-    ///    - if key_or_null == null: recurse and update child
-    ///    - if equiv(key, key_or_null): update value (or return same if unchanged)
-    ///    - else: create_node for hash collision at this level
-    fn generate_bin_assoc_func(&self) -> Function {
-        use crate::ir::gc_types;
-        use crate::ir::type_ids;
-
-        // Locals: node=0, shift=1, hash=2, key=3, val=4
-        //         bit=5, bitmap=6, idx=7, n=8
-        //         arr=9, key_or_null=10, val_or_node=11, new_child=12, new_arr=13
-        let eqref = ValType::Ref(RefType::EQREF);
-        let locals = vec![
-            (4, ValType::I32), // bit, bitmap, idx, n
-            (5, eqref),        // arr, key_or_null, val_or_node, new_child, new_arr
-        ];
-        let mut f = Function::new(locals);
-
-        // bit = bitpos(hash, shift)
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HAMT_BITPOS)));
-        f.instruction(&Instruction::LocalSet(5)); // bit
-
-        // bitmap = node.bitmap
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::BITMAP_INDEXED_NODE)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::BITMAP_INDEXED_NODE,
-            field_index: 1, // bitmap
-        });
-        f.instruction(&Instruction::LocalSet(6)); // bitmap
-
-        // idx = index(bitmap, bit)
-        f.instruction(&Instruction::LocalGet(6)); // bitmap
-        f.instruction(&Instruction::LocalGet(5)); // bit
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HAMT_INDEX)));
-        f.instruction(&Instruction::LocalSet(7)); // idx
-
-        // arr = node.arr
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::BITMAP_INDEXED_NODE)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::BITMAP_INDEXED_NODE,
-            field_index: 2, // arr
-        });
-        f.instruction(&Instruction::LocalSet(9)); // arr
-
-        // if (bitmap & bit) == 0: new entry
-        f.instruction(&Instruction::LocalGet(6)); // bitmap
-        f.instruction(&Instruction::LocalGet(5)); // bit
-        f.instruction(&Instruction::I32And);
-        f.instruction(&Instruction::I32Eqz);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-
-        // ---- New entry case ----
-        // n = popcnt(bitmap)
-        f.instruction(&Instruction::LocalGet(6)); // bitmap
-        f.instruction(&Instruction::I32Popcnt);
-        f.instruction(&Instruction::LocalSet(8)); // n
-
-        // TODO: if n >= 16, promote to ArrayNode
-        // For now, just insert (we'll add promotion logic in Step 5)
-
-        // Create new array with 2 more slots
-        // new_arr = TRIE_NODE array with (n+1)*2 elements
-        // Copy elements before idx, insert key/val at 2*idx, copy rest
-
-        // Create new array with default null values
-        // ArrayNew expects: (default_value, length) -> ref array
-        f.instruction(&Instruction::RefNull(HeapType::Abstract {
-            shared: false,
-            ty: AbstractHeapType::Eq,
-        }));
-        // Calculate array size: (n+1)*2
-        f.instruction(&Instruction::LocalGet(8)); // n
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::ArrayNew(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(13)); // new_arr
-
-        // Copy elements before insertion point (0..2*idx)
-        // array.copy new_arr[0..2*idx] from arr[0..2*idx]
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::I32GtS); // 2*idx > 0
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        f.instruction(&Instruction::LocalGet(13)); // new_arr (dst)
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0)); // dst offset
-        f.instruction(&Instruction::LocalGet(9)); // arr (src)
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0)); // src offset
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul); // length = 2*idx
-        f.instruction(&Instruction::ArrayCopy {
-            array_type_index_dst: gc_types::TRIE_NODE,
-            array_type_index_src: gc_types::TRIE_NODE,
-        });
-        f.instruction(&Instruction::End);
-
-        // Insert key at new_arr[2*idx]
-        f.instruction(&Instruction::LocalGet(13)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-
-        // Insert val at new_arr[2*idx + 1]
-        f.instruction(&Instruction::LocalGet(13)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::LocalGet(4)); // val
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-
-        // Copy elements after insertion point
-        // array.copy new_arr[2*idx+2..] from arr[2*idx..]
-        // length = n*2 - 2*idx
-        f.instruction(&Instruction::LocalGet(8)); // n
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Sub); // n*2 - 2*idx
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::I32GtS); // length > 0
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        f.instruction(&Instruction::LocalGet(13)); // new_arr (dst)
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Add); // dst offset = 2*idx + 2
-        f.instruction(&Instruction::LocalGet(9)); // arr (src)
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul); // src offset = 2*idx
-        f.instruction(&Instruction::LocalGet(8)); // n
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Sub); // length = n*2 - 2*idx
-        f.instruction(&Instruction::ArrayCopy {
-            array_type_index_dst: gc_types::TRIE_NODE,
-            array_type_index_src: gc_types::TRIE_NODE,
-        });
-        f.instruction(&Instruction::End);
-
-        // Return new BitmapIndexedNode(bitmap | bit, new_arr)
-        f.instruction(&Instruction::I32Const(type_ids::BITMAP_INDEXED_NODE));
-        f.instruction(&Instruction::LocalGet(6)); // bitmap
-        f.instruction(&Instruction::LocalGet(5)); // bit
-        f.instruction(&Instruction::I32Or); // bitmap | bit
-        f.instruction(&Instruction::LocalGet(13)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::StructNew(gc_types::BITMAP_INDEXED_NODE));
-
-        f.instruction(&Instruction::Else);
-
-        // ---- Existing slot case ----
-        // key_or_null = arr[2*idx]
-        f.instruction(&Instruction::LocalGet(9)); // arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(10)); // key_or_null
-
-        // val_or_node = arr[2*idx + 1]
-        f.instruction(&Instruction::LocalGet(9)); // arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(11)); // val_or_node
-
-        // if key_or_null == null: child node at this position
-        f.instruction(&Instruction::LocalGet(10)); // key_or_null
-        f.instruction(&Instruction::RefIsNull);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-
-        // new_child = inode_assoc(val_or_node, shift+5, hash, key, val)
-        f.instruction(&Instruction::LocalGet(11)); // val_or_node (child node)
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Add); // shift + 5
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::LocalGet(4)); // val
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::INODE_ASSOC)));
-        f.instruction(&Instruction::LocalSet(12)); // new_child
-
-        // Clone array and update val_or_node position
-        // new_arr = clone and set arr[2*idx+1] = new_child
-        // ArrayNew expects: (default_value, length) -> ref array
-        f.instruction(&Instruction::RefNull(HeapType::Abstract {
-            shared: false,
-            ty: AbstractHeapType::Eq,
-        }));
-        f.instruction(&Instruction::LocalGet(9)); // arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::ArrayLen);
-        f.instruction(&Instruction::ArrayNew(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(13)); // new_arr
-
-        // Copy all elements
-        f.instruction(&Instruction::LocalGet(13));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(9));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(9)); // arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::ArrayLen);
-        f.instruction(&Instruction::ArrayCopy {
-            array_type_index_dst: gc_types::TRIE_NODE,
-            array_type_index_src: gc_types::TRIE_NODE,
-        });
-
-        // Set new_arr[2*idx+1] = new_child
-        f.instruction(&Instruction::LocalGet(13));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::LocalGet(12)); // new_child
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-
-        // Return BitmapIndexedNode(bitmap, new_arr)
-        f.instruction(&Instruction::I32Const(type_ids::BITMAP_INDEXED_NODE));
-        f.instruction(&Instruction::LocalGet(6)); // bitmap
-        f.instruction(&Instruction::LocalGet(13)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::StructNew(gc_types::BITMAP_INDEXED_NODE));
-
-        f.instruction(&Instruction::Else);
-
-        // if equiv(key, key_or_null): update or return same
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::LocalGet(10)); // key_or_null
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::EQUIV)));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-
-        // if val == val_or_node: return node (no change)
-        f.instruction(&Instruction::LocalGet(4)); // val
-        f.instruction(&Instruction::LocalGet(11)); // val_or_node
-        f.instruction(&Instruction::RefEq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::Else);
-
-        // Clone and update value
-        f.instruction(&Instruction::RefNull(HeapType::Abstract {
-            shared: false,
-            ty: AbstractHeapType::Eq,
-        }));
-        f.instruction(&Instruction::LocalGet(9)); // arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::ArrayLen);
-        f.instruction(&Instruction::ArrayNew(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(13)); // new_arr
-
-        f.instruction(&Instruction::LocalGet(13));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(9));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(9));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::ArrayLen);
-        f.instruction(&Instruction::ArrayCopy {
-            array_type_index_dst: gc_types::TRIE_NODE,
-            array_type_index_src: gc_types::TRIE_NODE,
-        });
-
-        f.instruction(&Instruction::LocalGet(13));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::LocalGet(4)); // val
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-
-        f.instruction(&Instruction::I32Const(type_ids::BITMAP_INDEXED_NODE));
-        f.instruction(&Instruction::LocalGet(6)); // bitmap
-        f.instruction(&Instruction::LocalGet(13)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::StructNew(gc_types::BITMAP_INDEXED_NODE));
-        f.instruction(&Instruction::End); // end val eq check
-
-        f.instruction(&Instruction::Else);
-
-        // Hash collision at this level - create subtree
-        // new_child = create_node(shift+5, key_or_null, val_or_node, hash, key, val)
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Add); // shift + 5
-        f.instruction(&Instruction::LocalGet(10)); // key_or_null (key1)
-        f.instruction(&Instruction::LocalGet(11)); // val_or_node (val1)
-        f.instruction(&Instruction::LocalGet(2)); // hash (hash2)
-        f.instruction(&Instruction::LocalGet(3)); // key (key2)
-        f.instruction(&Instruction::LocalGet(4)); // val (val2)
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::CREATE_NODE)));
-        f.instruction(&Instruction::LocalSet(12)); // new_child
-
-        // Clone array and set both key slot to null, val slot to new_child
-        f.instruction(&Instruction::RefNull(HeapType::Abstract {
-            shared: false,
-            ty: AbstractHeapType::Eq,
-        }));
-        f.instruction(&Instruction::LocalGet(9)); // arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::ArrayLen);
-        f.instruction(&Instruction::ArrayNew(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(13)); // new_arr
-
-        f.instruction(&Instruction::LocalGet(13));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(9));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(9));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::ArrayLen);
-        f.instruction(&Instruction::ArrayCopy {
-            array_type_index_dst: gc_types::TRIE_NODE,
-            array_type_index_src: gc_types::TRIE_NODE,
-        });
-
-        // Set key slot to null
-        f.instruction(&Instruction::LocalGet(13));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::RefNull(HeapType::Abstract {
-            shared: false,
-            ty: AbstractHeapType::Eq,
-        }));
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-
-        // Set val slot to new_child
-        f.instruction(&Instruction::LocalGet(13));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(7)); // idx
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::LocalGet(12)); // new_child
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-
-        f.instruction(&Instruction::I32Const(type_ids::BITMAP_INDEXED_NODE));
-        f.instruction(&Instruction::LocalGet(6)); // bitmap
-        f.instruction(&Instruction::LocalGet(13)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::StructNew(gc_types::BITMAP_INDEXED_NODE));
-
-        f.instruction(&Instruction::End); // end equiv if
-        f.instruction(&Instruction::End); // end null check if
-        f.instruction(&Instruction::End); // end bitmap check if
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $an_find function - ArrayNode lookup.
-    ///
-    /// Signature: (node: eqref, shift: i32, hash: i32, key: eqref, not_found: eqref) -> eqref
-    ///
-    /// Algorithm:
-    /// 1. idx = mask(hash, shift) - get 5-bit index (0-31)
-    /// 2. child = arr[idx]
-    /// 3. if child == null: return not_found
-    /// 4. return inode_find(child, shift+5, hash, key, not_found)
-    fn generate_an_find_func(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Locals: node=0, shift=1, hash=2, key=3, not_found=4
-        //         idx=5, arr=6, child=7
-        let eqref = ValType::Ref(RefType::EQREF);
-        let locals = vec![
-            (1, ValType::I32), // idx
-            (2, eqref),        // arr, child
-        ];
-        let mut f = Function::new(locals);
-
-        // idx = mask(hash, shift) = (hash >>> shift) & 0x1f
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::I32ShrU);
-        f.instruction(&Instruction::I32Const(0x1f));
-        f.instruction(&Instruction::I32And);
-        f.instruction(&Instruction::LocalSet(5)); // idx
-
-        // arr = node.arr
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::ARRAY_NODE)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::ARRAY_NODE,
-            field_index: 2, // arr
-        });
-        f.instruction(&Instruction::LocalSet(6)); // arr
-
-        // child = arr[idx]
-        f.instruction(&Instruction::LocalGet(6)); // arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(5)); // idx
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(7)); // child
-
-        // if child == null: return not_found
-        f.instruction(&Instruction::LocalGet(7)); // child
-        f.instruction(&Instruction::RefIsNull);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-        f.instruction(&Instruction::LocalGet(4)); // not_found
-        f.instruction(&Instruction::Else);
-
-        // return inode_find(child, shift+5, hash, key, not_found)
-        f.instruction(&Instruction::LocalGet(7)); // child
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Add); // shift + 5
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::LocalGet(4)); // not_found
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::INODE_FIND)));
-
-        f.instruction(&Instruction::End); // end if
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $an_assoc function - ArrayNode insert/update.
-    ///
-    /// Signature: (node: eqref, shift: i32, hash: i32, key: eqref, val: eqref) -> eqref
-    ///
-    /// Algorithm:
-    /// 1. idx = mask(hash, shift) - get 5-bit index (0-31)
-    /// 2. child = arr[idx]
-    /// 3. if child == null:
-    ///    - Create BitmapIndexedNode with single entry
-    ///    - Clone arr and set arr[idx] = new_child
-    ///    - return ArrayNode(cnt+1, new_arr)
-    /// 4. new_child = inode_assoc(child, shift+5, hash, key, val)
-    /// 5. if new_child == child: return node (no change)
-    /// 6. Clone arr and set arr[idx] = new_child
-    /// 7. return ArrayNode(cnt, new_arr)
-    fn generate_an_assoc_func(&self) -> Function {
-        use crate::ir::gc_types;
-        use crate::ir::type_ids;
-
-        // Locals: node=0, shift=1, hash=2, key=3, val=4
-        //         idx=5, cnt=6, arr=7, child=8, new_child=9, new_arr=10
-        let eqref = ValType::Ref(RefType::EQREF);
-        let locals = vec![
-            (2, ValType::I32), // idx, cnt
-            (4, eqref),        // arr, child, new_child, new_arr
-        ];
-        let mut f = Function::new(locals);
-
-        // idx = mask(hash, shift) = (hash >>> shift) & 0x1f
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::I32ShrU);
-        f.instruction(&Instruction::I32Const(0x1f));
-        f.instruction(&Instruction::I32And);
-        f.instruction(&Instruction::LocalSet(5)); // idx
-
-        // arr = node.arr
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::ARRAY_NODE)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::ARRAY_NODE,
-            field_index: 2, // arr
-        });
-        f.instruction(&Instruction::LocalSet(7)); // arr
-
-        // cnt = node.cnt
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::ARRAY_NODE)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::ARRAY_NODE,
-            field_index: 1, // cnt
-        });
-        f.instruction(&Instruction::LocalSet(6)); // cnt
-
-        // child = arr[idx]
-        f.instruction(&Instruction::LocalGet(7)); // arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(5)); // idx
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(8)); // child
-
-        // if child == null
-        f.instruction(&Instruction::LocalGet(8)); // child
-        f.instruction(&Instruction::RefIsNull);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-
-        // --- child is null: insert new BitmapIndexedNode ---
-        // Create BitmapIndexedNode(bitpos(hash, shift+5), [key, val])
-        f.instruction(&Instruction::I32Const(type_ids::BITMAP_INDEXED_NODE));
-        // bitpos(hash, shift+5)
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Add); // shift + 5
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HAMT_BITPOS)));
-        // arr = [key, val]
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::LocalGet(4)); // val
-        f.instruction(&Instruction::ArrayNewFixed {
-            array_type_index: gc_types::TRIE_NODE,
-            array_size: 2,
-        });
-        f.instruction(&Instruction::StructNew(gc_types::BITMAP_INDEXED_NODE));
-        f.instruction(&Instruction::LocalSet(9)); // new_child
-
-        // Clone arr: new_arr = array.new_default(32) then array.copy
-        f.instruction(&Instruction::RefNull(HeapType::Abstract {
-            shared: false,
-            ty: AbstractHeapType::Eq,
-        }));
-        f.instruction(&Instruction::I32Const(32));
-        f.instruction(&Instruction::ArrayNew(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(10)); // new_arr
-
-        // array.copy new_arr[0..32] from arr[0..32]
-        f.instruction(&Instruction::LocalGet(10)); // new_arr (dst)
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(7)); // arr (src)
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::I32Const(32));
-        f.instruction(&Instruction::ArrayCopy {
-            array_type_index_dst: gc_types::TRIE_NODE,
-            array_type_index_src: gc_types::TRIE_NODE,
-        });
-
-        // new_arr[idx] = new_child
-        f.instruction(&Instruction::LocalGet(10)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(5)); // idx
-        f.instruction(&Instruction::LocalGet(9)); // new_child
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-
-        // return ArrayNode(cnt+1, new_arr)
-        f.instruction(&Instruction::I32Const(type_ids::ARRAY_NODE));
-        f.instruction(&Instruction::LocalGet(6)); // cnt
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add); // cnt + 1
-        f.instruction(&Instruction::LocalGet(10)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::StructNew(gc_types::ARRAY_NODE));
-
-        f.instruction(&Instruction::Else);
-
-        // --- child exists: recurse ---
-        // new_child = inode_assoc(child, shift+5, hash, key, val)
-        f.instruction(&Instruction::LocalGet(8)); // child
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Add); // shift + 5
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::LocalGet(4)); // val
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::INODE_ASSOC)));
-        f.instruction(&Instruction::LocalSet(9)); // new_child
-
-        // if new_child == child: return node (no change)
-        f.instruction(&Instruction::LocalGet(9)); // new_child
-        f.instruction(&Instruction::LocalGet(8)); // child
-        f.instruction(&Instruction::RefEq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::Else);
-
-        // Clone arr and set new_child
-        f.instruction(&Instruction::RefNull(HeapType::Abstract {
-            shared: false,
-            ty: AbstractHeapType::Eq,
-        }));
-        f.instruction(&Instruction::I32Const(32));
-        f.instruction(&Instruction::ArrayNew(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(10)); // new_arr
-
-        // array.copy new_arr[0..32] from arr[0..32]
-        f.instruction(&Instruction::LocalGet(10)); // new_arr (dst)
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(7)); // arr (src)
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::I32Const(32));
-        f.instruction(&Instruction::ArrayCopy {
-            array_type_index_dst: gc_types::TRIE_NODE,
-            array_type_index_src: gc_types::TRIE_NODE,
-        });
-
-        // new_arr[idx] = new_child
-        f.instruction(&Instruction::LocalGet(10)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(5)); // idx
-        f.instruction(&Instruction::LocalGet(9)); // new_child
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-
-        // return ArrayNode(cnt, new_arr)
-        f.instruction(&Instruction::I32Const(type_ids::ARRAY_NODE));
-        f.instruction(&Instruction::LocalGet(6)); // cnt (unchanged)
-        f.instruction(&Instruction::LocalGet(10)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::StructNew(gc_types::ARRAY_NODE));
-
-        f.instruction(&Instruction::End); // end child eq check
-        f.instruction(&Instruction::End); // end child null check
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $hcn_find function - HashCollisionNode lookup.
-    ///
-    /// Signature: (node: eqref, hash: i32, key: eqref, not_found: eqref) -> eqref
-    ///
-    /// Algorithm:
-    /// 1. if hash != node.hash: return not_found
-    /// 2. Linear scan: for i in 0..cnt:
-    ///    if equiv(key, arr[2*i]): return arr[2*i + 1]
-    /// 3. return not_found
-    fn generate_hcn_find_func(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Params: node=0, hash=1, key=2, not_found=3
-        // Locals: node_hash=4, cnt=5, i=6, arr=7
-        let eqref = ValType::Ref(RefType::EQREF);
-        let locals = vec![
-            (3, ValType::I32), // node_hash, cnt, i
-            (1, eqref),        // arr
-        ];
-        let mut f = Function::new(locals);
-
-        // node_hash = node.hash
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::HASH_COLLISION_NODE)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::HASH_COLLISION_NODE,
-            field_index: 1, // hash
-        });
-        f.instruction(&Instruction::LocalSet(4)); // node_hash
-
-        // if hash != node_hash: return not_found
-        f.instruction(&Instruction::LocalGet(1)); // hash
-        f.instruction(&Instruction::LocalGet(4)); // node_hash
-        f.instruction(&Instruction::I32Ne);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-        f.instruction(&Instruction::LocalGet(3)); // not_found
-        f.instruction(&Instruction::Else);
-
-        // cnt = node.cnt
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::HASH_COLLISION_NODE)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::HASH_COLLISION_NODE,
-            field_index: 2, // cnt
-        });
-        f.instruction(&Instruction::LocalSet(5)); // cnt
-
-        // arr = node.arr
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::HASH_COLLISION_NODE)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::HASH_COLLISION_NODE,
-            field_index: 3, // arr
-        });
-        f.instruction(&Instruction::LocalSet(7)); // arr
-
-        // i = 0
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalSet(6)); // i
-
-        // Loop: linear scan for matching key
-        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Result(eqref)));
-        f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
-
-        // if i >= cnt: break (return not_found)
-        f.instruction(&Instruction::LocalGet(6)); // i
-        f.instruction(&Instruction::LocalGet(5)); // cnt
-        f.instruction(&Instruction::I32GeS);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        f.instruction(&Instruction::LocalGet(3)); // not_found
-        f.instruction(&Instruction::Br(2)); // break to outer block with result
-        f.instruction(&Instruction::End);
-
-        // current_key = arr[2*i]
-        f.instruction(&Instruction::LocalGet(7)); // arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(6)); // i
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
-
-        // if equiv(key, current_key):
-        f.instruction(&Instruction::LocalGet(2)); // key
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::EQUIV)));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        // return arr[2*i + 1]
-        f.instruction(&Instruction::LocalGet(7)); // arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(6)); // i
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::Br(2)); // break to outer block with result
-        f.instruction(&Instruction::End);
-
-        // i++
-        f.instruction(&Instruction::LocalGet(6)); // i
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::LocalSet(6)); // i
-
-        f.instruction(&Instruction::Br(0)); // continue loop
-        f.instruction(&Instruction::End); // end loop
-        f.instruction(&Instruction::Unreachable); // should never reach here
-        f.instruction(&Instruction::End); // end block
-
-        f.instruction(&Instruction::End); // end hash check if
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $hcn_assoc function - HashCollisionNode insert/update.
-    ///
-    /// Signature: (node: eqref, hash: i32, key: eqref, val: eqref) -> eqref
-    ///
-    /// Algorithm:
-    /// 1. if hash == node.hash:
-    ///    - Linear scan for existing key
-    ///    - If found: clone_and_set, return HCN(hash, cnt, new_arr)
-    ///    - If not found: clone_and_append, return HCN(hash, cnt+1, new_arr)
-    /// 2. else (different hash):
-    ///    - Create BitmapIndexedNode with null and node, then assoc key/val
-    fn generate_hcn_assoc_func(&self) -> Function {
-        use crate::ir::gc_types;
-        use crate::ir::type_ids;
-
-        // Params: node=0, hash=1, key=2, val=3
-        // Locals: node_hash=4, cnt=5, i=6, (unused=7), arr=8, new_arr=9
-        let eqref = ValType::Ref(RefType::EQREF);
-        let locals = vec![
-            (4, ValType::I32), // node_hash, cnt, i, temp
-            (2, eqref),        // arr, new_arr
-        ];
-        let mut f = Function::new(locals);
-
-        // node_hash = node.hash
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::HASH_COLLISION_NODE)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::HASH_COLLISION_NODE,
-            field_index: 1, // hash
-        });
-        f.instruction(&Instruction::LocalSet(4)); // node_hash
-
-        // if hash == node_hash
-        f.instruction(&Instruction::LocalGet(1)); // hash
-        f.instruction(&Instruction::LocalGet(4)); // node_hash
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-
-        // --- Same hash: linear scan and update/append ---
-        // cnt = node.cnt
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::HASH_COLLISION_NODE)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::HASH_COLLISION_NODE,
-            field_index: 2, // cnt
-        });
-        f.instruction(&Instruction::LocalSet(5)); // cnt
-
-        // arr = node.arr
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::HASH_COLLISION_NODE)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::HASH_COLLISION_NODE,
-            field_index: 3, // arr
-        });
-        f.instruction(&Instruction::LocalSet(8)); // arr
-
-        // i = 0
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalSet(6)); // i
-
-        // Loop: linear scan for matching key
-        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Result(eqref)));
-        f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
-
-        // if i >= cnt: break (key not found, will append)
-        f.instruction(&Instruction::LocalGet(6)); // i
-        f.instruction(&Instruction::LocalGet(5)); // cnt
-        f.instruction(&Instruction::I32GeS);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        // Append: create new_arr with cnt+1 entries
-        // new_arr = array.new(cnt*2 + 2)
-        f.instruction(&Instruction::RefNull(HeapType::Abstract {
-            shared: false,
-            ty: AbstractHeapType::Eq,
-        }));
-        f.instruction(&Instruction::LocalGet(5)); // cnt
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Add); // cnt*2 + 2
-        f.instruction(&Instruction::ArrayNew(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(9)); // new_arr
-
-        // Copy old entries
-        f.instruction(&Instruction::LocalGet(9)); // new_arr (dst)
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(8)); // arr (src)
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(5)); // cnt
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul); // cnt*2
-        f.instruction(&Instruction::ArrayCopy {
-            array_type_index_dst: gc_types::TRIE_NODE,
-            array_type_index_src: gc_types::TRIE_NODE,
-        });
-
-        // Append key at new_arr[cnt*2]
-        f.instruction(&Instruction::LocalGet(9)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(5)); // cnt
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::LocalGet(2)); // key
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-
-        // Append val at new_arr[cnt*2 + 1]
-        f.instruction(&Instruction::LocalGet(9)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(5)); // cnt
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::LocalGet(3)); // val
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-
-        // Return HashCollisionNode(hash, cnt+1, new_arr)
-        f.instruction(&Instruction::I32Const(type_ids::HASH_COLLISION_NODE));
-        f.instruction(&Instruction::LocalGet(4)); // node_hash
-        f.instruction(&Instruction::LocalGet(5)); // cnt
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add); // cnt + 1
-        f.instruction(&Instruction::LocalGet(9)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::StructNew(gc_types::HASH_COLLISION_NODE));
-        f.instruction(&Instruction::Br(2)); // break to outer block with result
-        f.instruction(&Instruction::End); // end if i >= cnt
-
-        // current_key = arr[2*i]
-        f.instruction(&Instruction::LocalGet(8)); // arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(6)); // i
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
-
-        // if equiv(key, current_key):
-        f.instruction(&Instruction::LocalGet(2)); // key
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::EQUIV)));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
-        // Update: clone and set val at 2*i+1
-        f.instruction(&Instruction::RefNull(HeapType::Abstract {
-            shared: false,
-            ty: AbstractHeapType::Eq,
-        }));
-        f.instruction(&Instruction::LocalGet(5)); // cnt
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::ArrayNew(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(9)); // new_arr
-
-        // Copy all entries
-        f.instruction(&Instruction::LocalGet(9)); // new_arr (dst)
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(8)); // arr (src)
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::LocalGet(5)); // cnt
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul); // cnt*2
-        f.instruction(&Instruction::ArrayCopy {
-            array_type_index_dst: gc_types::TRIE_NODE,
-            array_type_index_src: gc_types::TRIE_NODE,
-        });
-
-        // Update val at new_arr[2*i + 1]
-        f.instruction(&Instruction::LocalGet(9)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::LocalGet(6)); // i
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::LocalGet(3)); // val
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-
-        // Return HashCollisionNode(hash, cnt, new_arr)
-        f.instruction(&Instruction::I32Const(type_ids::HASH_COLLISION_NODE));
-        f.instruction(&Instruction::LocalGet(4)); // node_hash
-        f.instruction(&Instruction::LocalGet(5)); // cnt (unchanged)
-        f.instruction(&Instruction::LocalGet(9)); // new_arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::StructNew(gc_types::HASH_COLLISION_NODE));
-        f.instruction(&Instruction::Br(2)); // break to outer block with result
-        f.instruction(&Instruction::End); // end equiv if
-
-        // i++
-        f.instruction(&Instruction::LocalGet(6)); // i
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::LocalSet(6)); // i
-
-        f.instruction(&Instruction::Br(0)); // continue loop
-        f.instruction(&Instruction::End); // end loop
-        f.instruction(&Instruction::Unreachable); // should never reach here
-        f.instruction(&Instruction::End); // end block
-
-        f.instruction(&Instruction::Else);
-
-        // --- Different hash: wrap in BitmapIndexedNode and assoc ---
-        // Create BitmapIndexedNode(bitpos(node_hash, 0), [null, node])
-        // Then call inode_assoc(bin, 0, hash, key, val)
-        f.instruction(&Instruction::I32Const(type_ids::BITMAP_INDEXED_NODE));
-        f.instruction(&Instruction::LocalGet(4)); // node_hash
-        f.instruction(&Instruction::I32Const(0)); // shift = 0
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HAMT_BITPOS)));
-        // arr = [null, node]
-        f.instruction(&Instruction::RefNull(HeapType::Abstract {
-            shared: false,
-            ty: AbstractHeapType::Eq,
-        }));
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::ArrayNewFixed {
-            array_type_index: gc_types::TRIE_NODE,
-            array_size: 2,
-        });
-        f.instruction(&Instruction::StructNew(gc_types::BITMAP_INDEXED_NODE));
-
-        // inode_assoc(bin, 0, hash, key, val)
-        f.instruction(&Instruction::I32Const(0)); // shift
-        f.instruction(&Instruction::LocalGet(1)); // hash
-        f.instruction(&Instruction::LocalGet(2)); // key
-        f.instruction(&Instruction::LocalGet(3)); // val
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::INODE_ASSOC)));
-
-        f.instruction(&Instruction::End); // end hash check if
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $create_node function - create subtree for colliding keys.
-    ///
-    /// Signature: (shift: i32, key1: eqref, val1: eqref, hash2: i32, key2: eqref, val2: eqref) -> eqref
-    ///
-    /// Creates a new subtree to hold two key-value pairs that collided at the parent level.
-    /// If hashes differ at current level, creates BitmapIndexedNode with both.
-    /// If hashes match all the way down (shift >= 32), creates HashCollisionNode.
-    fn generate_create_node_func(&self) -> Function {
-        use crate::ir::gc_types;
-        use crate::ir::type_ids;
-
-        // Locals: shift=0, key1=1, val1=2, hash2=3, key2=4, val2=5
-        //         hash1=6, idx1=7, idx2=8, bit1=9, bit2=10, arr=11
-        let eqref = ValType::Ref(RefType::EQREF);
-        let locals = vec![
-            (5, ValType::I32), // hash1, idx1, idx2, bit1, bit2
-            (1, eqref),        // arr
-        ];
-        let mut f = Function::new(locals);
-
-        // Note: We don't have hash1 here. The proper solution would pass hash1 as a parameter.
-        // For now, we use a simplified approach:
-        // - Assume key1 hashes to index 0 at the current level
-        // - key2 goes to its computed index based on hash2
-        // - If they collide (idx2 == 0), we recurse
-        // - At shift >= 32, we create a HashCollisionNode
-
-        // if shift >= 32: create HashCollisionNode
-        f.instruction(&Instruction::LocalGet(0)); // shift
-        f.instruction(&Instruction::I32Const(32));
-        f.instruction(&Instruction::I32GeS);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-
-        // Create HashCollisionNode with both entries
-        // HCN: { type_id, hash, cnt, arr }
-        f.instruction(&Instruction::I32Const(type_ids::HASH_COLLISION_NODE));
-        f.instruction(&Instruction::LocalGet(3)); // hash2 (same as hash1 since we're colliding)
-        f.instruction(&Instruction::I32Const(2)); // cnt = 2
-        // Create arr with [key1, val1, key2, val2]
-        f.instruction(&Instruction::LocalGet(1)); // key1
-        f.instruction(&Instruction::LocalGet(2)); // val1
-        f.instruction(&Instruction::LocalGet(4)); // key2
-        f.instruction(&Instruction::LocalGet(5)); // val2
-        f.instruction(&Instruction::ArrayNewFixed {
-            array_type_index: gc_types::TRIE_NODE,
-            array_size: 4,
-        });
-        f.instruction(&Instruction::StructNew(gc_types::HASH_COLLISION_NODE));
-
-        f.instruction(&Instruction::Else);
-
-        // For now, create a simple BitmapIndexedNode with both key-value pairs
-        // This is a simplification - proper implementation would compute hash1 and
-        // compare indices, possibly recursing if they match.
-
-        // We need to compute where key1 goes. The issue is we don't have hash1.
-        // For a working implementation, let's compute it using the same logic as
-        // for any key hashing.
-
-        // Actually, since create_node is called from bin_assoc when keys collide,
-        // we know both keys hash to the same index at the PARENT level (shift-5).
-        // At the CURRENT level (shift), they might differ.
-
-        // Let me compute hash1 by calling the hash protocol on key1.
-        // For primitive types (i31ref), we can compute directly.
-        // For this step, let's create a simple BIN assuming indices differ.
-
-        // idx2 = mask(hash2, shift)
-        f.instruction(&Instruction::LocalGet(3)); // hash2
-        f.instruction(&Instruction::LocalGet(0)); // shift
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HAMT_MASK)));
-        f.instruction(&Instruction::LocalSet(8)); // idx2
-
-        // bit2 = 1 << idx2
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::LocalGet(8));
-        f.instruction(&Instruction::I32Shl);
-        f.instruction(&Instruction::LocalSet(10)); // bit2
-
-        // For key1, we need its hash. Since we're in a collision scenario,
-        // key1 and key2 have different hashes (otherwise equiv would have matched).
-        // But we don't know hash1 here.
-
-        // WORKAROUND: Compute a "hash" for key1 based on its structure.
-        // For i31ref, we can use the value directly.
-        // For other types, this is harder.
-
-        // Let's use a different approach: store key1 as a direct entry and
-        // key2 as another entry. If their bit positions are the same at this level,
-        // we recurse. For simplicity, let's assume they differ (optimistic case).
-
-        // For now, create BIN with key1 entry at position 0 and key2 at its computed position
-        // This is a TEMPORARY simplification - proper implementation needs hash1.
-
-        // Actually, let me think about this more carefully. In the Clojure implementation,
-        // create_node is typically called with hash1 already known (it's passed from the
-        // original lookup). But in our simplified API, we don't have it.
-
-        // The cleanest solution is to add hash1 as a parameter to create_node.
-        // But that changes the signature. For now, let's assume key1's hash is "0"
-        // (so it goes to position 0 at every level) and key2 goes to its computed position.
-
-        // If idx2 == 0, we need to create a child node. Otherwise, both fit.
-
-        // For Step 4, create a BIN with both entries assuming they fit at different positions
-        // This will work for most cases where keys hash differently.
-
-        // Create array with [key1, val1, key2, val2] at positions 0 and idx2
-        // Bitmap = bit at position 0 | bit at position idx2
-
-        // Hmm, this is getting complex. Let me use the simplest possible implementation:
-        // Create a BIN with both key-value pairs stored directly.
-        // bitmap = bit for key1 (assuming idx 0) | bit for key2
-        // If they're the same bit, recurse.
-
-        // Actually, let's be more careful. We're going to compute hash1 by calling
-        // the protocol dispatch for hash. This is the correct approach.
-
-        // For Step 4, I'll implement a simple version that:
-        // 1. Puts key1 at index 0 (bit 1)
-        // 2. Puts key2 at its computed index (bit2)
-        // 3. If they're the same, recurse to next level
-
-        // Check if idx2 == 0 (same position as key1's assumed position)
-        f.instruction(&Instruction::LocalGet(8)); // idx2
-        f.instruction(&Instruction::I32Eqz);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-
-        // Same index - need to recurse
-        // create_node(shift+5, key1, val1, hash2, key2, val2)
-        f.instruction(&Instruction::LocalGet(0)); // shift
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::LocalGet(1)); // key1
-        f.instruction(&Instruction::LocalGet(2)); // val1
-        f.instruction(&Instruction::LocalGet(3)); // hash2
-        f.instruction(&Instruction::LocalGet(4)); // key2
-        f.instruction(&Instruction::LocalGet(5)); // val2
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::CREATE_NODE)));
-
-        f.instruction(&Instruction::Else);
-
-        // Different indices - create BIN with both entries
-        // Order entries by index: smaller index first in array
-        // bitmap = (1 << 0) | (1 << idx2) = 1 | bit2
-
-        // idx1 = 0, so key1 comes first if idx2 > 0
-        // Create arr = [key1, val1, key2, val2]
-        f.instruction(&Instruction::LocalGet(1)); // key1
-        f.instruction(&Instruction::LocalGet(2)); // val1
-        f.instruction(&Instruction::LocalGet(4)); // key2
-        f.instruction(&Instruction::LocalGet(5)); // val2
-        f.instruction(&Instruction::ArrayNewFixed {
-            array_type_index: gc_types::TRIE_NODE,
-            array_size: 4,
-        });
-        f.instruction(&Instruction::LocalSet(11)); // arr
-
-        // BitmapIndexedNode(1 | bit2, arr)
-        f.instruction(&Instruction::I32Const(type_ids::BITMAP_INDEXED_NODE));
-        f.instruction(&Instruction::I32Const(1)); // bit for index 0
-        f.instruction(&Instruction::LocalGet(10)); // bit2
-        f.instruction(&Instruction::I32Or); // bitmap
-        f.instruction(&Instruction::LocalGet(11)); // arr
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::StructNew(gc_types::BITMAP_INDEXED_NODE));
-
-        f.instruction(&Instruction::End); // end idx2 == 0 if
-        f.instruction(&Instruction::End); // end shift >= 32 if
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $hash function - compute hash code for any value.
-    ///
-    /// Signature: (value: eqref) -> i32
-    ///
-    /// Returns i32 hash directly (not wrapped as i31ref).
-    /// Used by HAMT operations for key hashing.
-    fn generate_hash_func(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Locals: value=0 (param), temp=1 (for i31 value)
-        let locals = vec![(1, ValType::I32)]; // temp local for i31 value
-        let mut f = Function::new(locals);
-
-        // Type dispatch using nested if/else
-        // First, test if it's an i31ref (nil, bool, small int)
-        f.instruction(&Instruction::LocalGet(0)); // value
-        f.instruction(&Instruction::RefTestNonNull(HeapType::I31));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-
-        // === i31ref path ===
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-        f.instruction(&Instruction::I31GetS);
-        f.instruction(&Instruction::LocalSet(1)); // save to temp
-
-        // Check for nil (0)
-        f.instruction(&Instruction::LocalGet(1));
-        f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(0)); // hash(nil) = 0
-
-        f.instruction(&Instruction::Else);
-        // Check for false (2)
-        f.instruction(&Instruction::LocalGet(1));
-        f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(gc_types::HASH_FALSE));
-
-        f.instruction(&Instruction::Else);
-        // Check for true (4)
-        f.instruction(&Instruction::LocalGet(1));
-        f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        f.instruction(&Instruction::I32Const(gc_types::HASH_TRUE));
-
-        f.instruction(&Instruction::Else);
-        // Must be a small integer - decode and use as hash
-        // Decode: >> 1
-        f.instruction(&Instruction::LocalGet(1));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32ShrS);
-
-        f.instruction(&Instruction::End); // close true check
-        f.instruction(&Instruction::End); // close false check
-        f.instruction(&Instruction::End); // close nil check
-
-        f.instruction(&Instruction::Else);
-        // === Not i31ref - check struct types ===
-
-        // Test LARGE_INT
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::LARGE_INT)));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-
-        // Extract i64 and hash it
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::LARGE_INT)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::LARGE_INT,
-            field_index: gc_types::LI_VALUE,
-        });
-        self.emit_hash_i64(&mut f);
-
-        f.instruction(&Instruction::Else);
-
-        // Test FLOAT
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::FLOAT)));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-
-        // Extract f64, reinterpret as i64, and hash
-        f.instruction(&Instruction::LocalGet(0));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::FLOAT,
-            field_index: gc_types::FL_VALUE,
-        });
-        f.instruction(&Instruction::I64ReinterpretF64);
-        self.emit_hash_i64(&mut f);
-
-        f.instruction(&Instruction::Else);
-
-        // Default: return 0 for unsupported types
-        // (keywords, symbols, strings, collections use different hashing)
-        f.instruction(&Instruction::I32Const(0));
-
-        f.instruction(&Instruction::End); // close FLOAT
-        f.instruction(&Instruction::End); // close LARGE_INT
-        f.instruction(&Instruction::End); // close i31ref test
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $inode_dissoc function - type-dispatching remove.
-    ///
-    /// Signature: (node: eqref, shift: i32, hash: i32, key: eqref) -> eqref
-    ///
-    /// Dispatches to $bin_dissoc, $an_dissoc, or $hcn_dissoc based on node type.
-    /// Returns null if the node becomes empty after removal.
-    fn generate_inode_dissoc_func(&self) -> Function {
-        use crate::ir::gc_types;
-
-        // Locals: node=0, shift=1, hash=2, key=3, type_id=4
-        let locals = vec![(1, ValType::I32)]; // type_id
-        let mut f = Function::new(locals);
-
-        // Get type_id of node
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));
-        f.instruction(&Instruction::LocalSet(4)); // type_id
-
-        // if type_id == BITMAP_INDEXED_NODE: call $bin_dissoc
-        f.instruction(&Instruction::LocalGet(4));
-        f.instruction(&Instruction::I32Const(gc_types::BITMAP_INDEXED_NODE as i32));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::BIN_DISSOC)));
-        f.instruction(&Instruction::Else);
-
-        // if type_id == ARRAY_NODE: call $an_dissoc
-        f.instruction(&Instruction::LocalGet(4));
-        f.instruction(&Instruction::I32Const(gc_types::ARRAY_NODE as i32));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::LocalGet(1)); // shift
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::AN_DISSOC)));
-        f.instruction(&Instruction::Else);
-
-        // else (HASH_COLLISION_NODE): call $hcn_dissoc (no shift parameter)
-        f.instruction(&Instruction::LocalGet(0)); // node
-        f.instruction(&Instruction::LocalGet(2)); // hash
-        f.instruction(&Instruction::LocalGet(3)); // key
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HCN_DISSOC)));
-
-        f.instruction(&Instruction::End); // end inner if
-        f.instruction(&Instruction::End); // end outer if
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $bin_dissoc function - BitmapIndexedNode remove.
-    ///
-    /// Signature: (node: eqref, shift: i32, hash: i32, key: eqref) -> eqref
-    ///
-    /// Algorithm:
-    /// 1. bit = bitpos(hash, shift)
-    /// 2. if (bitmap & bit) == 0: return node (not found)
-    /// 3. idx = index(bitmap, bit)
-    /// 4. key_or_null = arr[2*idx]
-    /// 5. val_or_node = arr[2*idx + 1]
-    /// 6. if key_or_null is null: recurse via inode_dissoc
-    /// 7. else if key == key_or_null: remove this entry
-    /// 8. else: return node (key not found)
-    fn generate_bin_dissoc_func(&self) -> Function {
-        // Simplified stub implementation - just return original node
-        // TODO: Implement proper BitmapIndexedNode dissoc
-        let locals = vec![];
-        let mut f = Function::new(locals);
-
-        // Return original node for now (no-op dissoc)
-        f.instruction(&Instruction::LocalGet(0));
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $an_dissoc function - ArrayNode remove.
-    ///
-    /// Signature: (node: eqref, shift: i32, hash: i32, key: eqref) -> eqref
-    ///
-    /// For simplicity, this implementation just returns the original node.
-    /// A full implementation would:
-    /// 1. Find the slot using mask(hash, shift)
-    /// 2. If slot is null, return original
-    /// 3. Recurse into child, update slot with result
-    /// 4. If count drops to 16, demote to BitmapIndexedNode
-    fn generate_an_dissoc_func(&self) -> Function {
-        // Simplified implementation - just return original node
-        // Full implementation would be similar to an_assoc but removing entries
-        let locals = vec![];
-        let mut f = Function::new(locals);
-
-        // Return original node for now (no-op dissoc on ArrayNode)
-        // TODO: Implement proper ArrayNode dissoc
-        f.instruction(&Instruction::LocalGet(0));
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    /// Generate $hcn_dissoc function - HashCollisionNode remove.
-    ///
-    /// Signature: (node: eqref, hash: i32, key: eqref) -> eqref
-    ///
-    /// For simplicity, this implementation just returns the original node.
-    /// A full implementation would:
-    /// 1. Linear search for key in array
-    /// 2. If found, create new array without that entry
-    /// 3. If only 1 entry left, return a simple key-value node
-    /// 4. If empty, return null
-    fn generate_hcn_dissoc_func(&self) -> Function {
-        // Simplified implementation - just return original node
-        // Full implementation would search and remove
-        let locals = vec![];
-        let mut f = Function::new(locals);
-
-        // Return original node for now (no-op dissoc on HashCollisionNode)
-        // TODO: Implement proper HashCollisionNode dissoc
-        f.instruction(&Instruction::LocalGet(0));
-
-        f.instruction(&Instruction::End);
-        f
-    }
-
-    // ========================================================================
-    // Persistent Vector Codegen
     // ========================================================================
 
     /// Generate code to create a new persistent vector from elements.
@@ -5054,38 +1251,43 @@ impl<'a> CodeGen<'a> {
     /// - Large vector (>32): cnt=n, shift=5*depth, root=trie, tail=rightmost leaf
     fn generate_vec_new(&self, elements: &[Expr], f: &mut Function) -> CompileResult<()> {
         use crate::ir::gc_types;
-        use crate::ir::type_ids;
         let cnt = elements.len() as i32;
+
+        // Look up PersistentVector type indices dynamically
+        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
+        let pv_type_id = self.deftype_type_id("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
 
         if cnt == 0 {
             // Empty vector: type_id, cnt=0, shift=5, root=null, tail=empty array
-            f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_VECTOR));
+            f.instruction(&Instruction::I32Const(pv_type_id));
             f.instruction(&Instruction::I32Const(0)); // cnt
             f.instruction(&Instruction::I32Const(5)); // shift
-            f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::TRIE_NODE))); // root
+            f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::ARRAY))); // root
             // Create empty tail array using ArrayNewFixed with 0 elements
             f.instruction(&Instruction::ArrayNewFixed {
-                array_type_index: gc_types::TRIE_NODE,
+                array_type_index: gc_types::ARRAY,
                 array_size: 0,
             });
-            f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_VECTOR));
+            f.instruction(&Instruction::StructNew(pv_gc_idx));
         } else if cnt <= 32 {
             // Small vector: type_id, cnt=n, shift=5, root=null, tail=[elements]
-            f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_VECTOR));
+            f.instruction(&Instruction::I32Const(pv_type_id));
             f.instruction(&Instruction::I32Const(cnt)); // cnt
             f.instruction(&Instruction::I32Const(5)); // shift
-            f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::TRIE_NODE))); // root
+            f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::ARRAY))); // root
 
             // Build tail array using ArrayNewFixed - push all elements, then create array
             for elem in elements.iter() {
                 self.generate_expr(elem, f)?;
             }
             f.instruction(&Instruction::ArrayNewFixed {
-                array_type_index: gc_types::TRIE_NODE,
+                array_type_index: gc_types::ARRAY,
                 array_size: cnt as u32,
             });
 
-            f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_VECTOR));
+            f.instruction(&Instruction::StructNew(pv_gc_idx));
         } else {
             // Large vector: build proper trie structure
             // This is complex - for now, delegate to a simpler construction
@@ -5099,26 +1301,31 @@ impl<'a> CodeGen<'a> {
     /// Generate large vector construction by building trie incrementally
     fn generate_vec_new_large(&self, elements: &[Expr], f: &mut Function) -> CompileResult<()> {
         use crate::ir::gc_types;
-        use crate::ir::type_ids;
         // Start with first 32 elements as base vector
         let (first_32, rest) = elements.split_at(32.min(elements.len()));
 
+        // Look up PersistentVector type indices dynamically
+        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
+        let pv_type_id = self.deftype_type_id("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
+
         // Create initial vector with first batch: type_id, cnt, shift, root, tail
-        f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_VECTOR));
+        f.instruction(&Instruction::I32Const(pv_type_id));
         f.instruction(&Instruction::I32Const(first_32.len() as i32));
         f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::TRIE_NODE)));
+        f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::ARRAY)));
 
         // Build tail with first elements using ArrayNewFixed
         for elem in first_32.iter() {
             self.generate_expr(elem, f)?;
         }
         f.instruction(&Instruction::ArrayNewFixed {
-            array_type_index: gc_types::TRIE_NODE,
+            array_type_index: gc_types::ARRAY,
             array_size: first_32.len() as u32,
         });
 
-        f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_VECTOR));
+        f.instruction(&Instruction::StructNew(pv_gc_idx));
 
         // For remaining elements, we need to generate conj calls
         // This is inefficient but correct - can optimize later
@@ -5148,6 +1355,10 @@ impl<'a> CodeGen<'a> {
     fn generate_vec_nth(&self, vec: &Expr, index: &Expr, f: &mut Function) -> CompileResult<()> {
         use crate::ir::gc_types;
 
+        // Look up array-for helper function dynamically
+        let array_for_idx = self.func_idx_by_name("array-for")
+            .ok_or_else(|| CompileError::Unsupported("array-for function not found".to_string()))?;
+
         // Use scratch locals to store vec and decoded index
         let scratch_base = self.scratch_local.get();
         let vec_local = scratch_base; // eqref
@@ -5166,12 +1377,17 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::I32ShrS);
         f.instruction(&Instruction::LocalSet(idx_local));
 
-        // Call $vec_array_for(vec, idx) to get the leaf array
+        // Call array-for(vec, idx) to get the leaf array
+        // array-for expects boxed values, so we need to box the i32 index
         f.instruction(&Instruction::LocalGet(vec_local));
+        // Box idx as i31ref: (n << 1) | 1
         f.instruction(&Instruction::LocalGet(idx_local));
-        f.instruction(&Instruction::Call(
-            self.helper_func_idx(helper_funcs::VEC_ARRAY_FOR),
-        ));
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
+        f.instruction(&Instruction::Call(array_for_idx));
 
         // Cast result to TRIE_NODE for array.get
         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
@@ -5197,7 +1413,20 @@ impl<'a> CodeGen<'a> {
     ///   - Create new single-element tail [val]
     fn generate_vec_conj(&self, vec: &Expr, val: &Expr, f: &mut Function) -> CompileResult<()> {
         use crate::ir::gc_types;
-        use crate::ir::type_ids;
+
+        // Look up PersistentVector type indices dynamically
+        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
+        let pv_type_id = self.deftype_type_id("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
+
+        // Look up helper functions dynamically (they're defined in core.suss)
+        let tail_off_idx = self.func_idx_by_name("tail-off")
+            .ok_or_else(|| CompileError::Unsupported("tail-off function not found".to_string()))?;
+        let new_path_idx = self.func_idx_by_name("new-path")
+            .ok_or_else(|| CompileError::Unsupported("new-path function not found".to_string()))?;
+        let push_tail_idx = self.func_idx_by_name("push-tail")
+            .ok_or_else(|| CompileError::Unsupported("push-tail function not found".to_string()))?;
 
         // Scratch local indices (relative to scratch_base)
         // Layout: scratch_base+0: eqref, +1: i32, +2: eqref, +3: eqref, +4: eqref
@@ -5212,22 +1441,29 @@ impl<'a> CodeGen<'a> {
 
         // Get count
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_CNT,
         });
         f.instruction(&Instruction::LocalSet(cnt_local));
 
-        // Check: (cnt - tail_off) < 32 means room in tail
-        // Inline tail_off calculation: cnt - $vec_tail_off(vec)
+        // Check: (cnt - tail_off(cnt)) < 32 means room in tail
+        // tail-off takes cnt (boxed), returns tail offset (boxed)
         f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::Call(
-            self.helper_func_idx(helper_funcs::VEC_TAIL_OFF),
-        ));
+        // Box cnt as i31ref to pass to tail-off
+        f.instruction(&Instruction::LocalGet(cnt_local));
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
+        f.instruction(&Instruction::Call(tail_off_idx));
+        // Unbox the returned i31ref to i32
+        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+        f.instruction(&Instruction::I31GetS);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32ShrS);
         f.instruction(&Instruction::I32Sub);
         f.instruction(&Instruction::I32Const(32));
         f.instruction(&Instruction::I32LtU);
@@ -5264,11 +1500,9 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
         f.instruction(&Instruction::I32Const(0)); // dst_offset
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_TAIL,
         });
         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
@@ -5294,31 +1528,27 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
 
         // Create new vector: type_id, (inc cnt), shift, root, new_tail
-        f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_VECTOR));
+        f.instruction(&Instruction::I32Const(pv_type_id));
         f.instruction(&Instruction::LocalGet(cnt_local));
         f.instruction(&Instruction::I32Const(1));
         f.instruction(&Instruction::I32Add); // new cnt
 
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_SHIFT,
         });
 
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_ROOT,
         });
 
         f.instruction(&Instruction::LocalGet(new_tail_local));
-        f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_VECTOR));
+        f.instruction(&Instruction::StructNew(pv_gc_idx));
 
         f.instruction(&Instruction::Else);
 
@@ -5331,11 +1561,9 @@ impl<'a> CodeGen<'a> {
 
         f.instruction(&Instruction::I32Const(1));
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_SHIFT,
         });
         f.instruction(&Instruction::I32Shl); // 1 << shift
@@ -5350,34 +1578,34 @@ impl<'a> CodeGen<'a> {
 
         // First element: old_root
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_ROOT,
         });
 
         // Second element: new_path(shift, tail)
+        // Get shift and box it as i31ref
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_SHIFT,
         });
+        // Box i32 as i31ref: (n << 1) | 1
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
+        // Get tail (already eqref)
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_TAIL,
         });
-        f.instruction(&Instruction::Call(
-            self.helper_func_idx(helper_funcs::VEC_NEW_PATH),
-        ));
+        f.instruction(&Instruction::Call(new_path_idx));
 
         // Create new root array [old_root, new_path_result]
         f.instruction(&Instruction::ArrayNewFixed {
@@ -5387,17 +1615,15 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::LocalSet(new_tail_local)); // reuse local for new_root
 
         // Build result: type_id, (inc cnt), (shift + 5), new_root, [val]
-        f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_VECTOR));
+        f.instruction(&Instruction::I32Const(pv_type_id));
         f.instruction(&Instruction::LocalGet(cnt_local));
         f.instruction(&Instruction::I32Const(1));
         f.instruction(&Instruction::I32Add);
 
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_SHIFT,
         });
         f.instruction(&Instruction::I32Const(5));
@@ -5412,7 +1638,7 @@ impl<'a> CodeGen<'a> {
             array_size: 1,
         });
 
-        f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_VECTOR));
+        f.instruction(&Instruction::StructNew(pv_gc_idx));
 
         f.instruction(&Instruction::Else);
 
@@ -5421,11 +1647,9 @@ impl<'a> CodeGen<'a> {
         // But first handle the case where root is null (first push)
 
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_ROOT,
         });
         f.instruction(&Instruction::RefIsNull);
@@ -5437,75 +1661,75 @@ impl<'a> CodeGen<'a> {
         // Root is null: this is the first time we're pushing tail into trie
         // new_root = new_path(shift, tail) - wraps tail in a single-element array
         // Note: must use shift (not shift-5) so the tail gets wrapped properly
+        // Get shift and box it as i31ref
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_SHIFT,
         });
-        // Use shift directly (not shift - 5), so new_path(5, tail) = [tail]
+        // Box i32 as i31ref: (n << 1) | 1
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
+        // Get tail (already eqref)
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_TAIL,
         });
-        f.instruction(&Instruction::Call(
-            self.helper_func_idx(helper_funcs::VEC_NEW_PATH),
-        ));
+        f.instruction(&Instruction::Call(new_path_idx));
 
         f.instruction(&Instruction::Else);
 
         // Root is not null: push_tail(vec, shift, root, tail)
         f.instruction(&Instruction::LocalGet(vec_local));
+        // Get shift and box it as i31ref
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_SHIFT,
         });
+        // Box i32 as i31ref: (n << 1) | 1
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
+        // Get root (already eqref)
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_ROOT,
         });
+        // Get tail (already eqref)
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_TAIL,
         });
-        f.instruction(&Instruction::Call(
-            self.helper_func_idx(helper_funcs::VEC_PUSH_TAIL),
-        ));
+        f.instruction(&Instruction::Call(push_tail_idx));
 
         f.instruction(&Instruction::End); // end if (root is null)
 
         f.instruction(&Instruction::LocalSet(new_tail_local)); // reuse local for new_root
 
         // Build result: type_id, (inc cnt), shift, new_root, [val]
-        f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_VECTOR));
+        f.instruction(&Instruction::I32Const(pv_type_id));
         f.instruction(&Instruction::LocalGet(cnt_local));
         f.instruction(&Instruction::I32Const(1));
         f.instruction(&Instruction::I32Add);
 
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
+            struct_type_index: pv_gc_idx,
             field_index: gc_types::PV_SHIFT,
         });
 
@@ -5518,7 +1742,7 @@ impl<'a> CodeGen<'a> {
             array_size: 1,
         });
 
-        f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_VECTOR));
+        f.instruction(&Instruction::StructNew(pv_gc_idx));
 
         f.instruction(&Instruction::End); // end if (root overflow)
         f.instruction(&Instruction::End); // end if (room in tail)
@@ -5532,28 +1756,31 @@ impl<'a> CodeGen<'a> {
 
     /// Generate code to create a new persistent map from key-value pairs.
     fn generate_map_new(&self, pairs: &[(Expr, Expr)], f: &mut Function) -> CompileResult<()> {
-        use crate::ir::gc_types;
-        use crate::ir::type_ids;
+        // Look up PersistentMap type indices dynamically
+        let pm_gc_idx = self.deftype_gc_type_idx("PersistentMap")
+            .ok_or_else(|| CompileError::Unsupported("PersistentMap deftype not found".to_string()))?;
+        let pm_type_id = self.deftype_type_id("PersistentMap")
+            .ok_or_else(|| CompileError::Unsupported("PersistentMap deftype not found".to_string()))?;
 
         if pairs.is_empty() {
             // Empty map
-            f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_MAP)); // type_id
+            f.instruction(&Instruction::I32Const(pm_type_id)); // type_id
             f.instruction(&Instruction::I32Const(0)); // cnt
             f.instruction(&Instruction::RefNull(HeapType::Abstract {
                 shared: false,
                 ty: AbstractHeapType::Eq,
             })); // root (null for empty)
-            f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_MAP));
+            f.instruction(&Instruction::StructNew(pm_gc_idx));
         } else {
             // Build map by starting with empty and assoc'ing each pair
             // Start with empty map on stack
-            f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_MAP)); // type_id
+            f.instruction(&Instruction::I32Const(pm_type_id)); // type_id
             f.instruction(&Instruction::I32Const(0)); // cnt
             f.instruction(&Instruction::RefNull(HeapType::Abstract {
                 shared: false,
                 ty: AbstractHeapType::Eq,
             })); // root (null for empty)
-            f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_MAP));
+            f.instruction(&Instruction::StructNew(pm_gc_idx));
 
             // For each pair, assoc it into the map
             for (key, val) in pairs {
@@ -5584,6 +1811,16 @@ impl<'a> CodeGen<'a> {
     ) -> CompileResult<()> {
         use crate::ir::gc_types;
 
+        // Look up PersistentMap type index dynamically
+        let pm_gc_idx = self.deftype_gc_type_idx("PersistentMap")
+            .ok_or_else(|| CompileError::Unsupported("PersistentMap deftype not found".to_string()))?;
+
+        // Look up helper functions dynamically
+        let hash_idx = self.func_idx_by_name("hash")
+            .ok_or_else(|| CompileError::Unsupported("hash function not found".to_string()))?;
+        let inode_find_idx = self.func_idx_by_name("inode-find")
+            .ok_or_else(|| CompileError::Unsupported("inode-find function not found".to_string()))?;
+
         // Use scratch locals matching layout: +0: eqref, +1: i32, +2: eqref
         let scratch_base = self.scratch_local.get();
         // Bump scratch_local so nested expressions use different locals
@@ -5598,10 +1835,10 @@ impl<'a> CodeGen<'a> {
 
         // Evaluate map and get root
         self.generate_expr(map, f)?;
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_MAP)));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pm_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_MAP,
-            field_index: 2, // root
+            struct_type_index: pm_gc_idx,
+            field_index: 2, // root (field 0 is type_id, field 1 is cnt)
         });
         f.instruction(&Instruction::LocalSet(root_local));
 
@@ -5617,21 +1854,29 @@ impl<'a> CodeGen<'a> {
 
         f.instruction(&Instruction::Else);
 
-        // Root exists - call inode_find(root, 0, hash(key), key, nil)
-        f.instruction(&Instruction::LocalGet(root_local)); // root
-        f.instruction(&Instruction::I32Const(0)); // shift = 0
+        // Root exists - call inode_find(root, shift, hash, key, not_found)
+        // All args must be boxed eqref
+        f.instruction(&Instruction::LocalGet(root_local)); // root (already eqref)
 
-        // hash(key)
+        // Box shift = 0
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
+
+        // hash(key) - already returns boxed
         f.instruction(&Instruction::LocalGet(key_local));
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH)));
+        f.instruction(&Instruction::Call(hash_idx));
 
-        f.instruction(&Instruction::LocalGet(key_local)); // key
+        f.instruction(&Instruction::LocalGet(key_local)); // key (already eqref)
 
         // not_found = nil
         f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
         f.instruction(&Instruction::RefI31);
 
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::INODE_FIND)));
+        f.instruction(&Instruction::Call(inode_find_idx));
 
         f.instruction(&Instruction::End); // end null check
 
@@ -5667,7 +1912,24 @@ impl<'a> CodeGen<'a> {
     /// 5. Create new PersistentMap(cnt+1, new_root)
     fn generate_map_assoc_impl(&self, f: &mut Function) -> CompileResult<()> {
         use crate::ir::gc_types;
-        use crate::ir::type_ids;
+
+        // Look up type indices dynamically
+        let pm_gc_idx = self.deftype_gc_type_idx("PersistentMap")
+            .ok_or_else(|| CompileError::Unsupported("PersistentMap deftype not found".to_string()))?;
+        let pm_type_id = self.deftype_type_id("PersistentMap")
+            .ok_or_else(|| CompileError::Unsupported("PersistentMap deftype not found".to_string()))?;
+        let bin_gc_idx = self.deftype_gc_type_idx("BitmapIndexedNode")
+            .ok_or_else(|| CompileError::Unsupported("BitmapIndexedNode deftype not found".to_string()))?;
+        let bin_type_id = self.deftype_type_id("BitmapIndexedNode")
+            .ok_or_else(|| CompileError::Unsupported("BitmapIndexedNode deftype not found".to_string()))?;
+
+        // Look up helper functions dynamically
+        let hash_idx = self.func_idx_by_name("hash")
+            .ok_or_else(|| CompileError::Unsupported("hash function not found".to_string()))?;
+        let hamt_bitpos_idx = self.func_idx_by_name("hamt-bitpos")
+            .ok_or_else(|| CompileError::Unsupported("hamt-bitpos function not found".to_string()))?;
+        let inode_assoc_idx = self.func_idx_by_name("inode-assoc")
+            .ok_or_else(|| CompileError::Unsupported("inode-assoc function not found".to_string()))?;
 
         // Use scratch locals matching layout: +0: eqref, +1: i32, +2-4: eqref
         let scratch_base = self.scratch_local.get();
@@ -5684,17 +1946,17 @@ impl<'a> CodeGen<'a> {
 
         // Get root and cnt from map
         f.instruction(&Instruction::LocalGet(map_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_MAP)));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pm_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_MAP,
-            field_index: 2, // root
+            struct_type_index: pm_gc_idx,
+            field_index: 2, // root (field 0 is type_id, field 1 is cnt)
         });
         f.instruction(&Instruction::LocalSet(root_local));
 
         f.instruction(&Instruction::LocalGet(map_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_MAP)));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pm_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_MAP,
+            struct_type_index: pm_gc_idx,
             field_index: 1, // cnt
         });
         f.instruction(&Instruction::LocalSet(cnt_local));
@@ -5707,13 +1969,28 @@ impl<'a> CodeGen<'a> {
 
         // Root is null - create BitmapIndexedNode with single entry
         // BitmapIndexedNode(bitpos(hash, 0), [key, val])
-        f.instruction(&Instruction::I32Const(type_ids::BITMAP_INDEXED_NODE));
+        f.instruction(&Instruction::I32Const(bin_type_id));
 
-        // bitpos(hash, 0)
+        // Call hamt-bitpos(hash(key), 0)
+        // hamt-bitpos takes [hash shift] both boxed
+        // First arg: boxed hash
         f.instruction(&Instruction::LocalGet(key_local));
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH)));
-        f.instruction(&Instruction::I32Const(0)); // shift = 0
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HAMT_BITPOS)));
+        f.instruction(&Instruction::Call(hash_idx)); // Returns boxed hash
+
+        // Second arg: boxed shift = 0
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
+
+        f.instruction(&Instruction::Call(hamt_bitpos_idx));
+        // Unbox hamt-bitpos result for struct field
+        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+        f.instruction(&Instruction::I31GetS);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32ShrS);
 
         // [key, val]
         f.instruction(&Instruction::LocalGet(key_local));
@@ -5722,22 +1999,28 @@ impl<'a> CodeGen<'a> {
             array_type_index: gc_types::TRIE_NODE,
             array_size: 2,
         });
-        f.instruction(&Instruction::StructNew(gc_types::BITMAP_INDEXED_NODE));
+        f.instruction(&Instruction::StructNew(bin_gc_idx));
 
         f.instruction(&Instruction::Else);
 
         // Root exists - call inode_assoc(root, 0, hash(key), key, val)
         f.instruction(&Instruction::LocalGet(root_local)); // root
+        // Box shift = 0
         f.instruction(&Instruction::I32Const(0)); // shift = 0
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
 
-        // hash(key)
+        // hash(key) - already boxed
         f.instruction(&Instruction::LocalGet(key_local));
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH)));
+        f.instruction(&Instruction::Call(hash_idx));
 
         f.instruction(&Instruction::LocalGet(key_local)); // key
         f.instruction(&Instruction::LocalGet(val_local)); // val
 
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::INODE_ASSOC)));
+        f.instruction(&Instruction::Call(inode_assoc_idx));
 
         f.instruction(&Instruction::End); // end null check
 
@@ -5747,12 +2030,12 @@ impl<'a> CodeGen<'a> {
         let new_root_local = scratch_base + 5;
         f.instruction(&Instruction::LocalSet(new_root_local));
 
-        f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_MAP));
+        f.instruction(&Instruction::I32Const(pm_type_id));
         f.instruction(&Instruction::LocalGet(cnt_local));
         f.instruction(&Instruction::I32Const(1));
         f.instruction(&Instruction::I32Add); // cnt + 1
         f.instruction(&Instruction::LocalGet(new_root_local));
-        f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_MAP));
+        f.instruction(&Instruction::StructNew(pm_gc_idx));
 
         Ok(())
     }
@@ -5763,30 +2046,33 @@ impl<'a> CodeGen<'a> {
 
     /// Generate code to create a new persistent set from elements.
     fn generate_set_new(&self, elements: &[Expr], f: &mut Function) -> CompileResult<()> {
-        use crate::ir::gc_types;
-        use crate::ir::type_ids;
+        // Look up PersistentSet type indices dynamically
+        let ps_gc_idx = self.deftype_gc_type_idx("PersistentSet")
+            .ok_or_else(|| CompileError::Unsupported("PersistentSet deftype not found".to_string()))?;
+        let ps_type_id = self.deftype_type_id("PersistentSet")
+            .ok_or_else(|| CompileError::Unsupported("PersistentSet deftype not found".to_string()))?;
 
         if elements.is_empty() {
             // Empty set
-            f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_SET)); // type_id
+            f.instruction(&Instruction::I32Const(ps_type_id)); // type_id
             f.instruction(&Instruction::I32Const(0)); // cnt
             f.instruction(&Instruction::RefNull(HeapType::Abstract {
                 shared: false,
                 ty: AbstractHeapType::Eq,
             })); // root (null for empty)
             f.instruction(&Instruction::I32Const(0)); // marker field
-            f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_SET));
+            f.instruction(&Instruction::StructNew(ps_gc_idx));
         } else {
             // Build set by starting with empty and conj'ing each element
             // Start with empty set on stack
-            f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_SET)); // type_id
+            f.instruction(&Instruction::I32Const(ps_type_id)); // type_id
             f.instruction(&Instruction::I32Const(0)); // cnt
             f.instruction(&Instruction::RefNull(HeapType::Abstract {
                 shared: false,
                 ty: AbstractHeapType::Eq,
             })); // root (null for empty)
             f.instruction(&Instruction::I32Const(0)); // marker field
-            f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_SET));
+            f.instruction(&Instruction::StructNew(ps_gc_idx));
 
             // For each element, conj it into the set
             for elem in elements {
@@ -5811,6 +2097,16 @@ impl<'a> CodeGen<'a> {
     ) -> CompileResult<()> {
         use crate::ir::gc_types;
 
+        // Look up type indices dynamically
+        let ps_gc_idx = self.deftype_gc_type_idx("PersistentSet")
+            .ok_or_else(|| CompileError::Unsupported("PersistentSet deftype not found".to_string()))?;
+
+        // Look up helper functions dynamically
+        let hash_idx = self.func_idx_by_name("hash")
+            .ok_or_else(|| CompileError::Unsupported("hash function not found".to_string()))?;
+        let inode_find_idx = self.func_idx_by_name("inode-find")
+            .ok_or_else(|| CompileError::Unsupported("inode-find function not found".to_string()))?;
+
         // Use scratch locals
         let scratch_base = self.scratch_local.get();
         self.scratch_local.set(scratch_base + 5);
@@ -5825,11 +2121,12 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::LocalSet(key_local));
 
         // Evaluate set and get root
+        // PersistentSet fields: 0=type_id, 1=set-cnt, 2=set-root, 3=_marker
         self.generate_expr(set, f)?;
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_SET)));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(ps_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_SET,
-            field_index: gc_types::PS_ROOT,
+            struct_type_index: ps_gc_idx,
+            field_index: 2, // set-root
         });
         f.instruction(&Instruction::LocalSet(root_local));
 
@@ -5846,11 +2143,18 @@ impl<'a> CodeGen<'a> {
 
         // Root exists - call inode_find(root, 0, hash(key), key, nil)
         f.instruction(&Instruction::LocalGet(root_local)); // root
-        f.instruction(&Instruction::I32Const(0)); // shift = 0
+
+        // Boxed shift = 0
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
 
         // hash(key)
         f.instruction(&Instruction::LocalGet(key_local));
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH)));
+        f.instruction(&Instruction::Call(hash_idx));
 
         f.instruction(&Instruction::LocalGet(key_local)); // key
 
@@ -5858,7 +2162,7 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
         f.instruction(&Instruction::RefI31);
 
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::INODE_FIND)));
+        f.instruction(&Instruction::Call(inode_find_idx));
         f.instruction(&Instruction::LocalSet(result_local));
 
         // Compare result with nil using ref.eq
@@ -5911,7 +2215,24 @@ impl<'a> CodeGen<'a> {
     /// For sets, we store val as both key and value in the HAMT.
     fn generate_set_conj_impl(&self, f: &mut Function) -> CompileResult<()> {
         use crate::ir::gc_types;
-        use crate::ir::type_ids;
+
+        // Look up type indices dynamically
+        let ps_gc_idx = self.deftype_gc_type_idx("PersistentSet")
+            .ok_or_else(|| CompileError::Unsupported("PersistentSet deftype not found".to_string()))?;
+        let ps_type_id = self.deftype_type_id("PersistentSet")
+            .ok_or_else(|| CompileError::Unsupported("PersistentSet deftype not found".to_string()))?;
+        let bin_gc_idx = self.deftype_gc_type_idx("BitmapIndexedNode")
+            .ok_or_else(|| CompileError::Unsupported("BitmapIndexedNode deftype not found".to_string()))?;
+        let bin_type_id = self.deftype_type_id("BitmapIndexedNode")
+            .ok_or_else(|| CompileError::Unsupported("BitmapIndexedNode deftype not found".to_string()))?;
+
+        // Look up helper functions dynamically
+        let hash_idx = self.func_idx_by_name("hash")
+            .ok_or_else(|| CompileError::Unsupported("hash function not found".to_string()))?;
+        let hamt_bitpos_idx = self.func_idx_by_name("hamt-bitpos")
+            .ok_or_else(|| CompileError::Unsupported("hamt-bitpos function not found".to_string()))?;
+        let inode_assoc_idx = self.func_idx_by_name("inode-assoc")
+            .ok_or_else(|| CompileError::Unsupported("inode-assoc function not found".to_string()))?;
 
         // Use scratch locals matching layout: +0: eqref, +1: i32, +2-4: eqref
         let scratch_base = self.scratch_local.get();
@@ -5925,19 +2246,20 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::LocalSet(set_local));
 
         // Get root and cnt from set
+        // PersistentSet fields: 0=type_id, 1=set-cnt, 2=set-root, 3=_marker
         f.instruction(&Instruction::LocalGet(set_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_SET)));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(ps_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_SET,
-            field_index: gc_types::PS_ROOT,
+            struct_type_index: ps_gc_idx,
+            field_index: 2, // set-root
         });
         f.instruction(&Instruction::LocalSet(root_local));
 
         f.instruction(&Instruction::LocalGet(set_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::PERSISTENT_SET)));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(ps_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_SET,
-            field_index: gc_types::PS_CNT,
+            struct_type_index: ps_gc_idx,
+            field_index: 1, // set-cnt
         });
         f.instruction(&Instruction::LocalSet(cnt_local));
 
@@ -5949,13 +2271,27 @@ impl<'a> CodeGen<'a> {
 
         // Root is null - create BitmapIndexedNode with single entry
         // BitmapIndexedNode(bitpos(hash, 0), [val, val]) - key=val, val=val
-        f.instruction(&Instruction::I32Const(type_ids::BITMAP_INDEXED_NODE));
+        f.instruction(&Instruction::I32Const(bin_type_id));
 
-        // bitpos(hash, 0)
+        // Call hamt-bitpos(hash(val), 0)
+        // First arg: boxed hash
         f.instruction(&Instruction::LocalGet(val_local));
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH)));
-        f.instruction(&Instruction::I32Const(0)); // shift = 0
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HAMT_BITPOS)));
+        f.instruction(&Instruction::Call(hash_idx)); // Returns boxed hash
+
+        // Second arg: boxed shift = 0
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
+
+        f.instruction(&Instruction::Call(hamt_bitpos_idx));
+        // Unbox hamt-bitpos result for struct field
+        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+        f.instruction(&Instruction::I31GetS);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32ShrS);
 
         // [val, val] - key and value are the same for sets
         f.instruction(&Instruction::LocalGet(val_local));
@@ -5964,37 +2300,44 @@ impl<'a> CodeGen<'a> {
             array_type_index: gc_types::TRIE_NODE,
             array_size: 2,
         });
-        f.instruction(&Instruction::StructNew(gc_types::BITMAP_INDEXED_NODE));
+        f.instruction(&Instruction::StructNew(bin_gc_idx));
 
         f.instruction(&Instruction::Else);
 
         // Root exists - call inode_assoc(root, 0, hash(val), val, val)
         f.instruction(&Instruction::LocalGet(root_local)); // root
-        f.instruction(&Instruction::I32Const(0)); // shift = 0
+
+        // Boxed shift = 0
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
 
         // hash(val)
         f.instruction(&Instruction::LocalGet(val_local));
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH)));
+        f.instruction(&Instruction::Call(hash_idx));
 
         f.instruction(&Instruction::LocalGet(val_local)); // key = val
         f.instruction(&Instruction::LocalGet(val_local)); // val = val
 
-        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::INODE_ASSOC)));
+        f.instruction(&Instruction::Call(inode_assoc_idx));
 
         f.instruction(&Instruction::End); // end null check
 
         // Stack now has new_root
-        // Create new PersistentSet(cnt+1, new_root, marker)
+        // Create new PersistentSet(type_id, cnt+1, new_root, marker)
         let new_root_local = scratch_base + 4;
         f.instruction(&Instruction::LocalSet(new_root_local));
 
-        f.instruction(&Instruction::I32Const(type_ids::PERSISTENT_SET));
+        f.instruction(&Instruction::I32Const(ps_type_id));
         f.instruction(&Instruction::LocalGet(cnt_local));
         f.instruction(&Instruction::I32Const(1));
         f.instruction(&Instruction::I32Add); // cnt + 1
         f.instruction(&Instruction::LocalGet(new_root_local));
         f.instruction(&Instruction::I32Const(0)); // marker field
-        f.instruction(&Instruction::StructNew(gc_types::PERSISTENT_SET));
+        f.instruction(&Instruction::StructNew(ps_gc_idx));
 
         Ok(())
     }
@@ -6157,6 +2500,42 @@ impl<'a> CodeGen<'a> {
 
         let mut f = Function::new(local_types);
         self.generate_expr(&func.body, &mut f)?;
+
+        // Protocol method implementations with explicit primitive return type hints
+        // need to unbox the result. They have names like "$TypeName/-methodname".
+        if func.name.contains("/-") {
+            match &func.return_type {
+                Type::I32 => {
+                    // Unbox i31ref to i32: ref.cast (ref i31), i31.get_s, i32.const 1, i32.shr_s
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                    f.instruction(&Instruction::I31GetS);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32ShrS);
+                }
+                Type::I64 => {
+                    // Unbox Int64 struct to i64: ref.cast (ref $INT64), struct.get $INT64 1
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
+                        crate::ir::gc_types::INT64,
+                    )));
+                    f.instruction(&Instruction::StructGet {
+                        struct_type_index: crate::ir::gc_types::INT64,
+                        field_index: 1,
+                    });
+                }
+                Type::F64 => {
+                    // Unbox Float64 struct to f64: ref.cast (ref $FLOAT64), struct.get $FLOAT64 1
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
+                        crate::ir::gc_types::FLOAT64,
+                    )));
+                    f.instruction(&Instruction::StructGet {
+                        struct_type_index: crate::ir::gc_types::FLOAT64,
+                        field_index: 1,
+                    });
+                }
+                _ => {}
+            }
+        }
+
         f.instruction(&Instruction::End);
         Ok(f)
     }
@@ -6730,6 +3109,19 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::I32Const(*v));
             }
 
+            Expr::Unbox32(value) => {
+                // Unbox a tagged integer to raw i32:
+                // 1. Generate the value (eqref with boxed integer)
+                // 2. Cast to i31ref
+                // 3. Extract with i31.get_s
+                // 4. Decode by shifting right by 1
+                self.generate_expr_inner(value, f, loop_depth)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+            }
+
             Expr::Float(v) => {
                 // Box float in FLOAT struct { type_id, value }
                 f.instruction(&Instruction::I32Const(type_ids::FLOAT));
@@ -7265,6 +3657,30 @@ impl<'a> CodeGen<'a> {
                 }
             }
 
+            // Get i32 field and encode as tagged i31ref
+            // Used for user-defined types with ^i32 fields
+            Expr::StructGetI32 {
+                type_idx,
+                field_idx,
+                value,
+            } => {
+                self.generate_expr(value, f)?;
+                // Cast to specific struct type
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                // Get the i32 field
+                f.instruction(&Instruction::StructGet {
+                    struct_type_index: *type_idx,
+                    field_index: *field_idx,
+                });
+                // Encode as tagged integer: (value << 1) | 1
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32Shl);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32Or);
+                // Wrap as i31ref
+                f.instruction(&Instruction::RefI31);
+            }
+
             Expr::ArrayNew { type_idx, elements } => {
                 // Create array with default values, then set each element
                 f.instruction(&Instruction::I32Const(elements.len() as i32));
@@ -7537,15 +3953,16 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::VecCount(vec) => {
+                // Look up PersistentVector type index dynamically
+                let pv_idx = self.deftype_gc_type_idx("PersistentVector")
+                    .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
                 self.generate_expr(vec, f)?;
                 // Cast to concrete PersistentVector type for struct.get
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-                    gc_types::PERSISTENT_VECTOR,
-                )));
-                // struct.get PERSISTENT_VECTOR.cnt - produces i32
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_idx)));
+                // struct.get PersistentVector.cnt (field 1) - produces i32
                 f.instruction(&Instruction::StructGet {
-                    struct_type_index: gc_types::PERSISTENT_VECTOR,
-                    field_index: gc_types::PV_CNT,
+                    struct_type_index: pv_idx,
+                    field_index: 1, // cnt is field 1 (after type_id)
                 });
                 // Wrap as i31ref: encode = (n << 1) | 1
                 f.instruction(&Instruction::I32Const(1));
@@ -7572,15 +3989,16 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::MapCount(map) => {
+                // Look up PersistentMap type index dynamically
+                let pm_idx = self.deftype_gc_type_idx("PersistentMap")
+                    .ok_or_else(|| CompileError::Unsupported("PersistentMap deftype not found".to_string()))?;
                 self.generate_expr(map, f)?;
                 // Cast to concrete PersistentMap type for struct.get
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-                    gc_types::PERSISTENT_MAP,
-                )));
-                // struct.get PERSISTENT_MAP.cnt - produces i32
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pm_idx)));
+                // struct.get PersistentMap.cnt (field 1) - produces i32
                 f.instruction(&Instruction::StructGet {
-                    struct_type_index: gc_types::PERSISTENT_MAP,
-                    field_index: gc_types::PM_CNT,
+                    struct_type_index: pm_idx,
+                    field_index: 1, // cnt is field 1 (after type_id)
                 });
                 // Wrap as i31ref: encode = (n << 1) | 1
                 f.instruction(&Instruction::I32Const(1));
@@ -7615,15 +4033,16 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::SetCount(set) => {
+                // Look up PersistentSet type index dynamically
+                let ps_idx = self.deftype_gc_type_idx("PersistentSet")
+                    .ok_or_else(|| CompileError::Unsupported("PersistentSet deftype not found".to_string()))?;
                 self.generate_expr(set, f)?;
                 // Cast to concrete PersistentSet type for struct.get
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-                    gc_types::PERSISTENT_SET,
-                )));
-                // struct.get PERSISTENT_SET.cnt - produces i32
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(ps_idx)));
+                // struct.get PersistentSet.cnt (field 1) - produces i32
                 f.instruction(&Instruction::StructGet {
-                    struct_type_index: gc_types::PERSISTENT_SET,
-                    field_index: gc_types::PS_CNT,
+                    struct_type_index: ps_idx,
+                    field_index: 1, // cnt is field 1 (after type_id)
                 });
                 // Wrap as i31ref: encode = (n << 1) | 1
                 f.instruction(&Instruction::I32Const(1));
@@ -7638,28 +4057,30 @@ impl<'a> CodeGen<'a> {
             // =========================================================
 
             Expr::ListFirst(list) => {
+                // Look up Cons type index dynamically
+                let cons_idx = self.deftype_gc_type_idx("Cons")
+                    .ok_or_else(|| CompileError::Unsupported("Cons deftype not found".to_string()))?;
                 self.generate_expr(list, f)?;
-                // Cast to concrete CONS type for struct.get
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-                    gc_types::CONS,
-                )));
-                // struct.get CONS.first
+                // Cast to concrete Cons type for struct.get
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(cons_idx)));
+                // struct.get Cons.first (field 1)
                 f.instruction(&Instruction::StructGet {
-                    struct_type_index: gc_types::CONS,
-                    field_index: gc_types::CONS_FIRST,
+                    struct_type_index: cons_idx,
+                    field_index: 1, // first is field 1 (after type_id)
                 });
             }
 
             Expr::ListRest(list) => {
+                // Look up Cons type index dynamically
+                let cons_idx = self.deftype_gc_type_idx("Cons")
+                    .ok_or_else(|| CompileError::Unsupported("Cons deftype not found".to_string()))?;
                 self.generate_expr(list, f)?;
-                // Cast to concrete CONS type for struct.get
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-                    gc_types::CONS,
-                )));
-                // struct.get CONS.rest
+                // Cast to concrete Cons type for struct.get
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(cons_idx)));
+                // struct.get Cons.rest (field 2)
                 f.instruction(&Instruction::StructGet {
-                    struct_type_index: gc_types::CONS,
-                    field_index: gc_types::CONS_REST,
+                    struct_type_index: cons_idx,
+                    field_index: 2, // rest is field 2
                 });
             }
 
@@ -7904,10 +4325,13 @@ impl<'a> CodeGen<'a> {
     ) -> CompileResult<()> {
         use crate::ir::gc_types;
 
-        let fn_type = gc_types::variadic_fn_type_for_arity(arity);
+        let fn_type = gc_types::variadic_fn_type_for_arity_new(arity);
         let fn_field = gc_types::VC_FN0 + arity; // VC_FN0=1, VC_FN1=2, etc.
 
-        // Push actual arguments (no env for variadic closures)
+        // Push null env (variadic closures don't capture, but CLOSURE_FN_* types expect env)
+        f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::ARRAY)));
+
+        // Push actual arguments
         for arg in args {
             self.generate_expr(arg, f)?;
         }
@@ -7944,6 +4368,10 @@ impl<'a> CodeGen<'a> {
     ) -> CompileResult<()> {
         use crate::ir::gc_types;
 
+        // Look up PersistentVector type index dynamically
+        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
+
         // Scratch locals matching layout: +0: eqref, +1: i32, +2: eqref, +3: eqref, +4: eqref
         let scratch_base = self.scratch_local.get();
         let closure_local = scratch_base; // eqref at +0
@@ -7958,14 +4386,12 @@ impl<'a> CodeGen<'a> {
         self.generate_expr(args, f)?;
         f.instruction(&Instruction::LocalSet(vec_local));
 
-        // Get vector count as raw i32
+        // Get vector count as raw i32 - PersistentVector field 1 is cnt
         f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::PERSISTENT_VECTOR,
-        )));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::PERSISTENT_VECTOR,
-            field_index: gc_types::PV_CNT,
+            struct_type_index: pv_gc_idx,
+            field_index: 1, // cnt field is at index 1 (after type_id)
         });
         f.instruction(&Instruction::LocalSet(count_local));
 
@@ -8193,6 +4619,10 @@ impl<'a> CodeGen<'a> {
         let closure_type = gc_types::closure_type_for_arity(arity);
         let fn_type = gc_types::closure_fn_type_for_arity(arity);
 
+        // Look up PersistentVector type index dynamically
+        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
+
         // Get env (first arg to wrapper function)
         f.instruction(&Instruction::LocalGet(closure_local));
         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(closure_type)));
@@ -8201,9 +4631,22 @@ impl<'a> CodeGen<'a> {
             field_index: gc_types::CL_ENV,
         });
 
-        // Extract each argument from the vector
-        for i in 0..arity {
-            self.generate_vec_nth_raw(vec_local, i, f)?;
+        if arity <= 4 {
+            // For arities 0-4: Extract individual arguments from the vector
+            for i in 0..arity {
+                self.generate_vec_nth_raw(vec_local, i, f)?;
+            }
+        } else {
+            // For arities 5+: CLOSURE_FN_N takes (env, args_array)
+            // Pass the vector's tail array directly
+            f.instruction(&Instruction::LocalGet(vec_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
+            f.instruction(&Instruction::StructGet {
+                struct_type_index: pv_gc_idx,
+                field_index: 4, // tail field
+            });
+            // Cast eqref to the expected array type for CLOSURE_FN_N
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::ARRAY)));
         }
 
         // Get fn (typed funcref)
@@ -8233,21 +4676,26 @@ impl<'a> CodeGen<'a> {
     ) -> CompileResult<()> {
         use crate::ir::gc_types;
 
-        // Call $vec_array_for(vec, index) to get the leaf array
+        // Look up PersistentVector type index dynamically
+        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
+
+        // For small vectors (≤32 elements, which is the typical case for apply),
+        // we can directly access the tail array. The tail is at field 4.
+        // PersistentVector layout: type_id(0), cnt(1), shift(2), root(3), tail(4)
         f.instruction(&Instruction::LocalGet(vec_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: pv_gc_idx,
+            field_index: 4, // tail field
+        });
+
+        // Cast to ARRAY type for array.get
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::ARRAY)));
+
+        // Get element at index (for small vectors, index < 32 always)
         f.instruction(&Instruction::I32Const(index as i32));
-        f.instruction(&Instruction::Call(
-            self.helper_func_idx(helper_funcs::VEC_ARRAY_FOR),
-        ));
-
-        // Cast result to TRIE_NODE for array.get
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::TRIE_NODE,
-        )));
-
-        // Get element at index & 0x1f
-        f.instruction(&Instruction::I32Const((index & 0x1F) as i32));
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
+        f.instruction(&Instruction::ArrayGet(gc_types::ARRAY));
 
         Ok(())
     }
@@ -8371,11 +4819,20 @@ impl<'a> CodeGen<'a> {
     ) -> CompileResult<()> {
         use crate::ir::gc_types;
 
-        let variadic_type = gc_types::VARIADIC_CLOSURE;
-        let fn_type = gc_types::variadic_fn_type_for_arity(arity);
-        let fn_field = gc_types::VC_FN0 + arity; // VC_FN0=1, VC_FN1=2, etc.
+        // Look up PersistentVector type index dynamically
+        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
 
-        // Extract each argument from the vector (no env for variadic closures)
+        let variadic_type = gc_types::VARIADIC_CLOSURE;
+        // Variadic closure fields use CLOSURE_FN_* types for arities 0-8 (with env as first param)
+        let fn_type = gc_types::variadic_fn_type_for_arity_new(arity);
+        let fn_field = 1 + arity; // field 0 is type_id, field 1 is fn0, field 2 is fn1, etc.
+
+        // First arg is env (null for variadic builtins, but required by function signature)
+        f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::ARRAY)));
+
+        // For arities 0-8: Extract individual arguments from the vector
+        // All variadic arities 0-8 now have dedicated function types with individual params
         for i in 0..arity {
             self.generate_vec_nth_raw(vec_local, i, f)?;
         }
@@ -8388,7 +4845,7 @@ impl<'a> CodeGen<'a> {
             field_index: fn_field,
         });
 
-        // Call with call_ref
+        // Call with call_ref using the appropriate CLOSURE_FN_* type
         f.instruction(&Instruction::CallRef(fn_type));
 
         Ok(())
@@ -8686,6 +5143,10 @@ impl<'a> CodeGen<'a> {
     // ========================================================================
 
     /// Convert IR type to WASM ValType using GC references
+    ///
+    /// In GC mode, all value types become eqref (boxed GC references).
+    /// Use `type_to_valtype_for_signature` for function signatures where
+    /// explicit type hints should be respected.
     fn type_to_valtype_gc(&self, ty: &Type) -> ValType {
         match ty {
             // All value types become eqref in GC mode
@@ -8706,9 +5167,39 @@ impl<'a> CodeGen<'a> {
         }
     }
 
+    /// Convert IR type to WASM ValType for function signatures.
+    ///
+    /// Unlike `type_to_valtype_gc`, this respects explicit primitive type hints
+    /// from protocol method return type annotations (^i32, ^i64, ^f64).
+    fn type_to_valtype_for_signature(&self, ty: &Type) -> ValType {
+        match ty {
+            // Explicit primitive types - used for protocol method return type hints
+            Type::I32 => ValType::I32,
+            Type::I64 => ValType::I64,
+            Type::F64 => ValType::F64,
+            // Function refs as i32 indices
+            Type::Func { .. } => ValType::I32,
+            // All other value types become eqref
+            Type::Unit
+            | Type::Bool
+            | Type::String
+            | Type::List(_)
+            | Type::Vector(_)
+            | Type::Map(_, _)
+            | Type::Set(_)
+            | Type::GcRef
+            | Type::Unknown => ValType::Ref(RefType::EQREF),
+        }
+    }
+
     /// Get all ValTypes for a type - everything is a single eqref in GC mode
     fn type_to_valtypes_gc(&self, ty: &Type) -> Vec<ValType> {
         vec![self.type_to_valtype_gc(ty)]
+    }
+
+    /// Get ValTypes for function signatures (respects primitive type hints)
+    fn type_to_valtypes_for_signature(&self, ty: &Type) -> Vec<ValType> {
+        vec![self.type_to_valtype_for_signature(ty)]
     }
 
     // ========================================================================

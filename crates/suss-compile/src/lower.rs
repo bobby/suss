@@ -66,6 +66,8 @@ struct UserTypeField {
 struct UserTypeInfo {
     gc_type_idx: u32,
     type_id: i32,
+    /// Dispatch table slot for protocol dispatch (0-4 for primitives, 5+ for deftypes)
+    dispatch_slot: u32,
     fields: Vec<UserTypeField>,
 }
 
@@ -101,6 +103,9 @@ struct Lowerer {
     /// Number of deftype constructor functions
     /// Used to calculate closure wrapper indices correctly
     num_deftype_constructors: u32,
+    /// Number of protocol method implementations from extend-type
+    /// Used to calculate closure wrapper indices correctly
+    num_extension_funcs: u32,
     /// Cached indices for built-in wrapper functions: builtin_name -> func_idx
     builtin_wrappers: HashMap<String, u32>,
     /// User-defined protocol method IDs: "ProtocolName/method_name/arity" -> method_id
@@ -110,12 +115,20 @@ struct Lowerer {
     method_protocols: HashMap<String, Vec<(String, usize)>>,
     /// Next user-defined method ID (starts at method_ids::USER_START)
     next_user_method_id: u32,
+    /// Protocol method return types: method_name -> type_hint (e.g., "i32")
+    /// Populated from ^type hints in defprotocol definitions
+    method_return_types: HashMap<String, String>,
     /// User-defined types: name -> type info
     user_types: HashMap<String, UserTypeInfo>,
     /// Next GC type index for user types (starts at NUM_GC_TYPES)
     next_user_gc_type: u32,
     /// Next type ID for user types (starts at USER_TYPE_BASE)
     next_user_type_id: i32,
+    /// Next dispatch table slot for deftypes (starts at 5, after primitive slots 0-4)
+    next_dispatch_slot: u32,
+    /// Current self type when lowering protocol method implementations
+    /// Used to resolve field access to the correct type
+    current_self_type: Option<String>,
 }
 
 impl Lowerer {
@@ -167,13 +180,17 @@ impl Lowerer {
             pending_closures: Vec::new(),
             num_analyzed_funcs: 0,
             num_deftype_constructors: 0,
+            num_extension_funcs: 0,
             builtin_wrappers: HashMap::new(),
             user_method_ids: HashMap::new(),
             method_protocols,
             next_user_method_id: method_ids::USER_START,
+            method_return_types: HashMap::new(),
             user_types: HashMap::new(),
             next_user_gc_type: gc_types::NUM_GC_TYPES,
             next_user_type_id: type_ids::USER_TYPE_BASE,
+            next_dispatch_slot: 5, // slots 0-4 reserved for primitives
+            current_self_type: None,
         }
     }
 
@@ -226,7 +243,11 @@ impl Lowerer {
         self.num_imports = analyzed.imports.len() as u32;
         self.num_analyzed_funcs = analyzed.functions.len() as u32;
 
-        // Lower deftypes first - assigns GC type indices and type IDs
+        // Lower protocol definitions first - populates method_return_types
+        // which is needed by lower_deftypes and lower_extensions for return type hints
+        self.lower_protocols(&analyzed.protocols)?;
+
+        // Lower deftypes - assigns GC type indices and type IDs
         // This creates constructor functions for deftypes (skipping HAMT nodes 5-7)
         self.lower_deftypes(&analyzed.deftypes)?;
         // Count only deftypes that generate constructors (skip HAMT nodes 5-7)
@@ -240,6 +261,15 @@ impl Lowerer {
             })
             .count() as u32;
         let num_deftype_constructors = self.num_deftype_constructors;
+
+        // Pre-count extension methods (from extend-type) so closure indices are correct
+        // Each extension can have multiple protocol implementations, each with multiple methods
+        self.num_extension_funcs = analyzed
+            .extensions
+            .iter()
+            .flat_map(|ext| ext.implementations.iter())
+            .map(|impl_| impl_.methods.len() as u32)
+            .sum();
 
         // Build function index map
         // In Full mode: indices start after imports + runtime helpers + protocol impls + deftype constructors
@@ -266,10 +296,8 @@ impl Lowerer {
             self.module.functions.push(lowered);
         }
 
-        // Lower protocol definitions
-        self.lower_protocols(&analyzed.protocols)?;
-
         // Lower extend-type declarations (generates dispatch table entries)
+        // Note: lower_protocols was already called earlier to populate method_return_types
         self.lower_extensions(&analyzed.extensions)?;
 
         // Generate closure wrapper functions
@@ -300,16 +328,12 @@ impl Lowerer {
         let mut params = Vec::new();
         let env_idx: Option<u32>;
 
-        if closure.is_variadic {
-            // Variadic wrappers don't have an env parameter
-            env_idx = None;
-        } else {
-            // First parameter is always env (array of captured values)
-            env_idx = Some(self.next_local);
-            self.next_local += 1;
-            self.local_types.insert(env_idx.unwrap(), Type::GcRef);
-            params.push(("$env".to_string(), Type::GcRef));
-        }
+        // All closures (including variadic) now have env as first parameter
+        // to match CLOSURE_FN_* function types. Variadic builtins just ignore env.
+        env_idx = Some(self.next_local);
+        self.next_local += 1;
+        self.local_types.insert(env_idx.unwrap(), Type::GcRef);
+        params.push(("$env".to_string(), Type::GcRef));
 
         // Add regular parameters
         for param_name in &closure.params {
@@ -638,7 +662,7 @@ impl Lowerer {
             "first" => self.lower_first(args),
             "rest" => self.lower_rest(args),
             "conj" => self.lower_conj(args),
-            "cons" => self.lower_cons(args),
+            // NOTE: "cons" is now a regular function in core.suss, not a compiler builtin
             "count" => self.lower_count(args),
             "get" => self.lower_get(args),
             "assoc" => self.lower_assoc(args),
@@ -699,53 +723,57 @@ impl Lowerer {
 
         // Check user-defined types first
         if let Some((type_idx, field_idx, field_type)) = self.lookup_user_field(field_name) {
-            let raw_access = Expr::StructGet {
-                type_idx,
-                field_idx,
-                value: Box::new(obj),
-            };
-
-            // Box primitive fields on access
-            let boxed = match field_type {
+            // For i32 fields, we use StructGetI32 which codegen will handle specially
+            // (encode as tagged i31ref). For other types, use regular StructGet.
+            let expr = match field_type {
                 FieldType::I32 => {
-                    // Wrap i32 as i31ref: (ref.i31 (i32.shl value 1) | 1)
-                    // Actually, we need to use the small int encoding
-                    Expr::I31New(Box::new(Expr::BinOp {
-                        op: BinOp::BitOr,
-                        left: Box::new(Expr::BinOp {
-                            op: BinOp::Shl,
-                            left: Box::new(raw_access),
-                            right: Box::new(Expr::RawI32(1)),
-                            ty: Type::I32,
-                        }),
-                        right: Box::new(Expr::RawI32(1)),
-                        ty: Type::I32,
-                    }))
+                    // StructGetI32 signals codegen to encode the i32 as tagged i31ref
+                    Expr::StructGetI32 {
+                        type_idx,
+                        field_idx,
+                        value: Box::new(obj),
+                    }
                 }
                 FieldType::I64 => {
-                    // Wrap i64 as LARGE_INT struct
+                    // Wrap i64 as INT64 struct
+                    let raw_access = Expr::StructGet {
+                        type_idx,
+                        field_idx,
+                        value: Box::new(obj),
+                    };
                     Expr::StructNew {
-                        type_idx: gc_types::LARGE_INT,
+                        type_idx: gc_types::INT64,
                         fields: vec![
-                            Expr::RawI32(gc_types::LARGE_INT as i32), // type_id
+                            Expr::RawI32(type_ids::INT64), // type_id
                             raw_access, // the i64 value
                         ],
                     }
                 }
                 FieldType::F64 => {
-                    // Wrap f64 as FLOAT struct
+                    // Wrap f64 as FLOAT64 struct
+                    let raw_access = Expr::StructGet {
+                        type_idx,
+                        field_idx,
+                        value: Box::new(obj),
+                    };
                     Expr::StructNew {
-                        type_idx: gc_types::FLOAT,
+                        type_idx: gc_types::FLOAT64,
                         fields: vec![
-                            Expr::RawI32(gc_types::FLOAT as i32), // type_id
+                            Expr::RawI32(type_ids::FLOAT64), // type_id
                             raw_access, // the f64 value
                         ],
                     }
                 }
-                FieldType::GcRef => raw_access,
+                FieldType::GcRef => {
+                    Expr::StructGet {
+                        type_idx,
+                        field_idx,
+                        value: Box::new(obj),
+                    }
+                }
             };
 
-            return Ok(boxed);
+            return Ok(expr);
         }
 
         // Map field names to (type_idx, field_idx) pairs for built-in types
@@ -794,14 +822,27 @@ impl Lowerer {
     /// Returns (gc_type_idx, field_idx, field_type) if found.
     /// Field index is offset by 1 to account for type_id at field 0.
     ///
-    /// Note: Skips types with reserved IDs (gc_type_idx < NUM_GC_TYPES) as their
-    /// fields are handled by hardcoded mappings with different boxing semantics.
+    /// Collection types (Cons, PersistentVector, etc.) are now regular user types
+    /// defined in core.suss, so all deftypes are handled uniformly here.
+    ///
+    /// If `current_self_type` is set (during protocol method lowering), prioritize
+    /// looking up fields in that type to handle fields with the same name in
+    /// different types (e.g., "root" exists in both PersistentVector and PersistentMap).
     fn lookup_user_field(&self, field_name: &str) -> Option<(u32, u32, FieldType)> {
-        for info in self.user_types.values() {
-            // Skip reserved types - their fields use hardcoded mappings
-            if info.gc_type_idx < gc_types::NUM_GC_TYPES {
-                continue;
+        // If we're in a protocol method implementation, check the self type first
+        if let Some(ref self_type) = self.current_self_type {
+            if let Some(info) = self.user_types.get(self_type.as_str()) {
+                for (idx, field) in info.fields.iter().enumerate() {
+                    if field.name == field_name {
+                        // Field 0 is type_id, so user fields start at index 1
+                        return Some((info.gc_type_idx, (idx + 1) as u32, field.field_type));
+                    }
+                }
             }
+        }
+
+        // Fall back to searching all user types
+        for info in self.user_types.values() {
             for (idx, field) in info.fields.iter().enumerate() {
                 if field.name == field_name {
                     // Field 0 is type_id, so user fields start at index 1
@@ -829,7 +870,7 @@ impl Lowerer {
         // The object expression is not in tail position - we still need to test it
         let obj = self.with_tail_disabled(|l| l.lower_expr(&args[1]))?;
 
-        // Check user-defined types first
+        // Check user-defined types first (includes collection types from core.suss)
         if let Some(info) = self.user_types.get(type_name.as_str()) {
             return Ok(Expr::RefTest {
                 type_idx: info.gc_type_idx,
@@ -837,17 +878,9 @@ impl Lowerer {
             });
         }
 
-        // Map type names to GC type indices for built-in types
+        // Fallback for primitive types only
         let type_idx = match type_name.as_str() {
-            "PersistentVector" => gc_types::PERSISTENT_VECTOR,
-            "PersistentMap" => gc_types::PERSISTENT_MAP,
-            "PersistentSet" => gc_types::PERSISTENT_SET,
-            "Cons" => gc_types::CONS,
             "String" => gc_types::STRING,
-            // HAMT node types for map/set implementations
-            "BitmapIndexedNode" => gc_types::BITMAP_INDEXED_NODE,
-            "ArrayNode" => gc_types::ARRAY_NODE,
-            "HashCollisionNode" => gc_types::HASH_COLLISION_NODE,
             _ => return Err(CompileError::Undefined(format!("Unknown type: {}", type_name))),
         };
 
@@ -1084,10 +1117,9 @@ impl Lowerer {
         self.closure_counter += 1;
 
         // Calculate wrapper function index in IR
-        // Closures are added after deftype constructors and analyzed functions, so the index is:
-        // num_deftype_constructors + num_analyzed_funcs + number of pending closures (before this one)
+        // Closures are added after deftype constructors, analyzed functions, and extension methods
         let num_pending = self.pending_closures.len() as u32;
-        let wrapper_idx = self.num_deftype_constructors + self.num_analyzed_funcs + num_pending;
+        let wrapper_idx = self.num_deftype_constructors + self.num_analyzed_funcs + self.num_extension_funcs + num_pending;
 
         // Register wrapper function name for the index
         self.func_indices.insert(wrapper_name.clone(), wrapper_idx);
@@ -1856,29 +1888,8 @@ impl Lowerer {
         })
     }
 
-    /// Lower (cons val coll) -> StructNew CONS
-    fn lower_cons(&mut self, args: &[Edn]) -> CompileResult<Expr> {
-        if args.len() != 2 {
-            return Err(CompileError::Parse(
-                "cons requires exactly 2 arguments: value and collection".into(),
-            ));
-        }
-        // Arguments are never in tail position
-        let (val, coll) = self.with_tail_disabled(|l| {
-            Ok((l.lower_expr(&args[0])?, l.lower_expr(&args[1])?))
-        })?;
-        // cons creates a new cons cell with type_id, val as first, and coll as rest
-        use crate::ir::{gc_types, type_ids};
-        Ok(Expr::StructNew {
-            type_idx: gc_types::CONS,
-            // Field 0: type_id (raw i32), Field 1: first, Field 2: rest
-            fields: vec![
-                Expr::RawI32(type_ids::CONS),
-                val,
-                coll,
-            ],
-        })
-    }
+    // NOTE: lower_cons() removed - cons is now a regular function in core.suss
+    // that calls the ->Cons constructor generated by deftype.
 
     /// Lower (count coll) -> VecCount, MapCount, SetCount, or ProtocolDispatch
     ///
@@ -2104,7 +2115,7 @@ impl Lowerer {
 
         // Calculate wrapper function index
         let num_pending = self.pending_closures.len() as u32;
-        let wrapper_idx = self.num_deftype_constructors + self.num_analyzed_funcs + num_pending;
+        let wrapper_idx = self.num_deftype_constructors + self.num_analyzed_funcs + self.num_extension_funcs + num_pending;
 
         // Register wrapper function
         self.func_indices.insert(wrapper_name.clone(), wrapper_idx);
@@ -2151,7 +2162,7 @@ impl Lowerer {
         }
 
         // Generate 9 wrapper functions (one per arity 0-8)
-        let base_idx = self.num_deftype_constructors + self.num_analyzed_funcs + self.pending_closures.len() as u32;
+        let base_idx = self.num_deftype_constructors + self.num_analyzed_funcs + self.num_extension_funcs + self.pending_closures.len() as u32;
 
         for arity in 0..=8u32 {
             let wrapper_name = format!(
@@ -2248,11 +2259,17 @@ impl Lowerer {
 
     /// Lower protocol definitions to IR ProtocolDefs.
     /// Assigns method IDs to each protocol method for each arity.
+    /// Also records return type hints for protocol dispatch.
     fn lower_protocols(&mut self, protocols: &[AnalyzedProtocol]) -> CompileResult<()> {
         for protocol in protocols {
             let mut methods = Vec::new();
 
             for method in &protocol.methods {
+                // Store return type hint if specified
+                if let Some(ref return_type) = method.return_type {
+                    self.method_return_types.insert(method.name.clone(), return_type.clone());
+                }
+
                 // Register each arity of this method
                 for arity_params in &method.arities {
                     let arity = arity_params.len();
@@ -2327,6 +2344,20 @@ impl Lowerer {
     /// Uses the method_protocols map which is populated from defprotocol definitions.
     fn is_protocol_method(&self, name: &str) -> bool {
         self.method_protocols.contains_key(name)
+    }
+
+    /// Get the return type for a protocol method from ^type hints in defprotocol.
+    /// Returns None if no type hint was specified (defaults to eqref/GcRef).
+    fn get_protocol_method_return_type(&self, method_name: &str) -> Option<Type> {
+        self.method_return_types.get(method_name).map(|hint| {
+            match hint.as_str() {
+                "i32" => Type::I32,
+                "i64" => Type::I64,
+                "f64" => Type::F64,
+                "eqref" => Type::GcRef,
+                _ => Type::GcRef, // Unknown hints default to GcRef
+            }
+        })
     }
 
     /// Lower direct protocol method calls: (-count obj), (-first seq), etc.
@@ -2440,10 +2471,15 @@ impl Lowerer {
                 }
             }).collect();
 
+            // Assign dispatch table slot (used for protocol dispatch)
+            let dispatch_slot = self.next_dispatch_slot;
+            self.next_dispatch_slot += 1;
+
             // Register in user_types map
             self.user_types.insert(deftype.name.clone(), UserTypeInfo {
                 gc_type_idx,
                 type_id,
+                dispatch_slot,
                 fields: fields.clone(),
             });
 
@@ -2479,9 +2515,9 @@ impl Lowerer {
                         method,
                     )?;
 
-                    // Add dispatch table entry
+                    // Add dispatch table entry using dispatch_slot
                     self.module.dispatch_entries.push(DispatchEntry {
-                        type_id: type_id as u32,
+                        dispatch_slot,
                         method_id,
                         func_idx,
                     });
@@ -2544,9 +2580,8 @@ impl Lowerer {
             // For primitive types, unbox the input value
             let field_value = match field.field_type {
                 FieldType::I32 => {
-                    // Unbox: (i31.get_s (ref.cast i31 arg))
-                    // Need to cast eqref to i31ref before calling i31.get_s
-                    Expr::I31GetS(Box::new(Expr::RefCastI31(Box::new(local_get))))
+                    // Unbox tagged integer to raw i32 for struct field
+                    Expr::Unbox32(Box::new(local_get))
                 }
                 FieldType::I64 => {
                     // Unbox: (struct.get $LARGE_INT 1 (ref.cast ... arg))
@@ -2597,7 +2632,8 @@ impl Lowerer {
     /// Each method implementation becomes a wrapper function registered in the dispatch table.
     fn lower_extensions(&mut self, extensions: &[AnalyzedExtension]) -> CompileResult<()> {
         for extension in extensions {
-            let type_id = self.type_name_to_type_id(&extension.type_name)?;
+            // Get the dispatch slot for this type from user_types
+            let dispatch_slot = self.type_name_to_dispatch_slot(&extension.type_name)?;
 
             for impl_ in &extension.implementations {
                 for method in &impl_.methods {
@@ -2611,9 +2647,9 @@ impl Lowerer {
                         method,
                     )?;
 
-                    // Add dispatch table entry
+                    // Add dispatch table entry using dispatch_slot
                     self.module.dispatch_entries.push(DispatchEntry {
-                        type_id,
+                        dispatch_slot,
                         method_id,
                         func_idx,
                     });
@@ -2626,21 +2662,46 @@ impl Lowerer {
 
     /// Convert a type name to its runtime type ID.
     fn type_name_to_type_id(&self, type_name: &str) -> CompileResult<u32> {
-        // Check built-in types first
+        // Check primitive types first (not deftypes)
         match type_name {
-            "PersistentVector" => return Ok(type_ids::PERSISTENT_VECTOR as u32),
-            "PersistentMap" => return Ok(type_ids::PERSISTENT_MAP as u32),
-            "PersistentSet" => return Ok(type_ids::PERSISTENT_SET as u32),
-            "Cons" => return Ok(type_ids::CONS as u32),
             "String" => return Ok(type_ids::STRING as u32),
             "LargeInt" => return Ok(type_ids::LARGE_INT as u32),
             "Float" => return Ok(type_ids::FLOAT as u32),
             _ => {}
         }
 
-        // Check user-defined types
+        // Check user-defined types (includes collection types from core.suss:
+        // Cons, PersistentVector, PersistentMap, PersistentSet, HAMT nodes, etc.)
         if let Some(info) = self.user_types.get(type_name) {
             return Ok(info.type_id as u32);
+        }
+
+        Err(CompileError::Undefined(format!(
+            "Unknown type for protocol extension: {}",
+            type_name
+        )))
+    }
+
+    /// Convert a type name to its dispatch table slot.
+    ///
+    /// Slot mapping:
+    /// - Primitive types (String, etc.): slots 0-4
+    /// - User deftypes: slots 5+ (in definition order)
+    fn type_name_to_dispatch_slot(&self, type_name: &str) -> CompileResult<u32> {
+        // Check primitive types first (slots 0-4)
+        // Note: These match the constants in generate_get_type_id_func
+        match type_name {
+            "Int64" | "LargeInt" => return Ok(0),
+            "Float64" | "Float" => return Ok(1),
+            "String" => return Ok(2),
+            "Array" => return Ok(3),
+            "I32Array" => return Ok(4),
+            _ => {}
+        }
+
+        // Check user-defined types
+        if let Some(info) = self.user_types.get(type_name) {
+            return Ok(info.dispatch_slot);
         }
 
         Err(CompileError::Undefined(format!(
@@ -2665,14 +2726,22 @@ impl Lowerer {
             method.name.replace('-', "_")
         );
 
-        // Calculate function index
-        let func_idx = self.num_imports
-            + self.num_analyzed_funcs
+        // Calculate function index for func_indices (with all offsets for call resolution)
+        let func_offset = match self.mode {
+            LoweringMode::Full => gc_types::USER_FUNC_OFFSET,
+            LoweringMode::Component => 0,
+        };
+        let full_func_idx = self.num_imports
+            + func_offset
             + self.pending_closures.len() as u32
             + self.module.functions.len() as u32;
 
-        // Register function
-        self.func_indices.insert(func_name.clone(), func_idx);
+        // Register function with full index for call resolution
+        self.func_indices.insert(func_name.clone(), full_func_idx);
+
+        // For dispatch entries, store the index into ir.functions array
+        // Codegen will add offsets via user_func_idx()
+        let ir_func_idx = self.module.functions.len() as u32;
 
         // Reset locals for new function
         self.locals.clear();
@@ -2690,16 +2759,23 @@ impl Lowerer {
             params.push((param_name.clone(), Type::GcRef));
         }
 
-        // Lower the body
+        // Lower the body with self type context for field access resolution
+        self.current_self_type = Some(type_name.to_string());
         self.in_tail_position = true;
         let body = self.lower_expr(&method.body)?;
         self.in_tail_position = false;
+        self.current_self_type = None;
+
+        // Determine return type from protocol definition (via type hints)
+        // Falls back to GcRef if no hint provided
+        let return_type = self.get_protocol_method_return_type(&method.name)
+            .unwrap_or(Type::GcRef);
 
         // Create function
         let function = Function {
             name: func_name,
             params,
-            return_type: Type::GcRef,
+            return_type,
             locals: self.collect_locals(),
             body,
             exported: false,
@@ -2708,7 +2784,7 @@ impl Lowerer {
 
         self.module.functions.push(function);
 
-        Ok(func_idx)
+        Ok(ir_func_idx)
     }
 
     /// Collect local variable types for the current function.
