@@ -2906,7 +2906,8 @@ impl<'a> CodeGen<'a> {
                 Ok(())
             }
             // For simple expressions that don't contain sub-expressions, delegate to normal gen
-            _ => self.generate_expr(expr, f),
+            // Use generate_expr_with_offset to preserve param_offset for nested LocalGet
+            _ => self.generate_expr_with_offset(expr, f, param_offset),
         }
     }
 
@@ -3062,10 +3063,16 @@ impl<'a> CodeGen<'a> {
     }
 
     fn generate_expr(&self, expr: &Expr, f: &mut Function) -> CompileResult<()> {
-        self.generate_expr_inner(expr, f, 0)
+        self.generate_expr_inner(expr, f, 0, 0)
     }
 
-    fn generate_expr_inner(&self, expr: &Expr, f: &mut Function, loop_depth: u32) -> CompileResult<()> {
+    /// Generate expression with param_offset for WIT-exported functions.
+    /// param_offset is the number of raw WIT params before converted eqref params.
+    fn generate_expr_with_offset(&self, expr: &Expr, f: &mut Function, param_offset: u32) -> CompileResult<()> {
+        self.generate_expr_inner(expr, f, 0, param_offset)
+    }
+
+    fn generate_expr_inner(&self, expr: &Expr, f: &mut Function, loop_depth: u32, param_offset: u32) -> CompileResult<()> {
         use crate::ir::gc_types;
         use crate::ir::type_ids;
         match expr {
@@ -3112,7 +3119,7 @@ impl<'a> CodeGen<'a> {
                 // 2. Cast to i31ref
                 // 3. Extract with i31.get_s
                 // 4. Decode by shifting right by 1
-                self.generate_expr_inner(value, f, loop_depth)?;
+                self.generate_expr_inner(value, f, loop_depth, param_offset)?;
                 f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
                 f.instruction(&Instruction::I31GetS);
                 f.instruction(&Instruction::I32Const(1));
@@ -3141,12 +3148,12 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::LocalGet { local, ty: _ } => {
-                f.instruction(&Instruction::LocalGet(*local));
+                f.instruction(&Instruction::LocalGet(*local + param_offset));
             }
 
             Expr::LocalSet { local, value, ty: _ } => {
-                self.generate_expr_inner(value, f, loop_depth)?;
-                f.instruction(&Instruction::LocalSet(*local));
+                self.generate_expr_inner(value, f, loop_depth, param_offset)?;
+                f.instruction(&Instruction::LocalSet(*local + param_offset));
                 f.instruction(&Instruction::I32Const(0));
             }
 
@@ -3155,7 +3162,7 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::GlobalSet(idx, value) => {
-                self.generate_expr_inner(value, f, loop_depth)?;
+                self.generate_expr_inner(value, f, loop_depth, param_offset)?;
                 f.instruction(&Instruction::GlobalSet(*idx));
                 f.instruction(&Instruction::I32Const(0));
             }
@@ -3187,9 +3194,9 @@ impl<'a> CodeGen<'a> {
                 match (op, ty) {
                     // Arithmetic operations: unwrap, compute, wrap
                     (BinOp::Add, Type::I32) | (BinOp::Add, Type::I64) => {
-                        self.generate_expr_inner(left, f, loop_depth)?;
+                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
                         generate_unwrap_i31(f);
-                        self.generate_expr_inner(right, f, loop_depth)?;
+                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
                         generate_unwrap_i31(f);
                         f.instruction(&Instruction::I32Add);
                         // Encode result: (n << 1) | 1
@@ -3200,9 +3207,9 @@ impl<'a> CodeGen<'a> {
                         f.instruction(&Instruction::RefI31);
                     }
                     (BinOp::Sub, Type::I32) | (BinOp::Sub, Type::I64) => {
-                        self.generate_expr_inner(left, f, loop_depth)?;
+                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
                         generate_unwrap_i31(f);
-                        self.generate_expr_inner(right, f, loop_depth)?;
+                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
                         generate_unwrap_i31(f);
                         f.instruction(&Instruction::I32Sub);
                         f.instruction(&Instruction::I32Const(1));
@@ -3212,9 +3219,9 @@ impl<'a> CodeGen<'a> {
                         f.instruction(&Instruction::RefI31);
                     }
                     (BinOp::Mul, Type::I32) | (BinOp::Mul, Type::I64) => {
-                        self.generate_expr_inner(left, f, loop_depth)?;
+                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
                         generate_unwrap_i31(f);
-                        self.generate_expr_inner(right, f, loop_depth)?;
+                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
                         generate_unwrap_i31(f);
                         f.instruction(&Instruction::I32Mul);
                         f.instruction(&Instruction::I32Const(1));
@@ -3224,9 +3231,9 @@ impl<'a> CodeGen<'a> {
                         f.instruction(&Instruction::RefI31);
                     }
                     (BinOp::Div, Type::I32) | (BinOp::Div, Type::I64) => {
-                        self.generate_expr_inner(left, f, loop_depth)?;
+                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
                         generate_unwrap_i31(f);
-                        self.generate_expr_inner(right, f, loop_depth)?;
+                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
                         generate_unwrap_i31(f);
                         f.instruction(&Instruction::I32DivS);
                         f.instruction(&Instruction::I32Const(1));
@@ -3236,9 +3243,9 @@ impl<'a> CodeGen<'a> {
                         f.instruction(&Instruction::RefI31);
                     }
                     (BinOp::Rem, Type::I32) | (BinOp::Rem, Type::I64) => {
-                        self.generate_expr_inner(left, f, loop_depth)?;
+                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
                         generate_unwrap_i31(f);
-                        self.generate_expr_inner(right, f, loop_depth)?;
+                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
                         generate_unwrap_i31(f);
                         f.instruction(&Instruction::I32RemS);
                         f.instruction(&Instruction::I32Const(1));
@@ -3316,9 +3323,9 @@ impl<'a> CodeGen<'a> {
 
                     // Comparison operations: unwrap, compare, return bool sentinel
                     (BinOp::Eq, _) | (BinOp::Ne, _) | (BinOp::Lt, _) | (BinOp::Le, _) | (BinOp::Gt, _) | (BinOp::Ge, _) => {
-                        self.generate_expr_inner(left, f, loop_depth)?;
+                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
                         generate_unwrap_i31(f);
-                        self.generate_expr_inner(right, f, loop_depth)?;
+                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
                         generate_unwrap_i31(f);
 
                         let cmp_instr = match op {
@@ -3405,7 +3412,7 @@ impl<'a> CodeGen<'a> {
                         match ty {
                             Type::I32 | Type::I64 => {
                                 // Cast eqref to i31ref, unbox, negate, rebox
-                                self.generate_expr_inner(operand, f, loop_depth)?;
+                                self.generate_expr_inner(operand, f, loop_depth, param_offset)?;
                                 f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
                                 f.instruction(&Instruction::I31GetS);
                                 f.instruction(&Instruction::I32Const(1));
@@ -3421,7 +3428,7 @@ impl<'a> CodeGen<'a> {
                             Type::F64 => {
                                 // Unbox float, negate, rebox in { type_id, value }
                                 f.instruction(&Instruction::I32Const(type_ids::FLOAT));
-                                self.generate_expr_inner(operand, f, loop_depth)?;
+                                self.generate_expr_inner(operand, f, loop_depth, param_offset)?;
                                 f.instruction(&Instruction::StructGet {
                                     struct_type_index: gc_types::FLOAT,
                                     field_index: gc_types::FL_VALUE,
@@ -3439,7 +3446,7 @@ impl<'a> CodeGen<'a> {
                     UnOp::Not => {
                         // Logical not: falsy -> true, truthy -> false
                         // Use generate_condition to get 0/1, then convert to bool sentinel
-                        self.generate_condition_inner(operand, f, loop_depth)?;
+                        self.generate_condition_inner(operand, f, loop_depth, param_offset)?;
                         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
                             ValType::Ref(RefType::EQREF),
                         )));
@@ -3457,14 +3464,14 @@ impl<'a> CodeGen<'a> {
 
             Expr::Call { func, args } => {
                 for arg in args {
-                    self.generate_expr_inner(arg, f, loop_depth)?;
+                    self.generate_expr_inner(arg, f, loop_depth, param_offset)?;
                 }
                 f.instruction(&Instruction::Call(*func));
             }
 
             Expr::TailCall { func, args } => {
                 for arg in args {
-                    self.generate_expr_inner(arg, f, loop_depth)?;
+                    self.generate_expr_inner(arg, f, loop_depth, param_offset)?;
                 }
                 f.instruction(&Instruction::ReturnCall(*func));
             }
@@ -3475,15 +3482,15 @@ impl<'a> CodeGen<'a> {
                 else_branch,
                 ty,
             } => {
-                self.generate_condition_inner(cond, f, loop_depth)?;
+                self.generate_condition_inner(cond, f, loop_depth, param_offset)?;
 
                 let block_type = wasm_encoder::BlockType::Result(self.type_to_valtype_gc(ty));
 
                 f.instruction(&Instruction::If(block_type));
                 // Branches are inside the If block, so increment depth
-                self.generate_expr_inner(then_branch, f, loop_depth + 1)?;
+                self.generate_expr_inner(then_branch, f, loop_depth + 1, param_offset)?;
                 f.instruction(&Instruction::Else);
-                self.generate_expr_inner(else_branch, f, loop_depth + 1)?;
+                self.generate_expr_inner(else_branch, f, loop_depth + 1, param_offset)?;
                 f.instruction(&Instruction::End);
             }
 
@@ -3494,7 +3501,7 @@ impl<'a> CodeGen<'a> {
                     f.instruction(&Instruction::RefI31);
                 } else {
                     for (i, expr) in exprs.iter().enumerate() {
-                        self.generate_expr_inner(expr, f, loop_depth)?;
+                        self.generate_expr_inner(expr, f, loop_depth, param_offset)?;
                         if i < exprs.len() - 1 {
                             f.instruction(&Instruction::Drop);
                         }
@@ -3504,15 +3511,15 @@ impl<'a> CodeGen<'a> {
 
             Expr::Let { bindings, body } => {
                 for (idx, value) in bindings {
-                    self.generate_expr_inner(value, f, loop_depth)?;
+                    self.generate_expr_inner(value, f, loop_depth, param_offset)?;
                     f.instruction(&Instruction::LocalSet(*idx));
                 }
-                self.generate_expr_inner(body, f, loop_depth)?;
+                self.generate_expr_inner(body, f, loop_depth, param_offset)?;
             }
 
             Expr::Loop { bindings, body } => {
                 for (idx, value) in bindings {
-                    self.generate_expr_inner(value, f, loop_depth)?;
+                    self.generate_expr_inner(value, f, loop_depth, param_offset)?;
                     f.instruction(&Instruction::LocalSet(*idx));
                 }
 
@@ -3527,7 +3534,7 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::Loop(block_type));
 
                 // Inside the loop, depth resets to 0 (Br(0) branches to loop header)
-                self.generate_expr_inner(body, f, 0)?;
+                self.generate_expr_inner(body, f, 0, param_offset)?;
 
                 // When body falls through (doesn't recur), Br(1) exits to outer block
                 // with the result value on stack
@@ -3539,7 +3546,7 @@ impl<'a> CodeGen<'a> {
 
             Expr::Recur(values) => {
                 for (local_idx, value) in values.iter() {
-                    self.generate_expr_inner(value, f, loop_depth)?;
+                    self.generate_expr_inner(value, f, loop_depth, param_offset)?;
                     f.instruction(&Instruction::LocalSet(*local_idx));
                 }
                 // Branch to loop header - depth tracks nesting inside blocks/ifs
@@ -5098,13 +5105,13 @@ impl<'a> CodeGen<'a> {
     /// - false (i31ref(2)) is falsy
     /// - Everything else is truthy (including 0, empty collections, etc.)
     fn generate_condition(&self, cond: &Expr, f: &mut Function) -> CompileResult<()> {
-        self.generate_condition_inner(cond, f, 0)
+        self.generate_condition_inner(cond, f, 0, 0)
     }
 
-    fn generate_condition_inner(&self, cond: &Expr, f: &mut Function, loop_depth: u32) -> CompileResult<()> {
+    fn generate_condition_inner(&self, cond: &Expr, f: &mut Function, loop_depth: u32, param_offset: u32) -> CompileResult<()> {
         use crate::ir::gc_types;
 
-        self.generate_expr_inner(cond, f, loop_depth)?;
+        self.generate_expr_inner(cond, f, loop_depth, param_offset)?;
 
         // All values are now GC refs in GC mode
         // Test if it's an i31ref that could be nil or false
@@ -5113,14 +5120,14 @@ impl<'a> CodeGen<'a> {
 
         // Is i31ref - need to check if it's nil (0) or false (2)
         // Re-evaluate to get the value back, then cast to i31ref
-        self.generate_expr_inner(cond, f, loop_depth + 1)?;
+        self.generate_expr_inner(cond, f, loop_depth + 1, param_offset)?;
         // Cast eqref to i31ref (we know it's i31 because we tested for it)
         f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
         f.instruction(&Instruction::I31GetS);
         // Truthy if value != 0 (nil) AND value != 2 (false)
         f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
         f.instruction(&Instruction::I32Ne);
-        self.generate_expr_inner(cond, f, loop_depth + 1)?;
+        self.generate_expr_inner(cond, f, loop_depth + 1, param_offset)?;
         f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
         f.instruction(&Instruction::I31GetS);
         f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
