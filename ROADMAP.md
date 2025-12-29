@@ -88,6 +88,7 @@ Function Index Layout:
 - [x] Reserved type indices for bootstrap (Phase 3.3)
 - [x] Bootstrap HAMT nodes in core.suss (Phase 4)
 - [x] Protocol method return type hints (`^i32` on `-count`, `-hash`, etc.)
+- [x] WIT param_offset propagation fix (unblocks VEC_CONJ migration)
 - [ ] End-to-end verification of complex trie operations
 - [ ] `deftype` with inline protocols (Phase 3.2)
 
@@ -96,8 +97,6 @@ Function Index Layout:
 
 ### Known Bugs
 - **Protocol-from-protocol calls in Component mode**: Calling a protocol method from within another protocol method implementation (e.g., `-first` calling `-nth`) generates invalid WASM in `LoweringMode::Component`. The workaround is to inline the implementation. Works correctly in `LoweringMode::Full` (expression mode). Issue manifests as "type mismatch: expected eqref but nothing on stack" during WASM validation. Root cause likely in scratch local allocation during `generate_protocol_dispatch_table`.
-
-- **WIT param_offset not propagated in expression fallthrough**: In `generate_expr_wit_inner` (codegen.rs:6533), the fallthrough to `generate_expr` loses the `param_offset` context. This causes expressions like `StructNew`, `ArrayNew`, etc. to use incorrect local indices when executed in WIT mode. Symptom: "type mismatch: expected i32, found eqref" errors. This blocks migrating VEC_CONJ to core.suss. Fix requires either passing param_offset through all generate_expr calls, or implementing WIT-aware versions of all expression types.
 
 ---
 
@@ -441,7 +440,7 @@ SET_COUNT, SET_CONTAINS, SET_CONJ
 - [x] Add built-in type deftypes to core.suss (Cons, PersistentVector, PersistentMap, PersistentSet)
 - [x] Enable constructor generation for reserved deftypes (`->PersistentVector`, etc.)
 - [x] Add `acopy` primitive for efficient array copying (WASM array.copy)
-- [ ] Migrate VEC_CONJ to core.suss (**BLOCKED** - see Known Bugs: WIT param_offset)
+- [ ] Migrate VEC_CONJ to core.suss (unblocked - WIT param_offset bug fixed)
 - [ ] Migrate SET_CONJ to core.suss (requires inode-assoc helper from Phase 6)
 - [ ] Remove remaining protocol_impl_funcs from codegen.rs
 - [ ] Dispatch table fully populated from core.suss extend-type declarations
