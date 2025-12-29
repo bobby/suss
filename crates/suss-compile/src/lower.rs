@@ -103,6 +103,9 @@ struct Lowerer {
     /// Number of deftype constructor functions
     /// Used to calculate closure wrapper indices correctly
     num_deftype_constructors: u32,
+    /// Number of protocol method implementations from inline deftype protocols
+    /// Used to calculate closure wrapper indices correctly
+    num_deftype_impl_funcs: u32,
     /// Number of protocol method implementations from extend-type
     /// Used to calculate closure wrapper indices correctly
     num_extension_funcs: u32,
@@ -180,6 +183,7 @@ impl Lowerer {
             pending_closures: Vec::new(),
             num_analyzed_funcs: 0,
             num_deftype_constructors: 0,
+            num_deftype_impl_funcs: 0,
             num_extension_funcs: 0,
             builtin_wrappers: HashMap::new(),
             user_method_ids: HashMap::new(),
@@ -249,8 +253,10 @@ impl Lowerer {
 
         // Lower deftypes - assigns GC type indices and type IDs
         // This creates constructor functions for deftypes (skipping HAMT nodes 5-7)
+        // Also handles inline protocol implementations
         self.lower_deftypes(&analyzed.deftypes)?;
-        // Count only deftypes that generate constructors (skip HAMT nodes 5-7)
+
+        // Count deftype constructors (skip HAMT nodes 5-7 which don't generate constructors)
         self.num_deftype_constructors = analyzed
             .deftypes
             .iter()
@@ -260,7 +266,16 @@ impl Lowerer {
                 gc_type_idx < gc_types::BITMAP_INDEXED_NODE || gc_type_idx > gc_types::HASH_COLLISION_NODE
             })
             .count() as u32;
-        let num_deftype_constructors = self.num_deftype_constructors;
+
+        // Count inline protocol implementations from deftype declarations
+        self.num_deftype_impl_funcs = analyzed
+            .deftypes
+            .iter()
+            .flat_map(|dt| dt.implementations.iter())
+            .map(|impl_| impl_.methods.len() as u32)
+            .sum();
+
+        let num_deftype_funcs = self.num_deftype_constructors + self.num_deftype_impl_funcs;
 
         // Pre-count extension methods (from extend-type) so closure indices are correct
         // Each extension can have multiple protocol implementations, each with multiple methods
@@ -277,9 +292,11 @@ impl Lowerer {
         //   [0..N)                          - WASI/WIT imports
         //   [N..N+H)                        - Runtime helpers (hash_string, get_type_id)
         //   [N+H..N+H+C)                    - Deftype constructors
-        //   [N+H+C..N+H+C+F)                - User functions (core.suss + user code)
+        //   [N+H+C..N+H+C+I)                - Deftype inline protocol impls
+        //   [N+H+C+I..N+H+C+I+F)            - User functions (core.suss + user code)
         //
-        // Where: N = num_imports, H = NUM_RUNTIME_HELPERS (2), C = num_deftype_constructors
+        // Where: N = num_imports, H = NUM_RUNTIME_HELPERS (2),
+        //        C = num_deftype_constructors, I = num_deftype_impl_funcs
         //
         // IMPORTANT: Both REPL and Component modes use the same offset because runtime
         // helpers are emitted in both modes. This ensures function calls work correctly
@@ -287,7 +304,7 @@ impl Lowerer {
         use crate::ir::gc_types;
         let func_offset = gc_types::USER_FUNC_OFFSET;
         for (idx, func) in analyzed.functions.iter().enumerate() {
-            let func_idx = self.num_imports + func_offset + num_deftype_constructors + idx as u32;
+            let func_idx = self.num_imports + func_offset + num_deftype_funcs + idx as u32;
             self.func_indices.insert(func.name.clone(), func_idx);
         }
 
@@ -1177,9 +1194,9 @@ impl Lowerer {
         self.closure_counter += 1;
 
         // Calculate wrapper function index in IR
-        // Closures are added after deftype constructors, analyzed functions, and extension methods
+        // Closures are added after deftype constructors, deftype impls, analyzed functions, and extension methods
         let num_pending = self.pending_closures.len() as u32;
-        let wrapper_idx = self.num_deftype_constructors + self.num_analyzed_funcs + self.num_extension_funcs + num_pending;
+        let wrapper_idx = self.num_deftype_constructors + self.num_deftype_impl_funcs + self.num_analyzed_funcs + self.num_extension_funcs + num_pending;
 
         // Register wrapper function name for the index
         self.func_indices.insert(wrapper_name.clone(), wrapper_idx);
@@ -2204,7 +2221,7 @@ impl Lowerer {
 
         // Calculate wrapper function index
         let num_pending = self.pending_closures.len() as u32;
-        let wrapper_idx = self.num_deftype_constructors + self.num_analyzed_funcs + self.num_extension_funcs + num_pending;
+        let wrapper_idx = self.num_deftype_constructors + self.num_deftype_impl_funcs + self.num_analyzed_funcs + self.num_extension_funcs + num_pending;
 
         // Register wrapper function
         self.func_indices.insert(wrapper_name.clone(), wrapper_idx);
@@ -2251,7 +2268,7 @@ impl Lowerer {
         }
 
         // Generate 9 wrapper functions (one per arity 0-8)
-        let base_idx = self.num_deftype_constructors + self.num_analyzed_funcs + self.num_extension_funcs + self.pending_closures.len() as u32;
+        let base_idx = self.num_deftype_constructors + self.num_deftype_impl_funcs + self.num_analyzed_funcs + self.num_extension_funcs + self.pending_closures.len() as u32;
 
         for arity in 0..=8u32 {
             let wrapper_name = format!(

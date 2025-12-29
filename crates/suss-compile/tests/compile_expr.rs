@@ -1450,6 +1450,162 @@ fn test_map_dissoc_nonexistent_key() {
 }
 
 // =========================================================
+// Large Map Tests (>16 entries - HAMT branching required)
+// =========================================================
+
+/// Helper to build map expression of size n: {0 0, 1 1, 2 2, ..., n-1 n-1}
+fn build_map_expr(n: usize) -> String {
+    format!(
+        "(loop [m {{}} i 0] (if (< i {}) (recur (assoc m i i) (+ i 1)) m))",
+        n
+    )
+}
+
+#[test]
+fn test_large_map_count_50() {
+    // Map with 50 entries exercises HAMT branching
+    let expr = format!("(count {})", build_map_expr(50));
+    assert_eq!(run_expr_i32(&expr), 50);
+}
+
+#[test]
+fn test_large_map_count_100() {
+    // Map with 100 entries exercises deeper HAMT tree
+    let expr = format!("(count {})", build_map_expr(100));
+    assert_eq!(run_expr_i32(&expr), 100);
+}
+
+#[test]
+fn test_large_map_get_first() {
+    // Get first key from large map
+    let expr = format!("(get {} 0)", build_map_expr(100));
+    assert_eq!(run_expr_i32(&expr), 0);
+}
+
+#[test]
+fn test_large_map_get_middle() {
+    // Get key in middle of large map
+    let expr = format!("(get {} 50)", build_map_expr(100));
+    assert_eq!(run_expr_i32(&expr), 50);
+}
+
+#[test]
+fn test_large_map_get_last() {
+    // Get last key from large map
+    let expr = format!("(get {} 99)", build_map_expr(100));
+    assert_eq!(run_expr_i32(&expr), 99);
+}
+
+#[test]
+fn test_large_map_get_missing() {
+    // Get missing key from large map returns nil (0)
+    let expr = format!("(get {} 999)", build_map_expr(100));
+    assert_eq!(run_expr_i32(&expr), 0);
+}
+
+#[test]
+fn test_large_map_assoc_update() {
+    // Update existing key in large map
+    let expr = format!("(get (assoc {} 50 999) 50)", build_map_expr(100));
+    assert_eq!(run_expr_i32(&expr), 999);
+}
+
+#[test]
+fn test_large_map_assoc_preserves() {
+    // Verify assoc on large map preserves other entries
+    let expr = format!("(get (assoc {} 50 999) 49)", build_map_expr(100));
+    assert_eq!(run_expr_i32(&expr), 49);
+}
+
+#[test]
+fn test_map_structural_sharing() {
+    // Verify original map is unchanged after assoc
+    let expr = format!(
+        "(let [m1 {} m2 (assoc m1 50 999)] (+ (get m1 50) (get m2 50)))",
+        build_map_expr(100)
+    );
+    assert_eq!(run_expr_i32(&expr), 1049); // 50 + 999
+}
+
+// =========================================================
+// Large Set Tests (>16 elements - HAMT branching required)
+// =========================================================
+
+/// Helper to build set expression of size n: #{0 1 2 ... n-1}
+fn build_set_expr(n: usize) -> String {
+    format!(
+        "(loop [s #{{}} i 0] (if (< i {}) (recur (conj s i) (+ i 1)) s))",
+        n
+    )
+}
+
+#[test]
+fn test_large_set_count_50() {
+    // Set with 50 elements exercises HAMT branching
+    let expr = format!("(count {})", build_set_expr(50));
+    assert_eq!(run_expr_i32(&expr), 50);
+}
+
+#[test]
+fn test_large_set_count_100() {
+    // Set with 100 elements exercises deeper HAMT tree
+    let expr = format!("(count {})", build_set_expr(100));
+    assert_eq!(run_expr_i32(&expr), 100);
+}
+
+#[test]
+fn test_large_set_contains_first() {
+    // Check first element in large set
+    let expr = format!("(contains? {} 0)", build_set_expr(100));
+    assert_eq!(run_expr_bool(&expr), true);
+}
+
+#[test]
+fn test_large_set_contains_middle() {
+    // Check element in middle of large set
+    let expr = format!("(contains? {} 50)", build_set_expr(100));
+    assert_eq!(run_expr_bool(&expr), true);
+}
+
+#[test]
+fn test_large_set_contains_last() {
+    // Check last element in large set
+    let expr = format!("(contains? {} 99)", build_set_expr(100));
+    assert_eq!(run_expr_bool(&expr), true);
+}
+
+#[test]
+fn test_large_set_contains_missing() {
+    // Check missing element in large set
+    let expr = format!("(contains? {} 999)", build_set_expr(100));
+    assert_eq!(run_expr_bool(&expr), false);
+}
+
+#[test]
+fn test_large_set_conj_new() {
+    // Add new element to large set
+    let expr = format!("(contains? (conj {} 999) 999)", build_set_expr(100));
+    assert_eq!(run_expr_bool(&expr), true);
+}
+
+#[test]
+fn test_large_set_conj_preserves() {
+    // Verify conj preserves existing elements
+    let expr = format!("(contains? (conj {} 999) 50)", build_set_expr(100));
+    assert_eq!(run_expr_bool(&expr), true);
+}
+
+#[test]
+fn test_set_structural_sharing() {
+    // Verify original set is unchanged after conj
+    let expr = format!(
+        "(let [s1 {} s2 (conj s1 999)] (if (contains? s1 999) 1 (if (contains? s2 999) 2 0)))",
+        build_set_expr(100)
+    );
+    assert_eq!(run_expr_i32(&expr), 2); // s1 doesn't have 999, s2 does
+}
+
+// =========================================================
 // First-Class Functions (Closures) Tests
 // =========================================================
 

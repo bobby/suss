@@ -514,11 +514,76 @@ impl Compiler {
             }
             _ => return Ok(None),
         };
+        idx += 1;
+
+        // Parse protocol implementations (same as extend-type)
+        let mut implementations = Vec::new();
+        let mut current_protocol: Option<String> = None;
+        let mut current_methods: Vec<analyze::AnalyzedMethodImpl> = Vec::new();
+
+        for item in &items[idx..] {
+            match item {
+                // Protocol name (bare symbol)
+                Edn::Symbol(s) => {
+                    // Save previous protocol if any
+                    if let Some(protocol_name) = current_protocol.take() {
+                        implementations.push(analyze::AnalyzedProtocolImpl {
+                            protocol_name,
+                            methods: std::mem::take(&mut current_methods),
+                        });
+                    }
+                    current_protocol = Some(s.name.clone());
+                }
+                // Method implementation
+                Edn::List(method_items) if !method_items.is_empty() => {
+                    let method_name = match &method_items[0] {
+                        Edn::Symbol(s) => s.name.clone(),
+                        _ => continue,
+                    };
+
+                    if method_items.len() < 3 {
+                        continue;
+                    }
+
+                    let params = match &method_items[1] {
+                        Edn::Vector(p) => p.iter()
+                            .filter_map(|x| if let Edn::Symbol(s) = x { Some(s.name.clone()) } else { None })
+                            .collect(),
+                        _ => continue,
+                    };
+
+                    let body = if method_items.len() == 3 {
+                        method_items[2].clone()
+                    } else {
+                        Edn::List(
+                            std::iter::once(Edn::Symbol(suss_core::Symbol::new("do")))
+                                .chain(method_items[2..].iter().cloned())
+                                .collect()
+                        )
+                    };
+
+                    current_methods.push(analyze::AnalyzedMethodImpl {
+                        name: method_name,
+                        params,
+                        body,
+                    });
+                }
+                _ => {}
+            }
+        }
+
+        // Save last protocol
+        if let Some(protocol_name) = current_protocol {
+            implementations.push(analyze::AnalyzedProtocolImpl {
+                protocol_name,
+                methods: current_methods,
+            });
+        }
 
         Ok(Some(analyze::AnalyzedDeftype {
             name,
             fields,
-            implementations: Vec::new(), // No protocol impls in expression context
+            implementations,
             reserved_type_id,
         }))
     }

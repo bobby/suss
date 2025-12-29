@@ -10,24 +10,35 @@ Don't set `RUSTFLAGS=\"-A warnings\"` when invoking `Bash` commands, as we've se
 cargo build                    # Build all crates
 cargo test                     # Run all tests
 cargo test -p suss-reader      # Test specific crate
-cargo run -p suss-cli          # Start REPL
-cargo run -p suss-cli -- -e "(+ 1 2)"  # Evaluate expression
-cargo run -p suss-cli -- script.suss   # Run file
 ```
 
-### Static Compilation (Suss → WASM Components)
+### CLI Usage (Clojure-style)
+
+The CLI follows Clojure conventions with init options and main modes:
 
 ```bash
-# Project-based compilation (reads deps.suss)
-cargo run -p suss-cli -- compile                    # Compile all worlds
-cargo run -p suss-cli -- compile --world :app/v1    # Compile specific world
-cargo run -p suss-cli -- compile -c path/deps.suss  # Custom config
+# Execute mode (default) - run immediately
+suss                                    # Start REPL
+suss -r                                 # Explicit REPL
+suss -e "(+ 1 2)"                       # Evaluate expression
+suss script.suss                        # Run script file
+suss -                                  # Run from stdin
+suss -m myapp.core arg1 arg2            # Run -main with args (TODO)
 
-# Single-file compilation
-cargo run -p suss-cli -- compile src.suss -w world.wit -o out.wasm
+# Init options (run before main action)
+suss -i prelude.suss -r                 # Load file, then start REPL
+suss -e "(def x 1)" -e "(+ x 2)"        # Chain evals (last is main)
+suss -i lib.suss -e "(process)"         # Load file, then eval
 
-# Run compiled components with WASI support
-cargo run -p suss-cli -- run out.wasm --invoke add 3 5
+# Compile subcommand - AOT output
+suss compile src.suss -o out.wasm                   # REPL component (TODO)
+suss compile -m ns src.suss -o app.wasm             # CLI command (TODO)
+suss compile -w api.wit src.suss -o lib.wasm        # Library/plugin
+suss compile --world :app/v1                        # From deps.suss
+
+# Run subcommand - execute compiled component
+suss run app.wasm                       # Run CLI command (auto-finds run)
+suss run lib.wasm --invoke add 3 5      # Run specific function
 ```
 
 ### WASM Component Builds
@@ -84,6 +95,40 @@ WIT interfaces in `wit/` define component boundaries:
 - `world.wit` - Main REPL world combining all interfaces
 
 Components use `wit-bindgen::generate!()` with the `component` feature flag.
+
+### Default WIT Worlds
+
+The compiler provides sensible default worlds when no explicit WIT is provided:
+
+**CLI Command World** (`compile -m ns`):
+```wit
+world command {
+    import wasi:cli/environment@0.2.4;
+    import wasi:cli/stdin@0.2.4;
+    import wasi:cli/stdout@0.2.4;
+    import wasi:cli/stderr@0.2.4;
+    import wasi:filesystem/...;
+    import wasi:random/random@0.2.4;
+    import wasi:clocks/...;
+    export wasi:cli/run@0.2.4;
+}
+```
+
+**Embeddable REPL World** (`compile` without -w/-m):
+```wit
+interface repl {
+    eval: func(expr: string) -> result<string, string>;
+    rep: func(expr: string) -> result<string, string>;
+}
+world embeddable-repl {
+    import wasi:cli/stdin@0.2.4;
+    import wasi:cli/stdout@0.2.4;
+    ...
+    export repl;
+}
+```
+
+**Key file:** `crates/suss-compile/src/worlds.rs`
 
 ## Key Patterns
 

@@ -264,6 +264,100 @@ impl<'a> CodeGen<'a> {
             .map(|(idx, _)| self.user_func_idx(idx as u32))
     }
 
+    /// Generate code to unwrap an integer from either i31ref or INT64.
+    ///
+    /// Input: eqref on stack
+    /// Output: i32 on stack
+    ///
+    /// For HAMT bitmap operations, we need to handle both small integers
+    /// (stored as i31ref) and large integers (stored as INT64 struct).
+    /// Values like 2^30 and 2^31 from bit-shift-left exceed i31ref capacity.
+    fn generate_polymorphic_unwrap_i32(&self, f: &mut Function) {
+        use crate::ir::gc_types;
+
+        // Scratch local to store the value for testing
+        let scratch = self.scratch_local.get();
+
+        // Store value in scratch local
+        f.instruction(&Instruction::LocalSet(scratch));
+
+        // Test if it's INT64
+        f.instruction(&Instruction::LocalGet(scratch));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::INT64)));
+
+        // if (is INT64)
+        f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+        {
+            // Extract i64 from INT64 struct, wrap to i32
+            f.instruction(&Instruction::LocalGet(scratch));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::INT64)));
+            f.instruction(&Instruction::StructGet {
+                struct_type_index: gc_types::INT64,
+                field_index: gc_types::I64_VALUE,
+            });
+            f.instruction(&Instruction::I32WrapI64);
+        }
+        f.instruction(&Instruction::Else);
+        {
+            // It's i31ref - decode: cast, get_s, shr 1
+            f.instruction(&Instruction::LocalGet(scratch));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+            f.instruction(&Instruction::I31GetS);
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::I32ShrS);
+        }
+        f.instruction(&Instruction::End);
+    }
+
+    /// Generate code to box an i32 result, using INT64 if needed.
+    ///
+    /// Input: i32 on stack
+    /// Output: eqref on stack
+    ///
+    /// For bit operations that may produce values outside i31ref range
+    /// (like bit-shift-left), we check if the result fits in 30-bit signed
+    /// and use INT64 otherwise.
+    fn generate_box_i32_safe(&self, f: &mut Function) {
+        use crate::ir::gc_types;
+        use crate::ir::type_ids;
+
+        // Scratch local to store the i32 value
+        let scratch = self.scratch_local.get() + 1; // use i32 slot
+
+        // Store result in scratch
+        f.instruction(&Instruction::LocalSet(scratch));
+
+        // Check if value fits in 30-bit signed range: -2^29 <= n < 2^29
+        // This is: n >= -536870912 && n < 536870912
+        // Equivalently: (n + 536870912) as u32 < 1073741824
+        f.instruction(&Instruction::LocalGet(scratch));
+        f.instruction(&Instruction::I32Const(536870912)); // 2^29
+        f.instruction(&Instruction::I32Add);
+        f.instruction(&Instruction::I32Const(1073741824)); // 2^30
+        f.instruction(&Instruction::I32LtU);
+
+        // if (fits in i31ref)
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+        {
+            // Encode as i31ref: (n << 1) | 1
+            f.instruction(&Instruction::LocalGet(scratch));
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::I32Shl);
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::I32Or);
+            f.instruction(&Instruction::RefI31);
+        }
+        f.instruction(&Instruction::Else);
+        {
+            // Box in INT64 struct: { type_id, i64_value }
+            f.instruction(&Instruction::I32Const(type_ids::INT64));
+            f.instruction(&Instruction::LocalGet(scratch));
+            f.instruction(&Instruction::I64ExtendI32S);
+            f.instruction(&Instruction::StructNew(gc_types::INT64));
+        }
+        f.instruction(&Instruction::End);
+    }
+
     // ========================================================================
     // Module generation modes
     // ========================================================================
@@ -2098,19 +2192,22 @@ impl<'a> CodeGen<'a> {
                 Ok(())
             }
             Expr::BitCount(value) => {
-                // Unbox i31ref, compute popcnt, rebox as i31ref
+                // Polymorphic unwrap to handle both i31ref and INT64 inputs
+                // (INT64 can come from bit-shift-left with large results)
+                let scratch_base = self.scratch_local.get();
+                self.scratch_local.set(scratch_base + 5);
+
                 self.generate_expr_wit(value, f, param_offset)?;
-                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                f.instruction(&Instruction::I31GetS);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32ShrS);
+                self.generate_polymorphic_unwrap_i32(f);
                 f.instruction(&Instruction::I32Popcnt);
-                // Encode result: (n << 1) | 1
+                // Result is always small (0-32), safe to encode as i31ref
                 f.instruction(&Instruction::I32Const(1));
                 f.instruction(&Instruction::I32Shl);
                 f.instruction(&Instruction::I32Const(1));
                 f.instruction(&Instruction::I32Or);
                 f.instruction(&Instruction::RefI31);
+
+                self.scratch_local.set(scratch_base);
                 Ok(())
             }
             // For simple expressions that don't contain sub-expressions, delegate to normal gen
@@ -2322,16 +2419,15 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::Unbox32(value) => {
-                // Unbox a tagged integer to raw i32:
-                // 1. Generate the value (eqref with boxed integer)
-                // 2. Cast to i31ref
-                // 3. Extract with i31.get_s
-                // 4. Decode by shifting right by 1
+                // Polymorphic unbox to raw i32:
+                // Handles both i31ref (small integers) and INT64 (from bit-shift-left overflow)
+                let scratch_base = self.scratch_local.get();
+                self.scratch_local.set(scratch_base + 5);
+
                 self.generate_expr_inner(value, f, loop_depth, param_offset)?;
-                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                f.instruction(&Instruction::I31GetS);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32ShrS);
+                self.generate_polymorphic_unwrap_i32(f);
+
+                self.scratch_local.set(scratch_base);
             }
 
             Expr::Float(v) => {
@@ -2400,67 +2496,45 @@ impl<'a> CodeGen<'a> {
                 };
 
                 match (op, ty) {
-                    // Arithmetic operations: unwrap, compute, wrap
-                    (BinOp::Add, Type::I32) | (BinOp::Add, Type::I64) => {
-                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
-                        generate_unwrap_i31(f);
-                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
-                        generate_unwrap_i31(f);
-                        f.instruction(&Instruction::I32Add);
-                        // Encode result: (n << 1) | 1
-                        f.instruction(&Instruction::I32Const(1));
-                        f.instruction(&Instruction::I32Shl);
-                        f.instruction(&Instruction::I32Const(1));
-                        f.instruction(&Instruction::I32Or);
-                        f.instruction(&Instruction::RefI31);
-                    }
-                    (BinOp::Sub, Type::I32) | (BinOp::Sub, Type::I64) => {
-                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
-                        generate_unwrap_i31(f);
-                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
-                        generate_unwrap_i31(f);
-                        f.instruction(&Instruction::I32Sub);
-                        f.instruction(&Instruction::I32Const(1));
-                        f.instruction(&Instruction::I32Shl);
-                        f.instruction(&Instruction::I32Const(1));
-                        f.instruction(&Instruction::I32Or);
-                        f.instruction(&Instruction::RefI31);
-                    }
-                    (BinOp::Mul, Type::I32) | (BinOp::Mul, Type::I64) => {
-                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
-                        generate_unwrap_i31(f);
-                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
-                        generate_unwrap_i31(f);
-                        f.instruction(&Instruction::I32Mul);
-                        f.instruction(&Instruction::I32Const(1));
-                        f.instruction(&Instruction::I32Shl);
-                        f.instruction(&Instruction::I32Const(1));
-                        f.instruction(&Instruction::I32Or);
-                        f.instruction(&Instruction::RefI31);
-                    }
-                    (BinOp::Div, Type::I32) | (BinOp::Div, Type::I64) => {
-                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
-                        generate_unwrap_i31(f);
-                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
-                        generate_unwrap_i31(f);
-                        f.instruction(&Instruction::I32DivS);
-                        f.instruction(&Instruction::I32Const(1));
-                        f.instruction(&Instruction::I32Shl);
-                        f.instruction(&Instruction::I32Const(1));
-                        f.instruction(&Instruction::I32Or);
-                        f.instruction(&Instruction::RefI31);
-                    }
+                    // Arithmetic operations: polymorphic unwrap to handle INT64 from bit ops
+                    (BinOp::Add, Type::I32) | (BinOp::Add, Type::I64) |
+                    (BinOp::Sub, Type::I32) | (BinOp::Sub, Type::I64) |
+                    (BinOp::Mul, Type::I32) | (BinOp::Mul, Type::I64) |
+                    (BinOp::Div, Type::I32) | (BinOp::Div, Type::I64) |
                     (BinOp::Rem, Type::I32) | (BinOp::Rem, Type::I64) => {
-                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
-                        generate_unwrap_i31(f);
+                        // Reserve scratch locals for polymorphic unwrap
+                        let scratch_base = self.scratch_local.get();
+                        self.scratch_local.set(scratch_base + 5);
+
+                        let right_i32_local = scratch_base + 1;
+
+                        // Generate right first, store it
                         self.generate_expr_inner(right, f, loop_depth, param_offset)?;
-                        generate_unwrap_i31(f);
-                        f.instruction(&Instruction::I32RemS);
-                        f.instruction(&Instruction::I32Const(1));
-                        f.instruction(&Instruction::I32Shl);
-                        f.instruction(&Instruction::I32Const(1));
-                        f.instruction(&Instruction::I32Or);
-                        f.instruction(&Instruction::RefI31);
+                        self.generate_polymorphic_unwrap_i32(f);
+                        f.instruction(&Instruction::LocalSet(right_i32_local));
+
+                        // Generate left (stays on stack)
+                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
+                        self.generate_polymorphic_unwrap_i32(f);
+
+                        // Get right from local
+                        f.instruction(&Instruction::LocalGet(right_i32_local));
+                        // Stack: [left, right]
+
+                        // Perform operation
+                        match op {
+                            BinOp::Add => f.instruction(&Instruction::I32Add),
+                            BinOp::Sub => f.instruction(&Instruction::I32Sub),
+                            BinOp::Mul => f.instruction(&Instruction::I32Mul),
+                            BinOp::Div => f.instruction(&Instruction::I32DivS),
+                            BinOp::Rem => f.instruction(&Instruction::I32RemS),
+                            _ => unreachable!(),
+                        };
+
+                        // Safe box result (INT64 if overflow)
+                        self.generate_box_i32_safe(f);
+
+                        self.scratch_local.set(scratch_base);
                     }
 
                     // Float arithmetic: unwrap structs, compute, wrap in { type_id, value }
@@ -2529,12 +2603,26 @@ impl<'a> CodeGen<'a> {
                         f.instruction(&Instruction::StructNew(gc_types::FLOAT));
                     }
 
-                    // Comparison operations: unwrap, compare, return bool sentinel
+                    // Comparison operations: polymorphic unwrap to handle INT64 from bit ops
                     (BinOp::Eq, _) | (BinOp::Ne, _) | (BinOp::Lt, _) | (BinOp::Le, _) | (BinOp::Gt, _) | (BinOp::Ge, _) => {
-                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
-                        generate_unwrap_i31(f);
+                        // Reserve scratch locals for polymorphic unwrap
+                        let scratch_base = self.scratch_local.get();
+                        self.scratch_local.set(scratch_base + 5);
+
+                        let right_i32_local = scratch_base + 1;
+
+                        // Generate right first, store it
                         self.generate_expr_inner(right, f, loop_depth, param_offset)?;
-                        generate_unwrap_i31(f);
+                        self.generate_polymorphic_unwrap_i32(f);
+                        f.instruction(&Instruction::LocalSet(right_i32_local));
+
+                        // Generate left (stays on stack)
+                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
+                        self.generate_polymorphic_unwrap_i32(f);
+
+                        // Get right from local
+                        f.instruction(&Instruction::LocalGet(right_i32_local));
+                        // Stack: [left, right]
 
                         let cmp_instr = match op {
                             BinOp::Eq => Instruction::I32Eq,
@@ -2558,6 +2646,8 @@ impl<'a> CodeGen<'a> {
                         f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
                         f.instruction(&Instruction::RefI31);
                         f.instruction(&Instruction::End);
+
+                        self.scratch_local.set(scratch_base);
                     }
 
                     (BinOp::And, _) | (BinOp::Or, _) => {
@@ -2576,15 +2666,39 @@ impl<'a> CodeGen<'a> {
                     }
 
                     // Bitwise operations on integers
+                    // These use polymorphic unwrap to handle both i31ref and INT64 inputs,
+                    // and safe boxing to handle results that may exceed i31ref range.
+                    // This is critical for HAMT bitmap operations where bit-shift-left
+                    // can produce values like 2^30 or 2^31.
                     (BinOp::BitAnd, Type::I32) | (BinOp::BitOr, Type::I32) |
                     (BinOp::BitXor, Type::I32) | (BinOp::Shl, Type::I32) |
                     (BinOp::ShrS, Type::I32) | (BinOp::ShrU, Type::I32) => {
-                        // Unbox operands, perform bit op, rebox result
-                        self.generate_expr(left, f)?;
-                        generate_unwrap_i31(f);
-                        self.generate_expr(right, f)?;
-                        generate_unwrap_i31(f);
+                        // Reserve scratch locals for unwrap operations
+                        // Layout: +0: eqref, +1: i32, +2: eqref, +3: eqref, +4: eqref
+                        let scratch_base = self.scratch_local.get();
+                        self.scratch_local.set(scratch_base + 5);
 
+                        let right_i32_local = scratch_base + 1; // i32 slot
+
+                        // WASM stack order: for (op left right), we need [left, right]
+                        // with right on top. So we generate right first, store it,
+                        // then generate left (stays on stack), then get right.
+
+                        // Step 1: Generate and unwrap right operand, store it
+                        self.generate_expr(right, f)?;
+                        self.generate_polymorphic_unwrap_i32(f);
+                        f.instruction(&Instruction::LocalSet(right_i32_local));
+
+                        // Step 2: Generate and unwrap left operand (stays on stack)
+                        self.generate_expr(left, f)?;
+                        self.generate_polymorphic_unwrap_i32(f);
+                        // Stack: [left_i32]
+
+                        // Step 3: Get right operand from local
+                        f.instruction(&Instruction::LocalGet(right_i32_local));
+                        // Stack: [left_i32, right_i32] - correct order!
+
+                        // Step 4: Perform the operation
                         let instr = match op {
                             BinOp::BitAnd => Instruction::I32And,
                             BinOp::BitOr => Instruction::I32Or,
@@ -2596,12 +2710,11 @@ impl<'a> CodeGen<'a> {
                         };
                         f.instruction(&instr);
 
-                        // Encode result as i31ref
-                        f.instruction(&Instruction::I32Const(1));
-                        f.instruction(&Instruction::I32Shl);
-                        f.instruction(&Instruction::I32Const(1));
-                        f.instruction(&Instruction::I32Or);
-                        f.instruction(&Instruction::RefI31);
+                        // Step 5: Box result safely (INT64 if overflow, i31ref otherwise)
+                        self.generate_box_i32_safe(f);
+
+                        // Restore scratch
+                        self.scratch_local.set(scratch_base);
                     }
 
                     _ => {
@@ -2869,13 +2982,18 @@ impl<'a> CodeGen<'a> {
                 }
             }
 
-            // Get i32 field and encode as tagged i31ref
+            // Get i32 field and encode safely (i31ref or INT64 if overflow)
             // Used for user-defined types with ^i32 fields
+            // Critical for HAMT bitmap which can have values >= 2^29
             Expr::StructGetI32 {
                 type_idx,
                 field_idx,
                 value,
             } => {
+                // Reserve scratch for safe boxing
+                let scratch_base = self.scratch_local.get();
+                self.scratch_local.set(scratch_base + 5);
+
                 self.generate_expr(value, f)?;
                 // Cast to specific struct type
                 f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
@@ -2884,13 +3002,10 @@ impl<'a> CodeGen<'a> {
                     struct_type_index: *type_idx,
                     field_index: *field_idx,
                 });
-                // Encode as tagged integer: (value << 1) | 1
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32Shl);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32Or);
-                // Wrap as i31ref
-                f.instruction(&Instruction::RefI31);
+                // Safe box: i31ref if fits, INT64 if overflow
+                self.generate_box_i32_safe(f);
+
+                self.scratch_local.set(scratch_base);
             }
 
             Expr::ArrayNew { type_idx, elements } => {
@@ -3067,19 +3182,22 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::BitCount(value) => {
-                // Unbox i31ref, compute popcnt, rebox as i31ref
+                // Polymorphic unwrap to handle both i31ref and INT64 inputs
+                // (INT64 can come from bit-shift-left with large results)
+                let scratch_base = self.scratch_local.get();
+                self.scratch_local.set(scratch_base + 5);
+
                 self.generate_expr(value, f)?;
-                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                f.instruction(&Instruction::I31GetS);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32ShrS); // Decode tagged value
+                self.generate_polymorphic_unwrap_i32(f);
                 f.instruction(&Instruction::I32Popcnt);
-                // Encode result: (n << 1) | 1
+                // Result is always small (0-32), safe to encode as i31ref
                 f.instruction(&Instruction::I32Const(1));
                 f.instruction(&Instruction::I32Shl);
                 f.instruction(&Instruction::I32Const(1));
                 f.instruction(&Instruction::I32Or);
                 f.instruction(&Instruction::RefI31);
+
+                self.scratch_local.set(scratch_base);
             }
 
             Expr::NilCheck(value) => {
