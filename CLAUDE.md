@@ -255,9 +255,13 @@ Following ClojureScript semantics, `core.suss` is automatically loaded before us
 - **Built-in collection types** with reserved type IDs (Cons, PersistentVector, PersistentMap, PersistentSet)
 - **HAMT node types** with reserved type IDs (BitmapIndexedNode, ArrayNode, HashCollisionNode)
 - Protocol definitions (ICounted, IIndexed, ISeq, ISeqable, ILookup, IAssociative, ICollection, IEquiv, IHash)
-- Protocol implementations via `extend-type` (PersistentVector: -nth, -first, -rest)
-- Vector trie helper functions (`tail-off`, `array-for`, `new-path`, `push-tail`)
-- HAMT helper functions (`hamt-mask`, `hamt-bitpos`, `hamt-index`, `bin-find`, `an-find`, `hcn-find`, `inode-find`)
+- Protocol implementations via `extend-type`:
+  - PersistentVector: `-nth`, `-first`, `-rest`, `-conj`, `-count`
+  - PersistentMap: `-lookup`, `-count`
+  - PersistentSet: `-lookup`, `-count`
+  - Cons: `-first`, `-rest`, `-count`
+- Vector trie helper functions (`tail-off`, `array-for`, `new-path`, `push-tail`, `-vec-conj-overflow`, `-vec-conj-push`)
+- HAMT helper functions (`hamt-mask`, `hamt-bitpos`, `hamt-index`, `bin-find`, `an-find`, `hcn-find`, `inode-find`, `bin-assoc`, `inode-assoc`)
 
 **Key file:** `crates/suss-compile/src/core.suss`
 
@@ -296,8 +300,9 @@ WASM GC operations exposed to Suss for implementing protocols:
 
 **Null/nil checking:**
 ```clojure
-(nil? x)             ; true if x is nil, false otherwise
-                     ; Uses ref.test i31 + i31.get_s check for NIL_SENTINEL
+(nil? x)             ; true if x is nil or null reference, false otherwise
+                     ; First checks RefIsNull for null struct fields (e.g., vector root)
+                     ; Then checks i31ref for NIL_SENTINEL (value 0)
 ```
 
 **Type checking:**

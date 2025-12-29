@@ -875,7 +875,6 @@ impl Expr {
             // Persistent collections all return GC refs
             Expr::VecNew(_) => Type::GcRef,
             Expr::VecNth { .. } => Type::GcRef,
-            Expr::VecConj { .. } => Type::GcRef,
             Expr::VecCount(_) => Type::I32,
 
             Expr::MapNew(_) => Type::GcRef,
@@ -1143,13 +1142,6 @@ pub enum Expr {
     VecNth {
         vec: Box<Expr>,
         index: Box<Expr>,
-    },
-
-    /// Add element to end of persistent vector (returns new vector)
-    /// Structural sharing via path copying
-    VecConj {
-        vec: Box<Expr>,
-        val: Box<Expr>,
     },
 
     /// Get count of persistent vector

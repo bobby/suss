@@ -1299,6 +1299,9 @@ impl<'a> CodeGen<'a> {
     /// Generate large vector construction by building trie incrementally
     fn generate_vec_new_large(&self, elements: &[Expr], f: &mut Function) -> CompileResult<()> {
         use crate::ir::gc_types;
+        use crate::ir::method_ids;
+        use crate::ir::dispatch_table;
+
         // Start with first 32 elements as base vector
         let (first_32, rest) = elements.split_at(32.min(elements.len()));
 
@@ -1307,6 +1310,8 @@ impl<'a> CodeGen<'a> {
             .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
         let pv_type_id = self.deftype_type_id("PersistentVector")
             .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
+
+        let vec_local = self.scratch_local.get();
 
         // Create initial vector with first batch: type_id, cnt, shift, root, tail
         f.instruction(&Instruction::I32Const(pv_type_id));
@@ -1324,25 +1329,30 @@ impl<'a> CodeGen<'a> {
         });
 
         f.instruction(&Instruction::StructNew(pv_gc_idx));
+        f.instruction(&Instruction::LocalSet(vec_local));
 
-        // For remaining elements, we need to generate conj calls
-        // This is inefficient but correct - can optimize later
+        // For remaining elements, call conj via protocol dispatch
+        let type_idx = self.protocol_type_index_for_method(method_ids::CONJ);
         for elem in rest {
+            // Calculate dispatch table index: type_id * 10 + method_id
+            // For PersistentVector (type_id 8) and CONJ (method_id 4): 8 * 10 + 4 = 84
+            let dispatch_idx = gc_types::PERSISTENT_VECTOR as i32 * 10 + method_ids::CONJ as i32;
+
+            // Call -conj via dispatch table: takes (vec, val), returns new vec
+            f.instruction(&Instruction::LocalGet(vec_local));
             self.generate_expr(elem, f)?;
-            self.generate_vec_conj_inplace(f)?;
+            f.instruction(&Instruction::I32Const(dispatch_idx));
+            f.instruction(&Instruction::CallIndirect {
+                type_index: type_idx,
+                table_index: dispatch_table::TABLE_INDEX,
+            });
+            f.instruction(&Instruction::LocalSet(vec_local));
         }
 
-        Ok(())
-    }
+        // Final result
+        f.instruction(&Instruction::LocalGet(vec_local));
 
-    /// Generate conj when vec is already on stack
-    fn generate_vec_conj_inplace(&self, _f: &mut Function) -> CompileResult<()> {
-        // TODO: Implement proper trie manipulation
-        // For now, this is a placeholder that will need full implementation
-        // when we support vectors > 32 elements
-        Err(CompileError::Unsupported(
-            "Vectors with more than 32 elements not yet supported".to_string(),
-        ))
+        Ok(())
     }
 
     /// Generate code to get element at index from persistent vector.
@@ -1397,353 +1407,6 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::I32Const(0x1F));
         f.instruction(&Instruction::I32And);
         f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
-
-        Ok(())
-    }
-
-    /// Generate code to add element to end of persistent vector.
-    ///
-    /// Full algorithm:
-    /// - If (cnt - tail_off) < 32 (room in tail): clone tail, append element
-    /// - Else (tail full):
-    ///   - If root overflow: create new root [old_root, new_path(shift, tail)], shift += 5
-    ///   - Else: push_tail into existing trie
-    ///   - Create new single-element tail [val]
-    fn generate_vec_conj(&self, vec: &Expr, val: &Expr, f: &mut Function) -> CompileResult<()> {
-        use crate::ir::gc_types;
-
-        // Look up PersistentVector type indices dynamically
-        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
-            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
-        let pv_type_id = self.deftype_type_id("PersistentVector")
-            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
-
-        // Look up helper functions dynamically (they're defined in core.suss)
-        let tail_off_idx = self.func_idx_by_name("tail-off")
-            .ok_or_else(|| CompileError::Unsupported("tail-off function not found".to_string()))?;
-        let new_path_idx = self.func_idx_by_name("new-path")
-            .ok_or_else(|| CompileError::Unsupported("new-path function not found".to_string()))?;
-        let push_tail_idx = self.func_idx_by_name("push-tail")
-            .ok_or_else(|| CompileError::Unsupported("push-tail function not found".to_string()))?;
-
-        // Scratch local indices (relative to scratch_base)
-        // Layout: scratch_base+0: eqref, +1: i32, +2: eqref, +3: eqref, +4: eqref
-        let scratch_base = self.scratch_local.get();
-        let vec_local = scratch_base; // eqref - stores the vector
-        let cnt_local = scratch_base + 1; // i32 - stores count
-        let new_tail_local = scratch_base + 2; // eqref - stores new tail/new root
-
-        // Evaluate and store vec
-        self.generate_expr(vec, f)?;
-        f.instruction(&Instruction::LocalSet(vec_local));
-
-        // Get count
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_CNT,
-        });
-        f.instruction(&Instruction::LocalSet(cnt_local));
-
-        // Check: (cnt - tail_off(cnt)) < 32 means room in tail
-        // tail-off takes cnt (boxed), returns tail offset (boxed)
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        // Box cnt as i31ref to pass to tail-off
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Shl);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Or);
-        f.instruction(&Instruction::RefI31);
-        f.instruction(&Instruction::Call(tail_off_idx));
-        // Unbox the returned i31ref to i32
-        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-        f.instruction(&Instruction::I31GetS);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32ShrS);
-        f.instruction(&Instruction::I32Sub);
-        f.instruction(&Instruction::I32Const(32));
-        f.instruction(&Instruction::I32LtU);
-
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-
-        // === Room in tail: create larger tail, copy elements, add new element ===
-        // The tail array is sized to fit exactly, so we need to create a new array
-        // that is one element larger, not just clone.
-
-        // tail_idx = cnt & 0x1f (where new element goes)
-        // new_tail = array.new of size (tail_idx + 1)
-        // array.copy from old tail to new tail
-        // array.set new tail at tail_idx
-
-        // Create new array of size (cnt & 0x1f) + 1, filled with null
-        f.instruction(&Instruction::RefNull(HeapType::Abstract {
-            shared: false,
-            ty: AbstractHeapType::Eq,
-        }));
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(0x1f));
-        f.instruction(&Instruction::I32And);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add); // (cnt & 0x1f) + 1
-        f.instruction(&Instruction::ArrayNew(gc_types::TRIE_NODE));
-        f.instruction(&Instruction::LocalSet(new_tail_local));
-
-        // Copy old tail elements to new tail using array.copy
-        // array.copy dst dst_offset src src_offset len
-        f.instruction(&Instruction::LocalGet(new_tail_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0)); // dst_offset
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_TAIL,
-        });
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
-        f.instruction(&Instruction::I32Const(0)); // src_offset
-        // len = cnt & 0x1f (old tail size)
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(0x1f));
-        f.instruction(&Instruction::I32And);
-        f.instruction(&Instruction::ArrayCopy {
-            array_type_index_dst: gc_types::TRIE_NODE,
-            array_type_index_src: gc_types::TRIE_NODE,
-        });
-
-        // Set new element at index (cnt & 0x1f)
-        f.instruction(&Instruction::LocalGet(new_tail_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::TRIE_NODE,
-        )));
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(0x1f));
-        f.instruction(&Instruction::I32And);
-        self.generate_expr(val, f)?;
-        f.instruction(&Instruction::ArraySet(gc_types::TRIE_NODE));
-
-        // Create new vector: type_id, (inc cnt), shift, root, new_tail
-        f.instruction(&Instruction::I32Const(pv_type_id));
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add); // new cnt
-
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_SHIFT,
-        });
-
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_ROOT,
-        });
-
-        f.instruction(&Instruction::LocalGet(new_tail_local));
-        f.instruction(&Instruction::StructNew(pv_gc_idx));
-
-        f.instruction(&Instruction::Else);
-
-        // === Tail full: push into trie ===
-
-        // Check root overflow: (cnt >>> 5) > (1 << shift)
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32ShrU); // cnt >>> 5
-
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_SHIFT,
-        });
-        f.instruction(&Instruction::I32Shl); // 1 << shift
-        f.instruction(&Instruction::I32GtU); // (cnt>>>5) > (1<<shift)
-
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-
-        // === Root overflow: grow tree ===
-        // new_root = [old_root, new_path(shift, tail)]
-
-        // First element: old_root
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_ROOT,
-        });
-
-        // Second element: new_path(shift, tail)
-        // Get shift and box it as i31ref
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_SHIFT,
-        });
-        // Box i32 as i31ref: (n << 1) | 1
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Shl);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Or);
-        f.instruction(&Instruction::RefI31);
-        // Get tail (already eqref)
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_TAIL,
-        });
-        f.instruction(&Instruction::Call(new_path_idx));
-
-        // Create new root array [old_root, new_path_result]
-        f.instruction(&Instruction::ArrayNewFixed {
-            array_type_index: gc_types::TRIE_NODE,
-            array_size: 2,
-        });
-        f.instruction(&Instruction::LocalSet(new_tail_local)); // reuse local for new_root
-
-        // Build result: type_id, (inc cnt), (shift + 5), new_root, [val]
-        f.instruction(&Instruction::I32Const(pv_type_id));
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_SHIFT,
-        });
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Add); // shift + 5
-
-        f.instruction(&Instruction::LocalGet(new_tail_local)); // new_root
-
-        // New tail = [val]
-        self.generate_expr(val, f)?;
-        f.instruction(&Instruction::ArrayNewFixed {
-            array_type_index: gc_types::TRIE_NODE,
-            array_size: 1,
-        });
-
-        f.instruction(&Instruction::StructNew(pv_gc_idx));
-
-        f.instruction(&Instruction::Else);
-
-        // === No overflow: push tail into existing tree ===
-        // new_root = push_tail(vec, shift, root, tail)
-        // But first handle the case where root is null (first push)
-
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_ROOT,
-        });
-        f.instruction(&Instruction::RefIsNull);
-
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(
-            ValType::Ref(RefType::EQREF),
-        )));
-
-        // Root is null: this is the first time we're pushing tail into trie
-        // new_root = new_path(shift, tail) - wraps tail in a single-element array
-        // Note: must use shift (not shift-5) so the tail gets wrapped properly
-        // Get shift and box it as i31ref
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_SHIFT,
-        });
-        // Box i32 as i31ref: (n << 1) | 1
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Shl);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Or);
-        f.instruction(&Instruction::RefI31);
-        // Get tail (already eqref)
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_TAIL,
-        });
-        f.instruction(&Instruction::Call(new_path_idx));
-
-        f.instruction(&Instruction::Else);
-
-        // Root is not null: push_tail(vec, shift, root, tail)
-        f.instruction(&Instruction::LocalGet(vec_local));
-        // Get shift and box it as i31ref
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_SHIFT,
-        });
-        // Box i32 as i31ref: (n << 1) | 1
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Shl);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Or);
-        f.instruction(&Instruction::RefI31);
-        // Get root (already eqref)
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_ROOT,
-        });
-        // Get tail (already eqref)
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_TAIL,
-        });
-        f.instruction(&Instruction::Call(push_tail_idx));
-
-        f.instruction(&Instruction::End); // end if (root is null)
-
-        f.instruction(&Instruction::LocalSet(new_tail_local)); // reuse local for new_root
-
-        // Build result: type_id, (inc cnt), shift, new_root, [val]
-        f.instruction(&Instruction::I32Const(pv_type_id));
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add);
-
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: gc_types::PV_SHIFT,
-        });
-
-        f.instruction(&Instruction::LocalGet(new_tail_local)); // new_root
-
-        // New tail = [val]
-        self.generate_expr(val, f)?;
-        f.instruction(&Instruction::ArrayNewFixed {
-            array_type_index: gc_types::TRIE_NODE,
-            array_size: 1,
-        });
-
-        f.instruction(&Instruction::StructNew(pv_gc_idx));
-
-        f.instruction(&Instruction::End); // end if (root overflow)
-        f.instruction(&Instruction::End); // end if (room in tail)
 
         Ok(())
     }
@@ -3875,14 +3538,25 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::NilCheck(value) => {
-                // Check if value is nil (i31ref(0) = NIL_SENTINEL)
+                // Check if value is nil (i31ref(0) = NIL_SENTINEL) or null reference
                 // Use scratch local to store value
                 let scratch = self.scratch_local.get();
 
                 self.generate_expr(value, f)?;
                 f.instruction(&Instruction::LocalSet(scratch));
 
-                // Check if it's an i31ref
+                // First check if it's a null reference (for struct fields like vector root)
+                f.instruction(&Instruction::LocalGet(scratch));
+                f.instruction(&Instruction::RefIsNull);
+                f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::Ref(
+                    RefType::EQREF,
+                ))));
+                // Is null - return true
+                f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                f.instruction(&Instruction::Else);
+
+                // Not null - check if it's an i31ref with value 0 (NIL_SENTINEL)
                 f.instruction(&Instruction::LocalGet(scratch));
                 f.instruction(&Instruction::RefTestNonNull(HeapType::I31));
                 f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::Ref(
@@ -3911,6 +3585,8 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
                 f.instruction(&Instruction::RefI31);
                 f.instruction(&Instruction::End);
+
+                f.instruction(&Instruction::End); // close null check
             }
 
             Expr::RefTestI31(value) => {
@@ -3950,10 +3626,6 @@ impl<'a> CodeGen<'a> {
 
             Expr::VecNth { vec, index } => {
                 self.generate_vec_nth(vec, index, f)?;
-            }
-
-            Expr::VecConj { vec, val } => {
-                self.generate_vec_conj(vec, val, f)?;
             }
 
             Expr::VecCount(vec) => {

@@ -1850,10 +1850,10 @@ impl Lowerer {
         })
     }
 
-    /// Lower (conj coll val) -> VecConj, SetConj, Cons, or ProtocolDispatch
+    /// Lower (conj coll val) -> SetConj, Cons, or ProtocolDispatch
     ///
-    /// If the collection type is known at compile time, uses the appropriate fast path.
-    /// Otherwise, falls back to runtime protocol dispatch.
+    /// Vector conj now uses protocol dispatch (implemented in core.suss).
+    /// Sets and Cons still use fast paths.
     fn lower_conj(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         use crate::ir::{gc_types, method_ids};
 
@@ -1871,9 +1871,12 @@ impl Lowerer {
         // Fast path: if we know the collection type at compile time
         if let Some(type_id) = self.infer_collection_type(&args[0]) {
             return match type_id {
-                t if t == gc_types::PERSISTENT_VECTOR => Ok(Expr::VecConj {
-                    vec: Box::new(coll),
-                    val: Box::new(val),
+                // Vector conj now uses protocol dispatch (core.suss implementation)
+                t if t == gc_types::PERSISTENT_VECTOR => Ok(Expr::ProtocolDispatch {
+                    obj: Box::new(coll),
+                    method_id: method_ids::CONJ,
+                    args: vec![val],
+                    in_tail_position: self.in_tail_position,
                 }),
                 t if t == gc_types::PERSISTENT_SET => Ok(Expr::SetConj {
                     set: Box::new(coll),

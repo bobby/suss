@@ -82,7 +82,7 @@ Function Index Layout:
 ### In Progress
 - [x] Array primitives: `aget`, `aset`, `alength`, `aclone`, `make-array`
 - [x] `bit-count` (popcnt for HAMT bitmap indexing)
-- [x] `nil?` check
+- [x] `nil?` check (handles both nil sentinel and null references)
 - [x] Parser fix for `nil?`, `true?`, `false?` symbols
 - [x] `deftype` basic implementation (Phase 3.1 - fields, constructor, field access, instance?)
 - [x] Reserved type indices for bootstrap (Phase 3.3)
@@ -90,6 +90,7 @@ Function Index Layout:
 - [x] Protocol method return type hints (`^i32` on `-count`, `-hash`, etc.)
 - [x] WIT param_offset propagation fix (unblocks VEC_CONJ migration)
 - [x] Protocol-from-protocol call fix (param_offset in dispatch table)
+- [x] VEC_CONJ migrated to core.suss (Phase 5 - first major protocol migration)
 - [ ] End-to-end verification of complex trie operations
 - [ ] `deftype` with inline protocols (Phase 3.2)
 
@@ -441,7 +442,9 @@ SET_COUNT, SET_CONTAINS, SET_CONJ
 - [x] Add built-in type deftypes to core.suss (Cons, PersistentVector, PersistentMap, PersistentSet)
 - [x] Enable constructor generation for reserved deftypes (`->PersistentVector`, etc.)
 - [x] Add `acopy` primitive for efficient array copying (WASM array.copy)
-- [ ] Migrate VEC_CONJ to core.suss (unblocked - WIT param_offset bug fixed)
+- [x] Migrate VEC_CONJ to core.suss with helper functions (`-vec-conj-overflow`, `-vec-conj-push`)
+- [x] Remove `Expr::VecConj` from ir.rs and `generate_vec_conj` from codegen.rs
+- [x] Update `generate_vec_new_large` to use protocol dispatch for large vector literals
 - [ ] Migrate SET_CONJ to core.suss (requires inode-assoc helper from Phase 6)
 - [ ] Remove remaining protocol_impl_funcs from codegen.rs
 - [ ] Dispatch table fully populated from core.suss extend-type declarations
@@ -567,6 +570,7 @@ The challenge is that protocol impls (Phase 5) call these helpers:
 ### Tasks
 
 **Phase 6a - Remove duplicate helpers (already in core.suss):**
+- [x] VEC_CONJ migrated to core.suss, hardcoded `generate_vec_conj` removed (~350 lines)
 - [ ] Switch protocol callers from `helper_func_idx()` to `core_func_idx()`
 - [ ] Remove `VEC_TAIL_OFF`, `VEC_NEW_PATH`, `VEC_ARRAY_FOR`, `VEC_PUSH_TAIL`
 - [ ] Remove `HAMT_BITPOS`, `HAMT_INDEX`
