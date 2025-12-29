@@ -91,6 +91,11 @@ Function Index Layout:
 - [x] WIT param_offset propagation fix (unblocks VEC_CONJ migration)
 - [x] Protocol-from-protocol call fix (param_offset in dispatch table)
 - [x] VEC_CONJ migrated to core.suss (Phase 5 - first major protocol migration)
+- [x] SET_CONJ migrated to core.suss via protocol dispatch
+- [x] MAP_ASSOC migrated to core.suss via protocol dispatch
+- [x] Collection literal desugaring (temporary inline approach - see note below)
+- [x] `get` and `contains?` now use protocol dispatch
+- [x] TCO with WIT-exported functions (function index offset fix in Component mode)
 - [ ] End-to-end verification of complex trie operations
 - [ ] `deftype` with inline protocols (Phase 3.2)
 
@@ -311,13 +316,13 @@ This enables core.suss to define HAMT node types at the **same indices** current
 - [x] Use specified index instead of allocating from user pool (gc_type_idx = reserved_type_id)
 - [x] Skip emitting GC types for reserved deftypes (they reuse built-in type slots)
 - [x] Skip constructor generation for reserved types (use hardcoded struct layouts)
-- [x] Added `LoweringMode` to handle function index differences between REPL and component compilation
+- [x] Added `LoweringMode` to distinguish REPL vs component compilation contexts
 
 **Key implementation notes:**
 - Reserved type IDs use `^:type-id N` syntax (simpler than `^{:type-id N}`)
 - Types with reserved IDs < NUM_GC_TYPES (39) reuse built-in GC type slots
 - Field access uses hardcoded mappings for reserved types (not user field lookup)
-- Component compilation uses `lower_for_component()` with no runtime helper offset
+- Both REPL and component modes use the same function index offset (runtime helpers are emitted in both)
 
 ### 3.4 Implementation Checklist
 
@@ -445,9 +450,25 @@ SET_COUNT, SET_CONTAINS, SET_CONJ
 - [x] Migrate VEC_CONJ to core.suss with helper functions (`-vec-conj-overflow`, `-vec-conj-push`)
 - [x] Remove `Expr::VecConj` from ir.rs and `generate_vec_conj` from codegen.rs
 - [x] Update `generate_vec_new_large` to use protocol dispatch for large vector literals
-- [ ] Migrate SET_CONJ to core.suss (requires inode-assoc helper from Phase 6)
+- [x] Migrate SET_CONJ to core.suss via `-conj` protocol dispatch
+- [x] Migrate MAP_ASSOC to core.suss via `-assoc` protocol dispatch
+- [x] Remove `Expr::MapAssoc`, `Expr::SetConj`, `Expr::MapGet`, `Expr::SetContains` from ir.rs
+- [x] Remove corresponding codegen functions (~400 lines of hardcoded WASM)
+- [x] Collection literal desugaring via inline `conj`/`assoc` calls (temporary - see note)
 - [ ] Remove remaining protocol_impl_funcs from codegen.rs
 - [ ] Dispatch table fully populated from core.suss extend-type declarations
+
+**Note: Temporary Literal Desugaring**
+
+Collection literals currently desugar to inline nested calls:
+- `[1 2 3]` → `(conj (conj (conj [] 1) 2) 3)`
+- `{1 2}` → `(assoc {} 1 2)`
+- `#{1 2}` → `(conj (conj #{} 1) 2)`
+
+This is temporary because multi-arity `defn` isn't yet supported. Once variadic functions (`& args`) are implemented, the desugaring should change to:
+- `[1 2 3]` → `(vector 1 2 3)` where `(defn vector [& args] (reduce conj [] args))`
+- `{1 2}` → `(hash-map 1 2)` where `(defn hash-map [& kvs] (apply assoc {} kvs))`
+- `#{1 2}` → `(hash-set 1 2)` where `(defn hash-set [& args] (reduce conj #{} args))`
 
 **Acceptance tests:**
 ```clojure
@@ -571,13 +592,18 @@ The challenge is that protocol impls (Phase 5) call these helpers:
 
 **Phase 6a - Remove duplicate helpers (already in core.suss):**
 - [x] VEC_CONJ migrated to core.suss, hardcoded `generate_vec_conj` removed (~350 lines)
+- [x] SET_CONJ migrated, hardcoded `generate_set_conj` removed (~150 lines)
+- [x] MAP_ASSOC migrated, hardcoded `generate_map_assoc` removed (~150 lines)
+- [x] MAP_GET removed, now uses protocol dispatch (~80 lines)
+- [x] SET_CONTAINS removed, now uses protocol dispatch (~100 lines)
 - [ ] Switch protocol callers from `helper_func_idx()` to `core_func_idx()`
 - [ ] Remove `VEC_TAIL_OFF`, `VEC_NEW_PATH`, `VEC_ARRAY_FOR`, `VEC_PUSH_TAIL`
 - [ ] Remove `HAMT_BITPOS`, `HAMT_INDEX`
 - [ ] Remove `INODE_FIND`, `BIN_FIND`, `AN_FIND`, `HCN_FIND`
 
 **Phase 6b - Add assoc helpers to core.suss:**
-- [ ] Implement `bin-assoc`, `an-assoc`, `hcn-assoc`, `inode-assoc`, `create-node`
+- [x] Implement `bin-assoc`, `inode-assoc` in core.suss
+- [ ] Implement `an-assoc`, `hcn-assoc`, `create-node` (for ArrayNode and HashCollisionNode)
 - [ ] Remove hardcoded versions from codegen.rs
 
 **Phase 6c - Add dissoc helpers to core.suss:**

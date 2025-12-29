@@ -878,14 +878,10 @@ impl Expr {
             Expr::VecCount(_) => Type::I32,
 
             Expr::MapNew(_) => Type::GcRef,
-            Expr::MapGet { .. } => Type::GcRef,
-            Expr::MapAssoc { .. } => Type::GcRef,
             Expr::MapDissoc { .. } => Type::GcRef,
             Expr::MapCount(_) => Type::I32,
 
             Expr::SetNew(_) => Type::GcRef,
-            Expr::SetContains { .. } => Type::I32, // Boolean result
-            Expr::SetConj { .. } => Type::GcRef,
             Expr::SetDisj { .. } => Type::GcRef,
             Expr::SetCount(_) => Type::I32,
 
@@ -1155,19 +1151,6 @@ pub enum Expr {
     /// Create a new persistent map from key-value pairs
     MapNew(Vec<(Expr, Expr)>),
 
-    /// Get value for key from persistent map (returns nil if not found)
-    MapGet {
-        map: Box<Expr>,
-        key: Box<Expr>,
-    },
-
-    /// Associate key with value in map (returns new map)
-    MapAssoc {
-        map: Box<Expr>,
-        key: Box<Expr>,
-        val: Box<Expr>,
-    },
-
     /// Remove key from map (returns new map)
     MapDissoc {
         map: Box<Expr>,
@@ -1184,18 +1167,6 @@ pub enum Expr {
 
     /// Create a new persistent set from elements
     SetNew(Vec<Expr>),
-
-    /// Test if set contains element
-    SetContains {
-        set: Box<Expr>,
-        key: Box<Expr>,
-    },
-
-    /// Add element to set (returns new set)
-    SetConj {
-        set: Box<Expr>,
-        val: Box<Expr>,
-    },
 
     /// Remove element from set (returns new set)
     SetDisj {

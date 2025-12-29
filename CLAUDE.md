@@ -235,9 +235,11 @@ pub struct DeftypeDef {
 
 // lower.rs
 pub enum LoweringMode {
-    Full,      // REPL: includes runtime helper offset (39)
-    Component, // compile_files: no runtime helpers
+    Full,      // REPL mode
+    Component, // compile_files mode (WIT exports)
 }
+// Note: Both modes use USER_FUNC_OFFSET (2) for function indices
+// because runtime helpers (hash_string, get_type_id) are emitted in both modes.
 ```
 
 **Implementation notes:**
@@ -257,11 +259,21 @@ Following ClojureScript semantics, `core.suss` is automatically loaded before us
 - Protocol definitions (ICounted, IIndexed, ISeq, ISeqable, ILookup, IAssociative, ICollection, IEquiv, IHash)
 - Protocol implementations via `extend-type`:
   - PersistentVector: `-nth`, `-first`, `-rest`, `-conj`, `-count`
-  - PersistentMap: `-lookup`, `-count`
-  - PersistentSet: `-lookup`, `-count`
+  - PersistentMap: `-lookup`, `-assoc`, `-count`
+  - PersistentSet: `-lookup`, `-conj`, `-count`
   - Cons: `-first`, `-rest`, `-count`
 - Vector trie helper functions (`tail-off`, `array-for`, `new-path`, `push-tail`, `-vec-conj-overflow`, `-vec-conj-push`)
 - HAMT helper functions (`hamt-mask`, `hamt-bitpos`, `hamt-index`, `bin-find`, `an-find`, `hcn-find`, `inode-find`, `bin-assoc`, `inode-assoc`)
+- User-facing functions (`cons`, `hash`)
+
+**Collection Literal Desugaring (Temporary):**
+
+Non-empty collection literals are desugared to inline `conj`/`assoc` calls in `lower.rs`:
+- `[1 2 3]` → `(conj (conj (conj [] 1) 2) 3)`
+- `{1 2}` → `(assoc {} 1 2)`
+- `#{1 2}` → `(conj (conj #{} 1) 2)`
+
+This is temporary until variadic functions are implemented, at which point they should desugar to `(vector ...)`, `(hash-map ...)`, `(hash-set ...)`.
 
 **Key file:** `crates/suss-compile/src/core.suss`
 

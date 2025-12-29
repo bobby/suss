@@ -817,6 +817,12 @@ impl Compiler {
         // Generate core WASM module
         let core_wasm = codegen::generate(&ir, &resolve, *world_id)?;
 
+        // Debug: dump core WASM before component encoding
+        #[cfg(debug_assertions)]
+        {
+            let _ = std::fs::write("/tmp/debug_core.wasm", &core_wasm);
+        }
+
         // Wrap as WASM Component
         component::encode_component(&core_wasm, &resolve, *world_id)
     }

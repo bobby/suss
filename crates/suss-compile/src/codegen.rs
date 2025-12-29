@@ -430,14 +430,29 @@ impl<'a> CodeGen<'a> {
         let mut module = WasmModule::new();
         let num_imports = self.num_imports();
 
+        // Count emitted deftypes (those not using reserved type IDs)
+        let emitted_deftypes = self.ir.deftypes
+            .iter()
+            .filter(|dt| dt.gc_type_idx >= gc_types::NUM_GC_TYPES)
+            .count() as u32;
+        // Base type index after GC types + user deftypes
+        let type_base = gc_types::NUM_GC_TYPES + emitted_deftypes;
+
         // Type section - GC types first, then import function types, then local function types
         // This ensures GC type indices (0..NUM_GC_TYPES-1) are preserved for struct/array ops.
         let mut types = TypeSection::new();
 
         // GC types (indices 0..NUM_GC_TYPES-1) - required for .-field, instance?, etc.
+        // Plus user deftypes (indices NUM_GC_TYPES..type_base-1)
         self.emit_gc_types(&mut types);
 
-        // Import function types (indices NUM_GC_TYPES..NUM_GC_TYPES+num_imports-1)
+        // Helper function types (indices type_base..type_base+NUM_HELPER_TYPES-1)
+        self.emit_helper_types(&mut types);
+
+        // Protocol function types
+        self.emit_protocol_types(&mut types);
+
+        // Import function types
         for import in &self.ir.imports {
             let params: Vec<ValType> = import
                 .params
@@ -452,7 +467,7 @@ impl<'a> CodeGen<'a> {
             types.ty().function(params, results);
         }
 
-        // Local function types (indices NUM_GC_TYPES+num_imports..)
+        // Local function types
         // Exported functions use WIT types (for component model compatibility)
         // Non-exported functions use GC types (eqref)
         for func in &self.ir.functions {
@@ -481,27 +496,39 @@ impl<'a> CodeGen<'a> {
         }
         module.section(&types);
 
+        // Calculate type offsets for imports and local functions
+        use crate::ir::protocol_types;
+        let import_type_base = type_base + NUM_HELPER_TYPES + protocol_types::NUM_PROTOCOL_TYPES;
+        let local_func_type_base = import_type_base + num_imports;
+
         // Import section - WASI functions
-        // Type indices are offset by NUM_GC_TYPES
         if !self.ir.imports.is_empty() {
             let mut imports = ImportSection::new();
             for (idx, import) in self.ir.imports.iter().enumerate() {
                 imports.import(
                     &import.wit_interface,
                     &import.function_name,
-                    EntityType::Function(gc_types::NUM_GC_TYPES + idx as u32),
+                    EntityType::Function(import_type_base + idx as u32),
                 );
             }
             module.section(&imports);
         }
 
-        // Function section - local function indices start after imports
-        // Type indices: NUM_GC_TYPES + num_imports + function_index
+        // Function section - helper functions first, then user functions
+        // Helper functions use type indices from helper_type_base
+        // User functions use type indices starting at local_func_type_base
         let mut functions = FunctionSection::new();
+        // Helper functions (hash_string, get_type_id)
+        functions.function(type_base + helper_type_offsets::HASH_STRING);
+        functions.function(type_base + helper_type_offsets::GET_TYPE_ID);
+        // User functions
         for (idx, _) in self.ir.functions.iter().enumerate() {
-            functions.function(gc_types::NUM_GC_TYPES + num_imports + idx as u32);
+            functions.function(local_func_type_base + idx as u32);
         }
         module.section(&functions);
+
+        // Table section - dispatch table for protocol methods
+        self.emit_table_section(&mut module);
 
         // Memory section
         self.emit_memory_section(&mut module);
@@ -513,16 +540,26 @@ impl<'a> CodeGen<'a> {
         let mut exports = ExportSection::new();
         exports.export("memory", ExportKind::Memory, 0);
 
+        // User functions come after imports + helper functions
+        let user_func_base = num_imports + NUM_RUNTIME_HELPERS;
         for (idx, func) in self.ir.functions.iter().enumerate() {
             if func.exported {
                 let name = func.export_name.as_deref().unwrap_or(&func.name);
-                exports.export(name, ExportKind::Func, num_imports + idx as u32);
+                exports.export(name, ExportKind::Func, user_func_base + idx as u32);
             }
         }
         module.section(&exports);
 
-        // Code section - use WIT marshaling for exported functions
+        // Element section - populate dispatch table
+        self.emit_element_section(&mut module);
+
+        // Code section - helper functions first, then user functions
         let mut code = CodeSection::new();
+        // Emit helper functions
+        self.emit_helper_functions(&mut code)?;
+        // Emit protocol implementation functions (if needed for dispatch table)
+        self.emit_protocol_impl_functions(&mut code)?;
+        // Emit user functions
         for func in &self.ir.functions {
             let function = if func.exported {
                 // Exported functions need WIT boundary marshaling
@@ -1443,261 +1480,18 @@ impl<'a> CodeGen<'a> {
             })); // root (null for empty)
             f.instruction(&Instruction::StructNew(pm_gc_idx));
 
-            // For each pair, assoc it into the map
+            // For each pair, assoc it into the map via protocol dispatch
             for (key, val) in pairs {
                 // Stack: [current_map]
                 // Push key and val
                 self.generate_expr(key, f)?;
                 self.generate_expr(val, f)?;
                 // Stack: [current_map, key, val]
-                self.generate_map_assoc_impl(f)?;
+                // Call -assoc via protocol dispatch (method_id=1, 2 args)
+                self.generate_protocol_dispatch_stack(crate::ir::method_ids::ASSOC, 2, f)?;
                 // Stack: [new_map]
             }
         }
-        Ok(())
-    }
-
-    /// Generate map lookup (get)
-    ///
-    /// Algorithm:
-    /// 1. Get root from map
-    /// 2. If root is null, return nil
-    /// 3. Compute hash(key)
-    /// 4. Call inode_find(root, 0, hash, key, nil)
-    fn generate_map_get(
-        &self,
-        map: &Expr,
-        key: &Expr,
-        f: &mut Function,
-    ) -> CompileResult<()> {
-        use crate::ir::gc_types;
-
-        // Look up PersistentMap type index dynamically
-        let pm_gc_idx = self.deftype_gc_type_idx("PersistentMap")
-            .ok_or_else(|| CompileError::Unsupported("PersistentMap deftype not found".to_string()))?;
-
-        // Look up helper functions dynamically
-        let hash_idx = self.func_idx_by_name("hash")
-            .ok_or_else(|| CompileError::Unsupported("hash function not found".to_string()))?;
-        let inode_find_idx = self.func_idx_by_name("inode-find")
-            .ok_or_else(|| CompileError::Unsupported("inode-find function not found".to_string()))?;
-
-        // Use scratch locals matching layout: +0: eqref, +1: i32, +2: eqref
-        let scratch_base = self.scratch_local.get();
-        // Bump scratch_local so nested expressions use different locals
-        self.scratch_local.set(scratch_base + 5);
-
-        let key_local = scratch_base;       // eqref at +0
-        let root_local = scratch_base + 2;  // eqref at +2
-
-        // Evaluate and store key
-        self.generate_expr(key, f)?;
-        f.instruction(&Instruction::LocalSet(key_local));
-
-        // Evaluate map and get root
-        self.generate_expr(map, f)?;
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pm_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pm_gc_idx,
-            field_index: 2, // root (field 0 is type_id, field 1 is cnt)
-        });
-        f.instruction(&Instruction::LocalSet(root_local));
-
-        // Check if root is null
-        let eqref = ValType::Ref(RefType::EQREF);
-        f.instruction(&Instruction::LocalGet(root_local));
-        f.instruction(&Instruction::RefIsNull);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-
-        // Root is null - return nil
-        f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-        f.instruction(&Instruction::RefI31);
-
-        f.instruction(&Instruction::Else);
-
-        // Root exists - call inode_find(root, shift, hash, key, not_found)
-        // All args must be boxed eqref
-        f.instruction(&Instruction::LocalGet(root_local)); // root (already eqref)
-
-        // Box shift = 0
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Shl);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Or);
-        f.instruction(&Instruction::RefI31);
-
-        // hash(key) - already returns boxed
-        f.instruction(&Instruction::LocalGet(key_local));
-        f.instruction(&Instruction::Call(hash_idx));
-
-        f.instruction(&Instruction::LocalGet(key_local)); // key (already eqref)
-
-        // not_found = nil
-        f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-        f.instruction(&Instruction::RefI31);
-
-        f.instruction(&Instruction::Call(inode_find_idx));
-
-        f.instruction(&Instruction::End); // end null check
-
-        // Restore scratch_local
-        self.scratch_local.set(scratch_base);
-
-        Ok(())
-    }
-
-    /// Generate map association (assoc)
-    fn generate_map_assoc(
-        &self,
-        map: &Expr,
-        key: &Expr,
-        val: &Expr,
-        f: &mut Function,
-    ) -> CompileResult<()> {
-        self.generate_expr(map, f)?;
-        self.generate_expr(key, f)?;
-        self.generate_expr(val, f)?;
-        self.generate_map_assoc_impl(f)
-    }
-
-    /// Implementation of map assoc when values are on stack
-    ///
-    /// Stack: [map, key, val]
-    ///
-    /// Algorithm:
-    /// 1. Get root and cnt from map
-    /// 2. Compute hash(key)
-    /// 3. If root is null: create BitmapIndexedNode with single entry
-    /// 4. Else: call inode_assoc(root, 0, hash, key, val)
-    /// 5. Create new PersistentMap(cnt+1, new_root)
-    fn generate_map_assoc_impl(&self, f: &mut Function) -> CompileResult<()> {
-        use crate::ir::gc_types;
-
-        // Look up type indices dynamically
-        let pm_gc_idx = self.deftype_gc_type_idx("PersistentMap")
-            .ok_or_else(|| CompileError::Unsupported("PersistentMap deftype not found".to_string()))?;
-        let pm_type_id = self.deftype_type_id("PersistentMap")
-            .ok_or_else(|| CompileError::Unsupported("PersistentMap deftype not found".to_string()))?;
-        let bin_gc_idx = self.deftype_gc_type_idx("BitmapIndexedNode")
-            .ok_or_else(|| CompileError::Unsupported("BitmapIndexedNode deftype not found".to_string()))?;
-        let bin_type_id = self.deftype_type_id("BitmapIndexedNode")
-            .ok_or_else(|| CompileError::Unsupported("BitmapIndexedNode deftype not found".to_string()))?;
-
-        // Look up helper functions dynamically
-        let hash_idx = self.func_idx_by_name("hash")
-            .ok_or_else(|| CompileError::Unsupported("hash function not found".to_string()))?;
-        let hamt_bitpos_idx = self.func_idx_by_name("hamt-bitpos")
-            .ok_or_else(|| CompileError::Unsupported("hamt-bitpos function not found".to_string()))?;
-        let inode_assoc_idx = self.func_idx_by_name("inode-assoc")
-            .ok_or_else(|| CompileError::Unsupported("inode-assoc function not found".to_string()))?;
-
-        // Use scratch locals matching layout: +0: eqref, +1: i32, +2-4: eqref
-        let scratch_base = self.scratch_local.get();
-        let val_local = scratch_base;        // eqref at +0
-        let cnt_local = scratch_base + 1;    // i32 at +1
-        let key_local = scratch_base + 2;    // eqref at +2
-        let map_local = scratch_base + 3;    // eqref at +3
-        let root_local = scratch_base + 4;   // eqref at +4
-
-        // Stack is [map, key, val] - store in reverse order
-        f.instruction(&Instruction::LocalSet(val_local));
-        f.instruction(&Instruction::LocalSet(key_local));
-        f.instruction(&Instruction::LocalSet(map_local));
-
-        // Get root and cnt from map
-        f.instruction(&Instruction::LocalGet(map_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pm_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pm_gc_idx,
-            field_index: 2, // root (field 0 is type_id, field 1 is cnt)
-        });
-        f.instruction(&Instruction::LocalSet(root_local));
-
-        f.instruction(&Instruction::LocalGet(map_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pm_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pm_gc_idx,
-            field_index: 1, // cnt
-        });
-        f.instruction(&Instruction::LocalSet(cnt_local));
-
-        // Check if root is null
-        let eqref = ValType::Ref(RefType::EQREF);
-        f.instruction(&Instruction::LocalGet(root_local));
-        f.instruction(&Instruction::RefIsNull);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-
-        // Root is null - create BitmapIndexedNode with single entry
-        // BitmapIndexedNode(bitpos(hash, 0), [key, val])
-        f.instruction(&Instruction::I32Const(bin_type_id));
-
-        // Call hamt-bitpos(hash(key), 0)
-        // hamt-bitpos takes [hash shift] both boxed
-        // First arg: boxed hash
-        f.instruction(&Instruction::LocalGet(key_local));
-        f.instruction(&Instruction::Call(hash_idx)); // Returns boxed hash
-
-        // Second arg: boxed shift = 0
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Shl);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Or);
-        f.instruction(&Instruction::RefI31);
-
-        f.instruction(&Instruction::Call(hamt_bitpos_idx));
-        // Unbox hamt-bitpos result for struct field
-        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-        f.instruction(&Instruction::I31GetS);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32ShrS);
-
-        // [key, val]
-        f.instruction(&Instruction::LocalGet(key_local));
-        f.instruction(&Instruction::LocalGet(val_local));
-        f.instruction(&Instruction::ArrayNewFixed {
-            array_type_index: gc_types::TRIE_NODE,
-            array_size: 2,
-        });
-        f.instruction(&Instruction::StructNew(bin_gc_idx));
-
-        f.instruction(&Instruction::Else);
-
-        // Root exists - call inode_assoc(root, 0, hash(key), key, val)
-        f.instruction(&Instruction::LocalGet(root_local)); // root
-        // Box shift = 0
-        f.instruction(&Instruction::I32Const(0)); // shift = 0
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Shl);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Or);
-        f.instruction(&Instruction::RefI31);
-
-        // hash(key) - already boxed
-        f.instruction(&Instruction::LocalGet(key_local));
-        f.instruction(&Instruction::Call(hash_idx));
-
-        f.instruction(&Instruction::LocalGet(key_local)); // key
-        f.instruction(&Instruction::LocalGet(val_local)); // val
-
-        f.instruction(&Instruction::Call(inode_assoc_idx));
-
-        f.instruction(&Instruction::End); // end null check
-
-        // Stack now has new_root
-        // Create new PersistentMap(cnt+1, new_root)
-        // But first we need to store new_root
-        let new_root_local = scratch_base + 5;
-        f.instruction(&Instruction::LocalSet(new_root_local));
-
-        f.instruction(&Instruction::I32Const(pm_type_id));
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add); // cnt + 1
-        f.instruction(&Instruction::LocalGet(new_root_local));
-        f.instruction(&Instruction::StructNew(pm_gc_idx));
-
         Ok(())
     }
 
@@ -1735,271 +1529,16 @@ impl<'a> CodeGen<'a> {
             f.instruction(&Instruction::I32Const(0)); // marker field
             f.instruction(&Instruction::StructNew(ps_gc_idx));
 
-            // For each element, conj it into the set
+            // For each element, conj it into the set via protocol dispatch
             for elem in elements {
                 // Stack: [current_set]
                 self.generate_expr(elem, f)?;
                 // Stack: [current_set, elem]
-                self.generate_set_conj_impl(f)?;
+                // Call -conj via protocol dispatch (method_id=4, 1 arg)
+                self.generate_protocol_dispatch_stack(crate::ir::method_ids::CONJ, 1, f)?;
                 // Stack: [new_set]
             }
         }
-        Ok(())
-    }
-
-    /// Generate set membership test (contains?)
-    ///
-    /// Returns true (i31ref 4) if key is in set, false (i31ref 2) otherwise.
-    fn generate_set_contains(
-        &self,
-        set: &Expr,
-        key: &Expr,
-        f: &mut Function,
-    ) -> CompileResult<()> {
-        use crate::ir::gc_types;
-
-        // Look up type indices dynamically
-        let ps_gc_idx = self.deftype_gc_type_idx("PersistentSet")
-            .ok_or_else(|| CompileError::Unsupported("PersistentSet deftype not found".to_string()))?;
-
-        // Look up helper functions dynamically
-        let hash_idx = self.func_idx_by_name("hash")
-            .ok_or_else(|| CompileError::Unsupported("hash function not found".to_string()))?;
-        let inode_find_idx = self.func_idx_by_name("inode-find")
-            .ok_or_else(|| CompileError::Unsupported("inode-find function not found".to_string()))?;
-
-        // Use scratch locals
-        let scratch_base = self.scratch_local.get();
-        self.scratch_local.set(scratch_base + 5);
-
-        let eqref = ValType::Ref(RefType::EQREF);
-        let key_local = scratch_base;       // eqref at +0
-        let root_local = scratch_base + 2;  // eqref at +2
-        let result_local = scratch_base + 3; // eqref at +3
-
-        // Evaluate and store key
-        self.generate_expr(key, f)?;
-        f.instruction(&Instruction::LocalSet(key_local));
-
-        // Evaluate set and get root
-        // PersistentSet fields: 0=type_id, 1=set-cnt, 2=set-root, 3=_marker
-        self.generate_expr(set, f)?;
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(ps_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: ps_gc_idx,
-            field_index: 2, // set-root
-        });
-        f.instruction(&Instruction::LocalSet(root_local));
-
-        // Check if root is null
-        f.instruction(&Instruction::LocalGet(root_local));
-        f.instruction(&Instruction::RefIsNull);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-
-        // Root is null - return false (i31ref 2)
-        f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
-        f.instruction(&Instruction::RefI31);
-
-        f.instruction(&Instruction::Else);
-
-        // Root exists - call inode_find(root, 0, hash(key), key, nil)
-        f.instruction(&Instruction::LocalGet(root_local)); // root
-
-        // Boxed shift = 0
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Shl);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Or);
-        f.instruction(&Instruction::RefI31);
-
-        // hash(key)
-        f.instruction(&Instruction::LocalGet(key_local));
-        f.instruction(&Instruction::Call(hash_idx));
-
-        f.instruction(&Instruction::LocalGet(key_local)); // key
-
-        // not_found = nil
-        f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-        f.instruction(&Instruction::RefI31);
-
-        f.instruction(&Instruction::Call(inode_find_idx));
-        f.instruction(&Instruction::LocalSet(result_local));
-
-        // Compare result with nil using ref.eq
-        // Create nil reference for comparison
-        f.instruction(&Instruction::LocalGet(result_local));
-        f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-        f.instruction(&Instruction::RefI31);
-        f.instruction(&Instruction::RefEq);
-
-        // If result == nil, return false; else return true
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-        f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL)); // false
-        f.instruction(&Instruction::RefI31);
-        f.instruction(&Instruction::Else);
-        f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL)); // true
-        f.instruction(&Instruction::RefI31);
-        f.instruction(&Instruction::End);
-
-        f.instruction(&Instruction::End); // end null check
-
-        // Restore scratch_local
-        self.scratch_local.set(scratch_base);
-
-        Ok(())
-    }
-
-    /// Generate set conjunction (conj)
-    fn generate_set_conj(
-        &self,
-        set: &Expr,
-        val: &Expr,
-        f: &mut Function,
-    ) -> CompileResult<()> {
-        // Bump scratch_local so nested expressions use different locals
-        let scratch_base = self.scratch_local.get();
-        self.scratch_local.set(scratch_base + 5);
-
-        self.generate_expr(set, f)?;
-        self.generate_expr(val, f)?;
-
-        // Restore scratch_local before calling impl
-        self.scratch_local.set(scratch_base);
-        self.generate_set_conj_impl(f)
-    }
-
-    /// Implementation of set conj when values are on stack
-    ///
-    /// Stack: [set, val]
-    ///
-    /// For sets, we store val as both key and value in the HAMT.
-    fn generate_set_conj_impl(&self, f: &mut Function) -> CompileResult<()> {
-        use crate::ir::gc_types;
-
-        // Look up type indices dynamically
-        let ps_gc_idx = self.deftype_gc_type_idx("PersistentSet")
-            .ok_or_else(|| CompileError::Unsupported("PersistentSet deftype not found".to_string()))?;
-        let ps_type_id = self.deftype_type_id("PersistentSet")
-            .ok_or_else(|| CompileError::Unsupported("PersistentSet deftype not found".to_string()))?;
-        let bin_gc_idx = self.deftype_gc_type_idx("BitmapIndexedNode")
-            .ok_or_else(|| CompileError::Unsupported("BitmapIndexedNode deftype not found".to_string()))?;
-        let bin_type_id = self.deftype_type_id("BitmapIndexedNode")
-            .ok_or_else(|| CompileError::Unsupported("BitmapIndexedNode deftype not found".to_string()))?;
-
-        // Look up helper functions dynamically
-        let hash_idx = self.func_idx_by_name("hash")
-            .ok_or_else(|| CompileError::Unsupported("hash function not found".to_string()))?;
-        let hamt_bitpos_idx = self.func_idx_by_name("hamt-bitpos")
-            .ok_or_else(|| CompileError::Unsupported("hamt-bitpos function not found".to_string()))?;
-        let inode_assoc_idx = self.func_idx_by_name("inode-assoc")
-            .ok_or_else(|| CompileError::Unsupported("inode-assoc function not found".to_string()))?;
-
-        // Use scratch locals matching layout: +0: eqref, +1: i32, +2-4: eqref
-        let scratch_base = self.scratch_local.get();
-        let val_local = scratch_base;        // eqref at +0
-        let cnt_local = scratch_base + 1;    // i32 at +1
-        let set_local = scratch_base + 2;    // eqref at +2
-        let root_local = scratch_base + 3;   // eqref at +3
-
-        // Stack is [set, val] - store in reverse order
-        f.instruction(&Instruction::LocalSet(val_local));
-        f.instruction(&Instruction::LocalSet(set_local));
-
-        // Get root and cnt from set
-        // PersistentSet fields: 0=type_id, 1=set-cnt, 2=set-root, 3=_marker
-        f.instruction(&Instruction::LocalGet(set_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(ps_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: ps_gc_idx,
-            field_index: 2, // set-root
-        });
-        f.instruction(&Instruction::LocalSet(root_local));
-
-        f.instruction(&Instruction::LocalGet(set_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(ps_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: ps_gc_idx,
-            field_index: 1, // set-cnt
-        });
-        f.instruction(&Instruction::LocalSet(cnt_local));
-
-        // Check if root is null
-        let eqref = ValType::Ref(RefType::EQREF);
-        f.instruction(&Instruction::LocalGet(root_local));
-        f.instruction(&Instruction::RefIsNull);
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(eqref)));
-
-        // Root is null - create BitmapIndexedNode with single entry
-        // BitmapIndexedNode(bitpos(hash, 0), [val, val]) - key=val, val=val
-        f.instruction(&Instruction::I32Const(bin_type_id));
-
-        // Call hamt-bitpos(hash(val), 0)
-        // First arg: boxed hash
-        f.instruction(&Instruction::LocalGet(val_local));
-        f.instruction(&Instruction::Call(hash_idx)); // Returns boxed hash
-
-        // Second arg: boxed shift = 0
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Shl);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Or);
-        f.instruction(&Instruction::RefI31);
-
-        f.instruction(&Instruction::Call(hamt_bitpos_idx));
-        // Unbox hamt-bitpos result for struct field
-        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-        f.instruction(&Instruction::I31GetS);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32ShrS);
-
-        // [val, val] - key and value are the same for sets
-        f.instruction(&Instruction::LocalGet(val_local));
-        f.instruction(&Instruction::LocalGet(val_local));
-        f.instruction(&Instruction::ArrayNewFixed {
-            array_type_index: gc_types::TRIE_NODE,
-            array_size: 2,
-        });
-        f.instruction(&Instruction::StructNew(bin_gc_idx));
-
-        f.instruction(&Instruction::Else);
-
-        // Root exists - call inode_assoc(root, 0, hash(val), val, val)
-        f.instruction(&Instruction::LocalGet(root_local)); // root
-
-        // Boxed shift = 0
-        f.instruction(&Instruction::I32Const(0));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Shl);
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Or);
-        f.instruction(&Instruction::RefI31);
-
-        // hash(val)
-        f.instruction(&Instruction::LocalGet(val_local));
-        f.instruction(&Instruction::Call(hash_idx));
-
-        f.instruction(&Instruction::LocalGet(val_local)); // key = val
-        f.instruction(&Instruction::LocalGet(val_local)); // val = val
-
-        f.instruction(&Instruction::Call(inode_assoc_idx));
-
-        f.instruction(&Instruction::End); // end null check
-
-        // Stack now has new_root
-        // Create new PersistentSet(type_id, cnt+1, new_root, marker)
-        let new_root_local = scratch_base + 4;
-        f.instruction(&Instruction::LocalSet(new_root_local));
-
-        f.instruction(&Instruction::I32Const(ps_type_id));
-        f.instruction(&Instruction::LocalGet(cnt_local));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Add); // cnt + 1
-        f.instruction(&Instruction::LocalGet(new_root_local));
-        f.instruction(&Instruction::I32Const(0)); // marker field
-        f.instruction(&Instruction::StructNew(ps_gc_idx));
-
         Ok(())
     }
 
@@ -2142,16 +1681,17 @@ impl<'a> CodeGen<'a> {
         let scratch_base = func.locals.len() as u32;
         self.scratch_local.set(scratch_base);
 
-        // Add 25 scratch locals (5 sets of 5, for nested operations):
+        // Add 50 scratch locals (10 sets of 5, for nested operations):
         // Each operation (protocol dispatch, set conj, map assoc) uses 5 locals,
-        // and nested calls bump by 5. We allow up to 5 levels of nesting.
-        // Scratch locals layout per set (repeated 5x for nesting):
+        // and nested calls bump by 5. We allow up to 10 levels of nesting.
+        // This handles desugared vectors like [1 2 3 4 5 6 7 8 9] inside apply.
+        // Scratch locals layout per set (repeated 10x for nesting):
         //   +0: eqref (protocol dispatch, vec storage)
         //   +1: i32 (count, index)
         //   +2: eqref (new tail, temp)
         //   +3: eqref (old tail, temp)
         //   +4: eqref (extra temp)
-        for _ in 0..5 {
+        for _ in 0..10 {
             local_types.push((1, ValType::Ref(RefType::EQREF))); // scratch +0
             local_types.push((1, ValType::I32));                  // scratch +1
             local_types.push((1, ValType::Ref(RefType::EQREF))); // scratch +2
@@ -2365,13 +1905,17 @@ impl<'a> CodeGen<'a> {
                 Ok(())
             }
             Expr::Call { func, args } => {
-                // Check if target function is exported (needs WIT marshaling)
+                // Check if target function is exported (needs WIT marshaling for i32 <-> eqref)
+                //
+                // Function indices are: [imports][helpers][user functions]
+                // To find the IR function index, we subtract imports and helpers.
                 let num_imports = self.num_imports();
-                let is_exported = if *func >= num_imports {
-                    let local_idx = (*func - num_imports) as usize;
+                let user_func_base = num_imports + NUM_RUNTIME_HELPERS;
+                let is_exported = if *func >= user_func_base {
+                    let local_idx = (*func - user_func_base) as usize;
                     self.ir.functions.get(local_idx).map_or(false, |f| f.exported)
                 } else {
-                    false // Imports use WIT types directly
+                    false // Imports/helpers don't need marshaling
                 };
 
                 for arg in args {
@@ -2400,11 +1944,12 @@ impl<'a> CodeGen<'a> {
             Expr::TailCall { func, args } => {
                 // Check if target function is exported (needs WIT marshaling)
                 let num_imports = self.num_imports();
-                let is_exported = if *func >= num_imports {
-                    let local_idx = (*func - num_imports) as usize;
+                let user_func_base = num_imports + NUM_RUNTIME_HELPERS;
+                let is_exported = if *func >= user_func_base {
+                    let local_idx = (*func - user_func_base) as usize;
                     self.ir.functions.get(local_idx).map_or(false, |f| f.exported)
                 } else {
-                    false
+                    false // Imports/helpers don't need marshaling
                 };
 
                 for arg in args {
@@ -3656,14 +3201,6 @@ impl<'a> CodeGen<'a> {
                 self.generate_map_new(pairs, f)?;
             }
 
-            Expr::MapGet { map, key } => {
-                self.generate_map_get(map, key, f)?;
-            }
-
-            Expr::MapAssoc { map, key, val } => {
-                self.generate_map_assoc(map, key, val, f)?;
-            }
-
             Expr::MapCount(map) => {
                 // Look up PersistentMap type index dynamically
                 let pm_idx = self.deftype_gc_type_idx("PersistentMap")
@@ -3694,14 +3231,6 @@ impl<'a> CodeGen<'a> {
 
             Expr::SetNew(elements) => {
                 self.generate_set_new(elements, f)?;
-            }
-
-            Expr::SetContains { set, key } => {
-                self.generate_set_contains(set, key, f)?;
-            }
-
-            Expr::SetConj { set, val } => {
-                self.generate_set_conj(set, val, f)?;
             }
 
             Expr::SetDisj { set, val } => {
@@ -4053,6 +3582,10 @@ impl<'a> CodeGen<'a> {
         let closure_local = scratch_base; // eqref at +0
         let count_local = scratch_base + 1; // i32 at +1
         let vec_local = scratch_base + 2; // eqref at +2
+
+        // Reserve our scratch locals before generating subexpressions
+        // This prevents nested expressions (like desugared vectors) from overwriting them
+        self.scratch_local.set(scratch_base + 5);
 
         // Evaluate and store closure
         self.generate_expr(func, f)?;
@@ -5005,6 +4538,63 @@ impl<'a> CodeGen<'a> {
         // Restore scratch_local
         self.scratch_local.set(scratch);
 
+        Ok(())
+    }
+
+    /// Generate protocol dispatch when obj and args are already on the stack.
+    ///
+    /// Stack: [obj, arg1, arg2, ...] (args in order after obj)
+    /// After: [result]
+    ///
+    /// This is used internally by collection literal codegen where we build
+    /// collections incrementally and the intermediate value is on the stack.
+    fn generate_protocol_dispatch_stack(
+        &self,
+        method_id: u32,
+        num_args: u32,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::dispatch_table;
+        use crate::ir::method_ids;
+
+        let scratch = self.scratch_local.get();
+        self.scratch_local.set(scratch + 5);
+
+        let obj_local = scratch;         // eqref at +0
+        let type_id_local = scratch + 1; // i32 at +1
+        let args_base = scratch + 2;     // eqref locals at +2, +3, +4
+
+        // Stack is [obj, arg1, arg2, ...] - save in reverse order
+        for i in (0..num_args).rev() {
+            f.instruction(&Instruction::LocalSet(args_base + i));
+        }
+        f.instruction(&Instruction::LocalTee(obj_local));
+
+        // Get type ID
+        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));
+        f.instruction(&Instruction::LocalSet(type_id_local));
+
+        // Push obj and args back on stack for the call
+        f.instruction(&Instruction::LocalGet(obj_local));
+        for i in 0..num_args {
+            f.instruction(&Instruction::LocalGet(args_base + i));
+        }
+
+        // Calculate table index: type_id * NUM_BUILTIN + method_id
+        f.instruction(&Instruction::LocalGet(type_id_local));
+        f.instruction(&Instruction::I32Const(method_ids::NUM_BUILTIN as i32));
+        f.instruction(&Instruction::I32Mul);
+        f.instruction(&Instruction::I32Const(method_id as i32));
+        f.instruction(&Instruction::I32Add);
+
+        // Get the correct type index and call_indirect
+        let type_idx = self.protocol_type_index_for_method(method_id);
+        f.instruction(&Instruction::CallIndirect {
+            type_index: type_idx,
+            table_index: dispatch_table::TABLE_INDEX,
+        });
+
+        self.scratch_local.set(scratch);
         Ok(())
     }
 

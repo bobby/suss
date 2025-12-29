@@ -5,7 +5,7 @@
 use std::collections::HashMap;
 
 use num_traits::ToPrimitive;
-use suss_core::{Edn, Number};
+use suss_core::{Edn, Number, Symbol};
 
 use crate::analyze::{
     AnalyzedModule, AnalyzedFunction, AnalyzedGlobal,
@@ -272,13 +272,20 @@ impl Lowerer {
             .sum();
 
         // Build function index map
-        // In Full mode: indices start after imports + runtime helpers + protocol impls + deftype constructors
-        // In Component mode: indices start after imports + deftype constructors (no runtime helpers)
+        //
+        // Function indices in the generated WASM are laid out as:
+        //   [0..N)                          - WASI/WIT imports
+        //   [N..N+H)                        - Runtime helpers (hash_string, get_type_id)
+        //   [N+H..N+H+C)                    - Deftype constructors
+        //   [N+H+C..N+H+C+F)                - User functions (core.suss + user code)
+        //
+        // Where: N = num_imports, H = NUM_RUNTIME_HELPERS (2), C = num_deftype_constructors
+        //
+        // IMPORTANT: Both REPL and Component modes use the same offset because runtime
+        // helpers are emitted in both modes. This ensures function calls work correctly
+        // in both contexts.
         use crate::ir::gc_types;
-        let func_offset = match self.mode {
-            LoweringMode::Full => gc_types::USER_FUNC_OFFSET,
-            LoweringMode::Component => 0,
-        };
+        let func_offset = gc_types::USER_FUNC_OFFSET;
         for (idx, func) in analyzed.functions.iter().enumerate() {
             let func_idx = self.num_imports + func_offset + num_deftype_constructors + idx as u32;
             self.func_indices.insert(func.name.clone(), func_idx);
@@ -538,30 +545,67 @@ impl Lowerer {
             }
 
             Edn::Vector(items) => {
-                // GC mode: create persistent vector
-                let elements: Vec<Expr> = items
-                    .iter()
-                    .map(|item| self.lower_expr(item))
-                    .collect::<Result<_, _>>()?;
-                Ok(Expr::VecNew(elements))
+                if items.is_empty() {
+                    // Empty vector: use VecNew for minimal codegen
+                    Ok(Expr::VecNew(vec![]))
+                } else {
+                    // Desugar [1 2 3] -> (conj (conj (conj [] 1) 2) 3)
+                    // Start with empty vector
+                    let mut result = Edn::Vector(vec![]);
+                    // Wrap each element with (conj ... elem)
+                    for item in items {
+                        let conj_call = Edn::List(vec![
+                            Edn::Symbol(Symbol::new("conj")),
+                            result,
+                            item.clone(),
+                        ]);
+                        result = conj_call;
+                    }
+                    self.lower_expr(&result)
+                }
             }
 
             Edn::Map(pairs) => {
-                // GC mode: create persistent map
-                let lowered_pairs: Vec<(Expr, Expr)> = pairs
-                    .iter()
-                    .map(|(k, v)| Ok((self.lower_expr(k)?, self.lower_expr(v)?)))
-                    .collect::<Result<_, CompileError>>()?;
-                Ok(Expr::MapNew(lowered_pairs))
+                if pairs.is_empty() {
+                    // Empty map: use MapNew for minimal codegen
+                    Ok(Expr::MapNew(vec![]))
+                } else {
+                    // Desugar {1 2 3 4} -> (assoc (assoc {} 1 2) 3 4)
+                    // Start with empty map
+                    let mut result = Edn::Map(vec![]);
+                    // Wrap each pair with (assoc ... k v)
+                    for (k, v) in pairs {
+                        let assoc_call = Edn::List(vec![
+                            Edn::Symbol(Symbol::new("assoc")),
+                            result,
+                            k.clone(),
+                            v.clone(),
+                        ]);
+                        result = assoc_call;
+                    }
+                    self.lower_expr(&result)
+                }
             }
 
             Edn::Set(items) => {
-                // GC mode: create persistent set
-                let elements: Vec<Expr> = items
-                    .iter()
-                    .map(|item| self.lower_expr(item))
-                    .collect::<Result<_, _>>()?;
-                Ok(Expr::SetNew(elements))
+                if items.is_empty() {
+                    // Empty set: use SetNew for minimal codegen
+                    Ok(Expr::SetNew(vec![]))
+                } else {
+                    // Desugar #{1 2 3} -> (conj (conj (conj #{} 1) 2) 3)
+                    // Start with empty set
+                    let mut result = Edn::Set(vec![]);
+                    // Wrap each element with (conj ... elem)
+                    for item in items {
+                        let conj_call = Edn::List(vec![
+                            Edn::Symbol(Symbol::new("conj")),
+                            result,
+                            item.clone(),
+                        ]);
+                        result = conj_call;
+                    }
+                    self.lower_expr(&result)
+                }
             }
 
             _ => Err(CompileError::Unsupported(format!(
@@ -1878,9 +1922,11 @@ impl Lowerer {
                     args: vec![val],
                     in_tail_position: self.in_tail_position,
                 }),
-                t if t == gc_types::PERSISTENT_SET => Ok(Expr::SetConj {
-                    set: Box::new(coll),
-                    val: Box::new(val),
+                t if t == gc_types::PERSISTENT_SET => Ok(Expr::ProtocolDispatch {
+                    obj: Box::new(coll),
+                    method_id: method_ids::CONJ,
+                    args: vec![val],
+                    in_tail_position: self.in_tail_position,
                 }),
                 t if t == gc_types::CONS => {
                     // For lists, conj adds to the front (like cons)
@@ -1974,10 +2020,15 @@ impl Lowerer {
         // Fast path: if we know the collection type at compile time
         if let Some(type_id) = self.infer_collection_type(&args[0]) {
             return match type_id {
-                t if t == gc_types::PERSISTENT_MAP => Ok(Expr::MapGet {
-                    map: Box::new(coll),
-                    key: Box::new(key),
-                }),
+                t if t == gc_types::PERSISTENT_MAP => {
+                    // Use protocol dispatch for maps (MapGet has local variable issues)
+                    Ok(Expr::ProtocolDispatch {
+                        obj: Box::new(coll),
+                        method_id: method_ids::LOOKUP,
+                        args: vec![key],
+                        in_tail_position: self.in_tail_position,
+                    })
+                }
                 t if t == gc_types::PERSISTENT_VECTOR => {
                     // For vectors, get is like nth
                     Ok(Expr::VecNth {
@@ -2003,7 +2054,7 @@ impl Lowerer {
         })
     }
 
-    /// Lower (assoc map key val) -> MapAssoc
+    /// Lower (assoc map key val) -> ProtocolDispatch for IAssociative/-assoc
     fn lower_assoc(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         if args.len() != 3 {
             return Err(CompileError::Parse(
@@ -2013,15 +2064,19 @@ impl Lowerer {
         let map = self.lower_expr(&args[0])?;
         let key = self.lower_expr(&args[1])?;
         let val = self.lower_expr(&args[2])?;
-        Ok(Expr::MapAssoc {
-            map: Box::new(map),
-            key: Box::new(key),
-            val: Box::new(val),
+        Ok(Expr::ProtocolDispatch {
+            obj: Box::new(map),
+            method_id: method_ids::ASSOC,
+            args: vec![key, val],
+            in_tail_position: self.in_tail_position,
         })
     }
 
-    /// Lower (contains? set key) -> SetContains
+    /// Lower (contains? set key) using protocol dispatch
+    /// Desugars to: (if (nil? (-lookup set key)) false true)
     fn lower_contains(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        use crate::ir::method_ids;
+
         if args.len() != 2 {
             return Err(CompileError::Parse(
                 "contains? requires exactly 2 arguments: set and key".into(),
@@ -2031,9 +2086,24 @@ impl Lowerer {
         let (set, key) = self.with_tail_disabled(|l| {
             Ok((l.lower_expr(&args[0])?, l.lower_expr(&args[1])?))
         })?;
-        Ok(Expr::SetContains {
-            set: Box::new(set),
-            key: Box::new(key),
+
+        // Use protocol dispatch to call -lookup, then check if result is not nil
+        let lookup = Expr::ProtocolDispatch {
+            obj: Box::new(set),
+            method_id: method_ids::LOOKUP,
+            args: vec![key],
+            in_tail_position: false,
+        };
+
+        // Check if the result is nil
+        let nil_check = Expr::NilCheck(Box::new(lookup));
+
+        // Return false if nil, true otherwise
+        Ok(Expr::If {
+            cond: Box::new(nil_check),
+            then_branch: Box::new(Expr::Bool(false)),
+            else_branch: Box::new(Expr::Bool(true)),
+            ty: Type::GcRef, // Returns boxed boolean
         })
     }
 
@@ -2562,11 +2632,8 @@ impl Lowerer {
         // 1. deftype constructors (added in lower_deftypes)
         // 2. analyzed functions (added after lower_deftypes)
         // 3. closures (added after analyzed functions)
-        let func_offset = match self.mode {
-            LoweringMode::Full => gc_types::USER_FUNC_OFFSET,
-            LoweringMode::Component => 0,
-        };
-        let func_idx = self.num_imports + func_offset + self.module.functions.len() as u32;
+        // Runtime helpers are emitted in both modes
+        let func_idx = self.num_imports + gc_types::USER_FUNC_OFFSET + self.module.functions.len() as u32;
 
         self.func_indices.insert(constructor_name.clone(), func_idx);
 
@@ -2747,12 +2814,9 @@ impl Lowerer {
         );
 
         // Calculate function index for func_indices (with all offsets for call resolution)
-        let func_offset = match self.mode {
-            LoweringMode::Full => gc_types::USER_FUNC_OFFSET,
-            LoweringMode::Component => 0,
-        };
+        // Runtime helpers are emitted in both modes
         let full_func_idx = self.num_imports
-            + func_offset
+            + gc_types::USER_FUNC_OFFSET
             + self.pending_closures.len() as u32
             + self.module.functions.len() as u32;
 

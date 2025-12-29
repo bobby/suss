@@ -319,6 +319,13 @@
   (-first [c] (.-first c))
   (-rest [c] (.-rest c))
 
+  IIndexed
+  (-nth [c idx]
+    (loop [coll c i idx]
+      (if (= i 0)
+        (.-first coll)
+        (recur (.-rest coll) (- i 1)))))
+
   ICounted
   (-count [c]
     (loop [coll c cnt 0]
@@ -392,7 +399,21 @@
         (inode-find root 0 (hash key) key nil))))
 
   ICounted
-  (-count [m] (.-map-cnt m)))
+  (-count [m] (.-map-cnt m))
+
+  IAssociative
+  (-assoc [m key val]
+    (let [root (.-map-root m)
+          cnt (.-map-cnt m)
+          h (hash key)]
+      (if (nil? root)
+        ;; Empty map: create BitmapIndexedNode with single entry [key, val]
+        (let [arr (make-array 2)]
+          (aset arr 0 key)
+          (aset arr 1 val)
+          (->PersistentMap (+ cnt 1) (->BitmapIndexedNode (hamt-bitpos h 0) arr)))
+        ;; Non-empty: use inode-assoc
+        (->PersistentMap (+ cnt 1) (inode-assoc root 0 h key val))))))
 
 (extend-type PersistentSet
   ILookup
@@ -403,4 +424,18 @@
         (inode-find root 0 (hash key) key nil))))
 
   ICounted
-  (-count [s] (.-set-cnt s)))
+  (-count [s] (.-set-cnt s))
+
+  ICollection
+  (-conj [s val]
+    (let [root (.-set-root s)
+          cnt (.-set-cnt s)
+          h (hash val)]
+      (if (nil? root)
+        ;; Empty set: create BitmapIndexedNode with single entry [val, val]
+        (let [arr (make-array 2)]
+          (aset arr 0 val)
+          (aset arr 1 val)
+          (->PersistentSet (+ cnt 1) (->BitmapIndexedNode (hamt-bitpos h 0) arr) 0))
+        ;; Non-empty: use inode-assoc (key=val, value=val for sets)
+        (->PersistentSet (+ cnt 1) (inode-assoc root 0 h val val) 0)))))

@@ -1916,3 +1916,58 @@ fn dump_set_count_wasm_for_debug() {
     eprintln!("Written to /tmp/debug_set_count.wasm");
 }
 
+
+#[test]
+#[ignore]
+fn dump_tco_core_wasm() {
+    use std::io::Write;
+    use suss_compile::Compiler;
+    
+    let source = r#"
+(defn ^:export sum [n acc]
+  (if (<= n 0)
+    acc
+    (sum (dec n) (+ acc n))))
+"#;
+
+    let wit = r#"
+package test:tco;
+world tco {
+    export sum: func(n: s32, acc: s32) -> s32;
+}
+"#;
+
+    // Create temp files
+    let mut suss_file = tempfile::Builder::new()
+        .suffix(".suss")
+        .tempfile()
+        .expect("failed to create temp suss file");
+    suss_file.write_all(source.as_bytes()).expect("failed to write suss");
+
+    let mut wit_file = tempfile::Builder::new()
+        .suffix(".wit")
+        .tempfile()
+        .expect("failed to create temp wit file");
+    wit_file.write_all(wit.as_bytes()).expect("failed to write wit");
+
+    // Use a debug method to get core WASM
+    let mut compiler = Compiler::new();
+    let result = compiler
+        .compile_files(suss_file.path().to_str().unwrap(), wit_file.path().to_str().unwrap());
+    eprintln!("Result: {:?}", result);
+}
+
+#[test]
+#[ignore]
+fn dump_tco_repl_wasm() {
+    let mut compiler = Compiler::new();
+    let wasm = compiler.compile_expr("
+(defn sum [n acc]
+  (if (<= n 0)
+    acc
+    (sum (- n 1) (+ acc n))))
+(sum 5 0)
+").unwrap();
+    std::fs::write("/tmp/tco_repl.wasm", &wasm).unwrap();
+    eprintln!("Wrote /tmp/tco_repl.wasm");
+}
