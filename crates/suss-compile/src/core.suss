@@ -332,21 +332,15 @@
     (aget (array-for v idx) (bit-and idx 31)))
 
   ISeq
-  ;; NOTE: Inlined array-for call instead of calling (-nth v 0) because
-  ;; protocol-from-protocol calls have a bug in Component lowering mode.
-  ;; TODO: Fix the underlying issue and restore (-nth v 0) call.
+  ;; Protocol-from-protocol calls now work after param_offset fix.
   (-first [v]
     (if (> (.-cnt v) 0)
-      (aget (array-for v 0) 0)
+      (-nth v 0)
       nil))
   (-rest [v] nil))  ;; TODO: ChunkedSeq/IndexedSeq
 
-;; ICollection/-conj implementation is blocked by a codegen bug in WIT mode.
-;; In generate_expr_wit_inner, the fallthrough to generate_expr at line 6533
-;; loses the param_offset context, causing StructNew and other expressions
-;; to use incorrect local indices in the WIT local layout.
-;; See: VEC_CONJ migration blocked in Phase 5.
-;; For now, VEC_CONJ remains in codegen.rs as a hardcoded wrapper.
+;; TODO: VEC_CONJ migration - param_offset bug is now fixed.
+;; Move ICollection/-conj implementation here from codegen.rs.
 
 (extend-type PersistentMap
   ILookup

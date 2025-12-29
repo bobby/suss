@@ -89,6 +89,7 @@ Function Index Layout:
 - [x] Bootstrap HAMT nodes in core.suss (Phase 4)
 - [x] Protocol method return type hints (`^i32` on `-count`, `-hash`, etc.)
 - [x] WIT param_offset propagation fix (unblocks VEC_CONJ migration)
+- [x] Protocol-from-protocol call fix (param_offset in dispatch table)
 - [ ] End-to-end verification of complex trie operations
 - [ ] `deftype` with inline protocols (Phase 3.2)
 
@@ -96,7 +97,7 @@ Function Index Layout:
 - None currently blocking
 
 ### Known Bugs
-- **Protocol-from-protocol calls in Component mode**: Calling a protocol method from within another protocol method implementation (e.g., `-first` calling `-nth`) generates invalid WASM in `LoweringMode::Component`. The workaround is to inline the implementation. Works correctly in `LoweringMode::Full` (expression mode). Issue manifests as "type mismatch: expected eqref but nothing on stack" during WASM validation. Root cause likely in scratch local allocation during `generate_protocol_dispatch_table`.
+- None currently known
 
 ---
 

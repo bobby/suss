@@ -4106,11 +4106,11 @@ impl<'a> CodeGen<'a> {
                 args,
                 in_tail_position,
             } => {
-                self.generate_protocol_dispatch(obj, *method_id, args, *in_tail_position, f)?;
+                self.generate_protocol_dispatch(obj, *method_id, args, *in_tail_position, f, param_offset)?;
             }
 
             Expr::GetTypeId(value) => {
-                self.generate_get_type_id(value, f)?;
+                self.generate_get_type_id(value, f, param_offset)?;
             }
 
             // =========================================================================
@@ -5227,8 +5227,9 @@ impl<'a> CodeGen<'a> {
         args: &[Expr],
         in_tail_position: bool,
         f: &mut Function,
+        param_offset: u32,
     ) -> CompileResult<()> {
-        self.generate_protocol_dispatch_table(obj, method_id, args, in_tail_position, f)
+        self.generate_protocol_dispatch_table(obj, method_id, args, in_tail_position, f, param_offset)
     }
 
     /// Generate table-based protocol dispatch using call_indirect.
@@ -5259,6 +5260,7 @@ impl<'a> CodeGen<'a> {
         args: &[Expr],
         in_tail_position: bool,
         f: &mut Function,
+        param_offset: u32,
     ) -> CompileResult<()> {
         use crate::ir::dispatch_table;
         use crate::ir::method_ids;
@@ -5274,12 +5276,12 @@ impl<'a> CodeGen<'a> {
 
         // 1. Evaluate and save args to scratch locals
         for (i, arg) in args.iter().enumerate() {
-            self.generate_expr(arg, f)?;
+            self.generate_expr_inner(arg, f, 0, param_offset)?;
             f.instruction(&Instruction::LocalSet(args_base + i as u32));
         }
 
         // 2. Evaluate obj and save to scratch local
-        self.generate_expr(obj, f)?;
+        self.generate_expr_inner(obj, f, 0, param_offset)?;
         f.instruction(&Instruction::LocalTee(obj_local));
 
         // 3. Call $get_type_id to get runtime type ID
@@ -5363,9 +5365,9 @@ impl<'a> CodeGen<'a> {
     /// - 256+ for user-defined types
     ///
     /// Calls the $get_type_id helper function which uses a chain of ref.test checks.
-    fn generate_get_type_id(&self, value: &Expr, f: &mut Function) -> CompileResult<()> {
+    fn generate_get_type_id(&self, value: &Expr, f: &mut Function, param_offset: u32) -> CompileResult<()> {
         // Generate the value - it will be on the stack as eqref
-        self.generate_expr(value, f)?;
+        self.generate_expr_inner(value, f, 0, param_offset)?;
 
         // Call the $get_type_id helper function
         f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));
