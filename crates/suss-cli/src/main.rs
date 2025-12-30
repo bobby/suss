@@ -42,6 +42,9 @@ fn run_command(cmd: args::Command) {
         args::Command::CompileFile { source, world_wit, output } => {
             compile_file(&source, &world_wit, &output);
         }
+        args::Command::CompileMain { source, namespace, output } => {
+            compile_main(&source, &namespace, &output);
+        }
         args::Command::CompileProject { world, config_path } => {
             compile_project(world.as_deref(), config_path.as_deref());
         }
@@ -311,6 +314,34 @@ fn compile_file(source_path: &str, wit_path: &str, output_path: &str) {
     }
 }
 
+/// Compile a Suss file with -main function to a CLI command component
+fn compile_main(source_path: &str, namespace: &str, output_path: &str) {
+    let source = match std::fs::read_to_string(source_path) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("Error reading file '{}': {}", source_path, e);
+            std::process::exit(1);
+        }
+    };
+
+    let mut compiler = suss_compile::Compiler::new();
+
+    match compiler.compile_for_main(&source, namespace) {
+        Ok(wasm) => {
+            if let Err(e) = std::fs::write(output_path, &wasm) {
+                eprintln!("Error writing output file '{}': {}", output_path, e);
+                std::process::exit(1);
+            }
+            println!("Compiled {} -> {} ({} bytes)", source_path, output_path, wasm.len());
+            println!("Run with: suss run {} --invoke run", output_path);
+        }
+        Err(e) => {
+            eprintln!("Compilation error: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
+
 /// Compile a project from deps.suss configuration
 fn compile_project(world: Option<&str>, config_path: Option<&str>) {
     use std::path::Path;
@@ -406,9 +437,10 @@ fn run_component_impl(path: &str, invoke: &str, args: &[String]) -> Result<(), S
         }
     }
 
-    // Enable component model
+    // Enable component model and GC
     let mut config = Config::new();
     config.wasm_component_model(true);
+    config.wasm_gc(true);
     let engine = Engine::new(&config)
         .map_err(|e| format!("Failed to create engine: {}", e))?;
 

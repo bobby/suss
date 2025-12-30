@@ -4777,6 +4777,7 @@ fn type_to_valtype(ty: &Type) -> ValType {
 /// Get all ValTypes for a type (strings need ptr+len pair)
 fn type_to_valtypes(ty: &Type) -> Vec<ValType> {
     match ty {
+        Type::Unit => vec![], // No return value for unit type
         Type::String => vec![ValType::I32, ValType::I32],
         Type::List(_) => vec![ValType::I32, ValType::I32],
         _ => vec![type_to_valtype(ty)],

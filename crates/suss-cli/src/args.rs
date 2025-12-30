@@ -14,10 +14,16 @@ pub enum Command {
     Eval { expr: String },
     /// Run a file
     RunFile { path: String },
-    /// Compile a source file to a WASM component (file mode)
+    /// Compile a source file to a WASM component (file mode with WIT)
     CompileFile {
         source: String,
         world_wit: String,
+        output: String,
+    },
+    /// Compile a source file to a CLI command component (main mode)
+    CompileMain {
+        source: String,
+        namespace: String,
         output: String,
     },
     /// Compile a project from deps.suss
@@ -77,12 +83,14 @@ pub fn parse_args() -> Result<Command, lexopt::Error> {
 
 /// Parse the compile subcommand arguments
 ///
-/// Supports two modes:
+/// Supports three modes:
 /// 1. File mode: `suss compile src.suss -w world.wit -o out.wasm`
-/// 2. Project mode: `suss compile` or `suss compile --world :app/v1`
+/// 2. Main mode: `suss compile src.suss -m namespace -o out.wasm`
+/// 3. Project mode: `suss compile` or `suss compile --world :app/v1`
 fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
     let mut source: Option<String> = None;
     let mut world_wit: Option<String> = None;
+    let mut main_ns: Option<String> = None;
     let mut output: Option<String> = None;
     let mut world_target: Option<String> = None;
     let mut config_path: Option<String> = None;
@@ -92,6 +100,10 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             Short('w') | Long("wit") => {
                 // -w/--wit for WIT file in file mode
                 world_wit = Some(parser.value()?.string()?);
+            }
+            Short('m') | Long("main") => {
+                // -m/--main for main mode (CLI command component)
+                main_ns = Some(parser.value()?.string()?);
             }
             Long("world") => {
                 // --world for world name in project mode
@@ -111,15 +123,26 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
     }
 
     // Determine mode based on arguments
-    if source.is_some() && world_wit.is_some() && output.is_some() {
-        // File mode: explicit source, WIT, and output
-        Ok(Command::CompileFile {
-            source: source.unwrap(),
-            world_wit: world_wit.unwrap(),
-            output: output.unwrap(),
+    if source.is_some() && main_ns.is_some() {
+        // Main mode: compile with -main function
+        let source = source.unwrap();
+        let output = output.unwrap_or_else(|| source.replace(".suss", ".wasm"));
+        Ok(Command::CompileMain {
+            source,
+            namespace: main_ns.unwrap(),
+            output,
         })
-    } else if source.is_none() || (source.is_some() && world_wit.is_none()) {
-        // Project mode: no source file, or source without -w (treat as config path)
+    } else if source.is_some() && world_wit.is_some() {
+        // File mode: explicit source and WIT
+        let source = source.unwrap();
+        let output = output.unwrap_or_else(|| source.replace(".suss", ".wasm"));
+        Ok(Command::CompileFile {
+            source,
+            world_wit: world_wit.unwrap(),
+            output,
+        })
+    } else if source.is_none() || world_wit.is_none() {
+        // Project mode: no source file, or source without -w/-m
         if source.is_some() && config_path.is_none() {
             // Treat the positional arg as config path if no -c specified
             config_path = source;
@@ -131,7 +154,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
     } else {
         // Invalid combination
         Err(lexopt::Error::MissingValue {
-            option: Some("-o/--output (required for file mode)".to_string()),
+            option: Some("-o/--output or -m/--main or -w/--wit required".to_string()),
         })
     }
 }

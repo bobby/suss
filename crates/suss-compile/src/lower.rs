@@ -451,8 +451,9 @@ impl Lowerer {
             params.push((name.clone(), ty.clone()));
         }
 
-        // Lower body - function body is in tail position
-        self.in_tail_position = true;
+        // Lower body - function body is in tail position UNLESS the function returns Unit
+        // (because Unit return type means we need to drop the result, not return it)
+        self.in_tail_position = func.return_type != Type::Unit;
         let body = self.lower_expr(&func.body)?;
         self.in_tail_position = false;
 
