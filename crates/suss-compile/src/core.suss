@@ -272,9 +272,7 @@
               (->BitmapIndexedNode bitmap new-arr))
             ;; Hash collision or different key at this slot
             ;; Create a new subtree with both entries
-            (let [new-child (inode-assoc
-                              (inode-assoc nil (+ shift 5) (hash key-or-nil) key-or-nil val-or-node)
-                              (+ shift 5) hash key val)
+            (let [new-child (create-node (+ shift 5) key-or-nil val-or-node hash key val)
                   new-arr (aclone arr)]
               (aset new-arr (* 2 idx) nil)  ;; Mark as subtree
               (aset new-arr (+ (* 2 idx) 1) new-child)
@@ -290,6 +288,79 @@
         ;; Copy entries after new slot
         (acopy new-arr (* 2 (+ idx 1)) arr (* 2 idx) (* 2 (- n idx)))
         (->BitmapIndexedNode (bit-or bitmap bit) new-arr)))))
+
+(defn an-assoc
+  "ArrayNode assoc - 32-slot direct indexing.
+   Each slot is either nil or a child node."
+  [node shift hash key val]
+  (let [idx (hamt-mask hash shift)
+        arr (.-an-arr node)
+        child (aget arr idx)
+        new-child (inode-assoc child (+ shift 5) hash key val)
+        new-arr (aclone arr)
+        cnt (.-an-cnt node)
+        new-cnt (if (and (nil? child) (not (nil? new-child)))
+                  (+ cnt 1)
+                  cnt)]
+    (aset new-arr idx new-child)
+    (->ArrayNode new-cnt new-arr)))
+
+(defn hcn-assoc
+  "HashCollisionNode assoc - linear scan for matching key.
+   All entries have the same hash value."
+  [node hash key val]
+  (let [cnt (.-hcn-cnt node)
+        arr (.-hcn-arr node)]
+    ;; Search for existing key
+    (loop [i 0]
+      (if (>= i cnt)
+        ;; Key not found - add new entry
+        (let [new-arr (make-array (* 2 (+ cnt 1)))]
+          (acopy new-arr 0 arr 0 (* 2 cnt))
+          (aset new-arr (* 2 cnt) key)
+          (aset new-arr (+ (* 2 cnt) 1) val)
+          (->HashCollisionNode hash (+ cnt 1) new-arr))
+        ;; Check if key matches
+        (if (= key (aget arr (* 2 i)))
+          ;; Update existing value
+          (let [new-arr (aclone arr)]
+            (aset new-arr (+ (* 2 i) 1) val)
+            (->HashCollisionNode hash cnt new-arr))
+          (recur (+ i 1)))))))
+
+(defn create-node
+  "Create a node containing two key-value pairs.
+   If hashes differ at this level: BitmapIndexedNode with both.
+   If hashes are identical: HashCollisionNode."
+  [shift key1 val1 key2hash key2 val2]
+  (let [key1hash (hash key1)]
+    (if (= key1hash key2hash)
+      ;; Same hash - create HashCollisionNode
+      (let [arr (make-array 4)]
+        (aset arr 0 key1)
+        (aset arr 1 val1)
+        (aset arr 2 key2)
+        (aset arr 3 val2)
+        (->HashCollisionNode key1hash 2 arr))
+      ;; Different hashes - create BitmapIndexedNode
+      (let [bit1 (hamt-bitpos key1hash shift)
+            bit2 (hamt-bitpos key2hash shift)]
+        (if (= bit1 bit2)
+          ;; Same bit position - recurse deeper
+          (let [child (create-node (+ shift 5) key1 val1 key2hash key2 val2)
+                arr (make-array 2)]
+            (aset arr 0 nil)  ;; nil key marks subtree
+            (aset arr 1 child)
+            (->BitmapIndexedNode bit1 arr))
+          ;; Different bit positions - two entries
+          (let [arr (make-array 4)]
+            (if (< (hamt-index (bit-or bit1 bit2) bit1)
+                   (hamt-index (bit-or bit1 bit2) bit2))
+              (do (aset arr 0 key1) (aset arr 1 val1)
+                  (aset arr 2 key2) (aset arr 3 val2))
+              (do (aset arr 0 key2) (aset arr 1 val2)
+                  (aset arr 2 key1) (aset arr 3 val1)))
+            (->BitmapIndexedNode (bit-or bit1 bit2) arr)))))))
 
 (defn inode-assoc
   "Type-dispatching assoc for any HAMT node type.
@@ -307,8 +378,176 @@
     (instance? BitmapIndexedNode node)
     (bin-assoc node shift hash key val)
 
-    ;; TODO: ArrayNode and HashCollisionNode assoc
+    (instance? ArrayNode node)
+    (an-assoc node shift hash key val)
+
+    (instance? HashCollisionNode node)
+    (hcn-assoc node hash key val)
+
     :else node))
+
+;; ============================================================
+;; HAMT Dissoc Functions
+;; ============================================================
+
+(defn remove-pair
+  "Remove key-value pair at index i from array.
+   Returns new array with 2 fewer elements."
+  [arr i]
+  (let [len (alength arr)
+        new-arr (make-array (- len 2))]
+    ;; Copy entries before removed pair
+    (acopy new-arr 0 arr 0 (* 2 i))
+    ;; Copy entries after removed pair
+    (acopy new-arr (* 2 i) arr (* 2 (+ i 1)) (- len (* 2 (+ i 1))))
+    new-arr))
+
+(defn hcn-find-index
+  "Find index of key in HashCollisionNode array.
+   Returns the key index (0, 1, 2, ...) or -1 if not found."
+  [arr cnt key]
+  (loop [i 0]
+    (if (>= i cnt)
+      -1
+      (if (= key (aget arr (* 2 i)))
+        i
+        (recur (+ i 1))))))
+
+(defn bin-dissoc
+  "Remove a key from a BitmapIndexedNode.
+   Returns new node, or nil if this was the only entry.
+   NOTE: Caller should verify key exists before calling (can't compare node refs)."
+  [node shift hash key]
+  (let [bit (hamt-bitpos hash shift)
+        bitmap (.-bitmap node)]
+    (if (= (bit-and bitmap bit) 0)
+      ;; Bit not set - key not found
+      node
+      ;; Bit set - look up entry
+      (let [idx (hamt-index bitmap bit)
+            arr (.-bin-arr node)
+            key-or-nil (aget arr (* 2 idx))
+            val-or-node (aget arr (+ (* 2 idx) 1))]
+        (if (nil? key-or-nil)
+          ;; Subtree - recurse into child
+          (let [n (inode-dissoc val-or-node (+ shift 5) hash key)]
+            (cond
+              ;; Child shrunk but not nil - update reference
+              (not (nil? n))
+              (let [new-arr (aclone arr)]
+                (aset new-arr (+ (* 2 idx) 1) n)
+                (->BitmapIndexedNode bitmap new-arr))
+              ;; Child became nil - remove this entry
+              (= bitmap bit) nil  ;; Was the only entry
+              :else (->BitmapIndexedNode (bit-xor bitmap bit) (remove-pair arr idx))))
+          ;; Leaf entry - check if key matches
+          (if (= key key-or-nil)
+            ;; Key matches - remove it
+            (if (= bitmap bit)
+              nil  ;; Was the only entry
+              (->BitmapIndexedNode (bit-xor bitmap bit) (remove-pair arr idx)))
+            ;; Key doesn't match - not found
+            node))))))
+
+(defn an-dissoc
+  "Remove a key from an ArrayNode.
+   Returns new node, or nil if empty after removal.
+   NOTE: Caller should verify key exists before calling (can't compare node refs)."
+  [node shift hash key]
+  (let [idx (hamt-mask hash shift)
+        arr (.-an-arr node)
+        child (aget arr idx)]
+    (if (nil? child)
+      ;; No child at this index - not found
+      node
+      ;; Recurse into child
+      (let [n (inode-dissoc child (+ shift 5) hash key)
+            cnt (.-an-cnt node)]
+        (cond
+          ;; Child became nil - decrement count
+          (nil? n)
+          (if (= cnt 1)
+            nil  ;; Was the only child
+            (let [new-arr (aclone arr)]
+              (aset new-arr idx nil)
+              (->ArrayNode (- cnt 1) new-arr)))
+          ;; Child shrunk but not nil - update reference
+          :else
+          (let [new-arr (aclone arr)]
+            (aset new-arr idx n)
+            (->ArrayNode cnt new-arr)))))))
+
+(defn hcn-dissoc
+  "Remove a key from a HashCollisionNode.
+   Returns new node, or nil if this was the only entry."
+  [node hash key]
+  (let [cnt (.-hcn-cnt node)
+        arr (.-hcn-arr node)
+        idx (hcn-find-index arr cnt key)]
+    (cond
+      ;; Key not found
+      (= idx -1) node
+      ;; Only one entry - return nil
+      (= cnt 1) nil
+      ;; Multiple entries - remove this one
+      :else (->HashCollisionNode hash (- cnt 1) (remove-pair arr idx)))))
+
+(defn inode-dissoc
+  "Type-dispatching dissoc for any HAMT node type."
+  [node shift hash key]
+  (cond
+    (nil? node) nil
+
+    (instance? BitmapIndexedNode node)
+    (bin-dissoc node shift hash key)
+
+    (instance? ArrayNode node)
+    (an-dissoc node shift hash key)
+
+    (instance? HashCollisionNode node)
+    (hcn-dissoc node hash key)
+
+    :else node))
+
+;; ============================================================
+;; User-Facing Dissoc/Disj Functions
+;; ============================================================
+
+(defn dissoc
+  "Dissoc[iate]. Returns a new map without the mapping for key."
+  [m key]
+  (if (nil? m)
+    nil
+    (let [root (.-map-root m)
+          cnt (.-map-cnt m)
+          h (hash key)]
+      (if (nil? root)
+        m  ;; Empty map, nothing to remove
+        ;; Check if key exists first, then remove
+        (if (nil? (inode-find root 0 h key nil))
+          m  ;; Key not found, return unchanged
+          (let [new-root (inode-dissoc root 0 h key)]
+            (if (nil? new-root)
+              (->PersistentMap 0 nil)  ;; Map is now empty
+              (->PersistentMap (- cnt 1) new-root))))))))
+
+(defn disj
+  "Disj[oin]. Returns a new set without key."
+  [s key]
+  (if (nil? s)
+    nil
+    (let [root (.-set-root s)
+          cnt (.-set-cnt s)
+          h (hash key)]
+      (if (nil? root)
+        s  ;; Empty set, nothing to remove
+        ;; Check if key exists first, then remove
+        (if (nil? (inode-find root 0 h key nil))
+          s  ;; Key not found, return unchanged
+          (let [new-root (inode-dissoc root 0 h key)]
+            (if (nil? new-root)
+              (->PersistentSet 0 nil 0)  ;; Set is now empty
+              (->PersistentSet (- cnt 1) new-root 0))))))))
 
 ;; ============================================================
 ;; Protocol Implementations

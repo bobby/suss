@@ -1404,14 +1404,13 @@ fn test_set_chained_conj() {
 }
 
 // =========================================================
-// Set disj Tests (stub implementation - returns original set)
+// Set disj Tests
 // =========================================================
 
 #[test]
 fn test_set_disj_compiles() {
-    // Just verify disj compiles and runs
-    // Stub returns original set, so count is still 3
-    assert_eq!(run_expr_i32("(count (disj #{1 2 3} 2))"), 3);
+    // disj removes element from set, reducing count
+    assert_eq!(run_expr_i32("(count (disj #{1 2 3} 2))"), 2);
 }
 
 #[test]
@@ -1427,14 +1426,13 @@ fn test_set_disj_nonexistent_element() {
 }
 
 // =========================================================
-// Map dissoc Tests (stub implementation - returns original map)
+// Map dissoc Tests
 // =========================================================
 
 #[test]
 fn test_map_dissoc_compiles() {
-    // Just verify dissoc compiles and runs
-    // Stub returns original map, so count is still 2
-    assert_eq!(run_expr_i32("(count (dissoc {1 2 3 4} 1))"), 2);
+    // dissoc removes key from map, reducing count
+    assert_eq!(run_expr_i32("(count (dissoc {1 2 3 4} 1))"), 1);
 }
 
 #[test]
@@ -1896,6 +1894,34 @@ fn dump_div_wasm() {
     std::fs::write("/tmp/div_test.wasm", &wasm).unwrap();
 }
 
+#[test]
+fn dump_anon_variadic_wasm() {
+    let mut compiler = suss_compile::Compiler::new();
+    let wasm = compiler.compile_expr("((fn [& args] 42) 1 2 3)").unwrap();
+    std::fs::write("/tmp/anon_var.wasm", &wasm).unwrap();
+}
+
+#[test]
+fn dump_defn_variadic_wasm() {
+    let mut compiler = suss_compile::Compiler::new();
+    let wasm = compiler.compile_expr("(defn vartest [& args] (aget args 0)) (vartest 1 2 3)").unwrap();
+    std::fs::write("/tmp/defn_var.wasm", &wasm).unwrap();
+}
+
+#[test]
+fn dump_defn_fixed_rest_wasm() {
+    let mut compiler = suss_compile::Compiler::new();
+    let wasm = compiler.compile_expr("(defn greet [greeting & names] 42) (greet \"Hello\" \"Alice\")").unwrap();
+    std::fs::write("/tmp/fixed_rest.wasm", &wasm).unwrap();
+}
+
+#[test]
+fn dump_closure_capture_wasm() {
+    let mut compiler = suss_compile::Compiler::new();
+    let wasm = compiler.compile_expr("(let [x 10] ((fn [y] (+ x y)) 5))").unwrap();
+    std::fs::write("/tmp/closure_capture.wasm", &wasm).unwrap();
+}
+
 // =============================================================================
 // Variadic Apply Tests (Part 2)
 // =============================================================================
@@ -2040,6 +2066,16 @@ fn dump_closure_wasm_for_debug() {
     let wasm_bytes = compiler.compile_expr(expr).expect("compilation failed");
     std::fs::write("/tmp/conj_debug.wasm", &wasm_bytes).expect("write failed");
     println!("Wrote {} bytes to /tmp/conj_debug.wasm", wasm_bytes.len());
+}
+
+#[test]
+#[ignore]
+fn dump_variadic_mixed_wasm() {
+    let expr = r#"(defn greet [greeting & names] greeting) (greet "Hello" "Alice")"#;
+    let mut compiler = Compiler::new();
+    let wasm_bytes = compiler.compile_expr(expr).expect("compilation failed");
+    std::fs::write("/tmp/variadic_mixed.wasm", &wasm_bytes).expect("write failed");
+    println!("Wrote {} bytes to /tmp/variadic_mixed.wasm", wasm_bytes.len());
 }
 
 #[test]

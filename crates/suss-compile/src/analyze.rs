@@ -132,6 +132,8 @@ pub struct AnalyzedFunction {
     pub exported: bool,
     pub export_name: Option<String>,
     pub params: Vec<(String, Type)>,
+    /// Rest parameter name for variadic functions (e.g., "args" in [a b & args])
+    pub rest_param: Option<String>,
     pub return_type: Type,
     /// Explicit return type hint from ^type metadata (e.g., "i32", "i64", "f64")
     pub return_type_hint: Option<String>,
@@ -457,7 +459,7 @@ impl<'a> Analyzer<'a> {
             return Err(CompileError::Parse("defn requires parameters vector".into()));
         }
 
-        let params = self.parse_params(&items[params_idx])?;
+        let (params, rest_param) = self.parse_params(&items[params_idx])?;
 
         // Body is everything after params
         let body = if items.len() - params_idx - 1 == 1 {
@@ -478,6 +480,7 @@ impl<'a> Analyzer<'a> {
             exported,
             export_name,
             params,
+            rest_param,
             return_type,
             return_type_hint,
             body,
@@ -703,21 +706,51 @@ impl<'a> Analyzer<'a> {
         }
     }
 
-    fn parse_params(&self, params: &Edn) -> CompileResult<Vec<(String, Type)>> {
+    /// Parse parameters, returning (fixed_params, rest_param)
+    /// Handles variadic syntax: [a b & rest]
+    fn parse_params(&self, params: &Edn) -> CompileResult<(Vec<(String, Type)>, Option<String>)> {
         match params {
             Edn::Vector(items) => {
-                items
-                    .iter()
-                    .map(|item| {
-                        match item {
-                            Edn::Symbol(sym) => {
-                                // Type will be inferred from WIT or usage
-                                Ok((sym.name.clone(), Type::Unknown))
+                let mut fixed_params = Vec::new();
+                let mut rest_param = None;
+                let mut saw_ampersand = false;
+
+                for item in items {
+                    match item {
+                        Edn::Symbol(sym) => {
+                            if sym.name == "&" {
+                                if saw_ampersand {
+                                    return Err(CompileError::Parse(
+                                        "Multiple & in parameter list".into(),
+                                    ));
+                                }
+                                saw_ampersand = true;
+                            } else if saw_ampersand {
+                                if rest_param.is_some() {
+                                    return Err(CompileError::Parse(
+                                        "Only one parameter allowed after &".into(),
+                                    ));
+                                }
+                                rest_param = Some(sym.name.clone());
+                            } else {
+                                fixed_params.push((sym.name.clone(), Type::Unknown));
                             }
-                            _ => Err(CompileError::Parse("Expected symbol in parameter list".into())),
                         }
-                    })
-                    .collect()
+                        _ => {
+                            return Err(CompileError::Parse(
+                                "Expected symbol in parameter list".into(),
+                            ))
+                        }
+                    }
+                }
+
+                if saw_ampersand && rest_param.is_none() {
+                    return Err(CompileError::Parse(
+                        "& must be followed by a parameter name".into(),
+                    ));
+                }
+
+                Ok((fixed_params, rest_param))
             }
             _ => Err(CompileError::Parse("Expected vector for parameters".into())),
         }

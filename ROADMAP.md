@@ -96,8 +96,8 @@ Function Index Layout:
 - [x] Collection literal desugaring (temporary inline approach - see note below)
 - [x] `get` and `contains?` now use protocol dispatch
 - [x] TCO with WIT-exported functions (function index offset fix in Component mode)
-- [ ] End-to-end verification of complex trie operations
-- [ ] `deftype` with inline protocols (Phase 3.2)
+- [x] End-to-end verification of complex trie operations
+- [x] `deftype` with inline protocols (Phase 3.2)
 
 ### Blocking Issues
 - None currently blocking
@@ -596,19 +596,21 @@ The challenge is that protocol impls (Phase 5) call these helpers:
 - [x] MAP_ASSOC migrated, hardcoded `generate_map_assoc` removed (~150 lines)
 - [x] MAP_GET removed, now uses protocol dispatch (~80 lines)
 - [x] SET_CONTAINS removed, now uses protocol dispatch (~100 lines)
-- [ ] Switch protocol callers from `helper_func_idx()` to `core_func_idx()`
-- [ ] Remove `VEC_TAIL_OFF`, `VEC_NEW_PATH`, `VEC_ARRAY_FOR`, `VEC_PUSH_TAIL`
-- [ ] Remove `HAMT_BITPOS`, `HAMT_INDEX`
-- [ ] Remove `INODE_FIND`, `BIN_FIND`, `AN_FIND`, `HCN_FIND`
+- [x] All deprecated helper_funcs stubs removed (now just HASH_STRING and GET_TYPE_ID)
+- [ ] Remove `VEC_TAIL_OFF`, `VEC_NEW_PATH`, `VEC_ARRAY_FOR`, `VEC_PUSH_TAIL` from protocol callers
+- [ ] Remove `HAMT_BITPOS`, `HAMT_INDEX` from protocol callers
+- [ ] Remove `INODE_FIND`, `BIN_FIND`, `AN_FIND`, `HCN_FIND` from protocol callers
 
-**Phase 6b - Add assoc helpers to core.suss:**
+**Phase 6b - Add assoc helpers to core.suss:** ✓ COMPLETE
 - [x] Implement `bin-assoc`, `inode-assoc` in core.suss
-- [ ] Implement `an-assoc`, `hcn-assoc`, `create-node` (for ArrayNode and HashCollisionNode)
-- [ ] Remove hardcoded versions from codegen.rs
+- [x] Implement `an-assoc`, `hcn-assoc`, `create-node` (for ArrayNode and HashCollisionNode)
+- [x] Remove hardcoded versions from codegen.rs
 
-**Phase 6c - Add dissoc helpers to core.suss:**
-- [ ] Implement `bin-dissoc`, `an-dissoc`, `hcn-dissoc`, `inode-dissoc`
-- [ ] Remove hardcoded versions from codegen.rs
+**Phase 6c - Add dissoc helpers to core.suss:** ✓ COMPLETE
+- [x] Implement `bin-dissoc`, `an-dissoc`, `hcn-dissoc`, `inode-dissoc`
+- [x] Implement `dissoc` and `disj` user-facing functions
+- [x] Update lowerer to call core.suss functions instead of stub codegen
+- [x] Remove hardcoded versions from codegen.rs (MapDissoc, SetDisj IR types removed)
 
 ### Acceptance Tests
 
@@ -790,7 +792,7 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 | Phase | What | Blocking? | Status |
 |-------|------|-----------|--------|
 | **3.1** | Basic deftype (fields only) | Yes | ✓ COMPLETE |
-| **3.2** | deftype with inline protocols | No | Pending |
+| **3.2** | deftype with inline protocols | No | ✓ COMPLETE |
 | **3.3** | Reserved type indices | Yes | ✓ COMPLETE |
 | **4** | HAMT nodes as deftype | Yes | ✓ COMPLETE |
 | **5** | Protocol impls in core.suss | Yes | **NEXT** |
@@ -812,7 +814,7 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 - [x] `(->Point 10 20)` creates a user-defined struct
 - [x] `(.-x p)` accesses fields on user types
 - [x] `(instance? Point p)` works for user types
-- [ ] `(deftype Foo [...] IBar (-method ...))` compiles and dispatches correctly (Phase 3.2)
+- [x] `(deftype Foo [...] IBar (-method ...))` compiles and dispatches correctly (Phase 3.2)
 - [x] `^:type-id N` reserves specific type indices
 
 ### Phase 4 Complete When: ✓ COMPLETE
@@ -826,10 +828,13 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 - [ ] PersistentVector, PersistentMap, PersistentSet, Cons protocols in core.suss
 
 ### Phase 6 Complete When:
-- [ ] `codegen.rs` `helper_funcs` module has only truly irreducible helpers
-- [ ] Vector trie helpers (tail-off, array-for, new-path, push-tail) removed from Rust
-- [ ] HAMT find/assoc/dissoc helpers removed from Rust
-- [ ] Only HASH_STRING, VEC_ACLONE remain (need WASM primitives)
+- [x] `codegen.rs` `helper_funcs` module has only truly irreducible helpers (HASH_STRING, GET_TYPE_ID)
+- [x] All deprecated helper stubs removed
+- [x] HAMT assoc helpers in core.suss (bin-assoc, an-assoc, hcn-assoc, inode-assoc, create-node)
+- [x] HAMT dissoc helpers in core.suss (bin-dissoc, an-dissoc, hcn-dissoc, inode-dissoc)
+- [x] IR types MapDissoc, SetDisj removed (now call core.suss functions)
+- [ ] Vector trie helpers called from core.suss only (remove helper_func_idx calls)
+- [ ] HAMT find helpers called from core.suss only (remove helper_func_idx calls)
 
 ### Phase 7 Complete When:
 - [ ] `codegen.rs` reduced by ~40% (target: ~3000 lines from ~7000)

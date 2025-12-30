@@ -5,7 +5,7 @@
 use std::collections::HashMap;
 
 use num_traits::ToPrimitive;
-use suss_core::{Edn, Number, Symbol};
+use suss_core::{Edn, Keyword, Number, Symbol};
 
 use crate::analyze::{
     AnalyzedModule, AnalyzedFunction, AnalyzedGlobal,
@@ -46,8 +46,10 @@ struct ClosureWrapper {
     name: String,
     /// Names of captured variables (env[0], env[1], ...)
     captures: Vec<String>,
-    /// Parameter names (excluding env)
+    /// Parameter names (excluding env, excluding rest param)
     params: Vec<String>,
+    /// Rest parameter name (for variadic functions)
+    rest_param: Option<String>,
     /// Body expression (original fn body)
     body: Edn,
     /// True for variadic builtin wrappers which don't take an env parameter
@@ -132,6 +134,9 @@ struct Lowerer {
     /// Current self type when lowering protocol method implementations
     /// Used to resolve field access to the correct type
     current_self_type: Option<String>,
+    /// Variadic functions: name -> min_arity (number of fixed params before &)
+    /// Used to package arguments at call sites
+    variadic_funcs: HashMap<String, usize>,
 }
 
 impl Lowerer {
@@ -195,6 +200,7 @@ impl Lowerer {
             next_user_type_id: type_ids::USER_TYPE_BASE,
             next_dispatch_slot: 5, // slots 0-4 reserved for primitives
             current_self_type: None,
+            variadic_funcs: HashMap::new(),
         }
     }
 
@@ -306,6 +312,10 @@ impl Lowerer {
         for (idx, func) in analyzed.functions.iter().enumerate() {
             let func_idx = self.num_imports + func_offset + num_deftype_funcs + idx as u32;
             self.func_indices.insert(func.name.clone(), func_idx);
+            // Track variadic functions for call site handling
+            if func.rest_param.is_some() {
+                self.variadic_funcs.insert(func.name.clone(), func.params.len());
+            }
         }
 
         // Lower globals
@@ -340,7 +350,7 @@ impl Lowerer {
 
     /// Generate a wrapper function for a closure
     /// Regular closure signature: (env: eqref, params...) -> eqref
-    /// Variadic closure signature: (params...) -> eqref (no env)
+    /// Variadic closure signature: (env: eqref, args_array: eqref) -> eqref
     fn lower_closure_wrapper(&mut self, closure: &ClosureWrapper) -> CompileResult<Function> {
         use crate::ir::gc_types;
 
@@ -350,28 +360,27 @@ impl Lowerer {
         self.next_local = 0;
 
         let mut params = Vec::new();
-        let env_idx: Option<u32>;
 
-        // All closures (including variadic) now have env as first parameter
-        // to match CLOSURE_FN_* function types. Variadic builtins just ignore env.
-        env_idx = Some(self.next_local);
+        // All closures have env as first parameter
+        let env_idx = self.next_local;
         self.next_local += 1;
-        self.local_types.insert(env_idx.unwrap(), Type::GcRef);
+        self.local_types.insert(env_idx, Type::GcRef);
         params.push(("$env".to_string(), Type::GcRef));
 
-        // Add regular parameters
-        for param_name in &closure.params {
-            let idx = self.next_local;
-            self.locals.insert(param_name.clone(), (idx, Type::GcRef));
-            self.local_types.insert(idx, Type::GcRef);
-            self.next_local += 1;
-            params.push((param_name.clone(), Type::GcRef));
-        }
+        // Bindings to wrap the body with
+        let mut all_bindings = Vec::new();
 
-        // Add captured variables as synthetic locals that read from env
-        // (only for non-variadic closures with env)
-        let mut capture_bindings = Vec::new();
-        if let Some(env) = env_idx {
+        // IMPORTANT: Add function params BEFORE captured variables
+        // In WASM, params occupy the first local indices, so we must reserve them first
+        if closure.rest_param.is_some() {
+            // Variadic closure: second param is args_array
+            let args_array_local = self.next_local;
+            self.locals.insert("__args".to_string(), (args_array_local, Type::GcRef));
+            self.local_types.insert(args_array_local, Type::GcRef);
+            self.next_local += 1;
+            params.push(("__args".to_string(), Type::GcRef));
+
+            // Now add captured variables as synthetic locals that read from env
             for (cap_idx, cap_name) in closure.captures.iter().enumerate() {
                 let local_idx = self.next_local;
                 self.locals.insert(cap_name.clone(), (local_idx, Type::GcRef));
@@ -379,31 +388,95 @@ impl Lowerer {
                 self.next_local += 1;
 
                 // env[cap_idx] - ArrayGet from env
-                // Note: index must be a boxed integer (Int), not RawI32,
-                // because codegen for ArrayGet expects an i31ref to unbox
                 let env_get = Expr::ArrayGet {
                     type_idx: gc_types::TRIE_NODE,
                     array: Box::new(Expr::LocalGet {
-                        local: env,
+                        local: env_idx,
                         ty: Type::GcRef,
                     }),
                     index: Box::new(Expr::Int(cap_idx as i64)),
                 };
-                capture_bindings.push((local_idx, env_get));
+                all_bindings.push((local_idx, env_get));
+            }
+
+            // Extract fixed params from args_array
+            for (i, param_name) in closure.params.iter().enumerate() {
+                let local_idx = self.next_local;
+                self.locals.insert(param_name.clone(), (local_idx, Type::GcRef));
+                self.local_types.insert(local_idx, Type::GcRef);
+                self.next_local += 1;
+
+                let aget_expr = Expr::ArrayGet {
+                    type_idx: gc_types::ARRAY,
+                    array: Box::new(Expr::LocalGet {
+                        local: args_array_local,
+                        ty: Type::GcRef,
+                    }),
+                    index: Box::new(Expr::Int(i as i64)),
+                };
+                all_bindings.push((local_idx, aget_expr));
+            }
+
+            // Extract rest param
+            let rest_param_name = closure.rest_param.as_ref().unwrap();
+            let rest_local_idx = self.next_local;
+            self.locals.insert(rest_param_name.clone(), (rest_local_idx, Type::GcRef));
+            self.local_types.insert(rest_local_idx, Type::GcRef);
+            self.next_local += 1;
+
+            let fixed_count = closure.params.len();
+            let rest_expr = if fixed_count == 0 {
+                // Rest is entire args array
+                Expr::LocalGet {
+                    local: args_array_local,
+                    ty: Type::GcRef,
+                }
+            } else {
+                // Extract rest using array slice
+                self.generate_rest_param_extraction(args_array_local, fixed_count)?
+            };
+            all_bindings.push((rest_local_idx, rest_expr));
+        } else {
+            // Non-variadic: add regular parameters first
+            for param_name in &closure.params {
+                let idx = self.next_local;
+                self.locals.insert(param_name.clone(), (idx, Type::GcRef));
+                self.local_types.insert(idx, Type::GcRef);
+                self.next_local += 1;
+                params.push((param_name.clone(), Type::GcRef));
+            }
+
+            // Now add captured variables as synthetic locals that read from env
+            for (cap_idx, cap_name) in closure.captures.iter().enumerate() {
+                let local_idx = self.next_local;
+                self.locals.insert(cap_name.clone(), (local_idx, Type::GcRef));
+                self.local_types.insert(local_idx, Type::GcRef);
+                self.next_local += 1;
+
+                // env[cap_idx] - ArrayGet from env
+                let env_get = Expr::ArrayGet {
+                    type_idx: gc_types::TRIE_NODE,
+                    array: Box::new(Expr::LocalGet {
+                        local: env_idx,
+                        ty: Type::GcRef,
+                    }),
+                    index: Box::new(Expr::Int(cap_idx as i64)),
+                };
+                all_bindings.push((local_idx, env_get));
             }
         }
 
-        // Lower the body with captures in scope
+        // Lower the body with all bindings in scope
         self.in_tail_position = true;
         let body_expr = self.lower_expr(&closure.body)?;
         self.in_tail_position = false;
 
-        // Wrap body with capture bindings if any
-        let final_body = if capture_bindings.is_empty() {
+        // Wrap body with bindings if any
+        let final_body = if all_bindings.is_empty() {
             body_expr
         } else {
             Expr::Let {
-                bindings: capture_bindings,
+                bindings: all_bindings,
                 body: Box::new(body_expr),
             }
         };
@@ -421,6 +494,7 @@ impl Lowerer {
             params,
             return_type: Type::GcRef,
             has_explicit_return_type: false,
+            rest_param: closure.rest_param.clone(),
             locals,
             body: final_body,
         })
@@ -441,21 +515,31 @@ impl Lowerer {
         self.local_types.clear();
         self.next_local = 0;
 
-        // Add parameters as locals with their types
-        let mut params = Vec::new();
-        for (name, ty) in &func.params {
-            let idx = self.next_local;
-            self.locals.insert(name.clone(), (idx, ty.clone()));
-            self.local_types.insert(idx, ty.clone());
-            self.next_local += 1;
-            params.push((name.clone(), ty.clone()));
-        }
+        // Check if this is a variadic function
+        let is_variadic = func.rest_param.is_some();
 
-        // Lower body - function body is in tail position UNLESS the function returns Unit
-        // (because Unit return type means we need to drop the result, not return it)
-        self.in_tail_position = func.return_type != Type::Unit;
-        let body = self.lower_expr(&func.body)?;
-        self.in_tail_position = false;
+        // For variadic functions, the actual WASM function takes a single args_array parameter.
+        // We generate code to extract fixed params and rest param from this array.
+        let (params, body) = if is_variadic {
+            self.lower_variadic_function(func)?
+        } else {
+            // Non-variadic: add parameters as locals with their types
+            let mut params = Vec::new();
+            for (name, ty) in &func.params {
+                let idx = self.next_local;
+                self.locals.insert(name.clone(), (idx, ty.clone()));
+                self.local_types.insert(idx, ty.clone());
+                self.next_local += 1;
+                params.push((name.clone(), ty.clone()));
+            }
+
+            // Lower body - function body is in tail position UNLESS the function returns Unit
+            self.in_tail_position = func.return_type != Type::Unit;
+            let body = self.lower_expr(&func.body)?;
+            self.in_tail_position = false;
+
+            (params, body)
+        };
 
         // Collect local types from tracked info
         let mut locals = vec![Type::Unknown; self.next_local as usize];
@@ -482,10 +566,179 @@ impl Lowerer {
             exported: func.exported,
             export_name: func.export_name.clone(),
             params,
+            rest_param: func.rest_param.clone(),
             return_type,
             has_explicit_return_type,
             locals,
             body,
+        })
+    }
+
+    /// Lower a variadic function.
+    ///
+    /// Variadic functions are compiled to take a single args_array parameter.
+    /// The body is wrapped in a let that extracts fixed params using aget
+    /// and creates the rest param using subvec.
+    fn lower_variadic_function(
+        &mut self,
+        func: &AnalyzedFunction,
+    ) -> CompileResult<(Vec<(String, Type)>, Expr)> {
+        let rest_param_name = func.rest_param.as_ref().unwrap();
+        let fixed_param_count = func.params.len();
+
+        // The WASM function takes a single args_array parameter
+        let args_array_local = self.next_local;
+        self.locals.insert("__args".to_string(), (args_array_local, Type::GcRef));
+        self.local_types.insert(args_array_local, Type::GcRef);
+        self.next_local += 1;
+
+        // Generate bindings to extract fixed params and rest param
+        let mut bindings = Vec::new();
+
+        // Extract fixed params: (aget __args 0), (aget __args 1), etc.
+        for (i, (name, _ty)) in func.params.iter().enumerate() {
+            let local_idx = self.next_local;
+            self.locals.insert(name.clone(), (local_idx, Type::GcRef));
+            self.local_types.insert(local_idx, Type::GcRef);
+            self.next_local += 1;
+
+            // aget __args i
+            let aget_expr = Expr::ArrayGet {
+                type_idx: gc_types::ARRAY,
+                array: Box::new(Expr::LocalGet {
+                    local: args_array_local,
+                    ty: Type::GcRef,
+                }),
+                index: Box::new(Expr::Int(i as i64)),
+            };
+            bindings.push((local_idx, aget_expr));
+        }
+
+        // Create rest param using subvec: (subvec __args fixed_param_count)
+        // For now, we'll use a simpler approach: rest param is the args array itself
+        // if there are no fixed params, or we slice it
+        let rest_local_idx = self.next_local;
+        self.locals
+            .insert(rest_param_name.clone(), (rest_local_idx, Type::GcRef));
+        self.local_types.insert(rest_local_idx, Type::GcRef);
+        self.next_local += 1;
+
+        // TODO: Implement proper subvec. For now, if no fixed params, rest = args.
+        // Otherwise, we need to create a view/slice of the array.
+        let rest_expr = if fixed_param_count == 0 {
+            // Rest is the entire args array
+            Expr::LocalGet {
+                local: args_array_local,
+                ty: Type::GcRef,
+            }
+        } else {
+            // For now, create a simple loop to build a new array with remaining elements
+            // This is inefficient but works. TODO: Add proper subvec support.
+            //
+            // We'll generate: a new array containing elements from fixed_param_count onwards
+            // Using ArrayNewDefault + loop to copy elements
+            //
+            // Actually, let's use a simpler approach for now: just pass the whole array
+            // and document that the user should use `(drop N coll)` or similar.
+            //
+            // For MVP, let's just generate code to build a vector from remaining args.
+            self.generate_rest_param_extraction(args_array_local, fixed_param_count)?
+        };
+        bindings.push((rest_local_idx, rest_expr));
+
+        // Lower the body with all bindings in scope
+        self.in_tail_position = func.return_type != Type::Unit;
+        let inner_body = self.lower_expr(&func.body)?;
+        self.in_tail_position = false;
+
+        // Wrap body in let with all the bindings
+        let body = Expr::Let {
+            bindings,
+            body: Box::new(inner_body),
+        };
+
+        // Return single args_array parameter
+        let params = vec![("__args".to_string(), Type::GcRef)];
+
+        Ok((params, body))
+    }
+
+    /// Generate code to extract rest parameters from args array.
+    /// Creates a new WASM array containing elements from `start_idx` onwards.
+    fn generate_rest_param_extraction(
+        &mut self,
+        args_local: u32,
+        start_idx: usize,
+    ) -> CompileResult<Expr> {
+        // Generate IR equivalent to:
+        // (let [len (alength __args)
+        //       rest-len (- len start_idx)
+        //       rest-arr (make-array rest-len)]
+        //   (acopy rest-arr 0 args start_idx rest-len)
+        //   rest-arr)
+
+        // Allocate locals for intermediate values
+        let len_local = self.next_local;
+        self.locals.insert("__len".to_string(), (len_local, Type::GcRef));
+        self.local_types.insert(len_local, Type::GcRef);
+        self.next_local += 1;
+
+        let rest_len_local = self.next_local;
+        self.locals.insert("__rest_len".to_string(), (rest_len_local, Type::GcRef));
+        self.local_types.insert(rest_len_local, Type::GcRef);
+        self.next_local += 1;
+
+        let rest_arr_local = self.next_local;
+        self.locals.insert("__rest_arr".to_string(), (rest_arr_local, Type::GcRef));
+        self.local_types.insert(rest_arr_local, Type::GcRef);
+        self.next_local += 1;
+
+        // len = (alength args)
+        let args_ref = Expr::LocalGet {
+            local: args_local,
+            ty: Type::GcRef,
+        };
+        let len_expr = Expr::ArrayLen(Box::new(args_ref.clone()));
+
+        // rest_len = (- len start_idx)
+        let rest_len_expr = Expr::BinOp {
+            op: BinOp::Sub,
+            left: Box::new(Expr::LocalGet { local: len_local, ty: Type::GcRef }),
+            right: Box::new(Expr::Int(start_idx as i64)),
+            ty: Type::I32,
+        };
+
+        // rest_arr = (make-array rest_len)
+        let rest_arr_expr = Expr::ArrayNewDefault {
+            type_idx: gc_types::ARRAY,
+            size: Box::new(Expr::LocalGet { local: rest_len_local, ty: Type::GcRef }),
+        };
+
+        // (acopy rest_arr 0 args start_idx rest_len)
+        let copy_expr = Expr::ArrayCopy {
+            type_idx: gc_types::ARRAY,
+            dst: Box::new(Expr::LocalGet { local: rest_arr_local, ty: Type::GcRef }),
+            dst_offset: Box::new(Expr::Int(0)),
+            src: Box::new(args_ref),
+            src_offset: Box::new(Expr::Int(start_idx as i64)),
+            len: Box::new(Expr::LocalGet { local: rest_len_local, ty: Type::GcRef }),
+        };
+
+        // Build the let expression
+        let bindings = vec![
+            (len_local, len_expr),
+            (rest_len_local, rest_len_expr),
+            (rest_arr_local, rest_arr_expr),
+        ];
+
+        let body = Expr::Block(vec![
+            copy_expr,
+            Expr::LocalGet { local: rest_arr_local, ty: Type::GcRef },
+        ]);
+
+        Ok(Expr::Let {
+            bindings,
+            body: Box::new(body),
         })
     }
 
@@ -519,6 +772,14 @@ impl Lowerer {
 
             Edn::Char(c) => Ok(Expr::Int(*c as i64)),
 
+            Edn::Keyword(kw) => {
+                let idx =
+                    self.module
+                        .intern_keyword(kw.namespace.as_deref(), &kw.name);
+                let hash = gc_types::hash_keyword(kw.namespace.as_deref(), &kw.name);
+                Ok(Expr::Keyword { idx, hash })
+            }
+
             Edn::Symbol(sym) => {
                 // Check if it's a local
                 if let Some(&(idx, ref ty)) = self.locals.get(&sym.name) {
@@ -543,9 +804,65 @@ impl Lowerer {
                     } else {
                         self.lower_call(&sym.name, &items[1..])
                     }
+                } else if let Edn::Keyword(kw) = &items[0] {
+                    // Keyword in call position: desugar to get
+                    // (:foo map) -> (get map :foo)
+                    // Note: 3-arg form (:foo map default) is not yet supported
+                    // because get doesn't handle default values
+                    if items.len() != 2 {
+                        return Err(CompileError::Unsupported(
+                            "Keyword in call position requires exactly 1 argument (the map)".into(),
+                        ));
+                    }
+                    let get_call = Edn::List(vec![
+                        Edn::Symbol(Symbol::new("get")),
+                        items[1].clone(),
+                        Edn::Keyword(kw.clone()),
+                    ]);
+                    self.lower_expr(&get_call)
                 } else {
                     // Expression in call position - treat as closure call
                     // Examples: ((fn [x] x) 5), ((if cond + -) a b)
+
+                    // Check for immediate variadic fn call: ((fn [& args] ...) 1 2 3)
+                    if let Edn::List(fn_items) = &items[0] {
+                        if let Some(Edn::Symbol(sym)) = fn_items.first() {
+                            if sym.name == "fn" && fn_items.len() >= 2 {
+                                if let Edn::Vector(params_vec) = &fn_items[1] {
+                                    // Check if this fn is variadic
+                                    let is_variadic = params_vec.iter().any(|p| {
+                                        matches!(p, Edn::Symbol(s) if s.name == "&")
+                                    });
+                                    if is_variadic {
+                                        // Lower the fn to get the closure
+                                        let closure = self.with_tail_disabled(|l| {
+                                            l.lower_expr(&items[0])
+                                        })?;
+
+                                        // Package all args into an array
+                                        let lowered_args: Vec<Expr> = self.with_tail_disabled(|l| {
+                                            items[1..].iter()
+                                                .map(|e| l.lower_expr(e))
+                                                .collect::<CompileResult<_>>()
+                                        })?;
+
+                                        let args_array = Expr::ArrayNew {
+                                            type_idx: gc_types::ARRAY,
+                                            elements: lowered_args,
+                                        };
+
+                                        // Call with single array arg
+                                        return Ok(Expr::ClosureCall {
+                                            closure: Box::new(closure),
+                                            args: vec![args_array],
+                                            in_tail_position: self.in_tail_position,
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     let (closure, args) = self.with_tail_disabled(|l| -> CompileResult<_> {
                         let closure = l.lower_expr(&items[0])?;
                         let args: Vec<Expr> = items[1..]
@@ -1168,12 +1485,23 @@ impl Lowerer {
         };
 
         let mut params = Vec::new();
+        let mut rest_param: Option<String> = None;
+        let mut found_amp = false;
         for param in params_vec {
             match param {
+                Edn::Symbol(sym) if sym.name == "&" => {
+                    found_amp = true;
+                }
+                Edn::Symbol(sym) if found_amp => {
+                    rest_param = Some(sym.name.clone());
+                    // No more params after rest
+                    break;
+                }
                 Edn::Symbol(sym) => params.push(sym.name.clone()),
                 _ => return Err(CompileError::Parse("fn param must be a symbol".into())),
             }
         }
+        let is_variadic = rest_param.is_some();
 
         // Body is everything after params, wrapped in do if multiple
         let body = if args.len() == 2 {
@@ -1207,8 +1535,9 @@ impl Lowerer {
             name: wrapper_name,
             captures: free_vars.clone(),
             params,
+            rest_param: rest_param.clone(),
             body,
-            is_variadic: false,
+            is_variadic,
         });
 
         // Generate capture expressions (LocalGet for each captured variable)
@@ -1226,7 +1555,13 @@ impl Lowerer {
             })
             .collect::<CompileResult<Vec<_>>>()?;
 
-        let arity = self.pending_closures.last().unwrap().params.len() as u32;
+        // For variadic closures, arity is 1 (the args_array parameter)
+        // For regular closures, arity is the number of fixed params
+        let arity = if is_variadic {
+            1
+        } else {
+            self.pending_closures.last().unwrap().params.len() as u32
+        };
 
         Ok(Expr::ClosureNew {
             func_idx: wrapper_idx,
@@ -1739,24 +2074,54 @@ impl Lowerer {
         let func_idx = self.func_indices.get(name).copied();
 
         if let Some(idx) = func_idx {
-            // Arguments are never in tail position
-            let (result, was_tail) = self.with_args_context(|l| {
-                args.iter()
-                    .map(|e| l.lower_expr(e))
-                    .collect::<CompileResult<Vec<_>>>()
-            });
-            let lowered_args = result?;
+            // Check if this is a variadic function
+            if let Some(&_min_arity) = self.variadic_funcs.get(name) {
+                // Variadic function: package all args into an array
+                let (result, was_tail) = self.with_args_context(|l| {
+                    args.iter()
+                        .map(|e| l.lower_expr(e))
+                        .collect::<CompileResult<Vec<_>>>()
+                });
+                let lowered_args = result?;
 
-            if was_tail {
-                Ok(Expr::TailCall {
-                    func: idx,
-                    args: lowered_args,
-                })
+                // Create an array containing all arguments
+                let args_array = Expr::ArrayNew {
+                    type_idx: gc_types::ARRAY,
+                    elements: lowered_args,
+                };
+
+                // Call with single args_array argument
+                if was_tail {
+                    Ok(Expr::TailCall {
+                        func: idx,
+                        args: vec![args_array],
+                    })
+                } else {
+                    Ok(Expr::Call {
+                        func: idx,
+                        args: vec![args_array],
+                    })
+                }
             } else {
-                Ok(Expr::Call {
-                    func: idx,
-                    args: lowered_args,
-                })
+                // Non-variadic function: pass args directly
+                let (result, was_tail) = self.with_args_context(|l| {
+                    args.iter()
+                        .map(|e| l.lower_expr(e))
+                        .collect::<CompileResult<Vec<_>>>()
+                });
+                let lowered_args = result?;
+
+                if was_tail {
+                    Ok(Expr::TailCall {
+                        func: idx,
+                        args: lowered_args,
+                    })
+                } else {
+                    Ok(Expr::Call {
+                        func: idx,
+                        args: lowered_args,
+                    })
+                }
             }
         } else if let Some(&(local_idx, ref ty)) = self.locals.get(name) {
             // It's a local variable - could be a closure
@@ -2125,38 +2490,26 @@ impl Lowerer {
         })
     }
 
-    /// Lower (disj set val) -> SetDisj
+    /// Lower (disj set val) -> call core.suss disj function
     fn lower_disj(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         if args.len() != 2 {
             return Err(CompileError::Parse(
                 "disj requires exactly 2 arguments: set and value".into(),
             ));
         }
-        // Arguments are never in tail position
-        let (set, val) = self.with_tail_disabled(|l| {
-            Ok((l.lower_expr(&args[0])?, l.lower_expr(&args[1])?))
-        })?;
-        Ok(Expr::SetDisj {
-            set: Box::new(set),
-            val: Box::new(val),
-        })
+        // Call the core.suss disj function
+        self.lower_func_call("disj", args)
     }
 
-    /// Lower (dissoc map key) -> MapDissoc
+    /// Lower (dissoc map key) -> call core.suss dissoc function
     fn lower_dissoc(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         if args.len() != 2 {
             return Err(CompileError::Parse(
                 "dissoc requires exactly 2 arguments: map and key".into(),
             ));
         }
-        // Arguments are never in tail position
-        let (map, key) = self.with_tail_disabled(|l| {
-            Ok((l.lower_expr(&args[0])?, l.lower_expr(&args[1])?))
-        })?;
-        Ok(Expr::MapDissoc {
-            map: Box::new(map),
-            key: Box::new(key),
-        })
+        // Call the core.suss dissoc function
+        self.lower_func_call("dissoc", args)
     }
 
     // ========================================================================
@@ -2242,6 +2595,7 @@ impl Lowerer {
             name: wrapper_name,
             captures: vec![], // no captures
             params: param_names,
+            rest_param: None,
             body,
             is_variadic: false,
         });
@@ -2296,6 +2650,7 @@ impl Lowerer {
                 name: wrapper_name,
                 captures: vec![], // no captures
                 params: param_names,
+                rest_param: None,
                 body,
                 is_variadic: true, // Variadic wrappers don't take env
             });
@@ -2724,6 +3079,7 @@ impl Lowerer {
             params,
             return_type: Type::GcRef,
             has_explicit_return_type: false,
+            rest_param: None,
             locals: vec![Type::GcRef; fields.len()],
             body,
         };
@@ -2882,6 +3238,7 @@ impl Lowerer {
             params,
             return_type,
             has_explicit_return_type,
+            rest_param: None,
             locals: self.collect_locals(),
             body,
             exported: false,

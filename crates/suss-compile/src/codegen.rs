@@ -43,58 +43,12 @@ mod helper_funcs {
     /// Returns the runtime type ID of a GC value
     pub const GET_TYPE_ID: u32 = 1;
 
-    // =========================================================================
-    // DEPRECATED STUBS - These functions are now in core.suss
-    // All point to HASH_STRING (0) to allow compilation during migration.
-    // Calling these will NOT work correctly.
-    // =========================================================================
-
-    #[deprecated(note = "Now in core.suss")]
-    pub const VEC_ACLONE: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const VEC_TAIL_OFF: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const VEC_NEW_PATH: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const VEC_ARRAY_FOR: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const VEC_PUSH_TAIL: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const EQUIV: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const HAMT_MASK: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const HAMT_BITPOS: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const HAMT_INDEX: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const INODE_FIND: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const INODE_ASSOC: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const BIN_FIND: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const BIN_ASSOC: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const AN_FIND: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const AN_ASSOC: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const HCN_FIND: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const HCN_ASSOC: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const CREATE_NODE: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const HASH: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const INODE_DISSOC: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const BIN_DISSOC: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const AN_DISSOC: u32 = 0;
-    #[deprecated(note = "Now in core.suss")]
-    pub const HCN_DISSOC: u32 = 0;
+    // All collection helper functions have been migrated to core.suss:
+    // - Vector trie ops: tail-off, array-for, new-path, push-tail
+    // - HAMT ops: hamt-mask, hamt-bitpos, hamt-index
+    // - HAMT find: inode-find, bin-find, an-find, hcn-find
+    // - HAMT assoc: inode-assoc, bin-assoc, an-assoc, hcn-assoc, create-node
+    // - HAMT dissoc: inode-dissoc, bin-dissoc, an-dissoc, hcn-dissoc
 }
 
 /// Relative offsets for helper function signatures (added to helper_type_base())
@@ -299,12 +253,31 @@ impl<'a> CodeGen<'a> {
         }
         f.instruction(&Instruction::Else);
         {
-            // It's i31ref - decode: cast, get_s, shr 1
+            // Test if it's KEYWORD
             f.instruction(&Instruction::LocalGet(scratch));
-            f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-            f.instruction(&Instruction::I31GetS);
-            f.instruction(&Instruction::I32Const(1));
-            f.instruction(&Instruction::I32ShrS);
+            f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::KEYWORD)));
+
+            f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+            {
+                // Extract name_idx from KEYWORD struct for equality comparison
+                // Keywords with same idx are equal
+                f.instruction(&Instruction::LocalGet(scratch));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::KEYWORD)));
+                f.instruction(&Instruction::StructGet {
+                    struct_type_index: gc_types::KEYWORD,
+                    field_index: gc_types::KW_NAME_IDX,
+                });
+            }
+            f.instruction(&Instruction::Else);
+            {
+                // It's i31ref - decode: cast, get_s, shr 1
+                f.instruction(&Instruction::LocalGet(scratch));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+            }
+            f.instruction(&Instruction::End);
         }
         f.instruction(&Instruction::End);
     }
@@ -440,6 +413,9 @@ impl<'a> CodeGen<'a> {
 
         // Element section - populate dispatch table with protocol implementations
         self.emit_element_section(&mut module);
+
+        // Data count section (required before code section for array.new_data)
+        self.emit_data_count_section(&mut module);
 
         // Code section - helper functions first, then protocol impls, then user functions
         let mut code = CodeSection::new();
@@ -700,21 +676,27 @@ impl<'a> CodeGen<'a> {
         module.section(&globals);
     }
 
+    /// Emit the data count section (required before code section for array.new_data)
+    fn emit_data_count_section(&self, module: &mut WasmModule) {
+        if !self.ir.strings.is_empty() {
+            let data_count = wasm_encoder::DataCountSection {
+                count: self.ir.strings.len() as u32,
+            };
+            module.section(&data_count);
+        }
+    }
+
     fn emit_data_section(&self, module: &mut WasmModule) {
         if !self.ir.strings.is_empty() {
             let mut data = DataSection::new();
-            let mut offset = 0u32;
 
+            // Use passive data segments for GC string creation via array.new_data
             for s in &self.ir.strings {
                 let bytes = s.as_bytes();
                 data.segment(DataSegment {
-                    mode: DataSegmentMode::Active {
-                        memory_index: 0,
-                        offset: &wasm_encoder::ConstExpr::i32_const(offset as i32),
-                    },
+                    mode: DataSegmentMode::Passive,
                     data: bytes.iter().copied(),
                 });
-                offset += bytes.len() as u32;
             }
             module.section(&data);
         }
@@ -1006,6 +988,28 @@ impl<'a> CodeGen<'a> {
         debug_assert_eq!(gc_types::VARIADIC_CLOSURE, 22);
 
         // =========================================================================
+        // Keyword Type (23)
+        // Interned keywords with pre-computed hash for O(1) map operations
+        // =========================================================================
+
+        // Type 23: KEYWORD - struct { type_id: i32, hash: i32, name_idx: i32 }
+        // - type_id: For protocol dispatch (always type_ids::KEYWORD)
+        // - hash: Pre-computed xxHash32 of the keyword string
+        // - name_idx: Index into module's keyword table
+        types.ty().struct_(vec![
+            type_id_field.clone(),
+            FieldType {
+                element_type: StorageType::Val(ValType::I32),
+                mutable: false,
+            },
+            FieldType {
+                element_type: StorageType::Val(ValType::I32),
+                mutable: false,
+            },
+        ]);
+        debug_assert_eq!(gc_types::KEYWORD, 23);
+
+        // =========================================================================
         // User-Defined Types (from deftype)
         // These come after all built-in types. Each has type_id at field 0.
         // Collection types are now regular deftypes defined in core.suss.
@@ -1045,10 +1049,10 @@ impl<'a> CodeGen<'a> {
     fn emit_helper_types(&self, types: &mut TypeSection) {
         let eqref = ValType::Ref(RefType::EQREF);
 
-        // Type 0: $hash_string: (i32, i32) -> i32
-        // Takes (ptr, len) pointing to linear memory, returns hash
+        // Type 0: $hash_string: (eqref) -> i32
+        // Takes STRING (array<i8>) GC array, returns hash
         types.ty().function(
-            vec![ValType::I32, ValType::I32],
+            vec![eqref],
             vec![ValType::I32],
         );
 
@@ -1132,18 +1136,26 @@ impl<'a> CodeGen<'a> {
     /// 3. Process remaining bytes
     /// 4. Avalanche (final mixing)
     fn generate_hash_string_func(&self) -> Function {
+        use crate::ir::gc_types;
+
         // xxHash32 prime constants
         const PRIME32_1: i32 = 0x9E3779B1_u32 as i32;
         const PRIME32_2: i32 = 0x85EBCA77_u32 as i32;
         const PRIME32_3: i32 = 0xC2B2AE3D_u32 as i32;
         const PRIME32_5: i32 = 0x165667B1_u32 as i32;
 
-        // Locals: ptr=0, len=1, acc=2, i=3, k=4
+        // Param 0: str (eqref - the GC string array)
+        // Locals: len=1, acc=2, i=3
         let locals = vec![
-            (2, ValType::I32), // acc, i
-            (1, ValType::I32), // k (for 4-byte load)
+            (3, ValType::I32), // len, acc, i
         ];
         let mut f = Function::new(locals);
+
+        // len = array.len(str)
+        f.instruction(&Instruction::LocalGet(0)); // str
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+        f.instruction(&Instruction::ArrayLen);
+        f.instruction(&Instruction::LocalSet(1)); // len
 
         // acc = PRIME32_5 + len
         f.instruction(&Instruction::I32Const(PRIME32_5));
@@ -1155,52 +1167,8 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::I32Const(0));
         f.instruction(&Instruction::LocalSet(3)); // i
 
-        // Process 4-byte chunks: while (i + 4 <= len)
-        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Empty));
-        f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
-        // Check: i + 4 > len => break
-        f.instruction(&Instruction::LocalGet(3)); // i
-        f.instruction(&Instruction::I32Const(4));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::LocalGet(1)); // len
-        f.instruction(&Instruction::I32GtU);
-        f.instruction(&Instruction::BrIf(1)); // break to outer block
-
-        // k = i32.load(ptr + i)
-        f.instruction(&Instruction::LocalGet(0)); // ptr
-        f.instruction(&Instruction::LocalGet(3)); // i
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
-            offset: 0,
-            align: 0, // unaligned access
-            memory_index: 0,
-        }));
-        f.instruction(&Instruction::LocalSet(4)); // k
-
-        // acc = acc + k * PRIME32_3
-        f.instruction(&Instruction::LocalGet(2)); // acc
-        f.instruction(&Instruction::LocalGet(4)); // k
-        f.instruction(&Instruction::I32Const(PRIME32_3));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::I32Add);
-        // acc = rotl(acc, 17)
-        f.instruction(&Instruction::I32Const(17));
-        f.instruction(&Instruction::I32Rotl);
-        // acc = acc * PRIME32_1 (using PRIME32_2 to match reference)
-        f.instruction(&Instruction::I32Const(PRIME32_1));
-        f.instruction(&Instruction::I32Mul);
-        f.instruction(&Instruction::LocalSet(2)); // acc
-
-        // i += 4
-        f.instruction(&Instruction::LocalGet(3));
-        f.instruction(&Instruction::I32Const(4));
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::LocalSet(3));
-        f.instruction(&Instruction::Br(0)); // continue loop
-        f.instruction(&Instruction::End); // end loop
-        f.instruction(&Instruction::End); // end block
-
-        // Process remaining bytes: while (i < len)
+        // Process bytes one at a time: while (i < len)
+        // (Simpler than 4-byte chunks, and GC arrays don't have direct i32 load)
         f.instruction(&Instruction::Block(wasm_encoder::BlockType::Empty));
         f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
         // Check: i >= len => break
@@ -1209,15 +1177,11 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::I32GeU);
         f.instruction(&Instruction::BrIf(1)); // break
 
-        // byte = i32.load8_u(ptr + i)
-        f.instruction(&Instruction::LocalGet(0)); // ptr
+        // byte = array.get_s(str, i)  -- signed get for i8 array
+        f.instruction(&Instruction::LocalGet(0)); // str
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
         f.instruction(&Instruction::LocalGet(3)); // i
-        f.instruction(&Instruction::I32Add);
-        f.instruction(&Instruction::I32Load8U(wasm_encoder::MemArg {
-            offset: 0,
-            align: 0,
-            memory_index: 0,
-        }));
+        f.instruction(&Instruction::ArrayGetS(gc_types::STRING)); // get signed byte
 
         // acc = acc + byte * PRIME32_5
         f.instruction(&Instruction::I32Const(PRIME32_5));
@@ -1636,65 +1600,8 @@ impl<'a> CodeGen<'a> {
         Ok(())
     }
 
-    /// Generate code for (disj set val)
-    ///
-    /// Removes val from the set, returning a new set without that element.
-    fn generate_set_disj(
-        &self,
-        set: &Expr,
-        val: &Expr,
-        f: &mut Function,
-    ) -> CompileResult<()> {
-        // Generate the set and val expressions
-        // Note: stub impl doesn't use locals, so no need to bump scratch_local
-        self.generate_expr(set, f)?;
-        self.generate_expr(val, f)?;
-
-        self.generate_set_disj_impl(f)
-    }
-
-    /// Implementation of set disj when values are on stack
-    ///
-    /// Stack: [set, val]
-    ///
-    /// Stub implementation: just returns the original set.
-    /// TODO: Implement proper set disj logic
-    fn generate_set_disj_impl(&self, f: &mut Function) -> CompileResult<()> {
-        // Stack is [set, val] - drop val, keep set
-        f.instruction(&Instruction::Drop); // drop val
-        // set is now on top of stack
-        Ok(())
-    }
-
-    /// Generate code for (dissoc map key)
-    ///
-    /// Removes key from the map, returning a new map without that key.
-    fn generate_map_dissoc(
-        &self,
-        map: &Expr,
-        key: &Expr,
-        f: &mut Function,
-    ) -> CompileResult<()> {
-        // Generate the map and key expressions
-        // Note: stub impl doesn't use locals, so no need to bump scratch_local
-        self.generate_expr(map, f)?;
-        self.generate_expr(key, f)?;
-
-        self.generate_map_dissoc_impl(f)
-    }
-
-    /// Implementation of map dissoc when values are on stack
-    ///
-    /// Stack: [map, key]
-    ///
-    /// Stub implementation: just returns the original map.
-    /// TODO: Implement proper map dissoc logic
-    fn generate_map_dissoc_impl(&self, f: &mut Function) -> CompileResult<()> {
-        // Stack is [map, key] - drop key, keep map
-        f.instruction(&Instruction::Drop); // drop key
-        // map is now on top of stack
-        Ok(())
-    }
+    // generate_set_disj removed - now uses core.suss disj function
+    // generate_map_dissoc removed - now uses core.suss dissoc function
 
     // ========================================================================
     // WIT/WASI helpers
@@ -2438,17 +2345,22 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::String(idx) => {
-                let mut offset = 0u32;
-                for (i, s) in self.ir.strings.iter().enumerate() {
-                    if i == *idx as usize {
-                        break;
-                    }
-                    offset += s.len() as u32;
-                }
+                // Create STRING (array<i8>) from passive data segment using array.new_data
                 let len = self.ir.strings[*idx as usize].len() as u32;
+                f.instruction(&Instruction::I32Const(0));     // offset into data segment
+                f.instruction(&Instruction::I32Const(len as i32));  // length
+                f.instruction(&Instruction::ArrayNewData {
+                    array_type_index: gc_types::STRING,
+                    array_data_index: *idx,  // Data segment index = string index
+                });
+            }
 
-                f.instruction(&Instruction::I32Const(offset as i32));
-                f.instruction(&Instruction::I32Const(len as i32));
+            Expr::Keyword { idx, hash } => {
+                // Create KEYWORD struct { type_id: i32, hash: i32, name_idx: i32 }
+                f.instruction(&Instruction::I32Const(type_ids::KEYWORD));
+                f.instruction(&Instruction::I32Const(*hash));
+                f.instruction(&Instruction::I32Const(*idx as i32));
+                f.instruction(&Instruction::StructNew(gc_types::KEYWORD));
             }
 
             Expr::LocalGet { local, ty: _ } => {
@@ -3009,17 +2921,35 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::ArrayNew { type_idx, elements } => {
-                // Create array with default values, then set each element
-                f.instruction(&Instruction::I32Const(elements.len() as i32));
-                f.instruction(&Instruction::ArrayNewDefault(*type_idx));
+                if elements.is_empty() {
+                    // Empty array: use ArrayNewFixed with 0 elements
+                    f.instruction(&Instruction::ArrayNewFixed {
+                        array_type_index: *type_idx,
+                        array_size: 0,
+                    });
+                } else {
+                    // Use scratch local to store array ref
+                    let scratch = self.scratch_local.get();
+                    self.scratch_local.set(scratch + 5);
+                    let arr_local = scratch; // eqref at scratch +0
 
-                // Set each element
-                for (i, elem) in elements.iter().enumerate() {
-                    // Duplicate array ref for set
-                    f.instruction(&Instruction::LocalTee(0)); // TODO: need a temp local
-                    f.instruction(&Instruction::I32Const(i as i32));
-                    self.generate_expr(elem, f)?;
-                    f.instruction(&Instruction::ArraySet(*type_idx));
+                    // Create array with default values
+                    f.instruction(&Instruction::I32Const(elements.len() as i32));
+                    f.instruction(&Instruction::ArrayNewDefault(*type_idx));
+                    f.instruction(&Instruction::LocalSet(arr_local));
+
+                    // Set each element
+                    for (i, elem) in elements.iter().enumerate() {
+                        // Cast from eqref to concrete array type for array.set
+                        f.instruction(&Instruction::LocalGet(arr_local));
+                        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+                        f.instruction(&Instruction::I32Const(i as i32));
+                        self.generate_expr(elem, f)?;
+                        f.instruction(&Instruction::ArraySet(*type_idx));
+                    }
+
+                    // Push array back onto stack as result
+                    f.instruction(&Instruction::LocalGet(arr_local));
                 }
             }
 
@@ -3339,9 +3269,7 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::RefI31);
             }
 
-            Expr::MapDissoc { map, key } => {
-                self.generate_map_dissoc(map, key, f)?;
-            }
+            // MapDissoc removed - now uses core.suss dissoc function
 
             // =========================================================
             // Persistent Set Operations
@@ -3351,9 +3279,7 @@ impl<'a> CodeGen<'a> {
                 self.generate_set_new(elements, f)?;
             }
 
-            Expr::SetDisj { set, val } => {
-                self.generate_set_disj(set, val, f)?;
-            }
+            // SetDisj removed - now uses core.suss disj function
 
             Expr::SetCount(set) => {
                 // Look up PersistentSet type index dynamically
@@ -3563,9 +3489,13 @@ impl<'a> CodeGen<'a> {
 
         let arity = args.len() as u32;
 
+        // Reserve scratch space for closure storage before generating the closure expr
+        let scratch = self.scratch_local.get();
+        let closure_local = scratch;
+        self.scratch_local.set(scratch + 5); // Reserve space so args don't clobber
+
         // Evaluate and save the closure to a local
         self.generate_expr(closure, f)?;
-        let closure_local = self.scratch_local.get();
         f.instruction(&Instruction::LocalSet(closure_local));
 
         // Check if it's a variadic closure
@@ -4305,6 +4235,21 @@ impl<'a> CodeGen<'a> {
 
         f.instruction(&Instruction::Else);
 
+        // Test KEYWORD
+        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::KEYWORD)));
+        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
+
+        // Extract pre-computed hash from KEYWORD struct
+        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::KEYWORD)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: gc_types::KEYWORD,
+            field_index: gc_types::KW_HASH,
+        });
+
+        f.instruction(&Instruction::Else);
+
         // NOTE: STRING (array<i8>) would be tested here, but strings currently
         // use memory-based ptr+len representation, not GC arrays.
         // String hashing will be added when strings move to GC refs.
@@ -4312,6 +4257,7 @@ impl<'a> CodeGen<'a> {
         // Default: return 0 for unsupported types
         f.instruction(&Instruction::I32Const(0));
 
+        f.instruction(&Instruction::End); // close KEYWORD
         f.instruction(&Instruction::End); // close FLOAT
         f.instruction(&Instruction::End); // close LARGE_INT
         f.instruction(&Instruction::End); // close i31ref test
@@ -4979,6 +4925,7 @@ mod tests {
             params: vec![],
             return_type: Type::GcRef,
             has_explicit_return_type: false,
+            rest_param: None,
             locals: vec![],
             // Return nil sentinel as i31ref
             body: Expr::I31New(Box::new(Expr::Int(gc_types::NIL_SENTINEL as i64))),
@@ -5037,6 +4984,7 @@ mod tests {
             params: vec![],
             return_type: Type::GcRef,
             has_explicit_return_type: false,
+            rest_param: None,
             locals: vec![],
             // Return a large int boxed in a struct
             body: Expr::StructNew {
@@ -5101,6 +5049,7 @@ mod tests {
             params: vec![],
             return_type: Type::GcRef,
             has_explicit_return_type: false,
+            rest_param: None,
             locals: vec![],
             // Expr::Int(42) encodes as (42 << 1) | 1 = 85, wrapped in ref.i31
             body: Expr::Int(42),

@@ -218,16 +218,23 @@ impl Compiler {
 
                             if params_idx < items.len() {
                                 if let Edn::Vector(params_vec) = &items[params_idx] {
-                                    let params: Vec<(String, ir::Type)> = params_vec
-                                        .iter()
-                                        .filter_map(|p| {
-                                            if let Edn::Symbol(s) = p {
-                                                Some((s.name.clone(), ir::Type::GcRef))
+                                    // Parse params, handling & for variadic
+                                    let mut params: Vec<(String, ir::Type)> = Vec::new();
+                                    let mut rest_param: Option<String> = None;
+                                    let mut found_amp = false;
+
+                                    for p in params_vec {
+                                        if let Edn::Symbol(s) = p {
+                                            if s.name == "&" {
+                                                found_amp = true;
+                                            } else if found_amp {
+                                                rest_param = Some(s.name.clone());
+                                                break;
                                             } else {
-                                                None
+                                                params.push((s.name.clone(), ir::Type::GcRef));
                                             }
-                                        })
-                                        .collect();
+                                        }
+                                    }
 
                                     // Body is either single expr or implicit do
                                     let body = if items.len() == body_start + 1 {
@@ -251,6 +258,7 @@ impl Compiler {
                                         exported: false,
                                         export_name: None,
                                         params,
+                                        rest_param,
                                         return_type: ir::Type::GcRef,
                                         return_type_hint: None,
                                         body,
@@ -608,6 +616,7 @@ impl Compiler {
             exported: true,
             export_name: Some("eval".to_string()),
             params: Vec::new(),
+            rest_param: None,
             return_type,
             return_type_hint: None,
             body: expr,
@@ -674,6 +683,7 @@ impl Compiler {
             exported: true,
             export_name: Some("eval".to_string()),
             params: Vec::new(),
+            rest_param: None,
             return_type,
             return_type_hint: None,
             body: expr,
@@ -945,6 +955,7 @@ impl Compiler {
             exported: true,
             export_name: Some("run".to_string()),
             params: Vec::new(),
+            rest_param: None,
             return_type: ir::Type::Unit,
             return_type_hint: None,
             body: run_body,
@@ -1107,6 +1118,7 @@ impl Compiler {
                                         exported: false,
                                         export_name: None,
                                         params,
+                                        rest_param: None,
                                         return_type: ir::Type::GcRef,
                                         return_type_hint: None,
                                         body,

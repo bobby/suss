@@ -146,6 +146,15 @@ pub mod gc_types {
     /// Contains typed funcrefs for arities 0-8 using CLOSURE_FN_* types
     pub const VARIADIC_CLOSURE: u32 = 22;
 
+    // =========================================================================
+    // Keyword Type
+    // Keywords are interned values with pre-computed hash for O(1) equality
+    // =========================================================================
+
+    /// struct { type_id: i32, hash: i32, name_idx: i32 }
+    /// Interned keyword with pre-computed hash for fast map lookups
+    pub const KEYWORD: u32 = 23;
+
     /// Get the variadic function type index (always VARIADIC_FN)
     /// This is a compatibility shim - variadic functions now use a single type
     #[deprecated(note = "Use VARIADIC_FN directly - all arities use the same type")]
@@ -155,8 +164,8 @@ pub mod gc_types {
     }
 
     /// Number of GC types defined (for type index offset calculation)
-    /// 5 primitives + 10 closure fn types + 6 closure struct types + 2 variadic = 23
-    pub const NUM_GC_TYPES: u32 = 23;
+    /// 5 primitives + 10 closure fn types + 6 closure struct types + 2 variadic + 1 keyword = 24
+    pub const NUM_GC_TYPES: u32 = 24;
 
     // =========================================================================
     // Closure Field Indices
@@ -177,6 +186,17 @@ pub mod gc_types {
     pub const VC_TYPE_ID: u32 = 0;
     /// Variadic closure fn field
     pub const VC_FN: u32 = 1;
+
+    // =========================================================================
+    // Keyword Field Indices
+    // =========================================================================
+
+    /// Keyword type_id field (for protocol dispatch)
+    pub const KW_TYPE_ID: u32 = 0;
+    /// Keyword pre-computed hash (for fast map operations)
+    pub const KW_HASH: u32 = 1;
+    /// Keyword name index (into interned string table)
+    pub const KW_NAME_IDX: u32 = 2;
 
     // =========================================================================
     // i31ref Sentinel Values
@@ -282,6 +302,92 @@ pub mod gc_types {
     #[inline]
     pub const fn hash_unordered(h1: i32, h2: i32) -> i32 {
         h1.wrapping_add(h2)
+    }
+
+    /// Compute xxHash32 of a byte slice at compile time
+    /// Used for pre-computing keyword hashes
+    pub fn xxhash32(data: &[u8]) -> i32 {
+        let len = data.len();
+        let mut h: u32 = if len >= 16 {
+            // Process 16-byte chunks
+            let mut v1 = 0u32.wrapping_add(PRIME32_1).wrapping_add(PRIME32_2);
+            let mut v2 = PRIME32_2;
+            let mut v3 = 0u32;
+            let mut v4 = 0u32.wrapping_sub(PRIME32_1);
+            let mut i = 0;
+            while i + 16 <= len {
+                let k1 = u32::from_le_bytes([data[i], data[i + 1], data[i + 2], data[i + 3]]);
+                v1 = v1
+                    .wrapping_add(k1.wrapping_mul(PRIME32_2))
+                    .rotate_left(13)
+                    .wrapping_mul(PRIME32_1);
+                let k2 =
+                    u32::from_le_bytes([data[i + 4], data[i + 5], data[i + 6], data[i + 7]]);
+                v2 = v2
+                    .wrapping_add(k2.wrapping_mul(PRIME32_2))
+                    .rotate_left(13)
+                    .wrapping_mul(PRIME32_1);
+                let k3 =
+                    u32::from_le_bytes([data[i + 8], data[i + 9], data[i + 10], data[i + 11]]);
+                v3 = v3
+                    .wrapping_add(k3.wrapping_mul(PRIME32_2))
+                    .rotate_left(13)
+                    .wrapping_mul(PRIME32_1);
+                let k4 =
+                    u32::from_le_bytes([data[i + 12], data[i + 13], data[i + 14], data[i + 15]]);
+                v4 = v4
+                    .wrapping_add(k4.wrapping_mul(PRIME32_2))
+                    .rotate_left(13)
+                    .wrapping_mul(PRIME32_1);
+                i += 16;
+            }
+            v1.rotate_left(1)
+                .wrapping_add(v2.rotate_left(7))
+                .wrapping_add(v3.rotate_left(12))
+                .wrapping_add(v4.rotate_left(18))
+        } else {
+            PRIME32_5
+        };
+
+        h = h.wrapping_add(len as u32);
+
+        // Process remaining 4-byte chunks
+        let mut i = (len / 16) * 16;
+        while i + 4 <= len {
+            let k = u32::from_le_bytes([data[i], data[i + 1], data[i + 2], data[i + 3]]);
+            h = h
+                .wrapping_add(k.wrapping_mul(PRIME32_3))
+                .rotate_left(17)
+                .wrapping_mul(PRIME32_4);
+            i += 4;
+        }
+
+        // Process remaining bytes
+        while i < len {
+            h = h
+                .wrapping_add((data[i] as u32).wrapping_mul(PRIME32_5))
+                .rotate_left(11)
+                .wrapping_mul(PRIME32_1);
+            i += 1;
+        }
+
+        // Final avalanche
+        h ^= h >> 15;
+        h = h.wrapping_mul(PRIME32_2);
+        h ^= h >> 13;
+        h = h.wrapping_mul(PRIME32_3);
+        h ^= h >> 16;
+
+        h as i32
+    }
+
+    /// Compute hash for a keyword (namespace/name or just name)
+    pub fn hash_keyword(namespace: Option<&str>, name: &str) -> i32 {
+        let s = match namespace {
+            Some(ns) => format!(":{}/{}", ns, name),
+            None => format!(":{}", name),
+        };
+        xxhash32(s.as_bytes())
     }
 
     // =========================================================================
@@ -455,6 +561,9 @@ pub mod type_ids {
 
     // Variadic closure (for variadic builtins like +, *, -, /)
     pub const VARIADIC_CLOSURE: i32 = super::gc_types::VARIADIC_CLOSURE as i32;
+
+    // Keywords (interned with pre-computed hash)
+    pub const KEYWORD: i32 = super::gc_types::KEYWORD as i32;
 
     /// User-defined types start at 5 (after INT64=0, FLOAT64=1, STRING=2, ARRAY=3, I32_ARRAY=4).
     /// Type IDs 5-14 are available for deftypes (before CLOSURE_0 at 15).
@@ -667,6 +776,8 @@ pub struct Module {
     pub globals: Vec<Global>,
     /// String literals (stored in data section)
     pub strings: Vec<String>,
+    /// Interned keywords (namespace, name) pairs
+    pub keywords: Vec<(Option<String>, String)>,
     /// Protocol definitions (user-defined protocols)
     pub protocols: Vec<ProtocolDef>,
     /// Dispatch table entries for protocol methods
@@ -697,6 +808,7 @@ impl Module {
             functions: Vec::new(),
             globals: Vec::new(),
             strings: Vec::new(),
+            keywords: Vec::new(),
             protocols: Vec::new(),
             dispatch_entries: Vec::new(),
             deftypes: Vec::new(),
@@ -710,6 +822,22 @@ impl Module {
         }
         let idx = self.strings.len() as u32;
         self.strings.push(s.to_string());
+        idx
+    }
+
+    /// Intern a keyword, returning its index
+    /// Keywords with the same namespace and name return the same index
+    pub fn intern_keyword(&mut self, namespace: Option<&str>, name: &str) -> u32 {
+        let ns_owned = namespace.map(|s| s.to_string());
+        if let Some(idx) = self
+            .keywords
+            .iter()
+            .position(|(ns, n)| ns.as_deref() == namespace && n == name)
+        {
+            return idx as u32;
+        }
+        let idx = self.keywords.len() as u32;
+        self.keywords.push((ns_owned, name.to_string()));
         idx
     }
 }
@@ -729,8 +857,10 @@ pub struct Function {
     pub exported: bool,
     /// Export name (may differ from internal name)
     pub export_name: Option<String>,
-    /// Parameter types (name, type)
+    /// Parameter types (name, type) - for variadic fns, these are the fixed params
     pub params: Vec<(String, Type)>,
+    /// Rest parameter name for variadic functions (e.g., "args" in [a b & args])
+    pub rest_param: Option<String>,
     /// Return type
     pub return_type: Type,
     /// Whether the return type was explicitly specified via ^type hint
@@ -834,6 +964,7 @@ impl Expr {
             Expr::Unbox32(_) => Type::I32,
             Expr::Float(_) => Type::F64,
             Expr::String(_) => Type::String,
+            Expr::Keyword { .. } => Type::GcRef,
             Expr::BinOp { ty, .. } => ty.clone(),
             Expr::UnOp { ty, .. } => ty.clone(),
             Expr::If { ty, .. } => ty.clone(),
@@ -878,11 +1009,9 @@ impl Expr {
             Expr::VecCount(_) => Type::I32,
 
             Expr::MapNew(_) => Type::GcRef,
-            Expr::MapDissoc { .. } => Type::GcRef,
             Expr::MapCount(_) => Type::I32,
 
             Expr::SetNew(_) => Type::GcRef,
-            Expr::SetDisj { .. } => Type::GcRef,
             Expr::SetCount(_) => Type::I32,
 
             Expr::ListFirst(_) => Type::GcRef,
@@ -932,6 +1061,9 @@ pub enum Expr {
 
     /// String literal (index into string table)
     String(u32),
+
+    /// Keyword literal (index into keyword table, hash pre-computed)
+    Keyword { idx: u32, hash: i32 },
 
     /// Local variable reference with type info for proper truthiness
     LocalGet { local: u32, ty: Type },
@@ -1151,11 +1283,7 @@ pub enum Expr {
     /// Create a new persistent map from key-value pairs
     MapNew(Vec<(Expr, Expr)>),
 
-    /// Remove key from map (returns new map)
-    MapDissoc {
-        map: Box<Expr>,
-        key: Box<Expr>,
-    },
+    // MapDissoc removed - now uses core.suss dissoc function
 
     /// Get count of persistent map
     MapCount(Box<Expr>),
@@ -1168,11 +1296,7 @@ pub enum Expr {
     /// Create a new persistent set from elements
     SetNew(Vec<Expr>),
 
-    /// Remove element from set (returns new set)
-    SetDisj {
-        set: Box<Expr>,
-        val: Box<Expr>,
-    },
+    // SetDisj removed - now uses core.suss disj function
 
     /// Get count of persistent set
     SetCount(Box<Expr>),
@@ -1412,7 +1536,7 @@ mod tests {
 
     #[test]
     fn test_gc_type_indices() {
-        // Verify type indices are unique and contiguous (23 types total)
+        // Verify type indices are unique and contiguous (24 types total)
         let indices = [
             // Primitive types (0-4)
             gc_types::INT64,
@@ -1441,6 +1565,8 @@ mod tests {
             // Variadic types (21-22)
             gc_types::VARIADIC_FN,
             gc_types::VARIADIC_CLOSURE,
+            // Keyword type (23)
+            gc_types::KEYWORD,
         ];
         for (i, idx) in indices.iter().enumerate() {
             assert_eq!(*idx, i as u32, "type index {} should be {}", idx, i);
