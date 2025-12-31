@@ -186,6 +186,21 @@ impl Compiler {
                     if sym.name == "ns" {
                         continue;
                     }
+                    // Handle (do ...) blocks by recursively extracting definitions
+                    if sym.name == "do" && items.len() > 1 {
+                        let inner_exprs: Vec<Edn> = items[1..].to_vec();
+                        let (inner_fns, inner_deftypes, inner_protocols, inner_extensions, inner_remaining) =
+                            Self::extract_core_definitions(inner_exprs)?;
+                        functions.extend(inner_fns);
+                        deftypes.extend(inner_deftypes);
+                        protocols.extend(inner_protocols);
+                        extensions.extend(inner_extensions);
+                        // Keep the remaining expressions in a do block (or just the expression if single)
+                        if inner_remaining != Edn::Nil {
+                            remaining.push(inner_remaining);
+                        }
+                        continue;
+                    }
                     // Extract protocol declarations (needed for return type hints)
                     if sym.name == "defprotocol" {
                         if let Some(protocol) = Self::extract_protocol(items)? {

@@ -589,14 +589,12 @@
  {:name "defn-simple"
   :category :defn
   :expr "(do (defn double [x] (* x 2)) (double 5))"
-  :expected 10
-  :skip true}  ;; defn tests slow in conformance harness
+  :expected 10}
 
  {:name "defn-recursive"
   :category :defn
   :expr "(do (defn fact [n] (if (<= n 1) 1 (* n (fact (- n 1))))) (fact 5))"
-  :expected 120
-  :skip true}  ;; defn tests slow in conformance harness
+  :expected 120}
 
  ;; =============================================================================
  ;; Truthiness
