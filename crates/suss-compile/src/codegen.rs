@@ -270,12 +270,31 @@ impl<'a> CodeGen<'a> {
             }
             f.instruction(&Instruction::Else);
             {
-                // It's i31ref - decode: cast, get_s, shr 1
+                // Test if it's SYMBOL
                 f.instruction(&Instruction::LocalGet(scratch));
-                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                f.instruction(&Instruction::I31GetS);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32ShrS);
+                f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+
+                f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+                {
+                    // Extract hash from SYMBOL struct for equality comparison
+                    // Symbols with same hash are considered equal (hash includes ns + name)
+                    f.instruction(&Instruction::LocalGet(scratch));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+                    f.instruction(&Instruction::StructGet {
+                        struct_type_index: gc_types::SYMBOL,
+                        field_index: gc_types::SYM_HASH,
+                    });
+                }
+                f.instruction(&Instruction::Else);
+                {
+                    // It's i31ref - decode: cast, get_s, shr 1
+                    f.instruction(&Instruction::LocalGet(scratch));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                    f.instruction(&Instruction::I31GetS);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32ShrS);
+                }
+                f.instruction(&Instruction::End);
             }
             f.instruction(&Instruction::End);
         }
@@ -346,9 +365,9 @@ impl<'a> CodeGen<'a> {
         self.emit_helper_types(&mut types);
         self.emit_protocol_types(&mut types);
 
-        // Add user function types, but skip closure/builtin wrappers since they use pre-defined types
+        // Add user function types, but skip closure/builtin/userfn wrappers since they use pre-defined types
         for func in &self.ir.functions {
-            if !func.name.starts_with("$closure_") && !func.name.starts_with("$builtin_") {
+            if !func.name.starts_with("$closure_") && !func.name.starts_with("$builtin_") && !func.name.starts_with("$userfn_") && !func.name.starts_with("$variadic_") {
                 let params: Vec<ValType> = func
                     .params
                     .iter()
@@ -374,12 +393,12 @@ impl<'a> CodeGen<'a> {
         // User functions: closure/builtin wrappers use pre-defined types, others use type_offset
         let mut non_closure_type_idx = 0u32;
         for func in &self.ir.functions {
-            if func.name.starts_with("$closure_") || func.name.starts_with("$builtin_") {
+            if func.name.starts_with("$closure_") || func.name.starts_with("$builtin_") || func.name.starts_with("$userfn_") {
                 // Regular closures have env as first param, so arity = params.len() - 1
                 let arity = func.params.len().saturating_sub(1) as u32;
                 let closure_fn_type = crate::ir::gc_types::closure_fn_type_for_arity(arity);
                 functions.function(closure_fn_type);
-            } else if func.name.starts_with("$variadic_") {
+            } else if func.name.starts_with("$variadic_") || func.name.starts_with("$variadic_userfn_") {
                 // Variadic wrappers have explicit types for arities 0-8
                 // Uses variadic_fn_type_for_arity_new which returns CLOSURE_FN_5-8 for arities 5-8
                 let arity = func.params.len().saturating_sub(1) as u32;
@@ -771,6 +790,7 @@ impl<'a> CodeGen<'a> {
         // - "$closure_" prefixed: user-defined anonymous functions
         // - "$builtin_" prefixed: wrappers for built-in functions used as values
         // - "$variadic_" prefixed: wrappers for variadic builtins (+, *, -, /)
+        // - "$userfn_" prefixed: wrappers for user-defined functions used with #'var
         // - "$protocol_" prefixed: protocol method implementations from extend-type
         let closure_func_indices: Vec<u32> = self
             .ir
@@ -781,6 +801,7 @@ impl<'a> CodeGen<'a> {
                 f.name.starts_with("$closure_")
                     || f.name.starts_with("$builtin_")
                     || f.name.starts_with("$variadic_")
+                    || f.name.starts_with("$userfn_")
                     || f.name.starts_with("$protocol_")
             })
             .map(|(idx, _)| self.user_func_idx(idx as u32))
@@ -1008,6 +1029,60 @@ impl<'a> CodeGen<'a> {
             },
         ]);
         debug_assert_eq!(gc_types::KEYWORD, 23);
+
+        // =========================================================================
+        // Symbol Type (24)
+        // First-class symbols with namespace support and pre-computed hash
+        // =========================================================================
+
+        // Type 24: SYMBOL - struct { type_id: i32, hash: i32, ns_idx: i32, name_idx: i32 }
+        // - type_id: For protocol dispatch (always type_ids::SYMBOL)
+        // - hash: Pre-computed xxHash32 of the symbol string
+        // - ns_idx: -1 for no namespace, else index into string table
+        // - name_idx: Index into string table for the symbol name
+        types.ty().struct_(vec![
+            type_id_field.clone(),
+            FieldType {
+                element_type: StorageType::Val(ValType::I32),
+                mutable: false,
+            },
+            FieldType {
+                element_type: StorageType::Val(ValType::I32),
+                mutable: false,
+            },
+            FieldType {
+                element_type: StorageType::Val(ValType::I32),
+                mutable: false,
+            },
+        ]);
+        debug_assert_eq!(gc_types::SYMBOL, 24);
+
+        // =========================================================================
+        // Var Type (25)
+        // First-class variables with metadata support
+        // =========================================================================
+
+        // Type 25: VAR - struct { type_id: i32, root: eqref, meta: eqref, sym: eqref }
+        // - type_id: For protocol dispatch (always type_ids::VAR)
+        // - root: The bound value
+        // - meta: Metadata map (or nil)
+        // - sym: The SYMBOL for this var's name
+        types.ty().struct_(vec![
+            type_id_field.clone(),
+            FieldType {
+                element_type: StorageType::Val(eqref),
+                mutable: false,
+            },
+            FieldType {
+                element_type: StorageType::Val(eqref),
+                mutable: false,
+            },
+            FieldType {
+                element_type: StorageType::Val(eqref),
+                mutable: false,
+            },
+        ]);
+        debug_assert_eq!(gc_types::VAR, 25);
 
         // =========================================================================
         // User-Defined Types (from deftype)
@@ -2363,6 +2438,19 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::StructNew(gc_types::KEYWORD));
             }
 
+            Expr::Symbol {
+                hash,
+                ns_str_idx,
+                name_str_idx,
+            } => {
+                // Create SYMBOL struct { type_id: i32, hash: i32, ns_idx: i32, name_idx: i32 }
+                f.instruction(&Instruction::I32Const(type_ids::SYMBOL));
+                f.instruction(&Instruction::I32Const(*hash));
+                f.instruction(&Instruction::I32Const(*ns_str_idx));
+                f.instruction(&Instruction::I32Const(*name_str_idx as i32));
+                f.instruction(&Instruction::StructNew(gc_types::SYMBOL));
+            }
+
             Expr::LocalGet { local, ty: _ } => {
                 f.instruction(&Instruction::LocalGet(*local + param_offset));
             }
@@ -3388,6 +3476,33 @@ impl<'a> CodeGen<'a> {
             Expr::ToFloat(inner) => {
                 self.generate_to_float(inner, f)?;
             }
+
+            Expr::GetName(inner) => {
+                self.generate_get_name(inner, f)?;
+            }
+
+            Expr::GetNamespace(inner) => {
+                self.generate_get_namespace(inner, f)?;
+            }
+
+            Expr::SymbolFromString { ns, name } => {
+                self.generate_symbol_from_string(ns.as_deref(), name, f)?;
+            }
+
+            // =========================================================================
+            // Var Operations
+            // =========================================================================
+            Expr::VarNew { root, meta, sym } => {
+                self.generate_var_new(root, meta, sym, f)?;
+            }
+
+            Expr::VarDeref(var_expr) => {
+                self.generate_var_deref(var_expr, f)?;
+            }
+
+            Expr::VarMeta(var_expr) => {
+                self.generate_var_meta(var_expr, f)?;
+            }
         }
 
         Ok(())
@@ -3751,6 +3866,212 @@ impl<'a> CodeGen<'a> {
 
         // Restore scratch local
         self.scratch_local.set(scratch_base);
+
+        Ok(())
+    }
+
+    /// Generate code to get the name from a symbol or keyword.
+    /// Returns the name as a string.
+    fn generate_get_name(&self, inner: &Expr, f: &mut Function) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use wasm_encoder::{BlockType, HeapType, Instruction, RefType, ValType};
+
+        let eqref = RefType::EQREF;
+
+        // Generate the inner expression
+        self.generate_expr(inner, f)?;
+
+        // Store in a local to test
+        let scratch_base = self.scratch_local.get();
+        let val_local = scratch_base;
+        self.scratch_local.set(scratch_base + 1);
+        f.instruction(&Instruction::LocalSet(val_local));
+
+        // Check if it's a SYMBOL
+        f.instruction(&Instruction::LocalGet(val_local));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(eqref))));
+        {
+            // It's a SYMBOL - extract name_str_idx and create string reference
+            // For now, return nil as a placeholder (proper string lookup needs runtime support)
+            f.instruction(&Instruction::LocalGet(val_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+            f.instruction(&Instruction::StructGet {
+                struct_type_index: gc_types::SYMBOL,
+                field_index: gc_types::SYM_NAME_IDX,
+            });
+            // The name_str_idx is an index into the string table (data section)
+            // For proper implementation, we'd need to create the string array from data
+            // For now, just return nil
+            f.instruction(&Instruction::Drop);
+            f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+            f.instruction(&Instruction::RefI31);
+        }
+        f.instruction(&Instruction::Else);
+        {
+            // Not a symbol - return nil
+            f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+            f.instruction(&Instruction::RefI31);
+        }
+        f.instruction(&Instruction::End);
+
+        self.scratch_local.set(scratch_base);
+        Ok(())
+    }
+
+    /// Generate code to get the namespace from a symbol or keyword.
+    /// Returns the namespace as a string, or nil if no namespace.
+    fn generate_get_namespace(&self, inner: &Expr, f: &mut Function) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use wasm_encoder::{BlockType, HeapType, Instruction, RefType, ValType};
+
+        let eqref = RefType::EQREF;
+
+        // Generate the inner expression
+        self.generate_expr(inner, f)?;
+
+        // Store in a local to test
+        let scratch_base = self.scratch_local.get();
+        let val_local = scratch_base;
+        self.scratch_local.set(scratch_base + 1);
+        f.instruction(&Instruction::LocalSet(val_local));
+
+        // Check if it's a SYMBOL
+        f.instruction(&Instruction::LocalGet(val_local));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(eqref))));
+        {
+            // It's a SYMBOL - check ns_str_idx
+            f.instruction(&Instruction::LocalGet(val_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+            f.instruction(&Instruction::StructGet {
+                struct_type_index: gc_types::SYMBOL,
+                field_index: gc_types::SYM_NS_IDX,
+            });
+            // ns_str_idx is -1 if no namespace
+            f.instruction(&Instruction::I32Const(-1));
+            f.instruction(&Instruction::I32Eq);
+            f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(eqref))));
+            {
+                // No namespace - return nil
+                f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+            }
+            f.instruction(&Instruction::Else);
+            {
+                // Has namespace - for now return nil (proper string lookup needs runtime)
+                f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+            }
+            f.instruction(&Instruction::End);
+        }
+        f.instruction(&Instruction::Else);
+        {
+            // Not a symbol - return nil
+            f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+            f.instruction(&Instruction::RefI31);
+        }
+        f.instruction(&Instruction::End);
+
+        self.scratch_local.set(scratch_base);
+        Ok(())
+    }
+
+    /// Generate code to create a symbol from string(s).
+    /// Currently returns nil as a placeholder - dynamic symbol creation needs runtime support.
+    fn generate_symbol_from_string(
+        &self,
+        ns: Option<&Expr>,
+        name: &Expr,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use wasm_encoder::Instruction;
+
+        // Generate and drop the arguments (we still need to evaluate them for side effects)
+        if let Some(ns_expr) = ns {
+            self.generate_expr(ns_expr, f)?;
+            f.instruction(&Instruction::Drop);
+        }
+        self.generate_expr(name, f)?;
+        f.instruction(&Instruction::Drop);
+
+        // For now, return nil as a placeholder
+        // Full implementation requires runtime string hashing
+        f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+        f.instruction(&Instruction::RefI31);
+
+        Ok(())
+    }
+
+    // ========================================================================
+    // Var Operations
+    // ========================================================================
+
+    /// Generate code for creating a new Var
+    ///
+    /// Creates: struct { type_id: i32, root: eqref, meta: eqref, sym: eqref }
+    fn generate_var_new(
+        &self,
+        root: &Expr,
+        meta: &Expr,
+        sym: &Expr,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use crate::ir::type_ids;
+        use wasm_encoder::Instruction;
+
+        // Field 0: type_id (i32)
+        f.instruction(&Instruction::I32Const(type_ids::VAR));
+
+        // Field 1: root (eqref) - the bound value
+        self.generate_expr(root, f)?;
+
+        // Field 2: meta (eqref) - metadata map or nil
+        self.generate_expr(meta, f)?;
+
+        // Field 3: sym (eqref) - the symbol naming this var
+        self.generate_expr(sym, f)?;
+
+        // Create the struct
+        f.instruction(&Instruction::StructNew(gc_types::VAR));
+
+        Ok(())
+    }
+
+    /// Generate code to dereference a Var (get its root value)
+    fn generate_var_deref(&self, var_expr: &Expr, f: &mut Function) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use wasm_encoder::Instruction;
+
+        // Generate the var expression
+        self.generate_expr(var_expr, f)?;
+
+        // Cast to VAR type and get the root field
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::VAR)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: gc_types::VAR,
+            field_index: gc_types::VAR_ROOT,
+        });
+
+        Ok(())
+    }
+
+    /// Generate code to get a Var's metadata
+    fn generate_var_meta(&self, var_expr: &Expr, f: &mut Function) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use wasm_encoder::Instruction;
+
+        // Generate the var expression
+        self.generate_expr(var_expr, f)?;
+
+        // Cast to VAR type and get the meta field
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::VAR)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: gc_types::VAR,
+            field_index: gc_types::VAR_META,
+        });
 
         Ok(())
     }

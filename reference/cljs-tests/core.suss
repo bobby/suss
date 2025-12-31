@@ -642,72 +642,60 @@
  {:name "nil-pred-true"
   :category :predicates
   :expr "(nil? nil)"
-  :expected true
-  :skip true}  ;; predicates not yet implemented
+  :expected true}
 
  {:name "nil-pred-false"
   :category :predicates
   :expr "(nil? 1)"
-  :expected false
-  :skip true}
+  :expected false}
 
  {:name "zero-pred-true"
   :category :predicates
   :expr "(zero? 0)"
-  :expected true
-  :skip true}
+  :expected true}
 
  {:name "zero-pred-false"
   :category :predicates
   :expr "(zero? 1)"
-  :expected false
-  :skip true}
+  :expected false}
 
  {:name "pos-pred-true"
   :category :predicates
   :expr "(pos? 5)"
-  :expected true
-  :skip true}
+  :expected true}
 
  {:name "pos-pred-false"
   :category :predicates
   :expr "(pos? -5)"
-  :expected false
-  :skip true}
+  :expected false}
 
  {:name "neg-pred-true"
   :category :predicates
   :expr "(neg? -5)"
-  :expected true
-  :skip true}
+  :expected true}
 
  {:name "neg-pred-false"
   :category :predicates
   :expr "(neg? 5)"
-  :expected false
-  :skip true}
+  :expected false}
 
  {:name "even-pred-true"
   :category :predicates
   :expr "(even? 4)"
-  :expected true
-  :skip true}
+  :expected true}
 
  {:name "even-pred-false"
   :category :predicates
   :expr "(even? 5)"
-  :expected false
-  :skip true}
+  :expected false}
 
  {:name "odd-pred-true"
   :category :predicates
   :expr "(odd? 5)"
-  :expected true
-  :skip true}
+  :expected true}
 
  {:name "odd-pred-false"
   :category :predicates
   :expr "(odd? 4)"
-  :expected false
-  :skip true}
+  :expected false}
 ]

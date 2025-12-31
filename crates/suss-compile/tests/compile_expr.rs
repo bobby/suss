@@ -2163,3 +2163,12 @@ fn dump_tco_repl_wasm() {
     std::fs::write("/tmp/tco_repl.wasm", &wasm).unwrap();
     eprintln!("Wrote /tmp/tco_repl.wasm");
 }
+
+#[test]
+fn dump_var_user_fn_wasm() {
+    let expr = "(defn f [] 1) (var? #'f)";
+    let mut compiler = suss_compile::Compiler::new();
+    let wasm = compiler.compile_expr(expr).unwrap();
+    std::fs::write("/tmp/var_user.wasm", &wasm).unwrap();
+    println!("Wrote {} bytes to /tmp/var_user.wasm", wasm.len());
+}

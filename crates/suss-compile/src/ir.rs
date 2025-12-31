@@ -155,6 +155,29 @@ pub mod gc_types {
     /// Interned keyword with pre-computed hash for fast map lookups
     pub const KEYWORD: u32 = 23;
 
+    // =========================================================================
+    // Symbol Type
+    // First-class symbols with optional namespace and pre-computed hash
+    // =========================================================================
+
+    /// struct { type_id: i32, hash: i32, ns_idx: i32, name_idx: i32 }
+    /// First-class symbol with namespace support and pre-computed hash.
+    /// - ns_idx: -1 if no namespace, otherwise index into string table
+    /// - name_idx: index into string table for the symbol name
+    pub const SYMBOL: u32 = 24;
+
+    // =========================================================================
+    // Var Type
+    // First-class variables with metadata support
+    // =========================================================================
+
+    /// struct { type_id: i32, root: eqref, meta: eqref, sym: eqref }
+    /// First-class Var containing:
+    /// - root: The bound value
+    /// - meta: Metadata map (or nil)
+    /// - sym: The SYMBOL for this var's name
+    pub const VAR: u32 = 25;
+
     /// Get the variadic function type index (always VARIADIC_FN)
     /// This is a compatibility shim - variadic functions now use a single type
     #[deprecated(note = "Use VARIADIC_FN directly - all arities use the same type")]
@@ -164,8 +187,8 @@ pub mod gc_types {
     }
 
     /// Number of GC types defined (for type index offset calculation)
-    /// 5 primitives + 10 closure fn types + 6 closure struct types + 2 variadic + 1 keyword = 24
-    pub const NUM_GC_TYPES: u32 = 24;
+    /// 5 primitives + 10 closure fn types + 6 closure struct types + 2 variadic + 1 keyword + 1 symbol + 1 var = 26
+    pub const NUM_GC_TYPES: u32 = 26;
 
     // =========================================================================
     // Closure Field Indices
@@ -197,6 +220,32 @@ pub mod gc_types {
     pub const KW_HASH: u32 = 1;
     /// Keyword name index (into interned string table)
     pub const KW_NAME_IDX: u32 = 2;
+
+    // =========================================================================
+    // Symbol Field Indices
+    // =========================================================================
+
+    /// Symbol type_id field (for protocol dispatch)
+    pub const SYM_TYPE_ID: u32 = 0;
+    /// Symbol pre-computed hash (for fast map operations)
+    pub const SYM_HASH: u32 = 1;
+    /// Symbol namespace index (-1 for no namespace, otherwise string table index)
+    pub const SYM_NS_IDX: u32 = 2;
+    /// Symbol name index (into interned string table)
+    pub const SYM_NAME_IDX: u32 = 3;
+
+    // =========================================================================
+    // Var Field Indices
+    // =========================================================================
+
+    /// Var type_id field (for protocol dispatch)
+    pub const VAR_TYPE_ID: u32 = 0;
+    /// Var root value (the bound value)
+    pub const VAR_ROOT: u32 = 1;
+    /// Var metadata (map or nil)
+    pub const VAR_META: u32 = 2;
+    /// Var symbol (the name of this var)
+    pub const VAR_SYM: u32 = 3;
 
     // =========================================================================
     // i31ref Sentinel Values
@@ -390,6 +439,15 @@ pub mod gc_types {
         xxhash32(s.as_bytes())
     }
 
+    /// Compute hash for a symbol (namespace/name or just name)
+    pub fn hash_symbol(namespace: Option<&str>, name: &str) -> i32 {
+        let s = match namespace {
+            Some(ns) => format!("{}/{}", ns, name),
+            None => name.to_string(),
+        };
+        xxhash32(s.as_bytes())
+    }
+
     // =========================================================================
     // Primitive Type Field Indices
     // Collection types are now deftypes - their field indices come from core.suss
@@ -564,6 +622,12 @@ pub mod type_ids {
 
     // Keywords (interned with pre-computed hash)
     pub const KEYWORD: i32 = super::gc_types::KEYWORD as i32;
+
+    // Symbols (interned with pre-computed hash and namespace support)
+    pub const SYMBOL: i32 = super::gc_types::SYMBOL as i32;
+
+    // Vars (first-class variables with metadata)
+    pub const VAR: i32 = super::gc_types::VAR as i32;
 
     /// User-defined types start at 5 (after INT64=0, FLOAT64=1, STRING=2, ARRAY=3, I32_ARRAY=4).
     /// Type IDs 5-14 are available for deftypes (before CLOSURE_0 at 15).
@@ -778,6 +842,8 @@ pub struct Module {
     pub strings: Vec<String>,
     /// Interned keywords (namespace, name) pairs
     pub keywords: Vec<(Option<String>, String)>,
+    /// Interned symbols (namespace, name) pairs
+    pub symbols: Vec<(Option<String>, String)>,
     /// Protocol definitions (user-defined protocols)
     pub protocols: Vec<ProtocolDef>,
     /// Dispatch table entries for protocol methods
@@ -809,6 +875,7 @@ impl Module {
             globals: Vec::new(),
             strings: Vec::new(),
             keywords: Vec::new(),
+            symbols: Vec::new(),
             protocols: Vec::new(),
             dispatch_entries: Vec::new(),
             deftypes: Vec::new(),
@@ -838,6 +905,22 @@ impl Module {
         }
         let idx = self.keywords.len() as u32;
         self.keywords.push((ns_owned, name.to_string()));
+        idx
+    }
+
+    /// Intern a symbol, returning its index
+    /// Symbols with the same namespace and name return the same index
+    pub fn intern_symbol(&mut self, namespace: Option<&str>, name: &str) -> u32 {
+        let ns_owned = namespace.map(|s| s.to_string());
+        if let Some(idx) = self
+            .symbols
+            .iter()
+            .position(|(ns, n)| ns.as_deref() == namespace && n == name)
+        {
+            return idx as u32;
+        }
+        let idx = self.symbols.len() as u32;
+        self.symbols.push((ns_owned, name.to_string()));
         idx
     }
 }
@@ -965,6 +1048,7 @@ impl Expr {
             Expr::Float(_) => Type::F64,
             Expr::String(_) => Type::String,
             Expr::Keyword { .. } => Type::GcRef,
+            Expr::Symbol { .. } => Type::GcRef,
             Expr::BinOp { ty, .. } => ty.clone(),
             Expr::UnOp { ty, .. } => ty.clone(),
             Expr::If { ty, .. } => ty.clone(),
@@ -1033,6 +1117,16 @@ impl Expr {
 
             // Type conversions
             Expr::ToFloat(_) => Type::GcRef, // Returns boxed FLOAT
+
+            // Symbol/keyword introspection
+            Expr::GetName(_) => Type::GcRef, // Returns STRING
+            Expr::GetNamespace(_) => Type::GcRef, // Returns STRING or nil
+            Expr::SymbolFromString { .. } => Type::GcRef, // Returns SYMBOL
+
+            // Var operations
+            Expr::VarNew { .. } => Type::GcRef, // Returns VAR
+            Expr::VarDeref(_) => Type::GcRef, // Returns the var's root value
+            Expr::VarMeta(_) => Type::GcRef, // Returns metadata map or nil
         }
     }
 }
@@ -1064,6 +1158,12 @@ pub enum Expr {
 
     /// Keyword literal (index into keyword table, hash pre-computed)
     Keyword { idx: u32, hash: i32 },
+
+    /// Symbol literal with namespace support
+    /// - hash: pre-computed xxHash32 for map key usage
+    /// - ns_str_idx: -1 for no namespace, otherwise index into Module.strings
+    /// - name_str_idx: index into Module.strings for the symbol name
+    Symbol { hash: i32, ns_str_idx: i32, name_str_idx: u32 },
 
     /// Local variable reference with type info for proper truthiness
     LocalGet { local: u32, ty: Type },
@@ -1434,6 +1534,49 @@ pub enum Expr {
     /// 2. Check if value is FLOAT -> extract f64 directly
     /// 3. Check if value is i31ref small int -> decode and convert to f64
     ToFloat(Box<Expr>),
+
+    // =========================================================================
+    // Symbol/Keyword Introspection
+    // =========================================================================
+
+    /// Get the name string from a symbol or keyword.
+    /// For symbols: extracts name_str_idx and returns that string
+    /// For keywords: extracts name from keyword table
+    GetName(Box<Expr>),
+
+    /// Get the namespace string from a symbol or keyword.
+    /// For symbols: extracts ns_str_idx (-1 means nil)
+    /// For keywords: extracts namespace from keyword table
+    /// Returns nil if no namespace.
+    GetNamespace(Box<Expr>),
+
+    /// Create a symbol from string(s).
+    /// - ns: Optional namespace string expression
+    /// - name: Name string expression
+    SymbolFromString {
+        ns: Option<Box<Expr>>,
+        name: Box<Expr>,
+    },
+
+    // =========================================================================
+    // Var Operations
+    // =========================================================================
+
+    /// Create a new Var.
+    /// - root: The initial bound value
+    /// - meta: Metadata map (or nil)
+    /// - sym: The symbol naming this var
+    VarNew {
+        root: Box<Expr>,
+        meta: Box<Expr>,
+        sym: Box<Expr>,
+    },
+
+    /// Dereference a Var to get its root value.
+    VarDeref(Box<Expr>),
+
+    /// Get metadata from a Var.
+    VarMeta(Box<Expr>),
 }
 
 /// Binary operators
@@ -1536,7 +1679,7 @@ mod tests {
 
     #[test]
     fn test_gc_type_indices() {
-        // Verify type indices are unique and contiguous (24 types total)
+        // Verify type indices are unique and contiguous (26 types total)
         let indices = [
             // Primitive types (0-4)
             gc_types::INT64,
@@ -1567,6 +1710,10 @@ mod tests {
             gc_types::VARIADIC_CLOSURE,
             // Keyword type (23)
             gc_types::KEYWORD,
+            // Symbol type (24)
+            gc_types::SYMBOL,
+            // Var type (25)
+            gc_types::VAR,
         ];
         for (i, idx) in indices.iter().enumerate() {
             assert_eq!(*idx, i as u32, "type index {} should be {}", idx, i);

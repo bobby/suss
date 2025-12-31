@@ -366,8 +366,7 @@
  {:name "list-literal"
   :category :lists
   :expr "'(1 2 3)"
-  :expected (1 2 3)
-  :skip true}  ; quote not implemented
+  :expected (1 2 3)}
 
  {:name "list-cons"
   :category :lists

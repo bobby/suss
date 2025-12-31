@@ -137,6 +137,9 @@ struct Lowerer {
     /// Variadic functions: name -> min_arity (number of fixed params before &)
     /// Used to package arguments at call sites
     variadic_funcs: HashMap<String, usize>,
+    /// Function arities: name -> number of parameters
+    /// Used for creating closure wrappers in #'var
+    func_arities: HashMap<String, usize>,
 }
 
 impl Lowerer {
@@ -201,6 +204,7 @@ impl Lowerer {
             next_dispatch_slot: 5, // slots 0-4 reserved for primitives
             current_self_type: None,
             variadic_funcs: HashMap::new(),
+            func_arities: HashMap::new(),
         }
     }
 
@@ -312,6 +316,8 @@ impl Lowerer {
         for (idx, func) in analyzed.functions.iter().enumerate() {
             let func_idx = self.num_imports + func_offset + num_deftype_funcs + idx as u32;
             self.func_indices.insert(func.name.clone(), func_idx);
+            // Track function arity for #'var closure wrappers
+            self.func_arities.insert(func.name.clone(), func.params.len());
             // Track variadic functions for call site handling
             if func.rest_param.is_some() {
                 self.variadic_funcs.insert(func.name.clone(), func.params.len());
@@ -1038,6 +1044,23 @@ impl Lowerer {
                 Ok(Expr::NilCheck(Box::new(operand)))
             }
 
+            // Quote - create first-class symbols and quoted data structures
+            "quote" => {
+                if args.len() != 1 {
+                    return Err(CompileError::Parse("quote requires exactly 1 argument".into()));
+                }
+                self.lower_quoted(&args[0])
+            }
+
+            // Var - get the Var object for a symbol
+            // #'x or (var x) returns the Var containing x's value
+            "var" => {
+                if args.len() != 1 {
+                    return Err(CompileError::Parse("var requires exactly 1 argument".into()));
+                }
+                self.lower_var(&args[0])
+            }
+
             // Control flow
             "if" => self.lower_if(args),
             "do" => self.lower_do(args),
@@ -1087,6 +1110,22 @@ impl Lowerer {
 
             // Type checking
             "instance?" => self.lower_instance_check(args),
+            "symbol?" => self.lower_symbol_check(args),
+            "keyword?" => self.lower_keyword_check(args),
+            "var?" => self.lower_var_check(args),
+
+            // Numeric predicates
+            "zero?" => self.lower_zero_check(args),
+            "pos?" => self.lower_pos_check(args),
+            "neg?" => self.lower_neg_check(args),
+            "even?" => self.lower_even_check(args),
+            "odd?" => self.lower_odd_check(args),
+
+            // Symbol/keyword/var introspection
+            "name" => self.lower_name(args),
+            "namespace" => self.lower_namespace(args),
+            "symbol" => self.lower_symbol_constructor(args),
+            "meta" => self.lower_meta(args),
 
             // Field access (.-field syntax)
             _ if name.starts_with(".-") => self.lower_field_access(name, args),
@@ -1285,6 +1324,95 @@ impl Lowerer {
         })
     }
 
+    fn lower_symbol_check(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse("symbol? requires exactly 1 argument".into()));
+        }
+        let obj = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        Ok(Expr::RefTest {
+            type_idx: gc_types::SYMBOL,
+            value: Box::new(obj),
+        })
+    }
+
+    fn lower_keyword_check(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse("keyword? requires exactly 1 argument".into()));
+        }
+        let obj = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        Ok(Expr::RefTest {
+            type_idx: gc_types::KEYWORD,
+            value: Box::new(obj),
+        })
+    }
+
+    fn lower_var_check(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse("var? requires exactly 1 argument".into()));
+        }
+        let obj = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        Ok(Expr::RefTest {
+            type_idx: gc_types::VAR,
+            value: Box::new(obj),
+        })
+    }
+
+    fn lower_name(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse("name requires exactly 1 argument".into()));
+        }
+        let obj = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        // Get the name field from symbol or keyword
+        // For symbols: name_str_idx is at field 3
+        // For keywords: name_idx is at field 2 (but it's a keyword table index, not string index)
+        // We'll use a runtime dispatch in codegen to handle both
+        Ok(Expr::GetName(Box::new(obj)))
+    }
+
+    fn lower_namespace(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse("namespace requires exactly 1 argument".into()));
+        }
+        let obj = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        // Get the namespace field from symbol or keyword
+        // For symbols: ns_str_idx is at field 2 (-1 if no namespace)
+        // For keywords: namespace is part of the keyword table entry
+        Ok(Expr::GetNamespace(Box::new(obj)))
+    }
+
+    fn lower_meta(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse("meta requires exactly 1 argument".into()));
+        }
+        let obj = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        // Get the metadata field from a Var
+        Ok(Expr::VarMeta(Box::new(obj)))
+    }
+
+    fn lower_symbol_constructor(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        // (symbol name) or (symbol ns name)
+        match args.len() {
+            1 => {
+                // (symbol name) - create symbol from string
+                let name_expr = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+                Ok(Expr::SymbolFromString {
+                    ns: None,
+                    name: Box::new(name_expr),
+                })
+            }
+            2 => {
+                // (symbol ns name) - create namespaced symbol
+                let ns_expr = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+                let name_expr = self.with_tail_disabled(|l| l.lower_expr(&args[1]))?;
+                Ok(Expr::SymbolFromString {
+                    ns: Some(Box::new(ns_expr)),
+                    name: Box::new(name_expr),
+                })
+            }
+            _ => Err(CompileError::Parse("symbol requires 1 or 2 arguments".into())),
+        }
+    }
+
     fn lower_binop(&mut self, op: BinOp, args: &[Edn], ty: Type) -> CompileResult<Expr> {
         if args.len() != 2 {
             return Err(CompileError::Parse(format!(
@@ -1378,6 +1506,192 @@ impl Lowerer {
             Expr::Int(i) => Expr::Float(i as f64),
             other => Expr::ToFloat(Box::new(other)),
         }
+    }
+
+    /// Lower a quoted expression to create first-class data.
+    /// Quote prevents evaluation and creates data values:
+    /// - 'sym → SYMBOL struct
+    /// - :kw → KEYWORD struct (keywords evaluate to themselves)
+    /// - '[...] → vector with quoted elements
+    /// - literals → themselves
+    fn lower_quoted(&mut self, edn: &Edn) -> CompileResult<Expr> {
+        use crate::ir::gc_types;
+
+        match edn {
+            // Quoted symbol → first-class SYMBOL struct
+            Edn::Symbol(sym) => {
+                let namespace = sym.namespace.as_deref();
+                let name = &sym.name;
+
+                // Compute hash for map key operations
+                let hash = gc_types::hash_symbol(namespace, name);
+
+                // Intern namespace and name into string table
+                let ns_str_idx = if let Some(ns) = namespace {
+                    self.module.intern_string(ns) as i32
+                } else {
+                    -1 // No namespace
+                };
+                let name_str_idx = self.module.intern_string(name);
+
+                Ok(Expr::Symbol {
+                    hash,
+                    ns_str_idx,
+                    name_str_idx,
+                })
+            }
+
+            // Keywords evaluate to themselves, so quoting them is the same
+            Edn::Keyword(kw) => {
+                let namespace = kw.namespace.as_deref();
+                let name = &kw.name;
+                let hash = gc_types::hash_keyword(namespace, name);
+                let idx = self.module.intern_keyword(namespace, name);
+                Ok(Expr::Keyword { idx, hash })
+            }
+
+            // Quoted vector → vector with quoted elements
+            Edn::Vector(elems) => {
+                let mut quoted_elems = Vec::with_capacity(elems.len());
+                for elem in elems {
+                    quoted_elems.push(self.lower_quoted(elem)?);
+                }
+                Ok(Expr::VecNew(quoted_elems))
+            }
+
+            // Quoted list → list with quoted elements (as cons cells)
+            // For now, treat as vector since we don't have first-class lists yet
+            Edn::List(elems) => {
+                let mut quoted_elems = Vec::with_capacity(elems.len());
+                for elem in elems {
+                    quoted_elems.push(self.lower_quoted(elem)?);
+                }
+                Ok(Expr::VecNew(quoted_elems))
+            }
+
+            // Quoted map → map with quoted key-value pairs
+            Edn::Map(pairs) => {
+                let mut quoted_pairs = Vec::with_capacity(pairs.len());
+                for (k, v) in pairs {
+                    let qk = self.lower_quoted(k)?;
+                    let qv = self.lower_quoted(v)?;
+                    quoted_pairs.push((qk, qv));
+                }
+                Ok(Expr::MapNew(quoted_pairs))
+            }
+
+            // Quoted set → set with quoted elements
+            Edn::Set(elems) => {
+                let mut quoted_elems = Vec::with_capacity(elems.len());
+                for elem in elems {
+                    quoted_elems.push(self.lower_quoted(elem)?);
+                }
+                Ok(Expr::SetNew(quoted_elems))
+            }
+
+            // Literals evaluate to themselves
+            Edn::Nil => Ok(Expr::Unit),
+            Edn::Bool(b) => Ok(Expr::Bool(*b)),
+            Edn::Number(n) => {
+                // Convert number to IR expression
+                match n {
+                    suss_core::Number::Integer(i) => {
+                        // Try to convert to i64
+                        if let Some(val) = i.to_i64() {
+                            Ok(Expr::Int(val))
+                        } else {
+                            Err(CompileError::Unsupported("BigInt not supported yet".into()))
+                        }
+                    }
+                    suss_core::Number::Float(f) => Ok(Expr::Float(*f)),
+                    suss_core::Number::Ratio(_) => {
+                        Err(CompileError::Unsupported("Ratio not supported yet".into()))
+                    }
+                }
+            }
+            Edn::String(s) => {
+                let idx = self.module.intern_string(s);
+                Ok(Expr::String(idx))
+            }
+            Edn::Char(c) => {
+                // Characters are represented as their Unicode code point
+                Ok(Expr::Int(*c as i64))
+            }
+
+            // Tagged literals - for now, just return the value
+            Edn::Tagged(tagged) => self.lower_quoted(&tagged.value),
+
+            // Reader conditionals should be resolved before lowering
+            Edn::ReaderConditional(_) => {
+                Err(CompileError::Unsupported("Reader conditional in quote".into()))
+            }
+
+            // Runtime-only values cannot be quoted
+            Edn::Primitive(_) | Edn::Function { .. } => {
+                Err(CompileError::Unsupported("Cannot quote runtime value".into()))
+            }
+        }
+    }
+
+    /// Lower (var x) or #'x - get the Var for a symbol
+    ///
+    /// Currently creates a Var on the fly since def doesn't create Vars yet.
+    /// When def is updated to create Vars, this will look up the existing Var.
+    fn lower_var(&mut self, arg: &Edn) -> CompileResult<Expr> {
+        use crate::ir::gc_types;
+
+        // arg should be a symbol
+        let Edn::Symbol(sym) = arg else {
+            return Err(CompileError::Parse(format!(
+                "var requires a symbol, got {:?}",
+                arg
+            )));
+        };
+
+        let name = &sym.name;
+        let namespace = sym.namespace.as_deref();
+
+        // Try to get the value for this symbol
+        let value = if let Some(&(idx, ref ty)) = self.locals.get(name) {
+            // It's a local variable
+            Expr::LocalGet { local: idx, ty: ty.clone() }
+        } else if let Some(&func_idx) = self.func_indices.get(name) {
+            // User-defined function - create a closure wrapper
+            let arity = self.func_arities.get(name).copied().unwrap_or(0);
+            if self.variadic_funcs.contains_key(name) {
+                // Variadic user function - create variadic closure
+                self.lower_variadic_user_func_as_closure(name, func_idx)?
+            } else {
+                // Regular user function
+                self.lower_user_func_as_closure(name, func_idx, arity)?
+            }
+        } else if let Some(arity) = self.builtin_arity(name) {
+            // Built-in function
+            self.lower_builtin_as_closure(name, arity)?
+        } else {
+            return Err(CompileError::Undefined(name.clone()));
+        };
+
+        // Create a SYMBOL struct for the symbol name
+        let hash = gc_types::hash_symbol(namespace, name);
+        let ns_str_idx = if let Some(ns) = namespace {
+            self.module.intern_string(ns) as i32
+        } else {
+            -1
+        };
+        let name_str_idx = self.module.intern_string(name);
+        let sym_expr = Expr::Symbol {
+            hash,
+            ns_str_idx,
+            name_str_idx,
+        };
+
+        // Create a Var: { root: value, meta: nil, sym: symbol }
+        Ok(Expr::VarNew {
+            root: Box::new(value),
+            meta: Box::new(Expr::Unit), // nil metadata
+            sym: Box::new(sym_expr),
+        })
     }
 
     fn lower_if(&mut self, args: &[Edn]) -> CompileResult<Expr> {
@@ -1881,6 +2195,88 @@ impl Lowerer {
                 else_branch: Box::new(Expr::LocalGet { local: n_local, ty: result_ty.clone() }),
                 ty: result_ty,
             }),
+        })
+    }
+
+    /// (zero? n) -> (= n 0)
+    fn lower_zero_check(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse("zero? requires exactly 1 argument".into()));
+        }
+        let n = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        Ok(Expr::BinOp {
+            op: BinOp::Eq,
+            left: Box::new(n),
+            right: Box::new(Expr::Int(0)),
+            ty: Type::Bool,
+        })
+    }
+
+    /// (pos? n) -> (> n 0)
+    fn lower_pos_check(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse("pos? requires exactly 1 argument".into()));
+        }
+        let n = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        Ok(Expr::BinOp {
+            op: BinOp::Gt,
+            left: Box::new(n),
+            right: Box::new(Expr::Int(0)),
+            ty: Type::Bool,
+        })
+    }
+
+    /// (neg? n) -> (< n 0)
+    fn lower_neg_check(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse("neg? requires exactly 1 argument".into()));
+        }
+        let n = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        Ok(Expr::BinOp {
+            op: BinOp::Lt,
+            left: Box::new(n),
+            right: Box::new(Expr::Int(0)),
+            ty: Type::Bool,
+        })
+    }
+
+    /// (even? n) -> (= 0 (mod n 2))
+    fn lower_even_check(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse("even? requires exactly 1 argument".into()));
+        }
+        let n = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        let mod_result = Expr::BinOp {
+            op: BinOp::Rem,
+            left: Box::new(n),
+            right: Box::new(Expr::Int(2)),
+            ty: Type::I32,
+        };
+        Ok(Expr::BinOp {
+            op: BinOp::Eq,
+            left: Box::new(mod_result),
+            right: Box::new(Expr::Int(0)),
+            ty: Type::Bool,
+        })
+    }
+
+    /// (odd? n) -> (not= 0 (mod n 2))
+    fn lower_odd_check(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse("odd? requires exactly 1 argument".into()));
+        }
+        let n = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        let mod_result = Expr::BinOp {
+            op: BinOp::Rem,
+            left: Box::new(n),
+            right: Box::new(Expr::Int(2)),
+            ty: Type::I32,
+        };
+        Ok(Expr::BinOp {
+            op: BinOp::Ne,
+            left: Box::new(mod_result),
+            right: Box::new(Expr::Int(0)),
+            ty: Type::Bool,
         })
     }
 
@@ -2605,6 +3001,128 @@ impl Lowerer {
             arity,
             captures: vec![], // no captures needed for built-ins
         })
+    }
+
+    /// Create a closure wrapper for a user-defined function used in #'var.
+    /// This wraps the user function so it can be stored in a Var and called later.
+    fn lower_user_func_as_closure(
+        &mut self,
+        name: &str,
+        _target_func_idx: u32,
+        arity: usize,
+    ) -> CompileResult<Expr> {
+        // Check if we already have a wrapper for this function
+        let cache_key = format!("userfn_{}", name);
+        if let Some(&func_idx) = self.builtin_wrappers.get(&cache_key) {
+            return Ok(Expr::ClosureNew {
+                func_idx,
+                arity: arity as u32,
+                captures: vec![],
+            });
+        }
+
+        // Generate wrapper function name
+        let wrapper_name = format!("$userfn_{}", name.replace(|c: char| !c.is_alphanumeric(), "_"));
+
+        // Calculate wrapper function index
+        let num_pending = self.pending_closures.len() as u32;
+        let wrapper_idx = self.num_deftype_constructors
+            + self.num_deftype_impl_funcs
+            + self.num_analyzed_funcs
+            + self.num_extension_funcs
+            + num_pending;
+
+        // Register wrapper function
+        self.func_indices.insert(wrapper_name.clone(), wrapper_idx);
+        self.builtin_wrappers.insert(cache_key, wrapper_idx);
+
+        // Generate parameter names
+        let param_names: Vec<String> = (0..arity).map(|i| format!("$arg{}", i)).collect();
+
+        // Generate wrapper body: a call to the user function
+        // (fn [a b] (user-fn a b))
+        let body = self.make_user_func_call_body(name, &param_names);
+
+        // Store closure wrapper for later generation
+        self.pending_closures.push(ClosureWrapper {
+            name: wrapper_name,
+            captures: vec![],
+            params: param_names,
+            rest_param: None,
+            body,
+            is_variadic: false,
+        });
+
+        Ok(Expr::ClosureNew {
+            func_idx: wrapper_idx,
+            arity: arity as u32,
+            captures: vec![],
+        })
+    }
+
+    /// Create a variadic closure wrapper for a user-defined variadic function.
+    fn lower_variadic_user_func_as_closure(
+        &mut self,
+        name: &str,
+        _target_func_idx: u32,
+    ) -> CompileResult<Expr> {
+        // Check if we already have wrappers for this variadic function
+        let cache_key = format!("variadic_userfn_{}", name);
+        if let Some(&base_idx) = self.builtin_wrappers.get(&cache_key) {
+            let func_indices: [u32; 9] = std::array::from_fn(|i| base_idx + i as u32);
+            return Ok(Expr::VariadicClosureNew {
+                op: name.to_string(),
+                func_indices,
+            });
+        }
+
+        // Generate 9 wrapper functions (one per arity 0-8)
+        let base_idx = self.num_deftype_constructors
+            + self.num_deftype_impl_funcs
+            + self.num_analyzed_funcs
+            + self.num_extension_funcs
+            + self.pending_closures.len() as u32;
+
+        for arity in 0..=8u32 {
+            let wrapper_name = format!(
+                "$variadic_userfn_{}_{}",
+                name.replace(|c: char| !c.is_alphanumeric(), "_"),
+                arity
+            );
+
+            let func_idx = base_idx + arity;
+            self.func_indices.insert(wrapper_name.clone(), func_idx);
+
+            let param_names: Vec<String> = (0..arity as usize).map(|i| format!("$arg{}", i)).collect();
+            let body = self.make_user_func_call_body(name, &param_names);
+
+            self.pending_closures.push(ClosureWrapper {
+                name: wrapper_name,
+                captures: vec![],
+                params: param_names,
+                rest_param: None,
+                body,
+                is_variadic: true,
+            });
+        }
+
+        self.builtin_wrappers.insert(cache_key, base_idx);
+
+        let func_indices: [u32; 9] = std::array::from_fn(|i| base_idx + i as u32);
+        Ok(Expr::VariadicClosureNew {
+            op: name.to_string(),
+            func_indices,
+        })
+    }
+
+    /// Create a call body for wrapping a user function.
+    fn make_user_func_call_body(&self, func_name: &str, params: &[String]) -> Edn {
+        // Create a call expression: (func-name $arg0 $arg1 ...)
+        let mut items = vec![Edn::Symbol(suss_core::Symbol::new(func_name))];
+        for param in params {
+            items.push(Edn::Symbol(suss_core::Symbol::new(param)));
+        }
+        Edn::List(items)
     }
 
     /// Create a variadic closure for variadic builtins (+, *, -, /).

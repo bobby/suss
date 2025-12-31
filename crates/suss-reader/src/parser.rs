@@ -329,6 +329,11 @@ fn edn_parser<'a>(_state: &'a mut ParserState) -> impl Parser<'a, &'a str, Edn, 
             .ignore_then(edn.clone())
             .map(|x| Edn::List(vec![Edn::Symbol(Symbol::new("deref")), x]));
 
+        // Var quote: #'x -> (var x)
+        let var_quote = just("#'")
+            .ignore_then(edn.clone())
+            .map(|x| Edn::List(vec![Edn::Symbol(Symbol::new("var")), x]));
+
         // All atoms and compounds
         choice((
             nil,
@@ -342,6 +347,7 @@ fn edn_parser<'a>(_state: &'a mut ParserState) -> impl Parser<'a, &'a str, Edn, 
             unquote_splice,
             unquote,
             deref,
+            var_quote, // Must come before set (both start with #)
             list,
             vector,
             set,
@@ -523,5 +529,31 @@ mod tests {
 
         let result = parse("false?", &mut state).unwrap();
         assert_eq!(result, Edn::Symbol(Symbol::new("false?")));
+    }
+
+    #[test]
+    fn test_parse_var_quote() {
+        let mut state = ParserState::new("suss");
+        let result = parse("#'foo", &mut state).unwrap();
+        if let Edn::List(items) = result {
+            assert_eq!(items.len(), 2);
+            assert_eq!(items[0], Edn::Symbol(Symbol::new("var")));
+            assert_eq!(items[1], Edn::Symbol(Symbol::new("foo")));
+        } else {
+            panic!("Expected list");
+        }
+    }
+
+    #[test]
+    fn test_parse_var_quote_namespaced() {
+        let mut state = ParserState::new("suss");
+        let result = parse("#'my-ns/my-fn", &mut state).unwrap();
+        if let Edn::List(items) = result {
+            assert_eq!(items.len(), 2);
+            assert_eq!(items[0], Edn::Symbol(Symbol::new("var")));
+            assert_eq!(items[1], Edn::Symbol(Symbol::namespaced("my-ns", "my-fn")));
+        } else {
+            panic!("Expected list");
+        }
     }
 }
