@@ -101,12 +101,13 @@ Function Index Layout:
 - [x] Cross-namespace require system (compile-time, Phases 8.1-8.6 complete)
 - [x] REPL runtime loading for `require` and `in-ns` (Phase 8.7)
 - [x] Convert core.suss to suss.core namespace (Phase 8.8)
+- [x] Nested closures bug fix (closure_counter instead of pending_closures.len())
 
 ### Blocking Issues
 - None currently blocking
 
 ### Known Bugs
-- **Nested closures inside function bodies fail to compile** - Closures defined and called inside a user function body produce WASM validation errors ("type mismatch: expected (ref $type), found (ref $type)"). Top-level closures work fine. This blocks 5 conformance tests (fn-nested, fn-closure, fn-higher-order, defn-simple, defn-recursive). Example: `((fn [] (let [f (fn [x] x)] (f 5))))` fails while `(let [f (fn [x] x)] (f 5))` works.
+- None currently known
 
 ---
 

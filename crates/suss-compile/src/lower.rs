@@ -1979,14 +1979,16 @@ impl Lowerer {
         // Collect free variables in body that aren't params
         let free_vars = self.collect_free_vars(&body, &params);
 
-        // Generate unique wrapper function name
-        let wrapper_name = format!("$closure_{}", self.closure_counter);
-        self.closure_counter += 1;
-
         // Calculate wrapper function index in IR
         // Closures are added after deftype constructors, deftype impls, analyzed functions, and extension methods
-        let num_pending = self.pending_closures.len() as u32;
-        let wrapper_idx = self.num_deftype_constructors + self.num_deftype_impl_funcs + self.num_analyzed_funcs + self.num_extension_funcs + num_pending;
+        // Use closure_counter (not pending_closures.len()) because pending closures may have been
+        // taken out during wrapper generation but their slots are still occupied
+        let closure_num = self.closure_counter;
+        let wrapper_idx = self.num_deftype_constructors + self.num_deftype_impl_funcs + self.num_analyzed_funcs + self.num_extension_funcs + closure_num;
+
+        // Generate unique wrapper function name
+        let wrapper_name = format!("$closure_{}", closure_num);
+        self.closure_counter += 1;
 
         // Register wrapper function name for the index
         self.func_indices.insert(wrapper_name.clone(), wrapper_idx);
@@ -3082,9 +3084,9 @@ impl Lowerer {
         // Generate wrapper function name
         let wrapper_name = format!("$builtin_{}", name.replace(|c: char| !c.is_alphanumeric(), "_"));
 
-        // Calculate wrapper function index
-        let num_pending = self.pending_closures.len() as u32;
-        let wrapper_idx = self.num_deftype_constructors + self.num_deftype_impl_funcs + self.num_analyzed_funcs + self.num_extension_funcs + num_pending;
+        // Calculate wrapper function index using closure_counter for consistency
+        let wrapper_idx = self.num_deftype_constructors + self.num_deftype_impl_funcs + self.num_analyzed_funcs + self.num_extension_funcs + self.closure_counter;
+        self.closure_counter += 1;
 
         // Register wrapper function
         self.func_indices.insert(wrapper_name.clone(), wrapper_idx);
@@ -3137,13 +3139,13 @@ impl Lowerer {
         // Generate wrapper function name
         let wrapper_name = format!("$userfn_{}", name.replace(|c: char| !c.is_alphanumeric(), "_"));
 
-        // Calculate wrapper function index
-        let num_pending = self.pending_closures.len() as u32;
+        // Calculate wrapper function index using closure_counter for consistency
         let wrapper_idx = self.num_deftype_constructors
             + self.num_deftype_impl_funcs
             + self.num_analyzed_funcs
             + self.num_extension_funcs
-            + num_pending;
+            + self.closure_counter;
+        self.closure_counter += 1;
 
         // Register wrapper function
         self.func_indices.insert(wrapper_name.clone(), wrapper_idx);
@@ -3190,11 +3192,12 @@ impl Lowerer {
         }
 
         // Generate 9 wrapper functions (one per arity 0-8)
+        // Use closure_counter for base index for consistency
         let base_idx = self.num_deftype_constructors
             + self.num_deftype_impl_funcs
             + self.num_analyzed_funcs
             + self.num_extension_funcs
-            + self.pending_closures.len() as u32;
+            + self.closure_counter;
 
         for arity in 0..=8u32 {
             let wrapper_name = format!(
@@ -3204,6 +3207,7 @@ impl Lowerer {
             );
 
             let func_idx = base_idx + arity;
+            self.closure_counter += 1;
             self.func_indices.insert(wrapper_name.clone(), func_idx);
 
             let param_names: Vec<String> = (0..arity as usize).map(|i| format!("$arg{}", i)).collect();
@@ -3254,7 +3258,8 @@ impl Lowerer {
         }
 
         // Generate 9 wrapper functions (one per arity 0-8)
-        let base_idx = self.num_deftype_constructors + self.num_deftype_impl_funcs + self.num_analyzed_funcs + self.num_extension_funcs + self.pending_closures.len() as u32;
+        // Use closure_counter for base index for consistency
+        let base_idx = self.num_deftype_constructors + self.num_deftype_impl_funcs + self.num_analyzed_funcs + self.num_extension_funcs + self.closure_counter;
 
         for arity in 0..=8u32 {
             let wrapper_name = format!(
@@ -3265,6 +3270,7 @@ impl Lowerer {
 
             // Calculate function index
             let func_idx = base_idx + arity;
+            self.closure_counter += 1;
             self.func_indices.insert(wrapper_name.clone(), func_idx);
 
             // Generate parameter names

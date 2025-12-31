@@ -570,20 +570,17 @@
  {:name "fn-nested"
   :category :fn
   :expr "((fn [x] ((fn [y] (+ x y)) 10)) 5)"
-  :expected 15
-  :skip true}  ;; slow in conformance harness
+  :expected 15}
 
  {:name "fn-closure"
   :category :fn
   :expr "(let [add5 (fn [x] (+ x 5))] (add5 10))"
-  :expected 15
-  :skip true}  ;; slow in conformance harness
+  :expected 15}
 
  {:name "fn-higher-order"
   :category :fn
   :expr "(let [apply-twice (fn [f x] (f (f x)))] (apply-twice inc 0))"
-  :expected 2
-  :skip true}  ;; slow in conformance harness
+  :expected 2}
 
  ;; =============================================================================
  ;; defn
