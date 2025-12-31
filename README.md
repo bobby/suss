@@ -48,21 +48,52 @@ Example REPL session:
 Suss v0.1.0 - A Clojure dialect for WASM
 Type (help) for help, Ctrl-C to exit
 
-suss> (+ 1 2 3)
+user=> (+ 1 2 3)
 6
-suss> (def add1 (fn [x] (+ x 1)))
-#<function>
-suss> (add1 5)
+user=> (defn add1 [x] (+ x 1))
+nil
+user=> (add1 5)
 6
-suss> ((fn [x y] (+ x y)) 3 4)
-7
-suss> (let [a 10 b 20] (+ a b))
-30
-suss> (apply + [1 2 3 4 5])
-15
-suss> (let [f (fn [x] (* x 2))] (f 21))
+user=> (def x 42)
+nil
+user=> x
 42
+user=> (let [a 10 b 20] (+ a b))
+30
+user=> (apply + [1 2 3 4 5])
+15
 ```
+
+#### Stateful REPL Features
+
+The REPL maintains state across expressions:
+
+```clojure
+;; Definitions persist across expressions
+user=> (defn greet [name] (str "Hello, " name))
+nil
+user=> (greet "World")
+"Hello, World"
+
+;; Switch namespaces with in-ns
+user=> (in-ns 'myapp.core)
+nil
+myapp.core=> (defn helper [] 42)
+nil
+myapp.core=> (helper)
+42
+
+;; Load namespace files with require
+user=> (require '[myapp.utils :as u])
+nil
+user=> (u/process 10)
+20
+```
+
+**Supported REPL forms:**
+- `(in-ns 'namespace)` - Switch current namespace (changes prompt)
+- `(require '[ns :as alias])` - Load namespace from `src/` directory
+- `(defn ...)`, `(def ...)`, `(deftype ...)`, etc. - Definitions persist
 
 ### Running Tests
 

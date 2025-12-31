@@ -42,6 +42,44 @@ suss run app.wasm                       # Run CLI command (auto-finds run)
 suss run lib.wasm --invoke add 3 5      # Run specific function
 ```
 
+### Stateful REPL
+
+The REPL maintains state across expressions via source accumulation:
+
+```clojure
+user=> (defn add [a b] (+ a b))
+nil
+user=> (add 2 3)
+5
+user=> (in-ns 'myapp.core)
+nil
+myapp.core=> (defn greet [] 42)
+nil
+myapp.core=> (greet)
+42
+user=> (require '[myapp.utils :as u])
+nil
+user=> (u/helper 10)
+20
+```
+
+**Key files:**
+- `crates/suss-cli/src/repl.rs` - `ReplState`, `handle_in_ns()`, `handle_require()`
+- `crates/suss-cli/src/main.rs` - Updated `run_repl()` with stateful loop
+
+**ReplState tracks:**
+- `ns_definitions: HashMap<String, String>` - Accumulated definitions per namespace
+- `current_ns: String` - Current namespace (shown in prompt)
+- `ns_aliases: HashMap<String, String>` - Alias → namespace mappings from requires
+- `loaded_namespaces: HashMap<String, String>` - Namespace → source content
+- `src_paths: Vec<PathBuf>` - Directories to search for namespace files
+
+**How it works:**
+1. Definitions (`defn`, `def`, `deftype`, etc.) are accumulated as source strings
+2. Each expression is compiled with all accumulated source prepended
+3. `in-ns` switches `current_ns` and changes the prompt
+4. `require` loads namespace files from `src/` and stores their source
+
 ### WASM Component Builds
 
 ```bash
