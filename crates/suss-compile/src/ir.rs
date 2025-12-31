@@ -502,78 +502,8 @@ pub mod gc_types {
     #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
     pub const PERSISTENT_SET: u32 = 106;
 
-    // Collection field indices - DEPRECATED
-    // These should come from DeftypeDef.fields at compile time.
-    // TODO: Remove once codegen resolves field indices dynamically.
-
-    // PersistentVector fields: type_id(0), cnt(1), shift(2), root(3), tail(4)
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const PV_CNT: u32 = 1;
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const PV_SHIFT: u32 = 2;
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const PV_ROOT: u32 = 3;
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const PV_TAIL: u32 = 4;
-
-    // Cons fields: type_id(0), first(1), rest(2)
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const CONS_FIRST: u32 = 1;
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const CONS_REST: u32 = 2;
-
-    // PersistentMap fields: type_id(0), cnt(1), root(2)
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const PM_CNT: u32 = 1;
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const PM_ROOT: u32 = 2;
-
-    // PersistentSet fields: type_id(0), cnt(1), root(2), _marker(3)
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const PS_CNT: u32 = 1;
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const PS_ROOT: u32 = 2;
-
-    // BitmapIndexedNode fields: type_id(0), bitmap(1), arr(2)
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const BIN_BITMAP: u32 = 1;
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const BIN_ARR: u32 = 2;
-
-    // ArrayNode fields: type_id(0), cnt(1), arr(2)
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const AN_CNT: u32 = 1;
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const AN_ARR: u32 = 2;
-
-    // HashCollisionNode fields: type_id(0), hash(1), cnt(2), arr(3)
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const HCN_HASH: u32 = 1;
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const HCN_CNT: u32 = 2;
-    #[deprecated(note = "Resolve from DeftypeDef")]
-    pub const HCN_ARR: u32 = 3;
-
-    // Variadic closure field indices - DEPRECATED
-    // Now uses single VC_FN field instead of per-arity fields
-    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
-    pub const VC_FN0: u32 = VC_FN;
-    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
-    pub const VC_FN1: u32 = VC_FN;
-    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
-    pub const VC_FN2: u32 = VC_FN;
-    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
-    pub const VC_FN3: u32 = VC_FN;
-    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
-    pub const VC_FN4: u32 = VC_FN;
-    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
-    pub const VC_FN5: u32 = VC_FN;
-    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
-    pub const VC_FN6: u32 = VC_FN;
-    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
-    pub const VC_FN7: u32 = VC_FN;
-    #[deprecated(note = "Use VC_FN - variadic now uses single function type")]
-    pub const VC_FN8: u32 = VC_FN;
+    // Collection field indices are now resolved dynamically from DeftypeDef.
+    // HAMT node field indices are now resolved dynamically from DeftypeDef.
 
     // =========================================================================
     // Function Index Offsets

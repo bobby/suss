@@ -373,7 +373,7 @@ The reserved type ID approach ensures:
 
 ---
 
-## Phase 5: Protocol Impls in core.suss (MOVED UP - was Phase 6)
+## Phase 5: Protocol Impls in core.suss ✓ COMPLETE
 
 > **Dependency:** Requires Phase 4 (HAMT nodes as deftype).
 > **CRITICAL:** This phase must come BEFORE algorithm migration (old Phase 5, now Phase 6).
@@ -459,8 +459,8 @@ SET_COUNT, SET_CONTAINS, SET_CONJ
 - [x] Remove `Expr::MapAssoc`, `Expr::SetConj`, `Expr::MapGet`, `Expr::SetContains` from ir.rs
 - [x] Remove corresponding codegen functions (~400 lines of hardcoded WASM)
 - [x] Collection literal desugaring via inline `conj`/`assoc` calls (temporary - see note)
-- [ ] Remove remaining protocol_impl_funcs from codegen.rs
-- [ ] Dispatch table fully populated from core.suss extend-type declarations
+- [x] Remove remaining protocol_impl_funcs from codegen.rs (NUM_PROTOCOL_IMPLS=0, module removed)
+- [x] Dispatch table fully populated from core.suss extend-type declarations
 
 **Note: Temporary Literal Desugaring**
 
@@ -890,7 +890,7 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 | **3.2** | deftype with inline protocols | No | ✓ COMPLETE |
 | **3.3** | Reserved type indices | Yes | ✓ COMPLETE |
 | **4** | HAMT nodes as deftype | Yes | ✓ COMPLETE |
-| **5** | Protocol impls in core.suss | Yes | **NEXT** |
+| **5** | Protocol impls in core.suss | Yes | ✓ COMPLETE |
 | **6** | Pure Suss algorithms | Incremental | Pending |
 | **7** | Minimize compiler | No | Pending |
 
@@ -917,10 +917,10 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 - [x] Types use reserved IDs matching ir.rs constants (5, 6, 7)
 - [x] All existing map/set tests still pass (207+ tests passing)
 
-### Phase 5 Complete When:
-- [ ] `codegen.rs` `protocol_impl_funcs` module is empty or removed
-- [ ] All collection protocol methods dispatch via core.suss `extend-type` declarations
-- [ ] PersistentVector, PersistentMap, PersistentSet, Cons protocols in core.suss
+### Phase 5 Complete When: ✓ COMPLETE
+- [x] `codegen.rs` `protocol_impl_funcs` module is empty or removed
+- [x] All collection protocol methods dispatch via core.suss `extend-type` declarations
+- [x] PersistentVector, PersistentMap, PersistentSet, Cons protocols in core.suss
 
 ### Phase 6 Complete When:
 - [x] `codegen.rs` `helper_funcs` module has only truly irreducible helpers (HASH_STRING, GET_TYPE_ID)

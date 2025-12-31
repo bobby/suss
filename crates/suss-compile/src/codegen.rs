@@ -83,16 +83,8 @@ mod protocol_type_offsets {
     pub const ARITY_3_REF: u32 = 4;
 }
 
-/// Protocol implementation function indices.
-///
-/// Collection protocol implementations are now in core.suss via extend-type.
-/// This module is kept for compatibility but contains no implementations.
-mod protocol_impl_funcs {
-    /// Number of protocol implementation wrapper functions (reduced from 14 to 0)
-    pub const NUM_PROTOCOL_IMPLS: u32 = 0;
-
-    // All collection protocol implementations removed - now in core.suss via extend-type
-}
+// Protocol implementations are now in core.suss via extend-type declarations.
+// The dispatch table is populated from DispatchEntry records created during lowering.
 
 // ============================================================================
 // Public API
@@ -183,19 +175,14 @@ impl<'a> CodeGen<'a> {
         self.protocol_type_base() + protocol_types::NUM_PROTOCOL_TYPES
     }
 
-    /// Get the function index for a user function (after imports + helper functions + protocol impl functions)
+    /// Get the function index for a user function (after imports + helper functions)
     fn user_func_idx(&self, idx: u32) -> u32 {
-        self.num_imports() + NUM_RUNTIME_HELPERS + protocol_impl_funcs::NUM_PROTOCOL_IMPLS + idx
+        self.num_imports() + NUM_RUNTIME_HELPERS + idx
     }
 
     /// Get the function index for a helper function (after imports)
     fn helper_func_idx(&self, helper_idx: u32) -> u32 {
         self.num_imports() + helper_idx
-    }
-
-    /// Get the function index for a protocol implementation wrapper (after imports + helpers)
-    fn protocol_impl_func_idx(&self, impl_idx: u32) -> u32 {
-        self.num_imports() + NUM_RUNTIME_HELPERS + impl_idx
     }
 
     /// Look up a deftype's GC type index by name.
@@ -3694,7 +3681,7 @@ impl<'a> CodeGen<'a> {
         use crate::ir::gc_types;
 
         let fn_type = gc_types::variadic_fn_type_for_arity_new(arity);
-        let fn_field = gc_types::VC_FN0 + arity; // VC_FN0=1, VC_FN1=2, etc.
+        let fn_field = gc_types::VC_FN + arity; // fn field indices: 1, 2, 3, ... for arities 0, 1, 2, ...
 
         // Push null env (variadic closures don't capture, but CLOSURE_FN_* types expect env)
         f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::ARRAY)));
