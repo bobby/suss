@@ -266,7 +266,7 @@ Without `^i32`, methods return boxed `eqref`. With `^i32`, codegen generates unb
 
 **User-defined methods** start at method_id 100+.
 
-**Dispatch table:** `type_id * 10 + method_id` indexes into a funcref table of 160 entries (16 types × 10 methods).
+**Dispatch table:** `type_id * 10 + method_id` indexes into a funcref table. Size is dynamically calculated based on number of deftypes. Dispatch entries are created from `extend-type` declarations in core.suss during lowering.
 
 ### User-Defined Types (deftype)
 
@@ -367,7 +367,7 @@ This is temporary until variadic functions are implemented, at which point they 
 3. Protocol definitions and helper functions become available to all user code
 4. HAMT node deftypes use reserved type IDs to match hardcoded ir.rs constants
 
-**Note:** core.suss has NO `(ns ...)` declaration - all definitions are at top level.
+**Note:** core.suss has `(ns suss.core)` declaration. Functions are registered with namespace-qualified names in file compilation mode. The REPL path strips the `ns` form for backward compatibility.
 
 ### Low-Level Primitives
 

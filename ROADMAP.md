@@ -102,6 +102,7 @@ Function Index Layout:
 - [x] REPL runtime loading for `require` and `in-ns` (Phase 8.7)
 - [x] Convert core.suss to suss.core namespace (Phase 8.8)
 - [x] Nested closures bug fix (closure_counter instead of pending_closures.len())
+- [x] Phase 5 complete: All protocol impls in core.suss (removed protocol_impl_funcs module)
 
 ### Blocking Issues
 - None currently blocking
