@@ -182,6 +182,10 @@ impl Compiler {
         for expr in exprs {
             if let Edn::List(ref items) = expr {
                 if let Some(Edn::Symbol(sym)) = items.first() {
+                    // Skip namespace declarations (metadata only)
+                    if sym.name == "ns" {
+                        continue;
+                    }
                     // Extract protocol declarations (needed for return type hints)
                     if sym.name == "defprotocol" {
                         if let Some(protocol) = Self::extract_protocol(items)? {

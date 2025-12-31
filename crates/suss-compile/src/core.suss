@@ -2,8 +2,8 @@
 ;;
 ;; This file is automatically loaded before user code (per Clojure semantics).
 ;; Contains protocol definitions and implementations for built-in types.
-;;
-;; NOTE: No (ns ...) declaration - all definitions are at top level.
+
+(ns suss.core)
 
 ;; ============================================================
 ;; Protocol Definitions

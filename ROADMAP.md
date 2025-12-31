@@ -100,7 +100,7 @@ Function Index Layout:
 - [x] `deftype` with inline protocols (Phase 3.2)
 - [x] Cross-namespace require system (compile-time, Phases 8.1-8.6 complete)
 - [x] REPL runtime loading for `require` and `in-ns` (Phase 8.7)
-- [ ] Convert core.suss to suss.core namespace (Phase 8.8)
+- [x] Convert core.suss to suss.core namespace (Phase 8.8)
 
 ### Blocking Issues
 - None currently blocking
@@ -730,10 +730,11 @@ After Phase 7, the compiler provides only:
 
 ### Remaining
 
-**Phase 8.8: core.suss as suss.core**
-- [ ] Add `(ns suss.core)` declaration to core.suss
-- [ ] Modify loader to register as namespace
-- [ ] All user code implicitly requires suss.core
+**Phase 8.8: core.suss as suss.core** ✅
+- [x] Add `(ns suss.core)` declaration to core.suss
+- [x] Functions registered with namespace-qualified names in file compilation
+- [x] Skip `ns` forms in REPL path (extract_core_definitions)
+- [x] Backward compatibility maintained via resolution chain
 
 **Phase 8.9: REPL Enhancements (Future)**
 - [ ] WASM compilation caching - Hash accumulated source, cache compiled WASM bytes

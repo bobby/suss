@@ -454,12 +454,20 @@ impl Lowerer {
         let func_offset = gc_types::USER_FUNC_OFFSET;
         for (idx, func) in analyzed.functions.iter().enumerate() {
             let func_idx = self.num_imports + func_offset + num_deftype_funcs + idx as u32;
-            self.func_indices.insert(func.name.clone(), func_idx);
+
+            // Namespace-qualify the function name if there's a namespace
+            let func_name = if let Some(ref ns) = analyzed.namespace {
+                format!("{}/{}", ns, func.name)
+            } else {
+                func.name.clone()
+            };
+
+            self.func_indices.insert(func_name.clone(), func_idx);
             // Track function arity for #'var closure wrappers
-            self.func_arities.insert(func.name.clone(), func.params.len());
+            self.func_arities.insert(func_name.clone(), func.params.len());
             // Track variadic functions for call site handling
             if func.rest_param.is_some() {
-                self.variadic_funcs.insert(func.name.clone(), func.params.len());
+                self.variadic_funcs.insert(func_name, func.params.len());
             }
         }
 
