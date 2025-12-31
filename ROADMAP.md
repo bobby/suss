@@ -103,6 +103,7 @@ Function Index Layout:
 - [x] Convert core.suss to suss.core namespace (Phase 8.8)
 - [x] Nested closures bug fix (closure_counter instead of pending_closures.len())
 - [x] Phase 5 complete: All protocol impls in core.suss (removed protocol_impl_funcs module)
+- [x] Phase 6 complete: All collection algorithm helpers in core.suss (only HASH_STRING, GET_TYPE_ID remain)
 
 ### Blocking Issues
 - None currently blocking
@@ -506,10 +507,10 @@ This is temporary because multi-arity `defn` isn't yet supported. Once variadic 
 
 ---
 
-## Phase 6: Pure Suss Collection Algorithms
+## Phase 6: Pure Suss Collection Algorithms ✓ COMPLETE
 
 > **Dependency:** Requires Phase 5 (protocol impls in core.suss).
-> **Note:** After Phase 5, protocol impls use boxed eqref values consistently, so these helpers can migrate cleanly.
+> **Note:** All collection algorithm helpers have been migrated to core.suss.
 
 Move collection algorithm helpers from hardcoded Rust to pure Suss in core.suss.
 
@@ -602,9 +603,9 @@ The challenge is that protocol impls (Phase 5) call these helpers:
 - [x] MAP_GET removed, now uses protocol dispatch (~80 lines)
 - [x] SET_CONTAINS removed, now uses protocol dispatch (~100 lines)
 - [x] All deprecated helper_funcs stubs removed (now just HASH_STRING and GET_TYPE_ID)
-- [ ] Remove `VEC_TAIL_OFF`, `VEC_NEW_PATH`, `VEC_ARRAY_FOR`, `VEC_PUSH_TAIL` from protocol callers
-- [ ] Remove `HAMT_BITPOS`, `HAMT_INDEX` from protocol callers
-- [ ] Remove `INODE_FIND`, `BIN_FIND`, `AN_FIND`, `HCN_FIND` from protocol callers
+- [x] Remove `VEC_TAIL_OFF`, `VEC_NEW_PATH`, `VEC_ARRAY_FOR`, `VEC_PUSH_TAIL` from protocol callers (already done - only in comments)
+- [x] Remove `HAMT_BITPOS`, `HAMT_INDEX` from protocol callers (already done - only in comments)
+- [x] Remove `INODE_FIND`, `BIN_FIND`, `AN_FIND`, `HCN_FIND` from protocol callers (already done - only in comments)
 
 **Phase 6b - Add assoc helpers to core.suss:** ✓ COMPLETE
 - [x] Implement `bin-assoc`, `inode-assoc` in core.suss
@@ -892,8 +893,8 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 | **3.3** | Reserved type indices | Yes | ✓ COMPLETE |
 | **4** | HAMT nodes as deftype | Yes | ✓ COMPLETE |
 | **5** | Protocol impls in core.suss | Yes | ✓ COMPLETE |
-| **6** | Pure Suss algorithms | Incremental | Pending |
-| **7** | Minimize compiler | No | Pending |
+| **6** | Pure Suss algorithms | Incremental | ✓ COMPLETE |
+| **7** | Minimize compiler | No | **NEXT** |
 
 ### After Self-Hosting
 8. **Phase 8: WIT marshaling** - Component exports
@@ -923,14 +924,14 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 - [x] All collection protocol methods dispatch via core.suss `extend-type` declarations
 - [x] PersistentVector, PersistentMap, PersistentSet, Cons protocols in core.suss
 
-### Phase 6 Complete When:
+### Phase 6 Complete When: ✓ COMPLETE
 - [x] `codegen.rs` `helper_funcs` module has only truly irreducible helpers (HASH_STRING, GET_TYPE_ID)
 - [x] All deprecated helper stubs removed
 - [x] HAMT assoc helpers in core.suss (bin-assoc, an-assoc, hcn-assoc, inode-assoc, create-node)
 - [x] HAMT dissoc helpers in core.suss (bin-dissoc, an-dissoc, hcn-dissoc, inode-dissoc)
 - [x] IR types MapDissoc, SetDisj removed (now call core.suss functions)
-- [ ] Vector trie helpers called from core.suss only (remove helper_func_idx calls)
-- [ ] HAMT find helpers called from core.suss only (remove helper_func_idx calls)
+- [x] Vector trie helpers called from core.suss only (helper_func_idx calls removed)
+- [x] HAMT find helpers called from core.suss only (helper_func_idx calls removed)
 
 ### Phase 7 Complete When:
 - [ ] `codegen.rs` reduced by ~40% (target: ~3000 lines from ~7000)
