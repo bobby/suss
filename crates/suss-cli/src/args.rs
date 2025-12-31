@@ -26,6 +26,17 @@ pub enum Command {
         namespace: String,
         output: String,
     },
+    /// Compile from a namespace with multi-file support
+    CompileNamespace {
+        /// Entry namespace (e.g., "myapp.core")
+        namespace: String,
+        /// Source directories to search
+        src_paths: Vec<String>,
+        /// WIT world definition file
+        world_wit: String,
+        /// Output path
+        output: String,
+    },
     /// Compile a project from deps.suss
     CompileProject {
         /// Optional specific world to compile (if None, compile all)
@@ -83,14 +94,17 @@ pub fn parse_args() -> Result<Command, lexopt::Error> {
 
 /// Parse the compile subcommand arguments
 ///
-/// Supports three modes:
+/// Supports four modes:
 /// 1. File mode: `suss compile src.suss -w world.wit -o out.wasm`
 /// 2. Main mode: `suss compile src.suss -m namespace -o out.wasm`
-/// 3. Project mode: `suss compile` or `suss compile --world :app/v1`
+/// 3. Namespace mode: `suss compile -n myapp.core --src src -w world.wit -o out.wasm`
+/// 4. Project mode: `suss compile` or `suss compile --world :app/v1`
 fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
     let mut source: Option<String> = None;
     let mut world_wit: Option<String> = None;
     let mut main_ns: Option<String> = None;
+    let mut entry_ns: Option<String> = None;
+    let mut src_paths: Vec<String> = Vec::new();
     let mut output: Option<String> = None;
     let mut world_target: Option<String> = None;
     let mut config_path: Option<String> = None;
@@ -104,6 +118,14 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             Short('m') | Long("main") => {
                 // -m/--main for main mode (CLI command component)
                 main_ns = Some(parser.value()?.string()?);
+            }
+            Short('n') | Long("namespace") => {
+                // -n/--namespace for namespace mode (multi-file)
+                entry_ns = Some(parser.value()?.string()?);
+            }
+            Long("src") | Long("src-path") => {
+                // --src/--src-path for source directories in namespace mode
+                src_paths.push(parser.value()?.string()?);
             }
             Long("world") => {
                 // --world for world name in project mode
@@ -123,7 +145,29 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
     }
 
     // Determine mode based on arguments
-    if source.is_some() && main_ns.is_some() {
+    if entry_ns.is_some() && world_wit.is_some() {
+        // Namespace mode: compile from entry namespace with multi-file support
+        let namespace = entry_ns.unwrap();
+        let world_wit = world_wit.unwrap();
+
+        // Default src-path to "src" if not specified
+        if src_paths.is_empty() {
+            src_paths.push("src".to_string());
+        }
+
+        // Default output based on namespace
+        let output = output.unwrap_or_else(|| {
+            let name = namespace.split('.').last().unwrap_or(&namespace);
+            format!("{}.wasm", name)
+        });
+
+        Ok(Command::CompileNamespace {
+            namespace,
+            src_paths,
+            world_wit,
+            output,
+        })
+    } else if source.is_some() && main_ns.is_some() {
         // Main mode: compile with -main function
         let source = source.unwrap();
         let output = output.unwrap_or_else(|| source.replace(".suss", ".wasm"));
@@ -207,6 +251,7 @@ USAGE:
     suss [OPTIONS] [FILE]
     suss compile [OPTIONS]                              (project mode)
     suss compile <FILE> -w <WORLD.wit> -o <OUTPUT.wasm> (file mode)
+    suss compile -n <NS> -w <WORLD.wit> [--src <DIR>]   (namespace mode)
     suss run <COMPONENT.wasm> --invoke <FUNC> [ARGS...] (run component)
 
 OPTIONS:
@@ -227,6 +272,12 @@ COMMANDS:
         -w, --wit <FILE>     WIT world definition file
         -o, --output <FILE>  Output WASM file path
 
+    compile - Namespace mode (multi-file with dependency resolution):
+        -n, --namespace <NS> Entry namespace (e.g., myapp.core)
+        --src, --src-path <DIR>  Source directory (default: src, repeatable)
+        -w, --wit <FILE>     WIT world definition file
+        -o, --output <FILE>  Output WASM file path
+
     run - Execute a WASM component:
         --invoke <FUNC>      Function to invoke (required)
         [ARGS...]            Arguments to pass to the function
@@ -238,7 +289,8 @@ EXAMPLES:
     suss compile                   Compile all worlds from deps.suss
     suss compile --world :app/v1   Compile specific world from deps.suss
     suss compile src.suss -w world.wit -o out.wasm  (file mode)
-    suss run out.wasm --invoke add 3 5             (run component)
+    suss compile -n myapp.core -w world.wit         (namespace mode)
+    suss run out.wasm --invoke add 3 5              (run component)
 "
     );
 }

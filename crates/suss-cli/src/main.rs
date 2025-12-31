@@ -3,6 +3,7 @@
 //! Uses WASM compilation + wasmtime for all expression evaluation.
 
 mod args;
+mod repl;
 
 #[cfg(all(feature = "component", target_family = "wasm"))]
 mod component;
@@ -44,6 +45,9 @@ fn run_command(cmd: args::Command) {
         }
         args::Command::CompileMain { source, namespace, output } => {
             compile_main(&source, &namespace, &output);
+        }
+        args::Command::CompileNamespace { namespace, src_paths, world_wit, output } => {
+            compile_namespace(&namespace, &src_paths, &world_wit, &output);
         }
         args::Command::CompileProject { world, config_path } => {
             compile_project(world.as_deref(), config_path.as_deref());
@@ -342,6 +346,32 @@ fn compile_main(source_path: &str, namespace: &str, output_path: &str) {
     }
 }
 
+/// Compile from an entry namespace with multi-file support
+fn compile_namespace(entry_ns: &str, src_paths: &[String], wit_path: &str, output_path: &str) {
+    use std::path::PathBuf;
+
+    let src_path_bufs: Vec<PathBuf> = src_paths.iter().map(PathBuf::from).collect();
+
+    let mut compiler = suss_compile::Compiler::new();
+
+    match compiler.compile_with_namespaces(entry_ns, &src_path_bufs, wit_path) {
+        Ok(wasm) => {
+            if let Err(e) = std::fs::write(output_path, &wasm) {
+                eprintln!("Error writing output file '{}': {}", output_path, e);
+                std::process::exit(1);
+            }
+            println!(
+                "Compiled namespace {} -> {} ({} bytes)",
+                entry_ns, output_path, wasm.len()
+            );
+        }
+        Err(e) => {
+            eprintln!("Compilation error: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
+
 /// Compile a project from deps.suss configuration
 fn compile_project(world: Option<&str>, config_path: Option<&str>) {
     use std::path::Path;
@@ -516,13 +546,19 @@ fn run_component_impl(path: &str, invoke: &str, args: &[String]) -> Result<(), S
     Ok(())
 }
 
-/// Start the REPL
+/// Start the REPL with stateful evaluation
+///
+/// The REPL maintains state across expressions:
+/// - Accumulated definitions (defn, def, deftype, etc.)
+/// - Current namespace context
+/// - Loaded namespaces from require
 #[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn run_repl() {
     println!("Suss v{} - A Clojure dialect for WASM", env!("CARGO_PKG_VERSION"));
     println!("Type (help) for help, Ctrl-C to exit");
     println!();
 
+    let mut state = repl::ReplState::new();
     let mut rl = match DefaultEditor::new() {
         Ok(editor) => editor,
         Err(e) => {
@@ -532,16 +568,43 @@ fn run_repl() {
     };
 
     loop {
-        match rl.readline("suss> ") {
+        // Dynamic prompt with current namespace
+        let prompt = format!("{}=> ", state.current_ns);
+
+        match rl.readline(&prompt) {
             Ok(line) => {
-                if line.trim().is_empty() {
+                let trimmed = line.trim();
+                if trimmed.is_empty() {
                     continue;
                 }
 
                 let _ = rl.add_history_entry(&line);
 
-                // Compile and run via WASM
-                match run_eval_wasm(&line) {
+                // Handle special forms
+                if trimmed.starts_with("(in-ns ") {
+                    match repl::handle_in_ns(&mut state, trimmed) {
+                        Ok(_ns) => println!("nil"),
+                        Err(e) => eprintln!("Error: {}", e),
+                    }
+                    continue;
+                }
+
+                if trimmed.starts_with("(require ") {
+                    match repl::handle_require(&mut state, trimmed) {
+                        Ok(_msg) => println!("nil"),
+                        Err(e) => eprintln!("Error: {}", e),
+                    }
+                    continue;
+                }
+
+                // Check if this is a definition to accumulate
+                if repl::is_definition(trimmed) {
+                    state.accumulate_definition(trimmed);
+                }
+
+                // Build full source and evaluate
+                let full_source = state.build_source(trimmed);
+                match run_eval_wasm(&full_source) {
                     Ok(()) => {}
                     Err(e) => {
                         eprintln!("Error: {}", e);
@@ -550,7 +613,6 @@ fn run_repl() {
             }
             Err(ReadlineError::Interrupted) => {
                 println!("^C");
-                break;
             }
             Err(ReadlineError::Eof) => {
                 println!("Goodbye!");

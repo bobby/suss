@@ -140,6 +140,19 @@ struct Lowerer {
     /// Function arities: name -> number of parameters
     /// Used for creating closure wrappers in #'var
     func_arities: HashMap<String, usize>,
+
+    // ========================================================================
+    // Namespace Resolution (Phase 5)
+    // ========================================================================
+
+    /// Current namespace being compiled
+    current_ns: Option<String>,
+    /// Namespace aliases: alias -> full namespace name
+    /// From (require '[myapp.utils :as utils])
+    ns_aliases: HashMap<String, String>,
+    /// Referred symbols: symbol_name -> source namespace
+    /// From (require '[myapp.utils :refer [helper]])
+    referred_symbols: HashMap<String, String>,
 }
 
 impl Lowerer {
@@ -205,6 +218,10 @@ impl Lowerer {
             current_self_type: None,
             variadic_funcs: HashMap::new(),
             func_arities: HashMap::new(),
+            // Namespace resolution
+            current_ns: None,
+            ns_aliases: HashMap::new(),
+            referred_symbols: HashMap::new(),
         }
     }
 
@@ -239,7 +256,129 @@ impl Lowerer {
         self.with_args_context(f).0
     }
 
+    /// Emit a function call, handling variadic functions and tail calls.
+    fn emit_func_call(&mut self, idx: u32, name: &str, args: &[Edn]) -> CompileResult<Expr> {
+        // Check if this is a variadic function
+        if let Some(&_min_arity) = self.variadic_funcs.get(name) {
+            // Variadic function: package all args into an array
+            let (result, was_tail) = self.with_args_context(|l| {
+                args.iter()
+                    .map(|e| l.lower_expr(e))
+                    .collect::<CompileResult<Vec<_>>>()
+            });
+            let lowered_args = result?;
+
+            // Create an array containing all arguments
+            let args_array = Expr::ArrayNew {
+                type_idx: gc_types::ARRAY,
+                elements: lowered_args,
+            };
+
+            // Call with single args_array argument
+            if was_tail {
+                Ok(Expr::TailCall {
+                    func: idx,
+                    args: vec![args_array],
+                })
+            } else {
+                Ok(Expr::Call {
+                    func: idx,
+                    args: vec![args_array],
+                })
+            }
+        } else {
+            // Non-variadic function: pass args directly
+            let (result, was_tail) = self.with_args_context(|l| {
+                args.iter()
+                    .map(|e| l.lower_expr(e))
+                    .collect::<CompileResult<Vec<_>>>()
+            });
+            let lowered_args = result?;
+
+            if was_tail {
+                Ok(Expr::TailCall {
+                    func: idx,
+                    args: lowered_args,
+                })
+            } else {
+                Ok(Expr::Call {
+                    func: idx,
+                    args: lowered_args,
+                })
+            }
+        }
+    }
+
+    /// Resolve an unqualified function name to a qualified name.
+    ///
+    /// Resolution order:
+    /// 1. Current namespace (if set)
+    /// 2. Referred symbols from requires
+    /// 3. suss.core (implicit require)
+    /// 4. Unqualified name (for backward compatibility)
+    fn resolve_func_name(&self, name: &str) -> Option<(String, u32)> {
+        // 1. Check current namespace first
+        if let Some(ref ns) = self.current_ns {
+            let qualified = format!("{}/{}", ns, name);
+            if let Some(&idx) = self.func_indices.get(&qualified) {
+                return Some((qualified, idx));
+            }
+        }
+
+        // 2. Check referred symbols
+        if let Some(source_ns) = self.referred_symbols.get(name) {
+            let qualified = format!("{}/{}", source_ns, name);
+            if let Some(&idx) = self.func_indices.get(&qualified) {
+                return Some((qualified, idx));
+            }
+        }
+
+        // 3. Check suss.core (implicit require)
+        let core_qualified = format!("suss.core/{}", name);
+        if let Some(&idx) = self.func_indices.get(&core_qualified) {
+            return Some((core_qualified, idx));
+        }
+
+        // 4. Fall back to unqualified name (backward compatibility)
+        if let Some(&idx) = self.func_indices.get(name) {
+            return Some((name.to_string(), idx));
+        }
+
+        None
+    }
+
+    /// Populate namespace aliases and referred symbols from requires.
+    fn populate_require_bindings(&mut self, requires: &[crate::analyze::AnalyzedRequire]) {
+        use crate::analyze::RequireSource;
+
+        for req in requires {
+            match &req.source {
+                RequireSource::SussNamespace { namespace } => {
+                    // Add alias if specified
+                    if let Some(ref alias) = req.alias {
+                        self.ns_aliases.insert(alias.clone(), namespace.clone());
+                    }
+
+                    // Add referred symbols
+                    for sym in &req.refers {
+                        self.referred_symbols.insert(sym.clone(), namespace.clone());
+                    }
+
+                    // Note: refer_all is handled during multi-namespace compilation
+                    // when we have the full NamespaceRegistry available
+                }
+                RequireSource::WitInterface { .. } => {
+                    // WASI imports are handled separately via import_indices
+                }
+            }
+        }
+    }
+
     fn lower_module(&mut self, analyzed: &AnalyzedModule) -> CompileResult<Module> {
+        // Set up namespace resolution info
+        self.current_ns = analyzed.namespace.clone();
+        self.populate_require_bindings(&analyzed.suss_requires);
+
         // Lower imports first - they occupy the first function indices
         for (idx, import) in analyzed.imports.iter().enumerate() {
             self.import_indices.insert(
@@ -2399,13 +2538,13 @@ impl Lowerer {
     }
 
     fn lower_func_call(&mut self, name: &str, args: &[Edn]) -> CompileResult<Expr> {
-        // Check if it's a qualified import call (e.g., "random/get-random-u64" or "wasi.random/get-random-u64")
+        // Check if it's a qualified call (e.g., "random/get-random-u64", "utils/helper", "myapp.core/main")
         if let Some(slash_pos) = name.find('/') {
-            let alias = &name[..slash_pos];
+            let prefix = &name[..slash_pos];
             let func_name = &name[slash_pos + 1..];
 
-            // Look up in import indices
-            if let Some(&idx) = self.import_indices.get(&(alias.to_string(), func_name.to_string())) {
+            // 1. Check WASI/WIT imports first
+            if let Some(&idx) = self.import_indices.get(&(prefix.to_string(), func_name.to_string())) {
                 // Arguments are never in tail position
                 let (result, was_tail) = self.with_args_context(|l| {
                     args.iter()
@@ -2428,17 +2567,30 @@ impl Lowerer {
                 };
             }
 
-            // Not found in imports - if this is a wasi.* call, provide helpful error
-            if alias.starts_with("wasi.") {
+            // 2. Check if prefix is a namespace alias -> resolve to full namespace
+            let target_ns = self.ns_aliases.get(prefix).cloned();
+            let qualified_name = if let Some(ns) = target_ns {
+                format!("{}/{}", ns, func_name)
+            } else {
+                // Prefix might be a full namespace name already (e.g., "myapp.core/main")
+                name.to_string()
+            };
+
+            // 3. Look up the qualified name in func_indices
+            if let Some(&idx) = self.func_indices.get(&qualified_name) {
+                return self.emit_func_call(idx, &qualified_name, args);
+            }
+
+            // Not found - provide helpful error
+            if prefix.starts_with("wasi.") || prefix.contains(':') {
                 return Err(CompileError::Undefined(format!(
-                    "WASI function '{}' not found. Make sure the function is supported. \
-                     Available: wasi.random/get-random-u64",
+                    "WASI function '{}' not found. Make sure the interface is imported.",
                     name
                 )));
             } else {
                 return Err(CompileError::Undefined(format!(
-                    "Import function '{}' not found (alias: '{}', function: '{}')",
-                    name, alias, func_name
+                    "Function '{}' not found (namespace: '{}', function: '{}')",
+                    name, prefix, func_name
                 )));
             }
         }
@@ -2466,60 +2618,13 @@ impl Lowerer {
             };
         }
 
-        // Look up local function by name
-        let func_idx = self.func_indices.get(name).copied();
+        // Resolve function name through namespace resolution chain
+        if let Some((resolved_name, idx)) = self.resolve_func_name(name) {
+            return self.emit_func_call(idx, &resolved_name, args);
+        }
 
-        if let Some(idx) = func_idx {
-            // Check if this is a variadic function
-            if let Some(&_min_arity) = self.variadic_funcs.get(name) {
-                // Variadic function: package all args into an array
-                let (result, was_tail) = self.with_args_context(|l| {
-                    args.iter()
-                        .map(|e| l.lower_expr(e))
-                        .collect::<CompileResult<Vec<_>>>()
-                });
-                let lowered_args = result?;
-
-                // Create an array containing all arguments
-                let args_array = Expr::ArrayNew {
-                    type_idx: gc_types::ARRAY,
-                    elements: lowered_args,
-                };
-
-                // Call with single args_array argument
-                if was_tail {
-                    Ok(Expr::TailCall {
-                        func: idx,
-                        args: vec![args_array],
-                    })
-                } else {
-                    Ok(Expr::Call {
-                        func: idx,
-                        args: vec![args_array],
-                    })
-                }
-            } else {
-                // Non-variadic function: pass args directly
-                let (result, was_tail) = self.with_args_context(|l| {
-                    args.iter()
-                        .map(|e| l.lower_expr(e))
-                        .collect::<CompileResult<Vec<_>>>()
-                });
-                let lowered_args = result?;
-
-                if was_tail {
-                    Ok(Expr::TailCall {
-                        func: idx,
-                        args: lowered_args,
-                    })
-                } else {
-                    Ok(Expr::Call {
-                        func: idx,
-                        args: lowered_args,
-                    })
-                }
-            }
-        } else if let Some(&(local_idx, ref ty)) = self.locals.get(name) {
+        // Check if it's a local variable (could be a closure)
+        if let Some(&(local_idx, ref ty)) = self.locals.get(name) {
             // It's a local variable - could be a closure
             // Clone values before mutable borrow
             let ty = ty.clone();

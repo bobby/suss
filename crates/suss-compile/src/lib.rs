@@ -626,6 +626,7 @@ impl Compiler {
             namespace: None,
             world_target: None,
             imports: Vec::new(),
+            suss_requires: Vec::new(),
             functions,
             globals: Vec::new(),
             protocols,
@@ -693,6 +694,7 @@ impl Compiler {
             namespace: None,
             world_target: None,
             imports,
+            suss_requires: Vec::new(),
             functions,
             globals: Vec::new(),
             protocols,
@@ -903,6 +905,115 @@ impl Compiler {
         component::encode_component(&core_wasm, &resolve, *world_id)
     }
 
+    /// Compile a multi-namespace project from an entry namespace.
+    ///
+    /// This method discovers all required namespaces starting from the entry point,
+    /// resolves them in topological order (dependencies first), and compiles them
+    /// into a single WASM component.
+    ///
+    /// # Arguments
+    ///
+    /// * `entry_ns` - The entry namespace (e.g., "myapp.core")
+    /// * `src_paths` - Directories to search for source files
+    /// * `wit_path` - Path to the WIT world definition
+    ///
+    /// # Returns
+    ///
+    /// The compiled WASM component bytes
+    pub fn compile_with_namespaces(
+        &mut self,
+        entry_ns: &str,
+        src_paths: &[std::path::PathBuf],
+        wit_path: &str,
+    ) -> CompileResult<Vec<u8>> {
+        use std::path::Path;
+
+        // 1. Discover files and build dependency graph
+        let mut resolver = DependencyResolver::new(src_paths.to_vec());
+        resolver.scan_from_entry(entry_ns)?;
+
+        // 2. Get compilation order (dependencies first)
+        let order = resolver.resolve_order()?;
+
+        if order.is_empty() {
+            return Err(CompileError::Config(format!(
+                "Namespace '{}' not found in source paths: {:?}",
+                entry_ns, src_paths
+            )));
+        }
+
+        // 3. Load core.suss (auto-injected before user code)
+        let core_exprs = load_core_exprs()?;
+
+        // 4. Gather all expressions in compilation order
+        let mut all_exprs = core_exprs;
+        for ns_name in &order {
+            if let Some(exprs) = resolver.get_parsed(ns_name) {
+                all_exprs.extend(exprs.clone());
+            }
+        }
+
+        // 5. Expand macros
+        let exprs = expand::expand_all(all_exprs, None)?;
+
+        // 6. Read the WIT file content for WASI detection
+        let wit_source = std::fs::read_to_string(wit_path)
+            .map_err(|e| CompileError::Io(format!("Failed to read {}: {}", wit_path, e)))?;
+
+        let wit_path_obj = Path::new(wit_path);
+        let mut resolve = Resolve::new();
+
+        // Auto-detect and load bundled WASI packages
+        let needed_wasi = wasi::detect_needed_packages(&wit_source);
+        for pkg_name in &needed_wasi {
+            if let Some(combined) = wasi::get_combined_package(pkg_name) {
+                let _ = resolve.push_str(&format!("wasi-{}.wit", pkg_name), &combined);
+            }
+        }
+
+        // Check if there's a user-provided deps folder
+        if let Some(parent) = wit_path_obj.parent() {
+            let deps_dir = parent.join("deps");
+            if deps_dir.is_dir() {
+                for entry in std::fs::read_dir(&deps_dir)
+                    .map_err(|e| CompileError::Io(format!("Failed to read deps: {}", e)))?
+                {
+                    let entry = entry
+                        .map_err(|e| CompileError::Io(format!("Failed to read entry: {}", e)))?;
+                    let path = entry.path();
+                    if path.is_dir() {
+                        let _ = resolve.push_path(&path);
+                    }
+                }
+            }
+        }
+
+        // Push the main WIT file
+        let pkg_id = resolve
+            .push_str(wit_path_obj.to_string_lossy().as_ref(), &wit_source)
+            .map_err(|e| CompileError::Wit(e.to_string()))?;
+
+        // Get the world from the package
+        let pkg = &resolve.packages[pkg_id];
+        let world_id = pkg
+            .worlds
+            .values()
+            .next()
+            .ok_or_else(|| CompileError::Wit("No world found in WIT file".to_string()))?;
+
+        // Analyze the source
+        let module = analyze::analyze(&exprs, &resolve, *world_id)?;
+
+        // Lower to IR (Component mode)
+        let ir = lower::lower_for_component(&module)?;
+
+        // Generate core WASM module
+        let core_wasm = codegen::generate(&ir, &resolve, *world_id)?;
+
+        // Wrap as WASM Component
+        component::encode_component(&core_wasm, &resolve, *world_id)
+    }
+
     /// Compile source code for main mode execution
     ///
     /// This method compiles Suss source code containing a `-main` function
@@ -1002,6 +1113,7 @@ impl Compiler {
             namespace: None,
             world_target: None,
             imports,
+            suss_requires: Vec::new(),
             functions,
             globals: Vec::new(),
             protocols,
@@ -1140,6 +1252,357 @@ impl Compiler {
         Ok((functions, deftypes, protocols, extensions))
     }
 
+    // ========================================================================
+    // Namespace File Resolution
+    // ========================================================================
+
+    /// Convert a namespace name to a file path following Clojure conventions.
+    ///
+    /// Conversion rules:
+    /// - Dots become directory separators: `myapp.core` → `myapp/core.suss`
+    /// - Hyphens become underscores: `my-app.core` → `my_app/core.suss`
+    ///
+    /// # Arguments
+    ///
+    /// * `ns` - Namespace name (e.g., "myapp.utils", "my-app.core")
+    /// * `src_paths` - List of source directories to search
+    ///
+    /// # Returns
+    ///
+    /// The first matching file path, or None if not found
+    pub fn ns_to_path(ns: &str, src_paths: &[std::path::PathBuf]) -> Option<std::path::PathBuf> {
+        // Convert dots to path separators, hyphens to underscores
+        let path_str = ns.replace('.', "/").replace('-', "_");
+        let file_name = format!("{}.suss", path_str);
+
+        for src_path in src_paths {
+            let candidate = src_path.join(&file_name);
+            if candidate.exists() {
+                return Some(candidate);
+            }
+        }
+        None
+    }
+
+    /// Convert a file path back to a namespace name.
+    ///
+    /// This is the inverse of `ns_to_path`.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - File path relative to a src-path
+    /// * `src_paths` - List of source directories
+    ///
+    /// # Returns
+    ///
+    /// The namespace name, or None if path doesn't match any src-path
+    pub fn path_to_ns(path: &std::path::Path, src_paths: &[std::path::PathBuf]) -> Option<String> {
+        for src_path in src_paths {
+            if let Ok(relative) = path.strip_prefix(src_path) {
+                // Remove .suss extension
+                let without_ext = relative.with_extension("");
+                // Convert path separators to dots, underscores to hyphens
+                let ns = without_ext
+                    .to_string_lossy()
+                    .replace(std::path::MAIN_SEPARATOR, ".")
+                    .replace('_', "-");
+                return Some(ns);
+            }
+        }
+        None
+    }
+}
+
+// ============================================================================
+// Dependency Resolution
+// ============================================================================
+
+use std::path::PathBuf;
+
+/// Resolves dependencies between Suss namespaces for correct compilation order.
+///
+/// The resolver scans source files, extracts namespace declarations and requires,
+/// builds a dependency graph, and produces a topological ordering for compilation.
+#[derive(Debug, Default)]
+pub struct DependencyResolver {
+    /// Maps namespace name to its dependencies (required namespaces)
+    deps: std::collections::HashMap<String, Vec<String>>,
+    /// Maps namespace name to its parsed expressions
+    parsed: std::collections::HashMap<String, Vec<Edn>>,
+    /// Maps namespace name to its source file path
+    files: std::collections::HashMap<String, PathBuf>,
+    /// Source paths for namespace resolution
+    src_paths: Vec<PathBuf>,
+}
+
+impl DependencyResolver {
+    /// Create a new dependency resolver with the given source paths.
+    pub fn new(src_paths: Vec<PathBuf>) -> Self {
+        Self {
+            deps: std::collections::HashMap::new(),
+            parsed: std::collections::HashMap::new(),
+            files: std::collections::HashMap::new(),
+            src_paths,
+        }
+    }
+
+    /// Scan a source file and extract namespace info.
+    ///
+    /// This performs a quick parse to extract the `(ns ...)` declaration
+    /// and any `(require ...)` statements.
+    pub fn scan_file(&mut self, path: &PathBuf) -> CompileResult<Option<String>> {
+        let source = std::fs::read_to_string(path)
+            .map_err(|e| CompileError::IoError(format!("Failed to read {}: {}", path.display(), e)))?;
+
+        let mut parser_state = suss_reader::ParserState::new("suss");
+        let exprs = suss_reader::parse_all(&source, &mut parser_state)
+            .map_err(|e| CompileError::Parse(format!("Parse error in {}: {}", path.display(), e)))?;
+
+        // Extract namespace name and dependencies from (ns ...) form
+        let mut ns_name: Option<String> = None;
+        let mut ns_deps: Vec<String> = Vec::new();
+
+        for expr in &exprs {
+            if let Edn::List(items) = expr {
+                if let Some(Edn::Symbol(sym)) = items.first() {
+                    if sym.name == "ns" {
+                        // (ns myapp.core (require '[...]) ...)
+                        if items.len() >= 2 {
+                            if let Edn::Symbol(ns_sym) = &items[1] {
+                                ns_name = Some(ns_sym.name.clone());
+                            }
+                        }
+                        // Extract requires from ns form
+                        for item in items.iter().skip(2) {
+                            if let Edn::List(req_items) = item {
+                                if let Some(Edn::Symbol(req_sym)) = req_items.first() {
+                                    if req_sym.name == "require" {
+                                        if let Some(dep) = self.extract_require_ns(req_items) {
+                                            ns_deps.push(dep);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else if sym.name == "require" {
+                        // Top-level (require '[...])
+                        if let Some(dep) = self.extract_require_ns(items) {
+                            ns_deps.push(dep);
+                        }
+                    }
+                }
+            }
+        }
+
+        if let Some(ref name) = ns_name {
+            self.deps.insert(name.clone(), ns_deps);
+            self.parsed.insert(name.clone(), exprs);
+            self.files.insert(name.clone(), path.clone());
+        }
+
+        Ok(ns_name)
+    }
+
+    /// Extract namespace name from a require form.
+    ///
+    /// Returns None for WASI requires (contain ':').
+    fn extract_require_ns(&self, items: &[Edn]) -> Option<String> {
+        // (require '[myapp.utils :as utils])
+        if items.len() < 2 {
+            return None;
+        }
+
+        // Get the spec - either quoted or unquoted vector
+        let spec = match &items[1] {
+            Edn::List(quote_items) if quote_items.len() == 2 => {
+                if let Edn::Symbol(sym) = &quote_items[0] {
+                    if sym.name == "quote" {
+                        if let Edn::Vector(vec_items) = &quote_items[1] {
+                            Some(vec_items)
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            }
+            Edn::Vector(vec_items) => Some(vec_items),
+            _ => None,
+        }?;
+
+        if spec.is_empty() {
+            return None;
+        }
+
+        // First element is the namespace/interface name
+        let name = match &spec[0] {
+            Edn::Symbol(sym) => &sym.name,
+            _ => return None,
+        };
+
+        // Skip WASI requires (contain ':')
+        if name.contains(':') {
+            return None;
+        }
+
+        Some(name.clone())
+    }
+
+    /// Scan starting from an entry namespace, discovering dependencies.
+    ///
+    /// This recursively discovers and scans all required namespaces.
+    pub fn scan_from_entry(&mut self, entry_ns: &str) -> CompileResult<()> {
+        let mut to_scan = vec![entry_ns.to_string()];
+        let mut scanned = std::collections::HashSet::new();
+
+        while let Some(ns) = to_scan.pop() {
+            if scanned.contains(&ns) {
+                continue;
+            }
+            scanned.insert(ns.clone());
+
+            // Skip if already scanned
+            if self.deps.contains_key(&ns) {
+                // Add its dependencies to the scan queue
+                if let Some(deps) = self.deps.get(&ns) {
+                    for dep in deps {
+                        if !scanned.contains(dep) {
+                            to_scan.push(dep.clone());
+                        }
+                    }
+                }
+                continue;
+            }
+
+            // Find and scan the file
+            if let Some(path) = Compiler::ns_to_path(&ns, &self.src_paths) {
+                self.scan_file(&path)?;
+
+                // Add discovered dependencies to scan queue
+                if let Some(deps) = self.deps.get(&ns) {
+                    for dep in deps {
+                        if !scanned.contains(dep) {
+                            to_scan.push(dep.clone());
+                        }
+                    }
+                }
+            } else {
+                // Namespace not found - might be suss.core or external
+                // We don't error here; missing deps are caught later
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Check for circular dependencies.
+    ///
+    /// Returns an error if a cycle is detected.
+    pub fn check_cycles(&self) -> CompileResult<()> {
+        use std::collections::HashSet;
+
+        fn visit(
+            ns: &str,
+            deps: &std::collections::HashMap<String, Vec<String>>,
+            visiting: &mut HashSet<String>,
+            visited: &mut HashSet<String>,
+            path: &mut Vec<String>,
+        ) -> CompileResult<()> {
+            if visited.contains(ns) {
+                return Ok(());
+            }
+            if visiting.contains(ns) {
+                path.push(ns.to_string());
+                return Err(CompileError::CyclicDependency(path.join(" -> ")));
+            }
+
+            visiting.insert(ns.to_string());
+            path.push(ns.to_string());
+
+            if let Some(ns_deps) = deps.get(ns) {
+                for dep in ns_deps {
+                    visit(dep, deps, visiting, visited, path)?;
+                }
+            }
+
+            path.pop();
+            visiting.remove(ns);
+            visited.insert(ns.to_string());
+            Ok(())
+        }
+
+        let mut visiting = HashSet::new();
+        let mut visited = HashSet::new();
+        let mut path = Vec::new();
+
+        for ns in self.deps.keys() {
+            visit(ns, &self.deps, &mut visiting, &mut visited, &mut path)?;
+        }
+
+        Ok(())
+    }
+
+    /// Return namespaces in compilation order (dependencies first).
+    ///
+    /// Uses topological sort to ensure each namespace is compiled
+    /// after all its dependencies.
+    pub fn resolve_order(&self) -> CompileResult<Vec<String>> {
+        self.check_cycles()?;
+
+        use std::collections::HashSet;
+
+        let mut result = Vec::new();
+        let mut visited = HashSet::new();
+
+        fn visit(
+            ns: &str,
+            deps: &std::collections::HashMap<String, Vec<String>>,
+            visited: &mut HashSet<String>,
+            result: &mut Vec<String>,
+        ) {
+            if visited.contains(ns) {
+                return;
+            }
+            visited.insert(ns.to_string());
+
+            // Visit dependencies first
+            if let Some(ns_deps) = deps.get(ns) {
+                for dep in ns_deps {
+                    visit(dep, deps, visited, result);
+                }
+            }
+
+            result.push(ns.to_string());
+        }
+
+        // Visit all namespaces
+        for ns in self.deps.keys() {
+            visit(ns, &self.deps, &mut visited, &mut result);
+        }
+
+        Ok(result)
+    }
+
+    /// Get parsed expressions for a namespace.
+    pub fn get_parsed(&self, ns: &str) -> Option<&Vec<Edn>> {
+        self.parsed.get(ns)
+    }
+
+    /// Get source file path for a namespace.
+    pub fn get_file(&self, ns: &str) -> Option<&PathBuf> {
+        self.files.get(ns)
+    }
+
+    /// Get all discovered namespaces.
+    pub fn namespaces(&self) -> impl Iterator<Item = &String> {
+        self.deps.keys()
+    }
+}
+
+impl Compiler {
     /// Compile a project from deps.suss configuration
     ///
     /// This method reads deps.suss, scans source paths, and compiles each world

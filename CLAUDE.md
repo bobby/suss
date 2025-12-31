@@ -32,8 +32,9 @@ suss -i lib.suss -e "(process)"         # Load file, then eval
 
 # Compile subcommand - AOT output
 suss compile src.suss -o out.wasm                   # REPL component (TODO)
-suss compile -m ns src.suss -o app.wasm             # CLI command (TODO)
+suss compile -m ns src.suss -o app.wasm             # CLI command
 suss compile -w api.wit src.suss -o lib.wasm        # Library/plugin
+suss compile -n myapp.core -w world.wit             # Namespace mode (multi-file)
 suss compile --world :app/v1                        # From deps.suss
 
 # Run subcommand - execute compiled component
@@ -402,6 +403,83 @@ Use `require` with `:as` alias or `:refer`:
 (require '[wasi:random/random :as random])
 (random/get-random-u64)
 ```
+
+### Cross-Namespace Requires
+
+Suss supports Clojure-style namespace requires for organizing code across multiple files.
+
+**Namespace Declaration:**
+```clojure
+(ns myapp.core
+  (require '[myapp.utils :as utils])
+  (require '[myapp.helpers :refer [helper-fn]])
+  (require '[wasi:random/random :as random]))  ;; WASI still works
+
+;; Using required namespaces
+(utils/process-data x)
+(helper-fn y)
+(random/get-random-u64)
+```
+
+**File Mapping (Clojure convention):**
+- `myapp.core` → `src/myapp/core.suss`
+- `myapp.utils-helpers` → `src/myapp/utils_helpers.suss`
+- Dots become directory separators, hyphens become underscores
+
+**Require Options:**
+- `:as alias` - Import all functions with alias prefix
+- `:refer [fn1 fn2]` - Import specific functions without prefix
+- `:refer :all` - Import all public functions without prefix
+
+**Compilation Modes:**
+```bash
+# Single-file compilation (existing)
+suss compile src.suss -w world.wit -o out.wasm
+
+# Multi-file namespace compilation (new)
+suss compile -n myapp.core -w world.wit -o app.wasm
+suss compile -n myapp.core --src lib --src vendor -w world.wit -o app.wasm
+```
+
+**Key files:**
+- `crates/suss-compile/src/analyze.rs` - `AnalyzedRequire`, `RequireSource`, require parsing
+- `crates/suss-compile/src/lib.rs` - `DependencyResolver`, `ns_to_path()`, `compile_with_namespaces()`
+- `crates/suss-compile/src/lower.rs` - Namespace resolution: `ns_aliases`, `referred_symbols`, `resolve_func_name()`
+
+**Resolution Order (for unqualified symbols):**
+1. Current namespace
+2. Referred symbols from requires
+3. `suss.core` (implicit require)
+4. Unqualified name (backward compatibility)
+
+**Key data structures:**
+```rust
+// analyze.rs
+pub enum RequireSource {
+    WitInterface { interface: String },
+    SussNamespace { namespace: String },
+}
+
+pub struct AnalyzedRequire {
+    pub source: RequireSource,
+    pub alias: Option<String>,
+    pub refers: Vec<String>,
+    pub refer_all: bool,
+}
+
+// lib.rs
+pub struct DependencyResolver {
+    deps: HashMap<String, Vec<String>>,  // ns -> dependencies
+    parsed: HashMap<String, Vec<Edn>>,   // ns -> parsed expressions
+    files: HashMap<String, PathBuf>,     // ns -> source file
+    src_paths: Vec<PathBuf>,
+}
+```
+
+**Dependency Resolution:**
+- Topological sort ensures dependencies compile before dependents
+- Circular dependency detection with helpful error messages
+- Lazy discovery: only scans files as needed from entry namespace
 
 ### Bundled WASI
 WASI 0.2.4 WIT files are bundled. When world.wit imports `wasi:*`, they're auto-loaded. No deps/ folder needed for WASI packages.

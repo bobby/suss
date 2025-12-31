@@ -59,4 +59,12 @@ pub enum CompileError {
     /// Compile-time macro evaluation error
     #[error("Macro evaluation error: {0}")]
     MacroEval(String),
+
+    /// I/O error (general, with context)
+    #[error("I/O error: {0}")]
+    IoError(String),
+
+    /// Circular dependency between namespaces
+    #[error("Circular dependency: {0}")]
+    CyclicDependency(String),
 }

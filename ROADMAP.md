@@ -98,12 +98,15 @@ Function Index Layout:
 - [x] TCO with WIT-exported functions (function index offset fix in Component mode)
 - [x] End-to-end verification of complex trie operations
 - [x] `deftype` with inline protocols (Phase 3.2)
+- [x] Cross-namespace require system (compile-time, Phases 8.1-8.6 complete)
+- [x] REPL runtime loading for `require` and `in-ns` (Phase 8.7)
+- [ ] Convert core.suss to suss.core namespace (Phase 8.8)
 
 ### Blocking Issues
 - None currently blocking
 
 ### Known Bugs
-- None currently known
+- **Nested closures inside function bodies fail to compile** - Closures defined and called inside a user function body produce WASM validation errors ("type mismatch: expected (ref $type), found (ref $type)"). Top-level closures work fine. This blocks 5 conformance tests (fn-nested, fn-closure, fn-higher-order, defn-simple, defn-recursive). Example: `((fn [] (let [f (fn [x] x)] (f 5))))` fails while `(let [f (fn [x] x)] (f 5))` works.
 
 ---
 
@@ -684,7 +687,97 @@ After Phase 7, the compiler provides only:
 
 ---
 
-## Phase 8: WIT Boundary Marshaling
+## Phase 8: Cross-Namespace Require System ✓ MOSTLY COMPLETE
+
+> **Goal:** Enable Clojure-style code organization across multiple files with proper dependency resolution.
+
+### Completed (Compile-Time Support)
+
+**Phase 8.1: Data Structures** ✓
+- [x] `NamespaceInfo`, `NamespaceRegistry` for tracking namespaces
+- [x] `AnalyzedRequire`, `RequireSource` for require parsing
+- [x] `PublicDef`, `DefKind` for export tracking
+
+**Phase 8.2: File Resolution** ✓
+- [x] `ns_to_path()` - Convert namespace to file path (Clojure convention)
+- [x] `path_to_ns()` - Convert file path back to namespace
+- [x] Support for multiple source paths (`--src` flag)
+
+**Phase 8.3: Require Parsing** ✓
+- [x] Parse both WASI and Suss namespace requires
+- [x] Discrimination: contains `:` → WASI, otherwise → Suss namespace
+- [x] Support `:as`, `:refer [...]`, `:refer :all`
+
+**Phase 8.4: Dependency Resolution** ✓
+- [x] `DependencyResolver` with topological sort
+- [x] Circular dependency detection
+- [x] Lazy discovery from entry namespace
+
+**Phase 8.5: Symbol Resolution** ✓
+- [x] Namespace aliases (`ns_aliases` HashMap)
+- [x] Referred symbols (`referred_symbols` HashMap)
+- [x] Resolution chain: current ns → referred → suss.core → unqualified
+
+**Phase 8.6: Multi-File Compilation** ✓
+- [x] `compile_with_namespaces()` entry point
+- [x] CLI support: `suss compile -n myapp.core -w world.wit`
+
+**Phase 8.7: REPL Runtime Loading** ✓
+- [x] `(require '[ns :as alias])` at REPL runtime - loads namespace files
+- [x] `(in-ns 'ns)` to switch current namespace - changes REPL prompt
+- [x] Definition persistence across expressions via source accumulation
+- [x] Dynamic prompt showing current namespace
+
+### Remaining
+
+**Phase 8.8: core.suss as suss.core**
+- [ ] Add `(ns suss.core)` declaration to core.suss
+- [ ] Modify loader to register as namespace
+- [ ] All user code implicitly requires suss.core
+
+**Phase 8.9: REPL Enhancements (Future)**
+- [ ] WASM compilation caching - Hash accumulated source, cache compiled WASM bytes
+- [ ] Hot reload - Watch source files, auto-reload namespaces on change
+- [ ] Tab completion - Complete namespace-qualified symbols
+- [ ] `*ns*` dynamic var - Clojure-style current namespace binding
+- [ ] Definition redefinition - Handle `(defn foo ...)` replacing previous `foo`
+- [ ] Incremental parsing - Cache parsed EDN per file to speed up recompilation
+
+### Usage
+
+```clojure
+;; src/myapp/core.suss
+(ns myapp.core
+  (require '[myapp.utils :as utils])
+  (require '[wasi:random/random :as random]))
+
+(defn ^:export main []
+  (utils/process (random/get-random-u64)))
+```
+
+```bash
+# Multi-file namespace compilation
+suss compile -n myapp.core -w world.wit -o app.wasm
+
+# With custom source paths
+suss compile -n myapp.core --src lib --src vendor -w world.wit
+```
+
+### Key Files Modified
+
+| File | Changes |
+|------|---------|
+| `analyze.rs` | `AnalyzedRequire`, `RequireSource`, `NamespaceInfo`, require parsing |
+| `lib.rs` | `DependencyResolver`, `ns_to_path()`, `compile_with_namespaces()` |
+| `lower.rs` | `ns_aliases`, `referred_symbols`, `resolve_func_name()` |
+| `error.rs` | `CyclicDependency`, `IoError` variants |
+| `args.rs` | `-n`/`--namespace` and `--src` CLI flags |
+| `main.rs` | `compile_namespace()` command handler, stateful REPL |
+| `repl.rs` | **NEW** - `ReplState`, `handle_in_ns()`, `handle_require()`, definition persistence |
+
+---
+
+## Phase 9: WIT Boundary Marshaling
 
 Convert between internal GC refs and WIT primitives at export boundaries.
 

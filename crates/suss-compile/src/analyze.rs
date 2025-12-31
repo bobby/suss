@@ -5,6 +5,10 @@
 //! - Type inference
 //! - Export detection (^:export metadata)
 //! - Validation against WIT world
+//! - Namespace management and cross-namespace requires
+
+use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
 
 use num_traits::ToPrimitive;
 use suss_core::Edn;
@@ -20,7 +24,10 @@ pub struct AnalyzedModule {
     pub namespace: Option<String>,
     /// Target world (from gen-world in ns declaration)
     pub world_target: Option<String>,
+    /// WASI/WIT interface imports
     pub imports: Vec<AnalyzedImport>,
+    /// Suss namespace requires (for cross-namespace calls)
+    pub suss_requires: Vec<AnalyzedRequire>,
     pub functions: Vec<AnalyzedFunction>,
     pub globals: Vec<AnalyzedGlobal>,
     /// Protocol definitions
@@ -147,6 +154,164 @@ pub struct AnalyzedGlobal {
     pub init: Edn,
 }
 
+// ============================================================================
+// Namespace System Types
+// ============================================================================
+
+/// Kind of definition in a namespace
+#[derive(Debug, Clone, PartialEq)]
+pub enum DefKind {
+    Function,
+    Protocol,
+    Deftype,
+    Macro,
+    Global,
+}
+
+/// Information about a public definition
+#[derive(Debug, Clone)]
+pub struct PublicDef {
+    pub name: String,
+    pub kind: DefKind,
+    /// Arity for functions (None for non-functions)
+    pub arity: Option<usize>,
+    /// Whether this is a variadic function
+    pub is_variadic: bool,
+}
+
+/// Source of a require - either WASI/WIT or a Suss namespace
+#[derive(Debug, Clone)]
+pub enum RequireSource {
+    /// WASI/WIT interface import (e.g., "wasi:random/random")
+    WitInterface { interface: String },
+    /// Suss namespace (e.g., "myapp.utils")
+    SussNamespace { namespace: String },
+}
+
+/// An analyzed require statement (for both WASI and Suss namespaces)
+#[derive(Debug, Clone)]
+pub struct AnalyzedRequire {
+    /// Source of the require
+    pub source: RequireSource,
+    /// Alias for qualified access (e.g., "utils" for utils/func)
+    pub alias: Option<String>,
+    /// Specifically referred symbols (for :refer [sym1 sym2])
+    pub refers: Vec<String>,
+    /// Whether :refer :all was specified
+    pub refer_all: bool,
+}
+
+/// Information about a namespace and its exports
+#[derive(Debug, Clone, Default)]
+pub struct NamespaceInfo {
+    /// Namespace name (e.g., "myapp.core")
+    pub name: String,
+    /// Public definitions exported from this namespace
+    pub publics: HashMap<String, PublicDef>,
+    /// Private definitions (marked with ^:private)
+    pub privates: HashSet<String>,
+    /// Requires from this namespace
+    pub requires: Vec<AnalyzedRequire>,
+    /// Source file path (if known)
+    pub source_file: Option<PathBuf>,
+}
+
+impl NamespaceInfo {
+    pub fn new(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            ..Default::default()
+        }
+    }
+
+    /// Check if a symbol is private
+    pub fn is_private(&self, name: &str) -> bool {
+        self.privates.contains(name)
+    }
+
+    /// Check if a symbol is public (exists and not private)
+    pub fn is_public(&self, name: &str) -> bool {
+        self.publics.contains_key(name) && !self.privates.contains(name)
+    }
+
+    /// Add a public definition
+    pub fn add_public(&mut self, name: &str, kind: DefKind, arity: Option<usize>, is_variadic: bool) {
+        self.publics.insert(
+            name.to_string(),
+            PublicDef {
+                name: name.to_string(),
+                kind,
+                arity,
+                is_variadic,
+            },
+        );
+    }
+
+    /// Mark a symbol as private
+    pub fn add_private(&mut self, name: &str) {
+        self.privates.insert(name.to_string());
+    }
+}
+
+/// Registry of all loaded namespaces
+#[derive(Debug, Clone, Default)]
+pub struct NamespaceRegistry {
+    /// All known namespaces: name -> info
+    pub namespaces: HashMap<String, NamespaceInfo>,
+    /// Namespace to source file mapping
+    pub ns_to_file: HashMap<String, PathBuf>,
+}
+
+impl NamespaceRegistry {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Check if a namespace is loaded
+    pub fn contains(&self, ns: &str) -> bool {
+        self.namespaces.contains_key(ns)
+    }
+
+    /// Get namespace info
+    pub fn get(&self, ns: &str) -> Option<&NamespaceInfo> {
+        self.namespaces.get(ns)
+    }
+
+    /// Get mutable namespace info
+    pub fn get_mut(&mut self, ns: &str) -> Option<&mut NamespaceInfo> {
+        self.namespaces.get_mut(ns)
+    }
+
+    /// Register a namespace
+    pub fn register(&mut self, info: NamespaceInfo) {
+        if let Some(ref path) = info.source_file {
+            self.ns_to_file.insert(info.name.clone(), path.clone());
+        }
+        self.namespaces.insert(info.name.clone(), info);
+    }
+
+    /// Create an empty namespace (for REPL in-ns)
+    pub fn create_empty(&mut self, name: &str) {
+        if !self.contains(name) {
+            self.register(NamespaceInfo::new(name));
+        }
+    }
+
+    /// Check if a symbol is visible from one namespace to another
+    pub fn is_visible(&self, source_ns: &str, symbol: &str, from_ns: &str) -> bool {
+        // Same namespace - always visible
+        if source_ns == from_ns {
+            return true;
+        }
+        // Check if symbol is private in source namespace
+        if let Some(info) = self.get(source_ns) {
+            !info.is_private(symbol)
+        } else {
+            false
+        }
+    }
+}
+
 /// Analyze Suss expressions and validate against WIT world
 pub fn analyze(
     exprs: &[Edn],
@@ -271,6 +436,7 @@ struct Analyzer<'a> {
     namespace: Option<String>,
     world_target: Option<String>,
     imports: Vec<AnalyzedImport>,
+    suss_requires: Vec<AnalyzedRequire>,
     functions: Vec<AnalyzedFunction>,
     globals: Vec<AnalyzedGlobal>,
     protocols: Vec<AnalyzedProtocol>,
@@ -286,6 +452,7 @@ impl<'a> Analyzer<'a> {
             namespace: None,
             world_target: None,
             imports: Vec::new(),
+            suss_requires: Vec::new(),
             functions: Vec::new(),
             globals: Vec::new(),
             protocols: Vec::new(),
@@ -307,6 +474,7 @@ impl<'a> Analyzer<'a> {
             namespace: self.namespace.take(),
             world_target: self.world_target.take(),
             imports: std::mem::take(&mut self.imports),
+            suss_requires: std::mem::take(&mut self.suss_requires),
             functions: std::mem::take(&mut self.functions),
             globals: std::mem::take(&mut self.globals),
             protocols: std::mem::take(&mut self.protocols),
@@ -490,8 +658,13 @@ impl<'a> Analyzer<'a> {
     }
 
     fn analyze_require(&mut self, items: &[Edn]) -> CompileResult<()> {
-        // (require '[wasi:random/random :as random])
-        // (require '[wasi:cli/stdout :refer [print]])
+        // WASI/WIT imports:
+        //   (require '[wasi:random/random :as random])
+        //   (require '[wasi:cli/stdout :refer [print]])
+        // Suss namespace imports:
+        //   (require '[myapp.utils :as utils])
+        //   (require '[myapp.helpers :refer [helper-fn]])
+        //   (require '[myapp.core :refer :all])
         if items.len() < 2 {
             return Err(CompileError::Parse("require needs a spec".into()));
         }
@@ -522,15 +695,16 @@ impl<'a> Analyzer<'a> {
             return Err(CompileError::Parse("require spec cannot be empty".into()));
         }
 
-        // First element is the interface name
-        let interface_name = match &spec[0] {
+        // First element is the namespace/interface name
+        let name = match &spec[0] {
             Edn::Symbol(sym) => sym.name.clone(),
-            _ => return Err(CompileError::Parse("require spec first element must be interface name".into())),
+            _ => return Err(CompileError::Parse("require spec first element must be a symbol".into())),
         };
 
-        // Parse options (:as alias or :refer [fns])
+        // Parse options (:as alias, :refer [fns], :refer :all)
         let mut alias: Option<String> = None;
         let mut refer_fns: Vec<String> = Vec::new();
+        let mut refer_all = false;
         let mut i = 1;
 
         while i < spec.len() {
@@ -551,18 +725,24 @@ impl<'a> Analyzer<'a> {
                         "refer" => {
                             i += 1;
                             if i >= spec.len() {
-                                return Err(CompileError::Parse(":refer requires a vector of names".into()));
+                                return Err(CompileError::Parse(":refer requires a vector of names or :all".into()));
                             }
-                            if let Edn::Vector(fns) = &spec[i] {
-                                for f in fns {
-                                    if let Edn::Symbol(sym) = f {
-                                        refer_fns.push(sym.name.clone());
-                                    } else {
-                                        return Err(CompileError::Parse(":refer elements must be symbols".into()));
+                            match &spec[i] {
+                                Edn::Vector(fns) => {
+                                    for f in fns {
+                                        if let Edn::Symbol(sym) = f {
+                                            refer_fns.push(sym.name.clone());
+                                        } else {
+                                            return Err(CompileError::Parse(":refer elements must be symbols".into()));
+                                        }
                                     }
                                 }
-                            } else {
-                                return Err(CompileError::Parse(":refer requires a vector".into()));
+                                Edn::Keyword(kw) if kw.name == "all" => {
+                                    refer_all = true;
+                                }
+                                _ => {
+                                    return Err(CompileError::Parse(":refer requires a vector or :all".into()));
+                                }
                             }
                         }
                         other => {
@@ -577,9 +757,26 @@ impl<'a> Analyzer<'a> {
             i += 1;
         }
 
+        // Discriminate: contains ':' = WASI/WIT import, otherwise = Suss namespace
+        if name.contains(':') {
+            self.analyze_wasi_require(&name, alias, refer_fns)?;
+        } else {
+            self.analyze_suss_require(&name, alias, refer_fns, refer_all)?;
+        }
+
+        Ok(())
+    }
+
+    /// Analyze a WASI/WIT interface require
+    fn analyze_wasi_require(
+        &mut self,
+        interface_name: &str,
+        alias: Option<String>,
+        refer_fns: Vec<String>,
+    ) -> CompileResult<()> {
         // Look up the interface in the WIT world imports
         let world = &self.resolve.worlds[self.world_id];
-        let interface_id = self.find_interface_import(&interface_name, world)?;
+        let interface_id = self.find_interface_import(interface_name, world)?;
 
         // Get functions from the interface
         let interface = &self.resolve.interfaces[interface_id];
@@ -600,7 +797,7 @@ impl<'a> Analyzer<'a> {
 
                 self.imports.push(AnalyzedImport {
                     alias: alias_name.clone(),
-                    wit_interface: interface_name.clone(),
+                    wit_interface: interface_name.to_string(),
                     function_name: func_name.clone(),
                     params,
                     return_type,
@@ -626,15 +823,38 @@ impl<'a> Analyzer<'a> {
 
                 self.imports.push(AnalyzedImport {
                     alias: String::new(), // No alias for :refer
-                    wit_interface: interface_name.clone(),
+                    wit_interface: interface_name.to_string(),
                     function_name: func_name.clone(),
                     params,
                     return_type,
                 });
             }
         } else {
-            return Err(CompileError::Parse("require needs :as or :refer".into()));
+            return Err(CompileError::Parse("WASI require needs :as or :refer".into()));
         }
+
+        Ok(())
+    }
+
+    /// Analyze a Suss namespace require
+    fn analyze_suss_require(
+        &mut self,
+        namespace: &str,
+        alias: Option<String>,
+        refers: Vec<String>,
+        refer_all: bool,
+    ) -> CompileResult<()> {
+        // For Suss namespaces, we just record the require info.
+        // Actual symbol resolution happens in the lowering phase
+        // after all namespaces have been analyzed.
+        self.suss_requires.push(AnalyzedRequire {
+            source: RequireSource::SussNamespace {
+                namespace: namespace.to_string(),
+            },
+            alias,
+            refers,
+            refer_all,
+        });
 
         Ok(())
     }
