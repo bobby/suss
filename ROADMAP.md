@@ -687,17 +687,6 @@ These gc_types constants are still actively used in lower.rs and codegen.rs:
 
 Removing these requires refactoring to resolve field indices dynamically from DeftypeDef.
 
-### Optional Future Work: WIT Code Consolidation (~722 lines)
-
-Nearly identical code paths exist for WIT vs non-WIT compilation with `param_offset` threading:
-- `generate_expr_wit()` / `generate_expr_wit_inner()` - 273 lines
-- `generate_binop_wit()` - 76 lines
-- `generate_function_wit()` - 104 lines
-- `generate_core_with_imports()` - 157 lines
-- Other WIT-specific functions - ~112 lines
-
-This is the biggest remaining opportunity but requires significant refactoring.
-
 ### What Remains in Compiler
 
 The compiler now provides only:
@@ -714,11 +703,98 @@ The compiler now provides only:
 
 **Metric:** Lines of code in `codegen.rs`
 - Original: ~7,000 lines
-- Current: 5,412 lines (23% reduction)
-- After quick wins: ~5,380 lines
-- Stretch goal with WIT consolidation: ~4,700 lines
+- Current: ~5,380 lines (~23% reduction)
 
 **All existing tests pass** - behavior unchanged, just moved to core.suss.
+
+---
+
+## Phase 7b: WIT Code Consolidation
+
+> **Goal:** Reduce code duplication between WIT and non-WIT code generation paths.
+> **Estimated savings:** ~400-600 lines (after accounting for new abstraction overhead)
+
+### Background
+
+The compiler has nearly identical code paths for WIT-exported functions vs internal functions, with the key difference being `param_offset` threading for local variable access.
+
+**WIT functions** have a dual local layout:
+- Positions 0..N hold raw WIT params (i32/i64/f64)
+- Positions N..2N hold converted eqref copies
+- Entry code marshals WIT params → eqref
+- Exit code marshals eqref result → WIT type
+- `param_offset = N` threads through all expression generation
+
+**Non-WIT functions** have a single local layout:
+- All params are eqref from the start
+- No entry/exit marshaling
+- `param_offset = 0`
+
+### Duplicated Functions (~722 lines)
+
+| WIT Version | Non-WIT Version | Lines | Notes |
+|-------------|-----------------|-------|-------|
+| `generate_function_wit()` | `generate_function()` | 104 | Dual vs single local layout |
+| `generate_expr_wit()` | `generate_expr()` | 273 | param_offset threading |
+| `generate_expr_wit_inner()` | `generate_expr_inner()` | (included above) | Main dispatch |
+| `generate_binop_wit()` | (embedded) | 76 | Simplified arithmetic |
+| `generate_unop_wit()` | (embedded) | 34 | Unary ops |
+| `generate_if_wit()` | (embedded) | 40 | Condition handling |
+| `generate_condition_wit()` | (embedded) | (included above) | |
+| `generate_core_with_imports()` | `generate_standalone_module()` | 157 | Module orchestration |
+
+### Proposed Approach: Mode Enum
+
+Unify via a `GenerationMode` enum that captures the differences:
+
+```rust
+enum GenerationMode {
+    /// Internal functions - all params are eqref
+    Internal,
+    /// WIT-exported functions - dual local layout with marshaling
+    WitExport {
+        param_offset: u32,
+        param_types: Vec<WitType>,  // For entry marshaling
+        return_type: WitType,        // For exit marshaling
+    },
+}
+
+fn generate_function(&self, func: &Function, mode: GenerationMode) -> CompileResult<Function> {
+    match mode {
+        GenerationMode::Internal => { /* current generate_function logic */ }
+        GenerationMode::WitExport { .. } => { /* current generate_function_wit logic */ }
+    }
+    // Shared body generation with mode passed through
+    self.generate_expr(&func.body, f, &mode)?;
+}
+```
+
+### Implementation Tasks
+
+- [ ] Define `GenerationMode` enum in codegen.rs
+- [ ] Unify `generate_function` and `generate_function_wit`
+- [ ] Unify `generate_expr_inner` with mode-aware param_offset handling
+- [ ] Unify `generate_binop` with mode-aware feature gates
+- [ ] Unify `generate_if` and condition handling
+- [ ] Remove `generate_*_wit` functions after unification
+- [ ] Update `generate_core_with_imports` to use unified path
+
+### Considerations
+
+**What stays different:**
+- Entry/exit marshaling (only for WIT exports)
+- Scratch local allocation (WIT uses fewer: 5×25 vs 10×50)
+- Complex arithmetic support (WIT subset restricts some operations)
+- Loop tracking (non-WIT tracks `loop_depth` for recur)
+
+**Risk:** If unification adds as much conditional logic as it removes duplication, the benefit is marginal. The goal is net reduction in complexity, not just line count.
+
+### Success Criteria
+
+- [ ] codegen.rs reduced to ~4,800-5,000 lines
+- [ ] All existing tests pass
+- [ ] WIT export functionality unchanged
+- [ ] Code is easier to maintain (changes apply to both paths)
 
 ---
 
@@ -927,13 +1003,15 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 | **5** | Protocol impls in core.suss | Yes | ✓ COMPLETE |
 | **6** | Pure Suss algorithms | Incremental | ✓ COMPLETE |
 | **7** | Minimize compiler | No | ✓ COMPLETE |
+| **7b** | WIT code consolidation | No | Pending |
 
 ### After Self-Hosting
-8. **Phase 8: WIT marshaling** - Component exports
-9. **Phase 9: Transients** - Performance optimization
-10. **Phase 10: wasm-opt** - Binary optimization
-11. **Phase 11: WASI CLI** - Command components
-12. **Phase 12: List/Seq** - Sequence abstraction
+- **Phase 7b: WIT consolidation** - Reduce codegen duplication (~400-600 lines)
+- **Phase 9: WIT marshaling** - Component boundary type conversion
+- **Phase 10: Transients** - Performance optimization
+- **Phase 11: wasm-opt** - Binary optimization
+- **Phase 12: WASI CLI** - Command components
+- **Phase 13: List/Seq** - Sequence abstraction
 
 ---
 
