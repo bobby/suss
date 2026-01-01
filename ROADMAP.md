@@ -104,7 +104,7 @@ Function Index Layout:
 - [x] Nested closures bug fix (closure_counter instead of pending_closures.len())
 - [x] Phase 5 complete: All protocol impls in core.suss (removed protocol_impl_funcs module)
 - [x] Phase 6 complete: All collection algorithm helpers in core.suss (only HASH_STRING, GET_TYPE_ID remain)
-- [x] Phase 7 mostly complete: codegen.rs reduced 23% (~5,400 lines), only dead code cleanup remaining
+- [x] Phase 7 complete: codegen.rs reduced ~25% (~5,300 lines), dead code and deprecated aliases removed
 
 ### Blocking Issues
 - None currently blocking
@@ -637,7 +637,7 @@ The challenge is that protocol impls (Phase 5) call these helpers:
 
 ---
 
-## Phase 7: Minimize Compiler ✓ MOSTLY COMPLETE
+## Phase 7: Minimize Compiler ✓ COMPLETE
 
 > **Dependency:** Requires Phases 4-6 complete (all behaviors in core.suss).
 > This phase removes now-dead Rust code after self-hosting migration.
@@ -666,17 +666,17 @@ The major cleanup work was completed during Phases 5-6:
 **ir.rs cleanup:**
 - [x] Deprecated field constants removed (~60 lines): PV_*, CONS_*, PM_*, PS_*, BIN_*, AN_*, HCN_*, VC_FN0-8
 
-### Remaining Quick Wins (~35 lines)
+### Quick Wins ✓ COMPLETE
 
-**Dead code to remove:**
-- [ ] `emit_protocol_impl_function_decls()` - empty function (lines 1154-1157)
-- [ ] `emit_protocol_impl_functions()` - empty function (lines 1168-1172)
-- [ ] Call sites for above functions
+**Dead code removed:**
+- [x] `emit_protocol_impl_function_decls()` and `emit_protocol_impl_functions()` - empty functions
+- [x] Call sites in `generate_standalone_module` and `generate_with_wit`
+- [x] `variadic_fn_type_for_arity()` - deprecated function
 
-**Deprecated legacy aliases in ir.rs:**
-- [ ] `LARGE_INT`, `FLOAT`, `TRIE_NODE` - unused aliases
-- [ ] `LI_VALUE`, `FL_VALUE` - unused aliases
-- [ ] `variadic_fn_type_for_arity()` - deprecated function
+**Deprecated aliases updated to canonical names:**
+- [x] `LARGE_INT` → `INT64`, `FLOAT` → `FLOAT64`, `TRIE_NODE` → `ARRAY`
+- [x] `LI_VALUE` → `I64_VALUE`, `FL_VALUE` → `F64_VALUE`
+- [x] All comments updated to use new names
 
 ### Constants That Cannot Be Removed Yet
 
@@ -926,7 +926,7 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 | **4** | HAMT nodes as deftype | Yes | ✓ COMPLETE |
 | **5** | Protocol impls in core.suss | Yes | ✓ COMPLETE |
 | **6** | Pure Suss algorithms | Incremental | ✓ COMPLETE |
-| **7** | Minimize compiler | No | ✓ MOSTLY COMPLETE |
+| **7** | Minimize compiler | No | ✓ COMPLETE |
 
 ### After Self-Hosting
 8. **Phase 8: WIT marshaling** - Component exports
@@ -965,13 +965,13 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 - [x] Vector trie helpers called from core.suss only (helper_func_idx calls removed)
 - [x] HAMT find helpers called from core.suss only (helper_func_idx calls removed)
 
-### Phase 7 Complete When: ✓ MOSTLY COMPLETE
+### Phase 7 Complete When: ✓ COMPLETE
 - [x] `helper_funcs` module reduced to irreducible helpers (HASH_STRING, GET_TYPE_ID)
 - [x] `protocol_impl_funcs` module removed
-- [x] `codegen.rs` reduced by ~23% (5,412 lines from ~7,000)
+- [x] `codegen.rs` reduced by ~25% (~5,300 lines from ~7,000)
 - [x] All existing tests pass without modification
 - [x] New collection operations can be added purely in core.suss
-- [ ] Remove remaining dead code (~35 lines of empty stubs and unused aliases)
+- [x] Dead code and deprecated aliases removed
 
 ### Ultimate Success:
 ```clojure
