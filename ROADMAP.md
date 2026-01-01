@@ -105,6 +105,11 @@ Function Index Layout:
 - [x] Phase 5 complete: All protocol impls in core.suss (removed protocol_impl_funcs module)
 - [x] Phase 6 complete: All collection algorithm helpers in core.suss (only HASH_STRING, GET_TYPE_ID remain)
 - [x] Phase 7 complete: codegen.rs reduced ~25% (~5,300 lines), dead code and deprecated aliases removed
+- [x] Phase 12 complete: Full sequence abstraction with lazy sequences and higher-order functions
+  - IndexedSeq, MapEntry, LazySeq types
+  - ISeqable for all collection types (vector, map, set)
+  - `^:mutable` field support in deftype
+  - Higher-order functions: map, filter, reduce, take, drop, range, iterate, etc.
 
 ### Blocking Issues
 - None currently blocking
@@ -203,7 +208,7 @@ All HAMT operations require consistent hashing. xxHash32 chosen for WASM efficie
 
 ---
 
-## Phase 2: Protocol System & Polymorphic Dispatch ✓ MOSTLY COMPLETE
+## Phase 2: Protocol System & Polymorphic Dispatch ✓ COMPLETE
 
 **Completed:**
 - [x] Type ID system: All GC structs have type_id in field 0
@@ -211,10 +216,8 @@ All HAMT operations require consistent hashing. xxHash32 chosen for WASM efficie
 - [x] Dispatch table infrastructure with `call_indirect`
 - [x] Table-based dispatch for all protocol methods
 - [x] Polymorphic `nth`, `count`, `first`, `rest`, `get`, `conj`
-
-**Remaining:**
-- [ ] `ISeqable/-seq` for vectors, maps, sets (returns proper seq)
-- [ ] ChunkedSeq/IndexedSeq types for vector sequences
+- [x] `ISeqable/-seq` for vectors, maps, sets (returns IndexedSeq)
+- [x] IndexedSeq type for array-backed sequences
 
 ### Dispatch Table
 
@@ -958,15 +961,43 @@ Functions named `-main` compile to `wasi:cli/run` command components.
 
 ---
 
-## Phase 12: List/Seq Operations
+## Phase 12: List/Seq Operations ✓ COMPLETE
 
-Proper sequence abstraction for all collections.
+Full sequence abstraction for all collections, including lazy sequences and higher-order functions.
 
-**Tasks:**
-- [ ] Implement `ISeqable/-seq` for PersistentVector (returns indexed seq)
-- [ ] Implement `ISeqable/-seq` for PersistentMap (returns entry seq)
-- [ ] Implement `ISeqable/-seq` for PersistentSet (returns element seq)
-- [ ] `first`, `rest`, `seq` emit ISeq/ISeqable dispatch
+### Completed
+
+**Core Sequence Types:**
+- [x] `IndexedSeq` - Array-backed sequence for efficient indexed access
+- [x] `MapEntry` - Key-value pair with IMapEntry protocol
+- [x] `LazySeq` - Lazy sequence with thunk caching (mutable `fn` and `s` fields)
+
+**ISeqable Implementations:**
+- [x] `PersistentVector` - Returns IndexedSeq over array copy
+- [x] `PersistentMap` - Returns IndexedSeq of MapEntry pairs (HAMT traversal)
+- [x] `PersistentSet` - Returns IndexedSeq of elements (HAMT traversal)
+- [x] `MapEntry` - Returns IndexedSeq of [key val]
+- [x] `Cons` - Already implements ISeq
+
+**User-Facing Functions:**
+- [x] `seq`, `first`, `rest`, `next` - Core sequence operations
+- [x] `key`, `val` - MapEntry accessors
+
+**Lazy Sequence Support:**
+- [x] `^:mutable` field support in `deftype`
+- [x] `lazy-seq` macro for deferred evaluation
+- [x] Thunk caching in LazySeq type
+
+**Higher-Order Functions:**
+- [x] `map`, `filter`, `remove` - Lazy transformations
+- [x] `take`, `drop`, `take-while`, `drop-while` - Subsequences
+- [x] `reduce` - Eager fold with accumulator
+- [x] `iterate`, `repeat`, `repeatedly` - Infinite sequences
+- [x] `range` - Lazy numeric range
+- [x] `concat2`, `mapcat` - Sequence concatenation
+
+**Numeric Helpers:**
+- [x] `inc`, `dec`, `pos?`, `neg?`, `zero?`
 
 ---
 
@@ -977,7 +1008,7 @@ Proper sequence abstraction for all collections.
 2. ✓ **Hash function** - xxHash32
 3. ✓ **Protocol dispatch** - dispatch table, polymorphic operations
 4. ✓ **core.suss infrastructure** - auto-loaded, parser fixes
-5. 🔶 **Array primitives** - aget, aset, alength, aclone, make-array (in progress)
+5. ✓ **Array primitives** - aget, aset, alength, aclone, make-array, acopy
 
 ### Self-Hosting Phases (Current Focus)
 
@@ -1004,14 +1035,14 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 | **6** | Pure Suss algorithms | Incremental | ✓ COMPLETE |
 | **7** | Minimize compiler | No | ✓ COMPLETE |
 | **7b** | WIT code consolidation | No | Pending |
+| **12** | List/Seq operations | No | ✓ COMPLETE |
 
 ### After Self-Hosting
 - **Phase 7b: WIT consolidation** - Reduce codegen duplication (~400-600 lines)
 - **Phase 9: WIT marshaling** - Component boundary type conversion
 - **Phase 10: Transients** - Performance optimization
 - **Phase 11: wasm-opt** - Binary optimization
-- **Phase 12: WASI CLI** - Command components
-- **Phase 13: List/Seq** - Sequence abstraction
+- **Phase 13: WASI CLI** - Command components
 
 ---
 
@@ -1050,6 +1081,18 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 - [x] All existing tests pass without modification
 - [x] New collection operations can be added purely in core.suss
 - [x] Dead code and deprecated aliases removed
+
+### Phase 12 Complete When: ✓ COMPLETE
+- [x] `(seq [1 2 3])` returns IndexedSeq
+- [x] `(first [1 2 3])` => 1
+- [x] `(rest [1 2 3])` => (2 3)
+- [x] `(seq {:a 1})` returns seq of MapEntry
+- [x] `(key (first {:a 1}))` => :a
+- [x] `(seq #{1 2})` returns seq of elements
+- [x] `(take 3 (map inc [1 2 3 4 5]))` => (2 3 4) via lazy evaluation
+- [x] `(reduce + 0 [1 2 3])` => 6
+- [x] `(filter pos? [-1 0 1 2])` returns lazy seq of positive numbers
+- [x] `^:mutable` fields work in deftype for LazySeq thunk caching
 
 ### Ultimate Success:
 ```clojure

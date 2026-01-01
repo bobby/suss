@@ -286,6 +286,15 @@ Suss supports `deftype` for user-defined WASM GC struct types:
 (deftype ^:type-id 5 BitmapIndexedNode [^i32 bitmap arr])
 ```
 
+**Mutable fields (for lazy sequences):**
+```clojure
+;; Use ^:mutable for fields that need to be mutated (e.g., thunk caching)
+(deftype LazySeq [^:mutable fn ^:mutable s])
+
+;; Mutable fields can be set with set! expression
+(set! (.-fn lazy-seq) nil)
+```
+
 **Key files:**
 - `crates/suss-compile/src/analyze.rs` - `AnalyzedDeftype` parsing
 - `crates/suss-compile/src/ir.rs` - `DeftypeDef` intermediate representation
@@ -317,6 +326,12 @@ pub struct DeftypeDef {
     pub type_id: i32,        // Runtime type ID (256+)
 }
 
+pub struct DeftypeFieldDef {
+    pub name: String,
+    pub field_type: FieldType,
+    pub is_mutable: bool,    // ^:mutable fields use FieldMutability::Mutable
+}
+
 // lower.rs
 pub enum LoweringMode {
     Full,      // REPL mode
@@ -330,6 +345,7 @@ pub enum LoweringMode {
 - Constructors (`->TypeName`) are regular functions emitted before user functions
 - Field 0 of every struct is `type_id: i32` for protocol dispatch
 - `.-field` access uses `struct.get` with dynamically resolved field index
+- `(set! (.-field obj) val)` uses `struct.set` for mutable fields (returns the value for chaining)
 - `instance?` uses `ref.test` against the GC type index
 - User types shift helper type indices (use `helper_type()` method for dynamic offset calculation)
 - Reserved types (gc_type_idx < NUM_GC_TYPES) now generate constructors (`->PersistentVector`, etc.)
@@ -340,15 +356,23 @@ pub enum LoweringMode {
 Following ClojureScript semantics, `core.suss` is automatically loaded before user code. It contains:
 - **Built-in collection types** with reserved type IDs (Cons, PersistentVector, PersistentMap, PersistentSet)
 - **HAMT node types** with reserved type IDs (BitmapIndexedNode, ArrayNode, HashCollisionNode)
-- Protocol definitions (ICounted, IIndexed, ISeq, ISeqable, ILookup, IAssociative, ICollection, IEquiv, IHash)
+- **Sequence types** (IndexedSeq, MapEntry, LazySeq)
+- Protocol definitions (ICounted, IIndexed, ISeq, ISeqable, ILookup, IAssociative, ICollection, IEquiv, IHash, IMapEntry)
 - Protocol implementations via `extend-type`:
-  - PersistentVector: `-nth`, `-first`, `-rest`, `-conj`, `-count`
-  - PersistentMap: `-lookup`, `-assoc`, `-count`
-  - PersistentSet: `-lookup`, `-conj`, `-count`
+  - PersistentVector: `-nth`, `-first`, `-rest`, `-conj`, `-count`, `-seq`
+  - PersistentMap: `-lookup`, `-assoc`, `-count`, `-seq`
+  - PersistentSet: `-lookup`, `-conj`, `-count`, `-seq`
   - Cons: `-first`, `-rest`, `-count`
+  - IndexedSeq: `-first`, `-rest`, `-count`, `-seq`
+  - MapEntry: `-key`, `-val`, `-count`, `-nth`, `-seq`
+  - LazySeq: `-first`, `-rest`, `-seq`
 - Vector trie helper functions (`tail-off`, `array-for`, `new-path`, `push-tail`, `-vec-conj-overflow`, `-vec-conj-push`)
 - HAMT helper functions (`hamt-mask`, `hamt-bitpos`, `hamt-index`, `bin-find`, `an-find`, `hcn-find`, `inode-find`, `bin-assoc`, `inode-assoc`)
-- User-facing functions (`cons`, `hash`)
+- HAMT traversal helpers (`-collect-map-entries`, `-collect-set-entries` for ISeqable)
+- User-facing sequence functions (`seq`, `first`, `rest`, `next`, `key`, `val`, `cons`, `hash`)
+- Higher-order functions (`map`, `filter`, `remove`, `take`, `drop`, `take-while`, `drop-while`, `reduce`, `iterate`, `repeat`, `repeatedly`, `range`, `concat2`, `mapcat`)
+- Numeric helpers (`inc`, `dec`, `pos?`, `neg?`, `zero?`)
+- `lazy-seq` macro for deferred evaluation
 
 **Collection Literal Desugaring (Temporary):**
 
@@ -740,10 +764,10 @@ The `samples/` directory contains classic Clojure programs as implementation tar
 | Sample | Features Needed | Status |
 |--------|-----------------|--------|
 | `fibonacci.suss` | loop/recur | Partial |
-| `factorial.suss` | loop/recur, reduce, range | Partial |
-| `game_of_life.suss` | for, mapcat, frequencies, destructuring, sets | Needs HOFs |
-| `primes.suss` | filter, some, range, sets, Math/sqrt | Needs HOFs |
-| `quicksort.suss` | filter, concat | Needs filter, concat |
-| `tree_traversal.suss` | map keyword access, concat | Needs concat |
+| `factorial.suss` | loop/recur, reduce, range | Ready (has `reduce`, `range`) |
+| `game_of_life.suss` | for, mapcat, frequencies, destructuring, sets | Needs `for`, `frequencies`, destructuring |
+| `primes.suss` | filter, some, range, sets, Math/sqrt | Needs `some`, `Math/sqrt` |
+| `quicksort.suss` | filter, concat | Ready (has `filter`, `concat2`) |
+| `tree_traversal.suss` | map keyword access, concat | Ready (has `concat2`) |
 
 These programs are valid Clojure code and serve as progress markers. When a sample runs correctly, it demonstrates that feature set is complete.

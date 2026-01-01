@@ -402,12 +402,18 @@ User-defined types compile to WASM GC structs with automatic:
 - `ICounted` - `^i32 -count` for countable collections
 - `IIndexed` - `-nth` for indexed access
 - `ISeq` - `-first`, `-rest` for sequential access
-- `ISeqable` - `-seq` for conversion to sequences
+- `ISeqable` - `-seq` for conversion to sequences (vectors, maps, sets)
 - `ILookup` - `-lookup` for key-based lookup
 - `IAssociative` - `-assoc`, `^i32 -contains-key` for associative structures
 - `ICollection` - `-conj` for adding elements
 - `IEquiv` - `^i32 -equiv` for equality testing
 - `IHash` - `^i32 -hash` for hashing
+- `IMapEntry` - `-key`, `-val` for map entry access
+
+**Built-in sequence types:**
+- `IndexedSeq` - Array-backed sequence for efficient indexed access
+- `MapEntry` - Key-value pair returned when iterating maps
+- `LazySeq` - Lazy sequence with thunk caching for deferred evaluation
 
 **Return type hints:** Methods with `^i32` return unboxed i32 values (for dispatch table type matching). Methods without hints return boxed `eqref`.
 
@@ -441,6 +447,9 @@ The static compiler supports a subset of Suss suitable for ahead-of-time compila
 | Maps | Yes | HAMT-based, `get`, `assoc`, `count`, `contains?` |
 | Sets | Yes | HAMT-based, `conj`, `count`, `contains?` |
 | Lists | Yes | Cons cells, `first`, `rest`, `cons` |
+| Sequences | Yes | `seq`, `first`, `rest`, `next` for all collections |
+| Lazy Seqs | Yes | `lazy-seq`, `map`, `filter`, `take`, `drop`, `range` |
+| HOFs | Yes | `reduce`, `iterate`, `repeat`, `repeatedly`, `mapcat` |
 | Macros | Yes | `defmacro` with syntax-quote, core macros built-in |
 | Protocols | Yes | `defprotocol`, `extend-type` for user-defined abstractions |
 | `deftype` | Yes | User-defined WASM GC struct types with constructors |
@@ -501,6 +510,7 @@ Suss is built as composable WASM components:
   - Sets (HAMT-based)
   - Lists (cons cells)
 * First-class functions (closures with variable capture)
+* Lazy sequences with higher-order functions (`map`, `filter`, `reduce`, `take`, `range`, etc.)
 * Compile-time macros (`defmacro` with syntax-quote, unquote, unquote-splicing)
 * Standard library (follows ClojureScript's implementation)
 
@@ -514,10 +524,10 @@ The `samples/` directory contains classic Clojure programs that serve as impleme
 |--------|-------------|--------|
 | `fibonacci.suss` | Fibonacci (naive, tail-recursive, sequence) | Partial |
 | `factorial.suss` | Factorial implementations | Partial |
-| `game_of_life.suss` | Conway's Game of Life (Christophe Grand's elegant version) | Needs HOFs |
-| `primes.suss` | Prime number algorithms (trial division, sieve) | Needs HOFs |
-| `quicksort.suss` | Functional quicksort | Needs filter, concat |
-| `tree_traversal.suss` | Binary tree operations using maps | Needs concat |
+| `game_of_life.suss` | Conway's Game of Life (Christophe Grand's elegant version) | Needs `for`, `frequencies`, destructuring |
+| `primes.suss` | Prime number algorithms (trial division, sieve) | Needs `some`, `Math/sqrt` |
+| `quicksort.suss` | Functional quicksort | Ready (has `filter`, `concat2`) |
+| `tree_traversal.suss` | Binary tree operations using maps | Ready (has `concat2`) |
 
 These programs document the path toward full Clojure compatibility. See `samples/README.md` for details.
 
