@@ -423,10 +423,9 @@ impl<'a> CodeGen<'a> {
         // Data count section (required before code section for array.new_data)
         self.emit_data_count_section(&mut module);
 
-        // Code section - helper functions first, then protocol impls, then user functions
+        // Code section - helper functions first, then user functions
         let mut code = CodeSection::new();
         self.emit_helper_functions(&mut code)?;
-        self.emit_protocol_impl_functions(&mut code)?;
         for func in &self.ir.functions {
             let function = self.generate_function(func)?;
             code.function(&function);
@@ -631,11 +630,7 @@ impl<'a> CodeGen<'a> {
 
         // Code section - helper functions first, then user functions
         let mut code = CodeSection::new();
-        // Emit helper functions
         self.emit_helper_functions(&mut code)?;
-        // Emit protocol implementation functions (if needed for dispatch table)
-        self.emit_protocol_impl_functions(&mut code)?;
-        // Emit user functions
         for func in &self.ir.functions {
             let function = if func.exported {
                 // Exported functions need WIT boundary marshaling
@@ -808,10 +803,10 @@ impl<'a> CodeGen<'a> {
     /// Emit WASM GC struct, array, and closure type definitions.
     ///
     /// This defines the GC types used for Clojure's persistent data structures:
-    /// - Type 0 (LARGE_INT): struct { i64 } - for integers > 30 bits
+    /// - Type 0 (INT64): struct { i64 } - for integers > 30 bits
     /// - Type 1 (FLOAT): struct { f64 } - all floats are boxed
     /// - Type 2 (STRING): array<i8> - UTF-8 bytes
-    /// - Type 3 (TRIE_NODE): array<eqref> - 32-way trie node for vectors
+    /// - Type 3 (ARRAY): array<eqref> - 32-way trie node for vectors
     /// - Type 4 (CONS): struct { first: eqref, rest: eqref } - list cons cell
     /// - Type 5 (BITMAP_INDEXED_NODE): struct { type_id, bitmap, arr } - sparse HAMT node
     /// - Type 6 (ARRAY_NODE): struct { type_id, cnt, arr } - dense HAMT node (>16 children)
@@ -881,7 +876,7 @@ impl<'a> CodeGen<'a> {
         debug_assert_eq!(gc_types::STRING, 2);
 
         // Type 3: ARRAY - array<eqref>
-        // Universal mutable storage for collections (replaces TRIE_NODE)
+        // Universal mutable storage for collections (replaces old TRIE_NODE alias)
         types.ty().array(&StorageType::Val(eqref), true);
         debug_assert_eq!(gc_types::ARRAY, 3);
 
@@ -1147,30 +1142,6 @@ impl<'a> CodeGen<'a> {
         // ARITY_3_REF: (eqref, eqref, eqref) -> eqref - for assoc
         types.ty().function(vec![eqref, eqref, eqref], vec![eqref]);
     }
-
-    /// Emit function declarations for protocol implementation wrappers.
-    ///
-    /// Collection protocol implementations are now in core.suss via extend-type.
-    fn emit_protocol_impl_function_decls(&self, _functions: &mut FunctionSection) {
-        // All collection protocol declarations removed - now in core.suss
-        // This function is empty but kept for structural compatibility
-    }
-
-    /// Emit code for protocol implementation wrapper functions.
-    ///
-    /// These wrappers:
-    /// 1. Take eqref parameters
-    /// 2. Cast to concrete GC types
-    /// 3. Perform the operation
-    /// 4. Return result (as eqref or i32 depending on method)
-    ///
-    /// Collection protocol implementations are now in core.suss via extend-type.
-    fn emit_protocol_impl_functions(&self, _code: &mut CodeSection) -> CompileResult<()> {
-        // All collection protocol implementations removed - now in core.suss
-        // This function is empty but kept for structural compatibility
-        Ok(())
-    }
-
 
     /// Emit code for runtime helper functions.
     ///
@@ -1554,16 +1525,16 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::RefI31);
         f.instruction(&Instruction::Call(array_for_idx));
 
-        // Cast result to TRIE_NODE for array.get
+        // Cast result to ARRAY for array.get
         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-            gc_types::TRIE_NODE,
+            gc_types::ARRAY,
         )));
 
         // Get element at idx & 0x1f
         f.instruction(&Instruction::LocalGet(idx_local));
         f.instruction(&Instruction::I32Const(0x1F));
         f.instruction(&Instruction::I32And);
-        f.instruction(&Instruction::ArrayGet(gc_types::TRIE_NODE));
+        f.instruction(&Instruction::ArrayGet(gc_types::ARRAY));
 
         Ok(())
     }
@@ -1865,9 +1836,9 @@ impl<'a> CodeGen<'a> {
                 }
                 Type::F64 => {
                     // Box f64 in FLOAT struct: { type_id, value }
-                    f.instruction(&Instruction::I32Const(type_ids::FLOAT));
+                    f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
                     f.instruction(&Instruction::LocalGet(i));
-                    f.instruction(&Instruction::StructNew(gc_types::FLOAT));
+                    f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
                     f.instruction(&Instruction::LocalSet(num_params + i));
                 }
                 _ => {
@@ -1893,10 +1864,10 @@ impl<'a> CodeGen<'a> {
             }
             Type::F64 => {
                 // Unbox from FLOAT struct
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT)));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
                 f.instruction(&Instruction::StructGet {
-                    struct_type_index: gc_types::FLOAT,
-                    field_index: gc_types::FL_VALUE,
+                    struct_type_index: gc_types::FLOAT64,
+                    field_index: gc_types::F64_VALUE,
                 });
             }
             Type::Unit => {
@@ -2034,7 +2005,7 @@ impl<'a> CodeGen<'a> {
             Expr::ArrayLen(array) => {
                 self.generate_expr_wit(array, f, param_offset)?;
                 // Cast eqref to array type before array.len
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::ARRAY)));
                 f.instruction(&Instruction::ArrayLen);
                 // Box result as i31ref: (n << 1) | 1
                 f.instruction(&Instruction::I32Const(1));
@@ -2375,10 +2346,10 @@ impl<'a> CodeGen<'a> {
                     f.instruction(&Instruction::I32Const(encoded));
                     f.instruction(&Instruction::RefI31);
                 } else {
-                    // Large integer: box in LARGE_INT struct { type_id, value }
-                    f.instruction(&Instruction::I32Const(type_ids::LARGE_INT));
+                    // Large integer: box in INT64 struct { type_id, value }
+                    f.instruction(&Instruction::I32Const(type_ids::INT64));
                     f.instruction(&Instruction::I64Const(*i));
-                    f.instruction(&Instruction::StructNew(gc_types::LARGE_INT));
+                    f.instruction(&Instruction::StructNew(gc_types::INT64));
                 }
             }
 
@@ -2401,9 +2372,9 @@ impl<'a> CodeGen<'a> {
 
             Expr::Float(v) => {
                 // Box float in FLOAT struct { type_id, value }
-                f.instruction(&Instruction::I32Const(type_ids::FLOAT));
+                f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
                 f.instruction(&Instruction::F64Const(*v));
-                f.instruction(&Instruction::StructNew(gc_types::FLOAT));
+                f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
             }
 
             Expr::String(idx) => {
@@ -2526,68 +2497,68 @@ impl<'a> CodeGen<'a> {
 
                     // Float arithmetic: unwrap structs, compute, wrap in { type_id, value }
                     (BinOp::Add, Type::F64) => {
-                        f.instruction(&Instruction::I32Const(type_ids::FLOAT));
+                        f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
                         self.generate_expr(left, f)?;
                         f.instruction(&Instruction::StructGet {
-                            struct_type_index: gc_types::FLOAT,
-                            field_index: gc_types::FL_VALUE,
+                            struct_type_index: gc_types::FLOAT64,
+                            field_index: gc_types::F64_VALUE,
                         });
                         self.generate_expr(right, f)?;
                         f.instruction(&Instruction::StructGet {
-                            struct_type_index: gc_types::FLOAT,
-                            field_index: gc_types::FL_VALUE,
+                            struct_type_index: gc_types::FLOAT64,
+                            field_index: gc_types::F64_VALUE,
                         });
                         f.instruction(&Instruction::F64Add);
-                        f.instruction(&Instruction::StructNew(gc_types::FLOAT));
+                        f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
                     }
                     (BinOp::Sub, Type::F64) => {
-                        f.instruction(&Instruction::I32Const(type_ids::FLOAT));
+                        f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
                         self.generate_expr(left, f)?;
                         f.instruction(&Instruction::StructGet {
-                            struct_type_index: gc_types::FLOAT,
-                            field_index: gc_types::FL_VALUE,
+                            struct_type_index: gc_types::FLOAT64,
+                            field_index: gc_types::F64_VALUE,
                         });
                         self.generate_expr(right, f)?;
                         f.instruction(&Instruction::StructGet {
-                            struct_type_index: gc_types::FLOAT,
-                            field_index: gc_types::FL_VALUE,
+                            struct_type_index: gc_types::FLOAT64,
+                            field_index: gc_types::F64_VALUE,
                         });
                         f.instruction(&Instruction::F64Sub);
-                        f.instruction(&Instruction::StructNew(gc_types::FLOAT));
+                        f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
                     }
                     (BinOp::Mul, Type::F64) => {
-                        f.instruction(&Instruction::I32Const(type_ids::FLOAT));
+                        f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
                         self.generate_expr(left, f)?;
                         f.instruction(&Instruction::StructGet {
-                            struct_type_index: gc_types::FLOAT,
-                            field_index: gc_types::FL_VALUE,
+                            struct_type_index: gc_types::FLOAT64,
+                            field_index: gc_types::F64_VALUE,
                         });
                         self.generate_expr(right, f)?;
                         f.instruction(&Instruction::StructGet {
-                            struct_type_index: gc_types::FLOAT,
-                            field_index: gc_types::FL_VALUE,
+                            struct_type_index: gc_types::FLOAT64,
+                            field_index: gc_types::F64_VALUE,
                         });
                         f.instruction(&Instruction::F64Mul);
-                        f.instruction(&Instruction::StructNew(gc_types::FLOAT));
+                        f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
                     }
                     (BinOp::Div, Type::F64) => {
-                        f.instruction(&Instruction::I32Const(type_ids::FLOAT));
+                        f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
                         self.generate_expr(left, f)?;
                         // Cast to FLOAT struct before extracting value
-                        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT)));
+                        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
                         f.instruction(&Instruction::StructGet {
-                            struct_type_index: gc_types::FLOAT,
-                            field_index: gc_types::FL_VALUE,
+                            struct_type_index: gc_types::FLOAT64,
+                            field_index: gc_types::F64_VALUE,
                         });
                         self.generate_expr(right, f)?;
                         // Cast to FLOAT struct before extracting value
-                        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT)));
+                        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
                         f.instruction(&Instruction::StructGet {
-                            struct_type_index: gc_types::FLOAT,
-                            field_index: gc_types::FL_VALUE,
+                            struct_type_index: gc_types::FLOAT64,
+                            field_index: gc_types::F64_VALUE,
                         });
                         f.instruction(&Instruction::F64Div);
-                        f.instruction(&Instruction::StructNew(gc_types::FLOAT));
+                        f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
                     }
 
                     // Comparison operations: polymorphic unwrap to handle INT64 from bit ops
@@ -2735,14 +2706,14 @@ impl<'a> CodeGen<'a> {
                             }
                             Type::F64 => {
                                 // Unbox float, negate, rebox in { type_id, value }
-                                f.instruction(&Instruction::I32Const(type_ids::FLOAT));
+                                f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
                                 self.generate_expr_inner(operand, f, loop_depth, param_offset)?;
                                 f.instruction(&Instruction::StructGet {
-                                    struct_type_index: gc_types::FLOAT,
-                                    field_index: gc_types::FL_VALUE,
+                                    struct_type_index: gc_types::FLOAT64,
+                                    field_index: gc_types::F64_VALUE,
                                 });
                                 f.instruction(&Instruction::F64Neg);
-                                f.instruction(&Instruction::StructNew(gc_types::FLOAT));
+                                f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
                             }
                             _ => {
                                 return Err(CompileError::Codegen(
@@ -3046,7 +3017,7 @@ impl<'a> CodeGen<'a> {
                 use crate::ir::gc_types;
                 self.generate_expr(array, f)?;
                 // Cast eqref to array type before array.len
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::TRIE_NODE)));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::ARRAY)));
                 f.instruction(&Instruction::ArrayLen);
                 // Box result as i31ref: (n << 1) | 1
                 f.instruction(&Instruction::I32Const(1));
@@ -3525,7 +3496,7 @@ impl<'a> CodeGen<'a> {
         // Create array of captured values
         if captures.is_empty() {
             // Empty captures - use null ref
-            f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::TRIE_NODE)));
+            f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::ARRAY)));
         } else {
             // Generate each capture expression
             for capture in captures {
@@ -3533,7 +3504,7 @@ impl<'a> CodeGen<'a> {
             }
             // Create array from values on stack
             f.instruction(&Instruction::ArrayNewFixed {
-                array_type_index: gc_types::TRIE_NODE,
+                array_type_index: gc_types::ARRAY,
                 array_size: captures.len() as u32,
             });
         }
@@ -3781,8 +3752,8 @@ impl<'a> CodeGen<'a> {
     ///
     /// Handles:
     /// - FLOAT struct -> return as-is
-    /// - LARGE_INT struct -> extract i64, convert to f64, box as FLOAT
-    /// - i31ref small int -> decode, convert to f64, box as FLOAT
+    /// - INT64 struct -> extract i64, convert to f64, box as FLOAT64
+    /// - i31ref small int -> decode, convert to f64, box as FLOAT64
     ///
     /// Returns eqref (FLOAT struct) on the stack.
     fn generate_to_float(&self, inner: &Expr, f: &mut Function) -> CompileResult<()> {
@@ -3809,7 +3780,7 @@ impl<'a> CodeGen<'a> {
 
         // Check if it's already a FLOAT struct - if so, return it as-is
         f.instruction(&Instruction::LocalGet(val_local));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::FLOAT)));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::FLOAT64)));
         f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(eqref))));
         {
             // It's already a FLOAT - return it unchanged
@@ -3817,26 +3788,26 @@ impl<'a> CodeGen<'a> {
         }
         f.instruction(&Instruction::Else);
         {
-            // Check if it's a LARGE_INT struct
+            // Check if it's an INT64 struct
             f.instruction(&Instruction::LocalGet(val_local));
-            f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::LARGE_INT)));
+            f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::INT64)));
             f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(eqref))));
             {
-                // It's a LARGE_INT - extract i64, convert to f64, wrap in FLOAT
-                f.instruction(&Instruction::I32Const(type_ids::FLOAT));
+                // It's an INT64 - extract i64, convert to f64, wrap in FLOAT
+                f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
                 f.instruction(&Instruction::LocalGet(val_local));
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::LARGE_INT)));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::INT64)));
                 f.instruction(&Instruction::StructGet {
-                    struct_type_index: gc_types::LARGE_INT,
-                    field_index: gc_types::LI_VALUE,
+                    struct_type_index: gc_types::INT64,
+                    field_index: gc_types::I64_VALUE,
                 });
                 f.instruction(&Instruction::F64ConvertI64S);
-                f.instruction(&Instruction::StructNew(gc_types::FLOAT));
+                f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
             }
             f.instruction(&Instruction::Else);
             {
                 // Must be i31ref small int - decode, convert, wrap in FLOAT
-                f.instruction(&Instruction::I32Const(type_ids::FLOAT));
+                f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
                 f.instruction(&Instruction::LocalGet(val_local));
                 f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
                 f.instruction(&Instruction::I31GetS);
@@ -3845,7 +3816,7 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::I32ShrU);
                 // Convert i32 to f64
                 f.instruction(&Instruction::F64ConvertI32S);
-                f.instruction(&Instruction::StructNew(gc_types::FLOAT));
+                f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
             }
             f.instruction(&Instruction::End);
         }
@@ -4510,17 +4481,17 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::Else);
         // === Not i31ref - check struct types ===
 
-        // Test LARGE_INT
+        // Test INT64
         self.generate_expr(value, f)?;
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::LARGE_INT)));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::INT64)));
         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
 
         // Extract i64 and hash it
         self.generate_expr(value, f)?;
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::LARGE_INT)));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::INT64)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::LARGE_INT,
-            field_index: gc_types::LI_VALUE,
+            struct_type_index: gc_types::INT64,
+            field_index: gc_types::I64_VALUE,
         });
         self.emit_hash_i64(f);
 
@@ -4528,15 +4499,15 @@ impl<'a> CodeGen<'a> {
 
         // Test FLOAT
         self.generate_expr(value, f)?;
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::FLOAT)));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::FLOAT64)));
         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
 
         // Extract f64, reinterpret as i64, and hash
         self.generate_expr(value, f)?;
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT)));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
         f.instruction(&Instruction::StructGet {
-            struct_type_index: gc_types::FLOAT,
-            field_index: gc_types::FL_VALUE,
+            struct_type_index: gc_types::FLOAT64,
+            field_index: gc_types::F64_VALUE,
         });
         f.instruction(&Instruction::I64ReinterpretF64);
         self.emit_hash_i64(f);
@@ -4567,7 +4538,7 @@ impl<'a> CodeGen<'a> {
 
         f.instruction(&Instruction::End); // close KEYWORD
         f.instruction(&Instruction::End); // close FLOAT
-        f.instruction(&Instruction::End); // close LARGE_INT
+        f.instruction(&Instruction::End); // close INT64
         f.instruction(&Instruction::End); // close i31ref test
 
         // Wrap the i32 hash result as i31ref
@@ -5136,9 +5107,9 @@ mod tests {
 
         let mut f = Function::new([]);
 
-        // Generate: (struct.new $LARGE_INT (i64.const 1000))
+        // Generate: (struct.new $INT64 (i64.const 1000))
         let expr = Expr::StructNew {
-            type_idx: gc_types::LARGE_INT,
+            type_idx: gc_types::INT64,
             fields: vec![Expr::Int(1000)],
         };
         codegen.generate_expr(&expr, &mut f).unwrap();
@@ -5154,13 +5125,13 @@ mod tests {
 
         let mut f = Function::new([]);
 
-        // Generate: (struct.get $LARGE_INT 0 (struct.new $LARGE_INT (i64.const 42)))
+        // Generate: (struct.get $INT64 0 (struct.new $INT64 (i64.const 42)))
         let struct_val = Expr::StructNew {
-            type_idx: gc_types::LARGE_INT,
+            type_idx: gc_types::INT64,
             fields: vec![Expr::Int(42)],
         };
         let expr = Expr::StructGet {
-            type_idx: gc_types::LARGE_INT,
+            type_idx: gc_types::INT64,
             field_idx: 0,
             value: Box::new(struct_val),
         };
@@ -5296,7 +5267,7 @@ mod tests {
             locals: vec![],
             // Return a large int boxed in a struct
             body: Expr::StructNew {
-                type_idx: gc_types::LARGE_INT,
+                type_idx: gc_types::INT64,
                 fields: vec![Expr::Int(i64::MAX)],
             },
         });

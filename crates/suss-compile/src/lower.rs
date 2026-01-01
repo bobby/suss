@@ -542,7 +542,7 @@ impl Lowerer {
 
                 // env[cap_idx] - ArrayGet from env
                 let env_get = Expr::ArrayGet {
-                    type_idx: gc_types::TRIE_NODE,
+                    type_idx: gc_types::ARRAY,
                     array: Box::new(Expr::LocalGet {
                         local: env_idx,
                         ty: Type::GcRef,
@@ -608,7 +608,7 @@ impl Lowerer {
 
                 // env[cap_idx] - ArrayGet from env
                 let env_get = Expr::ArrayGet {
-                    type_idx: gc_types::TRIE_NODE,
+                    type_idx: gc_types::ARRAY,
                     array: Box::new(Expr::LocalGet {
                         local: env_idx,
                         ty: Type::GcRef,
@@ -3596,7 +3596,7 @@ impl Lowerer {
 
             // Generate constructor function ->TypeName
             // Skip constructors for HAMT node types (gc_type_idx 5-7) since they use
-            // specific array types (ref $TRIE_NODE) that require special handling
+            // specific array types (ref $ARRAY) that require special handling
             if gc_type_idx < gc_types::BITMAP_INDEXED_NODE || gc_type_idx > gc_types::HASH_COLLISION_NODE {
                 self.lower_deftype_constructor(&deftype.name, gc_type_idx, type_id, &fields)?;
             }
@@ -3680,18 +3680,18 @@ impl Lowerer {
                     Expr::Unbox32(Box::new(local_get))
                 }
                 FieldType::I64 => {
-                    // Unbox: (struct.get $LARGE_INT 1 (ref.cast ... arg))
+                    // Unbox: (struct.get $INT64 1 (ref.cast ... arg))
                     Expr::StructGet {
-                        type_idx: gc_types::LARGE_INT,
-                        field_idx: gc_types::LI_VALUE,
+                        type_idx: gc_types::INT64,
+                        field_idx: gc_types::I64_VALUE,
                         value: Box::new(local_get),
                     }
                 }
                 FieldType::F64 => {
                     // Unbox: (struct.get $FLOAT 1 (ref.cast ... arg))
                     Expr::StructGet {
-                        type_idx: gc_types::FLOAT,
-                        field_idx: gc_types::FL_VALUE,
+                        type_idx: gc_types::FLOAT64,
+                        field_idx: gc_types::F64_VALUE,
                         value: Box::new(local_get),
                     }
                 }
@@ -3763,8 +3763,8 @@ impl Lowerer {
         // Check primitive types first (not deftypes)
         match type_name {
             "String" => return Ok(type_ids::STRING as u32),
-            "LargeInt" => return Ok(type_ids::LARGE_INT as u32),
-            "Float" => return Ok(type_ids::FLOAT as u32),
+            "LargeInt" => return Ok(type_ids::INT64 as u32),
+            "Float" => return Ok(type_ids::FLOAT64 as u32),
             _ => {}
         }
 
@@ -3903,7 +3903,7 @@ impl Lowerer {
     // ========================================================================
 
     /// Lower (aget arr idx) -> ArrayGet
-    /// Gets an element from a TRIE_NODE array at the given index.
+    /// Gets an element from a ARRAY array at the given index.
     fn lower_aget(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         if args.len() != 2 {
             return Err(CompileError::Parse(
@@ -3914,16 +3914,16 @@ impl Lowerer {
             Ok((l.lower_expr(&args[0])?, l.lower_expr(&args[1])?))
         })?;
 
-        // Use TRIE_NODE as the default array type
+        // Use ARRAY as the default array type
         Ok(Expr::ArrayGet {
-            type_idx: gc_types::TRIE_NODE,
+            type_idx: gc_types::ARRAY,
             array: Box::new(array),
             index: Box::new(index),
         })
     }
 
     /// Lower (aset arr idx val) -> ArraySet
-    /// Sets an element in a TRIE_NODE array at the given index.
+    /// Sets an element in a ARRAY array at the given index.
     fn lower_aset(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         if args.len() != 3 {
             return Err(CompileError::Parse(
@@ -3938,9 +3938,9 @@ impl Lowerer {
             ))
         })?;
 
-        // Use TRIE_NODE as the default array type
+        // Use ARRAY as the default array type
         Ok(Expr::ArraySet {
-            type_idx: gc_types::TRIE_NODE,
+            type_idx: gc_types::ARRAY,
             array: Box::new(array),
             index: Box::new(index),
             value: Box::new(value),
@@ -3948,7 +3948,7 @@ impl Lowerer {
     }
 
     /// Lower (alength arr) -> ArrayLen
-    /// Gets the length of a TRIE_NODE array.
+    /// Gets the length of a ARRAY array.
     fn lower_alength(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         if args.len() != 1 {
             return Err(CompileError::Parse(
@@ -3961,7 +3961,7 @@ impl Lowerer {
     }
 
     /// Lower (aclone arr) -> ArrayClone
-    /// Creates a shallow copy of a TRIE_NODE array.
+    /// Creates a shallow copy of a ARRAY array.
     fn lower_aclone(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         if args.len() != 1 {
             return Err(CompileError::Parse(
@@ -3970,15 +3970,15 @@ impl Lowerer {
         }
         let array = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
 
-        // Use TRIE_NODE as the default array type
+        // Use ARRAY as the default array type
         Ok(Expr::ArrayClone {
-            type_idx: gc_types::TRIE_NODE,
+            type_idx: gc_types::ARRAY,
             array: Box::new(array),
         })
     }
 
     /// Lower (acopy dst dst-offset src src-offset len) -> ArrayCopy
-    /// Copies elements between TRIE_NODE arrays. Returns nil.
+    /// Copies elements between ARRAY arrays. Returns nil.
     fn lower_acopy(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         if args.len() != 5 {
             return Err(CompileError::Parse(
@@ -3991,9 +3991,9 @@ impl Lowerer {
         let src_offset = self.with_tail_disabled(|l| l.lower_expr(&args[3]))?;
         let len = self.with_tail_disabled(|l| l.lower_expr(&args[4]))?;
 
-        // Use TRIE_NODE as the default array type
+        // Use ARRAY as the default array type
         Ok(Expr::ArrayCopy {
-            type_idx: gc_types::TRIE_NODE,
+            type_idx: gc_types::ARRAY,
             dst: Box::new(dst),
             dst_offset: Box::new(dst_offset),
             src: Box::new(src),
@@ -4003,7 +4003,7 @@ impl Lowerer {
     }
 
     /// Lower (make-array size) -> ArrayNewDefault
-    /// Creates a new TRIE_NODE array with null values.
+    /// Creates a new ARRAY array with null values.
     fn lower_make_array(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         if args.len() != 1 {
             return Err(CompileError::Parse(
@@ -4012,9 +4012,9 @@ impl Lowerer {
         }
         let size = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
 
-        // Use TRIE_NODE as the default array type
+        // Use ARRAY as the default array type
         Ok(Expr::ArrayNewDefault {
-            type_idx: gc_types::TRIE_NODE,
+            type_idx: gc_types::ARRAY,
             size: Box::new(size),
         })
     }

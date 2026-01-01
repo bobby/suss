@@ -178,14 +178,6 @@ pub mod gc_types {
     /// - sym: The SYMBOL for this var's name
     pub const VAR: u32 = 25;
 
-    /// Get the variadic function type index (always VARIADIC_FN)
-    /// This is a compatibility shim - variadic functions now use a single type
-    #[deprecated(note = "Use VARIADIC_FN directly - all arities use the same type")]
-    #[inline]
-    pub const fn variadic_fn_type_for_arity(_arity: u32) -> u32 {
-        VARIADIC_FN
-    }
-
     /// Number of GC types defined (for type index offset calculation)
     /// 5 primitives + 10 closure fn types + 6 closure struct types + 2 variadic + 1 keyword + 1 symbol + 1 var = 26
     pub const NUM_GC_TYPES: u32 = 26;
@@ -465,24 +457,6 @@ pub mod gc_types {
 
     // =========================================================================
     // LEGACY ALIASES - TO BE REMOVED
-    // These exist for backward compatibility during the type system migration.
-    // Collection types are now deftypes in core.suss, not compiler primitives.
-    // =========================================================================
-
-    // Renamed types
-    #[deprecated(note = "Use INT64 instead")]
-    pub const LARGE_INT: u32 = INT64;
-    #[deprecated(note = "Use FLOAT64 instead")]
-    pub const FLOAT: u32 = FLOAT64;
-    #[deprecated(note = "Use ARRAY instead")]
-    pub const TRIE_NODE: u32 = ARRAY;
-
-    // Renamed field indices
-    #[deprecated(note = "Use I64_VALUE instead")]
-    pub const LI_VALUE: u32 = I64_VALUE;
-    #[deprecated(note = "Use F64_VALUE instead")]
-    pub const FL_VALUE: u32 = F64_VALUE;
-
     // Collection types - NOW DEFTYPES IN CORE.SUSS
     // These placeholders keep codegen compiling during migration.
     // They map to indices that will be overwritten by deftype registration.
@@ -570,13 +544,6 @@ pub mod type_ids {
     // Collection types are now deftypes with dynamic type IDs.
     // These placeholders keep codegen compiling during migration.
     // =========================================================================
-
-    #[deprecated(note = "Use INT64 instead")]
-    pub const LARGE_INT: i32 = INT64;
-    #[deprecated(note = "Use FLOAT64 instead")]
-    pub const FLOAT: i32 = FLOAT64;
-    #[deprecated(note = "Use ARRAY instead")]
-    pub const TRIE_NODE: i32 = ARRAY;
 
     #[deprecated(note = "Now a deftype - resolve dynamically")]
     pub const CONS: i32 = 260;
@@ -729,9 +696,9 @@ pub struct DispatchEntry {
 pub enum FieldType {
     /// 32-bit integer (stored directly, boxed on access as i31ref)
     I32,
-    /// 64-bit integer (stored directly, boxed on access as LARGE_INT)
+    /// 64-bit integer (stored directly, boxed on access as INT64 struct)
     I64,
-    /// 64-bit float (stored directly, boxed on access as FLOAT)
+    /// 64-bit float (stored directly, boxed on access as FLOAT64 struct)
     F64,
     /// GC reference (stored and accessed as eqref)
     GcRef,
