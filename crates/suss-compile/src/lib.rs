@@ -522,6 +522,7 @@ impl Compiler {
             Some(Edn::Vector(field_items)) => {
                 let mut fields = Vec::new();
                 let mut pending_type_hint = None;
+                let mut pending_mutable = false;
 
                 for item in field_items {
                     if let Edn::Symbol(sym) = item {
@@ -529,12 +530,16 @@ impl Compiler {
                             let hint = &sym.name[1..];
                             if matches!(hint, "i32" | "i64" | "f64" | "eqref") {
                                 pending_type_hint = Some(hint.to_string());
+                            } else if hint == ":mutable" {
+                                pending_mutable = true;
                             }
                         } else {
                             fields.push(analyze::DeftypeField {
                                 name: sym.name.clone(),
                                 type_hint: pending_type_hint.take(),
+                                is_mutable: pending_mutable,
                             });
+                            pending_mutable = false;
                         }
                     }
                 }
@@ -2020,5 +2025,24 @@ mod deftype_tests {
             }
             Err(e) => eprintln!("Compile error: {:?}", e),
         }
+    }
+
+    #[test]
+    fn test_deftype_mutable_field() {
+        let mut compiler = Compiler::new();
+        let source = r#"
+            (deftype MutableBox [^:mutable val])
+            (let [b (->MutableBox 10)]
+              (set! (.-val b) 99)
+              (.-val b))
+        "#;
+        let result = compiler.compile_expr(source);
+        if let Err(e) = &result {
+            eprintln!("Compilation error: {:?}", e);
+        }
+        assert!(result.is_ok(), "Should compile mutable field set");
+
+        let wasm = result.unwrap();
+        std::fs::write("/tmp/deftype_mutable.wasm", &wasm).unwrap();
     }
 }

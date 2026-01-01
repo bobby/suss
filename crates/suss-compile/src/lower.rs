@@ -61,6 +61,7 @@ struct ClosureWrapper {
 struct UserTypeField {
     name: String,
     field_type: FieldType,
+    is_mutable: bool,
 }
 
 /// Information about a user-defined type
@@ -1274,6 +1275,9 @@ impl Lowerer {
             "symbol" => self.lower_symbol_constructor(args),
             "meta" => self.lower_meta(args),
 
+            // Mutable field set: (set! (.-field obj) value)
+            "set!" => self.lower_set(args),
+
             // Field access (.-field syntax)
             _ if name.starts_with(".-") => self.lower_field_access(name, args),
 
@@ -1432,6 +1436,57 @@ impl Lowerer {
             }
         }
         None
+    }
+
+    /// Lower set!: (set! (.-field obj) value)
+    /// Only works with mutable fields on user-defined types.
+    fn lower_set(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 2 {
+            return Err(CompileError::Parse(format!(
+                "set! requires exactly 2 arguments, got {}",
+                args.len()
+            )));
+        }
+
+        // First arg must be a field access: (.-field obj)
+        let field_access = &args[0];
+        let value = &args[1];
+
+        match field_access {
+            Edn::List(items) if items.len() == 2 => {
+                // Check it's a field access (.-field obj)
+                if let Edn::Symbol(sym) = &items[0] {
+                    if sym.name.starts_with(".-") {
+                        let field_name = &sym.name[2..]; // Strip ".-" prefix
+
+                        // Look up the field in user types
+                        if let Some((type_idx, field_idx, _field_type)) = self.lookup_user_field(field_name) {
+                            // Lower the object and value expressions
+                            let obj = self.with_tail_disabled(|l| l.lower_expr(&items[1]))?;
+                            let val = self.with_tail_disabled(|l| l.lower_expr(value))?;
+
+                            return Ok(Expr::StructSet {
+                                type_idx,
+                                field_idx,
+                                obj: Box::new(obj),
+                                value: Box::new(val),
+                            });
+                        } else {
+                            return Err(CompileError::Undefined(format!(
+                                "set!: unknown field {}",
+                                field_name
+                            )));
+                        }
+                    }
+                }
+                Err(CompileError::Parse(
+                    "set! first argument must be a field access (.-field obj)".into()
+                ))
+            }
+            _ => Err(CompileError::Parse(
+                "set! first argument must be a field access (.-field obj)".into()
+            )),
+        }
     }
 
     /// Lower instance check: (instance? TypeName obj)
@@ -3567,6 +3622,7 @@ impl Lowerer {
                 UserTypeField {
                     name: f.name.clone(),
                     field_type,
+                    is_mutable: f.is_mutable,
                 }
             }).collect();
 
@@ -3588,6 +3644,7 @@ impl Lowerer {
                 fields: fields.iter().map(|f| DeftypeFieldDef {
                     name: f.name.clone(),
                     field_type: f.field_type,
+                    is_mutable: f.is_mutable,
                 }).collect(),
                 gc_type_idx,
                 type_id,

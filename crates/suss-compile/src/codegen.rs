@@ -1089,7 +1089,7 @@ impl<'a> CodeGen<'a> {
                 };
                 fields.push(FieldType {
                     element_type: storage_type,
-                    mutable: false,
+                    mutable: field.is_mutable,
                 });
             }
 
@@ -2964,6 +2964,36 @@ impl<'a> CodeGen<'a> {
                 self.generate_box_i32_safe(f);
 
                 self.scratch_local.set(scratch_base);
+            }
+
+            // Set a mutable field in a struct
+            // struct.set expects [ref, value] on stack, returns nothing
+            // We return the value for expression chaining
+            Expr::StructSet { type_idx, field_idx, obj, value } => {
+                // Use scratch to save the value for return
+                // Reserve full 5-slot group so inner expressions get clean scratch space
+                let scratch = self.scratch_local.get();
+                self.scratch_local.set(scratch + 5);
+
+                // First: generate struct reference (goes on stack first for struct.set)
+                self.generate_expr(obj, f)?;
+                // Cast to specific struct type
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
+
+                // Second: generate value and save for return
+                self.generate_expr(value, f)?;
+                f.instruction(&Instruction::LocalTee(scratch));
+
+                // Stack is now [ref, value] - correct order for struct.set
+                f.instruction(&Instruction::StructSet {
+                    struct_type_index: *type_idx,
+                    field_index: *field_idx,
+                });
+
+                // Return the value that was set
+                f.instruction(&Instruction::LocalGet(scratch));
+
+                self.scratch_local.set(scratch);
             }
 
             Expr::ArrayNew { type_idx, elements } => {

@@ -103,6 +103,8 @@ pub struct DeftypeField {
     pub name: String,
     /// Type hint (e.g., Some("i32"), Some("f64"), None for eqref)
     pub type_hint: Option<String>,
+    /// Whether this field is mutable (from ^:mutable metadata)
+    pub is_mutable: bool,
 }
 
 /// A deftype declaration
@@ -1355,25 +1357,29 @@ impl<'a> Analyzer<'a> {
         Ok(())
     }
 
-    /// Parse deftype fields with optional type hints
-    /// [x y] or [^i32 x ^i64 y z]
+    /// Parse deftype fields with optional type hints and mutability
+    /// [x y] or [^i32 x ^i64 y z] or [^:mutable val]
     fn parse_deftype_fields(&self, items: &[Edn]) -> CompileResult<Vec<DeftypeField>> {
         let mut fields = Vec::new();
         let mut pending_type_hint: Option<String> = None;
+        let mut pending_mutable = false;
 
         for item in items {
             match item {
                 Edn::Symbol(sym) => {
-                    // Check for type hint metadata (^i32, ^i64, ^f64, ^eqref)
+                    // Check for type hint metadata (^i32, ^i64, ^f64, ^eqref) or ^:mutable
                     if sym.name.starts_with('^') {
                         let hint = &sym.name[1..];
                         match hint {
                             "i32" | "i64" | "f64" | "eqref" => {
                                 pending_type_hint = Some(hint.to_string());
                             }
+                            ":mutable" => {
+                                pending_mutable = true;
+                            }
                             _ => {
                                 return Err(CompileError::Parse(
-                                    format!("Unknown type hint ^{}, expected ^i32, ^i64, ^f64, or ^eqref", hint)
+                                    format!("Unknown type hint ^{}, expected ^i32, ^i64, ^f64, ^eqref, or ^:mutable", hint)
                                 ));
                             }
                         }
@@ -1382,7 +1388,9 @@ impl<'a> Analyzer<'a> {
                         fields.push(DeftypeField {
                             name: sym.name.clone(),
                             type_hint: pending_type_hint.take(),
+                            is_mutable: pending_mutable,
                         });
+                        pending_mutable = false;
                     }
                 }
                 _ => {
@@ -1393,6 +1401,9 @@ impl<'a> Analyzer<'a> {
 
         if pending_type_hint.is_some() {
             return Err(CompileError::Parse("Type hint without field name".into()));
+        }
+        if pending_mutable {
+            return Err(CompileError::Parse("^:mutable without field name".into()));
         }
 
         Ok(fields)

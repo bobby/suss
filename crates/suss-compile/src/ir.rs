@@ -711,6 +711,8 @@ pub struct DeftypeFieldDef {
     pub name: String,
     /// Field storage type
     pub field_type: FieldType,
+    /// Whether this field is mutable (for LazySeq caching, etc.)
+    pub is_mutable: bool,
 }
 
 /// A user-defined type from deftype
@@ -969,6 +971,7 @@ impl Expr {
             Expr::StructNew { .. } => Type::GcRef,
             Expr::StructGet { .. } => Type::GcRef, // Field could be any type, but in GC mode it's eqref
             Expr::StructGetI32 { .. } => Type::GcRef, // Returns encoded i31ref
+            Expr::StructSet { .. } => Type::GcRef, // Returns the value that was set
             Expr::ArrayNew { .. } => Type::GcRef,
             Expr::ArrayNewData { .. } => Type::GcRef,
             Expr::ArrayLen(_) => Type::GcRef, // Returns boxed i31ref
@@ -1173,6 +1176,15 @@ pub enum Expr {
     StructGetI32 {
         type_idx: u32,
         field_idx: u32,
+        value: Box<Expr>,
+    },
+
+    /// Set a field in a GC struct (for mutable fields)
+    /// Returns the value that was set (for expression chaining)
+    StructSet {
+        type_idx: u32,
+        field_idx: u32,
+        obj: Box<Expr>,
         value: Box<Expr>,
     },
 

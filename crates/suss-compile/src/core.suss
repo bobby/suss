@@ -550,10 +550,117 @@
               (->PersistentSet (- cnt 1) new-root 0))))))))
 
 ;; ============================================================
+;; HAMT Traversal for ISeqable
+;; ============================================================
+
+(defn -collect-bin-map-entries
+  "Collect MapEntry pairs from BitmapIndexedNode into array."
+  [node arr idx]
+  (let [n (bit-count (.-bitmap node))
+        bin-arr (.-bin-arr node)]
+    (loop [i 0 cur idx]
+      (if (>= i n)
+        cur
+        (let [k (aget bin-arr (* 2 i))
+              v (aget bin-arr (+ (* 2 i) 1))]
+          (if (nil? k)
+            ;; Child node - recurse
+            (recur (+ i 1) (-collect-map-entries v arr cur))
+            ;; Leaf entry
+            (do (aset arr cur (->MapEntry k v))
+                (recur (+ i 1) (+ cur 1)))))))))
+
+(defn -collect-an-map-entries
+  "Collect MapEntry pairs from ArrayNode into array."
+  [node arr idx]
+  (let [an-arr (.-an-arr node)]
+    (loop [i 0 cur idx]
+      (if (>= i 32)
+        cur
+        (let [child (aget an-arr i)]
+          (if (nil? child)
+            (recur (+ i 1) cur)
+            (recur (+ i 1) (-collect-map-entries child arr cur))))))))
+
+(defn -collect-hcn-map-entries
+  "Collect MapEntry pairs from HashCollisionNode into array."
+  [node arr idx]
+  (let [hcn-arr (.-hcn-arr node)
+        n (alength hcn-arr)]
+    (loop [i 0 cur idx]
+      (if (>= i n)
+        cur
+        (do (aset arr cur (->MapEntry (aget hcn-arr i) (aget hcn-arr (+ i 1))))
+            (recur (+ i 2) (+ cur 1)))))))
+
+(defn -collect-map-entries
+  "Collect all MapEntry pairs from a HAMT node into array."
+  [node arr idx]
+  (cond
+    (nil? node) idx
+    (instance? BitmapIndexedNode node) (-collect-bin-map-entries node arr idx)
+    (instance? ArrayNode node) (-collect-an-map-entries node arr idx)
+    (instance? HashCollisionNode node) (-collect-hcn-map-entries node arr idx)
+    :else idx))
+
+(defn -collect-bin-set-entries
+  "Collect keys from BitmapIndexedNode into array (for sets)."
+  [node arr idx]
+  (let [n (bit-count (.-bitmap node))
+        bin-arr (.-bin-arr node)]
+    (loop [i 0 cur idx]
+      (if (>= i n)
+        cur
+        (let [k (aget bin-arr (* 2 i))
+              v (aget bin-arr (+ (* 2 i) 1))]
+          (if (nil? k)
+            ;; Child node - recurse
+            (recur (+ i 1) (-collect-set-entries v arr cur))
+            ;; Leaf entry - only store key (in sets key=value)
+            (do (aset arr cur k)
+                (recur (+ i 1) (+ cur 1)))))))))
+
+(defn -collect-an-set-entries
+  "Collect keys from ArrayNode into array (for sets)."
+  [node arr idx]
+  (let [an-arr (.-an-arr node)]
+    (loop [i 0 cur idx]
+      (if (>= i 32)
+        cur
+        (let [child (aget an-arr i)]
+          (if (nil? child)
+            (recur (+ i 1) cur)
+            (recur (+ i 1) (-collect-set-entries child arr cur))))))))
+
+(defn -collect-hcn-set-entries
+  "Collect keys from HashCollisionNode into array (for sets)."
+  [node arr idx]
+  (let [hcn-arr (.-hcn-arr node)
+        n (alength hcn-arr)]
+    (loop [i 0 cur idx]
+      (if (>= i n)
+        cur
+        (do (aset arr cur (aget hcn-arr i))
+            (recur (+ i 2) (+ cur 1)))))))
+
+(defn -collect-set-entries
+  "Collect all keys from a HAMT node into array (for sets)."
+  [node arr idx]
+  (cond
+    (nil? node) idx
+    (instance? BitmapIndexedNode node) (-collect-bin-set-entries node arr idx)
+    (instance? ArrayNode node) (-collect-an-set-entries node arr idx)
+    (instance? HashCollisionNode node) (-collect-hcn-set-entries node arr idx)
+    :else idx))
+
+;; ============================================================
 ;; Protocol Implementations
 ;; ============================================================
 
 (extend-type Cons
+  ISeqable
+  (-seq [c] c)  ;; Cons is already a seq
+
   ISeq
   (-first [c] (.-first c))
   (-rest [c] (.-rest c))
@@ -577,13 +684,35 @@
   (-nth [v idx]
     (aget (array-for v idx) (bit-and idx 31)))
 
+  ISeqable
+  (-seq [v]
+    (if (= 0 (.-cnt v))
+      nil
+      ;; Build array from vector elements for IndexedSeq
+      (let [n (.-cnt v)
+            arr (make-array n)]
+        (loop [i 0]
+          (if (< i n)
+            (do (aset arr i (-nth v i))
+                (recur (+ i 1)))
+            (->IndexedSeq arr 0))))))
+
   ISeq
-  ;; Protocol-from-protocol calls now work after param_offset fix.
   (-first [v]
     (if (> (.-cnt v) 0)
       (-nth v 0)
       nil))
-  (-rest [v] nil)  ;; TODO: ChunkedSeq/IndexedSeq
+  (-rest [v]
+    (if (<= (.-cnt v) 1)
+      ()
+      ;; Build IndexedSeq starting at index 1
+      (let [n (- (.-cnt v) 1)
+            arr (make-array n)]
+        (loop [i 0]
+          (if (< i n)
+            (do (aset arr i (-nth v (+ i 1)))
+                (recur (+ i 1)))
+            (->IndexedSeq arr 0))))))
 
   ICounted
   (-count [v] (.-cnt v)))
@@ -652,7 +781,15 @@
           (aset arr 1 val)
           (->PersistentMap (+ cnt 1) (->BitmapIndexedNode (hamt-bitpos h 0) arr)))
         ;; Non-empty: use inode-assoc
-        (->PersistentMap (+ cnt 1) (inode-assoc root 0 h key val))))))
+        (->PersistentMap (+ cnt 1) (inode-assoc root 0 h key val)))))
+
+  ISeqable
+  (-seq [m]
+    (if (= 0 (.-map-cnt m))
+      nil
+      (let [arr (make-array (.-map-cnt m))]
+        (-collect-map-entries (.-map-root m) arr 0)
+        (->IndexedSeq arr 0)))))
 
 (extend-type PersistentSet
   ILookup
@@ -677,4 +814,319 @@
           (aset arr 1 val)
           (->PersistentSet (+ cnt 1) (->BitmapIndexedNode (hamt-bitpos h 0) arr) 0))
         ;; Non-empty: use inode-assoc (key=val, value=val for sets)
-        (->PersistentSet (+ cnt 1) (inode-assoc root 0 h val val) 0)))))
+        (->PersistentSet (+ cnt 1) (inode-assoc root 0 h val val) 0))))
+
+  ISeqable
+  (-seq [s]
+    (if (= 0 (.-set-cnt s))
+      nil
+      (let [arr (make-array (.-set-cnt s))]
+        (-collect-set-entries (.-set-root s) arr 0)
+        (->IndexedSeq arr 0)))))
+
+;; ============================================================
+;; IndexedSeq - A sequence view over an array
+;;
+;; IndexedSeq wraps an array and provides sequence access starting
+;; from a given index. This is used for vector iteration and other
+;; indexed collection sequences.
+;; ============================================================
+
+(deftype IndexedSeq [arr ^i32 i])
+
+(extend-type IndexedSeq
+  ISeqable
+  (-seq [iseq]
+    (if (< (.-i iseq) (alength (.-arr iseq)))
+      iseq
+      nil))
+
+  ISeq
+  (-first [iseq] (aget (.-arr iseq) (.-i iseq)))
+  (-rest [iseq]
+    (let [next-i (+ (.-i iseq) 1)]
+      (if (< next-i (alength (.-arr iseq)))
+        (->IndexedSeq (.-arr iseq) next-i)
+        ())))
+
+  ICounted
+  (-count [iseq] (- (alength (.-arr iseq)) (.-i iseq))))
+
+;; ============================================================
+;; User-Facing Sequence Functions
+;;
+;; These are the primary functions users interact with for sequence
+;; operations. They delegate to protocol methods.
+;; ============================================================
+
+(defn seq
+  "Returns a seq on the collection. If empty, returns nil."
+  [coll]
+  (if (nil? coll)
+    nil
+    (-seq coll)))
+
+(defn first
+  "Returns the first element of coll. Returns nil if empty."
+  [coll]
+  (if (nil? coll)
+    nil
+    (let [s (seq coll)]
+      (if (nil? s)
+        nil
+        (-first s)))))
+
+(defn rest
+  "Returns the rest of coll after first. Returns empty list if empty."
+  [coll]
+  (if (nil? coll)
+    ()
+    (let [s (seq coll)]
+      (if (nil? s)
+        ()
+        (-rest s)))))
+
+(defn next
+  "Returns the next element of coll. Like (seq (rest coll))."
+  [coll]
+  (if (nil? coll)
+    nil
+    (let [s (seq coll)]
+      (if (nil? s)
+        nil
+        (seq (-rest s))))))
+
+;; ============================================================
+;; MapEntry - Key-value pair for map iteration
+;;
+;; MapEntry wraps a key and value from a map, allowing iteration
+;; over maps as sequences of entries.
+;; ============================================================
+
+(deftype MapEntry [key val])
+
+(extend-type MapEntry
+  ICounted
+  (-count [e] 2)
+
+  IIndexed
+  (-nth [e n]
+    (cond (= n 0) (.-key e)
+          (= n 1) (.-val e)
+          :else nil))
+
+  ISeqable
+  (-seq [e]
+    ;; MapEntry as a 2-element seq
+    (let [arr (make-array 2)]
+      (aset arr 0 (.-key e))
+      (aset arr 1 (.-val e))
+      (->IndexedSeq arr 0))))
+
+(defn key
+  "Returns the key of a map entry."
+  [e]
+  (.-key e))
+
+(defn val
+  "Returns the value of a map entry."
+  [e]
+  (.-val e))
+
+;; ============================================================
+;; LazySeq - Lazily-evaluated sequence
+;;
+;; LazySeq wraps a thunk (zero-arg function) that produces a sequence.
+;; The thunk is evaluated on first access and the result is cached.
+;; This enables lazy evaluation for map, filter, take, etc.
+;; ============================================================
+
+(deftype LazySeq [^:mutable fn ^:mutable s])
+
+(defn -lazy-seq-realize
+  "Evaluate thunk and cache result. Internal use."
+  [ls]
+  (when-not (nil? (.-fn ls))
+    (set! (.-s ls) ((.-fn ls)))
+    (set! (.-fn ls) nil))
+  (.-s ls))
+
+(extend-type LazySeq
+  ISeqable
+  (-seq [ls]
+    (let [realized (-lazy-seq-realize ls)]
+      (if (nil? realized)
+        nil
+        (seq realized))))
+
+  ISeq
+  (-first [ls]
+    (let [s (seq ls)]
+      (if (nil? s) nil (first s))))
+  (-rest [ls]
+    (let [s (seq ls)]
+      (if (nil? s) () (rest s)))))
+
+(defmacro lazy-seq
+  "Returns a lazy sequence that will evaluate body when needed."
+  [& body]
+  (list '->LazySeq (cons 'fn (cons [] body)) nil))
+
+;; ============================================================
+;; Numeric Helpers
+;; ============================================================
+
+(defn inc
+  "Returns a number one greater than n."
+  [n]
+  (+ n 1))
+
+(defn dec
+  "Returns a number one less than n."
+  [n]
+  (- n 1))
+
+(defn pos?
+  "Returns true if n is greater than zero."
+  [n]
+  (> n 0))
+
+(defn neg?
+  "Returns true if n is less than zero."
+  [n]
+  (< n 0))
+
+(defn zero?
+  "Returns true if n is zero."
+  [n]
+  (= n 0))
+
+;; ============================================================
+;; Higher-Order Sequence Functions
+;; ============================================================
+
+(defn map
+  "Returns a lazy sequence of applying f to each element of coll."
+  [f coll]
+  (lazy-seq
+    (let [s (seq coll)]
+      (if (nil? s)
+        nil
+        (cons (f (-first s)) (map f (-rest s)))))))
+
+(defn filter
+  "Returns a lazy sequence of elements where (pred elem) is truthy."
+  [pred coll]
+  (lazy-seq
+    (let [s (seq coll)]
+      (if (nil? s)
+        nil
+        (let [fst (-first s)
+              rst (-rest s)]
+          (if (pred fst)
+            (cons fst (filter pred rst))
+            (filter pred rst)))))))
+
+(defn remove
+  "Returns a lazy sequence of elements where (pred elem) is falsy."
+  [pred coll]
+  (filter (fn [x] (not (pred x))) coll))
+
+(defn take
+  "Returns a lazy sequence of the first n elements of coll."
+  [n coll]
+  (lazy-seq
+    (if (pos? n)
+      (let [s (seq coll)]
+        (if (nil? s)
+          nil
+          (cons (-first s) (take (dec n) (-rest s)))))
+      nil)))
+
+(defn drop
+  "Returns a lazy sequence of all but the first n elements of coll."
+  [n coll]
+  (if (pos? n)
+    (let [s (seq coll)]
+      (if (nil? s)
+        nil
+        (drop (dec n) (-rest s))))
+    coll))
+
+(defn take-while
+  "Returns a lazy sequence of elements while (pred elem) is truthy."
+  [pred coll]
+  (lazy-seq
+    (let [s (seq coll)]
+      (if (nil? s)
+        nil
+        (let [fst (-first s)]
+          (if (pred fst)
+            (cons fst (take-while pred (-rest s)))
+            nil))))))
+
+(defn drop-while
+  "Returns a lazy sequence dropping elements while (pred elem) is truthy."
+  [pred coll]
+  (let [s (seq coll)]
+    (if (nil? s)
+      nil
+      (if (pred (-first s))
+        (drop-while pred (-rest s))
+        s))))
+
+(defn reduce
+  "Reduces coll using f with init as initial value."
+  [f init coll]
+  (loop [acc init s (seq coll)]
+    (if (nil? s)
+      acc
+      (recur (f acc (-first s)) (-rest s)))))
+
+(defn iterate
+  "Returns a lazy sequence of x, (f x), (f (f x)), etc."
+  [f x]
+  (cons x (lazy-seq (iterate f (f x)))))
+
+(defn repeat
+  "Returns a lazy infinite sequence of x."
+  [x]
+  (cons x (lazy-seq (repeat x))))
+
+(defn repeatedly
+  "Returns a lazy sequence of calling f (presumably for side effects)."
+  [f]
+  (lazy-seq (cons (f) (repeatedly f))))
+
+(defn -range-step
+  "Internal: range with start, end, and step."
+  [start end step]
+  (lazy-seq
+    (if (if (pos? step)
+          (< start end)
+          (> start end))
+      (cons start (-range-step (+ start step) end step))
+      nil)))
+
+(defn range
+  "Returns a lazy sequence from 0 to end (exclusive)."
+  [end]
+  (-range-step 0 end 1))
+
+(defn concat2
+  "Returns a lazy sequence concatenating two collections."
+  [coll1 coll2]
+  (lazy-seq
+    (let [s1 (seq coll1)]
+      (if (nil? s1)
+        (seq coll2)
+        (cons (-first s1) (concat2 (-rest s1) coll2))))))
+
+(defn mapcat
+  "Returns a lazy sequence of concatenating (map f coll)."
+  [f coll]
+  (lazy-seq
+    (let [s (seq coll)]
+      (if (nil? s)
+        nil
+        (concat2 (f (-first s)) (mapcat f (-rest s)))))))
