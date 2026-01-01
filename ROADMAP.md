@@ -115,7 +115,7 @@ Function Index Layout:
 - None currently blocking
 
 ### Known Bugs
-- None currently known
+- **0-arg closure call bug**: Calling a closure with 0 arguments fails in certain contexts (e.g., `((constantly 42))`), but works with 1+ arguments. Workaround: call with at least one argument when using `constantly` or similar function combinators.
 
 ---
 

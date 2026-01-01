@@ -1130,3 +1130,143 @@
       (if (nil? s)
         nil
         (concat2 (f (-first s)) (mapcat f (-rest s)))))))
+
+;; ============================================================
+;; Predicate Functions
+;; ============================================================
+
+(defn empty?
+  "Returns true if coll has no items."
+  [coll]
+  (if (nil? coll)
+    true
+    (let [s (seq coll)]
+      (nil? s))))
+
+(defn not-empty
+  "Returns coll if not empty, nil otherwise."
+  [coll]
+  (if (empty? coll) nil coll))
+
+;; ============================================================
+;; Sequence Search Functions
+;; ============================================================
+
+(defn some
+  "Returns first logical true value of (pred x) for any x in coll."
+  [pred coll]
+  (let [s (seq coll)]
+    (if (nil? s)
+      nil
+      (let [result (pred (-first s))]
+        (if result
+          result
+          (some pred (-rest s)))))))
+
+(defn every?
+  "Returns true if (pred x) is logical true for every x in coll."
+  [pred coll]
+  (let [s (seq coll)]
+    (if (nil? s)
+      true
+      (if (pred (-first s))
+        (every? pred (-rest s))
+        false))))
+
+(defn not-any?
+  "Returns false if (pred x) is logical true for any x in coll."
+  [pred coll]
+  (not (some pred coll)))
+
+(defn not-every?
+  "Returns true if (pred x) is logical false for some x in coll."
+  [pred coll]
+  (not (every? pred coll)))
+
+;; ============================================================
+;; Function Combinators
+;; ============================================================
+
+(defn identity
+  "Returns its argument."
+  [x]
+  x)
+
+(defn constantly
+  "Returns a function that always returns val."
+  [val]
+  (fn [& args] val))
+
+(defn complement
+  "Returns a function that returns the opposite truth value of f."
+  [f]
+  (fn [& args] (not (apply f args))))
+
+;; ============================================================
+;; Collection Utilities
+;; ============================================================
+
+(defn into
+  "Returns a new coll with items from xs conj'd onto to."
+  [to xs]
+  (reduce (fn [acc x] (conj acc x)) to xs))
+
+(defn concat
+  "Returns a lazy seq of the concatenation of two collections."
+  [x y]
+  (concat2 x y))
+
+;; ============================================================
+;; Utility Functions
+;; ============================================================
+
+(defn second
+  "Returns the second element of coll."
+  [coll]
+  (first (rest coll)))
+
+(defn last
+  "Returns the last element of coll (linear time)."
+  [coll]
+  (let [s (seq coll)]
+    (if (nil? s)
+      nil
+      (let [n (next s)]
+        (if (nil? n)
+          (first s)
+          (last n))))))
+
+(defn butlast
+  "Returns all but the last element of coll (linear time)."
+  [coll]
+  (loop [result [] s (seq coll)]
+    (if (nil? s)
+      nil
+      (let [n (next s)]
+        (if (nil? n)
+          (seq result)
+          (recur (conj result (first s)) n))))))
+
+(defn reverse
+  "Returns a seq of the items in coll in reverse order."
+  [coll]
+  (reduce (fn [acc x] (cons x acc)) () coll))
+
+(defn -distinct-step
+  "Internal helper for distinct."
+  [xs seen]
+  (lazy-seq
+    (let [s (seq xs)]
+      (if (nil? s)
+        nil
+        (let [f (-first s)
+              h (hash f)]
+          (if (contains? seen h)
+            (-distinct-step (-rest s) seen)
+            (cons f (-distinct-step (-rest s) (conj seen h)))))))))
+
+(defn distinct
+  "Returns a lazy sequence of distinct elements from coll."
+  [coll]
+  (-distinct-step coll #{}))
+
