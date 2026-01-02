@@ -3441,8 +3441,9 @@ impl<'a> CodeGen<'a> {
                 func_idx,
                 arity,
                 captures,
+                is_variadic,
             } => {
-                self.generate_closure_new(*func_idx, *arity, captures, f)?;
+                self.generate_closure_new(*func_idx, *arity, captures, *is_variadic, f)?;
             }
 
             Expr::VariadicClosureNew { op: _, func_indices } => {
@@ -3504,6 +3505,8 @@ impl<'a> CodeGen<'a> {
     ///
     /// Creates: struct { type_id, env, fn }
     /// - type_id: i32 identifying arity for protocol dispatch
+    ///   - For regular closures: CLOSURE_0 + arity
+    ///   - For variadic closures: VARIADIC_CAPTURE (special marker)
     /// - env: array<eqref> containing captured values
     /// - fn: typed funcref to the wrapper function
     fn generate_closure_new(
@@ -3511,13 +3514,19 @@ impl<'a> CodeGen<'a> {
         func_idx: u32,
         arity: u32,
         captures: &[Expr],
+        is_variadic: bool,
         f: &mut Function,
     ) -> CompileResult<()> {
         use crate::ir::gc_types;
         use crate::ir::type_ids;
 
         let closure_type = gc_types::closure_type_for_arity(arity);
-        let type_id = type_ids::CLOSURE_0 + arity as i32;
+        // Variadic closures with captures use special type_id so call site can detect them
+        let type_id = if is_variadic {
+            type_ids::VARIADIC_CAPTURE
+        } else {
+            type_ids::CLOSURE_0 + arity as i32
+        };
 
         // Field 0: type_id (i32)
         f.instruction(&Instruction::I32Const(type_id));
@@ -3580,7 +3589,10 @@ impl<'a> CodeGen<'a> {
     /// Generate code for calling a closure
     ///
     /// Uses call_ref with typed funcref for efficient invocation.
-    /// Handles both regular closures and variadic closures.
+    /// Handles:
+    /// - VARIADIC_CLOSURE: builtin variadic functions (+, *, etc.)
+    /// - VARIADIC_CAPTURE: closures with (fn [& args] body) that capture values
+    /// - Regular closures: fixed-arity closures
     fn generate_closure_call(
         &self,
         closure: &Expr,
@@ -3589,6 +3601,7 @@ impl<'a> CodeGen<'a> {
         f: &mut Function,
     ) -> CompileResult<()> {
         use crate::ir::gc_types;
+        use crate::ir::type_ids;
 
         let arity = args.len() as u32;
 
@@ -3601,7 +3614,7 @@ impl<'a> CodeGen<'a> {
         self.generate_expr(closure, f)?;
         f.instruction(&Instruction::LocalSet(closure_local));
 
-        // Check if it's a variadic closure
+        // Check if it's a VARIADIC_CLOSURE (builtin like +, *, etc.)
         f.instruction(&Instruction::LocalGet(closure_local));
         f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(
             gc_types::VARIADIC_CLOSURE,
@@ -3610,15 +3623,48 @@ impl<'a> CodeGen<'a> {
             RefType::EQREF,
         ))));
 
-        // Variadic closure path
+        // VARIADIC_CLOSURE path (builtins)
         self.generate_variadic_closure_call(closure_local, args, arity, in_tail_position, f)?;
 
         f.instruction(&Instruction::Else);
 
-        // Regular closure path
+        // Check if it's a variadic capture (fn [& args] body) by checking type_id
+        // All closure types have type_id as field 0, so we can cast to CLOSURE_1 to read it
+        // (VARIADIC_CAPTURE closures are always CLOSURE_1 with arity=1 for args array)
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::CLOSURE_1)));
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+
+        // It's a CLOSURE_1 - check if it's variadic capture
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::CLOSURE_1)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: gc_types::CLOSURE_1,
+            field_index: gc_types::CL_TYPE_ID,
+        });
+        f.instruction(&Instruction::I32Const(type_ids::VARIADIC_CAPTURE));
+        f.instruction(&Instruction::I32Eq);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+
+        // VARIADIC_CAPTURE path - pack args into array and call with arity=1
+        self.generate_variadic_capture_call(closure_local, args, in_tail_position, f)?;
+
+        f.instruction(&Instruction::Else);
+
+        // Regular CLOSURE_1 (not variadic capture)
+        // If arity != 1, this will produce wrong signature, but that's an arity error
         self.generate_regular_closure_call(closure_local, args, arity, in_tail_position, f)?;
 
-        f.instruction(&Instruction::End);
+        f.instruction(&Instruction::End); // inner if (VARIADIC_CAPTURE check)
+
+        f.instruction(&Instruction::Else);
+
+        // Not CLOSURE_1, use regular path with call-site arity
+        self.generate_regular_closure_call(closure_local, args, arity, in_tail_position, f)?;
+
+        f.instruction(&Instruction::End); // middle if (CLOSURE_1 check)
+
+        f.instruction(&Instruction::End); // outer if (VARIADIC_CLOSURE check)
 
         Ok(())
     }
@@ -3700,6 +3746,67 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::StructGet {
             struct_type_index: gc_types::VARIADIC_CLOSURE,
             field_index: fn_field,
+        });
+
+        // Call with typed funcref
+        if in_tail_position {
+            f.instruction(&Instruction::ReturnCallRef(fn_type));
+        } else {
+            f.instruction(&Instruction::CallRef(fn_type));
+        }
+
+        Ok(())
+    }
+
+    /// Generate code for calling a variadic closure with captures (fn [& args] body).
+    ///
+    /// These closures use CLOSURE_1 with type_id=VARIADIC_CAPTURE.
+    /// At the call site, we pack all arguments into an array and call with arity=1.
+    fn generate_variadic_capture_call(
+        &self,
+        closure_local: u32,
+        args: &[Expr],
+        in_tail_position: bool,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+
+        // Variadic capture closures are CLOSURE_1 with fn signature (env, args_array) -> result
+        let fn_type = gc_types::CLOSURE_FN_1;
+
+        // Push env (from CLOSURE_1 field 1)
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::CLOSURE_1)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: gc_types::CLOSURE_1,
+            field_index: gc_types::CL_ENV,
+        });
+
+        // Pack all arguments into an array
+        if args.is_empty() {
+            // Empty array
+            f.instruction(&Instruction::ArrayNewFixed {
+                array_type_index: gc_types::ARRAY,
+                array_size: 0,
+            });
+        } else {
+            // Generate each argument
+            for arg in args {
+                self.generate_expr(arg, f)?;
+            }
+            // Create array from values on stack
+            f.instruction(&Instruction::ArrayNewFixed {
+                array_type_index: gc_types::ARRAY,
+                array_size: args.len() as u32,
+            });
+        }
+
+        // Get fn (typed funcref for arity=1)
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::CLOSURE_1)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: gc_types::CLOSURE_1,
+            field_index: gc_types::CL_FN,
         });
 
         // Call with typed funcref

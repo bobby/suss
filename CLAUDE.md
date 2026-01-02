@@ -181,6 +181,35 @@ All symbols and keywords go through `Interner` for O(1) equality. Use `SymbolId`
 Compilable: `def`, `defn`, `fn` (closures with capture), `apply`, `let`, `if`, `do`, `loop/recur`, numbers (i32/i64/f64), strings, vectors, macros, `defprotocol`, `extend-type`, `deftype`.
 Not yet compilable: BigInt (use i64).
 
+### Closure Implementation
+
+Closures use WASM GC structs with typed function references:
+
+**Closure struct types (by arity):**
+- `CLOSURE_0` through `CLOSURE_4`: Fixed arity closures (0-4 params)
+- `CLOSURE_N`: Higher arity closures (5+ params, uses args array)
+- `VARIADIC_CLOSURE`: Builtin variadic functions (+, *, etc.) with fn0..fn8 fields
+
+**Closure struct layout:**
+```
+struct Closure { type_id: i32, env: array<eqref>, fn: funcref }
+```
+
+**Variadic closures with captures:**
+Closures like `(fn [& args] body)` that capture values use `CLOSURE_1` (arity=1 for args array) but with a special `type_id = VARIADIC_CAPTURE (-2)`. At call sites, this type_id is checked to pack arguments into an array before calling.
+
+```clojure
+;; Works correctly with any number of arguments:
+((constantly 42))        ;; → 42
+((constantly 42) 1 2 3)  ;; → 42
+(let [f (fn [& xs] (count xs))] (f 1 2 3))  ;; → 3
+```
+
+**Key files:**
+- `ir.rs`: `gc_types` module defines closure types, `type_ids::VARIADIC_CAPTURE`
+- `lower.rs`: Sets `is_variadic` flag on `ClosureNew` for variadic closures
+- `codegen.rs`: `generate_closure_call()` checks for VARIADIC_CAPTURE and packs args
+
 ### Macro System
 
 Suss has ClojureScript-style compile-time macros:
@@ -293,6 +322,23 @@ Suss supports `deftype` for user-defined WASM GC struct types:
 
 ;; Mutable fields can be set with set! expression
 (set! (.-fn lazy-seq) nil)
+```
+
+**Inline protocol implementations:**
+```clojure
+;; Define a type with protocol implementations inline
+(deftype Counter [val]
+  ICounted
+  (-count [this] (.-val this)))
+
+(count (->Counter 42))  ;; → 42
+
+;; Multiple protocols supported
+(deftype Box [value]
+  ICounted
+  (-count [this] 1)
+  IIndexed
+  (-nth [this n] (.-value this)))
 ```
 
 **Key files:**
@@ -586,7 +632,7 @@ fn dump_wasm_for_debug() {
     let expr = "(your expression here)";
     let mut compiler = Compiler::new();
     let wasm = compiler.compile_expr(expr).unwrap();
-    std::fs::write("/tmp/debug.wasm", &wasm).unwrap();
+    std::fs::write("./tmp/debug.wasm", &wasm).unwrap();
 }
 ```
 
@@ -596,28 +642,28 @@ Then run: `cargo test -p suss-compile --test compile_expr dump_wasm`
 
 ```bash
 # Validate WASM
-wasm-tools validate --features gc /tmp/debug.wasm
+wasm-tools validate --features gc ./tmp/debug.wasm
 
 # Disassemble to WAT format
-wasm-tools print /tmp/debug.wasm > /tmp/debug.wat
+wasm-tools print ./tmp/debug.wasm > ./tmp/debug.wat
 
 # Print with instruction offsets (for backtrace debugging)
-wasm-tools print --print-offsets /tmp/debug.wasm
+wasm-tools print --print-offsets ./tmp/debug.wasm
 
 # Show section overview
-wasm-tools objdump /tmp/debug.wasm
+wasm-tools objdump ./tmp/debug.wasm
 
 # Run directly with wasmtime
-~/.wasmtime/bin/wasmtime run -W gc --invoke eval /tmp/debug.wasm
+~/.wasmtime/bin/wasmtime run -W gc --invoke eval ./tmp/debug.wasm
 ```
 
 ### Debugging Dispatch Table Issues
 
 When debugging `call_indirect` issues with the protocol dispatch table:
 
-1. **Verify element sections**: `grep "(elem" /tmp/debug.wat`
-2. **Check table size**: `grep "(table" /tmp/debug.wat`
-3. **Verify function types**: `grep "type (;N;)" /tmp/debug.wat`
+1. **Verify element sections**: `grep "(elem" ./tmp/debug.wat`
+2. **Check table size**: `grep "(table" ./tmp/debug.wat`
+3. **Verify function types**: `grep "type (;N;)" ./tmp/debug.wat`
 4. **Compare with working case**: Dump both working and failing WASM and diff them
 
 Key dispatch table facts:
@@ -636,9 +682,9 @@ To test if an issue is with the computed index vs the table itself:
 
 ```bash
 # Convert WASM → WAT → WASM to verify encoding
-wasm-tools print /tmp/debug.wasm > /tmp/debug.wat
-wasm-tools parse /tmp/debug.wat -o /tmp/debug_round.wasm
-~/.wasmtime/bin/wasmtime run -W gc --invoke eval /tmp/debug_round.wasm
+wasm-tools print ./tmp/debug.wasm > ./tmp/debug.wat
+wasm-tools parse ./tmp/debug.wat -o ./tmp/debug_round.wasm
+~/.wasmtime/bin/wasmtime run -W gc --invoke eval ./tmp/debug_round.wasm
 ```
 
 ### WASM GC Structural Typing Gotcha

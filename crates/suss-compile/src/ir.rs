@@ -506,6 +506,10 @@ pub mod type_ids {
     /// i31ref values (nil, bool, small int) - not dispatchable to most protocols
     pub const I31REF: i32 = -1;
 
+    /// Variadic closure with captures (fn [& args] body)
+    /// Uses CLOSURE_1 struct but expects args packed into array at call site
+    pub const VARIADIC_CAPTURE: i32 = -2;
+
     // === Compiler Primitives (type_id = gc_type index) ===
     pub const INT64: i32 = super::gc_types::INT64 as i32;
     pub const FLOAT64: i32 = super::gc_types::FLOAT64 as i32;
@@ -1384,6 +1388,10 @@ pub enum Expr {
         arity: u32,
         /// Expressions for values to capture in the environment
         captures: Vec<Expr>,
+        /// True if this is a variadic closure (fn [& args] body).
+        /// Variadic closures use arity=1 where the arg is a packed array.
+        /// At call site, we detect this via type_id=VARIADIC_CAPTURE and pack args.
+        is_variadic: bool,
     },
 
     /// Call a closure value.

@@ -2085,6 +2085,7 @@ impl Lowerer {
             func_idx: wrapper_idx,
             arity,
             captures,
+            is_variadic,
         })
     }
 
@@ -3133,6 +3134,7 @@ impl Lowerer {
                 func_idx,
                 arity,
                 captures: vec![], // no captures needed for built-ins
+                is_variadic: false,
             });
         }
 
@@ -3170,6 +3172,7 @@ impl Lowerer {
             func_idx: wrapper_idx,
             arity,
             captures: vec![], // no captures needed for built-ins
+            is_variadic: false,
         })
     }
 
@@ -3188,6 +3191,7 @@ impl Lowerer {
                 func_idx,
                 arity: arity as u32,
                 captures: vec![],
+                is_variadic: false,
             });
         }
 
@@ -3227,6 +3231,7 @@ impl Lowerer {
             func_idx: wrapper_idx,
             arity: arity as u32,
             captures: vec![],
+            is_variadic: false,
         })
     }
 

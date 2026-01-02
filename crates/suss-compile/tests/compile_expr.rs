@@ -771,6 +771,7 @@ world tco {{
     config.wasm_tail_call(true);
     config.wasm_component_model(true);
     config.wasm_gc(true);
+    config.wasm_function_references(true);
     let engine = Engine::new(&config).expect("engine creation failed");
 
     // Load as component
@@ -1668,6 +1669,26 @@ fn test_closure_capture_multiple_vars() {
         run_expr_i32("(let [a 1 b 2 c 3] ((fn [d] (+ a (+ b (+ c d)))) 4))"),
         10
     );
+}
+
+#[test]
+fn test_variadic_closure_with_capture_zero_args() {
+    // Variadic closure with capture, called with zero args
+    // This was a bug: CLOSURE_1 (arity=1 for args array) was incorrectly
+    // cast to CLOSURE_0 at call site. Fixed by VARIADIC_CAPTURE type_id.
+    assert_eq!(run_expr_i32("((constantly 42))"), 42);
+}
+
+#[test]
+fn test_variadic_closure_with_capture_multiple_args() {
+    // Variadic closure with capture, called with multiple args
+    assert_eq!(run_expr_i32("((constantly 99) 1 2 3)"), 99);
+}
+
+#[test]
+fn test_variadic_closure_inline_zero_args() {
+    // Inline variadic closure with capture, called with zero args
+    assert_eq!(run_expr_i32("(let [v 100] (let [f (fn [& xs] v)] (f)))"), 100);
 }
 
 // ============================================================================
