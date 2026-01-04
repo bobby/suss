@@ -8,33 +8,33 @@ These programs represent **target behavior** - idiomatic Clojure code that we're
 
 | File | Description | Status |
 |------|-------------|--------|
-| `fibonacci.suss` | Fibonacci implementations (naive, tail-recursive, sequence) | Partial |
-| `factorial.suss` | Factorial (tail-recursive, reduce-based) | Partial |
-| `game_of_life.suss` | Conway's Game of Life (Christophe Grand's elegant version) | Not yet |
-| `primes.suss` | Prime number algorithms (trial division, sieve) | Not yet |
-| `quicksort.suss` | Functional quicksort | Not yet |
-| `tree_traversal.suss` | Binary tree traversals using maps | Not yet |
+| `fibonacci.sus` | Fibonacci implementations (naive, tail-recursive, sequence) | Partial |
+| `factorial.sus` | Factorial (tail-recursive, reduce-based) | Partial |
+| `game_of_life.sus` | Conway's Game of Life (Christophe Grand's elegant version) | Not yet |
+| `primes.sus` | Prime number algorithms (trial division, sieve) | Not yet |
+| `quicksort.sus` | Functional quicksort | Not yet |
+| `tree_traversal.sus` | Binary tree traversals using maps | Not yet |
 
 ## Feature Dependencies
 
 | Sample | Required Features |
 |--------|-------------------|
-| `fibonacci.suss` | loop/recur ✓, closures ✓ |
-| `factorial.suss` | loop/recur ✓, reduce, range |
-| `game_of_life.suss` | destructuring, for, mapcat, frequencies |
-| `primes.suss` | filter, some, range, Math/sqrt |
-| `quicksort.suss` | filter, concat |
-| `tree_traversal.suss` | keyword lookup, concat |
+| `fibonacci.sus` | loop/recur ✓, closures ✓ |
+| `factorial.sus` | loop/recur ✓, reduce, range |
+| `game_of_life.sus` | destructuring, for, mapcat, frequencies |
+| `primes.sus` | filter, some, range, Math/sqrt |
+| `quicksort.sus` | filter, concat |
+| `tree_traversal.sus` | keyword lookup, concat |
 
 ## Running Samples
 
 ```bash
 # Run a sample (once features are implemented)
-cargo run -p suss-cli -- samples/fibonacci.suss
+cargo run -p suss-cli -- samples/fibonacci.sus
 
 # Or use the REPL
 cargo run -p suss-cli
-suss> (load-file "samples/fibonacci.suss")
+suss> (load-file "samples/fibonacci.sus")
 suss> (fib 10)
 ```
 

@@ -21,21 +21,21 @@ The CLI follows Clojure conventions with init options and main modes:
 suss                                    # Start REPL
 suss -r                                 # Explicit REPL
 suss -e "(+ 1 2)"                       # Evaluate expression
-suss script.suss                        # Run script file
+suss script.sus                        # Run script file
 suss -                                  # Run from stdin
 suss -m myapp.core arg1 arg2            # Run -main with args (TODO)
 
 # Init options (run before main action)
-suss -i prelude.suss -r                 # Load file, then start REPL
+suss -i prelude.sus -r                 # Load file, then start REPL
 suss -e "(def x 1)" -e "(+ x 2)"        # Chain evals (last is main)
-suss -i lib.suss -e "(process)"         # Load file, then eval
+suss -i lib.sus -e "(process)"         # Load file, then eval
 
 # Compile subcommand - AOT output
-suss compile src.suss -o out.wasm                   # REPL component (TODO)
-suss compile -m ns src.suss -o app.wasm             # CLI command
-suss compile -w api.wit src.suss -o lib.wasm        # Library/plugin
+suss compile src.sus -o out.wasm                   # REPL component (TODO)
+suss compile -m ns src.sus -o app.wasm             # CLI command
+suss compile -w api.wit src.sus -o lib.wasm        # Library/plugin
 suss compile -n myapp.core -w world.wit             # Namespace mode (multi-file)
-suss compile --world :app/v1                        # From deps.suss
+suss compile --world :app/v1                        # From deps.sus
 
 # Run subcommand - execute compiled component
 suss run app.wasm                       # Run CLI command (auto-finds run)
@@ -295,7 +295,7 @@ Without `^i32`, methods return boxed `eqref`. With `^i32`, codegen generates unb
 
 **User-defined methods** start at method_id 100+.
 
-**Dispatch table:** `type_id * 10 + method_id` indexes into a funcref table. Size is dynamically calculated based on number of deftypes. Dispatch entries are created from `extend-type` declarations in core.suss during lowering.
+**Dispatch table:** `type_id * 10 + method_id` indexes into a funcref table. Size is dynamically calculated based on number of deftypes. Dispatch entries are created from `extend-type` declarations in core.sus during lowering.
 
 ### User-Defined Types (deftype)
 
@@ -349,7 +349,7 @@ Suss supports `deftype` for user-defined WASM GC struct types:
 
 **Type indices:**
 - Built-in GC types: indices 0-38 (see `gc_types` module)
-- Reserved deftypes: indices 5-7 (HAMT nodes defined in core.suss)
+- Reserved deftypes: indices 5-7 (HAMT nodes defined in core.sus)
 - User deftypes: indices 39+ (assigned at lowering time)
 - Helper types follow user types
 - Type IDs: built-in 0-10, user types start at 256 (`USER_TYPE_BASE`)
@@ -395,11 +395,11 @@ pub enum LoweringMode {
 - `instance?` uses `ref.test` against the GC type index
 - User types shift helper type indices (use `helper_type()` method for dynamic offset calculation)
 - Reserved types (gc_type_idx < NUM_GC_TYPES) now generate constructors (`->PersistentVector`, etc.)
-- Built-in types are declared in core.suss with `^:type-id N` metadata for bootstrap compatibility
+- Built-in types are declared in core.sus with `^:type-id N` metadata for bootstrap compatibility
 
-### core.suss (Auto-Loaded Library)
+### core.sus (Auto-Loaded Library)
 
-Following ClojureScript semantics, `core.suss` is automatically loaded before user code. It contains:
+Following ClojureScript semantics, `core.sus` is automatically loaded before user code. It contains:
 - **Built-in collection types** with reserved type IDs (Cons, PersistentVector, PersistentMap, PersistentSet)
 - **HAMT node types** with reserved type IDs (BitmapIndexedNode, ArrayNode, HashCollisionNode)
 - **Sequence types** (IndexedSeq, MapEntry, LazySeq)
@@ -429,15 +429,15 @@ Non-empty collection literals are desugared to inline `conj`/`assoc` calls in `l
 
 This is temporary until variadic functions are implemented, at which point they should desugar to `(vector ...)`, `(hash-map ...)`, `(hash-set ...)`.
 
-**Key file:** `crates/suss-compile/src/core.suss`
+**Key file:** `crates/suss-compile/src/core.sus`
 
 **How it works:**
-1. `lib.rs` includes core.suss via `include_str!`
-2. Before compiling user code, core.suss is parsed and analyzed
+1. `lib.rs` includes core.sus via `include_str!`
+2. Before compiling user code, core.sus is parsed and analyzed
 3. Protocol definitions and helper functions become available to all user code
 4. HAMT node deftypes use reserved type IDs to match hardcoded ir.rs constants
 
-**Note:** core.suss has `(ns suss.core)` declaration. Functions are registered with namespace-qualified names in file compilation mode. The REPL path strips the `ns` form for backward compatibility.
+**Note:** core.sus has `(ns suss.core)` declaration. Functions are registered with namespace-qualified names in file compilation mode. The REPL path strips the `ns` form for backward compatibility.
 
 ### Low-Level Primitives
 
@@ -530,8 +530,8 @@ Suss supports Clojure-style namespace requires for organizing code across multip
 ```
 
 **File Mapping (Clojure convention):**
-- `myapp.core` → `src/myapp/core.suss`
-- `myapp.utils-helpers` → `src/myapp/utils_helpers.suss`
+- `myapp.core` → `src/myapp/core.sus`
+- `myapp.utils-helpers` → `src/myapp/utils_helpers.sus`
 - Dots become directory separators, hyphens become underscores
 
 **Require Options:**
@@ -542,7 +542,7 @@ Suss supports Clojure-style namespace requires for organizing code across multip
 **Compilation Modes:**
 ```bash
 # Single-file compilation (existing)
-suss compile src.suss -w world.wit -o out.wasm
+suss compile src.sus -w world.wit -o out.wasm
 
 # Multi-file namespace compilation (new)
 suss compile -n myapp.core -w world.wit -o app.wasm
@@ -592,9 +592,9 @@ pub struct DependencyResolver {
 ### Bundled WASI
 WASI 0.2.4 WIT files are bundled. When world.wit imports `wasi:*`, they're auto-loaded. No deps/ folder needed for WASI packages.
 
-### Project Configuration (deps.suss)
+### Project Configuration (deps.sus)
 
-Multi-world projects use `deps.suss` (EDN format like Clojure's deps.edn):
+Multi-world projects use `deps.sus` (EDN format like Clojure's deps.edn):
 
 ```clojure
 {:worlds
@@ -617,7 +617,7 @@ Source files declare their target world with `gen-world` in the namespace:
 
 ### Key Types
 
-- `SussConfig` - Loaded from deps.suss, contains worlds and src-paths
+- `SussConfig` - Loaded from deps.sus, contains worlds and src-paths
 - `WorldConfig` - WIT path and output path for a world
 - `AnalyzedModule` - Parsed source with namespace, world_target, functions
 
@@ -764,9 +764,9 @@ cargo test -p suss-compile --test conformance test_conformance_core -- --nocaptu
 ```
 
 Suss conformance test files in `reference/cljs-tests/`:
-- `collections.suss` - Vectors, maps, sets (76 tests)
-- `core.suss` - Arithmetic, logic, control flow, functions (125 tests)
-- `benchmarks.suss` - Performance benchmark definitions
+- `collections.sus` - Vectors, maps, sets (76 tests)
+- `core.sus` - Arithmetic, logic, control flow, functions (125 tests)
+- `benchmarks.sus` - Performance benchmark definitions
 
 For the original ClojureScript tests, see `clojurescript/src/test/cljs/`.
 
@@ -809,11 +809,11 @@ The `samples/` directory contains classic Clojure programs as implementation tar
 
 | Sample | Features Needed | Status |
 |--------|-----------------|--------|
-| `fibonacci.suss` | loop/recur | Partial |
-| `factorial.suss` | loop/recur, reduce, range | Ready (has `reduce`, `range`) |
-| `game_of_life.suss` | for, mapcat, frequencies, destructuring, sets | Needs `for`, `frequencies`, destructuring |
-| `primes.suss` | filter, some, range, sets, Math/sqrt | Needs `some`, `Math/sqrt` |
-| `quicksort.suss` | filter, concat | Ready (has `filter`, `concat2`) |
-| `tree_traversal.suss` | map keyword access, concat | Ready (has `concat2`) |
+| `fibonacci.sus` | loop/recur | Partial |
+| `factorial.sus` | loop/recur, reduce, range | Ready (has `reduce`, `range`) |
+| `game_of_life.sus` | for, mapcat, frequencies, destructuring, sets | Needs `for`, `frequencies`, destructuring |
+| `primes.sus` | filter, some, range, sets, Math/sqrt | Needs `some`, `Math/sqrt` |
+| `quicksort.sus` | filter, concat | Ready (has `filter`, `concat2`) |
+| `tree_traversal.sus` | map keyword access, concat | Ready (has `concat2`) |
 
 These programs are valid Clojure code and serve as progress markers. When a sample runs correctly, it demonstrates that feature set is complete.

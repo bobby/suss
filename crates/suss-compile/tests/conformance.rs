@@ -1,6 +1,6 @@
 //! Conformance tests - verify Suss implementation against ClojureScript semantics
 //!
-//! Loads test cases from reference/cljs-tests/*.suss and runs them through
+//! Loads test cases from reference/cljs-tests/*.sus and runs them through
 //! the compiler and wasmtime to verify correctness.
 
 use suss_compile::Compiler;
@@ -286,7 +286,7 @@ fn test_conformance_collections() {
         .unwrap()
         .parent()
         .unwrap()
-        .join("reference/cljs-tests/collections.suss");
+        .join("reference/cljs-tests/collections.sus");
 
     if !path.exists() {
         println!("Skipping: {} not found", path.display());
@@ -311,7 +311,7 @@ fn test_conformance_core() {
         .unwrap()
         .parent()
         .unwrap()
-        .join("reference/cljs-tests/core.suss");
+        .join("reference/cljs-tests/core.sus");
 
     if !path.exists() {
         println!("Skipping: {} not found", path.display());
@@ -349,7 +349,7 @@ fn test_conformance_all() {
     let mut total_skipped = 0;
     let mut total_errors = 0;
 
-    for file in &["collections.suss", "core.suss"] {
+    for file in &["collections.sus", "core.sus"] {
         let path = base.join(file);
         if path.exists() {
             println!("\n=== {} ===", file);

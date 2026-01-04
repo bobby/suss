@@ -48,7 +48,7 @@ pub enum CompileError {
     #[error("Component error: {0}")]
     Component(String),
 
-    /// Configuration error (deps.suss)
+    /// Configuration error (deps.sus)
     #[error("Config error: {0}")]
     Config(String),
 

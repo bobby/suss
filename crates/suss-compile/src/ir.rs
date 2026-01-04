@@ -11,7 +11,7 @@
 /// - Closure machinery (function types and structs)
 ///
 /// All collection types (Cons, PersistentVector, PersistentMap, etc.) and
-/// extended numeric types (BigInt, Ratio, BigDecimal) are defined in core.suss
+/// extended numeric types (BigInt, Ratio, BigDecimal) are defined in core.sus
 /// via deftype.
 ///
 /// Value representation:
@@ -25,7 +25,7 @@ pub mod gc_types {
     // =========================================================================
     // GC Type Indices - IRREDUCIBLE PRIMITIVES ONLY
     // These are indices into the WASM type section, assigned during codegen.
-    // All collection types are now deftypes in core.suss.
+    // All collection types are now deftypes in core.sus.
     // =========================================================================
 
     // === Numeric Primitives (0-1) ===
@@ -45,7 +45,7 @@ pub mod gc_types {
     /// Used by: vector nodes, HAMT nodes, any array-based data structure
     pub const ARRAY: u32 = 3;
 
-    /// array<i32> - For BigInt magnitude storage (defined in core.suss)
+    /// array<i32> - For BigInt magnitude storage (defined in core.sus)
     pub const I32_ARRAY: u32 = 4;
 
     // =========================================================================
@@ -442,7 +442,7 @@ pub mod gc_types {
 
     // =========================================================================
     // Primitive Type Field Indices
-    // Collection types are now deftypes - their field indices come from core.suss
+    // Collection types are now deftypes - their field indices come from core.sus
     // =========================================================================
 
     /// All dispatchable types have type_id as field 0
@@ -461,19 +461,19 @@ pub mod gc_types {
     // These placeholders keep codegen compiling during migration.
     // They map to indices that will be overwritten by deftype registration.
     // TODO: Remove once codegen resolves these from DeftypeDefs.
-    #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
+    #[deprecated(note = "Now a deftype in core.sus - resolve dynamically")]
     pub const CONS: u32 = 100;
-    #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
+    #[deprecated(note = "Now a deftype in core.sus - resolve dynamically")]
     pub const BITMAP_INDEXED_NODE: u32 = 101;
-    #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
+    #[deprecated(note = "Now a deftype in core.sus - resolve dynamically")]
     pub const ARRAY_NODE: u32 = 102;
-    #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
+    #[deprecated(note = "Now a deftype in core.sus - resolve dynamically")]
     pub const HASH_COLLISION_NODE: u32 = 103;
-    #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
+    #[deprecated(note = "Now a deftype in core.sus - resolve dynamically")]
     pub const PERSISTENT_VECTOR: u32 = 104;
-    #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
+    #[deprecated(note = "Now a deftype in core.sus - resolve dynamically")]
     pub const PERSISTENT_MAP: u32 = 105;
-    #[deprecated(note = "Now a deftype in core.suss - resolve dynamically")]
+    #[deprecated(note = "Now a deftype in core.sus - resolve dynamically")]
     pub const PERSISTENT_SET: u32 = 106;
 
     // Collection field indices are now resolved dynamically from DeftypeDef.
@@ -481,8 +481,8 @@ pub mod gc_types {
 
     // =========================================================================
     // Function Index Offsets
-    // With collection algorithms in core.suss, these are greatly reduced.
-    // User functions now start right after imports and core.suss functions.
+    // With collection algorithms in core.sus, these are greatly reduced.
+    // User functions now start right after imports and core.sus functions.
     // =========================================================================
 
     /// Number of runtime helper functions emitted before user functions.
@@ -490,7 +490,7 @@ pub mod gc_types {
     pub const NUM_RUNTIME_HELPERS: u32 = 2;
 
     /// Number of protocol implementation wrapper functions
-    /// Reduced: protocol impls now in core.suss via extend-type
+    /// Reduced: protocol impls now in core.sus via extend-type
     pub const NUM_PROTOCOL_IMPLS: u32 = 0;
 
     /// Total offset for user-defined functions (after imports)
@@ -500,7 +500,7 @@ pub mod gc_types {
 /// Type IDs for protocol dispatch.
 ///
 /// Compiler primitives have fixed type IDs matching their GC type indices.
-/// Collection types (Cons, PersistentVector, etc.) are deftypes in core.suss
+/// Collection types (Cons, PersistentVector, etc.) are deftypes in core.sus
 /// and get type IDs starting at USER_TYPE_BASE (256).
 pub mod type_ids {
     /// i31ref values (nil, bool, small int) - not dispatchable to most protocols
@@ -1296,7 +1296,7 @@ pub enum Expr {
     /// Create a new persistent map from key-value pairs
     MapNew(Vec<(Expr, Expr)>),
 
-    // MapDissoc removed - now uses core.suss dissoc function
+    // MapDissoc removed - now uses core.sus dissoc function
 
     /// Get count of persistent map
     MapCount(Box<Expr>),
@@ -1309,7 +1309,7 @@ pub enum Expr {
     /// Create a new persistent set from elements
     SetNew(Vec<Expr>),
 
-    // SetDisj removed - now uses core.suss disj function
+    // SetDisj removed - now uses core.sus disj function
 
     /// Get count of persistent set
     SetCount(Box<Expr>),

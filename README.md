@@ -36,7 +36,7 @@ cargo run -p suss-cli
 cargo run -p suss-cli -- -e "(+ 1 2 3)"
 
 # Run a file
-cargo run -p suss-cli -- script.suss
+cargo run -p suss-cli -- script.sus
 
 # Show help
 cargo run -p suss-cli -- --help
@@ -158,7 +158,7 @@ wasmtime run target/wasm32-wasip2/release/suss_composed.wasm
 wasmtime run target/wasm32-wasip2/release/suss_composed.wasm -e "(+ 10 20)"
 
 # Run a script file (requires --dir for filesystem access)
-wasmtime run --dir=. target/wasm32-wasip2/release/suss_composed.wasm -- script.suss
+wasmtime run --dir=. target/wasm32-wasip2/release/suss_composed.wasm -- script.sus
 ```
 
 The composed component includes the reader, evaluator, and CLI - a fully self-contained Suss environment running as pure WASM.
@@ -169,34 +169,34 @@ Suss compiles source code directly to standalone WASM components that implement 
 
 #### Project-Based Compilation (Recommended)
 
-For projects with multiple worlds or organized source trees, use `deps.suss`:
+For projects with multiple worlds or organized source trees, use `deps.sus`:
 
 ```bash
-# Compile all worlds defined in deps.suss
+# Compile all worlds defined in deps.sus
 cargo run -p suss-cli -- compile
 
 # Compile a specific world
 cargo run -p suss-cli -- compile --world :my-app/v1
 
 # Use a custom config file
-cargo run -p suss-cli -- compile -c path/to/deps.suss
+cargo run -p suss-cli -- compile -c path/to/deps.sus
 ```
 
 **Project structure:**
 
 ```
 myproject/
-  deps.suss           # Project configuration
+  deps.sus           # Project configuration
   wit/
     v1.wit            # WIT world definitions
     v2.wit
   src/
-    core.suss         # Source files with (gen-world ...)
-    utils.suss
+    core.sus         # Source files with (gen-world ...)
+    utils.sus
   target/             # Compiled output
 ```
 
-**deps.suss** (EDN format, like Clojure's deps.edn):
+**deps.sus** (EDN format, like Clojure's deps.edn):
 
 ```clojure
 {:worlds
@@ -226,13 +226,13 @@ For quick one-off compilation without project setup:
 
 ```bash
 # Compile a single file
-cargo run -p suss-cli -- compile src.suss -w world.wit -o out.wasm
+cargo run -p suss-cli -- compile src.sus -w world.wit -o out.wasm
 
 # Run the compiled component using suss run
 cargo run -p suss-cli -- run out.wasm --invoke add 3 5
 ```
 
-Example source (`add.suss`):
+Example source (`add.sus`):
 
 ```clojure
 (defn ^:export add [a b]
@@ -287,7 +287,7 @@ WASI 0.2.4 WIT definitions are bundled with the compiler. When your world.wit im
 ```
 myproject/
   world.wit       # Just import wasi:random/random - it works!
-  app.suss
+  app.sus
 ```
 
 Supported bundled packages:
@@ -303,7 +303,7 @@ For custom (non-WASI) WIT packages, place them in a `deps/` folder next to your 
 ```
 myproject/
   world.wit       # Your world definition
-  app.suss        # Your Suss source
+  app.sus        # Your Suss source
   deps/
     mypackage/    # Custom WIT packages
       types.wit
@@ -398,7 +398,7 @@ User-defined types compile to WASM GC structs with automatic:
 - Field accessors (`.-field`)
 - Type identity for `instance?` checks
 
-**Built-in protocols** (defined in `core.suss`, auto-loaded before user code):
+**Built-in protocols** (defined in `core.sus`, auto-loaded before user code):
 - `ICounted` - `^i32 -count` for countable collections
 - `IIndexed` - `-nth` for indexed access
 - `ISeq` - `-first`, `-rest` for sequential access
@@ -522,12 +522,12 @@ The `samples/` directory contains classic Clojure programs that serve as impleme
 
 | Sample | Description | Status |
 |--------|-------------|--------|
-| `fibonacci.suss` | Fibonacci (naive, tail-recursive, sequence) | Partial |
-| `factorial.suss` | Factorial implementations | Partial |
-| `game_of_life.suss` | Conway's Game of Life (Christophe Grand's elegant version) | Needs `for`, `frequencies`, destructuring |
-| `primes.suss` | Prime number algorithms (trial division, sieve) | Needs `some`, `Math/sqrt` |
-| `quicksort.suss` | Functional quicksort | Ready (has `filter`, `concat2`) |
-| `tree_traversal.suss` | Binary tree operations using maps | Ready (has `concat2`) |
+| `fibonacci.sus` | Fibonacci (naive, tail-recursive, sequence) | Partial |
+| `factorial.sus` | Factorial implementations | Partial |
+| `game_of_life.sus` | Conway's Game of Life (Christophe Grand's elegant version) | Needs `for`, `frequencies`, destructuring |
+| `primes.sus` | Prime number algorithms (trial division, sieve) | Needs `some`, `Math/sqrt` |
+| `quicksort.sus` | Functional quicksort | Ready (has `filter`, `concat2`) |
+| `tree_traversal.sus` | Binary tree operations using maps | Ready (has `concat2`) |
 
 These programs document the path toward full Clojure compatibility. See `samples/README.md` for details.
 

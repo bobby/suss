@@ -1,4 +1,4 @@
-;; core.suss - Suss core library
+;; core.sus - Suss core library
 ;;
 ;; This file is automatically loaded before user code (per Clojure semantics).
 ;; Contains protocol definitions and implementations for built-in types.

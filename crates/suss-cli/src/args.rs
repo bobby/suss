@@ -37,11 +37,11 @@ pub enum Command {
         /// Output path
         output: String,
     },
-    /// Compile a project from deps.suss
+    /// Compile a project from deps.sus
     CompileProject {
         /// Optional specific world to compile (if None, compile all)
         world: Option<String>,
-        /// Optional config file path (defaults to deps.suss)
+        /// Optional config file path (defaults to deps.sus)
         config_path: Option<String>,
     },
     /// Run a compiled WASM component
@@ -95,8 +95,8 @@ pub fn parse_args() -> Result<Command, lexopt::Error> {
 /// Parse the compile subcommand arguments
 ///
 /// Supports four modes:
-/// 1. File mode: `suss compile src.suss -w world.wit -o out.wasm`
-/// 2. Main mode: `suss compile src.suss -m namespace -o out.wasm`
+/// 1. File mode: `suss compile src.sus -w world.wit -o out.wasm`
+/// 2. Main mode: `suss compile src.sus -m namespace -o out.wasm`
 /// 3. Namespace mode: `suss compile -n myapp.core --src src -w world.wit -o out.wasm`
 /// 4. Project mode: `suss compile` or `suss compile --world :app/v1`
 fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
@@ -170,7 +170,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
     } else if source.is_some() && main_ns.is_some() {
         // Main mode: compile with -main function
         let source = source.unwrap();
-        let output = output.unwrap_or_else(|| source.replace(".suss", ".wasm"));
+        let output = output.unwrap_or_else(|| source.replace(".sus", ".wasm"));
         Ok(Command::CompileMain {
             source,
             namespace: main_ns.unwrap(),
@@ -179,7 +179,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
     } else if source.is_some() && world_wit.is_some() {
         // File mode: explicit source and WIT
         let source = source.unwrap();
-        let output = output.unwrap_or_else(|| source.replace(".suss", ".wasm"));
+        let output = output.unwrap_or_else(|| source.replace(".sus", ".wasm"));
         Ok(Command::CompileFile {
             source,
             world_wit: world_wit.unwrap(),
@@ -264,9 +264,9 @@ COMMANDS:
     compile         Compile Suss source to WASM components
     run             Run a compiled WASM component
 
-    compile - Project mode (reads deps.suss):
+    compile - Project mode (reads deps.sus):
         --world <NAME>       Compile specific world (e.g., :my-app/v1)
-        -c, --config <FILE>  Config file path (default: deps.suss)
+        -c, --config <FILE>  Config file path (default: deps.sus)
 
     compile - File mode (single file compilation):
         -w, --wit <FILE>     WIT world definition file
@@ -285,10 +285,10 @@ COMMANDS:
 EXAMPLES:
     suss                           Start the REPL
     suss -e '(+ 1 2)'              Evaluate an expression
-    suss script.suss               Run a file
-    suss compile                   Compile all worlds from deps.suss
-    suss compile --world :app/v1   Compile specific world from deps.suss
-    suss compile src.suss -w world.wit -o out.wasm  (file mode)
+    suss script.sus                Run a file
+    suss compile                   Compile all worlds from deps.sus
+    suss compile --world :app/v1   Compile specific world from deps.sus
+    suss compile src.sus -w world.wit -o out.wasm  (file mode)
     suss compile -n myapp.core -w world.wit         (namespace mode)
     suss run out.wasm --invoke add 3 5              (run component)
 "

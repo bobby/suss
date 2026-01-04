@@ -7,10 +7,10 @@ fn write_temp_files(suss_content: &str, wit_content: &str) -> (tempfile::NamedTe
     use std::io::Write;
 
     let mut suss_file = tempfile::Builder::new()
-        .suffix(".suss")
+        .suffix(".sus")
         .tempfile()
-        .expect("failed to create temp suss file");
-    suss_file.write_all(suss_content.as_bytes()).expect("failed to write suss");
+        .expect("failed to create temp sus file");
+    suss_file.write_all(suss_content.as_bytes()).expect("failed to write sus");
 
     let mut wit_file = tempfile::Builder::new()
         .suffix(".wit")
@@ -166,16 +166,16 @@ fn test_project_compilation() {
     std::fs::create_dir_all(base_path.join("wit")).expect("failed to create wit dir");
     std::fs::create_dir_all(base_path.join("target")).expect("failed to create target dir");
 
-    // Create deps.suss
-    let deps_suss = r#"
+    // Create deps.sus
+    let deps_sus = r#"
 {:worlds
  {:app/v1 {:wit "wit/v1.wit"
            :output "target/v1.wasm"}}
  :src-paths ["src"]}
 "#;
-    let mut deps_file = std::fs::File::create(base_path.join("deps.suss"))
-        .expect("failed to create deps.suss");
-    deps_file.write_all(deps_suss.as_bytes()).expect("failed to write deps.suss");
+    let mut deps_file = std::fs::File::create(base_path.join("deps.sus"))
+        .expect("failed to create deps.sus");
+    deps_file.write_all(deps_sus.as_bytes()).expect("failed to write deps.sus");
 
     // Create WIT file
     let wit = r#"
@@ -196,12 +196,12 @@ world v1 {
 
 (defn ^:export add [a b] (+ a b))
 "#;
-    let mut suss_file = std::fs::File::create(base_path.join("src/core.suss"))
-        .expect("failed to create suss file");
-    suss_file.write_all(suss.as_bytes()).expect("failed to write suss file");
+    let mut suss_file = std::fs::File::create(base_path.join("src/core.sus"))
+        .expect("failed to create sus file");
+    suss_file.write_all(suss.as_bytes()).expect("failed to write sus file");
 
     // Load config and compile project
-    let config = suss_compile::SussConfig::load(&base_path.join("deps.suss"))
+    let config = suss_compile::SussConfig::load(&base_path.join("deps.sus"))
         .expect("failed to load config");
 
     let mut compiler = Compiler::new();

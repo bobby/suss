@@ -24,7 +24,7 @@ world command {
 }
 "#;
 
-/// Embeddable REPL world - for `compile source.suss` without -w or -m
+/// Embeddable REPL world - for `compile source.sus` without -w or -m
 ///
 /// Provides an eval interface that can be called by host applications
 /// or composed with other components.

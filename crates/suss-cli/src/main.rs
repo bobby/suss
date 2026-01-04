@@ -372,11 +372,11 @@ fn compile_namespace(entry_ns: &str, src_paths: &[String], wit_path: &str, outpu
     }
 }
 
-/// Compile a project from deps.suss configuration
+/// Compile a project from deps.sus configuration
 fn compile_project(world: Option<&str>, config_path: Option<&str>) {
     use std::path::Path;
 
-    let config_path = config_path.unwrap_or("deps.suss");
+    let config_path = config_path.unwrap_or("deps.sus");
 
     // Load configuration
     let config = match suss_compile::SussConfig::load(Path::new(config_path)) {

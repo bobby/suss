@@ -30,7 +30,7 @@ use crate::ir::{BinOp, Expr, Function as IrFunc, Module, Type, UnOp, FieldType a
 
 /// Number of runtime helper functions emitted before user functions.
 /// Reduced to 2: only hash_string and get_type_id remain in codegen.
-/// Collection algorithms (vector trie, HAMT) are now implemented in core.suss.
+/// Collection algorithms (vector trie, HAMT) are now implemented in core.sus.
 const NUM_RUNTIME_HELPERS: u32 = 2;
 
 /// Function index offsets for runtime helpers (relative to start of functions)
@@ -43,7 +43,7 @@ mod helper_funcs {
     /// Returns the runtime type ID of a GC value
     pub const GET_TYPE_ID: u32 = 1;
 
-    // All collection helper functions have been migrated to core.suss:
+    // All collection helper functions have been migrated to core.sus:
     // - Vector trie ops: tail-off, array-for, new-path, push-tail
     // - HAMT ops: hamt-mask, hamt-bitpos, hamt-index
     // - HAMT find: inode-find, bin-find, an-find, hcn-find
@@ -59,7 +59,7 @@ mod helper_type_offsets {
     /// Type for $get_type_id: (eqref) -> i32
     pub const GET_TYPE_ID: u32 = 1;
 
-    // Collection helper types removed - now in core.suss
+    // Collection helper types removed - now in core.sus
 }
 
 /// Number of helper function types (reduced from 19 to 2)
@@ -83,7 +83,7 @@ mod protocol_type_offsets {
     pub const ARITY_3_REF: u32 = 4;
 }
 
-// Protocol implementations are now in core.suss via extend-type declarations.
+// Protocol implementations are now in core.sus via extend-type declarations.
 // The dispatch table is populated from DispatchEntry records created during lowering.
 
 // ============================================================================
@@ -372,7 +372,7 @@ impl<'a> CodeGen<'a> {
         module.section(&types);
 
         // Function section - helper functions first, then user functions
-        // Collection helpers (vector trie, HAMT) removed - now in core.suss
+        // Collection helpers (vector trie, HAMT) removed - now in core.sus
         let mut functions = FunctionSection::new();
         // Runtime helper functions: just hash_string and get_type_id
         functions.function(self.helper_type(helper_type_offsets::HASH_STRING));
@@ -749,7 +749,7 @@ impl<'a> CodeGen<'a> {
         // =========================================================================
         // Protocol dispatch table entries
         // Collection types (Cons, PersistentVector, PersistentMap, PersistentSet)
-        // are now deftypes in core.suss. Their protocol implementations come from
+        // are now deftypes in core.sus. Their protocol implementations come from
         // extend-type declarations and are added via the dispatch_entries loop.
         // =========================================================================
 
@@ -827,7 +827,7 @@ impl<'a> CodeGen<'a> {
     /// - 11-16: CLOSURE_0 to CLOSURE_4, CLOSURE_N (closure struct types)
     /// - 17-18: VARIADIC_FN, VARIADIC_CLOSURE (variadic)
     ///
-    /// Collection types (Cons, PersistentVector, etc.) are now deftypes in core.suss.
+    /// Collection types (Cons, PersistentVector, etc.) are now deftypes in core.sus.
     fn emit_gc_types(&self, types: &mut TypeSection) {
         use crate::ir::gc_types;
 
@@ -881,7 +881,7 @@ impl<'a> CodeGen<'a> {
         debug_assert_eq!(gc_types::ARRAY, 3);
 
         // Type 4: I32_ARRAY - array<i32>
-        // For BigInt magnitude storage (defined in core.suss)
+        // For BigInt magnitude storage (defined in core.sus)
         types.ty().array(&StorageType::Val(ValType::I32), true);
         debug_assert_eq!(gc_types::I32_ARRAY, 4);
 
@@ -1069,7 +1069,7 @@ impl<'a> CodeGen<'a> {
         // =========================================================================
         // User-Defined Types (from deftype)
         // These come after all built-in types. Each has type_id at field 0.
-        // Collection types are now regular deftypes defined in core.suss.
+        // Collection types are now regular deftypes defined in core.sus.
         // =========================================================================
 
         for deftype in &self.ir.deftypes {
@@ -1102,7 +1102,7 @@ impl<'a> CodeGen<'a> {
     /// These come after GC types but before protocol function types.
     /// Order must match helper_types module constants.
     ///
-    /// NOTE: Reduced to 2 types - vector and HAMT helpers are now in core.suss.
+    /// NOTE: Reduced to 2 types - vector and HAMT helpers are now in core.sus.
     fn emit_helper_types(&self, types: &mut TypeSection) {
         let eqref = ValType::Ref(RefType::EQREF);
 
@@ -1117,7 +1117,7 @@ impl<'a> CodeGen<'a> {
         // Takes any GC value, returns its type ID
         types.ty().function(vec![eqref], vec![ValType::I32]);
 
-        // Vector trie and HAMT helper types removed - now defined via defn in core.suss
+        // Vector trie and HAMT helper types removed - now defined via defn in core.sus
     }
 
     /// Emit function types for protocol methods.
@@ -1147,7 +1147,7 @@ impl<'a> CodeGen<'a> {
     ///
     /// These come before user functions in the code section.
     fn emit_helper_functions(&self, code: &mut CodeSection) -> CompileResult<()> {
-        // Only 2 runtime helpers remain - collection algorithms are now in core.suss
+        // Only 2 runtime helpers remain - collection algorithms are now in core.sus
 
         // $hash_string - xxHash32 for string hashing
         code.function(&self.generate_hash_string_func());
@@ -1155,7 +1155,7 @@ impl<'a> CodeGen<'a> {
         // $get_type_id - runtime type dispatch
         code.function(&self.generate_get_type_id_func());
 
-        // Vector trie and HAMT helpers removed - now in core.suss
+        // Vector trie and HAMT helpers removed - now in core.sus
         Ok(())
     }
 
@@ -1633,8 +1633,8 @@ impl<'a> CodeGen<'a> {
         Ok(())
     }
 
-    // generate_set_disj removed - now uses core.suss disj function
-    // generate_map_dissoc removed - now uses core.suss dissoc function
+    // generate_set_disj removed - now uses core.sus disj function
+    // generate_map_dissoc removed - now uses core.sus dissoc function
 
     // ========================================================================
     // WIT/WASI helpers
@@ -3345,7 +3345,7 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::RefI31);
             }
 
-            // MapDissoc removed - now uses core.suss dissoc function
+            // MapDissoc removed - now uses core.sus dissoc function
 
             // =========================================================
             // Persistent Set Operations
@@ -3355,7 +3355,7 @@ impl<'a> CodeGen<'a> {
                 self.generate_set_new(elements, f)?;
             }
 
-            // SetDisj removed - now uses core.suss disj function
+            // SetDisj removed - now uses core.sus disj function
 
             Expr::SetCount(set) => {
                 // Look up PersistentSet type index dynamically

@@ -67,15 +67,15 @@ use suss_core::Edn;
 use suss_reader::ParserState;
 use wit_parser::Resolve;
 
-/// Bundled core.suss source - automatically loaded before user code (per Clojure semantics)
-const CORE_SOURCE: &str = include_str!("core.suss");
+/// Bundled core.sus source - automatically loaded before user code (per Clojure semantics)
+const CORE_SOURCE: &str = include_str!("core.sus");
 
 /// The Suss static compiler
 pub struct Compiler;
 
-/// Parse core.suss and return its expressions
+/// Parse core.sus and return its expressions
 fn load_core_exprs() -> CompileResult<Vec<Edn>> {
-    // Handle empty/comments-only core.suss gracefully
+    // Handle empty/comments-only core.sus gracefully
     let trimmed = CORE_SOURCE
         .lines()
         .filter(|line| {
@@ -91,7 +91,7 @@ fn load_core_exprs() -> CompileResult<Vec<Edn>> {
 
     let mut parser_state = ParserState::new("core");
     suss_reader::parse_all(CORE_SOURCE, &mut parser_state)
-        .map_err(|e| CompileError::Parse(format!("core.suss: {}", e)))
+        .map_err(|e| CompileError::Parse(format!("core.sus: {}", e)))
 }
 
 impl Compiler {
@@ -124,7 +124,7 @@ impl Compiler {
     ///
     /// Returns both the WASM bytes and whether it's a component (WASI) or core module.
     pub fn compile_expr_with_info(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
-        // Load core.suss (auto-injected before user code per Clojure semantics)
+        // Load core.sus (auto-injected before user code per Clojure semantics)
         let core_exprs = load_core_exprs()?;
 
         // Parse all expressions in the source
@@ -794,7 +794,7 @@ impl Compiler {
     ///
     /// The compiled WASM component bytes
     pub fn compile(&mut self, source: &str, wit_source: &str) -> CompileResult<Vec<u8>> {
-        // Load core.suss (auto-injected before user code per Clojure semantics)
+        // Load core.sus (auto-injected before user code per Clojure semantics)
         let core_exprs = load_core_exprs()?;
 
         // Parse the Suss source
@@ -847,7 +847,7 @@ impl Compiler {
     pub fn compile_files(&mut self, source_path: &str, wit_path: &str) -> CompileResult<Vec<u8>> {
         use std::path::Path;
 
-        // Load core.suss (auto-injected before user code per Clojure semantics)
+        // Load core.sus (auto-injected before user code per Clojure semantics)
         let core_exprs = load_core_exprs()?;
 
         let source = std::fs::read_to_string(source_path)
@@ -966,7 +966,7 @@ impl Compiler {
             )));
         }
 
-        // 3. Load core.suss (auto-injected before user code)
+        // 3. Load core.sus (auto-injected before user code)
         let core_exprs = load_core_exprs()?;
 
         // 4. Gather all expressions in compilation order
@@ -1052,7 +1052,7 @@ impl Compiler {
     ///
     /// Compiled WASM component bytes with `run` export
     pub fn compile_for_main(&mut self, source: &str, _main_ns: &str) -> CompileResult<Vec<u8>> {
-        // Load core.suss (auto-injected before user code per Clojure semantics)
+        // Load core.sus (auto-injected before user code per Clojure semantics)
         let core_exprs = load_core_exprs()?;
 
         // Parse the Suss source
@@ -1283,8 +1283,8 @@ impl Compiler {
     /// Convert a namespace name to a file path following Clojure conventions.
     ///
     /// Conversion rules:
-    /// - Dots become directory separators: `myapp.core` → `myapp/core.suss`
-    /// - Hyphens become underscores: `my-app.core` → `my_app/core.suss`
+    /// - Dots become directory separators: `myapp.core` → `myapp/core.sus`
+    /// - Hyphens become underscores: `my-app.core` → `my_app/core.sus`
     ///
     /// # Arguments
     ///
@@ -1297,7 +1297,7 @@ impl Compiler {
     pub fn ns_to_path(ns: &str, src_paths: &[std::path::PathBuf]) -> Option<std::path::PathBuf> {
         // Convert dots to path separators, hyphens to underscores
         let path_str = ns.replace('.', "/").replace('-', "_");
-        let file_name = format!("{}.suss", path_str);
+        let file_name = format!("{}.sus", path_str);
 
         for src_path in src_paths {
             let candidate = src_path.join(&file_name);
@@ -1323,7 +1323,7 @@ impl Compiler {
     pub fn path_to_ns(path: &std::path::Path, src_paths: &[std::path::PathBuf]) -> Option<String> {
         for src_path in src_paths {
             if let Ok(relative) = path.strip_prefix(src_path) {
-                // Remove .suss extension
+                // Remove .sus extension
                 let without_ext = relative.with_extension("");
                 // Convert path separators to dots, underscores to hyphens
                 let ns = without_ext
@@ -1627,14 +1627,14 @@ impl DependencyResolver {
 }
 
 impl Compiler {
-    /// Compile a project from deps.suss configuration
+    /// Compile a project from deps.sus configuration
     ///
-    /// This method reads deps.suss, scans source paths, and compiles each world
+    /// This method reads deps.sus, scans source paths, and compiles each world
     /// defined in the configuration.
     ///
     /// # Arguments
     ///
-    /// * `config` - Loaded project configuration from deps.suss
+    /// * `config` - Loaded project configuration from deps.sus
     /// * `world` - Optional specific world to compile (if None, compiles all worlds)
     ///
     /// # Returns
@@ -1660,7 +1660,7 @@ impl Compiler {
                     vec![w]
                 } else {
                     return Err(CompileError::Config(format!(
-                        "World '{}' not found in deps.suss. Available: {:?}",
+                        "World '{}' not found in deps.sus. Available: {:?}",
                         w,
                         config.worlds.keys().collect::<Vec<_>>()
                     )));
@@ -1779,7 +1779,7 @@ impl Compiler {
         component::encode_component(&core_wasm, &resolve, *world_id)
     }
 
-    /// Collect all .suss source files from configured src-paths
+    /// Collect all .sus source files from configured src-paths
     fn collect_source_files(&self, config: &SussConfig) -> CompileResult<Vec<std::path::PathBuf>> {
         let mut files = Vec::new();
 
@@ -2002,7 +2002,7 @@ mod deftype_tests {
     #[test]
     fn test_deftype_reserved_type_id() {
         let mut compiler = Compiler::new();
-        // Use reserved type ID (for core.suss bootstrap types)
+        // Use reserved type ID (for core.sus bootstrap types)
         let source = "(deftype ^:type-id 39 CustomNode [data]) (instance? CustomNode (->CustomNode 42))";
         let result = compiler.compile_expr(source);
         if let Err(e) = &result {

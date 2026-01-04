@@ -725,7 +725,7 @@ fn run_module_i32(source: &str, func_name: &str, args: &[i32]) -> i32 {
 
     // Create temp files
     let mut suss_file = tempfile::Builder::new()
-        .suffix(".suss")
+        .suffix(".sus")
         .tempfile()
         .expect("failed to create temp suss file");
     suss_file.write_all(source.as_bytes()).expect("failed to write suss");
@@ -2152,10 +2152,10 @@ world tco {
 
     // Create temp files
     let mut suss_file = tempfile::Builder::new()
-        .suffix(".suss")
+        .suffix(".sus")
         .tempfile()
-        .expect("failed to create temp suss file");
-    suss_file.write_all(source.as_bytes()).expect("failed to write suss");
+        .expect("failed to create temp sus file");
+    suss_file.write_all(source.as_bytes()).expect("failed to write sus");
 
     let mut wit_file = tempfile::Builder::new()
         .suffix(".wit")

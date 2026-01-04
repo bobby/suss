@@ -1,8 +1,8 @@
-//! Configuration file parser for deps.suss
+//! Configuration file parser for deps.sus
 //!
 //! Parses EDN configuration files similar to Clojure's deps.edn.
 //!
-//! # Example deps.suss
+//! # Example deps.sus
 //!
 //! ```clojure
 //! {:worlds
@@ -24,16 +24,16 @@ use suss_reader::ParserState;
 
 use crate::error::{CompileError, CompileResult};
 
-/// Configuration loaded from deps.suss
+/// Configuration loaded from deps.sus
 #[derive(Debug, Clone)]
 pub struct SussConfig {
     /// World definitions (world-name -> world config)
     pub worlds: HashMap<String, WorldConfig>,
-    /// Source paths to scan for .suss files
+    /// Source paths to scan for .sus files
     pub src_paths: Vec<PathBuf>,
     /// Dependencies (package-name -> version)
     pub deps: HashMap<String, String>,
-    /// Base directory (where deps.suss is located)
+    /// Base directory (where deps.sus is located)
     pub base_dir: PathBuf,
 }
 
@@ -47,7 +47,7 @@ pub struct WorldConfig {
 }
 
 impl SussConfig {
-    /// Load configuration from a deps.suss file
+    /// Load configuration from a deps.sus file
     pub fn load(path: &Path) -> CompileResult<Self> {
         let content = std::fs::read_to_string(path)
             .map_err(|e| CompileError::Io(format!("Failed to read {}: {}", path.display(), e)))?;
@@ -64,7 +64,7 @@ impl SussConfig {
     pub fn parse(content: &str, base_dir: PathBuf) -> CompileResult<Self> {
         let mut parser_state = ParserState::new("suss");
         let edn = suss_reader::parse(content, &mut parser_state)
-            .map_err(|e| CompileError::Config(format!("Failed to parse deps.suss: {}", e)))?;
+            .map_err(|e| CompileError::Config(format!("Failed to parse deps.sus: {}", e)))?;
 
         Self::from_edn(&edn, base_dir)
     }
@@ -73,7 +73,7 @@ impl SussConfig {
     fn from_edn(edn: &Edn, base_dir: PathBuf) -> CompileResult<Self> {
         let map = match edn {
             Edn::Map(pairs) => pairs,
-            _ => return Err(CompileError::Config("deps.suss must be a map".into())),
+            _ => return Err(CompileError::Config("deps.sus must be a map".into())),
         };
 
         let mut worlds = HashMap::new();
@@ -94,12 +94,12 @@ impl SussConfig {
                     }
                     other => {
                         // Ignore unknown keys for forward compatibility
-                        eprintln!("Warning: Unknown key in deps.suss: {}", other);
+                        eprintln!("Warning: Unknown key in deps.sus: {}", other);
                     }
                 },
                 _ => {
                     return Err(CompileError::Config(
-                        "deps.suss keys must be keywords".into(),
+                        "deps.sus keys must be keywords".into(),
                     ))
                 }
             }
