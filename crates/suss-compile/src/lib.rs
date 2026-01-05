@@ -1800,7 +1800,7 @@ impl Compiler {
         files: &mut Vec<std::path::PathBuf>,
     ) -> CompileResult<()> {
         if dir.is_file() {
-            if dir.extension().and_then(|e| e.to_str()) == Some("suss") {
+            if dir.extension().and_then(|e| e.to_str()) == Some("sus") {
                 files.push(dir.to_path_buf());
             }
             return Ok(());
@@ -1814,7 +1814,7 @@ impl Compiler {
 
             if path.is_dir() {
                 self.collect_suss_files_recursive(&path, files)?;
-            } else if path.extension().and_then(|e| e.to_str()) == Some("suss") {
+            } else if path.extension().and_then(|e| e.to_str()) == Some("sus") {
                 files.push(path);
             }
         }
