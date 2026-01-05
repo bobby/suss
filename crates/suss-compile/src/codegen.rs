@@ -543,9 +543,16 @@ impl<'a> CodeGen<'a> {
         }
 
         // Local function types
+        // Skip closure/builtin/userfn/variadic wrappers - they use pre-defined CLOSURE_FN_* types
         // Exported functions use WIT types (for component model compatibility)
         // Non-exported functions use GC types (eqref)
         for func in &self.ir.functions {
+            // Skip functions that use pre-defined closure types
+            if func.name.starts_with("$closure_") || func.name.starts_with("$builtin_")
+                || func.name.starts_with("$userfn_") || func.name.starts_with("$variadic_") {
+                continue;
+            }
+
             if func.exported {
                 let params: Vec<ValType> = func
                     .params
@@ -591,14 +598,30 @@ impl<'a> CodeGen<'a> {
 
         // Function section - helper functions first, then user functions
         // Helper functions use type indices from helper_type_base
-        // User functions use type indices starting at local_func_type_base
+        // Closure/builtin wrappers use pre-defined CLOSURE_FN_* types
+        // Other user functions use type indices starting at local_func_type_base
         let mut functions = FunctionSection::new();
         // Helper functions (hash_string, get_type_id)
         functions.function(type_base + helper_type_offsets::HASH_STRING);
         functions.function(type_base + helper_type_offsets::GET_TYPE_ID);
-        // User functions
-        for (idx, _) in self.ir.functions.iter().enumerate() {
-            functions.function(local_func_type_base + idx as u32);
+        // User functions - closure wrappers use pre-defined types, others use unique types
+        let mut non_closure_idx = 0u32;
+        for func in &self.ir.functions {
+            if func.name.starts_with("$closure_") || func.name.starts_with("$builtin_") || func.name.starts_with("$userfn_") {
+                // Regular closures have env as first param, so arity = params.len() - 1
+                let arity = func.params.len().saturating_sub(1) as u32;
+                let closure_fn_type = gc_types::closure_fn_type_for_arity(arity);
+                functions.function(closure_fn_type);
+            } else if func.name.starts_with("$variadic_") || func.name.starts_with("$variadic_userfn_") {
+                // Variadic wrappers use CLOSURE_FN_* types
+                let arity = func.params.len().saturating_sub(1) as u32;
+                let variadic_fn_type = gc_types::variadic_fn_type_for_arity_new(arity);
+                functions.function(variadic_fn_type);
+            } else {
+                // Non-closure functions use unique type indices
+                functions.function(local_func_type_base + non_closure_idx);
+                non_closure_idx += 1;
+            }
         }
         module.section(&functions);
 
@@ -3601,7 +3624,6 @@ impl<'a> CodeGen<'a> {
         f: &mut Function,
     ) -> CompileResult<()> {
         use crate::ir::gc_types;
-        use crate::ir::type_ids;
 
         let arity = args.len() as u32;
 
@@ -3628,41 +3650,47 @@ impl<'a> CodeGen<'a> {
 
         f.instruction(&Instruction::Else);
 
-        // Check if it's a variadic capture (fn [& args] body) by checking type_id
-        // All closure types have type_id as field 0, so we can cast to CLOSURE_1 to read it
-        // (VARIADIC_CAPTURE closures are always CLOSURE_1 with arity=1 for args array)
+        // Check for VARIADIC_CAPTURE: a closure with (fn [& args] body) that captures values.
+        // These are CLOSURE_1 struct type with type_id = VARIADIC_CAPTURE.
+        // They can be called with ANY number of arguments (packed into an array).
+        //
+        // Compute flag: is_variadic_capture = is_CLOSURE_1 && (type_id == VARIADIC_CAPTURE)
+        // Then use a single branch: if variadic_capture → pack args, else → regular call
         f.instruction(&Instruction::LocalGet(closure_local));
         f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::CLOSURE_1)));
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+        f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
 
-        // It's a CLOSURE_1 - check if it's variadic capture
+        // Is CLOSURE_1 - check type_id
         f.instruction(&Instruction::LocalGet(closure_local));
         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::CLOSURE_1)));
         f.instruction(&Instruction::StructGet {
             struct_type_index: gc_types::CLOSURE_1,
             field_index: gc_types::CL_TYPE_ID,
         });
-        f.instruction(&Instruction::I32Const(type_ids::VARIADIC_CAPTURE));
+        f.instruction(&Instruction::I32Const(crate::ir::type_ids::VARIADIC_CAPTURE));
         f.instruction(&Instruction::I32Eq);
+
+        f.instruction(&Instruction::Else);
+
+        // Not CLOSURE_1, so definitely not variadic capture
+        f.instruction(&Instruction::I32Const(0));
+
+        f.instruction(&Instruction::End);
+
+        // Stack now has i32 flag: 1 if variadic capture, 0 otherwise
         f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
 
-        // VARIADIC_CAPTURE path - pack args into array and call with arity=1
+        // VARIADIC_CAPTURE path - pack all args into array and call with arity=1
         self.generate_variadic_capture_call(closure_local, args, in_tail_position, f)?;
 
         f.instruction(&Instruction::Else);
 
-        // Regular CLOSURE_1 (not variadic capture)
-        // If arity != 1, this will produce wrong signature, but that's an arity error
+        // Regular closure path - use call-site arity.
+        // This works for all non-variadic-capture closures.
+        // The closure type will match call-site arity (or fail at runtime if mismatched).
         self.generate_regular_closure_call(closure_local, args, arity, in_tail_position, f)?;
 
-        f.instruction(&Instruction::End); // inner if (VARIADIC_CAPTURE check)
-
-        f.instruction(&Instruction::Else);
-
-        // Not CLOSURE_1, use regular path with call-site arity
-        self.generate_regular_closure_call(closure_local, args, arity, in_tail_position, f)?;
-
-        f.instruction(&Instruction::End); // middle if (CLOSURE_1 check)
+        f.instruction(&Instruction::End);
 
         f.instruction(&Instruction::End); // outer if (VARIADIC_CLOSURE check)
 

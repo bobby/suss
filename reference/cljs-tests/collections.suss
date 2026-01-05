@@ -1,0 +1,429 @@
+;; ClojureScript Conformance Tests: Collections
+;; Adapted from clojurescript/src/test/cljs/cljs/collections_test.cljs
+;; EPL 1.0 License - See README.md
+
+[
+ ;; =============================================================================
+ ;; Vector Tests
+ ;; =============================================================================
+
+ ;; Vector literals and creation
+ {:name "vector-empty-literal"
+  :category :vectors
+  :expr "[]"
+  :expected []}
+
+ {:name "vector-literal"
+  :category :vectors
+  :expr "[1 2 3]"
+  :expected [1 2 3]}
+
+ {:name "vector-nested"
+  :category :vectors
+  :expr "[[1 2] [3 4]]"
+  :expected [[1 2] [3 4]]}
+
+ ;; conj
+ {:name "vector-conj-single"
+  :category :vectors
+  :expr "(conj [1 2] 3)"
+  :expected [1 2 3]}
+
+ {:name "vector-conj-empty"
+  :category :vectors
+  :expr "(conj [] 1)"
+  :expected [1]}
+
+ {:name "vector-conj-multiple"
+  :category :vectors
+  :expr "(conj [1] 2 3 4)"
+  :expected [1 2 3 4]}
+
+ ;; first, rest, next
+ {:name "vector-first"
+  :category :vectors
+  :expr "(first [1 2 3])"
+  :expected 1}
+
+ {:name "vector-first-empty"
+  :category :vectors
+  :expr "(first [])"
+  :expected nil}
+
+ {:name "vector-rest"
+  :category :vectors
+  :expr "(rest [1 2 3])"
+  :expected [2 3]}
+
+ {:name "vector-rest-single"
+  :category :vectors
+  :expr "(rest [1])"
+  :expected []}
+
+ {:name "vector-rest-empty"
+  :category :vectors
+  :expr "(rest [])"
+  :expected []}
+
+ ;; nth
+ {:name "vector-nth-first"
+  :category :vectors
+  :expr "(nth [1 2 3] 0)"
+  :expected 1}
+
+ {:name "vector-nth-middle"
+  :category :vectors
+  :expr "(nth [1 2 3] 1)"
+  :expected 2}
+
+ {:name "vector-nth-last"
+  :category :vectors
+  :expr "(nth [1 2 3] 2)"
+  :expected 3}
+
+ {:name "vector-nth-default"
+  :category :vectors
+  :expr "(nth [1 2 3] 10 :not-found)"
+  :expected :not-found}
+
+ ;; count
+ {:name "vector-count-empty"
+  :category :vectors
+  :expr "(count [])"
+  :expected 0}
+
+ {:name "vector-count-three"
+  :category :vectors
+  :expr "(count [1 2 3])"
+  :expected 3}
+
+ ;; peek, pop
+ {:name "vector-peek"
+  :category :vectors
+  :expr "(peek [1 2 3])"
+  :expected 3}
+
+ {:name "vector-peek-single"
+  :category :vectors
+  :expr "(peek [1])"
+  :expected 1}
+
+ {:name "vector-pop"
+  :category :vectors
+  :expr "(pop [1 2 3])"
+  :expected [1 2]}
+
+ {:name "vector-pop-single"
+  :category :vectors
+  :expr "(pop [1])"
+  :expected []}
+
+ ;; get
+ {:name "vector-get"
+  :category :vectors
+  :expr "(get [1 2 3] 1)"
+  :expected 2}
+
+ {:name "vector-get-missing"
+  :category :vectors
+  :expr "(get [1 2 3] 10)"
+  :expected nil}
+
+ {:name "vector-get-default"
+  :category :vectors
+  :expr "(get [1 2 3] 10 :default)"
+  :expected :default}
+
+ ;; assoc
+ {:name "vector-assoc"
+  :category :vectors
+  :expr "(assoc [1 2 3] 1 :x)"
+  :expected [1 :x 3]}
+
+ {:name "vector-assoc-first"
+  :category :vectors
+  :expr "(assoc [1 2 3] 0 :x)"
+  :expected [:x 2 3]}
+
+ {:name "vector-assoc-last"
+  :category :vectors
+  :expr "(assoc [1 2 3] 2 :x)"
+  :expected [1 2 :x]}
+
+ ;; Large vectors (triggers trie structure)
+ {:name "vector-large-count"
+  :category :vectors
+  :expr "(count (loop [v [] i 0] (if (< i 100) (recur (conj v i) (+ i 1)) v)))"
+  :expected 100}
+
+ {:name "vector-large-nth"
+  :category :vectors
+  :expr "(nth (loop [v [] i 0] (if (< i 100) (recur (conj v i) (+ i 1)) v)) 50)"
+  :expected 50}
+
+ {:name "vector-large-first"
+  :category :vectors
+  :expr "(first (loop [v [] i 0] (if (< i 100) (recur (conj v i) (+ i 1)) v)))"
+  :expected 0}
+
+ {:name "vector-large-peek"
+  :category :vectors
+  :expr "(peek (loop [v [] i 0] (if (< i 100) (recur (conj v i) (+ i 1)) v)))"
+  :expected 99}
+
+ ;; =============================================================================
+ ;; Map Tests
+ ;; =============================================================================
+
+ ;; Map literals and creation
+ {:name "map-empty-literal"
+  :category :maps
+  :expr "{}"
+  :expected {}}
+
+ {:name "map-literal"
+  :category :maps
+  :expr "{:a 1 :b 2}"
+  :expected {:a 1 :b 2}}
+
+ {:name "map-nested"
+  :category :maps
+  :expr "{:a {:b 1}}"
+  :expected {:a {:b 1}}}
+
+ ;; get
+ {:name "map-get"
+  :category :maps
+  :expr "(get {:a 1 :b 2} :a)"
+  :expected 1}
+
+ {:name "map-get-missing"
+  :category :maps
+  :expr "(get {:a 1 :b 2} :c)"
+  :expected nil}
+
+ {:name "map-get-default"
+  :category :maps
+  :expr "(get {:a 1 :b 2} :c :default)"
+  :expected :default}
+
+ ;; assoc
+ {:name "map-assoc-new"
+  :category :maps
+  :expr "(assoc {} :a 1)"
+  :expected {:a 1}}
+
+ {:name "map-assoc-update"
+  :category :maps
+  :expr "(assoc {:a 1} :a 2)"
+  :expected {:a 2}}
+
+ {:name "map-assoc-multiple"
+  :category :maps
+  :expr "(assoc {} :a 1 :b 2 :c 3)"
+  :expected {:a 1 :b 2 :c 3}}
+
+ ;; dissoc
+ {:name "map-dissoc"
+  :category :maps
+  :expr "(dissoc {:a 1 :b 2} :a)"
+  :expected {:b 2}}
+
+ {:name "map-dissoc-missing"
+  :category :maps
+  :expr "(dissoc {:a 1 :b 2} :c)"
+  :expected {:a 1 :b 2}}
+
+ {:name "map-dissoc-multiple"
+  :category :maps
+  :expr "(dissoc {:a 1 :b 2 :c 3} :a :c)"
+  :expected {:b 2}}
+
+ ;; count
+ {:name "map-count-empty"
+  :category :maps
+  :expr "(count {})"
+  :expected 0}
+
+ {:name "map-count"
+  :category :maps
+  :expr "(count {:a 1 :b 2 :c 3})"
+  :expected 3}
+
+ ;; contains?
+ {:name "map-contains-true"
+  :category :maps
+  :expr "(contains? {:a 1 :b 2} :a)"
+  :expected true}
+
+ {:name "map-contains-false"
+  :category :maps
+  :expr "(contains? {:a 1 :b 2} :c)"
+  :expected false}
+
+ ;; Chained operations
+ {:name "map-chained-assoc"
+  :category :maps
+  :expr "(-> {} (assoc :a 1) (assoc :b 2) (assoc :c 3) (get :b))"
+  :expected 2
+  :skip true}  ; -> macro not implemented
+
+ {:name "map-assoc-chain"
+  :category :maps
+  :expr "(get (assoc (assoc (assoc {} :a 1) :b 2) :c 3) :b)"
+  :expected 2}
+
+ ;; Large maps (triggers HAMT structure)
+ {:name "map-large-count"
+  :category :maps
+  :expr "(count (loop [m {} i 0] (if (< i 50) (recur (assoc m i i) (+ i 1)) m)))"
+  :expected 50}
+
+ {:name "map-large-get"
+  :category :maps
+  :expr "(get (loop [m {} i 0] (if (< i 50) (recur (assoc m i i) (+ i 1)) m)) 25)"
+  :expected 25}
+
+ ;; =============================================================================
+ ;; Set Tests
+ ;; =============================================================================
+
+ ;; Set literals and creation
+ {:name "set-empty-literal"
+  :category :sets
+  :expr "#{}"
+  :expected #{}}
+
+ {:name "set-literal"
+  :category :sets
+  :expr "#{1 2 3}"
+  :expected #{1 2 3}}
+
+ ;; conj
+ {:name "set-conj"
+  :category :sets
+  :expr "(conj #{1 2} 3)"
+  :expected #{1 2 3}}
+
+ {:name "set-conj-duplicate"
+  :category :sets
+  :expr "(conj #{1 2 3} 2)"
+  :expected #{1 2 3}}
+
+ {:name "set-conj-empty"
+  :category :sets
+  :expr "(conj #{} 1)"
+  :expected #{1}}
+
+ ;; disj
+ {:name "set-disj"
+  :category :sets
+  :expr "(disj #{1 2 3} 2)"
+  :expected #{1 3}}
+
+ {:name "set-disj-missing"
+  :category :sets
+  :expr "(disj #{1 2 3} 4)"
+  :expected #{1 2 3}}
+
+ ;; contains?
+ {:name "set-contains-true"
+  :category :sets
+  :expr "(contains? #{1 2 3} 2)"
+  :expected true}
+
+ {:name "set-contains-false"
+  :category :sets
+  :expr "(contains? #{1 2 3} 4)"
+  :expected false}
+
+ ;; count
+ {:name "set-count-empty"
+  :category :sets
+  :expr "(count #{})"
+  :expected 0}
+
+ {:name "set-count"
+  :category :sets
+  :expr "(count #{1 2 3})"
+  :expected 3}
+
+ ;; Large sets (triggers HAMT structure)
+ {:name "set-large-count"
+  :category :sets
+  :expr "(count (loop [s #{} i 0] (if (< i 50) (recur (conj s i) (+ i 1)) s)))"
+  :expected 50}
+
+ {:name "set-large-contains"
+  :category :sets
+  :expr "(contains? (loop [s #{} i 0] (if (< i 50) (recur (conj s i) (+ i 1)) s)) 25)"
+  :expected true}
+
+ ;; =============================================================================
+ ;; List Tests
+ ;; =============================================================================
+
+ {:name "list-literal"
+  :category :lists
+  :expr "'(1 2 3)"
+  :expected (1 2 3)}
+
+ {:name "list-cons"
+  :category :lists
+  :expr "(cons 1 [2 3])"
+  :expected [1 2 3]}  ; cons onto vector returns vector in Suss
+
+ {:name "list-cons-nil"
+  :category :lists
+  :expr "(cons 1 nil)"
+  :expected [1]}
+
+ ;; =============================================================================
+ ;; Equality Tests
+ ;; =============================================================================
+
+ {:name "vector-equality"
+  :category :equality
+  :expr "(= [1 2 3] [1 2 3])"
+  :expected true}
+
+ {:name "vector-inequality"
+  :category :equality
+  :expr "(= [1 2 3] [1 2 4])"
+  :expected false}
+
+ {:name "vector-inequality-length"
+  :category :equality
+  :expr "(= [1 2 3] [1 2])"
+  :expected false}
+
+ {:name "map-equality"
+  :category :equality
+  :expr "(= {:a 1 :b 2} {:b 2 :a 1})"
+  :expected true}
+
+ {:name "map-inequality"
+  :category :equality
+  :expr "(= {:a 1 :b 2} {:a 1 :b 3})"
+  :expected false}
+
+ {:name "set-equality"
+  :category :equality
+  :expr "(= #{1 2 3} #{3 2 1})"
+  :expected true}
+
+ {:name "set-inequality"
+  :category :equality
+  :expr "(= #{1 2 3} #{1 2 4})"
+  :expected false}
+
+ {:name "empty-collections-equal"
+  :category :equality
+  :expr "(= [] [])"
+  :expected true}
+
+ {:name "empty-map-set-not-equal"
+  :category :equality
+  :expr "(= {} #{})"
+  :expected false}
+]

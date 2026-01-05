@@ -1,0 +1,37 @@
+;; Factorial Implementations
+;; Classic examples showing different approaches
+
+;; -----------------------------------------------------------------------------
+;; Tail-recursive with loop/recur
+;; The standard efficient approach
+;; -----------------------------------------------------------------------------
+(defn factorial [n]
+  (loop [acc 1 i n]
+    (if (<= i 1)
+      acc
+      (recur (* acc i) (dec i)))))
+
+;; -----------------------------------------------------------------------------
+;; Using reduce (requires reduce and range)
+;; More declarative style
+;; -----------------------------------------------------------------------------
+(defn factorial-reduce [n]
+  (reduce * 1 (range 1 (inc n))))
+
+;; -----------------------------------------------------------------------------
+;; Naive recursive (not tail-recursive)
+;; Simple but will overflow stack for large n
+;; -----------------------------------------------------------------------------
+(defn factorial-naive [n]
+  (if (<= n 1)
+    1
+    (* n (factorial-naive (dec n)))))
+
+;; -----------------------------------------------------------------------------
+;; Examples
+;; -----------------------------------------------------------------------------
+;; (factorial 0)  ; => 1
+;; (factorial 1)  ; => 1
+;; (factorial 5)  ; => 120
+;; (factorial 10) ; => 3628800
+;; (factorial 20) ; => 2432902008176640000

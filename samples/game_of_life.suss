@@ -1,0 +1,61 @@
+;; Conway's Game of Life
+;; From: http://clj-me.cgrand.net/2011/08/19/conways-game-of-life/
+;; Author: Christophe Grand (2011)
+;;
+;; This elegant implementation demonstrates Clojure's power:
+;; - Set operations for representing living cells
+;; - List comprehensions (for) for neighbor generation
+;; - frequencies for counting neighbors
+;; - Destructuring for coordinate handling
+
+;; -----------------------------------------------------------------------------
+;; Core Implementation
+;; -----------------------------------------------------------------------------
+
+;; Generate all 8 neighbors of a cell
+(defn neighbours [[x y]]
+  (for [dx [-1 0 1] dy [-1 0 1] :when (not= 0 dx dy)]
+    [(+ dx x) (+ dy y)]))
+
+;; Compute the next generation
+;; A cell survives if it has 2 neighbors and is alive, or has exactly 3 neighbors
+(defn step [cells]
+  (set (for [[loc n] (frequencies (mapcat neighbours cells))
+             :when (or (= n 3) (and (= n 2) (cells loc)))]
+         loc)))
+
+;; -----------------------------------------------------------------------------
+;; Example Patterns
+;; -----------------------------------------------------------------------------
+
+;; Glider - moves diagonally across the grid
+(def glider #{[1 0] [2 1] [0 2] [1 2] [2 2]})
+
+;; Blinker - oscillates between horizontal and vertical
+(def blinker #{[1 0] [1 1] [1 2]})
+
+;; Block - stable 2x2 square
+(def block #{[0 0] [1 0] [0 1] [1 1]})
+
+;; Beacon - period-2 oscillator
+(def beacon #{[0 0] [1 0] [0 1] [2 3] [3 2] [3 3]})
+
+;; -----------------------------------------------------------------------------
+;; Simulation
+;; -----------------------------------------------------------------------------
+
+;; Run simulation for n generations
+(defn run [cells generations]
+  (loop [cells cells gen 0]
+    (if (< gen generations)
+      (recur (step cells) (inc gen))
+      cells)))
+
+;; -----------------------------------------------------------------------------
+;; Examples
+;; -----------------------------------------------------------------------------
+;; (step glider)        ; Next generation of glider
+;; (run glider 4)       ; Glider after 4 steps (returns to original shape, shifted)
+;; (step blinker)       ; Blinker oscillates
+;; (step (step blinker)); Returns to original blinker
+;; (step block)         ; Block is stable - returns itself

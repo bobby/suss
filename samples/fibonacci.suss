@@ -1,0 +1,40 @@
+;; Fibonacci Implementations
+;; Classic examples of recursion and iteration in functional style
+
+;; -----------------------------------------------------------------------------
+;; Naive recursive (exponential time complexity)
+;; Beautiful but impractical for large n
+;; -----------------------------------------------------------------------------
+(defn fib-naive [n]
+  (if (<= n 1)
+    n
+    (+ (fib-naive (- n 1)) (fib-naive (- n 2)))))
+
+;; -----------------------------------------------------------------------------
+;; Tail-recursive with loop/recur (linear time, constant space)
+;; The idiomatic Clojure approach
+;; -----------------------------------------------------------------------------
+(defn fib [n]
+  (loop [a 0 b 1 i n]
+    (if (= i 0)
+      a
+      (recur b (+ a b) (dec i)))))
+
+;; -----------------------------------------------------------------------------
+;; Generate Fibonacci sequence as a vector
+;; Returns first n Fibonacci numbers
+;; -----------------------------------------------------------------------------
+(defn fib-seq [n]
+  (loop [result [] a 0 b 1 i n]
+    (if (= i 0)
+      result
+      (recur (conj result a) b (+ a b) (dec i)))))
+
+;; -----------------------------------------------------------------------------
+;; Examples
+;; -----------------------------------------------------------------------------
+;; (fib 0)      ; => 0
+;; (fib 1)      ; => 1
+;; (fib 10)     ; => 55
+;; (fib 20)     ; => 6765
+;; (fib-seq 10) ; => [0 1 1 2 3 5 8 13 21 34]
