@@ -907,6 +907,12 @@
         nil
         (seq (-rest s))))))
 
+(defn conj
+  "Adds item to collection. For vectors, adds to end. For sets, adds to set.
+   For lists, adds to front (like cons)."
+  [coll item]
+  (-conj coll item))
+
 ;; ============================================================
 ;; MapEntry - Key-value pair for map iteration
 ;;
@@ -1231,6 +1237,30 @@
   "Returns a new coll with items from xs conj'd onto to."
   [to xs]
   (reduce (fn [acc x] (conj acc x)) to xs))
+
+(defn vector
+  "Creates a new vector containing the args."
+  [& args]
+  (loop [v [] i 0]
+    (if (< i (alength args))
+      (recur (-conj v (aget args i)) (+ i 1))
+      v)))
+
+(defn hash-map
+  "Creates a new hash-map from alternating key-value pairs."
+  [& kvs]
+  (loop [m {} i 0]
+    (if (< i (alength kvs))
+      (recur (assoc m (aget kvs i) (aget kvs (+ i 1))) (+ i 2))
+      m)))
+
+(defn hash-set
+  "Creates a new hash-set containing the args."
+  [& args]
+  (loop [s #{} i 0]
+    (if (< i (alength args))
+      (recur (-conj s (aget args i)) (+ i 1))
+      s)))
 
 (defmacro concat
   "Returns a lazy seq of the concatenation of collections.

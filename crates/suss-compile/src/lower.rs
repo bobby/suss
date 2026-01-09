@@ -1001,19 +1001,10 @@ impl Lowerer {
                     // Empty vector: use VecNew for minimal codegen
                     Ok(Expr::VecNew(vec![]))
                 } else {
-                    // Desugar [1 2 3] -> (conj (conj (conj [] 1) 2) 3)
-                    // Start with empty vector
-                    let mut result = Edn::Vector(vec![]);
-                    // Wrap each element with (conj ... elem)
-                    for item in items {
-                        let conj_call = Edn::List(vec![
-                            Edn::Symbol(Symbol::new("conj")),
-                            result,
-                            item.clone(),
-                        ]);
-                        result = conj_call;
-                    }
-                    self.lower_expr(&result)
+                    // Desugar [1 2 3] -> (vector 1 2 3)
+                    let mut call = vec![Edn::Symbol(Symbol::new("vector"))];
+                    call.extend(items.iter().cloned());
+                    self.lower_expr(&Edn::List(call))
                 }
             }
 
@@ -1022,20 +1013,13 @@ impl Lowerer {
                     // Empty map: use MapNew for minimal codegen
                     Ok(Expr::MapNew(vec![]))
                 } else {
-                    // Desugar {1 2 3 4} -> (assoc (assoc {} 1 2) 3 4)
-                    // Start with empty map
-                    let mut result = Edn::Map(vec![]);
-                    // Wrap each pair with (assoc ... k v)
+                    // Desugar {k1 v1 k2 v2} -> (hash-map k1 v1 k2 v2)
+                    let mut call = vec![Edn::Symbol(Symbol::new("hash-map"))];
                     for (k, v) in pairs {
-                        let assoc_call = Edn::List(vec![
-                            Edn::Symbol(Symbol::new("assoc")),
-                            result,
-                            k.clone(),
-                            v.clone(),
-                        ]);
-                        result = assoc_call;
+                        call.push(k.clone());
+                        call.push(v.clone());
                     }
-                    self.lower_expr(&result)
+                    self.lower_expr(&Edn::List(call))
                 }
             }
 
@@ -1044,19 +1028,10 @@ impl Lowerer {
                     // Empty set: use SetNew for minimal codegen
                     Ok(Expr::SetNew(vec![]))
                 } else {
-                    // Desugar #{1 2 3} -> (conj (conj (conj #{} 1) 2) 3)
-                    // Start with empty set
-                    let mut result = Edn::Set(vec![]);
-                    // Wrap each element with (conj ... elem)
-                    for item in items {
-                        let conj_call = Edn::List(vec![
-                            Edn::Symbol(Symbol::new("conj")),
-                            result,
-                            item.clone(),
-                        ]);
-                        result = conj_call;
-                    }
-                    self.lower_expr(&result)
+                    // Desugar #{1 2 3} -> (hash-set 1 2 3)
+                    let mut call = vec![Edn::Symbol(Symbol::new("hash-set"))];
+                    call.extend(items.iter().cloned());
+                    self.lower_expr(&Edn::List(call))
                 }
             }
 
