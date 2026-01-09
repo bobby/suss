@@ -990,6 +990,7 @@ impl Expr {
             Expr::RefNull(_) => Type::GcRef,
             Expr::RefIsNull(_) => Type::I32, // Boolean result
             Expr::NilCheck(_) => Type::GcRef, // Returns boxed boolean (true/false as i31ref)
+            Expr::Identical(_, _) => Type::GcRef, // Returns boxed boolean
 
             // Persistent collections all return GC refs
             Expr::VecNew(_) => Type::GcRef,
@@ -1268,6 +1269,10 @@ pub enum Expr {
     /// Check if value is nil (compares with NIL_SENTINEL i31ref(0))
     /// Returns true (boxed) if value is nil, false otherwise
     NilCheck(Box<Expr>),
+
+    /// Check if two references are identical (reference equality)
+    /// Uses WASM ref.eq instruction
+    Identical(Box<Expr>, Box<Expr>),
 
     // =========================================================================
     // Persistent Vector Operations

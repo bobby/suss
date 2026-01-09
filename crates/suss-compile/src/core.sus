@@ -516,8 +516,8 @@
 ;; User-Facing Dissoc/Disj Functions
 ;; ============================================================
 
-(defn dissoc
-  "Dissoc[iate]. Returns a new map without the mapping for key."
+(defn dissoc1
+  "Dissoc[iate] a single key. Returns a new map without the mapping for key."
   [m key]
   (if (nil? m)
     nil
@@ -533,6 +533,15 @@
             (if (nil? new-root)
               (->PersistentMap 0 nil)  ;; Map is now empty
               (->PersistentMap (- cnt 1) new-root))))))))
+
+(defn dissoc
+  "Dissoc[iate]. Returns a new map without the mappings for the given keys. Variadic."
+  [m & ks]
+  (let [len (alength ks)]
+    (loop [m m i 0]
+      (if (< i len)
+        (recur (dissoc1 m (aget ks i)) (+ i 1))
+        m))))
 
 (defn disj
   "Disj[oin]. Returns a new set without key."
@@ -680,7 +689,10 @@
     (loop [coll c cnt 0]
       (if (nil? coll)
         cnt
-        (recur (.-rest coll) (+ cnt 1))))))
+        (recur (.-rest coll) (+ cnt 1)))))
+
+  ICollection
+  (-conj [c item] (->Cons item c)))  ;; Add to front like cons
 
 (extend-type PersistentVector
   IIndexed
@@ -707,7 +719,7 @@
       nil))
   (-rest [v]
     (if (<= (.-cnt v) 1)
-      ()
+      []  ;; Return empty vector for empty or single-element vectors
       ;; Build IndexedSeq starting at index 1
       (let [n (- (.-cnt v) 1)
             arr (make-array n)]
@@ -760,6 +772,40 @@
           (-vec-conj-overflow cnt shift root tail val)
           ;; No overflow
           (-vec-conj-push v cnt shift root tail val))))))
+
+;; Vector assoc helper: update a node at the given level
+(defn -vec-do-assoc
+  "Update element at index in a tree node."
+  [level node idx val]
+  (if (= level 0)
+    ;; Leaf level: clone and update
+    (let [new-node (aclone node)]
+      (aset new-node (bit-and idx 31) val)
+      new-node)
+    ;; Internal node: recurse down
+    (let [subidx (bit-and (unsigned-bit-shift-right idx level) 31)
+          new-node (aclone node)]
+      (aset new-node subidx (-vec-do-assoc (- level 5) (aget node subidx) idx val))
+      new-node)))
+
+(extend-type PersistentVector
+  IAssociative
+  (-assoc [v idx val]
+    (let [cnt (.-cnt v)
+          shift (.-shift v)
+          root (.-root v)
+          tail (.-tail v)]
+      ;; Bounds check
+      (if (>= idx cnt)
+        v  ;; Out of bounds - return unchanged (could throw)
+        (if (>= idx (tail-off cnt))
+          ;; Index is in tail: clone and update tail
+          (let [tail-idx (bit-and idx 31)
+                new-tail (aclone tail)]
+            (aset new-tail tail-idx val)
+            (->PersistentVector cnt shift root new-tail))
+          ;; Index is in tree: update tree node
+          (->PersistentVector cnt shift (-vec-do-assoc shift root idx val) tail))))))
 
 (extend-type PersistentMap
   ILookup
@@ -888,13 +934,13 @@
         (-first s)))))
 
 (defn rest
-  "Returns the rest of coll after first. Returns empty list if empty."
+  "Returns the rest of coll after first. Returns empty seq if empty."
   [coll]
   (if (nil? coll)
-    ()
+    []  ;; Return empty vector for nil
     (let [s (seq coll)]
       (if (nil? s)
-        ()
+        []  ;; Return empty vector for empty collection
         (-rest s)))))
 
 (defn next
@@ -908,10 +954,203 @@
         (seq (-rest s))))))
 
 (defn conj
-  "Adds item to collection. For vectors, adds to end. For sets, adds to set.
-   For lists, adds to front (like cons)."
-  [coll item]
-  (-conj coll item))
+  "Adds items to collection. For vectors, adds to end. For sets, adds to set.
+   For lists, adds to front (like cons). Variadic."
+  [coll & items]
+  (let [len (alength items)]
+    (loop [c coll i 0]
+      (if (< i len)
+        (recur (-conj c (aget items i)) (+ i 1))
+        c))))
+
+(defn assoc
+  "Associates key/value pairs with a map or vector. Variadic."
+  [m & kvs]
+  (let [len (alength kvs)]
+    (loop [m m i 0]
+      (if (< i len)
+        (recur (-assoc m (aget kvs i) (aget kvs (+ i 1))) (+ i 2))
+        m))))
+
+(defn peek
+  "Returns the last element of a vector, or first element of a list/seq.
+   Returns nil for empty collections."
+  [coll]
+  (cond
+    (nil? coll) nil
+    (instance? PersistentVector coll)
+    (let [cnt (.-cnt coll)]
+      (if (= cnt 0)
+        nil
+        (let [tail (.-tail coll)
+              tail-len (- cnt (tail-off cnt))]
+          (aget tail (- tail-len 1)))))
+    ;; For lists/seqs, peek returns first element
+    :else (first coll)))
+
+(defn -vec-pop-tail
+  "Pop tail from vector trie. Returns the new root array after removing last leaf."
+  [v level node]
+  (let [subidx (bit-and (unsigned-bit-shift-right (- (.-cnt v) 2) level) 31)]
+    (if (> level 5)
+      ;; Not at leaf level yet - recurse
+      (let [new-child (-vec-pop-tail v (- level 5) (aget node subidx))]
+        (if (nil? new-child)
+          (if (= subidx 0)
+            nil  ;; This subtree is now empty
+            ;; Copy array without the last child
+            (let [new-node (make-array subidx)]
+              (acopy new-node 0 node 0 subidx)
+              new-node))
+          ;; Copy array with updated child
+          (let [new-node (make-array (+ subidx 1))]
+            (acopy new-node 0 node 0 subidx)
+            (aset new-node subidx new-child)
+            new-node)))
+      ;; At leaf level
+      (if (= subidx 0)
+        nil  ;; This is the only leaf, remove it
+        ;; Copy array without the last element
+        (let [new-node (make-array subidx)]
+          (acopy new-node 0 node 0 subidx)
+          new-node)))))
+
+(defn pop
+  "Returns a new vector without the last element.
+   Throws error if called on empty vector."
+  [coll]
+  (cond
+    (nil? coll) nil
+    (instance? PersistentVector coll)
+    (let [cnt (.-cnt coll)]
+      (cond
+        (= cnt 0) nil  ;; Empty vector - return nil
+        (= cnt 1) []   ;; Single element - return empty vector
+        :else
+        (let [tail (.-tail coll)
+              tail-len (- cnt (tail-off cnt))]
+          (if (> tail-len 1)
+            ;; Just shrink the tail
+            (let [new-tail (make-array (- tail-len 1))]
+              (acopy new-tail 0 tail 0 (- tail-len 1))
+              (->PersistentVector (- cnt 1) (.-shift coll) (.-root coll) new-tail))
+            ;; Tail has 1 element - need to get new tail from trie
+            (let [root (.-root coll)
+                  shift (.-shift coll)
+                  new-tail (array-for coll (- cnt 2))  ;; Get the leaf that will become new tail
+                  new-root (-vec-pop-tail coll shift root)]
+              (if (nil? new-root)
+                ;; Root is now nil, we're back to a tail-only vector
+                (->PersistentVector (- cnt 1) 5 nil new-tail)
+                ;; Check if we should reduce tree height
+                (if (> shift 5)
+                  (if (nil? (aget new-root 1))
+                    (->PersistentVector (- cnt 1) (- shift 5) (aget new-root 0) new-tail)
+                    (->PersistentVector (- cnt 1) shift new-root new-tail))
+                  (->PersistentVector (- cnt 1) shift new-root new-tail))))))))
+    ;; For lists/seqs, pop returns rest
+    :else (rest coll)))
+
+;; ============================================================
+;; Equality - Structural comparison for collections
+;;
+;; Following ClojureScript semantics:
+;; - nil = nil
+;; - identical references are equal
+;; - collections use structural comparison via -equiv protocol
+;; ============================================================
+
+(defn -equiv-sequential
+  "Compare two sequential collections element by element.
+   Assumes both are sequential and non-nil."
+  [x y]
+  (let [cx (count x)
+        cy (count y)]
+    (if (not (= cx cy))
+      false
+      (loop [xs (seq x) ys (seq y)]
+        (cond
+          (nil? xs) true  ;; Both exhausted = equal
+          (suss-equals (first xs) (first ys)) (recur (next xs) (next ys))
+          :else false)))))
+
+(defn -equiv-map
+  "Compare two maps for equality.
+   Two maps are equal if they have the same keys with equal values."
+  [x y]
+  (let [cx (count x)
+        cy (count y)]
+    (if (not (= cx cy))
+      false
+      ;; Check each entry in x exists in y with same value
+      (loop [entries (seq x)]
+        (if (nil? entries)
+          true
+          (let [entry (first entries)
+                k (key entry)
+                vx (val entry)]
+            (if (contains? y k)
+              (let [vy (get y k)]
+                (if (suss-equals vx vy)
+                  (recur (next entries))
+                  false))
+              false)))))))
+
+(defn -equiv-set
+  "Compare two sets for equality.
+   Two sets are equal if they have the same elements."
+  [x y]
+  (let [cx (count x)
+        cy (count y)]
+    (if (not (= cx cy))
+      false
+      ;; Check each element in x exists in y
+      (loop [entries (seq x)]
+        (if (nil? entries)
+          true
+          (let [elem (first entries)]
+            (if (contains? y elem)
+              (recur (next entries))
+              false)))))))
+
+(defn suss-equals
+  "Structural equality comparison.
+   Returns true if x equals y using value semantics."
+  [x y]
+  (cond
+    ;; nil checks
+    (nil? x) (nil? y)
+    (nil? y) false
+    ;; Reference equality (fast path)
+    (identical? x y) true
+    ;; Vector equality
+    (instance? PersistentVector x)
+    (if (instance? PersistentVector y)
+      (-equiv-sequential x y)
+      false)
+    ;; Map equality
+    (instance? PersistentMap x)
+    (if (instance? PersistentMap y)
+      (-equiv-map x y)
+      false)
+    ;; Set equality
+    (instance? PersistentSet x)
+    (if (instance? PersistentSet y)
+      (-equiv-set x y)
+      false)
+    ;; Cons/List equality
+    (instance? Cons x)
+    (if (instance? Cons y)
+      (-equiv-sequential x y)
+      false)
+    ;; IndexedSeq equality
+    (instance? IndexedSeq x)
+    (if (instance? IndexedSeq y)
+      (-equiv-sequential x y)
+      false)
+    ;; Fallback to primitive equality (handles keywords, symbols, numbers, etc.)
+    ;; Uses prim-eq which compares keywords by name_idx, not reference
+    :else (prim-eq x y)))
 
 ;; ============================================================
 ;; MapEntry - Key-value pair for map iteration
@@ -1027,6 +1266,13 @@
   "Returns true if n is zero."
   [n]
   (= n 0))
+
+(defn mod
+  "Floored modulus. Result has same sign as divisor (Clojure semantics).
+   Unlike rem, (mod -10 3) returns 2, not -1."
+  [a b]
+  (let [r (rem a b)]
+    (rem (+ r b) b)))
 
 ;; ============================================================
 ;; Higher-Order Sequence Functions

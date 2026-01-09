@@ -1509,14 +1509,17 @@ impl<'a> CodeGen<'a> {
     /// Generate code to get element at index from persistent vector.
     ///
     /// Algorithm:
+    /// - If index < 0 or index >= count, return nil
     /// - If index >= tailoff: return tail[index & 0x1F]
     /// - Else: traverse trie from root using bit partitioning
     fn generate_vec_nth(&self, vec: &Expr, index: &Expr, f: &mut Function) -> CompileResult<()> {
         use crate::ir::gc_types;
 
-        // Look up array-for helper function dynamically
+        // Look up array-for helper function and PersistentVector type dynamically
         let array_for_idx = self.func_idx_by_name("array-for")
             .ok_or_else(|| CompileError::Unsupported("array-for function not found".to_string()))?;
+        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
 
         // Use scratch locals to store vec and decoded index
         let scratch_base = self.scratch_local.get();
@@ -1536,8 +1539,32 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::I32ShrS);
         f.instruction(&Instruction::LocalSet(idx_local));
 
-        // Call array-for(vec, idx) to get the leaf array
-        // array-for expects boxed values, so we need to box the i32 index
+        // Bounds check: if idx < 0 || idx >= cnt, return nil
+        // Check: idx < 0
+        f.instruction(&Instruction::LocalGet(idx_local));
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32LtS);
+
+        // Check: idx >= cnt
+        f.instruction(&Instruction::LocalGet(idx_local));
+        f.instruction(&Instruction::LocalGet(vec_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: pv_gc_idx,
+            field_index: 1, // cnt is field 1 (after type_id)
+        });
+        f.instruction(&Instruction::I32GeS);
+
+        // OR the two conditions: (idx < 0) || (idx >= cnt)
+        f.instruction(&Instruction::I32Or);
+
+        // If out of bounds, return nil
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+        f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+        f.instruction(&Instruction::RefI31);
+        f.instruction(&Instruction::Else);
+
+        // In bounds: call array-for(vec, idx) to get the leaf array
         f.instruction(&Instruction::LocalGet(vec_local));
         // Box idx as i31ref: (n << 1) | 1
         f.instruction(&Instruction::LocalGet(idx_local));
@@ -1558,6 +1585,8 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::I32Const(0x1F));
         f.instruction(&Instruction::I32And);
         f.instruction(&Instruction::ArrayGet(gc_types::ARRAY));
+
+        f.instruction(&Instruction::End); // End of if
 
         Ok(())
     }
@@ -3314,6 +3343,23 @@ impl<'a> CodeGen<'a> {
             Expr::RefIsNull(value) => {
                 self.generate_expr(value, f)?;
                 f.instruction(&Instruction::RefIsNull);
+            }
+
+            Expr::Identical(left, right) => {
+                // Reference equality using WASM ref.eq
+                self.generate_expr(left, f)?;
+                self.generate_expr(right, f)?;
+                f.instruction(&Instruction::RefEq);
+                // Convert i32 boolean (0/1) to GC boolean sentinel
+                f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::Ref(
+                    RefType::EQREF,
+                ))));
+                f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                f.instruction(&Instruction::Else);
+                f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                f.instruction(&Instruction::End);
             }
 
             // =========================================================

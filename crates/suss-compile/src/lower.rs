@@ -1087,10 +1087,11 @@ impl Lowerer {
                 // Division always produces F64 (Clojure semantics: / returns ratio/float)
                 self.lower_binop_chain(BinOp::Div, args, Type::F64)
             }
-            "rem" | "mod" => {
+            "rem" => {
                 let ty = self.infer_numeric_type(args);
                 self.lower_binop(BinOp::Rem, args, ty)
             }
+            // NOTE: "mod" is now a regular function in core.sus (floored modulus)
 
             // Numeric operations (desugar to primitives)
             "inc" => self.lower_inc(args),
@@ -1099,13 +1100,61 @@ impl Lowerer {
             "min" => self.lower_min(args),
             "max" => self.lower_max(args),
 
-            // Comparison
-            "=" => self.lower_binop(BinOp::Eq, args, Type::Bool),
+            // Comparison - use suss-equals for structural equality
+            // Supports variadic: (= a b c) → (and (= a b) (= b c))
+            "=" => {
+                if args.len() < 2 {
+                    return Err(CompileError::Parse(
+                        "= requires at least 2 arguments".into(),
+                    ));
+                }
+                // Call suss-equals function for proper structural comparison
+                if let Some((_, idx)) = self.resolve_func_name("suss-equals") {
+                    if args.len() == 2 {
+                        // Simple 2-arg case
+                        let lowered_args = args
+                            .iter()
+                            .map(|arg| self.lower_expr(arg))
+                            .collect::<Result<Vec<_>, _>>()?;
+                        Ok(Expr::Call {
+                            func: idx,
+                            args: lowered_args,
+                        })
+                    } else {
+                        // Variadic: (= a b c) → (and (suss-equals a b) (suss-equals b c))
+                        self.with_tail_disabled(|l| {
+                            let mut comparisons = Vec::new();
+                            for pair in args.windows(2) {
+                                let left = l.lower_expr(&pair[0])?;
+                                let right = l.lower_expr(&pair[1])?;
+                                comparisons.push(Expr::Call {
+                                    func: idx,
+                                    args: vec![left, right],
+                                });
+                            }
+                            // Chain with AND using short-circuit if/else
+                            let mut result = comparisons.pop().unwrap();
+                            while let Some(cmp) = comparisons.pop() {
+                                result = Expr::If {
+                                    cond: Box::new(cmp),
+                                    then_branch: Box::new(result),
+                                    else_branch: Box::new(Expr::Bool(false)),
+                                    ty: Type::Bool,
+                                };
+                            }
+                            Ok(result)
+                        })
+                    }
+                } else {
+                    // Fallback to primitive comparison if suss-equals not available
+                    self.lower_comparison_chain(BinOp::Eq, args)
+                }
+            }
             "not=" => self.lower_binop(BinOp::Ne, args, Type::Bool),
-            "<" => self.lower_binop(BinOp::Lt, args, Type::Bool),
-            "<=" => self.lower_binop(BinOp::Le, args, Type::Bool),
-            ">" => self.lower_binop(BinOp::Gt, args, Type::Bool),
-            ">=" => self.lower_binop(BinOp::Ge, args, Type::Bool),
+            "<" => self.lower_comparison_chain(BinOp::Lt, args),
+            "<=" => self.lower_comparison_chain(BinOp::Le, args),
+            ">" => self.lower_comparison_chain(BinOp::Gt, args),
+            ">=" => self.lower_comparison_chain(BinOp::Ge, args),
 
             // Logical
             "not" => {
@@ -1128,6 +1177,29 @@ impl Lowerer {
                 let operand = self.lower_expr(&args[0])?;
                 // nil? returns true if operand equals nil sentinel (i31ref(0))
                 Ok(Expr::NilCheck(Box::new(operand)))
+            }
+
+            // identical? - reference equality check using WASM ref.eq
+            "identical?" => {
+                if args.len() != 2 {
+                    return Err(CompileError::Parse(
+                        "identical? requires exactly 2 arguments".into(),
+                    ));
+                }
+                let left = self.lower_expr(&args[0])?;
+                let right = self.lower_expr(&args[1])?;
+                Ok(Expr::Identical(Box::new(left), Box::new(right)))
+            }
+
+            // prim-eq - primitive equality using polymorphic unwrap
+            // Handles keywords/symbols by comparing their name_idx, not references
+            "prim-eq" => {
+                if args.len() != 2 {
+                    return Err(CompileError::Parse(
+                        "prim-eq requires exactly 2 arguments".into(),
+                    ));
+                }
+                self.lower_binop(BinOp::Eq, args, Type::Bool)
             }
 
             // Quote - create first-class symbols and quoted data structures
@@ -1165,12 +1237,12 @@ impl Lowerer {
             "nth" => self.lower_nth(args),
             "first" => self.lower_first(args),
             "rest" => self.lower_rest(args),
-            "conj" => self.lower_conj(args),
+            // NOTE: "conj" is now a variadic function in core.sus
             // NOTE: "cons" is now a regular function in core.sus, not a compiler builtin
             "count" => self.lower_count(args),
             "get" => self.lower_get(args),
-            "assoc" => self.lower_assoc(args),
-            "dissoc" => self.lower_dissoc(args),
+            // NOTE: "assoc" is now a variadic function in core.sus
+            // NOTE: "dissoc" is now a variadic function in core.sus
             "contains?" => self.lower_contains(args),
             "disj" => self.lower_disj(args),
 
@@ -1635,6 +1707,51 @@ impl Lowerer {
                 };
             }
 
+            Ok(result)
+        })
+    }
+
+    /// Lower a variadic comparison operator like (< a b c) into chained comparisons
+    /// Result: (and (< a b) (< b c))
+    /// Note: This re-evaluates intermediate arguments, which is fine for simple expressions.
+    fn lower_comparison_chain(&mut self, op: BinOp, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() < 2 {
+            return Err(CompileError::Parse(format!(
+                "Comparison operator requires at least 2 arguments, got {}",
+                args.len()
+            )));
+        }
+
+        // For exactly 2 args, just do simple comparison
+        if args.len() == 2 {
+            return self.lower_binop(op, args, Type::Bool);
+        }
+
+        // For 3+ args, chain comparisons with AND
+        // (< a b c) → (and (< a b) (< b c))
+        self.with_tail_disabled(|l| {
+            let mut comparisons = Vec::new();
+            for pair in args.windows(2) {
+                let left = l.lower_expr(&pair[0])?;
+                let right = l.lower_expr(&pair[1])?;
+                comparisons.push(Expr::BinOp {
+                    op,
+                    left: Box::new(left),
+                    right: Box::new(right),
+                    ty: Type::Bool,
+                });
+            }
+
+            // Chain with AND
+            let mut result = comparisons.pop().unwrap();
+            while let Some(cmp) = comparisons.pop() {
+                result = Expr::If {
+                    cond: Box::new(cmp),
+                    then_branch: Box::new(result),
+                    else_branch: Box::new(Expr::Bool(false)),
+                    ty: Type::Bool,
+                };
+            }
             Ok(result)
         })
     }
@@ -2679,43 +2796,77 @@ impl Lowerer {
         }
     }
 
-    /// Lower (nth coll index) -> VecNth or ProtocolDispatch
+    /// Lower (nth coll index) or (nth coll index default) -> VecNth or ProtocolDispatch
     ///
     /// If the collection type is known at compile time, uses the fast path.
     /// Otherwise, falls back to runtime protocol dispatch.
+    /// With 3 args, returns default if index is out of bounds.
     fn lower_nth(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         use crate::ir::{gc_types, method_ids};
 
-        if args.len() != 2 {
+        if args.len() < 2 || args.len() > 3 {
             return Err(CompileError::Parse(
-                "nth requires exactly 2 arguments: collection and index".into(),
+                "nth requires 2 or 3 arguments: collection, index, [default]".into(),
             ));
         }
 
-        // Arguments are never in tail position
-        let (coll, index) = self.with_tail_disabled(|l| {
-            Ok((l.lower_expr(&args[0])?, l.lower_expr(&args[1])?))
-        })?;
+        let has_default = args.len() == 3;
 
-        // Fast path: if we know the collection type at compile time
-        if let Some(type_id) = self.infer_collection_type(&args[0]) {
+        // Arguments are never in tail position
+        let coll = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        let index = self.with_tail_disabled(|l| l.lower_expr(&args[1]))?;
+        let default = if has_default {
+            Some(self.with_tail_disabled(|l| l.lower_expr(&args[2]))?)
+        } else {
+            None
+        };
+
+        // Build the nth operation
+        let nth_expr = if let Some(type_id) = self.infer_collection_type(&args[0]) {
             if type_id == gc_types::PERSISTENT_VECTOR {
-                return Ok(Expr::VecNth {
+                Expr::VecNth {
                     vec: Box::new(coll),
                     index: Box::new(index),
-                });
+                }
+            } else {
+                Expr::ProtocolDispatch {
+                    obj: Box::new(coll),
+                    method_id: method_ids::NTH,
+                    args: vec![index],
+                    in_tail_position: false,
+                }
             }
-            // For other collection types, we would add specific Expr variants here
-            // For now, fall through to protocol dispatch
-        }
+        } else {
+            Expr::ProtocolDispatch {
+                obj: Box::new(coll),
+                method_id: method_ids::NTH,
+                args: vec![index],
+                in_tail_position: false,
+            }
+        };
 
-        // Slow path: runtime protocol dispatch
-        Ok(Expr::ProtocolDispatch {
-            obj: Box::new(coll),
-            method_id: method_ids::NTH,
-            args: vec![index],
-            in_tail_position: self.in_tail_position,
-        })
+        // If we have a default, wrap in: (let [result nth-expr] (if (nil? result) default result))
+        if let Some(default_val) = default {
+            let result_local = self.next_local;
+            self.next_local += 1;
+            Ok(Expr::Let {
+                bindings: vec![(result_local, nth_expr)],
+                body: Box::new(Expr::If {
+                    cond: Box::new(Expr::NilCheck(Box::new(Expr::LocalGet {
+                        local: result_local,
+                        ty: Type::GcRef,
+                    }))),
+                    then_branch: Box::new(default_val),
+                    else_branch: Box::new(Expr::LocalGet {
+                        local: result_local,
+                        ty: Type::GcRef,
+                    }),
+                    ty: Type::GcRef,
+                }),
+            })
+        } else {
+            Ok(nth_expr)
+        }
     }
 
     /// Lower (first coll) -> ListFirst or ProtocolDispatch
@@ -2891,55 +3042,82 @@ impl Lowerer {
     /// - Maps use MapGet
     /// - Vectors use VecNth (for integer keys)
     /// Otherwise, falls back to runtime protocol dispatch.
+    /// With 3 args, returns default if key is not found.
     fn lower_get(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         use crate::ir::{gc_types, method_ids};
 
-        if args.len() != 2 {
+        if args.len() < 2 || args.len() > 3 {
             return Err(CompileError::Parse(
-                "get requires exactly 2 arguments: collection and key".into(),
+                "get requires 2 or 3 arguments: collection, key, [default]".into(),
             ));
         }
 
-        // Arguments are never in tail position
-        let (coll, key) = self.with_tail_disabled(|l| {
-            Ok((l.lower_expr(&args[0])?, l.lower_expr(&args[1])?))
-        })?;
+        let has_default = args.len() == 3;
 
-        // Fast path: if we know the collection type at compile time
-        if let Some(type_id) = self.infer_collection_type(&args[0]) {
-            return match type_id {
+        // Arguments are never in tail position
+        let coll = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        let key = self.with_tail_disabled(|l| l.lower_expr(&args[1]))?;
+        let default = if has_default {
+            Some(self.with_tail_disabled(|l| l.lower_expr(&args[2]))?)
+        } else {
+            None
+        };
+
+        // Build the get operation
+        let get_expr = if let Some(type_id) = self.infer_collection_type(&args[0]) {
+            match type_id {
                 t if t == gc_types::PERSISTENT_MAP => {
-                    // Use protocol dispatch for maps (MapGet has local variable issues)
-                    Ok(Expr::ProtocolDispatch {
+                    Expr::ProtocolDispatch {
                         obj: Box::new(coll),
                         method_id: method_ids::LOOKUP,
                         args: vec![key],
-                        in_tail_position: self.in_tail_position,
-                    })
+                        in_tail_position: false,
+                    }
                 }
                 t if t == gc_types::PERSISTENT_VECTOR => {
-                    // For vectors, get is like nth
-                    Ok(Expr::VecNth {
+                    Expr::VecNth {
                         vec: Box::new(coll),
                         index: Box::new(key),
-                    })
+                    }
                 }
-                _ => Ok(Expr::ProtocolDispatch {
+                _ => Expr::ProtocolDispatch {
                     obj: Box::new(coll),
                     method_id: method_ids::LOOKUP,
                     args: vec![key],
-                    in_tail_position: self.in_tail_position,
-                }),
-            };
-        }
+                    in_tail_position: false,
+                },
+            }
+        } else {
+            Expr::ProtocolDispatch {
+                obj: Box::new(coll),
+                method_id: method_ids::LOOKUP,
+                args: vec![key],
+                in_tail_position: false,
+            }
+        };
 
-        // Slow path: runtime protocol dispatch
-        Ok(Expr::ProtocolDispatch {
-            obj: Box::new(coll),
-            method_id: method_ids::LOOKUP,
-            args: vec![key],
-            in_tail_position: self.in_tail_position,
-        })
+        // If we have a default, wrap in: (let [result get-expr] (if (nil? result) default result))
+        if let Some(default_val) = default {
+            let result_local = self.next_local;
+            self.next_local += 1;
+            Ok(Expr::Let {
+                bindings: vec![(result_local, get_expr)],
+                body: Box::new(Expr::If {
+                    cond: Box::new(Expr::NilCheck(Box::new(Expr::LocalGet {
+                        local: result_local,
+                        ty: Type::GcRef,
+                    }))),
+                    then_branch: Box::new(default_val),
+                    else_branch: Box::new(Expr::LocalGet {
+                        local: result_local,
+                        ty: Type::GcRef,
+                    }),
+                    ty: Type::GcRef,
+                }),
+            })
+        } else {
+            Ok(get_expr)
+        }
     }
 
     /// Lower (assoc map key val) -> ProtocolDispatch for IAssociative/-assoc
