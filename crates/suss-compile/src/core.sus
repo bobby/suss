@@ -134,7 +134,9 @@
 ;; The compiler no longer has hardcoded struct layouts for collections.
 
 ;; Cons cell for lists
-(deftype Cons [first rest])
+;; Note: _marker field distinguishes Cons from other 2-field types (MapEntry)
+;; due to WASM GC structural typing
+(deftype Cons [first rest ^i32 _marker])
 
 ;; Persistent Vector (32-way trie with tail optimization)
 (deftype PersistentVector [^i32 cnt ^i32 shift root tail])
@@ -230,7 +232,7 @@
 (defn cons
   "Returns a new seq with x as the first element and coll as the rest."
   [x coll]
-  (->Cons x coll))
+  (->Cons x coll 0))
 
 (defn hash
   "Returns a hash code for x.
@@ -692,7 +694,7 @@
         (recur (.-rest coll) (+ cnt 1)))))
 
   ICollection
-  (-conj [c item] (->Cons item c)))  ;; Add to front like cons
+  (-conj [c item] (->Cons item c 0)))  ;; Add to front like cons
 
 (extend-type PersistentVector
   IIndexed
@@ -833,8 +835,14 @@
           (aset arr 0 key)
           (aset arr 1 val)
           (->PersistentMap (+ cnt 1) (->BitmapIndexedNode (hamt-bitpos h 0) arr)))
-        ;; Non-empty: use inode-assoc
-        (->PersistentMap (+ cnt 1) (inode-assoc root 0 h key val)))))
+        ;; Non-empty: check if key already exists
+        (let [sentinel (->NotFound)
+              existing (inode-find root 0 h key sentinel)]
+          (if (instance? NotFound existing)
+            ;; Key doesn't exist - add and increment count
+            (->PersistentMap (+ cnt 1) (inode-assoc root 0 h key val))
+            ;; Key exists - update without incrementing count
+            (->PersistentMap cnt (inode-assoc root 0 h key val)))))))
 
   ISeqable
   (-seq [m]
@@ -870,8 +878,14 @@
           (aset arr 0 val)
           (aset arr 1 val)
           (->PersistentSet (+ cnt 1) (->BitmapIndexedNode (hamt-bitpos h 0) arr) 0))
-        ;; Non-empty: use inode-assoc (key=val, value=val for sets)
-        (->PersistentSet (+ cnt 1) (inode-assoc root 0 h val val) 0))))
+        ;; Non-empty: check if value already exists
+        (let [sentinel (->NotFound)
+              existing (inode-find root 0 h val sentinel)]
+          (if (instance? NotFound existing)
+            ;; New value - add it and increment count
+            (->PersistentSet (+ cnt 1) (inode-assoc root 0 h val val) 0)
+            ;; Already exists - return unchanged set
+            s)))))
 
   ISeqable
   (-seq [s]
@@ -1267,6 +1281,20 @@
   [n]
   (= n 0))
 
+(defn not=
+  "Returns true if any argument is not equal to the first."
+  [& args]
+  (let [len (alength args)]
+    (if (< len 2)
+      false
+      (let [first-val (aget args 0)]
+        (loop [i 1]
+          (if (< i len)
+            (if (= first-val (aget args i))
+              (recur (+ i 1))
+              true)
+            false))))))
+
 (defn mod
   "Floored modulus. Result has same sign as divisor (Clojure semantics).
    Unlike rem, (mod -10 3) returns 2, not -1."
@@ -1352,9 +1380,9 @@
   "Reduces coll using f with init as initial value."
   [f init coll]
   (loop [acc init s (seq coll)]
-    (if (nil? s)
-      acc
-      (recur (f acc (-first s)) (-rest s)))))
+    (if s
+      (recur (f acc (first s)) (next s))
+      acc)))
 
 (defn iterate
   "Returns a lazy sequence of x, (f x), (f (f x)), etc."
@@ -1382,9 +1410,17 @@
       nil)))
 
 (defn range
-  "Returns a lazy sequence from 0 to end (exclusive)."
-  [end]
-  (-range-step 0 end 1))
+  "Returns a lazy sequence of numbers.
+   (range end) - 0 to end-1
+   (range start end) - start to end-1
+   (range start end step) - start, start+step, ... up to (but not including) end"
+  [& args]
+  (let [len (alength args)]
+    (cond
+      (= len 1) (-range-step 0 (aget args 0) 1)
+      (= len 2) (-range-step (aget args 0) (aget args 1) 1)
+      (= len 3) (-range-step (aget args 0) (aget args 1) (aget args 2))
+      :else nil)))
 
 (defn concat2
   "Returns a lazy sequence concatenating two collections."
@@ -1507,6 +1543,24 @@
     (if (< i (alength args))
       (recur (-conj s (aget args i)) (+ i 1))
       s)))
+
+(defn set
+  "Returns a set containing the elements of coll."
+  [coll]
+  (loop [s #{} items (seq coll)]
+    (if items
+      (recur (conj s (first items)) (next items))
+      s)))
+
+(defn frequencies
+  "Returns a map from distinct items in coll to the number of times they appear."
+  [coll]
+  (loop [m {} s (seq coll)]
+    (if s
+      (let [k (first s)
+            cnt (get m k 0)]
+        (recur (assoc m k (+ cnt 1)) (next s)))
+      m)))
 
 (defmacro concat
   "Returns a lazy seq of the concatenation of collections.

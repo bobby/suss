@@ -26,6 +26,19 @@ pub struct MacroDef {
     pub body: Edn,
 }
 
+/// A binding group in a for comprehension
+#[derive(Debug, Clone)]
+struct ForBindingGroup {
+    /// The binding pattern (symbol or destructuring pattern)
+    pattern: Edn,
+    /// The collection to iterate over
+    collection: Edn,
+    /// :when predicates
+    when_clauses: Vec<Edn>,
+    /// :let bindings (flattened [sym expr ...])
+    let_bindings: Vec<Edn>,
+}
+
 /// Macro expansion environment
 pub struct MacroEnv {
     /// Registered macros
@@ -449,6 +462,591 @@ impl MacroEnv {
         Ok((regular, rest))
     }
 
+    /// Check if a binding pattern requires destructuring
+    fn needs_destructuring(pattern: &Edn) -> bool {
+        match pattern {
+            Edn::Vector(_) => true,
+            Edn::Map(_) => true,
+            _ => false,
+        }
+    }
+
+    /// Generate destructured bindings for a vector pattern
+    /// Returns a list of (symbol, value-expr) pairs
+    fn destructure_vector(&mut self, pattern: &[Edn], value_sym: &Symbol) -> CompileResult<Vec<(Edn, Edn)>> {
+        let mut bindings = Vec::new();
+        let mut idx = 0;
+        let mut saw_rest = false;
+
+        for elem in pattern {
+            if let Edn::Symbol(sym) = elem {
+                if sym.name == "&" {
+                    saw_rest = true;
+                    continue;
+                }
+                if saw_rest {
+                    // This is the rest binding: bind to (drop idx value)
+                    bindings.push((
+                        Edn::Symbol(sym.clone()),
+                        Edn::List(vec![
+                            Edn::Symbol(Symbol::new("drop")),
+                            Edn::Number(suss_core::Number::from_i64(idx as i64)),
+                            Edn::Symbol(value_sym.clone()),
+                        ]),
+                    ));
+                    break;
+                } else {
+                    // Regular binding: bind to (nth value idx)
+                    bindings.push((
+                        Edn::Symbol(sym.clone()),
+                        Edn::List(vec![
+                            Edn::Symbol(Symbol::new("nth")),
+                            Edn::Symbol(value_sym.clone()),
+                            Edn::Number(suss_core::Number::from_i64(idx as i64)),
+                        ]),
+                    ));
+                    idx += 1;
+                }
+            } else if let Edn::Vector(nested) = elem {
+                // Nested destructuring - generate temp symbol and recurse
+                let temp_sym = self.gensym("vec");
+                // First bind temp to (nth value idx)
+                bindings.push((
+                    Edn::Symbol(temp_sym.clone()),
+                    Edn::List(vec![
+                        Edn::Symbol(Symbol::new("nth")),
+                        Edn::Symbol(value_sym.clone()),
+                        Edn::Number(suss_core::Number::from_i64(idx as i64)),
+                    ]),
+                ));
+                // Then destructure the nested pattern
+                let nested_bindings = self.destructure_vector(nested, &temp_sym)?;
+                bindings.extend(nested_bindings);
+                idx += 1;
+            } else {
+                return Err(CompileError::MacroExpansion(format!(
+                    "Invalid destructuring pattern element: {:?}", elem
+                )));
+            }
+        }
+
+        Ok(bindings)
+    }
+
+    /// Expand a binding pair, handling destructuring
+    /// Returns expanded bindings as a flat vector
+    fn expand_binding_pair(&mut self, pattern: Edn, value: Edn) -> CompileResult<Vec<Edn>> {
+        if Self::needs_destructuring(&pattern) {
+            match pattern {
+                Edn::Vector(ref elems) => {
+                    let temp_sym = self.gensym("destructure");
+                    let mut result = vec![
+                        Edn::Symbol(temp_sym.clone()),
+                        self.expand(value)?,
+                    ];
+
+                    let bindings = self.destructure_vector(elems, &temp_sym)?;
+                    for (sym, expr) in bindings {
+                        result.push(sym);
+                        result.push(self.expand(expr)?);
+                    }
+
+                    Ok(result)
+                }
+                Edn::Map(_) => {
+                    // Map destructuring not yet implemented
+                    Err(CompileError::MacroExpansion(
+                        "Map destructuring not yet implemented".into()
+                    ))
+                }
+                _ => unreachable!(),
+            }
+        } else {
+            // Simple binding - just expand the value
+            Ok(vec![pattern, self.expand(value)?])
+        }
+    }
+
+    /// Expand a let form, handling destructuring in bindings
+    fn expand_let(&mut self, items: &[Edn]) -> CompileResult<Edn> {
+        if items.len() < 2 {
+            return Err(CompileError::MacroExpansion(
+                "let requires bindings and body".into()
+            ));
+        }
+
+        let bindings = match &items[1] {
+            Edn::Vector(v) => v,
+            _ => return Err(CompileError::MacroExpansion(
+                "let bindings must be a vector".into()
+            )),
+        };
+
+        if bindings.len() % 2 != 0 {
+            return Err(CompileError::MacroExpansion(
+                "let bindings must have even number of forms".into()
+            ));
+        }
+
+        // Process bindings in pairs
+        let mut expanded_bindings = Vec::new();
+        for chunk in bindings.chunks(2) {
+            let expanded = self.expand_binding_pair(chunk[0].clone(), chunk[1].clone())?;
+            expanded_bindings.extend(expanded);
+        }
+
+        // Build result with expanded bindings and recursively expanded body
+        let mut result = vec![
+            Edn::Symbol(Symbol::new("let")),
+            Edn::Vector(expanded_bindings),
+        ];
+
+        // Expand body forms
+        for body_form in &items[2..] {
+            result.push(self.expand(body_form.clone())?);
+        }
+
+        Ok(Edn::List(result))
+    }
+
+    /// Expand an fn form, handling destructuring in parameters
+    fn expand_fn(&mut self, items: &[Edn]) -> CompileResult<Edn> {
+        // fn can have optional name: (fn name [params] body) or (fn [params] body)
+        let (name_opt, params_idx) = if items.len() >= 2 {
+            match &items[1] {
+                Edn::Symbol(_) => (Some(items[1].clone()), 2),
+                Edn::Vector(_) => (None, 1),
+                _ => return Err(CompileError::MacroExpansion(
+                    "fn requires parameter vector".into()
+                )),
+            }
+        } else {
+            return Err(CompileError::MacroExpansion("fn requires parameters".into()));
+        };
+
+        if items.len() <= params_idx {
+            return Err(CompileError::MacroExpansion(
+                "fn requires parameter vector".into()
+            ));
+        }
+
+        let params = match &items[params_idx] {
+            Edn::Vector(v) => v,
+            _ => return Err(CompileError::MacroExpansion(
+                "fn parameters must be a vector".into()
+            )),
+        };
+
+        // Check if any parameter needs destructuring
+        let has_destructuring = params.iter().any(|p| {
+            // Don't treat & as needing destructuring
+            if let Edn::Symbol(s) = p {
+                if s.name == "&" {
+                    return false;
+                }
+            }
+            Self::needs_destructuring(p)
+        });
+
+        if !has_destructuring {
+            // No destructuring needed - just recursively expand
+            let expanded: CompileResult<Vec<Edn>> = items.iter()
+                .map(|e| self.expand(e.clone()))
+                .collect();
+            return Ok(Edn::List(expanded?));
+        }
+
+        // Generate new parameter names and collect destructuring bindings
+        let mut new_params = Vec::new();
+        let mut let_bindings = Vec::new();
+        let mut saw_rest = false;
+
+        for param in params {
+            if let Edn::Symbol(sym) = param {
+                if sym.name == "&" {
+                    saw_rest = true;
+                    new_params.push(Edn::Symbol(sym.clone()));
+                    continue;
+                }
+            }
+
+            if Self::needs_destructuring(param) {
+                let temp_sym = self.gensym("p");
+                new_params.push(Edn::Symbol(temp_sym.clone()));
+
+                match param {
+                    Edn::Vector(elems) => {
+                        let bindings = self.destructure_vector(elems, &temp_sym)?;
+                        for (sym, expr) in bindings {
+                            let_bindings.push(sym);
+                            let_bindings.push(expr);
+                        }
+                    }
+                    _ => {
+                        return Err(CompileError::MacroExpansion(
+                            "Only vector destructuring supported in fn params".into()
+                        ));
+                    }
+                }
+            } else {
+                new_params.push(param.clone());
+            }
+        }
+
+        // Build the new fn with let wrapper
+        let mut result = vec![Edn::Symbol(Symbol::new("fn"))];
+        if let Some(name) = name_opt {
+            result.push(name);
+        }
+        result.push(Edn::Vector(new_params));
+
+        // Wrap body in let if we have destructuring bindings
+        if !let_bindings.is_empty() {
+            let mut body_forms = Vec::new();
+            for body_form in &items[params_idx + 1..] {
+                body_forms.push(self.expand(body_form.clone())?);
+            }
+
+            let let_body = if body_forms.len() == 1 {
+                body_forms.pop().unwrap()
+            } else {
+                let mut do_form = vec![Edn::Symbol(Symbol::new("do"))];
+                do_form.extend(body_forms);
+                Edn::List(do_form)
+            };
+
+            result.push(Edn::List(vec![
+                Edn::Symbol(Symbol::new("let")),
+                Edn::Vector(let_bindings),
+                let_body,
+            ]));
+        } else {
+            for body_form in &items[params_idx + 1..] {
+                result.push(self.expand(body_form.clone())?);
+            }
+        }
+
+        Ok(Edn::List(result))
+    }
+
+    /// Expand a loop form, handling destructuring in bindings
+    fn expand_loop(&mut self, items: &[Edn]) -> CompileResult<Edn> {
+        if items.len() < 2 {
+            return Err(CompileError::MacroExpansion(
+                "loop requires bindings and body".into()
+            ));
+        }
+
+        let bindings = match &items[1] {
+            Edn::Vector(v) => v,
+            _ => return Err(CompileError::MacroExpansion(
+                "loop bindings must be a vector".into()
+            )),
+        };
+
+        if bindings.len() % 2 != 0 {
+            return Err(CompileError::MacroExpansion(
+                "loop bindings must have even number of forms".into()
+            ));
+        }
+
+        // Check if any binding needs destructuring
+        let has_destructuring = bindings.chunks(2)
+            .any(|chunk| Self::needs_destructuring(&chunk[0]));
+
+        if !has_destructuring {
+            // No destructuring - just recursively expand
+            let expanded: CompileResult<Vec<Edn>> = items.iter()
+                .map(|e| self.expand(e.clone()))
+                .collect();
+            return Ok(Edn::List(expanded?));
+        }
+
+        // For loop with destructuring, we need to:
+        // 1. Create simple loop variables
+        // 2. Add let bindings inside loop body
+        // 3. Transform recur calls to use the simple variables
+
+        // This is complex because recur args must match loop bindings
+        // For now, use simpler approach: wrap in let for initial destructuring
+
+        let mut outer_let_bindings = Vec::new();
+        let mut loop_bindings = Vec::new();
+
+        for chunk in bindings.chunks(2) {
+            let pattern = &chunk[0];
+            let value = &chunk[1];
+
+            if Self::needs_destructuring(pattern) {
+                let temp_sym = self.gensym("loop_var");
+                // Bind temp to initial value
+                loop_bindings.push(Edn::Symbol(temp_sym.clone()));
+                loop_bindings.push(self.expand(value.clone())?);
+
+                // Will add inner let for destructuring
+                match pattern {
+                    Edn::Vector(elems) => {
+                        let bindings = self.destructure_vector(elems, &temp_sym)?;
+                        for (sym, expr) in bindings {
+                            outer_let_bindings.push(sym);
+                            outer_let_bindings.push(expr);
+                        }
+                    }
+                    _ => {
+                        return Err(CompileError::MacroExpansion(
+                            "Only vector destructuring supported in loop".into()
+                        ));
+                    }
+                }
+            } else {
+                loop_bindings.push(pattern.clone());
+                loop_bindings.push(self.expand(value.clone())?);
+            }
+        }
+
+        // Build loop with inner let for destructuring
+        let mut body_forms = Vec::new();
+        for body_form in &items[2..] {
+            body_forms.push(self.expand(body_form.clone())?);
+        }
+
+        let body = if body_forms.len() == 1 {
+            body_forms.pop().unwrap()
+        } else {
+            let mut do_form = vec![Edn::Symbol(Symbol::new("do"))];
+            do_form.extend(body_forms);
+            Edn::List(do_form)
+        };
+
+        let inner_body = if !outer_let_bindings.is_empty() {
+            Edn::List(vec![
+                Edn::Symbol(Symbol::new("let")),
+                Edn::Vector(outer_let_bindings),
+                body,
+            ])
+        } else {
+            body
+        };
+
+        Ok(Edn::List(vec![
+            Edn::Symbol(Symbol::new("loop")),
+            Edn::Vector(loop_bindings),
+            inner_body,
+        ]))
+    }
+
+    /// Parse for bindings into groups
+    /// Each group is: (binding_sym, collection_expr, when_clauses, let_bindings)
+    fn parse_for_bindings(&self, bindings: &[Edn]) -> CompileResult<Vec<ForBindingGroup>> {
+        let mut groups = Vec::new();
+        let mut i = 0;
+
+        while i < bindings.len() {
+            // Expect a binding pattern
+            let pattern = bindings[i].clone();
+            i += 1;
+
+            if i >= bindings.len() {
+                return Err(CompileError::MacroExpansion(
+                    "for binding requires collection expression".into()
+                ));
+            }
+
+            // Check if next is a keyword modifier or collection
+            let mut collection = None;
+            let mut when_clauses = Vec::new();
+            let mut let_bindings = Vec::new();
+
+            while i < bindings.len() {
+                match &bindings[i] {
+                    Edn::Keyword(kw) if kw.name == "when" => {
+                        i += 1;
+                        if i >= bindings.len() {
+                            return Err(CompileError::MacroExpansion(
+                                ":when requires predicate expression".into()
+                            ));
+                        }
+                        when_clauses.push(bindings[i].clone());
+                        i += 1;
+                    }
+                    Edn::Keyword(kw) if kw.name == "let" => {
+                        i += 1;
+                        if i >= bindings.len() {
+                            return Err(CompileError::MacroExpansion(
+                                ":let requires binding vector".into()
+                            ));
+                        }
+                        match &bindings[i] {
+                            Edn::Vector(v) => {
+                                let_bindings.extend(v.clone());
+                                i += 1;
+                            }
+                            _ => return Err(CompileError::MacroExpansion(
+                                ":let requires binding vector".into()
+                            )),
+                        }
+                    }
+                    Edn::Keyword(kw) if kw.name == "while" => {
+                        // :while is similar to :when but breaks iteration
+                        // For simplicity, treat it like :when for now
+                        i += 1;
+                        if i >= bindings.len() {
+                            return Err(CompileError::MacroExpansion(
+                                ":while requires predicate expression".into()
+                            ));
+                        }
+                        when_clauses.push(bindings[i].clone());
+                        i += 1;
+                    }
+                    _ if collection.is_none() => {
+                        // This is the collection expression
+                        collection = Some(bindings[i].clone());
+                        i += 1;
+                    }
+                    _ => {
+                        // Start of next binding group
+                        break;
+                    }
+                }
+            }
+
+            let coll = collection.ok_or_else(|| {
+                CompileError::MacroExpansion("for binding requires collection expression".into())
+            })?;
+
+            groups.push(ForBindingGroup {
+                pattern,
+                collection: coll,
+                when_clauses,
+                let_bindings,
+            });
+        }
+
+        Ok(groups)
+    }
+
+    /// Expand a for form (list comprehension)
+    fn expand_for(&mut self, items: &[Edn]) -> CompileResult<Edn> {
+        if items.len() < 3 {
+            return Err(CompileError::MacroExpansion(
+                "for requires bindings and body".into()
+            ));
+        }
+
+        let bindings = match &items[1] {
+            Edn::Vector(v) => v,
+            _ => return Err(CompileError::MacroExpansion(
+                "for bindings must be a vector".into()
+            )),
+        };
+
+        let body = items[2].clone();
+        let groups = self.parse_for_bindings(bindings)?;
+
+        if groups.is_empty() {
+            return Err(CompileError::MacroExpansion(
+                "for requires at least one binding".into()
+            ));
+        }
+
+        // Build the expansion from innermost to outermost
+        self.expand_for_groups(&groups, body)
+    }
+
+    /// Recursively expand for binding groups
+    fn expand_for_groups(&mut self, groups: &[ForBindingGroup], body: Edn) -> CompileResult<Edn> {
+        if groups.is_empty() {
+            return self.expand(body);
+        }
+
+        let group = &groups[0];
+        let rest_groups = &groups[1..];
+
+        // Build the inner expression
+        let inner = if rest_groups.is_empty() {
+            // Innermost - just the body
+            body
+        } else {
+            // Build nested for for remaining groups
+            let mut inner_bindings = Vec::new();
+            for g in rest_groups {
+                inner_bindings.push(g.pattern.clone());
+                inner_bindings.push(g.collection.clone());
+                for when in &g.when_clauses {
+                    inner_bindings.push(Edn::Keyword(Keyword::new("when")));
+                    inner_bindings.push(when.clone());
+                }
+                if !g.let_bindings.is_empty() {
+                    inner_bindings.push(Edn::Keyword(Keyword::new("let")));
+                    inner_bindings.push(Edn::Vector(g.let_bindings.clone()));
+                }
+            }
+            Edn::List(vec![
+                Edn::Symbol(Symbol::new("for")),
+                Edn::Vector(inner_bindings),
+                body,
+            ])
+        };
+
+        // Wrap in :let bindings if any
+        let with_let = if group.let_bindings.is_empty() {
+            inner
+        } else {
+            Edn::List(vec![
+                Edn::Symbol(Symbol::new("let")),
+                Edn::Vector(group.let_bindings.clone()),
+                inner,
+            ])
+        };
+
+        // Build the fn that takes the binding pattern
+        let fn_body = with_let;
+        let fn_param = group.pattern.clone();
+
+        // If there are :when clauses, wrap collection in filter
+        let filtered_coll = if group.when_clauses.is_empty() {
+            group.collection.clone()
+        } else {
+            // Build (filter (fn [pattern] (and when1 when2 ...)) coll)
+            let pred = if group.when_clauses.len() == 1 {
+                group.when_clauses[0].clone()
+            } else {
+                let mut and_form = vec![Edn::Symbol(Symbol::new("and"))];
+                and_form.extend(group.when_clauses.clone());
+                Edn::List(and_form)
+            };
+
+            Edn::List(vec![
+                Edn::Symbol(Symbol::new("filter")),
+                Edn::List(vec![
+                    Edn::Symbol(Symbol::new("fn")),
+                    Edn::Vector(vec![fn_param.clone()]),
+                    pred,
+                ]),
+                group.collection.clone(),
+            ])
+        };
+
+        // Choose map or mapcat based on whether there are more groups
+        let map_fn = if rest_groups.is_empty() {
+            Symbol::new("map")
+        } else {
+            Symbol::new("mapcat")
+        };
+
+        let result = Edn::List(vec![
+            Edn::Symbol(map_fn),
+            Edn::List(vec![
+                Edn::Symbol(Symbol::new("fn")),
+                Edn::Vector(vec![fn_param]),
+                fn_body,
+            ]),
+            filtered_coll,
+        ]);
+
+        self.expand(result)
+    }
+
     /// Expand an expression, handling syntax-quote and macro calls
     pub fn expand(&mut self, expr: Edn) -> CompileResult<Edn> {
         match expr {
@@ -473,6 +1071,19 @@ impl MacroEnv {
                                 "{} outside of syntax-quote",
                                 sym.name
                             )));
+                        }
+                        // Handle special forms with destructuring
+                        "let" => {
+                            return self.expand_let(items);
+                        }
+                        "fn" => {
+                            return self.expand_fn(items);
+                        }
+                        "loop" => {
+                            return self.expand_loop(items);
+                        }
+                        "for" => {
+                            return self.expand_for(items);
                         }
                         name => {
                             // Check for macro call

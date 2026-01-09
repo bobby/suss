@@ -941,6 +941,20 @@ impl Lowerer {
                 } else if let Some(arity) = self.builtin_arity(&sym.name) {
                     // It's a built-in in value position - wrap it as a closure
                     self.lower_builtin_as_closure(&sym.name, arity)
+                } else if let Some((resolved_name, func_idx)) = self.resolve_func_name(&sym.name) {
+                    // It's a user-defined function in value position - create a closure
+                    let arity = self.func_arities.get(&resolved_name).copied().unwrap_or(0);
+                    let is_variadic = self.variadic_funcs.contains_key(&resolved_name);
+                    // func_idx from func_indices already includes (num_imports + USER_FUNC_OFFSET),
+                    // but codegen's user_func_idx() will add (num_imports + NUM_RUNTIME_HELPERS).
+                    // Since USER_FUNC_OFFSET = NUM_RUNTIME_HELPERS, we subtract both.
+                    let adjusted_idx = func_idx - self.num_imports - gc_types::USER_FUNC_OFFSET;
+                    Ok(Expr::ClosureNew {
+                        func_idx: adjusted_idx,
+                        arity: arity as u32,
+                        captures: vec![], // No captures for named functions
+                        is_variadic,
+                    })
                 } else {
                     Err(CompileError::Undefined(sym.name.clone()))
                 }
@@ -1150,7 +1164,7 @@ impl Lowerer {
                     self.lower_comparison_chain(BinOp::Eq, args)
                 }
             }
-            "not=" => self.lower_binop(BinOp::Ne, args, Type::Bool),
+            // not= is now handled by core.sus as (defn not= [& args] (not (apply = args)))
             "<" => self.lower_comparison_chain(BinOp::Lt, args),
             "<=" => self.lower_comparison_chain(BinOp::Le, args),
             ">" => self.lower_comparison_chain(BinOp::Gt, args),

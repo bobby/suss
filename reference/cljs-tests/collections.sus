@@ -265,8 +265,7 @@
  {:name "map-chained-assoc"
   :category :maps
   :expr "(-> {} (assoc :a 1) (assoc :b 2) (assoc :c 3) (get :b))"
-  :expected 2
-  :skip true}  ; -> macro not implemented
+  :expected 2}
 
  {:name "map-assoc-chain"
   :category :maps
