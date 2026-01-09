@@ -2847,8 +2847,16 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::Recur(values) => {
-                for (local_idx, value) in values.iter() {
+                // Parallel assignment: evaluate ALL values first (using current locals),
+                // then store them all. This ensures (recur b (+ a b)) uses the OLD
+                // values of a and b when computing new values.
+
+                // First: evaluate ALL values, pushing results onto stack
+                for (_local_idx, value) in values.iter() {
                     self.generate_expr_inner(value, f, loop_depth, param_offset)?;
+                }
+                // Second: store ALL values in reverse order (stack is LIFO)
+                for (local_idx, _value) in values.iter().rev() {
                     f.instruction(&Instruction::LocalSet(*local_idx));
                 }
                 // Branch to loop header - depth tracks nesting inside blocks/ifs
