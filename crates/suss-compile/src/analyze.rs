@@ -583,15 +583,77 @@ impl<'a> Analyzer<'a> {
             return Err(CompileError::Parse("def requires name and value".into()));
         }
 
-        let (name, _metadata, _return_type_hint, value_idx) = self.parse_name_with_metadata(&items[1..])?;
-        let value = &items[value_idx + 1];
+        let (name, metadata, return_type_hint, value_idx) = self.parse_name_with_metadata(&items[1..])?;
+        // value_idx is relative to items[1..], so add 1 to get index in items, then +1 for the value after name
+        let value = &items[1 + value_idx + 1];
 
+        // Check if value is an fn form - if so, create an AnalyzedFunction
+        if let Edn::List(fn_items) = value {
+            if let Some(Edn::Symbol(sym)) = fn_items.first() {
+                if sym.name == "fn" {
+                    return self.analyze_def_fn(&name, &metadata, &return_type_hint, fn_items);
+                }
+            }
+        }
+
+        // Regular global variable
         let ty = self.infer_type(value)?;
 
         self.globals.push(AnalyzedGlobal {
             name,
             ty,
             init: value.clone(),
+        });
+
+        Ok(())
+    }
+
+    /// Analyze a def with an fn value: (def name (fn [params] body))
+    fn analyze_def_fn(
+        &mut self,
+        name: &str,
+        metadata: &[String],
+        return_type_hint: &Option<String>,
+        fn_items: &[Edn],
+    ) -> CompileResult<()> {
+        // fn_items: [fn, [params], body...]
+        if fn_items.len() < 3 {
+            return Err(CompileError::Parse("fn requires params and body".into()));
+        }
+
+        let exported = metadata.iter().any(|s| s == "export");
+        let export_name = if exported {
+            Some(name.to_string())
+        } else {
+            None
+        };
+
+        // Parse parameters
+        let (params, rest_param) = self.parse_params(&fn_items[1])?;
+
+        // Body is everything after params
+        let body = if fn_items.len() == 3 {
+            fn_items[2].clone()
+        } else {
+            // Wrap multiple body forms in (do ...)
+            let do_sym = Edn::Symbol(suss_core::Symbol::new("do"));
+            let mut body_items = vec![do_sym];
+            body_items.extend(fn_items[2..].iter().cloned());
+            Edn::List(body_items)
+        };
+
+        // Infer return type from body
+        let return_type = self.infer_type(&body)?;
+
+        self.functions.push(AnalyzedFunction {
+            name: name.to_string(),
+            exported,
+            export_name,
+            params,
+            rest_param,
+            return_type,
+            return_type_hint: return_type_hint.clone(),
+            body,
         });
 
         Ok(())

@@ -977,45 +977,8 @@ impl Lowerer {
                 } else {
                     // Expression in call position - treat as closure call
                     // Examples: ((fn [x] x) 5), ((if cond + -) a b)
-
-                    // Check for immediate variadic fn call: ((fn [& args] ...) 1 2 3)
-                    if let Edn::List(fn_items) = &items[0] {
-                        if let Some(Edn::Symbol(sym)) = fn_items.first() {
-                            if sym.name == "fn" && fn_items.len() >= 2 {
-                                if let Edn::Vector(params_vec) = &fn_items[1] {
-                                    // Check if this fn is variadic
-                                    let is_variadic = params_vec.iter().any(|p| {
-                                        matches!(p, Edn::Symbol(s) if s.name == "&")
-                                    });
-                                    if is_variadic {
-                                        // Lower the fn to get the closure
-                                        let closure = self.with_tail_disabled(|l| {
-                                            l.lower_expr(&items[0])
-                                        })?;
-
-                                        // Package all args into an array
-                                        let lowered_args: Vec<Expr> = self.with_tail_disabled(|l| {
-                                            items[1..].iter()
-                                                .map(|e| l.lower_expr(e))
-                                                .collect::<CompileResult<_>>()
-                                        })?;
-
-                                        let args_array = Expr::ArrayNew {
-                                            type_idx: gc_types::ARRAY,
-                                            elements: lowered_args,
-                                        };
-
-                                        // Call with single array arg
-                                        return Ok(Expr::ClosureCall {
-                                            closure: Box::new(closure),
-                                            args: vec![args_array],
-                                            in_tail_position: self.in_tail_position,
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    // Variadic closures are handled by generate_closure_call detecting
+                    // VARIADIC_CAPTURE type_id and packing args appropriately.
 
                     let (closure, args) = self.with_tail_disabled(|l| -> CompileResult<_> {
                         let closure = l.lower_expr(&items[0])?;

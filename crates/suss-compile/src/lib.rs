@@ -222,6 +222,43 @@ impl Compiler {
                             continue;
                         }
                     }
+                    // Handle (def name (fn [params] body)) - expanded form of defn
+                    if sym.name == "def" && items.len() >= 3 {
+                        // Check if the value is an fn form
+                        // Skip metadata symbols (^:export, etc.)
+                        let mut idx = 1;
+                        let mut is_exported = false;
+                        while idx < items.len() {
+                            if let Edn::Symbol(s) = &items[idx] {
+                                if s.name.starts_with('^') {
+                                    if s.name == "^:export" {
+                                        is_exported = true;
+                                    }
+                                    idx += 1;
+                                    continue;
+                                }
+                            }
+                            break;
+                        }
+                        if let (Some(Edn::Symbol(name_sym)), Some(Edn::List(fn_items))) =
+                            (items.get(idx), items.get(idx + 1))
+                        {
+                            if let Some(Edn::Symbol(fn_sym)) = fn_items.first() {
+                                if fn_sym.name == "fn" && fn_items.len() >= 3 {
+                                    // Extract: (def name (fn [params] body))
+                                    if let Some(extracted) = Self::extract_def_fn(
+                                        &name_sym.name,
+                                        is_exported,
+                                        &fn_items[1..],
+                                    )? {
+                                        functions.push(extracted);
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // Legacy: Handle raw defn forms (for backwards compatibility)
                     if sym.name == "defn" && items.len() >= 3 {
                         // Extract: (defn name [params...] body...)
                         //      or: (defn name "docstring" [params...] body...)
@@ -618,6 +655,67 @@ impl Compiler {
             fields,
             implementations,
             reserved_type_id,
+        }))
+    }
+
+    /// Extract a (def name (fn [params] body)) form into an AnalyzedFunction
+    fn extract_def_fn(
+        name: &str,
+        is_exported: bool,
+        fn_rest: &[Edn], // Items after 'fn': [params_vector, body...]
+    ) -> CompileResult<Option<analyze::AnalyzedFunction>> {
+        if fn_rest.is_empty() {
+            return Ok(None);
+        }
+
+        // First item should be the params vector
+        let params_vec = match &fn_rest[0] {
+            Edn::Vector(v) => v,
+            _ => return Ok(None),
+        };
+
+        // Parse params, handling & for variadic
+        let mut params: Vec<(String, ir::Type)> = Vec::new();
+        let mut rest_param: Option<String> = None;
+        let mut found_amp = false;
+
+        for p in params_vec {
+            if let Edn::Symbol(s) = p {
+                if s.name == "&" {
+                    found_amp = true;
+                } else if found_amp {
+                    rest_param = Some(s.name.clone());
+                    break;
+                } else {
+                    params.push((s.name.clone(), ir::Type::GcRef));
+                }
+            }
+        }
+
+        // Body is remaining items (after params vector)
+        let body = if fn_rest.len() == 2 {
+            fn_rest[1].clone()
+        } else if fn_rest.len() > 2 {
+            // Wrap multiple body expressions in do
+            Edn::List(
+                std::iter::once(Edn::Symbol(suss_core::Symbol::new("do")))
+                    .chain(fn_rest[1..].iter().cloned())
+                    .collect(),
+            )
+        } else {
+            // No body - return nil
+            Edn::Nil
+        };
+
+        Ok(Some(analyze::AnalyzedFunction {
+            name: name.to_string(),
+            exported: is_exported,
+            export_name: if is_exported { Some(name.to_string()) } else { None },
+            params,
+            rest_param,
+            return_type: ir::Type::GcRef,
+            return_type_hint: None,
+            body,
         }))
     }
 

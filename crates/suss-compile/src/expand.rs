@@ -267,11 +267,96 @@ impl MacroEnv {
                     self.process_defmacro(items)?;
                     return Ok(None);
                 }
+                if sym.name == "defn" {
+                    // Expand defn to (def name (fn ...))
+                    let expanded = self.expand_defn(items)?;
+                    return Ok(Some(self.expand(expanded)?));
+                }
             }
         }
 
         // Otherwise expand normally
         Ok(Some(self.expand(expr)?))
+    }
+
+    /// Expand defn to (def name (fn params body))
+    /// (defn name [params] body...)
+    /// (defn ^:export name [params] body...)
+    /// (defn name "docstring" [params] body...)
+    fn expand_defn(&self, items: &[Edn]) -> CompileResult<Edn> {
+        // defn requires at least: defn name [params] body
+        if items.len() < 4 {
+            return Err(CompileError::MacroExpansion(
+                "defn requires name, params, and body".into(),
+            ));
+        }
+
+        let mut idx = 1;
+        let mut metadata: Vec<Edn> = Vec::new();
+
+        // Collect metadata symbols (^:export, ^i32, etc.)
+        while idx < items.len() {
+            if let Edn::Symbol(s) = &items[idx] {
+                if s.name.starts_with('^') {
+                    metadata.push(items[idx].clone());
+                    idx += 1;
+                    continue;
+                }
+            }
+            break;
+        }
+
+        // Name must be a symbol
+        let name = match &items[idx] {
+            Edn::Symbol(_) => items[idx].clone(),
+            _ => {
+                return Err(CompileError::MacroExpansion(
+                    "defn name must be a symbol".into(),
+                ))
+            }
+        };
+        idx += 1;
+
+        // Skip optional docstring
+        if idx < items.len() {
+            if matches!(&items[idx], Edn::String(_)) {
+                idx += 1;
+            }
+        }
+
+        // Params must be a vector
+        if idx >= items.len() {
+            return Err(CompileError::MacroExpansion(
+                "defn requires parameters vector".into(),
+            ));
+        }
+        let params = match &items[idx] {
+            Edn::Vector(_) => items[idx].clone(),
+            _ => {
+                return Err(CompileError::MacroExpansion(
+                    "defn params must be a vector".into(),
+                ))
+            }
+        };
+        idx += 1;
+
+        // Body is everything after params
+        let body: Vec<Edn> = items[idx..].to_vec();
+        if body.is_empty() {
+            return Err(CompileError::MacroExpansion("defn requires a body".into()));
+        }
+
+        // Build (fn params body...) form
+        let mut fn_form = vec![Edn::Symbol(Symbol::new("fn")), params];
+        fn_form.extend(body);
+
+        // Build (def [metadata...] name (fn ...)) form
+        let mut def_form = vec![Edn::Symbol(Symbol::new("def"))];
+        def_form.extend(metadata);
+        def_form.push(name);
+        def_form.push(Edn::List(fn_form));
+
+        Ok(Edn::List(def_form))
     }
 
     /// Process a defmacro form

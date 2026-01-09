@@ -1691,6 +1691,31 @@ fn test_variadic_closure_inline_zero_args() {
     assert_eq!(run_expr_i32("(let [v 100] (let [f (fn [& xs] v)] (f)))"), 100);
 }
 
+#[test]
+fn test_immediate_variadic_fn_call_alength() {
+    // Immediate variadic fn call should not double-wrap args
+    // Bug: ((fn [& xs] (alength xs)) 1 2 3) was returning 1 instead of 3
+    assert_eq!(run_expr_i32("((fn [& xs] (alength xs)) 1 2 3)"), 3);
+    assert_eq!(run_expr_i32("((fn [& xs] (alength xs)))"), 0);
+    assert_eq!(run_expr_i32("((fn [& xs] (alength xs)) 1)"), 1);
+}
+
+#[test]
+fn test_immediate_variadic_fn_call_aget() {
+    // Verify args are accessible with correct indices
+    assert_eq!(run_expr_i32("((fn [& xs] (aget xs 0)) 10 20 30)"), 10);
+    assert_eq!(run_expr_i32("((fn [& xs] (aget xs 1)) 10 20 30)"), 20);
+    assert_eq!(run_expr_i32("((fn [& xs] (aget xs 2)) 10 20 30)"), 30);
+}
+
+#[test]
+fn test_immediate_variadic_fn_with_fixed_params() {
+    // Variadic with fixed params: (fn [a b & rest] ...)
+    assert_eq!(run_expr_i32("((fn [a b & rest] a) 1 2 3 4)"), 1);
+    assert_eq!(run_expr_i32("((fn [a b & rest] b) 1 2 3 4)"), 2);
+    assert_eq!(run_expr_i32("((fn [a b & rest] (alength rest)) 1 2 3 4)"), 2);
+}
+
 // ============================================================================
 // Built-in Function Values
 // ============================================================================
