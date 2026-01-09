@@ -145,6 +145,9 @@
 ;; Persistent Set (HAMT with marker for structural distinction)
 (deftype PersistentSet [^i32 set-cnt set-root ^i32 _marker])
 
+;; Sentinel type for distinguishing "key not found" from "key exists with nil value"
+(deftype NotFound [])
+
 ;; ============================================================
 ;; HAMT Node Types (for maps and sets)
 ;; ============================================================
@@ -764,7 +767,11 @@
     (let [root (.-map-root m)]
       (if (nil? root)
         nil
-        (inode-find root 0 (hash key) key nil))))
+        (let [sentinel (->NotFound)
+              result (inode-find root 0 (hash key) key sentinel)]
+          (if (instance? NotFound result)
+            nil
+            result)))))
 
   ICounted
   (-count [m] (.-map-cnt m))
@@ -797,7 +804,11 @@
     (let [root (.-set-root s)]
       (if (nil? root)
         nil
-        (inode-find root 0 (hash key) key nil))))
+        (let [sentinel (->NotFound)
+              result (inode-find root 0 (hash key) key sentinel)]
+          (if (instance? NotFound result)
+            nil
+            result)))))
 
   ICounted
   (-count [s] (.-set-cnt s))
@@ -965,7 +976,17 @@
       (if (nil? s) nil (first s))))
   (-rest [ls]
     (let [s (seq ls)]
-      (if (nil? s) () (rest s)))))
+      (if (nil? s) nil (rest s))))
+
+  ICounted
+  (-count [ls]
+    (let [s (seq ls)]
+      (if (nil? s)
+        0
+        (loop [coll s cnt 0]
+          (if (nil? coll)
+            cnt
+            (recur (next coll) (+ cnt 1))))))))
 
 (defmacro lazy-seq
   "Returns a lazy sequence that will evaluate body when needed."
@@ -1211,10 +1232,15 @@
   [to xs]
   (reduce (fn [acc x] (conj acc x)) to xs))
 
-(defn concat
-  "Returns a lazy seq of the concatenation of two collections."
-  [x y]
-  (concat2 x y))
+(defmacro concat
+  "Returns a lazy seq of the concatenation of collections.
+  Variadic: (concat) (concat x) (concat x y) (concat x y z) etc."
+  [& colls]
+  (if (empty? colls)
+    nil
+    (if (empty? (rest colls))
+      (list 'seq (first colls))
+      (list 'concat2 (first colls) (cons 'concat (rest colls))))))
 
 ;; ============================================================
 ;; Utility Functions

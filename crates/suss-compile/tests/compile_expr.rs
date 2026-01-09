@@ -2193,3 +2193,12 @@ fn dump_var_user_fn_wasm() {
     std::fs::write("/tmp/var_user.wasm", &wasm).unwrap();
     println!("Wrote {} bytes to /tmp/var_user.wasm", wasm.len());
 }
+
+#[test]
+fn dump_identity_fn_wasm() {
+    let expr = "(defn f [a] a) (f 1)";
+    let mut compiler = suss_compile::Compiler::new();
+    let wasm = compiler.compile_expr(expr).unwrap();
+    std::fs::write("/tmp/identity.wasm", &wasm).unwrap();
+    println!("Wrote {} bytes to /tmp/identity.wasm", wasm.len());
+}

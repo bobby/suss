@@ -3011,9 +3011,14 @@ impl Lowerer {
                 "assoc requires exactly 3 arguments: map, key, and value".into(),
             ));
         }
-        let map = self.lower_expr(&args[0])?;
-        let key = self.lower_expr(&args[1])?;
-        let val = self.lower_expr(&args[2])?;
+        // Arguments are never in tail position - only the result of assoc is
+        let (map, key, val) = self.with_tail_disabled(|l| {
+            Ok((
+                l.lower_expr(&args[0])?,
+                l.lower_expr(&args[1])?,
+                l.lower_expr(&args[2])?,
+            ))
+        })?;
         Ok(Expr::ProtocolDispatch {
             obj: Box::new(map),
             method_id: method_ids::ASSOC,
