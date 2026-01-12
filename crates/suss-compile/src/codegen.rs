@@ -29,9 +29,9 @@ use crate::ir::{BinOp, Expr, Function as IrFunc, Module, Type, UnOp, FieldType a
 // ============================================================================
 
 /// Number of runtime helper functions emitted before user functions.
-/// Reduced to 2: only hash_string and get_type_id remain in codegen.
-/// Collection algorithms (vector trie, HAMT) are now implemented in core.sus.
-const NUM_RUNTIME_HELPERS: u32 = 2;
+/// Functions: hash_string, get_type_id, init_intern_tables
+/// Collection algorithms (vector trie, HAMT) are implemented in core.sus.
+const NUM_RUNTIME_HELPERS: u32 = 3;
 
 /// Function index offsets for runtime helpers (relative to start of functions)
 mod helper_funcs {
@@ -43,12 +43,9 @@ mod helper_funcs {
     /// Returns the runtime type ID of a GC value
     pub const GET_TYPE_ID: u32 = 1;
 
-    // All collection helper functions have been migrated to core.sus:
-    // - Vector trie ops: tail-off, array-for, new-path, push-tail
-    // - HAMT ops: hamt-mask, hamt-bitpos, hamt-index
-    // - HAMT find: inode-find, bin-find, an-find, hcn-find
-    // - HAMT assoc: inode-assoc, bin-assoc, an-assoc, hcn-assoc, create-node
-    // - HAMT dissoc: inode-dissoc, bin-dissoc, an-dissoc, hcn-dissoc
+    /// $init_intern_tables() -> ()
+    /// Initializes keyword/symbol intern tables on module instantiation
+    pub const INIT_INTERN_TABLES: u32 = 2;
 }
 
 /// Relative offsets for helper function signatures (added to helper_type_base())
@@ -59,11 +56,12 @@ mod helper_type_offsets {
     /// Type for $get_type_id: (eqref) -> i32
     pub const GET_TYPE_ID: u32 = 1;
 
-    // Collection helper types removed - now in core.sus
+    /// Type for $init_intern_tables: () -> ()
+    pub const INIT_INTERN_TABLES: u32 = 2;
 }
 
-/// Number of helper function types (reduced from 19 to 2)
-const NUM_HELPER_TYPES: u32 = 2;
+/// Number of helper function types
+const NUM_HELPER_TYPES: u32 = 3;
 
 /// Relative offsets for protocol function signatures (added to protocol_type_base())
 mod protocol_type_offsets {
@@ -197,6 +195,15 @@ impl<'a> CodeGen<'a> {
         self.ir.deftypes.iter().find(|dt| dt.name == name).map(|dt| dt.type_id)
     }
 
+    /// Look up a deftype's dispatch slot by name.
+    /// Dispatch slots: primitives use 0-4, deftypes use 5+ (index in array order).
+    /// Returns None if the deftype is not found.
+    fn deftype_dispatch_slot(&self, name: &str) -> Option<u32> {
+        const PRIMITIVE_SLOTS: u32 = 5;
+        self.ir.deftypes.iter().position(|dt| dt.name == name)
+            .map(|idx| PRIMITIVE_SLOTS + idx as u32)
+    }
+
     /// Look up a function's index by name.
     /// Returns the WASM function index for the named function from ir.functions.
     fn func_idx_by_name(&self, name: &str) -> Option<u32> {
@@ -246,13 +253,13 @@ impl<'a> CodeGen<'a> {
 
             f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
             {
-                // Extract name_idx from KEYWORD struct for equality comparison
-                // Keywords with same idx are equal
+                // Extract hash from KEYWORD struct for equality comparison
+                // Keywords with same hash are equal (interned, so hash is unique)
                 f.instruction(&Instruction::LocalGet(scratch));
                 f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::KEYWORD)));
                 f.instruction(&Instruction::StructGet {
                     struct_type_index: gc_types::KEYWORD,
-                    field_index: gc_types::KW_NAME_IDX,
+                    field_index: gc_types::KW_HASH,
                 });
             }
             f.instruction(&Instruction::Else);
@@ -284,6 +291,140 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::End);
             }
             f.instruction(&Instruction::End);
+        }
+        f.instruction(&Instruction::End);
+    }
+
+    /// Generate code to unwrap a value for comparison without decoding numbers.
+    ///
+    /// Input: eqref on stack
+    /// Output: i32 on stack
+    ///
+    /// This function extracts a raw i32 value suitable for equality comparison:
+    /// - INT64 structs: extracts the i64 value wrapped to i32
+    /// - KEYWORD structs: extracts the hash
+    /// - SYMBOL structs: extracts the hash
+    /// - i31ref values: uses raw value WITHOUT decoding
+    ///
+    /// The key difference from generate_polymorphic_unwrap_i32 is that i31ref
+    /// values are NOT decoded (no shift right). This ensures:
+    /// - Numbers: 0→1, 1→3, 2→5, etc. (tagged encoding)
+    /// - Sentinels: nil=0, false=2, true=4
+    /// These raw values never overlap, so equality comparisons work correctly.
+    fn generate_polymorphic_unwrap_i32_for_compare(&self, f: &mut Function) {
+        use crate::ir::gc_types;
+
+        // Scratch local to store the value for testing
+        let scratch = self.scratch_local.get();
+
+        // Store value in scratch local
+        f.instruction(&Instruction::LocalSet(scratch));
+
+        // Test if it's INT64
+        f.instruction(&Instruction::LocalGet(scratch));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::INT64)));
+
+        // if (is INT64)
+        f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+        {
+            // Extract i64 from INT64 struct, wrap to i32
+            f.instruction(&Instruction::LocalGet(scratch));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::INT64)));
+            f.instruction(&Instruction::StructGet {
+                struct_type_index: gc_types::INT64,
+                field_index: gc_types::I64_VALUE,
+            });
+            f.instruction(&Instruction::I32WrapI64);
+        }
+        f.instruction(&Instruction::Else);
+        {
+            // Test if it's KEYWORD
+            f.instruction(&Instruction::LocalGet(scratch));
+            f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::KEYWORD)));
+
+            f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+            {
+                // Extract hash from KEYWORD struct for equality comparison
+                f.instruction(&Instruction::LocalGet(scratch));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::KEYWORD)));
+                f.instruction(&Instruction::StructGet {
+                    struct_type_index: gc_types::KEYWORD,
+                    field_index: gc_types::KW_HASH,
+                });
+            }
+            f.instruction(&Instruction::Else);
+            {
+                // Test if it's SYMBOL
+                f.instruction(&Instruction::LocalGet(scratch));
+                f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+
+                f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+                {
+                    // Extract hash from SYMBOL struct for equality comparison
+                    f.instruction(&Instruction::LocalGet(scratch));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+                    f.instruction(&Instruction::StructGet {
+                        struct_type_index: gc_types::SYMBOL,
+                        field_index: gc_types::SYM_HASH,
+                    });
+                }
+                f.instruction(&Instruction::Else);
+                {
+                    // It's i31ref - use raw value WITHOUT decoding
+                    // This ensures sentinels (nil=0, false=2, true=4) don't overlap
+                    // with decoded numbers (0, 1, 2, etc.)
+                    f.instruction(&Instruction::LocalGet(scratch));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                    f.instruction(&Instruction::I31GetS);
+                    // NO shift right - use raw tagged value
+                }
+                f.instruction(&Instruction::End);
+            }
+            f.instruction(&Instruction::End);
+        }
+        f.instruction(&Instruction::End);
+    }
+
+    /// Generate code to unwrap an integer to i64.
+    ///
+    /// Input: eqref on stack (either i31ref small int or INT64 struct)
+    /// Output: i64 on stack
+    ///
+    /// Handles both small integers (stored as i31ref) and large integers
+    /// (stored as INT64 struct).
+    fn generate_polymorphic_unwrap_i64(&self, f: &mut Function) {
+        use crate::ir::gc_types;
+
+        // Scratch local to store the value for testing
+        let scratch = self.scratch_local.get();
+
+        // Store value in scratch local
+        f.instruction(&Instruction::LocalSet(scratch));
+
+        // Test if it's INT64
+        f.instruction(&Instruction::LocalGet(scratch));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::INT64)));
+
+        // if (is INT64)
+        f.instruction(&Instruction::If(BlockType::Result(ValType::I64)));
+        {
+            // Extract i64 from INT64 struct
+            f.instruction(&Instruction::LocalGet(scratch));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::INT64)));
+            f.instruction(&Instruction::StructGet {
+                struct_type_index: gc_types::INT64,
+                field_index: gc_types::I64_VALUE,
+            });
+        }
+        f.instruction(&Instruction::Else);
+        {
+            // It's i31ref - decode: cast, get_s, shr 1, extend to i64
+            f.instruction(&Instruction::LocalGet(scratch));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+            f.instruction(&Instruction::I31GetS);
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::I32ShrS);
+            f.instruction(&Instruction::I64ExtendI32S);
         }
         f.instruction(&Instruction::End);
     }
@@ -374,9 +515,10 @@ impl<'a> CodeGen<'a> {
         // Function section - helper functions first, then user functions
         // Collection helpers (vector trie, HAMT) removed - now in core.sus
         let mut functions = FunctionSection::new();
-        // Runtime helper functions: just hash_string and get_type_id
+        // Runtime helper functions: hash_string, get_type_id, init_intern_tables
         functions.function(self.helper_type(helper_type_offsets::HASH_STRING));
         functions.function(self.helper_type(helper_type_offsets::GET_TYPE_ID));
+        functions.function(self.helper_type(helper_type_offsets::INIT_INTERN_TABLES));
         // User functions: closure/builtin wrappers use pre-defined types, others use type_offset
         let mut non_closure_type_idx = 0u32;
         for func in &self.ir.functions {
@@ -404,6 +546,9 @@ impl<'a> CodeGen<'a> {
         // Memory section (still needed for string data even in GC mode)
         self.emit_memory_section(&mut module);
 
+        // Global section - heap pointer, intern tables
+        self.emit_global_section(&mut module);
+
         // Export section
         let mut exports = ExportSection::new();
         exports.export("memory", ExportKind::Memory, 0);
@@ -416,6 +561,9 @@ impl<'a> CodeGen<'a> {
             }
         }
         module.section(&exports);
+
+        // Start section - initialize intern tables on module instantiation
+        self.emit_start_section(&mut module);
 
         // Element section - populate dispatch table with protocol implementations
         self.emit_element_section(&mut module);
@@ -601,9 +749,10 @@ impl<'a> CodeGen<'a> {
         // Closure/builtin wrappers use pre-defined CLOSURE_FN_* types
         // Other user functions use type indices starting at local_func_type_base
         let mut functions = FunctionSection::new();
-        // Helper functions (hash_string, get_type_id)
+        // Helper functions (hash_string, get_type_id, init_intern_tables)
         functions.function(type_base + helper_type_offsets::HASH_STRING);
         functions.function(type_base + helper_type_offsets::GET_TYPE_ID);
+        functions.function(type_base + helper_type_offsets::INIT_INTERN_TABLES);
         // User functions - closure wrappers use pre-defined types, others use unique types
         let mut non_closure_idx = 0u32;
         for func in &self.ir.functions {
@@ -648,8 +797,17 @@ impl<'a> CodeGen<'a> {
         }
         module.section(&exports);
 
+        // Start section - initialize intern tables on module instantiation
+        // Function index is num_imports + helper func index
+        module.section(&wasm_encoder::StartSection {
+            function_index: num_imports + helper_funcs::INIT_INTERN_TABLES,
+        });
+
         // Element section - populate dispatch table
         self.emit_element_section(&mut module);
+
+        // Data count section (required before code section for array.new_data)
+        self.emit_data_count_section(&mut module);
 
         // Code section - helper functions first, then user functions
         let mut code = CodeSection::new();
@@ -688,7 +846,17 @@ impl<'a> CodeGen<'a> {
     }
 
     fn emit_global_section(&self, module: &mut WasmModule) {
+        use crate::ir::global_indices;
+
         let mut globals = GlobalSection::new();
+
+        // eqref type for intern table globals
+        let eqref_heap = HeapType::Abstract {
+            shared: false,
+            ty: AbstractHeapType::Eq,
+        };
+
+        // Global 0: heap_ptr (i32, mutable) - for linear memory allocation
         globals.global(
             GlobalType {
                 val_type: ValType::I32,
@@ -697,7 +865,49 @@ impl<'a> CodeGen<'a> {
             },
             &wasm_encoder::ConstExpr::i32_const(0),
         );
+        debug_assert_eq!(global_indices::HEAP_PTR, 0);
+
+        // Global 1: keyword_table (eqref, mutable) - array of interned keywords
+        // Initialized to null, populated by start function
+        globals.global(
+            GlobalType {
+                val_type: ValType::Ref(RefType {
+                    nullable: true,
+                    heap_type: eqref_heap,
+                }),
+                mutable: true,
+                shared: false,
+            },
+            &wasm_encoder::ConstExpr::ref_null(eqref_heap),
+        );
+        debug_assert_eq!(global_indices::KEYWORD_TABLE, 1);
+
+        // Global 2: symbol_table (eqref, mutable) - array of interned symbols
+        // Initialized to null, populated by start function
+        globals.global(
+            GlobalType {
+                val_type: ValType::Ref(RefType {
+                    nullable: true,
+                    heap_type: eqref_heap,
+                }),
+                mutable: true,
+                shared: false,
+            },
+            &wasm_encoder::ConstExpr::ref_null(eqref_heap),
+        );
+        debug_assert_eq!(global_indices::SYMBOL_TABLE, 2);
+
         module.section(&globals);
+    }
+
+    /// Emit the start section to initialize intern tables on module instantiation.
+    ///
+    /// The start function is init_intern_tables (helper func index 2).
+    /// In the no-imports code path, function index = helper func index.
+    fn emit_start_section(&self, module: &mut WasmModule) {
+        module.section(&wasm_encoder::StartSection {
+            function_index: helper_funcs::INIT_INTERN_TABLES,
+        });
     }
 
     /// Emit the data count section (required before code section for array.new_data)
@@ -732,17 +942,34 @@ impl<'a> CodeGen<'a> {
     /// - 5 primitive type slots (0-4)
     /// - N deftype slots (5 to 5+N-1)
     /// - Total slots = 5 + num_deftypes
-    /// - Table size = (5 + num_deftypes) * NUM_BUILTIN
+    /// - Table size = (5 + num_deftypes) * methods_per_type
     ///
     /// Table index 0 is used for the dispatch table.
     fn emit_table_section(&self, module: &mut WasmModule) {
-        use crate::ir::method_ids;
+        use crate::ir::dispatch_table;
 
-        // Calculate dynamic table size based on number of deftypes
+        // Calculate table size based on the maximum dispatch index that will be used.
+        // The index formula is: dispatch_slot * methods_per_type + method_id
+        // methods_per_type is calculated during lowering as max_method_id + 1.
         const PRIMITIVE_SLOTS: u32 = 5; // slots 0-4 for INT64, FLOAT64, STRING, ARRAY, I32_ARRAY
         let num_deftype_slots = self.ir.deftypes.len() as u32;
         let total_slots = PRIMITIVE_SLOTS + num_deftype_slots;
-        let table_size = total_slots * method_ids::NUM_BUILTIN;
+
+        // Use dynamic methods_per_type from lowering (accommodates user-defined protocols)
+        let methods_per_type = self.ir.methods_per_type;
+        let default_size = total_slots * methods_per_type;
+
+        // Find the maximum actual index that will be used
+        let max_index = self
+            .ir
+            .dispatch_entries
+            .iter()
+            .map(|e| dispatch_table::index(e.dispatch_slot, e.method_id, methods_per_type))
+            .max()
+            .unwrap_or(0);
+
+        // Table size must accommodate the maximum index + 1
+        let table_size = (max_index + 1).max(default_size);
 
         let mut tables = TableSection::new();
         tables.table(TableType {
@@ -758,7 +985,7 @@ impl<'a> CodeGen<'a> {
     /// Emit the element section to populate the dispatch table.
     ///
     /// Registers protocol implementations at their computed slot indices:
-    /// - index = dispatch_slot * NUM_BUILTIN + method_id
+    /// - index = dispatch_slot * methods_per_type + method_id
     ///
     /// Slot mapping (set by lowerer):
     /// - Primitive types: slots 0-4
@@ -768,6 +995,7 @@ impl<'a> CodeGen<'a> {
         use std::borrow::Cow;
 
         let mut elements = ElementSection::new();
+        let methods_per_type = self.ir.methods_per_type;
 
         // =========================================================================
         // Protocol dispatch table entries
@@ -779,7 +1007,7 @@ impl<'a> CodeGen<'a> {
         // User-defined protocol implementations from extend-type
         for entry in &self.ir.dispatch_entries {
             // dispatch_slot is already set correctly by the lowerer
-            let table_idx = dispatch_table::index(entry.dispatch_slot, entry.method_id);
+            let table_idx = dispatch_table::index(entry.dispatch_slot, entry.method_id, methods_per_type);
             // User-defined protocol methods use user_func_idx because they're lowered as regular functions
             let func_idx = self.user_func_idx(entry.func_idx);
             elements.active(
@@ -797,18 +1025,14 @@ impl<'a> CodeGen<'a> {
         // - "$variadic_" prefixed: wrappers for variadic builtins (+, *, -, /)
         // - "$userfn_" prefixed: wrappers for user-defined functions used with #'var
         // - "$protocol_" prefixed: protocol method implementations from extend-type
+        // Declare ALL user functions so they can be used with ref.func for closures.
+        // Any user function might be used as a first-class value (passed to another function),
+        // which requires ref.func. WASM requires all ref.func targets to be declared.
         let closure_func_indices: Vec<u32> = self
             .ir
             .functions
             .iter()
             .enumerate()
-            .filter(|(_, f)| {
-                f.name.starts_with("$closure_")
-                    || f.name.starts_with("$builtin_")
-                    || f.name.starts_with("$variadic_")
-                    || f.name.starts_with("$userfn_")
-                    || f.name.starts_with("$protocol_")
-            })
             .map(|(idx, _)| self.user_func_idx(idx as u32))
             .collect();
 
@@ -1018,10 +1242,19 @@ impl<'a> CodeGen<'a> {
         // Interned keywords with pre-computed hash for O(1) map operations
         // =========================================================================
 
-        // Type 23: KEYWORD - struct { type_id: i32, hash: i32, name_idx: i32 }
+        // Type 23: KEYWORD - struct { type_id: i32, hash: i32, ns: (ref null STRING), name: (ref STRING) }
         // - type_id: For protocol dispatch (always type_ids::KEYWORD)
         // - hash: Pre-computed xxHash32 of the keyword string
-        // - name_idx: Index into module's keyword table
+        // - ns: Namespace string (or null if no namespace)
+        // - name: Name string
+        let nullable_string_ref = RefType {
+            nullable: true,
+            heap_type: HeapType::Concrete(gc_types::STRING),
+        };
+        let string_ref = RefType {
+            nullable: false,
+            heap_type: HeapType::Concrete(gc_types::STRING),
+        };
         types.ty().struct_(vec![
             type_id_field.clone(),
             FieldType {
@@ -1029,7 +1262,11 @@ impl<'a> CodeGen<'a> {
                 mutable: false,
             },
             FieldType {
-                element_type: StorageType::Val(ValType::I32),
+                element_type: StorageType::Val(ValType::Ref(nullable_string_ref)),
+                mutable: false,
+            },
+            FieldType {
+                element_type: StorageType::Val(ValType::Ref(string_ref)),
                 mutable: false,
             },
         ]);
@@ -1040,11 +1277,11 @@ impl<'a> CodeGen<'a> {
         // First-class symbols with namespace support and pre-computed hash
         // =========================================================================
 
-        // Type 24: SYMBOL - struct { type_id: i32, hash: i32, ns_idx: i32, name_idx: i32 }
+        // Type 24: SYMBOL - struct { type_id: i32, hash: i32, ns: (ref null STRING), name: (ref STRING) }
         // - type_id: For protocol dispatch (always type_ids::SYMBOL)
         // - hash: Pre-computed xxHash32 of the symbol string
-        // - ns_idx: -1 for no namespace, else index into string table
-        // - name_idx: Index into string table for the symbol name
+        // - ns: Namespace string (or null if no namespace)
+        // - name: Name string
         types.ty().struct_(vec![
             type_id_field.clone(),
             FieldType {
@@ -1052,11 +1289,11 @@ impl<'a> CodeGen<'a> {
                 mutable: false,
             },
             FieldType {
-                element_type: StorageType::Val(ValType::I32),
+                element_type: StorageType::Val(ValType::Ref(nullable_string_ref)),
                 mutable: false,
             },
             FieldType {
-                element_type: StorageType::Val(ValType::I32),
+                element_type: StorageType::Val(ValType::Ref(string_ref)),
                 mutable: false,
             },
         ]);
@@ -1088,6 +1325,36 @@ impl<'a> CodeGen<'a> {
             },
         ]);
         debug_assert_eq!(gc_types::VAR, 25);
+
+        // =========================================================================
+        // Intern Tables (26-27)
+        // Array types for keyword/symbol interning with hash-based lookup
+        // NOTE: Currently unused - reserved for runtime (keyword "name") support
+        // =========================================================================
+
+        // Type 26: KEYWORD_INTERN_TABLE - array<(ref null KEYWORD)>
+        // Hash table for interned keywords using open addressing
+        let nullable_keyword_ref = RefType {
+            nullable: true,
+            heap_type: HeapType::Concrete(gc_types::KEYWORD),
+        };
+        types.ty().array(
+            &StorageType::Val(ValType::Ref(nullable_keyword_ref)),
+            true, // mutable for setting entries
+        );
+        debug_assert_eq!(gc_types::KEYWORD_INTERN_TABLE, 26);
+
+        // Type 27: SYMBOL_INTERN_TABLE - array<(ref null SYMBOL)>
+        // Hash table for interned symbols using open addressing
+        let nullable_symbol_ref = RefType {
+            nullable: true,
+            heap_type: HeapType::Concrete(gc_types::SYMBOL),
+        };
+        types.ty().array(
+            &StorageType::Val(ValType::Ref(nullable_symbol_ref)),
+            true, // mutable for setting entries
+        );
+        debug_assert_eq!(gc_types::SYMBOL_INTERN_TABLE, 27);
 
         // =========================================================================
         // User-Defined Types (from deftype)
@@ -1125,7 +1392,8 @@ impl<'a> CodeGen<'a> {
     /// These come after GC types but before protocol function types.
     /// Order must match helper_types module constants.
     ///
-    /// NOTE: Reduced to 2 types - vector and HAMT helpers are now in core.sus.
+    /// NOTE: Helper types: hash_string, get_type_id, init_intern_tables.
+    /// Vector and HAMT helpers are now in core.sus.
     fn emit_helper_types(&self, types: &mut TypeSection) {
         let eqref = ValType::Ref(RefType::EQREF);
 
@@ -1140,7 +1408,9 @@ impl<'a> CodeGen<'a> {
         // Takes any GC value, returns its type ID
         types.ty().function(vec![eqref], vec![ValType::I32]);
 
-        // Vector trie and HAMT helper types removed - now defined via defn in core.sus
+        // Type 2: $init_intern_tables: () -> ()
+        // Start function that initializes keyword/symbol intern tables
+        types.ty().function(vec![], vec![]);
     }
 
     /// Emit function types for protocol methods.
@@ -1170,15 +1440,18 @@ impl<'a> CodeGen<'a> {
     ///
     /// These come before user functions in the code section.
     fn emit_helper_functions(&self, code: &mut CodeSection) -> CompileResult<()> {
-        // Only 2 runtime helpers remain - collection algorithms are now in core.sus
+        // 3 runtime helpers - collection algorithms are now in core.sus
 
-        // $hash_string - xxHash32 for string hashing
+        // $hash_string - xxHash32 for string hashing (func 0 after imports)
         code.function(&self.generate_hash_string_func());
 
-        // $get_type_id - runtime type dispatch
+        // $get_type_id - runtime type dispatch (func 1 after imports)
         code.function(&self.generate_get_type_id_func());
 
-        // Vector trie and HAMT helpers removed - now in core.sus
+        // $init_intern_tables - initialize keyword/symbol intern tables (func 2 after imports)
+        // Called by WASM start section on module instantiation
+        code.function(&self.generate_init_intern_tables_func());
+
         Ok(())
     }
 
@@ -1390,6 +1663,156 @@ impl<'a> CodeGen<'a> {
         f
     }
 
+    /// Generate $init_intern_tables function - initialize keyword/symbol intern tables.
+    ///
+    /// Signature: () -> ()
+    ///
+    /// Called by WASM start section on module instantiation.
+    /// Creates arrays of pre-built keyword/symbol structs and stores them in globals.
+    fn generate_init_intern_tables_func(&self) -> Function {
+        use crate::ir::{gc_types, global_indices, type_ids};
+
+        let locals = vec![];
+        let mut f = Function::new(locals);
+
+        let num_keywords = self.ir.keywords.len() as u32;
+        let num_symbols = self.ir.symbols.len() as u32;
+
+        // Helper to find string index by content
+        let find_string_idx = |s: &str| -> Option<u32> {
+            self.ir.strings.iter().position(|x| x == s).map(|i| i as u32)
+        };
+
+        // Create keyword array and populate it
+        if num_keywords > 0 {
+            // Stack will have: [kw_struct_0, kw_struct_1, ..., kw_struct_n]
+            for (_idx, (ns_opt, name)) in self.ir.keywords.iter().enumerate() {
+                // Compute hash for this keyword
+                let full_name = if let Some(ns) = ns_opt {
+                    format!(":{}:{}", ns, name)
+                } else {
+                    format!(":{}", name)
+                };
+                let hash = gc_types::xxhash32(full_name.as_bytes());
+
+                // Create KEYWORD struct { type_id: i32, hash: i32, ns: (ref null STRING), name: (ref STRING) }
+                f.instruction(&Instruction::I32Const(type_ids::KEYWORD));
+                f.instruction(&Instruction::I32Const(hash));
+
+                // ns field - create string array or null
+                if let Some(ns) = ns_opt {
+                    if let Some(str_idx) = find_string_idx(ns) {
+                        let len = ns.len() as i32;
+                        f.instruction(&Instruction::I32Const(0));     // offset
+                        f.instruction(&Instruction::I32Const(len));   // length
+                        f.instruction(&Instruction::ArrayNewData {
+                            array_type_index: gc_types::STRING,
+                            array_data_index: str_idx,
+                        });
+                    } else {
+                        // Namespace not found in strings table - shouldn't happen
+                        f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::STRING)));
+                    }
+                } else {
+                    f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::STRING)));
+                }
+
+                // name field - create string array
+                if let Some(str_idx) = find_string_idx(name) {
+                    let len = name.len() as i32;
+                    f.instruction(&Instruction::I32Const(0));     // offset
+                    f.instruction(&Instruction::I32Const(len));   // length
+                    f.instruction(&Instruction::ArrayNewData {
+                        array_type_index: gc_types::STRING,
+                        array_data_index: str_idx,
+                    });
+                } else {
+                    // Name not found - create empty string as fallback
+                    f.instruction(&Instruction::ArrayNewFixed {
+                        array_type_index: gc_types::STRING,
+                        array_size: 0,
+                    });
+                }
+
+                f.instruction(&Instruction::StructNew(gc_types::KEYWORD));
+            }
+
+            // Create array from the stack of keyword structs
+            f.instruction(&Instruction::ArrayNewFixed {
+                array_type_index: gc_types::KEYWORD_INTERN_TABLE,
+                array_size: num_keywords,
+            });
+
+            // Store in global
+            f.instruction(&Instruction::GlobalSet(global_indices::KEYWORD_TABLE));
+        }
+
+        // Create symbol array and populate it
+        if num_symbols > 0 {
+            for (_idx, (ns_opt, name)) in self.ir.symbols.iter().enumerate() {
+                // Compute hash for this symbol (no leading colon)
+                let full_name = if let Some(ns) = ns_opt {
+                    format!("{}/{}", ns, name)
+                } else {
+                    name.clone()
+                };
+                let hash = gc_types::xxhash32(full_name.as_bytes());
+
+                // Create SYMBOL struct { type_id: i32, hash: i32, ns: (ref null STRING), name: (ref STRING) }
+                f.instruction(&Instruction::I32Const(type_ids::SYMBOL));
+                f.instruction(&Instruction::I32Const(hash));
+
+                // ns field - create string array or null
+                if let Some(ns) = ns_opt {
+                    if let Some(str_idx) = find_string_idx(ns) {
+                        let len = ns.len() as i32;
+                        f.instruction(&Instruction::I32Const(0));     // offset
+                        f.instruction(&Instruction::I32Const(len));   // length
+                        f.instruction(&Instruction::ArrayNewData {
+                            array_type_index: gc_types::STRING,
+                            array_data_index: str_idx,
+                        });
+                    } else {
+                        f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::STRING)));
+                    }
+                } else {
+                    f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::STRING)));
+                }
+
+                // name field - create string array
+                if let Some(str_idx) = find_string_idx(name) {
+                    let len = name.len() as i32;
+                    f.instruction(&Instruction::I32Const(0));     // offset
+                    f.instruction(&Instruction::I32Const(len));   // length
+                    f.instruction(&Instruction::ArrayNewData {
+                        array_type_index: gc_types::STRING,
+                        array_data_index: str_idx,
+                    });
+                } else {
+                    // Name not found - create empty string as fallback
+                    f.instruction(&Instruction::ArrayNewFixed {
+                        array_type_index: gc_types::STRING,
+                        array_size: 0,
+                    });
+                }
+
+                f.instruction(&Instruction::StructNew(gc_types::SYMBOL));
+            }
+
+            // Create array from the stack of symbol structs
+            f.instruction(&Instruction::ArrayNewFixed {
+                array_type_index: gc_types::SYMBOL_INTERN_TABLE,
+                array_size: num_symbols,
+            });
+
+            // Store in global
+            f.instruction(&Instruction::GlobalSet(global_indices::SYMBOL_TABLE));
+        }
+
+        f.instruction(&Instruction::End);
+        f
+    }
+
     // ========================================================================
 
     /// Generate code to create a new persistent vector from elements.
@@ -1483,12 +1906,14 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::LocalSet(vec_local));
 
         // For remaining elements, call conj via protocol dispatch
-        let type_idx = self.protocol_type_index_for_method(method_ids::CONJ);
-        for elem in rest {
-            // Calculate dispatch table index: type_id * 10 + method_id
-            // For PersistentVector (type_id 8) and CONJ (method_id 4): 8 * 10 + 4 = 84
-            let dispatch_idx = gc_types::PERSISTENT_VECTOR as i32 * 10 + method_ids::CONJ as i32;
+        let type_idx = self.protocol_type_index_for_method(method_ids::CONJ, 2);
 
+        // Calculate dispatch table index: dispatch_slot * methods_per_type + method_id
+        let pv_slot = self.deftype_dispatch_slot("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
+        let dispatch_idx = dispatch_table::index(pv_slot, method_ids::CONJ, self.ir.methods_per_type) as i32;
+
+        for elem in rest {
             // Call -conj via dispatch table: takes (vec, val), returns new vec
             f.instruction(&Instruction::LocalGet(vec_local));
             self.generate_expr(elem, f)?;
@@ -2056,8 +2481,12 @@ impl<'a> CodeGen<'a> {
             // Array operations with proper WIT local offset handling
             Expr::ArrayLen(array) => {
                 self.generate_expr_wit(array, f, param_offset)?;
-                // Cast eqref to array type before array.len
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::ARRAY)));
+                // Cast eqref to abstract array type for array.len
+                // This works for any array type (STRING, ARRAY, I32_ARRAY)
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Abstract {
+                    shared: false,
+                    ty: AbstractHeapType::Array,
+                }));
                 f.instruction(&Instruction::ArrayLen);
                 // Box result as i31ref: (n << 1) | 1
                 f.instruction(&Instruction::I32Const(1));
@@ -2077,7 +2506,17 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::I31GetS);
                 f.instruction(&Instruction::I32Const(1));
                 f.instruction(&Instruction::I32ShrS);
-                f.instruction(&Instruction::ArrayGet(*type_idx));
+                // For STRING (array<i8>), use array.get_s for packed type, then box
+                if *type_idx == gc_types::STRING {
+                    f.instruction(&Instruction::ArrayGetS(*type_idx));
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Shl);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Or);
+                    f.instruction(&Instruction::RefI31);
+                } else {
+                    f.instruction(&Instruction::ArrayGet(*type_idx));
+                }
                 Ok(())
             }
             Expr::ArraySet { type_idx, array, index, value } => {
@@ -2094,6 +2533,13 @@ impl<'a> CodeGen<'a> {
                 // Duplicate value to return after set
                 let scratch = self.scratch_local.get();
                 f.instruction(&Instruction::LocalTee(scratch));
+                // For STRING (array<i8>), unbox the value to i32 before array.set
+                if *type_idx == gc_types::STRING {
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                    f.instruction(&Instruction::I31GetS);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32ShrS);
+                }
                 f.instruction(&Instruction::ArraySet(*type_idx));
                 // Return the value that was set
                 f.instruction(&Instruction::LocalGet(scratch));
@@ -2263,6 +2709,7 @@ impl<'a> CodeGen<'a> {
                 BinOp::Mul => { f.instruction(&Instruction::I32Mul); }
                 BinOp::Div => { f.instruction(&Instruction::I32DivS); }
                 BinOp::Rem => { f.instruction(&Instruction::I32RemS); }
+                BinOp::Quot => { f.instruction(&Instruction::I32DivS); }
                 // Bitwise operations
                 BinOp::BitAnd => { f.instruction(&Instruction::I32And); }
                 BinOp::BitOr => { f.instruction(&Instruction::I32Or); }
@@ -2440,25 +2887,28 @@ impl<'a> CodeGen<'a> {
                 });
             }
 
-            Expr::Keyword { idx, hash } => {
-                // Create KEYWORD struct { type_id: i32, hash: i32, name_idx: i32 }
-                f.instruction(&Instruction::I32Const(type_ids::KEYWORD));
-                f.instruction(&Instruction::I32Const(*hash));
+            Expr::Keyword { idx, hash: _ } => {
+                // Load interned KEYWORD from global intern table
+                // This ensures reference equality: same keyword literal = same object
+                use crate::ir::global_indices;
+                f.instruction(&Instruction::GlobalGet(global_indices::KEYWORD_TABLE));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::KEYWORD_INTERN_TABLE)));
                 f.instruction(&Instruction::I32Const(*idx as i32));
-                f.instruction(&Instruction::StructNew(gc_types::KEYWORD));
+                f.instruction(&Instruction::ArrayGet(gc_types::KEYWORD_INTERN_TABLE));
             }
 
             Expr::Symbol {
-                hash,
-                ns_str_idx,
+                hash: _,
+                ns_str_idx: _,
                 name_str_idx,
             } => {
-                // Create SYMBOL struct { type_id: i32, hash: i32, ns_idx: i32, name_idx: i32 }
-                f.instruction(&Instruction::I32Const(type_ids::SYMBOL));
-                f.instruction(&Instruction::I32Const(*hash));
-                f.instruction(&Instruction::I32Const(*ns_str_idx));
+                // Load interned SYMBOL from global intern table
+                // This ensures reference equality: same symbol literal = same object
+                use crate::ir::global_indices;
+                f.instruction(&Instruction::GlobalGet(global_indices::SYMBOL_TABLE));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::SYMBOL_INTERN_TABLE)));
                 f.instruction(&Instruction::I32Const(*name_str_idx as i32));
-                f.instruction(&Instruction::StructNew(gc_types::SYMBOL));
+                f.instruction(&Instruction::ArrayGet(gc_types::SYMBOL_INTERN_TABLE));
             }
 
             Expr::LocalGet { local, ty: _ } => {
@@ -2511,7 +2961,8 @@ impl<'a> CodeGen<'a> {
                     (BinOp::Sub, Type::I32) | (BinOp::Sub, Type::I64) |
                     (BinOp::Mul, Type::I32) | (BinOp::Mul, Type::I64) |
                     (BinOp::Div, Type::I32) | (BinOp::Div, Type::I64) |
-                    (BinOp::Rem, Type::I32) | (BinOp::Rem, Type::I64) => {
+                    (BinOp::Rem, Type::I32) | (BinOp::Rem, Type::I64) |
+                    (BinOp::Quot, Type::I32) | (BinOp::Quot, Type::I64) => {
                         // Reserve scratch locals for polymorphic unwrap
                         let scratch_base = self.scratch_local.get();
                         self.scratch_local.set(scratch_base + 5);
@@ -2538,6 +2989,7 @@ impl<'a> CodeGen<'a> {
                             BinOp::Mul => f.instruction(&Instruction::I32Mul),
                             BinOp::Div => f.instruction(&Instruction::I32DivS),
                             BinOp::Rem => f.instruction(&Instruction::I32RemS),
+                            BinOp::Quot => f.instruction(&Instruction::I32DivS),
                             _ => unreachable!(),
                         };
 
@@ -2613,7 +3065,9 @@ impl<'a> CodeGen<'a> {
                         f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
                     }
 
-                    // Comparison operations: polymorphic unwrap to handle INT64 from bit ops
+                    // Comparison operations: use raw i31 values to avoid sentinel/number collision
+                    // Numbers are encoded as (n << 1) | 1, sentinels are 0/2/4
+                    // Using raw values preserves both equality semantics and ordering
                     (BinOp::Eq, _) | (BinOp::Ne, _) | (BinOp::Lt, _) | (BinOp::Le, _) | (BinOp::Gt, _) | (BinOp::Ge, _) => {
                         // Reserve scratch locals for polymorphic unwrap
                         let scratch_base = self.scratch_local.get();
@@ -2623,12 +3077,12 @@ impl<'a> CodeGen<'a> {
 
                         // Generate right first, store it
                         self.generate_expr_inner(right, f, loop_depth, param_offset)?;
-                        self.generate_polymorphic_unwrap_i32(f);
+                        self.generate_polymorphic_unwrap_i32_for_compare(f);
                         f.instruction(&Instruction::LocalSet(right_i32_local));
 
                         // Generate left (stays on stack)
                         self.generate_expr_inner(left, f, loop_depth, param_offset)?;
-                        self.generate_polymorphic_unwrap_i32(f);
+                        self.generate_polymorphic_unwrap_i32_for_compare(f);
 
                         // Get right from local
                         f.instruction(&Instruction::LocalGet(right_i32_local));
@@ -3029,10 +3483,13 @@ impl<'a> CodeGen<'a> {
             // Set a mutable field in a struct
             // struct.set expects [ref, value] on stack, returns nothing
             // We return the value for expression chaining
-            Expr::StructSet { type_idx, field_idx, obj, value } => {
+            Expr::StructSet { type_idx, field_idx, field_type, obj, value } => {
+                use crate::ir::FieldType;
+
                 // Use scratch to save the value for return
                 // Reserve full 5-slot group so inner expressions get clean scratch space
                 let scratch = self.scratch_local.get();
+                let scratch_i32 = scratch + 1;  // For i32 values
                 self.scratch_local.set(scratch + 5);
 
                 // First: generate struct reference (goes on stack first for struct.set)
@@ -3040,18 +3497,33 @@ impl<'a> CodeGen<'a> {
                 // Cast to specific struct type
                 f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
 
-                // Second: generate value and save for return
+                // Second: generate value
                 self.generate_expr(value, f)?;
-                f.instruction(&Instruction::LocalTee(scratch));
 
-                // Stack is now [ref, value] - correct order for struct.set
-                f.instruction(&Instruction::StructSet {
-                    struct_type_index: *type_idx,
-                    field_index: *field_idx,
-                });
-
-                // Return the value that was set
-                f.instruction(&Instruction::LocalGet(scratch));
+                // For i32 fields, unbox the value before struct.set
+                if *field_type == FieldType::I32 {
+                    // Save boxed value for return
+                    f.instruction(&Instruction::LocalTee(scratch));
+                    // Unbox to i32
+                    self.generate_polymorphic_unwrap_i32(f);
+                    // Save unboxed i32 for struct.set
+                    f.instruction(&Instruction::LocalTee(scratch_i32));
+                    // struct.set with i32 value
+                    f.instruction(&Instruction::StructSet {
+                        struct_type_index: *type_idx,
+                        field_index: *field_idx,
+                    });
+                    // Return the boxed value
+                    f.instruction(&Instruction::LocalGet(scratch));
+                } else {
+                    // For eqref fields, just save and use directly
+                    f.instruction(&Instruction::LocalTee(scratch));
+                    f.instruction(&Instruction::StructSet {
+                        struct_type_index: *type_idx,
+                        field_index: *field_idx,
+                    });
+                    f.instruction(&Instruction::LocalGet(scratch));
+                }
 
                 self.scratch_local.set(scratch);
             }
@@ -3104,10 +3576,13 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::ArrayLen(array) => {
-                use crate::ir::gc_types;
                 self.generate_expr(array, f)?;
-                // Cast eqref to array type before array.len
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::ARRAY)));
+                // Cast eqref to abstract array type for array.len
+                // This works for any array type (STRING, ARRAY, I32_ARRAY)
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Abstract {
+                    shared: false,
+                    ty: AbstractHeapType::Array,
+                }));
                 f.instruction(&Instruction::ArrayLen);
                 // Box result as i31ref: (n << 1) | 1
                 f.instruction(&Instruction::I32Const(1));
@@ -3131,7 +3606,17 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::I31GetS);
                 f.instruction(&Instruction::I32Const(1));
                 f.instruction(&Instruction::I32ShrS); // Decode tagged value
-                f.instruction(&Instruction::ArrayGet(*type_idx));
+                // For STRING (array<i8>), use array.get_s for packed type, then box
+                if *type_idx == gc_types::STRING {
+                    f.instruction(&Instruction::ArrayGetS(*type_idx));
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Shl);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Or);
+                    f.instruction(&Instruction::RefI31);
+                } else {
+                    f.instruction(&Instruction::ArrayGet(*type_idx));
+                }
             }
 
             Expr::ArraySet {
@@ -3153,6 +3638,13 @@ impl<'a> CodeGen<'a> {
                 // Duplicate value to return after set
                 let scratch = self.scratch_local.get();
                 f.instruction(&Instruction::LocalTee(scratch));
+                // For STRING (array<i8>), unbox the value to i32 before array.set
+                if *type_idx == gc_types::STRING {
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                    f.instruction(&Instruction::I31GetS);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32ShrS);
+                }
                 f.instruction(&Instruction::ArraySet(*type_idx));
                 // Return the value that was set
                 f.instruction(&Instruction::LocalGet(scratch));
@@ -3343,6 +3835,126 @@ impl<'a> CodeGen<'a> {
             Expr::RefIsNull(value) => {
                 self.generate_expr(value, f)?;
                 f.instruction(&Instruction::RefIsNull);
+            }
+
+            Expr::IntCheck(value) => {
+                // Check if value is an integer:
+                // - i31ref with number tag (low bit = 1 after i31.get_s)
+                // - OR INT64 struct
+                let scratch = self.scratch_local.get();
+
+                self.generate_expr(value, f)?;
+                f.instruction(&Instruction::LocalSet(scratch));
+
+                // First check if it's an i31ref
+                f.instruction(&Instruction::LocalGet(scratch));
+                f.instruction(&Instruction::RefTestNonNull(HeapType::I31));
+                f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
+
+                // It's an i31ref - check if it has number tag (low bit = 1)
+                f.instruction(&Instruction::LocalGet(scratch));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32And);
+                // Result is 1 (true) if number tag, 0 (false) otherwise
+
+                f.instruction(&Instruction::Else);
+                // Not i31ref - check if it's INT64 struct
+                f.instruction(&Instruction::LocalGet(scratch));
+                f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::INT64)));
+                f.instruction(&Instruction::End);
+
+                // Convert i32 boolean to sentinel
+                f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::Ref(
+                    RefType::EQREF,
+                ))));
+                f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                f.instruction(&Instruction::Else);
+                f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                f.instruction(&Instruction::End);
+            }
+
+            Expr::FloatCheck(value) => {
+                // Check if value is a float (FLOAT64 struct)
+                self.generate_expr(value, f)?;
+                f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::FLOAT64)));
+                // Convert i32 boolean to sentinel
+                f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::Ref(
+                    RefType::EQREF,
+                ))));
+                f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                f.instruction(&Instruction::Else);
+                f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                f.instruction(&Instruction::End);
+            }
+
+            Expr::StringCheck(value) => {
+                // Check if value is a string (STRING array)
+                self.generate_expr(value, f)?;
+                f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::STRING)));
+                // Convert i32 boolean to sentinel
+                f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::Ref(
+                    RefType::EQREF,
+                ))));
+                f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                f.instruction(&Instruction::Else);
+                f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                f.instruction(&Instruction::End);
+            }
+
+            Expr::F64Trunc(value) => {
+                // Truncate f64 toward zero
+                // First put type_id for result struct
+                f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
+                // Generate and unbox input
+                self.generate_expr(value, f)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
+                f.instruction(&Instruction::StructGet {
+                    struct_type_index: gc_types::FLOAT64,
+                    field_index: gc_types::F64_VALUE,
+                });
+                // Truncate
+                f.instruction(&Instruction::F64Trunc);
+                // Box result
+                f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
+            }
+
+            Expr::F64ToI64(value) => {
+                // Convert f64 to i64 (saturating)
+                // First put type_id for result struct
+                f.instruction(&Instruction::I32Const(type_ids::INT64));
+                // Generate and unbox input
+                self.generate_expr(value, f)?;
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
+                f.instruction(&Instruction::StructGet {
+                    struct_type_index: gc_types::FLOAT64,
+                    field_index: gc_types::F64_VALUE,
+                });
+                // Convert to i64
+                f.instruction(&Instruction::I64TruncSatF64S);
+                // Box result
+                f.instruction(&Instruction::StructNew(gc_types::INT64));
+            }
+
+            Expr::I64ToF64(value) => {
+                // Convert i64 to f64
+                // First put type_id for result struct
+                f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
+                // Generate and unbox input (could be INT64 struct or small int i31ref)
+                self.generate_expr(value, f)?;
+                // Use polymorphic unwrap to handle both INT64 struct and i31ref small ints
+                self.generate_polymorphic_unwrap_i64(f);
+                // Convert to f64
+                f.instruction(&Instruction::F64ConvertI64S);
+                // Box result
+                f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
             }
 
             Expr::Identical(left, right) => {
@@ -4064,31 +4676,41 @@ impl<'a> CodeGen<'a> {
         self.scratch_local.set(scratch_base + 1);
         f.instruction(&Instruction::LocalSet(val_local));
 
-        // Check if it's a SYMBOL
+        // Check if it's a KEYWORD
         f.instruction(&Instruction::LocalGet(val_local));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::KEYWORD)));
         f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(eqref))));
         {
-            // It's a SYMBOL - extract name_str_idx and create string reference
-            // For now, return nil as a placeholder (proper string lookup needs runtime support)
+            // It's a KEYWORD - extract name field (ref STRING)
             f.instruction(&Instruction::LocalGet(val_local));
-            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::KEYWORD)));
             f.instruction(&Instruction::StructGet {
-                struct_type_index: gc_types::SYMBOL,
-                field_index: gc_types::SYM_NAME_IDX,
+                struct_type_index: gc_types::KEYWORD,
+                field_index: gc_types::KW_NAME,
             });
-            // The name_str_idx is an index into the string table (data section)
-            // For proper implementation, we'd need to create the string array from data
-            // For now, just return nil
-            f.instruction(&Instruction::Drop);
-            f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-            f.instruction(&Instruction::RefI31);
         }
         f.instruction(&Instruction::Else);
         {
-            // Not a symbol - return nil
-            f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-            f.instruction(&Instruction::RefI31);
+            // Check if it's a SYMBOL
+            f.instruction(&Instruction::LocalGet(val_local));
+            f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+            f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(eqref))));
+            {
+                // It's a SYMBOL - extract name field (ref STRING)
+                f.instruction(&Instruction::LocalGet(val_local));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+                f.instruction(&Instruction::StructGet {
+                    struct_type_index: gc_types::SYMBOL,
+                    field_index: gc_types::SYM_NAME,
+                });
+            }
+            f.instruction(&Instruction::Else);
+            {
+                // Not a keyword or symbol - return nil
+                f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+            }
+            f.instruction(&Instruction::End);
         }
         f.instruction(&Instruction::End);
 
@@ -4113,40 +4735,81 @@ impl<'a> CodeGen<'a> {
         self.scratch_local.set(scratch_base + 1);
         f.instruction(&Instruction::LocalSet(val_local));
 
-        // Check if it's a SYMBOL
+        // Check if it's a KEYWORD
         f.instruction(&Instruction::LocalGet(val_local));
-        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::KEYWORD)));
         f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(eqref))));
         {
-            // It's a SYMBOL - check ns_str_idx
+            // It's a KEYWORD - extract ns field (ref null STRING)
+            // The field is nullable, so check if it's null
             f.instruction(&Instruction::LocalGet(val_local));
-            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::KEYWORD)));
             f.instruction(&Instruction::StructGet {
-                struct_type_index: gc_types::SYMBOL,
-                field_index: gc_types::SYM_NS_IDX,
+                struct_type_index: gc_types::KEYWORD,
+                field_index: gc_types::KW_NS,
             });
-            // ns_str_idx is -1 if no namespace
-            f.instruction(&Instruction::I32Const(-1));
-            f.instruction(&Instruction::I32Eq);
+            // Result is already (ref null STRING) - if null, it stays null which is fine for returning nil
+            // But we need to convert null to proper nil sentinel
+            f.instruction(&Instruction::RefIsNull);
             f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(eqref))));
             {
-                // No namespace - return nil
+                // Namespace is null - return nil
                 f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
                 f.instruction(&Instruction::RefI31);
             }
             f.instruction(&Instruction::Else);
             {
-                // Has namespace - for now return nil (proper string lookup needs runtime)
-                f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-                f.instruction(&Instruction::RefI31);
+                // Namespace is non-null - return it
+                f.instruction(&Instruction::LocalGet(val_local));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::KEYWORD)));
+                f.instruction(&Instruction::StructGet {
+                    struct_type_index: gc_types::KEYWORD,
+                    field_index: gc_types::KW_NS,
+                });
             }
             f.instruction(&Instruction::End);
         }
         f.instruction(&Instruction::Else);
         {
-            // Not a symbol - return nil
-            f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-            f.instruction(&Instruction::RefI31);
+            // Check if it's a SYMBOL
+            f.instruction(&Instruction::LocalGet(val_local));
+            f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+            f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(eqref))));
+            {
+                // It's a SYMBOL - extract ns field (ref null STRING)
+                f.instruction(&Instruction::LocalGet(val_local));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+                f.instruction(&Instruction::StructGet {
+                    struct_type_index: gc_types::SYMBOL,
+                    field_index: gc_types::SYM_NS,
+                });
+                // Check if null
+                f.instruction(&Instruction::RefIsNull);
+                f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(eqref))));
+                {
+                    // Namespace is null - return nil
+                    f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+                    f.instruction(&Instruction::RefI31);
+                }
+                f.instruction(&Instruction::Else);
+                {
+                    // Namespace is non-null - return it
+                    f.instruction(&Instruction::LocalGet(val_local));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::SYMBOL)));
+                    f.instruction(&Instruction::StructGet {
+                        struct_type_index: gc_types::SYMBOL,
+                        field_index: gc_types::SYM_NS,
+                    });
+                }
+                f.instruction(&Instruction::End);
+            }
+            f.instruction(&Instruction::Else);
+            {
+                // Not a keyword or symbol - return nil
+                f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+            }
+            f.instruction(&Instruction::End);
         }
         f.instruction(&Instruction::End);
 
@@ -5002,13 +5665,13 @@ impl<'a> CodeGen<'a> {
     /// Generate table-based protocol dispatch using call_indirect.
     ///
     /// This method uses the dispatch table for extensible protocol dispatch.
-    /// The table is indexed by: type_id * NUM_BUILTIN + method_id
+    /// The table is indexed by: type_id * methods_per_type + method_id
     ///
     /// Algorithm:
     /// 1. Evaluate and save args to scratch locals
     /// 2. Evaluate obj and save to scratch local
     /// 3. Call $get_type_id to get runtime type ID
-    /// 4. Calculate table index: type_id * NUM_BUILTIN + method_id
+    /// 4. Calculate table index: type_id * methods_per_type + method_id
     /// 5. Push obj and args back on stack
     /// 6. call_indirect (or return_call_indirect for tail position)
     ///
@@ -5062,15 +5725,16 @@ impl<'a> CodeGen<'a> {
             f.instruction(&Instruction::LocalGet(args_base + i as u32));
         }
 
-        // 5. Calculate table index: type_id * NUM_BUILTIN + method_id
+        // 5. Calculate table index: type_id * methods_per_type + method_id
         f.instruction(&Instruction::LocalGet(type_id_local));
-        f.instruction(&Instruction::I32Const(method_ids::NUM_BUILTIN as i32));
+        f.instruction(&Instruction::I32Const(self.ir.methods_per_type as i32));
         f.instruction(&Instruction::I32Mul);
         f.instruction(&Instruction::I32Const(method_id as i32));
         f.instruction(&Instruction::I32Add);
 
-        // 6. Get the correct type index for this method
-        let type_idx = self.protocol_type_index_for_method(method_id);
+        // 6. Get the correct type index for this method (arity = obj + method args)
+        let arity = args.len() + 1;
+        let type_idx = self.protocol_type_index_for_method(method_id, arity);
 
         // 7. call_indirect or return_call_indirect
         let returns_i32 = matches!(method_id, method_ids::COUNT | method_ids::HASH | method_ids::EQUIV);
@@ -5142,15 +5806,16 @@ impl<'a> CodeGen<'a> {
             f.instruction(&Instruction::LocalGet(args_base + i));
         }
 
-        // Calculate table index: type_id * NUM_BUILTIN + method_id
+        // Calculate table index: type_id * methods_per_type + method_id
         f.instruction(&Instruction::LocalGet(type_id_local));
-        f.instruction(&Instruction::I32Const(method_ids::NUM_BUILTIN as i32));
+        f.instruction(&Instruction::I32Const(self.ir.methods_per_type as i32));
         f.instruction(&Instruction::I32Mul);
         f.instruction(&Instruction::I32Const(method_id as i32));
         f.instruction(&Instruction::I32Add);
 
-        // Get the correct type index and call_indirect
-        let type_idx = self.protocol_type_index_for_method(method_id);
+        // Get the correct type index and call_indirect (arity = obj + extra args)
+        let arity = (num_args + 1) as usize;
+        let type_idx = self.protocol_type_index_for_method(method_id, arity);
         f.instruction(&Instruction::CallIndirect {
             type_index: type_idx,
             table_index: dispatch_table::TABLE_INDEX,
@@ -5160,9 +5825,12 @@ impl<'a> CodeGen<'a> {
         Ok(())
     }
 
-    /// Get the protocol function type index for a method ID.
-    /// This maps method_id to the correct type signature for call_indirect.
-    fn protocol_type_index_for_method(&self, method_id: u32) -> u32 {
+    /// Get the protocol function type index for a method ID and arity.
+    /// This maps (method_id, arity) to the correct type signature for call_indirect.
+    ///
+    /// For built-in methods, the arity is ignored (they have fixed signatures).
+    /// For user-defined methods (method_id >= USER_START), the arity is used.
+    fn protocol_type_index_for_method(&self, method_id: u32, arity: usize) -> u32 {
         use crate::ir::method_ids;
 
         let offset = match method_id {
@@ -5176,7 +5844,18 @@ impl<'a> CodeGen<'a> {
             method_ids::SEQ => protocol_type_offsets::ARITY_1_REF,     // (coll) -> seq
             method_ids::HASH => protocol_type_offsets::ARITY_1_I32,    // (value) -> i32
             method_ids::EQUIV => protocol_type_offsets::ARITY_2_I32,   // (a, b) -> bool
-            _ => protocol_type_offsets::ARITY_1_REF,                   // Default for user methods
+            _ => {
+                // User-defined methods: use arity to determine type
+                // arity includes 'this' parameter, so total params = arity
+                match arity {
+                    1 => protocol_type_offsets::ARITY_1_REF,
+                    2 => protocol_type_offsets::ARITY_2_REF,
+                    3 => protocol_type_offsets::ARITY_3_REF,
+                    // For higher arities, we'd need to add more type definitions.
+                    // For now, fall back to arity 1 (will cause type mismatch at runtime).
+                    _ => protocol_type_offsets::ARITY_1_REF,
+                }
+            }
         };
         self.protocol_type(offset)
     }

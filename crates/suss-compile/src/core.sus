@@ -1626,3 +1626,191 @@
   [coll]
   (-distinct-step coll #{}))
 
+;; Printing Infrastructure
+
+(defprotocol IWriter
+  (-write [writer s])
+  (-flush [writer]))
+
+(deftype StringBuffer [^:mutable sb-arr ^:mutable ^i32 sb-len ^:mutable ^i32 sb-cap])
+
+(defn string-buffer [n]
+  (->StringBuffer (make-string n) 0 n))
+
+(defn -sb-ensure-capacity [sb needed]
+  (let [current-len (.-sb-len sb)
+        current-cap (.-sb-cap sb)
+        required (+ current-len needed)]
+    (when (> required current-cap)
+      (let [new-cap (if (> (* 2 current-cap) required) (* 2 current-cap) required)
+            new-arr (make-string new-cap)
+            old-arr (.-sb-arr sb)]
+        (scopy new-arr 0 old-arr 0 current-len)
+        (set! (.-sb-arr sb) new-arr)
+        (set! (.-sb-cap sb) new-cap)))))
+
+(defn -sb-append-str [sb s]
+  (let [slen (alength s)]
+    (when (> slen 0)
+      (-sb-ensure-capacity sb slen)
+      (let [arr (.-sb-arr sb)
+            len (.-sb-len sb)]
+        (scopy arr len s 0 slen)
+        (set! (.-sb-len sb) (+ len slen))))))
+
+(defn -sb->str [sb]
+  (let [len (.-sb-len sb)
+        result (make-string len)
+        arr (.-sb-arr sb)]
+    (scopy result 0 arr 0 len)
+    result))
+
+(deftype StringBufferWriter [sb])
+
+(extend-type StringBufferWriter
+  IWriter
+  (-write [w s] (-sb-append-str (.-sb w) s) nil)
+  (-flush [w] nil))
+
+(defn string-buffer-writer [capacity]
+  (->StringBufferWriter (string-buffer capacity)))
+
+(defn int->str [n]
+  (if (= n 0)
+    "0"
+    (let [is-neg (< n 0)
+          abs-n (if is-neg (- 0 n) n)
+          buf (make-string 21)]
+      (loop [num abs-n pos 20]
+        (if (= num 0)
+          (let [start (if is-neg (do (sset buf pos 45) pos) (+ pos 1))
+                len (- 21 start)
+                result (make-string len)]
+            (scopy result 0 buf start len)
+            result)
+          (let [digit (rem num 10)
+                char-code (+ 48 digit)]
+            (sset buf pos char-code)
+            (recur (quot num 10) (- pos 1))))))))
+
+(defn float->str [n]
+  (int->str (f64->i64 n)))
+
+(defprotocol IPrintWithWriter
+  (-pr-writer [obj writer opts]))
+
+(defn pr-sequential-writer [writer print-one begin sep end opts coll]
+  (-write writer begin)
+  (when-let [s (seq coll)]
+    (print-one (first s) writer opts)
+    (loop [xs (next s)]
+      (when xs
+        (-write writer sep)
+        (print-one (first xs) writer opts)
+        (recur (next xs)))))
+  (-write writer end))
+
+(defn pr-writer [obj writer opts]
+  (cond
+    ;; Primitive types handled inline (not protocol-dispatched)
+    (nil? obj) (-write writer "nil")
+    (= obj true) (-write writer "true")
+    (= obj false) (-write writer "false")
+    (int? obj) (-write writer (int->str obj))
+    (string? obj) (-write writer obj)
+    (keyword? obj) (do
+                     (-write writer ":")
+                     (when-let [ns (namespace obj)]
+                       (-write writer ns)
+                       (-write writer "/"))
+                     (-write writer (name obj)))
+    (symbol? obj) (do
+                    (when-let [ns (namespace obj)]
+                      (-write writer ns)
+                      (-write writer "/"))
+                    (-write writer (name obj)))
+    ;; Collection types use IPrintWithWriter protocol dispatch
+    (instance? PersistentVector obj) (-pr-writer obj writer opts)
+    (instance? Cons obj) (-pr-writer obj writer opts)
+    (instance? IndexedSeq obj) (-pr-writer obj writer opts)
+    (instance? LazySeq obj) (-pr-writer obj writer opts)
+    (instance? PersistentMap obj) (-pr-writer obj writer opts)
+    (instance? PersistentSet obj) (-pr-writer obj writer opts)
+    (instance? MapEntry obj) (-pr-writer obj writer opts)
+    :else (-write writer "<object>")))
+
+(defn pr-str
+  "Returns a string representation of obj in a readable form."
+  [obj]
+  (let [sb (string-buffer 64)
+        w (->StringBufferWriter sb)]
+    (pr-writer obj w {:readably true})
+    (-sb->str sb)))
+
+;; ============================================================
+;; IPrintWithWriter Implementations
+;; These extend-type declarations must come after pr-writer is defined
+;; since they reference pr-writer and pr-sequential-writer.
+;; ============================================================
+
+(extend-type PersistentVector
+  IPrintWithWriter
+  (-pr-writer [v writer opts]
+    (pr-sequential-writer writer pr-writer "[" " " "]" opts v)))
+
+(extend-type Cons
+  IPrintWithWriter
+  (-pr-writer [c writer opts]
+    (pr-sequential-writer writer pr-writer "(" " " ")" opts c)))
+
+(extend-type IndexedSeq
+  IPrintWithWriter
+  (-pr-writer [iseq writer opts]
+    (pr-sequential-writer writer pr-writer "(" " " ")" opts iseq)))
+
+(extend-type LazySeq
+  IPrintWithWriter
+  (-pr-writer [lseq writer opts]
+    (pr-sequential-writer writer pr-writer "(" " " ")" opts lseq)))
+
+(extend-type PersistentMap
+  IPrintWithWriter
+  (-pr-writer [m writer opts]
+    (-write writer "{")
+    (when-let [s (seq m)]
+      (let [e (first s)]
+        (pr-writer (key e) writer opts)
+        (-write writer " ")
+        (pr-writer (val e) writer opts))
+      (loop [xs (next s)]
+        (when xs
+          (-write writer ", ")
+          (let [e (first xs)]
+            (pr-writer (key e) writer opts)
+            (-write writer " ")
+            (pr-writer (val e) writer opts))
+          (recur (next xs)))))
+    (-write writer "}")))
+
+(extend-type PersistentSet
+  IPrintWithWriter
+  (-pr-writer [s writer opts]
+    (-write writer "#{")
+    (when-let [sq (seq s)]
+      (pr-writer (first sq) writer opts)
+      (loop [xs (next sq)]
+        (when xs
+          (-write writer " ")
+          (pr-writer (first xs) writer opts)
+          (recur (next xs)))))
+    (-write writer "}")))
+
+(extend-type MapEntry
+  IPrintWithWriter
+  (-pr-writer [e writer opts]
+    (-write writer "[")
+    (pr-writer (key e) writer opts)
+    (-write writer " ")
+    (pr-writer (val e) writer opts)
+    (-write writer "]")))
+

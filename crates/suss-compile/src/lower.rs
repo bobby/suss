@@ -499,6 +499,10 @@ impl Lowerer {
             }
         }
 
+        // Calculate methods_per_type for dispatch table sizing
+        // This ensures the table can accommodate all method IDs (built-in + user-defined)
+        self.module.methods_per_type = self.module.max_method_id + 1;
+
         Ok(std::mem::take(&mut self.module))
     }
 
@@ -942,19 +946,14 @@ impl Lowerer {
                     // It's a built-in in value position - wrap it as a closure
                     self.lower_builtin_as_closure(&sym.name, arity)
                 } else if let Some((resolved_name, func_idx)) = self.resolve_func_name(&sym.name) {
-                    // It's a user-defined function in value position - create a closure
+                    // It's a user-defined function in value position - create a closure wrapper
                     let arity = self.func_arities.get(&resolved_name).copied().unwrap_or(0);
                     let is_variadic = self.variadic_funcs.contains_key(&resolved_name);
-                    // func_idx from func_indices already includes (num_imports + USER_FUNC_OFFSET),
-                    // but codegen's user_func_idx() will add (num_imports + NUM_RUNTIME_HELPERS).
-                    // Since USER_FUNC_OFFSET = NUM_RUNTIME_HELPERS, we subtract both.
-                    let adjusted_idx = func_idx - self.num_imports - gc_types::USER_FUNC_OFFSET;
-                    Ok(Expr::ClosureNew {
-                        func_idx: adjusted_idx,
-                        arity: arity as u32,
-                        captures: vec![], // No captures for named functions
-                        is_variadic,
-                    })
+                    if is_variadic {
+                        self.lower_variadic_user_func_as_closure(&resolved_name, func_idx)
+                    } else {
+                        self.lower_user_func_as_closure(&resolved_name, func_idx, arity)
+                    }
                 } else {
                     Err(CompileError::Undefined(sym.name.clone()))
                 }
@@ -1104,6 +1103,10 @@ impl Lowerer {
             "rem" => {
                 let ty = self.infer_numeric_type(args);
                 self.lower_binop(BinOp::Rem, args, ty)
+            }
+            "quot" => {
+                let ty = self.infer_numeric_type(args);
+                self.lower_binop(BinOp::Quot, args, ty)
             }
             // NOTE: "mod" is now a regular function in core.sus (floored modulus)
 
@@ -1279,12 +1282,24 @@ impl Lowerer {
             "aclone" => self.lower_aclone(args),
             "acopy" => self.lower_acopy(args),
             "make-array" => self.lower_make_array(args),
+            "make-string" => self.lower_make_string(args),
+            "scopy" => self.lower_scopy(args),
+            "sget" => self.lower_sget(args),
+            "sset" => self.lower_sset(args),
 
             // Type checking
             "instance?" => self.lower_instance_check(args),
             "symbol?" => self.lower_symbol_check(args),
             "keyword?" => self.lower_keyword_check(args),
             "var?" => self.lower_var_check(args),
+            "int?" => self.lower_int_check(args),
+            "float?" => self.lower_float_check(args),
+            "string?" => self.lower_string_check(args),
+
+            // Float operations
+            "trunc" => self.lower_f64_trunc(args),
+            "f64->i64" => self.lower_f64_to_i64(args),
+            "i64->f64" => self.lower_i64_to_f64(args),
 
             // Numeric predicates
             "zero?" => self.lower_zero_check(args),
@@ -1330,8 +1345,8 @@ impl Lowerer {
         // The object expression is not in tail position - we still need to access its field
         let obj = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
 
-        // Check user-defined types first
-        if let Some((type_idx, field_idx, field_type)) = self.lookup_user_field(field_name) {
+        // Check user-defined types first (for_mutation=false: reading field)
+        if let Some((type_idx, field_idx, field_type)) = self.lookup_user_field(field_name, false) {
             // For i32 fields, we use StructGetI32 which codegen will handle specially
             // (encode as tagged i31ref). For other types, use regular StructGet.
             let expr = match field_type {
@@ -1437,12 +1452,14 @@ impl Lowerer {
     /// If `current_self_type` is set (during protocol method lowering), prioritize
     /// looking up fields in that type to handle fields with the same name in
     /// different types (e.g., "root" exists in both PersistentVector and PersistentMap).
-    fn lookup_user_field(&self, field_name: &str) -> Option<(u32, u32, FieldType)> {
+    /// Look up a field by name across user-defined types.
+    /// When `for_mutation` is true, only returns mutable fields (for set! operations).
+    fn lookup_user_field(&self, field_name: &str, for_mutation: bool) -> Option<(u32, u32, FieldType)> {
         // If we're in a protocol method implementation, check the self type first
         if let Some(ref self_type) = self.current_self_type {
             if let Some(info) = self.user_types.get(self_type.as_str()) {
                 for (idx, field) in info.fields.iter().enumerate() {
-                    if field.name == field_name {
+                    if field.name == field_name && (!for_mutation || field.is_mutable) {
                         // Field 0 is type_id, so user fields start at index 1
                         return Some((info.gc_type_idx, (idx + 1) as u32, field.field_type));
                     }
@@ -1453,7 +1470,7 @@ impl Lowerer {
         // Fall back to searching all user types
         for info in self.user_types.values() {
             for (idx, field) in info.fields.iter().enumerate() {
-                if field.name == field_name {
+                if field.name == field_name && (!for_mutation || field.is_mutable) {
                     // Field 0 is type_id, so user fields start at index 1
                     return Some((info.gc_type_idx, (idx + 1) as u32, field.field_type));
                 }
@@ -1483,8 +1500,8 @@ impl Lowerer {
                     if sym.name.starts_with(".-") {
                         let field_name = &sym.name[2..]; // Strip ".-" prefix
 
-                        // Look up the field in user types
-                        if let Some((type_idx, field_idx, _field_type)) = self.lookup_user_field(field_name) {
+                        // Look up the field in user types (for_mutation=true: only mutable fields)
+                        if let Some((type_idx, field_idx, field_type)) = self.lookup_user_field(field_name, true) {
                             // Lower the object and value expressions
                             let obj = self.with_tail_disabled(|l| l.lower_expr(&items[1]))?;
                             let val = self.with_tail_disabled(|l| l.lower_expr(value))?;
@@ -1492,12 +1509,13 @@ impl Lowerer {
                             return Ok(Expr::StructSet {
                                 type_idx,
                                 field_idx,
+                                field_type,
                                 obj: Box::new(obj),
                                 value: Box::new(val),
                             });
                         } else {
                             return Err(CompileError::Undefined(format!(
-                                "set!: unknown field {}",
+                                "set!: unknown or immutable field {}",
                                 field_name
                             )));
                         }
@@ -3241,7 +3259,7 @@ impl Lowerer {
             // Variadic arithmetic (handled specially when used as values)
             "+" | "-" | "*" | "/" => Some(2), // default arity for direct calls
             // Binary arithmetic
-            "rem" | "mod" => Some(2),
+            "rem" | "mod" | "quot" => Some(2),
             // Binary comparison
             "=" | "not=" | "<" | "<=" | ">" | ">=" => Some(2),
             // Unary
@@ -3614,6 +3632,8 @@ impl Lowerer {
         let id = self.next_user_method_id;
         self.next_user_method_id += 1;
         self.user_method_ids.insert(key, id);
+        // Track maximum method ID for dispatch table sizing
+        self.module.max_method_id = self.module.max_method_id.max(id);
         id
     }
 
@@ -4216,6 +4236,93 @@ impl Lowerer {
         })
     }
 
+    /// Lower (make-string size) -> ArrayNewDefault for STRING type
+    /// Creates a new STRING array (array<i8>) with zero bytes.
+    fn lower_make_string(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse(
+                "make-string requires exactly 1 argument: size".into(),
+            ));
+        }
+        let size = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+
+        // Use STRING as the array type (array<i8>)
+        Ok(Expr::ArrayNewDefault {
+            type_idx: gc_types::STRING,
+            size: Box::new(size),
+        })
+    }
+
+    /// Lower (scopy dst dst-offset src src-offset len) -> ArrayCopy for STRING type
+    /// Copies bytes between STRING arrays.
+    fn lower_scopy(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 5 {
+            return Err(CompileError::Parse(
+                "scopy requires exactly 5 arguments: dst dst-offset src src-offset len".into(),
+            ));
+        }
+        let dst = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        let dst_offset = self.with_tail_disabled(|l| l.lower_expr(&args[1]))?;
+        let src = self.with_tail_disabled(|l| l.lower_expr(&args[2]))?;
+        let src_offset = self.with_tail_disabled(|l| l.lower_expr(&args[3]))?;
+        let len = self.with_tail_disabled(|l| l.lower_expr(&args[4]))?;
+
+        // Use STRING as the array type (array<i8>)
+        Ok(Expr::ArrayCopy {
+            type_idx: gc_types::STRING,
+            dst: Box::new(dst),
+            dst_offset: Box::new(dst_offset),
+            src: Box::new(src),
+            src_offset: Box::new(src_offset),
+            len: Box::new(len),
+        })
+    }
+
+    /// Lower (sget string index) -> ArrayGet for STRING type
+    /// Gets a byte from a STRING array.
+    fn lower_sget(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 2 {
+            return Err(CompileError::Parse(
+                "sget requires exactly 2 arguments: string and index".into(),
+            ));
+        }
+        let (array, index) = self.with_tail_disabled(|l| {
+            Ok((l.lower_expr(&args[0])?, l.lower_expr(&args[1])?))
+        })?;
+
+        // Use STRING as the array type (array<i8>)
+        Ok(Expr::ArrayGet {
+            type_idx: gc_types::STRING,
+            array: Box::new(array),
+            index: Box::new(index),
+        })
+    }
+
+    /// Lower (sset string index value) -> ArraySet for STRING type
+    /// Sets a byte in a STRING array.
+    fn lower_sset(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 3 {
+            return Err(CompileError::Parse(
+                "sset requires exactly 3 arguments: string, index, and value".into(),
+            ));
+        }
+        let (array, index, value) = self.with_tail_disabled(|l| {
+            Ok((
+                l.lower_expr(&args[0])?,
+                l.lower_expr(&args[1])?,
+                l.lower_expr(&args[2])?,
+            ))
+        })?;
+
+        // Use STRING as the array type (array<i8>)
+        Ok(Expr::ArraySet {
+            type_idx: gc_types::STRING,
+            array: Box::new(array),
+            index: Box::new(index),
+            value: Box::new(value),
+        })
+    }
+
     /// Lower (bit-count x) -> BitCount
     /// Returns the population count (number of 1 bits) of an integer.
     fn lower_bit_count(&mut self, args: &[Edn]) -> CompileResult<Expr> {
@@ -4227,5 +4334,83 @@ impl Lowerer {
         let value = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
 
         Ok(Expr::BitCount(Box::new(value)))
+    }
+
+    /// Lower (int? x) -> IntCheck
+    /// Tests if value is an integer (i31ref with number tag OR INT64 struct).
+    fn lower_int_check(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse(
+                "int? requires exactly 1 argument".into(),
+            ));
+        }
+        let value = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+
+        Ok(Expr::IntCheck(Box::new(value)))
+    }
+
+    /// Lower (float? x) -> FloatCheck
+    /// Tests if value is a float (FLOAT64 struct).
+    fn lower_float_check(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse(
+                "float? requires exactly 1 argument".into(),
+            ));
+        }
+        let value = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+
+        Ok(Expr::FloatCheck(Box::new(value)))
+    }
+
+    /// Lower (string? x) -> StringCheck
+    /// Tests if value is a string (STRING array).
+    fn lower_string_check(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse(
+                "string? requires exactly 1 argument".into(),
+            ));
+        }
+        let value = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+
+        Ok(Expr::StringCheck(Box::new(value)))
+    }
+
+    /// Lower (trunc x) -> F64Trunc
+    /// Truncates f64 toward zero (removes fractional part).
+    fn lower_f64_trunc(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse(
+                "trunc requires exactly 1 argument".into(),
+            ));
+        }
+        let value = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+
+        Ok(Expr::F64Trunc(Box::new(value)))
+    }
+
+    /// Lower (f64->i64 x) -> F64ToI64
+    /// Converts f64 to i64 (truncated toward zero).
+    fn lower_f64_to_i64(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse(
+                "f64->i64 requires exactly 1 argument".into(),
+            ));
+        }
+        let value = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+
+        Ok(Expr::F64ToI64(Box::new(value)))
+    }
+
+    /// Lower (i64->f64 x) -> I64ToF64
+    /// Converts i64 to f64.
+    fn lower_i64_to_f64(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse(
+                "i64->f64 requires exactly 1 argument".into(),
+            ));
+        }
+        let value = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+
+        Ok(Expr::I64ToF64(Box::new(value)))
     }
 }

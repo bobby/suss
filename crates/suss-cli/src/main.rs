@@ -76,17 +76,22 @@ fn run_eval(expr: &str) {
 ///
 /// Automatically detects WASI calls and uses component model when needed.
 fn run_eval_wasm(expr: &str) -> Result<(), String> {
-    // Compile expression to WASM
+    // First check if expression uses WASI (component model)
     let mut compiler = suss_compile::Compiler::new();
-    let compiled = compiler.compile_expr_with_info(expr)
+    let probe = compiler.compile_expr_with_info(expr)
         .map_err(|e| format!("{}", e))?;
 
-    if compiled.is_component {
-        // WASI expression - use component model runtime
-        run_eval_component(&compiled.wasm)
+    if probe.is_component {
+        // WASI expression - use component model runtime (can't use pr-str with WIT types)
+        run_eval_component(&probe.wasm)
     } else {
-        // Pure expression - use core module runtime
-        run_eval_core_module(&compiled.wasm)
+        // Pure expression - wrap in (pr-str ...) for pretty printing
+        let wrapped_expr = format!("(pr-str {})", expr);
+        let mut compiler2 = suss_compile::Compiler::new();
+        let compiled = compiler2.compile_expr_with_info(&wrapped_expr)
+            .map_err(|e| format!("{}", e))?;
+        // Result is STRING array
+        run_eval_core_module_string(&compiled.wasm)
     }
 }
 
@@ -187,6 +192,72 @@ fn run_eval_core_module(wasm_bytes: &[u8]) -> Result<(), String> {
         }
         Val::AnyRef(None) => println!("nil"),
         _ => println!("{:?}", results[0]),
+    }
+
+    Ok(())
+}
+
+/// Run a compiled core module that returns a STRING array (from pr-str)
+fn run_eval_core_module_string(wasm_bytes: &[u8]) -> Result<(), String> {
+    use wasmtime::{Config, Engine, Linker, Module, Store, Val};
+
+    // Create wasmtime engine with GC and related features enabled
+    let mut config = Config::new();
+    config.wasm_gc(true);
+    config.wasm_function_references(true);
+    config.wasm_tail_call(true);
+    let engine = Engine::new(&config)
+        .map_err(|e| format!("Engine creation error: {}", e))?;
+
+    let module = Module::new(&engine, wasm_bytes)
+        .map_err(|e| format!("WASM module error: {}", e))?;
+
+    // Create store (no WASI context needed for pure expressions)
+    let mut store = Store::new(&engine, ());
+
+    // Create linker
+    let linker: Linker<()> = Linker::new(&engine);
+
+    // Instantiate via linker
+    let instance = linker.instantiate(&mut store, &module)
+        .map_err(|e| format!("Instantiation error: {}", e))?;
+
+    // Get the eval function
+    let eval_fn = instance.get_func(&mut store, "eval")
+        .ok_or_else(|| "eval function not found".to_string())?;
+
+    // Call the function with eqref result
+    let mut results = vec![Val::null_any_ref()];
+    eval_fn.call(&mut store, &[], &mut results)
+        .map_err(|e| format!("Call error: {}", e))?;
+
+    // Result should be a STRING array (array<i8>)
+    match &results[0] {
+        Val::AnyRef(Some(anyref)) => {
+            // Try to get as array
+            match anyref.as_array(&store) {
+                Ok(Some(array_ref)) => {
+                    let len = array_ref.len(&store)
+                        .map_err(|e| format!("Error getting array length: {}", e))?;
+                    let mut bytes = Vec::with_capacity(len as usize);
+                    for i in 0..len {
+                        match array_ref.get(&mut store, i) {
+                            Ok(Val::I32(b)) => bytes.push(b as u8),
+                            _ => return Err("Invalid string array element".to_string()),
+                        }
+                    }
+                    // Print as UTF-8 string
+                    match String::from_utf8(bytes) {
+                        Ok(s) => println!("{}", s),
+                        Err(e) => return Err(format!("Invalid UTF-8: {}", e)),
+                    }
+                }
+                Ok(None) => println!("nil"),
+                Err(e) => return Err(format!("Error extracting array: {}", e)),
+            }
+        }
+        Val::AnyRef(None) => println!("nil"),
+        _ => return Err(format!("Unexpected result type: {:?}", results[0])),
     }
 
     Ok(())

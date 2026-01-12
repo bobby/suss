@@ -178,9 +178,24 @@ pub mod gc_types {
     /// - sym: The SYMBOL for this var's name
     pub const VAR: u32 = 25;
 
+    // =========================================================================
+    // Intern Tables (reserved for future runtime interning)
+    // Array types for keyword/symbol interning with hash-based lookup
+    // =========================================================================
+
+    /// array<(ref null $KEYWORD)>
+    /// Hash table for interned keywords. Uses open addressing with linear probing.
+    /// NOTE: Currently unused - reserved for runtime `(keyword "name")` support.
+    pub const KEYWORD_INTERN_TABLE: u32 = 26;
+
+    /// array<(ref null $SYMBOL)>
+    /// Hash table for interned symbols. Uses open addressing with linear probing.
+    /// NOTE: Currently unused - reserved for runtime `(symbol "name")` support.
+    pub const SYMBOL_INTERN_TABLE: u32 = 27;
+
     /// Number of GC types defined (for type index offset calculation)
-    /// 5 primitives + 10 closure fn types + 6 closure struct types + 2 variadic + 1 keyword + 1 symbol + 1 var = 26
-    pub const NUM_GC_TYPES: u32 = 26;
+    /// 5 primitives + 10 closure fn types + 6 closure struct types + 2 variadic + 1 keyword + 1 symbol + 1 var + 2 intern tables = 28
+    pub const NUM_GC_TYPES: u32 = 28;
 
     // =========================================================================
     // Closure Field Indices
@@ -204,27 +219,31 @@ pub mod gc_types {
 
     // =========================================================================
     // Keyword Field Indices
+    // struct { type_id: i32, hash: i32, ns: (ref null STRING), name: (ref STRING) }
     // =========================================================================
 
     /// Keyword type_id field (for protocol dispatch)
     pub const KW_TYPE_ID: u32 = 0;
     /// Keyword pre-computed hash (for fast map operations)
     pub const KW_HASH: u32 = 1;
-    /// Keyword name index (into interned string table)
-    pub const KW_NAME_IDX: u32 = 2;
+    /// Keyword namespace (ref null STRING) - nil for no namespace
+    pub const KW_NS: u32 = 2;
+    /// Keyword name (ref STRING)
+    pub const KW_NAME: u32 = 3;
 
     // =========================================================================
     // Symbol Field Indices
+    // struct { type_id: i32, hash: i32, ns: (ref null STRING), name: (ref STRING) }
     // =========================================================================
 
     /// Symbol type_id field (for protocol dispatch)
     pub const SYM_TYPE_ID: u32 = 0;
     /// Symbol pre-computed hash (for fast map operations)
     pub const SYM_HASH: u32 = 1;
-    /// Symbol namespace index (-1 for no namespace, otherwise string table index)
-    pub const SYM_NS_IDX: u32 = 2;
-    /// Symbol name index (into interned string table)
-    pub const SYM_NAME_IDX: u32 = 3;
+    /// Symbol namespace (ref null STRING) - nil for no namespace
+    pub const SYM_NS: u32 = 2;
+    /// Symbol name (ref STRING)
+    pub const SYM_NAME: u32 = 3;
 
     // =========================================================================
     // Var Field Indices
@@ -486,8 +505,8 @@ pub mod gc_types {
     // =========================================================================
 
     /// Number of runtime helper functions emitted before user functions.
-    /// Reduced: only hash_string and get_type_id remain in codegen.
-    pub const NUM_RUNTIME_HELPERS: u32 = 2;
+    /// Functions: hash_string, get_type_id, init_intern_tables
+    pub const NUM_RUNTIME_HELPERS: u32 = 3;
 
     /// Number of protocol implementation wrapper functions
     /// Reduced: protocol impls now in core.sus via extend-type
@@ -565,6 +584,24 @@ pub mod type_ids {
     pub const PERSISTENT_SET: i32 = 266;
 }
 
+/// Global variable indices in the WASM module.
+///
+/// These correspond to the globals emitted in `emit_global_section`.
+pub mod global_indices {
+    /// Heap pointer for linear memory allocation (i32, mutable)
+    pub const HEAP_PTR: u32 = 0;
+
+    /// Keyword intern table - array of pre-created keyword structs (eqref, mutable)
+    /// Initialized by the start function to hold all compile-time keywords.
+    /// Keyword literals load from this array by index for reference equality.
+    pub const KEYWORD_TABLE: u32 = 1;
+
+    /// Symbol intern table - array of pre-created symbol structs (eqref, mutable)
+    /// Initialized by the start function to hold all compile-time symbols.
+    /// Symbol literals load from this array by index for reference equality.
+    pub const SYMBOL_TABLE: u32 = 2;
+}
+
 /// Protocol method IDs for dispatch table indexing.
 ///
 /// Built-in protocol methods use IDs 0-99.
@@ -594,8 +631,9 @@ pub mod method_ids {
     /// Number of built-in protocol methods
     pub const NUM_BUILTIN: u32 = 10;
 
-    /// User-defined protocol methods start here
-    pub const USER_START: u32 = 100;
+    /// User-defined protocol methods start here.
+    /// User methods are contiguous with built-in methods to keep the dispatch table compact.
+    pub const USER_START: u32 = 10;
 }
 
 /// Protocol function type indices for call_ref.
@@ -658,12 +696,13 @@ pub mod dispatch_table {
     /// # Arguments
     /// * `type_id` - Runtime type ID (from $get-type-id)
     /// * `method_id` - Protocol method ID
+    /// * `methods_per_type` - Number of method slots per type (from Module.methods_per_type)
     ///
     /// # Returns
     /// Index into the dispatch table funcref array
     #[inline]
-    pub const fn index(type_id: u32, method_id: u32) -> u32 {
-        type_id * method_ids::NUM_BUILTIN + method_id
+    pub fn index(type_id: u32, method_id: u32, methods_per_type: u32) -> u32 {
+        type_id * methods_per_type + method_id
     }
 }
 
@@ -753,6 +792,12 @@ pub struct Module {
     pub dispatch_entries: Vec<DispatchEntry>,
     /// User-defined types (from deftype declarations)
     pub deftypes: Vec<DeftypeDef>,
+    /// Maximum method ID used (for dispatch table sizing)
+    /// Starts at NUM_BUILTIN - 1 (9), increases with user-defined protocols.
+    pub max_method_id: u32,
+    /// Methods per type for dispatch table indexing (max_method_id + 1).
+    /// Used in formula: dispatch_slot * methods_per_type + method_id
+    pub methods_per_type: u32,
 }
 
 /// An imported function from a WIT interface
@@ -782,6 +827,9 @@ impl Module {
             protocols: Vec::new(),
             dispatch_entries: Vec::new(),
             deftypes: Vec::new(),
+            // Default to NUM_BUILTIN methods (9 is the highest built-in method ID)
+            max_method_id: method_ids::NUM_BUILTIN - 1,
+            methods_per_type: method_ids::NUM_BUILTIN,
         }
     }
 
@@ -796,7 +844,8 @@ impl Module {
     }
 
     /// Intern a keyword, returning its index
-    /// Keywords with the same namespace and name return the same index
+    /// Keywords with the same namespace and name return the same index.
+    /// Also interns the name and namespace strings for runtime access.
     pub fn intern_keyword(&mut self, namespace: Option<&str>, name: &str) -> u32 {
         let ns_owned = namespace.map(|s| s.to_string());
         if let Some(idx) = self
@@ -806,13 +855,19 @@ impl Module {
         {
             return idx as u32;
         }
+        // Also intern the name string so we can create it at runtime
+        self.intern_string(name);
+        if let Some(ns) = namespace {
+            self.intern_string(ns);
+        }
         let idx = self.keywords.len() as u32;
         self.keywords.push((ns_owned, name.to_string()));
         idx
     }
 
     /// Intern a symbol, returning its index
-    /// Symbols with the same namespace and name return the same index
+    /// Symbols with the same namespace and name return the same index.
+    /// Also interns the name and namespace strings for runtime access.
     pub fn intern_symbol(&mut self, namespace: Option<&str>, name: &str) -> u32 {
         let ns_owned = namespace.map(|s| s.to_string());
         if let Some(idx) = self
@@ -821,6 +876,11 @@ impl Module {
             .position(|(ns, n)| ns.as_deref() == namespace && n == name)
         {
             return idx as u32;
+        }
+        // Also intern the name string so we can create it at runtime
+        self.intern_string(name);
+        if let Some(ns) = namespace {
+            self.intern_string(ns);
         }
         let idx = self.symbols.len() as u32;
         self.symbols.push((ns_owned, name.to_string()));
@@ -987,6 +1047,12 @@ impl Expr {
             Expr::BitCount(_) => Type::GcRef, // Returns boxed i31ref
             Expr::RefTestI31(_) => Type::I32, // Boolean result
             Expr::RefTest { .. } => Type::I32, // Boolean result
+            Expr::IntCheck(_) => Type::I32, // Boolean result
+            Expr::FloatCheck(_) => Type::I32, // Boolean result
+            Expr::StringCheck(_) => Type::I32, // Boolean result
+            Expr::F64Trunc(_) => Type::GcRef, // Truncated f64 (boxed)
+            Expr::F64ToI64(_) => Type::GcRef, // i64 from f64 (boxed)
+            Expr::I64ToF64(_) => Type::GcRef, // f64 from i64 (boxed)
             Expr::RefNull(_) => Type::GcRef,
             Expr::RefIsNull(_) => Type::I32, // Boolean result
             Expr::NilCheck(_) => Type::GcRef, // Returns boxed boolean (true/false as i31ref)
@@ -1189,6 +1255,7 @@ pub enum Expr {
     StructSet {
         type_idx: u32,
         field_idx: u32,
+        field_type: FieldType,
         obj: Box<Expr>,
         value: Box<Expr>,
     },
@@ -1259,6 +1326,24 @@ pub enum Expr {
         type_idx: u32,
         value: Box<Expr>,
     },
+
+    /// Test if value is an integer (i31ref with number tag OR INT64 struct)
+    IntCheck(Box<Expr>),
+
+    /// Test if value is a float (FLOAT64 struct)
+    FloatCheck(Box<Expr>),
+
+    /// Test if value is a string (STRING array)
+    StringCheck(Box<Expr>),
+
+    /// Truncate f64 toward zero (removes fractional part)
+    F64Trunc(Box<Expr>),
+
+    /// Convert f64 to i64 (truncated toward zero)
+    F64ToI64(Box<Expr>),
+
+    /// Convert i64 to f64
+    I64ToF64(Box<Expr>),
 
     /// Null reference of a given type
     RefNull(u32),
@@ -1510,6 +1595,7 @@ pub enum BinOp {
     Mul,
     Div,
     Rem,
+    Quot, // Integer division (truncates toward zero)
 
     // Comparison
     Eq,
@@ -1636,6 +1722,9 @@ mod tests {
             gc_types::SYMBOL,
             // Var type (25)
             gc_types::VAR,
+            // Intern tables (26-27)
+            gc_types::KEYWORD_INTERN_TABLE,
+            gc_types::SYMBOL_INTERN_TABLE,
         ];
         for (i, idx) in indices.iter().enumerate() {
             assert_eq!(*idx, i as u32, "type index {} should be {}", idx, i);
