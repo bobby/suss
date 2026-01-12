@@ -370,13 +370,45 @@ impl<'a> CodeGen<'a> {
                 }
                 f.instruction(&Instruction::Else);
                 {
-                    // It's i31ref - use raw value WITHOUT decoding
-                    // This ensures sentinels (nil=0, false=2, true=4) don't overlap
-                    // with decoded numbers (0, 1, 2, etc.)
+                    // Test if it's STRING
                     f.instruction(&Instruction::LocalGet(scratch));
-                    f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                    f.instruction(&Instruction::I31GetS);
-                    // NO shift right - use raw tagged value
+                    f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::STRING)));
+
+                    f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+                    {
+                        // Call hash_string to get comparable i32 value
+                        // hash_string is function index 0 (first runtime helper)
+                        f.instruction(&Instruction::LocalGet(scratch));
+                        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+                        f.instruction(&Instruction::Call(0)); // hash_string
+                    }
+                    f.instruction(&Instruction::Else);
+                    {
+                        // Test if it's i31ref
+                        f.instruction(&Instruction::LocalGet(scratch));
+                        f.instruction(&Instruction::RefTestNonNull(HeapType::I31));
+
+                        f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+                        {
+                            // It's i31ref - use raw value WITHOUT decoding
+                            // This ensures sentinels (nil=0, false=2, true=4) don't overlap
+                            // with decoded numbers (0, 1, 2, etc.)
+                            f.instruction(&Instruction::LocalGet(scratch));
+                            f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                            f.instruction(&Instruction::I31GetS);
+                            // NO shift right - use raw tagged value
+                        }
+                        f.instruction(&Instruction::Else);
+                        {
+                            // Unknown struct type (e.g., MapEntry, custom deftypes)
+                            // Call get_type_id to get a unique i32 for comparison
+                            // get_type_id is function index 1 (second runtime helper)
+                            f.instruction(&Instruction::LocalGet(scratch));
+                            f.instruction(&Instruction::Call(1)); // get_type_id
+                        }
+                        f.instruction(&Instruction::End);
+                    }
+                    f.instruction(&Instruction::End);
                 }
                 f.instruction(&Instruction::End);
             }

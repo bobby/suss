@@ -1778,17 +1778,15 @@
   (-pr-writer [m writer opts]
     (-write writer "{")
     (when-let [s (seq m)]
-      (let [e (first s)]
-        (pr-writer (key e) writer opts)
-        (-write writer " ")
-        (pr-writer (val e) writer opts))
+      (pr-writer (key (first s)) writer opts)
+      (-write writer " ")
+      (pr-writer (val (first s)) writer opts)
       (loop [xs (next s)]
         (when xs
           (-write writer ", ")
-          (let [e (first xs)]
-            (pr-writer (key e) writer opts)
-            (-write writer " ")
-            (pr-writer (val e) writer opts))
+          (pr-writer (key (first xs)) writer opts)
+          (-write writer " ")
+          (pr-writer (val (first xs)) writer opts)
           (recur (next xs)))))
     (-write writer "}")))
 
