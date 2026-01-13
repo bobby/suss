@@ -1300,6 +1300,9 @@ impl Lowerer {
             "trunc" => self.lower_f64_trunc(args),
             "f64->i64" => self.lower_f64_to_i64(args),
             "i64->f64" => self.lower_i64_to_f64(args),
+            "sqrt" => self.lower_f64_sqrt(args),
+            "Math/sqrt" => self.lower_f64_sqrt(args),
+            "int" => self.lower_f64_to_i64(args), // int is alias for f64->i64
 
             // Numeric predicates
             "zero?" => self.lower_zero_check(args),
@@ -1815,18 +1818,13 @@ impl Lowerer {
                 // Compute hash for map key operations
                 let hash = gc_types::hash_symbol(namespace, name);
 
-                // Intern namespace and name into string table
-                let ns_str_idx = if let Some(ns) = namespace {
-                    self.module.intern_string(ns) as i32
-                } else {
-                    -1 // No namespace
-                };
-                let name_str_idx = self.module.intern_string(name);
+                // Intern into symbol table (like keywords use intern_keyword)
+                let symbol_idx = self.module.intern_symbol(namespace, name);
 
                 Ok(Expr::Symbol {
                     hash,
-                    ns_str_idx,
-                    name_str_idx,
+                    ns_str_idx: -1,              // No longer needed for lookup
+                    name_str_idx: symbol_idx,   // Now a symbol table index
                 })
             }
 
@@ -4412,5 +4410,18 @@ impl Lowerer {
         let value = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
 
         Ok(Expr::I64ToF64(Box::new(value)))
+    }
+
+    /// Lower (sqrt x) -> F64Sqrt
+    /// Computes the square root of a float.
+    fn lower_f64_sqrt(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse(
+                "sqrt requires exactly 1 argument".into(),
+            ));
+        }
+        let value = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+
+        Ok(Expr::F64Sqrt(Box::new(value)))
     }
 }

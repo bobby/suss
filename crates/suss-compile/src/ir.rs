@@ -1053,6 +1053,7 @@ impl Expr {
             Expr::F64Trunc(_) => Type::GcRef, // Truncated f64 (boxed)
             Expr::F64ToI64(_) => Type::GcRef, // i64 from f64 (boxed)
             Expr::I64ToF64(_) => Type::GcRef, // f64 from i64 (boxed)
+            Expr::F64Sqrt(_) => Type::GcRef,  // sqrt result (boxed float)
             Expr::RefNull(_) => Type::GcRef,
             Expr::RefIsNull(_) => Type::I32, // Boolean result
             Expr::NilCheck(_) => Type::GcRef, // Returns boxed boolean (true/false as i31ref)
@@ -1344,6 +1345,9 @@ pub enum Expr {
 
     /// Convert i64 to f64
     I64ToF64(Box<Expr>),
+
+    /// Square root of f64
+    F64Sqrt(Box<Expr>),
 
     /// Null reference of a given type
     RefNull(u32),

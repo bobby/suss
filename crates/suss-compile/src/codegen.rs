@@ -328,6 +328,8 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
         {
             // Extract i64 from INT64 struct, wrap to i32
+            // Add a large offset to avoid collision with sentinels (0, 2, 4)
+            // Offset 0x10000000 is larger than any sentinel but won't overflow for typical INT64 values
             f.instruction(&Instruction::LocalGet(scratch));
             f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::INT64)));
             f.instruction(&Instruction::StructGet {
@@ -335,6 +337,9 @@ impl<'a> CodeGen<'a> {
                 field_index: gc_types::I64_VALUE,
             });
             f.instruction(&Instruction::I32WrapI64);
+            // Add offset to avoid sentinel collision
+            f.instruction(&Instruction::I32Const(0x10000000));
+            f.instruction(&Instruction::I32Add);
         }
         f.instruction(&Instruction::Else);
         {
@@ -1309,11 +1314,12 @@ impl<'a> CodeGen<'a> {
         // First-class symbols with namespace support and pre-computed hash
         // =========================================================================
 
-        // Type 24: SYMBOL - struct { type_id: i32, hash: i32, ns: (ref null STRING), name: (ref STRING) }
+        // Type 24: SYMBOL - struct { type_id: i32, hash: i32, ns: (ref null STRING), name: (ref STRING), _marker: i32 }
         // - type_id: For protocol dispatch (always type_ids::SYMBOL)
         // - hash: Pre-computed xxHash32 of the symbol string
         // - ns: Namespace string (or null if no namespace)
         // - name: Name string
+        // - _marker: Distinguishes from KEYWORD (WASM GC uses structural typing)
         types.ty().struct_(vec![
             type_id_field.clone(),
             FieldType {
@@ -1326,6 +1332,12 @@ impl<'a> CodeGen<'a> {
             },
             FieldType {
                 element_type: StorageType::Val(ValType::Ref(string_ref)),
+                mutable: false,
+            },
+            // Marker field to make SYMBOL structurally distinct from KEYWORD
+            // (WASM GC uses structural typing, so same layout = same type for ref.test)
+            FieldType {
+                element_type: StorageType::Val(ValType::I32),
                 mutable: false,
             },
         ]);
@@ -1790,7 +1802,7 @@ impl<'a> CodeGen<'a> {
                 };
                 let hash = gc_types::xxhash32(full_name.as_bytes());
 
-                // Create SYMBOL struct { type_id: i32, hash: i32, ns: (ref null STRING), name: (ref STRING) }
+                // Create SYMBOL struct { type_id: i32, hash: i32, ns: (ref null STRING), name: (ref STRING), _marker: i32 }
                 f.instruction(&Instruction::I32Const(type_ids::SYMBOL));
                 f.instruction(&Instruction::I32Const(hash));
 
@@ -1827,6 +1839,9 @@ impl<'a> CodeGen<'a> {
                         array_size: 0,
                     });
                 }
+
+                // Marker field - distinguishes SYMBOL from KEYWORD structurally
+                f.instruction(&Instruction::I32Const(0));
 
                 f.instruction(&Instruction::StructNew(gc_types::SYMBOL));
             }
@@ -3985,6 +4000,21 @@ impl<'a> CodeGen<'a> {
                 self.generate_polymorphic_unwrap_i64(f);
                 // Convert to f64
                 f.instruction(&Instruction::F64ConvertI64S);
+                // Box result
+                f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
+            }
+
+            Expr::F64Sqrt(value) => {
+                // Compute square root - accepts both integers and floats
+                // First put type_id for result struct
+                f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
+                // Generate input
+                self.generate_expr(value, f)?;
+                // Unbox to i64 (handles both INT64 and small ints), convert to f64
+                self.generate_polymorphic_unwrap_i64(f);
+                f.instruction(&Instruction::F64ConvertI64S);
+                // Compute sqrt
+                f.instruction(&Instruction::F64Sqrt);
                 // Box result
                 f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
             }

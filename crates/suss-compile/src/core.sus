@@ -1333,6 +1333,32 @@
   [pred coll]
   (filter (fn [x] (not (pred x))) coll))
 
+(defn some
+  "Returns the first truthy value of (pred x) for any x in coll, else nil."
+  [pred coll]
+  (let [s (seq coll)]
+    (if (nil? s)
+      nil
+      (let [val (pred (-first s))]
+        (if val
+          val
+          (some pred (-rest s)))))))
+
+(defn every?
+  "Returns true if (pred x) is truthy for every x in coll, else false."
+  [pred coll]
+  (let [s (seq coll)]
+    (if (nil? s)
+      true
+      (if (pred (-first s))
+        (every? pred (-rest s))
+        false))))
+
+(defn not-any?
+  "Returns true if (pred x) is falsy for every x in coll, else false."
+  [pred coll]
+  (not (some pred coll)))
+
 (defn take
   "Returns a lazy sequence of the first n elements of coll."
   [n coll]
@@ -1383,6 +1409,23 @@
     (if s
       (recur (f acc (first s)) (next s))
       acc)))
+
+(defn frequencies
+  "Returns a map from distinct items in coll to the number of times they appear."
+  [coll]
+  (reduce (fn [counts x]
+            (assoc counts x (inc (get counts x 0))))
+          {}
+          coll))
+
+(defn group-by
+  "Returns a map of the elements of coll keyed by the result of f on each element."
+  [f coll]
+  (reduce (fn [groups x]
+            (let [k (f x)]
+              (assoc groups k (conj (get groups k []) x))))
+          {}
+          coll))
 
 (defn iterate
   "Returns a lazy sequence of x, (f x), (f (f x)), etc."
@@ -1717,6 +1760,7 @@
     (= obj true) (-write writer "true")
     (= obj false) (-write writer "false")
     (int? obj) (-write writer (int->str obj))
+    (float? obj) (-write writer (float->str obj))
     (string? obj) (-write writer obj)
     (keyword? obj) (do
                      (-write writer ":")
