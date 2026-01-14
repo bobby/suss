@@ -1178,7 +1178,8 @@ impl Lowerer {
                 if args.len() != 1 {
                     return Err(CompileError::Parse("not requires exactly 1 argument".into()));
                 }
-                let operand = self.lower_expr(&args[0])?;
+                // Operand is never in tail position - we need to test its value
+                let operand = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
                 Ok(Expr::UnOp {
                     op: UnOp::Not,
                     operand: Box::new(operand),
@@ -1191,7 +1192,8 @@ impl Lowerer {
                 if args.len() != 1 {
                     return Err(CompileError::Parse("nil? requires exactly 1 argument".into()));
                 }
-                let operand = self.lower_expr(&args[0])?;
+                // Operand is never in tail position - we need to test its value
+                let operand = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
                 // nil? returns true if operand equals nil sentinel (i31ref(0))
                 Ok(Expr::NilCheck(Box::new(operand)))
             }
@@ -1203,8 +1205,10 @@ impl Lowerer {
                         "identical? requires exactly 2 arguments".into(),
                     ));
                 }
-                let left = self.lower_expr(&args[0])?;
-                let right = self.lower_expr(&args[1])?;
+                // Arguments to identical? are never in tail position
+                let (left, right) = self.with_tail_disabled(|l| -> CompileResult<_> {
+                    Ok((l.lower_expr(&args[0])?, l.lower_expr(&args[1])?))
+                })?;
                 Ok(Expr::Identical(Box::new(left), Box::new(right)))
             }
 
