@@ -37,10 +37,11 @@
 ;; Returns a vector of prime factors
 ;; -----------------------------------------------------------------------------
 (defn prime-factors [n]
+  ;; Note: using quot for integer division (/ returns floats)
   (loop [n n factors [] d 2]
     (cond
       (< n 2) factors
-      (= 0 (rem n d)) (recur (/ n d) (conj factors d) d)
+      (= 0 (rem n d)) (recur (quot n d) (conj factors d) d)
       :else (recur n factors (inc d)))))
 
 ;; -----------------------------------------------------------------------------

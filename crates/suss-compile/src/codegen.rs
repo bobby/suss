@@ -343,6 +343,28 @@ impl<'a> CodeGen<'a> {
         }
         f.instruction(&Instruction::Else);
         {
+            // Test if it's FLOAT64
+            f.instruction(&Instruction::LocalGet(scratch));
+            f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::FLOAT64)));
+
+            f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+            {
+                // Extract f64 from FLOAT64 struct, truncate to i32
+                // This handles mixed int/float comparisons like (< 30.0 2)
+                f.instruction(&Instruction::LocalGet(scratch));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
+                f.instruction(&Instruction::StructGet {
+                    struct_type_index: gc_types::FLOAT64,
+                    field_index: gc_types::F64_VALUE,
+                });
+                // Truncate f64 to i32 (toward zero)
+                f.instruction(&Instruction::I32TruncF64S);
+                // Add offset to avoid sentinel collision (same as INT64)
+                f.instruction(&Instruction::I32Const(0x10000000));
+                f.instruction(&Instruction::I32Add);
+            }
+            f.instruction(&Instruction::Else);
+            {
             // Test if it's KEYWORD
             f.instruction(&Instruction::LocalGet(scratch));
             f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::KEYWORD)));
@@ -395,13 +417,34 @@ impl<'a> CodeGen<'a> {
 
                         f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
                         {
-                            // It's i31ref - use raw value WITHOUT decoding
-                            // This ensures sentinels (nil=0, false=2, true=4) don't overlap
-                            // with decoded numbers (0, 1, 2, etc.)
+                            // It's i31ref - decode and add offset for consistency with INT64/FLOAT64
+                            // Numbers are encoded as (n << 1) | 1 (odd), sentinels are even (0, 2, 4)
+                            // We decode and add offset so comparisons with INT64/FLOAT64 work
                             f.instruction(&Instruction::LocalGet(scratch));
                             f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
                             f.instruction(&Instruction::I31GetS);
-                            // NO shift right - use raw tagged value
+                            // Store raw i31 value in scratch+1 (i32 slot)
+                            let i31_local = scratch + 1;
+                            f.instruction(&Instruction::LocalTee(i31_local));
+                            // Check if it's a number (bit 0 = 1) vs sentinel (bit 0 = 0)
+                            f.instruction(&Instruction::I32Const(1));
+                            f.instruction(&Instruction::I32And);
+                            f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+                            {
+                                // It's a number: decode (>> 1) and add offset
+                                f.instruction(&Instruction::LocalGet(i31_local));
+                                f.instruction(&Instruction::I32Const(1));
+                                f.instruction(&Instruction::I32ShrS);
+                                f.instruction(&Instruction::I32Const(0x10000000));
+                                f.instruction(&Instruction::I32Add);
+                            }
+                            f.instruction(&Instruction::Else);
+                            {
+                                // It's a sentinel: use raw value (0=nil, 2=false, 4=true)
+                                // These are < 0x10000000 so they won't equal any number
+                                f.instruction(&Instruction::LocalGet(i31_local));
+                            }
+                            f.instruction(&Instruction::End);
                         }
                         f.instruction(&Instruction::Else);
                         {
@@ -419,7 +462,9 @@ impl<'a> CodeGen<'a> {
             }
             f.instruction(&Instruction::End);
         }
-        f.instruction(&Instruction::End);
+        f.instruction(&Instruction::End); // FLOAT64
+        }
+        f.instruction(&Instruction::End); // INT64
     }
 
     /// Generate code to unwrap an integer to i64.
