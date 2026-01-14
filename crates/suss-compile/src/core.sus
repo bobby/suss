@@ -1281,6 +1281,56 @@
   [n]
   (= n 0))
 
+(defn min*
+  "Returns the least of the arguments. First-class fn version for use with apply."
+  [& args]
+  (let [len (alength args)]
+    (if (= len 1)
+      (aget args 0)
+      (loop [i 1 result (aget args 0)]
+        (if (< i len)
+          (let [x (aget args i)]
+            (recur (+ i 1) (if (< x result) x result)))
+          result)))))
+
+(defn max*
+  "Returns the greatest of the arguments. First-class fn version for use with apply."
+  [& args]
+  (let [len (alength args)]
+    (if (= len 1)
+      (aget args 0)
+      (loop [i 1 result (aget args 0)]
+        (if (< i len)
+          (let [x (aget args i)]
+            (recur (+ i 1) (if (> x result) x result)))
+          result)))))
+
+(defn min-coll
+  "Returns the minimum element of a collection. Works with any seqable."
+  [coll]
+  (let [s (seq coll)]
+    (if (nil? s)
+      nil
+      (loop [xs (rest s) result (first s)]
+        (if (nil? xs)
+          result
+          (let [x (first xs)
+                new-result (if (< x result) x result)]
+            (recur (next xs) new-result)))))))
+
+(defn max-coll
+  "Returns the maximum element of a collection. Works with any seqable."
+  [coll]
+  (let [s (seq coll)]
+    (if (nil? s)
+      nil
+      (loop [xs (rest s) result (first s)]
+        (if (nil? xs)
+          result
+          (let [x (first xs)
+                new-result (if (> x result) x result)]
+            (recur (next xs) new-result)))))))
+
 (defn not=
   "Returns true if any argument is not equal to the first."
   [& args]

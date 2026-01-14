@@ -4673,15 +4673,110 @@ impl<'a> CodeGen<'a> {
             RefType::EQREF,
         ))));
 
-        // Variadic closure path
+        // Variadic closure path (builtins like +, *, etc. with fn0..fn8)
         self.generate_apply_variadic_dispatch(closure_local, vec_local, count_local, f)?;
 
         f.instruction(&Instruction::Else);
 
-        // Regular closure path
-        self.generate_apply_dispatch(closure_local, vec_local, count_local, f)?;
+        // Check for VARIADIC_CAPTURE: user-defined (fn [& args] ...) closures
+        // These are CLOSURE_1 with type_id == VARIADIC_CAPTURE
+        // They can handle ANY number of arguments (not limited to 8)
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::CLOSURE_1)));
+        f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+
+        // Is CLOSURE_1 - check type_id
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::CLOSURE_1)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: gc_types::CLOSURE_1,
+            field_index: gc_types::CL_TYPE_ID,
+        });
+        f.instruction(&Instruction::I32Const(crate::ir::type_ids::VARIADIC_CAPTURE));
+        f.instruction(&Instruction::I32Eq);
+
+        f.instruction(&Instruction::Else);
+
+        // Not CLOSURE_1, so definitely not variadic capture
+        f.instruction(&Instruction::I32Const(0));
 
         f.instruction(&Instruction::End);
+
+        // Stack now has i32 flag: 1 if variadic capture, 0 otherwise
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+
+        // VARIADIC_CAPTURE path - pass vector elements as array (no arg limit!)
+        self.generate_apply_variadic_capture(closure_local, vec_local, count_local, f)?;
+
+        f.instruction(&Instruction::Else);
+
+        // Regular closure path (fixed arity, 0-8 args limit)
+        self.generate_apply_dispatch(closure_local, vec_local, count_local, f)?;
+
+        f.instruction(&Instruction::End); // VARIADIC_CAPTURE check
+        f.instruction(&Instruction::End); // VARIADIC_CLOSURE check
+
+        Ok(())
+    }
+
+    /// Generate code to apply a VARIADIC_CAPTURE closure to a vector of args.
+    ///
+    /// VARIADIC_CAPTURE closures are (fn [& args] ...) that take a single array argument.
+    /// This function converts the vector elements to an array and calls the closure.
+    ///
+    /// For vectors <= 32 elements, the tail array contains all elements and is passed directly.
+    /// For larger vectors, we currently trap (TODO: implement proper conversion).
+    fn generate_apply_variadic_capture(
+        &self,
+        closure_local: u32,
+        vec_local: u32,
+        count_local: u32,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+
+        // Look up PersistentVector type index dynamically
+        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
+
+        // VARIADIC_CAPTURE closures use CLOSURE_FN_1 type: (env, args_array) -> result
+        let fn_type = gc_types::CLOSURE_FN_1;
+
+        // For now, we only support vectors <= 32 elements (where tail contains all elements)
+        // For larger vectors, trap (TODO: implement proper conversion)
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(32));
+        f.instruction(&Instruction::I32GtU);
+        f.instruction(&Instruction::If(BlockType::Empty));
+        f.instruction(&Instruction::Unreachable); // Trap for vectors > 32
+        f.instruction(&Instruction::End);
+
+        // Get env from CLOSURE_1
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::CLOSURE_1)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: gc_types::CLOSURE_1,
+            field_index: gc_types::CL_ENV,
+        });
+
+        // Get tail array from vector (contains all elements for cnt <= 32)
+        f.instruction(&Instruction::LocalGet(vec_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: pv_gc_idx,
+            field_index: 4, // tail field
+        });
+
+        // Get fn from CLOSURE_1
+        f.instruction(&Instruction::LocalGet(closure_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::CLOSURE_1)));
+        f.instruction(&Instruction::StructGet {
+            struct_type_index: gc_types::CLOSURE_1,
+            field_index: gc_types::CL_FN,
+        });
+
+        // Call the function: (env, args_array) -> result
+        f.instruction(&Instruction::CallRef(fn_type));
 
         Ok(())
     }

@@ -1083,6 +1083,33 @@ impl Lowerer {
 
     fn lower_call(&mut self, name: &str, args: &[Edn]) -> CompileResult<Expr> {
         match name {
+            // Special form: call a variadic function directly with an args array
+            // Used by variadic function wrappers to avoid double-packing
+            // ($direct-variadic-call func-name args-array)
+            "$direct-variadic-call" => {
+                if args.len() != 2 {
+                    return Err(CompileError::Parse(
+                        "$direct-variadic-call requires 2 arguments: func-name and args-array".into(),
+                    ));
+                }
+                let func_name = match &args[0] {
+                    Edn::Symbol(sym) => sym.name.clone(),
+                    _ => return Err(CompileError::Parse(
+                        "$direct-variadic-call first arg must be a symbol".into(),
+                    )),
+                };
+                if let Some((_, idx)) = self.resolve_func_name(&func_name) {
+                    let args_array = self.lower_expr(&args[1])?;
+                    // Emit direct call without variadic packing
+                    Ok(Expr::Call {
+                        func: idx,
+                        args: vec![args_array],
+                    })
+                } else {
+                    Err(CompileError::Undefined(func_name))
+                }
+            }
+
             // Arithmetic - infer type from operands
             "+" => {
                 let ty = self.infer_numeric_type(args);
@@ -3391,59 +3418,67 @@ impl Lowerer {
     }
 
     /// Create a variadic closure wrapper for a user-defined variadic function.
+    ///
+    /// Unlike builtins which use VARIADIC_CLOSURE (limited to 8 args), user-defined
+    /// variadic functions use CLOSURE_1 with VARIADIC_CAPTURE type_id to support
+    /// arbitrary argument counts via apply.
     fn lower_variadic_user_func_as_closure(
         &mut self,
         name: &str,
         _target_func_idx: u32,
     ) -> CompileResult<Expr> {
-        // Check if we already have wrappers for this variadic function
-        let cache_key = format!("variadic_userfn_{}", name);
-        if let Some(&base_idx) = self.builtin_wrappers.get(&cache_key) {
-            let func_indices: [u32; 9] = std::array::from_fn(|i| base_idx + i as u32);
-            return Ok(Expr::VariadicClosureNew {
-                op: name.to_string(),
-                func_indices,
+        // Check if we already have a wrapper for this variadic function
+        let cache_key = format!("variadic_userfn_capture_{}", name);
+        if let Some(&wrapper_idx) = self.builtin_wrappers.get(&cache_key) {
+            return Ok(Expr::ClosureNew {
+                func_idx: wrapper_idx,
+                arity: 1, // Takes args_array
+                captures: vec![],
+                is_variadic: true, // Marks as VARIADIC_CAPTURE
             });
         }
 
-        // Generate 9 wrapper functions (one per arity 0-8)
-        // Use closure_counter for base index for consistency
-        let base_idx = self.num_deftype_constructors
+        // Generate a single wrapper function that takes an args array
+        // and passes it to the original variadic function
+        let wrapper_name = format!(
+            "$variadic_userfn_capture_{}",
+            name.replace(|c: char| !c.is_alphanumeric(), "_")
+        );
+
+        let wrapper_idx = self.num_deftype_constructors
             + self.num_deftype_impl_funcs
             + self.num_analyzed_funcs
             + self.num_extension_funcs
             + self.closure_counter;
 
-        for arity in 0..=8u32 {
-            let wrapper_name = format!(
-                "$variadic_userfn_{}_{}",
-                name.replace(|c: char| !c.is_alphanumeric(), "_"),
-                arity
-            );
+        self.closure_counter += 1;
+        self.func_indices.insert(wrapper_name.clone(), wrapper_idx);
 
-            let func_idx = base_idx + arity;
-            self.closure_counter += 1;
-            self.func_indices.insert(wrapper_name.clone(), func_idx);
+        // The wrapper takes an args array and needs to call the target variadic
+        // function directly with that array. Use $direct-variadic-call to bypass
+        // the normal variadic packing that would wrap $args in another array.
+        let body = Edn::List(vec![
+            Edn::Symbol(Symbol::new("$direct-variadic-call")),
+            Edn::Symbol(Symbol::new(name)),
+            Edn::Symbol(Symbol::new("$args")),
+        ]);
 
-            let param_names: Vec<String> = (0..arity as usize).map(|i| format!("$arg{}", i)).collect();
-            let body = self.make_user_func_call_body(name, &param_names);
+        self.pending_closures.push(ClosureWrapper {
+            name: wrapper_name,
+            captures: vec![],
+            params: vec!["$args".to_string()], // Single array parameter
+            rest_param: None,
+            body,
+            is_variadic: false, // The wrapper itself is fixed-arity (1 param)
+        });
 
-            self.pending_closures.push(ClosureWrapper {
-                name: wrapper_name,
-                captures: vec![],
-                params: param_names,
-                rest_param: None,
-                body,
-                is_variadic: true,
-            });
-        }
+        self.builtin_wrappers.insert(cache_key, wrapper_idx);
 
-        self.builtin_wrappers.insert(cache_key, base_idx);
-
-        let func_indices: [u32; 9] = std::array::from_fn(|i| base_idx + i as u32);
-        Ok(Expr::VariadicClosureNew {
-            op: name.to_string(),
-            func_indices,
+        Ok(Expr::ClosureNew {
+            func_idx: wrapper_idx,
+            arity: 1,
+            captures: vec![],
+            is_variadic: true, // Marks type_id as VARIADIC_CAPTURE for apply
         })
     }
 

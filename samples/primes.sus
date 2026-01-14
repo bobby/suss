@@ -23,13 +23,15 @@
 ;; Classic algorithm using sets for efficiency
 ;; -----------------------------------------------------------------------------
 (defn sieve [n]
+  ;; Note: using min-coll instead of (apply min) as apply only supports up to 8 args
+  ;; Note: using reduce disj instead of (apply disj) for the same reason
   (loop [candidates (set (range 2 (inc n)))
          primes []]
     (if (empty? candidates)
       primes
-      (let [p (apply min candidates)
+      (let [p (min-coll candidates)
             multiples (set (range (* p p) (inc n) p))]
-        (recur (disj (apply disj candidates multiples) p)
+        (recur (disj (reduce disj candidates multiples) p)
                (conj primes p))))))
 
 ;; -----------------------------------------------------------------------------
