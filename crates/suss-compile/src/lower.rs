@@ -1027,7 +1027,7 @@ impl Lowerer {
 
             Edn::Vector(items) => {
                 if items.is_empty() {
-                    // Empty vector: use VecNew for minimal codegen
+                    // Empty vector is an irreducible primitive (used by core.sus vector fn)
                     Ok(Expr::VecNew(vec![]))
                 } else {
                     // Desugar [1 2 3] -> (vector 1 2 3)
@@ -1039,7 +1039,7 @@ impl Lowerer {
 
             Edn::Map(pairs) => {
                 if pairs.is_empty() {
-                    // Empty map: use MapNew for minimal codegen
+                    // Empty map is an irreducible primitive (used by core.sus hash-map fn)
                     Ok(Expr::MapNew(vec![]))
                 } else {
                     // Desugar {k1 v1 k2 v2} -> (hash-map k1 v1 k2 v2)
@@ -1054,7 +1054,7 @@ impl Lowerer {
 
             Edn::Set(items) => {
                 if items.is_empty() {
-                    // Empty set: use SetNew for minimal codegen
+                    // Empty set is an irreducible primitive (used by core.sus hash-set fn)
                     Ok(Expr::SetNew(vec![]))
                 } else {
                     // Desugar #{1 2 3} -> (hash-set 1 2 3)
@@ -2120,13 +2120,22 @@ impl Lowerer {
     }
 
     /// Lower anonymous function to closure
-    /// (fn [params] body) → ClosureNew { func_idx, arity, captures }
+    /// Single-arity: (fn [params] body) → ClosureNew { func_idx, arity, captures }
+    /// Multi-arity: (fn ([p1] b1) ([p2] b2) ...) → variadic closure with dispatch
     fn lower_fn(&mut self, args: &[Edn]) -> CompileResult<Expr> {
         if args.is_empty() {
             return Err(CompileError::Parse("fn requires params vector".into()));
         }
 
-        // Parse params vector
+        // Check for multi-arity: (fn ([p1] b1) ([p2] b2) ...)
+        // Each clause is a List starting with a Vector
+        if let Edn::List(clause) = &args[0] {
+            if matches!(clause.first(), Some(Edn::Vector(_))) {
+                return self.lower_multi_arity_fn(args);
+            }
+        }
+
+        // Parse params vector (single-arity)
         let params_vec = match &args[0] {
             Edn::Vector(items) => items,
             _ => return Err(CompileError::Parse("fn params must be a vector".into())),
@@ -2219,6 +2228,170 @@ impl Lowerer {
             captures,
             is_variadic,
         })
+    }
+
+    /// Lower multi-arity fn to a variadic closure with dispatch
+    /// (fn ([x] x) ([x y] (+ x y))) becomes:
+    /// (fn [& args]
+    ///   (case (count args)
+    ///     1 (let [x (nth args 0)] x)
+    ///     2 (let [x (nth args 0) y (nth args 1)] (+ x y))
+    ///     default-error))
+    fn lower_multi_arity_fn(&mut self, clauses: &[Edn]) -> CompileResult<Expr> {
+        use suss_core::Symbol;
+
+        // Parse each arity clause
+        struct ArityClause {
+            arity: usize,
+            params: Vec<String>,
+            rest_param: Option<String>,
+            body: Vec<Edn>,
+        }
+
+        let mut parsed_clauses = Vec::new();
+        let mut has_variadic = false;
+
+        for clause in clauses {
+            let clause_items = match clause {
+                Edn::List(items) => items,
+                _ => return Err(CompileError::Parse("Multi-arity clause must be a list".into())),
+            };
+
+            if clause_items.is_empty() {
+                return Err(CompileError::Parse("Empty arity clause".into()));
+            }
+
+            let params_vec = match &clause_items[0] {
+                Edn::Vector(items) => items,
+                _ => return Err(CompileError::Parse("Arity clause must start with params vector".into())),
+            };
+
+            let mut params = Vec::new();
+            let mut rest_param: Option<String> = None;
+            let mut found_amp = false;
+            for param in params_vec {
+                match param {
+                    Edn::Symbol(sym) if sym.name == "&" => {
+                        found_amp = true;
+                    }
+                    Edn::Symbol(sym) if found_amp => {
+                        rest_param = Some(sym.name.clone());
+                        has_variadic = true;
+                        break;
+                    }
+                    Edn::Symbol(sym) => params.push(sym.name.clone()),
+                    _ => return Err(CompileError::Parse("Param must be a symbol".into())),
+                }
+            }
+
+            let arity = params.len();
+            let body: Vec<Edn> = clause_items[1..].to_vec();
+
+            parsed_clauses.push(ArityClause {
+                arity,
+                params,
+                rest_param,
+                body,
+            });
+        }
+
+        // Sort by arity (variadic clause last)
+        parsed_clauses.sort_by(|a, b| {
+            match (&a.rest_param, &b.rest_param) {
+                (Some(_), None) => std::cmp::Ordering::Greater,
+                (None, Some(_)) => std::cmp::Ordering::Less,
+                _ => a.arity.cmp(&b.arity),
+            }
+        });
+
+        // Build the dispatch body using nested if on (count args)
+        // (if (= (count args) N1) body1 (if (= (count args) N2) body2 default))
+        let args_sym = Symbol::new("$multi_arity_args");
+
+        // Helper to build a clause body with let bindings
+        // Note: args is a raw WASM array, so we use aget/alength instead of nth/count
+        let build_clause_body = |clause: &ArityClause| -> Edn {
+            let mut let_bindings = Vec::new();
+            for (i, param) in clause.params.iter().enumerate() {
+                let_bindings.push(Edn::Symbol(Symbol::new(param)));
+                let_bindings.push(Edn::List(vec![
+                    Edn::Symbol(Symbol::new("aget")),
+                    Edn::Symbol(args_sym.clone()),
+                    Edn::Number(suss_core::Number::Integer((i as i64).into())),
+                ]));
+            }
+            // Add rest param binding if present
+            // For now, we create a lazy-seq that iterates over the remaining array elements
+            if let Some(ref rest_name) = clause.rest_param {
+                let_bindings.push(Edn::Symbol(Symbol::new(rest_name)));
+                // TODO: properly implement rest args for multi-arity
+                // For now, just use nil as placeholder
+                let_bindings.push(Edn::Nil);
+            }
+
+            let let_body = if clause.body.len() == 1 {
+                clause.body[0].clone()
+            } else {
+                let mut do_form = vec![Edn::Symbol(Symbol::new("do"))];
+                do_form.extend(clause.body.clone());
+                Edn::List(do_form)
+            };
+
+            if let_bindings.is_empty() {
+                // 0-arity: no bindings needed
+                let_body
+            } else {
+                Edn::List(vec![
+                    Edn::Symbol(Symbol::new("let")),
+                    Edn::Vector(let_bindings),
+                    let_body,
+                ])
+            }
+        };
+
+        // Build nested if from back to front
+        let mut dispatch_expr = if has_variadic {
+            // Default is the variadic clause
+            build_clause_body(parsed_clauses.last().unwrap())
+        } else {
+            Edn::Nil
+        };
+
+        // Process fixed-arity clauses in reverse order (excluding variadic if present)
+        let fixed_clauses: Vec<_> = parsed_clauses.iter()
+            .filter(|c| c.rest_param.is_none())
+            .collect();
+
+        for clause in fixed_clauses.into_iter().rev() {
+            let condition = Edn::List(vec![
+                Edn::Symbol(Symbol::new("=")),
+                Edn::List(vec![
+                    Edn::Symbol(Symbol::new("alength")),
+                    Edn::Symbol(args_sym.clone()),
+                ]),
+                Edn::Number(suss_core::Number::Integer((clause.arity as i64).into())),
+            ]);
+
+            let then_body = build_clause_body(clause);
+
+            dispatch_expr = Edn::List(vec![
+                Edn::Symbol(Symbol::new("if")),
+                condition,
+                then_body,
+                dispatch_expr,
+            ]);
+        }
+
+        // Now lower as a regular variadic fn: (fn [& args] dispatch-body)
+        let variadic_fn = vec![
+            Edn::Vector(vec![
+                Edn::Symbol(Symbol::new("&")),
+                Edn::Symbol(args_sym),
+            ]),
+            dispatch_expr,
+        ];
+
+        self.lower_fn(&variadic_fn)
     }
 
     /// Lower (apply func args-vec) to Apply expression.

@@ -293,14 +293,15 @@ impl MacroEnv {
     }
 
     /// Expand defn to (def name (fn params body))
-    /// (defn name [params] body...)
-    /// (defn ^:export name [params] body...)
-    /// (defn name "docstring" [params] body...)
+    /// Single-arity: (defn name [params] body...)
+    /// Multi-arity:  (defn name ([params1] body1) ([params2] body2)...)
+    /// With metadata: (defn ^:export name [params] body...)
+    /// With docstring: (defn name "docstring" [params] body...)
     fn expand_defn(&self, items: &[Edn]) -> CompileResult<Edn> {
-        // defn requires at least: defn name [params] body
-        if items.len() < 4 {
+        // defn requires at least: defn name [params] body  or  defn name ([params] body)
+        if items.len() < 3 {
             return Err(CompileError::MacroExpansion(
-                "defn requires name, params, and body".into(),
+                "defn requires name and body".into(),
             ));
         }
 
@@ -337,12 +338,36 @@ impl MacroEnv {
             }
         }
 
-        // Params must be a vector
         if idx >= items.len() {
             return Err(CompileError::MacroExpansion(
-                "defn requires parameters vector".into(),
+                "defn requires parameters and body".into(),
             ));
         }
+
+        // Check for multi-arity form: (defn name ([params] body) ([params] body) ...)
+        // Detection: next item is a List where first element is a Vector
+        let is_multi_arity = if let Edn::List(clause) = &items[idx] {
+            matches!(clause.first(), Some(Edn::Vector(_)))
+        } else {
+            false
+        };
+
+        if is_multi_arity {
+            // Multi-arity: collect all arity clauses and build (fn ([p1] b1) ([p2] b2) ...)
+            let clauses: Vec<Edn> = items[idx..].to_vec();
+            let mut fn_form = vec![Edn::Symbol(Symbol::new("fn"))];
+            fn_form.extend(clauses);
+
+            // Build (def [metadata...] name (fn ...)) form
+            let mut def_form = vec![Edn::Symbol(Symbol::new("def"))];
+            def_form.extend(metadata);
+            def_form.push(name);
+            def_form.push(Edn::List(fn_form));
+
+            return Ok(Edn::List(def_form));
+        }
+
+        // Single-arity: params must be a vector
         let params = match &items[idx] {
             Edn::Vector(_) => items[idx].clone(),
             _ => {
@@ -609,28 +634,71 @@ impl MacroEnv {
         Ok(Edn::List(result))
     }
 
-    /// Expand an fn form, handling destructuring in parameters
-    fn expand_fn(&mut self, items: &[Edn]) -> CompileResult<Edn> {
-        // fn can have optional name: (fn name [params] body) or (fn [params] body)
-        let (name_opt, params_idx) = if items.len() >= 2 {
-            match &items[1] {
-                Edn::Symbol(_) => (Some(items[1].clone()), 2),
-                Edn::Vector(_) => (None, 1),
-                _ => return Err(CompileError::MacroExpansion(
-                    "fn requires parameter vector".into()
-                )),
-            }
+    /// Check if an Edn item is a multi-arity clause: a List where first element is a Vector
+    fn is_arity_clause(item: &Edn) -> bool {
+        if let Edn::List(clause) = item {
+            matches!(clause.first(), Some(Edn::Vector(_)))
         } else {
+            false
+        }
+    }
+
+    /// Expand an fn form, handling destructuring in parameters
+    /// Single-arity: (fn [params] body) or (fn name [params] body)
+    /// Multi-arity: (fn ([params1] body1) ([params2] body2)...) or (fn name ([params1] body1)...)
+    fn expand_fn(&mut self, items: &[Edn]) -> CompileResult<Edn> {
+        if items.len() < 2 {
             return Err(CompileError::MacroExpansion("fn requires parameters".into()));
+        }
+
+        // Check for optional name and determine where params/clauses start
+        let (name_opt, body_start) = match &items[1] {
+            Edn::Symbol(_) => (Some(items[1].clone()), 2),
+            Edn::Vector(_) => (None, 1),
+            Edn::List(_) => (None, 1), // Could be multi-arity clause
+            _ => return Err(CompileError::MacroExpansion(
+                "fn requires parameter vector or arity clauses".into()
+            )),
         };
 
-        if items.len() <= params_idx {
+        if items.len() <= body_start {
             return Err(CompileError::MacroExpansion(
-                "fn requires parameter vector".into()
+                "fn requires parameter vector or body".into()
             ));
         }
 
-        let params = match &items[params_idx] {
+        // Check for multi-arity: (fn ([p1] b1) ([p2] b2)...) or (fn name ([p1] b1) ([p2] b2)...)
+        if Self::is_arity_clause(&items[body_start]) {
+            // Multi-arity: pass through, recursively expanding each clause body
+            let mut result = vec![Edn::Symbol(Symbol::new("fn"))];
+            if let Some(name) = name_opt {
+                result.push(name);
+            }
+
+            // Process each arity clause
+            for clause in &items[body_start..] {
+                if let Edn::List(clause_items) = clause {
+                    if clause_items.is_empty() {
+                        return Err(CompileError::MacroExpansion(
+                            "Empty arity clause in fn".into()
+                        ));
+                    }
+                    // Recursively expand the params and body within the clause
+                    // Clause format: ([params] body...)
+                    let expanded_clause = self.expand_fn_clause(clause_items)?;
+                    result.push(Edn::List(expanded_clause));
+                } else {
+                    return Err(CompileError::MacroExpansion(
+                        "Invalid arity clause in multi-arity fn".into()
+                    ));
+                }
+            }
+
+            return Ok(Edn::List(result));
+        }
+
+        // Single-arity: params must be a vector
+        let params = match &items[body_start] {
             Edn::Vector(v) => v,
             _ => return Err(CompileError::MacroExpansion(
                 "fn parameters must be a vector".into()
@@ -659,12 +727,10 @@ impl MacroEnv {
         // Generate new parameter names and collect destructuring bindings
         let mut new_params = Vec::new();
         let mut let_bindings = Vec::new();
-        let mut saw_rest = false;
 
         for param in params {
             if let Edn::Symbol(sym) = param {
                 if sym.name == "&" {
-                    saw_rest = true;
                     new_params.push(Edn::Symbol(sym.clone()));
                     continue;
                 }
@@ -703,7 +769,7 @@ impl MacroEnv {
         // Wrap body in let if we have destructuring bindings
         if !let_bindings.is_empty() {
             let mut body_forms = Vec::new();
-            for body_form in &items[params_idx + 1..] {
+            for body_form in &items[body_start + 1..] {
                 body_forms.push(self.expand(body_form.clone())?);
             }
 
@@ -721,12 +787,98 @@ impl MacroEnv {
                 let_body,
             ]));
         } else {
-            for body_form in &items[params_idx + 1..] {
+            for body_form in &items[body_start + 1..] {
                 result.push(self.expand(body_form.clone())?);
             }
         }
 
         Ok(Edn::List(result))
+    }
+
+    /// Expand a single arity clause: ([params] body...) -> [params] expanded-body
+    /// Handles destructuring within the clause
+    fn expand_fn_clause(&mut self, clause_items: &[Edn]) -> CompileResult<Vec<Edn>> {
+        if clause_items.is_empty() {
+            return Err(CompileError::MacroExpansion("Empty arity clause".into()));
+        }
+
+        let params = match &clause_items[0] {
+            Edn::Vector(v) => v,
+            _ => return Err(CompileError::MacroExpansion(
+                "Arity clause must start with parameter vector".into()
+            )),
+        };
+
+        // Check for destructuring
+        let has_destructuring = params.iter().any(|p| {
+            if let Edn::Symbol(s) = p {
+                if s.name == "&" {
+                    return false;
+                }
+            }
+            Self::needs_destructuring(p)
+        });
+
+        if !has_destructuring {
+            // No destructuring - just expand body forms
+            let mut result = vec![clause_items[0].clone()];
+            for body_form in &clause_items[1..] {
+                result.push(self.expand(body_form.clone())?);
+            }
+            return Ok(result);
+        }
+
+        // Handle destructuring
+        let mut new_params = Vec::new();
+        let mut let_bindings = Vec::new();
+
+        for param in params {
+            if let Edn::Symbol(sym) = param {
+                if sym.name == "&" {
+                    new_params.push(Edn::Symbol(sym.clone()));
+                    continue;
+                }
+            }
+
+            if Self::needs_destructuring(param) {
+                let temp_sym = self.gensym("p");
+                new_params.push(Edn::Symbol(temp_sym.clone()));
+
+                if let Edn::Vector(elems) = param {
+                    let bindings = self.destructure_vector(elems, &temp_sym)?;
+                    for (sym, expr) in bindings {
+                        let_bindings.push(sym);
+                        let_bindings.push(expr);
+                    }
+                }
+            } else {
+                new_params.push(param.clone());
+            }
+        }
+
+        // Build result with new params and let-wrapped body
+        let mut result = vec![Edn::Vector(new_params)];
+
+        let mut body_forms = Vec::new();
+        for body_form in &clause_items[1..] {
+            body_forms.push(self.expand(body_form.clone())?);
+        }
+
+        let let_body = if body_forms.len() == 1 {
+            body_forms.pop().unwrap()
+        } else {
+            let mut do_form = vec![Edn::Symbol(Symbol::new("do"))];
+            do_form.extend(body_forms);
+            Edn::List(do_form)
+        };
+
+        result.push(Edn::List(vec![
+            Edn::Symbol(Symbol::new("let")),
+            Edn::Vector(let_bindings),
+            let_body,
+        ]));
+
+        Ok(result)
     }
 
     /// Expand a loop form, handling destructuring in bindings

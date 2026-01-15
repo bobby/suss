@@ -110,12 +110,16 @@ Function Index Layout:
   - ISeqable for all collection types (vector, map, set)
   - `^:mutable` field support in deftype
   - Higher-order functions: map, filter, reduce, take, drop, range, iterate, etc.
+- [x] Phase 13 complete: Multi-arity function support
+  - `(defn foo ([x] x) ([x y] (+ x y)))` syntax
+  - `(fn ([x] x) ([x y] (+ x y)))` anonymous multi-arity
+  - Implemented via variadic closure with arity dispatch
 
 ### Blocking Issues
 - None currently blocking
 
 ### Known Bugs
-- **TCO with WIT type mismatch**: Tail-recursive functions work in REPL mode but fail in WIT component compilation with "type mismatch" errors. The WIT path has deeper type compatibility issues.
+- None currently identified
 
 ---
 
@@ -710,92 +714,65 @@ The compiler now provides only:
 
 ---
 
-## Phase 7b: WIT Code Consolidation
+## Phase 7b: WIT Code Consolidation ✓ COMPLETE
 
 > **Goal:** Reduce code duplication between WIT and non-WIT code generation paths.
-> **Estimated savings:** ~400-600 lines (after accounting for new abstraction overhead)
+> **Achieved:** ~400 lines removed (450 deleted, 50 added for marshaling fixes)
 
 ### Background
 
-The compiler has nearly identical code paths for WIT-exported functions vs internal functions, with the key difference being `param_offset` threading for local variable access.
+The compiler had nearly identical code paths for WIT-exported functions vs internal functions. The key insight was that `generate_expr_inner` already takes a `param_offset` parameter that handles the difference.
 
-**WIT functions** have a dual local layout:
-- Positions 0..N hold raw WIT params (i32/i64/f64)
-- Positions N..2N hold converted eqref copies
-- Entry code marshals WIT params → eqref
-- Exit code marshals eqref result → WIT type
-- `param_offset = N` threads through all expression generation
+### What Was Done
 
-**Non-WIT functions** have a single local layout:
-- All params are eqref from the start
-- No entry/exit marshaling
-- `param_offset = 0`
+**Deleted legacy WIT-specific functions (~450 lines):**
+- `generate_expr_wit()` - Wrapper for WIT expression generation
+- `generate_expr_wit_inner()` - Duplicate of generate_expr_inner with param_offset
+- `generate_binop_wit()` - Duplicate binary op handling
+- `generate_unop_wit()` - Duplicate unary op handling
+- `generate_if_wit()` - Duplicate conditional handling
+- `generate_condition_wit()` - Duplicate condition evaluation
 
-### Duplicated Functions (~722 lines)
+**Updated unified path:**
+- `generate_function_wit()` now calls `generate_expr_with_offset()` instead of deleted `generate_expr_wit()`
+- Added `param_offset` to `LocalSet` in `Let`, `Loop`, and `Recur` expression handling
+- Added WIT marshaling for `Call` and `TailCall` when calling exported functions from WIT context
 
-| WIT Version | Non-WIT Version | Lines | Notes |
-|-------------|-----------------|-------|-------|
-| `generate_function_wit()` | `generate_function()` | 104 | Dual vs single local layout |
-| `generate_expr_wit()` | `generate_expr()` | 273 | param_offset threading |
-| `generate_expr_wit_inner()` | `generate_expr_inner()` | (included above) | Main dispatch |
-| `generate_binop_wit()` | (embedded) | 76 | Simplified arithmetic |
-| `generate_unop_wit()` | (embedded) | 34 | Unary ops |
-| `generate_if_wit()` | (embedded) | 40 | Condition handling |
-| `generate_condition_wit()` | (embedded) | (included above) | |
-| `generate_core_with_imports()` | `generate_standalone_module()` | 157 | Module orchestration |
+### Architecture After Consolidation
 
-### Proposed Approach: Mode Enum
-
-Unify via a `GenerationMode` enum that captures the differences:
-
-```rust
-enum GenerationMode {
-    /// Internal functions - all params are eqref
-    Internal,
-    /// WIT-exported functions - dual local layout with marshaling
-    WitExport {
-        param_offset: u32,
-        param_types: Vec<WitType>,  // For entry marshaling
-        return_type: WitType,        // For exit marshaling
-    },
-}
-
-fn generate_function(&self, func: &Function, mode: GenerationMode) -> CompileResult<Function> {
-    match mode {
-        GenerationMode::Internal => { /* current generate_function logic */ }
-        GenerationMode::WitExport { .. } => { /* current generate_function_wit logic */ }
-    }
-    // Shared body generation with mode passed through
-    self.generate_expr(&func.body, f, &mode)?;
-}
+```
+generate_function()      → generate_expr() → generate_expr_inner(param_offset=0)
+generate_function_wit()  → generate_expr_with_offset() → generate_expr_inner(param_offset=N)
 ```
 
-### Implementation Tasks
+The only remaining WIT-specific code is in `generate_function_wit()`:
+- Entry marshaling: Convert WIT params (i32/i64/f64) to boxed eqref
+- Exit marshaling: Convert boxed eqref result back to WIT type
+- Local layout with dual param slots
 
-- [ ] Define `GenerationMode` enum in codegen.rs
-- [ ] Unify `generate_function` and `generate_function_wit`
-- [ ] Unify `generate_expr_inner` with mode-aware param_offset handling
-- [ ] Unify `generate_binop` with mode-aware feature gates
-- [ ] Unify `generate_if` and condition handling
-- [ ] Remove `generate_*_wit` functions after unification
-- [ ] Update `generate_core_with_imports` to use unified path
+### Call Site Marshaling
 
-### Considerations
+When calling an exported function from within WIT context (e.g., recursive calls to `^:export` functions), the unified `generate_expr_inner` now:
+1. Detects if target is an exported function (`func.exported`)
+2. Unwraps eqref args to i32 before the call
+3. Wraps i32 result back to eqref after the call
 
-**What stays different:**
-- Entry/exit marshaling (only for WIT exports)
-- Scratch local allocation (WIT uses fewer: 5×25 vs 10×50)
-- Complex arithmetic support (WIT subset restricts some operations)
-- Loop tracking (non-WIT tracks `loop_depth` for recur)
+This was previously handled by the deleted `generate_expr_wit_inner()`.
 
-**Risk:** If unification adds as much conditional logic as it removes duplication, the benefit is marginal. The goal is net reduction in complexity, not just line count.
+### Metrics
 
-### Success Criteria
+| Metric | Before | After |
+|--------|--------|-------|
+| codegen.rs lines | ~5,400 | ~5,000 |
+| `_wit` functions | 6 | 0 (deleted) |
+| Lines changed | - | -450, +50 |
 
-- [ ] codegen.rs reduced to ~4,800-5,000 lines
-- [ ] All existing tests pass
-- [ ] WIT export functionality unchanged
-- [ ] Code is easier to maintain (changes apply to both paths)
+### Success Criteria ✓
+
+- [x] codegen.rs reduced by ~400 lines
+- [x] All 246 tests pass (237 compile_expr + 6 component + 3 conformance)
+- [x] WIT export functionality unchanged
+- [x] TCO with WIT exports now works (was a known bug)
 
 ---
 
@@ -999,6 +976,50 @@ Full sequence abstraction for all collections, including lazy sequences and high
 
 ---
 
+## Phase 13: Multi-Arity Functions ✓ COMPLETE
+
+Support ClojureScript-style multi-arity functions.
+
+### Syntax
+
+```clojure
+;; Multi-arity defn
+(defn greet
+  ([] "Hello!")
+  ([name] (str "Hello, " name "!"))
+  ([greeting name] (str greeting ", " name "!")))
+
+;; Multi-arity anonymous fn
+(fn ([x] x) ([x y] (+ x y)))
+```
+
+### Implementation
+
+Multi-arity functions are compiled to variadic closures with arity dispatch:
+
+1. **Parsing (expand.rs):** Detect multi-arity form when first element after name is a List starting with Vector
+2. **Lowering (lower.rs):** Convert to variadic closure with nested if dispatch:
+   ```clojure
+   (fn [& args]
+     (if (= (alength args) 0) body0
+       (if (= (alength args) 1) (let [x (aget args 0)] body1)
+         (let [x (aget args 0) y (aget args 1)] body2))))
+   ```
+3. **Codegen:** Reuses existing variadic closure infrastructure
+
+### Completed
+- [x] expand.rs: Multi-arity detection in `expand_defn` and `expand_fn`
+- [x] expand.rs: `expand_fn_clause` for individual arity clauses with destructuring
+- [x] lower.rs: `lower_multi_arity_fn` generates dispatch closure
+- [x] All arities 0-N work correctly
+- [x] Existing single-arity functions unchanged (237 tests pass)
+
+### Limitations
+- Variadic arities within multi-arity (e.g., `([x & more] ...)`) not yet fully supported
+- No compile-time arity checking (wrong arity returns nil)
+
+---
+
 ## Implementation Order
 
 ### Completed Foundation
@@ -1032,11 +1053,13 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 | **5** | Protocol impls in core.sus | Yes | ✓ COMPLETE |
 | **6** | Pure Suss algorithms | Incremental | ✓ COMPLETE |
 | **7** | Minimize compiler | No | ✓ COMPLETE |
-| **7b** | WIT code consolidation | No | Pending |
+| **7b** | WIT code consolidation | No | ✓ COMPLETE |
 | **12** | List/Seq operations | No | ✓ COMPLETE |
+| **13** | Multi-arity functions | No | ✓ COMPLETE |
 
 ### After Self-Hosting
-- **Phase 7b: WIT consolidation** - Reduce codegen duplication (~400-600 lines)
+- ✓ **Phase 7b: WIT consolidation** - Reduced codegen duplication (~400 lines)
+- ✓ **Phase 13: Multi-arity functions** - `(defn foo ([x] x) ([x y] (+ x y)))` syntax
 - **Phase 9: WIT marshaling** - Component boundary type conversion
 - **Phase 10: Transients** - Performance optimization
 - **Phase 11: wasm-opt** - Binary optimization
@@ -1091,6 +1114,13 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 - [x] `(reduce + 0 [1 2 3])` => 6
 - [x] `(filter pos? [-1 0 1 2])` returns lazy seq of positive numbers
 - [x] `^:mutable` fields work in deftype for LazySeq thunk caching
+
+### Phase 13 Complete When: ✓ COMPLETE
+- [x] `(defn foo ([x] x) ([x y] (+ x y)))` compiles and runs
+- [x] `(fn ([x] x) ([x y] (+ x y)))` anonymous multi-arity works
+- [x] 0-arity clauses work: `(fn ([] 0) ([x] x))`
+- [x] Multiple fixed arities dispatch correctly
+- [x] Existing single-arity functions unchanged
 
 ### Ultimate Success:
 ```clojure

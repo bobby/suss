@@ -2459,7 +2459,8 @@ impl<'a> CodeGen<'a> {
         }
 
         // Generate body with local offset for params
-        self.generate_expr_wit(&func.body, &mut f, num_params)?;
+        // Uses unified generate_expr_inner with param_offset for local remapping
+        self.generate_expr_with_offset(&func.body, &mut f, num_params)?;
 
         // Exit: convert eqref result back to WIT type
         match &func.return_type {
@@ -2490,452 +2491,6 @@ impl<'a> CodeGen<'a> {
 
         f.instruction(&Instruction::End);
         Ok(f)
-    }
-
-    /// Generate expression with WIT local offset for params.
-    fn generate_expr_wit(&self, expr: &Expr, f: &mut Function, param_offset: u32) -> CompileResult<()> {
-        // This is a wrapper that remaps LocalGet for params
-        // For simplicity, we handle LocalGet specially and delegate the rest
-        match expr {
-            Expr::LocalGet { local, ty: _ } => {
-                // Remap param access to use converted local
-                f.instruction(&Instruction::LocalGet(*local + param_offset));
-                Ok(())
-            }
-            _ => {
-                // For other expressions, use normal generation but recurse for nested exprs
-                self.generate_expr_wit_inner(expr, f, param_offset)
-            }
-        }
-    }
-
-    /// Inner helper for WIT expression generation - handles recursion
-    fn generate_expr_wit_inner(&self, expr: &Expr, f: &mut Function, param_offset: u32) -> CompileResult<()> {
-        use crate::ir::gc_types;
-        match expr {
-            // Recursively handle expressions that contain sub-expressions
-            Expr::BinOp { op, left, right, ty } => {
-                self.generate_binop_wit(op, left, right, ty, f, param_offset)
-            }
-            Expr::UnOp { op, operand, ty: _ } => {
-                self.generate_unop_wit(op, operand, f, param_offset)
-            }
-            Expr::If { cond, then_branch, else_branch, ty } => {
-                self.generate_if_wit(cond, then_branch, else_branch, ty, f, param_offset)
-            }
-            Expr::Block(exprs) => {
-                for (i, e) in exprs.iter().enumerate() {
-                    self.generate_expr_wit(e, f, param_offset)?;
-                    if i < exprs.len() - 1 {
-                        f.instruction(&Instruction::Drop);
-                    }
-                }
-                if exprs.is_empty() {
-                    f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-                    f.instruction(&Instruction::RefI31);
-                }
-                Ok(())
-            }
-            Expr::Let { bindings, body } => {
-                for (local_idx, init) in bindings {
-                    self.generate_expr_wit(init, f, param_offset)?;
-                    f.instruction(&Instruction::LocalSet(*local_idx + param_offset));
-                }
-                self.generate_expr_wit(body, f, param_offset)
-            }
-            Expr::LocalGet { local, ty: _ } => {
-                f.instruction(&Instruction::LocalGet(*local + param_offset));
-                Ok(())
-            }
-            Expr::Call { func, args } => {
-                // Check if target function is exported (needs WIT marshaling for i32 <-> eqref)
-                //
-                // Function indices are: [imports][helpers][user functions]
-                // To find the IR function index, we subtract imports and helpers.
-                let num_imports = self.num_imports();
-                let user_func_base = num_imports + NUM_RUNTIME_HELPERS;
-                let is_exported = if *func >= user_func_base {
-                    let local_idx = (*func - user_func_base) as usize;
-                    self.ir.functions.get(local_idx).map_or(false, |f| f.exported)
-                } else {
-                    false // Imports/helpers don't need marshaling
-                };
-
-                for arg in args {
-                    self.generate_expr_wit(arg, f, param_offset)?;
-                    if is_exported || *func < num_imports {
-                        // Unwrap eqref to i32 for exported/import functions
-                        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                        f.instruction(&Instruction::I31GetS);
-                        f.instruction(&Instruction::I32Const(1));
-                        f.instruction(&Instruction::I32ShrS);
-                    }
-                }
-                f.instruction(&Instruction::Call(*func));
-
-                if is_exported {
-                    // Wrap i32 result back to eqref
-                    f.instruction(&Instruction::I32Const(1));
-                    f.instruction(&Instruction::I32Shl);
-                    f.instruction(&Instruction::I32Const(1));
-                    f.instruction(&Instruction::I32Or);
-                    f.instruction(&Instruction::RefI31);
-                }
-                // Note: import functions return WIT types, caller must handle
-                Ok(())
-            }
-            Expr::TailCall { func, args } => {
-                // Check if target function is exported (needs WIT marshaling)
-                let num_imports = self.num_imports();
-                let user_func_base = num_imports + NUM_RUNTIME_HELPERS;
-                let is_exported = if *func >= user_func_base {
-                    let local_idx = (*func - user_func_base) as usize;
-                    self.ir.functions.get(local_idx).map_or(false, |f| f.exported)
-                } else {
-                    false // Imports/helpers don't need marshaling
-                };
-
-                for arg in args {
-                    self.generate_expr_wit(arg, f, param_offset)?;
-                    if is_exported || *func < num_imports {
-                        // Unwrap eqref to i32 for exported/import functions
-                        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                        f.instruction(&Instruction::I31GetS);
-                        f.instruction(&Instruction::I32Const(1));
-                        f.instruction(&Instruction::I32ShrS);
-                    }
-                }
-                f.instruction(&Instruction::ReturnCall(*func));
-                // Note: tail call returns directly, no result wrapping needed
-                // (the function's exit marshaling handles return value conversion)
-                Ok(())
-            }
-            // Array operations with proper WIT local offset handling
-            Expr::ArrayLen(array) => {
-                self.generate_expr_wit(array, f, param_offset)?;
-                // Cast eqref to abstract array type for array.len
-                // This works for any array type (STRING, ARRAY, I32_ARRAY)
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Abstract {
-                    shared: false,
-                    ty: AbstractHeapType::Array,
-                }));
-                f.instruction(&Instruction::ArrayLen);
-                // Box result as i31ref: (n << 1) | 1
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32Shl);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32Or);
-                f.instruction(&Instruction::RefI31);
-                Ok(())
-            }
-            Expr::ArrayGet { type_idx, array, index } => {
-                self.generate_expr_wit(array, f, param_offset)?;
-                // Cast eqref to array type
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
-                // Unbox index from i31ref
-                self.generate_expr_wit(index, f, param_offset)?;
-                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                f.instruction(&Instruction::I31GetS);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32ShrS);
-                // For STRING (array<i8>), use array.get_s for packed type, then box
-                if *type_idx == gc_types::STRING {
-                    f.instruction(&Instruction::ArrayGetS(*type_idx));
-                    f.instruction(&Instruction::I32Const(1));
-                    f.instruction(&Instruction::I32Shl);
-                    f.instruction(&Instruction::I32Const(1));
-                    f.instruction(&Instruction::I32Or);
-                    f.instruction(&Instruction::RefI31);
-                } else {
-                    f.instruction(&Instruction::ArrayGet(*type_idx));
-                }
-                Ok(())
-            }
-            Expr::ArraySet { type_idx, array, index, value } => {
-                self.generate_expr_wit(array, f, param_offset)?;
-                // Cast eqref to array type
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
-                // Unbox index from i31ref
-                self.generate_expr_wit(index, f, param_offset)?;
-                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                f.instruction(&Instruction::I31GetS);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32ShrS);
-                self.generate_expr_wit(value, f, param_offset)?;
-                // Duplicate value to return after set
-                let scratch = self.scratch_local.get();
-                f.instruction(&Instruction::LocalTee(scratch));
-                // For STRING (array<i8>), unbox the value to i32 before array.set
-                if *type_idx == gc_types::STRING {
-                    f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                    f.instruction(&Instruction::I31GetS);
-                    f.instruction(&Instruction::I32Const(1));
-                    f.instruction(&Instruction::I32ShrS);
-                }
-                f.instruction(&Instruction::ArraySet(*type_idx));
-                // Return the value that was set
-                f.instruction(&Instruction::LocalGet(scratch));
-                Ok(())
-            }
-            Expr::ArrayNewDefault { type_idx, size } => {
-                // Unbox size from i31ref
-                self.generate_expr_wit(size, f, param_offset)?;
-                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                f.instruction(&Instruction::I31GetS);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32ShrS);
-                f.instruction(&Instruction::ArrayNewDefault(*type_idx));
-                Ok(())
-            }
-            Expr::ArrayClone { type_idx, array } => {
-                // Clone by creating new array and copying
-                // Scratch layout: +0: eqref, +1: i32, +2: eqref, +3: eqref, +4: eqref
-                let scratch = self.scratch_local.get();
-                let src_arr_local = scratch;     // eqref at +0
-                let new_arr_local = scratch + 2; // eqref at +2 (NOT +1 which is i32!)
-
-                self.generate_expr_wit(array, f, param_offset)?;
-                // Cast eqref to array type
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
-                // NOTE: local.tee returns the local's type (eqref), so we must cast after!
-                f.instruction(&Instruction::LocalTee(src_arr_local));
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
-                f.instruction(&Instruction::ArrayLen);
-                f.instruction(&Instruction::ArrayNewDefault(*type_idx));
-                f.instruction(&Instruction::LocalTee(new_arr_local));
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
-                f.instruction(&Instruction::I32Const(0));
-                // Note: scratch locals are eqref, so we must cast again after LocalGet
-                f.instruction(&Instruction::LocalGet(src_arr_local));
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
-                f.instruction(&Instruction::I32Const(0));
-                f.instruction(&Instruction::LocalGet(src_arr_local));
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
-                f.instruction(&Instruction::ArrayLen);
-                f.instruction(&Instruction::ArrayCopy {
-                    array_type_index_dst: *type_idx,
-                    array_type_index_src: *type_idx,
-                });
-                f.instruction(&Instruction::LocalGet(new_arr_local));
-                Ok(())
-            }
-            Expr::ArrayCopy {
-                type_idx,
-                dst,
-                dst_offset,
-                src,
-                src_offset,
-                len,
-            } => {
-                // Emit array.copy instruction
-                // Stack: dst dst_offset src src_offset len -> (nothing)
-                // Returns nil after the copy
-                self.generate_expr_wit(dst, f, param_offset)?;
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
-                self.generate_expr_wit(dst_offset, f, param_offset)?;
-                // Unbox dst_offset from i31ref to i32
-                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                f.instruction(&Instruction::I31GetS);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32ShrS);
-                self.generate_expr_wit(src, f, param_offset)?;
-                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(*type_idx)));
-                self.generate_expr_wit(src_offset, f, param_offset)?;
-                // Unbox src_offset from i31ref to i32
-                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                f.instruction(&Instruction::I31GetS);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32ShrS);
-                self.generate_expr_wit(len, f, param_offset)?;
-                // Unbox len from i31ref to i32
-                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                f.instruction(&Instruction::I31GetS);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32ShrS);
-                f.instruction(&Instruction::ArrayCopy {
-                    array_type_index_dst: *type_idx,
-                    array_type_index_src: *type_idx,
-                });
-                // Return nil
-                f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-                f.instruction(&Instruction::RefI31);
-                Ok(())
-            }
-            Expr::BitCount(value) => {
-                // Polymorphic unwrap to handle both i31ref and INT64 inputs
-                // (INT64 can come from bit-shift-left with large results)
-                let scratch_base = self.scratch_local.get();
-                self.scratch_local.set(scratch_base + 5);
-
-                self.generate_expr_wit(value, f, param_offset)?;
-                self.generate_polymorphic_unwrap_i32(f);
-                f.instruction(&Instruction::I32Popcnt);
-                // Result is always small (0-32), safe to encode as i31ref
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32Shl);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32Or);
-                f.instruction(&Instruction::RefI31);
-
-                self.scratch_local.set(scratch_base);
-                Ok(())
-            }
-            // For simple expressions that don't contain sub-expressions, delegate to normal gen
-            // Use generate_expr_with_offset to preserve param_offset for nested LocalGet
-            _ => self.generate_expr_with_offset(expr, f, param_offset),
-        }
-    }
-
-    /// Helper for BinOp with WIT offset
-    fn generate_binop_wit(&self, op: &BinOp, left: &Expr, right: &Expr, _ty: &Type, f: &mut Function, param_offset: u32) -> CompileResult<()> {
-        use crate::ir::gc_types;
-
-        // Helper to unwrap i31ref: cast, get_s, shr 1
-        let generate_unwrap_i31 = |f: &mut Function| {
-            f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-            f.instruction(&Instruction::I31GetS);
-            f.instruction(&Instruction::I32Const(1));
-            f.instruction(&Instruction::I32ShrS);
-        };
-
-        // For comparison ops that return bool, we don't need to unwrap/rewrap differently
-        let is_comparison = matches!(op, BinOp::Eq | BinOp::Ne | BinOp::Lt | BinOp::Le | BinOp::Gt | BinOp::Ge);
-
-        if is_comparison {
-            // For comparisons: generate and unwrap each operand in sequence
-            // This avoids needing temp storage which would clobber converted params
-            self.generate_expr_wit(left, f, param_offset)?;
-            generate_unwrap_i31(f);
-            self.generate_expr_wit(right, f, param_offset)?;
-            generate_unwrap_i31(f);
-
-            // Now stack has [left_i32, right_i32]
-            match op {
-                BinOp::Eq => f.instruction(&Instruction::I32Eq),
-                BinOp::Ne => f.instruction(&Instruction::I32Ne),
-                BinOp::Lt => f.instruction(&Instruction::I32LtS),
-                BinOp::Le => f.instruction(&Instruction::I32LeS),
-                BinOp::Gt => f.instruction(&Instruction::I32GtS),
-                BinOp::Ge => f.instruction(&Instruction::I32GeS),
-                _ => unreachable!(),
-            };
-
-            // Convert i32 (0 or 1) to bool sentinel
-            f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-            f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
-            f.instruction(&Instruction::Else);
-            f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
-            f.instruction(&Instruction::End);
-            f.instruction(&Instruction::RefI31);
-        } else {
-            // For arithmetic ops: generate and unwrap each operand in sequence
-            // This avoids needing temp storage which would clobber converted params
-            self.generate_expr_wit(left, f, param_offset)?;
-            generate_unwrap_i31(f);
-            self.generate_expr_wit(right, f, param_offset)?;
-            generate_unwrap_i31(f);
-
-            match op {
-                BinOp::Add => { f.instruction(&Instruction::I32Add); }
-                BinOp::Sub => { f.instruction(&Instruction::I32Sub); }
-                BinOp::Mul => { f.instruction(&Instruction::I32Mul); }
-                BinOp::Div => { f.instruction(&Instruction::I32DivS); }
-                BinOp::Rem => { f.instruction(&Instruction::I32RemS); }
-                BinOp::Quot => { f.instruction(&Instruction::I32DivS); }
-                // Bitwise operations
-                BinOp::BitAnd => { f.instruction(&Instruction::I32And); }
-                BinOp::BitOr => { f.instruction(&Instruction::I32Or); }
-                BinOp::BitXor => { f.instruction(&Instruction::I32Xor); }
-                BinOp::Shl => { f.instruction(&Instruction::I32Shl); }
-                BinOp::ShrS => { f.instruction(&Instruction::I32ShrS); }
-                BinOp::ShrU => { f.instruction(&Instruction::I32ShrU); }
-                _ => unreachable!("arithmetic/bitwise binop only: {:?}", op)
-            }
-
-            // Wrap result as i31ref
-            f.instruction(&Instruction::I32Const(1));
-            f.instruction(&Instruction::I32Shl);
-            f.instruction(&Instruction::I32Const(1));
-            f.instruction(&Instruction::I32Or);
-            f.instruction(&Instruction::RefI31);
-        }
-
-        Ok(())
-    }
-
-    /// Helper for UnOp with WIT offset
-    fn generate_unop_wit(&self, op: &UnOp, operand: &Expr, f: &mut Function, param_offset: u32) -> CompileResult<()> {
-        use crate::ir::gc_types;
-        self.generate_expr_wit(operand, f, param_offset)?;
-
-        match op {
-            UnOp::Not => {
-                // Truthiness check, then negate
-                self.generate_condition_wit(operand, f, param_offset)?;
-                f.instruction(&Instruction::I32Eqz);
-                f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-                f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
-                f.instruction(&Instruction::Else);
-                f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
-                f.instruction(&Instruction::End);
-                f.instruction(&Instruction::RefI31);
-            }
-            UnOp::Neg => {
-                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-                f.instruction(&Instruction::I31GetS);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32ShrS);
-                f.instruction(&Instruction::I32Const(0));
-                f.instruction(&Instruction::I32Sub);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32Shl);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32Or);
-                f.instruction(&Instruction::RefI31);
-            }
-        }
-        Ok(())
-    }
-
-    /// Helper for If with WIT offset
-    fn generate_if_wit(&self, cond: &Expr, then_branch: &Expr, else_branch: &Expr, result_type: &Type, f: &mut Function, param_offset: u32) -> CompileResult<()> {
-        self.generate_condition_wit(cond, f, param_offset)?;
-
-        let block_type = wasm_encoder::BlockType::Result(self.type_to_valtype_gc(result_type));
-        f.instruction(&Instruction::If(block_type));
-        self.generate_expr_wit(then_branch, f, param_offset)?;
-        f.instruction(&Instruction::Else);
-        self.generate_expr_wit(else_branch, f, param_offset)?;
-        f.instruction(&Instruction::End);
-        Ok(())
-    }
-
-    /// Generate condition check with WIT offset
-    fn generate_condition_wit(&self, cond: &Expr, f: &mut Function, param_offset: u32) -> CompileResult<()> {
-        use crate::ir::gc_types;
-        self.generate_expr_wit(cond, f, param_offset)?;
-
-        // Check if i31ref, then check truthiness
-        f.instruction(&Instruction::RefTestNonNull(HeapType::I31));
-        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        self.generate_expr_wit(cond, f, param_offset)?;
-        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-        f.instruction(&Instruction::I31GetS);
-        // Check if not nil (0) and not false (2)
-        f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-        f.instruction(&Instruction::I32Ne);
-        self.generate_expr_wit(cond, f, param_offset)?;
-        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
-        f.instruction(&Instruction::I31GetS);
-        f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
-        f.instruction(&Instruction::I32Ne);
-        f.instruction(&Instruction::I32And);
-        f.instruction(&Instruction::Else);
-        // Non-i31 refs (structs, arrays) are always truthy
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::End);
-
-        Ok(())
     }
 
     fn generate_expr(&self, expr: &Expr, f: &mut Function) -> CompileResult<()> {
@@ -3380,17 +2935,62 @@ impl<'a> CodeGen<'a> {
             }
 
             Expr::Call { func, args } => {
+                // Check if target function is exported (needs WIT marshaling for i32 <-> eqref)
+                // Only relevant when we're in a WIT context (param_offset > 0)
+                let num_imports = self.num_imports();
+                let user_func_base = num_imports + NUM_RUNTIME_HELPERS;
+                let is_exported = if param_offset > 0 && *func >= user_func_base {
+                    let local_idx = (*func - user_func_base) as usize;
+                    self.ir.functions.get(local_idx).map_or(false, |f| f.exported)
+                } else {
+                    false
+                };
+
                 for arg in args {
                     self.generate_expr_inner(arg, f, loop_depth, param_offset)?;
+                    if is_exported {
+                        // Unwrap eqref to i32 for exported functions
+                        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                        f.instruction(&Instruction::I31GetS);
+                        f.instruction(&Instruction::I32Const(1));
+                        f.instruction(&Instruction::I32ShrS);
+                    }
                 }
                 f.instruction(&Instruction::Call(*func));
+
+                if is_exported {
+                    // Wrap i32 result back to eqref
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Shl);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Or);
+                    f.instruction(&Instruction::RefI31);
+                }
             }
 
             Expr::TailCall { func, args } => {
+                // Check if target function is exported (needs WIT marshaling)
+                let num_imports = self.num_imports();
+                let user_func_base = num_imports + NUM_RUNTIME_HELPERS;
+                let is_exported = if param_offset > 0 && *func >= user_func_base {
+                    let local_idx = (*func - user_func_base) as usize;
+                    self.ir.functions.get(local_idx).map_or(false, |f| f.exported)
+                } else {
+                    false
+                };
+
                 for arg in args {
                     self.generate_expr_inner(arg, f, loop_depth, param_offset)?;
+                    if is_exported {
+                        // Unwrap eqref to i32 for exported functions
+                        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                        f.instruction(&Instruction::I31GetS);
+                        f.instruction(&Instruction::I32Const(1));
+                        f.instruction(&Instruction::I32ShrS);
+                    }
                 }
                 f.instruction(&Instruction::ReturnCall(*func));
+                // Note: tail call returns directly, the function's exit marshaling handles return value
             }
 
             Expr::If {
@@ -3429,7 +3029,7 @@ impl<'a> CodeGen<'a> {
             Expr::Let { bindings, body } => {
                 for (idx, value) in bindings {
                     self.generate_expr_inner(value, f, loop_depth, param_offset)?;
-                    f.instruction(&Instruction::LocalSet(*idx));
+                    f.instruction(&Instruction::LocalSet(*idx + param_offset));
                 }
                 self.generate_expr_inner(body, f, loop_depth, param_offset)?;
             }
@@ -3437,7 +3037,7 @@ impl<'a> CodeGen<'a> {
             Expr::Loop { bindings, body } => {
                 for (idx, value) in bindings {
                     self.generate_expr_inner(value, f, loop_depth, param_offset)?;
-                    f.instruction(&Instruction::LocalSet(*idx));
+                    f.instruction(&Instruction::LocalSet(*idx + param_offset));
                 }
 
                 // The outer block catches the result when the loop exits (non-recur path)
@@ -3472,7 +3072,7 @@ impl<'a> CodeGen<'a> {
                 }
                 // Second: store ALL values in reverse order (stack is LIFO)
                 for (local_idx, _value) in values.iter().rev() {
-                    f.instruction(&Instruction::LocalSet(*local_idx));
+                    f.instruction(&Instruction::LocalSet(*local_idx + param_offset));
                 }
                 // Branch to loop header - depth tracks nesting inside blocks/ifs
                 f.instruction(&Instruction::Br(loop_depth));
