@@ -511,6 +511,46 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::End);
     }
 
+    /// Generate code to convert any numeric value (int or float) to f64.
+    ///
+    /// Input: eqref (must be numeric) on stack
+    /// Output: f64 on stack
+    ///
+    /// Handles: i31ref small ints, INT64 structs, FLOAT64 structs
+    fn generate_numeric_to_f64(&self, f: &mut Function) {
+        use crate::ir::gc_types;
+
+        // Scratch local to store the value for testing
+        let scratch = self.scratch_local.get();
+
+        // Store value in scratch local
+        f.instruction(&Instruction::LocalSet(scratch));
+
+        // Test if it's FLOAT64
+        f.instruction(&Instruction::LocalGet(scratch));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::FLOAT64)));
+
+        // if (is FLOAT64)
+        f.instruction(&Instruction::If(BlockType::Result(ValType::F64)));
+        {
+            // Extract f64 from FLOAT64 struct
+            f.instruction(&Instruction::LocalGet(scratch));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
+            f.instruction(&Instruction::StructGet {
+                struct_type_index: gc_types::FLOAT64,
+                field_index: gc_types::F64_VALUE,
+            });
+        }
+        f.instruction(&Instruction::Else);
+        {
+            // It's an integer (i31ref or INT64) - unwrap and convert to f64
+            f.instruction(&Instruction::LocalGet(scratch));
+            self.generate_polymorphic_unwrap_i64(f);
+            f.instruction(&Instruction::F64ConvertI64S);
+        }
+        f.instruction(&Instruction::End);
+    }
+
     /// Generate code to box an i32 result, using INT64 if needed.
     ///
     /// Input: i32 on stack
@@ -4053,11 +4093,9 @@ impl<'a> CodeGen<'a> {
                 // Compute square root - accepts both integers and floats
                 // First put type_id for result struct
                 f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
-                // Generate input
+                // Generate input and convert to f64 (handles int or float)
                 self.generate_expr(value, f)?;
-                // Unbox to i64 (handles both INT64 and small ints), convert to f64
-                self.generate_polymorphic_unwrap_i64(f);
-                f.instruction(&Instruction::F64ConvertI64S);
+                self.generate_numeric_to_f64(f);
                 // Compute sqrt
                 f.instruction(&Instruction::F64Sqrt);
                 // Box result
@@ -4409,6 +4447,65 @@ impl<'a> CodeGen<'a> {
         self.generate_expr(closure, f)?;
         f.instruction(&Instruction::LocalSet(closure_local));
 
+        // Check if callee is ANY closure type (VARIADIC_CLOSURE or CLOSURE_*)
+        // If not a closure, dispatch to IFn/-invoke protocol (collections as functions)
+        f.instruction(&Instruction::LocalGet(closure_local));
+        self.generate_is_closure_check(f);
+
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+
+        // CLOSURE PATH - existing logic
+        self.generate_closure_call_inner(closure_local, args, arity, in_tail_position, f)?;
+
+        f.instruction(&Instruction::Else);
+
+        // IFN PATH - dispatch to -invoke protocol (for collections as functions)
+        // (#{1 2} key) => (-invoke #{1 2} key) => (-lookup #{1 2} key)
+        self.generate_ifn_invoke(closure_local, args, in_tail_position, f)?;
+
+        f.instruction(&Instruction::End);
+
+        Ok(())
+    }
+
+    /// Check if the value on stack is any closure type.
+    /// Returns i32 (1 if closure, 0 otherwise).
+    fn generate_is_closure_check(&self, f: &mut Function) {
+        use crate::ir::gc_types;
+
+        // Use scratch local to save the value for multiple tests
+        let scratch = self.scratch_local.get();
+        f.instruction(&Instruction::LocalTee(scratch));
+
+        // Test VARIADIC_CLOSURE
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::VARIADIC_CLOSURE)));
+
+        // Test CLOSURE_0 through CLOSURE_N
+        for closure_type in [
+            gc_types::CLOSURE_0,
+            gc_types::CLOSURE_1,
+            gc_types::CLOSURE_2,
+            gc_types::CLOSURE_3,
+            gc_types::CLOSURE_4,
+            gc_types::CLOSURE_N,
+        ] {
+            f.instruction(&Instruction::LocalGet(scratch));
+            f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(closure_type)));
+            f.instruction(&Instruction::I32Or);
+        }
+    }
+
+    /// Generate the inner closure call logic (for callee known to be a closure).
+    fn generate_closure_call_inner(
+        &self,
+        closure_local: u32,
+        args: &[Expr],
+        arity: u32,
+        in_tail_position: bool,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+
         // Check if it's a VARIADIC_CLOSURE (builtin like +, *, etc.)
         f.instruction(&Instruction::LocalGet(closure_local));
         f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(
@@ -4467,6 +4564,113 @@ impl<'a> CodeGen<'a> {
 
         f.instruction(&Instruction::End); // outer if (VARIADIC_CLOSURE check)
 
+        Ok(())
+    }
+
+    /// Generate IFn/-invoke dispatch for non-closure callees (collections as functions).
+    fn generate_ifn_invoke(
+        &self,
+        obj_local: u32,
+        args: &[Expr],
+        in_tail_position: bool,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use crate::ir::method_ids;
+
+        let arity = args.len();
+
+        // Determine method_id based on arity
+        // -invoke with 1 arg (key) -> INVOKE_1
+        // -invoke with 2 args (key, not-found) -> INVOKE_2
+        let method_id = match arity {
+            1 => method_ids::INVOKE_1,
+            2 => method_ids::INVOKE_2,
+            _ => {
+                // Collections only support 1-2 args for -invoke
+                // Return nil for unsupported arities
+                f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+                return Ok(());
+            }
+        };
+
+        // Generate protocol dispatch with obj already in local
+        self.generate_protocol_dispatch_with_local(obj_local, method_id, args, in_tail_position, f)
+    }
+
+    /// Generate protocol dispatch when the object is already saved to a local.
+    fn generate_protocol_dispatch_with_local(
+        &self,
+        obj_local: u32,
+        method_id: u32,
+        args: &[Expr],
+        in_tail_position: bool,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::dispatch_table;
+        use crate::ir::method_ids;
+
+        let scratch = self.scratch_local.get();
+        self.scratch_local.set(scratch + 5);
+
+        let type_id_local = scratch + 1;
+        let args_base = scratch + 2;
+
+        // Evaluate and save args to scratch locals
+        for (i, arg) in args.iter().enumerate() {
+            self.generate_expr(arg, f)?;
+            f.instruction(&Instruction::LocalSet(args_base + i as u32));
+        }
+
+        // Get type ID from the object
+        f.instruction(&Instruction::LocalGet(obj_local));
+        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));
+        f.instruction(&Instruction::LocalSet(type_id_local));
+
+        // Push obj and args back on stack for the call
+        f.instruction(&Instruction::LocalGet(obj_local));
+        for i in 0..args.len() {
+            f.instruction(&Instruction::LocalGet(args_base + i as u32));
+        }
+
+        // Calculate table index: type_id * methods_per_type + method_id
+        f.instruction(&Instruction::LocalGet(type_id_local));
+        f.instruction(&Instruction::I32Const(self.ir.methods_per_type as i32));
+        f.instruction(&Instruction::I32Mul);
+        f.instruction(&Instruction::I32Const(method_id as i32));
+        f.instruction(&Instruction::I32Add);
+
+        // Get the correct type index for this method (arity = obj + method args)
+        let total_arity = args.len() + 1;
+        let type_idx = self.protocol_type_index_for_method(method_id, total_arity);
+
+        // call_indirect or return_call_indirect
+        let returns_i32 = matches!(method_id, method_ids::COUNT | method_ids::HASH | method_ids::EQUIV);
+        let use_tail_call = in_tail_position && !returns_i32;
+
+        if use_tail_call {
+            f.instruction(&Instruction::ReturnCallIndirect {
+                type_index: type_idx,
+                table_index: dispatch_table::TABLE_INDEX,
+            });
+        } else {
+            f.instruction(&Instruction::CallIndirect {
+                type_index: type_idx,
+                table_index: dispatch_table::TABLE_INDEX,
+            });
+            // If method returns i32 but we need eqref, box it as small int
+            if returns_i32 {
+                // Encode as small int: (value << 1) | 1
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32Shl);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32Or);
+                f.instruction(&Instruction::RefI31);
+            }
+        }
+
+        self.scratch_local.set(scratch);
         Ok(())
     }
 

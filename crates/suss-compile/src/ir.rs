@@ -627,13 +627,17 @@ pub mod method_ids {
     pub const HASH: u32 = 8;
     /// IEquiv/-equiv: (a, b) -> bool
     pub const EQUIV: u32 = 9;
+    /// IFn/-invoke: (coll, key) -> value (1-arg invoke)
+    pub const INVOKE_1: u32 = 10;
+    /// IFn/-invoke: (coll, key, not-found) -> value (2-arg invoke)
+    pub const INVOKE_2: u32 = 11;
 
     /// Number of built-in protocol methods
-    pub const NUM_BUILTIN: u32 = 10;
+    pub const NUM_BUILTIN: u32 = 12;
 
     /// User-defined protocol methods start here.
     /// User methods are contiguous with built-in methods to keep the dispatch table compact.
-    pub const USER_START: u32 = 10;
+    pub const USER_START: u32 = 12;
 }
 
 /// Protocol function type indices for call_ref.
@@ -669,6 +673,8 @@ pub mod protocol_types {
             method_ids::SEQ => ARITY_1_REF,    // (coll) -> seq
             method_ids::HASH => ARITY_1_I32,   // (value) -> i32
             method_ids::EQUIV => ARITY_2_I32,  // (a, b) -> bool
+            method_ids::INVOKE_1 => ARITY_2_REF, // (coll, key) -> value
+            method_ids::INVOKE_2 => ARITY_3_REF, // (coll, key, not-found) -> value
             _ => ARITY_1_REF,                  // Default for user methods
         }
     }

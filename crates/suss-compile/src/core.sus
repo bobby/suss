@@ -50,6 +50,11 @@
   "Protocol for hashing."
   (^i32 -hash [o]))
 
+(defprotocol IFn
+  "Protocol for invocable objects.
+   Allows collections to be used as functions for lookup."
+  (-invoke [coll k] [coll k not-found]))
+
 ;; ============================================================
 ;; Helper Functions for Vector Trie Operations
 ;; ============================================================
@@ -894,6 +899,30 @@
       (let [arr (make-array (.-set-cnt s))]
         (-collect-set-entries (.-set-root s) arr 0)
         (->IndexedSeq arr 0)))))
+
+;; ============================================================
+;; IFn Protocol Implementations
+;;
+;; Allows collections to be used as functions for lookup.
+;; (#{1 2 3} 2) => 2
+;; ({:a 1} :a) => 1
+;; ([10 20 30] 1) => 20
+;; ============================================================
+
+(extend-type PersistentVector
+  IFn
+  (-invoke [coll k] (nth coll k))
+  (-invoke [coll k not-found] (nth coll k not-found)))
+
+(extend-type PersistentMap
+  IFn
+  (-invoke [coll k] (-lookup coll k))
+  (-invoke [coll k not-found] (-lookup coll k not-found)))
+
+(extend-type PersistentSet
+  IFn
+  (-invoke [coll k] (-lookup coll k))
+  (-invoke [coll k not-found] (-lookup coll k not-found)))
 
 ;; ============================================================
 ;; IndexedSeq - A sequence view over an array

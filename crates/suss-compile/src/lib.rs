@@ -222,9 +222,8 @@ impl Compiler {
                             continue;
                         }
                     }
-                    // Handle (def name (fn [params] body)) - expanded form of defn
+                    // Handle (def name value) forms
                     if sym.name == "def" && items.len() >= 3 {
-                        // Check if the value is an fn form
                         // Skip metadata symbols (^:export, etc.)
                         let mut idx = 1;
                         let mut is_exported = false;
@@ -240,21 +239,36 @@ impl Compiler {
                             }
                             break;
                         }
-                        if let (Some(Edn::Symbol(name_sym)), Some(Edn::List(fn_items))) =
-                            (items.get(idx), items.get(idx + 1))
-                        {
-                            if let Some(Edn::Symbol(fn_sym)) = fn_items.first() {
-                                if fn_sym.name == "fn" && fn_items.len() >= 3 {
-                                    // Extract: (def name (fn [params] body))
-                                    if let Some(extracted) = Self::extract_def_fn(
-                                        &name_sym.name,
-                                        is_exported,
-                                        &fn_items[1..],
-                                    )? {
-                                        functions.push(extracted);
-                                        continue;
+                        if let Some(Edn::Symbol(name_sym)) = items.get(idx) {
+                            let value_idx = idx + 1;
+                            if let Some(value) = items.get(value_idx) {
+                                // Check if value is an fn form: (def name (fn [params] body))
+                                if let Edn::List(fn_items) = value {
+                                    if let Some(Edn::Symbol(fn_sym)) = fn_items.first() {
+                                        if fn_sym.name == "fn" && fn_items.len() >= 3 {
+                                            if let Some(extracted) = Self::extract_def_fn(
+                                                &name_sym.name,
+                                                is_exported,
+                                                &fn_items[1..],
+                                            )? {
+                                                functions.push(extracted);
+                                                continue;
+                                            }
+                                        }
                                     }
                                 }
+                                // Plain def: (def name value) - wrap as zero-arg fn
+                                functions.push(analyze::AnalyzedFunction {
+                                    name: name_sym.name.clone(),
+                                    exported: is_exported,
+                                    export_name: None,
+                                    params: vec![],
+                                    rest_param: None,
+                                    return_type: ir::Type::GcRef,
+                                    return_type_hint: None,
+                                    body: value.clone(),
+                                });
+                                continue;
                             }
                         }
                     }
@@ -330,10 +344,9 @@ impl Compiler {
         }
 
         // The final expression is all remaining expressions combined
+        // If no expressions remain (file with only definitions), return nil
         let user_expr = if remaining.is_empty() {
-            return Err(CompileError::MacroExpansion(
-                "Expression was consumed by macro".into(),
-            ));
+            Edn::Nil
         } else if remaining.len() == 1 {
             remaining.pop().unwrap()
         } else {

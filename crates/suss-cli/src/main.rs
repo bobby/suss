@@ -85,13 +85,20 @@ fn run_eval_wasm(expr: &str) -> Result<(), String> {
         // WASI expression - use component model runtime (can't use pr-str with WIT types)
         run_eval_component(&probe.wasm)
     } else {
-        // Pure expression - wrap in (pr-str ...) for pretty printing
+        // Try to wrap in pr-str for pretty printing
+        // This fails if expr contains definitions (defn/def inside pr-str)
         let wrapped_expr = format!("(pr-str {})", expr);
         let mut compiler2 = suss_compile::Compiler::new();
-        let compiled = compiler2.compile_expr_with_info(&wrapped_expr)
-            .map_err(|e| format!("{}", e))?;
-        // Result is STRING array
-        run_eval_core_module_string(&compiled.wasm)
+        match compiler2.compile_expr_with_info(&wrapped_expr) {
+            Ok(compiled) => {
+                // pr-str compilation succeeded - print as string
+                run_eval_core_module_string(&compiled.wasm)
+            }
+            Err(_) => {
+                // pr-str failed (likely has definitions) - run directly
+                run_eval_core_module(&probe.wasm)
+            }
+        }
     }
 }
 

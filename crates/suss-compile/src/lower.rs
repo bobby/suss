@@ -946,12 +946,28 @@ impl Lowerer {
                     // It's a built-in in value position - wrap it as a closure
                     self.lower_builtin_as_closure(&sym.name, arity)
                 } else if let Some((resolved_name, func_idx)) = self.resolve_func_name(&sym.name) {
-                    // It's a user-defined function in value position - create a closure wrapper
+                    // It's a user-defined function in value position
                     let arity = self.func_arities.get(&resolved_name).copied().unwrap_or(0);
                     let is_variadic = self.variadic_funcs.contains_key(&resolved_name);
                     if is_variadic {
+                        // Variadic functions: wrap as closure
                         self.lower_variadic_user_func_as_closure(&resolved_name, func_idx)
+                    } else if arity == 0 {
+                        // Zero-arg functions (e.g., plain def values): call directly
+                        // This makes (def x 42) work - referencing x calls the thunk
+                        if self.in_tail_position {
+                            Ok(Expr::TailCall {
+                                func: func_idx,
+                                args: vec![],
+                            })
+                        } else {
+                            Ok(Expr::Call {
+                                func: func_idx,
+                                args: vec![],
+                            })
+                        }
                     } else {
+                        // Non-zero-arg functions: wrap as closure
                         self.lower_user_func_as_closure(&resolved_name, func_idx, arity)
                     }
                 } else {
@@ -3648,8 +3664,8 @@ impl Lowerer {
 
     /// Get the method ID for a protocol method, or assign a new one if user-defined.
     fn get_or_assign_method_id(&mut self, protocol_name: &str, method_name: &str, arity: usize) -> u32 {
-        // Check built-in methods first - they have fixed IDs regardless of arity
-        if let Some(id) = self.builtin_method_id(method_name) {
+        // Check built-in methods first (some like -invoke depend on arity)
+        if let Some(id) = self.builtin_method_id_with_arity(method_name, arity) {
             return id;
         }
 
@@ -3675,6 +3691,7 @@ impl Lowerer {
     }
 
     /// Map built-in method names to their method IDs.
+    /// Most methods have fixed IDs, but -invoke depends on arity.
     fn builtin_method_id(&self, method_name: &str) -> Option<u32> {
         match method_name {
             "-lookup" => Some(method_ids::LOOKUP),
@@ -3687,6 +3704,22 @@ impl Lowerer {
             "-seq" => Some(method_ids::SEQ),
             "-hash" => Some(method_ids::HASH),
             "-equiv" => Some(method_ids::EQUIV),
+            // -invoke is arity-dependent, handled separately
+            _ => None,
+        }
+    }
+
+    /// Map built-in method names to their method IDs, with arity for multi-arity methods.
+    fn builtin_method_id_with_arity(&self, method_name: &str, arity: usize) -> Option<u32> {
+        // First check non-arity-dependent methods
+        if let Some(id) = self.builtin_method_id(method_name) {
+            return Some(id);
+        }
+        // Handle arity-dependent methods
+        match (method_name, arity) {
+            // -invoke: (coll key) = 2 args -> INVOKE_1, (coll key not-found) = 3 args -> INVOKE_2
+            ("-invoke", 2) => Some(method_ids::INVOKE_1),
+            ("-invoke", 3) => Some(method_ids::INVOKE_2),
             _ => None,
         }
     }
@@ -3724,8 +3757,8 @@ impl Lowerer {
         let arity = args.len();
 
         // Look up the method ID using arity
-        let method_id = if let Some(id) = self.builtin_method_id(name) {
-            // Built-in methods have fixed IDs regardless of arity
+        let method_id = if let Some(id) = self.builtin_method_id_with_arity(name, arity) {
+            // Built-in methods have fixed IDs (some depend on arity like -invoke)
             id
         } else {
             // For user-defined protocol methods, look up by method name + arity
