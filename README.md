@@ -522,12 +522,12 @@ The `samples/` directory contains classic Clojure programs that serve as impleme
 
 | Sample | Description | Status |
 |--------|-------------|--------|
-| `fibonacci.sus` | Fibonacci (naive, tail-recursive, sequence) | Partial |
-| `factorial.sus` | Factorial implementations | Partial |
-| `game_of_life.sus` | Conway's Game of Life (Christophe Grand's elegant version) | Needs `for`, `frequencies`, destructuring |
-| `primes.sus` | Prime number algorithms (trial division, sieve) | Needs `some`, `Math/sqrt` |
-| `quicksort.sus` | Functional quicksort | Ready (has `filter`, `concat2`) |
-| `tree_traversal.sus` | Binary tree operations using maps | Ready (has `concat2`) |
+| `fibonacci.sus` | Fibonacci (naive, tail-recursive, sequence) | ✓ Working |
+| `factorial.sus` | Factorial implementations | ✓ Working |
+| `game_of_life.sus` | Conway's Game of Life (Christophe Grand's elegant version) | ✓ Working |
+| `primes.sus` | Prime number algorithms (trial division, sieve) | ✓ Working |
+| `quicksort.sus` | Functional quicksort | ✓ Working |
+| `tree_traversal.sus` | Binary tree operations using maps | ✓ Working |
 
 These programs document the path toward full Clojure compatibility. See `samples/README.md` for details.
 

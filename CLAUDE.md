@@ -809,11 +809,11 @@ The `samples/` directory contains classic Clojure programs as implementation tar
 
 | Sample | Features Needed | Status |
 |--------|-----------------|--------|
-| `fibonacci.sus` | loop/recur | Partial |
-| `factorial.sus` | loop/recur, reduce, range | Ready (has `reduce`, `range`) |
-| `game_of_life.sus` | for, mapcat, frequencies, destructuring, sets | Needs `for`, `frequencies`, destructuring |
-| `primes.sus` | filter, some, range, sets, Math/sqrt | Needs `some`, `Math/sqrt` |
-| `quicksort.sus` | filter, concat | Ready (has `filter`, `concat2`) |
-| `tree_traversal.sus` | map keyword access, concat | Ready (has `concat2`) |
+| `fibonacci.sus` | loop/recur | ✓ Working |
+| `factorial.sus` | loop/recur, reduce, range | ✓ Working |
+| `game_of_life.sus` | for, mapcat, frequencies, destructuring, sets | ✓ Working |
+| `primes.sus` | filter, some, range, sets | ✓ Working |
+| `quicksort.sus` | filter, concat | ✓ Working |
+| `tree_traversal.sus` | map keyword access, concat | ✓ Working |
 
 These programs are valid Clojure code and serve as progress markers. When a sample runs correctly, it demonstrates that feature set is complete.

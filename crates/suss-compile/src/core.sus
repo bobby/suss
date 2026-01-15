@@ -1381,6 +1381,16 @@
   (let [r (rem a b)]
     (rem (+ r b) b)))
 
+(defn even?
+  "Returns true if n is even."
+  [n]
+  (= 0 (rem n 2)))
+
+(defn odd?
+  "Returns true if n is odd."
+  [n]
+  (not (even? n)))
+
 ;; ============================================================
 ;; Higher-Order Sequence Functions
 ;; ============================================================
@@ -1641,6 +1651,14 @@
   "Returns a new coll with items from xs conj'd onto to."
   [to xs]
   (reduce (fn [acc x] (conj acc x)) to xs))
+
+(defn vec
+  "Coerces coll to a (potentially empty) vector.
+   If coll is already a vector, returns it unchanged."
+  [coll]
+  (if (instance? PersistentVector coll)
+    coll
+    (into [] coll)))
 
 (defn vector
   "Creates a new vector containing the args."

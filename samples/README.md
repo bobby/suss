@@ -8,23 +8,23 @@ These programs represent **target behavior** - idiomatic Clojure code that we're
 
 | File | Description | Status |
 |------|-------------|--------|
-| `fibonacci.sus` | Fibonacci implementations (naive, tail-recursive, sequence) | Partial |
-| `factorial.sus` | Factorial (tail-recursive, reduce-based) | Partial |
-| `game_of_life.sus` | Conway's Game of Life (Christophe Grand's elegant version) | Not yet |
-| `primes.sus` | Prime number algorithms (trial division, sieve) | Not yet |
-| `quicksort.sus` | Functional quicksort | Not yet |
-| `tree_traversal.sus` | Binary tree traversals using maps | Not yet |
+| `fibonacci.sus` | Fibonacci implementations (naive, tail-recursive, sequence) | ✓ Working |
+| `factorial.sus` | Factorial (tail-recursive, reduce-based) | ✓ Working |
+| `game_of_life.sus` | Conway's Game of Life (Christophe Grand's elegant version) | ✓ Working |
+| `primes.sus` | Prime number algorithms (trial division, sieve) | ✓ Working |
+| `quicksort.sus` | Functional quicksort | ✓ Working |
+| `tree_traversal.sus` | Binary tree traversals using maps | ✓ Working |
 
 ## Feature Dependencies
 
 | Sample | Required Features |
 |--------|-------------------|
 | `fibonacci.sus` | loop/recur ✓, closures ✓ |
-| `factorial.sus` | loop/recur ✓, reduce, range |
-| `game_of_life.sus` | destructuring, for, mapcat, frequencies |
-| `primes.sus` | filter, some, range, Math/sqrt |
-| `quicksort.sus` | filter, concat |
-| `tree_traversal.sus` | keyword lookup, concat |
+| `factorial.sus` | loop/recur ✓, reduce ✓, range ✓ |
+| `game_of_life.sus` | destructuring ✓, for ✓, mapcat ✓, frequencies ✓ |
+| `primes.sus` | filter ✓, some ✓, range ✓ |
+| `quicksort.sus` | filter ✓, concat ✓ |
+| `tree_traversal.sus` | keyword lookup ✓, concat ✓ |
 
 ## Running Samples
 
