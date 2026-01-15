@@ -114,6 +114,10 @@ Function Index Layout:
   - `(defn foo ([x] x) ([x y] (+ x y)))` syntax
   - `(fn ([x] x) ([x y] (+ x y)))` anonymous multi-arity
   - Implemented via variadic closure with arity dispatch
+- [x] Phase 11 complete: WASI CLI command support
+  - `-main` functions compile to `wasi:cli/run@0.2.4` command components
+  - Run with `wasmtime run -W gc,function-references app.wasm`
+  - Result type handling for WIT interface exports
 
 ### Blocking Issues
 - None currently blocking
@@ -915,24 +919,35 @@ Expected benefit: ~1.9x speedup on WasmGC code (per V8 benchmarks).
 
 ---
 
-## Phase 11: WASI CLI Commands
+## Phase 11: WASI CLI Commands ✓ COMPLETE
 
 Functions named `-main` compile to `wasi:cli/run` command components.
 
 ```clojure
-(ns my-app.core
-  (gen-world :my-app/cli))
-
-(defn ^:export -main []
-  (println "Hello, world!")
-  0)  ; exit code
+;; app.sus
+(defn -main [] 42)
 ```
 
-**Tasks:**
-- [ ] Detect `-main` in analyzed module
-- [ ] Generate synthetic WIT world importing `wasi:cli/*`
-- [ ] Wire `-main` to `wasi:cli/run.run` export
-- [ ] Handle args via `wasi:cli/environment.get-arguments`
+```bash
+# Compile to CLI command component
+suss compile -m myapp app.sus -o app.wasm
+
+# Run with wasmtime
+wasmtime run -W gc,function-references app.wasm
+```
+
+**Completed:**
+- [x] Detect `-main` in analyzed module via `extract_definitions_for_main`
+- [x] Generate CLI_COMMAND_WORLD with proper `wasi:cli/run@0.2.4` export
+- [x] Add Result type to IR for WIT result types
+- [x] Handle Result in `wit_type_to_ir` and codegen exit marshaling
+- [x] Fix `def + fn` handling (expanded `defn` forms) in main extraction
+- [x] Interface-only CLI package loading (avoids cross-package `include` issues)
+- [x] Disable tail call optimization for Result-returning functions
+
+**Not yet implemented:**
+- [ ] Handle args via `wasi:cli/environment.get-arguments` (future enhancement)
+- [ ] Support exit codes from `-main` return value (future enhancement)
 
 ---
 
@@ -1054,16 +1069,17 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 | **6** | Pure Suss algorithms | Incremental | ✓ COMPLETE |
 | **7** | Minimize compiler | No | ✓ COMPLETE |
 | **7b** | WIT code consolidation | No | ✓ COMPLETE |
+| **11** | WASI CLI commands | No | ✓ COMPLETE |
 | **12** | List/Seq operations | No | ✓ COMPLETE |
 | **13** | Multi-arity functions | No | ✓ COMPLETE |
 
 ### After Self-Hosting
 - ✓ **Phase 7b: WIT consolidation** - Reduced codegen duplication (~400 lines)
 - ✓ **Phase 13: Multi-arity functions** - `(defn foo ([x] x) ([x y] (+ x y)))` syntax
+- ✓ **Phase 11: WASI CLI** - Command components with `-main` functions
 - **Phase 9: WIT marshaling** - Component boundary type conversion
-- **Phase 10: Transients** - Performance optimization
-- **Phase 11: wasm-opt** - Binary optimization
-- **Phase 13: WASI CLI** - Command components
+- **Phase 9b: Transients** - Performance optimization
+- **Phase 10: wasm-opt** - Binary optimization
 
 ---
 
