@@ -691,8 +691,15 @@ impl Lowerer {
                 params.push((name.clone(), ty.clone()));
             }
 
-            // Lower body - function body is in tail position UNLESS the function returns Unit
-            self.in_tail_position = func.return_type != Type::Unit;
+            // Lower body - function body is in tail position UNLESS:
+            // - The function returns Unit (nothing to return)
+            // - The function returns Result (WIT exit marshaling needed after body)
+            let enable_tail = match &func.return_type {
+                Type::Unit => false,
+                Type::Result { .. } => false, // Need exit marshaling, no tail calls
+                _ => true,
+            };
+            self.in_tail_position = enable_tail;
             let body = self.lower_expr(&func.body)?;
             self.in_tail_position = false;
 

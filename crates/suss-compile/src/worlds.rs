@@ -7,20 +7,28 @@
 
 /// WASI CLI command world - for `compile -m ns` output
 ///
-/// This world exports a run function and can import WASI interfaces.
+/// This world exports the wasi:cli/run interface and imports standard WASI interfaces.
 /// Runnable with `wasmtime run` or `suss run`.
-///
-/// Note: Uses a simple `run: func()` export rather than the full
-/// `wasi:cli/run` interface to avoid complex cross-package WIT dependencies.
 pub const CLI_COMMAND_WORLD: &str = r#"
 package suss:generated;
 
 world command {
+    // Core CLI imports
+    import wasi:cli/environment@0.2.4;
+    import wasi:cli/exit@0.2.4;
+    import wasi:cli/stdin@0.2.4;
+    import wasi:cli/stdout@0.2.4;
+    import wasi:cli/stderr@0.2.4;
+
+    // Commonly used WASI imports
     import wasi:random/random@0.2.4;
     import wasi:clocks/wall-clock@0.2.4;
     import wasi:clocks/monotonic-clock@0.2.4;
+    import wasi:io/error@0.2.4;
+    import wasi:io/streams@0.2.4;
 
-    export run: func();
+    // Export the proper WASI CLI run interface
+    export wasi:cli/run@0.2.4;
 }
 "#;
 
@@ -103,7 +111,7 @@ mod tests {
 
     #[test]
     fn test_cli_world_has_run_export() {
-        assert!(CLI_COMMAND_WORLD.contains("export run: func();"));
+        assert!(CLI_COMMAND_WORLD.contains("export wasi:cli/run@0.2.4;"));
     }
 
     #[test]

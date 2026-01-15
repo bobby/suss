@@ -967,6 +967,12 @@ pub enum Type {
     /// GC reference type (eqref in WASM GC)
     /// Used for all values in GC mode - nil, bools, ints, floats, collections
     GcRef,
+    /// Result type from WIT - result<ok, err> or bare result
+    /// Bare result (ok: None, err: None) maps to i32 discriminant (0=Ok, 1=Err)
+    Result {
+        ok: Option<Box<Type>>,
+        err: Option<Box<Type>>,
+    },
     /// Unknown type (for type inference)
     Unknown,
 }
@@ -986,6 +992,7 @@ impl Type {
             Type::Set(_) => 8, // ptr + len
             Type::Func { .. } => 4, // function table index
             Type::GcRef => 4, // GC reference (eqref)
+            Type::Result { .. } => 4, // i32 discriminant (bare result)
             Type::Unknown => 0,
         }
     }

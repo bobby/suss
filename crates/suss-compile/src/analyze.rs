@@ -1516,6 +1516,10 @@ pub fn wit_type_to_ir(resolve: &Resolve, ty: &wit_parser::Type) -> Type {
             let typedef = &resolve.types[*id];
             match &typedef.kind {
                 TypeDefKind::List(elem) => Type::List(Box::new(wit_type_to_ir(resolve, elem))),
+                TypeDefKind::Result(result) => Type::Result {
+                    ok: result.ok.as_ref().map(|t| Box::new(wit_type_to_ir(resolve, t))),
+                    err: result.err.as_ref().map(|t| Box::new(wit_type_to_ir(resolve, t))),
+                },
                 _ => Type::Unknown,
             }
         }

@@ -174,6 +174,20 @@ pub mod cli {
             ("cli/terminal.wit", TERMINAL),
         ]
     }
+
+    /// Interface-only files (excludes worlds with cross-package includes)
+    /// Use this when loading CLI as a dependency without pulling in all WASI packages
+    pub fn interface_files() -> &'static [(&'static str, &'static str)] {
+        &[
+            // command.wit and imports.wit are excluded because they have
+            // `include wasi:*` statements that require all other packages
+            ("cli/environment.wit", ENVIRONMENT),
+            ("cli/exit.wit", EXIT),
+            ("cli/run.wit", RUN),
+            ("cli/stdio.wit", STDIO),
+            ("cli/terminal.wit", TERMINAL),
+        ]
+    }
 }
 
 // ============================================================================
@@ -282,11 +296,25 @@ pub fn get_package_files(package: &str) -> Option<&'static [(&'static str, &'sta
 
 /// Combine all WIT files for a package into a single content string
 /// The package declaration is only included once
+///
+/// For CLI, this uses interface_files() to avoid loading worlds with
+/// cross-package `include` statements that would require all WASI packages.
 pub fn get_combined_package(package: &str) -> Option<String> {
-    let files = get_package_files(package)?;
+    // For CLI, use interface-only files to avoid cross-package includes
+    let files = if package == "cli" {
+        cli::interface_files()
+    } else {
+        get_package_files(package)?
+    };
 
     let mut combined = String::new();
     let mut seen_package_decl = false;
+
+    // For CLI, we need to add the package declaration since interface files don't have it
+    if package == "cli" {
+        combined.push_str("package wasi:cli@0.2.4;\n\n");
+        seen_package_decl = true;
+    }
 
     for (_, content) in files {
         for line in content.lines() {

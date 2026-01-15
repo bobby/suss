@@ -2484,6 +2484,17 @@ impl<'a> CodeGen<'a> {
                 // Drop the eqref, return nothing
                 f.instruction(&Instruction::Drop);
             }
+            Type::Result { ok: None, err: None } => {
+                // Bare result (wasi:cli/run): drop return value, return 0 (Ok discriminant)
+                f.instruction(&Instruction::Drop);
+                f.instruction(&Instruction::I32Const(0)); // Ok discriminant
+            }
+            Type::Result { .. } => {
+                // TODO: handle result types with payloads
+                // For now, just return 0 (success)
+                f.instruction(&Instruction::Drop);
+                f.instruction(&Instruction::I32Const(0));
+            }
             _ => {
                 // For other types, leave as-is (will cause type error if mismatched)
             }
@@ -5602,8 +5613,10 @@ impl<'a> CodeGen<'a> {
             | Type::Set(_)
             | Type::GcRef
             | Type::Unknown => ValType::Ref(RefType::EQREF),
-            // Only function refs stay as i32 for now (used as indices)
+            // Function refs as i32 indices
             Type::Func { .. } => ValType::I32,
+            // Result type is i32 discriminant
+            Type::Result { .. } => ValType::I32,
         }
     }
 
@@ -5619,6 +5632,8 @@ impl<'a> CodeGen<'a> {
             Type::F64 => ValType::F64,
             // Function refs as i32 indices
             Type::Func { .. } => ValType::I32,
+            // Result type is i32 discriminant
+            Type::Result { .. } => ValType::I32,
             // All other value types become eqref
             Type::Unit
             | Type::Bool
@@ -5899,6 +5914,7 @@ fn type_to_valtype(ty: &Type) -> ValType {
         Type::List(_) | Type::Vector(_) | Type::Map(_, _) | Type::Set(_) => ValType::I32,
         Type::GcRef => ValType::Ref(RefType::EQREF),
         Type::Func { .. } => ValType::I32,
+        Type::Result { .. } => ValType::I32, // i32 discriminant
         Type::Unknown => ValType::I32,
     }
 }
@@ -5909,6 +5925,10 @@ fn type_to_valtypes(ty: &Type) -> Vec<ValType> {
         Type::Unit => vec![], // No return value for unit type
         Type::String => vec![ValType::I32, ValType::I32],
         Type::List(_) => vec![ValType::I32, ValType::I32],
+        // Bare result (no ok/err types) flattens to i32 discriminant (0=Ok, 1=Err)
+        Type::Result { ok: None, err: None } => vec![ValType::I32],
+        // Result with payload types would need more complex flattening
+        Type::Result { .. } => vec![ValType::I32], // TODO: handle payloads
         _ => vec![type_to_valtype(ty)],
     }
 }

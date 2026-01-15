@@ -1199,10 +1199,13 @@ impl Compiler {
         functions.push(analyze::AnalyzedFunction {
             name: "__run".to_string(),
             exported: true,
-            export_name: Some("run".to_string()),
+            // Export name must match what wit-component expects for interface exports
+            // Format: "{interface-path}#{function-name}"
+            export_name: Some("wasi:cli/run@0.2.4#run".to_string()),
             params: Vec::new(),
             rest_param: None,
-            return_type: ir::Type::Unit,
+            // wasi:cli/run requires `run: func() -> result`
+            return_type: ir::Type::Result { ok: None, err: None },
             return_type_hint: None,
             body: run_body,
         });
@@ -1261,7 +1264,7 @@ impl Compiler {
         let mut resolve = Resolve::new();
 
         // Load WASI packages needed by CLI command world
-        for pkg_name in &["io", "random", "clocks"] {
+        for pkg_name in &["io", "cli", "random", "clocks"] {
             if let Some(combined) = wasi::get_combined_package(pkg_name) {
                 let _ = resolve.push_str(&format!("wasi-{}.wit", pkg_name), &combined);
             }
@@ -1375,9 +1378,28 @@ impl Compiler {
                             }
                         }
                     }
-                    // Skip def forms (globals) for now
-                    if sym.name == "def" {
-                        continue;
+                    // Handle def forms: extract (def name (fn [params] body)) as functions
+                    if sym.name == "def" && items.len() >= 3 {
+                        if let Edn::Symbol(name_sym) = &items[1] {
+                            let value = &items[2];
+                            // Check if value is an fn form: (def name (fn [params] body))
+                            if let Edn::List(fn_items) = value {
+                                if let Some(Edn::Symbol(fn_sym)) = fn_items.first() {
+                                    if fn_sym.name == "fn" && fn_items.len() >= 2 {
+                                        if let Some(extracted) = Self::extract_def_fn(
+                                            &name_sym.name,
+                                            false, // Not exported by default
+                                            &fn_items[1..],
+                                        )? {
+                                            functions.push(extracted);
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+                            // Plain def (not fn): skip for now
+                            continue;
+                        }
                     }
                 }
             }
