@@ -64,15 +64,20 @@ user=> (u/helper 10)
 ```
 
 **Key files:**
-- `crates/suss-cli/src/repl.rs` - `ReplState`, `handle_in_ns()`, `handle_require()`
-- `crates/suss-cli/src/main.rs` - Updated `run_repl()` with stateful loop
+- `crates/suss-cli/src/session.rs` - `SessionState` with WASM caching, symbol table, core.sus preloading
+- `crates/suss-cli/src/completer.rs` - `SussCompleter` for tab completion (rustyline `Completer` trait)
+- `crates/suss-cli/src/repl.rs` - `ReplState` (legacy), `is_definition()` helper
+- `crates/suss-cli/src/main.rs` - `run_repl()` with `SessionState`, core preloading, tab completion
 
-**ReplState tracks:**
+**SessionState tracks:**
 - `ns_definitions: HashMap<String, String>` - Accumulated definitions per namespace
 - `current_ns: String` - Current namespace (shown in prompt)
 - `ns_aliases: HashMap<String, String>` - Alias → namespace mappings from requires
 - `loaded_namespaces: HashMap<String, String>` - Namespace → source content
 - `src_paths: Vec<PathBuf>` - Directories to search for namespace files
+- `compiler: Compiler` - Reused compiler with `CoreCache` (core.sus parsed once)
+- `wasm_cache: HashMap<u64, CacheEntry>` - Source hash → compiled WASM bytes (LRU, max 100)
+- `symbols: HashMap<String, SymbolEntry>` - Symbol table for tab completion
 
 **How it works:**
 1. Definitions (`defn`, `def`, `deftype`, etc.) are accumulated as source strings

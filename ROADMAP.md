@@ -118,6 +118,11 @@ Function Index Layout:
   - `-main` functions compile to `wasi:cli/run@0.2.4` command components
   - Run with `wasmtime run -W gc,function-references app.wasm`
   - Result type handling for WIT interface exports
+- [x] Phase 8.9 partial: REPL enhancements
+  - Core.sus caching via `CoreCache` in `Compiler` (parse/analyze once per session)
+  - WASM compilation caching with LRU eviction (hash-based, 100 entries)
+  - Tab completion for builtins, core.sus symbols, and user definitions
+  - `SessionState` with integrated caching, symbol table, and namespace management
 
 ### Blocking Issues
 - None currently blocking
@@ -829,10 +834,12 @@ This was previously handled by the deleted `generate_expr_wit_inner()`.
 - [x] Skip `ns` forms in REPL path (extract_core_definitions)
 - [x] Backward compatibility maintained via resolution chain
 
-**Phase 8.9: REPL Enhancements (Future)**
-- [ ] WASM compilation caching - Hash accumulated source, cache compiled WASM bytes
+**Phase 8.9: REPL Enhancements** ✓ PARTIALLY COMPLETE
+- [x] Core.sus caching - Parse/analyze core.sus once per session via `CoreCache` in `Compiler`
+- [x] WASM compilation caching - Hash accumulated source, cache compiled WASM bytes (LRU, 100 entries)
+- [x] Tab completion - Symbol completion for builtins, core.sus functions, and user definitions
+- [x] Stateful sessions - `SessionState` accumulates defs, manages namespaces, caches compilations
 - [ ] Hot reload - Watch source files, auto-reload namespaces on change
-- [ ] Tab completion - Complete namespace-qualified symbols
 - [ ] `*ns*` dynamic var - Clojure-style current namespace binding
 - [ ] Definition redefinition - Handle `(defn foo ...)` replacing previous `foo`
 - [ ] Incremental parsing - Cache parsed EDN per file to speed up recompilation
@@ -1072,11 +1079,13 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 | **11** | WASI CLI commands | No | ✓ COMPLETE |
 | **12** | List/Seq operations | No | ✓ COMPLETE |
 | **13** | Multi-arity functions | No | ✓ COMPLETE |
+| **8.9** | REPL enhancements | No | ✓ PARTIAL (caching, completion, sessions done) |
 
 ### After Self-Hosting
 - ✓ **Phase 7b: WIT consolidation** - Reduced codegen duplication (~400 lines)
 - ✓ **Phase 13: Multi-arity functions** - `(defn foo ([x] x) ([x y] (+ x y)))` syntax
 - ✓ **Phase 11: WASI CLI** - Command components with `-main` functions
+- ✓ **Phase 8.9: REPL enhancements** - Core caching, WASM caching, tab completion, stateful sessions
 - **Phase 9: WIT marshaling** - Component boundary type conversion
 - **Phase 9b: Transients** - Performance optimization
 - **Phase 10: wasm-opt** - Binary optimization

@@ -3,7 +3,9 @@
 //! Uses WASM compilation + wasmtime for all expression evaluation.
 
 mod args;
+mod completer;
 mod repl;
+mod session;
 
 #[cfg(all(feature = "component", target_family = "wasm"))]
 mod component;
@@ -630,20 +632,49 @@ fn run_component_impl(path: &str, invoke: &str, args: &[String]) -> Result<(), S
 /// - Accumulated definitions (defn, def, deftype, etc.)
 /// - Current namespace context
 /// - Loaded namespaces from require
+/// - Cached compilations for performance
+/// - Tab completion for symbols
 #[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn run_repl() {
+    use std::sync::{Arc, RwLock};
+    use rustyline::config::Configurer;
+
     println!("Suss v{} - A Clojure dialect for WASM", env!("CARGO_PKG_VERSION"));
     println!("Type (help) for help, Ctrl-C to exit");
+
+    // Initialize session with caching
+    let mut state = session::SessionState::new();
+
+    // Preload core.sus during startup (shows loading message)
+    print!("Loading core.sus... ");
+    use std::io::Write;
+    std::io::stdout().flush().ok();
+    match state.preload_core() {
+        Ok(()) => println!("done."),
+        Err(e) => {
+            eprintln!("\nWarning: {}", e);
+        }
+    }
     println!();
 
-    let mut state = repl::ReplState::new();
-    let mut rl = match DefaultEditor::new() {
+    // Set up shared symbol table for tab completion
+    let symbols = Arc::new(RwLock::new(state.symbols.clone()));
+    let completer_helper = completer::SussCompleter::new(symbols.clone());
+
+    // Configure rustyline with completion
+    let config = rustyline::Config::builder()
+        .auto_add_history(true)
+        .completion_type(rustyline::config::CompletionType::List)
+        .build();
+
+    let mut rl = match rustyline::Editor::with_config(config) {
         Ok(editor) => editor,
         Err(e) => {
             eprintln!("Failed to initialize readline: {}", e);
             return;
         }
     };
+    rl.set_helper(Some(completer_helper));
 
     loop {
         // Dynamic prompt with current namespace
@@ -656,11 +687,9 @@ fn run_repl() {
                     continue;
                 }
 
-                let _ = rl.add_history_entry(&line);
-
                 // Handle special forms
                 if trimmed.starts_with("(in-ns ") {
-                    match repl::handle_in_ns(&mut state, trimmed) {
+                    match handle_in_ns_session(&mut state, trimmed) {
                         Ok(_ns) => println!("nil"),
                         Err(e) => eprintln!("Error: {}", e),
                     }
@@ -668,7 +697,7 @@ fn run_repl() {
                 }
 
                 if trimmed.starts_with("(require ") {
-                    match repl::handle_require(&mut state, trimmed) {
+                    match handle_require_session(&mut state, trimmed) {
                         Ok(_msg) => println!("nil"),
                         Err(e) => eprintln!("Error: {}", e),
                     }
@@ -678,12 +707,24 @@ fn run_repl() {
                 // Check if this is a definition to accumulate
                 if repl::is_definition(trimmed) {
                     state.accumulate_definition(trimmed);
+                    // Update shared symbol table
+                    if let Ok(mut syms) = symbols.write() {
+                        *syms = state.symbols.clone();
+                    }
                 }
 
-                // Build full source and evaluate
-                let full_source = state.build_source(trimmed);
-                match run_eval_wasm(&full_source) {
-                    Ok(()) => {}
+                // Compile and evaluate with caching
+                match state.compile_cached(trimmed) {
+                    Ok((wasm, is_component, _was_cached)) => {
+                        let result = if is_component {
+                            run_eval_component(&wasm)
+                        } else {
+                            run_eval_with_prstr(trimmed, &wasm)
+                        };
+                        if let Err(e) = result {
+                            eprintln!("Error: {}", e);
+                        }
+                    }
                     Err(e) => {
                         eprintln!("Error: {}", e);
                     }
@@ -693,7 +734,9 @@ fn run_repl() {
                 println!("^C");
             }
             Err(ReadlineError::Eof) => {
-                println!("Goodbye!");
+                println!("\nGoodbye!");
+                // Print cache statistics
+                println!("{}", state.cache_stats());
                 break;
             }
             Err(e) => {
@@ -702,4 +745,112 @@ fn run_repl() {
             }
         }
     }
+}
+
+/// Run evaluation with pr-str wrapping for better output
+fn run_eval_with_prstr(expr: &str, fallback_wasm: &[u8]) -> Result<(), String> {
+    // Try to wrap in pr-str for pretty printing
+    let wrapped_expr = format!("(pr-str {})", expr);
+    let mut compiler = suss_compile::Compiler::new();
+    match compiler.compile_expr_with_info(&wrapped_expr) {
+        Ok(compiled) if !compiled.is_component => {
+            // pr-str compilation succeeded - print as string
+            run_eval_core_module_string(&compiled.wasm)
+        }
+        _ => {
+            // pr-str failed or is component - run directly
+            run_eval_core_module(fallback_wasm)
+        }
+    }
+}
+
+/// Handle (in-ns 'namespace-name) for SessionState
+fn handle_in_ns_session(state: &mut session::SessionState, input: &str) -> Result<String, String> {
+    // Find 'symbol in input
+    let quote_pos = input.find('\'')
+        .ok_or_else(|| "(in-ns ...) requires a quoted symbol".to_string())?;
+    let rest = &input[quote_pos + 1..];
+
+    // Find end of symbol
+    let end = rest.find(|c: char| c.is_whitespace() || c == ')')
+        .unwrap_or(rest.len());
+    let name = rest[..end].trim();
+
+    if name.is_empty() {
+        return Err("(in-ns ...) requires a namespace name".to_string());
+    }
+
+    // Switch context
+    state.current_ns = name.to_string();
+
+    // Initialize namespace if needed
+    state.ns_definitions.entry(name.to_string()).or_default();
+
+    // Clear WASM cache since namespace context changed
+    state.clear_cache();
+
+    Ok(name.to_string())
+}
+
+/// Handle (require '[namespace :as alias]) for SessionState
+fn handle_require_session(state: &mut session::SessionState, input: &str) -> Result<String, String> {
+    // Parse require spec
+    let start = input.find('[').ok_or("require needs a vector spec")?;
+    let end = input.rfind(']').ok_or("require needs a closing ]")?;
+    let content = &input[start + 1..end];
+
+    let parts: Vec<&str> = content.split_whitespace().collect();
+    if parts.is_empty() {
+        return Err("Empty require spec".into());
+    }
+
+    let namespace = parts[0].to_string();
+    let mut alias = None;
+
+    let mut i = 1;
+    while i < parts.len() {
+        if parts[i] == ":as" && i + 1 < parts.len() {
+            alias = Some(parts[i + 1].to_string());
+            i += 2;
+        } else {
+            i += 1;
+        }
+    }
+
+    // Check if this is WASI (contains ':')
+    if namespace.contains(':') {
+        if let Some(a) = alias {
+            state.ns_aliases.insert(a, namespace.clone());
+        }
+        return Ok(format!("WASI import: {}", namespace));
+    }
+
+    // Already loaded?
+    if state.loaded_namespaces.contains_key(&namespace) {
+        if let Some(a) = alias {
+            state.ns_aliases.insert(a, namespace.clone());
+        }
+        return Ok(format!("Already loaded: {}", namespace));
+    }
+
+    // Find file
+    let path = suss_compile::Compiler::ns_to_path(&namespace, &state.src_paths)
+        .ok_or_else(|| format!("Namespace '{}' not found in {:?}", namespace, state.src_paths))?;
+
+    // Read file
+    let source = std::fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
+
+    // Store loaded namespace
+    state.loaded_namespaces.insert(namespace.clone(), source);
+
+    // Record alias
+    if let Some(a) = alias {
+        state.ns_aliases.insert(a, namespace.clone());
+    }
+
+    // Clear WASM cache since we loaded new code
+    state.clear_cache();
+
+    Ok(format!("Loaded: {}", namespace))
 }

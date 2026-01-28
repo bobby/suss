@@ -135,7 +135,7 @@ pub struct AnalyzedImport {
     pub return_type: Type,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AnalyzedFunction {
     pub name: String,
     pub exported: bool,
