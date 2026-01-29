@@ -1953,3 +1953,803 @@
     (pr-writer (val e) writer opts)
     (-write writer "]")))
 
+;; ============================================================
+;; UTF-8 String Infrastructure
+;; ============================================================
+
+(defn -utf8-continuation-byte?
+  "Returns true if b is a UTF-8 continuation byte (10xxxxxx)."
+  [b]
+  (= 128 (bit-and b 192)))
+
+(defn -utf8-lead-byte-length
+  "Returns the number of bytes in a UTF-8 sequence starting with lead byte b."
+  [b]
+  (let [ub (if (< b 0) (+ b 256) b)]
+    (cond
+      (< ub 128) 1
+      (< ub 192) 1
+      (< ub 224) 2
+      (< ub 240) 3
+      (< ub 248) 4
+      :else 1)))
+
+(defn string-length
+  "Returns the number of UTF-8 codepoints in string s."
+  [s]
+  (if (nil? s)
+    0
+    (let [len (alength s)]
+      (loop [byte-idx 0 cnt 0]
+        (if (>= byte-idx len)
+          cnt
+          (let [b (sget s byte-idx)
+                ub (if (< b 0) (+ b 256) b)
+                byte-len (-utf8-lead-byte-length ub)]
+            (recur (+ byte-idx byte-len) (+ cnt 1))))))))
+
+(defn -utf8-codepoint-to-byte-idx
+  "Convert a codepoint index to byte index in string s."
+  [s codepoint-idx]
+  (let [len (alength s)]
+    (loop [byte-idx 0 cp-idx 0]
+      (cond
+        (= cp-idx codepoint-idx) byte-idx
+        (>= byte-idx len) -1
+        :else
+        (let [b (sget s byte-idx)
+              ub (if (< b 0) (+ b 256) b)
+              byte-len (-utf8-lead-byte-length ub)]
+          (recur (+ byte-idx byte-len) (+ cp-idx 1)))))))
+
+;; Helper to convert signed byte to unsigned
+(defn -unsigned-byte [b]
+  (if (< b 0) (+ b 256) b))
+
+;; Decode just the codepoint value (not a pair)
+(defn -utf8-decode-codepoint-value
+  "Decode UTF-8 codepoint starting at byte index idx. Returns codepoint integer."
+  [s idx]
+  (let [len (alength s)
+        b0 (sget s idx)
+        ub0 (-unsigned-byte b0)]
+    (cond
+      ;; ASCII
+      (< ub0 128) ub0
+      ;; 2-byte
+      (and (< ub0 224) (>= ub0 192) (< (+ idx 1) len))
+      (let [ub1 (-unsigned-byte (sget s (+ idx 1)))]
+        (bit-or (bit-shift-left (bit-and ub0 31) 6)
+                (bit-and ub1 63)))
+      ;; 3-byte
+      (and (< ub0 240) (>= ub0 224) (< (+ idx 2) len))
+      (let [ub1 (-unsigned-byte (sget s (+ idx 1)))
+            ub2 (-unsigned-byte (sget s (+ idx 2)))]
+        (bit-or (bit-or (bit-shift-left (bit-and ub0 15) 12)
+                        (bit-shift-left (bit-and ub1 63) 6))
+                (bit-and ub2 63)))
+      ;; 4-byte
+      (and (< ub0 248) (>= ub0 240) (< (+ idx 3) len))
+      (let [ub1 (-unsigned-byte (sget s (+ idx 1)))
+            ub2 (-unsigned-byte (sget s (+ idx 2)))
+            ub3 (-unsigned-byte (sget s (+ idx 3)))]
+        (bit-or (bit-or (bit-or (bit-shift-left (bit-and ub0 7) 18)
+                                (bit-shift-left (bit-and ub1 63) 12))
+                        (bit-shift-left (bit-and ub2 63) 6))
+                (bit-and ub3 63)))
+      ;; Invalid
+      :else 65533)))
+
+(defn char-at
+  "Returns the Unicode codepoint at index idx (0-indexed by codepoint, not byte).
+   Returns nil if idx is out of bounds."
+  [s idx]
+  (if (or (nil? s) (< idx 0))
+    nil
+    (let [byte-idx (-utf8-codepoint-to-byte-idx s idx)]
+      (if (< byte-idx 0)
+        nil
+        (-utf8-decode-codepoint-value s byte-idx)))))
+
+(defn subs
+  "Returns the substring of s from start (inclusive) to end (exclusive).
+   Indices are codepoint positions, not byte positions."
+  [s start & args]
+  (if (or (nil? s) (< start 0))
+    ""
+    (let [end (if (> (alength args) 0)
+                (aget args 0)
+                (string-length s))
+          start-byte (-utf8-codepoint-to-byte-idx s start)
+          end-byte (-utf8-codepoint-to-byte-idx s end)]
+      (cond
+        (< start-byte 0) ""
+        (< end-byte 0)
+        ;; end is past the string, use full remaining length
+        (let [len (- (alength s) start-byte)
+              result (make-string len)]
+          (scopy result 0 s start-byte len)
+          result)
+        (< end start) ""
+        :else
+        (let [len (- end-byte start-byte)
+              result (make-string len)]
+          (scopy result 0 s start-byte len)
+          result)))))
+
+;; ============================================================
+;; Runtime String Concatenation
+;; ============================================================
+
+(defn -str-append-value
+  "Append a value to a StringBuffer, converting to string as needed."
+  [sb v]
+  (cond
+    (nil? v) nil  ;; nil contributes nothing to str
+    (string? v) (-sb-append-str sb v)
+    (int? v) (-sb-append-str sb (int->str v))
+    (float? v) (-sb-append-str sb (float->str v))
+    (keyword? v) (do
+                   (-sb-append-str sb ":")
+                   (when-let [ns (namespace v)]
+                     (-sb-append-str sb ns)
+                     (-sb-append-str sb "/"))
+                   (-sb-append-str sb (name v)))
+    (symbol? v) (do
+                  (when-let [ns (namespace v)]
+                    (-sb-append-str sb ns)
+                    (-sb-append-str sb "/"))
+                  (-sb-append-str sb (name v)))
+    :else (-sb-append-str sb (pr-str v))))
+
+(defn str
+  "Concatenates values into a string. nil values are ignored."
+  [& args]
+  (let [len (alength args)]
+    (if (= len 0)
+      ""
+      (if (= len 1)
+        ;; Single arg - optimize common case
+        (let [v (aget args 0)]
+          (cond
+            (nil? v) ""
+            (string? v) v
+            (int? v) (int->str v)
+            (float? v) (float->str v)
+            :else
+            (let [sb (string-buffer 32)]
+              (-str-append-value sb v)
+              (-sb->str sb))))
+        ;; Multiple args
+        (let [sb (string-buffer 64)]
+          (loop [i 0]
+            (when (< i len)
+              (-str-append-value sb (aget args i))
+              (recur (+ i 1))))
+          (-sb->str sb))))))
+
+;; ============================================================
+;; String Predicates and Search
+;; ============================================================
+
+(defn -whitespace?
+  "Returns true if byte b is ASCII whitespace (space, tab, newline, carriage return)."
+  [b]
+  (let [ub (-unsigned-byte b)]
+    (or (= ub 32) (= ub 9) (= ub 10) (= ub 13))))
+
+(defn blank?
+  "True if s is nil, empty, or contains only whitespace."
+  [s]
+  (if (nil? s)
+    true
+    (let [len (alength s)]
+      (if (= len 0)
+        true
+        (loop [i 0]
+          (if (>= i len)
+            true
+            (if (-whitespace? (sget s i))
+              (recur (+ i 1))
+              false)))))))
+
+(defn -bytes-equal?
+  "Compare two byte sequences for equality. Returns true if s1[off1..off1+len] equals s2[off2..off2+len]."
+  [s1 off1 s2 off2 len]
+  (loop [i 0]
+    (if (>= i len)
+      true
+      (if (= (sget s1 (+ off1 i)) (sget s2 (+ off2 i)))
+        (recur (+ i 1))
+        false))))
+
+(defn starts-with?
+  "True if s starts with substr."
+  [s substr]
+  (if (or (nil? s) (nil? substr))
+    false
+    (let [s-len (alength s)
+          sub-len (alength substr)]
+      (if (> sub-len s-len)
+        false
+        (-bytes-equal? s 0 substr 0 sub-len)))))
+
+(defn ends-with?
+  "True if s ends with substr."
+  [s substr]
+  (if (or (nil? s) (nil? substr))
+    false
+    (let [s-len (alength s)
+          sub-len (alength substr)]
+      (if (> sub-len s-len)
+        false
+        (-bytes-equal? s (- s-len sub-len) substr 0 sub-len)))))
+
+(defn index-of
+  "Returns the index of the first occurrence of substr in s, or -1 if not found.
+   Optional from-index specifies the starting position for the search."
+  [s substr & args]
+  (if (or (nil? s) (nil? substr))
+    -1
+    (let [s-len (alength s)
+          sub-len (alength substr)
+          from (if (> (alength args) 0) (aget args 0) 0)]
+      (if (= sub-len 0)
+        from
+        (if (or (< from 0) (> sub-len s-len))
+          -1
+          (let [max-idx (- s-len sub-len)]
+            (loop [i from]
+              (if (> i max-idx)
+                -1
+                (if (-bytes-equal? s i substr 0 sub-len)
+                  i
+                  (recur (+ i 1)))))))))))
+
+(defn last-index-of
+  "Returns the index of the last occurrence of substr in s, or -1 if not found.
+   Optional from-index specifies the starting position for the backward search."
+  [s substr & args]
+  (if (or (nil? s) (nil? substr))
+    -1
+    (let [s-len (alength s)
+          sub-len (alength substr)
+          max-idx (- s-len sub-len)
+          from (if (> (alength args) 0)
+                 (min (aget args 0) max-idx)
+                 max-idx)]
+      (if (= sub-len 0)
+        from
+        (if (or (< from 0) (> sub-len s-len))
+          -1
+          (loop [i from]
+            (if (< i 0)
+              -1
+              (if (-bytes-equal? s i substr 0 sub-len)
+                i
+                (recur (- i 1))))))))))
+
+(defn includes?
+  "True if s includes substr anywhere within it."
+  [s substr]
+  (>= (index-of s substr) 0))
+
+;; ============================================================
+;; String Transformation
+;; ============================================================
+
+(defn triml
+  "Removes whitespace from the left side of string."
+  [s]
+  (if (or (nil? s) (= (alength s) 0))
+    ""
+    (let [len (alength s)]
+      (loop [i 0]
+        (if (>= i len)
+          ""
+          (if (-whitespace? (sget s i))
+            (recur (+ i 1))
+            (let [new-len (- len i)
+                  result (make-string new-len)]
+              (scopy result 0 s i new-len)
+              result)))))))
+
+(defn trimr
+  "Removes whitespace from the right side of string."
+  [s]
+  (if (or (nil? s) (= (alength s) 0))
+    ""
+    (let [len (alength s)]
+      (loop [i (- len 1)]
+        (if (< i 0)
+          ""
+          (if (-whitespace? (sget s i))
+            (recur (- i 1))
+            (let [new-len (+ i 1)
+                  result (make-string new-len)]
+              (scopy result 0 s 0 new-len)
+              result)))))))
+
+(defn trim
+  "Removes whitespace from both ends of string."
+  [s]
+  (triml (trimr s)))
+
+(defn -ascii-upper-byte
+  "Convert ASCII lowercase byte to uppercase. Other bytes unchanged."
+  [b]
+  (let [ub (-unsigned-byte b)]
+    (if (and (>= ub 97) (<= ub 122))
+      (- ub 32)
+      b)))
+
+(defn -ascii-lower-byte
+  "Convert ASCII uppercase byte to lowercase. Other bytes unchanged."
+  [b]
+  (let [ub (-unsigned-byte b)]
+    (if (and (>= ub 65) (<= ub 90))
+      (+ ub 32)
+      b)))
+
+(defn upper-case
+  "Converts string to all upper-case (ASCII characters only)."
+  [s]
+  (if (or (nil? s) (= (alength s) 0))
+    ""
+    (let [len (alength s)
+          result (make-string len)]
+      (loop [i 0]
+        (if (>= i len)
+          result
+          (do
+            (sset result i (-ascii-upper-byte (sget s i)))
+            (recur (+ i 1))))))))
+
+(defn lower-case
+  "Converts string to all lower-case (ASCII characters only)."
+  [s]
+  (if (or (nil? s) (= (alength s) 0))
+    ""
+    (let [len (alength s)
+          result (make-string len)]
+      (loop [i 0]
+        (if (>= i len)
+          result
+          (do
+            (sset result i (-ascii-lower-byte (sget s i)))
+            (recur (+ i 1))))))))
+
+(defn join
+  "Returns a string of all elements in coll, separated by sep.
+   If called with one arg, uses no separator."
+  [sep-or-coll & args]
+  (if (= (alength args) 0)
+    ;; Single arg - it's a collection, no separator
+    (let [coll sep-or-coll
+          sb (string-buffer 64)]
+      (loop [s (seq coll) first? true]
+        (if s
+          (do
+            (-str-append-value sb (first s))
+            (recur (next s) false))
+          (-sb->str sb))))
+    ;; Two args - separator and collection
+    (let [sep sep-or-coll
+          coll (aget args 0)
+          sb (string-buffer 64)]
+      (loop [s (seq coll) first? true]
+        (if s
+          (do
+            (when (not first?)
+              (-sb-append-str sb sep))
+            (-str-append-value sb (first s))
+            (recur (next s) false))
+          (-sb->str sb))))))
+
+(defn split
+  "Splits string on a string delimiter. Returns a vector of strings."
+  [s delim]
+  (if (or (nil? s) (nil? delim))
+    []
+    (let [s-len (alength s)
+          d-len (alength delim)]
+      (if (= d-len 0)
+        [s]
+        (loop [start 0 result []]
+          (let [idx (index-of s delim start)]
+            (if (< idx 0)
+              ;; No more delimiters - add remaining
+              (if (>= start s-len)
+                result
+                (let [remain-len (- s-len start)
+                      remain (make-string remain-len)]
+                  (scopy remain 0 s start remain-len)
+                  (conj result remain)))
+              ;; Found delimiter - extract part before it
+              (let [part-len (- idx start)
+                    part (make-string part-len)]
+                (scopy part 0 s start part-len)
+                (recur (+ idx d-len) (conj result part))))))))))
+
+;; ============================================================
+;; Nested Data Structure Functions
+;; ============================================================
+
+(defn get-in
+  "Returns the value in a nested associative structure, where ks is a sequence
+   of keys. Returns nil if any key is not present, or not-found if supplied."
+  [m ks & args]
+  (let [not-found (if (> (alength args) 0) (aget args 0) nil)]
+    (loop [curr m keys (seq ks)]
+      (if keys
+        (if (nil? curr)
+          not-found
+          (let [k (first keys)
+                nxt (get curr k)]
+            (recur nxt (next keys))))
+        curr))))
+
+(defn assoc-in
+  "Associates a value in a nested associative structure, where ks is a
+   sequence of keys and v is the new value. Creates new structures if needed."
+  [m ks v]
+  (let [s (seq ks)]
+    (if (nil? s)
+      v
+      (let [k (first s)
+            rest-ks (next s)]
+        (if (nil? rest-ks)
+          (assoc m k v)
+          (assoc m k (assoc-in (get m k) rest-ks v)))))))
+
+(defn update
+  "Updates a value in an associative structure by applying f to the current value.
+   Supports up to 3 extra arguments to f."
+  [m k f & args]
+  (let [old (get m k)
+        n (alength args)]
+    (cond
+      (= n 0) (assoc m k (f old))
+      (= n 1) (assoc m k (f old (aget args 0)))
+      (= n 2) (assoc m k (f old (aget args 0) (aget args 1)))
+      :else (assoc m k (f old (aget args 0) (aget args 1) (aget args 2))))))
+
+(defn update-in
+  "Updates a value in a nested associative structure by applying f
+   at the location specified by ks."
+  [m ks f]
+  (let [s (seq ks)]
+    (if (nil? s)
+      (f m)
+      (let [k (first s)
+            rest-ks (next s)]
+        (if (nil? rest-ks)
+          (assoc m k (f (get m k)))
+          (assoc m k (update-in (get m k) rest-ks f)))))))
+
+(defn -merge-map-into
+  "Merge entries from m2 into m1."
+  [m1 m2]
+  (if (nil? m2)
+    m1
+    (reduce (fn [acc entry]
+              (assoc acc (key entry) (val entry)))
+            m1
+            (seq m2))))
+
+(defn merge
+  "Returns a map that is the merge of the maps. Nil maps are skipped.
+   Later values override earlier ones for duplicate keys."
+  [& maps]
+  (let [n (alength maps)]
+    (loop [i 0 result {}]
+      (if (>= i n)
+        result
+        (recur (+ i 1) (-merge-map-into result (aget maps i)))))))
+
+(defn -merge-with-map-into
+  "Merge entries from m2 into m1, using f to combine duplicate keys."
+  [f m1 m2]
+  (if (nil? m2)
+    m1
+    (reduce (fn [acc entry]
+              (let [k (key entry)
+                    v (val entry)
+                    existing (get acc k)]
+                (if (nil? existing)
+                  (assoc acc k v)
+                  (assoc acc k (f existing v)))))
+            m1
+            (seq m2))))
+
+(defn merge-with
+  "Returns a map that is the merge of the maps. For duplicate keys,
+   f is called with the values from left and right to determine the result."
+  [f & maps]
+  (let [n (alength maps)]
+    (loop [i 0 result {}]
+      (if (>= i n)
+        result
+        (recur (+ i 1) (-merge-with-map-into f result (aget maps i)))))))
+
+(defn select-keys
+  "Returns a map containing only those entries in m whose key is in keys."
+  [m keyseq]
+  (reduce (fn [acc k]
+            (let [v (get m k)]
+              (if (nil? v)
+                acc
+                (assoc acc k v))))
+          {}
+          keyseq))
+
+(defn zipmap
+  "Returns a map with the keys mapped to the corresponding vals."
+  [keys vals]
+  (loop [m {}
+         ks (seq keys)
+         vs (seq vals)]
+    (if (and ks vs)
+      (recur (assoc m (first ks) (first vs))
+             (next ks)
+             (next vs))
+      m)))
+
+;; ============================================================
+;; Partitioning Functions
+;; ============================================================
+
+(defn split-at
+  "Returns a vector of [(take n coll) (drop n coll)]."
+  [n coll]
+  [(take n coll) (drop n coll)])
+
+(defn split-with
+  "Returns a vector of [(take-while pred coll) (drop-while pred coll)]."
+  [pred coll]
+  [(take-while pred coll) (drop-while pred coll)])
+
+(defn -take-n
+  "Take up to n items from seq s, returning a vector."
+  [n s]
+  (loop [i 0 result [] xs s]
+    (if (or (>= i n) (nil? xs))
+      result
+      (recur (+ i 1) (conj result (first xs)) (next xs)))))
+
+(defn partition
+  "Returns a lazy sequence of lists of n items each, at offsets step apart.
+   If step is not supplied, defaults to n, i.e. partitions do not overlap.
+   If a pad collection is supplied, uses its elements to complete the last
+   partition up to n items. Only includes partitions with exactly n items."
+  [n coll]
+  (lazy-seq
+    (let [s (seq coll)]
+      (when s
+        (let [p (-take-n n s)]
+          (when (= (count p) n)
+            (cons p (partition n (drop n s)))))))))
+
+(defn partition-all
+  "Returns a lazy sequence of lists of n items each, at offsets step apart.
+   Unlike partition, includes incomplete partitions at the end."
+  [n coll]
+  (lazy-seq
+    (let [s (seq coll)]
+      (when s
+        (let [p (-take-n n s)]
+          (cons p (partition-all n (drop n s))))))))
+
+(defn partition-by
+  "Applies f to each value in coll, splitting it each time f returns a new value."
+  [f coll]
+  (lazy-seq
+    (let [s (seq coll)]
+      (when s
+        (let [fst (first s)
+              fv (f fst)]
+          (loop [run [fst] xs (next s)]
+            (if (nil? xs)
+              (cons run nil)
+              (let [x (first xs)]
+                (if (= fv (f x))
+                  (recur (conj run x) (next xs))
+                  (cons run (partition-by f xs)))))))))))
+
+;; ============================================================
+;; Transformation Functions
+;; ============================================================
+
+(defn keep
+  "Returns a lazy sequence of the non-nil results of (f item)."
+  [f coll]
+  (lazy-seq
+    (let [s (seq coll)]
+      (when s
+        (let [x (f (first s))]
+          (if (nil? x)
+            (keep f (rest s))
+            (cons x (keep f (rest s)))))))))
+
+(defn -keep-indexed-helper
+  "Helper for keep-indexed with index tracking."
+  [f idx s]
+  (lazy-seq
+    (when s
+      (let [x (f idx (first s))]
+        (if (nil? x)
+          (-keep-indexed-helper f (+ idx 1) (next s))
+          (cons x (-keep-indexed-helper f (+ idx 1) (next s))))))))
+
+(defn keep-indexed
+  "Returns a lazy sequence of the non-nil results of (f index item)."
+  [f coll]
+  (-keep-indexed-helper f 0 (seq coll)))
+
+(defn -map-indexed-helper
+  "Helper for map-indexed with index tracking."
+  [f idx s]
+  (lazy-seq
+    (when s
+      (cons (f idx (first s))
+            (-map-indexed-helper f (+ idx 1) (next s))))))
+
+(defn map-indexed
+  "Returns a lazy sequence of (f index item)."
+  [f coll]
+  (-map-indexed-helper f 0 (seq coll)))
+
+(defn reductions
+  "Returns a lazy seq of the intermediate values of the reduction."
+  [f init coll]
+  (lazy-seq
+    (cons init
+          (let [s (seq coll)]
+            (when s
+              (reductions f (f init (first s)) (rest s)))))))
+
+(defn cycle
+  "Returns a lazy infinite sequence of repetitions of coll items."
+  [coll]
+  (lazy-seq
+    (let [s (seq coll)]
+      (when s
+        (concat2 s (cycle s))))))
+
+(defn interleave
+  "Returns a lazy seq of the first item in each coll, then the second, etc."
+  [c1 c2]
+  (lazy-seq
+    (let [s1 (seq c1)
+          s2 (seq c2)]
+      (when (and s1 s2)
+        (cons (first s1)
+              (cons (first s2)
+                    (interleave (rest s1) (rest s2))))))))
+
+(defn interpose
+  "Returns a lazy seq of the elements of coll separated by sep."
+  [sep coll]
+  (lazy-seq
+    (let [s (seq coll)]
+      (when s
+        (cons (first s)
+              (let [r (next s)]
+                (when r
+                  (cons sep (interpose sep r)))))))))
+
+(defn -dedupe-step
+  "Helper for dedupe - skips elements equal to prev."
+  [prev s]
+  (lazy-seq
+    (when s
+      (let [x (first s)]
+        (if (= x prev)
+          (-dedupe-step prev (next s))
+          (cons x (-dedupe-step x (next s))))))))
+
+(defn dedupe
+  "Returns a lazy sequence removing consecutive duplicates."
+  [coll]
+  (lazy-seq
+    (let [s (seq coll)]
+      (when s
+        (cons (first s) (-dedupe-step (first s) (next s)))))))
+
+(defn nthrest
+  "Returns the nth rest of coll."
+  [coll n]
+  (loop [i n s coll]
+    (if (and (pos? i) (seq s))
+      (recur (dec i) (rest s))
+      s)))
+
+(defn nthnext
+  "Returns the nth next of coll, or nil."
+  [coll n]
+  (loop [i n s (seq coll)]
+    (if (and (pos? i) s)
+      (recur (dec i) (next s))
+      s)))
+
+(defn sequential?
+  "Returns true if coll is sequential (vector, list, or seq)."
+  [coll]
+  (or (instance? PersistentVector coll)
+      (instance? Cons coll)
+      (instance? LazySeq coll)
+      (instance? IndexedSeq coll)))
+
+(defn flatten
+  "Takes any nested combination of sequential things and returns their
+   contents as a single, flat lazy sequence."
+  [x]
+  (lazy-seq
+    (let [s (seq x)]
+      (when s
+        (let [fst (first s)]
+          (if (sequential? fst)
+            (concat2 (flatten fst) (flatten (rest s)))
+            (cons fst (flatten (rest s)))))))))
+
+;; ============================================================
+;; Sort Functions
+;; ============================================================
+
+(defn compare
+  "Comparator. Returns -1, 0, or 1 for less than, equal, or greater than."
+  [x y]
+  (cond
+    (and (int? x) (int? y))
+    (cond (< x y) -1 (> x y) 1 :else 0)
+
+    (and (float? x) (float? y))
+    (cond (< x y) -1 (> x y) 1 :else 0)
+
+    (and (string? x) (string? y))
+    (let [len-x (alength x)
+          len-y (alength y)
+          min-len (if (< len-x len-y) len-x len-y)]
+      (loop [i 0]
+        (if (>= i min-len)
+          (cond (< len-x len-y) -1 (> len-x len-y) 1 :else 0)
+          (let [cx (sget x i)
+                cy (sget y i)]
+            (cond
+              (< cx cy) -1
+              (> cx cy) 1
+              :else (recur (+ i 1)))))))
+
+    (and (keyword? x) (keyword? y))
+    (compare (name x) (name y))
+
+    :else 0))
+
+(defn -quicksort
+  "Quicksort implementation using comparator comp."
+  [comp coll]
+  (let [v (vec coll)
+        n (count v)]
+    (if (<= n 1)
+      v
+      (let [pivot (nth v 0)]
+        (loop [i 1 less [] equal [pivot] greater []]
+          (if (>= i n)
+            (vec (concat2 (concat2 (-quicksort comp less) equal)
+                          (-quicksort comp greater)))
+            (let [x (nth v i)
+                  c (comp x pivot)]
+              (cond
+                (< c 0) (recur (+ i 1) (conj less x) equal greater)
+                (> c 0) (recur (+ i 1) less equal (conj greater x))
+                :else (recur (+ i 1) less (conj equal x) greater)))))))))
+
+(defn sort
+  "Returns a sorted sequence of the items in coll."
+  [coll]
+  (-quicksort compare coll))
+
+(defn sort-by
+  "Returns a sorted sequence of the items in coll, comparing (keyfn item)."
+  [keyfn coll]
+  (-quicksort (fn [x y] (compare (keyfn x) (keyfn y))) coll))
