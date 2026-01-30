@@ -2725,15 +2725,42 @@
 
     :else 0))
 
+(defn -median-of-three
+  "Returns the median value of a, b, c using comparator comp."
+  [comp a b c]
+  (let [ab (comp a b)
+        bc (comp b c)
+        ac (comp a c)]
+    (cond
+      ;; a <= b
+      (<= ab 0)
+      (cond
+        (<= bc 0) b      ;; a <= b <= c, median is b
+        (<= ac 0) c      ;; a <= c < b, median is c
+        :else a)         ;; c < a <= b, median is a
+      ;; a > b
+      :else
+      (cond
+        (>= bc 0) b      ;; c <= b < a, median is b
+        (>= ac 0) c      ;; b < c <= a, median is c
+        :else a))))      ;; b < a < c, median is a
+
 (defn -quicksort
-  "Quicksort implementation using comparator comp."
+  "Quicksort implementation using median-of-three pivot selection."
   [comp coll]
   (let [v (vec coll)
         n (count v)]
-    (if (<= n 1)
-      v
-      (let [pivot (nth v 0)]
-        (loop [i 1 less [] equal [pivot] greater []]
+    (cond
+      (<= n 1) v
+      (= n 2)
+      (let [a (nth v 0) b (nth v 1)]
+        (if (<= (comp a b) 0) [a b] [b a]))
+      :else
+      (let [first-elem (nth v 0)
+            mid-elem (nth v (quot n 2))
+            last-elem (nth v (- n 1))
+            pivot (-median-of-three comp first-elem mid-elem last-elem)]
+        (loop [i 0 less [] equal [] greater []]
           (if (>= i n)
             (vec (concat2 (concat2 (-quicksort comp less) equal)
                           (-quicksort comp greater)))
