@@ -331,12 +331,17 @@ impl MacroEnv {
         };
         idx += 1;
 
-        // Skip optional docstring
-        if idx < items.len() {
-            if matches!(&items[idx], Edn::String(_)) {
+        // Capture optional docstring
+        let docstring = if idx < items.len() {
+            if let Edn::String(doc) = &items[idx] {
                 idx += 1;
+                Some(Edn::String(doc.clone()))
+            } else {
+                None
             }
-        }
+        } else {
+            None
+        };
 
         if idx >= items.len() {
             return Err(CompileError::MacroExpansion(
@@ -358,10 +363,13 @@ impl MacroEnv {
             let mut fn_form = vec![Edn::Symbol(Symbol::new("fn"))];
             fn_form.extend(clauses);
 
-            // Build (def [metadata...] name (fn ...)) form
+            // Build (def [metadata...] name [docstring] (fn ...)) form
             let mut def_form = vec![Edn::Symbol(Symbol::new("def"))];
             def_form.extend(metadata);
             def_form.push(name);
+            if let Some(doc) = docstring {
+                def_form.push(doc);
+            }
             def_form.push(Edn::List(fn_form));
 
             return Ok(Edn::List(def_form));
@@ -388,10 +396,14 @@ impl MacroEnv {
         let mut fn_form = vec![Edn::Symbol(Symbol::new("fn")), params];
         fn_form.extend(body);
 
-        // Build (def [metadata...] name (fn ...)) form
+        // Build (def [metadata...] name [docstring] (fn ...)) form
+        // Docstring comes after name, before fn body (matching defn syntax)
         let mut def_form = vec![Edn::Symbol(Symbol::new("def"))];
         def_form.extend(metadata);
         def_form.push(name);
+        if let Some(doc) = docstring {
+            def_form.push(doc);
+        }
         def_form.push(Edn::List(fn_form));
 
         Ok(Edn::List(def_form))

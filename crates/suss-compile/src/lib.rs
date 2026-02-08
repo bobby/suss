@@ -284,6 +284,7 @@ impl Compiler {
             rest_param: None,
             return_type,
             return_type_hint: None,
+            docstring: None,
             body: expr,
         });
 
@@ -349,6 +350,7 @@ impl Compiler {
             rest_param: None,
             return_type,
             return_type_hint: None,
+            docstring: None,
             body: expr,
         });
 
@@ -493,7 +495,7 @@ impl Compiler {
                             continue;
                         }
                     }
-                    // Handle (def name value) forms
+                    // Handle (def name value) or (def name "docstring" (fn ...)) forms
                     if sym.name == "def" && items.len() >= 3 {
                         // Skip metadata symbols (^:export, etc.)
                         let mut idx = 1;
@@ -511,17 +513,28 @@ impl Compiler {
                             break;
                         }
                         if let Some(Edn::Symbol(name_sym)) = items.get(idx) {
-                            let value_idx = idx + 1;
-                            if let Some(value) = items.get(value_idx) {
-                                // Check if value is an fn form: (def name (fn [params] body))
+                            idx += 1;
+
+                            // Check for optional docstring after name
+                            let docstring = if let Some(Edn::String(doc)) = items.get(idx) {
+                                idx += 1;
+                                Some(doc.clone())
+                            } else {
+                                None
+                            };
+
+                            if let Some(value) = items.get(idx) {
+                                // Check if value is an fn form: (def name [docstring] (fn [params] body))
                                 if let Edn::List(fn_items) = value {
                                     if let Some(Edn::Symbol(fn_sym)) = fn_items.first() {
                                         if fn_sym.name == "fn" && fn_items.len() >= 3 {
-                                            if let Some(extracted) = Self::extract_def_fn(
+                                            if let Some(mut extracted) = Self::extract_def_fn(
                                                 &name_sym.name,
                                                 is_exported,
                                                 &fn_items[1..],
                                             )? {
+                                                // Preserve docstring from defn expansion
+                                                extracted.docstring = docstring;
                                                 functions.push(extracted);
                                                 continue;
                                             }
@@ -537,6 +550,7 @@ impl Compiler {
                                     rest_param: None,
                                     return_type: ir::Type::GcRef,
                                     return_type_hint: None,
+                                    docstring,
                                     body: value.clone(),
                                 });
                                 continue;
@@ -549,12 +563,12 @@ impl Compiler {
                         //      or: (defn name "docstring" [params...] body...)
                         if let Edn::Symbol(name_sym) = &items[1] {
                             // Find params vector (skip optional docstring)
-                            let (params_idx, body_start) = if matches!(&items[2], Edn::String(_)) {
+                            let (params_idx, body_start, docstring) = if let Edn::String(doc) = &items[2] {
                                 // Has docstring: (defn name "doc" [params] body...)
-                                (3, 4)
+                                (3, 4, Some(doc.clone()))
                             } else {
                                 // No docstring: (defn name [params] body...)
-                                (2, 3)
+                                (2, 3, None)
                             };
 
                             if params_idx < items.len() {
@@ -602,6 +616,7 @@ impl Compiler {
                                         rest_param,
                                         return_type: ir::Type::GcRef,
                                         return_type_hint: None,
+                                        docstring,
                                         body,
                                     });
                                     continue;
@@ -999,6 +1014,7 @@ impl Compiler {
             rest_param,
             return_type: ir::Type::GcRef,
             return_type_hint: None,
+            docstring: None,
             body,
         }))
     }
@@ -1025,6 +1041,7 @@ impl Compiler {
             rest_param: None,
             return_type,
             return_type_hint: None,
+            docstring: None,
             body: expr,
         });
 
@@ -1093,6 +1110,7 @@ impl Compiler {
             rest_param: None,
             return_type,
             return_type_hint: None,
+            docstring: None,
             body: expr,
         });
 
@@ -1478,6 +1496,7 @@ impl Compiler {
             // wasi:cli/run requires `run: func() -> result`
             return_type: ir::Type::Result { ok: None, err: None },
             return_type_hint: None,
+            docstring: None,
             body: run_body,
         });
 
@@ -1642,6 +1661,7 @@ impl Compiler {
                                         rest_param: None,
                                         return_type: ir::Type::GcRef,
                                         return_type_hint: None,
+                                        docstring: None,
                                         body,
                                     });
                                     continue;
@@ -1649,21 +1669,30 @@ impl Compiler {
                             }
                         }
                     }
-                    // Handle def forms: extract (def name (fn [params] body)) as functions
+                    // Handle def forms: extract (def name [docstring] (fn [params] body)) as functions
                     if sym.name == "def" && items.len() >= 3 {
                         if let Edn::Symbol(name_sym) = &items[1] {
-                            let value = &items[2];
-                            // Check if value is an fn form: (def name (fn [params] body))
-                            if let Edn::List(fn_items) = value {
-                                if let Some(Edn::Symbol(fn_sym)) = fn_items.first() {
-                                    if fn_sym.name == "fn" && fn_items.len() >= 2 {
-                                        if let Some(extracted) = Self::extract_def_fn(
-                                            &name_sym.name,
-                                            false, // Not exported by default
-                                            &fn_items[1..],
-                                        )? {
-                                            functions.push(extracted);
-                                            continue;
+                            // Check for optional docstring after name
+                            let (docstring, value_idx) = if let Some(Edn::String(doc)) = items.get(2) {
+                                (Some(doc.clone()), 3)
+                            } else {
+                                (None, 2)
+                            };
+
+                            if let Some(value) = items.get(value_idx) {
+                                // Check if value is an fn form: (def name [docstring] (fn [params] body))
+                                if let Edn::List(fn_items) = value {
+                                    if let Some(Edn::Symbol(fn_sym)) = fn_items.first() {
+                                        if fn_sym.name == "fn" && fn_items.len() >= 2 {
+                                            if let Some(mut extracted) = Self::extract_def_fn(
+                                                &name_sym.name,
+                                                false, // Not exported by default
+                                                &fn_items[1..],
+                                            )? {
+                                                extracted.docstring = docstring;
+                                                functions.push(extracted);
+                                                continue;
+                                            }
                                         }
                                     }
                                 }

@@ -141,6 +141,9 @@ struct Lowerer {
     /// Function arities: name -> number of parameters
     /// Used for creating closure wrappers in #'var
     func_arities: HashMap<String, usize>,
+    /// Function metadata for Var support: name -> (docstring, param_names)
+    /// Used when creating Vars with (var foo) or #'foo
+    fn_metadata: HashMap<String, (Option<String>, Vec<String>)>,
 
     // ========================================================================
     // Namespace Resolution (Phase 5)
@@ -219,6 +222,7 @@ impl Lowerer {
             current_self_type: None,
             variadic_funcs: HashMap::new(),
             func_arities: HashMap::new(),
+            fn_metadata: HashMap::new(),
             // Namespace resolution
             current_ns: None,
             ns_aliases: HashMap::new(),
@@ -466,6 +470,9 @@ impl Lowerer {
             self.func_indices.insert(func_name.clone(), func_idx);
             // Track function arity for #'var closure wrappers
             self.func_arities.insert(func_name.clone(), func.params.len());
+            // Track function metadata for Var support (docstring, param names)
+            let param_names: Vec<String> = func.params.iter().map(|(name, _)| name.clone()).collect();
+            self.fn_metadata.insert(func_name.clone(), (func.docstring.clone(), param_names));
             // Track variadic functions for call site handling
             if func.rest_param.is_some() {
                 self.variadic_funcs.insert(func_name, func.params.len());
@@ -1873,13 +1880,9 @@ impl Lowerer {
                 let hash = gc_types::hash_symbol(namespace, name);
 
                 // Intern into symbol table (like keywords use intern_keyword)
-                let symbol_idx = self.module.intern_symbol(namespace, name);
+                let idx = self.module.intern_symbol(namespace, name);
 
-                Ok(Expr::Symbol {
-                    hash,
-                    ns_str_idx: -1,              // No longer needed for lookup
-                    name_str_idx: symbol_idx,   // Now a symbol table index
-                })
+                Ok(Expr::Symbol { idx, hash })
             }
 
             // Keywords evaluate to themselves, so quoting them is the same
@@ -2013,26 +2016,74 @@ impl Lowerer {
             return Err(CompileError::Undefined(name.clone()));
         };
 
-        // Create a SYMBOL struct for the symbol name
+        // Intern the symbol and create a SYMBOL expression
         let hash = gc_types::hash_symbol(namespace, name);
-        let ns_str_idx = if let Some(ns) = namespace {
-            self.module.intern_string(ns) as i32
-        } else {
-            -1
-        };
-        let name_str_idx = self.module.intern_string(name);
+        let sym_idx = self.module.intern_symbol(namespace, name);
         let sym_expr = Expr::Symbol {
+            idx: sym_idx,
             hash,
-            ns_str_idx,
-            name_str_idx,
         };
 
-        // Create a Var: { root: value, meta: nil, sym: symbol }
+        // Build metadata map from fn_metadata if available
+        let meta_expr = if let Some((docstring, param_names)) = self.fn_metadata.get(name).cloned() {
+            self.build_var_metadata(docstring, param_names)?
+        } else {
+            Expr::Unit // nil metadata
+        };
+
+        // Create a Var: { root: value, meta: metadata_map, sym: symbol }
         Ok(Expr::VarNew {
             root: Box::new(value),
-            meta: Box::new(Expr::Unit), // nil metadata
+            meta: Box::new(meta_expr),
             sym: Box::new(sym_expr),
         })
+    }
+
+    /// Build a metadata map for a Var: {:doc "..." :arglists [[...]]}
+    fn build_var_metadata(
+        &mut self,
+        docstring: Option<String>,
+        param_names: Vec<String>,
+    ) -> CompileResult<Expr> {
+        let mut pairs: Vec<(Expr, Expr)> = Vec::new();
+
+        // Add :doc entry if present
+        if let Some(doc) = docstring {
+            let doc_kw_idx = self.module.intern_keyword(None, "doc");
+            let doc_hash = gc_types::hash_keyword(None, "doc");
+            let doc_key = Expr::Keyword { idx: doc_kw_idx, hash: doc_hash };
+            let doc_str_idx = self.module.intern_string(&doc);
+            let doc_val = Expr::String(doc_str_idx);
+            pairs.push((doc_key, doc_val));
+        }
+
+        // Add :arglists entry - a vector containing one vector of param name strings
+        // Format: [["a" "b" "c"]] (outer vector for multi-arity support)
+        if !param_names.is_empty() {
+            let arglists_kw_idx = self.module.intern_keyword(None, "arglists");
+            let arglists_hash = gc_types::hash_keyword(None, "arglists");
+            let arglists_key = Expr::Keyword { idx: arglists_kw_idx, hash: arglists_hash };
+
+            // Build inner vector of param names as strings
+            let param_exprs: Vec<Expr> = param_names
+                .iter()
+                .map(|name| {
+                    let str_idx = self.module.intern_string(name);
+                    Expr::String(str_idx)
+                })
+                .collect();
+            let inner_vec = Expr::VecNew(param_exprs);
+
+            // Wrap in outer vector for arglists format
+            let outer_vec = Expr::VecNew(vec![inner_vec]);
+            pairs.push((arglists_key, outer_vec));
+        }
+
+        if pairs.is_empty() {
+            Ok(Expr::Unit) // nil if no metadata
+        } else {
+            Ok(Expr::MapNew(pairs))
+        }
     }
 
     fn lower_if(&mut self, args: &[Edn]) -> CompileResult<Expr> {

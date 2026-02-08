@@ -1144,11 +1144,10 @@ pub enum Expr {
     /// Keyword literal (index into keyword table, hash pre-computed)
     Keyword { idx: u32, hash: i32 },
 
-    /// Symbol literal with namespace support
+    /// Symbol literal with namespace support (interned)
+    /// - idx: index into Module.symbols for the interned symbol
     /// - hash: pre-computed xxHash32 for map key usage
-    /// - ns_str_idx: -1 for no namespace, otherwise index into Module.strings
-    /// - name_str_idx: index into Module.strings for the symbol name
-    Symbol { hash: i32, ns_str_idx: i32, name_str_idx: u32 },
+    Symbol { idx: u32, hash: i32 },
 
     /// Local variable reference with type info for proper truthiness
     LocalGet { local: u32, ty: Type },

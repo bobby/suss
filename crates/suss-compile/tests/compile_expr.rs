@@ -187,6 +187,17 @@ fn test_dump_if_wasm() {
 }
 
 #[test]
+fn test_dump_var_wasm() {
+    use std::fs;
+    let mut compiler = Compiler::new();
+    // This works - uses count (which is i32)
+    let code = r#"(defn my-add "Adds two numbers" [a b] (+ a b)) (count (meta (var my-add)))"#;
+    let wasm_bytes = compiler.compile_expr(code).expect("compilation failed");
+    fs::write("/tmp/test_var.wasm", &wasm_bytes).expect("write failed");
+    println!("Wrote {} bytes to /tmp/test_var.wasm", wasm_bytes.len());
+}
+
+#[test]
 fn test_addition() {
     assert_eq!(run_expr_i32("(+ 1 2)"), 3);
 }

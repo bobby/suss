@@ -2780,3 +2780,14 @@
   "Returns a sorted sequence of the items in coll, comparing (keyfn item)."
   [keyfn coll]
   (-quicksort (fn [x y] (compare (keyfn x) (keyfn y))) coll))
+
+;; ============================================================
+;; Documentation Functions
+;; ============================================================
+
+(defn doc
+  "Returns the docstring of a Var. Use with (var symbol):
+   (doc (var foo)) or (doc #'foo) with var-quote syntax."
+  [v]
+  (when-let [m (meta v)]
+    (:doc m)))

@@ -2595,17 +2595,13 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::ArrayGet(gc_types::KEYWORD_INTERN_TABLE));
             }
 
-            Expr::Symbol {
-                hash: _,
-                ns_str_idx: _,
-                name_str_idx,
-            } => {
+            Expr::Symbol { idx, hash: _ } => {
                 // Load interned SYMBOL from global intern table
                 // This ensures reference equality: same symbol literal = same object
                 use crate::ir::global_indices;
                 f.instruction(&Instruction::GlobalGet(global_indices::SYMBOL_TABLE));
                 f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::SYMBOL_INTERN_TABLE)));
-                f.instruction(&Instruction::I32Const(*name_str_idx as i32));
+                f.instruction(&Instruction::I32Const(*idx as i32));
                 f.instruction(&Instruction::ArrayGet(gc_types::SYMBOL_INTERN_TABLE));
             }
 

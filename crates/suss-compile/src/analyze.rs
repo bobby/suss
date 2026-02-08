@@ -146,6 +146,8 @@ pub struct AnalyzedFunction {
     pub return_type: Type,
     /// Explicit return type hint from ^type metadata (e.g., "i32", "i64", "f64")
     pub return_type_hint: Option<String>,
+    /// Docstring for documentation (e.g., "Returns the sum of a and b")
+    pub docstring: Option<String>,
     pub body: Edn,
 }
 
@@ -154,6 +156,8 @@ pub struct AnalyzedGlobal {
     pub name: String,
     pub ty: Type,
     pub init: Edn,
+    /// Docstring for documentation
+    pub docstring: Option<String>,
 }
 
 // ============================================================================
@@ -579,19 +583,30 @@ impl<'a> Analyzer<'a> {
 
     fn analyze_def(&mut self, items: &[Edn]) -> CompileResult<()> {
         // (def name value) or (def ^:export name value)
+        // or (def name "docstring" (fn ...)) from defn expansion
         if items.len() < 3 {
             return Err(CompileError::Parse("def requires name and value".into()));
         }
 
-        let (name, metadata, return_type_hint, value_idx) = self.parse_name_with_metadata(&items[1..])?;
-        // value_idx is relative to items[1..], so add 1 to get index in items, then +1 for the value after name
-        let value = &items[1 + value_idx + 1];
+        let (name, metadata, return_type_hint, name_idx) = self.parse_name_with_metadata(&items[1..])?;
+        // name_idx is relative to items[1..], so the name is at items[1 + name_idx]
+        // Check for optional docstring after name
+        let mut value_idx = 1 + name_idx + 1; // Start after name
+        let docstring = if let Some(Edn::String(doc)) = items.get(value_idx) {
+            value_idx += 1;
+            Some(doc.clone())
+        } else {
+            None
+        };
+
+        let value = items.get(value_idx)
+            .ok_or_else(|| CompileError::Parse("def requires a value".into()))?;
 
         // Check if value is an fn form - if so, create an AnalyzedFunction
         if let Edn::List(fn_items) = value {
             if let Some(Edn::Symbol(sym)) = fn_items.first() {
                 if sym.name == "fn" {
-                    return self.analyze_def_fn(&name, &metadata, &return_type_hint, fn_items);
+                    return self.analyze_def_fn(&name, &metadata, &return_type_hint, &docstring, fn_items);
                 }
             }
         }
@@ -603,17 +618,19 @@ impl<'a> Analyzer<'a> {
             name,
             ty,
             init: value.clone(),
+            docstring,
         });
 
         Ok(())
     }
 
-    /// Analyze a def with an fn value: (def name (fn [params] body))
+    /// Analyze a def with an fn value: (def name [docstring] (fn [params] body))
     fn analyze_def_fn(
         &mut self,
         name: &str,
         metadata: &[String],
         return_type_hint: &Option<String>,
+        docstring: &Option<String>,
         fn_items: &[Edn],
     ) -> CompileResult<()> {
         // fn_items: [fn, [params], body...]
@@ -653,6 +670,7 @@ impl<'a> Analyzer<'a> {
             rest_param,
             return_type,
             return_type_hint: return_type_hint.clone(),
+            docstring: docstring.clone(),
             body,
         });
 
@@ -680,12 +698,17 @@ impl<'a> Analyzer<'a> {
         // After name, there may be an optional docstring, then params vector
         let mut params_idx = next_idx + 2; // Start looking after name
 
-        // Skip docstring if present
-        if params_idx < items.len() {
-            if let Edn::String(_) = &items[params_idx] {
+        // Capture docstring if present
+        let docstring = if params_idx < items.len() {
+            if let Edn::String(doc) = &items[params_idx] {
                 params_idx += 1;
+                Some(doc.clone())
+            } else {
+                None
             }
-        }
+        } else {
+            None
+        };
 
         if params_idx >= items.len() {
             return Err(CompileError::Parse("defn requires parameters vector".into()));
@@ -715,6 +738,7 @@ impl<'a> Analyzer<'a> {
             rest_param,
             return_type,
             return_type_hint,
+            docstring,
             body,
         });
 
