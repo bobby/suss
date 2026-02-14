@@ -38,8 +38,8 @@ const MAX_CACHE_ENTRIES: usize = 100;
 /// Session state with compilation caching
 pub struct SessionState {
     // === Namespace Management ===
-    /// Accumulated definitions per namespace (as source strings)
-    pub ns_definitions: HashMap<String, String>,
+    /// Accumulated definitions per namespace: namespace -> (def-name -> source)
+    pub ns_definitions: HashMap<String, HashMap<String, String>>,
     /// Current namespace context
     pub current_ns: String,
     /// Namespace aliases from requires: alias -> full namespace name
@@ -209,16 +209,21 @@ impl SessionState {
     pub fn build_source(&self, expr: &str) -> String {
         let mut source = String::new();
 
+        // 0. Inject *ns* binding for current namespace
+        source.push_str(&format!("(def *ns* '{})\n", self.current_ns));
+
         // 1. Add all loaded namespace files
         for (_ns, ns_source) in &self.loaded_namespaces {
             source.push_str(ns_source);
             source.push('\n');
         }
 
-        // 2. Add accumulated REPL definitions
+        // 2. Add accumulated REPL definitions (by name, not concatenated)
         for (_ns, defs) in &self.ns_definitions {
-            source.push_str(defs);
-            source.push('\n');
+            for (_name, def_source) in defs {
+                source.push_str(def_source);
+                source.push('\n');
+            }
         }
 
         // 3. Add current expression
@@ -227,15 +232,18 @@ impl SessionState {
     }
 
     /// Accumulate a definition into current namespace
-    pub fn accumulate_definition(&mut self, def: &str) {
-        let defs = self.ns_definitions
-            .entry(self.current_ns.clone())
-            .or_default();
-        defs.push_str(def);
-        defs.push('\n');
-
-        // Extract symbol name and add to table
+    ///
+    /// Returns Some(name) if a definition was redefined, None otherwise.
+    pub fn accumulate_definition(&mut self, def: &str) -> Option<String> {
         if let Some(name) = extract_def_name(def) {
+            let ns_defs = self.ns_definitions
+                .entry(self.current_ns.clone())
+                .or_default();
+
+            let was_redefined = ns_defs.contains_key(&name);
+            ns_defs.insert(name.clone(), def.to_string());
+
+            // Extract symbol kind and add to table
             let kind = if def.starts_with("(defn ") || def.starts_with("(defmacro ") {
                 if def.starts_with("(defmacro ") {
                     SymbolKind::Macro
@@ -250,7 +258,12 @@ impl SessionState {
                 SymbolKind::Var
             };
             self.add_symbol(&name, kind, None);
+
+            if was_redefined {
+                return Some(name);
+            }
         }
+        None
     }
 
     /// Compile an expression with caching
@@ -411,11 +424,37 @@ mod tests {
     #[test]
     fn test_accumulate_definition() {
         let mut state = SessionState::new();
-        state.accumulate_definition("(defn foo [] 42)");
+        let redefined = state.accumulate_definition("(defn foo [] 42)");
 
+        assert!(redefined.is_none()); // First definition, not a redefinition
         assert!(state.ns_definitions.contains_key("user"));
-        assert!(state.ns_definitions["user"].contains("(defn foo [] 42)"));
+        assert!(state.ns_definitions["user"].contains_key("foo"));
+        assert_eq!(state.ns_definitions["user"]["foo"], "(defn foo [] 42)");
         assert!(state.symbols.contains_key("foo"));
+    }
+
+    #[test]
+    fn test_redefinition_detected() {
+        let mut state = SessionState::new();
+        let redefined1 = state.accumulate_definition("(defn add [a b] (+ a b))");
+        assert!(redefined1.is_none());
+
+        let redefined2 = state.accumulate_definition("(defn add [a b] (- a b))");
+        assert_eq!(redefined2, Some("add".to_string()));
+
+        // Only one entry should exist
+        assert_eq!(state.ns_definitions["user"].len(), 1);
+        assert_eq!(state.ns_definitions["user"]["add"], "(defn add [a b] (- a b))");
+    }
+
+    #[test]
+    fn test_ns_var_injected() {
+        let state = SessionState::new();
+        let source = state.build_source("(+ 1 2)");
+
+        // *ns* should be injected at the start
+        assert!(source.starts_with("(def *ns* 'user)\n"));
+        assert!(source.contains("(+ 1 2)"));
     }
 
     #[test]

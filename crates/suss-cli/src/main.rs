@@ -78,9 +78,12 @@ fn run_eval(expr: &str) {
 ///
 /// Automatically detects WASI calls and uses component model when needed.
 fn run_eval_wasm(expr: &str) -> Result<(), String> {
+    // Inject *ns* binding for consistency with REPL
+    let full_expr = format!("(def *ns* 'user)\n{}", expr);
+
     // First check if expression uses WASI (component model)
     let mut compiler = suss_compile::Compiler::new();
-    let probe = compiler.compile_expr_with_info(expr)
+    let probe = compiler.compile_expr_with_info(&full_expr)
         .map_err(|e| format!("{}", e))?;
 
     if probe.is_component {
@@ -89,7 +92,7 @@ fn run_eval_wasm(expr: &str) -> Result<(), String> {
     } else {
         // Try to wrap in pr-str for pretty printing
         // This fails if expr contains definitions (defn/def inside pr-str)
-        let wrapped_expr = format!("(pr-str {})", expr);
+        let wrapped_expr = format!("(def *ns* 'user)\n(pr-str {})", expr);
         let mut compiler2 = suss_compile::Compiler::new();
         match compiler2.compile_expr_with_info(&wrapped_expr) {
             Ok(compiled) => {
@@ -706,7 +709,9 @@ fn run_repl() {
 
                 // Check if this is a definition to accumulate
                 if repl::is_definition(trimmed) {
-                    state.accumulate_definition(trimmed);
+                    if let Some(redefined_name) = state.accumulate_definition(trimmed) {
+                        eprintln!("(redefining {})", redefined_name);
+                    }
                     // Update shared symbol table
                     if let Ok(mut syms) = symbols.write() {
                         *syms = state.symbols.clone();
@@ -783,10 +788,10 @@ fn handle_in_ns_session(state: &mut session::SessionState, input: &str) -> Resul
     // Switch context
     state.current_ns = name.to_string();
 
-    // Initialize namespace if needed
+    // Initialize namespace definitions if needed (now a HashMap of definitions)
     state.ns_definitions.entry(name.to_string()).or_default();
 
-    // Clear WASM cache since namespace context changed
+    // Clear WASM cache since namespace context changed (forces recompilation with new *ns*)
     state.clear_cache();
 
     Ok(name.to_string())

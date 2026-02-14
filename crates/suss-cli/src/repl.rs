@@ -11,8 +11,8 @@ use std::path::PathBuf;
 
 /// Persistent REPL state that accumulates across expressions
 pub struct ReplState {
-    /// Accumulated definitions per namespace (as source strings)
-    pub ns_definitions: HashMap<String, String>,
+    /// Accumulated definitions per namespace: namespace -> (def-name -> source)
+    pub ns_definitions: HashMap<String, HashMap<String, String>>,
 
     /// Current namespace context
     pub current_ns: String,
@@ -44,16 +44,21 @@ impl ReplState {
     pub fn build_source(&self, expr: &str) -> String {
         let mut source = String::new();
 
+        // 0. Inject *ns* binding for current namespace
+        source.push_str(&format!("(def *ns* '{})\n", self.current_ns));
+
         // 1. Add all loaded namespace files
         for (_ns, ns_source) in &self.loaded_namespaces {
             source.push_str(ns_source);
             source.push('\n');
         }
 
-        // 2. Add accumulated REPL definitions
+        // 2. Add accumulated REPL definitions (by name, not concatenated)
         for (_ns, defs) in &self.ns_definitions {
-            source.push_str(defs);
-            source.push('\n');
+            for (_name, def_source) in defs {
+                source.push_str(def_source);
+                source.push('\n');
+            }
         }
 
         // 3. Add current expression
@@ -62,13 +67,48 @@ impl ReplState {
     }
 
     /// Accumulate a definition into current namespace
-    pub fn accumulate_definition(&mut self, def: &str) {
-        let defs = self.ns_definitions
-            .entry(self.current_ns.clone())
-            .or_default();
-        defs.push_str(def);
-        defs.push('\n');
+    ///
+    /// Returns Some(name) if a definition was redefined, None otherwise.
+    pub fn accumulate_definition(&mut self, def: &str) -> Option<String> {
+        if let Some(name) = extract_def_name(def) {
+            let ns_defs = self.ns_definitions
+                .entry(self.current_ns.clone())
+                .or_default();
+
+            let was_redefined = ns_defs.contains_key(&name);
+            ns_defs.insert(name.clone(), def.to_string());
+
+            if was_redefined {
+                return Some(name);
+            }
+        }
+        None
     }
+}
+
+/// Extract definition name from source
+fn extract_def_name(def: &str) -> Option<String> {
+    let prefixes = [
+        "(def ", "(defn ", "(deftype ", "(defprotocol ", "(defmacro ", "(extend-type ",
+    ];
+
+    for prefix in prefixes {
+        if def.starts_with(prefix) {
+            let rest = &def[prefix.len()..];
+            // Skip metadata like ^:export
+            let rest = if rest.starts_with('^') {
+                rest.split_whitespace().nth(1)?
+            } else {
+                rest.split_whitespace().next()?
+            };
+            // Clean up any trailing brackets
+            let name = rest.trim_end_matches(|c: char| c == '[' || c == '(');
+            if !name.is_empty() {
+                return Some(name.to_string());
+            }
+        }
+    }
+    None
 }
 
 impl Default for ReplState {
