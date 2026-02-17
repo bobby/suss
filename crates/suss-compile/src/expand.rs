@@ -1506,7 +1506,9 @@ pub fn expand_all(exprs: Vec<Edn>, current_ns: Option<&str>) -> CompileResult<Ve
     if let Some(ns) = current_ns {
         env.set_namespace(ns);
     }
-    env.expand_all(exprs)
+    let result = env.expand_all(exprs)?;
+
+    Ok(result)
 }
 
 #[cfg(test)]

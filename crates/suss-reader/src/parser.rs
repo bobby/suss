@@ -410,6 +410,58 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_symbols_with_bang() {
+        let mut state = ParserState::new("suss");
+
+        // Simple symbol with !
+        let result = parse("conj!", &mut state).unwrap();
+        assert_eq!(result, Edn::Symbol(Symbol::new("conj!")));
+
+        // Namespaced symbol with !
+        let result2 = parse("suss.core/persistent!", &mut state).unwrap();
+        assert_eq!(result2, Edn::Symbol(Symbol::namespaced("suss.core", "persistent!")));
+
+        // In a function call
+        let result3 = parse("(persistent! x)", &mut state).unwrap();
+        if let Edn::List(items) = result3 {
+            assert_eq!(items[0], Edn::Symbol(Symbol::new("persistent!")));
+        } else {
+            panic!("Expected list");
+        }
+
+        // Symbol starting with dash and ending with bang
+        let result4 = parse("-persistent!", &mut state).unwrap();
+        assert_eq!(result4, Edn::Symbol(Symbol::new("-persistent!")));
+
+        // In nested function call (this is what was failing!)
+        let result5 = parse("(fn [] (-persistent! x))", &mut state).unwrap();
+        if let Edn::List(items) = result5 {
+            if let Edn::List(body) = &items[2] {
+                assert_eq!(body[0], Edn::Symbol(Symbol::new("-persistent!")),
+                    "Expected -persistent! but got {:?}", body[0]);
+            } else {
+                panic!("Expected list for fn body");
+            }
+        } else {
+            panic!("Expected list");
+        }
+
+        // Multi-expression with newline - simulating CLI injection
+        let result6 = parse_all("(def *ns* 'user)\n(fn [] (-persistent! x))", &mut state).unwrap();
+        assert_eq!(result6.len(), 2, "Expected 2 expressions");
+        if let Edn::List(items) = &result6[1] {
+            if let Edn::List(body) = &items[2] {
+                assert_eq!(body[0], Edn::Symbol(Symbol::new("-persistent!")),
+                    "Expected -persistent! after newline but got {:?}", body[0]);
+            } else {
+                panic!("Expected list for fn body");
+            }
+        } else {
+            panic!("Expected list");
+        }
+    }
+
+    #[test]
     fn test_parse_keyword() {
         let mut state = ParserState::new("suss");
         let result = parse(":foo", &mut state).unwrap();

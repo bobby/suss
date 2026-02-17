@@ -114,8 +114,10 @@ fn load_core_exprs() -> CompileResult<Vec<Edn>> {
     }
 
     let mut parser_state = ParserState::new("core");
-    suss_reader::parse_all(CORE_SOURCE, &mut parser_state)
-        .map_err(|e| CompileError::Parse(format!("core.sus: {}", e)))
+    let result = suss_reader::parse_all(CORE_SOURCE, &mut parser_state)
+        .map_err(|e| CompileError::Parse(format!("core.sus: {}", e)))?;
+
+    Ok(result)
 }
 
 impl Compiler {

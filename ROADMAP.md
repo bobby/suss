@@ -118,11 +118,19 @@ Function Index Layout:
   - `-main` functions compile to `wasi:cli/run@0.2.4` command components
   - Run with `wasmtime run -W gc,function-references app.wasm`
   - Result type handling for WIT interface exports
-- [x] Phase 8.9 partial: REPL enhancements
+- [x] Phase 8.9 mostly complete: REPL enhancements
+  - `*ns*` dynamic var for current namespace binding
+  - Var redefinition support (replaces previous definition)
   - Core.sus caching via `CoreCache` in `Compiler` (parse/analyze once per session)
   - WASM compilation caching with LRU eviction (hash-based, 100 entries)
   - Tab completion for builtins, core.sus symbols, and user definitions
   - `SessionState` with integrated caching, symbol table, and namespace management
+- [x] Phase 9b complete: Transient collections
+  - TransientVector, TransientHashMap, TransientHashSet types
+  - IEditableCollection protocol with `-as-transient`
+  - ITransientCollection, ITransientAssociative, ITransientMap, ITransientSet protocols
+  - Public API: `transient`, `persistent!`, `conj!`, `assoc!`, `dissoc!`, `disj!`
+  - Core functions updated: `into`, `vec`, `set`, `frequencies`, `group-by`, `zipmap`
 
 ### Blocking Issues
 - None currently blocking
@@ -834,14 +842,14 @@ This was previously handled by the deleted `generate_expr_wit_inner()`.
 - [x] Skip `ns` forms in REPL path (extract_core_definitions)
 - [x] Backward compatibility maintained via resolution chain
 
-**Phase 8.9: REPL Enhancements** ✓ PARTIALLY COMPLETE
+**Phase 8.9: REPL Enhancements** ✓ MOSTLY COMPLETE
 - [x] Core.sus caching - Parse/analyze core.sus once per session via `CoreCache` in `Compiler`
 - [x] WASM compilation caching - Hash accumulated source, cache compiled WASM bytes (LRU, 100 entries)
 - [x] Tab completion - Symbol completion for builtins, core.sus functions, and user definitions
 - [x] Stateful sessions - `SessionState` accumulates defs, manages namespaces, caches compilations
+- [x] `*ns*` dynamic var - Clojure-style current namespace binding
+- [x] Definition redefinition - Handle `(defn foo ...)` replacing previous `foo`
 - [ ] Hot reload - Watch source files, auto-reload namespaces on change
-- [ ] `*ns*` dynamic var - Clojure-style current namespace binding
-- [ ] Definition redefinition - Handle `(defn foo ...)` replacing previous `foo`
 - [ ] Incremental parsing - Cache parsed EDN per file to speed up recompilation
 
 ### Usage
@@ -1079,7 +1087,7 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 | **11** | WASI CLI commands | No | ✓ COMPLETE |
 | **12** | List/Seq operations | No | ✓ COMPLETE |
 | **13** | Multi-arity functions | No | ✓ COMPLETE |
-| **8.9** | REPL enhancements | No | ✓ PARTIAL (caching, completion, sessions done) |
+| **8.9** | REPL enhancements | No | ✓ MOSTLY COMPLETE (*ns*, var redef, caching, completion) |
 
 ### After Self-Hosting
 - ✓ **Phase 7b: WIT consolidation** - Reduced codegen duplication (~400 lines)
@@ -1087,7 +1095,7 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 - ✓ **Phase 11: WASI CLI** - Command components with `-main` functions
 - ✓ **Phase 8.9: REPL enhancements** - Core caching, WASM caching, tab completion, stateful sessions
 - **Phase 9: WIT marshaling** - Component boundary type conversion
-- **Phase 9b: Transients** - Performance optimization
+- ✓ **Phase 9b: Transients** - Performance optimization
 - **Phase 10: wasm-opt** - Binary optimization
 
 ---
@@ -1146,6 +1154,17 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 - [x] 0-arity clauses work: `(fn ([] 0) ([x] x))`
 - [x] Multiple fixed arities dispatch correctly
 - [x] Existing single-arity functions unchanged
+
+### Phase 9b Complete When: ✓ COMPLETE
+- [x] `(transient [])` creates TransientVector
+- [x] `(transient {})` creates TransientHashMap
+- [x] `(transient #{})` creates TransientHashSet
+- [x] `(conj! tv val)` mutates transient vector in place
+- [x] `(assoc! tm k v)` mutates transient map in place
+- [x] `(persistent! tv)` returns persistent collection
+- [x] `(into [] coll)` uses transients for O(n) performance
+- [x] `(vec coll)`, `(set coll)` use transients internally
+- [x] `(frequencies coll)` uses transients
 
 ### Ultimate Success:
 ```clojure

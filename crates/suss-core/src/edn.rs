@@ -333,6 +333,21 @@ mod tests {
     }
 
     #[test]
+    fn test_symbol_with_bang() {
+        // Test Symbol::parse with bang symbols
+        let sym = Symbol::parse("persistent!");
+        assert_eq!(sym.namespace, None);
+        assert_eq!(sym.name, "persistent!");
+
+        let sym2 = Symbol::parse("suss.core/persistent!");
+        assert_eq!(sym2.namespace, Some("suss.core".to_string()));
+        assert_eq!(sym2.name, "persistent!");
+
+        let sym3 = Symbol::parse("conj!");
+        assert_eq!(sym3.name, "conj!");
+    }
+
+    #[test]
     fn test_keyword_display() {
         assert_eq!(Keyword::new("foo").to_string(), ":foo");
         assert_eq!(Keyword::namespaced("bar", "baz").to_string(), ":bar/baz");

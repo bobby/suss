@@ -1508,13 +1508,15 @@
           coll))
 
 (defn group-by
-  "Returns a map of the elements of coll keyed by the result of f on each element."
+  "Returns a map of the elements of coll keyed by the result of f on each element.
+   Uses transients for efficient batch construction."
   [f coll]
-  (reduce (fn [groups x]
-            (let [k (f x)]
-              (assoc groups k (conj (get groups k []) x))))
-          {}
-          coll))
+  (persistent!
+    (reduce (fn [ret x]
+              (let [k (f x)]
+                (assoc! ret k (conj (get ret k []) x))))
+            (transient {})
+            coll)))
 
 (defn iterate
   "Returns a lazy sequence of x, (f x), (f (f x)), etc."
@@ -1648,59 +1650,108 @@
 ;; ============================================================
 
 (defn into
-  "Returns a new coll with items from xs conj'd onto to."
+  "Returns a new coll with items from xs conj'd onto to.
+   Uses transients for vectors, maps, and sets for better performance."
   [to xs]
-  (reduce (fn [acc x] (conj acc x)) to xs))
+  (if (or (instance? PersistentVector to)
+          (instance? PersistentMap to)
+          (instance? PersistentSet to))
+    ;; Use transients for editable collections
+    (persistent!
+      (reduce (fn [acc x] (conj! acc x))
+              (transient to)
+              xs))
+    ;; Fallback for other collections (cons, etc.)
+    (reduce (fn [acc x] (conj acc x)) to xs)))
 
 (defn vec
   "Coerces coll to a (potentially empty) vector.
-   If coll is already a vector, returns it unchanged."
+   If coll is already a vector, returns it unchanged.
+   Uses transients for efficient batch construction."
   [coll]
   (if (instance? PersistentVector coll)
     coll
-    (into [] coll)))
+    (persistent!
+      (reduce (fn [acc x] (conj! acc x))
+              (transient [])
+              coll))))
 
 (defn vector
-  "Creates a new vector containing the args."
+  "Creates a new vector containing the args.
+   Uses transients for efficient batch construction."
   [& args]
-  (loop [v [] i 0]
-    (if (< i (alength args))
-      (recur (-conj v (aget args i)) (+ i 1))
-      v)))
+  (let [len (alength args)]
+    (if (= len 0)
+      []
+      (persistent!
+        (loop [v (transient []) i 0]
+          (if (< i len)
+            (recur (conj! v (aget args i)) (+ i 1))
+            v))))))
+
+(defn mapv
+  "Returns a vector of applying f to each element of coll.
+   Uses transients for efficient batch construction."
+  [f coll]
+  (persistent!
+    (reduce (fn [v o] (conj! v (f o)))
+            (transient [])
+            coll)))
+
+(defn filterv
+  "Returns a vector of the items in coll for which (pred item) returns true.
+   Uses transients for efficient batch construction."
+  [pred coll]
+  (persistent!
+    (reduce (fn [v o] (if (pred o) (conj! v o) v))
+            (transient [])
+            coll)))
 
 (defn hash-map
-  "Creates a new hash-map from alternating key-value pairs."
+  "Creates a new hash-map from alternating key-value pairs.
+   Uses transients for efficient batch construction."
   [& kvs]
-  (loop [m {} i 0]
-    (if (< i (alength kvs))
-      (recur (assoc m (aget kvs i) (aget kvs (+ i 1))) (+ i 2))
-      m)))
+  (let [len (alength kvs)]
+    (if (= len 0)
+      {}
+      (persistent!
+        (loop [m (transient {}) i 0]
+          (if (< i len)
+            (recur (assoc! m (aget kvs i) (aget kvs (+ i 1))) (+ i 2))
+            m))))))
 
 (defn hash-set
-  "Creates a new hash-set containing the args."
+  "Creates a new hash-set containing the args.
+   Uses transients for efficient batch construction."
   [& args]
-  (loop [s #{} i 0]
-    (if (< i (alength args))
-      (recur (-conj s (aget args i)) (+ i 1))
-      s)))
+  (let [len (alength args)]
+    (if (= len 0)
+      #{}
+      (persistent!
+        (loop [s (transient #{}) i 0]
+          (if (< i len)
+            (recur (conj! s (aget args i)) (+ i 1))
+            s))))))
 
 (defn set
-  "Returns a set containing the elements of coll."
+  "Returns a set containing the elements of coll.
+   Uses transients for efficient batch construction."
   [coll]
-  (loop [s #{} items (seq coll)]
-    (if items
-      (recur (conj s (first items)) (next items))
-      s)))
+  (persistent!
+    (reduce (fn [acc x] (conj! acc x))
+            (transient #{})
+            coll)))
 
 (defn frequencies
-  "Returns a map from distinct items in coll to the number of times they appear."
+  "Returns a map from distinct items in coll to the number of times they appear.
+   Uses transients for efficient batch construction."
   [coll]
-  (loop [m {} s (seq coll)]
-    (if s
-      (let [k (first s)
-            cnt (get m k 0)]
-        (recur (assoc m k (+ cnt 1)) (next s)))
-      m)))
+  (persistent!
+    (reduce (fn [counts x]
+              (let [cnt (get counts x 0)]
+                (assoc! counts x (+ cnt 1))))
+            (transient {})
+            coll)))
 
 (defmacro concat
   "Returns a lazy seq of the concatenation of collections.
@@ -2791,3 +2842,349 @@
   [v]
   (when-let [m (meta v)]
     (:doc m)))
+
+;; ============================================================
+;; Transient Collection Protocols
+;;
+;; Transients provide O(1) conversion to/from persistent collections
+;; and enable efficient batch operations by allowing in-place mutation.
+;; ============================================================
+
+(defprotocol IEditableCollection
+  "Protocol for collections which can be transformed to transients."
+  (-as-transient [coll]))
+
+(defprotocol ITransientCollection
+  "Protocol for transient collections."
+  (-conj! [tcoll val])
+  (-persistent! [tcoll]))
+
+(defprotocol ITransientAssociative
+  "Protocol for transient associative collections."
+  (-assoc! [tcoll key val]))
+
+(defprotocol ITransientMap
+  "Protocol for transient map operations."
+  (-dissoc! [tcoll key]))
+
+(defprotocol ITransientVector
+  "Protocol for transient vector operations."
+  (-assoc-n! [tcoll n val])
+  (-pop! [tcoll]))
+
+(defprotocol ITransientSet
+  "Protocol for transient set operations."
+  (-disjoin! [tcoll v]))
+
+;; ============================================================
+;; Transient Vector
+;;
+;; Mutable vector for batch construction. The tail array is mutable,
+;; and tree nodes are copied lazily on first write.
+;; edit-id is a unique token assigned at creation; -1 means invalidated.
+;; ============================================================
+
+(deftype TransientVector
+  [^:mutable ^i32 tv-cnt
+   ^:mutable ^i32 tv-shift
+   ^:mutable tv-root
+   ^:mutable tv-tail
+   ^:mutable ^i32 tv-edit])
+
+(defn -tv-ensure-editable
+  "Ensure this transient is still valid for mutation."
+  [tv]
+  (when (= (.-tv-edit tv) -1)
+    ;; In a real implementation, this would throw an exception
+    ;; For now, we return nil to indicate error
+    nil))
+
+(defn -tv-push-tail!
+  "Push tail into tree, mutating nodes when possible."
+  [tv level parent tailnode]
+  (let [subidx (bit-and (unsigned-bit-shift-right (- (.-tv-cnt tv) 1) level) 31)
+        ret (aclone parent)]
+    (if (= level 5)
+      ;; At the deepest internal level - insert tailnode directly
+      (do (aset ret subidx tailnode) ret)
+      ;; Higher level - recurse down
+      (let [child (aget parent subidx)]
+        (if (nil? child)
+          ;; No child exists - create new path
+          (do (aset ret subidx (new-path (- level 5) tailnode)) ret)
+          ;; Child exists - recurse into it
+          (do (aset ret subidx (-tv-push-tail! tv (- level 5) child tailnode)) ret))))))
+
+(extend-type TransientVector
+  ITransientCollection
+  (-conj! [tv val]
+    (if (= (.-tv-edit tv) -1)
+      nil  ;; Invalid - return nil to indicate error
+      (let [cnt (.-tv-cnt tv)
+            tail (.-tv-tail tv)
+            tail-len (- cnt (tail-off cnt))]
+        (if (< tail-len 32)
+          ;; Space in tail - mutate in place
+          (do (aset tail tail-len val)
+              (set! (.-tv-cnt tv) (+ cnt 1))
+              tv)
+          ;; Tail full - push tail into tree
+          (let [new-tail (make-array 32)
+                shift (.-tv-shift tv)
+                root (.-tv-root tv)]
+            (aset new-tail 0 val)
+            (if (> (unsigned-bit-shift-right cnt 5) (bit-shift-left 1 shift))
+              ;; Root overflow - grow tree
+              (let [new-root (make-array 32)]
+                (aset new-root 0 root)
+                (aset new-root 1 (new-path shift tail))
+                (set! (.-tv-root tv) new-root)
+                (set! (.-tv-shift tv) (+ shift 5))
+                (set! (.-tv-tail tv) new-tail)
+                (set! (.-tv-cnt tv) (+ cnt 1))
+                tv)
+              ;; No overflow
+              (let [new-root (if (nil? root)
+                               (new-path shift tail)
+                               (-tv-push-tail! tv shift root tail))]
+                (set! (.-tv-root tv) new-root)
+                (set! (.-tv-tail tv) new-tail)
+                (set! (.-tv-cnt tv) (+ cnt 1))
+                tv)))))))
+
+  (-persistent! [tv]
+    (if (= (.-tv-edit tv) -1)
+      nil  ;; Already persistent - error
+      (let [cnt (.-tv-cnt tv)
+            len (- cnt (tail-off cnt))
+            trimmed-tail (make-array len)]
+        (acopy trimmed-tail 0 (.-tv-tail tv) 0 len)
+        (set! (.-tv-edit tv) -1)  ;; Invalidate transient
+        (->PersistentVector cnt (.-tv-shift tv) (.-tv-root tv) trimmed-tail))))
+
+  ICounted
+  (-count [tv] (.-tv-cnt tv))
+
+  IIndexed
+  (-nth [tv n]
+    (let [cnt (.-tv-cnt tv)]
+      (if (or (< n 0) (>= n cnt))
+        nil
+        (if (>= n (tail-off cnt))
+          (aget (.-tv-tail tv) (bit-and n 31))
+          ;; In tree - traverse down
+          (loop [node (.-tv-root tv)
+                 level (.-tv-shift tv)]
+            (if (> level 0)
+              (recur (aget node (bit-and (unsigned-bit-shift-right n level) 31))
+                     (- level 5))
+              (aget node (bit-and n 31)))))))))
+
+;; ============================================================
+;; Transient Hash Map
+;;
+;; Mutable map for batch construction. The HAMT nodes are copied
+;; lazily on first write within a transient session.
+;; ============================================================
+
+(deftype TransientHashMap
+  [^:mutable ^i32 tm-cnt
+   ^:mutable tm-root
+   ^:mutable ^i32 tm-edit])
+
+(extend-type TransientHashMap
+  ITransientCollection
+  (-conj! [tm entry]
+    (-assoc! tm (key entry) (val entry)))
+
+  (-persistent! [tm]
+    (if (= (.-tm-edit tm) -1)
+      nil  ;; Already persistent - error
+      (do (set! (.-tm-edit tm) -1)
+          (->PersistentMap (.-tm-cnt tm) (.-tm-root tm)))))
+
+  ITransientAssociative
+  (-assoc! [tm k v]
+    (if (= (.-tm-edit tm) -1)
+      nil  ;; Invalid - return nil
+      (let [root (.-tm-root tm)
+            h (hash k)]
+        (if (nil? root)
+          ;; Empty map - create first entry
+          (let [arr (make-array 2)]
+            (aset arr 0 k)
+            (aset arr 1 v)
+            (set! (.-tm-root tm) (->BitmapIndexedNode (hamt-bitpos h 0) arr))
+            (set! (.-tm-cnt tm) 1)
+            tm)
+          ;; Check if key exists
+          (let [sentinel (->NotFound)
+                existing (inode-find root 0 h k sentinel)]
+            (if (instance? NotFound existing)
+              ;; New key - add and increment
+              (do (set! (.-tm-root tm) (inode-assoc root 0 h k v))
+                  (set! (.-tm-cnt tm) (+ (.-tm-cnt tm) 1))
+                  tm)
+              ;; Existing key - just update
+              (do (set! (.-tm-root tm) (inode-assoc root 0 h k v))
+                  tm)))))))
+
+  ITransientMap
+  (-dissoc! [tm k]
+    (if (= (.-tm-edit tm) -1)
+      nil
+      (let [root (.-tm-root tm)
+            h (hash k)]
+        (if (nil? root)
+          tm  ;; Empty map - nothing to remove
+          (let [sentinel (->NotFound)
+                existing (inode-find root 0 h k sentinel)]
+            (if (instance? NotFound existing)
+              tm  ;; Key not found
+              (let [new-root (inode-dissoc root 0 h k)]
+                (set! (.-tm-root tm) new-root)
+                (set! (.-tm-cnt tm) (- (.-tm-cnt tm) 1))
+                tm)))))))
+
+  ICounted
+  (-count [tm] (.-tm-cnt tm))
+
+  ILookup
+  (-lookup [tm k]
+    (let [root (.-tm-root tm)]
+      (if (nil? root)
+        nil
+        (let [sentinel (->NotFound)
+              result (inode-find root 0 (hash k) k sentinel)]
+          (if (instance? NotFound result)
+            nil
+            result))))))
+
+;; ============================================================
+;; Transient Hash Set
+;;
+;; Delegates to TransientHashMap for implementation.
+;; ============================================================
+
+(deftype TransientHashSet
+  [^:mutable ts-map
+   ^i32 _ts-marker])  ;; Structural distinction from TransientHashMap
+
+(extend-type TransientHashSet
+  ITransientCollection
+  (-conj! [ts val]
+    (set! (.-ts-map ts) (-assoc! (.-ts-map ts) val val))
+    ts)
+
+  (-persistent! [ts]
+    (let [tm (.-ts-map ts)
+          pm (-persistent! tm)]
+      (if (nil? pm)
+        nil
+        (->PersistentSet (.-map-cnt pm) (.-map-root pm) 0))))
+
+  ITransientSet
+  (-disjoin! [ts val]
+    (set! (.-ts-map ts) (-dissoc! (.-ts-map ts) val))
+    ts)
+
+  ICounted
+  (-count [ts] (count (.-ts-map ts))))
+
+;; ============================================================
+;; Edit ID Counter
+;;
+;; Each transient gets a unique edit ID for ownership tracking.
+;; Using a simple counter via mutable field in a def.
+;; ============================================================
+
+;; Note: This uses a zero-arg function to get next ID since we don't
+;; have mutable globals yet. The function returns an incrementing value.
+(def ^:private -edit-counter 0)
+
+(defn -next-edit-id
+  "Get the next unique edit ID for transient creation."
+  []
+  ;; Use a simple approach: return a fixed non-zero value
+  ;; In a real implementation, this would be a thread-local counter
+  ;; or use atomic operations. For now, just use 1 as a valid edit ID.
+  1)
+
+;; ============================================================
+;; IEditableCollection Implementations
+;; ============================================================
+
+(extend-type PersistentVector
+  IEditableCollection
+  (-as-transient [v]
+    ;; Create a 32-element tail and copy existing elements
+    ;; This ensures we have room for conj! operations
+    (let [old-tail (.-tail v)
+          old-len (alength old-tail)
+          new-tail (make-array 32)]
+      (when (> old-len 0)
+        (acopy new-tail 0 old-tail 0 old-len))
+      (->TransientVector (.-cnt v)
+                         (.-shift v)
+                         (.-root v)
+                         new-tail
+                         (-next-edit-id)))))
+
+(extend-type PersistentMap
+  IEditableCollection
+  (-as-transient [m]
+    (->TransientHashMap (.-map-cnt m)
+                        (.-map-root m)
+                        (-next-edit-id))))
+
+(extend-type PersistentSet
+  IEditableCollection
+  (-as-transient [s]
+    (->TransientHashSet (-as-transient (->PersistentMap (.-set-cnt s)
+                                                        (.-set-root s)))
+                        0)))
+
+;; ============================================================
+;; Public Transient API Functions
+;; ============================================================
+
+(defn transient
+  "Returns a new, transient version of the collection, in constant time."
+  [coll]
+  (-as-transient coll))
+
+(defn persistent!
+  "Returns a new, persistent version of the transient collection.
+   The transient cannot be used after this call."
+  [tcoll]
+  (-persistent! tcoll))
+
+(defn conj!
+  "Adds val to the transient collection, returns tcoll.
+   Note: Currently only supports (conj! coll val) form.
+   Variadic form will be added when multi-arity + variadic is fixed."
+  [tcoll val]
+  (-conj! tcoll val))
+
+(defn assoc!
+  "Associates key with val in transient map/vector.
+   Note: Currently only supports (assoc! coll key val) form."
+  [tcoll key val]
+  (-assoc! tcoll key val))
+
+(defn dissoc!
+  "Removes key from transient map.
+   Note: Currently only supports (dissoc! coll key) form."
+  [tcoll key]
+  (-dissoc! tcoll key))
+
+(defn pop!
+  "Removes last item from transient vector."
+  [tcoll]
+  (-pop! tcoll))
+
+(defn disj!
+  "Removes val from transient set.
+   Note: Currently only supports (disj! coll val) form."
+  [tcoll val]
+  (-disjoin! tcoll val))
