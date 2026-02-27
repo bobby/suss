@@ -132,6 +132,12 @@ struct CodeGen<'a> {
     /// Index of the scratch local (eqref) for protocol dispatch.
     /// Set before generating each function body.
     scratch_local: std::cell::Cell<u32>,
+    /// Index of the i64 scratch local for WIT import return boxing.
+    /// Used when we need to save an i64 value to reorder stack operands.
+    i64_scratch_local: std::cell::Cell<u32>,
+    /// Index of the f64 scratch local for WIT import return boxing.
+    /// Used when we need to save an f64 value to reorder stack operands.
+    f64_scratch_local: std::cell::Cell<u32>,
 }
 
 impl<'a> CodeGen<'a> {
@@ -139,6 +145,8 @@ impl<'a> CodeGen<'a> {
         Self {
             ir,
             scratch_local: std::cell::Cell::new(0),
+            i64_scratch_local: std::cell::Cell::new(0),
+            f64_scratch_local: std::cell::Cell::new(0),
         }
     }
 
@@ -2446,6 +2454,14 @@ impl<'a> CodeGen<'a> {
             local_types.push((1, ValType::Ref(RefType::EQREF))); // scratch +4
         }
 
+        // Add i64/f64 scratch locals for WIT import return boxing
+        let i64_scratch = scratch_base + 50; // after 10 sets of 5
+        local_types.push((1, ValType::I64));
+        self.i64_scratch_local.set(i64_scratch);
+        let f64_scratch = scratch_base + 51;
+        local_types.push((1, ValType::F64));
+        self.f64_scratch_local.set(f64_scratch);
+
         let mut f = Function::new(local_types);
         self.generate_expr(&func.body, &mut f)?;
 
@@ -2504,9 +2520,9 @@ impl<'a> CodeGen<'a> {
             .map(|(_, ty)| type_to_valtypes(ty).len() as u32)
             .sum();
 
-        // Check if any param or return involves strings
-        let has_string = func.params.iter().any(|(_, ty)| matches!(ty, Type::String))
-            || matches!(&func.return_type, Type::String);
+        // Check if any param or return involves strings (including inside option/list)
+        let has_string = func.params.iter().any(|(_, ty)| type_contains_string(ty))
+            || type_contains_string(&func.return_type);
 
         // Locals layout:
         // 0..wit_param_count: WIT params (i32/i64/f64, strings as ptr+len)
@@ -2553,6 +2569,14 @@ impl<'a> CodeGen<'a> {
             local_types.push((1, ValType::Ref(RefType::EQREF))); // scratch +4
         }
 
+        // Add i64/f64 scratch locals for WIT import return boxing
+        let i64_scratch = scratch_base + 25; // after 5 sets of 5
+        local_types.push((1, ValType::I64));
+        self.i64_scratch_local.set(i64_scratch);
+        let f64_scratch = scratch_base + 26;
+        local_types.push((1, ValType::F64));
+        self.f64_scratch_local.set(f64_scratch);
+
         let mut f = Function::new(local_types);
 
         // Entry: convert each WIT param to eqref and store in converted local
@@ -2561,7 +2585,7 @@ impl<'a> CodeGen<'a> {
             let (_, param_ty) = &func.params[i as usize];
             let converted_local = wit_param_count + i;
             match param_ty {
-                Type::I32 | Type::I64 | Type::Unknown => {
+                Type::I32 | Type::Unknown => {
                     // Convert i32 to small int encoding: (n << 1) | 1, then ref.i31
                     f.instruction(&Instruction::LocalGet(wit_idx));
                     f.instruction(&Instruction::I32Const(1));
@@ -2569,6 +2593,14 @@ impl<'a> CodeGen<'a> {
                     f.instruction(&Instruction::I32Const(1));
                     f.instruction(&Instruction::I32Or);
                     f.instruction(&Instruction::RefI31);
+                    f.instruction(&Instruction::LocalSet(converted_local));
+                    wit_idx += 1;
+                }
+                Type::I64 => {
+                    // Box i64 in INT64 struct: { type_id, value }
+                    f.instruction(&Instruction::I32Const(type_ids::INT64));
+                    f.instruction(&Instruction::LocalGet(wit_idx));
+                    f.instruction(&Instruction::StructNew(gc_types::INT64));
                     f.instruction(&Instruction::LocalSet(converted_local));
                     wit_idx += 1;
                 }
@@ -2655,6 +2687,16 @@ impl<'a> CodeGen<'a> {
                     f.instruction(&Instruction::LocalSet(converted_local));
                     wit_idx += 2; // strings consume 2 WIT param slots
                 }
+                Type::Option(inner) => {
+                    // option<T> params come as flat values: discriminant + payload
+                    self.emit_option_entry(inner, &mut f, wit_idx, converted_local, string_scratch_base)?;
+                    wit_idx += type_to_valtypes(param_ty).len() as u32;
+                }
+                Type::List(inner) => {
+                    // list<T> params come as (ptr, len) flat values
+                    self.emit_list_entry(inner, &mut f, wit_idx, converted_local, scratch_base, string_scratch_base)?;
+                    wit_idx += 2; // ptr + len
+                }
                 _ => {
                     // For other types, just copy
                     f.instruction(&Instruction::LocalGet(wit_idx));
@@ -2670,12 +2712,20 @@ impl<'a> CodeGen<'a> {
 
         // Exit: convert eqref result back to WIT type
         match &func.return_type {
-            Type::I32 | Type::I64 | Type::Unknown => {
+            Type::I32 | Type::Unknown => {
                 // Decode from i31ref: cast, get_s, >> 1
                 f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
                 f.instruction(&Instruction::I31GetS);
                 f.instruction(&Instruction::I32Const(1));
                 f.instruction(&Instruction::I32ShrS);
+            }
+            Type::I64 => {
+                // Unbox INT64 struct to i64
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::INT64)));
+                f.instruction(&Instruction::StructGet {
+                    struct_type_index: gc_types::INT64,
+                    field_index: gc_types::I64_VALUE,
+                });
             }
             Type::F64 => {
                 // Unbox from FLOAT struct
@@ -2742,6 +2792,14 @@ impl<'a> CodeGen<'a> {
 
                 // Return retptr
                 f.instruction(&Instruction::LocalGet(retptr_scratch));
+            }
+            Type::Option(inner) => {
+                // option<T> always has ≥2 flat values → uses retptr (MAX_FLAT_RESULTS=1)
+                self.emit_option_exit(inner, &mut f, scratch_base, string_scratch_base)?;
+            }
+            Type::List(inner) => {
+                // list<T> flattens to (ptr, len) = 2 flat values → uses retptr
+                self.emit_list_exit(inner, &mut f, scratch_base, string_scratch_base)?;
             }
             Type::Result { ok: None, err: None } => {
                 // Bare result (wasi:cli/run): drop return value, return 0 (Ok discriminant)
@@ -2899,6 +2957,1609 @@ impl<'a> CodeGen<'a> {
         Ok(())
     }
 
+    /// Emit nil check for option marshaling.
+    ///
+    /// Input: eqref on stack
+    /// Output: i32 on stack (1 = nil, 0 = not nil)
+    ///
+    /// Checks: RefIsNull || (ref.test i31 && i31.get_s == 0)
+    fn emit_nil_check(&self, f: &mut Function, val_local: u32) {
+        use crate::ir::gc_types;
+        // Save value
+        f.instruction(&Instruction::LocalSet(val_local));
+
+        // Check null ref first
+        f.instruction(&Instruction::LocalGet(val_local));
+        f.instruction(&Instruction::RefIsNull);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+        f.instruction(&Instruction::I32Const(1)); // is nil
+        f.instruction(&Instruction::Else);
+        // Check i31ref nil sentinel
+        f.instruction(&Instruction::LocalGet(val_local));
+        f.instruction(&Instruction::RefTestNonNull(HeapType::I31));
+        f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+        f.instruction(&Instruction::LocalGet(val_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+        f.instruction(&Instruction::I31GetS);
+        f.instruction(&Instruction::I32Eqz); // NIL_SENTINEL == 0, so eqz returns 1 if nil
+        f.instruction(&Instruction::Else);
+        f.instruction(&Instruction::I32Const(0)); // not nil (not i31 and not null)
+        f.instruction(&Instruction::End);
+        f.instruction(&Instruction::End);
+    }
+
+    /// Emit option<T> exit marshaling for WIT exports.
+    ///
+    /// Input: eqref on stack (value or nil)
+    /// Output: retptr (i32) on stack pointing to option layout in linear memory
+    ///
+    /// Retptr layout: [discriminant: i32, <aligned payload>]
+    fn emit_option_exit(
+        &self,
+        inner: &Type,
+        f: &mut Function,
+        scratch_base: u32,
+        string_scratch_base: Option<u32>,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+
+        let val_scratch = scratch_base; // eqref scratch +0
+        let retptr_scratch = scratch_base + 1; // i32 scratch +1
+
+        // Get flat types for the full option
+        let flat_vts = type_to_valtypes(&Type::Option(Box::new(inner.clone())));
+        let (total_size, offsets) = flat_byte_size_and_offsets(&flat_vts);
+        let align = if flat_vts.iter().any(|v| matches!(v, ValType::I64 | ValType::F64)) { 8 } else { 4 };
+
+        // Save value to scratch
+        f.instruction(&Instruction::LocalSet(val_scratch));
+
+        // Allocate retptr
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(align));
+        f.instruction(&Instruction::I32Const(total_size));
+        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::CABI_REALLOC)));
+        f.instruction(&Instruction::LocalSet(retptr_scratch));
+
+        // Check if nil
+        f.instruction(&Instruction::LocalGet(val_scratch));
+        self.emit_nil_check(f, val_scratch);
+
+        // if (is_nil)
+        f.instruction(&Instruction::If(BlockType::Empty));
+        {
+            // None: discriminant = 0, zero-fill payload
+            f.instruction(&Instruction::LocalGet(retptr_scratch));
+            f.instruction(&Instruction::I32Const(0));
+            f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                offset: offsets[0].0 as u64,
+                align: 2,
+                memory_index: 0,
+            }));
+            // Zero-fill payload slots
+            for &(offset, vt) in &offsets[1..] {
+                f.instruction(&Instruction::LocalGet(retptr_scratch));
+                match vt {
+                    ValType::I64 => {
+                        f.instruction(&Instruction::I64Const(0));
+                        f.instruction(&Instruction::I64Store(wasm_encoder::MemArg {
+                            offset: offset as u64,
+                            align: 3,
+                            memory_index: 0,
+                        }));
+                    }
+                    ValType::F64 => {
+                        f.instruction(&Instruction::F64Const(0.0));
+                        f.instruction(&Instruction::F64Store(wasm_encoder::MemArg {
+                            offset: offset as u64,
+                            align: 3,
+                            memory_index: 0,
+                        }));
+                    }
+                    _ => {
+                        f.instruction(&Instruction::I32Const(0));
+                        f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                            offset: offset as u64,
+                            align: 2,
+                            memory_index: 0,
+                        }));
+                    }
+                }
+            }
+        }
+        f.instruction(&Instruction::Else);
+        {
+            // Some: discriminant = 1, marshal payload
+            f.instruction(&Instruction::LocalGet(retptr_scratch));
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                offset: offsets[0].0 as u64,
+                align: 2,
+                memory_index: 0,
+            }));
+
+            // Marshal inner value based on type
+            match inner {
+                Type::I32 | Type::Unknown => {
+                    // Decode i31ref to i32
+                    f.instruction(&Instruction::LocalGet(retptr_scratch));
+                    f.instruction(&Instruction::LocalGet(val_scratch));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                    f.instruction(&Instruction::I31GetS);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32ShrS);
+                    f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                        offset: offsets[1].0 as u64,
+                        align: 2,
+                        memory_index: 0,
+                    }));
+                }
+                Type::I64 => {
+                    // Unbox INT64
+                    f.instruction(&Instruction::LocalGet(retptr_scratch));
+                    f.instruction(&Instruction::LocalGet(val_scratch));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::INT64)));
+                    f.instruction(&Instruction::StructGet {
+                        struct_type_index: gc_types::INT64,
+                        field_index: gc_types::I64_VALUE,
+                    });
+                    f.instruction(&Instruction::I64Store(wasm_encoder::MemArg {
+                        offset: offsets[1].0 as u64,
+                        align: 3,
+                        memory_index: 0,
+                    }));
+                }
+                Type::F64 => {
+                    // Unbox FLOAT64
+                    f.instruction(&Instruction::LocalGet(retptr_scratch));
+                    f.instruction(&Instruction::LocalGet(val_scratch));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
+                    f.instruction(&Instruction::StructGet {
+                        struct_type_index: gc_types::FLOAT64,
+                        field_index: gc_types::F64_VALUE,
+                    });
+                    f.instruction(&Instruction::F64Store(wasm_encoder::MemArg {
+                        offset: offsets[1].0 as u64,
+                        align: 3,
+                        memory_index: 0,
+                    }));
+                }
+                Type::Bool => {
+                    // Decode bool sentinel
+                    f.instruction(&Instruction::LocalGet(retptr_scratch));
+                    f.instruction(&Instruction::LocalGet(val_scratch));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                    f.instruction(&Instruction::I31GetS);
+                    f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                    f.instruction(&Instruction::I32Eq);
+                    f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                        offset: offsets[1].0 as u64,
+                        align: 2,
+                        memory_index: 0,
+                    }));
+                }
+                Type::String => {
+                    // Convert GC string to linear memory, write (ptr, len)
+                    f.instruction(&Instruction::LocalGet(val_scratch));
+                    let ss = string_scratch_base.unwrap();
+                    self.emit_gc_string_to_linear(f, ss)?;
+                    // Stack has (ptr, len)
+                    let tmp_len = ss + 2; // reuse str_len
+                    let tmp_ptr = ss + 1; // reuse str_ptr
+                    f.instruction(&Instruction::LocalSet(tmp_len));
+                    f.instruction(&Instruction::LocalSet(tmp_ptr));
+
+                    f.instruction(&Instruction::LocalGet(retptr_scratch));
+                    f.instruction(&Instruction::LocalGet(tmp_ptr));
+                    f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                        offset: offsets[1].0 as u64,
+                        align: 2,
+                        memory_index: 0,
+                    }));
+                    f.instruction(&Instruction::LocalGet(retptr_scratch));
+                    f.instruction(&Instruction::LocalGet(tmp_len));
+                    f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                        offset: offsets[2].0 as u64,
+                        align: 2,
+                        memory_index: 0,
+                    }));
+                }
+                _ => {
+                    return Err(CompileError::Codegen(format!(
+                        "Unsupported option inner type: {:?}",
+                        inner
+                    )));
+                }
+            }
+        }
+        f.instruction(&Instruction::End);
+
+        // Return retptr
+        f.instruction(&Instruction::LocalGet(retptr_scratch));
+
+        Ok(())
+    }
+
+    /// Emit option<T> entry marshaling for WIT export params.
+    ///
+    /// Option params come as flat values: discriminant (i32) + payload.
+    /// Converts to eqref (nil for None, boxed value for Some).
+    fn emit_option_entry(
+        &self,
+        inner: &Type,
+        f: &mut Function,
+        wit_idx: u32,
+        converted_local: u32,
+        string_scratch_base: Option<u32>,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use crate::ir::type_ids;
+
+        let disc_idx = wit_idx;
+        f.instruction(&Instruction::LocalGet(disc_idx));
+        // if discriminant != 0 → Some
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+        {
+            match inner {
+                Type::I32 | Type::Unknown => {
+                    // Encode as i31ref: (n << 1) | 1
+                    f.instruction(&Instruction::LocalGet(disc_idx + 1));
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Shl);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Or);
+                    f.instruction(&Instruction::RefI31);
+                }
+                Type::I64 => {
+                    // Box in INT64 struct
+                    f.instruction(&Instruction::I32Const(type_ids::INT64));
+                    f.instruction(&Instruction::LocalGet(disc_idx + 1));
+                    f.instruction(&Instruction::StructNew(gc_types::INT64));
+                }
+                Type::F64 => {
+                    // Box in FLOAT64 struct
+                    f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
+                    f.instruction(&Instruction::LocalGet(disc_idx + 1));
+                    f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
+                }
+                Type::Bool => {
+                    // Convert i32 bool to sentinel
+                    f.instruction(&Instruction::LocalGet(disc_idx + 1));
+                    f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+                    f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                    f.instruction(&Instruction::RefI31);
+                    f.instruction(&Instruction::Else);
+                    f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
+                    f.instruction(&Instruction::RefI31);
+                    f.instruction(&Instruction::End);
+                }
+                Type::String => {
+                    // Read (ptr, len) from wit_idx+1, wit_idx+2, convert to GC string
+                    f.instruction(&Instruction::LocalGet(disc_idx + 1)); // ptr
+                    f.instruction(&Instruction::LocalGet(disc_idx + 2)); // len
+                    let ss = string_scratch_base.unwrap();
+                    self.emit_linear_to_gc_string(f, ss)?;
+                }
+                _ => {
+                    return Err(CompileError::Codegen(format!(
+                        "Unsupported option inner type for entry: {:?}",
+                        inner
+                    )));
+                }
+            }
+        }
+        f.instruction(&Instruction::Else);
+        {
+            // None → nil
+            f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+            f.instruction(&Instruction::RefI31);
+        }
+        f.instruction(&Instruction::End);
+        f.instruction(&Instruction::LocalSet(converted_local));
+
+        Ok(())
+    }
+
+    /// Emit option<T> param marshaling for WIT import calls.
+    ///
+    /// Input: eqref on stack (value or nil)
+    /// Output: flat values on stack (discriminant + payload)
+    fn emit_option_import_param(
+        &self,
+        inner: &Type,
+        f: &mut Function,
+        string_scratch: Option<u32>,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+
+        let scratch = self.scratch_local.get();
+        let val_scratch = scratch; // eqref
+
+        // Save the eqref value
+        f.instruction(&Instruction::LocalSet(val_scratch));
+
+        // Check if nil
+        f.instruction(&Instruction::LocalGet(val_scratch));
+        self.emit_nil_check(f, val_scratch);
+
+        // Get the inner flat types count for the if/else block result
+        let inner_vts = type_to_valtypes(inner);
+        let option_vts = type_to_valtypes(&Type::Option(Box::new(inner.clone())));
+
+        // We need to produce discriminant + payload values on stack.
+        // Use a block that produces all values.
+        // For simplicity, store to scratch locals and load them.
+        let disc_local = scratch + 1; // i32
+        // We'll push discriminant and payload separately
+
+        // if (is_nil)
+        f.instruction(&Instruction::If(BlockType::Empty));
+        {
+            // None: push 0 discriminant
+            f.instruction(&Instruction::I32Const(0));
+            f.instruction(&Instruction::LocalSet(disc_local));
+        }
+        f.instruction(&Instruction::Else);
+        {
+            // Some: push 1 discriminant
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::LocalSet(disc_local));
+        }
+        f.instruction(&Instruction::End);
+
+        // Push discriminant
+        f.instruction(&Instruction::LocalGet(disc_local));
+
+        // Push payload (0 if none, marshaled value if some)
+        f.instruction(&Instruction::LocalGet(disc_local));
+        // if discriminant != 0
+        match inner {
+            Type::I32 | Type::Unknown => {
+                f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+                f.instruction(&Instruction::LocalGet(val_scratch));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+                f.instruction(&Instruction::Else);
+                f.instruction(&Instruction::I32Const(0));
+                f.instruction(&Instruction::End);
+            }
+            Type::I64 => {
+                f.instruction(&Instruction::If(BlockType::Result(ValType::I64)));
+                f.instruction(&Instruction::LocalGet(val_scratch));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::INT64)));
+                f.instruction(&Instruction::StructGet {
+                    struct_type_index: gc_types::INT64,
+                    field_index: gc_types::I64_VALUE,
+                });
+                f.instruction(&Instruction::Else);
+                f.instruction(&Instruction::I64Const(0));
+                f.instruction(&Instruction::End);
+            }
+            Type::F64 => {
+                f.instruction(&Instruction::If(BlockType::Result(ValType::F64)));
+                f.instruction(&Instruction::LocalGet(val_scratch));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
+                f.instruction(&Instruction::StructGet {
+                    struct_type_index: gc_types::FLOAT64,
+                    field_index: gc_types::F64_VALUE,
+                });
+                f.instruction(&Instruction::Else);
+                f.instruction(&Instruction::F64Const(0.0));
+                f.instruction(&Instruction::End);
+            }
+            Type::Bool => {
+                f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
+                f.instruction(&Instruction::LocalGet(val_scratch));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                f.instruction(&Instruction::I32Eq);
+                f.instruction(&Instruction::Else);
+                f.instruction(&Instruction::I32Const(0));
+                f.instruction(&Instruction::End);
+            }
+            Type::String => {
+                // String produces 2 values (ptr, len) — need retptr approach
+                // For simplicity: if Some, convert to linear string; if None, push (0, 0)
+                let ss = string_scratch.unwrap();
+                let tmp_ptr = ss + 1;
+                let tmp_len = ss + 2;
+
+                f.instruction(&Instruction::If(BlockType::Empty));
+                {
+                    f.instruction(&Instruction::LocalGet(val_scratch));
+                    self.emit_gc_string_to_linear(f, ss)?;
+                    f.instruction(&Instruction::LocalSet(tmp_len));
+                    f.instruction(&Instruction::LocalSet(tmp_ptr));
+                }
+                f.instruction(&Instruction::Else);
+                {
+                    f.instruction(&Instruction::I32Const(0));
+                    f.instruction(&Instruction::LocalSet(tmp_ptr));
+                    f.instruction(&Instruction::I32Const(0));
+                    f.instruction(&Instruction::LocalSet(tmp_len));
+                }
+                f.instruction(&Instruction::End);
+                f.instruction(&Instruction::LocalGet(tmp_ptr));
+                f.instruction(&Instruction::LocalGet(tmp_len));
+            }
+            _ => {
+                return Err(CompileError::Codegen(format!(
+                    "Unsupported option inner type for import param: {:?}",
+                    inner
+                )));
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Emit option<T> return marshaling for WIT import returns.
+    ///
+    /// Import wrote option to retptr. Read discriminant, then payload.
+    /// Pushes eqref on stack (nil for None, boxed value for Some).
+    fn emit_option_import_return(
+        &self,
+        inner: &Type,
+        f: &mut Function,
+        retptr: u32,
+        string_scratch: Option<u32>,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use crate::ir::type_ids;
+
+        let flat_vts = type_to_valtypes(&Type::Option(Box::new(inner.clone())));
+        let (_total_size, offsets) = flat_byte_size_and_offsets(&flat_vts);
+
+        // Read discriminant from retptr
+        f.instruction(&Instruction::LocalGet(retptr));
+        f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+            offset: offsets[0].0 as u64,
+            align: 2,
+            memory_index: 0,
+        }));
+
+        // if discriminant != 0 → Some
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+        {
+            match inner {
+                Type::I32 | Type::Unknown => {
+                    f.instruction(&Instruction::LocalGet(retptr));
+                    f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+                        offset: offsets[1].0 as u64,
+                        align: 2,
+                        memory_index: 0,
+                    }));
+                    // Encode as i31ref
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Shl);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Or);
+                    f.instruction(&Instruction::RefI31);
+                }
+                Type::I64 => {
+                    f.instruction(&Instruction::I32Const(type_ids::INT64));
+                    f.instruction(&Instruction::LocalGet(retptr));
+                    f.instruction(&Instruction::I64Load(wasm_encoder::MemArg {
+                        offset: offsets[1].0 as u64,
+                        align: 3,
+                        memory_index: 0,
+                    }));
+                    f.instruction(&Instruction::StructNew(gc_types::INT64));
+                }
+                Type::F64 => {
+                    f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
+                    f.instruction(&Instruction::LocalGet(retptr));
+                    f.instruction(&Instruction::F64Load(wasm_encoder::MemArg {
+                        offset: offsets[1].0 as u64,
+                        align: 3,
+                        memory_index: 0,
+                    }));
+                    f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
+                }
+                Type::Bool => {
+                    f.instruction(&Instruction::LocalGet(retptr));
+                    f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+                        offset: offsets[1].0 as u64,
+                        align: 2,
+                        memory_index: 0,
+                    }));
+                    f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+                    f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                    f.instruction(&Instruction::RefI31);
+                    f.instruction(&Instruction::Else);
+                    f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
+                    f.instruction(&Instruction::RefI31);
+                    f.instruction(&Instruction::End);
+                }
+                Type::String => {
+                    // Read (ptr, len) from retptr payload offsets
+                    f.instruction(&Instruction::LocalGet(retptr));
+                    f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+                        offset: offsets[1].0 as u64,
+                        align: 2,
+                        memory_index: 0,
+                    }));
+                    f.instruction(&Instruction::LocalGet(retptr));
+                    f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+                        offset: offsets[2].0 as u64,
+                        align: 2,
+                        memory_index: 0,
+                    }));
+                    self.emit_linear_to_gc_string(f, string_scratch.unwrap())?;
+                }
+                _ => {
+                    return Err(CompileError::Codegen(format!(
+                        "Unsupported option inner type for import return: {:?}",
+                        inner
+                    )));
+                }
+            }
+        }
+        f.instruction(&Instruction::Else);
+        {
+            // None → nil
+            f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+            f.instruction(&Instruction::RefI31);
+        }
+        f.instruction(&Instruction::End);
+
+        Ok(())
+    }
+
+    /// Emit list<T> exit marshaling for WIT exports.
+    ///
+    /// Input: eqref (PersistentVector) on stack
+    /// Output: retptr (i32) on stack pointing to (ptr, len) in linear memory
+    ///
+    /// Iterates the vector via -count and -nth protocol dispatch,
+    /// writes elements to linear memory, then writes (ptr, len) to retptr.
+    fn emit_list_exit(
+        &self,
+        inner: &Type,
+        f: &mut Function,
+        scratch_base: u32,
+        string_scratch_base: Option<u32>,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use crate::ir::method_ids;
+
+        // Scratch local assignments:
+        // +0 (eqref): vec
+        // +1 (i32): elem_base_ptr (constant through loop)
+        // +2 (eqref): count stored as i31ref (to free up an i32 slot)
+        // +6 (i32): loop counter i
+        // i64_scratch: nth_dispatch_idx (stored as i64 to avoid i32 conflicts)
+        let vec_local = scratch_base;
+        let elem_base_local = scratch_base + 1;
+        let count_eqref_local = scratch_base + 2;
+        let loop_i_local = scratch_base + 6;
+        let nth_idx_i64 = self.i64_scratch_local.get();
+
+        // 1. Save vector
+        f.instruction(&Instruction::LocalSet(vec_local));
+
+        // 2. Get type_id, save temporarily to loop_i_local (i32)
+        f.instruction(&Instruction::LocalGet(vec_local));
+        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));
+        f.instruction(&Instruction::LocalSet(loop_i_local)); // type_id in loop_i_local temporarily
+
+        // 3. Compute -nth dispatch index (type_id * mpt + NTH), save as i64
+        f.instruction(&Instruction::LocalGet(loop_i_local)); // type_id
+        f.instruction(&Instruction::I32Const(self.ir.methods_per_type as i32));
+        f.instruction(&Instruction::I32Mul);
+        f.instruction(&Instruction::I32Const(method_ids::NTH as i32));
+        f.instruction(&Instruction::I32Add);
+        f.instruction(&Instruction::I64ExtendI32U);
+        f.instruction(&Instruction::LocalSet(nth_idx_i64));
+
+        // 4. Call -count: push vec arg, then compute+push dispatch idx
+        f.instruction(&Instruction::LocalGet(vec_local));
+        f.instruction(&Instruction::LocalGet(loop_i_local)); // type_id
+        f.instruction(&Instruction::I32Const(self.ir.methods_per_type as i32));
+        f.instruction(&Instruction::I32Mul);
+        f.instruction(&Instruction::I32Const(method_ids::COUNT as i32));
+        f.instruction(&Instruction::I32Add);
+        f.instruction(&Instruction::CallIndirect {
+            type_index: self.protocol_type(protocol_type_offsets::ARITY_1_I32),
+            table_index: 0,
+        });
+        // Stack: [count: i32]
+
+        // 5. Save count as i31ref to free up i32 locals for the loop
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
+        f.instruction(&Instruction::LocalSet(count_eqref_local));
+
+        // Helper: inline decode count from i31ref
+        // Pushes count (i32) on stack from count_eqref_local
+        macro_rules! push_count {
+            () => {
+                f.instruction(&Instruction::LocalGet(count_eqref_local));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+            }
+        }
+
+        // 6. Determine element stride and alignment
+        let elem_stride = match inner {
+            Type::I32 | Type::Bool | Type::Unknown => 4i32,
+            Type::I64 | Type::F64 => 8,
+            Type::String => 8, // ptr (4) + len (4)
+            _ => 4,
+        };
+        let elem_align = match inner {
+            Type::I64 | Type::F64 => 8i32,
+            _ => 4i32,
+        };
+
+        // 7. Allocate element array: cabi_realloc(0, 0, align, count * stride)
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(elem_align));
+        push_count!();
+        f.instruction(&Instruction::I32Const(elem_stride));
+        f.instruction(&Instruction::I32Mul);
+        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::CABI_REALLOC)));
+        f.instruction(&Instruction::LocalSet(elem_base_local));
+
+        // 8. Loop: for i = 0..count
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::LocalSet(loop_i_local));
+
+        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Empty));
+        f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
+        {
+            // Break if i >= count
+            f.instruction(&Instruction::LocalGet(loop_i_local));
+            push_count!();
+            f.instruction(&Instruction::I32GeU);
+            f.instruction(&Instruction::BrIf(1));
+
+            // Get element via -nth protocol dispatch
+            // call_indirect expects: [vec, i_eqref, dispatch_idx]
+            f.instruction(&Instruction::LocalGet(vec_local));
+            // Encode i as i31ref: (i << 1) | 1
+            f.instruction(&Instruction::LocalGet(loop_i_local));
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::I32Shl);
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::I32Or);
+            f.instruction(&Instruction::RefI31);
+            // Push nth dispatch index (convert from i64)
+            f.instruction(&Instruction::LocalGet(nth_idx_i64));
+            f.instruction(&Instruction::I32WrapI64);
+            f.instruction(&Instruction::CallIndirect {
+                type_index: self.protocol_type(protocol_type_offsets::ARITY_2_REF),
+                table_index: 0,
+            });
+            // Stack: [elem: eqref]
+
+            // Compute store address: elem_base + i * stride
+            // We need addr on stack BELOW the value for i32.store.
+            // Pattern: save elem, push addr, push marshaled value, store
+            let elem_eqref_local = scratch_base + 4; // eqref scratch
+            f.instruction(&Instruction::LocalSet(elem_eqref_local));
+
+            // Push store address
+            f.instruction(&Instruction::LocalGet(elem_base_local));
+            f.instruction(&Instruction::LocalGet(loop_i_local));
+            f.instruction(&Instruction::I32Const(elem_stride));
+            f.instruction(&Instruction::I32Mul);
+            f.instruction(&Instruction::I32Add);
+
+            // Marshal element and store
+            match inner {
+                Type::I32 | Type::Unknown => {
+                    // Decode i31ref to i32
+                    f.instruction(&Instruction::LocalGet(elem_eqref_local));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                    f.instruction(&Instruction::I31GetS);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32ShrS);
+                    f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                        offset: 0, align: 2, memory_index: 0,
+                    }));
+                }
+                Type::I64 => {
+                    f.instruction(&Instruction::LocalGet(elem_eqref_local));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::INT64)));
+                    f.instruction(&Instruction::StructGet {
+                        struct_type_index: gc_types::INT64,
+                        field_index: gc_types::I64_VALUE,
+                    });
+                    f.instruction(&Instruction::I64Store(wasm_encoder::MemArg {
+                        offset: 0, align: 3, memory_index: 0,
+                    }));
+                }
+                Type::F64 => {
+                    f.instruction(&Instruction::LocalGet(elem_eqref_local));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
+                    f.instruction(&Instruction::StructGet {
+                        struct_type_index: gc_types::FLOAT64,
+                        field_index: gc_types::F64_VALUE,
+                    });
+                    f.instruction(&Instruction::F64Store(wasm_encoder::MemArg {
+                        offset: 0, align: 3, memory_index: 0,
+                    }));
+                }
+                Type::Bool => {
+                    f.instruction(&Instruction::LocalGet(elem_eqref_local));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                    f.instruction(&Instruction::I31GetS);
+                    f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                    f.instruction(&Instruction::I32Eq);
+                    f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                        offset: 0, align: 2, memory_index: 0,
+                    }));
+                }
+                Type::String => {
+                    // Drop the address we already pushed — we'll compute it again
+                    // after getting (ptr, len) from the string
+                    f.instruction(&Instruction::Drop);
+
+                    // Convert GC string to linear memory
+                    f.instruction(&Instruction::LocalGet(elem_eqref_local));
+                    let ss = string_scratch_base.unwrap();
+                    self.emit_gc_string_to_linear(f, ss)?;
+                    // Stack: [str_ptr, str_len]
+                    let tmp_len = ss + 2;
+                    let tmp_ptr = ss + 1;
+                    f.instruction(&Instruction::LocalSet(tmp_len));
+                    f.instruction(&Instruction::LocalSet(tmp_ptr));
+
+                    // Compute address for string: elem_base + i * 8
+                    let addr_local = loop_i_local; // temporarily reuse — NO, loop_i is needed for i++
+
+                    // Store ptr at addr+0
+                    f.instruction(&Instruction::LocalGet(elem_base_local));
+                    f.instruction(&Instruction::LocalGet(loop_i_local));
+                    f.instruction(&Instruction::I32Const(elem_stride));
+                    f.instruction(&Instruction::I32Mul);
+                    f.instruction(&Instruction::I32Add);
+                    f.instruction(&Instruction::LocalGet(tmp_ptr));
+                    f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                        offset: 0, align: 2, memory_index: 0,
+                    }));
+                    // Store len at addr+4
+                    f.instruction(&Instruction::LocalGet(elem_base_local));
+                    f.instruction(&Instruction::LocalGet(loop_i_local));
+                    f.instruction(&Instruction::I32Const(elem_stride));
+                    f.instruction(&Instruction::I32Mul);
+                    f.instruction(&Instruction::I32Add);
+                    f.instruction(&Instruction::LocalGet(tmp_len));
+                    f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                        offset: 4, align: 2, memory_index: 0,
+                    }));
+                }
+                _ => {
+                    // Unsupported inner type — store 0
+                    f.instruction(&Instruction::I32Const(0));
+                    f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                        offset: 0, align: 2, memory_index: 0,
+                    }));
+                }
+            }
+
+            // i++
+            f.instruction(&Instruction::LocalGet(loop_i_local));
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::I32Add);
+            f.instruction(&Instruction::LocalSet(loop_i_local));
+            f.instruction(&Instruction::Br(0)); // continue
+        }
+        f.instruction(&Instruction::End); // end loop
+        f.instruction(&Instruction::End); // end block
+
+        // 9. Allocate retptr for (ptr: i32, len: i32)
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(4));
+        f.instruction(&Instruction::I32Const(8));
+        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::CABI_REALLOC)));
+        // Reuse loop_i_local as retptr (loop is done)
+        let retptr_local = loop_i_local;
+        f.instruction(&Instruction::LocalSet(retptr_local));
+
+        // 10. Write (elem_base, count) to retptr
+        f.instruction(&Instruction::LocalGet(retptr_local));
+        f.instruction(&Instruction::LocalGet(elem_base_local));
+        f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+            offset: 0, align: 2, memory_index: 0,
+        }));
+        f.instruction(&Instruction::LocalGet(retptr_local));
+        push_count!();
+        f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+            offset: 4, align: 2, memory_index: 0,
+        }));
+
+        // 11. Return retptr
+        f.instruction(&Instruction::LocalGet(retptr_local));
+
+        Ok(())
+    }
+
+    /// Emit list<T> entry marshaling for WIT export params.
+    ///
+    /// list<T> params come as (ptr: i32, len: i32) flat values.
+    /// Builds a PersistentVector by conjing each element via protocol dispatch.
+    fn emit_list_entry(
+        &self,
+        inner: &Type,
+        f: &mut Function,
+        wit_idx: u32,
+        converted_local: u32,
+        scratch_base: u32,
+        string_scratch_base: Option<u32>,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use crate::ir::method_ids;
+
+        // Scratch locals:
+        // +0 (eqref): accumulator vec
+        // +1 (i32): loop counter
+        // +6 (i32): ptr (from wit_idx)
+        // i64_scratch: len (as i64 to save i32 locals)
+        let vec_acc_local = scratch_base;
+        let loop_i_local = scratch_base + 1;
+        let ptr_local = scratch_base + 1; // reuse after copying
+        let len_i64 = self.i64_scratch_local.get();
+
+        // Save ptr and len from WIT params
+        f.instruction(&Instruction::LocalGet(wit_idx));     // ptr
+        f.instruction(&Instruction::LocalSet(ptr_local));
+        f.instruction(&Instruction::LocalGet(wit_idx + 1)); // len
+        f.instruction(&Instruction::I64ExtendI32U);
+        f.instruction(&Instruction::LocalSet(len_i64));
+
+        // Start with empty PersistentVector
+        // Look up the PersistentVector constructor or create an empty one
+        // For simplicity, create nil (empty vec) and conj elements
+        // Empty vec = nil sentinel — but we need a real PersistentVector for -conj
+        // Use the PersistentVector deftype constructor
+        if let Some(pv_gc_idx) = self.deftype_gc_type_idx("PersistentVector") {
+            let pv_type_id = self.deftype_type_id("PersistentVector").unwrap();
+            // PersistentVector struct: { type_id: i32, cnt: i32, shift: i32, root: eqref, tail: eqref }
+            f.instruction(&Instruction::I32Const(pv_type_id));
+            f.instruction(&Instruction::I32Const(0)); // cnt = 0
+            f.instruction(&Instruction::I32Const(5)); // shift = 5
+            f.instruction(&Instruction::RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq })); // root = null
+            f.instruction(&Instruction::I32Const(0)); // empty array size
+            f.instruction(&Instruction::ArrayNewDefault(gc_types::ARRAY));
+            f.instruction(&Instruction::StructNew(pv_gc_idx));
+        } else {
+            // Fallback: nil
+            f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+            f.instruction(&Instruction::RefI31);
+        }
+        f.instruction(&Instruction::LocalSet(vec_acc_local));
+
+        // Copy ptr to a stable local since loop_i_local will overwrite it
+        // Actually ptr_local and loop_i_local are the same (+1). Save ptr to stack via i32 trick.
+        // We need both ptr and loop_i. Let me use a different approach.
+        // Save ptr into f64_scratch as bits
+        let ptr_i64 = self.f64_scratch_local.get(); // repurpose f64 scratch
+        // Actually can't store i32 in f64 local. Let me just save ptr in count_eqref as i31ref.
+        let ptr_eqref_local = scratch_base + 2; // eqref
+        f.instruction(&Instruction::LocalGet(ptr_local));
+        // ptr is an address (positive i32), encode as i31ref
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
+        f.instruction(&Instruction::LocalSet(ptr_eqref_local));
+
+        // Helper to decode ptr from i31ref
+        macro_rules! push_ptr {
+            () => {
+                f.instruction(&Instruction::LocalGet(ptr_eqref_local));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+            }
+        }
+
+        let elem_stride = match inner {
+            Type::I32 | Type::Bool | Type::Unknown => 4i32,
+            Type::I64 | Type::F64 => 8,
+            Type::String => 8,
+            _ => 4,
+        };
+
+        // Loop: for i = 0..len, conj each element
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::LocalSet(loop_i_local));
+
+        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Empty));
+        f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
+        {
+            // Break if i >= len
+            f.instruction(&Instruction::LocalGet(loop_i_local));
+            f.instruction(&Instruction::LocalGet(len_i64));
+            f.instruction(&Instruction::I32WrapI64);
+            f.instruction(&Instruction::I32GeU);
+            f.instruction(&Instruction::BrIf(1));
+
+            // Read element from linear memory: mem[ptr + i * stride]
+            match inner {
+                Type::I32 | Type::Unknown => {
+                    push_ptr!();
+                    f.instruction(&Instruction::LocalGet(loop_i_local));
+                    f.instruction(&Instruction::I32Const(elem_stride));
+                    f.instruction(&Instruction::I32Mul);
+                    f.instruction(&Instruction::I32Add);
+                    f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+                        offset: 0, align: 2, memory_index: 0,
+                    }));
+                    // Encode as i31ref
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Shl);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Or);
+                    f.instruction(&Instruction::RefI31);
+                }
+                Type::I64 => {
+                    use crate::ir::type_ids;
+                    push_ptr!();
+                    f.instruction(&Instruction::LocalGet(loop_i_local));
+                    f.instruction(&Instruction::I32Const(elem_stride));
+                    f.instruction(&Instruction::I32Mul);
+                    f.instruction(&Instruction::I32Add);
+                    f.instruction(&Instruction::I64Load(wasm_encoder::MemArg {
+                        offset: 0, align: 3, memory_index: 0,
+                    }));
+                    // Box in INT64
+                    let scratch = self.i64_scratch_local.get();
+                    // Can't use i64_scratch — it holds len! Use f64_scratch repurposed.
+                    // Actually we can just use struct.new directly since both args are on stack
+                    // struct.new needs (type_id: i32, value: i64) — but value is on top, type_id below
+                    // Need scratch. Use f64_scratch as i64:
+                    // Hmm, f64_scratch is ValType::F64, can't store i64.
+                    // Just push type_id first, but we need to save the i64.
+                    // Alternative: recompute the load address
+                    // Simpler: push type_id const BEFORE the load, then the load pushes i64 on top.
+                    // But struct.new expects (type_id, value) and type_id was pushed first = below.
+                    // Actually that IS the right order! type_id is consumed first (from bottom).
+                    // Wait, WASM stack: struct.new pops in order (first param from bottom).
+                    // So if stack is [type_id, value], struct.new will create {type_id, value}. Correct!
+
+                    // Let me redo: push type_id first, then do the load
+                    // But the load was already emitted above. I need to restructure.
+                    // For simplicity, just drop and redo.
+                    // Actually I emitted the load already. Let me save to a scratch and redo.
+                    // Use a simple approach: the i64 is on the stack. Save via local, push type_id, reload.
+                    // Use len_i64 as temp? No, it has the length!
+                    // We ARE stuck. Let me just not emit the load inline — restructure.
+
+                    // Actually, I already have the i64 on stack from the load.
+                    // I need: [i32, i64] on stack for struct.new.
+                    // Current stack: [i64]. I need to get i32 below it.
+                    // WASM has no swap. Only option: save i64, push i32, reload i64.
+                    // But we don't have a free i64 local!
+                    // len_i64 is occupied. nth_idx_i64 is... well it's i64_scratch which = len_i64.
+                    // Hmm, we only have one i64 scratch.
+                    // Solution: Save len to stack before the loop (it's constant).
+                    // Actually the issue is fundamental: we need 2 i64 locals for list<s64>.
+                    // For now, handle s64 in list by a different approach:
+                    // pre-push type_id, then compute address and load.
+
+                    // Delete the load we already emitted? Can't.
+                    // The load is already emitted. But I can just use it:
+                    // After i64Load, stack has [i64_value].
+                    // Use i64_scratch to save it (len is constant, decode from len_i64):
+                    // Wait, I'm using i64_scratch AS len_i64. So they're the same local!
+                    // If I overwrite it with the loaded value, I lose len.
+                    // Solution for i64 inner: DON'T store len in i64_scratch.
+                    // Instead store len as i31ref like we store count in emit_list_exit.
+
+                    // This method is already complex. For i64 list elements, let me use a
+                    // simpler approach: before the loop, copy len to an i31ref local.
+                    // But I'd need to restructure the whole method.
+
+                    // For now, since list<s64> params are rare, emit a simplified version
+                    // that just boxes it using the struct.new with correct stack order.
+                    // I'll swap by storing to i64_scratch, losing len, but len was already
+                    // checked at the top of the loop so we don't need it again until next iteration.
+                    // Actually we DO need len for the loop condition check.
+
+                    // OK best approach: just don't emit the i64Load above for the I64 case.
+                    // But I already did in the match arm. Hmm.
+
+                    // Actually wait — I'm IN the I64 match arm. The push_ptr/mul/add/i64Load
+                    // was also in this arm. Let me remove what I emitted above and redo properly.
+                    // The issue is that Rust match arms execute at runtime, but the wasm instructions
+                    // are emitted at compile-time. Each match arm emits different instructions.
+                    // So the I64 arm above emits the push_ptr + compute addr + i64Load.
+                    // Now I need to also box it. The i64 is on stack.
+                    // I need to save len, use i64_scratch for the value, push type_id, reload.
+
+                    // Let's save len to an eqref local as i31ref first (before loop).
+                    // But I already started the loop! Can't go back.
+
+                    // Simplest fix: reuse f64_scratch by storing len as f64 bits.
+                    // Actually we can store an i64 value in an f64 local using reinterpret:
+                    // i64.reinterpret_f64 and f64.reinterpret_i64.
+                    // Save len to f64_scratch:
+                    f.instruction(&Instruction::LocalGet(len_i64)); // get len (i64)
+                    f.instruction(&Instruction::F64ReinterpretI64);
+                    f.instruction(&Instruction::LocalSet(ptr_i64)); // save len as f64 bits in f64_scratch
+
+                    // Now i64_scratch is free. Save the loaded i64 value.
+                    f.instruction(&Instruction::LocalSet(len_i64)); // repurpose for value
+
+                    f.instruction(&Instruction::I32Const(type_ids::INT64));
+                    f.instruction(&Instruction::LocalGet(len_i64)); // loaded value
+                    f.instruction(&Instruction::StructNew(gc_types::INT64));
+
+                    // Restore len from f64_scratch
+                    f.instruction(&Instruction::LocalGet(ptr_i64));
+                    f.instruction(&Instruction::I64ReinterpretF64);
+                    f.instruction(&Instruction::LocalSet(len_i64));
+                }
+                Type::F64 => {
+                    use crate::ir::type_ids;
+                    f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
+                    push_ptr!();
+                    f.instruction(&Instruction::LocalGet(loop_i_local));
+                    f.instruction(&Instruction::I32Const(elem_stride));
+                    f.instruction(&Instruction::I32Mul);
+                    f.instruction(&Instruction::I32Add);
+                    f.instruction(&Instruction::F64Load(wasm_encoder::MemArg {
+                        offset: 0, align: 3, memory_index: 0,
+                    }));
+                    f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
+                }
+                Type::Bool => {
+                    push_ptr!();
+                    f.instruction(&Instruction::LocalGet(loop_i_local));
+                    f.instruction(&Instruction::I32Const(elem_stride));
+                    f.instruction(&Instruction::I32Mul);
+                    f.instruction(&Instruction::I32Add);
+                    f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+                        offset: 0, align: 2, memory_index: 0,
+                    }));
+                    f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+                    f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                    f.instruction(&Instruction::RefI31);
+                    f.instruction(&Instruction::Else);
+                    f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
+                    f.instruction(&Instruction::RefI31);
+                    f.instruction(&Instruction::End);
+                }
+                Type::String => {
+                    // Read (ptr, len) at addr and addr+4
+                    push_ptr!();
+                    f.instruction(&Instruction::LocalGet(loop_i_local));
+                    f.instruction(&Instruction::I32Const(elem_stride));
+                    f.instruction(&Instruction::I32Mul);
+                    f.instruction(&Instruction::I32Add);
+                    // Load str_ptr
+                    f.instruction(&Instruction::LocalTee(scratch_base + 6)); // save addr temporarily
+                    f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+                        offset: 0, align: 2, memory_index: 0,
+                    }));
+                    // Load str_len
+                    f.instruction(&Instruction::LocalGet(scratch_base + 6));
+                    f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+                        offset: 4, align: 2, memory_index: 0,
+                    }));
+                    // Convert to GC string
+                    let ss = string_scratch_base.unwrap();
+                    self.emit_linear_to_gc_string(f, ss)?;
+                }
+                _ => {
+                    // Unknown type: push nil
+                    f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+                    f.instruction(&Instruction::RefI31);
+                }
+            }
+            // Stack: [elem: eqref]
+
+            // Conj element onto accumulator via protocol dispatch
+            // call_indirect expects: [vec, elem, dispatch_idx] for -conj
+            // Save element temporarily
+            let elem_local = scratch_base + 3; // eqref scratch
+            f.instruction(&Instruction::LocalSet(elem_local));
+
+            // Get type_id of accumulator
+            f.instruction(&Instruction::LocalGet(vec_acc_local));
+            f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));
+            // Compute conj dispatch idx: type_id * mpt + CONJ
+            f.instruction(&Instruction::I32Const(self.ir.methods_per_type as i32));
+            f.instruction(&Instruction::I32Mul);
+            f.instruction(&Instruction::I32Const(method_ids::CONJ as i32));
+            f.instruction(&Instruction::I32Add);
+            // Save dispatch idx
+            let conj_idx_local = scratch_base + 6; // reuse
+            // Wait, +6 might be used. For string inner, we used it as addr temp.
+            // It's fine — we're past that usage now.
+            f.instruction(&Instruction::LocalSet(conj_idx_local));
+
+            // Push args: [vec, elem, dispatch_idx]
+            f.instruction(&Instruction::LocalGet(vec_acc_local));
+            f.instruction(&Instruction::LocalGet(elem_local));
+            f.instruction(&Instruction::LocalGet(conj_idx_local));
+            f.instruction(&Instruction::CallIndirect {
+                type_index: self.protocol_type(protocol_type_offsets::ARITY_2_REF),
+                table_index: 0,
+            });
+            // Stack: [new_vec: eqref]
+            f.instruction(&Instruction::LocalSet(vec_acc_local));
+
+            // i++
+            f.instruction(&Instruction::LocalGet(loop_i_local));
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::I32Add);
+            f.instruction(&Instruction::LocalSet(loop_i_local));
+            f.instruction(&Instruction::Br(0)); // continue
+        }
+        f.instruction(&Instruction::End); // end loop
+        f.instruction(&Instruction::End); // end block
+
+        // Result is the accumulated vector
+        f.instruction(&Instruction::LocalGet(vec_acc_local));
+        f.instruction(&Instruction::LocalSet(converted_local));
+
+        Ok(())
+    }
+
+    /// Emit list<T> param marshaling for WIT import params.
+    /// Converts eqref vec → flat list values (ptr, len) on stack.
+    ///
+    /// Reuses emit_list_exit logic: iterates vec via -count/-nth,
+    /// writes elements to linear memory, pushes (ptr, len) on stack.
+    fn emit_list_import_param(
+        &self,
+        inner: &Type,
+        f: &mut Function,
+        string_scratch: Option<u32>,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use crate::ir::method_ids;
+
+        // This is essentially the same as list exit but leaves (ptr, len) on stack
+        // instead of writing to retptr. Reuse scratch from self.scratch_local.
+        let scratch_base = self.scratch_local.get();
+        // Bump scratch past what we'll use (2 sets)
+        self.scratch_local.set(scratch_base + 10);
+
+        let vec_local = scratch_base;
+        let elem_base_local = scratch_base + 1;
+        let count_eqref_local = scratch_base + 2;
+        let loop_i_local = scratch_base + 6;
+        let nth_idx_i64 = self.i64_scratch_local.get();
+
+        // Save vector (on stack from caller)
+        f.instruction(&Instruction::LocalSet(vec_local));
+
+        // Get type_id
+        f.instruction(&Instruction::LocalGet(vec_local));
+        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));
+        f.instruction(&Instruction::LocalSet(loop_i_local)); // type_id temp
+
+        // Compute nth dispatch idx
+        f.instruction(&Instruction::LocalGet(loop_i_local));
+        f.instruction(&Instruction::I32Const(self.ir.methods_per_type as i32));
+        f.instruction(&Instruction::I32Mul);
+        f.instruction(&Instruction::I32Const(method_ids::NTH as i32));
+        f.instruction(&Instruction::I32Add);
+        f.instruction(&Instruction::I64ExtendI32U);
+        f.instruction(&Instruction::LocalSet(nth_idx_i64));
+
+        // Call -count
+        f.instruction(&Instruction::LocalGet(vec_local));
+        f.instruction(&Instruction::LocalGet(loop_i_local)); // type_id
+        f.instruction(&Instruction::I32Const(self.ir.methods_per_type as i32));
+        f.instruction(&Instruction::I32Mul);
+        f.instruction(&Instruction::I32Const(method_ids::COUNT as i32));
+        f.instruction(&Instruction::I32Add);
+        f.instruction(&Instruction::CallIndirect {
+            type_index: self.protocol_type(protocol_type_offsets::ARITY_1_I32),
+            table_index: 0,
+        });
+        // Encode count as i31ref
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
+        f.instruction(&Instruction::LocalSet(count_eqref_local));
+
+        macro_rules! push_count {
+            () => {
+                f.instruction(&Instruction::LocalGet(count_eqref_local));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+            }
+        }
+
+        let elem_stride = match inner {
+            Type::I32 | Type::Bool | Type::Unknown => 4i32,
+            Type::I64 | Type::F64 => 8,
+            Type::String => 8,
+            _ => 4,
+        };
+        let elem_align = match inner {
+            Type::I64 | Type::F64 => 8i32,
+            _ => 4i32,
+        };
+
+        // Allocate element array
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(elem_align));
+        push_count!();
+        f.instruction(&Instruction::I32Const(elem_stride));
+        f.instruction(&Instruction::I32Mul);
+        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::CABI_REALLOC)));
+        f.instruction(&Instruction::LocalSet(elem_base_local));
+
+        // Loop
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::LocalSet(loop_i_local));
+
+        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Empty));
+        f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
+        {
+            f.instruction(&Instruction::LocalGet(loop_i_local));
+            push_count!();
+            f.instruction(&Instruction::I32GeU);
+            f.instruction(&Instruction::BrIf(1));
+
+            // Get element via -nth
+            f.instruction(&Instruction::LocalGet(vec_local));
+            f.instruction(&Instruction::LocalGet(loop_i_local));
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::I32Shl);
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::I32Or);
+            f.instruction(&Instruction::RefI31);
+            f.instruction(&Instruction::LocalGet(nth_idx_i64));
+            f.instruction(&Instruction::I32WrapI64);
+            f.instruction(&Instruction::CallIndirect {
+                type_index: self.protocol_type(protocol_type_offsets::ARITY_2_REF),
+                table_index: 0,
+            });
+
+            let elem_eqref_local = scratch_base + 4;
+            f.instruction(&Instruction::LocalSet(elem_eqref_local));
+
+            // Compute address and store
+            f.instruction(&Instruction::LocalGet(elem_base_local));
+            f.instruction(&Instruction::LocalGet(loop_i_local));
+            f.instruction(&Instruction::I32Const(elem_stride));
+            f.instruction(&Instruction::I32Mul);
+            f.instruction(&Instruction::I32Add);
+
+            match inner {
+                Type::I32 | Type::Unknown => {
+                    f.instruction(&Instruction::LocalGet(elem_eqref_local));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                    f.instruction(&Instruction::I31GetS);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32ShrS);
+                    f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                        offset: 0, align: 2, memory_index: 0,
+                    }));
+                }
+                Type::I64 => {
+                    f.instruction(&Instruction::LocalGet(elem_eqref_local));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::INT64)));
+                    f.instruction(&Instruction::StructGet {
+                        struct_type_index: gc_types::INT64,
+                        field_index: gc_types::I64_VALUE,
+                    });
+                    f.instruction(&Instruction::I64Store(wasm_encoder::MemArg {
+                        offset: 0, align: 3, memory_index: 0,
+                    }));
+                }
+                Type::F64 => {
+                    f.instruction(&Instruction::LocalGet(elem_eqref_local));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
+                    f.instruction(&Instruction::StructGet {
+                        struct_type_index: gc_types::FLOAT64,
+                        field_index: gc_types::F64_VALUE,
+                    });
+                    f.instruction(&Instruction::F64Store(wasm_encoder::MemArg {
+                        offset: 0, align: 3, memory_index: 0,
+                    }));
+                }
+                Type::Bool => {
+                    f.instruction(&Instruction::LocalGet(elem_eqref_local));
+                    f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                    f.instruction(&Instruction::I31GetS);
+                    f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                    f.instruction(&Instruction::I32Eq);
+                    f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                        offset: 0, align: 2, memory_index: 0,
+                    }));
+                }
+                Type::String => {
+                    f.instruction(&Instruction::Drop); // drop pre-computed addr
+                    f.instruction(&Instruction::LocalGet(elem_eqref_local));
+                    let ss = string_scratch.unwrap();
+                    self.emit_gc_string_to_linear(f, ss)?;
+                    let tmp_len = ss + 2;
+                    let tmp_ptr = ss + 1;
+                    f.instruction(&Instruction::LocalSet(tmp_len));
+                    f.instruction(&Instruction::LocalSet(tmp_ptr));
+                    // Store at addr
+                    f.instruction(&Instruction::LocalGet(elem_base_local));
+                    f.instruction(&Instruction::LocalGet(loop_i_local));
+                    f.instruction(&Instruction::I32Const(elem_stride));
+                    f.instruction(&Instruction::I32Mul);
+                    f.instruction(&Instruction::I32Add);
+                    f.instruction(&Instruction::LocalGet(tmp_ptr));
+                    f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                        offset: 0, align: 2, memory_index: 0,
+                    }));
+                    f.instruction(&Instruction::LocalGet(elem_base_local));
+                    f.instruction(&Instruction::LocalGet(loop_i_local));
+                    f.instruction(&Instruction::I32Const(elem_stride));
+                    f.instruction(&Instruction::I32Mul);
+                    f.instruction(&Instruction::I32Add);
+                    f.instruction(&Instruction::LocalGet(tmp_len));
+                    f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                        offset: 4, align: 2, memory_index: 0,
+                    }));
+                }
+                _ => {
+                    f.instruction(&Instruction::I32Const(0));
+                    f.instruction(&Instruction::I32Store(wasm_encoder::MemArg {
+                        offset: 0, align: 2, memory_index: 0,
+                    }));
+                }
+            }
+
+            f.instruction(&Instruction::LocalGet(loop_i_local));
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::I32Add);
+            f.instruction(&Instruction::LocalSet(loop_i_local));
+            f.instruction(&Instruction::Br(0));
+        }
+        f.instruction(&Instruction::End);
+        f.instruction(&Instruction::End);
+
+        // Push (ptr, len) on stack
+        f.instruction(&Instruction::LocalGet(elem_base_local));
+        push_count!();
+
+        // Restore scratch
+        self.scratch_local.set(scratch_base);
+
+        Ok(())
+    }
+
+    /// Emit list<T> return marshaling for WIT import returns.
+    /// Reads (ptr, len) from retptr, builds PersistentVector via -conj.
+    fn emit_list_import_return(
+        &self,
+        inner: &Type,
+        f: &mut Function,
+        retptr: u32,
+        string_scratch: Option<u32>,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use crate::ir::method_ids;
+
+        let scratch_base = self.scratch_local.get();
+        self.scratch_local.set(scratch_base + 10);
+
+        let vec_acc_local = scratch_base;
+        let loop_i_local = scratch_base + 1;
+        let ptr_eqref_local = scratch_base + 2;
+        let len_i64 = self.i64_scratch_local.get();
+
+        // Read ptr and len from retptr
+        f.instruction(&Instruction::LocalGet(retptr));
+        f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+            offset: 0, align: 2, memory_index: 0,
+        }));
+        // Encode ptr as i31ref
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Or);
+        f.instruction(&Instruction::RefI31);
+        f.instruction(&Instruction::LocalSet(ptr_eqref_local));
+
+        f.instruction(&Instruction::LocalGet(retptr));
+        f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+            offset: 4, align: 2, memory_index: 0,
+        }));
+        f.instruction(&Instruction::I64ExtendI32U);
+        f.instruction(&Instruction::LocalSet(len_i64));
+
+        macro_rules! push_ptr {
+            () => {
+                f.instruction(&Instruction::LocalGet(ptr_eqref_local));
+                f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
+                f.instruction(&Instruction::I31GetS);
+                f.instruction(&Instruction::I32Const(1));
+                f.instruction(&Instruction::I32ShrS);
+            }
+        }
+
+        let elem_stride = match inner {
+            Type::I32 | Type::Bool | Type::Unknown => 4i32,
+            Type::I64 | Type::F64 => 8,
+            Type::String => 8,
+            _ => 4,
+        };
+
+        // Start with empty PersistentVector
+        if let Some(pv_gc_idx) = self.deftype_gc_type_idx("PersistentVector") {
+            let pv_type_id = self.deftype_type_id("PersistentVector").unwrap();
+            f.instruction(&Instruction::I32Const(pv_type_id));
+            f.instruction(&Instruction::I32Const(0));
+            f.instruction(&Instruction::I32Const(5));
+            f.instruction(&Instruction::RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }));
+            f.instruction(&Instruction::I32Const(0));
+            f.instruction(&Instruction::ArrayNewDefault(gc_types::ARRAY));
+            f.instruction(&Instruction::StructNew(pv_gc_idx));
+        } else {
+            f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+            f.instruction(&Instruction::RefI31);
+        }
+        f.instruction(&Instruction::LocalSet(vec_acc_local));
+
+        // Loop
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::LocalSet(loop_i_local));
+
+        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Empty));
+        f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
+        {
+            f.instruction(&Instruction::LocalGet(loop_i_local));
+            f.instruction(&Instruction::LocalGet(len_i64));
+            f.instruction(&Instruction::I32WrapI64);
+            f.instruction(&Instruction::I32GeU);
+            f.instruction(&Instruction::BrIf(1));
+
+            // Read element
+            match inner {
+                Type::I32 | Type::Unknown => {
+                    push_ptr!();
+                    f.instruction(&Instruction::LocalGet(loop_i_local));
+                    f.instruction(&Instruction::I32Const(elem_stride));
+                    f.instruction(&Instruction::I32Mul);
+                    f.instruction(&Instruction::I32Add);
+                    f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+                        offset: 0, align: 2, memory_index: 0,
+                    }));
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Shl);
+                    f.instruction(&Instruction::I32Const(1));
+                    f.instruction(&Instruction::I32Or);
+                    f.instruction(&Instruction::RefI31);
+                }
+                Type::I64 => {
+                    use crate::ir::type_ids;
+                    push_ptr!();
+                    f.instruction(&Instruction::LocalGet(loop_i_local));
+                    f.instruction(&Instruction::I32Const(elem_stride));
+                    f.instruction(&Instruction::I32Mul);
+                    f.instruction(&Instruction::I32Add);
+                    f.instruction(&Instruction::I64Load(wasm_encoder::MemArg {
+                        offset: 0, align: 3, memory_index: 0,
+                    }));
+                    // Save len, use i64_scratch for value
+                    let f64_scratch = self.f64_scratch_local.get();
+                    f.instruction(&Instruction::LocalGet(len_i64));
+                    f.instruction(&Instruction::F64ReinterpretI64);
+                    f.instruction(&Instruction::LocalSet(f64_scratch));
+                    f.instruction(&Instruction::LocalSet(len_i64)); // value
+                    f.instruction(&Instruction::I32Const(type_ids::INT64));
+                    f.instruction(&Instruction::LocalGet(len_i64));
+                    f.instruction(&Instruction::StructNew(gc_types::INT64));
+                    // Restore len
+                    f.instruction(&Instruction::LocalGet(f64_scratch));
+                    f.instruction(&Instruction::I64ReinterpretF64);
+                    f.instruction(&Instruction::LocalSet(len_i64));
+                }
+                Type::F64 => {
+                    use crate::ir::type_ids;
+                    f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
+                    push_ptr!();
+                    f.instruction(&Instruction::LocalGet(loop_i_local));
+                    f.instruction(&Instruction::I32Const(elem_stride));
+                    f.instruction(&Instruction::I32Mul);
+                    f.instruction(&Instruction::I32Add);
+                    f.instruction(&Instruction::F64Load(wasm_encoder::MemArg {
+                        offset: 0, align: 3, memory_index: 0,
+                    }));
+                    f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
+                }
+                Type::Bool => {
+                    push_ptr!();
+                    f.instruction(&Instruction::LocalGet(loop_i_local));
+                    f.instruction(&Instruction::I32Const(elem_stride));
+                    f.instruction(&Instruction::I32Mul);
+                    f.instruction(&Instruction::I32Add);
+                    f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+                        offset: 0, align: 2, memory_index: 0,
+                    }));
+                    f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+                    f.instruction(&Instruction::I32Const(gc_types::TRUE_SENTINEL));
+                    f.instruction(&Instruction::RefI31);
+                    f.instruction(&Instruction::Else);
+                    f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));
+                    f.instruction(&Instruction::RefI31);
+                    f.instruction(&Instruction::End);
+                }
+                Type::String => {
+                    push_ptr!();
+                    f.instruction(&Instruction::LocalGet(loop_i_local));
+                    f.instruction(&Instruction::I32Const(elem_stride));
+                    f.instruction(&Instruction::I32Mul);
+                    f.instruction(&Instruction::I32Add);
+                    f.instruction(&Instruction::LocalTee(scratch_base + 6));
+                    f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+                        offset: 0, align: 2, memory_index: 0,
+                    }));
+                    f.instruction(&Instruction::LocalGet(scratch_base + 6));
+                    f.instruction(&Instruction::I32Load(wasm_encoder::MemArg {
+                        offset: 4, align: 2, memory_index: 0,
+                    }));
+                    let ss = string_scratch.unwrap();
+                    self.emit_linear_to_gc_string(f, ss)?;
+                }
+                _ => {
+                    f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+                    f.instruction(&Instruction::RefI31);
+                }
+            }
+
+            // Conj element
+            let elem_local = scratch_base + 3;
+            f.instruction(&Instruction::LocalSet(elem_local));
+
+            f.instruction(&Instruction::LocalGet(vec_acc_local));
+            f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));
+            f.instruction(&Instruction::I32Const(self.ir.methods_per_type as i32));
+            f.instruction(&Instruction::I32Mul);
+            f.instruction(&Instruction::I32Const(method_ids::CONJ as i32));
+            f.instruction(&Instruction::I32Add);
+            let conj_idx_local = scratch_base + 6;
+            f.instruction(&Instruction::LocalSet(conj_idx_local));
+
+            f.instruction(&Instruction::LocalGet(vec_acc_local));
+            f.instruction(&Instruction::LocalGet(elem_local));
+            f.instruction(&Instruction::LocalGet(conj_idx_local));
+            f.instruction(&Instruction::CallIndirect {
+                type_index: self.protocol_type(protocol_type_offsets::ARITY_2_REF),
+                table_index: 0,
+            });
+            f.instruction(&Instruction::LocalSet(vec_acc_local));
+
+            f.instruction(&Instruction::LocalGet(loop_i_local));
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::I32Add);
+            f.instruction(&Instruction::LocalSet(loop_i_local));
+            f.instruction(&Instruction::Br(0));
+        }
+        f.instruction(&Instruction::End);
+        f.instruction(&Instruction::End);
+
+        f.instruction(&Instruction::LocalGet(vec_acc_local));
+
+        self.scratch_local.set(scratch_base);
+
+        Ok(())
+    }
+
     /// Generate a call to an imported function with proper marshaling.
     ///
     /// Converts eqref arguments to WIT types for each param, calls the import,
@@ -2915,11 +4576,11 @@ impl<'a> CodeGen<'a> {
 
         let import = &self.ir.imports[import_idx as usize];
 
-        // Reserve scratch locals for string marshaling if needed
+        // Reserve scratch locals for string/option/list marshaling if needed
         let scratch_save = self.scratch_local.get();
-        let has_string = import.params.iter().any(|ty| matches!(ty, Type::String))
-            || matches!(&import.return_type, Type::String);
-        let string_scratch = if has_string {
+        let needs_scratch = import.params.iter().any(|ty| type_needs_marshal_scratch(ty))
+            || type_needs_marshal_scratch(&import.return_type);
+        let string_scratch = if needs_scratch {
             let base = self.scratch_local.get();
             self.scratch_local.set(base + 5);
             Some(base)
@@ -2945,7 +4606,7 @@ impl<'a> CodeGen<'a> {
                         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::INT64)));
                         f.instruction(&Instruction::StructGet {
                             struct_type_index: gc_types::INT64,
-                            field_index: 1,
+                            field_index: gc_types::I64_VALUE,
                         });
                     }
                     Type::F64 => {
@@ -2966,6 +4627,14 @@ impl<'a> CodeGen<'a> {
                     Type::String => {
                         self.emit_gc_string_to_linear(f, string_scratch.unwrap())?;
                     }
+                    Type::Option(inner) => {
+                        // Marshal eqref → option flat values (discriminant + payload)
+                        self.emit_option_import_param(inner, f, string_scratch)?;
+                    }
+                    Type::List(inner) => {
+                        // Marshal eqref vec → list flat values (ptr, len)
+                        self.emit_list_import_param(inner, f, string_scratch)?;
+                    }
                     _ => {}
                 }
             }
@@ -2980,11 +4649,12 @@ impl<'a> CodeGen<'a> {
         };
         let import_uses_retptr = flat_return.len() > 1;
         let retptr_local = if import_uses_retptr {
-            // Allocate space for return values in linear memory
-            let size = (flat_return.len() * 4) as i32;
+            // Allocate space for return values in linear memory with proper alignment
+            let (size, _offsets) = flat_byte_size_and_offsets(&flat_return);
+            let align = if flat_return.iter().any(|v| matches!(v, ValType::I64 | ValType::F64)) { 8 } else { 4 };
             f.instruction(&Instruction::I32Const(0));        // old_ptr
             f.instruction(&Instruction::I32Const(0));        // old_size
-            f.instruction(&Instruction::I32Const(4));        // align
+            f.instruction(&Instruction::I32Const(align));    // align
             f.instruction(&Instruction::I32Const(size));     // new_size
             f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::CABI_REALLOC)));
             // Save retptr to a scratch local
@@ -3010,24 +4680,22 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::RefI31);
             }
             Type::I64 => {
-                // Truncate i64 to i32 and wrap as i31ref.
-                // Full i64 boxing requires a dedicated i64 scratch local (future work).
-                f.instruction(&Instruction::I32WrapI64);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32Shl);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32Or);
-                f.instruction(&Instruction::RefI31);
+                // Box i64 in INT64 struct: { type_id, value }
+                use crate::ir::type_ids;
+                let scratch = self.i64_scratch_local.get();
+                f.instruction(&Instruction::LocalSet(scratch));
+                f.instruction(&Instruction::I32Const(type_ids::INT64));
+                f.instruction(&Instruction::LocalGet(scratch));
+                f.instruction(&Instruction::StructNew(gc_types::INT64));
             }
             Type::F64 => {
-                // Truncate f64 to i32 and wrap as i31ref.
-                // Full f64 boxing requires a dedicated f64 scratch local (future work).
-                f.instruction(&Instruction::I32TruncF64S);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32Shl);
-                f.instruction(&Instruction::I32Const(1));
-                f.instruction(&Instruction::I32Or);
-                f.instruction(&Instruction::RefI31);
+                // Box f64 in FLOAT64 struct: { type_id, value }
+                use crate::ir::type_ids;
+                let scratch = self.f64_scratch_local.get();
+                f.instruction(&Instruction::LocalSet(scratch));
+                f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
+                f.instruction(&Instruction::LocalGet(scratch));
+                f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
             }
             Type::Bool => {
                 // Convert i32 (0/1) to i31ref bool sentinel
@@ -3057,6 +4725,16 @@ impl<'a> CodeGen<'a> {
                     memory_index: 0,
                 }));
                 self.emit_linear_to_gc_string(f, string_scratch.unwrap())?;
+            }
+            Type::Option(inner) => {
+                // option<T> return via retptr: read discriminant, then payload
+                let retptr = retptr_local.unwrap();
+                self.emit_option_import_return(inner, f, retptr, string_scratch)?;
+            }
+            Type::List(inner) => {
+                // list<T> return via retptr: read (ptr, len), build PersistentVector
+                let retptr = retptr_local.unwrap();
+                self.emit_list_import_return(inner, f, retptr, string_scratch)?;
             }
             Type::Unit => {
                 // Import returns nothing, push nil
@@ -6477,6 +8155,25 @@ impl<'a> CodeGen<'a> {
 // Helper functions
 // ============================================================================
 
+/// Check if a type contains strings (directly or inside option/list).
+fn type_contains_string(ty: &Type) -> bool {
+    match ty {
+        Type::String => true,
+        Type::Option(inner) => type_contains_string(inner),
+        Type::List(inner) => type_contains_string(inner),
+        _ => false,
+    }
+}
+
+/// Check if a type needs marshal scratch locals (string, option, list).
+/// These types need extra scratch locals for retptr, string copies, etc.
+fn type_needs_marshal_scratch(ty: &Type) -> bool {
+    match ty {
+        Type::String | Type::Option(_) | Type::List(_) => true,
+        _ => false,
+    }
+}
+
 /// Convert IR type to WASM ValType
 fn type_to_valtype(ty: &Type) -> ValType {
     match ty {
@@ -6510,6 +8207,25 @@ fn type_to_valtypes(ty: &Type) -> Vec<ValType> {
         }
         _ => vec![type_to_valtype(ty)],
     }
+}
+
+/// Compute byte sizes and offsets for a sequence of flat ValTypes.
+///
+/// Handles alignment requirements: i64/f64 need 8-byte alignment, i32 needs 4-byte.
+/// Returns (total_size, vec of (byte_offset, valtype)) for proper retptr layout.
+fn flat_byte_size_and_offsets(valtypes: &[ValType]) -> (i32, Vec<(u32, ValType)>) {
+    let mut offset: u32 = 0;
+    let mut entries = Vec::new();
+    for vt in valtypes {
+        let (size, align) = match vt {
+            ValType::I64 | ValType::F64 => (8u32, 8u32),
+            _ => (4, 4),
+        };
+        offset = (offset + align - 1) & !(align - 1);
+        entries.push((offset, *vt));
+        offset += size;
+    }
+    (offset as i32, entries)
 }
 
 /// Convert IR type to WIT type string for synthetic world generation

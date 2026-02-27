@@ -415,3 +415,279 @@ world multi-string {
 
     assert!(result.is_ok(), "Multiple string params should compile: {:?}", result.err());
 }
+
+// ============================================================================
+// i64/f64 marshaling tests
+// ============================================================================
+
+#[test]
+fn test_i64_export() {
+    let suss = r#"
+(defn ^:export big [] 999999999999)
+"#;
+    let wit = r#"
+package test:int64;
+
+world int64-world {
+    export big: func() -> s64;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "i64 export should compile: {:?}", result.err());
+}
+
+#[test]
+fn test_i64_param_return() {
+    let suss = r#"
+(defn ^:export inc64 [x] (+ x 1))
+"#;
+    let wit = r#"
+package test:int64;
+
+world int64-world {
+    export inc64: func(x: s64) -> s64;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "i64 param+return should compile: {:?}", result.err());
+}
+
+#[test]
+fn test_f64_export() {
+    let suss = r#"
+(defn ^:export pi [] 3.14159)
+"#;
+    let wit = r#"
+package test:float64;
+
+world float64-world {
+    export pi: func() -> f64;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "f64 export should compile: {:?}", result.err());
+}
+
+#[test]
+fn test_f64_param_return() {
+    let suss = r#"
+(defn ^:export double [x] (* x 2.0))
+"#;
+    let wit = r#"
+package test:float64;
+
+world float64-world {
+    export double: func(x: f64) -> f64;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "f64 param+return should compile: {:?}", result.err());
+}
+
+// ============================================================================
+// option<T> marshaling tests
+// ============================================================================
+
+#[test]
+fn test_option_s32_export() {
+    let suss = r#"
+(defn ^:export maybe-val [x] (if (> x 0) x nil))
+"#;
+    let wit = r#"
+package test:optional;
+
+world optional-world {
+    export maybe-val: func(x: s32) -> option<s32>;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "option<s32> export should compile: {:?}", result.err());
+}
+
+#[test]
+fn test_option_string_export() {
+    let suss = r#"
+(defn ^:export maybe-greet [x] (if (> x 0) "hello" nil))
+"#;
+    let wit = r#"
+package test:optional;
+
+world optional-world {
+    export maybe-greet: func(x: s32) -> option<string>;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "option<string> export should compile: {:?}", result.err());
+}
+
+#[test]
+fn test_option_s32_param() {
+    let suss = r#"
+(defn ^:export unwrap-or [x default] (if (nil? x) default x))
+"#;
+    let wit = r#"
+package test:optional;
+
+world optional-world {
+    export unwrap-or: func(x: option<s32>, default: s32) -> s32;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "option<s32> param should compile: {:?}", result.err());
+}
+
+#[test]
+fn test_option_bool_export() {
+    let suss = r#"
+(defn ^:export maybe-true [x] (if (> x 0) true nil))
+"#;
+    let wit = r#"
+package test:optional;
+
+world optional-world {
+    export maybe-true: func(x: s32) -> option<bool>;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "option<bool> export should compile: {:?}", result.err());
+}
+
+// ============================================================================
+// list<T> marshaling tests
+// ============================================================================
+
+#[test]
+fn test_list_s32_export() {
+    let suss = r#"
+(defn ^:export make-list [] [1 2 3])
+"#;
+    let wit = r#"
+package test:lists;
+
+world lists-world {
+    export make-list: func() -> list<s32>;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "list<s32> export should compile: {:?}", result.err());
+}
+
+#[test]
+fn test_list_s32_param() {
+    let suss = r#"
+(defn ^:export list-len [xs] (count xs))
+"#;
+    let wit = r#"
+package test:lists;
+
+world lists-world {
+    export list-len: func(xs: list<s32>) -> s32;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "list<s32> param should compile: {:?}", result.err());
+}
+
+#[test]
+fn test_list_string_export() {
+    let suss = r#"
+(defn ^:export greetings [] ["hello" "world"])
+"#;
+    let wit = r#"
+package test:lists;
+
+world lists-world {
+    export greetings: func() -> list<string>;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "list<string> export should compile: {:?}", result.err());
+}
