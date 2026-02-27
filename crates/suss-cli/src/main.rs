@@ -42,17 +42,17 @@ fn run_command(cmd: args::Command) {
             #[cfg(not(all(feature = "component", target_family = "wasm")))]
             run_file(&path);
         }
-        args::Command::CompileFile { source, world_wit, output } => {
-            compile_file(&source, &world_wit, &output);
+        args::Command::CompileFile { source, world_wit, output, optimize } => {
+            compile_file(&source, &world_wit, &output, optimize);
         }
-        args::Command::CompileMain { source, namespace, output } => {
-            compile_main(&source, &namespace, &output);
+        args::Command::CompileMain { source, namespace, output, optimize } => {
+            compile_main(&source, &namespace, &output, optimize);
         }
-        args::Command::CompileNamespace { namespace, src_paths, world_wit, output } => {
-            compile_namespace(&namespace, &src_paths, &world_wit, &output);
+        args::Command::CompileNamespace { namespace, src_paths, world_wit, output, optimize } => {
+            compile_namespace(&namespace, &src_paths, &world_wit, &output, optimize);
         }
-        args::Command::CompileProject { world, config_path } => {
-            compile_project(world.as_deref(), config_path.as_deref());
+        args::Command::CompileProject { world, config_path, optimize } => {
+            compile_project(world.as_deref(), config_path.as_deref(), optimize);
         }
         args::Command::Run { component_path, invoke, args } => {
             run_component(&component_path, &invoke, &args);
@@ -382,8 +382,37 @@ fn run_file(path: &str) {
     }
 }
 
+/// Run wasm-opt on a compiled WASM file for size/performance optimization
+fn run_wasm_opt(path: &str) -> Result<(), String> {
+    let original_size = std::fs::metadata(path).map(|m| m.len())
+        .map_err(|e| format!("{}", e))?;
+
+    let status = std::process::Command::new("wasm-opt")
+        .args(["-O3", "--enable-gc", "--enable-reference-types",
+               "--enable-multivalue", "--enable-bulk-memory",
+               "--enable-tail-call", "-o", path, path])
+        .status();
+
+    match status {
+        Ok(s) if s.success() => {
+            let opt_size = std::fs::metadata(path).map(|m| m.len()).unwrap_or(0);
+            let pct = if original_size > 0 {
+                100.0 * (1.0 - opt_size as f64 / original_size as f64)
+            } else { 0.0 };
+            println!("Optimized: {} bytes -> {} bytes ({:.0}% smaller)",
+                     original_size, opt_size, pct);
+            Ok(())
+        }
+        Ok(s) => Err(format!("wasm-opt exited with status: {}", s)),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            Err("wasm-opt not found. Install: brew install binaryen".into())
+        }
+        Err(e) => Err(format!("Failed to run wasm-opt: {}", e)),
+    }
+}
+
 /// Compile a Suss file to a WASM component (file mode)
-fn compile_file(source_path: &str, wit_path: &str, output_path: &str) {
+fn compile_file(source_path: &str, wit_path: &str, output_path: &str, optimize: bool) {
     let mut compiler = suss_compile::Compiler::new();
 
     match compiler.compile_files(source_path, wit_path) {
@@ -393,6 +422,12 @@ fn compile_file(source_path: &str, wit_path: &str, output_path: &str) {
                 std::process::exit(1);
             }
             println!("Compiled {} -> {} ({} bytes)", source_path, output_path, wasm.len());
+            if optimize {
+                if let Err(e) = run_wasm_opt(output_path) {
+                    eprintln!("Optimization error: {}", e);
+                    std::process::exit(1);
+                }
+            }
         }
         Err(e) => {
             eprintln!("Compilation error: {}", e);
@@ -402,7 +437,7 @@ fn compile_file(source_path: &str, wit_path: &str, output_path: &str) {
 }
 
 /// Compile a Suss file with -main function to a CLI command component
-fn compile_main(source_path: &str, namespace: &str, output_path: &str) {
+fn compile_main(source_path: &str, namespace: &str, output_path: &str, optimize: bool) {
     let source = match std::fs::read_to_string(source_path) {
         Ok(s) => s,
         Err(e) => {
@@ -421,6 +456,12 @@ fn compile_main(source_path: &str, namespace: &str, output_path: &str) {
             }
             println!("Compiled {} -> {} ({} bytes)", source_path, output_path, wasm.len());
             println!("Run with: suss run {} --invoke run", output_path);
+            if optimize {
+                if let Err(e) = run_wasm_opt(output_path) {
+                    eprintln!("Optimization error: {}", e);
+                    std::process::exit(1);
+                }
+            }
         }
         Err(e) => {
             eprintln!("Compilation error: {}", e);
@@ -430,7 +471,7 @@ fn compile_main(source_path: &str, namespace: &str, output_path: &str) {
 }
 
 /// Compile from an entry namespace with multi-file support
-fn compile_namespace(entry_ns: &str, src_paths: &[String], wit_path: &str, output_path: &str) {
+fn compile_namespace(entry_ns: &str, src_paths: &[String], wit_path: &str, output_path: &str, optimize: bool) {
     use std::path::PathBuf;
 
     let src_path_bufs: Vec<PathBuf> = src_paths.iter().map(PathBuf::from).collect();
@@ -447,6 +488,12 @@ fn compile_namespace(entry_ns: &str, src_paths: &[String], wit_path: &str, outpu
                 "Compiled namespace {} -> {} ({} bytes)",
                 entry_ns, output_path, wasm.len()
             );
+            if optimize {
+                if let Err(e) = run_wasm_opt(output_path) {
+                    eprintln!("Optimization error: {}", e);
+                    std::process::exit(1);
+                }
+            }
         }
         Err(e) => {
             eprintln!("Compilation error: {}", e);
@@ -456,7 +503,7 @@ fn compile_namespace(entry_ns: &str, src_paths: &[String], wit_path: &str, outpu
 }
 
 /// Compile a project from deps.sus configuration
-fn compile_project(world: Option<&str>, config_path: Option<&str>) {
+fn compile_project(world: Option<&str>, config_path: Option<&str>, optimize: bool) {
     use std::path::Path;
 
     let config_path = config_path.unwrap_or("deps.sus");
@@ -495,6 +542,12 @@ fn compile_project(world: Option<&str>, config_path: Option<&str>) {
                         }
                         println!("Compiled {} -> {} ({} bytes)",
                                  world_name, output_path.display(), wasm.len());
+                        if optimize {
+                            if let Err(e) = run_wasm_opt(&output_path.display().to_string()) {
+                                eprintln!("Optimization error: {}", e);
+                                std::process::exit(1);
+                            }
+                        }
                     }
                     Err(e) => {
                         eprintln!("Error: {}", e);
@@ -680,6 +733,17 @@ fn run_repl() {
     rl.set_helper(Some(completer_helper));
 
     loop {
+        // Check for hot-reloaded namespace files
+        let reloaded = state.check_for_reloads();
+        for ns in &reloaded {
+            eprintln!("(reloading {})", ns);
+        }
+        if !reloaded.is_empty() {
+            if let Ok(mut syms) = symbols.write() {
+                *syms = state.symbols.clone();
+            }
+        }
+
         // Dynamic prompt with current namespace
         let prompt = format!("{}=> ", state.current_ns);
 
@@ -846,8 +910,13 @@ fn handle_require_session(state: &mut session::SessionState, input: &str) -> Res
     let source = std::fs::read_to_string(&path)
         .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
 
-    // Store loaded namespace
-    state.loaded_namespaces.insert(namespace.clone(), source);
+    // Store loaded namespace with mtime for hot reload
+    let mtime = std::fs::metadata(&path)
+        .and_then(|m| m.modified())
+        .unwrap_or_else(|_| std::time::SystemTime::now());
+    state.loaded_namespaces.insert(namespace.clone(), session::LoadedNamespace {
+        path: path.clone(), mtime, source,
+    });
 
     // Record alias
     if let Some(a) = alias {

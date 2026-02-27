@@ -9,6 +9,8 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use crate::session::LoadedNamespace;
+
 /// Persistent REPL state that accumulates across expressions
 pub struct ReplState {
     /// Accumulated definitions per namespace: namespace -> (def-name -> source)
@@ -20,8 +22,8 @@ pub struct ReplState {
     /// Namespace aliases from requires: alias -> full namespace name
     pub ns_aliases: HashMap<String, String>,
 
-    /// Loaded namespace files: namespace -> source content
-    pub loaded_namespaces: HashMap<String, String>,
+    /// Loaded namespace files: namespace -> loaded info (path, mtime, source)
+    pub loaded_namespaces: HashMap<String, LoadedNamespace>,
 
     /// Source paths for namespace resolution
     pub src_paths: Vec<PathBuf>,
@@ -48,8 +50,8 @@ impl ReplState {
         source.push_str(&format!("(def *ns* '{})\n", self.current_ns));
 
         // 1. Add all loaded namespace files
-        for (_ns, ns_source) in &self.loaded_namespaces {
-            source.push_str(ns_source);
+        for (_ns, loaded) in &self.loaded_namespaces {
+            source.push_str(&loaded.source);
             source.push('\n');
         }
 
@@ -160,8 +162,13 @@ pub fn handle_require(state: &mut ReplState, input: &str) -> Result<String, Stri
     let source = std::fs::read_to_string(&path)
         .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
 
-    // Store loaded namespace
-    state.loaded_namespaces.insert(spec.namespace.clone(), source);
+    // Store loaded namespace with mtime for hot reload
+    let mtime = std::fs::metadata(&path)
+        .and_then(|m| m.modified())
+        .unwrap_or_else(|_| std::time::SystemTime::now());
+    state.loaded_namespaces.insert(spec.namespace.clone(), LoadedNamespace {
+        path: path.clone(), mtime, source,
+    });
 
     // Record alias
     if let Some(alias) = spec.alias {

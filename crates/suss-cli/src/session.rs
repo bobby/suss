@@ -9,6 +9,7 @@
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
+use std::time::SystemTime;
 
 use suss_compile::{CompiledExpr, Compiler};
 
@@ -32,6 +33,13 @@ pub struct SymbolEntry {
     pub arity: Option<usize>,
 }
 
+/// Tracks a loaded namespace file for hot reload
+pub struct LoadedNamespace {
+    pub path: PathBuf,
+    pub mtime: SystemTime,
+    pub source: String,
+}
+
 /// Maximum entries in the WASM cache
 const MAX_CACHE_ENTRIES: usize = 100;
 
@@ -44,8 +52,8 @@ pub struct SessionState {
     pub current_ns: String,
     /// Namespace aliases from requires: alias -> full namespace name
     pub ns_aliases: HashMap<String, String>,
-    /// Loaded namespace files: namespace -> source content
-    pub loaded_namespaces: HashMap<String, String>,
+    /// Loaded namespace files: namespace -> loaded info (path, mtime, source)
+    pub loaded_namespaces: HashMap<String, LoadedNamespace>,
     /// Source paths for namespace resolution
     pub src_paths: Vec<PathBuf>,
 
@@ -213,8 +221,8 @@ impl SessionState {
         source.push_str(&format!("(def *ns* '{})\n", self.current_ns));
 
         // 1. Add all loaded namespace files
-        for (_ns, ns_source) in &self.loaded_namespaces {
-            source.push_str(ns_source);
+        for (_ns, loaded) in &self.loaded_namespaces {
+            source.push_str(&loaded.source);
             source.push('\n');
         }
 
@@ -319,6 +327,37 @@ impl SessionState {
     pub fn clear_cache(&mut self) {
         self.wasm_cache.clear();
         self.cache_order.clear();
+    }
+
+    /// Check loaded namespace files for modifications and reload any that changed.
+    ///
+    /// Returns the list of namespace names that were reloaded.
+    pub fn check_for_reloads(&mut self) -> Vec<String> {
+        let stale: Vec<(String, PathBuf)> = self.loaded_namespaces.iter()
+            .filter_map(|(ns, loaded)| {
+                match std::fs::metadata(&loaded.path).and_then(|m| m.modified()) {
+                    Ok(mtime) if mtime > loaded.mtime => Some((ns.clone(), loaded.path.clone())),
+                    _ => None,
+                }
+            })
+            .collect();
+
+        for (ns, path) in &stale {
+            if let Ok(source) = std::fs::read_to_string(path) {
+                let mtime = std::fs::metadata(path)
+                    .and_then(|m| m.modified())
+                    .unwrap_or_else(|_| SystemTime::now());
+                self.loaded_namespaces.insert(ns.clone(), LoadedNamespace {
+                    path: path.clone(), mtime, source,
+                });
+            }
+        }
+
+        let ns_names: Vec<String> = stale.into_iter().map(|(ns, _)| ns).collect();
+        if !ns_names.is_empty() {
+            self.clear_cache();
+        }
+        ns_names
     }
 
     /// Get cache statistics as a formatted string

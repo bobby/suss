@@ -19,12 +19,14 @@ pub enum Command {
         source: String,
         world_wit: String,
         output: String,
+        optimize: bool,
     },
     /// Compile a source file to a CLI command component (main mode)
     CompileMain {
         source: String,
         namespace: String,
         output: String,
+        optimize: bool,
     },
     /// Compile from a namespace with multi-file support
     CompileNamespace {
@@ -36,6 +38,7 @@ pub enum Command {
         world_wit: String,
         /// Output path
         output: String,
+        optimize: bool,
     },
     /// Compile a project from deps.sus
     CompileProject {
@@ -43,6 +46,7 @@ pub enum Command {
         world: Option<String>,
         /// Optional config file path (defaults to deps.sus)
         config_path: Option<String>,
+        optimize: bool,
     },
     /// Run a compiled WASM component
     Run {
@@ -108,6 +112,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
     let mut output: Option<String> = None;
     let mut world_target: Option<String> = None;
     let mut config_path: Option<String> = None;
+    let mut optimize = false;
 
     while let Some(arg) = parser.next()? {
         match arg {
@@ -136,6 +141,9 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             }
             Short('c') | Long("config") => {
                 config_path = Some(parser.value()?.string()?);
+            }
+            Short('O') | Long("optimize") => {
+                optimize = true;
             }
             Value(path) if source.is_none() => {
                 source = Some(path.string()?);
@@ -166,6 +174,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             src_paths,
             world_wit,
             output,
+            optimize,
         })
     } else if source.is_some() && main_ns.is_some() {
         // Main mode: compile with -main function
@@ -175,6 +184,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             source,
             namespace: main_ns.unwrap(),
             output,
+            optimize,
         })
     } else if source.is_some() && world_wit.is_some() {
         // File mode: explicit source and WIT
@@ -184,6 +194,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             source,
             world_wit: world_wit.unwrap(),
             output,
+            optimize,
         })
     } else if source.is_none() || world_wit.is_none() {
         // Project mode: no source file, or source without -w/-m
@@ -194,6 +205,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
         Ok(Command::CompileProject {
             world: world_target,
             config_path,
+            optimize,
         })
     } else {
         // Invalid combination
@@ -267,6 +279,9 @@ COMMANDS:
     compile - Project mode (reads deps.sus):
         --world <NAME>       Compile specific world (e.g., :my-app/v1)
         -c, --config <FILE>  Config file path (default: deps.sus)
+
+    compile - Shared options:
+        -O, --optimize       Run wasm-opt on output (requires wasm-opt in PATH)
 
     compile - File mode (single file compilation):
         -w, --wit <FILE>     WIT world definition file
