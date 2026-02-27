@@ -125,6 +125,12 @@ Function Index Layout:
   - WASM compilation caching with LRU eviction (hash-based, 100 entries)
   - Tab completion for builtins, core.sus symbols, and user definitions
   - `SessionState` with integrated caching, symbol table, and namespace management
+- [x] Phase 9 complete: WIT boundary marshaling (all types except record)
+  - i64/f64 import return boxing with scratch locals
+  - i64 export entry/exit marshaling (INT64 struct box/unbox)
+  - option<T> marshaling (exit, entry, import param/return)
+  - list<T> ↔ PersistentVector marshaling (exit, entry, import param/return)
+  - `flat_byte_size_and_offsets()` for correct retptr alignment
 - [x] Phase 9b complete: Transient collections
   - TransientVector, TransientHashMap, TransientHashSet types
   - IEditableCollection protocol with `-as-transient`
@@ -893,10 +899,12 @@ Convert between internal GC refs and WIT types at export/import boundaries, foll
 | WIT Type | To GC Ref (entry) | From GC Ref (exit) |
 |----------|-----------|-------------|
 | i32/s32 | `(n << 1) \| 1` → `ref.i31` | `i31.get_s >> 1` |
-| i64/s64 | `struct.new $INT64` | `struct.get` |
-| f64 | `struct.new $FLOAT64` | `struct.get` |
+| i64/s64 | `struct.new $INT64` | `struct.get $INT64.value` |
+| f64 | `struct.new $FLOAT64` | `struct.get $FLOAT64.value` |
 | bool | sentinel → `ref.i31` (TRUE=4, FALSE=2) | `i31.get_s == TRUE` → i32 |
 | string | linear mem (ptr,len) → GC `array<i8>` | GC `array<i8>` → linear mem, retptr |
+| option\<T\> | discriminant + payload → nil or boxed T | nil check → discriminant + marshal T to retptr |
+| list\<T\> | (ptr,len) → PersistentVector via `-conj` | PersistentVector via `-count`/`-nth` → (ptr,len) |
 | result | i32 discriminant (0=Ok, 1=Err) | drop + i32 const 0 |
 
 **Completed:**
@@ -908,16 +916,18 @@ Convert between internal GC refs and WIT types at export/import boundaries, foll
 - [x] Canonical ABI `MAX_FLAT_RESULTS = 1` compliance (retptr encoding)
 - [x] `Type::Option(Box<Type>)` variant added to IR
 - [x] `type_to_wit_string()` returns `String`, handles List/Result/Option composite types
+- [x] i64/f64 import return boxing (scratch locals for stack reordering)
+- [x] i64 export entry/exit marshaling (box/unbox INT64 struct)
+- [x] option<T> marshaling (export exit/entry, import param/return)
+- [x] list<T> ↔ PersistentVector marshaling (export exit/entry, import param/return)
+- [x] `flat_byte_size_and_offsets()` for correct i64/f64 alignment in retptr
 
 **Not yet implemented:**
-- [ ] list<T> ↔ vector marshaling
 - [ ] record ↔ map marshaling
-- [ ] option<T> marshaling (codegen)
-- [ ] Full i64/f64 import return boxing (currently truncated to i32)
 
 ---
 
-## Phase 9: Transient Collections (Performance Optimization)
+## Phase 9b: Transient Collections (Performance Optimization) ✓ COMPLETE
 
 Mutable "transient" variants for batch construction:
 
@@ -926,11 +936,9 @@ Mutable "transient" variants for batch construction:
 ```
 
 **Tasks:**
-- [ ] TransientVector with mutable tail
-- [ ] TransientHashMap with edit tracking
-- [ ] `transient`, `conj!`, `assoc!`, `persistent!` special forms
-
-Low priority - optimization only.
+- [x] TransientVector with mutable tail
+- [x] TransientHashMap with edit tracking
+- [x] `transient`, `conj!`, `assoc!`, `persistent!` special forms
 
 ---
 
@@ -1107,7 +1115,7 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 - ✓ **Phase 13: Multi-arity functions** - `(defn foo ([x] x) ([x y] (+ x y)))` syntax
 - ✓ **Phase 11: WASI CLI** - Command components with `-main` functions
 - ✓ **Phase 8.9: REPL enhancements** - Core caching, WASM caching, tab completion, stateful sessions
-- ✓ **Phase 9: WIT marshaling** - String/bool/int boundary marshaling with canonical ABI compliance
+- ✓ **Phase 9: WIT marshaling** - Full boundary marshaling (i32/i64/f64/bool/string/option/list) with canonical ABI compliance
 - ✓ **Phase 9b: Transients** - Performance optimization
 - **Phase 10: wasm-opt** - Binary optimization
 
@@ -1167,6 +1175,15 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 - [x] 0-arity clauses work: `(fn ([] 0) ([x] x))`
 - [x] Multiple fixed arities dispatch correctly
 - [x] Existing single-arity functions unchanged
+
+### Phase 9 Complete When: ✓ COMPLETE (except record)
+- [x] i32/s32, bool, string marshaling (export/import)
+- [x] i64/s64 marshaling (export entry/exit, import param/return)
+- [x] f64 marshaling (export entry/exit, import param/return)
+- [x] option<T> marshaling for T ∈ {s32, s64, f64, bool, string}
+- [x] list<T> ↔ PersistentVector marshaling for T ∈ {s32, s64, f64, bool, string}
+- [x] Correct retptr alignment for i64/f64 (8-byte) types
+- [ ] record ↔ map marshaling (deferred — rarely used, complex)
 
 ### Phase 9b Complete When: ✓ COMPLETE
 - [x] `(transient [])` creates TransientVector
