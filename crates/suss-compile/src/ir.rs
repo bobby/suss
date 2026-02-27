@@ -505,8 +505,8 @@ pub mod gc_types {
     // =========================================================================
 
     /// Number of runtime helper functions emitted before user functions.
-    /// Functions: hash_string, get_type_id, init_intern_tables
-    pub const NUM_RUNTIME_HELPERS: u32 = 3;
+    /// Functions: hash_string, get_type_id, init_intern_tables, cabi_realloc
+    pub const NUM_RUNTIME_HELPERS: u32 = 4;
 
     /// Number of protocol implementation wrapper functions
     /// Reduced: protocol impls now in core.sus via extend-type
@@ -973,6 +973,9 @@ pub enum Type {
         ok: Option<Box<Type>>,
         err: Option<Box<Type>>,
     },
+    /// Option type from WIT - option<T>
+    /// Flattens to (discriminant: i32, ...payload_valtypes)
+    Option(Box<Type>),
     /// Unknown type (for type inference)
     Unknown,
 }
@@ -993,6 +996,7 @@ impl Type {
             Type::Func { .. } => 4, // function table index
             Type::GcRef => 4, // GC reference (eqref)
             Type::Result { .. } => 4, // i32 discriminant (bare result)
+            Type::Option(_) => 8, // discriminant + payload
             Type::Unknown => 0,
         }
     }

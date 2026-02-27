@@ -1495,24 +1495,50 @@ impl<'a> Analyzer<'a> {
         Ok(fields)
     }
 
-    fn validate_exports(&self) -> CompileResult<()> {
+    fn validate_exports(&mut self) -> CompileResult<()> {
         let world = &self.resolve.worlds[self.world_id];
 
         // Check that all WIT exports have corresponding Suss exports
+        // and apply WIT types to function params/returns
         for (key, item) in &world.exports {
             match item {
-                WorldItem::Function(_) => {
+                WorldItem::Function(func) => {
                     let name = match key {
                         WorldKey::Name(n) => n.as_str(),
                         WorldKey::Interface(_) => continue, // Skip interface exports
                     };
-                    let found = self.functions.iter().any(|f| {
+                    let found_idx = self.functions.iter().position(|f| {
                         f.exported && f.export_name.as_deref() == Some(name)
                     });
-                    if !found {
-                        return Err(CompileError::ExportMismatch(
-                            format!("WIT world requires export '{}' but no matching ^:export function found", name)
-                        ));
+                    match found_idx {
+                        None => {
+                            return Err(CompileError::ExportMismatch(
+                                format!("WIT world requires export '{}' but no matching ^:export function found", name)
+                            ));
+                        }
+                        Some(idx) => {
+                            // Apply WIT types to function params
+                            let wit_params: Vec<Type> = func.params
+                                .iter()
+                                .map(|(_, ty)| wit_type_to_ir(self.resolve, ty))
+                                .collect();
+                            let wit_return = match &func.results {
+                                wit_parser::Results::Named(results) if results.is_empty() => Type::Unit,
+                                wit_parser::Results::Named(results) => {
+                                    wit_type_to_ir(self.resolve, &results[0].1)
+                                }
+                                wit_parser::Results::Anon(ty) => wit_type_to_ir(self.resolve, ty),
+                            };
+
+                            // Update param types from WIT (params keep their Suss names)
+                            let suss_func = &mut self.functions[idx];
+                            for (i, wit_ty) in wit_params.iter().enumerate() {
+                                if i < suss_func.params.len() {
+                                    suss_func.params[i].1 = wit_ty.clone();
+                                }
+                            }
+                            suss_func.return_type = wit_return;
+                        }
                     }
                 }
                 WorldItem::Interface { .. } | WorldItem::Type(_) => {
@@ -1544,6 +1570,7 @@ pub fn wit_type_to_ir(resolve: &Resolve, ty: &wit_parser::Type) -> Type {
                     ok: result.ok.as_ref().map(|t| Box::new(wit_type_to_ir(resolve, t))),
                     err: result.err.as_ref().map(|t| Box::new(wit_type_to_ir(resolve, t))),
                 },
+                TypeDefKind::Option(inner) => Type::Option(Box::new(wit_type_to_ir(resolve, inner))),
                 _ => Type::Unknown,
             }
         }

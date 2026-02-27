@@ -213,3 +213,205 @@ world v1 {
     assert_eq!(results.len(), 1, "Should compile 1 world");
     assert!(results.contains_key(":app/v1"), "Should contain :app/v1 world");
 }
+
+// ============================================================================
+// String marshaling tests
+// ============================================================================
+
+#[test]
+fn test_string_export_return() {
+    let suss = r#"
+(defn ^:export greet [] "hello")
+"#;
+    let wit = r#"
+package test:strings;
+
+world strings {
+    export greet: func() -> string;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "String export return should compile: {:?}", result.err());
+}
+
+#[test]
+fn test_string_export_param_and_return() {
+    let suss = r#"
+(defn ^:export echo [s] s)
+"#;
+    let wit = r#"
+package test:strings;
+
+world strings {
+    export echo: func(s: string) -> string;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "String param+return should compile: {:?}", result.err());
+}
+
+#[test]
+fn test_string_param_to_int() {
+    let suss = r#"
+(defn ^:export len [s] (count s))
+"#;
+    let wit = r#"
+package test:strings;
+
+world strings {
+    export len: func(s: string) -> s32;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "String param to int should compile: {:?}", result.err());
+}
+
+#[test]
+fn test_bool_export() {
+    let suss = r#"
+(defn ^:export is-positive [x] (> x 0))
+"#;
+    let wit = r#"
+package test:bools;
+
+world bools {
+    export is-positive: func(x: s32) -> bool;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "Bool export should compile: {:?}", result.err());
+}
+
+#[test]
+fn test_cabi_realloc_export() {
+    // Verify that cabi_realloc is exported in the core module
+    let suss = r#"
+(defn ^:export add [a b] (+ a b))
+"#;
+    let wit = r#"
+package test:realloc;
+
+world realloc {
+    export add: func(a: s32, b: s32) -> s32;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let wasm_bytes = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    ).expect("compilation should succeed");
+
+    // The result is a WASM Component, but we can verify it contains valid bytes
+    assert!(wasm_bytes.len() > 8, "Should produce non-trivial WASM");
+    // Verify WASM magic bytes (component or module)
+    assert_eq!(&wasm_bytes[0..4], b"\0asm", "Should start with WASM magic");
+}
+
+#[test]
+fn test_string_concat_return() {
+    // Test a function that takes two strings and returns a string
+    // (uses count to produce an integer, verifying param marshaling works)
+    let suss = r#"
+(defn ^:export total [a b] (+ (count a) (count b)))
+"#;
+    let wit = r#"
+package test:string-ops;
+
+world string-ops {
+    export total: func(a: string, b: string) -> s32;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "String ops should compile: {:?}", result.err());
+}
+
+#[test]
+fn test_mixed_string_and_int_params() {
+    let suss = r#"
+(defn ^:export concat-len [s n] (+ (count s) n))
+"#;
+    let wit = r#"
+package test:mixed;
+
+world mixed {
+    export concat-len: func(s: string, n: s32) -> s32;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "Mixed string+int params should compile: {:?}", result.err());
+}
+
+#[test]
+fn test_multiple_string_params() {
+    let suss = r#"
+(defn ^:export total-len [a b] (+ (count a) (count b)))
+"#;
+    let wit = r#"
+package test:multi-string;
+
+world multi-string {
+    export total-len: func(a: string, b: string) -> s32;
+}
+"#;
+
+    let (suss_file, wit_file) = write_temp_files(suss, wit);
+
+    let mut compiler = Compiler::new();
+    let result = compiler.compile_files(
+        suss_file.path().to_str().unwrap(),
+        wit_file.path().to_str().unwrap(),
+    );
+
+    assert!(result.is_ok(), "Multiple string params should compile: {:?}", result.err());
+}

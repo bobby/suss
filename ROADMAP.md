@@ -886,21 +886,34 @@ suss compile -n myapp.core --src lib --src vendor -w world.wit
 
 ---
 
-## Phase 9: WIT Boundary Marshaling
+## Phase 9: WIT Boundary Marshaling ✓ COMPLETE
 
-Convert between internal GC refs and WIT primitives at export boundaries.
+Convert between internal GC refs and WIT types at export/import boundaries, following the Component Model canonical ABI.
 
-| WIT Type | To GC Ref | From GC Ref |
+| WIT Type | To GC Ref (entry) | From GC Ref (exit) |
 |----------|-----------|-------------|
-| i32 | `(n << 1) \| 1` → `ref.i31` | `i31.get_s >> 1` |
-| i64 | `struct.new $LARGE_INT` | `struct.get` |
-| f64 | `struct.new $FLOAT` | `struct.get` |
-| string | `array.new_data $STRING` | extract bytes |
+| i32/s32 | `(n << 1) \| 1` → `ref.i31` | `i31.get_s >> 1` |
+| i64/s64 | `struct.new $INT64` | `struct.get` |
+| f64 | `struct.new $FLOAT64` | `struct.get` |
+| bool | sentinel → `ref.i31` (TRUE=4, FALSE=2) | `i31.get_s == TRUE` → i32 |
+| string | linear mem (ptr,len) → GC `array<i8>` | GC `array<i8>` → linear mem, retptr |
+| result | i32 discriminant (0=Ok, 1=Err) | drop + i32 const 0 |
 
-**Tasks:**
-- [ ] Implement marshaling for all primitive types
-- [ ] Implement list<T> ↔ vector marshaling
-- [ ] Implement record ↔ map marshaling (if needed)
+**Completed:**
+- [x] `cabi_realloc` export (bump allocator using `heap_ptr` global)
+- [x] String export marshaling (GC array ↔ linear memory with retptr for canonical ABI)
+- [x] String import marshaling (retptr convention for multi-value returns)
+- [x] Bool entry/exit marshaling via sentinel values
+- [x] WIT types applied to exported function params via `validate_exports`
+- [x] Canonical ABI `MAX_FLAT_RESULTS = 1` compliance (retptr encoding)
+- [x] `Type::Option(Box<Type>)` variant added to IR
+- [x] `type_to_wit_string()` returns `String`, handles List/Result/Option composite types
+
+**Not yet implemented:**
+- [ ] list<T> ↔ vector marshaling
+- [ ] record ↔ map marshaling
+- [ ] option<T> marshaling (codegen)
+- [ ] Full i64/f64 import return boxing (currently truncated to i32)
 
 ---
 
@@ -1094,7 +1107,7 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 - ✓ **Phase 13: Multi-arity functions** - `(defn foo ([x] x) ([x y] (+ x y)))` syntax
 - ✓ **Phase 11: WASI CLI** - Command components with `-main` functions
 - ✓ **Phase 8.9: REPL enhancements** - Core caching, WASM caching, tab completion, stateful sessions
-- **Phase 9: WIT marshaling** - Component boundary type conversion
+- ✓ **Phase 9: WIT marshaling** - String/bool/int boundary marshaling with canonical ABI compliance
 - ✓ **Phase 9b: Transients** - Performance optimization
 - **Phase 10: wasm-opt** - Binary optimization
 
