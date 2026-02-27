@@ -125,6 +125,10 @@ Function Index Layout:
   - WASM compilation caching with LRU eviction (hash-based, 100 entries)
   - Tab completion for builtins, core.sus symbols, and user definitions
   - `SessionState` with integrated caching, symbol table, and namespace management
+  - Hot reload: poll mtimes of required namespace files before each prompt, auto-reload on change
+- [x] Phase 10 complete: wasm-opt integration
+  - `-O`/`--optimize` flag on all compile subcommand modes
+  - Shells out to `wasm-opt -O3` with GC feature flags, reports size savings
 - [x] Phase 9 complete: WIT boundary marshaling (all types except record)
   - i64/f64 import return boxing with scratch locals
   - i64 export entry/exit marshaling (INT64 struct box/unbox)
@@ -855,7 +859,7 @@ This was previously handled by the deleted `generate_expr_wit_inner()`.
 - [x] Stateful sessions - `SessionState` accumulates defs, manages namespaces, caches compilations
 - [x] `*ns*` dynamic var - Clojure-style current namespace binding
 - [x] Definition redefinition - Handle `(defn foo ...)` replacing previous `foo`
-- [ ] Hot reload - Watch source files, auto-reload namespaces on change
+- [x] Hot reload - Poll mtimes of required namespace files before each prompt, auto-reload on change
 - [ ] Incremental parsing - Cache parsed EDN per file to speed up recompilation
 
 ### Usage
@@ -886,9 +890,10 @@ suss compile -n myapp.core --src lib --src vendor -w world.wit
 | `lib.rs` | `DependencyResolver`, `ns_to_path()`, `compile_with_namespaces()` |
 | `lower.rs` | `ns_aliases`, `referred_symbols`, `resolve_func_name()` |
 | `error.rs` | `CyclicDependency`, `IoError` variants |
-| `args.rs` | `-n`/`--namespace` and `--src` CLI flags |
-| `main.rs` | `compile_namespace()` command handler, stateful REPL |
-| `repl.rs` | **NEW** - `ReplState`, `handle_in_ns()`, `handle_require()`, definition persistence |
+| `args.rs` | `-n`/`--namespace`, `--src` CLI flags, `-O`/`--optimize` flag |
+| `main.rs` | `compile_namespace()`, stateful REPL, hot reload check, `run_wasm_opt()` |
+| `repl.rs` | `ReplState`, `handle_in_ns()`, `handle_require()`, definition persistence |
+| `session.rs` | `LoadedNamespace` struct, `check_for_reloads()` mtime polling |
 
 ---
 
@@ -942,14 +947,15 @@ Mutable "transient" variants for batch construction:
 
 ---
 
-## Phase 10: wasm-opt Integration
+## Phase 10: wasm-opt Integration ✓ COMPLETE
 
 Run Binaryen's optimizer on compiled output.
 
 **Tasks:**
-- [ ] Add `--optimize` / `-O` flag to compile command
-- [ ] Shell out to `wasm-opt -O3` on generated `.wasm` files
-- [ ] Optionally bundle wasm-opt or require it in PATH
+- [x] Add `--optimize` / `-O` flag to compile command
+- [x] Shell out to `wasm-opt -O3` on generated `.wasm` files with GC feature flags
+- [x] Require wasm-opt in PATH with helpful error message (`brew install binaryen`)
+- [x] Report size savings (original bytes → optimized bytes, % reduction)
 
 Expected benefit: ~1.9x speedup on WasmGC code (per V8 benchmarks).
 
@@ -1108,16 +1114,17 @@ Then the raw i32 helper functions become dead code that can be removed (Phase 6)
 | **11** | WASI CLI commands | No | ✓ COMPLETE |
 | **12** | List/Seq operations | No | ✓ COMPLETE |
 | **13** | Multi-arity functions | No | ✓ COMPLETE |
-| **8.9** | REPL enhancements | No | ✓ MOSTLY COMPLETE (*ns*, var redef, caching, completion) |
+| **8.9** | REPL enhancements | No | ✓ MOSTLY COMPLETE (*ns*, var redef, caching, completion, hot reload) |
+| **10** | wasm-opt integration | No | ✓ COMPLETE |
 
 ### After Self-Hosting
 - ✓ **Phase 7b: WIT consolidation** - Reduced codegen duplication (~400 lines)
 - ✓ **Phase 13: Multi-arity functions** - `(defn foo ([x] x) ([x y] (+ x y)))` syntax
 - ✓ **Phase 11: WASI CLI** - Command components with `-main` functions
-- ✓ **Phase 8.9: REPL enhancements** - Core caching, WASM caching, tab completion, stateful sessions
+- ✓ **Phase 8.9: REPL enhancements** - Core caching, WASM caching, tab completion, stateful sessions, hot reload
 - ✓ **Phase 9: WIT marshaling** - Full boundary marshaling (i32/i64/f64/bool/string/option/list) with canonical ABI compliance
 - ✓ **Phase 9b: Transients** - Performance optimization
-- **Phase 10: wasm-opt** - Binary optimization
+- ✓ **Phase 10: wasm-opt** - Binary optimization via `-O`/`--optimize` flag
 
 ---
 
