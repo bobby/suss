@@ -8,7 +8,7 @@
 //! - Strings: arrayref (STRING type)
 
 use suss_compile::Compiler;
-use wasmtime::{Config, Engine, Instance, Module, Store, Val};
+use wasmtime::{Config, Engine, Instance, Linker, Module, Store, Val};
 
 /// Create a GC-enabled wasmtime engine
 fn gc_engine() -> Engine {
@@ -57,6 +57,22 @@ fn decode_i31_from_anyref(store: &mut Store<()>, val: &Val) -> i64 {
     }
 }
 
+/// Instantiate a WASM module with print_str host import support
+fn instantiate_with_print(engine: &Engine, module: &Module, store: &mut Store<()>) -> Instance {
+    let mut linker: Linker<()> = Linker::new(engine);
+    linker.func_wrap("suss", "print_str", |mut caller: wasmtime::Caller<'_, ()>, ptr: i32, len: i32| {
+        if let Some(memory) = caller.get_export("memory").and_then(|e| e.into_memory()) {
+            let mut buf = vec![0u8; len as usize];
+            if memory.read(&caller, ptr as usize, &mut buf).is_ok() {
+                use std::io::Write;
+                let _ = std::io::stdout().write_all(&buf);
+                let _ = std::io::stdout().flush();
+            }
+        }
+    }).expect("linker func_wrap failed");
+    linker.instantiate(store, module).expect("instantiation failed")
+}
+
 fn run_expr_i32(expr: &str) -> i32 {
     let mut compiler = Compiler::new();
     let wasm_bytes = compiler.compile_expr(expr).expect("compilation failed");
@@ -64,7 +80,7 @@ fn run_expr_i32(expr: &str) -> i32 {
     let engine = gc_engine();
     let module = Module::new(&engine, &wasm_bytes).expect("module creation failed");
     let mut store = Store::new(&engine, ());
-    let instance = Instance::new(&mut store, &module, &[]).expect("instantiation failed");
+    let instance = instantiate_with_print(&engine, &module, &mut store);
 
     let eval_fn = instance.get_func(&mut store, "eval").expect("eval function not found");
     let mut results = vec![Val::null_any_ref()];
@@ -80,7 +96,7 @@ fn run_expr_i64(expr: &str) -> i64 {
     let engine = gc_engine();
     let module = Module::new(&engine, &wasm_bytes).expect("module creation failed");
     let mut store = Store::new(&engine, ());
-    let instance = Instance::new(&mut store, &module, &[]).expect("instantiation failed");
+    let instance = instantiate_with_print(&engine, &module, &mut store);
 
     let eval_fn = instance.get_func(&mut store, "eval").expect("eval function not found");
     let mut results = vec![Val::null_any_ref()];
@@ -96,7 +112,7 @@ fn run_expr_f64(expr: &str) -> f64 {
     let engine = gc_engine();
     let module = Module::new(&engine, &wasm_bytes).expect("module creation failed");
     let mut store = Store::new(&engine, ());
-    let instance = Instance::new(&mut store, &module, &[]).expect("instantiation failed");
+    let instance = instantiate_with_print(&engine, &module, &mut store);
 
     let eval_fn = instance.get_func(&mut store, "eval").expect("eval function not found");
     let mut results = vec![Val::null_any_ref()];
@@ -140,7 +156,7 @@ fn run_expr_bool(expr: &str) -> bool {
     let engine = gc_engine();
     let module = Module::new(&engine, &wasm_bytes).expect("module creation failed");
     let mut store = Store::new(&engine, ());
-    let instance = Instance::new(&mut store, &module, &[]).expect("instantiation failed");
+    let instance = instantiate_with_print(&engine, &module, &mut store);
 
     let eval_fn = instance.get_func(&mut store, "eval").expect("eval function not found");
     let mut results = vec![Val::null_any_ref()];
@@ -299,21 +315,35 @@ fn run_expr_string(expr: &str) -> String {
     let mut compiler = Compiler::new();
     let wasm_bytes = compiler.compile_expr(expr).expect("compilation failed");
 
-    let engine = Engine::default();
+    let engine = gc_engine();
     let module = Module::new(&engine, &wasm_bytes).expect("module creation failed");
     let mut store = Store::new(&engine, ());
-    let instance = Instance::new(&mut store, &module, &[]).expect("instantiation failed");
+    let instance = instantiate_with_print(&engine, &module, &mut store);
 
-    let eval_fn = instance
-        .get_typed_func::<(), (i32, i32)>(&mut store, "eval")
-        .expect("eval function not found");
+    let eval_fn = instance.get_func(&mut store, "eval").expect("eval function not found");
+    let mut results = vec![Val::null_any_ref()];
+    eval_fn.call(&mut store, &[], &mut results).expect("call failed");
 
-    let (ptr, len) = eval_fn.call(&mut store, ()).expect("call failed");
-
-    let memory = instance.get_memory(&mut store, "memory").expect("memory not found");
-    let mut buf = vec![0u8; len as usize];
-    memory.read(&store, ptr as usize, &mut buf).expect("memory read failed");
-    String::from_utf8(buf).expect("invalid utf8")
+    match &results[0] {
+        Val::AnyRef(Some(anyref)) => {
+            match anyref.as_array(&store) {
+                Ok(Some(array_ref)) => {
+                    let len = array_ref.len(&store).expect("array len failed");
+                    let mut bytes = Vec::with_capacity(len as usize);
+                    for i in 0..len {
+                        match array_ref.get(&mut store, i) {
+                            Ok(Val::I32(b)) => bytes.push(b as u8),
+                            other => panic!("Expected i32 byte, got {:?}", other),
+                        }
+                    }
+                    String::from_utf8(bytes).expect("invalid utf8")
+                }
+                _ => panic!("Expected GC string array, got non-array"),
+            }
+        }
+        Val::AnyRef(None) => String::new(), // null = empty string
+        _ => panic!("Unexpected value type: {:?}", results[0]),
+    }
 }
 
 /// Run an expression and verify it compiles and executes without error.
@@ -325,7 +355,7 @@ fn run_expr_is_gc_struct(expr: &str) -> bool {
     let engine = gc_engine();
     let module = Module::new(&engine, &wasm_bytes).expect("module creation failed");
     let mut store = Store::new(&engine, ());
-    let instance = Instance::new(&mut store, &module, &[]).expect("instantiation failed");
+    let instance = instantiate_with_print(&engine, &module, &mut store);
 
     let eval_fn = instance.get_func(&mut store, "eval").expect("eval function not found");
     let mut results = vec![Val::null_any_ref()];
@@ -2519,4 +2549,106 @@ fn test_doseq_basic() {
 fn test_when_first() {
     let result = run_expr_i32("(when-first [x [42 1 2]] x)");
     assert_eq!(result, 42);
+}
+
+// ============================================================
+// str multi-arg tests
+// ============================================================
+
+#[test]
+fn test_str_multi_arg_literals() {
+    // All-literal strings - compile-time optimization
+    assert_eq!(run_expr_string(r#"(str "hello" " " "world")"#), "hello world");
+}
+
+#[test]
+fn test_str_mixed_types() {
+    // Mixed types - runtime via core.sus str function
+    assert_eq!(run_expr_string(r#"(str "x=" 42)"#), "x=42");
+}
+
+#[test]
+fn test_str_single_int() {
+    assert_eq!(run_expr_string("(str 123)"), "123");
+}
+
+#[test]
+fn test_str_with_nil() {
+    assert_eq!(run_expr_string(r#"(str "a" nil "b")"#), "ab");
+}
+
+#[test]
+fn test_str_empty() {
+    assert_eq!(run_expr_string("(str)"), "");
+}
+
+/// Run an expression and capture any stdout output from print/println
+fn run_expr_capture_stdout(expr: &str) -> String {
+    use std::sync::{Arc, Mutex};
+
+    let mut compiler = Compiler::new();
+    let wasm_bytes = compiler.compile_expr(expr).expect("compilation failed");
+
+    let engine = gc_engine();
+    let module = Module::new(&engine, &wasm_bytes).expect("module creation failed");
+    let mut store = Store::new(&engine, ());
+
+    let output = Arc::new(Mutex::new(Vec::<u8>::new()));
+    let output_clone = output.clone();
+
+    let mut linker: Linker<()> = Linker::new(&engine);
+    linker.func_wrap("suss", "print_str", move |mut caller: wasmtime::Caller<'_, ()>, ptr: i32, len: i32| {
+        if let Some(memory) = caller.get_export("memory").and_then(|e| e.into_memory()) {
+            let mut buf = vec![0u8; len as usize];
+            if memory.read(&caller, ptr as usize, &mut buf).is_ok() {
+                output_clone.lock().unwrap().extend_from_slice(&buf);
+            }
+        }
+    }).expect("linker func_wrap failed");
+
+    let instance = linker.instantiate(&mut store, &module).expect("instantiation failed");
+    let eval_fn = instance.get_func(&mut store, "eval").expect("eval function not found");
+    let mut results = vec![Val::null_any_ref()];
+    eval_fn.call(&mut store, &[], &mut results).expect("call failed");
+
+    let captured = output.lock().unwrap();
+    String::from_utf8(captured.clone()).expect("invalid utf8")
+}
+
+#[test]
+fn test_println_basic() {
+    let output = run_expr_capture_stdout(r#"(println "hello")"#);
+    assert_eq!(output, "hello\n");
+}
+
+#[test]
+fn test_println_multiple_args() {
+    let output = run_expr_capture_stdout(r#"(println "hello" "world")"#);
+    assert_eq!(output, "hello world\n");
+}
+
+#[test]
+fn test_println_no_args() {
+    let output = run_expr_capture_stdout("(println)");
+    assert_eq!(output, "\n");
+}
+
+#[test]
+fn test_println_number() {
+    let output = run_expr_capture_stdout("(println 42)");
+    assert_eq!(output, "42\n");
+}
+
+#[test]
+fn test_print_no_newline() {
+    let output = run_expr_capture_stdout(r#"(print "hello")"#);
+    assert_eq!(output, "hello");
+}
+
+#[test]
+fn test_prn_basic() {
+    // prn uses pr-str which should print in readable form
+    // For now, verify it outputs the value followed by newline
+    let output = run_expr_capture_stdout("(prn 42)");
+    assert_eq!(output, "42\n");
 }

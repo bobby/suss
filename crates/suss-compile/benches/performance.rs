@@ -7,7 +7,7 @@
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
 use suss_compile::Compiler;
-use wasmtime::{Config, Engine, Instance, Module, Store, Val};
+use wasmtime::{Config, Engine, Linker, Module, Store, Val};
 
 /// Create a GC-enabled wasmtime engine
 fn gc_engine() -> Engine {
@@ -25,12 +25,24 @@ fn compile_expr(expr: &str) -> Vec<u8> {
     compiler.compile_expr(expr).expect("compilation failed")
 }
 
+/// Instantiate a WASM module with print_str host import support
+fn instantiate_with_print(engine: &Engine, module: &Module, store: &mut Store<()>) -> wasmtime::Instance {
+    let mut linker: Linker<()> = Linker::new(engine);
+    linker.func_wrap("suss", "print_str", |mut caller: wasmtime::Caller<'_, ()>, ptr: i32, len: i32| {
+        if let Some(memory) = caller.get_export("memory").and_then(|e| e.into_memory()) {
+            let mut buf = vec![0u8; len as usize];
+            let _ = memory.read(&caller, ptr as usize, &mut buf);
+        }
+    }).expect("linker func_wrap failed");
+    linker.instantiate(store, module).expect("instantiation failed")
+}
+
 /// Compile, load, and run an expression
 fn run_expr(engine: &Engine, expr: &str) -> Val {
     let wasm_bytes = compile_expr(expr);
     let module = Module::new(engine, &wasm_bytes).expect("module failed");
     let mut store = Store::new(engine, ());
-    let instance = Instance::new(&mut store, &module, &[]).expect("instantiation failed");
+    let instance = instantiate_with_print(engine, &module, &mut store);
     let eval_fn = instance.get_func(&mut store, "eval").expect("eval not found");
     let mut results = vec![Val::null_any_ref()];
     eval_fn.call(&mut store, &[], &mut results).expect("call failed");
@@ -127,7 +139,7 @@ fn bench_execution(c: &mut Criterion) {
     group.bench_function("add_2_exec", |b| {
         b.iter(|| {
             let mut store = Store::new(&engine, ());
-            let instance = Instance::new(&mut store, &add_module, &[]).unwrap();
+            let instance = instantiate_with_print(&engine, &add_module, &mut store);
             let eval_fn = instance.get_func(&mut store, "eval").unwrap();
             let mut results = vec![Val::null_any_ref()];
             eval_fn.call(&mut store, &[], &mut results).unwrap();
@@ -138,7 +150,7 @@ fn bench_execution(c: &mut Criterion) {
     group.bench_function("nested_arithmetic_exec", |b| {
         b.iter(|| {
             let mut store = Store::new(&engine, ());
-            let instance = Instance::new(&mut store, &nested_module, &[]).unwrap();
+            let instance = instantiate_with_print(&engine, &nested_module, &mut store);
             let eval_fn = instance.get_func(&mut store, "eval").unwrap();
             let mut results = vec![Val::null_any_ref()];
             eval_fn.call(&mut store, &[], &mut results).unwrap();
@@ -149,7 +161,7 @@ fn bench_execution(c: &mut Criterion) {
     group.bench_function("vector_create_exec", |b| {
         b.iter(|| {
             let mut store = Store::new(&engine, ());
-            let instance = Instance::new(&mut store, &vector_module, &[]).unwrap();
+            let instance = instantiate_with_print(&engine, &vector_module, &mut store);
             let eval_fn = instance.get_func(&mut store, "eval").unwrap();
             let mut results = vec![Val::null_any_ref()];
             eval_fn.call(&mut store, &[], &mut results).unwrap();
@@ -160,7 +172,7 @@ fn bench_execution(c: &mut Criterion) {
     group.bench_function("vector_conj_exec", |b| {
         b.iter(|| {
             let mut store = Store::new(&engine, ());
-            let instance = Instance::new(&mut store, &conj_module, &[]).unwrap();
+            let instance = instantiate_with_print(&engine, &conj_module, &mut store);
             let eval_fn = instance.get_func(&mut store, "eval").unwrap();
             let mut results = vec![Val::null_any_ref()];
             eval_fn.call(&mut store, &[], &mut results).unwrap();
@@ -171,7 +183,7 @@ fn bench_execution(c: &mut Criterion) {
     group.bench_function("if_exec", |b| {
         b.iter(|| {
             let mut store = Store::new(&engine, ());
-            let instance = Instance::new(&mut store, &if_module, &[]).unwrap();
+            let instance = instantiate_with_print(&engine, &if_module, &mut store);
             let eval_fn = instance.get_func(&mut store, "eval").unwrap();
             let mut results = vec![Val::null_any_ref()];
             eval_fn.call(&mut store, &[], &mut results).unwrap();
@@ -182,7 +194,7 @@ fn bench_execution(c: &mut Criterion) {
     group.bench_function("loop_10_exec", |b| {
         b.iter(|| {
             let mut store = Store::new(&engine, ());
-            let instance = Instance::new(&mut store, &loop_module, &[]).unwrap();
+            let instance = instantiate_with_print(&engine, &loop_module, &mut store);
             let eval_fn = instance.get_func(&mut store, "eval").unwrap();
             let mut results = vec![Val::null_any_ref()];
             eval_fn.call(&mut store, &[], &mut results).unwrap();

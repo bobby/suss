@@ -506,7 +506,7 @@ pub mod gc_types {
 
     /// Number of runtime helper functions emitted before user functions.
     /// Functions: hash_string, get_type_id, init_intern_tables, cabi_realloc
-    pub const NUM_RUNTIME_HELPERS: u32 = 4;
+    pub const NUM_RUNTIME_HELPERS: u32 = 5;
 
     /// Number of protocol implementation wrapper functions
     /// Reduced: protocol impls now in core.sus via extend-type
@@ -804,6 +804,8 @@ pub struct Module {
     /// Methods per type for dispatch table indexing (max_method_id + 1).
     /// Used in formula: dispatch_slot * methods_per_type + method_id
     pub methods_per_type: u32,
+    /// Whether the module uses print-str (requires host import)
+    pub has_print: bool,
 }
 
 /// An imported function from a WIT interface
@@ -836,6 +838,7 @@ impl Module {
             // Default to NUM_BUILTIN methods (9 is the highest built-in method ID)
             max_method_id: method_ids::NUM_BUILTIN - 1,
             methods_per_type: method_ids::NUM_BUILTIN,
+            has_print: false,
         }
     }
 
@@ -1034,6 +1037,7 @@ impl Expr {
             Expr::If { ty, .. } => ty.clone(),
             Expr::Coerce { to, .. } => to.clone(),
             Expr::StrConcat(_) => Type::String,
+            Expr::PrintStr(_) => Type::GcRef, // Returns nil
             // LocalGet/Set now carry type info
             Expr::LocalGet { ty, .. } => ty.clone(),
             Expr::LocalSet { ty, .. } => ty.clone(),
@@ -1225,6 +1229,10 @@ pub enum Expr {
 
     /// String concatenation
     StrConcat(Vec<Expr>),
+
+    /// Print a string to stdout via host import
+    /// Takes a GC string (array<i8>) and writes it. Returns nil.
+    PrintStr(Box<Expr>),
 
     /// Type coercion
     Coerce {

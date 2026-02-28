@@ -8,7 +8,7 @@ use suss_core::{Edn, Keyword, Number};
 use suss_reader::{parse_all, ParserState};
 use std::collections::HashMap;
 use std::path::Path;
-use wasmtime::{Config, Engine, Instance, Module, Store, Val};
+use wasmtime::{Config, Engine, Linker, Module, Store, Val};
 
 /// A single conformance test case
 #[derive(Debug)]
@@ -196,7 +196,14 @@ fn run_test(test: &ConformanceTest) -> TestResult {
     };
 
     let mut store = Store::new(&engine, ());
-    let instance = match Instance::new(&mut store, &module, &[]) {
+    let mut linker: Linker<()> = Linker::new(&engine);
+    linker.func_wrap("suss", "print_str", |mut caller: wasmtime::Caller<'_, ()>, ptr: i32, len: i32| {
+        if let Some(memory) = caller.get_export("memory").and_then(|e| e.into_memory()) {
+            let mut buf = vec![0u8; len as usize];
+            let _ = memory.read(&caller, ptr as usize, &mut buf);
+        }
+    }).expect("linker func_wrap failed");
+    let instance = match linker.instantiate(&mut store, &module) {
         Ok(i) => i,
         Err(e) => {
             return TestResult::Error {

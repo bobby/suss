@@ -137,8 +137,18 @@ fn run_eval_core_module(wasm_bytes: &[u8]) -> Result<(), String> {
     // Create store (no WASI context needed for pure expressions)
     let mut store = Store::new(&engine, ());
 
-    // Create linker
-    let linker: Linker<()> = Linker::new(&engine);
+    // Create linker with print_str support
+    let mut linker: Linker<()> = Linker::new(&engine);
+    linker.func_wrap("suss", "print_str", |mut caller: wasmtime::Caller<'_, ()>, ptr: i32, len: i32| {
+        if let Some(memory) = caller.get_export("memory").and_then(|e| e.into_memory()) {
+            let mut buf = vec![0u8; len as usize];
+            if memory.read(&caller, ptr as usize, &mut buf).is_ok() {
+                use std::io::Write;
+                let _ = std::io::stdout().write_all(&buf);
+                let _ = std::io::stdout().flush();
+            }
+        }
+    }).map_err(|e| format!("Linker error: {}", e))?;
 
     // Instantiate via linker
     let instance = linker.instantiate(&mut store, &module)
@@ -229,8 +239,18 @@ fn run_eval_core_module_string(wasm_bytes: &[u8]) -> Result<(), String> {
     // Create store (no WASI context needed for pure expressions)
     let mut store = Store::new(&engine, ());
 
-    // Create linker
-    let linker: Linker<()> = Linker::new(&engine);
+    // Create linker with print_str support
+    let mut linker: Linker<()> = Linker::new(&engine);
+    linker.func_wrap("suss", "print_str", |mut caller: wasmtime::Caller<'_, ()>, ptr: i32, len: i32| {
+        if let Some(memory) = caller.get_export("memory").and_then(|e| e.into_memory()) {
+            let mut buf = vec![0u8; len as usize];
+            if memory.read(&caller, ptr as usize, &mut buf).is_ok() {
+                use std::io::Write;
+                let _ = std::io::stdout().write_all(&buf);
+                let _ = std::io::stdout().flush();
+            }
+        }
+    }).map_err(|e| format!("Linker error: {}", e))?;
 
     // Instantiate via linker
     let instance = linker.instantiate(&mut store, &module)

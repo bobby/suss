@@ -3276,3 +3276,50 @@
   [a f]
   (set! (.-validator a) f)
   nil)
+
+;; ============================================================
+;; I/O: print, println, prn
+;; ============================================================
+
+(defn print
+  "Prints the object(s) to stdout using str for string conversion.
+   print does not add a newline."
+  [& args]
+  (let [len (count args)]
+    (when (> len 0)
+      (print-str (str (nth args 0)))
+      (loop [i 1]
+        (when (< i len)
+          (print-str " ")
+          (print-str (str (nth args i)))
+          (recur (+ i 1)))))))
+
+(defn println
+  "Same as print followed by a newline."
+  [& args]
+  (let [len (count args)]
+    (if (= len 0)
+      (print-str "\n")
+      (do
+        (print-str (str (nth args 0)))
+        (loop [i 1]
+          (when (< i len)
+            (print-str " ")
+            (print-str (str (nth args i)))
+            (recur (+ i 1))))
+        (print-str "\n")))))
+
+(defn prn
+  "Same as pr followed by a newline. Prints in readable form."
+  [& args]
+  (let [len (count args)]
+    (if (= len 0)
+      (print-str "\n")
+      (do
+        (print-str (pr-str (nth args 0)))
+        (loop [i 1]
+          (when (< i len)
+            (print-str " ")
+            (print-str (pr-str (nth args i)))
+            (recur (+ i 1))))
+        (print-str "\n")))))

@@ -29,9 +29,9 @@ use crate::ir::{BinOp, Expr, Function as IrFunc, Module, Type, UnOp, FieldType a
 // ============================================================================
 
 /// Number of runtime helper functions emitted before user functions.
-/// Functions: hash_string, get_type_id, init_intern_tables, cabi_realloc
+/// Functions: hash_string, get_type_id, init_intern_tables, cabi_realloc, print_str
 /// Collection algorithms (vector trie, HAMT) are implemented in core.sus.
-const NUM_RUNTIME_HELPERS: u32 = 4;
+const NUM_RUNTIME_HELPERS: u32 = 5;
 
 /// Function index offsets for runtime helpers (relative to start of functions)
 mod helper_funcs {
@@ -50,6 +50,11 @@ mod helper_funcs {
     /// $cabi_realloc(old_ptr: i32, old_size: i32, align: i32, new_size: i32) -> i32
     /// Component Model canonical ABI allocator (bump allocator using heap_ptr)
     pub const CABI_REALLOC: u32 = 3;
+
+    /// $print_str(value: eqref) -> ()
+    /// Copies GC string to linear memory and calls host print_str import.
+    /// No-op if module doesn't use print-str.
+    pub const PRINT_STR: u32 = 4;
 }
 
 /// Relative offsets for helper function signatures (added to helper_type_base())
@@ -65,10 +70,13 @@ mod helper_type_offsets {
 
     /// Type for $cabi_realloc: (i32, i32, i32, i32) -> i32
     pub const CABI_REALLOC: u32 = 3;
+
+    /// Type for $print_str: (eqref) -> ()
+    pub const PRINT_STR: u32 = 4;
 }
 
 /// Number of helper function types
-const NUM_HELPER_TYPES: u32 = 4;
+const NUM_HELPER_TYPES: u32 = 5;
 
 /// Relative offsets for protocol function signatures (added to protocol_type_base())
 mod protocol_type_offsets {
@@ -150,8 +158,14 @@ impl<'a> CodeGen<'a> {
         }
     }
 
-    /// Number of imported functions
+    /// Number of imported functions (WIT imports + print_str)
+    /// print_str is always imported so function indices are unconditionally stable.
     fn num_imports(&self) -> u32 {
+        self.ir.imports.len() as u32 + 1
+    }
+
+    /// Function index of the host print_str import (last import, after WIT imports)
+    fn print_str_import_idx(&self) -> u32 {
         self.ir.imports.len() as u32
     }
 
@@ -419,10 +433,9 @@ impl<'a> CodeGen<'a> {
                     f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
                     {
                         // Call hash_string to get comparable i32 value
-                        // hash_string is function index 0 (first runtime helper)
                         f.instruction(&Instruction::LocalGet(scratch));
                         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
-                        f.instruction(&Instruction::Call(0)); // hash_string
+                        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH_STRING)));
                     }
                     f.instruction(&Instruction::Else);
                     {
@@ -465,9 +478,8 @@ impl<'a> CodeGen<'a> {
                         {
                             // Unknown struct type (e.g., MapEntry, custom deftypes)
                             // Call get_type_id to get a unique i32 for comparison
-                            // get_type_id is function index 1 (second runtime helper)
                             f.instruction(&Instruction::LocalGet(scratch));
-                            f.instruction(&Instruction::Call(1)); // get_type_id
+                            f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));
                         }
                         f.instruction(&Instruction::End);
                     }
@@ -622,13 +634,19 @@ impl<'a> CodeGen<'a> {
     /// Generate a core WASM module (no WIT, used for standalone expression evaluation)
     fn generate_core_module(&self) -> CompileResult<Vec<u8>> {
         let mut module = WasmModule::new();
-        let type_offset = self.func_type_offset();
+        // type_offset starts after GC + helper + protocol types, plus 1 for the print_str import type
+        let import_type_idx = self.func_type_offset();
+        let type_offset = import_type_idx + 1; // +1 for print_str import type
 
-        // Type section - GC types first, then helper types, then protocol types, then user function signatures
+        // Type section - GC types first, then helper types, then protocol types,
+        // then print_str import type, then user function signatures
         let mut types = TypeSection::new();
         self.emit_gc_types(&mut types);
         self.emit_helper_types(&mut types);
         self.emit_protocol_types(&mut types);
+
+        // print_str import type: (i32, i32) -> () — always present
+        types.ty().function(vec![ValType::I32, ValType::I32], vec![]);
 
         // Add user function types, but skip closure/builtin/userfn wrappers since they use pre-defined types
         let mut type_count = types.len();
@@ -662,14 +680,22 @@ impl<'a> CodeGen<'a> {
 
         module.section(&types);
 
+        // Import section - print_str host import (always present)
+        {
+            let mut imports = ImportSection::new();
+            imports.import("suss", "print_str", EntityType::Function(import_type_idx));
+            module.section(&imports);
+        }
+
         // Function section - helper functions first, then user functions
         // Collection helpers (vector trie, HAMT) removed - now in core.sus
         let mut functions = FunctionSection::new();
-        // Runtime helper functions: hash_string, get_type_id, init_intern_tables, cabi_realloc
+        // Runtime helper functions: hash_string, get_type_id, init_intern_tables, cabi_realloc, print_str
         functions.function(self.helper_type(helper_type_offsets::HASH_STRING));
         functions.function(self.helper_type(helper_type_offsets::GET_TYPE_ID));
         functions.function(self.helper_type(helper_type_offsets::INIT_INTERN_TABLES));
         functions.function(self.helper_type(helper_type_offsets::CABI_REALLOC));
+        functions.function(self.helper_type(helper_type_offsets::PRINT_STR));
         // User functions: closure/builtin wrappers use pre-defined types, others use type_offset
         let mut non_closure_type_idx = 0u32;
         for func in &self.ir.functions {
@@ -862,6 +888,9 @@ impl<'a> CodeGen<'a> {
             types.ty().function(params, results);
         }
 
+        // print_str import type: (i32, i32) -> () — always present
+        types.ty().function(vec![ValType::I32, ValType::I32], vec![]);
+
         // Local function types
         // Skip closure/builtin/userfn/variadic wrappers - they use pre-defined CLOSURE_FN_* types
         // Exported functions use WIT types (for component model compatibility)
@@ -910,8 +939,8 @@ impl<'a> CodeGen<'a> {
         let import_type_base = type_base + NUM_HELPER_TYPES + protocol_types::NUM_PROTOCOL_TYPES;
         let local_func_type_base = import_type_base + num_imports;
 
-        // Import section - WASI functions
-        if !self.ir.imports.is_empty() {
+        // Import section - WASI functions + print_str (always present)
+        {
             let mut imports = ImportSection::new();
             for (idx, import) in self.ir.imports.iter().enumerate() {
                 imports.import(
@@ -920,6 +949,12 @@ impl<'a> CodeGen<'a> {
                     EntityType::Function(import_type_base + idx as u32),
                 );
             }
+            // print_str is always imported (unconditionally stable function indices)
+            imports.import(
+                "suss",
+                "print_str",
+                EntityType::Function(import_type_base + self.ir.imports.len() as u32),
+            );
             module.section(&imports);
         }
 
@@ -928,11 +963,12 @@ impl<'a> CodeGen<'a> {
         // Closure/builtin wrappers use pre-defined CLOSURE_FN_* types
         // Other user functions use type indices starting at local_func_type_base
         let mut functions = FunctionSection::new();
-        // Helper functions (hash_string, get_type_id, init_intern_tables, cabi_realloc)
+        // Helper functions (hash_string, get_type_id, init_intern_tables, cabi_realloc, print_str)
         functions.function(type_base + helper_type_offsets::HASH_STRING);
         functions.function(type_base + helper_type_offsets::GET_TYPE_ID);
         functions.function(type_base + helper_type_offsets::INIT_INTERN_TABLES);
         functions.function(type_base + helper_type_offsets::CABI_REALLOC);
+        functions.function(type_base + helper_type_offsets::PRINT_STR);
         // User functions - closure wrappers use pre-defined types, others use unique types
         let mut non_closure_idx = 0u32;
         for func in &self.ir.functions {
@@ -1089,7 +1125,7 @@ impl<'a> CodeGen<'a> {
     /// In the no-imports code path, function index = helper func index.
     fn emit_start_section(&self, module: &mut WasmModule) {
         module.section(&wasm_encoder::StartSection {
-            function_index: helper_funcs::INIT_INTERN_TABLES,
+            function_index: self.num_imports() + helper_funcs::INIT_INTERN_TABLES,
         });
     }
 
@@ -1608,6 +1644,10 @@ impl<'a> CodeGen<'a> {
             vec![ValType::I32, ValType::I32, ValType::I32, ValType::I32],
             vec![ValType::I32],
         );
+
+        // Type 4: $print_str: (eqref) -> ()
+        // Takes GC string, copies to linear memory, calls host import
+        types.ty().function(vec![eqref], vec![]);
     }
 
     /// Emit function types for protocol methods.
@@ -1651,6 +1691,9 @@ impl<'a> CodeGen<'a> {
 
         // $cabi_realloc - Component Model canonical ABI allocator (func 3 after imports)
         code.function(&self.generate_cabi_realloc_func());
+
+        // $print_str - copy GC string to linear memory and call host import (func 4 after imports)
+        code.function(&self.generate_print_str_func());
 
         Ok(())
     }
@@ -2080,6 +2123,109 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::LocalGet(4));
 
         f.instruction(&Instruction::End);
+        f
+    }
+
+    /// Generate $print_str helper function.
+    ///
+    /// Signature: (value: eqref) -> ()
+    /// Copies a GC string (array<i8>) to linear memory and calls the host import.
+    /// If has_print is false, this is a no-op.
+    fn generate_print_str_func(&self) -> Function {
+        use crate::ir::gc_types;
+
+        // Param 0: value (eqref) - the GC string to print
+        // Local 1: str_ref (eqref) - cast string reference
+        // Local 2: str_ptr (i32) - linear memory pointer
+        // Local 3: str_len (i32) - string length
+        // Local 4: str_i (i32) - loop counter
+        let locals = vec![
+            (1, ValType::Ref(RefType::EQREF)),  // str_ref
+            (3, ValType::I32),                   // str_ptr, str_len, str_i
+        ];
+        let mut f = Function::new(locals);
+
+        let param_val = 0u32;
+        let str_ref = 1u32;
+        let str_ptr = 2u32;
+        let str_len = 3u32;
+        let str_i = 4u32;
+
+        // Check if arg is null/nil - if so, skip printing
+        f.instruction(&Instruction::LocalGet(param_val));
+        f.instruction(&Instruction::RefIsNull);
+        f.instruction(&Instruction::If(wasm_encoder::BlockType::Empty));
+        f.instruction(&Instruction::Return);
+        f.instruction(&Instruction::End);
+
+        // Also check for i31ref (nil sentinel) - not a string
+        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Empty));
+        f.instruction(&Instruction::LocalGet(param_val));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+        f.instruction(&Instruction::LocalSet(str_ref));
+
+        // Get string length
+        f.instruction(&Instruction::LocalGet(str_ref));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+        f.instruction(&Instruction::ArrayLen);
+        f.instruction(&Instruction::LocalSet(str_len));
+
+        // If length is 0, skip
+        f.instruction(&Instruction::LocalGet(str_len));
+        f.instruction(&Instruction::I32Eqz);
+        f.instruction(&Instruction::BrIf(0)); // break to end of block
+
+        // Allocate linear memory: call cabi_realloc(0, 0, 1, len)
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::LocalGet(str_len));
+        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::CABI_REALLOC)));
+        f.instruction(&Instruction::LocalSet(str_ptr));
+
+        // Copy loop: for i = 0..len, mem[ptr + i] = array.get_s str[i]
+        f.instruction(&Instruction::I32Const(0));
+        f.instruction(&Instruction::LocalSet(str_i));
+
+        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Empty));
+        f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
+        // break if i >= len
+        f.instruction(&Instruction::LocalGet(str_i));
+        f.instruction(&Instruction::LocalGet(str_len));
+        f.instruction(&Instruction::I32GeU);
+        f.instruction(&Instruction::BrIf(1));
+
+        // i32.store8 (ptr + i) <- array.get_s $STRING str_ref[i]
+        f.instruction(&Instruction::LocalGet(str_ptr));
+        f.instruction(&Instruction::LocalGet(str_i));
+        f.instruction(&Instruction::I32Add);
+        f.instruction(&Instruction::LocalGet(str_ref));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+        f.instruction(&Instruction::LocalGet(str_i));
+        f.instruction(&Instruction::ArrayGetS(gc_types::STRING));
+        f.instruction(&Instruction::I32Store8(wasm_encoder::MemArg {
+            offset: 0,
+            align: 0,
+            memory_index: 0,
+        }));
+
+        // i++
+        f.instruction(&Instruction::LocalGet(str_i));
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Add);
+        f.instruction(&Instruction::LocalSet(str_i));
+        f.instruction(&Instruction::Br(0)); // continue
+        f.instruction(&Instruction::End); // end loop
+        f.instruction(&Instruction::End); // end block (inner)
+
+        // Call host import: print_str(ptr, len)
+        f.instruction(&Instruction::LocalGet(str_ptr));
+        f.instruction(&Instruction::LocalGet(str_len));
+        f.instruction(&Instruction::Call(self.print_str_import_idx()));
+
+        f.instruction(&Instruction::End); // end outer block
+
+        f.instruction(&Instruction::End); // end function
         f
     }
 
@@ -5426,6 +5572,16 @@ impl<'a> CodeGen<'a> {
                 }
             }
 
+            Expr::PrintStr(string_expr) => {
+                // Evaluate the string expression
+                self.generate_expr(string_expr, f)?;
+                // Call the print_str runtime helper
+                f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::PRINT_STR)));
+                // Push nil (print-str returns nil)
+                f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
+                f.instruction(&Instruction::RefI31);
+            }
+
             Expr::Coerce { expr, from, to } => {
                 self.generate_expr(expr, f)?;
 
@@ -8633,13 +8789,13 @@ mod tests {
         }
 
         assert!(found_types, "No type section found");
-        // Should have GC types (11) + helper types (16) + protocol types (5) + 1 function type + 1 exception tag type = 34 types
+        // Should have GC types + helper types + protocol types + 1 import type (print_str) + 1 function type + 1 exception tag type
         use crate::ir::protocol_types;
-        let expected_types = gc_types::NUM_GC_TYPES + NUM_HELPER_TYPES + protocol_types::NUM_PROTOCOL_TYPES + 1 + 1;
+        let expected_types = gc_types::NUM_GC_TYPES + NUM_HELPER_TYPES + protocol_types::NUM_PROTOCOL_TYPES + 1 + 1 + 1;
         assert_eq!(
             type_count,
             expected_types,
-            "Expected {} types ({} GC + {} helper + {} protocol + 1 func), found {}",
+            "Expected {} types ({} GC + {} helper + {} protocol + 1 import + 1 func + 1 tag), found {}",
             expected_types,
             gc_types::NUM_GC_TYPES,
             NUM_HELPER_TYPES,

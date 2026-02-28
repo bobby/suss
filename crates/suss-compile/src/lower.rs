@@ -398,7 +398,7 @@ impl Lowerer {
                 return_type: import.return_type.clone(),
             });
         }
-        self.num_imports = analyzed.imports.len() as u32;
+        self.num_imports = analyzed.imports.len() as u32 + 1; // +1 for unconditional print_str import
         self.num_analyzed_funcs = analyzed.functions.len() as u32;
 
         // Lower protocol definitions first - populates method_return_types
@@ -1317,6 +1317,7 @@ impl Lowerer {
 
             // String
             "str" => self.lower_str(args),
+            "print-str" => self.lower_print_str(args),
 
             // Collection operations
             "nth" => self.lower_nth(args),
@@ -3077,11 +3078,10 @@ impl Lowerer {
     }
 
     fn lower_str(&mut self, args: &[Edn]) -> CompileResult<Expr> {
-        // First try compile-time concatenation for all-literal strings
+        // Compile-time concatenation for all-literal strings
         let all_literals = args.iter().all(|arg| matches!(arg, Edn::String(_)));
 
         if all_literals && !args.is_empty() {
-            // Concatenate at compile time
             let mut result = String::new();
             for arg in args {
                 if let Edn::String(s) = arg {
@@ -3092,14 +3092,17 @@ impl Lowerer {
             return Ok(Expr::String(idx));
         }
 
-        // Fall back to runtime concatenation
-        // Arguments are never in tail position
-        let parts = self.with_tail_disabled(|l| {
-            args.iter()
-                .map(|e| l.lower_expr(e))
-                .collect::<CompileResult<Vec<_>>>()
-        })?;
-        Ok(Expr::StrConcat(parts))
+        // Fall through to core.sus str function for runtime concatenation
+        self.lower_func_call("str", args)
+    }
+
+    fn lower_print_str(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse("print-str requires exactly 1 argument".into()));
+        }
+        self.module.has_print = true;
+        let arg = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        Ok(Expr::PrintStr(Box::new(arg)))
     }
 
     fn lower_func_call(&mut self, name: &str, args: &[Edn]) -> CompileResult<Expr> {
