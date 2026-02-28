@@ -3235,7 +3235,7 @@
   (let [v (.-validator a)]
     (when (not (nil? v))
       (when (not (v newval))
-        nil))  ;; TODO: throw when we have exceptions
+        (throw "Invalid reference state")))  ;; Matches ClojureScript IllegalStateException
     (set! (.-state a) newval)
     newval))
 

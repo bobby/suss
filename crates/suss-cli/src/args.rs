@@ -217,7 +217,12 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
 
 /// Parse the run subcommand arguments
 ///
+/// Usage: `suss run component.wasm [args...]`
 /// Usage: `suss run component.wasm --invoke func_name [args...]`
+///
+/// When `--invoke` is omitted, defaults to `"run"` (the WASI CLI entry point).
+/// Extra positional args after the wasm path become WASI argv (for `run`)
+/// or function parameters (for explicit `--invoke`).
 fn parse_run(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
     let mut component_path: Option<String> = None;
     let mut invoke: Option<String> = None;
@@ -242,9 +247,8 @@ fn parse_run(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
         option: Some("component path".to_string()),
     })?;
 
-    let invoke = invoke.ok_or_else(|| lexopt::Error::MissingValue {
-        option: Some("--invoke".to_string()),
-    })?;
+    // Default to "run" (WASI CLI entry point) when --invoke is not specified
+    let invoke = invoke.unwrap_or_else(|| "run".to_string());
 
     Ok(Command::Run {
         component_path,
@@ -264,7 +268,8 @@ USAGE:
     suss compile [OPTIONS]                              (project mode)
     suss compile <FILE> -w <WORLD.wit> -o <OUTPUT.wasm> (file mode)
     suss compile -n <NS> -w <WORLD.wit> [--src <DIR>]   (namespace mode)
-    suss run <COMPONENT.wasm> --invoke <FUNC> [ARGS...] (run component)
+    suss run <COMPONENT.wasm> [ARGS...]                  (run CLI command)
+    suss run <COMPONENT.wasm> --invoke <FUNC> [ARGS...]  (run specific function)
 
 OPTIONS:
     -r              Start the REPL (default if no arguments)
@@ -305,7 +310,8 @@ EXAMPLES:
     suss compile --world :app/v1   Compile specific world from deps.sus
     suss compile src.sus -w world.wit -o out.wasm  (file mode)
     suss compile -n myapp.core -w world.wit         (namespace mode)
-    suss run out.wasm --invoke add 3 5              (run component)
+    suss run app.wasm hello world                   (run CLI command with args)
+    suss run out.wasm --invoke add 3 5              (run specific function)
 "
     );
 }

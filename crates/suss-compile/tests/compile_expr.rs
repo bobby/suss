@@ -2407,6 +2407,33 @@ fn test_atom_swap() {
     assert_eq!(result, 11);
 }
 
+#[test]
+fn test_atom_validator_accepts() {
+    // Validator accepts value → reset! succeeds
+    let result = run_expr_i32(
+        "(let [a (atom 0)] (set-validator! a pos?) (reset! a 42) @a)"
+    );
+    assert_eq!(result, 42);
+}
+
+#[test]
+fn test_atom_validator_rejects() {
+    // Validator rejects value → throw caught by try/catch
+    let result = run_expr_i32(
+        "(let [a (atom 1)] (set-validator! a pos?) (try (reset! a -1) (catch e 99)))"
+    );
+    assert_eq!(result, 99);
+}
+
+#[test]
+fn test_atom_validator_swap_rejects() {
+    // Validator rejects swap! result → throw caught
+    let result = run_expr_i32(
+        "(let [a (atom 5)] (set-validator! a pos?) (try (swap! a (fn [x] (- 0 x))) (catch e 99)))"
+    );
+    assert_eq!(result, 99);
+}
+
 // ============================================================
 // partial/comp/juxt tests
 // ============================================================

@@ -637,11 +637,24 @@ fn run_component_impl(path: &str, invoke: &str, args: &[String]) -> Result<(), S
         .map_err(|e| format!("Failed to load component '{}': {}", path, e))?;
 
     // Create WASI context
+    // For "run" (WASI CLI entry point), pass extra args as WASI argv
+    // so the guest can read them via wasi:cli/environment#get-arguments.
+    // For other functions, args are passed as function parameters instead.
+    let is_run = invoke == "run";
+    let mut wasi_builder = WasiCtxBuilder::new();
+    wasi_builder.inherit_stdio();
+    wasi_builder.inherit_env();
+    if is_run && !args.is_empty() {
+        // Prepend the component path as argv[0], then the user args
+        let mut argv: Vec<String> = vec![path.to_string()];
+        argv.extend(args.iter().cloned());
+        wasi_builder.args(&argv);
+    } else {
+        wasi_builder.inherit_args();
+    }
+
     let state = ComponentState {
-        wasi: WasiCtxBuilder::new()
-            .inherit_stdio()
-            .inherit_env()
-            .build(),
+        wasi: wasi_builder.build(),
         table: ResourceTable::new(),
     };
 
@@ -661,14 +674,18 @@ fn run_component_impl(path: &str, invoke: &str, args: &[String]) -> Result<(), S
     let func = instance.get_func(&mut store, invoke)
         .ok_or_else(|| format!("Function '{}' not found in component", invoke))?;
 
-    // Parse arguments as i32 values (for now, simple integer args)
-    let func_args: Vec<Val> = args.iter()
-        .map(|s| {
-            // Try parsing as i32, fall back to 0
-            let v: i32 = s.parse().unwrap_or(0);
-            Val::S32(v)
-        })
-        .collect();
+    // For "run", the WASI CLI entry point takes no parameters.
+    // For other functions, parse args as i32 values.
+    let func_args: Vec<Val> = if is_run {
+        Vec::new()
+    } else {
+        args.iter()
+            .map(|s| {
+                let v: i32 = s.parse().unwrap_or(0);
+                Val::S32(v)
+            })
+            .collect()
+    };
 
     // Prepare results buffer based on function type
     let func_ty = func.ty(&store);
