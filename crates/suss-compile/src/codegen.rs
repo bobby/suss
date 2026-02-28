@@ -12,11 +12,11 @@
 //! This consolidation enables cleaner GC support when we add WASM GC types.
 
 use wasm_encoder::{
-    AbstractHeapType, BlockType, CodeSection, ConstExpr, CustomSection, DataSection, DataSegment,
-    DataSegmentMode, ElementSection, Elements, EntityType, ExportKind, ExportSection, FieldType,
-    Function, FunctionSection, GlobalSection, GlobalType, HeapType, ImportSection, Instruction,
-    MemorySection, MemoryType, Module as WasmModule, RawSection, RefType, StorageType,
-    TableSection, TableType, TypeSection, ValType,
+    AbstractHeapType, BlockType, Catch, CodeSection, ConstExpr, CustomSection, DataSection,
+    DataSegment, DataSegmentMode, ElementSection, Elements, EntityType, ExportKind, ExportSection,
+    FieldType, Function, FunctionSection, GlobalSection, GlobalType, HeapType, ImportSection,
+    Instruction, MemorySection, MemoryType, Module as WasmModule, RawSection, RefType, StorageType,
+    TableSection, TableType, TagKind, TagSection, TagType, TypeSection, ValType,
 };
 use wit_component::{metadata, ComponentEncoder, StringEncoding};
 use wit_parser::{Resolve, WorldId};
@@ -631,6 +631,7 @@ impl<'a> CodeGen<'a> {
         self.emit_protocol_types(&mut types);
 
         // Add user function types, but skip closure/builtin/userfn wrappers since they use pre-defined types
+        let mut type_count = types.len();
         for func in &self.ir.functions {
             if !func.name.starts_with("$closure_") && !func.name.starts_with("$builtin_") && !func.name.starts_with("$userfn_") && !func.name.starts_with("$variadic_") {
                 let params: Vec<ValType> = func
@@ -645,8 +646,20 @@ impl<'a> CodeGen<'a> {
                     self.type_to_valtypes_gc(&func.return_type)
                 };
                 types.ty().function(params, results);
+                type_count += 1;
             }
         }
+
+        // Exception tag function type: (eqref) -> ()
+        // This type is used by the tag section for throw/catch
+        let eqref_val = ValType::Ref(RefType {
+            nullable: true,
+            heap_type: HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq },
+        });
+        types.ty().function([eqref_val], []);
+        // Record the exception tag type index (it's the last type added)
+        let exception_tag_type_idx = type_count;
+
         module.section(&types);
 
         // Function section - helper functions first, then user functions
@@ -683,6 +696,19 @@ impl<'a> CodeGen<'a> {
 
         // Memory section (still needed for string data even in GC mode)
         self.emit_memory_section(&mut module);
+
+        // Tag section - exception tag for try/catch/throw
+        // Tag 0: exception tag that carries an eqref value
+        // Always emitted so throw/catch work from any code path
+        {
+            let mut tags = TagSection::new();
+            // The tag type references the exception function type: (eqref) -> ()
+            tags.tag(TagType {
+                kind: TagKind::Exception,
+                func_type_idx: exception_tag_type_idx,
+            });
+            module.section(&tags);
+        }
 
         // Global section - heap pointer, intern tables
         self.emit_global_section(&mut module);
@@ -2111,6 +2137,53 @@ impl<'a> CodeGen<'a> {
             self.generate_vec_new_large(elements, f)?;
         }
 
+        Ok(())
+    }
+
+    /// Wrap a raw GC array (eqref) into a PersistentVector.
+    ///
+    /// Used to convert variadic rest params from raw arrays to usable collections.
+    /// The array becomes the tail of a PersistentVector with cnt=array.len.
+    fn generate_wrap_in_vector(&self, array_expr: &Expr, f: &mut Function) -> CompileResult<()> {
+        use crate::ir::gc_types;
+
+        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
+        let pv_type_id = self.deftype_type_id("PersistentVector")
+            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
+
+        // Store array in a scratch local so we can reference it twice (for len and as tail)
+        // Must bump by 5 (full group) to maintain scratch alignment [eqref, i32, eqref, eqref, eqref]
+        let scratch_base = self.scratch_local.get();
+        let arr_local = scratch_base; // eqref
+        self.scratch_local.set(scratch_base + 5);
+
+        // Evaluate the array expression and store
+        self.generate_expr(array_expr, f)?;
+        f.instruction(&Instruction::LocalSet(arr_local));
+
+        // Build PersistentVector struct: { type_id, cnt, shift, root, tail }
+        // Field 0: type_id (i32)
+        f.instruction(&Instruction::I32Const(pv_type_id));
+
+        // Field 1: cnt (i32) = array.len
+        f.instruction(&Instruction::LocalGet(arr_local));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::ARRAY)));
+        f.instruction(&Instruction::ArrayLen);
+
+        // Field 2: shift (i32) = 5
+        f.instruction(&Instruction::I32Const(5));
+
+        // Field 3: root (eqref) = null
+        f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::ARRAY)));
+
+        // Field 4: tail (eqref) = the raw array
+        f.instruction(&Instruction::LocalGet(arr_local));
+
+        // Create the struct
+        f.instruction(&Instruction::StructNew(pv_gc_idx));
+
+        self.scratch_local.set(scratch_base);
         Ok(())
     }
 
@@ -6013,6 +6086,10 @@ impl<'a> CodeGen<'a> {
                 f.instruction(&Instruction::RefI31);
             }
 
+            Expr::WrapInVector(array_expr) => {
+                self.generate_wrap_in_vector(array_expr, f)?;
+            }
+
             // =========================================================
             // Persistent Map Operations
             // =========================================================
@@ -6187,6 +6264,19 @@ impl<'a> CodeGen<'a> {
 
             Expr::VarMeta(var_expr) => {
                 self.generate_var_meta(var_expr, f)?;
+            }
+
+            // =========================================================================
+            // Exception Handling
+            // =========================================================================
+            Expr::Throw(value) => {
+                self.generate_expr(value, f)?;
+                // The exception tag index is 0 (defined in tag section)
+                f.instruction(&Instruction::Throw(0));
+            }
+
+            Expr::TryCatch { body, catch_binding, catch_body, finally_body } => {
+                self.generate_try_catch(body, *catch_binding, catch_body, finally_body.as_deref(), f)?;
             }
         }
 
@@ -7180,6 +7270,85 @@ impl<'a> CodeGen<'a> {
             struct_type_index: gc_types::VAR,
             field_index: gc_types::VAR_META,
         });
+
+        Ok(())
+    }
+
+    /// Generate try/catch using WASM exception handling (try_table instruction)
+    ///
+    /// Layout (without finally):
+    /// ```wasm
+    /// block $result (result eqref)         ;; label 1 from try_table
+    ///   block $catch_target (result eqref)  ;; label 0 from try_table
+    ///     try_table (result eqref) (catch 0 $catch_target)
+    ///       <body>
+    ///     end  ;; try_table - body result on stack
+    ///     br 1  ;; skip catch, jump to $result
+    ///   end  ;; $catch_target - exception value on stack
+    ///   local.set <catch_binding>
+    ///   <catch_body>
+    /// end  ;; $result
+    /// ```
+    fn generate_try_catch(
+        &self,
+        body: &Expr,
+        catch_binding: u32,
+        catch_body: &Expr,
+        finally_body: Option<&Expr>,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use wasm_encoder::Instruction;
+
+        let eqref_type = BlockType::Result(ValType::Ref(RefType {
+            nullable: true,
+            heap_type: HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq },
+        }));
+
+        // block $result (result eqref)
+        f.instruction(&Instruction::Block(eqref_type));
+
+        // block $catch_target (result eqref)
+        f.instruction(&Instruction::Block(eqref_type));
+
+        // try_table (result eqref) (catch tag_0 $catch_target)
+        // From inside try_table: label 0 = $catch_target, label 1 = $result
+        f.instruction(&Instruction::TryTable(
+            eqref_type,
+            std::borrow::Cow::Borrowed(&[Catch::One { tag: 0, label: 0 }]),
+        ));
+
+        // Generate body
+        self.generate_expr(body, f)?;
+
+        // end try_table - body value on stack
+        f.instruction(&Instruction::End);
+
+        // br 1 - skip catch block, jump to $result with body value
+        f.instruction(&Instruction::Br(1));
+
+        // end $catch_target - exception value on stack
+        f.instruction(&Instruction::End);
+
+        // Store caught value in catch binding local
+        f.instruction(&Instruction::LocalSet(catch_binding));
+
+        // Generate catch body
+        self.generate_expr(catch_body, f)?;
+
+        // end $result
+        f.instruction(&Instruction::End);
+
+        // If there's a finally body, execute it after the result
+        // (Note: in Clojure, finally doesn't affect the return value)
+        if let Some(fin) = finally_body {
+            // Save the result
+            f.instruction(&Instruction::LocalSet(catch_binding)); // reuse catch local as temp
+            // Execute finally (for side effects)
+            self.generate_expr(fin, f)?;
+            f.instruction(&Instruction::Drop); // discard finally result
+            // Restore the result
+            f.instruction(&Instruction::LocalGet(catch_binding));
+        }
 
         Ok(())
     }
@@ -8464,9 +8633,9 @@ mod tests {
         }
 
         assert!(found_types, "No type section found");
-        // Should have GC types (11) + helper types (16) + protocol types (5) + 1 function type = 33 types
+        // Should have GC types (11) + helper types (16) + protocol types (5) + 1 function type + 1 exception tag type = 34 types
         use crate::ir::protocol_types;
-        let expected_types = gc_types::NUM_GC_TYPES + NUM_HELPER_TYPES + protocol_types::NUM_PROTOCOL_TYPES + 1;
+        let expected_types = gc_types::NUM_GC_TYPES + NUM_HELPER_TYPES + protocol_types::NUM_PROTOCOL_TYPES + 1 + 1;
         assert_eq!(
             type_count,
             expected_types,
@@ -8567,9 +8736,10 @@ mod tests {
         let codegen = CodeGen::new(&ir);
         let wasm_bytes = codegen.generate_core_module().unwrap();
 
-        // Create wasmtime engine with GC enabled
+        // Create wasmtime engine with GC and exceptions enabled
         let mut config = wasmtime::Config::new();
         config.wasm_gc(true);
+        config.wasm_exceptions(true);
 
         let engine = wasmtime::Engine::new(&config).expect("engine creation failed");
 

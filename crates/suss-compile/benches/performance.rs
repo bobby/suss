@@ -15,6 +15,7 @@ fn gc_engine() -> Engine {
     config.wasm_gc(true);
     config.wasm_function_references(true);
     config.wasm_tail_call(true);
+    config.wasm_exceptions(true);
     Engine::new(&config).expect("engine creation failed")
 }
 

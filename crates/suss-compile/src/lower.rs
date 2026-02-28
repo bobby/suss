@@ -590,7 +590,7 @@ impl Lowerer {
             self.next_local += 1;
 
             let fixed_count = closure.params.len();
-            let rest_expr = if fixed_count == 0 {
+            let raw_array_expr = if fixed_count == 0 {
                 // Rest is entire args array
                 Expr::LocalGet {
                     local: args_array_local,
@@ -600,6 +600,9 @@ impl Lowerer {
                 // Extract rest using array slice
                 self.generate_rest_param_extraction(args_array_local, fixed_count)?
             };
+            // Wrap raw array in PersistentVector so rest params work with
+            // collection operations (first, count, apply, etc.)
+            let rest_expr = Expr::WrapInVector(Box::new(raw_array_expr));
             all_bindings.push((rest_local_idx, rest_expr));
         } else {
             // Non-variadic: add regular parameters first
@@ -795,27 +798,19 @@ impl Lowerer {
         self.local_types.insert(rest_local_idx, Type::GcRef);
         self.next_local += 1;
 
-        // TODO: Implement proper subvec. For now, if no fixed params, rest = args.
-        // Otherwise, we need to create a view/slice of the array.
-        let rest_expr = if fixed_param_count == 0 {
+        // Wrap the raw args array in a PersistentVector so rest params work with
+        // collection operations (first, count, apply, etc.)
+        let raw_array_expr = if fixed_param_count == 0 {
             // Rest is the entire args array
             Expr::LocalGet {
                 local: args_array_local,
                 ty: Type::GcRef,
             }
         } else {
-            // For now, create a simple loop to build a new array with remaining elements
-            // This is inefficient but works. TODO: Add proper subvec support.
-            //
-            // We'll generate: a new array containing elements from fixed_param_count onwards
-            // Using ArrayNewDefault + loop to copy elements
-            //
-            // Actually, let's use a simpler approach for now: just pass the whole array
-            // and document that the user should use `(drop N coll)` or similar.
-            //
-            // For MVP, let's just generate code to build a vector from remaining args.
+            // Extract remaining elements into a new array
             self.generate_rest_param_extraction(args_array_local, fixed_param_count)?
         };
+        let rest_expr = Expr::WrapInVector(Box::new(raw_array_expr));
         bindings.push((rest_local_idx, rest_expr));
 
         // Lower the body with all bindings in scope
@@ -1004,19 +999,27 @@ impl Lowerer {
                 } else if let Edn::Keyword(kw) = &items[0] {
                     // Keyword in call position: desugar to get
                     // (:foo map) -> (get map :foo)
-                    // Note: 3-arg form (:foo map default) is not yet supported
-                    // because get doesn't handle default values
-                    if items.len() != 2 {
+                    // (:foo map default) -> (get map :foo default)
+                    if items.len() == 2 {
+                        let get_call = Edn::List(vec![
+                            Edn::Symbol(Symbol::new("get")),
+                            items[1].clone(),
+                            Edn::Keyword(kw.clone()),
+                        ]);
+                        self.lower_expr(&get_call)
+                    } else if items.len() == 3 {
+                        let get_call = Edn::List(vec![
+                            Edn::Symbol(Symbol::new("get")),
+                            items[1].clone(),
+                            Edn::Keyword(kw.clone()),
+                            items[2].clone(),
+                        ]);
+                        self.lower_expr(&get_call)
+                    } else {
                         return Err(CompileError::Unsupported(
-                            "Keyword in call position requires exactly 1 argument (the map)".into(),
+                            "Keyword in call position requires 1 or 2 arguments: (keyword map) or (keyword map default)".into(),
                         ));
                     }
-                    let get_call = Edn::List(vec![
-                        Edn::Symbol(Symbol::new("get")),
-                        items[1].clone(),
-                        Edn::Keyword(kw.clone()),
-                    ]);
-                    self.lower_expr(&get_call)
                 } else {
                     // Expression in call position - treat as closure call
                     // Examples: ((fn [x] x) 5), ((if cond + -) a b)
@@ -1303,6 +1306,10 @@ impl Lowerer {
             "let" => self.lower_let(args),
             "loop" => self.lower_loop(args),
             "recur" => self.lower_recur(args),
+
+            // Exception handling
+            "throw" => self.lower_throw(args),
+            "try" => self.lower_try(args),
 
             // First-class functions
             "fn" => self.lower_fn(args),
@@ -2083,6 +2090,135 @@ impl Lowerer {
             Ok(Expr::Unit) // nil if no metadata
         } else {
             Ok(Expr::MapNew(pairs))
+        }
+    }
+
+    /// Lower (throw expr) to Expr::Throw
+    fn lower_throw(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.len() != 1 {
+            return Err(CompileError::Parse("throw requires exactly 1 argument".into()));
+        }
+        let value = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+        Ok(Expr::Throw(Box::new(value)))
+    }
+
+    /// Lower (try body... (catch e catch-body...) (finally finally-body...))
+    /// Clojure syntax: (try expr* catch-clause* finally-clause?)
+    /// catch-clause: (catch ExceptionType e expr*)
+    /// For Suss, we simplify: (try body (catch e body) (finally body))
+    fn lower_try(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        if args.is_empty() {
+            return Err(CompileError::Parse("try requires a body".into()));
+        }
+
+        let mut body_forms = Vec::new();
+        let mut catch_binding = None;
+        let mut catch_body = None;
+        let mut finally_body = None;
+
+        for arg in args {
+            if let Edn::List(items) = arg {
+                if let Some(Edn::Symbol(sym)) = items.first() {
+                    if sym.name == "catch" {
+                        // (catch TypeName e body...) or (catch e body...)
+                        // We support both forms - if second arg is a symbol, treat
+                        // first as type (ignored for now), second as binding
+                        if items.len() < 3 {
+                            return Err(CompileError::Parse(
+                                "catch requires at least a binding and body".into(),
+                            ));
+                        }
+
+                        // Parse binding - support both (catch Exception e body)
+                        // and (catch e body) forms
+                        let (binding_sym, body_start) = if items.len() >= 4 {
+                            // (catch ExceptionType e body...) - skip the type for now
+                            if let Edn::Symbol(bind) = &items[2] {
+                                (bind.name.clone(), 3)
+                            } else {
+                                return Err(CompileError::Parse(
+                                    "catch binding must be a symbol".into(),
+                                ));
+                            }
+                        } else {
+                            // (catch e body...)
+                            if let Edn::Symbol(bind) = &items[1] {
+                                (bind.name.clone(), 2)
+                            } else {
+                                return Err(CompileError::Parse(
+                                    "catch binding must be a symbol".into(),
+                                ));
+                            }
+                        };
+
+                        // Allocate local for catch binding
+                        let local_idx = self.next_local;
+                        self.next_local += 1;
+                        catch_binding = Some(local_idx);
+
+                        // Lower catch body
+                        let saved_locals = self.locals.clone();
+                        self.locals.insert(binding_sym.clone(), (local_idx, Type::GcRef));
+
+                        let catch_exprs: CompileResult<Vec<Expr>> = items[body_start..]
+                            .iter()
+                            .map(|e| self.with_tail_disabled(|l| l.lower_expr(e)))
+                            .collect();
+                        let catch_exprs = catch_exprs?;
+
+                        if catch_exprs.len() == 1 {
+                            catch_body = Some(catch_exprs.into_iter().next().unwrap());
+                        } else {
+                            catch_body = Some(Expr::Block(catch_exprs));
+                        }
+
+                        self.locals = saved_locals;
+                        continue;
+                    } else if sym.name == "finally" {
+                        // (finally body...)
+                        let finally_exprs: CompileResult<Vec<Expr>> = items[1..]
+                            .iter()
+                            .map(|e| self.with_tail_disabled(|l| l.lower_expr(e)))
+                            .collect();
+                        let finally_exprs = finally_exprs?;
+
+                        finally_body = if finally_exprs.len() == 1 {
+                            Some(finally_exprs.into_iter().next().unwrap())
+                        } else {
+                            Some(Expr::Block(finally_exprs))
+                        };
+                        continue;
+                    }
+                }
+            }
+            // Not a catch/finally form - it's part of the body
+            body_forms.push(arg);
+        }
+
+        // Lower the body
+        let body = if body_forms.len() == 1 {
+            self.with_tail_disabled(|l| l.lower_expr(body_forms[0]))?
+        } else {
+            let exprs: CompileResult<Vec<Expr>> = body_forms
+                .iter()
+                .map(|e| self.with_tail_disabled(|l| l.lower_expr(e)))
+                .collect();
+            Expr::Block(exprs?)
+        };
+
+        if let (Some(binding), Some(catch)) = (catch_binding, catch_body) {
+            Ok(Expr::TryCatch {
+                body: Box::new(body),
+                catch_binding: binding,
+                catch_body: Box::new(catch),
+                finally_body: finally_body.map(Box::new),
+            })
+        } else if let Some(fin) = finally_body {
+            // try with only finally (no catch) - just execute body then finally
+            Ok(Expr::Block(vec![body, fin, Expr::Unit]))
+        } else {
+            // try without catch or finally - just the body
+            Ok(body)
         }
     }
 

@@ -544,10 +544,10 @@
 (defn dissoc
   "Dissoc[iate]. Returns a new map without the mappings for the given keys. Variadic."
   [m & ks]
-  (let [len (alength ks)]
+  (let [len (count ks)]
     (loop [m m i 0]
       (if (< i len)
-        (recur (dissoc1 m (aget ks i)) (+ i 1))
+        (recur (dissoc1 m (nth ks i)) (+ i 1))
         m))))
 
 (defn disj
@@ -1000,19 +1000,19 @@
   "Adds items to collection. For vectors, adds to end. For sets, adds to set.
    For lists, adds to front (like cons). Variadic."
   [coll & items]
-  (let [len (alength items)]
+  (let [len (count items)]
     (loop [c coll i 0]
       (if (< i len)
-        (recur (-conj c (aget items i)) (+ i 1))
+        (recur (-conj c (nth items i)) (+ i 1))
         c))))
 
 (defn assoc
   "Associates key/value pairs with a map or vector. Variadic."
   [m & kvs]
-  (let [len (alength kvs)]
+  (let [len (count kvs)]
     (loop [m m i 0]
       (if (< i len)
-        (recur (-assoc m (aget kvs i) (aget kvs (+ i 1))) (+ i 2))
+        (recur (-assoc m (nth kvs i) (nth kvs (+ i 1))) (+ i 2))
         m))))
 
 (defn peek
@@ -1313,24 +1313,24 @@
 (defn min*
   "Returns the least of the arguments. First-class fn version for use with apply."
   [& args]
-  (let [len (alength args)]
+  (let [len (count args)]
     (if (= len 1)
-      (aget args 0)
-      (loop [i 1 result (aget args 0)]
+      (nth args 0)
+      (loop [i 1 result (nth args 0)]
         (if (< i len)
-          (let [x (aget args i)]
+          (let [x (nth args i)]
             (recur (+ i 1) (if (< x result) x result)))
           result)))))
 
 (defn max*
   "Returns the greatest of the arguments. First-class fn version for use with apply."
   [& args]
-  (let [len (alength args)]
+  (let [len (count args)]
     (if (= len 1)
-      (aget args 0)
-      (loop [i 1 result (aget args 0)]
+      (nth args 0)
+      (loop [i 1 result (nth args 0)]
         (if (< i len)
-          (let [x (aget args i)]
+          (let [x (nth args i)]
             (recur (+ i 1) (if (> x result) x result)))
           result)))))
 
@@ -1363,13 +1363,13 @@
 (defn not=
   "Returns true if any argument is not equal to the first."
   [& args]
-  (let [len (alength args)]
+  (let [len (count args)]
     (if (< len 2)
       false
-      (let [first-val (aget args 0)]
+      (let [first-val (nth args 0)]
         (loop [i 1]
           (if (< i len)
-            (if (= first-val (aget args i))
+            (if (= first-val (nth args i))
               (recur (+ i 1))
               true)
             false))))))
@@ -1549,11 +1549,11 @@
    (range start end) - start to end-1
    (range start end step) - start, start+step, ... up to (but not including) end"
   [& args]
-  (let [len (alength args)]
+  (let [len (count args)]
     (cond
-      (= len 1) (-range-step 0 (aget args 0) 1)
-      (= len 2) (-range-step (aget args 0) (aget args 1) 1)
-      (= len 3) (-range-step (aget args 0) (aget args 1) (aget args 2))
+      (= len 1) (-range-step 0 (nth args 0) 1)
+      (= len 2) (-range-step (nth args 0) (nth args 1) 1)
+      (= len 3) (-range-step (nth args 0) (nth args 1) (nth args 2))
       :else nil)))
 
 (defn concat2
@@ -1645,6 +1645,29 @@
   [f]
   (fn [& args] (not (apply f args))))
 
+(defn partial
+  "Takes a function f and fewer than the normal arguments to f, and
+   returns a fn that takes a variable number of additional args. When
+   called, the returned function calls f with args + additional args."
+  [f & args]
+  (fn [& more] (apply f (reduce conj args more))))
+
+(defn comp
+  "Takes two functions and returns a fn that is the composition
+   of those fns. The returned fn takes a variable number of args,
+   applies the rightmost fn to the args, then applies the left fn
+   to the result."
+  [f g]
+  (fn [& args] (f (apply g args))))
+
+(defn juxt
+  "Takes two functions and returns a fn that is the juxtaposition
+   of those fns. The returned fn takes a variable number of args, and
+   returns a vector containing the result of applying each fn to the
+   args."
+  [f g]
+  (fn [& args] [(apply f args) (apply g args)]))
+
 ;; ============================================================
 ;; Collection Utilities
 ;; ============================================================
@@ -1680,13 +1703,13 @@
   "Creates a new vector containing the args.
    Uses transients for efficient batch construction."
   [& args]
-  (let [len (alength args)]
+  (let [len (count args)]
     (if (= len 0)
       []
       (persistent!
         (loop [v (transient []) i 0]
           (if (< i len)
-            (recur (conj! v (aget args i)) (+ i 1))
+            (recur (conj! v (nth args i)) (+ i 1))
             v))))))
 
 (defn mapv
@@ -1711,26 +1734,26 @@
   "Creates a new hash-map from alternating key-value pairs.
    Uses transients for efficient batch construction."
   [& kvs]
-  (let [len (alength kvs)]
+  (let [len (count kvs)]
     (if (= len 0)
       {}
       (persistent!
         (loop [m (transient {}) i 0]
           (if (< i len)
-            (recur (assoc! m (aget kvs i) (aget kvs (+ i 1))) (+ i 2))
+            (recur (assoc! m (nth kvs i) (nth kvs (+ i 1))) (+ i 2))
             m))))))
 
 (defn hash-set
   "Creates a new hash-set containing the args.
    Uses transients for efficient batch construction."
   [& args]
-  (let [len (alength args)]
+  (let [len (count args)]
     (if (= len 0)
       #{}
       (persistent!
         (loop [s (transient #{}) i 0]
           (if (< i len)
-            (recur (conj! s (aget args i)) (+ i 1))
+            (recur (conj! s (nth args i)) (+ i 1))
             s))))))
 
 (defn set
@@ -2108,8 +2131,8 @@
   [s start & args]
   (if (or (nil? s) (< start 0))
     ""
-    (let [end (if (> (alength args) 0)
-                (aget args 0)
+    (let [end (if (> (count args) 0)
+                (nth args 0)
                 (string-length s))
           start-byte (-utf8-codepoint-to-byte-idx s start)
           end-byte (-utf8-codepoint-to-byte-idx s end)]
@@ -2156,12 +2179,12 @@
 (defn str
   "Concatenates values into a string. nil values are ignored."
   [& args]
-  (let [len (alength args)]
+  (let [len (count args)]
     (if (= len 0)
       ""
       (if (= len 1)
         ;; Single arg - optimize common case
-        (let [v (aget args 0)]
+        (let [v (nth args 0)]
           (cond
             (nil? v) ""
             (string? v) v
@@ -2175,7 +2198,7 @@
         (let [sb (string-buffer 64)]
           (loop [i 0]
             (when (< i len)
-              (-str-append-value sb (aget args i))
+              (-str-append-value sb (nth args i))
               (recur (+ i 1))))
           (-sb->str sb))))))
 
@@ -2244,7 +2267,7 @@
     -1
     (let [s-len (alength s)
           sub-len (alength substr)
-          from (if (> (alength args) 0) (aget args 0) 0)]
+          from (if (> (count args) 0) (nth args 0) 0)]
       (if (= sub-len 0)
         from
         (if (or (< from 0) (> sub-len s-len))
@@ -2266,8 +2289,8 @@
     (let [s-len (alength s)
           sub-len (alength substr)
           max-idx (- s-len sub-len)
-          from (if (> (alength args) 0)
-                 (min (aget args 0) max-idx)
+          from (if (> (count args) 0)
+                 (min (nth args 0) max-idx)
                  max-idx)]
       (if (= sub-len 0)
         from
@@ -2374,7 +2397,7 @@
   "Returns a string of all elements in coll, separated by sep.
    If called with one arg, uses no separator."
   [sep-or-coll & args]
-  (if (= (alength args) 0)
+  (if (= (count args) 0)
     ;; Single arg - it's a collection, no separator
     (let [coll sep-or-coll
           sb (string-buffer 64)]
@@ -2386,7 +2409,7 @@
           (-sb->str sb))))
     ;; Two args - separator and collection
     (let [sep sep-or-coll
-          coll (aget args 0)
+          coll (nth args 0)
           sb (string-buffer 64)]
       (loop [s (seq coll) first? true]
         (if s
@@ -2430,7 +2453,7 @@
   "Returns the value in a nested associative structure, where ks is a sequence
    of keys. Returns nil if any key is not present, or not-found if supplied."
   [m ks & args]
-  (let [not-found (if (> (alength args) 0) (aget args 0) nil)]
+  (let [not-found (if (> (count args) 0) (nth args 0) nil)]
     (loop [curr m keys (seq ks)]
       (if keys
         (if (nil? curr)
@@ -2458,12 +2481,12 @@
    Supports up to 3 extra arguments to f."
   [m k f & args]
   (let [old (get m k)
-        n (alength args)]
+        n (count args)]
     (cond
       (= n 0) (assoc m k (f old))
-      (= n 1) (assoc m k (f old (aget args 0)))
-      (= n 2) (assoc m k (f old (aget args 0) (aget args 1)))
-      :else (assoc m k (f old (aget args 0) (aget args 1) (aget args 2))))))
+      (= n 1) (assoc m k (f old (nth args 0)))
+      (= n 2) (assoc m k (f old (nth args 0) (nth args 1)))
+      :else (assoc m k (f old (nth args 0) (nth args 1) (nth args 2))))))
 
 (defn update-in
   "Updates a value in a nested associative structure by applying f
@@ -2492,11 +2515,11 @@
   "Returns a map that is the merge of the maps. Nil maps are skipped.
    Later values override earlier ones for duplicate keys."
   [& maps]
-  (let [n (alength maps)]
+  (let [n (count maps)]
     (loop [i 0 result {}]
       (if (>= i n)
         result
-        (recur (+ i 1) (-merge-map-into result (aget maps i)))))))
+        (recur (+ i 1) (-merge-map-into result (nth maps i)))))))
 
 (defn -merge-with-map-into
   "Merge entries from m2 into m1, using f to combine duplicate keys."
@@ -2517,11 +2540,11 @@
   "Returns a map that is the merge of the maps. For duplicate keys,
    f is called with the values from left and right to determine the result."
   [f & maps]
-  (let [n (alength maps)]
+  (let [n (count maps)]
     (loop [i 0 result {}]
       (if (>= i n)
         result
-        (recur (+ i 1) (-merge-with-map-into f result (aget maps i)))))))
+        (recur (+ i 1) (-merge-with-map-into f result (nth maps i)))))))
 
 (defn select-keys
   "Returns a map containing only those entries in m whose key is in keys."
@@ -3188,3 +3211,68 @@
    Note: Currently only supports (disj! coll val) form."
   [tcoll val]
   (-disjoin! tcoll val))
+
+;; ============================================================
+;; Atoms (Mutable Reference Type)
+;; ============================================================
+
+(deftype Atom [^:mutable state ^:mutable validator ^:mutable watches])
+
+(defn atom
+  "Creates and returns an Atom with an initial value of x."
+  [x]
+  (->Atom x nil {}))
+
+(defn deref
+  "Returns the current value of the atom."
+  [a]
+  (.-state a))
+
+(defn reset!
+  "Sets the value of atom to newval without regard for the
+   current value. Returns newval."
+  [a newval]
+  (let [v (.-validator a)]
+    (when (not (nil? v))
+      (when (not (v newval))
+        nil))  ;; TODO: throw when we have exceptions
+    (set! (.-state a) newval)
+    newval))
+
+(defn swap!
+  "Atomically swaps the value of atom to be:
+   (apply f current-value-of-atom args). Returns new value."
+  [a f & args]
+  (let [oldval (deref a)
+        newval (apply f (reduce conj [oldval] args))]
+    (reset! a newval)))
+
+(defn compare-and-set!
+  "Atomically sets the value of atom to newval if and only if
+   the current value of the atom is identical to oldval.
+   Returns true if set happened, else false."
+  [a oldval newval]
+  (if (= (deref a) oldval)
+    (do (reset! a newval) true)
+    false))
+
+(defn add-watch
+  "Adds a watch function to an atom. The watch fn must be a fn
+   of 4 args: a key, the atom, its old-state, its new-state."
+  [a key f]
+  (set! (.-watches a) (assoc (.-watches a) key f))
+  a)
+
+(defn remove-watch
+  "Removes a watch (set by add-watch) from an atom."
+  [a key]
+  (set! (.-watches a) (dissoc (.-watches a) key))
+  a)
+
+(defn set-validator!
+  "Sets the validator-fn for an atom. validator-fn must be nil or a
+   side-effect-free fn of one argument, which will be passed the
+   intended new state on any state change."
+  [a f]
+  (set! (.-validator a) f)
+  nil)

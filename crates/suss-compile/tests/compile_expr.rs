@@ -16,6 +16,7 @@ fn gc_engine() -> Engine {
     config.wasm_gc(true);
     config.wasm_function_references(true);
     config.wasm_tail_call(true);
+    config.wasm_exceptions(true);
     Engine::new(&config).expect("engine creation failed")
 }
 
@@ -1703,20 +1704,19 @@ fn test_variadic_closure_inline_zero_args() {
 }
 
 #[test]
-fn test_immediate_variadic_fn_call_alength() {
-    // Immediate variadic fn call should not double-wrap args
-    // Bug: ((fn [& xs] (alength xs)) 1 2 3) was returning 1 instead of 3
-    assert_eq!(run_expr_i32("((fn [& xs] (alength xs)) 1 2 3)"), 3);
-    assert_eq!(run_expr_i32("((fn [& xs] (alength xs)))"), 0);
-    assert_eq!(run_expr_i32("((fn [& xs] (alength xs)) 1)"), 1);
+fn test_immediate_variadic_fn_call_count() {
+    // Immediate variadic fn call: rest params are PersistentVectors
+    assert_eq!(run_expr_i32("((fn [& xs] (count xs)) 1 2 3)"), 3);
+    assert_eq!(run_expr_i32("((fn [& xs] (count xs)))"), 0);
+    assert_eq!(run_expr_i32("((fn [& xs] (count xs)) 1)"), 1);
 }
 
 #[test]
-fn test_immediate_variadic_fn_call_aget() {
-    // Verify args are accessible with correct indices
-    assert_eq!(run_expr_i32("((fn [& xs] (aget xs 0)) 10 20 30)"), 10);
-    assert_eq!(run_expr_i32("((fn [& xs] (aget xs 1)) 10 20 30)"), 20);
-    assert_eq!(run_expr_i32("((fn [& xs] (aget xs 2)) 10 20 30)"), 30);
+fn test_immediate_variadic_fn_call_nth() {
+    // Verify args are accessible with nth (rest params are PersistentVectors)
+    assert_eq!(run_expr_i32("((fn [& xs] (nth xs 0)) 10 20 30)"), 10);
+    assert_eq!(run_expr_i32("((fn [& xs] (nth xs 1)) 10 20 30)"), 20);
+    assert_eq!(run_expr_i32("((fn [& xs] (nth xs 2)) 10 20 30)"), 30);
 }
 
 #[test]
@@ -1724,7 +1724,7 @@ fn test_immediate_variadic_fn_with_fixed_params() {
     // Variadic with fixed params: (fn [a b & rest] ...)
     assert_eq!(run_expr_i32("((fn [a b & rest] a) 1 2 3 4)"), 1);
     assert_eq!(run_expr_i32("((fn [a b & rest] b) 1 2 3 4)"), 2);
-    assert_eq!(run_expr_i32("((fn [a b & rest] (alength rest)) 1 2 3 4)"), 2);
+    assert_eq!(run_expr_i32("((fn [a b & rest] (count rest)) 1 2 3 4)"), 2);
 }
 
 // ============================================================================
@@ -2237,4 +2237,286 @@ fn dump_identity_fn_wasm() {
     let wasm = compiler.compile_expr(expr).unwrap();
     std::fs::write("/tmp/identity.wasm", &wasm).unwrap();
     println!("Wrote {} bytes to /tmp/identity.wasm", wasm.len());
+}
+
+// ============================================================
+// Keyword 3-arg form tests
+// ============================================================
+
+#[test]
+fn test_keyword_3arg_with_default() {
+    // (:key map default) when key exists
+    let result = run_expr_i32("(:a {:a 42} 0)");
+    assert_eq!(result, 42);
+}
+
+#[test]
+fn test_keyword_3arg_with_default_missing() {
+    // (:key map default) when key is missing - should return default
+    let result = run_expr_i32("(:b {:a 42} 99)");
+    assert_eq!(result, 99);
+}
+
+// ============================================================
+// Threading variant macro tests
+// ============================================================
+
+#[test]
+fn test_cond_thread_first() {
+    // (cond-> 1 true inc true inc) should be 3
+    let result = run_expr_i32("(cond-> 1 true inc true inc)");
+    assert_eq!(result, 3);
+}
+
+#[test]
+fn test_cond_thread_first_false() {
+    // (cond-> 1 true inc false inc) should be 2 (second clause skipped)
+    let result = run_expr_i32("(cond-> 1 true inc false inc)");
+    assert_eq!(result, 2);
+}
+
+#[test]
+fn test_some_thread_first() {
+    // (some-> 1 inc inc) should be 3
+    let result = run_expr_i32("(some-> 1 inc inc)");
+    assert_eq!(result, 3);
+}
+
+#[test]
+fn test_as_thread() {
+    // (as-> 1 x (+ x 2) (+ x 10)) should be 13
+    let result = run_expr_i32("(as-> 1 x (+ x 2) (+ x 10))");
+    assert_eq!(result, 13);
+}
+
+// ============================================================
+// Vector destructuring tests
+// ============================================================
+
+#[test]
+fn test_vector_destructuring_let() {
+    let result = run_expr_i32("(let [[a b] [10 20]] (+ a b))");
+    assert_eq!(result, 30);
+}
+
+#[test]
+fn test_vector_destructuring_rest() {
+    // [a & rest] destructuring - count of rest
+    let result = run_expr_i32("(let [[a & rest] [1 2 3]] (count rest))");
+    assert_eq!(result, 2);
+}
+
+// ============================================================
+// Map destructuring tests
+// ============================================================
+
+#[test]
+fn test_map_destructuring_keys() {
+    // {:keys [a b]} destructuring
+    let result = run_expr_i32("(let [{:keys [a b]} {:a 10 :b 20}] (+ a b))");
+    assert_eq!(result, 30);
+}
+
+#[test]
+fn test_map_destructuring_direct() {
+    // {sym :key} direct binding
+    let result = run_expr_i32("(let [{x :a y :b} {:a 10 :b 20}] (+ x y))");
+    assert_eq!(result, 30);
+}
+
+// ============================================================
+// try/catch/throw tests
+// ============================================================
+
+#[test]
+fn test_try_no_exception() {
+    // try without throwing - should return body value
+    let result = run_expr_i32("(try 42 (catch e 0))");
+    assert_eq!(result, 42);
+}
+
+#[test]
+fn test_try_catch_throw() {
+    // throw inside try - should catch and return catch body value
+    let result = run_expr_i32("(try (throw 99) (catch e e))");
+    assert_eq!(result, 99);
+}
+
+#[test]
+fn test_try_catch_with_expressions() {
+    // Compute in both branches
+    let result = run_expr_i32("(try (do (+ 1 2) (throw 10)) (catch e (+ e 5)))");
+    assert_eq!(result, 15);
+}
+
+// ============================================================
+// Atom tests
+// ============================================================
+
+#[test]
+fn test_atom_basic() {
+    let result = run_expr_i32("(let [a (atom 42)] (deref a))");
+    assert_eq!(result, 42);
+}
+
+#[test]
+fn test_atom_deref_syntax() {
+    let result = run_expr_i32("(let [a (atom 42)] @a)");
+    assert_eq!(result, 42);
+}
+
+#[test]
+fn test_atom_reset() {
+    let result = run_expr_i32("(let [a (atom 0)] (reset! a 42) @a)");
+    assert_eq!(result, 42);
+}
+
+#[test]
+fn test_atom_swap() {
+    let result = run_expr_i32("(let [a (atom 10)] (swap! a inc) @a)");
+    assert_eq!(result, 11);
+}
+
+// ============================================================
+// partial/comp/juxt tests
+// ============================================================
+
+#[test]
+fn test_partial_debug_rest_count() {
+    // Test that variadic rest params are usable PersistentVectors
+    let result = run_expr_i32("((fn [& args] (count args)) 1 2 3)");
+    assert_eq!(result, 3);
+}
+
+#[test]
+fn test_partial_debug_rest_first() {
+    let result = run_expr_i32("((fn [& args] (first args)) 42)");
+    assert_eq!(result, 42);
+}
+
+#[test]
+fn test_partial_debug_apply_rest() {
+    let result = run_expr_i32("((fn [& args] (apply + args)) 3 4)");
+    assert_eq!(result, 7);
+}
+
+#[test]
+fn test_partial_debug_fixed_and_rest() {
+    // 1 fixed param + rest
+    let result = run_expr_i32("((fn [x & args] (+ x (first args))) 10 20)");
+    assert_eq!(result, 30);
+}
+
+#[test]
+fn test_partial_debug_concat2() {
+    let result = run_expr_i32("(first (concat2 [1 2] [3 4]))");
+    assert_eq!(result, 1);
+}
+
+#[test]
+fn test_partial_debug_concat2_count() {
+    let result = run_expr_i32("(count (concat2 [1 2] [3 4]))");
+    assert_eq!(result, 4);
+}
+
+#[test]
+fn test_partial_debug_lazy_seq() {
+    let result = run_expr_i32("(first (lazy-seq [1 2 3]))");
+    assert_eq!(result, 1);
+}
+
+#[test]
+fn test_partial_debug_range_alength() {
+    // Test that range still works (uses alength on rest param)
+    let result = run_expr_i32("(first (range 5))");
+    assert_eq!(result, 0);
+}
+
+#[test]
+fn test_debug_comp_simple() {
+    // comp without rest params: (f (g x)) where g is inc
+    let result = run_expr_i32("(let [f (comp inc inc)] (f 10))");
+    assert_eq!(result, 12);
+}
+
+#[test]
+fn test_debug_lazy_seq_simple() {
+    // Simplest lazy-seq: a thunk that returns a cons
+    let result = run_expr_i32("(first (lazy-seq (cons 42 nil)))");
+    assert_eq!(result, 42);
+}
+
+#[test]
+fn test_debug_set_mutable() {
+    // Test mutable field set!
+    let result = run_expr_i32("(let [a (->Atom 10 nil {})] (set! (.-state a) 20) (.-state a))");
+    assert_eq!(result, 20);
+}
+
+#[test]
+fn test_debug_seq_vec() {
+    // Test seq on a vector
+    let result = run_expr_i32("(first (seq [1 2 3]))");
+    assert_eq!(result, 1);
+}
+
+#[test]
+fn test_debug_vec_nth() {
+    // Test nth on a vector
+    let result = run_expr_i32("(nth [10 20 30] 1)");
+    assert_eq!(result, 20);
+}
+
+#[test]
+fn test_partial_apply_vec() {
+    let result = run_expr_i32("(apply + [5 10])");
+    assert_eq!(result, 15);
+}
+
+#[test]
+#[ignore] // apply only works with PersistentVectors, not Cons cells
+fn test_partial_apply_cons() {
+    let result = run_expr_i32("(apply + (cons 5 (cons 10 nil)))");
+    assert_eq!(result, 15);
+}
+
+#[test]
+#[ignore] // apply only works with PersistentVectors, not LazySeq (from concat2)
+fn test_partial_apply_concat() {
+    // Apply + to a concat2 result
+    let result = run_expr_i32("(apply + (concat2 [5] [10]))");
+    assert_eq!(result, 15);
+}
+
+#[test]
+fn test_partial() {
+    let result = run_expr_i32("(let [add5 (partial + 5)] (add5 10))");
+    assert_eq!(result, 15);
+}
+
+#[test]
+fn test_comp() {
+    let result = run_expr_i32("(let [f (comp inc inc)] (f 10))");
+    assert_eq!(result, 12);
+}
+
+// ============================================================
+// doseq test
+// ============================================================
+
+#[test]
+fn test_doseq_basic() {
+    // doseq should return nil (0 as i31ref sentinel)
+    let result = run_expr_i32("(let [a (atom 0)] (doseq [x [1 2 3]] (swap! a (fn [v] (+ v x)))) @a)");
+    assert_eq!(result, 6);
+}
+
+// ============================================================
+// when-first test
+// ============================================================
+
+#[test]
+fn test_when_first() {
+    let result = run_expr_i32("(when-first [x [42 1 2]] x)");
+    assert_eq!(result, 42);
 }

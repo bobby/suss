@@ -1080,6 +1080,7 @@ impl Expr {
             Expr::VecNew(_) => Type::GcRef,
             Expr::VecNth { .. } => Type::GcRef,
             Expr::VecCount(_) => Type::I32,
+            Expr::WrapInVector(_) => Type::GcRef,
 
             Expr::MapNew(_) => Type::GcRef,
             Expr::MapCount(_) => Type::I32,
@@ -1116,6 +1117,10 @@ impl Expr {
             Expr::VarNew { .. } => Type::GcRef, // Returns VAR
             Expr::VarDeref(_) => Type::GcRef, // Returns the var's root value
             Expr::VarMeta(_) => Type::GcRef, // Returns metadata map or nil
+
+            // Exception handling
+            Expr::Throw(_) => Type::GcRef, // Never returns, but typed as GcRef for consistency
+            Expr::TryCatch { .. } => Type::GcRef, // Returns body result or catch result
         }
     }
 }
@@ -1398,6 +1403,10 @@ pub enum Expr {
     /// Get count of persistent vector
     VecCount(Box<Expr>),
 
+    /// Wrap a raw GC array (eqref) into a PersistentVector
+    /// Used to convert variadic rest params (raw arrays) into usable collections
+    WrapInVector(Box<Expr>),
+
     // =========================================================================
     // Persistent Map Operations
     // HAMT (Hash Array Mapped Trie)
@@ -1604,6 +1613,29 @@ pub enum Expr {
 
     /// Get metadata from a Var.
     VarMeta(Box<Expr>),
+
+    // =========================================================================
+    // Exception Handling
+    // Uses WASM exception handling proposal (try_table/throw/tag)
+    // =========================================================================
+
+    /// Throw an exception with a value.
+    /// Compiles to WASM `throw` instruction with the exception tag.
+    Throw(Box<Expr>),
+
+    /// Try/catch expression.
+    /// Evaluates body; if an exception is thrown, binds the thrown value
+    /// to catch_binding and evaluates catch_body.
+    TryCatch {
+        /// The body expression to try
+        body: Box<Expr>,
+        /// Local index for the caught exception value
+        catch_binding: u32,
+        /// The catch body to execute on exception
+        catch_body: Box<Expr>,
+        /// Optional finally body (always executed)
+        finally_body: Option<Box<Expr>>,
+    },
 }
 
 /// Binary operators

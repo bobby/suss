@@ -127,6 +127,7 @@ fn run_eval_core_module(wasm_bytes: &[u8]) -> Result<(), String> {
     config.wasm_gc(true);
     config.wasm_function_references(true);
     config.wasm_tail_call(true);
+    config.wasm_exceptions(true);
     let engine = Engine::new(&config)
         .map_err(|e| format!("Engine creation error: {}", e))?;
 
@@ -218,6 +219,7 @@ fn run_eval_core_module_string(wasm_bytes: &[u8]) -> Result<(), String> {
     config.wasm_gc(true);
     config.wasm_function_references(true);
     config.wasm_tail_call(true);
+    config.wasm_exceptions(true);
     let engine = Engine::new(&config)
         .map_err(|e| format!("Engine creation error: {}", e))?;
 

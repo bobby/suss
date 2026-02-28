@@ -87,6 +87,28 @@ impl MacroEvaluator {
         primitives.insert("_when_let_impl".into(), prim_when_let_impl);
         primitives.insert("_if_let_impl".into(), prim_if_let_impl);
 
+        // Conditional and nil-safe threading macros
+        primitives.insert("_cond_thread_first_impl".into(), prim_cond_thread_first_impl);
+        primitives.insert("_cond_thread_last_impl".into(), prim_cond_thread_last_impl);
+        primitives.insert("_some_thread_first_impl".into(), prim_some_thread_first_impl);
+        primitives.insert("_some_thread_last_impl".into(), prim_some_thread_last_impl);
+        primitives.insert("_as_thread_impl".into(), prim_as_thread_impl);
+        primitives.insert("_doseq_impl".into(), prim_doseq_impl);
+        primitives.insert("_when_first_impl".into(), prim_when_first_impl);
+
+        // Additional predicates needed for map destructuring
+        primitives.insert("even?".into(), prim_even_q);
+        primitives.insert("assoc".into(), prim_assoc);
+        primitives.insert("dissoc".into(), prim_dissoc);
+        primitives.insert("contains?".into(), prim_contains_q);
+        primitives.insert("keys".into(), prim_keys);
+        primitives.insert("vals".into(), prim_vals);
+        primitives.insert("into".into(), prim_into);
+        primitives.insert("partition".into(), prim_partition);
+        primitives.insert("pop".into(), prim_pop);
+        primitives.insert("peek".into(), prim_peek);
+        primitives.insert("gensym".into(), prim_gensym);
+
         Self { primitives }
     }
 
@@ -105,12 +127,12 @@ impl MacroEvaluator {
                     sym.name.clone()
                 };
 
-                // Check for primitive
-                if self.primitives.contains_key(&name) {
+                // Check local env first, then primitives
+                if let Some(value) = env.lookup(&name) {
+                    Ok(value.clone())
+                } else if self.primitives.contains_key(&name) {
                     // Return a marker for the primitive
                     Ok(Edn::Primitive(name))
-                } else if let Some(value) = env.lookup(&name) {
-                    Ok(value.clone())
                 } else {
                     Err(CompileError::MacroEval(format!(
                         "Undefined symbol in macro: {}", name
@@ -1568,6 +1590,664 @@ fn prim_if_let_impl(args: &[Edn]) -> CompileResult<Edn> {
         Edn::Vector(vec![Edn::Symbol(temp_sym), expr]),
         if_form,
     ]))
+}
+
+/// Implement (cond-> expr test1 form1 test2 form2 ...) macro expansion
+/// Each test/form pair: if test is true, thread expr through form (as first arg)
+/// (cond-> x true (f a) false (g b)) => (let [g# x g# (if true (f g# a) g#) g# (if false (g g# b) g#)] g#)
+fn prim_cond_thread_first_impl(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() < 2 {
+        return Err(CompileError::MacroEval("cond-> expects expr and clauses".into()));
+    }
+
+    let expr = args[0].clone();
+    let clauses = match &args[1] {
+        Edn::List(v) => v.clone(),
+        Edn::Nil => vec![],
+        _ => return Err(CompileError::MacroEval("cond-> clauses must be a list".into())),
+    };
+
+    if clauses.len() % 2 != 0 {
+        return Err(CompileError::MacroEval("cond-> requires even number of clause forms".into()));
+    }
+
+    let g = suss_core::Symbol::new("g__cond_thread__");
+
+    // Build let bindings: [g expr, g (if test1 (-> g form1) g), ...]
+    let mut bindings = vec![Edn::Symbol(g.clone()), expr];
+
+    for pair in clauses.chunks(2) {
+        let test = pair[0].clone();
+        let form = pair[1].clone();
+
+        // Thread g through form as first argument
+        let threaded = match form {
+            Edn::List(ref items) if !items.is_empty() => {
+                let mut new_items = vec![items[0].clone(), Edn::Symbol(g.clone())];
+                new_items.extend(items[1..].iter().cloned());
+                Edn::List(new_items)
+            }
+            Edn::Symbol(_) => {
+                Edn::List(vec![form, Edn::Symbol(g.clone())])
+            }
+            _ => return Err(CompileError::MacroEval("cond-> form must be a symbol or list".into())),
+        };
+
+        bindings.push(Edn::Symbol(g.clone()));
+        bindings.push(Edn::List(vec![
+            Edn::Symbol(suss_core::Symbol::new("if")),
+            test,
+            threaded,
+            Edn::Symbol(g.clone()),
+        ]));
+    }
+
+    Ok(Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("let")),
+        Edn::Vector(bindings),
+        Edn::Symbol(g),
+    ]))
+}
+
+/// Implement (cond->> expr test1 form1 test2 form2 ...) macro expansion
+/// Like cond-> but threads as last argument
+fn prim_cond_thread_last_impl(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() < 2 {
+        return Err(CompileError::MacroEval("cond->> expects expr and clauses".into()));
+    }
+
+    let expr = args[0].clone();
+    let clauses = match &args[1] {
+        Edn::List(v) => v.clone(),
+        Edn::Nil => vec![],
+        _ => return Err(CompileError::MacroEval("cond->> clauses must be a list".into())),
+    };
+
+    if clauses.len() % 2 != 0 {
+        return Err(CompileError::MacroEval("cond->> requires even number of clause forms".into()));
+    }
+
+    let g = suss_core::Symbol::new("g__cond_thread__");
+
+    let mut bindings = vec![Edn::Symbol(g.clone()), expr];
+
+    for pair in clauses.chunks(2) {
+        let test = pair[0].clone();
+        let form = pair[1].clone();
+
+        // Thread g through form as last argument
+        let threaded = match form {
+            Edn::List(ref items) if !items.is_empty() => {
+                let mut new_items = items.clone();
+                new_items.push(Edn::Symbol(g.clone()));
+                Edn::List(new_items)
+            }
+            Edn::Symbol(_) => {
+                Edn::List(vec![form, Edn::Symbol(g.clone())])
+            }
+            _ => return Err(CompileError::MacroEval("cond->> form must be a symbol or list".into())),
+        };
+
+        bindings.push(Edn::Symbol(g.clone()));
+        bindings.push(Edn::List(vec![
+            Edn::Symbol(suss_core::Symbol::new("if")),
+            test,
+            threaded,
+            Edn::Symbol(g.clone()),
+        ]));
+    }
+
+    Ok(Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("let")),
+        Edn::Vector(bindings),
+        Edn::Symbol(g),
+    ]))
+}
+
+/// Implement (some-> expr form1 form2 ...) macro expansion
+/// Threads expr through forms, short-circuiting on nil
+/// (some-> x f g) => (let [g# x g# (if (nil? g#) nil (f g#)) g# (if (nil? g#) nil (g g#))] g#)
+fn prim_some_thread_first_impl(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() < 2 {
+        return Err(CompileError::MacroEval("some-> expects expr and forms".into()));
+    }
+
+    let expr = args[0].clone();
+    let forms = match &args[1] {
+        Edn::List(v) => v.clone(),
+        Edn::Nil => vec![],
+        _ => return Err(CompileError::MacroEval("some-> forms must be a list".into())),
+    };
+
+    let g = suss_core::Symbol::new("g__some_thread__");
+
+    let mut bindings = vec![Edn::Symbol(g.clone()), expr];
+
+    for form in forms {
+        let threaded = match form {
+            Edn::List(ref items) if !items.is_empty() => {
+                let mut new_items = vec![items[0].clone(), Edn::Symbol(g.clone())];
+                new_items.extend(items[1..].iter().cloned());
+                Edn::List(new_items)
+            }
+            Edn::Symbol(_) => {
+                Edn::List(vec![form, Edn::Symbol(g.clone())])
+            }
+            _ => return Err(CompileError::MacroEval("some-> form must be a symbol or list".into())),
+        };
+
+        bindings.push(Edn::Symbol(g.clone()));
+        bindings.push(Edn::List(vec![
+            Edn::Symbol(suss_core::Symbol::new("if")),
+            Edn::List(vec![
+                Edn::Symbol(suss_core::Symbol::new("nil?")),
+                Edn::Symbol(g.clone()),
+            ]),
+            Edn::Nil,
+            threaded,
+        ]));
+    }
+
+    Ok(Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("let")),
+        Edn::Vector(bindings),
+        Edn::Symbol(g),
+    ]))
+}
+
+/// Implement (some->> expr form1 form2 ...) macro expansion
+/// Like some-> but threads as last argument
+fn prim_some_thread_last_impl(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() < 2 {
+        return Err(CompileError::MacroEval("some->> expects expr and forms".into()));
+    }
+
+    let expr = args[0].clone();
+    let forms = match &args[1] {
+        Edn::List(v) => v.clone(),
+        Edn::Nil => vec![],
+        _ => return Err(CompileError::MacroEval("some->> forms must be a list".into())),
+    };
+
+    let g = suss_core::Symbol::new("g__some_thread__");
+
+    let mut bindings = vec![Edn::Symbol(g.clone()), expr];
+
+    for form in forms {
+        let threaded = match form {
+            Edn::List(ref items) if !items.is_empty() => {
+                let mut new_items = items.clone();
+                new_items.push(Edn::Symbol(g.clone()));
+                Edn::List(new_items)
+            }
+            Edn::Symbol(_) => {
+                Edn::List(vec![form, Edn::Symbol(g.clone())])
+            }
+            _ => return Err(CompileError::MacroEval("some->> form must be a symbol or list".into())),
+        };
+
+        bindings.push(Edn::Symbol(g.clone()));
+        bindings.push(Edn::List(vec![
+            Edn::Symbol(suss_core::Symbol::new("if")),
+            Edn::List(vec![
+                Edn::Symbol(suss_core::Symbol::new("nil?")),
+                Edn::Symbol(g.clone()),
+            ]),
+            Edn::Nil,
+            threaded,
+        ]));
+    }
+
+    Ok(Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("let")),
+        Edn::Vector(bindings),
+        Edn::Symbol(g),
+    ]))
+}
+
+/// Implement (as-> expr name form1 form2 ...) macro expansion
+/// Binds expr to name, then evaluates each form with name rebound to the result
+/// (as-> x $ (f $ 1) (g 2 $)) => (let [$ x $ (f $ 1) $ (g 2 $)] $)
+fn prim_as_thread_impl(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() < 3 {
+        return Err(CompileError::MacroEval("as-> expects expr, name, and forms".into()));
+    }
+
+    let expr = args[0].clone();
+    let name = args[1].clone();
+    let forms = match &args[2] {
+        Edn::List(v) => v.clone(),
+        Edn::Nil => vec![],
+        _ => return Err(CompileError::MacroEval("as-> forms must be a list".into())),
+    };
+
+    let mut bindings = vec![name.clone(), expr];
+
+    for form in forms {
+        bindings.push(name.clone());
+        bindings.push(form);
+    }
+
+    Ok(Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("let")),
+        Edn::Vector(bindings),
+        name,
+    ]))
+}
+
+/// Implement (doseq [binding coll & modifiers] body...) macro expansion
+/// Simple case: (doseq [x xs] body) => (loop [s (seq xs)] (when s (let [x (first s)] body (recur (rest s)))))
+/// Nested: (doseq [x xs y ys] body) => (doseq [x xs] (doseq [y ys] body))
+fn prim_doseq_impl(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() < 2 {
+        return Err(CompileError::MacroEval("doseq expects seq-exprs and body".into()));
+    }
+
+    let seq_exprs = match &args[0] {
+        Edn::Vector(v) => v.clone(),
+        _ => return Err(CompileError::MacroEval("doseq requires a vector for its bindings".into())),
+    };
+
+    let body = match &args[1] {
+        Edn::List(v) => v.clone(),
+        Edn::Nil => vec![],
+        _ => vec![args[1].clone()],
+    };
+
+    if seq_exprs.len() < 2 {
+        return Err(CompileError::MacroEval("doseq requires at least one binding pair".into()));
+    }
+
+    // Parse binding pairs, handling :when and :let modifiers
+    let bind = seq_exprs[0].clone();
+    let coll = seq_exprs[1].clone();
+
+    // Collect modifiers for this binding
+    let mut when_clauses = Vec::new();
+    let mut let_bindings = Vec::new();
+    let mut idx = 2;
+    while idx < seq_exprs.len() {
+        if let Edn::Keyword(kw) = &seq_exprs[idx] {
+            match kw.name.as_str() {
+                "when" => {
+                    if idx + 1 < seq_exprs.len() {
+                        when_clauses.push(seq_exprs[idx + 1].clone());
+                        idx += 2;
+                        continue;
+                    }
+                }
+                "let" => {
+                    if idx + 1 < seq_exprs.len() {
+                        if let Edn::Vector(v) = &seq_exprs[idx + 1] {
+                            let_bindings = v.clone();
+                        }
+                        idx += 2;
+                        continue;
+                    }
+                }
+                _ => break,
+            }
+        }
+        break;
+    }
+
+    // If there are remaining binding pairs after modifiers, wrap in nested doseq
+    let inner_body = if idx < seq_exprs.len() {
+        // Remaining bindings become inner doseq
+        let remaining = Edn::Vector(seq_exprs[idx..].to_vec());
+        let mut doseq_form = vec![
+            Edn::Symbol(suss_core::Symbol::new("doseq")),
+            remaining,
+        ];
+        doseq_form.extend(body);
+        vec![Edn::List(doseq_form)]
+    } else {
+        body
+    };
+
+    // Build: (loop [s# (seq coll)] (when s# (let [bind (first s#)] <body> (recur (next s#)))))
+    let s_sym = suss_core::Symbol::new("s__doseq__");
+
+    // Build the inner body with :let and :when wrapping
+    let mut inner = {
+        let mut do_form = vec![Edn::Symbol(suss_core::Symbol::new("do"))];
+        do_form.extend(inner_body);
+        do_form.push(Edn::List(vec![
+            Edn::Symbol(suss_core::Symbol::new("recur")),
+            Edn::List(vec![
+                Edn::Symbol(suss_core::Symbol::new("next")),
+                Edn::Symbol(s_sym.clone()),
+            ]),
+        ]));
+        Edn::List(do_form)
+    };
+
+    // Wrap with :when guards
+    for when_clause in when_clauses.into_iter().rev() {
+        inner = Edn::List(vec![
+            Edn::Symbol(suss_core::Symbol::new("if")),
+            when_clause,
+            inner,
+            Edn::List(vec![
+                Edn::Symbol(suss_core::Symbol::new("recur")),
+                Edn::List(vec![
+                    Edn::Symbol(suss_core::Symbol::new("next")),
+                    Edn::Symbol(s_sym.clone()),
+                ]),
+            ]),
+        ]);
+    }
+
+    // Wrap with :let bindings
+    if !let_bindings.is_empty() {
+        inner = Edn::List(vec![
+            Edn::Symbol(suss_core::Symbol::new("let")),
+            Edn::Vector(let_bindings),
+            inner,
+        ]);
+    }
+
+    // Build: (let [bind (first s#)] inner)
+    let let_form = Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("let")),
+        Edn::Vector(vec![
+            bind,
+            Edn::List(vec![
+                Edn::Symbol(suss_core::Symbol::new("first")),
+                Edn::Symbol(s_sym.clone()),
+            ]),
+        ]),
+        inner,
+    ]);
+
+    // Build: (when s# let_form)
+    let when_form = Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("when")),
+        Edn::Symbol(s_sym.clone()),
+        let_form,
+    ]);
+
+    // Build: (loop [s# (seq coll)] when_form)
+    let loop_form = Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("loop")),
+        Edn::Vector(vec![
+            Edn::Symbol(s_sym.clone()),
+            Edn::List(vec![
+                Edn::Symbol(suss_core::Symbol::new("seq")),
+                coll,
+            ]),
+        ]),
+        when_form,
+    ]);
+
+    Ok(loop_form)
+}
+
+/// Implement (when-first [x coll] body...) macro expansion
+/// (when-first [x xs] body) => (when-let [s (seq xs)] (let [x (first s)] body))
+fn prim_when_first_impl(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() < 2 {
+        return Err(CompileError::MacroEval("when-first expects binding and body".into()));
+    }
+
+    let binding = match &args[0] {
+        Edn::Vector(v) if v.len() >= 2 => v,
+        _ => return Err(CompileError::MacroEval("when-first requires [sym coll] binding".into())),
+    };
+
+    let sym = binding[0].clone();
+    let coll = binding[1].clone();
+
+    let body = match &args[1] {
+        Edn::List(v) => v.clone(),
+        Edn::Nil => vec![],
+        _ => vec![args[1].clone()],
+    };
+
+    // Build: (when-let [s# (seq coll)] (let [sym (first s#)] body...))
+    let s_sym = suss_core::Symbol::new("s__when_first__");
+
+    let mut do_form = vec![Edn::Symbol(suss_core::Symbol::new("do"))];
+    do_form.extend(body);
+
+    let let_form = Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("let")),
+        Edn::Vector(vec![
+            sym,
+            Edn::List(vec![
+                Edn::Symbol(suss_core::Symbol::new("first")),
+                Edn::Symbol(s_sym.clone()),
+            ]),
+        ]),
+        Edn::List(do_form),
+    ]);
+
+    Ok(Edn::List(vec![
+        Edn::Symbol(suss_core::Symbol::new("when-let")),
+        Edn::Vector(vec![
+            Edn::Symbol(s_sym),
+            Edn::List(vec![
+                Edn::Symbol(suss_core::Symbol::new("seq")),
+                coll,
+            ]),
+        ]),
+        let_form,
+    ]))
+}
+
+/// even? predicate for macro evaluator
+fn prim_even_q(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() != 1 {
+        return Err(CompileError::MacroEval("even? expects 1 argument".into()));
+    }
+    match &args[0] {
+        Edn::Number(n) => {
+            let val = n.to_i64().ok_or_else(|| CompileError::MacroEval("even? expects integer".into()))?;
+            Ok(Edn::Bool(val % 2 == 0))
+        }
+        _ => Err(CompileError::MacroEval("even? expects a number".into())),
+    }
+}
+
+/// assoc for macro evaluator maps
+fn prim_assoc(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() < 3 || args.len() % 2 == 0 {
+        return Err(CompileError::MacroEval("assoc expects map and key-value pairs".into()));
+    }
+    match &args[0] {
+        Edn::Map(pairs) => {
+            let mut new_pairs = pairs.clone();
+            for kv in args[1..].chunks(2) {
+                let key = kv[0].clone();
+                let val = kv[1].clone();
+                // Replace existing or add new
+                let mut found = false;
+                for pair in &mut new_pairs {
+                    if pair.0 == key {
+                        pair.1 = val.clone();
+                        found = true;
+                        break;
+                    }
+                }
+                if !found {
+                    new_pairs.push((key, val));
+                }
+            }
+            Ok(Edn::Map(new_pairs))
+        }
+        Edn::Nil => {
+            let mut pairs = Vec::new();
+            for kv in args[1..].chunks(2) {
+                pairs.push((kv[0].clone(), kv[1].clone()));
+            }
+            Ok(Edn::Map(pairs))
+        }
+        _ => Err(CompileError::MacroEval("assoc expects a map".into())),
+    }
+}
+
+/// dissoc for macro evaluator maps
+fn prim_dissoc(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() < 2 {
+        return Err(CompileError::MacroEval("dissoc expects map and key".into()));
+    }
+    match &args[0] {
+        Edn::Map(pairs) => {
+            let key = &args[1];
+            let new_pairs: Vec<_> = pairs.iter()
+                .filter(|(k, _)| k != key)
+                .cloned()
+                .collect();
+            Ok(Edn::Map(new_pairs))
+        }
+        _ => Err(CompileError::MacroEval("dissoc expects a map".into())),
+    }
+}
+
+/// contains? for macro evaluator
+fn prim_contains_q(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() != 2 {
+        return Err(CompileError::MacroEval("contains? expects 2 arguments".into()));
+    }
+    match &args[0] {
+        Edn::Map(pairs) => {
+            let key = &args[1];
+            Ok(Edn::Bool(pairs.iter().any(|(k, _)| k == key)))
+        }
+        Edn::Set(items) => {
+            Ok(Edn::Bool(items.contains(&args[1])))
+        }
+        Edn::Vector(items) => {
+            // contains? on vector checks index, not value
+            if let Edn::Number(n) = &args[1] {
+                if let Some(idx) = n.to_i64() {
+                    Ok(Edn::Bool(idx >= 0 && (idx as usize) < items.len()))
+                } else {
+                    Ok(Edn::Bool(false))
+                }
+            } else {
+                Ok(Edn::Bool(false))
+            }
+        }
+        _ => Ok(Edn::Bool(false)),
+    }
+}
+
+/// keys for macro evaluator maps
+fn prim_keys(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() != 1 {
+        return Err(CompileError::MacroEval("keys expects 1 argument".into()));
+    }
+    match &args[0] {
+        Edn::Map(pairs) => {
+            Ok(Edn::List(pairs.iter().map(|(k, _)| k.clone()).collect()))
+        }
+        Edn::Nil => Ok(Edn::Nil),
+        _ => Err(CompileError::MacroEval("keys expects a map".into())),
+    }
+}
+
+/// vals for macro evaluator maps
+fn prim_vals(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() != 1 {
+        return Err(CompileError::MacroEval("vals expects 1 argument".into()));
+    }
+    match &args[0] {
+        Edn::Map(pairs) => {
+            Ok(Edn::List(pairs.iter().map(|(_, v)| v.clone()).collect()))
+        }
+        Edn::Nil => Ok(Edn::Nil),
+        _ => Err(CompileError::MacroEval("vals expects a map".into())),
+    }
+}
+
+/// into for macro evaluator
+fn prim_into(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() != 2 {
+        return Err(CompileError::MacroEval("into expects 2 arguments".into()));
+    }
+    match (&args[0], &args[1]) {
+        (Edn::Vector(to), Edn::List(from)) | (Edn::Vector(to), Edn::Vector(from)) => {
+            let mut result = to.clone();
+            result.extend(from.iter().cloned());
+            Ok(Edn::Vector(result))
+        }
+        (Edn::Vector(to), Edn::Nil) => Ok(Edn::Vector(to.clone())),
+        _ => Err(CompileError::MacroEval("into: unsupported types".into())),
+    }
+}
+
+/// partition for macro evaluator
+fn prim_partition(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() != 2 {
+        return Err(CompileError::MacroEval("partition expects 2 arguments".into()));
+    }
+    let n = match &args[0] {
+        Edn::Number(num) => num.to_i64().ok_or_else(|| CompileError::MacroEval("partition size must be integer".into()))? as usize,
+        _ => return Err(CompileError::MacroEval("partition size must be a number".into())),
+    };
+
+    let items = match &args[1] {
+        Edn::List(v) => v.clone(),
+        Edn::Vector(v) => v.clone(),
+        Edn::Nil => vec![],
+        _ => return Err(CompileError::MacroEval("partition expects a sequence".into())),
+    };
+
+    let groups: Vec<Edn> = items.chunks(n)
+        .filter(|chunk| chunk.len() == n)
+        .map(|chunk| Edn::List(chunk.to_vec()))
+        .collect();
+
+    Ok(Edn::List(groups))
+}
+
+/// pop for macro evaluator
+fn prim_pop(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() != 1 {
+        return Err(CompileError::MacroEval("pop expects 1 argument".into()));
+    }
+    match &args[0] {
+        Edn::Vector(v) if !v.is_empty() => {
+            Ok(Edn::Vector(v[..v.len()-1].to_vec()))
+        }
+        Edn::List(v) if !v.is_empty() => {
+            Ok(Edn::List(v[1..].to_vec()))
+        }
+        _ => Err(CompileError::MacroEval("pop: can't pop empty collection".into())),
+    }
+}
+
+/// peek for macro evaluator
+fn prim_peek(args: &[Edn]) -> CompileResult<Edn> {
+    if args.len() != 1 {
+        return Err(CompileError::MacroEval("peek expects 1 argument".into()));
+    }
+    match &args[0] {
+        Edn::Vector(v) if !v.is_empty() => {
+            Ok(v.last().unwrap().clone())
+        }
+        Edn::List(v) if !v.is_empty() => {
+            Ok(v.first().unwrap().clone())
+        }
+        _ => Ok(Edn::Nil),
+    }
+}
+
+/// gensym for macro evaluator - generates a unique symbol
+static GENSYM_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+fn prim_gensym(args: &[Edn]) -> CompileResult<Edn> {
+    let prefix = if args.is_empty() {
+        "G__".to_string()
+    } else {
+        match &args[0] {
+            Edn::String(s) => s.clone(),
+            _ => "G__".to_string(),
+        }
+    };
+    let id = GENSYM_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    Ok(Edn::Symbol(suss_core::Symbol::new(format!("{}{}", prefix, id))))
 }
 
 #[cfg(test)]

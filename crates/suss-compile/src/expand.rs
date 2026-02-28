@@ -230,6 +230,100 @@ impl MacroEnv {
                 Edn::Symbol(Symbol::new("else_clause")),
             ]),
         });
+
+        // Conditional threading macros
+
+        // (defmacro cond-> [expr & clauses]
+        //   (_cond_thread_first_impl expr clauses))
+        self.define_macro(MacroDef {
+            name: "cond->".to_string(),
+            params: vec!["expr".to_string()],
+            rest_param: Some("clauses".to_string()),
+            body: Edn::List(vec![
+                Edn::Symbol(Symbol::new("_cond_thread_first_impl")),
+                Edn::Symbol(Symbol::new("expr")),
+                Edn::Symbol(Symbol::new("clauses")),
+            ]),
+        });
+
+        // (defmacro cond->> [expr & clauses]
+        //   (_cond_thread_last_impl expr clauses))
+        self.define_macro(MacroDef {
+            name: "cond->>".to_string(),
+            params: vec!["expr".to_string()],
+            rest_param: Some("clauses".to_string()),
+            body: Edn::List(vec![
+                Edn::Symbol(Symbol::new("_cond_thread_last_impl")),
+                Edn::Symbol(Symbol::new("expr")),
+                Edn::Symbol(Symbol::new("clauses")),
+            ]),
+        });
+
+        // (defmacro some-> [expr & forms]
+        //   (_some_thread_first_impl expr forms))
+        self.define_macro(MacroDef {
+            name: "some->".to_string(),
+            params: vec!["expr".to_string()],
+            rest_param: Some("forms".to_string()),
+            body: Edn::List(vec![
+                Edn::Symbol(Symbol::new("_some_thread_first_impl")),
+                Edn::Symbol(Symbol::new("expr")),
+                Edn::Symbol(Symbol::new("forms")),
+            ]),
+        });
+
+        // (defmacro some->> [expr & forms]
+        //   (_some_thread_last_impl expr forms))
+        self.define_macro(MacroDef {
+            name: "some->>".to_string(),
+            params: vec!["expr".to_string()],
+            rest_param: Some("forms".to_string()),
+            body: Edn::List(vec![
+                Edn::Symbol(Symbol::new("_some_thread_last_impl")),
+                Edn::Symbol(Symbol::new("expr")),
+                Edn::Symbol(Symbol::new("forms")),
+            ]),
+        });
+
+        // (defmacro as-> [expr name & forms]
+        //   (_as_thread_impl expr name forms))
+        self.define_macro(MacroDef {
+            name: "as->".to_string(),
+            params: vec!["expr".to_string(), "name".to_string()],
+            rest_param: Some("forms".to_string()),
+            body: Edn::List(vec![
+                Edn::Symbol(Symbol::new("_as_thread_impl")),
+                Edn::Symbol(Symbol::new("expr")),
+                Edn::Symbol(Symbol::new("name")),
+                Edn::Symbol(Symbol::new("forms")),
+            ]),
+        });
+
+        // (defmacro doseq [seq-exprs & body]
+        //   (_doseq_impl seq-exprs body))
+        self.define_macro(MacroDef {
+            name: "doseq".to_string(),
+            params: vec!["seq_exprs".to_string()],
+            rest_param: Some("body".to_string()),
+            body: Edn::List(vec![
+                Edn::Symbol(Symbol::new("_doseq_impl")),
+                Edn::Symbol(Symbol::new("seq_exprs")),
+                Edn::Symbol(Symbol::new("body")),
+            ]),
+        });
+
+        // (defmacro when-first [[sym coll] & body]
+        //   (_when_first_impl binding body))
+        self.define_macro(MacroDef {
+            name: "when-first".to_string(),
+            params: vec!["binding".to_string()],
+            rest_param: Some("body".to_string()),
+            body: Edn::List(vec![
+                Edn::Symbol(Symbol::new("_when_first_impl")),
+                Edn::Symbol(Symbol::new("binding")),
+                Edn::Symbol(Symbol::new("body")),
+            ]),
+        });
     }
 
     /// Set the current namespace
@@ -570,6 +664,148 @@ impl MacroEnv {
         Ok(bindings)
     }
 
+    /// Generate destructured bindings for a map pattern
+    /// Supports:
+    ///   {a :key-a, b :key-b}       — direct symbol-to-key mapping
+    ///   {:keys [a b]}              — keyword keys matching symbol names
+    ///   {:strs [a b]}              — string keys matching symbol names
+    ///   {:or {a default, b default}} — default values
+    ///   {:as name}                 — bind the whole map
+    fn destructure_map(&mut self, pairs: &[(Edn, Edn)], value_sym: &Symbol) -> CompileResult<Vec<(Edn, Edn)>> {
+        let mut bindings = Vec::new();
+        let mut defaults: Vec<(Edn, Edn)> = Vec::new();
+        let mut as_binding = None;
+
+        for (key, val) in pairs {
+            match key {
+                // {:keys [a b c]} — extract keywords with same name
+                Edn::Keyword(kw) if kw.name == "keys" => {
+                    if let Edn::Vector(syms) = val {
+                        for sym_edn in syms {
+                            if let Edn::Symbol(sym) = sym_edn {
+                                // (get map :sym-name)
+                                bindings.push((
+                                    Edn::Symbol(sym.clone()),
+                                    Edn::List(vec![
+                                        Edn::Symbol(Symbol::new("get")),
+                                        Edn::Symbol(value_sym.clone()),
+                                        Edn::Keyword(Keyword::new(&sym.name)),
+                                    ]),
+                                ));
+                            } else {
+                                return Err(CompileError::MacroExpansion(
+                                    ":keys vector must contain symbols".into()
+                                ));
+                            }
+                        }
+                    } else {
+                        return Err(CompileError::MacroExpansion(
+                            ":keys must be followed by a vector".into()
+                        ));
+                    }
+                }
+                // {:strs [a b c]} — extract string keys with same name
+                Edn::Keyword(kw) if kw.name == "strs" => {
+                    if let Edn::Vector(syms) = val {
+                        for sym_edn in syms {
+                            if let Edn::Symbol(sym) = sym_edn {
+                                // (get map "sym-name")
+                                bindings.push((
+                                    Edn::Symbol(sym.clone()),
+                                    Edn::List(vec![
+                                        Edn::Symbol(Symbol::new("get")),
+                                        Edn::Symbol(value_sym.clone()),
+                                        Edn::String(sym.name.clone()),
+                                    ]),
+                                ));
+                            } else {
+                                return Err(CompileError::MacroExpansion(
+                                    ":strs vector must contain symbols".into()
+                                ));
+                            }
+                        }
+                    } else {
+                        return Err(CompileError::MacroExpansion(
+                            ":strs must be followed by a vector".into()
+                        ));
+                    }
+                }
+                // {:or {a default-val, b default-val}} — defaults
+                Edn::Keyword(kw) if kw.name == "or" => {
+                    if let Edn::Map(or_pairs) = val {
+                        defaults = or_pairs.clone();
+                    } else {
+                        return Err(CompileError::MacroExpansion(
+                            ":or must be followed by a map".into()
+                        ));
+                    }
+                }
+                // {:as name} — bind the whole map
+                Edn::Keyword(kw) if kw.name == "as" => {
+                    as_binding = Some(val.clone());
+                }
+                // {sym :keyword} — direct symbol-to-key binding
+                Edn::Symbol(sym) => {
+                    bindings.push((
+                        Edn::Symbol(sym.clone()),
+                        Edn::List(vec![
+                            Edn::Symbol(Symbol::new("get")),
+                            Edn::Symbol(value_sym.clone()),
+                            val.clone(),
+                        ]),
+                    ));
+                }
+                _ => {
+                    return Err(CompileError::MacroExpansion(format!(
+                        "Invalid map destructuring key: {:?}", key
+                    )));
+                }
+            }
+        }
+
+        // Apply defaults: wrap existing bindings with (let [sym (if (nil? sym) default sym)])
+        if !defaults.is_empty() {
+            let mut final_bindings = Vec::new();
+            for (sym, expr) in bindings {
+                let sym_name = match &sym {
+                    Edn::Symbol(s) => s.name.clone(),
+                    _ => unreachable!(),
+                };
+                // Check if there's a default for this symbol
+                let has_default = defaults.iter().find(|(k, _)| {
+                    matches!(k, Edn::Symbol(s) if s.name == sym_name)
+                });
+                if let Some((_, default_val)) = has_default {
+                    // First bind the raw get, then rebind with default
+                    let temp = self.gensym("or");
+                    final_bindings.push((Edn::Symbol(temp.clone()), expr));
+                    final_bindings.push((
+                        sym,
+                        Edn::List(vec![
+                            Edn::Symbol(Symbol::new("if")),
+                            Edn::List(vec![
+                                Edn::Symbol(Symbol::new("nil?")),
+                                Edn::Symbol(temp.clone()),
+                            ]),
+                            default_val.clone(),
+                            Edn::Symbol(temp),
+                        ]),
+                    ));
+                } else {
+                    final_bindings.push((sym, expr));
+                }
+            }
+            bindings = final_bindings;
+        }
+
+        // Add :as binding
+        if let Some(as_sym) = as_binding {
+            bindings.push((as_sym, Edn::Symbol(value_sym.clone())));
+        }
+
+        Ok(bindings)
+    }
+
     /// Expand a binding pair, handling destructuring
     /// Returns expanded bindings as a flat vector
     fn expand_binding_pair(&mut self, pattern: Edn, value: Edn) -> CompileResult<Vec<Edn>> {
@@ -590,11 +826,20 @@ impl MacroEnv {
 
                     Ok(result)
                 }
-                Edn::Map(_) => {
-                    // Map destructuring not yet implemented
-                    Err(CompileError::MacroExpansion(
-                        "Map destructuring not yet implemented".into()
-                    ))
+                Edn::Map(ref pairs) => {
+                    let temp_sym = self.gensym("destructure");
+                    let mut result = vec![
+                        Edn::Symbol(temp_sym.clone()),
+                        self.expand(value)?,
+                    ];
+
+                    let bindings = self.destructure_map(pairs, &temp_sym)?;
+                    for (sym, expr) in bindings {
+                        result.push(sym);
+                        result.push(self.expand(expr)?);
+                    }
+
+                    Ok(result)
                 }
                 _ => unreachable!(),
             }
