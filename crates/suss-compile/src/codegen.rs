@@ -778,7 +778,15 @@ impl<'a> CodeGen<'a> {
 
     /// Generate core WASM with WIT metadata (for compile command)
     fn generate_with_wit(&self, resolve: &Resolve, world_id: WorldId) -> CompileResult<Vec<u8>> {
-        let core_wasm = self.generate_core_with_imports()?;
+        // Resolve the fully-qualified suss interface name from the WIT package
+        let world = &resolve.worlds[world_id];
+        let suss_module = if let Some(pkg_id) = world.package {
+            let pkg = &resolve.packages[pkg_id];
+            format!("{}/suss", pkg.name)
+        } else {
+            "suss".to_string()
+        };
+        let core_wasm = self.generate_core_with_imports(&suss_module)?;
 
         // Encode WIT metadata and append to module
         let encoded_metadata = metadata::encode(resolve, world_id, StringEncoding::UTF8, None)
@@ -790,7 +798,8 @@ impl<'a> CodeGen<'a> {
     /// Generate WASI component (for expression evaluation with WASI imports)
     fn generate_wasi_component(&self) -> CompileResult<Vec<u8>> {
         // Generate core module with imports
-        let core_wasm = self.generate_core_with_imports()?;
+        // The synthetic WIT uses package suss:expr, so the suss interface is suss:expr/suss
+        let core_wasm = self.generate_core_with_imports("suss:expr/suss")?;
 
         // Build a synthetic WIT world for the expression
         let wit_source = self.build_synthetic_wit_world()?;
@@ -837,7 +846,11 @@ impl<'a> CodeGen<'a> {
     }
 
     /// Generate a core WASM module with import section (shared by WIT and WASI modes)
-    fn generate_core_with_imports(&self) -> CompileResult<Vec<u8>> {
+    ///
+    /// `suss_import_module` is the fully-qualified WIT interface name for the suss
+    /// runtime import (e.g., "test:tco/suss" for package test:tco). The component
+    /// encoder requires import module names to match the WIT interface path.
+    fn generate_core_with_imports(&self, suss_import_module: &str) -> CompileResult<Vec<u8>> {
         use crate::ir::gc_types;
 
         let mut module = WasmModule::new();
@@ -951,8 +964,8 @@ impl<'a> CodeGen<'a> {
             }
             // print_str is always imported (unconditionally stable function indices)
             imports.import(
-                "suss",
-                "print_str",
+                suss_import_module,
+                "print-str",
                 EntityType::Function(import_type_base + self.ir.imports.len() as u32),
             );
             module.section(&imports);
@@ -995,6 +1008,18 @@ impl<'a> CodeGen<'a> {
 
         // Memory section
         self.emit_memory_section(&mut module);
+
+        // Tag section - exception tag for try/catch/throw
+        // Tag 0: exception tag that carries an eqref value
+        // Reuses the PRINT_STR helper type which has the same signature: (eqref) -> ()
+        {
+            let mut tags = TagSection::new();
+            tags.tag(TagType {
+                kind: TagKind::Exception,
+                func_type_idx: type_base + helper_type_offsets::PRINT_STR,
+            });
+            module.section(&tags);
+        }
 
         // Global section - heap pointer
         self.emit_global_section(&mut module);
@@ -2585,7 +2610,16 @@ impl<'a> CodeGen<'a> {
         let mut wit = String::new();
 
         wit.push_str("package suss:expr;\n\n");
+
+        // Define the suss runtime interface (print-str for string output)
+        wit.push_str("interface suss {\n");
+        wit.push_str("    print-str: func(ptr: u32, len: u32);\n");
+        wit.push_str("}\n\n");
+
         wit.push_str("world expr {\n");
+
+        // Import the suss runtime interface
+        wit.push_str("    import suss;\n");
 
         // Add WASI imports
         for import in &self.ir.imports {
@@ -5644,28 +5678,16 @@ impl<'a> CodeGen<'a> {
                     field_index: *field_idx,
                 });
                 // Determine if the field is i32 (needs wrapping) or eqref (already reference)
-                // PersistentVector: { type_id: 0, cnt: 1, shift: 2, root: 3, tail: 4 }
-                // PersistentMap/Set: { type_id: 0, cnt: 1, root: 2, ... }
-                // Cons: { first: 0, rest: 1 } - both eqref
-                let needs_i32_wrap = match (*type_idx, *field_idx) {
-                    // Vector i32 fields
-                    (gc_types::PERSISTENT_VECTOR, 1) => true,  // cnt
-                    (gc_types::PERSISTENT_VECTOR, 2) => true,  // shift
-                    // Map/Set i32 fields
-                    (gc_types::PERSISTENT_MAP, 1) => true,     // cnt
-                    (gc_types::PERSISTENT_SET, 1) => true,     // cnt
-                    // BitmapIndexedNode i32 fields: { type_id: 0, bitmap: 1, arr: 2 }
-                    (gc_types::BITMAP_INDEXED_NODE, 0) => true, // type_id
-                    (gc_types::BITMAP_INDEXED_NODE, 1) => true, // bitmap
-                    // ArrayNode i32 fields: { type_id: 0, cnt: 1, arr: 2 }
-                    (gc_types::ARRAY_NODE, 0) => true,          // type_id
-                    (gc_types::ARRAY_NODE, 1) => true,          // cnt
-                    // HashCollisionNode i32 fields: { type_id: 0, hash: 1, cnt: 2, arr: 3 }
-                    (gc_types::HASH_COLLISION_NODE, 0) => true, // type_id
-                    (gc_types::HASH_COLLISION_NODE, 1) => true, // hash
-                    (gc_types::HASH_COLLISION_NODE, 2) => true, // cnt
-                    // All other fields are eqref
-                    _ => false,
+                // Field 0 is always type_id (i32) for all deftypes.
+                // For other fields, check DeftypeDef dynamically.
+                let needs_i32_wrap = if *field_idx == 0 {
+                    true // field 0 is always type_id (i32)
+                } else {
+                    self.ir.deftypes.iter()
+                        .find(|dt| dt.gc_type_idx == *type_idx)
+                        .and_then(|dt| dt.fields.get((*field_idx - 1) as usize))
+                        .map(|f| matches!(f.field_type, IrFieldType::I32))
+                        .unwrap_or(false)
                 };
                 if needs_i32_wrap {
                     // Encode i32 as small int
@@ -7054,15 +7076,6 @@ impl<'a> CodeGen<'a> {
         // VARIADIC_CAPTURE closures use CLOSURE_FN_1 type: (env, args_array) -> result
         let fn_type = gc_types::CLOSURE_FN_1;
 
-        // For now, we only support vectors <= 32 elements (where tail contains all elements)
-        // For larger vectors, trap (TODO: implement proper conversion)
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(32));
-        f.instruction(&Instruction::I32GtU);
-        f.instruction(&Instruction::If(BlockType::Empty));
-        f.instruction(&Instruction::Unreachable); // Trap for vectors > 32
-        f.instruction(&Instruction::End);
-
         // Get env from CLOSURE_1
         f.instruction(&Instruction::LocalGet(closure_local));
         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::CLOSURE_1)));
@@ -7071,13 +7084,30 @@ impl<'a> CodeGen<'a> {
             field_index: gc_types::CL_ENV,
         });
 
-        // Get tail array from vector (contains all elements for cnt <= 32)
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: 4, // tail field
-        });
+        // Get args array: for vectors <= 32, use tail directly; for > 32, call vec-to-array
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(32));
+        f.instruction(&Instruction::I32GtU);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+        {
+            // > 32: call vec-to-array to flatten the trie into a WASM array
+            f.instruction(&Instruction::LocalGet(vec_local));
+            let vec_to_array_idx = self.func_idx_by_name("suss.core/vec-to-array")
+                .or_else(|| self.func_idx_by_name("vec-to-array"))
+                .ok_or_else(|| CompileError::Unsupported("vec-to-array not found".into()))?;
+            f.instruction(&Instruction::Call(vec_to_array_idx));
+        }
+        f.instruction(&Instruction::Else);
+        {
+            // <= 32: tail contains all elements
+            f.instruction(&Instruction::LocalGet(vec_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
+            f.instruction(&Instruction::StructGet {
+                struct_type_index: pv_gc_idx,
+                field_index: 4, // tail field
+            });
+        }
+        f.instruction(&Instruction::End);
 
         // Get fn from CLOSURE_1
         f.instruction(&Instruction::LocalGet(closure_local));

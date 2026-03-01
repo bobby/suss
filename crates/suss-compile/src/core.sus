@@ -3323,3 +3323,14 @@
             (print-str (pr-str (nth args i)))
             (recur (+ i 1))))
         (print-str "\n")))))
+
+;; Internal: convert PersistentVector to flat WASM array for apply on large vectors
+(defn vec-to-array
+  [v]
+  (let [n (count v)
+        arr (make-array n)]
+    (loop [i 0]
+      (when (< i n)
+        (aset arr i (nth v i))
+        (recur (inc i))))
+    arr))

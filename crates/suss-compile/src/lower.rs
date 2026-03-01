@@ -231,6 +231,16 @@ impl Lowerer {
     }
 
     // ========================================================================
+    // Dynamic Type Resolution Helpers
+    // ========================================================================
+
+    /// Look up a deftype's GC type index by name from user_types.
+    /// Returns u32::MAX if not found (safe sentinel for comparisons).
+    fn gc_idx(&self, name: &str) -> u32 {
+        self.user_types.get(name).map(|t| t.gc_type_idx).unwrap_or(u32::MAX)
+    }
+
+    // ========================================================================
     // Tail Position Context Helpers
     // ========================================================================
 
@@ -410,16 +420,8 @@ impl Lowerer {
         // Also handles inline protocol implementations
         self.lower_deftypes(&analyzed.deftypes)?;
 
-        // Count deftype constructors (skip HAMT nodes 5-7 which don't generate constructors)
-        self.num_deftype_constructors = analyzed
-            .deftypes
-            .iter()
-            .filter(|dt| {
-                use crate::ir::gc_types;
-                let gc_type_idx = dt.reserved_type_id.unwrap_or(gc_types::NUM_GC_TYPES);
-                gc_type_idx < gc_types::BITMAP_INDEXED_NODE || gc_type_idx > gc_types::HASH_COLLISION_NODE
-            })
-            .count() as u32;
+        // Count deftype constructors (all deftypes now generate constructors)
+        self.num_deftype_constructors = analyzed.deftypes.len() as u32;
 
         // Count inline protocol implementations from deftype declarations
         self.num_deftype_impl_funcs = analyzed
@@ -600,9 +602,15 @@ impl Lowerer {
                 // Extract rest using array slice
                 self.generate_rest_param_extraction(args_array_local, fixed_count)?
             };
-            // Wrap raw array in PersistentVector so rest params work with
-            // collection operations (first, count, apply, etc.)
-            let rest_expr = Expr::WrapInVector(Box::new(raw_array_expr));
+            // For multi-arity dispatch args ($multi_arity_args), keep the raw array
+            // since the dispatch body uses aget/alength directly.
+            // For user-facing variadic rest params, wrap in PersistentVector so
+            // collection operations (first, count, apply, etc.) work.
+            let rest_expr = if rest_param_name.starts_with("$multi_arity_") {
+                raw_array_expr
+            } else {
+                Expr::WrapInVector(Box::new(raw_array_expr))
+            };
             all_bindings.push((rest_local_idx, rest_expr));
         } else {
             // Non-variadic: add regular parameters first
@@ -893,6 +901,84 @@ impl Lowerer {
 
         // Build the let expression
         let bindings = vec![
+            (len_local, len_expr),
+            (rest_len_local, rest_len_expr),
+            (rest_arr_local, rest_arr_expr),
+        ];
+
+        let body = Expr::Block(vec![
+            copy_expr,
+            Expr::LocalGet { local: rest_arr_local, ty: Type::GcRef },
+        ]);
+
+        Ok(Expr::Let {
+            bindings,
+            body: Box::new(body),
+        })
+    }
+
+    /// Generate code to slice a WASM array from `start_idx` onwards.
+    /// Like `generate_rest_param_extraction` but takes an `Expr` instead of a local index.
+    fn generate_array_slice_from_expr(
+        &mut self,
+        arr_expr: Expr,
+        start_idx: usize,
+    ) -> CompileResult<Expr> {
+        use crate::ir::gc_types;
+
+        // We need to store the array in a local since it's used multiple times
+        let arr_local = self.next_local;
+        self.locals.insert("__slice_arr".to_string(), (arr_local, Type::GcRef));
+        self.local_types.insert(arr_local, Type::GcRef);
+        self.next_local += 1;
+
+        let len_local = self.next_local;
+        self.locals.insert("__slice_len".to_string(), (len_local, Type::GcRef));
+        self.local_types.insert(len_local, Type::GcRef);
+        self.next_local += 1;
+
+        let rest_len_local = self.next_local;
+        self.locals.insert("__slice_rest_len".to_string(), (rest_len_local, Type::GcRef));
+        self.local_types.insert(rest_len_local, Type::GcRef);
+        self.next_local += 1;
+
+        let rest_arr_local = self.next_local;
+        self.locals.insert("__slice_rest_arr".to_string(), (rest_arr_local, Type::GcRef));
+        self.local_types.insert(rest_arr_local, Type::GcRef);
+        self.next_local += 1;
+
+        // len = (alength arr)
+        let len_expr = Expr::ArrayLen(Box::new(Expr::LocalGet {
+            local: arr_local,
+            ty: Type::GcRef,
+        }));
+
+        // rest_len = (- len start_idx)
+        let rest_len_expr = Expr::BinOp {
+            op: BinOp::Sub,
+            left: Box::new(Expr::LocalGet { local: len_local, ty: Type::GcRef }),
+            right: Box::new(Expr::Int(start_idx as i64)),
+            ty: Type::I32,
+        };
+
+        // rest_arr = (make-array rest_len)
+        let rest_arr_expr = Expr::ArrayNewDefault {
+            type_idx: gc_types::ARRAY,
+            size: Box::new(Expr::LocalGet { local: rest_len_local, ty: Type::GcRef }),
+        };
+
+        // (acopy rest_arr 0 arr start_idx rest_len)
+        let copy_expr = Expr::ArrayCopy {
+            type_idx: gc_types::ARRAY,
+            dst: Box::new(Expr::LocalGet { local: rest_arr_local, ty: Type::GcRef }),
+            dst_offset: Box::new(Expr::Int(0)),
+            src: Box::new(Expr::LocalGet { local: arr_local, ty: Type::GcRef }),
+            src_offset: Box::new(Expr::Int(start_idx as i64)),
+            len: Box::new(Expr::LocalGet { local: rest_len_local, ty: Type::GcRef }),
+        };
+
+        let bindings = vec![
+            (arr_local, arr_expr),
             (len_local, len_expr),
             (rest_len_local, rest_len_expr),
             (rest_arr_local, rest_arr_expr),
@@ -1356,6 +1442,27 @@ impl Lowerer {
             "sget" => self.lower_sget(args),
             "sset" => self.lower_sset(args),
 
+            // Internal synthetic forms (used by multi-arity variadic dispatch)
+            "wrap-in-vector" => {
+                if args.len() != 1 {
+                    return Err(CompileError::Parse("wrap-in-vector requires exactly 1 argument".into()));
+                }
+                let inner = self.lower_expr(&args[0])?;
+                Ok(Expr::WrapInVector(Box::new(inner)))
+            }
+            "array-slice" => {
+                // (array-slice arr start-idx) → new array from arr[start_idx..]
+                if args.len() != 2 {
+                    return Err(CompileError::Parse("array-slice requires exactly 2 arguments".into()));
+                }
+                let arr = self.lower_expr(&args[0])?;
+                let start = match &args[1] {
+                    Edn::Number(n) => n.to_i64().unwrap() as usize,
+                    _ => return Err(CompileError::Parse("array-slice start index must be a number literal".into())),
+                };
+                self.generate_array_slice_from_expr(arr, start)
+            }
+
             // Type checking
             "instance?" => self.lower_instance_check(args),
             "symbol?" => self.lower_symbol_check(args),
@@ -1472,46 +1579,7 @@ impl Lowerer {
             return Ok(expr);
         }
 
-        // Map field names to (type_idx, field_idx) pairs for built-in types
-        // PersistentVector: { type_id: 0, cnt: 1, shift: 2, root: 3, tail: 4 }
-        // PersistentMap: { type_id: 0, cnt: 1, root: 2 }
-        // PersistentSet: { type_id: 0, cnt: 1, root: 2, _marker: 3 }
-        // Cons: { type_id: 0, first: 1, rest: 2 }
-
-        let (type_idx, field_idx) = match field_name {
-            // Vector fields
-            "cnt" => (gc_types::PERSISTENT_VECTOR, 1),
-            "shift" => (gc_types::PERSISTENT_VECTOR, 2),
-            "root" => (gc_types::PERSISTENT_VECTOR, 3),
-            "tail" => (gc_types::PERSISTENT_VECTOR, 4),
-            // Cons fields (type_id is at 0)
-            "first" => (gc_types::CONS, 1),
-            "rest" => (gc_types::CONS, 2),
-            // BitmapIndexedNode fields: { type_id: 0, bitmap: 1, arr: 2 }
-            "bitmap" => (gc_types::BITMAP_INDEXED_NODE, 1),
-            "bin-arr" => (gc_types::BITMAP_INDEXED_NODE, 2),
-            // ArrayNode fields: { type_id: 0, cnt: 1, arr: 2 }
-            "an-cnt" => (gc_types::ARRAY_NODE, 1),
-            "an-arr" => (gc_types::ARRAY_NODE, 2),
-            // HashCollisionNode fields: { type_id: 0, hash: 1, cnt: 2, arr: 3 }
-            "hash" => (gc_types::HASH_COLLISION_NODE, 1),
-            "hcn-cnt" => (gc_types::HASH_COLLISION_NODE, 2),
-            "hcn-arr" => (gc_types::HASH_COLLISION_NODE, 3),
-            // PersistentMap fields: { type_id: 0, cnt: 1, root: 2 }
-            "map-cnt" => (gc_types::PERSISTENT_MAP, 1),
-            "map-root" => (gc_types::PERSISTENT_MAP, 2),
-            // PersistentSet fields: { type_id: 0, cnt: 1, root: 2, _marker: 3 }
-            "set-cnt" => (gc_types::PERSISTENT_SET, 1),
-            "set-root" => (gc_types::PERSISTENT_SET, 2),
-            // Add more as needed
-            _ => return Err(CompileError::Undefined(format!("Unknown field: {}", field_name))),
-        };
-
-        Ok(Expr::StructGet {
-            type_idx,
-            field_idx,
-            value: Box::new(obj),
-        })
+        Err(CompileError::Undefined(format!("Unknown field: {}", field_name)))
     }
 
     /// Look up a field in user-defined types.
@@ -2516,12 +2584,27 @@ impl Lowerer {
                 ]));
             }
             // Add rest param binding if present
-            // For now, we create a lazy-seq that iterates over the remaining array elements
+            // Extract remaining args from the raw WASM array and wrap in a PersistentVector
             if let Some(ref rest_name) = clause.rest_param {
                 let_bindings.push(Edn::Symbol(Symbol::new(rest_name)));
-                // TODO: properly implement rest args for multi-arity
-                // For now, just use nil as placeholder
-                let_bindings.push(Edn::Nil);
+                let fixed_count = clause.params.len();
+                if fixed_count == 0 {
+                    // Rest is entire args array, wrap in vector
+                    let_bindings.push(Edn::List(vec![
+                        Edn::Symbol(Symbol::new("wrap-in-vector")),
+                        Edn::Symbol(args_sym.clone()),
+                    ]));
+                } else {
+                    // Rest is args[fixed_count..], slice then wrap
+                    let_bindings.push(Edn::List(vec![
+                        Edn::Symbol(Symbol::new("wrap-in-vector")),
+                        Edn::List(vec![
+                            Edn::Symbol(Symbol::new("array-slice")),
+                            Edn::Symbol(args_sym.clone()),
+                            Edn::Number(Number::Integer((fixed_count as i64).into())),
+                        ]),
+                    ]));
+                }
             }
 
             let let_body = if clause.body.len() == 1 {
@@ -3233,11 +3316,10 @@ impl Lowerer {
     /// whatever type its body returns. Only literal syntax ([], {}, #{}) can be
     /// reliably inferred at the EDN level.
     fn infer_collection_type(&self, expr: &Edn) -> Option<u32> {
-        use crate::ir::gc_types;
         match expr {
-            Edn::Vector(_) => Some(gc_types::PERSISTENT_VECTOR),
-            Edn::Map(_) => Some(gc_types::PERSISTENT_MAP),
-            Edn::Set(_) => Some(gc_types::PERSISTENT_SET),
+            Edn::Vector(_) => self.user_types.get("PersistentVector").map(|t| t.gc_type_idx),
+            Edn::Map(_) => self.user_types.get("PersistentMap").map(|t| t.gc_type_idx),
+            Edn::Set(_) => self.user_types.get("PersistentSet").map(|t| t.gc_type_idx),
             // Edn::List is intentionally NOT matched here - see docstring above
             _ => None,
         }
@@ -3249,7 +3331,7 @@ impl Lowerer {
     /// Otherwise, falls back to runtime protocol dispatch.
     /// With 3 args, returns default if index is out of bounds.
     fn lower_nth(&mut self, args: &[Edn]) -> CompileResult<Expr> {
-        use crate::ir::{gc_types, method_ids};
+        use crate::ir::method_ids;
 
         if args.len() < 2 || args.len() > 3 {
             return Err(CompileError::Parse(
@@ -3270,7 +3352,7 @@ impl Lowerer {
 
         // Build the nth operation
         let nth_expr = if let Some(type_id) = self.infer_collection_type(&args[0]) {
-            if type_id == gc_types::PERSISTENT_VECTOR {
+            if type_id == self.gc_idx("PersistentVector") {
                 Expr::VecNth {
                     vec: Box::new(coll),
                     index: Box::new(index),
@@ -3321,7 +3403,7 @@ impl Lowerer {
     /// If the collection type is known to be a list at compile time, uses ListFirst.
     /// Otherwise, falls back to runtime protocol dispatch.
     fn lower_first(&mut self, args: &[Edn]) -> CompileResult<Expr> {
-        use crate::ir::{gc_types, method_ids};
+        use crate::ir::method_ids;
 
         if args.len() != 1 {
             return Err(CompileError::Parse(
@@ -3334,7 +3416,7 @@ impl Lowerer {
 
         // Fast path: if we know the collection is a CONS (list)
         if let Some(type_id) = self.infer_collection_type(&args[0]) {
-            if type_id == gc_types::CONS {
+            if type_id == self.gc_idx("Cons") {
                 return Ok(Expr::ListFirst(Box::new(coll)));
             }
         }
@@ -3353,7 +3435,7 @@ impl Lowerer {
     /// If the collection type is known to be a list at compile time, uses ListRest.
     /// Otherwise, falls back to runtime protocol dispatch.
     fn lower_rest(&mut self, args: &[Edn]) -> CompileResult<Expr> {
-        use crate::ir::{gc_types, method_ids};
+        use crate::ir::method_ids;
 
         if args.len() != 1 {
             return Err(CompileError::Parse(
@@ -3366,7 +3448,7 @@ impl Lowerer {
 
         // Fast path: if we know the collection is a CONS (list)
         if let Some(type_id) = self.infer_collection_type(&args[0]) {
-            if type_id == gc_types::CONS {
+            if type_id == self.gc_idx("Cons") {
                 return Ok(Expr::ListRest(Box::new(coll)));
             }
         }
@@ -3385,7 +3467,7 @@ impl Lowerer {
     /// Vector conj now uses protocol dispatch (implemented in core.sus).
     /// Sets and Cons still use fast paths.
     fn lower_conj(&mut self, args: &[Edn]) -> CompileResult<Expr> {
-        use crate::ir::{gc_types, method_ids};
+        use crate::ir::method_ids;
 
         if args.len() != 2 {
             return Err(CompileError::Parse(
@@ -3400,24 +3482,27 @@ impl Lowerer {
 
         // Fast path: if we know the collection type at compile time
         if let Some(type_id) = self.infer_collection_type(&args[0]) {
+            let pv_idx = self.gc_idx("PersistentVector");
+            let ps_idx = self.gc_idx("PersistentSet");
+            let cons_idx = self.gc_idx("Cons");
             return match type_id {
                 // Vector conj now uses protocol dispatch (core.sus implementation)
-                t if t == gc_types::PERSISTENT_VECTOR => Ok(Expr::ProtocolDispatch {
+                t if t == pv_idx => Ok(Expr::ProtocolDispatch {
                     obj: Box::new(coll),
                     method_id: method_ids::CONJ,
                     args: vec![val],
                     in_tail_position: self.in_tail_position,
                 }),
-                t if t == gc_types::PERSISTENT_SET => Ok(Expr::ProtocolDispatch {
+                t if t == ps_idx => Ok(Expr::ProtocolDispatch {
                     obj: Box::new(coll),
                     method_id: method_ids::CONJ,
                     args: vec![val],
                     in_tail_position: self.in_tail_position,
                 }),
-                t if t == gc_types::CONS => {
+                t if t == cons_idx => {
                     // For lists, conj adds to the front (like cons)
                     Ok(Expr::StructNew {
-                        type_idx: gc_types::CONS,
+                        type_idx: cons_idx,
                         fields: vec![val, coll],
                     })
                 }
@@ -3447,7 +3532,7 @@ impl Lowerer {
     /// If the collection type is known at compile time, uses the fast path.
     /// Otherwise, falls back to runtime protocol dispatch.
     fn lower_count(&mut self, args: &[Edn]) -> CompileResult<Expr> {
-        use crate::ir::{gc_types, method_ids};
+        use crate::ir::method_ids;
 
         if args.len() != 1 {
             return Err(CompileError::Parse(
@@ -3460,10 +3545,13 @@ impl Lowerer {
 
         // Fast path: if we know the collection type at compile time
         if let Some(type_id) = self.infer_collection_type(&args[0]) {
+            let pv_idx = self.gc_idx("PersistentVector");
+            let pm_idx = self.gc_idx("PersistentMap");
+            let ps_idx = self.gc_idx("PersistentSet");
             return match type_id {
-                t if t == gc_types::PERSISTENT_VECTOR => Ok(Expr::VecCount(Box::new(coll))),
-                t if t == gc_types::PERSISTENT_MAP => Ok(Expr::MapCount(Box::new(coll))),
-                t if t == gc_types::PERSISTENT_SET => Ok(Expr::SetCount(Box::new(coll))),
+                t if t == pv_idx => Ok(Expr::VecCount(Box::new(coll))),
+                t if t == pm_idx => Ok(Expr::MapCount(Box::new(coll))),
+                t if t == ps_idx => Ok(Expr::SetCount(Box::new(coll))),
                 // For lists (CONS), we'd need to walk the list - use protocol dispatch
                 _ => Ok(Expr::ProtocolDispatch {
                     obj: Box::new(coll),
@@ -3491,7 +3579,7 @@ impl Lowerer {
     /// Otherwise, falls back to runtime protocol dispatch.
     /// With 3 args, returns default if key is not found.
     fn lower_get(&mut self, args: &[Edn]) -> CompileResult<Expr> {
-        use crate::ir::{gc_types, method_ids};
+        use crate::ir::method_ids;
 
         if args.len() < 2 || args.len() > 3 {
             return Err(CompileError::Parse(
@@ -3512,8 +3600,10 @@ impl Lowerer {
 
         // Build the get operation
         let get_expr = if let Some(type_id) = self.infer_collection_type(&args[0]) {
+            let pm_idx = self.gc_idx("PersistentMap");
+            let pv_idx = self.gc_idx("PersistentVector");
             match type_id {
-                t if t == gc_types::PERSISTENT_MAP => {
+                t if t == pm_idx => {
                     Expr::ProtocolDispatch {
                         obj: Box::new(coll),
                         method_id: method_ids::LOOKUP,
@@ -3521,7 +3611,7 @@ impl Lowerer {
                         in_tail_position: false,
                     }
                 }
-                t if t == gc_types::PERSISTENT_VECTOR => {
+                t if t == pv_idx => {
                     Expr::VecNth {
                         vec: Box::new(coll),
                         index: Box::new(key),
@@ -4252,11 +4342,7 @@ impl Lowerer {
             self.module.deftypes.push(deftype_def);
 
             // Generate constructor function ->TypeName
-            // Skip constructors for HAMT node types (gc_type_idx 5-7) since they use
-            // specific array types (ref $ARRAY) that require special handling
-            if gc_type_idx < gc_types::BITMAP_INDEXED_NODE || gc_type_idx > gc_types::HASH_COLLISION_NODE {
-                self.lower_deftype_constructor(&deftype.name, gc_type_idx, type_id, &fields)?;
-            }
+            self.lower_deftype_constructor(&deftype.name, gc_type_idx, type_id, &fields)?;
 
             // Handle protocol implementations (similar to extend-type)
             for impl_ in &deftype.implementations {

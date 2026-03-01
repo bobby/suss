@@ -120,6 +120,57 @@ fn load_core_exprs() -> CompileResult<Vec<Edn>> {
     Ok(result)
 }
 
+/// Inject the `suss` runtime interface into a WIT source string.
+///
+/// The compiler unconditionally imports `suss:print_str` for string output.
+/// This function adds the interface definition before the `world` keyword
+/// and adds `import suss;` inside the world body, so the component encoder
+/// can match the module import against the WIT world.
+fn inject_suss_interface(wit_source: &str) -> String {
+    // Interface definition to inject before the world
+    let iface_def = "\ninterface suss {\n    print-str: func(ptr: u32, len: u32);\n}\n";
+    let import_stmt = "    import suss;\n";
+
+    let mut result = String::with_capacity(wit_source.len() + iface_def.len() + import_stmt.len());
+
+    // Find the `world` keyword and inject the interface before it
+    if let Some(world_pos) = wit_source.find("\nworld ") {
+        result.push_str(&wit_source[..world_pos]);
+        result.push_str(iface_def);
+        let rest = &wit_source[world_pos..];
+
+        // Find the opening `{` of the world and inject `import suss;` after it
+        if let Some(brace_pos) = rest.find('{') {
+            result.push_str(&rest[..brace_pos + 1]);
+            result.push('\n');
+            result.push_str(import_stmt);
+            result.push_str(&rest[brace_pos + 1..]);
+        } else {
+            result.push_str(rest);
+        }
+    } else {
+        // Fallback: try without leading newline (world at start of file)
+        if let Some(world_pos) = wit_source.find("world ") {
+            result.push_str(&wit_source[..world_pos]);
+            result.push_str(iface_def);
+            let rest = &wit_source[world_pos..];
+            if let Some(brace_pos) = rest.find('{') {
+                result.push_str(&rest[..brace_pos + 1]);
+                result.push('\n');
+                result.push_str(import_stmt);
+                result.push_str(&rest[brace_pos + 1..]);
+            } else {
+                result.push_str(rest);
+            }
+        } else {
+            // No world keyword found, return as-is
+            return wit_source.to_string();
+        }
+    }
+
+    result
+}
+
 impl Compiler {
     /// Create a new compiler instance
     ///
@@ -1299,6 +1350,11 @@ impl Compiler {
             }
         }
 
+        // Inject the suss runtime interface into the WIT source.
+        // The compiler unconditionally imports suss:print_str for string output,
+        // so the WIT world must declare this interface.
+        let wit_source = inject_suss_interface(&wit_source);
+
         // Push the main WIT file as a string (since we already read it)
         let pkg_id = resolve
             .push_str(wit_path.to_string_lossy().as_ref(), &wit_source)
@@ -1413,6 +1469,9 @@ impl Compiler {
                 }
             }
         }
+
+        // Inject the suss runtime interface into the WIT source
+        let wit_source = inject_suss_interface(&wit_source);
 
         // Push the main WIT file
         let pkg_id = resolve
@@ -2187,6 +2246,9 @@ impl Compiler {
                 }
             }
         }
+
+        // Inject the suss runtime interface into the WIT source
+        let wit_source = inject_suss_interface(&wit_source);
 
         // Push the main WIT file
         let pkg_id = resolve

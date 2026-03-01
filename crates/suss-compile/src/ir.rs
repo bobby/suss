@@ -474,27 +474,6 @@ pub mod gc_types {
     /// FLOAT64 field indices
     pub const F64_VALUE: u32 = 1; // the f64 value
 
-    // =========================================================================
-    // LEGACY ALIASES - TO BE REMOVED
-    // Collection types - NOW DEFTYPES IN CORE.SUSS
-    // These placeholders keep codegen compiling during migration.
-    // They map to indices that will be overwritten by deftype registration.
-    // TODO: Remove once codegen resolves these from DeftypeDefs.
-    #[deprecated(note = "Now a deftype in core.sus - resolve dynamically")]
-    pub const CONS: u32 = 100;
-    #[deprecated(note = "Now a deftype in core.sus - resolve dynamically")]
-    pub const BITMAP_INDEXED_NODE: u32 = 101;
-    #[deprecated(note = "Now a deftype in core.sus - resolve dynamically")]
-    pub const ARRAY_NODE: u32 = 102;
-    #[deprecated(note = "Now a deftype in core.sus - resolve dynamically")]
-    pub const HASH_COLLISION_NODE: u32 = 103;
-    #[deprecated(note = "Now a deftype in core.sus - resolve dynamically")]
-    pub const PERSISTENT_VECTOR: u32 = 104;
-    #[deprecated(note = "Now a deftype in core.sus - resolve dynamically")]
-    pub const PERSISTENT_MAP: u32 = 105;
-    #[deprecated(note = "Now a deftype in core.sus - resolve dynamically")]
-    pub const PERSISTENT_SET: u32 = 106;
-
     // Collection field indices are now resolved dynamically from DeftypeDef.
     // HAMT node field indices are now resolved dynamically from DeftypeDef.
 

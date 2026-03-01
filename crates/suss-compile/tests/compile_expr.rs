@@ -808,18 +808,28 @@ world tco {{
         .compile_files(suss_file.path().to_str().unwrap(), wit_file.path().to_str().unwrap())
         .expect("compilation failed");
 
-    // Create engine with tail call and GC support
+    // Create engine with tail call, GC, and exceptions support
     let mut config = wasmtime::Config::new();
     config.wasm_tail_call(true);
     config.wasm_component_model(true);
     config.wasm_gc(true);
     config.wasm_function_references(true);
+    config.wasm_exceptions(true);
     let engine = Engine::new(&config).expect("engine creation failed");
 
     // Load as component
     let component = wasmtime::component::Component::new(&engine, &wasm_bytes)
         .expect("component creation failed");
-    let linker = wasmtime::component::Linker::<()>::new(&engine);
+    let mut linker = wasmtime::component::Linker::<()>::new(&engine);
+
+    // Register the suss runtime interface (print-str is a no-op in tests)
+    linker.instance("test:tco/suss")
+        .expect("failed to create suss instance in linker")
+        .func_wrap("print-str", |_store: wasmtime::StoreContextMut<'_, ()>, (_ptr, _len): (u32, u32)| -> wasmtime::Result<()> {
+            Ok(())
+        })
+        .expect("failed to register print-str");
+
     let mut store = Store::new(&engine, ());
     let instance = linker.instantiate(&mut store, &component)
         .expect("instantiation failed");
@@ -2678,4 +2688,81 @@ fn test_prn_basic() {
     // For now, verify it outputs the value followed by newline
     let output = run_expr_capture_stdout("(prn 42)");
     assert_eq!(output, "42\n");
+}
+
+// ========================================================================
+// Multi-arity functions
+// ========================================================================
+
+#[test]
+fn test_multi_arity_basic() {
+    // Non-variadic multi-arity: fixed dispatch
+    let result = run_expr_i32(
+        "(let [f (fn ([x] x) ([x y] (+ x y)))] (f 42))"
+    );
+    assert_eq!(result, 42);
+}
+
+#[test]
+fn test_multi_arity_two_args() {
+    let result = run_expr_i32(
+        "(let [f (fn ([x] x) ([x y] (+ x y)))] (f 10 20))"
+    );
+    assert_eq!(result, 30);
+}
+
+// ========================================================================
+// Multi-arity variadic rest params
+// ========================================================================
+
+#[test]
+fn test_multi_arity_variadic_basic() {
+    // Variadic clause should receive rest args as a vector
+    let result = run_expr_i32(
+        "(let [f (fn ([x] x) ([x & more] (count more)))] (f 1 2 3))"
+    );
+    assert_eq!(result, 2); // more = [2, 3]
+}
+
+#[test]
+fn test_multi_arity_variadic_fixed_dispatch() {
+    // Fixed arity clause should still work correctly
+    let result = run_expr_i32(
+        "(let [f (fn ([x] x) ([x & more] (count more)))] (f 42))"
+    );
+    assert_eq!(result, 42);
+}
+
+#[test]
+fn test_multi_arity_variadic_rest_first() {
+    // Should be able to use (first) on rest args
+    let result = run_expr_i32(
+        "(let [f (fn ([x] x) ([x y & more] (first more)))] (f 1 2 99))"
+    );
+    assert_eq!(result, 99);
+}
+
+#[test]
+fn test_multi_arity_variadic_zero_fixed() {
+    // Variadic clause with zero fixed params
+    let result = run_expr_i32(
+        "(let [f (fn ([] 0) ([& args] (count args)))] (f 1 2 3))"
+    );
+    assert_eq!(result, 3);
+}
+
+// ========================================================================
+// Large vector apply
+// ========================================================================
+
+#[test]
+fn test_apply_large_vector_variadic_capture() {
+    // apply a user-defined variadic closure to a vector > 32 elements
+    // This tests the VARIADIC_CAPTURE path with vec-to-array fallback
+    let result = run_expr_i32(
+        "(let [f (fn [& args] (count args))
+               v (vec (range 50))]
+           (apply f v))"
+    );
+    assert_eq!(result, 50);
 }
