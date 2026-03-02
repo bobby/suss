@@ -2365,6 +2365,35 @@ fn test_map_destructuring_direct() {
 }
 
 // ============================================================
+// Fn map destructuring tests
+// ============================================================
+
+#[test]
+fn test_fn_map_destructuring_keys() {
+    let result = run_expr_i32("((fn [{:keys [a b]}] (+ a b)) {:a 10 :b 20})");
+    assert_eq!(result, 30);
+}
+
+#[test]
+fn test_defn_map_destructuring() {
+    let result = run_expr_i32("(defn foo [{:keys [x y]}] (+ x y)) (foo {:x 3 :y 7})");
+    assert_eq!(result, 10);
+}
+
+#[test]
+fn test_fn_map_destructuring_as() {
+    let result = run_expr_i32("((fn [{:keys [a] :as m}] (+ a (count m))) {:a 10 :b 20})");
+    assert_eq!(result, 12);
+}
+
+#[test]
+fn test_multi_arity_map_destructuring() {
+    // Arity 0 returns constant, arity 1 uses map destructuring
+    let result = run_expr_i32("(let [f (fn ([] 0) ([{:keys [a b]}] (+ a b)))] (f {:a 5 :b 15}))");
+    assert_eq!(result, 20);
+}
+
+// ============================================================
 // try/catch/throw tests
 // ============================================================
 
@@ -2541,14 +2570,12 @@ fn test_partial_apply_vec() {
 }
 
 #[test]
-#[ignore] // apply only works with PersistentVectors, not Cons cells
 fn test_partial_apply_cons() {
     let result = run_expr_i32("(apply + (cons 5 (cons 10 nil)))");
     assert_eq!(result, 15);
 }
 
 #[test]
-#[ignore] // apply only works with PersistentVectors, not LazySeq (from concat2)
 fn test_partial_apply_concat() {
     // Apply + to a concat2 result
     let result = run_expr_i32("(apply + (concat2 [5] [10]))");

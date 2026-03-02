@@ -2688,9 +2688,20 @@ impl Lowerer {
             Ok((l.lower_expr(&args[0])?, l.lower_expr(&args[1])?))
         })?;
 
+        // Wrap arg_coll with (vec ...) so apply works with any ISeqable, not just vectors
+        let vec_wrapped = if let Some((_, vec_idx)) = self.resolve_func_name("vec") {
+            Expr::Call {
+                func: vec_idx,
+                args: vec![arg_coll],
+            }
+        } else {
+            // Fallback: if vec isn't available (e.g., bare expr mode), pass through
+            arg_coll
+        };
+
         Ok(Expr::Apply {
             func: Box::new(func),
-            args: Box::new(arg_coll),
+            args: Box::new(vec_wrapped),
         })
     }
 

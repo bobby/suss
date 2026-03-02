@@ -1005,9 +1005,16 @@ impl MacroEnv {
                             let_bindings.push(expr);
                         }
                     }
+                    Edn::Map(pairs) => {
+                        let bindings = self.destructure_map(pairs, &temp_sym)?;
+                        for (sym, expr) in bindings {
+                            let_bindings.push(sym);
+                            let_bindings.push(expr);
+                        }
+                    }
                     _ => {
                         return Err(CompileError::MacroExpansion(
-                            "Only vector destructuring supported in fn params".into()
+                            "Invalid destructuring pattern in fn params".into()
                         ));
                     }
                 }
@@ -1101,12 +1108,22 @@ impl MacroEnv {
                 let temp_sym = self.gensym("p");
                 new_params.push(Edn::Symbol(temp_sym.clone()));
 
-                if let Edn::Vector(elems) = param {
-                    let bindings = self.destructure_vector(elems, &temp_sym)?;
-                    for (sym, expr) in bindings {
-                        let_bindings.push(sym);
-                        let_bindings.push(expr);
+                match param {
+                    Edn::Vector(elems) => {
+                        let bindings = self.destructure_vector(elems, &temp_sym)?;
+                        for (sym, expr) in bindings {
+                            let_bindings.push(sym);
+                            let_bindings.push(expr);
+                        }
                     }
+                    Edn::Map(pairs) => {
+                        let bindings = self.destructure_map(pairs, &temp_sym)?;
+                        for (sym, expr) in bindings {
+                            let_bindings.push(sym);
+                            let_bindings.push(expr);
+                        }
+                    }
+                    _ => {}
                 }
             } else {
                 new_params.push(param.clone());
