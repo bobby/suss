@@ -1491,6 +1491,7 @@ impl Lowerer {
             "name" => self.lower_name(args),
             "namespace" => self.lower_namespace(args),
             "symbol" => self.lower_symbol_constructor(args),
+            "keyword" => self.lower_keyword_constructor(args),
             "meta" => self.lower_meta(args),
 
             // Mutable field set: (set! (.-field obj) value)
@@ -1794,6 +1795,28 @@ impl Lowerer {
                 })
             }
             _ => Err(CompileError::Parse("symbol requires 1 or 2 arguments".into())),
+        }
+    }
+
+    fn lower_keyword_constructor(&mut self, args: &[Edn]) -> CompileResult<Expr> {
+        // (keyword name) or (keyword ns name)
+        match args.len() {
+            1 => {
+                let name_expr = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+                Ok(Expr::KeywordFromString {
+                    ns: None,
+                    name: Box::new(name_expr),
+                })
+            }
+            2 => {
+                let ns_expr = self.with_tail_disabled(|l| l.lower_expr(&args[0]))?;
+                let name_expr = self.with_tail_disabled(|l| l.lower_expr(&args[1]))?;
+                Ok(Expr::KeywordFromString {
+                    ns: Some(Box::new(ns_expr)),
+                    name: Box::new(name_expr),
+                })
+            }
+            _ => Err(CompileError::Parse("keyword requires 1 or 2 arguments".into())),
         }
     }
 
@@ -2628,11 +2651,35 @@ impl Lowerer {
         };
 
         // Build nested if from back to front
+        let wrong_arity_throw = Edn::List(vec![
+            Edn::Symbol(Symbol::new("throw")),
+            Edn::String("Wrong number of args".into()),
+        ]);
         let mut dispatch_expr = if has_variadic {
-            // Default is the variadic clause
-            build_clause_body(parsed_clauses.last().unwrap())
+            // Default is the variadic clause, guarded by minimum arity
+            let variadic_clause = parsed_clauses.last().unwrap();
+            let min_arity = variadic_clause.arity;
+            let variadic_body = build_clause_body(variadic_clause);
+            if min_arity > 0 {
+                // Guard: (if (>= (alength args) min_arity) body (throw ...))
+                Edn::List(vec![
+                    Edn::Symbol(Symbol::new("if")),
+                    Edn::List(vec![
+                        Edn::Symbol(Symbol::new(">=")),
+                        Edn::List(vec![
+                            Edn::Symbol(Symbol::new("alength")),
+                            Edn::Symbol(args_sym.clone()),
+                        ]),
+                        Edn::Number(Number::Integer((min_arity as i64).into())),
+                    ]),
+                    variadic_body,
+                    wrong_arity_throw.clone(),
+                ])
+            } else {
+                variadic_body
+            }
         } else {
-            Edn::Nil
+            wrong_arity_throw
         };
 
         // Process fixed-arity clauses in reverse order (excluding variadic if present)

@@ -1735,10 +1735,11 @@ impl<'a> CodeGen<'a> {
     fn generate_hash_string_func(&self) -> Function {
         use crate::ir::gc_types;
 
-        // xxHash32 prime constants
+        // xxHash32 prime constants (must match ir.rs xxhash32)
         const PRIME32_1: i32 = 0x9E3779B1_u32 as i32;
         const PRIME32_2: i32 = 0x85EBCA77_u32 as i32;
         const PRIME32_3: i32 = 0xC2B2AE3D_u32 as i32;
+        const PRIME32_4: i32 = 0x27D4EB2F_u32 as i32;
         const PRIME32_5: i32 = 0x165667B1_u32 as i32;
 
         // Param 0: str (eqref - the GC string array)
@@ -1754,7 +1755,7 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::ArrayLen);
         f.instruction(&Instruction::LocalSet(1)); // len
 
-        // acc = PRIME32_5 + len
+        // acc = PRIME32_5 + len  (for inputs < 16 bytes)
         f.instruction(&Instruction::I32Const(PRIME32_5));
         f.instruction(&Instruction::LocalGet(1)); // len
         f.instruction(&Instruction::I32Add);
@@ -1764,8 +1765,79 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::I32Const(0));
         f.instruction(&Instruction::LocalSet(3)); // i
 
-        // Process bytes one at a time: while (i < len)
-        // (Simpler than 4-byte chunks, and GC arrays don't have direct i32 load)
+        // === Phase 1: Process 4-byte chunks ===
+        // while (i + 4 <= len) { k = le32(str[i..i+4]); acc = (acc + k*P3).rotl(17) * P4; i += 4 }
+        f.instruction(&Instruction::Block(wasm_encoder::BlockType::Empty));
+        f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
+        // Check: i + 4 > len => break
+        f.instruction(&Instruction::LocalGet(3)); // i
+        f.instruction(&Instruction::I32Const(4));
+        f.instruction(&Instruction::I32Add);
+        f.instruction(&Instruction::LocalGet(1)); // len
+        f.instruction(&Instruction::I32GtU);
+        f.instruction(&Instruction::BrIf(1)); // break
+
+        // Build k = u32 from 4 bytes in little-endian: str[i] | str[i+1]<<8 | str[i+2]<<16 | str[i+3]<<24
+        // Use array.get_u to get unsigned bytes
+        // byte 0
+        f.instruction(&Instruction::LocalGet(0));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+        f.instruction(&Instruction::LocalGet(3)); // i
+        f.instruction(&Instruction::ArrayGetU(gc_types::STRING));
+        // byte 1 << 8
+        f.instruction(&Instruction::LocalGet(0));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+        f.instruction(&Instruction::LocalGet(3));
+        f.instruction(&Instruction::I32Const(1));
+        f.instruction(&Instruction::I32Add); // i+1
+        f.instruction(&Instruction::ArrayGetU(gc_types::STRING));
+        f.instruction(&Instruction::I32Const(8));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Or);
+        // byte 2 << 16
+        f.instruction(&Instruction::LocalGet(0));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+        f.instruction(&Instruction::LocalGet(3));
+        f.instruction(&Instruction::I32Const(2));
+        f.instruction(&Instruction::I32Add); // i+2
+        f.instruction(&Instruction::ArrayGetU(gc_types::STRING));
+        f.instruction(&Instruction::I32Const(16));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Or);
+        // byte 3 << 24
+        f.instruction(&Instruction::LocalGet(0));
+        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+        f.instruction(&Instruction::LocalGet(3));
+        f.instruction(&Instruction::I32Const(3));
+        f.instruction(&Instruction::I32Add); // i+3
+        f.instruction(&Instruction::ArrayGetU(gc_types::STRING));
+        f.instruction(&Instruction::I32Const(24));
+        f.instruction(&Instruction::I32Shl);
+        f.instruction(&Instruction::I32Or);
+        // k is now on the stack
+
+        // acc = (acc + k * PRIME32_3).rotl(17) * PRIME32_4
+        f.instruction(&Instruction::I32Const(PRIME32_3));
+        f.instruction(&Instruction::I32Mul); // k * P3
+        f.instruction(&Instruction::LocalGet(2)); // acc
+        f.instruction(&Instruction::I32Add); // acc + k*P3
+        f.instruction(&Instruction::I32Const(17));
+        f.instruction(&Instruction::I32Rotl); // rotl(17)
+        f.instruction(&Instruction::I32Const(PRIME32_4));
+        f.instruction(&Instruction::I32Mul); // * P4
+        f.instruction(&Instruction::LocalSet(2)); // acc
+
+        // i += 4
+        f.instruction(&Instruction::LocalGet(3));
+        f.instruction(&Instruction::I32Const(4));
+        f.instruction(&Instruction::I32Add);
+        f.instruction(&Instruction::LocalSet(3));
+        f.instruction(&Instruction::Br(0)); // continue
+        f.instruction(&Instruction::End); // end loop
+        f.instruction(&Instruction::End); // end block
+
+        // === Phase 2: Process remaining bytes ===
+        // while (i < len) { acc = (acc + byte*P5).rotl(11) * P1; i++ }
         f.instruction(&Instruction::Block(wasm_encoder::BlockType::Empty));
         f.instruction(&Instruction::Loop(wasm_encoder::BlockType::Empty));
         // Check: i >= len => break
@@ -1774,21 +1846,19 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::I32GeU);
         f.instruction(&Instruction::BrIf(1)); // break
 
-        // byte = array.get_s(str, i)  -- signed get for i8 array
+        // byte = array.get_u(str, i) -- unsigned get for correct multiply
         f.instruction(&Instruction::LocalGet(0)); // str
         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
         f.instruction(&Instruction::LocalGet(3)); // i
-        f.instruction(&Instruction::ArrayGetS(gc_types::STRING)); // get signed byte
+        f.instruction(&Instruction::ArrayGetU(gc_types::STRING)); // unsigned byte
 
-        // acc = acc + byte * PRIME32_5
+        // acc = (acc + byte * PRIME32_5).rotl(11) * PRIME32_1
         f.instruction(&Instruction::I32Const(PRIME32_5));
         f.instruction(&Instruction::I32Mul);
         f.instruction(&Instruction::LocalGet(2)); // acc
         f.instruction(&Instruction::I32Add);
-        // acc = rotl(acc, 11)
         f.instruction(&Instruction::I32Const(11));
         f.instruction(&Instruction::I32Rotl);
-        // acc = acc * PRIME32_1
         f.instruction(&Instruction::I32Const(PRIME32_1));
         f.instruction(&Instruction::I32Mul);
         f.instruction(&Instruction::LocalSet(2)); // acc
@@ -1802,7 +1872,7 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::End); // end loop
         f.instruction(&Instruction::End); // end block
 
-        // Avalanche mixing
+        // === Avalanche mixing ===
         // acc ^= acc >> 15
         f.instruction(&Instruction::LocalGet(2));
         f.instruction(&Instruction::LocalGet(2));
@@ -6429,6 +6499,10 @@ impl<'a> CodeGen<'a> {
                 self.generate_symbol_from_string(ns.as_deref(), name, f)?;
             }
 
+            Expr::KeywordFromString { ns, name } => {
+                self.generate_keyword_from_string(ns.as_deref(), name, f)?;
+            }
+
             // =========================================================================
             // Var Operations
             // =========================================================================
@@ -6958,6 +7032,9 @@ impl<'a> CodeGen<'a> {
     ///
     /// (apply f coll) calls f with elements of coll as arguments.
     /// At runtime, we dispatch based on the vector count (0-8).
+    ///
+    /// Pre-normalizes the PersistentVector to a flat WASM array so that
+    /// element access works correctly for vectors of any size (including >32).
     fn generate_apply(
         &self,
         func: &Expr,
@@ -6970,14 +7047,14 @@ impl<'a> CodeGen<'a> {
         let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
             .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
 
-        // Scratch locals matching layout: +0: eqref, +1: i32, +2: eqref, +3: eqref, +4: eqref
+        // Scratch locals: +0: eqref (closure), +1: i32 (count), +2: eqref (vec), +3: eqref (arr), +4: eqref
         let scratch_base = self.scratch_local.get();
-        let closure_local = scratch_base; // eqref at +0
-        let count_local = scratch_base + 1; // i32 at +1
-        let vec_local = scratch_base + 2; // eqref at +2
+        let closure_local = scratch_base;     // eqref at +0
+        let count_local = scratch_base + 1;   // i32 at +1
+        let vec_local = scratch_base + 2;     // eqref at +2
+        let arr_local = scratch_base + 3;     // eqref at +3 (flat array)
 
         // Reserve our scratch locals before generating subexpressions
-        // This prevents nested expressions (like desugared vectors) from overwriting them
         self.scratch_local.set(scratch_base + 5);
 
         // Evaluate and store closure
@@ -6997,8 +7074,32 @@ impl<'a> CodeGen<'a> {
         });
         f.instruction(&Instruction::LocalSet(count_local));
 
+        // Pre-normalize: for vectors > 32, flatten trie to array via vec-to-array.
+        // For vectors <= 32, the tail array contains all elements.
+        f.instruction(&Instruction::LocalGet(count_local));
+        f.instruction(&Instruction::I32Const(32));
+        f.instruction(&Instruction::I32GtU);
+        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
+        {
+            f.instruction(&Instruction::LocalGet(vec_local));
+            let vec_to_array_idx = self.func_idx_by_name("suss.core/vec-to-array")
+                .or_else(|| self.func_idx_by_name("vec-to-array"))
+                .ok_or_else(|| CompileError::Unsupported("vec-to-array not found".into()))?;
+            f.instruction(&Instruction::Call(vec_to_array_idx));
+        }
+        f.instruction(&Instruction::Else);
+        {
+            f.instruction(&Instruction::LocalGet(vec_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
+            f.instruction(&Instruction::StructGet {
+                struct_type_index: pv_gc_idx,
+                field_index: 4, // tail field
+            });
+        }
+        f.instruction(&Instruction::End);
+        f.instruction(&Instruction::LocalSet(arr_local));
+
         // Check if it's a variadic closure by testing the type
-        // We use ref.test to check if it's a VARIADIC_CLOSURE struct
         f.instruction(&Instruction::LocalGet(closure_local));
         f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(
             gc_types::VARIADIC_CLOSURE,
@@ -7008,18 +7109,15 @@ impl<'a> CodeGen<'a> {
         ))));
 
         // Variadic closure path (builtins like +, *, etc. with fn0..fn8)
-        self.generate_apply_variadic_dispatch(closure_local, vec_local, count_local, f)?;
+        self.generate_apply_variadic_dispatch(closure_local, arr_local, count_local, f)?;
 
         f.instruction(&Instruction::Else);
 
         // Check for VARIADIC_CAPTURE: user-defined (fn [& args] ...) closures
-        // These are CLOSURE_1 with type_id == VARIADIC_CAPTURE
-        // They can handle ANY number of arguments (not limited to 8)
         f.instruction(&Instruction::LocalGet(closure_local));
         f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::CLOSURE_1)));
         f.instruction(&Instruction::If(BlockType::Result(ValType::I32)));
 
-        // Is CLOSURE_1 - check type_id
         f.instruction(&Instruction::LocalGet(closure_local));
         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::CLOSURE_1)));
         f.instruction(&Instruction::StructGet {
@@ -7030,22 +7128,18 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::I32Eq);
 
         f.instruction(&Instruction::Else);
-
-        // Not CLOSURE_1, so definitely not variadic capture
         f.instruction(&Instruction::I32Const(0));
-
         f.instruction(&Instruction::End);
 
-        // Stack now has i32 flag: 1 if variadic capture, 0 otherwise
         f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
 
-        // VARIADIC_CAPTURE path - pass vector elements as array (no arg limit!)
-        self.generate_apply_variadic_capture(closure_local, vec_local, count_local, f)?;
+        // VARIADIC_CAPTURE path - pass flat array directly
+        self.generate_apply_variadic_capture(closure_local, arr_local, f)?;
 
         f.instruction(&Instruction::Else);
 
         // Regular closure path (fixed arity, 0-8 args limit)
-        self.generate_apply_dispatch(closure_local, vec_local, count_local, f)?;
+        self.generate_apply_dispatch(closure_local, arr_local, count_local, f)?;
 
         f.instruction(&Instruction::End); // VARIADIC_CAPTURE check
         f.instruction(&Instruction::End); // VARIADIC_CLOSURE check
@@ -7053,27 +7147,18 @@ impl<'a> CodeGen<'a> {
         Ok(())
     }
 
-    /// Generate code to apply a VARIADIC_CAPTURE closure to a vector of args.
+    /// Generate code to apply a VARIADIC_CAPTURE closure to a pre-normalized flat array.
     ///
     /// VARIADIC_CAPTURE closures are (fn [& args] ...) that take a single array argument.
-    /// This function converts the vector elements to an array and calls the closure.
-    ///
-    /// For vectors <= 32 elements, the tail array contains all elements and is passed directly.
-    /// For larger vectors, we currently trap (TODO: implement proper conversion).
+    /// The caller has already normalized the PV to a flat array via arr_local.
     fn generate_apply_variadic_capture(
         &self,
         closure_local: u32,
-        vec_local: u32,
-        count_local: u32,
+        arr_local: u32,
         f: &mut Function,
     ) -> CompileResult<()> {
         use crate::ir::gc_types;
 
-        // Look up PersistentVector type index dynamically
-        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
-            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
-
-        // VARIADIC_CAPTURE closures use CLOSURE_FN_1 type: (env, args_array) -> result
         let fn_type = gc_types::CLOSURE_FN_1;
 
         // Get env from CLOSURE_1
@@ -7084,30 +7169,8 @@ impl<'a> CodeGen<'a> {
             field_index: gc_types::CL_ENV,
         });
 
-        // Get args array: for vectors <= 32, use tail directly; for > 32, call vec-to-array
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(32));
-        f.instruction(&Instruction::I32GtU);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(RefType::EQREF))));
-        {
-            // > 32: call vec-to-array to flatten the trie into a WASM array
-            f.instruction(&Instruction::LocalGet(vec_local));
-            let vec_to_array_idx = self.func_idx_by_name("suss.core/vec-to-array")
-                .or_else(|| self.func_idx_by_name("vec-to-array"))
-                .ok_or_else(|| CompileError::Unsupported("vec-to-array not found".into()))?;
-            f.instruction(&Instruction::Call(vec_to_array_idx));
-        }
-        f.instruction(&Instruction::Else);
-        {
-            // <= 32: tail contains all elements
-            f.instruction(&Instruction::LocalGet(vec_local));
-            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-            f.instruction(&Instruction::StructGet {
-                struct_type_index: pv_gc_idx,
-                field_index: 4, // tail field
-            });
-        }
-        f.instruction(&Instruction::End);
+        // Pass the pre-normalized flat array directly
+        f.instruction(&Instruction::LocalGet(arr_local));
 
         // Get fn from CLOSURE_1
         f.instruction(&Instruction::LocalGet(closure_local));
@@ -7361,8 +7424,10 @@ impl<'a> CodeGen<'a> {
         Ok(())
     }
 
-    /// Generate code to create a symbol from string(s).
-    /// Currently returns nil as a placeholder - dynamic symbol creation needs runtime support.
+    /// Generate code to create a symbol from string(s) at runtime.
+    ///
+    /// (symbol "foo") → SYMBOL { type_id, hash("foo"), null, "foo", 0 }
+    /// (symbol "ns" "foo") → SYMBOL { type_id, hash("ns/foo"), "ns", "foo", 0 }
     fn generate_symbol_from_string(
         &self,
         ns: Option<&Expr>,
@@ -7370,20 +7435,279 @@ impl<'a> CodeGen<'a> {
         f: &mut Function,
     ) -> CompileResult<()> {
         use crate::ir::gc_types;
-        use wasm_encoder::Instruction;
+        use crate::ir::type_ids;
 
-        // Generate and drop the arguments (we still need to evaluate them for side effects)
-        if let Some(ns_expr) = ns {
-            self.generate_expr(ns_expr, f)?;
-            f.instruction(&Instruction::Drop);
-        }
+        // Scratch layout: [eqref, i32, eqref, eqref, eqref]
+        let scratch_base = self.scratch_local.get();
+        let name_local = scratch_base;           // +0: eqref
+        self.scratch_local.set(scratch_base + 5);
+
+        // Evaluate and store name
         self.generate_expr(name, f)?;
-        f.instruction(&Instruction::Drop);
+        f.instruction(&Instruction::LocalSet(name_local));
 
-        // For now, return nil as a placeholder
-        // Full implementation requires runtime string hashing
-        f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
-        f.instruction(&Instruction::RefI31);
+        if let Some(ns_expr) = ns {
+            // (symbol "ns" "foo"): hash = hash("ns/foo")
+            let ns_local = scratch_base + 2;     // +2: eqref
+            let concat_local = scratch_base + 3; // +3: eqref
+            let ns_len_local = scratch_base + 1; // +1: i32
+
+            self.generate_expr(ns_expr, f)?;
+            f.instruction(&Instruction::LocalSet(ns_local));
+
+            // ns_len
+            f.instruction(&Instruction::LocalGet(ns_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::ArrayLen);
+            f.instruction(&Instruction::LocalSet(ns_len_local));
+
+            // total_len = ns_len + 1 + name_len
+            f.instruction(&Instruction::LocalGet(ns_len_local));
+            f.instruction(&Instruction::I32Const(1)); // for '/'
+            f.instruction(&Instruction::I32Add);
+            f.instruction(&Instruction::LocalGet(name_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::ArrayLen);
+            f.instruction(&Instruction::I32Add);
+
+            // concat = array.new_default STRING total_len
+            f.instruction(&Instruction::ArrayNewDefault(gc_types::STRING));
+            f.instruction(&Instruction::LocalSet(concat_local));
+
+            // copy ns into concat[0..ns_len]
+            f.instruction(&Instruction::LocalGet(concat_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::I32Const(0)); // dst offset
+            f.instruction(&Instruction::LocalGet(ns_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::I32Const(0)); // src offset
+            f.instruction(&Instruction::LocalGet(ns_len_local));
+            f.instruction(&Instruction::ArrayCopy {
+                array_type_index_dst: gc_types::STRING,
+                array_type_index_src: gc_types::STRING,
+            });
+
+            // set concat[ns_len] = '/'
+            f.instruction(&Instruction::LocalGet(concat_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::LocalGet(ns_len_local));
+            f.instruction(&Instruction::I32Const(b'/' as i32));
+            f.instruction(&Instruction::ArraySet(gc_types::STRING));
+
+            // copy name into concat[ns_len+1..]
+            f.instruction(&Instruction::LocalGet(concat_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::LocalGet(ns_len_local));
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::I32Add); // dst offset = ns_len + 1
+            f.instruction(&Instruction::LocalGet(name_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::I32Const(0)); // src offset
+            f.instruction(&Instruction::LocalGet(name_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::ArrayLen);
+            f.instruction(&Instruction::ArrayCopy {
+                array_type_index_dst: gc_types::STRING,
+                array_type_index_src: gc_types::STRING,
+            });
+
+            // hash = hash_string(concat)
+            f.instruction(&Instruction::I32Const(type_ids::SYMBOL));
+            f.instruction(&Instruction::LocalGet(concat_local));
+            f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH_STRING)));
+            // ns field (ref null $STRING) — cast from eqref
+            f.instruction(&Instruction::LocalGet(ns_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            // name field (ref $STRING) — cast from eqref
+            f.instruction(&Instruction::LocalGet(name_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            // marker field
+            f.instruction(&Instruction::I32Const(0));
+            f.instruction(&Instruction::StructNew(gc_types::SYMBOL));
+
+            self.scratch_local.set(scratch_base);
+        } else {
+            // (symbol "foo"): hash = hash("foo")
+            f.instruction(&Instruction::I32Const(type_ids::SYMBOL));
+            // hash
+            f.instruction(&Instruction::LocalGet(name_local));
+            f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH_STRING)));
+            // ns = null (ref null $STRING)
+            f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::STRING)));
+            // name (ref $STRING) — cast from eqref
+            f.instruction(&Instruction::LocalGet(name_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            // marker
+            f.instruction(&Instruction::I32Const(0));
+            f.instruction(&Instruction::StructNew(gc_types::SYMBOL));
+
+            self.scratch_local.set(scratch_base);
+        }
+
+        Ok(())
+    }
+
+    /// Generate code to create a keyword from string(s) at runtime.
+    ///
+    /// (keyword "foo") → KEYWORD { type_id, hash(":foo"), null, "foo" }
+    /// (keyword "ns" "foo") → KEYWORD { type_id, hash(":ns:foo"), "ns", "foo" }
+    fn generate_keyword_from_string(
+        &self,
+        ns: Option<&Expr>,
+        name: &Expr,
+        f: &mut Function,
+    ) -> CompileResult<()> {
+        use crate::ir::gc_types;
+        use crate::ir::type_ids;
+
+        // Scratch layout: [eqref, i32, eqref, eqref, eqref]
+        let scratch_base = self.scratch_local.get();
+        let name_local = scratch_base;           // +0: eqref
+        self.scratch_local.set(scratch_base + 5);
+
+        // Evaluate and store name
+        self.generate_expr(name, f)?;
+        f.instruction(&Instruction::LocalSet(name_local));
+
+        if let Some(ns_expr) = ns {
+            // (keyword "ns" "foo"): hash = hash(":ns:foo")
+            let ns_local = scratch_base + 2;     // +2: eqref
+            let concat_local = scratch_base + 3; // +3: eqref
+            let ns_len_local = scratch_base + 1; // +1: i32
+
+            self.generate_expr(ns_expr, f)?;
+            f.instruction(&Instruction::LocalSet(ns_local));
+
+            // ns_len
+            f.instruction(&Instruction::LocalGet(ns_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::ArrayLen);
+            f.instruction(&Instruction::LocalSet(ns_len_local));
+
+            // total_len = 1 + ns_len + 1 + name_len  (":ns:name")
+            f.instruction(&Instruction::I32Const(1)); // for leading ':'
+            f.instruction(&Instruction::LocalGet(ns_len_local));
+            f.instruction(&Instruction::I32Add);
+            f.instruction(&Instruction::I32Const(1)); // for separator ':'
+            f.instruction(&Instruction::I32Add);
+            f.instruction(&Instruction::LocalGet(name_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::ArrayLen);
+            f.instruction(&Instruction::I32Add);
+
+            // concat = array.new_default STRING total_len
+            f.instruction(&Instruction::ArrayNewDefault(gc_types::STRING));
+            f.instruction(&Instruction::LocalSet(concat_local));
+
+            // concat[0] = ':'
+            f.instruction(&Instruction::LocalGet(concat_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::I32Const(0));
+            f.instruction(&Instruction::I32Const(b':' as i32));
+            f.instruction(&Instruction::ArraySet(gc_types::STRING));
+
+            // copy ns into concat[1..1+ns_len]
+            f.instruction(&Instruction::LocalGet(concat_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::I32Const(1)); // dst offset
+            f.instruction(&Instruction::LocalGet(ns_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::I32Const(0)); // src offset
+            f.instruction(&Instruction::LocalGet(ns_len_local));
+            f.instruction(&Instruction::ArrayCopy {
+                array_type_index_dst: gc_types::STRING,
+                array_type_index_src: gc_types::STRING,
+            });
+
+            // concat[1+ns_len] = ':'
+            f.instruction(&Instruction::LocalGet(concat_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::I32Const(1));
+            f.instruction(&Instruction::LocalGet(ns_len_local));
+            f.instruction(&Instruction::I32Add); // offset = 1 + ns_len
+            f.instruction(&Instruction::I32Const(b':' as i32));
+            f.instruction(&Instruction::ArraySet(gc_types::STRING));
+
+            // copy name into concat[2+ns_len..]
+            f.instruction(&Instruction::LocalGet(concat_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::I32Const(2));
+            f.instruction(&Instruction::LocalGet(ns_len_local));
+            f.instruction(&Instruction::I32Add); // dst offset = 2 + ns_len
+            f.instruction(&Instruction::LocalGet(name_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::I32Const(0)); // src offset
+            f.instruction(&Instruction::LocalGet(name_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::ArrayLen);
+            f.instruction(&Instruction::ArrayCopy {
+                array_type_index_dst: gc_types::STRING,
+                array_type_index_src: gc_types::STRING,
+            });
+
+            // Build KEYWORD struct: { type_id, hash, ns, name }
+            f.instruction(&Instruction::I32Const(type_ids::KEYWORD));
+            f.instruction(&Instruction::LocalGet(concat_local));
+            f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH_STRING)));
+            // ns (ref null $STRING) — cast from eqref
+            f.instruction(&Instruction::LocalGet(ns_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            // name (ref $STRING) — cast from eqref
+            f.instruction(&Instruction::LocalGet(name_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::StructNew(gc_types::KEYWORD));
+
+            self.scratch_local.set(scratch_base);
+        } else {
+            // (keyword "foo"): hash = hash(":foo")
+            let concat_local = scratch_base + 2;  // +2: eqref
+
+            // total_len = 1 + name_len
+            f.instruction(&Instruction::I32Const(1)); // for ':'
+            f.instruction(&Instruction::LocalGet(name_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::ArrayLen);
+            f.instruction(&Instruction::I32Add);
+
+            // concat = array.new_default STRING total_len
+            f.instruction(&Instruction::ArrayNewDefault(gc_types::STRING));
+            f.instruction(&Instruction::LocalSet(concat_local));
+
+            // concat[0] = ':'
+            f.instruction(&Instruction::LocalGet(concat_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::I32Const(0));
+            f.instruction(&Instruction::I32Const(b':' as i32));
+            f.instruction(&Instruction::ArraySet(gc_types::STRING));
+
+            // copy name into concat[1..]
+            f.instruction(&Instruction::LocalGet(concat_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::I32Const(1)); // dst offset
+            f.instruction(&Instruction::LocalGet(name_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::I32Const(0)); // src offset
+            f.instruction(&Instruction::LocalGet(name_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::ArrayLen);
+            f.instruction(&Instruction::ArrayCopy {
+                array_type_index_dst: gc_types::STRING,
+                array_type_index_src: gc_types::STRING,
+            });
+
+            // Build KEYWORD struct: { type_id, hash, ns=null, name }
+            f.instruction(&Instruction::I32Const(type_ids::KEYWORD));
+            f.instruction(&Instruction::LocalGet(concat_local));
+            f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH_STRING)));
+            // ns = null (ref null $STRING)
+            f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::STRING)));
+            // name (ref $STRING) — cast from eqref
+            f.instruction(&Instruction::LocalGet(name_local));
+            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::STRING)));
+            f.instruction(&Instruction::StructNew(gc_types::KEYWORD));
+
+            self.scratch_local.set(scratch_base);
+        }
 
         Ok(())
     }
@@ -7540,106 +7864,33 @@ impl<'a> CodeGen<'a> {
     }
 
     /// Generate the nested if-else dispatch for apply based on vector count.
+    /// arr_local contains a pre-normalized flat WASM array of elements.
     fn generate_apply_dispatch(
         &self,
         closure_local: u32,
-        vec_local: u32,
+        arr_local: u32,
         count_local: u32,
         f: &mut Function,
     ) -> CompileResult<()> {
-        // count == 0?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Eqz);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_call_arity(closure_local, vec_local, 0, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 1?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_call_arity(closure_local, vec_local, 1, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 2?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_call_arity(closure_local, vec_local, 2, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 3?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(3));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_call_arity(closure_local, vec_local, 3, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 4?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(4));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_call_arity(closure_local, vec_local, 4, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 5?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_call_arity(closure_local, vec_local, 5, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 6?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(6));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_call_arity(closure_local, vec_local, 6, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 7?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(7));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_call_arity(closure_local, vec_local, 7, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 8?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(8));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_call_arity(closure_local, vec_local, 8, f)?;
-        f.instruction(&Instruction::Else);
+        for arity in 0..=8u32 {
+            f.instruction(&Instruction::LocalGet(count_local));
+            if arity == 0 {
+                f.instruction(&Instruction::I32Eqz);
+            } else {
+                f.instruction(&Instruction::I32Const(arity as i32));
+                f.instruction(&Instruction::I32Eq);
+            }
+            f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+                RefType::EQREF,
+            ))));
+            self.generate_apply_call_arity(closure_local, arr_local, arity, f)?;
+            f.instruction(&Instruction::Else);
+        }
 
         // Unsupported arity - trap
         f.instruction(&Instruction::Unreachable);
 
-        // Close all 9 if-else blocks (one for each arity 0-8)
+        // Close all 9 if-else blocks
         for _ in 0..9 {
             f.instruction(&Instruction::End);
         }
@@ -7647,11 +7898,12 @@ impl<'a> CodeGen<'a> {
         Ok(())
     }
 
-    /// Generate code to call a closure with a specific arity, extracting args from vector.
+    /// Generate code to call a closure with a specific arity, extracting args from flat array.
+    /// arr_local contains a pre-normalized flat WASM array.
     fn generate_apply_call_arity(
         &self,
         closure_local: u32,
-        vec_local: u32,
+        arr_local: u32,
         arity: u32,
         f: &mut Function,
     ) -> CompileResult<()> {
@@ -7659,10 +7911,6 @@ impl<'a> CodeGen<'a> {
 
         let closure_type = gc_types::closure_type_for_arity(arity);
         let fn_type = gc_types::closure_fn_type_for_arity(arity);
-
-        // Look up PersistentVector type index dynamically
-        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
-            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
 
         // Get env (first arg to wrapper function)
         f.instruction(&Instruction::LocalGet(closure_local));
@@ -7673,20 +7921,14 @@ impl<'a> CodeGen<'a> {
         });
 
         if arity <= 4 {
-            // For arities 0-4: Extract individual arguments from the vector
+            // For arities 0-4: Extract individual arguments from the flat array
             for i in 0..arity {
-                self.generate_vec_nth_raw(vec_local, i, f)?;
+                self.generate_arr_nth(arr_local, i, f)?;
             }
         } else {
             // For arities 5+: CLOSURE_FN_N takes (env, args_array)
-            // Pass the vector's tail array directly
-            f.instruction(&Instruction::LocalGet(vec_local));
-            f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-            f.instruction(&Instruction::StructGet {
-                struct_type_index: pv_gc_idx,
-                field_index: 4, // tail field
-            });
-            // Cast eqref to the expected array type for CLOSURE_FN_N
+            // Pass the flat array directly
+            f.instruction(&Instruction::LocalGet(arr_local));
             f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::ARRAY)));
         }
 
@@ -7698,43 +7940,23 @@ impl<'a> CodeGen<'a> {
             field_index: gc_types::CL_FN,
         });
 
-        // Call with call_ref (not tail call for now - apply result needs to bubble up)
+        // Call with call_ref
         f.instruction(&Instruction::CallRef(fn_type));
 
         Ok(())
     }
 
-    /// Generate code to get vector element at a raw i32 index.
-    ///
-    /// This is a simplified version for small vectors (≤32 elements)
-    /// that directly accesses the tail. For apply with vectors typically
-    /// containing few elements, this is the common case.
-    fn generate_vec_nth_raw(
+    /// Generate code to get element at index from a flat WASM array (eqref local).
+    fn generate_arr_nth(
         &self,
-        vec_local: u32,
+        arr_local: u32,
         index: u32,
         f: &mut Function,
     ) -> CompileResult<()> {
         use crate::ir::gc_types;
 
-        // Look up PersistentVector type index dynamically
-        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
-            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
-
-        // For small vectors (≤32 elements, which is the typical case for apply),
-        // we can directly access the tail array. The tail is at field 4.
-        // PersistentVector layout: type_id(0), cnt(1), shift(2), root(3), tail(4)
-        f.instruction(&Instruction::LocalGet(vec_local));
-        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(pv_gc_idx)));
-        f.instruction(&Instruction::StructGet {
-            struct_type_index: pv_gc_idx,
-            field_index: 4, // tail field
-        });
-
-        // Cast to ARRAY type for array.get
+        f.instruction(&Instruction::LocalGet(arr_local));
         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::ARRAY)));
-
-        // Get element at index (for small vectors, index < 32 always)
         f.instruction(&Instruction::I32Const(index as i32));
         f.instruction(&Instruction::ArrayGet(gc_types::ARRAY));
 
@@ -7742,107 +7964,33 @@ impl<'a> CodeGen<'a> {
     }
 
     /// Generate the nested if-else dispatch for variadic apply based on vector count.
+    /// arr_local contains a pre-normalized flat WASM array of elements.
     fn generate_apply_variadic_dispatch(
         &self,
         closure_local: u32,
-        vec_local: u32,
+        arr_local: u32,
         count_local: u32,
         f: &mut Function,
     ) -> CompileResult<()> {
-        // Same structure as regular dispatch, but calls variadic version
-        // count == 0?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Eqz);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_variadic_call_arity(closure_local, vec_local, 0, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 1?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(1));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_variadic_call_arity(closure_local, vec_local, 1, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 2?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(2));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_variadic_call_arity(closure_local, vec_local, 2, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 3?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(3));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_variadic_call_arity(closure_local, vec_local, 3, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 4?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(4));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_variadic_call_arity(closure_local, vec_local, 4, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 5?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(5));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_variadic_call_arity(closure_local, vec_local, 5, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 6?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(6));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_variadic_call_arity(closure_local, vec_local, 6, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 7?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(7));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_variadic_call_arity(closure_local, vec_local, 7, f)?;
-        f.instruction(&Instruction::Else);
-
-        // count == 8?
-        f.instruction(&Instruction::LocalGet(count_local));
-        f.instruction(&Instruction::I32Const(8));
-        f.instruction(&Instruction::I32Eq);
-        f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
-            RefType::EQREF,
-        ))));
-        self.generate_apply_variadic_call_arity(closure_local, vec_local, 8, f)?;
-        f.instruction(&Instruction::Else);
+        for arity in 0..=8u32 {
+            f.instruction(&Instruction::LocalGet(count_local));
+            if arity == 0 {
+                f.instruction(&Instruction::I32Eqz);
+            } else {
+                f.instruction(&Instruction::I32Const(arity as i32));
+                f.instruction(&Instruction::I32Eq);
+            }
+            f.instruction(&Instruction::If(BlockType::Result(ValType::Ref(
+                RefType::EQREF,
+            ))));
+            self.generate_apply_variadic_call_arity(closure_local, arr_local, arity, f)?;
+            f.instruction(&Instruction::Else);
+        }
 
         // Unsupported arity - trap
         f.instruction(&Instruction::Unreachable);
 
-        // Close all 9 if-else blocks (one for each arity 0-8)
+        // Close all 9 if-else blocks
         for _ in 0..9 {
             f.instruction(&Instruction::End);
         }
@@ -7850,32 +7998,26 @@ impl<'a> CodeGen<'a> {
         Ok(())
     }
 
-    /// Generate code to call a variadic closure with a specific arity, extracting args from vector.
+    /// Generate code to call a variadic closure with a specific arity, extracting args from flat array.
     fn generate_apply_variadic_call_arity(
         &self,
         closure_local: u32,
-        vec_local: u32,
+        arr_local: u32,
         arity: u32,
         f: &mut Function,
     ) -> CompileResult<()> {
         use crate::ir::gc_types;
 
-        // Look up PersistentVector type index dynamically
-        let pv_gc_idx = self.deftype_gc_type_idx("PersistentVector")
-            .ok_or_else(|| CompileError::Unsupported("PersistentVector deftype not found".to_string()))?;
-
         let variadic_type = gc_types::VARIADIC_CLOSURE;
-        // Variadic closure fields use CLOSURE_FN_* types for arities 0-8 (with env as first param)
         let fn_type = gc_types::variadic_fn_type_for_arity_new(arity);
         let fn_field = 1 + arity; // field 0 is type_id, field 1 is fn0, field 2 is fn1, etc.
 
         // First arg is env (null for variadic builtins, but required by function signature)
         f.instruction(&Instruction::RefNull(HeapType::Concrete(gc_types::ARRAY)));
 
-        // For arities 0-8: Extract individual arguments from the vector
-        // All variadic arities 0-8 now have dedicated function types with individual params
+        // Extract individual arguments from the flat array
         for i in 0..arity {
-            self.generate_vec_nth_raw(vec_local, i, f)?;
+            self.generate_arr_nth(arr_local, i, f)?;
         }
 
         // Get fnN (typed funcref) from variadic closure struct
@@ -7904,13 +8046,14 @@ impl<'a> CodeGen<'a> {
     /// - small int → value itself
     /// - large int → xxHash32 of i64 bytes
     /// - float → xxHash32 of f64 bit representation
-    /// - string → 0 (not yet supported - strings use ptr+len, not GC refs)
+    /// - string → xxHash32 of bytes
+    /// - keyword → pre-computed hash from struct
     fn generate_hash(&self, value: &Expr, f: &mut Function) -> CompileResult<()> {
         use crate::ir::gc_types;
         use crate::ir::Type;
 
-        // Check if the value is a String type - these aren't GC refs yet
-        // and produce two values (ptr, len) on the stack, not a single eqref.
+        // Check if the value is a statically-known String type.
+        // We can call $hash_string directly without dynamic type dispatch.
         if matches!(value.expr_type(), Type::String) {
             // Generate the string expression - puts (ptr, len) on stack
             self.generate_expr(value, f)?;
@@ -8034,13 +8177,18 @@ impl<'a> CodeGen<'a> {
 
         f.instruction(&Instruction::Else);
 
-        // NOTE: STRING (array<i8>) would be tested here, but strings currently
-        // use memory-based ptr+len representation, not GC arrays.
-        // String hashing will be added when strings move to GC refs.
+        // Test STRING (array<i8>)
+        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::STRING)));
+        f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
+        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH_STRING)));
+        f.instruction(&Instruction::Else);
 
         // Default: return 0 for unsupported types
         f.instruction(&Instruction::I32Const(0));
 
+        f.instruction(&Instruction::End); // close STRING
         f.instruction(&Instruction::End); // close KEYWORD
         f.instruction(&Instruction::End); // close FLOAT
         f.instruction(&Instruction::End); // close INT64

@@ -364,81 +364,12 @@ pub mod gc_types {
         h1.wrapping_add(h2)
     }
 
-    /// Compute xxHash32 of a byte slice at compile time
-    /// Used for pre-computing keyword hashes
+    /// Compute xxHash32 of a byte slice (seed=0).
+    /// Uses the xxhash-rust crate as the reference implementation.
+    /// The WASM runtime helper ($hash_string in codegen.rs) must produce
+    /// identical results — use this function as the ground truth.
     pub fn xxhash32(data: &[u8]) -> i32 {
-        let len = data.len();
-        let mut h: u32 = if len >= 16 {
-            // Process 16-byte chunks
-            let mut v1 = 0u32.wrapping_add(PRIME32_1).wrapping_add(PRIME32_2);
-            let mut v2 = PRIME32_2;
-            let mut v3 = 0u32;
-            let mut v4 = 0u32.wrapping_sub(PRIME32_1);
-            let mut i = 0;
-            while i + 16 <= len {
-                let k1 = u32::from_le_bytes([data[i], data[i + 1], data[i + 2], data[i + 3]]);
-                v1 = v1
-                    .wrapping_add(k1.wrapping_mul(PRIME32_2))
-                    .rotate_left(13)
-                    .wrapping_mul(PRIME32_1);
-                let k2 =
-                    u32::from_le_bytes([data[i + 4], data[i + 5], data[i + 6], data[i + 7]]);
-                v2 = v2
-                    .wrapping_add(k2.wrapping_mul(PRIME32_2))
-                    .rotate_left(13)
-                    .wrapping_mul(PRIME32_1);
-                let k3 =
-                    u32::from_le_bytes([data[i + 8], data[i + 9], data[i + 10], data[i + 11]]);
-                v3 = v3
-                    .wrapping_add(k3.wrapping_mul(PRIME32_2))
-                    .rotate_left(13)
-                    .wrapping_mul(PRIME32_1);
-                let k4 =
-                    u32::from_le_bytes([data[i + 12], data[i + 13], data[i + 14], data[i + 15]]);
-                v4 = v4
-                    .wrapping_add(k4.wrapping_mul(PRIME32_2))
-                    .rotate_left(13)
-                    .wrapping_mul(PRIME32_1);
-                i += 16;
-            }
-            v1.rotate_left(1)
-                .wrapping_add(v2.rotate_left(7))
-                .wrapping_add(v3.rotate_left(12))
-                .wrapping_add(v4.rotate_left(18))
-        } else {
-            PRIME32_5
-        };
-
-        h = h.wrapping_add(len as u32);
-
-        // Process remaining 4-byte chunks
-        let mut i = (len / 16) * 16;
-        while i + 4 <= len {
-            let k = u32::from_le_bytes([data[i], data[i + 1], data[i + 2], data[i + 3]]);
-            h = h
-                .wrapping_add(k.wrapping_mul(PRIME32_3))
-                .rotate_left(17)
-                .wrapping_mul(PRIME32_4);
-            i += 4;
-        }
-
-        // Process remaining bytes
-        while i < len {
-            h = h
-                .wrapping_add((data[i] as u32).wrapping_mul(PRIME32_5))
-                .rotate_left(11)
-                .wrapping_mul(PRIME32_1);
-            i += 1;
-        }
-
-        // Final avalanche
-        h ^= h >> 15;
-        h = h.wrapping_mul(PRIME32_2);
-        h ^= h >> 13;
-        h = h.wrapping_mul(PRIME32_3);
-        h ^= h >> 16;
-
-        h as i32
+        xxhash_rust::xxh32::xxh32(data, 0) as i32
     }
 
     /// Compute hash for a keyword (namespace/name or just name)
@@ -1095,6 +1026,7 @@ impl Expr {
             Expr::GetName(_) => Type::GcRef, // Returns STRING
             Expr::GetNamespace(_) => Type::GcRef, // Returns STRING or nil
             Expr::SymbolFromString { .. } => Type::GcRef, // Returns SYMBOL
+            Expr::KeywordFromString { .. } => Type::GcRef, // Returns KEYWORD
 
             // Var operations
             Expr::VarNew { .. } => Type::GcRef, // Returns VAR
@@ -1577,6 +1509,14 @@ pub enum Expr {
     /// - ns: Optional namespace string expression
     /// - name: Name string expression
     SymbolFromString {
+        ns: Option<Box<Expr>>,
+        name: Box<Expr>,
+    },
+
+    /// Create a keyword from string(s).
+    /// - ns: Optional namespace string expression
+    /// - name: Name string expression
+    KeywordFromString {
         ns: Option<Box<Expr>>,
         name: Box<Expr>,
     },

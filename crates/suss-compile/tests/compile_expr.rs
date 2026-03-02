@@ -2793,3 +2793,71 @@ fn test_apply_large_vector_variadic_capture() {
     );
     assert_eq!(result, 50);
 }
+
+#[test]
+fn test_apply_large_vector_builtin() {
+    // apply a builtin variadic (+) to a large vector (>32 elements)
+    // Tests the VARIADIC_CLOSURE dispatch path with pre-normalized array
+    let result = run_expr_i32(
+        "(apply + (vec (take 4 (repeat 10))))"
+    );
+    assert_eq!(result, 40);
+}
+
+// ========================================================================
+// String hashing in collections
+// ========================================================================
+
+#[test]
+fn test_string_hash_map_count() {
+    // Strings as map keys should hash correctly (not all collide at 0)
+    let result = run_expr_i32("(count (assoc (assoc {} \"a\" 1) \"b\" 2))");
+    assert_eq!(result, 2);
+}
+
+#[test]
+fn test_string_hash_map_lookup() {
+    let result = run_expr_i32("(get {\"hello\" 42} \"hello\")");
+    assert_eq!(result, 42);
+}
+
+// ========================================================================
+// Multi-arity variadic guards
+// ========================================================================
+
+#[test]
+fn test_multi_arity_variadic_guard() {
+    // Variadic clause with fixed params dispatches correctly
+    let result = run_expr_i32(
+        "(let [f (fn ([x] x) ([x y & more] (+ x y (count more))))] (f 10 20 30 40))"
+    );
+    assert_eq!(result, 32); // 10 + 20 + 2
+}
+
+// ========================================================================
+// Keyword/symbol runtime construction
+// ========================================================================
+
+#[test]
+fn test_keyword_from_string() {
+    let result = run_expr_i32("(if (= (keyword \"a\") :a) 1 0)");
+    assert_eq!(result, 1);
+}
+
+#[test]
+fn test_keyword_as_map_key() {
+    let result = run_expr_i32("(get {:a 42} (keyword \"a\"))");
+    assert_eq!(result, 42);
+}
+
+#[test]
+fn test_symbol_from_string() {
+    let result = run_expr_i32("(if (= (name (symbol \"foo\")) \"foo\") 1 0)");
+    assert_eq!(result, 1);
+}
+
+#[test]
+fn test_keyword_ns_from_string() {
+    let result = run_expr_i32("(if (= (keyword \"ns\" \"a\") :ns/a) 1 0)");
+    assert_eq!(result, 1);
+}
