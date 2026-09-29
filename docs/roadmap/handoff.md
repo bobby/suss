@@ -1170,3 +1170,70 @@ No PR was merged and no issue or milestone was directly closed.
 
 Next unblocked work remains lossless reader forms into HIR/binding identity,
 explicit source-order IR and shared runtime lowering, as described above.
+## Portable reader forms — 2026-09-29
+
+Prior reviewed PR heads have terminal successful CI: #40 fb3ec0a in
+[36636314840](https://github.com/bobby/suss/actions/runs/36636314840), and #41
+2b4d2fe in [36636495795](https://github.com/bobby/suss/actions/runs/36636495795).
+Both remain open drafts, unmerged. Each had the required dispatched review;
+#40's two significant findings were pushed and inherited by #41. No milestone
+was closed and M2–M9 remain incomplete.
+
+Next increment, on resurrection/portable-reader-forms stacked on #41, introduces
+`suss_reader::forms`. Source forms retain byte spans, ordered metadata, binary64
+numbers and UTF-16 strings separately from prototype EDN runtime values. Character
+literals are one-unit strings; raw astral strings and escaped lone surrogates
+preserve exact units. Ordinary integer literals round to binary64 rather than
+creating an arbitrary-precision runtime value. Ratios/precision suffixes produce
+explicit diagnostics. Numeric spelling support remains bounded, not a claim of
+all upstream reader forms.
+
+Conditional clauses are preserved in source order; resolution chooses the first
+portable :suss/:cljs/:default clause, removes unmatched syntax and only then
+pairs map entries. Quote/deref prefixes get source spans. Comments/discard and
+unsupported/malformed input have explicit results. Metadata remains syntax,
+not runtime metadata or an extra function argument. See docs/runtime/reader-forms.md.
+
+Failure/repair evidence:
+
+- Initial lone-surrogate regression through the old EDN reader failed with a
+  parse error. The new reader preserves [0xd800, 0, 0xd83d, 0xde00] and passes.
+- Initial 256-depth bound did not prevent actual test-thread stack overflow
+  (SIGABRT). A 64-form bound now rejects excessive nesting with a located error;
+  the regression passes. No blanket skip or increased test thread stack.
+- Initial development Node runner failed resolving a corpus path relative to
+  generated code. It now reads from the script's fixed oracle working directory;
+  a fresh successful compile/execute/compare follows, not a fabricated exit code.
+
+Validation (all Cargo commands use CARGO_BUILD_JOBS=2; no RUSTFLAGS):
+
+- `cargo test -p suss-reader --locked -- --test-threads=2`: 19 existing parser
+  tests plus 7 new portable form tests passed, 0 ignored.
+- `scripts/test-reader-oracle.sh`: freshly compiled pinned ClojureScript with its
+  tools.reader 1.3.6 dependency and Node; 14 original scalar observations match
+  float bits/UTF-16 units exactly. JVM/Node remain development-only. The adapter
+  and Rust implementation are original; no upstream core/reader source copied.
+- `cargo test -p suss-compile --test reader_runtime --locked -- --test-threads=2`:
+  2 passed, 0 ignored. Shared scalar corpus check plus actual generated ABI
+  runtime transfer, independently inspected GC fields/units and forced GC.
+- `cargo test --workspace --locked -- --test-threads=2`: exit 0;
+  /private/tmp/suss-portable-reader-full.log. 317 expressions/12 existing ignored,
+  29 components, 9 conformance/2 manual ignored, 4 oracle/1 manual ignored,
+  2 reader-runtime, 7 ABI, 3 shared, 8 async, 8 profile, 8 core, 19 old reader and
+  7 new reader passes. Two existing doctest examples remain ignored.
+- Python regression suite: 42 passed. Formatting, `git diff --check`, and offline
+  roadmap preview (10 milestones/39 stable issues) passed.
+
+M2-01 is in-progress, not complete. Legacy AOT/REPL/compiler/macro/component reader
+paths have not migrated to the portable forms. The 14 reader passes are not new
+compiler compatibility passes: full source differential corpus remains 9 passing,
+7 exact known failures and 0 skipped. Namespace file ambiguity, aliases/refers,
+phase imports, cljs.core binding aliases, complete reader/syntax-quote behavior
+and splicing conditionals remain work. No known-failure files were changed.
+
+Next unblocked task: make HIR/explicit evaluation-order IR consume portable forms
+without EDN conversion, lower values through shared ABI intrinsics, and wire the
+manifest/layout gate into fragment loading. Migrate AOT/REPL/macros through the
+same pipeline and retire prototype parser/runtime paths after acceptance. This
+increment requires its own dispatched reviewer, fixes pushed for significant
+findings and successful final-head CI; do not merge any PRs yet.
