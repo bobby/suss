@@ -231,3 +231,77 @@ fn implements_import_binds_and_calls_the_named_instance() {
     run.post_return(&mut store).unwrap();
     assert_eq!(store.data(), &["42".to_owned()]);
 }
+
+#[test]
+fn wit_external_id_survives_encoding_and_selects_an_executing_export() {
+    use wasm_encoder::{
+        CodeSection, ExportKind, ExportSection, Function, FunctionSection, Instruction, Module,
+        TypeSection, ValType,
+    };
+    use wasmtime::component::{Component, Linker};
+    use wasmtime::{Config, Engine, Store};
+    use wit_component::{ComponentEncoder, StringEncoding};
+    let mut resolve = Resolve::default();
+    let package = resolve
+        .push_str(
+            "external-id.wit",
+            r#"
+        package test:identity;
+        world identity {
+            @external-id("urn:suss:probe:increment-v1")
+            export logical: func(value: u32) -> u32;
+        }
+    "#,
+        )
+        .unwrap();
+    let world = resolve.select_world(&[package], Some("identity")).unwrap();
+    let mut module = Module::new();
+    let mut types = TypeSection::new();
+    types.ty().function([ValType::I32], [ValType::I32]);
+    module.section(&types);
+    let mut functions = FunctionSection::new();
+    functions.function(0);
+    module.section(&functions);
+    let mut exports = ExportSection::new();
+    exports.export("logical", ExportKind::Func, 0);
+    module.section(&exports);
+    let mut code = CodeSection::new();
+    let mut function = Function::new([]);
+    function.instruction(&Instruction::LocalGet(0));
+    function.instruction(&Instruction::I32Const(1));
+    function.instruction(&Instruction::I32Add);
+    function.instruction(&Instruction::End);
+    code.function(&function);
+    module.section(&code);
+    let mut core = module.finish();
+    wit_component::embed_component_metadata(&mut core, &resolve, world, StringEncoding::UTF8)
+        .unwrap();
+    let bytes = ComponentEncoder::default()
+        .validate(true)
+        .module(&core)
+        .unwrap()
+        .encode()
+        .unwrap();
+    let mut config = Config::new();
+    config.wasm_component_model_implements(true);
+    let engine = Engine::new(&config).unwrap();
+    let component = Component::new(&engine, bytes).unwrap();
+    // external-id is host-defined metadata, not an implicit renaming rule. The
+    // host selects its intended export by that identifier and then invokes it.
+    let ty = component.component_type();
+    let name = ty
+        .exports(&engine)
+        .find_map(|(name, item)| {
+            (item.external_id == Some("urn:suss:probe:increment-v1")).then_some(name.to_owned())
+        })
+        .expect("generated external-id must survive into runtime export metadata");
+    let mut store = Store::new(&engine, ());
+    let instance = Linker::new(&engine)
+        .instantiate(&mut store, &component)
+        .unwrap();
+    let increment = instance
+        .get_typed_func::<(u32,), (u32,)>(&mut store, &name)
+        .unwrap();
+    assert_eq!(increment.call(&mut store, (41,)).unwrap(), (42,));
+    increment.post_return(&mut store).unwrap();
+}

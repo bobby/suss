@@ -49,28 +49,36 @@ python3 scripts/wasi_lock.py --wasm-tools /path/to/wasm-tools-1.258.0 \
 The Rust `toolchain_profile` suite now executes core GC, typed function
 references, tail calls and exceptions, transfers actual map values through
 canonical guest memory in both directions, and calls a named implements import
-from a guest. All seven tests pass. The 28 component tests and shared-runtime
+from a guest. An external-id annotation survives WIT metadata encoding and
+selects an export at runtime; the selected export executes and returns 42. All
+eight tests pass. The 28 component tests and shared-runtime
 fixture also pass on the new engine. These are feasibility/legacy fixtures, not
 Suss support for the full boundary graph. Unimplemented Suss boundary types and
 async functions now produce explicit Unsupported diagnostics.
 
-Three `toolchain_async` tests now execute a stackless canonical callback that
+Five `toolchain_async` tests now execute a stackless canonical callback that
 yields before task.return, plus typed future and stream endpoint round-trips
 through a core guest. The future remains a future and separately delivers 42;
 the stream separately delivers boundary bytes. This certifies endpoint transport,
-not guest-memory payload reads, nested async values, EOF, backpressure, cancellation
-or production Suss scheduling. The callback fixture retains upstream license and
+not guest-memory payload reads, nested async values, EOF, backpressure or
+production Suss scheduling. Separate probes force a canonical async import to
+return Pending and complete through a waitable callback, and cancel a pending
+host import from the guest. The cancellation callback checks RETURN_CANCELLED
+and reclaims the host future before Store teardown. This requires the separate
+`wasm_component_model_more_async_builtins(true)` feature; enabling only async
+rejects the fixture during validation. The callback fixture retains upstream license and
 hash provenance under `crates/suss-compile/tests/fixtures/`.
 
 ```sh
 cargo test -p suss-compile --test toolchain_async --locked -- --test-threads=2
 ```
 
-M0-02 still requires canonical async imports, guest-driven cancellation and
-executing external-id semantics. Wasmtime 49.0.1 has no public API to cancel an
+M0-02 remains open while future/stream guest payload reads, EOF/backpressure
+and cancellation across those endpoints are unverified. Wasmtime 49.0.1 has no public API to cancel an
 individual started host call; its referenced upstream issue #11833 remains open.
-Dropping a Rust call future is not cancellation. Record this limit until an
-executing cancellation path satisfies the intended contract.
+Dropping a Rust call future is not cancellation. The executing guest-driven
+subtask cancellation path above does not establish top-level host interruption
+or Suss session cancellation.
 The optional Wasm compiler-component build fails on native-only CLI imports;
 see the handoff for its failed command and limits. The production bundled WIT remains
 in use pending replacement binding tests.

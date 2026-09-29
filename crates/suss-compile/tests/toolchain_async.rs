@@ -194,3 +194,150 @@ fn stream_endpoint_roundtrips_and_delivers_boundary_bytes() {
     .unwrap();
     assert_eq!(*bytes.lock().unwrap(), [0, 255, 42]);
 }
+
+#[test]
+fn canonical_async_import_suspends_and_completes_through_callback() {
+    use std::sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    };
+    use wasmtime::component::Val;
+    let wat = std::fs::read_to_string(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/fixtures/callback-async-import.wat"
+    ))
+    .expect("executing async import fixture must exist");
+    let mut config = Config::new();
+    config
+        .wasm_component_model_async(true)
+        .wasm_component_model_async_stackful(false)
+        .consume_fuel(true);
+    let engine = Engine::new(&config).unwrap();
+    let component = Component::new(&engine, wat).expect("validated async import and callback");
+    let mut linker = Linker::<Vec<u32>>::new(&engine);
+    linker
+        .root()
+        .func_wrap("trace", |mut context, (step,): (u32,)| {
+            context.data_mut().push(step);
+            Ok(())
+        })
+        .unwrap();
+    let polls = Arc::new(AtomicUsize::new(0));
+    let count = polls.clone();
+    linker
+        .root()
+        .func_new_concurrent("increment", move |_, _, params, results| {
+            let count = count.clone();
+            Box::pin(async move {
+                std::future::poll_fn(|context| {
+                    if count.fetch_add(1, Ordering::SeqCst) == 0 {
+                        context.waker().wake_by_ref();
+                        Poll::Pending
+                    } else {
+                        Poll::Ready(())
+                    }
+                })
+                .await;
+                let [Val::U32(value)] = params else {
+                    panic!("typed async input");
+                };
+                results[0] = Val::U32(value + 1);
+                Ok(())
+            })
+        })
+        .unwrap();
+    let mut store = Store::new(&engine, Vec::new());
+    store.set_fuel(100_000).unwrap();
+    let instance = drive(linker.instantiate_async(&mut store, &component)).unwrap();
+    let run = instance
+        .get_typed_func::<(u32,), (u32,)>(&mut store, "run")
+        .unwrap();
+    let result =
+        drive(store.run_concurrent(async |accessor| run.call_concurrent(accessor, (41,)).await))
+            .unwrap()
+            .unwrap();
+    assert_eq!(result, (42,));
+    assert_eq!(store.data(), &[1, 2, 3]);
+    assert!(
+        polls.load(Ordering::SeqCst) >= 2,
+        "import must actually suspend"
+    );
+}
+
+#[test]
+fn guest_cancels_pending_host_import_and_observes_terminal_event() {
+    use std::sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    };
+    struct Dropped(Arc<AtomicUsize>);
+    impl Drop for Dropped {
+        fn drop(&mut self) {
+            self.0.fetch_add(1, Ordering::SeqCst);
+        }
+    }
+    let wat = std::fs::read_to_string(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/fixtures/callback-cancel-import.wat"
+    ))
+    .expect("executing guest cancellation fixture must exist");
+    let mut config = Config::new();
+    config
+        .wasm_component_model_more_async_builtins(true)
+        .wasm_component_model_async(true)
+        .wasm_component_model_async_stackful(false)
+        .consume_fuel(true);
+    let engine = Engine::new(&config).unwrap();
+    let component = Component::new(&engine, wat).expect("validated guest subtask cancellation");
+    let mut linker = Linker::<Vec<u32>>::new(&engine);
+    linker
+        .root()
+        .func_wrap("trace", |mut context, (step,): (u32,)| {
+            context.data_mut().push(step);
+            Ok(())
+        })
+        .unwrap();
+    let drops = Arc::new(AtomicUsize::new(0));
+    let count = drops.clone();
+    let polls = Arc::new(AtomicUsize::new(0));
+    let poll_count = polls.clone();
+    linker
+        .root()
+        .func_new_concurrent("increment", move |_, _, _, _| {
+            // Construct the guard before returning the future so abort-before-first-poll
+            // also proves the allocated operation is reclaimed.
+            let guard = Dropped(count.clone());
+            let poll_count = poll_count.clone();
+            Box::pin(async move {
+                let _guard = guard;
+                std::future::poll_fn(|_| {
+                    poll_count.fetch_add(1, Ordering::SeqCst);
+                    Poll::<()>::Pending
+                })
+                .await;
+                unreachable!("this import may only finish through cancellation");
+            })
+        })
+        .unwrap();
+    let mut store = Store::new(&engine, Vec::new());
+    store.set_fuel(100_000).unwrap();
+    let instance = drive(linker.instantiate_async(&mut store, &component)).unwrap();
+    let run = instance
+        .get_typed_func::<(u32,), (u32,)>(&mut store, "run")
+        .unwrap();
+    let result =
+        drive(store.run_concurrent(async |accessor| run.call_concurrent(accessor, (41,)).await))
+            .unwrap()
+            .unwrap();
+    assert_eq!(result, (99,));
+    assert!(
+        polls.load(Ordering::SeqCst) >= 1,
+        "host operation was pending before cancellation"
+    );
+    assert_eq!(store.data(), &[1, 2, 3]);
+    assert_eq!(
+        drops.load(Ordering::SeqCst),
+        1,
+        "cancellation reclaims the host future before Store teardown"
+    );
+}

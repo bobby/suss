@@ -45,8 +45,8 @@ open. Do not claim those features based on these repairs or narrow CLI probes.
   mismatch is rejected by the prototype loader check. This is a fixture, not
   production REPL/runtime implementation.
 * Added Cargo.lock, lean build/test profiles, shared test engines, bounded fuel
-  and decoder traversal, and a GitHub Actions baseline workflow. Remote CI has
-  not run because these repository changes have not been pushed.
+  and decoder traversal, and a GitHub Actions baseline workflow. The first published roadmap-branch CI is now running; see the latest
+  publication evidence below. No remote success is claimed yet.
 * Added a real Chrome feasibility fixture for ES modules, GC continuation
   suspension/resume, cancellation and stale callback isolation. The browser
   emitted passing DOM but needed termination during shutdown; this is recorded
@@ -124,11 +124,10 @@ Continue **M0-02** before a production dependency/runtime replacement:
    bundled WIT until the replacement bindings pass executing tests.
 2. The Rust family migration now passes the full baseline (see below).
    Continue canonical callback, cancellation and future/stream feasibility.
-3. Complete executing external-id, canonical async imports and guest-driven
-   cancellation probes. Map values, callback suspension/resumption and typed
-   endpoint round-trips now execute (see below). Payload reads in guest memory,
-   EOF/backpressure and cancellation remain unverified; do not treat endpoint
-   round-trips as complete async interoperability.
+3. Canonical async imports, guest-driven host-subtask cancellation and external-id
+   now execute (see the latest increment below). Complete future/stream payload
+   reads in guest memory, EOF/backpressure and endpoint cancellation; do not treat
+   endpoint round-trips as complete async interoperability.
 4. Extend the M0-04 Chrome fixture to the full feature profile and compare the
    optional Jco path before committing browser packaging. Then implement
    spans/namespace phases and the general verified IR (M2).
@@ -159,7 +158,7 @@ Continue **M0-02** before a production dependency/runtime replacement:
 * Existing untracked `.codex/`, `reference/BUSINESS_DSL_RESEARCH.md` and
   `reference/clojure-site/` were left untouched. AGENTS.md was already untracked
   and was intentionally rewritten during discovery. Discovery was subsequently
-  committed as `6306fd6`; no push has been made.
+  committed as `6306fd6` and subsequently published on the roadmap branch.
 
 Current increment runtime check:
 `cargo test -p suss-compile --test shared_runtime --locked -- --test-threads=2`
@@ -261,3 +260,72 @@ Guest-driven `subtask.cancel`/task cancellation remains the next unblocked probe
 along with canonical async imports and executing external-id semantics.
 M0-02 and milestone M0 stay open. Suss async lowering and Suss boundary adapters
 remain unsupported; M6 lifetime/cleanup and stress gates remain future work.
+
+## Published branch and live CI — 2026-09-29
+
+The validated commits were pushed to
+[resurrection/m0-toolchain](https://github.com/bobby/suss/tree/resurrection/m0-toolchain)
+without changing remote main. Migration commit: `8156c97`; callback/endpoint
+probe commit: `64437bd`. The only unrelated untracked files remain the two
+reference paths listed above.
+
+The first remote prototype-baseline run is verified live:
+[36620372831](https://github.com/bobby/suss/actions/runs/36620372831),
+head `64437bda8a35fdafd3c8066865ce8c2c8cda5f40`, status in_progress, no conclusion
+at observation. Poll with
+`gh run view 36620372831 --repo bobby/suss --json status,conclusion,jobs,url`;
+do not restart this job because observation times out. CI success is not claimed.
+This CI observation describes the published head above. The later increment
+below adds executing probes and carries this note with its implementation commit.
+The optional Wasm compiler-component build remains a recorded failure.
+
+
+## M0-02 canonical async import, guest cancellation and external-id — 2026-09-29
+
+The two new original WAT fixtures execute canonical async lower and stackless
+callback lift on Wasmtime 49.0.1:
+
+- `callback-async-import.wat`: the host import returns Pending on its first poll,
+  then completes with 42. The guest joins its subtask to a waitable set; its
+  callback verifies the exact handle and RETURNED event. Rust verifies trace
+  `[1, 2, 3]`, value 42 and at least two host polls.
+- `callback-cancel-import.wat`: a polled, pending host import is cancelled by
+  guest `subtask.cancel async` before joining the waitable set. The callback
+  verifies RETURN_CANCELLED. Rust verifies trace `[1, 2, 3]`, acknowledgment marker
+  99 and exactly one host-future Drop before Store teardown. The marker is a probe
+  result, not an implementation of the Suss cancellation exception policy.
+- WIT `@external-id` metadata survives wit-component embedding/encoding and is
+  inspected at runtime to choose an exported function; invoking it returns 42.
+  This is explicit host metadata interpretation, not implicit export renaming.
+
+The async-import regression first failed because its artifact was missing.
+The cancellation fixture initially failed validation with only component async
+support enabled: async subtask.cancel requires the separate more-async-builtins
+feature. The probe now explicitly selects
+`Config::wasm_component_model_more_async_builtins(true)`, leaves stackful support
+disabled and gives the guest 100,000 fuel. Both tests use the existing bounded
+five-second driver. No production engine configuration changed.
+
+Commands and results:
+
+- `cargo test -p suss-compile --test toolchain_async canonical_async_import --locked -j2 -- --test-threads=2`: 1 passed.
+- `cargo test -p suss-compile --test toolchain_profile wit_external_id --locked -j2 -- --test-threads=2`: 1 passed.
+- `cargo test -p suss-compile --test toolchain_async guest_cancels --locked -j2 -- --test-threads=2`: failed validation before explicit feature selection, then passed.
+- `cargo test -p suss-compile --test toolchain_async --test toolchain_profile --locked -j2 -- --test-threads=2`: 5 async + 8 profile tests passed, no ignored tests or failures.
+- `rustfmt --edition 2024` on the two changed Rust test files: passed.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 12 passed.
+- `python3 scripts/wasi_lock.py`: verified 15 files and 6 packages.
+- `git diff --check`: passed.
+
+This increment adds feasibility tests only. The migrated native full workspace
+baseline recorded above still applies; the new tests have separate passing
+execution evidence. The existing remote CI run was observed still in_progress
+with no conclusion; do not restart it on observation timeouts.
+
+Limitations and next unblocked task: execute future/stream payload reads inside
+guest memory, completion/EOF, bounded buffering/backpressure and cancellation of
+pending endpoint operations. Top-level host call cancellation is still unavailable
+through the public Wasmtime API; guest subtask cancellation does not establish
+Suss interactive session interruption. Generated official WASI bindings, optional
+Wasm compiler-component repairs and M1–M9 remain future work. M0-02 and milestone
+M0 remain open until their full acceptance evidence is reviewable.
