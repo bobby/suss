@@ -40,7 +40,7 @@ preserves existing issue bodies.
 ### M1: Trustworthy evidence
 
 - **M1-01 — Strict conformance decoding and baseline** (in-progress). Replace wildcard GC results and non-failing conformance reports with independent decoding and explicit failures.
-- **M1-02 — ClojureScript oracle and semantic regressions** (in-progress). Build a pinned development-only oracle and lossless values/effects corpus.
+- **M1-02 — ClojureScript oracle and semantic regressions** (in-progress). Pinned Node reference and independent Suss GC decoding execute one source corpus: 5 differential passing, 7 exact tracked failures, 0 skipped. Language exception observation and broader semantic/arity coverage remain; the current runtime does not meet binary64/UTF-16 semantics.
 - **M1-03 — Bounded CI and reproducible baseline** (in-progress). Bound test resource use and make baseline results reproducible.
 
 ### M2: Compiler and runtime foundation

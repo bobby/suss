@@ -763,3 +763,74 @@ and the prior full baselines remain the relevant production/harness evidence.
 Next unblocked task: implement the shared differential corpus and independent
 Suss observation path for M1-02, preserving unsupported cases as honest failures
 before M2 representation changes.
+
+
+## M1-02 shared differential corpus and exact observations — 2026-09-29
+
+The previous goal turn was progress: three validated commits were published to
+PR #40 through 37d7c65 and issues #6/#7 updated. CI run 36629536970 on that head
+is authoritatively still in_progress; it restored cache and passed Python/
+inventory gates, with the Rust baseline running. Do not cancel/restart it or
+claim its eventual result. Publication of this new increment is held until that
+specific run becomes terminal to preserve useful validation/cache work.
+
+`tests/oracle/cases.json` now supplies the exact expression bodies to both
+runners. The original ClojureScript serializer is unchanged; Python generates
+thunks under ignored out/generated. Rust compiles each identical body inside a
+trace-returning wrapper, validates and executes the Wasm with a reused engine,
+20-million fuel bound and two threads, then independently reads the GC heap.
+Host encoding preserves float bits and UTF-16 code units. Prototype integers
+convert only if exact; a focused regression rejects 9007199254740993 instead of
+rounding it to the reference value. Unknown values remain decoder failures.
+
+The comparator preserves collection kinds and numeric bits (including NaN
+payloads), matches maps/sets without ordering but with one-to-one element use,
+and compares effects in exact order. Malformed/missing results fail rather than
+becoming a tracked success. The initial empty failure baseline FAILED (exit 101),
+proving that newly observed differences fail the gate. Observations were captured
+via an explicit manual test and every failure reviewed before recording this
+new corpus's initial baseline; existing legacy expectations were not changed.
+
+Actual initial differential result: **5 passing, 7 failing, 0 skipped**:
+
+- binary64-rounding: actual bits 3ff0000000000000 (1) instead of 4340000000000000
+  (9007199254740992).
+- negative-zero: actual positive-zero bits instead of 8000000000000000.
+- utf16-surrogate and utf16-pair: compile-stage parse failure, exact diagnostic
+  `Parse error: found end of input expected something else`.
+- nested-values: the quoted seq is decoded as a vector, while maps/sets and the
+  other nested values compare correctly independent of map iteration order.
+- variadic-arity: rest arguments are a vector instead of a seq.
+- exception-effect: compile-stage `Undefined symbol: ex-info`.
+
+These are newly exposed prototype incompatibilities in a new corpus, not approved
+regressions in the prior baseline. `tests/oracle/known-failures.json` retains exact
+expected/actual tagged output or stage/diagnostic. Changed failures, new failures
+and unexpected passes fail; stable failures are expressly not compatibility.
+The old 201-case catalog still has zero known failures and no skips.
+
+Commands/results:
+
+- `scripts/test-oracle.sh`: passed with a freshly compiled Node reference and
+  executing Suss comparison; 5 differential passes, 7 exact known failures.
+- `cargo test -p suss-compile --test oracle --locked -- --test-threads=2` with two
+  build jobs: 2 tests passed, 1 explicitly manual capture ignored, ~1.1s.
+- `SUSS_ORACLE_OUTPUT=/tmp/suss-shared-observations.json cargo test -p suss-compile --test oracle --locked record_observations -- --ignored --exact --test-threads=2`
+  with two build jobs: captured actual observations; never writes expectations.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 39 passed, including
+  seven new corpus/comparator regression methods for malformed inputs, collection
+  matching, numeric/effect differences and exact stage/diagnostic changes.
+- `cargo test --workspace --locked -- --test-threads=2` with CARGO_BUILD_JOBS=2:
+  passed; full log /tmp/suss-shared-oracle-full.log. New differential suite is
+  included; stricter legacy conformance has 8 passes/2 manual ignored. Existing
+  ignores are retained; no new semantic cases are skipped.
+- `rustfmt --edition 2024` and `git diff --check`: passed.
+
+M1-02 remains open. The observation wrapper currently cannot recover independent
+exception data/message or partial traces from failed execution, and ex-info is
+not implemented. Java/Node remain development-only; ordinary Cargo/CI runs use
+only the checked-in reference fixture and Python comparator. No architecture or
+production core forms were ported; source provenance is original repository code.
+Next unblocked task: add independently decoded caught-exception observations and
+focused exception/effect cases, then use the exact differential evidence to drive
+the M2 binary64/UTF-16 and closure/sequence foundation repairs.

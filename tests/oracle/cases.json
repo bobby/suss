@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "cases": [
+    {
+      "id": "condition-once",
+      "expr": "(let [n (atom 0)] (if (do (swap! trace conj :condition) (swap! n inc)) (deref n) 0))"
+    },
+    {
+      "id": "argument-order",
+      "expr": "(+ (do (swap! trace conj :left) 1) (do (swap! trace conj :right) 2))"
+    },
+    {
+      "id": "binary64-rounding",
+      "expr": "(+ 9007199254740992 1)"
+    },
+    {
+      "id": "negative-zero",
+      "expr": "(- 0)"
+    },
+    {
+      "id": "positive-infinity",
+      "expr": "(/ 1 0)"
+    },
+    {
+      "id": "nan",
+      "expr": "(/ 0 0)"
+    },
+    {
+      "id": "utf16-surrogate",
+      "expr": "\"\\ud800\""
+    },
+    {
+      "id": "utf16-pair",
+      "expr": "\"\\ud83d\\ude00\""
+    },
+    {
+      "id": "nested-values",
+      "expr": "{:a [nil false 42] :b #{1 2} :c '(3 4)}"
+    },
+    {
+      "id": "reduce-empty",
+      "expr": "(reduce + [])"
+    },
+    {
+      "id": "variadic-arity",
+      "expr": "((fn [a & rest] [a rest]) 1 2 3)"
+    },
+    {
+      "id": "exception-effect",
+      "expr": "(do (swap! trace conj :before-throw) (throw (ex-info \"probe\" {:reason :expected})))"
+    }
+  ]
+}

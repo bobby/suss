@@ -1,4 +1,4 @@
-{:paths ["src"]
+{:paths ["src" "out/generated"]
  :mvn/local-repo "/tmp/suss-oracle-m2"
  :deps {org.clojure/clojure {:mvn/version "1.12.1"}
         org.clojure/clojurescript {:local/root "../../clojurescript"}}}

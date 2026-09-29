@@ -1,4 +1,5 @@
-(ns suss-oracle.main)
+(ns suss-oracle.main
+  (:require [suss-oracle.cases]))
 
 ;; Original development oracle transport; no Suss equality/printer calls.
 (defn f64-bits [value]
@@ -29,18 +30,6 @@
         #js {:id identity :status "exception" :data (encode (ex-data error))
              :message (encode (ex-message error)) :effects (items @trace)}))))
 (defn -main []
-  (let [cases
-        [(observation "condition-once" (fn [t] (let [n (atom 0)] (if (do (swap! t conj :condition) (swap! n inc)) @n 0))))
-         (observation "argument-order" (fn [t] (+ (do (swap! t conj :left) 1) (do (swap! t conj :right) 2))))
-         (observation "binary64-rounding" (fn [_] (+ 9007199254740992 1)))
-         (observation "negative-zero" (fn [_] (- 0)))
-         (observation "positive-infinity" (fn [_] (/ 1 0)))
-         (observation "nan" (fn [_] (/ 0 0)))
-         (observation "utf16-surrogate" (fn [_] "\ud800"))
-         (observation "utf16-pair" (fn [_] "\ud83d\ude00"))
-         (observation "nested-values" (fn [_] {:a [nil false 42] :b #{1 2} :c '(3 4)}))
-         (observation "reduce-empty" (fn [_] (reduce + [])))
-         (observation "variadic-arity" (fn [_] ((fn [a & rest] [a rest]) 1 2 3)))
-         (observation "exception-effect" (fn [t] (swap! t conj :before-throw) (throw (ex-info "probe" {:reason :expected}))))]]
+  (let [cases (suss-oracle.cases/observations observation)]
     (println (.stringify js/JSON #js {:schema 1 :upstream "c4295f303100bbf5afac449242d30bca1126f1a1" :cases (into-array cases)}))))
 (set! *main-cli-fn* -main)
