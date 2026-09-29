@@ -1,0 +1,4 @@
+;; Human-reviewed overlay. No upstream declarations have yet completed review.
+{:schema 1
+ :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
+ :reviews {}}

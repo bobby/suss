@@ -1,0 +1,9 @@
+{
+  "source_url": "https://github.com/bytecodealliance/wasmtime/blob/46c23a87dac1465986a8ad53ba6a7ae49372857b/tests/misc_testsuite/component-model/async/callback-yield-then-exit.wast",
+  "source_revision": "46c23a87dac1465986a8ad53ba6a7ae49372857b",
+  "source_sha256": "78893e7628b010b39aff18fd471290151a92af6768a608544b796d8d0dcca3e8",
+  "adaptation": "Single component; yield before task.return; add input state and host trace to assert callback resumption and one completion. Disable stackful execution.",
+  "fixture_sha256": "ae89ea002ad7a62b59bab953f6b0e8e02429f36852f44d3f943e7916581db9b9",
+  "license": "Apache-2.0 WITH LLVM-exception",
+  "license_file": "wasmtime-fixture-LICENSE"
+}

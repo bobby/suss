@@ -1,0 +1,78 @@
+{
+  "tool": "wasm-tools 1.258.0 (5c6d31c78 2026-08-24)",
+  "source_lock_sha256": "4344a663512146c3fea100357d1de839d6109780cd195c697e7219e5b1959dba",
+  "packages": {
+    "wasi:cli@0.3.1": {
+      "resolved_packages": [
+        "wasi:cli@0.3.1",
+        "wasi:clocks@0.3.1",
+        "wasi:filesystem@0.3.1",
+        "wasi:random@0.3.1",
+        "wasi:sockets@0.3.1"
+      ],
+      "worlds": [
+        "command",
+        "imports"
+      ],
+      "resolution": "passed",
+      "validated_binary_roundtrip": "passed"
+    },
+    "wasi:clocks@0.3.1": {
+      "resolved_packages": [
+        "wasi:clocks@0.3.1"
+      ],
+      "worlds": [
+        "imports"
+      ],
+      "resolution": "passed",
+      "validated_binary_roundtrip": "passed"
+    },
+    "wasi:filesystem@0.3.1": {
+      "resolved_packages": [
+        "wasi:clocks@0.3.1",
+        "wasi:filesystem@0.3.1"
+      ],
+      "worlds": [
+        "imports"
+      ],
+      "resolution": "passed",
+      "validated_binary_roundtrip": "passed"
+    },
+    "wasi:http@0.3.1": {
+      "resolved_packages": [
+        "wasi:cli@0.3.1",
+        "wasi:clocks@0.3.1",
+        "wasi:http@0.3.1",
+        "wasi:random@0.3.1"
+      ],
+      "worlds": [
+        "middleware",
+        "service"
+      ],
+      "resolution": "passed",
+      "validated_binary_roundtrip": "passed"
+    },
+    "wasi:random@0.3.1": {
+      "resolved_packages": [
+        "wasi:random@0.3.1"
+      ],
+      "worlds": [
+        "imports"
+      ],
+      "resolution": "passed",
+      "validated_binary_roundtrip": "passed"
+    },
+    "wasi:sockets@0.3.1": {
+      "resolved_packages": [
+        "wasi:clocks@0.3.1",
+        "wasi:sockets@0.3.1"
+      ],
+      "worlds": [
+        "imports"
+      ],
+      "resolution": "passed",
+      "validated_binary_roundtrip": "passed"
+    }
+  },
+  "scope": "WIT resolution and validated package encoding only; no capability execution"
+}

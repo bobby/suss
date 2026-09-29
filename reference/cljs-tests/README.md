@@ -37,7 +37,7 @@ Fields:
 - `:category` - Test grouping (`:collections`, `:core`, `:seqs`, etc.)
 - `:expr` - Suss expression to evaluate
 - `:expected` - Expected result value
-- `:skip` - Optional, set to `true` for tests of unimplemented features
+- `:skip` - Optional Boolean; true is rejected. Record reviewed failures in `docs/compatibility/known-failures.json` instead.
 
 ## Running Tests
 
@@ -68,3 +68,9 @@ Some tests were modified from the ClojureScript originals:
 - `#js` literals converted to native Suss collections
 - Tests requiring `deftype`/`defrecord` marked as skip until implemented
 - Lazy sequence tests marked as skip until implemented
+
+The adaptation notes above describe the legacy curation history, not the current
+skip policy or complete upstream coverage. The reviewed 201-case corpus has no
+skipped cases. Unknown/malformed fields, missing expectations/files and duplicate
+IDs fail; `docs/compatibility/cases.json` protects every reviewed input and
+expectation. Full pinned upstream differential coverage remains roadmap work.

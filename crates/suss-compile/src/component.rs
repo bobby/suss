@@ -1,7 +1,7 @@
 //! WASM Component encoding
 //!
 //! Wraps core WASM modules as WASM Components using wit-component.
-//! This enables WASI 0.2 support and the Component Model.
+//! Output validation is mandatory; encoding alone is not interoperability.
 
 use std::borrow::Cow;
 
@@ -42,14 +42,14 @@ pub fn encode_component(
     );
 
     // Create component from module using ComponentEncoder
-    // Note: validation is disabled because wit-component's validator may not support
-    // WASM proposals like tail calls. The WASM itself is valid.
+    // This toolchain supports the prototype GC/tail-call feature set. Never
+    // return an artifact whose final component has failed validation.
     let component_bytes = ComponentEncoder::default()
-        .validate(false)
+        .validate(true)
         .module(&module_with_metadata)
         .map_err(|e| CompileError::Component(format!("Failed to set module: {}", e)))?
         .encode()
-        .map_err(|e| CompileError::Component(format!("Failed to encode component: {}", e)))?;
+        .map_err(|e| CompileError::Component(format!("Failed to encode component: {e:#}")))?;
 
     Ok(component_bytes)
 }

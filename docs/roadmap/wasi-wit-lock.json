@@ -1,0 +1,140 @@
+{
+  "release": "v0.3.1",
+  "source_commit": "59e48bfe3fae9bf2480eb15abd8f55999eb3b395",
+  "archive_url": "https://github.com/WebAssembly/WASI/releases/download/v0.3.1/wasi-wit-0.3.1.tar.gz",
+  "archive_sha256": "319d0eacc2d7abb8d5ccc44ac0e5c0d1ea0ebd8098ec83569aced46dbf9eb3e8",
+  "license": "vendor/wasi/LICENSE.md",
+  "files": {
+    "cli/cli.wit": {
+      "sha256": "c104ffedd557bf3f81f624dc51d2264ea9b59fdf3d9c409b4c1e46fb5cfb64fe",
+      "package": "wasi:cli@0.3.1",
+      "dependencies": [
+        "wasi:clocks@0.3.1",
+        "wasi:filesystem@0.3.1",
+        "wasi:random@0.3.1",
+        "wasi:sockets@0.3.1"
+      ]
+    },
+    "cli/deps/clocks.wit": {
+      "sha256": "e1389439f9d2864ee987346e9694d33ed0d3a55433c79ed629645c0f1100a39d",
+      "package": "wasi:clocks@0.3.1",
+      "dependencies": []
+    },
+    "cli/deps/filesystem.wit": {
+      "sha256": "f8e01528e83b988e36d32d84fc844114b9fe9ccf17830777233d7134b3dde407",
+      "package": "wasi:filesystem@0.3.1",
+      "dependencies": [
+        "wasi:clocks@0.3.1"
+      ]
+    },
+    "cli/deps/random.wit": {
+      "sha256": "6b515c5ca5827fdb1bd5554859dc4105b9bf63782d09b66a746c199da4b9abd0",
+      "package": "wasi:random@0.3.1",
+      "dependencies": []
+    },
+    "cli/deps/sockets.wit": {
+      "sha256": "3638bca88eb005e847f338a0303614f2a44d3b4a997ba0b1541ffb0f17074a46",
+      "package": "wasi:sockets@0.3.1",
+      "dependencies": [
+        "wasi:clocks@0.3.1"
+      ]
+    },
+    "clocks/clocks.wit": {
+      "sha256": "ad0099e4e19c5e16f40dc7618d7d1ce9ea32d36e767863c02852bbfcd74e331d",
+      "package": "wasi:clocks@0.3.1",
+      "dependencies": []
+    },
+    "filesystem/deps/clocks.wit": {
+      "sha256": "03aea910ea67d356bef397019aff501ba99c24cefba11a404f38805da7f34111",
+      "package": "wasi:clocks@0.3.1",
+      "dependencies": []
+    },
+    "filesystem/filesystem.wit": {
+      "sha256": "2b1c43a2e3ea0c7be4c8e4da0a73f80447174dc1a2f84e695ad13b93a8ef88f3",
+      "package": "wasi:filesystem@0.3.1",
+      "dependencies": [
+        "wasi:clocks@0.3.1"
+      ]
+    },
+    "http/deps/cli.wit": {
+      "sha256": "b40e61fc7e1c75b54bda178e17235ac78c457a8e9a8e2632c7fc81eadfce800e",
+      "package": "wasi:cli@0.3.1",
+      "dependencies": []
+    },
+    "http/deps/clocks.wit": {
+      "sha256": "e1389439f9d2864ee987346e9694d33ed0d3a55433c79ed629645c0f1100a39d",
+      "package": "wasi:clocks@0.3.1",
+      "dependencies": []
+    },
+    "http/deps/random.wit": {
+      "sha256": "6b515c5ca5827fdb1bd5554859dc4105b9bf63782d09b66a746c199da4b9abd0",
+      "package": "wasi:random@0.3.1",
+      "dependencies": []
+    },
+    "http/http.wit": {
+      "sha256": "5aed295aa4c24b782679cd5c7b3cf7cb1a894028ff0459324c198f4b9f0a31a3",
+      "package": "wasi:http@0.3.1",
+      "dependencies": [
+        "wasi:cli@0.3.1",
+        "wasi:clocks@0.3.1",
+        "wasi:random@0.3.1"
+      ]
+    },
+    "random/random.wit": {
+      "sha256": "d4302b347aff45b7ef51306c87787761d90c905c9ea39570f91e0f9542e24161",
+      "package": "wasi:random@0.3.1",
+      "dependencies": []
+    },
+    "sockets/deps/clocks.wit": {
+      "sha256": "15afeb055dcbb4fe92655a1521c91a96e96fa1c04d32f3adbe04185ea5fa4d40",
+      "package": "wasi:clocks@0.3.1",
+      "dependencies": []
+    },
+    "sockets/sockets.wit": {
+      "sha256": "cbe6e91d838942726d6a0ff8cea9ec221de4aa8cce261658fcba0b36ffc8d672",
+      "package": "wasi:sockets@0.3.1",
+      "dependencies": [
+        "wasi:clocks@0.3.1"
+      ]
+    }
+  },
+  "packages": {
+    "wasi:cli@0.3.1": {
+      "path": "cli",
+      "dependencies": [
+        "wasi:clocks@0.3.1",
+        "wasi:filesystem@0.3.1",
+        "wasi:random@0.3.1",
+        "wasi:sockets@0.3.1"
+      ]
+    },
+    "wasi:clocks@0.3.1": {
+      "path": "clocks",
+      "dependencies": []
+    },
+    "wasi:filesystem@0.3.1": {
+      "path": "filesystem",
+      "dependencies": [
+        "wasi:clocks@0.3.1"
+      ]
+    },
+    "wasi:http@0.3.1": {
+      "path": "http",
+      "dependencies": [
+        "wasi:cli@0.3.1",
+        "wasi:clocks@0.3.1",
+        "wasi:random@0.3.1"
+      ]
+    },
+    "wasi:random@0.3.1": {
+      "path": "random",
+      "dependencies": []
+    },
+    "wasi:sockets@0.3.1": {
+      "path": "sockets",
+      "dependencies": [
+        "wasi:clocks@0.3.1"
+      ]
+    }
+  }
+}

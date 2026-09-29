@@ -273,6 +273,19 @@ impl Lowerer {
 
     /// Emit a function call, handling variadic functions and tail calls.
     fn emit_func_call(&mut self, idx: u32, name: &str, args: &[Edn]) -> CompileResult<Expr> {
+        if let Some(&minimum) = self.variadic_funcs.get(name) {
+            if args.len() < minimum {
+                return Err(CompileError::Semantic(format!(
+                    "Invalid arity for {name}: expected at least {minimum}, got {}", args.len()
+                )));
+            }
+        } else if let Some(&expected) = self.func_arities.get(name) {
+            if args.len() != expected {
+                return Err(CompileError::Semantic(format!(
+                    "Invalid arity for {name}: expected {expected}, got {}", args.len()
+                )));
+            }
+        }
         // Check if this is a variadic function
         if let Some(&_min_arity) = self.variadic_funcs.get(name) {
             // Variadic function: package all args into an array
@@ -1201,6 +1214,11 @@ impl Lowerer {
     }
 
     fn lower_call(&mut self, name: &str, args: &[Edn]) -> CompileResult<Expr> {
+        // Lexical callees shadow both namespace vars and intrinsic core names.
+        if self.locals.contains_key(name) {
+            return self.lower_func_call(name, args);
+        }
+
         match name {
             // Special form: call a variadic function directly with an args array
             // Used by variadic function wrappers to avoid double-packing
@@ -1266,54 +1284,9 @@ impl Lowerer {
             // Comparison - use suss-equals for structural equality
             // Supports variadic: (= a b c) → (and (= a b) (= b c))
             "=" => {
-                if args.len() < 2 {
-                    return Err(CompileError::Parse(
-                        "= requires at least 2 arguments".into(),
-                    ));
-                }
-                // Call suss-equals function for proper structural comparison
-                if let Some((_, idx)) = self.resolve_func_name("suss-equals") {
-                    if args.len() == 2 {
-                        // Simple 2-arg case
-                        let lowered_args = args
-                            .iter()
-                            .map(|arg| self.lower_expr(arg))
-                            .collect::<Result<Vec<_>, _>>()?;
-                        Ok(Expr::Call {
-                            func: idx,
-                            args: lowered_args,
-                        })
-                    } else {
-                        // Variadic: (= a b c) → (and (suss-equals a b) (suss-equals b c))
-                        self.with_tail_disabled(|l| {
-                            let mut comparisons = Vec::new();
-                            for pair in args.windows(2) {
-                                let left = l.lower_expr(&pair[0])?;
-                                let right = l.lower_expr(&pair[1])?;
-                                comparisons.push(Expr::Call {
-                                    func: idx,
-                                    args: vec![left, right],
-                                });
-                            }
-                            // Chain with AND using short-circuit if/else
-                            let mut result = comparisons.pop().unwrap();
-                            while let Some(cmp) = comparisons.pop() {
-                                result = Expr::If {
-                                    cond: Box::new(cmp),
-                                    then_branch: Box::new(result),
-                                    else_branch: Box::new(Expr::Bool(false)),
-                                    ty: Type::Bool,
-                                };
-                            }
-                            Ok(result)
-                        })
-                    }
-                } else {
-                    // Fallback to primitive comparison if suss-equals not available
-                    self.lower_comparison_chain(BinOp::Eq, args)
-                }
+                let callee = self.resolve_func_name("suss-equals").map(|(_, idx)| idx);
+                self.lower_comparisons(BinOp::Eq, args, callee)
             }
-            // not= is now handled by core.sus as (defn not= [& args] (not (apply = args)))
             "<" => self.lower_comparison_chain(BinOp::Lt, args),
             "<=" => self.lower_comparison_chain(BinOp::Le, args),
             ">" => self.lower_comparison_chain(BinOp::Gt, args),
@@ -1906,48 +1879,46 @@ impl Lowerer {
         })
     }
 
-    /// Lower a variadic comparison operator like (< a b c) into chained comparisons
-    /// Result: (and (< a b) (< b c))
-    /// Note: This re-evaluates intermediate arguments, which is fine for simple expressions.
+    /// Normalize comparison operands before branching. Comparisons are ordinary
+    /// calls: all arguments run once in source order, even if a pair is false.
     fn lower_comparison_chain(&mut self, op: BinOp, args: &[Edn]) -> CompileResult<Expr> {
-        if args.len() < 2 {
-            return Err(CompileError::Parse(format!(
-                "Comparison operator requires at least 2 arguments, got {}",
-                args.len()
-            )));
-        }
+        self.lower_comparisons(op, args, None)
+    }
 
-        // For exactly 2 args, just do simple comparison
-        if args.len() == 2 {
-            return self.lower_binop(op, args, Type::Bool);
+    fn lower_comparisons(&mut self, op: BinOp, args: &[Edn], callee: Option<u32>) -> CompileResult<Expr> {
+        if args.is_empty() {
+            return Err(CompileError::Parse("Comparison requires at least one argument".into()));
         }
-
-        // For 3+ args, chain comparisons with AND
-        // (< a b c) → (and (< a b) (< b c))
         self.with_tail_disabled(|l| {
-            let mut comparisons = Vec::new();
-            for pair in args.windows(2) {
-                let left = l.lower_expr(&pair[0])?;
-                let right = l.lower_expr(&pair[1])?;
-                comparisons.push(Expr::BinOp {
-                    op,
-                    left: Box::new(left),
-                    right: Box::new(right),
-                    ty: Type::Bool,
-                });
+            let mut bindings = Vec::new();
+            let mut operands = Vec::new();
+            for arg in args {
+                let value = l.lower_expr(arg)?;
+                let ty = value.expr_type();
+                let local = l.next_local;
+                l.next_local += 1;
+                l.local_types.insert(local, ty.clone());
+                bindings.push((local, value));
+                operands.push(Expr::LocalGet { local, ty });
             }
-
-            // Chain with AND
-            let mut result = comparisons.pop().unwrap();
+            let mut comparisons = operands.windows(2).map(|pair| {
+                if let Some(func) = callee {
+                    Expr::Call { func, args: vec![pair[0].clone(), pair[1].clone()] }
+                } else {
+                    Expr::BinOp {
+                        op, left: Box::new(pair[0].clone()), right: Box::new(pair[1].clone()),
+                        ty: Type::Bool,
+                    }
+                }
+            }).collect::<Vec<_>>();
+            let mut result = comparisons.pop().unwrap_or(Expr::Bool(true));
             while let Some(cmp) = comparisons.pop() {
                 result = Expr::If {
-                    cond: Box::new(cmp),
-                    then_branch: Box::new(result),
-                    else_branch: Box::new(Expr::Bool(false)),
-                    ty: Type::Bool,
+                    cond: Box::new(cmp), then_branch: Box::new(result),
+                    else_branch: Box::new(Expr::Bool(false)), ty: Type::Bool,
                 };
             }
-            Ok(result)
+            Ok(Expr::Let { bindings, body: Box::new(result) })
         })
     }
 
@@ -2298,19 +2269,37 @@ impl Lowerer {
             Expr::Block(exprs?)
         };
 
-        if let (Some(binding), Some(catch)) = (catch_binding, catch_body) {
-            Ok(Expr::TryCatch {
+        let guarded = if let (Some(binding), Some(catch)) = (catch_binding, catch_body) {
+            Expr::TryCatch {
                 body: Box::new(body),
                 catch_binding: binding,
                 catch_body: Box::new(catch),
-                finally_body: finally_body.map(Box::new),
-            })
-        } else if let Some(fin) = finally_body {
-            // try with only finally (no catch) - just execute body then finally
-            Ok(Expr::Block(vec![body, fin, Expr::Unit]))
+                finally_body: None,
+            }
         } else {
-            // try without catch or finally - just the body
-            Ok(body)
+            body
+        };
+        if let Some(fin) = finally_body {
+            // Guard both the body and any user catch. A private catch runs
+            // cleanup before rethrowing; the normal-result path runs cleanup
+            // after preserving the result. A cleanup throw supersedes the
+            // original exception and is outside this guard on either path.
+            let pending_exception = self.next_local;
+            self.next_local += 1;
+            Ok(Expr::TryCatch {
+                body: Box::new(guarded),
+                catch_binding: pending_exception,
+                catch_body: Box::new(Expr::Block(vec![
+                    fin.clone(),
+                    Expr::Throw(Box::new(Expr::LocalGet {
+                        local: pending_exception,
+                        ty: Type::GcRef,
+                    })),
+                ])),
+                finally_body: Some(Box::new(fin)),
+            })
+        } else {
+            Ok(guarded)
         }
     }
 
@@ -3247,6 +3236,30 @@ impl Lowerer {
     }
 
     fn lower_func_call(&mut self, name: &str, args: &[Edn]) -> CompileResult<Expr> {
+        // Check if it's a local variable (could be a closure)
+        if let Some(&(local_idx, ref ty)) = self.locals.get(name) {
+            // It's a local variable - could be a closure
+            // Clone values before mutable borrow
+            let ty = ty.clone();
+
+            // Emit ClosureCall - use with_args_context to get was_tail
+            let (result, was_tail) = self.with_args_context(|l| {
+                args.iter()
+                    .map(|e| l.lower_expr(e))
+                    .collect::<CompileResult<Vec<_>>>()
+            });
+            let lowered_args = result?;
+
+            return Ok(Expr::ClosureCall {
+                closure: Box::new(Expr::LocalGet {
+                    local: local_idx,
+                    ty,
+                }),
+                args: lowered_args,
+                in_tail_position: was_tail,
+            });
+        }
+
         // Check if it's a qualified call (e.g., "random/get-random-u64", "utils/helper", "myapp.core/main")
         if let Some(slash_pos) = name.find('/') {
             let prefix = &name[..slash_pos];
@@ -3332,31 +3345,7 @@ impl Lowerer {
             return self.emit_func_call(idx, &resolved_name, args);
         }
 
-        // Check if it's a local variable (could be a closure)
-        if let Some(&(local_idx, ref ty)) = self.locals.get(name) {
-            // It's a local variable - could be a closure
-            // Clone values before mutable borrow
-            let ty = ty.clone();
-
-            // Emit ClosureCall - use with_args_context to get was_tail
-            let (result, was_tail) = self.with_args_context(|l| {
-                args.iter()
-                    .map(|e| l.lower_expr(e))
-                    .collect::<CompileResult<Vec<_>>>()
-            });
-            let lowered_args = result?;
-
-            Ok(Expr::ClosureCall {
-                closure: Box::new(Expr::LocalGet {
-                    local: local_idx,
-                    ty,
-                }),
-                args: lowered_args,
-                in_tail_position: was_tail,
-            })
-        } else {
-            Err(CompileError::Undefined(name.to_string()))
-        }
+        Err(CompileError::Undefined(name.to_string()))
     }
 
     // ========================================================================
@@ -4690,13 +4679,13 @@ impl Lowerer {
 
     /// Collect local variable types for the current function.
     fn collect_locals(&self) -> Vec<Type> {
-        let mut locals: Vec<_> = self.locals.iter()
-            .map(|(_, (idx, ty))| (*idx, ty.clone()))
-            .collect();
-        locals.sort_by_key(|(idx, _)| *idx);
-        locals.into_iter()
-            .map(|(_, ty)| ty)
-            .collect()
+        // Named bindings omit anonymous temporaries and shadowed bindings.
+        // Those slots still exist in IR, including protocol method bodies.
+        let mut locals = vec![Type::Unknown; self.next_local as usize];
+        for (&index, ty) in &self.local_types {
+            locals[index as usize] = ty.clone();
+        }
+        locals
     }
 
     // ========================================================================

@@ -1,0 +1,806 @@
+{
+  "collections/empty-collections-equal": [
+    "(= [] [])",
+    "Bool(true)"
+  ],
+  "collections/empty-map-set-not-equal": [
+    "(= {} #{})",
+    "Bool(false)"
+  ],
+  "collections/list-cons": [
+    "(cons 1 [2 3])",
+    "Vector([Number(Integer(1)), Number(Integer(2)), Number(Integer(3))])"
+  ],
+  "collections/list-cons-nil": [
+    "(cons 1 nil)",
+    "Vector([Number(Integer(1))])"
+  ],
+  "collections/list-literal": [
+    "'(1 2 3)",
+    "List([Number(Integer(1)), Number(Integer(2)), Number(Integer(3))])"
+  ],
+  "collections/map-assoc-chain": [
+    "(get (assoc (assoc (assoc {} :a 1) :b 2) :c 3) :b)",
+    "Number(Integer(2))"
+  ],
+  "collections/map-assoc-multiple": [
+    "(assoc {} :a 1 :b 2 :c 3)",
+    "Map([(Keyword(Keyword { namespace: None, name: \"a\" }), Number(Integer(1))), (Keyword(Keyword { namespace: None, name: \"b\" }), Number(Integer(2))), (Keyword(Keyword { namespace: None, name: \"c\" }), Number(Integer(3)))])"
+  ],
+  "collections/map-assoc-new": [
+    "(assoc {} :a 1)",
+    "Map([(Keyword(Keyword { namespace: None, name: \"a\" }), Number(Integer(1)))])"
+  ],
+  "collections/map-assoc-update": [
+    "(assoc {:a 1} :a 2)",
+    "Map([(Keyword(Keyword { namespace: None, name: \"a\" }), Number(Integer(2)))])"
+  ],
+  "collections/map-chained-assoc": [
+    "(-> {} (assoc :a 1) (assoc :b 2) (assoc :c 3) (get :b))",
+    "Number(Integer(2))"
+  ],
+  "collections/map-contains-false": [
+    "(contains? {:a 1 :b 2} :c)",
+    "Bool(false)"
+  ],
+  "collections/map-contains-true": [
+    "(contains? {:a 1 :b 2} :a)",
+    "Bool(true)"
+  ],
+  "collections/map-count": [
+    "(count {:a 1 :b 2 :c 3})",
+    "Number(Integer(3))"
+  ],
+  "collections/map-count-empty": [
+    "(count {})",
+    "Number(Integer(0))"
+  ],
+  "collections/map-dissoc": [
+    "(dissoc {:a 1 :b 2} :a)",
+    "Map([(Keyword(Keyword { namespace: None, name: \"b\" }), Number(Integer(2)))])"
+  ],
+  "collections/map-dissoc-missing": [
+    "(dissoc {:a 1 :b 2} :c)",
+    "Map([(Keyword(Keyword { namespace: None, name: \"a\" }), Number(Integer(1))), (Keyword(Keyword { namespace: None, name: \"b\" }), Number(Integer(2)))])"
+  ],
+  "collections/map-dissoc-multiple": [
+    "(dissoc {:a 1 :b 2 :c 3} :a :c)",
+    "Map([(Keyword(Keyword { namespace: None, name: \"b\" }), Number(Integer(2)))])"
+  ],
+  "collections/map-empty-literal": [
+    "{}",
+    "Map([])"
+  ],
+  "collections/map-equality": [
+    "(= {:a 1 :b 2} {:b 2 :a 1})",
+    "Bool(true)"
+  ],
+  "collections/map-get": [
+    "(get {:a 1 :b 2} :a)",
+    "Number(Integer(1))"
+  ],
+  "collections/map-get-default": [
+    "(get {:a 1 :b 2} :c :default)",
+    "Keyword(Keyword { namespace: None, name: \"default\" })"
+  ],
+  "collections/map-get-missing": [
+    "(get {:a 1 :b 2} :c)",
+    "Nil"
+  ],
+  "collections/map-inequality": [
+    "(= {:a 1 :b 2} {:a 1 :b 3})",
+    "Bool(false)"
+  ],
+  "collections/map-large-count": [
+    "(count (loop [m {} i 0] (if (< i 50) (recur (assoc m i i) (+ i 1)) m)))",
+    "Number(Integer(50))"
+  ],
+  "collections/map-large-get": [
+    "(get (loop [m {} i 0] (if (< i 50) (recur (assoc m i i) (+ i 1)) m)) 25)",
+    "Number(Integer(25))"
+  ],
+  "collections/map-literal": [
+    "{:a 1 :b 2}",
+    "Map([(Keyword(Keyword { namespace: None, name: \"a\" }), Number(Integer(1))), (Keyword(Keyword { namespace: None, name: \"b\" }), Number(Integer(2)))])"
+  ],
+  "collections/map-nested": [
+    "{:a {:b 1}}",
+    "Map([(Keyword(Keyword { namespace: None, name: \"a\" }), Map([(Keyword(Keyword { namespace: None, name: \"b\" }), Number(Integer(1)))]))])"
+  ],
+  "collections/set-conj": [
+    "(conj #{1 2} 3)",
+    "Set([Number(Integer(1)), Number(Integer(2)), Number(Integer(3))])"
+  ],
+  "collections/set-conj-duplicate": [
+    "(conj #{1 2 3} 2)",
+    "Set([Number(Integer(1)), Number(Integer(2)), Number(Integer(3))])"
+  ],
+  "collections/set-conj-empty": [
+    "(conj #{} 1)",
+    "Set([Number(Integer(1))])"
+  ],
+  "collections/set-contains-false": [
+    "(contains? #{1 2 3} 4)",
+    "Bool(false)"
+  ],
+  "collections/set-contains-true": [
+    "(contains? #{1 2 3} 2)",
+    "Bool(true)"
+  ],
+  "collections/set-count": [
+    "(count #{1 2 3})",
+    "Number(Integer(3))"
+  ],
+  "collections/set-count-empty": [
+    "(count #{})",
+    "Number(Integer(0))"
+  ],
+  "collections/set-disj": [
+    "(disj #{1 2 3} 2)",
+    "Set([Number(Integer(1)), Number(Integer(3))])"
+  ],
+  "collections/set-disj-missing": [
+    "(disj #{1 2 3} 4)",
+    "Set([Number(Integer(1)), Number(Integer(2)), Number(Integer(3))])"
+  ],
+  "collections/set-empty-literal": [
+    "#{}",
+    "Set([])"
+  ],
+  "collections/set-equality": [
+    "(= #{1 2 3} #{3 2 1})",
+    "Bool(true)"
+  ],
+  "collections/set-inequality": [
+    "(= #{1 2 3} #{1 2 4})",
+    "Bool(false)"
+  ],
+  "collections/set-large-contains": [
+    "(contains? (loop [s #{} i 0] (if (< i 50) (recur (conj s i) (+ i 1)) s)) 25)",
+    "Bool(true)"
+  ],
+  "collections/set-large-count": [
+    "(count (loop [s #{} i 0] (if (< i 50) (recur (conj s i) (+ i 1)) s)))",
+    "Number(Integer(50))"
+  ],
+  "collections/set-literal": [
+    "#{1 2 3}",
+    "Set([Number(Integer(1)), Number(Integer(2)), Number(Integer(3))])"
+  ],
+  "collections/vector-assoc": [
+    "(assoc [1 2 3] 1 :x)",
+    "Vector([Number(Integer(1)), Keyword(Keyword { namespace: None, name: \"x\" }), Number(Integer(3))])"
+  ],
+  "collections/vector-assoc-first": [
+    "(assoc [1 2 3] 0 :x)",
+    "Vector([Keyword(Keyword { namespace: None, name: \"x\" }), Number(Integer(2)), Number(Integer(3))])"
+  ],
+  "collections/vector-assoc-last": [
+    "(assoc [1 2 3] 2 :x)",
+    "Vector([Number(Integer(1)), Number(Integer(2)), Keyword(Keyword { namespace: None, name: \"x\" })])"
+  ],
+  "collections/vector-conj-empty": [
+    "(conj [] 1)",
+    "Vector([Number(Integer(1))])"
+  ],
+  "collections/vector-conj-multiple": [
+    "(conj [1] 2 3 4)",
+    "Vector([Number(Integer(1)), Number(Integer(2)), Number(Integer(3)), Number(Integer(4))])"
+  ],
+  "collections/vector-conj-single": [
+    "(conj [1 2] 3)",
+    "Vector([Number(Integer(1)), Number(Integer(2)), Number(Integer(3))])"
+  ],
+  "collections/vector-count-empty": [
+    "(count [])",
+    "Number(Integer(0))"
+  ],
+  "collections/vector-count-three": [
+    "(count [1 2 3])",
+    "Number(Integer(3))"
+  ],
+  "collections/vector-empty-literal": [
+    "[]",
+    "Vector([])"
+  ],
+  "collections/vector-equality": [
+    "(= [1 2 3] [1 2 3])",
+    "Bool(true)"
+  ],
+  "collections/vector-first": [
+    "(first [1 2 3])",
+    "Number(Integer(1))"
+  ],
+  "collections/vector-first-empty": [
+    "(first [])",
+    "Nil"
+  ],
+  "collections/vector-get": [
+    "(get [1 2 3] 1)",
+    "Number(Integer(2))"
+  ],
+  "collections/vector-get-default": [
+    "(get [1 2 3] 10 :default)",
+    "Keyword(Keyword { namespace: None, name: \"default\" })"
+  ],
+  "collections/vector-get-missing": [
+    "(get [1 2 3] 10)",
+    "Nil"
+  ],
+  "collections/vector-inequality": [
+    "(= [1 2 3] [1 2 4])",
+    "Bool(false)"
+  ],
+  "collections/vector-inequality-length": [
+    "(= [1 2 3] [1 2])",
+    "Bool(false)"
+  ],
+  "collections/vector-large-count": [
+    "(count (loop [v [] i 0] (if (< i 100) (recur (conj v i) (+ i 1)) v)))",
+    "Number(Integer(100))"
+  ],
+  "collections/vector-large-first": [
+    "(first (loop [v [] i 0] (if (< i 100) (recur (conj v i) (+ i 1)) v)))",
+    "Number(Integer(0))"
+  ],
+  "collections/vector-large-nth": [
+    "(nth (loop [v [] i 0] (if (< i 100) (recur (conj v i) (+ i 1)) v)) 50)",
+    "Number(Integer(50))"
+  ],
+  "collections/vector-large-peek": [
+    "(peek (loop [v [] i 0] (if (< i 100) (recur (conj v i) (+ i 1)) v)))",
+    "Number(Integer(99))"
+  ],
+  "collections/vector-literal": [
+    "[1 2 3]",
+    "Vector([Number(Integer(1)), Number(Integer(2)), Number(Integer(3))])"
+  ],
+  "collections/vector-nested": [
+    "[[1 2] [3 4]]",
+    "Vector([Vector([Number(Integer(1)), Number(Integer(2))]), Vector([Number(Integer(3)), Number(Integer(4))])])"
+  ],
+  "collections/vector-nth-default": [
+    "(nth [1 2 3] 10 :not-found)",
+    "Keyword(Keyword { namespace: None, name: \"not-found\" })"
+  ],
+  "collections/vector-nth-first": [
+    "(nth [1 2 3] 0)",
+    "Number(Integer(1))"
+  ],
+  "collections/vector-nth-last": [
+    "(nth [1 2 3] 2)",
+    "Number(Integer(3))"
+  ],
+  "collections/vector-nth-middle": [
+    "(nth [1 2 3] 1)",
+    "Number(Integer(2))"
+  ],
+  "collections/vector-peek": [
+    "(peek [1 2 3])",
+    "Number(Integer(3))"
+  ],
+  "collections/vector-peek-single": [
+    "(peek [1])",
+    "Number(Integer(1))"
+  ],
+  "collections/vector-pop": [
+    "(pop [1 2 3])",
+    "Vector([Number(Integer(1)), Number(Integer(2))])"
+  ],
+  "collections/vector-pop-single": [
+    "(pop [1])",
+    "Vector([])"
+  ],
+  "collections/vector-rest": [
+    "(rest [1 2 3])",
+    "Vector([Number(Integer(2)), Number(Integer(3))])"
+  ],
+  "collections/vector-rest-empty": [
+    "(rest [])",
+    "Vector([])"
+  ],
+  "collections/vector-rest-single": [
+    "(rest [1])",
+    "Vector([])"
+  ],
+  "core/abs-negative": [
+    "(abs -5)",
+    "Number(Integer(5))"
+  ],
+  "core/abs-positive": [
+    "(abs 5)",
+    "Number(Integer(5))"
+  ],
+  "core/abs-zero": [
+    "(abs 0)",
+    "Number(Integer(0))"
+  ],
+  "core/add-many-args": [
+    "(+ 1 2 3 4 5)",
+    "Number(Integer(15))"
+  ],
+  "core/add-negative": [
+    "(+ 10 -3)",
+    "Number(Integer(7))"
+  ],
+  "core/add-one-arg": [
+    "(+ 5)",
+    "Number(Integer(5))"
+  ],
+  "core/add-two-args": [
+    "(+ 1 2)",
+    "Number(Integer(3))"
+  ],
+  "core/add-zero-args": [
+    "(+)",
+    "Number(Integer(0))"
+  ],
+  "core/and-empty": [
+    "(and)",
+    "Bool(true)"
+  ],
+  "core/and-returns-falsy": [
+    "(and 1 nil 3)",
+    "Nil"
+  ],
+  "core/and-returns-last": [
+    "(and 1 2 3)",
+    "Number(Integer(3))"
+  ],
+  "core/and-short-circuit": [
+    "(and false (/ 1 0))",
+    "Bool(false)"
+  ],
+  "core/and-single-false": [
+    "(and false)",
+    "Bool(false)"
+  ],
+  "core/and-single-true": [
+    "(and true)",
+    "Bool(true)"
+  ],
+  "core/and-two-false": [
+    "(and true false)",
+    "Bool(false)"
+  ],
+  "core/and-two-true": [
+    "(and true true)",
+    "Bool(true)"
+  ],
+  "core/case-default": [
+    "(case 5 1 :one 2 :two 3 :three :default)",
+    "Keyword(Keyword { namespace: None, name: \"default\" })"
+  ],
+  "core/case-first": [
+    "(case 1 1 :one 2 :two :default)",
+    "Keyword(Keyword { namespace: None, name: \"one\" })"
+  ],
+  "core/case-match": [
+    "(case 2 1 :one 2 :two 3 :three :default)",
+    "Keyword(Keyword { namespace: None, name: \"two\" })"
+  ],
+  "core/cond-else": [
+    "(cond false 1 false 2 :else 3)",
+    "Number(Integer(3))"
+  ],
+  "core/cond-first": [
+    "(cond true 1 true 2)",
+    "Number(Integer(1))"
+  ],
+  "core/cond-none": [
+    "(cond false 1 false 2)",
+    "Nil"
+  ],
+  "core/cond-second": [
+    "(cond false 1 true 2)",
+    "Number(Integer(2))"
+  ],
+  "core/dec": [
+    "(dec 5)",
+    "Number(Integer(4))"
+  ],
+  "core/dec-to-negative": [
+    "(dec 0)",
+    "Number(Integer(-1))"
+  ],
+  "core/defn-recursive": [
+    "(do (defn fact [n] (if (<= n 1) 1 (* n (fact (- n 1))))) (fact 5))",
+    "Number(Integer(120))"
+  ],
+  "core/defn-simple": [
+    "(do (defn double [x] (* x 2)) (double 5))",
+    "Number(Integer(10))"
+  ],
+  "core/div-many-args": [
+    "(/ 100 2 5)",
+    "Number(Integer(10))"
+  ],
+  "core/div-one-arg": [
+    "(/ 2)",
+    "Number(Float(0.5))"
+  ],
+  "core/div-two-args": [
+    "(/ 10 2)",
+    "Number(Integer(5))"
+  ],
+  "core/do-multiple": [
+    "(do 1 2 3)",
+    "Number(Integer(3))"
+  ],
+  "core/do-single": [
+    "(do 42)",
+    "Number(Integer(42))"
+  ],
+  "core/do-with-side-effects": [
+    "(do (+ 1 2) (+ 3 4))",
+    "Number(Integer(7))"
+  ],
+  "core/eq-keywords": [
+    "(= :foo :foo)",
+    "Bool(true)"
+  ],
+  "core/eq-keywords-false": [
+    "(= :foo :bar)",
+    "Bool(false)"
+  ],
+  "core/eq-many-false": [
+    "(= 5 5 5 6)",
+    "Bool(false)"
+  ],
+  "core/eq-many-true": [
+    "(= 5 5 5 5)",
+    "Bool(true)"
+  ],
+  "core/eq-nil": [
+    "(= nil nil)",
+    "Bool(true)"
+  ],
+  "core/eq-numbers": [
+    "(= 1 1)",
+    "Bool(true)"
+  ],
+  "core/eq-numbers-false": [
+    "(= 1 2)",
+    "Bool(false)"
+  ],
+  "core/even-pred-false": [
+    "(even? 5)",
+    "Bool(false)"
+  ],
+  "core/even-pred-true": [
+    "(even? 4)",
+    "Bool(true)"
+  ],
+  "core/falsy-false": [
+    "(if false :truthy :falsy)",
+    "Keyword(Keyword { namespace: None, name: \"falsy\" })"
+  ],
+  "core/falsy-nil": [
+    "(if nil :truthy :falsy)",
+    "Keyword(Keyword { namespace: None, name: \"falsy\" })"
+  ],
+  "core/fn-add": [
+    "((fn [a b] (+ a b)) 3 4)",
+    "Number(Integer(7))"
+  ],
+  "core/fn-closure": [
+    "(let [add5 (fn [x] (+ x 5))] (add5 10))",
+    "Number(Integer(15))"
+  ],
+  "core/fn-higher-order": [
+    "(let [apply-twice (fn [f x] (f (f x)))] (apply-twice inc 0))",
+    "Number(Integer(2))"
+  ],
+  "core/fn-identity": [
+    "((fn [x] x) 42)",
+    "Number(Integer(42))"
+  ],
+  "core/fn-nested": [
+    "((fn [x] ((fn [y] (+ x y)) 10)) 5)",
+    "Number(Integer(15))"
+  ],
+  "core/gt-equal": [
+    "(> 1 1)",
+    "Bool(false)"
+  ],
+  "core/gt-false": [
+    "(> 1 2)",
+    "Bool(false)"
+  ],
+  "core/gt-many-true": [
+    "(> 4 3 2 1)",
+    "Bool(true)"
+  ],
+  "core/gt-true": [
+    "(> 2 1)",
+    "Bool(true)"
+  ],
+  "core/gte-equal": [
+    "(>= 2 2)",
+    "Bool(true)"
+  ],
+  "core/gte-greater": [
+    "(>= 2 1)",
+    "Bool(true)"
+  ],
+  "core/gte-less": [
+    "(>= 1 2)",
+    "Bool(false)"
+  ],
+  "core/if-false": [
+    "(if false 1 2)",
+    "Number(Integer(2))"
+  ],
+  "core/if-nil": [
+    "(if nil 1 2)",
+    "Number(Integer(2))"
+  ],
+  "core/if-no-else": [
+    "(if false 1)",
+    "Nil"
+  ],
+  "core/if-number-truthy": [
+    "(if 0 1 2)",
+    "Number(Integer(1))"
+  ],
+  "core/if-true": [
+    "(if true 1 2)",
+    "Number(Integer(1))"
+  ],
+  "core/inc": [
+    "(inc 5)",
+    "Number(Integer(6))"
+  ],
+  "core/inc-negative": [
+    "(inc -1)",
+    "Number(Integer(0))"
+  ],
+  "core/let-multiple": [
+    "(let [x 1 y 2] (+ x y))",
+    "Number(Integer(3))"
+  ],
+  "core/let-nested": [
+    "(let [x 1] (let [y 2] (+ x y)))",
+    "Number(Integer(3))"
+  ],
+  "core/let-sequential": [
+    "(let [x 1 y (+ x 1)] y)",
+    "Number(Integer(2))"
+  ],
+  "core/let-shadow": [
+    "(let [x 1] (let [x 2] x))",
+    "Number(Integer(2))"
+  ],
+  "core/let-single": [
+    "(let [x 1] x)",
+    "Number(Integer(1))"
+  ],
+  "core/loop-factorial": [
+    "(loop [n 5 acc 1] (if (<= n 1) acc (recur (- n 1) (* acc n))))",
+    "Number(Integer(120))"
+  ],
+  "core/loop-simple": [
+    "(loop [x 0] (if (< x 5) (recur (+ x 1)) x))",
+    "Number(Integer(5))"
+  ],
+  "core/loop-sum": [
+    "(loop [i 0 sum 0] (if (< i 10) (recur (+ i 1) (+ sum i)) sum))",
+    "Number(Integer(45))"
+  ],
+  "core/lt-equal": [
+    "(< 1 1)",
+    "Bool(false)"
+  ],
+  "core/lt-false": [
+    "(< 2 1)",
+    "Bool(false)"
+  ],
+  "core/lt-many-false": [
+    "(< 1 2 2 4)",
+    "Bool(false)"
+  ],
+  "core/lt-many-true": [
+    "(< 1 2 3 4)",
+    "Bool(true)"
+  ],
+  "core/lt-true": [
+    "(< 1 2)",
+    "Bool(true)"
+  ],
+  "core/lte-equal": [
+    "(<= 2 2)",
+    "Bool(true)"
+  ],
+  "core/lte-greater": [
+    "(<= 3 2)",
+    "Bool(false)"
+  ],
+  "core/lte-less": [
+    "(<= 1 2)",
+    "Bool(true)"
+  ],
+  "core/max-many": [
+    "(max 10 3 7 1 5)",
+    "Number(Integer(10))"
+  ],
+  "core/max-two": [
+    "(max 3 5)",
+    "Number(Integer(5))"
+  ],
+  "core/min-many": [
+    "(min 10 3 7 1 5)",
+    "Number(Integer(1))"
+  ],
+  "core/min-two": [
+    "(min 3 5)",
+    "Number(Integer(3))"
+  ],
+  "core/mod-negative-dividend": [
+    "(mod -10 3)",
+    "Number(Integer(2))"
+  ],
+  "core/mod-positive": [
+    "(mod 10 3)",
+    "Number(Integer(1))"
+  ],
+  "core/mod-zero": [
+    "(mod 9 3)",
+    "Number(Integer(0))"
+  ],
+  "core/mul-many-args": [
+    "(* 2 3 4 5)",
+    "Number(Integer(120))"
+  ],
+  "core/mul-one-arg": [
+    "(* 5)",
+    "Number(Integer(5))"
+  ],
+  "core/mul-two-args": [
+    "(* 3 4)",
+    "Number(Integer(12))"
+  ],
+  "core/mul-zero-args": [
+    "(*)",
+    "Number(Integer(1))"
+  ],
+  "core/neg-pred-false": [
+    "(neg? 5)",
+    "Bool(false)"
+  ],
+  "core/neg-pred-true": [
+    "(neg? -5)",
+    "Bool(true)"
+  ],
+  "core/nil-pred-false": [
+    "(nil? 1)",
+    "Bool(false)"
+  ],
+  "core/nil-pred-true": [
+    "(nil? nil)",
+    "Bool(true)"
+  ],
+  "core/not-eq-false": [
+    "(not= 1 1)",
+    "Bool(false)"
+  ],
+  "core/not-eq-true": [
+    "(not= 1 2)",
+    "Bool(true)"
+  ],
+  "core/not-false": [
+    "(not false)",
+    "Bool(true)"
+  ],
+  "core/not-nil": [
+    "(not nil)",
+    "Bool(true)"
+  ],
+  "core/not-number": [
+    "(not 1)",
+    "Bool(false)"
+  ],
+  "core/not-true": [
+    "(not true)",
+    "Bool(false)"
+  ],
+  "core/not-zero": [
+    "(not 0)",
+    "Bool(false)"
+  ],
+  "core/odd-pred-false": [
+    "(odd? 4)",
+    "Bool(false)"
+  ],
+  "core/odd-pred-true": [
+    "(odd? 5)",
+    "Bool(true)"
+  ],
+  "core/or-empty": [
+    "(or)",
+    "Nil"
+  ],
+  "core/or-returns-first-truthy": [
+    "(or nil false 1 2)",
+    "Number(Integer(1))"
+  ],
+  "core/or-short-circuit": [
+    "(or true (/ 1 0))",
+    "Bool(true)"
+  ],
+  "core/or-single-false": [
+    "(or false)",
+    "Bool(false)"
+  ],
+  "core/or-single-true": [
+    "(or true)",
+    "Bool(true)"
+  ],
+  "core/or-two-false": [
+    "(or false false)",
+    "Bool(false)"
+  ],
+  "core/or-two-true": [
+    "(or false true)",
+    "Bool(true)"
+  ],
+  "core/pos-pred-false": [
+    "(pos? -5)",
+    "Bool(false)"
+  ],
+  "core/pos-pred-true": [
+    "(pos? 5)",
+    "Bool(true)"
+  ],
+  "core/sub-many-args": [
+    "(- 100 10 20 30)",
+    "Number(Integer(40))"
+  ],
+  "core/sub-one-arg": [
+    "(- 5)",
+    "Number(Integer(-5))"
+  ],
+  "core/sub-two-args": [
+    "(- 10 3)",
+    "Number(Integer(7))"
+  ],
+  "core/truthy-empty-map": [
+    "(if {} :truthy :falsy)",
+    "Keyword(Keyword { namespace: None, name: \"truthy\" })"
+  ],
+  "core/truthy-empty-string": [
+    "(if \"\" :truthy :falsy)",
+    "Keyword(Keyword { namespace: None, name: \"truthy\" })"
+  ],
+  "core/truthy-empty-vector": [
+    "(if [] :truthy :falsy)",
+    "Keyword(Keyword { namespace: None, name: \"truthy\" })"
+  ],
+  "core/truthy-zero": [
+    "(if 0 :truthy :falsy)",
+    "Keyword(Keyword { namespace: None, name: \"truthy\" })"
+  ],
+  "core/when-false": [
+    "(when false 42)",
+    "Nil"
+  ],
+  "core/when-not-false": [
+    "(when-not false 42)",
+    "Number(Integer(42))"
+  ],
+  "core/when-not-true": [
+    "(when-not true 42)",
+    "Nil"
+  ],
+  "core/when-true": [
+    "(when true 42)",
+    "Number(Integer(42))"
+  ],
+  "core/zero-pred-false": [
+    "(zero? 1)",
+    "Bool(false)"
+  ],
+  "core/zero-pred-true": [
+    "(zero? 0)",
+    "Bool(true)"
+  ]
+}
