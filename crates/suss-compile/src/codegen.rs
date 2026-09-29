@@ -7829,6 +7829,9 @@ impl<'a> CodeGen<'a> {
     ) -> CompileResult<()> {
         use wasm_encoder::Instruction;
 
+        // Canonical parameters precede all logical language locals.
+        let catch_binding = catch_binding + self.param_offset.get();
+
         let eqref_type = BlockType::Result(ValType::Ref(RefType {
             nullable: true,
             heap_type: HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq },

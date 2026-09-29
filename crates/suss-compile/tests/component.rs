@@ -781,3 +781,21 @@ fn execute_wit_export_closure_and_protocol_results() {
     assert_eq!(first.call(&mut store, (vec![7, 8],)).unwrap(), (7,));
     first.post_return(&mut store).unwrap();
 }
+
+#[test]
+fn execute_wit_export_catch_and_finally_with_flattened_params() {
+    let (mut store, instance) = instantiate_fixture(
+        "(defn ^:export caught [x fallback] (try (throw fallback) (catch error (+ error 1)))) (defn ^:export cleanup [x fallback] (try fallback (finally (+ fallback 1))))",
+        "export caught: func(x: option<s32>, fallback: s32) -> s32; export cleanup: func(x: option<s32>, fallback: s32) -> s32;",
+    );
+    for name in ["caught", "cleanup"] {
+        let function = instance
+            .get_typed_func::<(Option<i32>, i32), (i32,)>(&mut store, name)
+            .unwrap();
+        for x in [None, Some(9)] {
+            let expected = if name == "caught" { 42 } else { 41 };
+            assert_eq!(function.call(&mut store, (x, 41)).unwrap(), (expected,));
+            function.post_return(&mut store).unwrap();
+        }
+    }
+}

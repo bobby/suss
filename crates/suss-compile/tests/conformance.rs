@@ -190,8 +190,14 @@ fn run(compiler: &mut Compiler, engine: &Engine, case: &Case) -> Result<(), Fail
         .get_func(&mut store, "eval")
         .ok_or_else(|| failure("artifact", "missing eval"))?;
     let mut results = [Val::null_any_ref()];
-    eval.call(&mut store, &[], &mut results)
-        .map_err(|e| failure("execution", format!("{e:#}")))?;
+    eval.call(&mut store, &[], &mut results).map_err(|e| {
+        let stage = if e.downcast_ref::<wasmtime::Trap>().is_some() {
+            "trap"
+        } else {
+            "execution"
+        };
+        failure(stage, format!("{e:#}"))
+    })?;
     let actual = Decoder::new(compiler)
         .decode(&mut store, &results[0])
         .map_err(|e| failure("decode", e))?;
@@ -445,4 +451,22 @@ fn missing_case_file_is_an_error_not_an_empty_suite() {
             .unwrap_err()
             .contains("required conformance file")
     );
+}
+
+#[test]
+fn runtime_traps_are_distinct_from_uncaught_language_exceptions() {
+    let engine = engine();
+    let mut compiler = Compiler::new();
+    for (expr, stage) in [
+        ("(loop [i 0] (recur (inc i)))", "trap"),
+        ("(throw \"expected\")", "execution"),
+    ] {
+        let case = Case {
+            id: "stage-regression".into(),
+            expr: expr.into(),
+            expected: Edn::Nil,
+        };
+        let failure = run(&mut compiler, &engine, &case).unwrap_err();
+        assert_eq!(failure.0, stage, "{failure:?}");
+    }
 }
