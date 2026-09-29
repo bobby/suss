@@ -515,3 +515,13 @@ Next unblocked task: address M1-03's bounded Linux test runtime from this observ
 cancellation (inspect profiles and repeated prototype compilation), then finish
 M0-04's browser feature profile and optional Jco comparison. Do not fix CI by
 skipping semantic tests or replacing missing results with success.
+
+
+## Publication authorization restored — 2026-09-29
+
+The user explicitly authorized committing, pushing implementation branches and
+opening PRs in the Suss GitHub repository as needed for the goal. The previous
+publication blocker is resolved. Publish the validated local increments to the
+existing `resurrection/m0-toolchain` branch and open a PR against main. Record
+results on the stable roadmap issues. Do not merge or mark the full roadmap/M0
+complete; bounded remote CI and the M0-04 browser profile still require work.
