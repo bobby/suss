@@ -872,16 +872,7 @@ impl<'a> Analyzer<'a> {
         if let Some(ref alias_name) = alias {
             // :as - import all functions with alias prefix
             for (func_name, func) in &interface.functions {
-                let params = func.params.iter()
-                    .map(|(_, ty)| wit_type_to_ir(self.resolve, ty))
-                    .collect();
-                let return_type = match &func.results {
-                    wit_parser::Results::Named(results) if results.is_empty() => Type::Unit,
-                    wit_parser::Results::Named(results) => {
-                        wit_type_to_ir(self.resolve, &results[0].1)
-                    }
-                    wit_parser::Results::Anon(ty) => wit_type_to_ir(self.resolve, ty),
-                };
+                let (params, return_type) = wit_function_signature(self.resolve, func)?;
 
                 self.imports.push(AnalyzedImport {
                     alias: alias_name.clone(),
@@ -898,16 +889,7 @@ impl<'a> Analyzer<'a> {
                     .ok_or_else(|| CompileError::Parse(
                         format!("Function '{}' not found in interface '{}'", func_name, interface_name)
                     ))?;
-                let params = func.params.iter()
-                    .map(|(_, ty)| wit_type_to_ir(self.resolve, ty))
-                    .collect();
-                let return_type = match &func.results {
-                    wit_parser::Results::Named(results) if results.is_empty() => Type::Unit,
-                    wit_parser::Results::Named(results) => {
-                        wit_type_to_ir(self.resolve, &results[0].1)
-                    }
-                    wit_parser::Results::Anon(ty) => wit_type_to_ir(self.resolve, ty),
-                };
+                let (params, return_type) = wit_function_signature(self.resolve, func)?;
 
                 self.imports.push(AnalyzedImport {
                     alias: String::new(), // No alias for :refer
@@ -1518,17 +1500,7 @@ impl<'a> Analyzer<'a> {
                         }
                         Some(idx) => {
                             // Apply WIT types to function params
-                            let wit_params: Vec<Type> = func.params
-                                .iter()
-                                .map(|(_, ty)| wit_type_to_ir(self.resolve, ty))
-                                .collect();
-                            let wit_return = match &func.results {
-                                wit_parser::Results::Named(results) if results.is_empty() => Type::Unit,
-                                wit_parser::Results::Named(results) => {
-                                    wit_type_to_ir(self.resolve, &results[0].1)
-                                }
-                                wit_parser::Results::Anon(ty) => wit_type_to_ir(self.resolve, ty),
-                            };
+                            let (wit_params, wit_return) = wit_function_signature(self.resolve, func)?;
 
                             // Update param types from WIT (params keep their Suss names)
                             let suss_func = &mut self.functions[idx];
@@ -1541,7 +1513,7 @@ impl<'a> Analyzer<'a> {
                         }
                     }
                 }
-                WorldItem::Interface { .. } | WorldItem::Type(_) => {
+                WorldItem::Interface { .. } | WorldItem::Type { .. } => {
                     // Interface/type exports not yet supported
                 }
             }
@@ -1551,28 +1523,82 @@ impl<'a> Analyzer<'a> {
     }
 }
 
-/// Convert WIT type to IR type
-pub fn wit_type_to_ir(resolve: &Resolve, ty: &wit_parser::Type) -> Type {
+/// Validate the prototype adapter profile separately from parser capability.
+fn wit_function_signature(
+    resolve: &Resolve,
+    function: &wit_parser::Function,
+) -> CompileResult<(Vec<Type>, Type)> {
+    if function.kind.is_async() {
+        return Err(CompileError::Unsupported(format!(
+            "WIT async function '{}' requires continuation/canonical async lowering",
+            function.name
+        )));
+    }
+    if function.external_id.is_some() {
+        return Err(CompileError::Unsupported(format!(
+            "WIT external-id on '{}' requires generated binding resolution",
+            function.name
+        )));
+    }
+    let params = function
+        .params
+        .iter()
+        .map(|param| wit_type_to_ir(resolve, &param.ty))
+        .collect::<CompileResult<Vec<_>>>()?;
+    let result = function
+        .result
+        .as_ref()
+        .map(|ty| wit_type_to_ir(resolve, ty))
+        .transpose()?
+        .unwrap_or(Type::Unit);
+    Ok((params, result))
+}
+
+/// Convert supported WIT types, rejecting unimplemented shapes before codegen.
+pub fn wit_type_to_ir(resolve: &Resolve, ty: &wit_parser::Type) -> CompileResult<Type> {
     use wit_parser::Type as WitType;
 
-    match ty {
+    Ok(match ty {
         WitType::Bool => Type::Bool,
-        WitType::S8 | WitType::S16 | WitType::S32 | WitType::U8 | WitType::U16 | WitType::U32 => Type::I32,
+        WitType::S8 | WitType::S16 | WitType::S32 | WitType::U8 | WitType::U16 | WitType::U32 => {
+            Type::I32
+        }
         WitType::S64 | WitType::U64 => Type::I64,
         WitType::F32 | WitType::F64 => Type::F64,
         WitType::Char => Type::I32,
         WitType::String => Type::String,
+        WitType::ErrorContext => {
+            return Err(CompileError::Unsupported(
+                "WIT error-context boundary adapters".into(),
+            ));
+        }
         WitType::Id(id) => {
             let typedef = &resolve.types[*id];
             match &typedef.kind {
-                TypeDefKind::List(elem) => Type::List(Box::new(wit_type_to_ir(resolve, elem))),
+                TypeDefKind::List(elem) => Type::List(Box::new(wit_type_to_ir(resolve, elem)?)),
                 TypeDefKind::Result(result) => Type::Result {
-                    ok: result.ok.as_ref().map(|t| Box::new(wit_type_to_ir(resolve, t))),
-                    err: result.err.as_ref().map(|t| Box::new(wit_type_to_ir(resolve, t))),
+                    ok: result
+                        .ok
+                        .as_ref()
+                        .map(|t| wit_type_to_ir(resolve, t).map(Box::new))
+                        .transpose()?,
+                    err: result
+                        .err
+                        .as_ref()
+                        .map(|t| wit_type_to_ir(resolve, t).map(Box::new))
+                        .transpose()?,
                 },
-                TypeDefKind::Option(inner) => Type::Option(Box::new(wit_type_to_ir(resolve, inner))),
-                _ => Type::Unknown,
+                TypeDefKind::Option(inner) => {
+                    Type::Option(Box::new(wit_type_to_ir(resolve, inner)?))
+                }
+                TypeDefKind::Type(inner) => return wit_type_to_ir(resolve, inner),
+                unsupported => {
+                    return Err(CompileError::Unsupported(format!(
+                        "WIT {} boundary adapters",
+                        unsupported.as_str()
+                    )));
+                }
             }
         }
-    }
+    })
 }

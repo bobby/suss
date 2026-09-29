@@ -92,7 +92,7 @@ fn fragments_share_closures_roots_and_nominal_descriptors() {
         .unwrap();
     // There are no Rust roots to the stored closure/object. Only the shared
     // runtime globals retain them across GC and loading the next fragment.
-    store.gc(None);
+    store.gc(None).expect("forced collection");
     let second = linker.instantiate(&mut store, &b).unwrap();
     let call = second
         .get_typed_func::<i32, i32>(&mut store, "call")
@@ -107,7 +107,7 @@ fn fragments_share_closures_roots_and_nominal_descriptors() {
         .unwrap()
         .call(&mut store, ())
         .unwrap();
-    store.gc(None);
+    store.gc(None).expect("forced collection");
     assert_eq!(same_type.call(&mut store, ()).unwrap(), 0);
     assert_eq!(
         second

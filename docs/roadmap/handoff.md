@@ -52,7 +52,8 @@ open. Do not claim those features based on these repairs or narrow CLI probes.
   emitted passing DOM but needed termination during shutdown; this is recorded
   explicitly in browser-probe.json. It does not compile Suss source.
 * Added eight candidate CLI probes; see [toolchain evidence](toolchain.md).
-  Production Rust dependencies are still Wasmtime 39.0.1 and wasm-tools 0.221.3.
+  Discovery used Wasmtime 39.0.1 and wasm-tools 0.221.3; the current
+  M0-02 migration below replaces that family.
 
 ## Validation
 
@@ -121,9 +122,8 @@ Continue **M0-02** before a production dependency/runtime replacement:
 
 1. The official WIT source graph is now locked (see above). Keep the old
    bundled WIT until the replacement bindings pass executing tests.
-2. Migrate Rust dependencies to the candidate compatible family (Wasmtime 49.0.1,
-   wasm-tools libraries 0.258.0, matching wit-bindgen). Re-run shared_runtime and
-   component fixtures using the new engine. CLI acceptance is not Rust API proof.
+2. The Rust family migration now passes the full baseline (see below).
+   Continue canonical callback, cancellation and future/stream feasibility.
 3. Add actual bidirectional map values and canonical async/callback execution,
    including cancellation and future/stream transfers. Type declarations alone
    do not satisfy this gate. Record unsupported features explicitly.
@@ -163,10 +163,57 @@ Current increment runtime check:
 `cargo test -p suss-compile --test shared_runtime --locked -- --test-threads=2`
 passed (one executing shared-GC fixture) on the existing Wasmtime 39.0.1 engine.
 
-The exact full baseline command `cargo test --workspace --locked -- --test-threads=2`
-was launched for discovery commit `6306fd6` and is still running in exec session
-`72926`; output is `/tmp/suss-discovery-baseline.log`. CLI and compiler unit tests
-have passed; expression integrations are in progress. Poll that session before
-claiming a full result or starting the dependency migration. No Rust source or
-manifest has changed since it started. The subsequent source-lock changes have
-12 passing Python tests and six passing upstream package probes.
+## M0-02 Rust toolchain migration — 2026-09-29
+
+The discovery baseline process finished with exit 0. Its exact command was
+`cargo test --workspace --locked -- --test-threads=2`: 14 CLI, 54 compiler unit,
+316 expression integration (12 existing ignores), 28 component, four conformance
+(two manual recorders ignored), one shared-runtime, eight core and 19 reader
+passed. The strict conformance test covers 201 reviewed cases. Two existing
+documentation examples remain ignored. Log: `/tmp/suss-discovery-baseline.log`.
+
+The current worktree migrates exact direct versions to Wasmtime/wasmtime-wasi
+49.0.1, wasm-encoder/parser and wit-parser/component 0.258.0, wit-bindgen 0.61.1.
+The transitive WAT parser is also locked to 1.258.0. Only selected toolchain
+packages were updated; unrelated lock entries were retained where compatible.
+Rust 1.98.0 is the tested compiler (Wasmtime 49 requires at least Rust 1.96).
+
+Adapted the parser's parameter/result/world item API, encoder float wrappers,
+mutable ComponentEncoder API and checked u64 section offsets. Forced GC errors
+now fail the shared-runtime fixture instead of being discarded. The prototype
+WIT analyzer rejects unsupported shapes (including nested shapes), async functions
+and external-id mappings before lowering instead of silently producing Unknown.
+Supported type aliases resolve recursively. This is not a new WIT adapter system.
+
+Regression-first evidence:
+* Both Rust WIT profile tests failed with 0.221.3: map syntax and the official
+  CLI async signature were rejected. They now pass with the pinned parser.
+* Before the adapter diagnostics, map/async tests failed at component encoding
+  instead of reporting the unsupported boundary. They now report Unsupported.
+* The first implements execution fixture attempted to reexport an imported
+  function; the engine rejected that unsupported route. The final fixture
+  actually lowers the host call, invokes it from a core guest and lifts the
+  guest export, proving the named implements instance is used.
+
+Focused checks:
+* `cargo check -p suss-compile --locked -j 2`: passed.
+* `cargo check -p suss-cli --locked -j 2`: passed (native CLI).
+* `cargo test -p suss-compile --test component --test shared_runtime --test toolchain_profile --locked -j 2 -- --test-threads=1`: 28 component, one shared-GC, five initial profile tests passed. One test worker was used while the old baseline was executing conformance.
+* Final `cargo test -p suss-compile --test toolchain_profile --locked -j 2 -- --test-threads=1`: seven passed. This executes GC, typed function references, tail calls and exceptions; actual canonical map transfers with empty/Unicode/boundary values; a named implements import through a guest call; official WIT resolution; and explicit prototype unsupported diagnostics.
+* `cargo check -p suss-cli --target wasm32-wasip2 --features component --locked -j 2`: **failed**, 20 errors. Native-only rustyline/Wasmtime imports and completer code are compiled on the Wasm target, and main references an unavailable run_component function. This optional legacy compiler-component target is not certified by the native checks. wit-bindgen 0.61.1 itself compiled, but the full CLI artifact did not. Log: `/tmp/suss-wit-bindgen-check.log`.
+
+The migrated full baseline completed with exit 0:
+`cargo test --workspace --locked -- --test-threads=2`. All 14 CLI, 54 compiler
+unit, 316 expression integrations (12 existing ignores), 28 component, four
+conformance (two manual recorders ignored), one shared-runtime, seven profile,
+eight core and 19 reader tests passed. The strict corpus covers all 201 reviewed
+cases. Two existing documentation examples remain ignored.
+Log: `/tmp/suss-migrated-baseline.log`. No new skips or known failures were added.
+
+Progress is recorded on [M0-02](https://github.com/bobby/suss/issues/2#issuecomment-5897039869),
+which retains milestone M0 and remains open. Canonical callback suspension/resume/cancellation and actual
+future/stream transfers are the next unblocked feasibility work. Maps have only
+been exercised through a hand-written engine fixture; Suss map adapters are
+still unsupported. external-id has parser evidence but no execution fixture.
+The old bundled WIT remains active until generated replacement bindings pass
+executing tests. The persistent compiled REPL and language ABI have not changed.

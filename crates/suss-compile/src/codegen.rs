@@ -842,7 +842,8 @@ impl<'a> CodeGen<'a> {
         let module_with_meta = self.append_metadata_section(&core_wasm, &encoded_metadata)?;
 
         // Create component
-        let mut encoder = ComponentEncoder::default()
+        let mut encoder = ComponentEncoder::default();
+        encoder
             .validate(true)
             .module(&module_with_meta)
             .map_err(|e| CompileError::Component(format!("Failed to encode component: {}", e)))?;
@@ -2738,9 +2739,17 @@ impl<'a> CodeGen<'a> {
                 _ => {
                     // Copy other sections as raw sections
                     if let Some((id, range)) = payload.as_section() {
+                        let start = usize::try_from(range.start).map_err(|_| {
+                            CompileError::Component("WASM section offset exceeds host address space".into())
+                        })?;
+                        let end = usize::try_from(range.end).map_err(|_| {
+                            CompileError::Component("WASM section offset exceeds host address space".into())
+                        })?;
                         let raw = RawSection {
                             id,
-                            data: &wasm[range],
+                            data: wasm.get(start..end).ok_or_else(|| {
+                                CompileError::Component("WASM section range exceeds module".into())
+                            })?,
                         };
                         output.section(&raw);
                     }
@@ -3380,7 +3389,7 @@ impl<'a> CodeGen<'a> {
                         }));
                     }
                     ValType::F64 => {
-                        f.instruction(&Instruction::F64Const(0.0));
+                        f.instruction(&Instruction::F64Const(0.0.into()));
                         f.instruction(&Instruction::F64Store(wasm_encoder::MemArg {
                             offset: offset as u64,
                             align: 3,
@@ -3677,7 +3686,7 @@ impl<'a> CodeGen<'a> {
                     field_index: gc_types::F64_VALUE,
                 });
                 f.instruction(&Instruction::Else);
-                f.instruction(&Instruction::F64Const(0.0));
+                f.instruction(&Instruction::F64Const(0.0.into()));
                 f.instruction(&Instruction::End);
             }
             Type::Bool => {
@@ -5151,7 +5160,7 @@ impl<'a> CodeGen<'a> {
             Expr::Float(v) => {
                 // Box float in FLOAT struct { type_id, value }
                 f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
-                f.instruction(&Instruction::F64Const(*v));
+                f.instruction(&Instruction::F64Const((*v).into()));
                 f.instruction(&Instruction::StructNew(gc_types::FLOAT64));
             }
 
