@@ -10,6 +10,7 @@ protocols and types are included because portable forms depend on them.
 ```sh
 python3 scripts/cljs_inventory.py
 python3 scripts/cljs_inventory.py --check
+python3 scripts/cljs_reviews.py
 python3 -m unittest discover -s scripts -p 'test_*.py'
 ```
 
@@ -24,6 +25,38 @@ review must record visibility, arities, dependencies, classification
 adaptation path and tests. Unreviewed entries remain `:unassessed`; they are not
 excluded. Source hash changes invalidate the review. Ported source retains EPL
 notices and must have reproducible extraction/patch provenance.
+
+## Review overlay schema
+
+`python3 scripts/cljs_reviews.py` validates the pinned source and the strict EDN
+data overlay. It rejects stale source hashes, unknown/duplicate IDs, missing or
+unknown fields, invalid arities and unsupported schema versions. It parses data
+only. The initial empty overlay reports **0 reviewed, 1,065 unassessed**.
+A review is not an executing test result; `:tests` lists evidence references for
+reviewers to inspect. Full compatibility requires the separate executing suites.
+
+Each `:reviews` entry is keyed by the exact generated declaration ID and contains:
+
+| Field | Required value |
+| --- | --- |
+| `:source-sha256` | Current declaration hash from the generated inventory |
+| `:visibility` | `:public`, `:private` or `:generated` |
+| `:arities` | `{:fixed [0 1] :variadic-min nil}` with sorted unique nonnegative arities; nil for a noncallable declaration. defn/defmacro reviews require explicit arities |
+| `:dependencies` | Vector of unique dependency names or declaration IDs, retaining phase qualifications where needed |
+| `:classification` | `:portable`, `:adapted` or `:host-specific` |
+| `:rationale` | Nonempty explanation based on the portable contract |
+| `:status` | `:unimplemented`, `:in-progress`, `:implemented` or `:excluded` |
+| `:adaptation-path` | Nonempty extraction/patch reference for `:adapted`; nil allowed otherwise |
+| `:alternative` | Explicit replacement for excluded host-specific behavior; nil allowed otherwise |
+| `:tests` | Vector of unique test/evidence references; at least one required for `:implemented` |
+
+Excluded entries must be host-specific and name an alternative. The validator
+does not infer portability, inspect dependency implementation, execute referenced
+tests or certify extraction/patch provenance. Protocol methods and macro-generated
+constructors remain explicit manual review work; the scanner's 1,065 top-level
+declarations are not a public API completeness claim.
+
+The [source and license policy](PROVENANCE.md) applies before importing core forms.
 
 ## Prototype baseline
 

@@ -450,3 +450,68 @@ macro phases or the persistent compiled REPL, and do not change the accepted des
 Next unblocked task: audit M0-01's deterministic inventory and source/license
 policy, then finish M0-04's complete browser feature profile and optional Jco
 comparison. Keep implementation, evidence and stable GitHub issue IDs aligned.
+
+
+## M0-01 inventory review schema and provenance gate — 2026-09-29
+
+The existing generated inventory had deterministic form/range/hash data, but
+review schema validation existed only as prose. `scripts/cljs_reviews.py` now
+parses a strict EDN data subset, never executes forms, and validates the overlay
+against freshly read pinned declarations. It fails on stale commit/form hashes,
+unknown/duplicate IDs, missing/unknown fields, invalid visibility/classification,
+malformed dependencies/arities, implementation claims without test references,
+and exclusions without an individual host-specific rationale/alternative.
+Function/macro reviews require explicit arities; noncallable declarations may
+use nil. Evidence references are not treated as passing test results.
+
+`inventory_records()` exposes the same pinned source records to generation and
+review validation without changing generated output. CI now invokes the review
+validator after the inventory check. Eight focused overlay tests cover malformed
+and stale data, while the five existing scanner tests remain passing.
+`docs/compatibility/PROVENANCE.md` specifies the origin/extraction/patch hashes,
+retained notices and corresponding license packaging needed before future core
+imports. Existing pinned upstream source notices and license texts were inspected;
+no upstream core forms were ported in this increment.
+
+Commands/results:
+
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 20 passed.
+- `python3 scripts/cljs_inventory.py --check`: 1,065 declarations verified.
+- Two independent `generate()` calls: identical bytes/count, SHA256
+  `b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c`.
+- Phase/branch audit: 811 runtime, 254 macro declarations, both :clj/:cljs labels.
+- `python3 scripts/cljs_reviews.py`: 0 reviewed, 1,065 unassessed.
+- CLI negative verification with a temporary overlay containing a stale source
+  hash: exit 1 and the expected stale-hash diagnostic. No review was added.
+- WIT lock verification passed; roadmap publisher offline preview retained
+  10 milestones/39 issue IDs; `git diff --check` passed.
+
+Local M0-01 acceptance now has evidence for deterministic regeneration,
+source hashes/reader branches, a machine-checked portable API review schema and
+the source/license policy. Issue #1 and M0 remain open pending publication and
+remote acceptance updates. This is not completed classification, a complete
+public API inventory, core import provenance automation or portable compatibility.
+Those remain M4/M7 acceptance work. Rust runtime code did not change, so this
+increment validates the inventory tooling rather than repeating its prior full
+native Rust baseline.
+
+## Terminal result of first remote baseline — 2026-09-29
+
+Run [36620372831](https://github.com/bobby/suss/actions/runs/36620372831), head
+64437bd, is now authoritatively completed/cancelled. Job 109583927141 started
+19:35:57 UTC and ended 20:01:13 UTC. Inventory/scanner/WIT lock checks passed.
+The Rust command compiled in 3m56s, then reached compile_expr and was cancelled
+while those tests were still running; the log ends with `The operation was
+canceled.` The elapsed job time matches the configured 25-minute budget. No
+complete remote test pass or specific semantic failure follows from partial
+passing expression tests. The run was not restarted. Full logs were read locally
+from `/tmp/suss-ci-36620372831.log`; the GitHub run is the durable reference.
+
+The later local commits have not been published and are not covered by that run.
+Publishing and issue comments still await explicit authorization after automatic
+review rejected the earlier actions. Local work is unblocked.
+
+Next unblocked task: address M1-03's bounded Linux test runtime from this observed
+cancellation (inspect profiles and repeated prototype compilation), then finish
+M0-04's browser feature profile and optional Jco comparison. Do not fix CI by
+skipping semantic tests or replacing missing results with success.
