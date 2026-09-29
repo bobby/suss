@@ -68,9 +68,13 @@ traces remain intact. Finally cleanup is verified on normal return, body throw,
 catch-body throw and cleanup throw. WebAssembly traps remain failures distinct
 from caught language throws; fuel/time failures are never language exceptions.
 
-M1-02 remains open for acceptance review and broader semantic/arity coverage.
-ExceptionInfo itself still fails at compilation; implementing its data/message/
-cause and descriptor behavior belongs with M2's runtime exception foundation.
+M1-02's bounded evidence-harness acceptance is complete after the merged
+implementation audit in [acceptance-m0-m1.md](../../docs/roadmap/acceptance-m0-m1.md).
+The named differential cases exist and their exact failures remain visible; this
+does not certify compatibility or comprehensive semantic/arity coverage. Those
+repairs remain M2/M4/M7 work. The GitHub issue remains open until the reconciliation
+PR merges with its closing link. ExceptionInfo itself still fails at compilation;
+implementing its data/message/cause and descriptor behavior belongs with M2's runtime exception foundation.
 On a Wasm trap or failed decoding, the prototype cannot recover the partial
 trace; that limitation is explicit. The current production integer/UTF-8
 representation cannot claim the binary64/UTF-16 contract from these reference

@@ -107,7 +107,7 @@
       "validation": "scripts/test-oracle.sh",
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
       "evidence": [
-        "Added regressions for repeated conditions, argument order, equality, reduce arities, static arity diagnostics and lexical shadowing. Upstream differential oracle remains.",
+        "The pinned development-only ClojureScript/Node oracle and independently decoded Suss execution share 16 cases covering once-only conditions, ordered arguments, binary64 bits, UTF-16 units, reduce/variadic arities and exceptions. Fresh differential evidence is 9 passing/7 exact failures/0 skipped; transport and comparison reject missing or changed observations. JVM/Node are development tools only. Comprehensive semantic/arity coverage and known-failure repairs remain M2/M4/M7 work.",
         "Acceptance reconciled after user merge of PR #40 and independent review fixes fb3ec0a; final-head CI 36636314840 and merged-main CI 36639533936 pass. See docs/roadmap/acceptance-m0-m1.md for criterion-by-criterion evidence and remaining M2\u2013M8 work. GitHub closure follows the reconciliation PR merge; stable issue IDs are unchanged."
       ]
     },

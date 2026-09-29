@@ -101,8 +101,10 @@ cargo test -p suss-compile --test conformance record_known_failures -- --ignored
 ```
 
 Review every diff. Do not accept new failures merely to get a green build. Fix
-regressions and remove resolved entries. The broader upstream differential oracle,
-lossless UTF-16/float transport and effect traces are still roadmap work.
+regressions and remove resolved entries. The shared development differential
+oracle now records lossless UTF-16/float transport and effect traces separately from this legacy baseline. Comprehensive
+portable semantic/arity coverage and repairs for its exact known failures remain
+M2/M4/M7 work.
 
 The conformance loader rejects missing files, empty/malformed suites, duplicate
 or unknown fields/IDs, namespaced schema keys and non-Boolean/true skip values.

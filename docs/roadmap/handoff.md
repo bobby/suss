@@ -1143,3 +1143,30 @@ Next unblocked implementation remains portable-form HIR with binding identity
 and source spans, explicit evaluation-order/control-flow IR and shared ABI
 lowering. Keep the lossless forms separate from legacy EDN; retire old paths
 only after replacement acceptance. M2–M9 remain unfinished.
+
+## Dispatched PR #43 acceptance review — 2026-09-29
+
+An independent dispatched reviewer audited the unchanged M0/M1 criteria against
+executing probe source, strict decoder/comparator regressions, pinned source and
+license policy, fresh acceptance logs and Chrome/Jco evidence. GitHub confirms
+successful CI at PR #40's reviewed fb3ec0a head and merged-main fad9ee9. The fresh
+browser JSON exactly matches committed evidence, including all 11 source hashes;
+its unknown process exit and teardown termination remain explicit.
+
+M1-02 requires differential cases for the named boundaries and a development-only
+oracle. Its 16 shared cases and strict 9-pass/7-exact-failure/0-skip baseline fulfill
+that evidence requirement; they do not fulfill future compatibility acceptance.
+Closing #1–#7 through PR #43 is justified by the unchanged bounded criteria. No
+M2–M9 issue, semantic failure or unassessed declaration is marked complete.
+
+The review corrected contradictory current prose in the oracle and compatibility
+READMEs and outdated M1-02 issue evidence that still described the differential
+oracle/transport as unimplemented. Historical observations remain intact.
+Policy/consistency checks: 42 Python tests, inventory/review/WIT lock verification,
+offline roadmap preview and diff whitespace check pass. Runtime code and expected
+results are unchanged; the already completed exact full baseline remains relevant.
+This review fix must be pushed and its own final-head CI observed before readiness.
+No PR was merged and no issue or milestone was directly closed.
+
+Next unblocked work remains lossless reader forms into HIR/binding identity,
+explicit source-order IR and shared runtime lowering, as described above.
