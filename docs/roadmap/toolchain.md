@@ -86,7 +86,7 @@ cargo test -p suss-compile --test toolchain_profile --test toolchain_async \
 ```
 
 The local M0-02 named feasibility acceptance probes now pass. Issue #2 remains
-open while publishing the local commits/results requires approval. See the
+open during draft PR #40 acceptance review. See the
 criterion-by-criterion audit in the handoff. This does not establish generated
 Suss boundary adapters, nested async values, arbitrary payload shapes, endpoint
 write cancellation or production Suss scheduling. These belong to the M5/M6

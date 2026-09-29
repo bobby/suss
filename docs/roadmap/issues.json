@@ -16,7 +16,7 @@
       "evidence": [
         "Accepted design and pinned 1065-declaration inventory: two independent generations are byte-identical (SHA256 b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c). 811 runtime/254 macro declarations retain source ranges/hashes and both :clj/:cljs reader branch labels.",
         "scripts/cljs_reviews.py validates exact overlay schema, pin/hash identity, duplicate/unknown IDs, visibility, arities, dependencies, classifications, implementation evidence references and individual exclusions. Eight focused overlay tests plus five scanner tests pass; empty overlay reports zero reviewed and 1065 unassessed. docs/compatibility/PROVENANCE.md records source/license/extraction requirements.",
-        "Local M0-01 schema/policy acceptance passes; manual classification, macro-generated public APIs, reproducible core extraction and executing semantic evidence remain M4/M7 work. Remote acceptance update awaits publication approval."
+        "Local M0-01 schema/policy acceptance passes; manual classification, macro-generated public APIs, reproducible core extraction and executing semantic evidence remain M4/M7 work. Published in draft PR #40; remote acceptance update awaits review."
       ]
     },
     {
@@ -33,7 +33,7 @@
       "evidence": [
         "Cargo.toml/Cargo.lock: Wasmtime/wasmtime-wasi 49.0.1, wasm-tools Rust family 0.258.0, wit-bindgen 0.61.1; official 15-file/six-package release graph locked by byte hashes in docs/roadmap/wasi-wit-lock.json.",
         "Executing Rust suites: eight toolchain_profile tests and eight toolchain_async tests pass. Core GC/function references/tail calls/EH, canonical maps, implements/external-id, callback lift/async lower, future/stream transport and guest-memory reads, one-byte stream demand/EOF, guest subtask/read cancellation. See docs/roadmap/handoff.md for acceptance audit and explicit unsupported production features.",
-        "Local named feasibility acceptance passes; GitHub issue remains open because publication of the later commits/results requires explicit approval. Migrated native workspace baseline passed; optional Wasm compiler-component build remains a recorded failure."
+        "Local named feasibility acceptance passes; GitHub issue remains open during draft PR #40 acceptance review. Migrated native workspace baseline passed; optional Wasm compiler-component build remains a recorded failure."
       ]
     },
     {
@@ -50,7 +50,7 @@
       "evidence": [
         "crates/suss-compile/tests/shared_runtime.rs: three executing probes pass on locked Wasmtime 49.0.1. One Store shares recursive GC groups, closures, runtime-global roots and nominal descriptors across independently compiled fragments; forced GC preserves old values and captured closures after binding redefinition.",
         "Probe-only fragment loader rejects a mismatched declared ABI before initializer effects. A matching version label with a different recursive descriptor layout fails engine linking before start. Deliberately bypassing the version gate makes the negative test fail; restored gate passes.",
-        "Local M0-03 feasibility acceptance passes; production runtime manifests, binding cells and incremental REPL remain M2/M3 work. GitHub acceptance update awaits publication approval; milestone M0 remains open."
+        "Local M0-03 feasibility acceptance passes; production runtime manifests, binding cells and incremental REPL remain M2/M3 work. Published in draft PR #40; GitHub acceptance update awaits review; milestone M0 remains open."
       ]
     },
     {
@@ -117,7 +117,8 @@
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
       "evidence": [
         "Cargo.lock, lean test profiles, shared engines, bounded conformance fuel/traversal, and .github/workflows/ci.yml exist. Migrated native full baseline passed locally.",
-        "Remote CI run 36620372831 on head 64437bd ended cancelled at 2026-09-29T20:01:13Z after about 25 minutes. Inventory checks passed; cold compile finished in 3m56s, then compile_expr ran until cancellation. No complete remote baseline is claimed. Diagnose bounded Linux test performance next; later local probes/review validation are not on the published head."
+        "Remote CI run 36620372831 on head 64437bd ended cancelled at 2026-09-29T20:01:13Z after about 25 minutes. Inventory checks passed; cold compile finished in 3m56s, then compile_expr ran until cancellation. No complete remote baseline is claimed. Diagnose bounded Linux test performance next; later local probes/review validation are not on the published head.",
+        "Optimized non-workspace test dependencies at Rust opt-level 2 with debug assertions/overflow checks retained. Full local workspace baseline passes: expressions 55.00s vs 319.67s, conformance 21.49s vs 192.07s. CI retains 25-minute budget/two build jobs/two test threads, uses only main push/PR events and cancels superseded PR heads. Linux result remains unverified until the new run completes."
       ]
     },
     {

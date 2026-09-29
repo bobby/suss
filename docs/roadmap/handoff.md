@@ -525,3 +525,77 @@ publication blocker is resolved. Publish the validated local increments to the
 existing `resurrection/m0-toolchain` branch and open a PR against main. Record
 results on the stable roadmap issues. Do not merge or mark the full roadmap/M0
 complete; bounded remote CI and the M0-04 browser profile still require work.
+
+
+## Implementation branch and draft PR published — 2026-09-29
+
+All validated local increments through aa3057a were pushed to
+`resurrection/m0-toolchain`. Draft [PR #40](https://github.com/bobby/suss/pull/40)
+now targets main; it has not been merged. Progress/evidence comments were posted
+on stable issues [M0-01](https://github.com/bobby/suss/issues/1#issuecomment-5897837810),
+[M0-02](https://github.com/bobby/suss/issues/2#issuecomment-5897839210),
+[M0-03](https://github.com/bobby/suss/issues/3#issuecomment-5897840444) and
+[M1-03](https://github.com/bobby/suss/issues/7#issuecomment-5897841862).
+The publication approval blocker is resolved. Issues/milestones remain open
+while their acceptance results are reviewed and remaining work is implemented.
+
+Both push run 36624215715 and PR run 36624292520 started on aa3057a. A cancellation
+request for the duplicate push run was accepted; the last observation still
+reported in_progress, so completed cancellation is not claimed. Keep the PR run
+[36624292520](https://github.com/bobby/suss/actions/runs/36624292520), observed
+live/in_progress with no conclusion. This is a new run triggered by new published
+coverage, not a restart due to an observation timeout. Avoid duplicate push/PR
+runs in the next bounded-CI implementation. Next: inspect unoptimized test
+profiles and repeated prototype/Wasmtime compilation to repair Linux runtime
+without skipping cases. Include this local publication note with that change
+rather than trigger another CI run solely for a status note.
+
+
+## M1-03 test dependency optimization — 2026-09-29
+
+The cancelled Linux run compiled successfully in about four minutes, then spent
+its remaining budget executing prototype expressions. A temporary phase-timing
+probe for test_addition was applied to the existing run_expr_i32 helper and
+restored in a finally block after each measurement. The same arithmetic result
+passed before and after; no profiling instrumentation remains in the source.
+
+| Local phase | Unoptimized dependencies | Optimized dependencies |
+| --- | --- | --- |
+| Suss source compilation | 208.7 ms | 168.9 ms |
+| Engine/Wasmtime module compilation | 806.0 ms | 80.8 ms |
+| Instantiate/call | 0.57 ms | 0.41 ms |
+| Focused test total | 1.02 s | 0.25 s |
+
+This is a single local timing probe, not a Linux or whole-suite performance
+claim. `profile.test.package."*"` now uses Rust opt-level 2 for non-workspace
+dependencies, with debug assertions and overflow checks explicitly enabled.
+Workspace code remains at its ordinary unoptimized test profile. Debug symbols
+and incremental caches remain disabled. Cranelift's Wasm optimization setting,
+source semantics, case expectations and test selection do not change. No
+RUSTFLAGS was set by a command.
+
+CI now runs pushes to main and PR events, avoiding duplicate branch push/PR
+runs. A per-PR/ref concurrency group cancels superseded heads. Build jobs remain
+two, test threads remain two, job timeout remains 25 minutes, and CI uses the
+exact full baseline command `cargo test --workspace --locked -- --test-threads=2`.
+YAML parses successfully and the bounded job/command were checked.
+
+The focused optimized build/test passed after 3m55s of dependency rebuilding.
+The full workspace baseline completed with exit 0 under the changed profile:
+`CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Its additional CLI/WASI feature union rebuilt artifacts in 3m57s. Results:
+14 CLI, 54 compiler units, 316 expression (12 existing ignored), 28 component,
+4 conformance harness (2 manual recorders ignored), 3 shared-runtime, 8 async,
+8 profile, 8 core and 19 reader tests passed; two existing doc examples remain
+ignored. No failures or new skips. The strict conformance baseline still checks
+all 201 reviewed cases. Log: `/tmp/suss-optimized-baseline.log`.
+
+Expression execution fell from 319.67s in the migrated baseline to 55.00s;
+conformance from 192.07s to 21.49s. These are local observations. The optimized
+Linux PR run must finish before claiming a repaired remote baseline. The earlier
+PR run on aa3057a is separate evidence; the duplicate push run's cancellation
+is authoritatively completed/cancelled. Twenty Python checks and inventory,
+review-overlay and WIT lock verification pass. No baseline expectations changed.
+Next: publish this profile/workflow change, observe the new PR run and retain
+M1-03 open until its full acceptance is proved. Continue M0-04 browser/Jco work
+while CI runs.

@@ -1,7 +1,15 @@
 name: prototype-baseline
 on:
   push:
+    branches: [main]
   pull_request:
+
+concurrency:
+  group: prototype-baseline-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_BUILD_JOBS: 2
 
 jobs:
   test:
@@ -21,4 +29,4 @@ jobs:
           python3 scripts/wasi_lock.py
           python3 scripts/publish_roadmap.py
       - name: Test prototype, strict conformance baseline and runtime probe
-        run: cargo test --workspace --locked -j 2 -- --test-threads=2
+        run: cargo test --workspace --locked -- --test-threads=2
