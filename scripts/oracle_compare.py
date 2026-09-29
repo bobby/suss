@@ -46,6 +46,13 @@ def matches(left, right):
     if left['tag'] != right['tag']:
         return False
     tag = left['tag']
+    if tag == 'f64':
+        a, b = int(left['bits'], 16), int(right['bits'], 16)
+        # Wasm arithmetic without NaN inputs has a canonical payload but an
+        # unspecified sign. Keep raw bits; permit only this sign difference.
+        canonical = 0x7ff8000000000000
+        mask = 0x7fffffffffffffff
+        return a == b or (a & mask == canonical and b & mask == canonical)
     if tag == 'exception-info':
         return all(matches(left[key], right[key]) for key in ('data', 'message', 'cause'))
     if tag == 'map':

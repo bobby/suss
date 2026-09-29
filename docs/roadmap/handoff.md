@@ -906,3 +906,34 @@ Next unblocked task: implement the accepted shared ABI v1 value representation
 and reader/IR boundaries in M2, starting with lossless binary64 and UTF-16,
 using these differential failures as acceptance tests. Preserve the persistent
 fragment/closure constraints already demonstrated in M0.
+
+
+## Linux canonical NaN sign regression — 2026-09-29
+
+The previous turn was progress: 5b0b5e2 and effb7fe were published to PR #40.
+Its new run [36631941576](https://github.com/bobby/suss/actions/runs/36631941576)
+is terminal/completed/failure, not a live wait or a success. Full failed-step
+logs are /tmp/suss-ci-5b0b5e2-failed.log. Linux observed NaN bits fff8000000000000
+for zero/zero, while the Node fixture recorded 7ff8000000000000. Every other
+observed failure matches the seven reviewed failures exactly; Rust suites before
+the oracle passed. The comparator incorrectly required one canonical NaN sign.
+
+WebAssembly permits either sign for a canonical arithmetic NaN; see
+https://www.w3.org/TR/wasm-core/ and the dated evidence clarification in the
+accepted design. The new regression FAILED before the comparator repair. The
+comparison now permits only this canonical NaN sign difference. Raw transport
+bits remain intact; changed payloads, finite values and signed zero still fail.
+Storage/boundary tests continue to require exact NaN bits. No NaN failure was
+added to known failures and no unknown/opaque result is accepted as success.
+
+Validation: 42 Python tests passed. The exact Linux failure JSON was audited:
+removing its canonical-sign-only NaN observation leaves the seven expected
+failures byte-for-byte equal, and that raw NaN observation passes the corrected
+comparison. This is an offline diagnostic replay, not a new green Linux job.
+The final full workspace baseline also passes, including the uncommitted shared
+runtime foundation (seven additional runtime tests), with 9 differential passing,
+7 failing and 0 skipped. New-head CI must execute after publication.
+
+Publish this focused correction to PR #40 first; the new M2 runtime implementation
+will be a separate stacked branch/PR based on that head. Neither milestone is
+closed. No shipped Java/Node path or production arithmetic was changed here.

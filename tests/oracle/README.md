@@ -39,7 +39,10 @@ checked-in reference fixture and need neither Java nor Node.
 `scripts/oracle_compare.py` compares tagged values and exact effect order.
 Collection kinds remain distinct; map/set iteration order is ignored, with
 one-to-one element matching. Numeric bits are exact, including signed zero and
-NaN payloads; this is observation comparison, not guest numeric equality.
+NaN payloads, except the two canonical arithmetic NaN signs are accepted as
+permitted by WebAssembly. Raw bits remain in the observations, and storage/
+boundary tests require exact NaN bits. This is observation comparison, not guest
+numeric equality.
 Malformed transport and absent cases fail. `known-failures.json` separately
 records seven reviewed failures with exact stages/diagnostics or expected/actual
 observations. A changed failure, new failure or unexpected pass fails the suite.

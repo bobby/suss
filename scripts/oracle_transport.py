@@ -97,6 +97,8 @@ def validate(document):
                            'binary64-rounding': '4340000000000000', 'negative-zero': '8000000000000000',
                            'positive-infinity': '7ff0000000000000', 'nan': '7ff8000000000000'}.items():
         if by_id[identity].get('value') != {'tag': 'f64', 'bits': bits}:
+            if identity == 'nan' and by_id[identity].get('value') == {'tag': 'f64', 'bits': 'fff8000000000000'}:
+                continue
             raise ValueError(f'wrong reference boundary {identity}')
     for identity, units in {'utf16-surrogate': [55296], 'utf16-pair': [55357, 56832]}.items():
         if by_id[identity].get('value') != {'tag': 'string', 'units': units}:

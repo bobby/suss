@@ -106,6 +106,16 @@ class DifferentialTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             compare(self.reference, observed)
 
+    def test_canonical_arithmetic_nan_sign_is_allowed_but_bits_remain_checked(self):
+        observed = copy.deepcopy(self.reference)
+        case = next(c for c in observed['cases'] if c['id'] == 'nan')
+        case['value']['bits'] = 'fff8000000000000'
+        self.assertEqual(compare(self.reference, observed), {})
+        for bits in ('7ff8000000000001', '7ff0000000000000', '0000000000000000'):
+            case['value']['bits'] = bits
+            self.assertEqual(compare(self.reference, observed)['nan']['stage'], 'value')
+        self.assertFalse(matches({'tag': 'f64', 'bits': '0000000000000000'}, {'tag': 'f64', 'bits': '8000000000000000'}))
+
 
 if __name__ == '__main__':
     unittest.main()

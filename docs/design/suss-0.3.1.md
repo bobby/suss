@@ -325,6 +325,13 @@ Decisions accepted 2026-09-29: ClojureScript contract; WASI first; WasmGC requir
 persistent compiled REPL in the first release; no shipped JVM; futures/streams
 before CSP; explicit browser bridge; incremental replacement of the prototype.
 
+2026-09-29 evidence clarification: WebAssembly arithmetic producing a canonical
+NaN permits either sign. The differential observation comparator accepts this
+sign difference while retaining raw bits; changed NaN payloads, finite bits and
+signed zero still fail. Storage and boundary round-trip tests check NaN bits
+exactly. This does not change language equality or make NaN equal to itself.
+See the [WebAssembly floating-point rules](https://www.w3.org/TR/wasm-core/).
+
 ## Primary references
 
 * [ClojureScript differences](https://clojurescript.org/about/differences)
