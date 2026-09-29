@@ -53,7 +53,7 @@ class DifferentialTests(unittest.TestCase):
             elif change == 'effects':
                 observed['cases'][1]['effects'].reverse()
             else:
-                observed['cases'][-1] = dict(observed['cases'][0], id='exception-effect')
+                observed['cases'][-1] = dict(observed['cases'][0], id=observed['cases'][-1]['id'])
             failures = compare(self.reference, observed)
             self.assertEqual(len(failures), 1)
             self.assertEqual(next(iter(failures.values()))['stage'], 'value')
@@ -96,6 +96,15 @@ class DifferentialTests(unittest.TestCase):
                 baseline(json.dumps(document))
         with self.assertRaises(ValueError):
             baseline('{"condition-once":{},"condition-once":{}}')
+
+    def test_thrown_values_cannot_be_discarded_or_changed(self):
+        observed = copy.deepcopy(self.reference)
+        case = next(c for c in observed['cases'] if c['id'] == 'throw-string')
+        case['thrown'] = {'tag': 'nil'}
+        self.assertEqual(compare(self.reference, observed)['throw-string']['stage'], 'value')
+        del case['thrown']
+        with self.assertRaises(ValueError):
+            compare(self.reference, observed)
 
 
 if __name__ == '__main__':

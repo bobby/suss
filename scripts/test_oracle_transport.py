@@ -3,7 +3,7 @@ import json
 import unittest
 from pathlib import Path
 
-from oracle_transport import unique, validate, value
+from oracle_transport import unique, validate, value, IDS
 
 
 REFERENCE = Path(__file__).resolve().parents[1] / 'tests/oracle/reference.json'
@@ -14,7 +14,7 @@ class OracleTransportTests(unittest.TestCase):
         self.reference = json.loads(REFERENCE.read_text(), object_pairs_hook=unique)
 
     def test_executed_reference_snapshot(self):
-        self.assertEqual(validate(self.reference), 12)
+        self.assertEqual(validate(self.reference), len(IDS))
 
     def test_missing_duplicate_or_changed_cases_fail(self):
         for change in ('missing', 'duplicate', 'unknown-status', 'unknown-field', 'wrong-pin'):
@@ -73,6 +73,16 @@ class OracleTransportTests(unittest.TestCase):
         for source in ('{"schema":1,"schema":2}', '{"tag":"nil"} {}'):
             with self.subTest(source=source), self.assertRaises(ValueError):
                 json.loads(source, object_pairs_hook=unique)
+
+    def test_old_schema_and_incomplete_exception_info_fail(self):
+        document = copy.deepcopy(self.reference)
+        document['schema'] = 1
+        with self.assertRaises(ValueError):
+            validate(document)
+        for node in ({'tag': 'exception-info'},
+                     {'tag': 'exception-info', 'data': {'tag': 'nil'}, 'message': {'tag': 'nil'}, 'cause': {'tag': 'nil'}}):
+            with self.subTest(node=node), self.assertRaises(ValueError):
+                value(node)
 
 
 if __name__ == '__main__':

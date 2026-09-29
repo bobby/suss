@@ -99,7 +99,7 @@ fn failure(stage: &str, error: impl std::fmt::Display) -> Failure {
 fn observe(compiler: &mut Compiler, engine: &Engine, case: &Case) -> Result<Value, Failure> {
     // The body is identical to ClojureScript; only the test runner wrapper differs.
     let source = format!(
-        "(let [trace (atom [])] (let [result {}] [result (deref trace)]))",
+        "(let [trace (atom [])] (let [outcome (try [false {}] (catch error [true error]))] [outcome (deref trace)]))",
         case.expr
     );
     let artifact = compiler
@@ -123,8 +123,14 @@ fn observe(compiler: &mut Compiler, engine: &Engine, case: &Case) -> Result<Valu
         .get_func(&mut store, "eval")
         .ok_or_else(|| failure("artifact", "missing eval"))?;
     let mut result = [Val::null_any_ref()];
-    eval.call(&mut store, &[], &mut result)
-        .map_err(|e| failure("execution", format!("{e:#}")))?;
+    eval.call(&mut store, &[], &mut result).map_err(|e| {
+        let stage = if e.downcast_ref::<wasmtime::Trap>().is_some() {
+            "trap"
+        } else {
+            "execution"
+        };
+        failure(stage, format!("{e:#}"))
+    })?;
     let decoded = Decoder::new(compiler)
         .decode(&mut store, &result[0])
         .map_err(|e| failure("decode", e))?;
@@ -137,10 +143,29 @@ fn observe(compiler: &mut Compiler, engine: &Engine, case: &Case) -> Result<Valu
     let Edn::Vector(effects) = &parts[1] else {
         return Err(failure("decode", "malformed effect trace"));
     };
-    Ok(
-        json!({"id":case.id, "status":"value", "value":tagged(&parts[0]).map_err(|e| failure("decode",e))?,
-        "effects":effects.iter().map(tagged).collect::<Result<Vec<_>,_>>().map_err(|e| failure("decode",e))?}),
-    )
+    let Edn::Vector(outcome) = &parts[0] else {
+        return Err(failure("decode", "malformed outcome"));
+    };
+    if outcome.len() != 2 {
+        return Err(failure("decode", "wrong outcome length"));
+    }
+    let effects = effects
+        .iter()
+        .map(tagged)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| failure("decode", e))?;
+    let payload = tagged(&outcome[1]).map_err(|e| failure("decode", e))?;
+    match outcome[0] {
+        Edn::Bool(false) => {
+            Ok(json!({"id":case.id,"status":"value","value":payload,"effects":effects}))
+        }
+        // These independently decoded prototype values are not Error or
+        // ExceptionInfo objects. Pinned cljs ex-data/ex-message return nil for
+        // non-Errors; preserve the exact thrown value instead of discarding it.
+        Edn::Bool(true) => Ok(json!({"id":case.id,"status":"exception","thrown":payload,
+            "data":{"tag":"nil"},"message":{"tag":"nil"},"effects":effects})),
+        _ => Err(failure("decode", "invalid outcome discriminator")),
+    }
 }
 
 fn observations() -> Value {
@@ -161,7 +186,7 @@ fn observations() -> Value {
             }
         })
         .collect();
-    json!({"schema":1,"upstream":PIN,"cases":cases})
+    json!({"schema":2,"upstream":PIN,"cases":cases})
 }
 
 #[test]
@@ -212,4 +237,48 @@ fn integer_transport_never_rounds_away_a_mismatch() {
         tagged(&Edn::Number(Number::Float(-0.0))).unwrap()["bits"],
         "8000000000000000"
     );
+}
+
+#[test]
+fn caught_values_and_partial_effects_are_independently_decoded() {
+    let engine = engine();
+    let mut compiler = Compiler::new();
+    for (source, expected) in [
+        ("nil", json!({"tag":"nil"})),
+        ("false", json!({"tag":"bool","value":false})),
+        ("0", json!({"tag":"f64","bits":"0000000000000000"})),
+        ("\"probe\"", string("probe")),
+        (
+            "{:reason :expected}",
+            json!({"tag":"map","entries":[[
+                {"tag":"keyword","namespace":{"tag":"nil"},"name":string("reason")},
+                {"tag":"keyword","namespace":{"tag":"nil"},"name":string("expected")}
+            ]]}),
+        ),
+    ] {
+        let case = Case {
+            id: "capture-regression".into(),
+            expr: format!("(do (swap! trace conj :before) (throw {source}))"),
+        };
+        let result = observe(&mut compiler, &engine, &case).unwrap();
+        assert_eq!(result["status"], "exception");
+        assert_eq!(result["thrown"], expected);
+        assert_eq!(result["data"], json!({"tag":"nil"}));
+        assert_eq!(result["message"], json!({"tag":"nil"}));
+        assert_eq!(
+            result["effects"],
+            json!([{"tag":"keyword","namespace":{"tag":"nil"},"name":string("before")}])
+        );
+    }
+}
+
+#[test]
+fn fuel_trap_is_not_a_caught_language_exception() {
+    let case = Case {
+        id: "trap-regression".into(),
+        expr: "(loop [i 0] (recur (inc i)))".into(),
+    };
+    let failure = observe(&mut Compiler::new(), &engine(), &case).unwrap_err();
+    assert_eq!(failure.0, "trap", "{failure:?}");
+    assert!(failure.1.contains("fuel"), "{}", failure.1);
 }

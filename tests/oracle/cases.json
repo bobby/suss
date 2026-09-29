@@ -48,6 +48,22 @@
     {
       "id": "exception-effect",
       "expr": "(do (swap! trace conj :before-throw) (throw (ex-info \"probe\" {:reason :expected})))"
+    },
+    {
+      "id": "throw-string",
+      "expr": "(do (swap! trace conj :before-string) (throw \"probe\"))"
+    },
+    {
+      "id": "throw-nil",
+      "expr": "(do (swap! trace conj :before-nil) (throw nil))"
+    },
+    {
+      "id": "throw-map",
+      "expr": "(do (swap! trace conj :before-map) (throw {:reason :expected}))"
+    },
+    {
+      "id": "throw-finally",
+      "expr": "(try (do (swap! trace conj :body) (throw \"probe\")) (finally (swap! trace conj :cleanup)))"
     }
   ]
 }

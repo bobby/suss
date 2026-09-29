@@ -2269,19 +2269,37 @@ impl Lowerer {
             Expr::Block(exprs?)
         };
 
-        if let (Some(binding), Some(catch)) = (catch_binding, catch_body) {
-            Ok(Expr::TryCatch {
+        let guarded = if let (Some(binding), Some(catch)) = (catch_binding, catch_body) {
+            Expr::TryCatch {
                 body: Box::new(body),
                 catch_binding: binding,
                 catch_body: Box::new(catch),
-                finally_body: finally_body.map(Box::new),
-            })
-        } else if let Some(fin) = finally_body {
-            // try with only finally (no catch) - just execute body then finally
-            Ok(Expr::Block(vec![body, fin, Expr::Unit]))
+                finally_body: None,
+            }
         } else {
-            // try without catch or finally - just the body
-            Ok(body)
+            body
+        };
+        if let Some(fin) = finally_body {
+            // Guard both the body and any user catch. A private catch runs
+            // cleanup before rethrowing; the normal-result path runs cleanup
+            // after preserving the result. A cleanup throw supersedes the
+            // original exception and is outside this guard on either path.
+            let pending_exception = self.next_local;
+            self.next_local += 1;
+            Ok(Expr::TryCatch {
+                body: Box::new(guarded),
+                catch_binding: pending_exception,
+                catch_body: Box::new(Expr::Block(vec![
+                    fin.clone(),
+                    Expr::Throw(Box::new(Expr::LocalGet {
+                        local: pending_exception,
+                        ty: Type::GcRef,
+                    })),
+                ])),
+                finally_body: Some(Box::new(fin)),
+            })
+        } else {
+            Ok(guarded)
         }
     }
 

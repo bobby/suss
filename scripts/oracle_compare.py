@@ -3,9 +3,9 @@
 import argparse
 import json
 from pathlib import Path
-from oracle_transport import fields, unique, validate, value, IDS, PIN
+from oracle_transport import fields, unique, validate, value, IDS, PIN, SCHEMA
 
-STAGES = ('compile', 'artifact', 'validation', 'instantiate', 'execution', 'decode', 'value')
+STAGES = ('compile', 'artifact', 'validation', 'instantiate', 'trap', 'execution', 'decode', 'value')
 
 
 def observation(actual):
@@ -14,7 +14,8 @@ def observation(actual):
         fields(actual, 'id status value effects')
         value(actual['value'])
     elif status == 'exception':
-        fields(actual, 'id status data message effects')
+        fields(actual, 'id status thrown data message effects')
+        value(actual['thrown'])
         value(actual['data'])
         value(actual['message'])
         if actual['message']['tag'] not in ('nil', 'string'):
@@ -45,6 +46,8 @@ def matches(left, right):
     if left['tag'] != right['tag']:
         return False
     tag = left['tag']
+    if tag == 'exception-info':
+        return all(matches(left[key], right[key]) for key in ('data', 'message', 'cause'))
     if tag == 'map':
         return unordered(left['entries'], right['entries'],
                          lambda a, b: matches(a[0], b[0]) and matches(a[1], b[1]))
@@ -58,7 +61,7 @@ def matches(left, right):
 def compare(reference, observations):
     validate(reference)
     fields(observations, 'schema upstream cases')
-    if type(observations['schema']) is not int or observations['schema'] != 1 or observations['upstream'] != PIN:
+    if type(observations['schema']) is not int or observations['schema'] != SCHEMA or observations['upstream'] != PIN:
         raise ValueError('wrong observation schema/pin')
     cases = observations['cases']
     if not isinstance(cases, list) or [c.get('id') if isinstance(c, dict) else None for c in cases] != list(IDS):
@@ -75,7 +78,7 @@ def compare(reference, observations):
         observation(actual)
         same = status == expected['status'] and actual['effects'] == expected['effects']
         if same:
-            keys = ('value',) if status == 'value' else ('data', 'message')
+            keys = ('value',) if status == 'value' else ('thrown', 'data', 'message')
             same = all(matches(expected[key], actual[key]) for key in keys)
         if not same:
             failures[actual['id']] = {'stage': 'value', 'expected': expected, 'actual': actual}

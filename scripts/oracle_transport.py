@@ -5,10 +5,12 @@ import json
 import re
 from pathlib import Path
 
+SCHEMA = 2
 PIN = 'c4295f303100bbf5afac449242d30bca1126f1a1'
 IDS = ('condition-once', 'argument-order', 'binary64-rounding', 'negative-zero',
        'positive-infinity', 'nan', 'utf16-surrogate', 'utf16-pair', 'nested-values',
-       'reduce-empty', 'variadic-arity', 'exception-effect')
+       'reduce-empty', 'variadic-arity', 'exception-effect', 'throw-string', 'throw-nil', 'throw-map', 'throw-finally')
+EXCEPTIONS = ('exception-effect', 'throw-string', 'throw-nil', 'throw-map', 'throw-finally')
 
 
 def fields(value, expected):
@@ -34,6 +36,12 @@ def value(node, depth=0):
         fields(node, 'tag units')
         if not isinstance(node['units'], list) or any(type(n) is not int or not 0 <= n <= 65535 for n in node['units']):
             raise ValueError('invalid UTF-16 units')
+    elif tag == 'exception-info':
+        fields(node, 'tag data message cause')
+        for key in ('data', 'message', 'cause'):
+            value(node[key], depth + 1)
+        if node['message']['tag'] != 'string':
+            raise ValueError('invalid ExceptionInfo message')
     elif tag in ('keyword', 'symbol'):
         fields(node, 'tag namespace name')
         value(node['namespace'], depth + 1)
@@ -59,20 +67,21 @@ def value(node, depth=0):
 
 def validate(document):
     fields(document, 'schema upstream cases')
-    if type(document['schema']) is not int or document['schema'] != 1 or document['upstream'] != PIN:
+    if type(document['schema']) is not int or document['schema'] != SCHEMA or document['upstream'] != PIN:
         raise ValueError('wrong schema/upstream pin')
     cases = document['cases']
     if not isinstance(cases, list) or [c.get('id') if isinstance(c, dict) else None for c in cases] != list(IDS):
         raise ValueError('missing/duplicate/changed oracle case IDs')
     for case in cases:
-        expected_status = 'exception' if case['id'] == 'exception-effect' else 'value'
+        expected_status = 'exception' if case['id'] in EXCEPTIONS else 'value'
         if case.get('status') != expected_status:
             raise ValueError('unexpected observation status')
         if case.get('status') == 'value':
             fields(case, 'id status value effects')
             value(case['value'])
         elif case.get('status') == 'exception':
-            fields(case, 'id status data message effects')
+            fields(case, 'id status thrown data message effects')
+            value(case['thrown'])
             value(case['data'])
             value(case['message'])
             if case['message']['tag'] not in ('nil', 'string'):
@@ -93,7 +102,8 @@ def validate(document):
         if by_id[identity].get('value') != {'tag': 'string', 'units': units}:
             raise ValueError(f'lossy reference string {identity}')
     expected_effects = {'condition-once': ['condition'], 'argument-order': ['left', 'right'],
-                        'exception-effect': ['before-throw']}
+                        'exception-effect': ['before-throw'], 'throw-string': ['before-string'],
+                        'throw-nil': ['before-nil'], 'throw-map': ['before-map'], 'throw-finally': ['body', 'cleanup']}
     for identity, case in by_id.items():
         labels = []
         for effect in case['effects']:

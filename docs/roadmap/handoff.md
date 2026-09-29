@@ -834,3 +834,75 @@ production core forms were ported; source provenance is original repository code
 Next unblocked task: add independently decoded caught-exception observations and
 focused exception/effect cases, then use the exact differential evidence to drive
 the M2 binary64/UTF-16 and closure/sequence foundation repairs.
+
+
+## Caught exceptions, cleanup repair and terminal Linux CI — 2026-09-29
+
+The previous turn was progress (local effb7fe shared differential implementation).
+CI run [36629536970](https://github.com/bobby/suss/actions/runs/36629536970) on
+published 37d7c65 is now completed/success, verified through the full downloaded
+log /tmp/suss-ci-37d7c65-success.log. Cached build took 17.41s; 316 expression
+passes/12 existing ignored took 383.27s; stricter conformance has 8 passes/2 manual
+ignored in 208.37s. All other enabled suites passed. This resolves the publication
+hold for effb7fe; it does not establish CI success for these newer commits.
+
+Transport schema 2 adds the exact thrown value to exception observations and a
+recursive ExceptionInfo data/message/cause tag. Old schema 1 and missing thrown
+values fail validation. The pinned ClojureScript serializer now records thrown
+nil, strings and maps, plus body/cleanup effects on a throwing finally path.
+No upstream implementation was copied: the pinned core ex-data/ex-message source
+was consulted to establish that non-Errors return nil; original host transport
+retains the exact thrown object separately. Actual ExceptionInfo still fails at
+Suss compilation (undefined ex-info), exactly as before.
+
+Suss's observation wrapper catches language throws into a Boolean-discriminated
+outcome, then independently decodes the thrown value and partial effect trace.
+Nil, false and zero cannot be mistaken for normal returns. Wasmtime Trap errors
+are classified separately as trap failures, not caught language exceptions.
+Executed fuel exhaustion proves that separation; failed decoding or traps still
+cannot expose a partial trace through this prototype wrapper.
+
+The new finally differential case FAILED before a production repair: cleanup was
+absent from the trace. Focused source regression also failed (exit 101):
+`(try 42 (finally 7))` returned nil/decoded 0 instead of 42. Lowering had treated
+finally-only as a plain block, discarded the body result and skipped cleanup on
+throw; user catch throws also bypassed cleanup. It now guards body plus user catch
+with a private catch: cleanup precedes rethrow on the exceptional path, and the
+existing normal-result path preserves the value while running cleanup. Cleanup
+throws supersede prior exceptions; cleanup executes once. This uses the existing
+IR/backend exception machinery, not a new runtime architecture.
+
+Focused regressions execute normal return, body throw, catch-body throw, cleanup
+throw and exact-once cleanup. The new four differential cases all pass after the
+repair. Current shared corpus: **16 cases, 9 passing, 7 failing, 0 skipped**.
+The same seven known failures remain byte-for-byte unchanged; no finally failure
+was accepted into a green baseline. The 201-case legacy baseline is unchanged.
+
+Commands/results:
+
+- Focused finally regression before repair: exit 101; after repair: passed.
+- `scripts/test-oracle.sh`: fresh pinned reference and Suss execution passed;
+  16 reference observations, 9 differential passes/7 unchanged known failures.
+- `cargo test -p suss-compile --test oracle --locked -- --test-threads=2` with two
+  build jobs: final suite has 4 passes/1 manual capture ignored. Captured values
+  include nil/false/zero/string/map plus partial effects; fuel trap is distinct.
+  The initial trap fixture had compile-stage failures (zero-binding loop and
+  function recur are not supported); a supported bound loop now actually exhausts
+  the 20-million fuel budget and passes the trap assertion, with no skip/default.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 41 passed; new checks
+  reject old schema, incomplete ExceptionInfo and omitted/changed thrown values.
+- `cargo test --workspace --locked -- --test-threads=2` with CARGO_BUILD_JOBS=2:
+  passed; expression suite 317 passes/12 existing ignored (53.90s), stricter
+  conformance 8 passes/2 manual ignored (21.77s). Full log
+  /tmp/suss-finally-full-baseline.log. The fuel-only regression was finalized
+  afterward and passed in the focused oracle suite; production code is unchanged
+  since the full run. No unrelated files or ignores were removed.
+- `rustfmt --edition 2024` on the oracle harness and `git diff --check`: passed.
+
+M1-02 remains open for acceptance review and broader semantic/arity coverage.
+Numeric/UTF-16, sequence/rest representation and ExceptionInfo incompatibilities
+remain explicit M2/M4 foundation work, not reasons to weaken the contract.
+Next unblocked task: implement the accepted shared ABI v1 value representation
+and reader/IR boundaries in M2, starting with lossless binary64 and UTF-16,
+using these differential failures as acceptance tests. Preserve the persistent
+fragment/closure constraints already demonstrated in M0.

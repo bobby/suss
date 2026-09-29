@@ -11,6 +11,7 @@
 (defn items [value] (into-array (map encode value)))
 (defn encode [value]
   (cond
+    (instance? cljs.core/ExceptionInfo value) #js {:tag "exception-info" :data (encode (ex-data value)) :message (encode (ex-message value)) :cause (encode (ex-cause value))}
     (nil? value) #js {:tag "nil"}
     (boolean? value) #js {:tag "bool" :value value}
     (number? value) #js {:tag "f64" :bits (f64-bits value)}
@@ -27,9 +28,9 @@
     (try
       #js {:id identity :status "value" :value (encode (thunk trace)) :effects (items @trace)}
       (catch :default error
-        #js {:id identity :status "exception" :data (encode (ex-data error))
+        #js {:id identity :status "exception" :thrown (encode error) :data (encode (ex-data error))
              :message (encode (ex-message error)) :effects (items @trace)}))))
 (defn -main []
   (let [cases (suss-oracle.cases/observations observation)]
-    (println (.stringify js/JSON #js {:schema 1 :upstream "c4295f303100bbf5afac449242d30bca1126f1a1" :cases (into-array cases)}))))
+    (println (.stringify js/JSON #js {:schema 2 :upstream "c4295f303100bbf5afac449242d30bca1126f1a1" :cases (into-array cases)}))))
 (set! *main-cli-fn* -main)

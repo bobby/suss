@@ -2414,6 +2414,15 @@ fn test_try_catch_with_expressions() {
     assert_eq!(result, 15);
 }
 
+#[test]
+fn test_finally_preserves_result_and_runs_on_throw() {
+    assert_eq!(run_expr_i32("(try 42 (finally 7))"), 42);
+    assert_eq!(run_expr_i32("(let [a (atom 0)] (try (try (throw 9) (finally (swap! a inc))) (catch e (+ e (deref a)))))"), 10);
+    assert_eq!(run_expr_i32("(let [a (atom 0)] (try (try (throw 9) (catch e (throw 11)) (finally (swap! a inc))) (catch e (+ e (deref a)))))"), 12);
+    assert_eq!(run_expr_i32("(try (try (throw 9) (finally (throw 13))) (catch e e))"), 13);
+    assert_eq!(run_expr_i32("(let [a (atom 0)] (let [result (try 42 (catch e 0) (finally (swap! a inc)))] (+ result (deref a))))"), 43);
+}
+
 // ============================================================
 // Atom tests
 // ============================================================

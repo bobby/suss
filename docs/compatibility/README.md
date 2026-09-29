@@ -2,10 +2,10 @@
 
 The [development oracle](../../tests/oracle/README.md) executes the pinned
 ClojureScript source in Node and records lossless tagged reference observations.
-Its 12-case corpus is shared with independently decoded Suss execution:
-**5 differential passing, 7 failing, 0 skipped**. Exact tagged observations and
+Its 16-case corpus is shared with independently decoded Suss execution:
+**9 differential passing, 7 failing, 0 skipped**. Exact tagged observations and
 failure stages are tracked separately from the legacy baseline. Stable known
-failures do not establish compatibility; exception observation and broader
+failures do not establish compatibility; ExceptionInfo implementation and broader
 semantic/arity coverage remain M1-02 work.
 
 The contract is [the design specification](../design/suss-0.3.1.md), using the
