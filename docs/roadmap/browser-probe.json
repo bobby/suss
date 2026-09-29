@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "browser": "Google Chrome 154.0.8037.58",
+  "wasm-tools": "wasm-tools 1.258.0 (5c6d31c78 2026-08-24)",
+  "scope": "single-browser feasibility fixture; not Suss browser output or canonical ABI",
+  "result": {
+    "status": "passed",
+    "checks": [
+      "ES module loading",
+      "WasmGC continuation",
+      "Promise suspension and resume",
+      "cancellation cleanup",
+      "stale callback isolation"
+    ]
+  },
+  "browser_terminated_after_dom_timeout": true,
+  "source_sha256": {
+    "bridge.mjs": "90e01210d9a93945ce4c9e73132809364b3aa7cb9320306720af992b0546b5cd",
+    "continuation.wat": "d79d50d95205e2642cb90500346ddf52468f4532805b4f0904efbe34672e6d4b",
+    "index.html": "b1eca9f6e4b47f7d9d352873a758fc9f620ff4df1b60d4ead895372ee7d85b20",
+    "probe.mjs": "cbc241c721f6f992c27077135a47fec6bb6157d1e9de8d1d8be2f1107a94e346"
+  }
+}

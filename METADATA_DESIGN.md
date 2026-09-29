@@ -1,3 +1,5 @@
+> Historical design: superseded by [the resurrection specification](docs/design/suss-0.3.1.md). Retained as implementation reference only.
+
 # Suss Metadata Design Document
 
 This document outlines the design for implementing comprehensive Clojure-style metadata in Suss, based on the ClojureScript implementation.

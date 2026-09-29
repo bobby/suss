@@ -146,6 +146,11 @@ struct CodeGen<'a> {
     /// Index of the f64 scratch local for WIT import return boxing.
     /// Used when we need to save an f64 value to reorder stack operands.
     f64_scratch_local: std::cell::Cell<u32>,
+    /// Offset inherited by helper emitters while generating a WIT export body.
+    /// Logical language locals follow the raw flattened canonical parameters.
+    param_offset: std::cell::Cell<u32>,
+    /// Canonical exports need result conversion, including those with no params.
+    in_wit_export: std::cell::Cell<bool>,
 }
 
 impl<'a> CodeGen<'a> {
@@ -155,6 +160,8 @@ impl<'a> CodeGen<'a> {
             scratch_local: std::cell::Cell::new(0),
             i64_scratch_local: std::cell::Cell::new(0),
             f64_scratch_local: std::cell::Cell::new(0),
+            param_offset: std::cell::Cell::new(0),
+            in_wit_export: std::cell::Cell::new(false),
         }
     }
 
@@ -5074,13 +5081,18 @@ impl<'a> CodeGen<'a> {
     }
 
     fn generate_expr(&self, expr: &Expr, f: &mut Function) -> CompileResult<()> {
-        self.generate_expr_inner(expr, f, 0, 0)
+        self.generate_expr_inner(expr, f, 0, self.param_offset.get())
     }
 
     /// Generate expression with param_offset for WIT-exported functions.
     /// param_offset is the number of raw WIT params before converted eqref params.
     fn generate_expr_with_offset(&self, expr: &Expr, f: &mut Function, param_offset: u32) -> CompileResult<()> {
-        self.generate_expr_inner(expr, f, 0, param_offset)
+        let previous = self.param_offset.replace(param_offset);
+        let previous_wit = self.in_wit_export.replace(true);
+        let result = self.generate_expr_inner(expr, f, 0, param_offset);
+        self.param_offset.set(previous);
+        self.in_wit_export.set(previous_wit);
+        result
     }
 
     fn generate_expr_inner(&self, expr: &Expr, f: &mut Function, loop_depth: u32, param_offset: u32) -> CompileResult<()> {
@@ -5230,20 +5242,12 @@ impl<'a> CodeGen<'a> {
                         let scratch_base = self.scratch_local.get();
                         self.scratch_local.set(scratch_base + 5);
 
-                        let right_i32_local = scratch_base + 1;
-
-                        // Generate right first, store it
-                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
-                        self.generate_polymorphic_unwrap_i32(f);
-                        f.instruction(&Instruction::LocalSet(right_i32_local));
-
-                        // Generate left (stays on stack)
+                        // Wasm preserves the left value on the operand stack
+                        // while evaluating the right, including across calls.
                         self.generate_expr_inner(left, f, loop_depth, param_offset)?;
                         self.generate_polymorphic_unwrap_i32(f);
-
-                        // Get right from local
-                        f.instruction(&Instruction::LocalGet(right_i32_local));
-                        // Stack: [left, right]
+                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
+                        self.generate_polymorphic_unwrap_i32(f);
 
                         // Perform operation
                         match op {
@@ -5266,11 +5270,13 @@ impl<'a> CodeGen<'a> {
                     (BinOp::Add, Type::F64) => {
                         f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
                         self.generate_expr(left, f)?;
+                        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
                         f.instruction(&Instruction::StructGet {
                             struct_type_index: gc_types::FLOAT64,
                             field_index: gc_types::F64_VALUE,
                         });
                         self.generate_expr(right, f)?;
+                        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
                         f.instruction(&Instruction::StructGet {
                             struct_type_index: gc_types::FLOAT64,
                             field_index: gc_types::F64_VALUE,
@@ -5281,11 +5287,13 @@ impl<'a> CodeGen<'a> {
                     (BinOp::Sub, Type::F64) => {
                         f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
                         self.generate_expr(left, f)?;
+                        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
                         f.instruction(&Instruction::StructGet {
                             struct_type_index: gc_types::FLOAT64,
                             field_index: gc_types::F64_VALUE,
                         });
                         self.generate_expr(right, f)?;
+                        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
                         f.instruction(&Instruction::StructGet {
                             struct_type_index: gc_types::FLOAT64,
                             field_index: gc_types::F64_VALUE,
@@ -5296,11 +5304,13 @@ impl<'a> CodeGen<'a> {
                     (BinOp::Mul, Type::F64) => {
                         f.instruction(&Instruction::I32Const(type_ids::FLOAT64));
                         self.generate_expr(left, f)?;
+                        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
                         f.instruction(&Instruction::StructGet {
                             struct_type_index: gc_types::FLOAT64,
                             field_index: gc_types::F64_VALUE,
                         });
                         self.generate_expr(right, f)?;
+                        f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
                         f.instruction(&Instruction::StructGet {
                             struct_type_index: gc_types::FLOAT64,
                             field_index: gc_types::F64_VALUE,
@@ -5336,20 +5346,12 @@ impl<'a> CodeGen<'a> {
                         let scratch_base = self.scratch_local.get();
                         self.scratch_local.set(scratch_base + 5);
 
-                        let right_i32_local = scratch_base + 1;
-
-                        // Generate right first, store it
-                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
-                        self.generate_polymorphic_unwrap_i32_for_compare(f);
-                        f.instruction(&Instruction::LocalSet(right_i32_local));
-
-                        // Generate left (stays on stack)
+                        // Wasm preserves the left value on the operand stack
+                        // while evaluating the right, including across calls.
                         self.generate_expr_inner(left, f, loop_depth, param_offset)?;
                         self.generate_polymorphic_unwrap_i32_for_compare(f);
-
-                        // Get right from local
-                        f.instruction(&Instruction::LocalGet(right_i32_local));
-                        // Stack: [left, right]
+                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
+                        self.generate_polymorphic_unwrap_i32_for_compare(f);
 
                         let cmp_instr = match op {
                             BinOp::Eq => Instruction::I32Eq,
@@ -5523,7 +5525,7 @@ impl<'a> CodeGen<'a> {
                 } else {
                     // Check if target function is exported (needs WIT marshaling for i32 <-> eqref)
                     // Only relevant when we're in a WIT context (param_offset > 0)
-                    let is_exported = if param_offset > 0 && *func >= user_func_base {
+                    let is_exported = if self.in_wit_export.get() && *func >= user_func_base {
                         let local_idx = (*func - user_func_base) as usize;
                         self.ir.functions.get(local_idx).map_or(false, |f| f.exported)
                     } else {
@@ -5557,7 +5559,7 @@ impl<'a> CodeGen<'a> {
                 // Check if target function is exported (needs WIT marshaling)
                 let num_imports = self.num_imports();
                 let user_func_base = num_imports + NUM_RUNTIME_HELPERS;
-                let is_exported = if param_offset > 0 && *func >= user_func_base {
+                let is_exported = if self.in_wit_export.get() && *func >= user_func_base {
                     let local_idx = (*func - user_func_base) as usize;
                     self.ir.functions.get(local_idx).map_or(false, |f| f.exported)
                 } else {
@@ -5574,8 +5576,13 @@ impl<'a> CodeGen<'a> {
                         f.instruction(&Instruction::I32ShrS);
                     }
                 }
-                f.instruction(&Instruction::ReturnCall(*func));
-                // Note: tail call returns directly, the function's exit marshaling handles return value
+                if self.in_wit_export.get() && !is_exported {
+                    // An internal callee returns a language value. The canonical
+                    // caller must run its own exit conversion before returning.
+                    f.instruction(&Instruction::Call(*func));
+                } else {
+                    f.instruction(&Instruction::ReturnCall(*func));
+                }
             }
 
             Expr::If {
@@ -6448,7 +6455,8 @@ impl<'a> CodeGen<'a> {
                 args,
                 in_tail_position,
             } => {
-                self.generate_protocol_dispatch(obj, *method_id, args, *in_tail_position, f, param_offset)?;
+                self.generate_protocol_dispatch(obj, *method_id, args,
+                    *in_tail_position && !self.in_wit_export.get(), f, param_offset)?;
             }
 
             Expr::GetTypeId(value) => {
@@ -6476,7 +6484,10 @@ impl<'a> CodeGen<'a> {
                 args,
                 in_tail_position,
             } => {
-                self.generate_closure_call(closure, args, *in_tail_position, f)?;
+                // GC callees return a language value, so canonical exports must
+                // keep control for their result conversion after the call.
+                self.generate_closure_call(closure, args,
+                    *in_tail_position && !self.in_wit_export.get(), f)?;
             }
 
             Expr::Apply { func, args } => {
@@ -8306,7 +8317,7 @@ impl<'a> CodeGen<'a> {
     /// - false (i31ref(2)) is falsy
     /// - Everything else is truthy (including 0, empty collections, etc.)
     fn generate_condition(&self, cond: &Expr, f: &mut Function) -> CompileResult<()> {
-        self.generate_condition_inner(cond, f, 0, 0)
+        self.generate_condition_inner(cond, f, 0, self.param_offset.get())
     }
 
     fn generate_condition_inner(&self, cond: &Expr, f: &mut Function, loop_depth: u32, param_offset: u32) -> CompileResult<()> {
@@ -8314,21 +8325,26 @@ impl<'a> CodeGen<'a> {
 
         self.generate_expr_inner(cond, f, loop_depth, param_offset)?;
 
+        // Inspect the evaluated value, not the source expression. Nothing below
+        // emits another expression or call, so this scratch slot cannot be
+        // clobbered while it is live (including for nested conditions).
+        let value = self.scratch_local.get();
+        f.instruction(&Instruction::LocalTee(value));
+
         // All values are now GC refs in GC mode
         // Test if it's an i31ref that could be nil or false
         f.instruction(&Instruction::RefTestNonNull(HeapType::I31));
         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
 
         // Is i31ref - need to check if it's nil (0) or false (2)
-        // Re-evaluate to get the value back, then cast to i31ref
-        self.generate_expr_inner(cond, f, loop_depth + 1, param_offset)?;
+        f.instruction(&Instruction::LocalGet(value));
         // Cast eqref to i31ref (we know it's i31 because we tested for it)
         f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
         f.instruction(&Instruction::I31GetS);
         // Truthy if value != 0 (nil) AND value != 2 (false)
         f.instruction(&Instruction::I32Const(gc_types::NIL_SENTINEL));
         f.instruction(&Instruction::I32Ne);
-        self.generate_expr_inner(cond, f, loop_depth + 1, param_offset)?;
+        f.instruction(&Instruction::LocalGet(value));
         f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
         f.instruction(&Instruction::I31GetS);
         f.instruction(&Instruction::I32Const(gc_types::FALSE_SENTINEL));

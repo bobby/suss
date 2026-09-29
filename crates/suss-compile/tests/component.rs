@@ -691,3 +691,93 @@ world lists-world {
 
     assert!(result.is_ok(), "list<string> export should compile: {:?}", result.err());
 }
+
+/// Encoding and validation do not prove boundary conversions execute correctly.
+/// These prototype fixtures explicitly provide its current private print import;
+/// removing that import from pure libraries remains M5-01.
+fn instantiate_fixture(
+    source: &str,
+    exports: &str,
+) -> (wasmtime::Store<()>, wasmtime::component::Instance) {
+    let wit = format!("package test:execution; world fixture {{ {exports} }}");
+    let (source, wit) = write_temp_files(source, &wit);
+    let bytes = Compiler::new()
+        .compile_files(
+            source.path().to_str().unwrap(),
+            wit.path().to_str().unwrap(),
+        )
+        .unwrap();
+    let mut config = wasmtime::Config::new();
+    config
+        .wasm_gc(true)
+        .wasm_function_references(true)
+        .wasm_tail_call(true)
+        .wasm_exceptions(true)
+        .wasm_component_model(true)
+        .cranelift_opt_level(wasmtime::OptLevel::None);
+    let engine = wasmtime::Engine::new(&config).unwrap();
+    let component = wasmtime::component::Component::new(&engine, bytes).unwrap();
+    let mut linker = wasmtime::component::Linker::new(&engine);
+    linker
+        .instance("test:execution/suss")
+        .unwrap()
+        .func_wrap("print-str", |_, _: (u32, u32)| -> wasmtime::Result<()> {
+            panic!("pure fixture unexpectedly printed")
+        })
+        .unwrap();
+    let mut store = wasmtime::Store::new(&engine, ());
+    let instance = linker.instantiate(&mut store, &component).unwrap();
+    (store, instance)
+}
+
+#[test]
+fn execute_wit_exports_with_internal_calls_and_float_params() {
+    let (mut store, instance) = instantiate_fixture(
+        "(defn helper [x] (+ x 1)) (defn ^:export add-one [x] (helper x)) (defn ^:export double [x] (* x 2.0))",
+        "export add-one: func(x: s32) -> s32; export double: func(x: f64) -> f64;",
+    );
+    let add = instance
+        .get_typed_func::<(i32,), (i32,)>(&mut store, "add-one")
+        .unwrap();
+    assert_eq!(add.call(&mut store, (41,)).unwrap(), (42,));
+    add.post_return(&mut store).unwrap();
+    let double = instance
+        .get_typed_func::<(f64,), (f64,)>(&mut store, "double")
+        .unwrap();
+    assert_eq!(double.call(&mut store, (2.5,)).unwrap(), (5.0,));
+    double.post_return(&mut store).unwrap();
+}
+
+#[test]
+fn execute_wit_exports_with_flattened_option_and_list_return() {
+    let (mut store, instance) = instantiate_fixture(
+        "(defn ^:export unwrap-or [x default] (if (nil? x) default x)) (defn ^:export make-list [] [1 2 3])",
+        "export unwrap-or: func(x: option<s32>, default: s32) -> s32; export make-list: func() -> list<s32>;",
+    );
+    let unwrap = instance
+        .get_typed_func::<(Option<i32>, i32), (i32,)>(&mut store, "unwrap-or")
+        .unwrap();
+    assert_eq!(unwrap.call(&mut store, (Some(3), 7)).unwrap(), (3,));
+    unwrap.post_return(&mut store).unwrap();
+    assert_eq!(unwrap.call(&mut store, (None, 7)).unwrap(), (7,));
+    unwrap.post_return(&mut store).unwrap();
+    let list = instance
+        .get_typed_func::<(), (Vec<i32>,)>(&mut store, "make-list")
+        .unwrap();
+    assert_eq!(list.call(&mut store, ()).unwrap().0, vec![1, 2, 3]);
+    list.post_return(&mut store).unwrap();
+}
+
+#[test]
+fn execute_wit_export_closure_and_protocol_results() {
+    let (mut store, instance) = instantiate_fixture(
+        "(defn ^:export closure [x] ((fn [n] (+ n 1)) x)) (defn ^:export first-of [xs] (-first xs))",
+        "export closure: func(x: s32) -> s32; export first-of: func(xs: list<s32>) -> s32;",
+    );
+    let closure = instance.get_typed_func::<(i32,), (i32,)>(&mut store, "closure").unwrap();
+    assert_eq!(closure.call(&mut store, (41,)).unwrap(), (42,));
+    closure.post_return(&mut store).unwrap();
+    let first = instance.get_typed_func::<(Vec<i32>,), (i32,)>(&mut store, "first-of").unwrap();
+    assert_eq!(first.call(&mut store, (vec![7, 8],)).unwrap(), (7,));
+    first.post_return(&mut store).unwrap();
+}

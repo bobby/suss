@@ -1491,13 +1491,27 @@
         (drop-while pred (-rest s))
         s))))
 
-(defn reduce
-  "Reduces coll using f with init as initial value."
+(defn -seq-reduce
   [f init coll]
   (loop [acc init s (seq coll)]
     (if s
       (recur (f acc (first s)) (next s))
       acc)))
+
+(defn reduce
+  "Reduces coll using f. Without init, uses the first element, or (f) if empty."
+  ;; The prototype's component analyzer does not yet accept multi-arity defn.
+  ;; Keep this adapter until M2 unifies the compiler pipelines. Reduced and
+  ;; protocol-optimized reduction remain tracked in M4-04.
+  [f init-or-coll & remaining]
+  (if (= (count remaining) 0)
+    (let [s (seq init-or-coll)]
+      (if s
+        (-seq-reduce f (first s) (next s))
+        (f)))
+    (if (= (count remaining) 1)
+      (-seq-reduce f init-or-coll (first remaining))
+      (throw "Invalid arity: reduce expects 2 or 3 arguments"))))
 
 (defn frequencies
   "Returns a map from distinct items in coll to the number of times they appear."

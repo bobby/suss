@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "wasmtime": "wasmtime 49.0.1 (46c23a87d 2026-09-24)",
+  "wasm-tools": "wasm-tools 1.258.0 (5c6d31c78 2026-08-24)",
+  "scope": "candidate CLI; production Cargo dependencies unchanged",
+  "probes": [
+    {
+      "probe": "gc",
+      "phase": "execute",
+      "passed": true,
+      "source_sha256": "427d1626f11164856a8ece8c0a6bdabd9af14ec411224f8704eaab0338aa44a5",
+      "stdout": "42",
+      "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future"
+    },
+    {
+      "probe": "tail-call",
+      "phase": "execute",
+      "passed": true,
+      "source_sha256": "9f2215e870247a1b3d5dca19e4dbb5b936dac9f0d714b5b22c0a9bf6b82b88e7",
+      "stdout": "42",
+      "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future"
+    },
+    {
+      "probe": "function-references",
+      "phase": "execute",
+      "passed": true,
+      "source_sha256": "729bc644023b8aa7006700bcfe6cac7e9c1a877fefd57ce3b63de88fab13013f",
+      "stdout": "42",
+      "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future"
+    },
+    {
+      "probe": "exceptions",
+      "phase": "execute",
+      "passed": true,
+      "source_sha256": "8f9657ccc0215049761e32746cc385fc508a14949e6e5cc83d9c60ac1dcc0a07",
+      "stdout": "42",
+      "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future"
+    },
+    {
+      "probe": "map",
+      "phase": "compile-type-declarations",
+      "passed": true,
+      "source_sha256": "b0360c3dce8a3f59fc7a54f2fd844a82e3aed8ff367acfede932348e76ad7ebb",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "probe": "future-stream",
+      "phase": "compile-type-declarations",
+      "passed": true,
+      "source_sha256": "591927a3784e0e8e7a882f066d29a3402e08f62d7bcaca836170f4526c4d40d2",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "probe": "implements",
+      "phase": "compile-type-declarations",
+      "passed": true,
+      "source_sha256": "f4ed196c89e52bd2662eb801cafafdb97580906d941d38b741dacd64c9ff0dcd",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "probe": "wit-map-async-external-id",
+      "phase": "parse-and-print-wit",
+      "passed": true,
+      "source_sha256": "d3ba79d65841f57a15b13d746817d8d6cbd3e082c145590600cb3e27c32ce2d3",
+      "stdout": "package suss:profile;\n\ninterface io {\n  type counts = map<string, u32>;\n\n  tally: func(values: counts) -> counts;\n\n  read: async func() -> tuple<stream<u8>, future<result>>;\n}\n\nworld profile {\n  import io;\n\n  @external-id(\"profile-run\")\n  export run: async func() -> result;\n}",
+      "stderr": ""
+    }
+  ],
+  "remaining": [
+    "Official WASI 0.3.1 package graph lock with content hashes",
+    "Async canonical lift/lower, callbacks, cancellation and resource transfers",
+    "Map values passed bidirectionally (not just type declarations)",
+    "Candidate Rust dependency migration and shared-runtime probe on that engine",
+    "Browser runtime and async bridge"
+  ]
+}

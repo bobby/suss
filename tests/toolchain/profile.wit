@@ -1,0 +1,13 @@
+package suss:profile;
+
+interface io {
+    type counts = map<string, u32>;
+    tally: func(values: counts) -> counts;
+    read: async func() -> tuple<stream<u8>, future<result>>;
+}
+
+world profile {
+    import io;
+    @external-id("profile-run")
+    export run: async func() -> result;
+}

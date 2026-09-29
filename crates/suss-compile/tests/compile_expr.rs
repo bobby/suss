@@ -8,16 +8,12 @@
 //! - Strings: arrayref (STRING type)
 
 use suss_compile::Compiler;
-use wasmtime::{Config, Engine, Instance, Linker, Module, Store, Val};
+use wasmtime::{Engine, Instance, Linker, Module, Store, Val};
 
-/// Create a GC-enabled wasmtime engine
+mod support;
+
 fn gc_engine() -> Engine {
-    let mut config = Config::new();
-    config.wasm_gc(true);
-    config.wasm_function_references(true);
-    config.wasm_tail_call(true);
-    config.wasm_exceptions(true);
-    Engine::new(&config).expect("engine creation failed")
+    support::engine()
 }
 
 /// GC sentinel constants
@@ -2860,4 +2856,87 @@ fn test_symbol_from_string() {
 fn test_keyword_ns_from_string() {
     let result = run_expr_i32("(if (= (keyword \"ns\" \"a\") :ns/a) 1 0)");
     assert_eq!(result, 1);
+}
+#[test]
+fn condition_evaluates_effect_once() {
+    assert_eq!(
+        run_expr_i32("(let [a (atom 0)] (if (swap! a inc) 10 20) (deref a))"),
+        1
+    );
+}
+
+#[test]
+fn condition_preserves_falsey_and_truthy_effects() {
+    for condition in ["nil", "false", "true", "0", "[]", "1.5"] {
+        let source =
+            format!("(let [a (atom 0)] (if (do (swap! a inc) {condition}) 10 20) (deref a))");
+        assert_eq!(run_expr_i32(&source), 1, "{condition}");
+    }
+}
+
+#[test]
+fn nested_conditions_preserve_effect_order() {
+    assert_eq!(
+        run_expr_i32(
+            "(let [a (atom 0)] (if (if (do (swap! a inc) false) true (do (swap! a inc) 0)) (swap! a inc) 99) (deref a))"
+        ),
+        3
+    );
+}
+
+#[test]
+fn reduce_without_initial_value() {
+    assert_eq!(run_expr_i32("(reduce + [1 2 3])"), 6);
+    assert_eq!(run_expr_i32("(reduce + [])"), 0);
+    assert_eq!(run_expr_i32("(reduce (fn [a b] (+ a b)) [8])"), 8);
+    assert_eq!(run_expr_i32("(reduce + 10 [1 2 3])"), 16);
+}
+
+#[test]
+fn comparison_arguments_evaluate_once_even_when_false() {
+    assert_eq!(
+        run_expr_i32("(let [a (atom 0)] (< (swap! a inc) (swap! a inc) (swap! a inc)) (deref a))"),
+        3
+    );
+    assert_eq!(
+        run_expr_i32(
+            "(let [a (atom 0)] (< (do (swap! a inc) 9) (do (swap! a inc) 2) (do (swap! a inc) 3)) (deref a))"
+        ),
+        3
+    );
+}
+
+#[test]
+fn arithmetic_and_equality_preserve_argument_effect_order() {
+    assert_eq!(
+        run_expr_i32("(let [a (atom 0)] (- (swap! a inc) (swap! a inc)))"),
+        -1
+    );
+    assert_eq!(
+        run_expr_i32("(let [a (atom 0)] (= (swap! a inc) (swap! a inc) (swap! a inc)) (deref a))"),
+        3
+    );
+    assert!(run_expr_bool("(= [1 2] [1 2])"));
+    assert!(!run_expr_bool("(= [1 2] [1 3])"));
+    assert!(run_expr_bool("(< 1)"));
+}
+
+#[test]
+fn known_function_arity_errors_are_compile_diagnostics() {
+    for expression in ["(defn f [x] x) (f)", "(defn f [x] x) (f 1 2)", "(reduce +)"] {
+        let error = Compiler::new()
+            .compile_expr(expression)
+            .expect_err(expression)
+            .to_string();
+        assert!(error.contains("Invalid arity"), "{expression}: {error}");
+    }
+}
+
+#[test]
+fn lexical_callees_shadow_global_and_intrinsic_names() {
+    assert_eq!(
+        run_expr_i32("(defn f [x] x) (let [f (fn [x y] (+ x y))] (f 20 22))"),
+        42
+    );
+    assert_eq!(run_expr_i32("(let [inc (fn [x] (+ x 10))] (inc 2))"), 12);
 }

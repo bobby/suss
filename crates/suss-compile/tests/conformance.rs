@@ -1,384 +1,277 @@
-//! Conformance tests - verify Suss implementation against ClojureScript semantics
-//!
-//! Loads test cases from reference/cljs-tests/*.sus and runs them through
-//! the compiler and wasmtime to verify correctness.
-
+//! Strict prototype baseline. Known failures are tracked, never counted as passes.
+mod support;
+use std::collections::{BTreeMap, HashMap, HashSet};
+use std::path::PathBuf;
+use std::sync::OnceLock;
+use support::decode::{Decoder, values_match};
 use suss_compile::Compiler;
-use suss_core::{Edn, Keyword, Number};
-use suss_reader::{parse_all, ParserState};
-use std::collections::HashMap;
-use std::path::Path;
+use suss_core::Edn;
+use suss_reader::{ParserState, parse_all};
 use wasmtime::{Config, Engine, Linker, Module, Store, Val};
 
-/// A single conformance test case
+type Failure = (String, String);
+type Baseline = BTreeMap<String, Failure>;
+
 #[derive(Debug)]
-struct ConformanceTest {
-    name: String,
-    category: String,
+struct Case {
+    id: String,
     expr: String,
     expected: Edn,
-    skip: bool,
 }
 
-/// Result of running a conformance test
-#[derive(Debug)]
-enum TestResult {
-    Pass,
-    Fail { expected: String, actual: String },
-    Skip { reason: String },
-    Error { message: String },
+fn root() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
-/// GC sentinel constants
-const NIL_SENTINEL: i32 = 0;
-const FALSE_SENTINEL: i32 = 2;
-const TRUE_SENTINEL: i32 = 4;
-
-/// Create a GC-enabled wasmtime engine
-fn gc_engine() -> Engine {
-    let mut config = Config::new();
-    config.wasm_gc(true);
-    config.wasm_function_references(true);
-    config.wasm_tail_call(true);
-    config.wasm_exceptions(true);
-    Engine::new(&config).expect("engine creation failed")
-}
-
-/// Parse test file and extract test cases
-fn load_tests_from_file(path: &Path) -> Vec<ConformanceTest> {
-    let content = std::fs::read_to_string(path).expect("failed to read test file");
-    let mut state = ParserState::new("suss");
-    let parsed = parse_all(&content, &mut state).expect("failed to parse test file");
-
-    let mut tests = Vec::new();
-
-    // The file should contain a single vector of test maps
-    if let Some(Edn::Vector(test_maps)) = parsed.first() {
-        for test_map in test_maps {
-            if let Edn::Map(pairs) = test_map {
-                let map: HashMap<String, &Edn> = pairs
-                    .iter()
-                    .filter_map(|(k, v)| {
-                        if let Edn::Keyword(kw) = k {
-                            Some((kw.name.clone(), v))
-                        } else {
-                            None
-                        }
-                    })
-                    .collect();
-
-                let name = match map.get("name") {
-                    Some(Edn::String(s)) => s.clone(),
-                    _ => continue,
-                };
-
-                let category = match map.get("category") {
-                    Some(Edn::Keyword(k)) => k.name.clone(),
-                    _ => "unknown".to_string(),
-                };
-
-                let expr = match map.get("expr") {
-                    Some(Edn::String(s)) => s.clone(),
-                    _ => continue,
-                };
-
-                let expected = match map.get("expected") {
-                    Some(e) => (*e).clone(),
-                    None => continue,
-                };
-
-                let skip = matches!(map.get("skip"), Some(Edn::Bool(true)));
-
-                tests.push(ConformanceTest {
-                    name,
-                    category,
-                    expr,
-                    expected,
-                    skip,
-                });
-            }
-        }
-    }
-
-    tests
-}
-
-/// Decode WASM GC value back to Edn for comparison
-fn decode_wasm_result(store: &mut Store<()>, val: &Val) -> Result<Edn, String> {
-    match val {
-        Val::AnyRef(Some(anyref)) => {
-            // Try to extract as i31 first
-            match anyref.as_i31(store) {
-                Ok(Some(i31)) => {
-                    let raw = i31.get_i32();
-                    match raw {
-                        NIL_SENTINEL => Ok(Edn::Nil),
-                        FALSE_SENTINEL => Ok(Edn::Bool(false)),
-                        TRUE_SENTINEL => Ok(Edn::Bool(true)),
-                        _ => {
-                            // Small integer: encoding is (n << 1) | 1
-                            let n = raw >> 1;
-                            Ok(Edn::Number(Number::Integer(n.into())))
-                        }
-                    }
-                }
-                Ok(None) => {
-                    // It's a struct or array - for now just report as success
-                    // since we can't easily decode complex structures
-                    Ok(Edn::Symbol(suss_core::Symbol::new("<gc-struct>")))
-                }
-                Err(e) => Err(format!("i31 extraction error: {:?}", e)),
-            }
-        }
-        Val::AnyRef(None) => Ok(Edn::Nil),
-        _ => Err(format!("unexpected value type: {:?}", val)),
-    }
-}
-
-/// Compare expected and actual values
-fn values_match(expected: &Edn, actual: &Edn) -> bool {
-    match (expected, actual) {
-        (Edn::Nil, Edn::Nil) => true,
-        (Edn::Bool(e), Edn::Bool(a)) => e == a,
-        (Edn::Number(e), Edn::Number(a)) => {
-            // Compare numbers, handling int/float equivalence
-            match (e, a) {
-                (Number::Integer(ei), Number::Integer(ai)) => ei == ai,
-                (Number::Float(ef), Number::Float(af)) => (ef - af).abs() < 0.0001,
-                (Number::Integer(ei), Number::Float(af)) => {
-                    let ei_f64: f64 = ei.to_string().parse().unwrap_or(f64::NAN);
-                    (ei_f64 - af).abs() < 0.0001
-                }
-                (Number::Float(ef), Number::Integer(ai)) => {
-                    let ai_f64: f64 = ai.to_string().parse().unwrap_or(f64::NAN);
-                    (ef - ai_f64).abs() < 0.0001
-                }
-                _ => false,
-            }
-        }
-        (Edn::Keyword(e), Edn::Keyword(a)) => e == a,
-        (Edn::Symbol(e), Edn::Symbol(a)) => e == a,
-        (Edn::String(e), Edn::String(a)) => e == a,
-        // For complex structures, we accept if actual is a GC struct placeholder
-        (_, Edn::Symbol(s)) if s.name == "<gc-struct>" => true,
-        _ => false,
-    }
-}
-
-/// Run a single conformance test
-fn run_test(test: &ConformanceTest) -> TestResult {
-    if test.skip {
-        return TestResult::Skip {
-            reason: "marked as skip".to_string(),
+fn cases() -> Vec<Case> {
+    let mut cases = Vec::new();
+    let mut names = HashSet::new();
+    for file in ["core", "collections"] {
+        let path = root().join(format!("reference/cljs-tests/{file}.sus"));
+        let content = std::fs::read_to_string(&path).expect("required conformance file missing");
+        let forms =
+            parse_all(&content, &mut ParserState::new("suss")).expect("malformed conformance file");
+        assert_eq!(forms.len(), 1, "{} must contain one vector", path.display());
+        let Edn::Vector(entries) = &forms[0] else {
+            panic!("expected test vector")
         };
+        assert!(!entries.is_empty(), "empty conformance file");
+        for entry in entries {
+            let Edn::Map(pairs) = entry else {
+                panic!("expected test map: {entry:?}")
+            };
+            let mut fields = HashMap::new();
+            for (key, val) in pairs {
+                let Edn::Keyword(key) = key else {
+                    panic!("non-keyword test field")
+                };
+                assert!(
+                    fields.insert(key.name.as_str(), val).is_none(),
+                    "duplicate test field"
+                );
+            }
+            let Some(Edn::String(name)) = fields.get("name") else {
+                panic!("missing test name")
+            };
+            let Some(Edn::String(expr)) = fields.get("expr") else {
+                panic!("missing expression: {name}")
+            };
+            let expected = fields.get("expected").expect("missing expected value");
+            assert!(
+                !matches!(fields.get("skip"), Some(Edn::Bool(true))),
+                "{name}: record a known failure instead of a blanket skip"
+            );
+            let id = format!("{file}/{name}");
+            assert!(names.insert(id.clone()), "duplicate case {id}");
+            cases.push(Case {
+                id,
+                expr: expr.clone(),
+                expected: (*expected).clone(),
+            });
+        }
     }
+    cases
+}
 
-    // Compile expression
+fn engine() -> Engine {
+    static ENGINE: OnceLock<Engine> = OnceLock::new();
+    ENGINE
+        .get_or_init(|| {
+            let mut cfg = Config::new();
+            cfg.wasm_gc(true)
+                .wasm_function_references(true)
+                .wasm_tail_call(true)
+                .wasm_exceptions(true)
+                .consume_fuel(true)
+                .cranelift_opt_level(wasmtime::OptLevel::None);
+            Engine::new(&cfg).expect("conformance engine")
+        })
+        .clone()
+}
+
+fn failure(kind: &str, err: impl std::fmt::Display) -> Failure {
+    (kind.into(), err.to_string())
+}
+
+fn run(compiler: &mut Compiler, engine: &Engine, case: &Case) -> Result<(), Failure> {
+    let compiled = compiler
+        .compile_expr_cached(&case.expr)
+        .map_err(|e| failure("compile", e))?;
+    if compiled.is_component {
+        return Err(failure("artifact", "expected core module"));
+    }
+    let module =
+        Module::new(engine, &compiled.wasm).map_err(|e| failure("validation", format!("{e:#}")))?;
+    let mut store = Store::new(engine, ());
+    store.set_fuel(20_000_000).unwrap();
+    let mut linker = Linker::new(engine);
+    linker
+        .func_wrap("suss", "print_str", |_: i32, _: i32| {})
+        .unwrap();
+    let instance = linker
+        .instantiate(&mut store, &module)
+        .map_err(|e| failure("instantiate", format!("{e:#}")))?;
+    let eval = instance
+        .get_func(&mut store, "eval")
+        .ok_or_else(|| failure("artifact", "missing eval"))?;
+    let mut results = [Val::null_any_ref()];
+    eval.call(&mut store, &[], &mut results)
+        .map_err(|e| failure("execution", format!("{e:#}")))?;
+    let actual = Decoder::new(compiler)
+        .decode(&mut store, &results[0])
+        .map_err(|e| failure("decode", e))?;
+    if values_match(&case.expected, &actual) {
+        Ok(())
+    } else {
+        Err(failure(
+            "value",
+            format!("expected {:?}; actual {:?}", case.expected, actual),
+        ))
+    }
+}
+
+fn observe() -> (Baseline, usize) {
+    let engine = engine();
     let mut compiler = Compiler::new();
-    let wasm_bytes = match compiler.compile_expr(&test.expr) {
-        Ok(bytes) => bytes,
-        Err(e) => {
-            return TestResult::Error {
-                message: format!("compilation failed: {:?}", e),
-            }
-        }
-    };
-
-    // Load and run
-    let engine = gc_engine();
-    let module = match Module::new(&engine, &wasm_bytes) {
-        Ok(m) => m,
-        Err(e) => {
-            return TestResult::Error {
-                message: format!("module creation failed: {}", e),
-            }
-        }
-    };
-
-    let mut store = Store::new(&engine, ());
-    let mut linker: Linker<()> = Linker::new(&engine);
-    linker.func_wrap("suss", "print_str", |mut caller: wasmtime::Caller<'_, ()>, ptr: i32, len: i32| {
-        if let Some(memory) = caller.get_export("memory").and_then(|e| e.into_memory()) {
-            let mut buf = vec![0u8; len as usize];
-            let _ = memory.read(&caller, ptr as usize, &mut buf);
-        }
-    }).expect("linker func_wrap failed");
-    let instance = match linker.instantiate(&mut store, &module) {
-        Ok(i) => i,
-        Err(e) => {
-            return TestResult::Error {
-                message: format!("instantiation failed: {}", e),
-            }
-        }
-    };
-
-    let eval_fn = match instance.get_func(&mut store, "eval") {
-        Some(f) => f,
-        None => {
-            return TestResult::Error {
-                message: "eval function not found".to_string(),
-            }
-        }
-    };
-
-    let mut results = vec![Val::null_any_ref()];
-    if let Err(e) = eval_fn.call(&mut store, &[], &mut results) {
-        return TestResult::Error {
-            message: format!("execution failed: {}", e),
-        };
-    }
-
-    // Decode result
-    let actual = match decode_wasm_result(&mut store, &results[0]) {
-        Ok(v) => v,
-        Err(e) => {
-            return TestResult::Error {
-                message: format!("decode failed: {}", e),
-            }
-        }
-    };
-
-    // Compare
-    if values_match(&test.expected, &actual) {
-        TestResult::Pass
-    } else {
-        TestResult::Fail {
-            expected: format!("{:?}", test.expected),
-            actual: format!("{:?}", actual),
+    let cases = cases();
+    let mut failures = Baseline::new();
+    for case in &cases {
+        if let Err(failure) = run(&mut compiler, &engine, case) {
+            println!("KNOWN/OBSERVED {}: {}: {}", case.id, failure.0, failure.1);
+            failures.insert(case.id.clone(), failure);
         }
     }
-}
-
-/// Run all conformance tests from a file
-fn run_conformance_file(path: &Path) -> (usize, usize, usize, usize) {
-    let tests = load_tests_from_file(path);
-    let mut passed = 0;
-    let mut failed = 0;
-    let mut skipped = 0;
-    let mut errors = 0;
-
-    for test in &tests {
-        let result = run_test(test);
-        match &result {
-            TestResult::Pass => {
-                passed += 1;
-                println!("  [PASS] {}/{}", test.category, test.name);
-            }
-            TestResult::Fail { expected, actual } => {
-                failed += 1;
-                println!("  [FAIL] {}/{}", test.category, test.name);
-                println!("         expr: {}", test.expr);
-                println!("         expected: {}", expected);
-                println!("         actual: {}", actual);
-            }
-            TestResult::Skip { reason } => {
-                skipped += 1;
-                println!("  [SKIP] {}/{} - {}", test.category, test.name, reason);
-            }
-            TestResult::Error { message } => {
-                errors += 1;
-                println!("  [ERROR] {}/{}", test.category, test.name);
-                println!("          expr: {}", test.expr);
-                println!("          {}", message);
-            }
-        }
-    }
-
-    (passed, failed, skipped, errors)
+    println!(
+        "{} cases: {} passing, {} failing, 0 skipped",
+        cases.len(),
+        cases.len() - failures.len(),
+        failures.len()
+    );
+    (failures, cases.len())
 }
 
 #[test]
-fn test_conformance_collections() {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("reference/cljs-tests/collections.sus");
-
-    if !path.exists() {
-        println!("Skipping: {} not found", path.display());
-        return;
-    }
-
-    println!("\n=== Collections Conformance Tests ===");
-    let (passed, failed, skipped, errors) = run_conformance_file(&path);
-    println!(
-        "\nResults: {} passed, {} failed, {} skipped, {} errors",
-        passed, failed, skipped, errors
+fn conformance_matches_reviewed_baseline() {
+    let expected: Baseline = serde_json::from_str(
+        &std::fs::read_to_string(root().join("docs/compatibility/known-failures.json"))
+            .expect("required known-failure baseline missing"),
+    )
+    .expect("malformed baseline");
+    let (actual, _) = observe();
+    // Exact outcomes catch regressions, changed failures, stale entries and
+    // unexpected passes. Updating this file is an explicit reviewed operation.
+    assert_eq!(
+        actual, expected,
+        "conformance changed: review each difference, fix regressions and remove resolved failures"
     );
-
-    // Don't fail the test for now - just report results
-    // assert_eq!(failed + errors, 0, "Some conformance tests failed");
 }
 
 #[test]
-fn test_conformance_core() {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("reference/cljs-tests/core.sus");
-
-    if !path.exists() {
-        println!("Skipping: {} not found", path.display());
-        return;
-    }
-
-    println!("\n=== Core Conformance Tests ===");
-    let (passed, failed, skipped, errors) = run_conformance_file(&path);
-    println!(
-        "\nResults: {} passed, {} failed, {} skipped, {} errors",
-        passed, failed, skipped, errors
-    );
-
-    // Don't fail the test for now - just report results
-    // assert_eq!(failed + errors, 0, "Some conformance tests failed");
+#[ignore = "manual evidence capture; review the diff before accepting this baseline"]
+fn record_known_failures() {
+    let (failures, _) = observe();
+    std::fs::write(
+        root().join("docs/compatibility/known-failures.json"),
+        serde_json::to_string_pretty(&failures).unwrap() + "\n",
+    )
+    .unwrap();
 }
 
-/// Run all conformance tests and print summary
 #[test]
-fn test_conformance_all() {
-    let base = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("reference/cljs-tests");
-
-    if !base.exists() {
-        println!("Skipping: {} not found", base.display());
-        return;
-    }
-
-    let mut total_passed = 0;
-    let mut total_failed = 0;
-    let mut total_skipped = 0;
-    let mut total_errors = 0;
-
-    for file in &["collections.sus", "core.sus"] {
-        let path = base.join(file);
-        if path.exists() {
-            println!("\n=== {} ===", file);
-            let (passed, failed, skipped, errors) = run_conformance_file(&path);
-            total_passed += passed;
-            total_failed += failed;
-            total_skipped += skipped;
-            total_errors += errors;
-        }
-    }
-
-    println!("\n=== TOTAL ===");
-    println!(
-        "{} passed, {} failed, {} skipped, {} errors",
-        total_passed, total_failed, total_skipped, total_errors
-    );
-
-    let pass_rate = if total_passed + total_failed > 0 {
-        (total_passed as f64 / (total_passed + total_failed) as f64) * 100.0
-    } else {
-        0.0
+fn comparison_rejects_opaque_values_and_wrong_collections() {
+    let read = |s| {
+        parse_all(s, &mut ParserState::new("suss"))
+            .unwrap()
+            .remove(0)
     };
-    println!("Pass rate: {:.1}%", pass_rate);
+    assert!(!values_match(&read("42"), &read("<gc-struct>")));
+    assert!(!values_match(&read("[1 2]"), &read("[1 3]")));
+    assert!(!values_match(&read("{:a 1}"), &read("{:a 2}")));
+    assert!(!values_match(&read("#{1 2}"), &read("#{1 3}")));
+    assert!(values_match(&read("{:a 1 :b 2}"), &read("{:b 2 :a 1}")));
+    assert!(values_match(&read("[1 2]"), &read("(1 2)")));
+    assert!(!values_match(&read("false"), &read("nil")));
+    assert!(!values_match(&read("1.0"), &read("1.00001")));
+    assert!(!values_match(
+        &read("9007199254740993"),
+        &read("9007199254740992.0")
+    ));
+    assert!(!values_match(&read("0"), &read("-0.0")));
+}
+
+#[test]
+fn decoder_observes_nested_values_and_trie_boundaries() {
+    let engine = engine();
+    let mut compiler = Compiler::new();
+    for (expr, expected) in [
+        (
+            "{:a [1 nil false] :b #{2 3}}",
+            "{:b #{3 2} :a [1 nil false]}",
+        ),
+        ("(cons 1 (cons 2 nil))", "(1 2)"),
+        (
+            "[536870912 2.5 \"hello\" :a/b (symbol \"c/d\")]",
+            "[536870912 2.5 \"hello\" :a/b c/d]",
+        ),
+    ] {
+        let expected = parse_all(expected, &mut ParserState::new("suss"))
+            .unwrap()
+            .remove(0);
+        run(
+            &mut compiler,
+            &engine,
+            &Case {
+                id: expr.into(),
+                expr: expr.into(),
+                expected,
+            },
+        )
+        .unwrap();
+    }
+    let items = (0..1057)
+        .map(|n| Edn::Number(suss_core::Number::from_i64(n)))
+        .collect();
+    run(
+        &mut compiler,
+        &engine,
+        &Case {
+            id: "vector trie".into(),
+            expr: "(loop [v [] i 0] (if (< i 1057) (recur (conj v i) (inc i)) v))".into(),
+            expected: Edn::Vector(items),
+        },
+    )
+    .unwrap();
+}
+
+fn case_catalog() -> BTreeMap<String, (String, String)> {
+    cases()
+        .into_iter()
+        .map(|case| (case.id, (case.expr, format!("{:?}", case.expected))))
+        .collect()
+}
+
+#[test]
+fn case_catalog_matches_reviewed_inputs() {
+    let expected: BTreeMap<String, (String, String)> = serde_json::from_str(
+        &std::fs::read_to_string(root().join("docs/compatibility/cases.json"))
+            .expect("required conformance catalog missing"),
+    )
+    .expect("malformed conformance catalog");
+    // Also protect passing cases: an empty failure baseline alone cannot detect
+    // removed tests or changed expectations. Input changes require review too.
+    assert_eq!(
+        case_catalog(),
+        expected,
+        "conformance inputs changed; review the catalog diff"
+    );
+}
+
+#[test]
+#[ignore = "manual input catalog update; review removed cases and changed expectations"]
+fn record_case_catalog() {
+    std::fs::write(
+        root().join("docs/compatibility/cases.json"),
+        serde_json::to_string_pretty(&case_catalog()).unwrap() + "\n",
+    )
+    .unwrap();
 }
