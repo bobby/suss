@@ -5,7 +5,7 @@
 //! Reader metadata remains syntax until phase analysis interprets it. Nesting is
 //! bounded to 64 forms to keep diagnostics safe on ordinary thread stacks.
 use crate::{Keyword, ParseError, Symbol};
-use std::ops::Range;
+use std::{collections::VecDeque, ops::Range};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Form {
@@ -28,7 +28,15 @@ pub enum Kind {
     Set(Vec<Form>),
     /// Ordered syntax entries; pairing is checked after conditional removal.
     Map(Vec<Form>),
-    Conditional(Vec<(Keyword, Form)>),
+    /// Ordered feature/body syntax, paired after reader-prefix selection.
+    Conditional(Vec<Form>),
+    /// Discard awaiting conditional selection of its logical target.
+    Discard(Box<Form>),
+    /// Reader prefix awaiting a retained target after conditional selection.
+    Prefix {
+        operator: Box<Form>,
+        target: Box<Form>,
+    },
 }
 
 /// Read portable syntax without namespace resolution or macro execution.
@@ -56,48 +64,174 @@ pub fn read_forms(source: &str) -> Result<Vec<Form>, ParseError> {
 /// in source order. Unmatched forms disappear. :default matches where written.
 /// Syntax quoting, namespace aliases and phase imports belong to later phases.
 pub fn resolve_conditionals(forms: Vec<Form>) -> Result<Vec<Form>, ParseError> {
-    forms
-        .into_iter()
-        .filter_map(|form| match select(form) {
-            Ok(Some(form)) => Some(Ok(form)),
-            Ok(None) => None,
-            Err(e) => Some(Err(e)),
-        })
-        .collect()
+    resolve_sequence(forms, 0)
 }
 
-fn select(mut form: Form) -> Result<Option<Form>, ParseError> {
-    let select_items = |items: Vec<Form>| resolve_conditionals(items);
-    form.kind = match form.kind {
+fn resolve_sequence(forms: Vec<Form>, depth: usize) -> Result<Vec<Form>, ParseError> {
+    let mut following = VecDeque::from(forms);
+    let mut resolved = Vec::new();
+    while let Some(form) = following.pop_front() {
+        if let Some(form) = select(form, &mut following, depth)? {
+            resolved.push(form);
+        }
+    }
+    Ok(resolved)
+}
+
+fn required_selected(
+    following: &mut VecDeque<Form>,
+    depth: usize,
+    span: Range<usize>,
+) -> Result<Form, ParseError> {
+    while let Some(form) = following.pop_front() {
+        if let Some(form) = select(form, following, depth)? {
+            return Ok(form);
+        }
+    }
+    Err(error(span, "Reader prefix requires a retained form"))
+}
+
+fn pending_prefix(kind: &Kind) -> bool {
+    match kind {
+        Kind::Conditional(_) | Kind::Discard(_) => true,
+        Kind::Prefix { target, .. } => pending_prefix(&target.kind),
+        _ => false,
+    }
+}
+
+// An unselected branch reads its body without selecting nested conditionals.
+// Prefix/discard syntax still consumes a logical target within this queue.
+fn skip_required(
+    following: &mut VecDeque<Form>,
+    depth: usize,
+    span: Range<usize>,
+) -> Result<(), ParseError> {
+    while let Some(form) = following.pop_front() {
+        if skip_target(form, following, depth)? {
+            return Ok(());
+        }
+    }
+    Err(error(span, "Reader prefix requires a retained form"))
+}
+
+fn skip_target(
+    form: Form,
+    following: &mut VecDeque<Form>,
+    depth: usize,
+) -> Result<bool, ParseError> {
+    if depth >= 64 {
+        return Err(error(form.span, "Reader selection nesting limit exceeded"));
+    }
+    let present = match form.kind {
+        Kind::Prefix { target, .. } => {
+            if !skip_target(*target, following, depth + 1)? {
+                skip_required(following, depth + 1, form.span.clone())?;
+            }
+            true
+        }
+        Kind::Discard(target) => {
+            if !skip_target(*target, following, depth + 1)? {
+                skip_required(following, depth + 1, form.span.clone())?;
+            }
+            false
+        }
+        _ => true,
+    };
+    if !present && !form.metadata.is_empty() {
+        skip_required(following, depth + 1, form.span)?;
+        return Ok(true);
+    }
+    Ok(present)
+}
+
+fn metadata_target(kind: &Kind) -> bool {
+    matches!(
+        kind,
+        Kind::Symbol(_) | Kind::List(_) | Kind::Vector(_) | Kind::Map(_) | Kind::Set(_)
+    )
+}
+
+fn select(
+    mut form: Form,
+    following: &mut VecDeque<Form>,
+    depth: usize,
+) -> Result<Option<Form>, ParseError> {
+    if depth >= 64 {
+        return Err(error(form.span, "Reader selection nesting limit exceeded"));
+    }
+    let span = form.span.clone();
+    let metadata = std::mem::take(&mut form.metadata);
+    let selected = match form.kind {
         Kind::Conditional(clauses) => {
-            for (key, mut value) in clauses {
+            let mut clauses = VecDeque::from(clauses);
+            let mut selected = None;
+            while let Some(feature) = clauses.pop_front() {
+                let Some(feature) = select(feature, &mut clauses, depth + 1)? else {
+                    continue;
+                };
+                let Kind::Keyword(key) = feature.kind else {
+                    return Err(error(feature.span, "Reader feature must be a keyword"));
+                };
                 if key.namespace.is_none()
                     && matches!(key.name.as_str(), "suss" | "cljs" | "default")
                 {
-                    // Prefix metadata remains attached to the selected syntax.
-                    value.metadata.splice(0..0, form.metadata);
-                    return select(value);
+                    selected = Some(required_selected(&mut clauses, depth + 1, span.clone())?);
+                    break;
                 }
+                skip_required(&mut clauses, depth + 1, span.clone())?;
             }
-            return Ok(None);
+            selected
         }
-        Kind::List(items) => Kind::List(select_items(items)?),
-        Kind::Vector(items) => Kind::Vector(select_items(items)?),
-        Kind::Set(items) => Kind::Set(select_items(items)?),
-        Kind::Map(items) => {
-            let items = select_items(items)?;
-            if items.len() % 2 != 0 {
-                return Err(error(
-                    form.span.clone(),
-                    "Conditional leaves an incomplete map entry",
-                ));
+        Kind::Discard(target) => {
+            if select(*target, following, depth + 1)?.is_none() {
+                required_selected(following, depth + 1, span.clone())?;
             }
-            Kind::Map(items)
+            None
         }
-        other => other,
+        Kind::Prefix { operator, target } => {
+            let target = match select(*target, following, depth + 1)? {
+                Some(target) => target,
+                None => required_selected(following, depth + 1, span.clone())?,
+            };
+            form.span.end = target.span.end;
+            form.kind = Kind::List(vec![*operator, target]);
+            Some(form)
+        }
+        kind => {
+            form.kind = match kind {
+                Kind::List(items) => Kind::List(resolve_sequence(items, depth + 1)?),
+                Kind::Vector(items) => Kind::Vector(resolve_sequence(items, depth + 1)?),
+                Kind::Set(items) => Kind::Set(resolve_sequence(items, depth + 1)?),
+                Kind::Map(items) => {
+                    let items = resolve_sequence(items, depth + 1)?;
+                    if items.len() % 2 != 0 {
+                        return Err(error(span, "Conditional leaves an incomplete map entry"));
+                    }
+                    Kind::Map(items)
+                }
+                other => other,
+            };
+            Some(form)
+        }
     };
-    form.metadata = resolve_conditionals(form.metadata)?;
-    Ok(Some(form))
+    if metadata.is_empty() {
+        return Ok(selected);
+    }
+    let mut selected = match selected {
+        Some(selected) => selected,
+        None => required_selected(following, depth + 1, span.clone())?,
+    };
+    if !metadata_target(&selected.kind) {
+        return Err(error(
+            selected.span,
+            "Metadata requires a symbol or collection",
+        ));
+    }
+    selected
+        .metadata
+        .splice(0..0, resolve_sequence(metadata, depth + 1)?);
+    selected.span.start = span.start;
+    Ok(Some(selected))
 }
 
 fn error(span: Range<usize>, message: impl Into<String>) -> ParseError {
@@ -182,9 +316,12 @@ impl Reader<'_> {
             '{' => {
                 let items = self.items(start, '}')?;
                 if items.len() % 2 != 0
-                    && !items
-                        .iter()
-                        .any(|item| matches!(item.kind, Kind::Conditional(_)))
+                    && !items.iter().any(|item| {
+                        matches!(
+                            item.kind,
+                            Kind::Conditional(_) | Kind::Prefix { .. } | Kind::Discard(_)
+                        )
+                    })
                 {
                     return Err(self.fail(start, "Map requires an even number of forms"));
                 }
@@ -207,7 +344,14 @@ impl Reader<'_> {
                 let mut target = self.required()?;
                 if !matches!(
                     target.kind,
-                    Kind::Symbol(_) | Kind::List(_) | Kind::Vector(_) | Kind::Map(_) | Kind::Set(_)
+                    Kind::Symbol(_)
+                        | Kind::List(_)
+                        | Kind::Vector(_)
+                        | Kind::Map(_)
+                        | Kind::Set(_)
+                        | Kind::Conditional(_)
+                        | Kind::Discard(_)
+                        | Kind::Prefix { .. }
                 ) {
                     return Err(error(
                         target.span,
@@ -234,8 +378,12 @@ impl Reader<'_> {
             '#' => match self.take() {
                 Some('{') => Kind::Set(self.items(start, '}')?),
                 Some('_') => {
-                    self.required()?;
-                    return Ok(None);
+                    let target = self.required()?;
+                    if pending_prefix(&target.kind) {
+                        Kind::Discard(Box::new(target))
+                    } else {
+                        return Ok(None);
+                    }
                 }
                 Some('\'') => self.wrapper(start, "var")?,
                 Some('?') => {
@@ -250,20 +398,30 @@ impl Reader<'_> {
                         return Err(self.fail(start, "Reader conditional requires a list"));
                     }
                     let items = self.items(start, ')')?;
-                    if items.len() % 2 != 0 {
-                        return Err(
-                            self.fail(start, "Reader conditional requires feature/form pairs")
-                        );
+                    // Prefixes can consume following raw forms after an unmatched
+                    // conditional disappears. Static clauses can be checked now;
+                    // dynamic clauses are paired in their isolated selection queue.
+                    if !items.iter().any(|item| {
+                        matches!(
+                            item.kind,
+                            Kind::Conditional(_) | Kind::Prefix { .. } | Kind::Discard(_)
+                        )
+                    }) {
+                        if items.len() % 2 != 0 {
+                            return Err(
+                                self.fail(start, "Reader conditional requires feature/form pairs")
+                            );
+                        }
+                        for pair in items.chunks_exact(2) {
+                            if !matches!(pair[0].kind, Kind::Keyword(_)) {
+                                return Err(error(
+                                    pair[0].span.clone(),
+                                    "Reader feature must be a keyword",
+                                ));
+                            }
+                        }
                     }
-                    let mut items = items.into_iter();
-                    let mut clauses = Vec::new();
-                    while let Some(key) = items.next() {
-                        let Kind::Keyword(key_kind) = key.kind else {
-                            return Err(error(key.span, "Reader feature must be a keyword"));
-                        };
-                        clauses.push((key_kind, items.next().unwrap()));
-                    }
-                    Kind::Conditional(clauses)
+                    Kind::Conditional(items)
                 }
                 Some('#') => {
                     let token = self.token();
@@ -319,7 +477,10 @@ impl Reader<'_> {
             metadata: Vec::new(),
             kind: Kind::Symbol(Symbol::new(name)),
         };
-        Ok(Kind::List(vec![prefix, self.required()?]))
+        Ok(Kind::Prefix {
+            operator: Box::new(prefix),
+            target: Box::new(self.required()?),
+        })
     }
     fn items(&mut self, start: usize, end: char) -> Result<Vec<Form>, ParseError> {
         let mut items = Vec::new();

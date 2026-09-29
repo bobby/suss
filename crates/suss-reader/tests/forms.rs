@@ -3,7 +3,7 @@ use suss_reader::forms::{Kind, read_forms, resolve_conditionals};
 #[test]
 fn apostrophes_continue_tokens_but_quote_at_form_start() {
     let source = "form' ns/form' :name' 'form'";
-    let forms = read_forms(source).unwrap();
+    let forms = resolve_conditionals(read_forms(source).unwrap()).unwrap();
     assert_eq!(forms.len(), 4);
     assert!(matches!(&forms[0].kind, Kind::Symbol(symbol) if symbol.name == "form'"));
     assert!(
@@ -21,6 +21,132 @@ fn apostrophes_continue_tokens_but_quote_at_form_start() {
         read_forms(r#""\1'""#).unwrap()[0].kind,
         Kind::String(vec![1, 39])
     );
+}
+
+#[test]
+fn metadata_targets_are_checked_after_conditional_selection() {
+    let source = "^:export #?(:suss ^:private f :cljs 1)";
+    let forms = resolve_conditionals(read_forms(source).unwrap()).unwrap();
+    assert!(matches!(&forms[0].kind, Kind::Symbol(symbol) if symbol.name == "f"));
+    assert_eq!(forms[0].metadata.len(), 2);
+    assert_eq!(&source[forms[0].metadata[0].span.clone()], ":export");
+    assert_eq!(&source[forms[0].metadata[1].span.clone()], ":private");
+    assert_eq!(forms[0].span.start, 0);
+    let forms = resolve_conditionals(read_forms("[^:a #?(:jvm f) ^:b x]").unwrap()).unwrap();
+    let Kind::Vector(items) = &forms[0].kind else {
+        panic!()
+    };
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0].metadata.len(), 2);
+    assert!(matches!(&items[0].kind, Kind::Symbol(symbol) if symbol.name == "x"));
+    let forms =
+        resolve_conditionals(read_forms("^:a #_ #?(:jvm ignored) discarded retained").unwrap())
+            .unwrap();
+    assert_eq!(forms.len(), 1);
+    assert_eq!(forms[0].metadata.len(), 1);
+    assert!(matches!(&forms[0].kind, Kind::Symbol(symbol) if symbol.name == "retained"));
+    for source in [
+        "^:a #?(:suss 1)",
+        "^:a #?(:jvm x) 1",
+        "^:a #?(:jvm x)",
+        "[^:a #?(:jvm x)]",
+        "^:a #?(:suss #?(:jvm ignored)) retained",
+    ] {
+        let error = resolve_conditionals(read_forms(source).unwrap()).unwrap_err();
+        assert!(error.span.start <= error.span.end && error.span.end <= source.len());
+        assert!(
+            error.message.contains("Metadata")
+                || error.message.contains("prefix")
+                || error.message.contains("conditional"),
+            "{}",
+            error.message
+        );
+    }
+}
+
+#[test]
+fn reader_prefixes_continue_after_unmatched_conditionals_with_bounded_depth() {
+    for (prefix, operator) in [
+        ("'", "quote"),
+        ("@", "deref"),
+        ("#'", "var"),
+        ("`", "syntax-quote"),
+        ("~", "unquote"),
+        ("~@", "unquote-splicing"),
+    ] {
+        let source = format!("{prefix}#?(:jvm ignored) retained");
+        let raw = read_forms(&source).unwrap();
+        let resolved = resolve_conditionals(raw).unwrap();
+        assert_eq!(resolved.len(), 1);
+        assert_eq!(resolved[0].span, 0..source.len());
+        let Kind::List(items) = &resolved[0].kind else {
+            panic!()
+        };
+        assert_eq!(items.len(), 2);
+        assert!(matches!(&items[0].kind, Kind::Symbol(symbol) if symbol.name == operator));
+        assert_eq!(&source[items[0].span.clone()], prefix);
+        assert!(matches!(&items[1].kind, Kind::Symbol(symbol) if symbol.name == "retained"));
+        assert!(
+            resolve_conditionals(read_forms(&format!("{prefix}#?(:jvm ignored)")).unwrap())
+                .is_err()
+        );
+    }
+    let source = "{:key '^:a #?(:jvm ignored) ^:b retained}";
+    let resolved = resolve_conditionals(read_forms(source).unwrap()).unwrap();
+    let Kind::Map(entries) = &resolved[0].kind else {
+        panic!()
+    };
+    assert_eq!(entries.len(), 2);
+    let Kind::List(quoted) = &entries[1].kind else {
+        panic!()
+    };
+    assert_eq!(quoted[1].metadata.len(), 2);
+    assert!(resolve_conditionals(read_forms("['#?(:jvm ignored)] retained").unwrap()).is_err());
+    for (source, retained) in [
+        ("[#_ #?(:jvm ignored) discarded next]", "next"),
+        ("[#_ #_ #?(:jvm ignored) first second next]", "next"),
+        ("[#_ '#?(:jvm ignored) discarded next]", "next"),
+    ] {
+        let forms = resolve_conditionals(read_forms(source).unwrap()).unwrap();
+        let Kind::Vector(items) = &forms[0].kind else {
+            panic!()
+        };
+        assert_eq!(items.len(), 1);
+        assert!(matches!(&items[0].kind, Kind::Symbol(symbol) if symbol.name == retained));
+    }
+    assert!(resolve_conditionals(read_forms("[#_ #?(:jvm ignored)] next").unwrap()).is_err());
+    assert!(
+        resolve_conditionals(read_forms("#?(:suss '#?(:jvm ignored)) retained").unwrap()).is_err()
+    );
+    let flat = format!("{}retained", "'#?(:jvm ignored) ".repeat(65));
+    assert!(
+        resolve_conditionals(read_forms(&flat).unwrap())
+            .unwrap_err()
+            .message
+            .contains("nesting limit")
+    );
+}
+
+#[test]
+fn conditional_clause_pairing_follows_deferred_prefix_selection() {
+    for source in [
+        "#?(:suss #_ 1 2 :cljs 3)",
+        "#?(:suss #_ #?(:jvm ignored) discarded 2 :cljs 3)",
+        "#?(:jvm #?(:jvm 1) :suss 2)",
+        "#?(:jvm '#?(:jvm 1) :suss 2)",
+    ] {
+        let forms = resolve_conditionals(read_forms(source).unwrap()).unwrap();
+        assert_eq!(forms[0].kind, Kind::Number(2.0));
+    }
+    let forms = resolve_conditionals(
+        read_forms("#?(:suss '#?(:jvm ignored) :cljs alternative) retained").unwrap(),
+    )
+    .unwrap();
+    let Kind::List(items) = &forms[0].kind else {
+        panic!()
+    };
+    assert!(matches!(&items[1].kind, Kind::Keyword(key) if key.name == "cljs"));
+    assert!(matches!(&forms[1].kind, Kind::Symbol(symbol) if symbol.name == "retained"));
 }
 
 #[test]
@@ -172,6 +298,7 @@ fn quote_discard_collections_and_terminating_character_literals() {
         "#_ discarded 'x #'a/f `(~x ~@xs) @cell #{1 2} {:a 1 :b 2} \\) \\space \\u0041 \\o377",
     )
     .unwrap();
+    let forms = resolve_conditionals(forms).unwrap();
     assert_eq!(forms.len(), 10);
     for (form, name) in forms.iter().zip(["quote", "var", "syntax-quote", "deref"]) {
         let Kind::List(items) = &form.kind else {

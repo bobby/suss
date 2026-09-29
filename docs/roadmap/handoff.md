@@ -1283,3 +1283,67 @@ remain open. The scalar corpus remains 14 reader observations, separate from
 Next unblocked task remains portable-form HIR/evaluation-order IR and shared-ABI
 lowering/loader integration. Push this review fix to PR #42 and require successful
 CI at that final head before readiness. Do not merge PRs.
+
+## PR #42 follow-up prefix/conditional review — 2026-09-29
+
+The coordinating agent reopened the dispatched review after spotting premature
+metadata target validation. Pinned tools.reader execution with :read-cond :allow
+and features :suss/:cljs confirms `^:export #?(:suss f :cljs g)` yields f with
+export metadata. A selected scalar is invalid; an unmatched conditional lets
+metadata seek the next retained target. The previous reader rejected even the
+valid selected-symbol case before selection. Its focused regression FAILED at
+94b0d19 (exit 101) and passes after this repair.
+
+The same finding affects quote, deref, var-quote and discard: an unmatched target
+conditional must disappear before a prefix finds its logical target. The old
+quote wrapper produced a malformed one-item quote list plus an unwrapped next
+form; its focused regression FAILED at 94b0d19 (two forms instead of one).
+Raw syntax now retains Prefix(operator,target) and conditional-dependent
+Discard(target) forms. Selection consumes retained targets in source order,
+lowers prefixes to lists, and validates metadata only on the retained target.
+Missing targets and scalar metadata targets produce located diagnostics.
+
+Conditional feature/body syntax must also remain flat until prefix/discard
+selection establishes its logical pairs. The deferred-discard clause regression
+FAILED at 94b0d19 (premature odd-pair diagnostic) and passes after the repair.
+Pinned Node execution confirms both ordinary and conditional-dependent discard
+clause examples yield 2. Unselected branch bodies suppress nested feature
+selection: `#?(:jvm #?(:jvm 1) :suss 2)` yields 2. Prefix target lookup stays
+within its containing sequence or enclosing conditional; it cannot consume a
+target outside a closing delimiter. Metadata order, operator byte spans,
+multi-discard chains, map pairing and conditional-body boundaries are tested.
+Both raw and synthesized nesting are bounded to 64, including many flat raw
+prefixes that would otherwise build an unbounded resolved chain. No test stack
+increase or blanket skip was added. No upstream implementation was copied.
+
+The predecessor head 94b0d19 had terminal successful CI
+[36641499909](https://github.com/bobby/suss/actions/runs/36641499909), verified by
+the coordinating agent. This does not certify the follow-up fix. New-head CI
+must pass after publication; no PR was merged by either agent.
+
+Focused validation (CARGO_BUILD_JOBS=2, shared CARGO_TARGET_DIR, no RUSTFLAGS):
+
+- `cargo test -p suss-reader --locked metadata_targets_are_checked_after_conditional_selection -- --exact --test-threads=2`: red at 94b0d19.
+- `cargo test -p suss-reader --locked reader_prefixes_continue_after_unmatched_conditionals_with_bounded_depth -- --exact --test-threads=2`: red at 94b0d19.
+- `cargo test -p suss-reader --locked conditional_clause_pairing_follows_deferred_prefix_selection -- --exact --test-threads=2`: red at 94b0d19.
+- `cargo test -p suss-reader --locked -- --test-threads=2`: 19 legacy plus
+  11 portable tests passed, 0 ignored, including all three repaired regressions.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 42 passed.
+- Formatting and `git diff --check`: passed. Final full baseline follows.
+
+Final full baseline: `cargo test --workspace --locked -- --test-threads=2`
+with CARGO_BUILD_JOBS=2 and the shared CARGO_TARGET_DIR passed (exit 0).
+Log: /private/tmp/suss-review-pr42-prefix-verified-full.log. Results: 14 CLI,
+54 compiler, 317 expressions/12 existing ignored (54.32s), 29 components,
+9 conformance/2 manual ignored (22.13s), 4 oracle/1 manual ignored,
+2 reader-runtime, 7 ABI, 3 shared-GC, 8 async, 8 profile, 8 core,
+19 legacy reader and 11 portable reader passes. Two existing doc examples
+remain ignored. Differential corpus remains 9 passing/7 exact failures/0 skipped;
+no known-failure or expected scalar observations changed.
+
+The syntax contract now documents flat conditional forms, pending prefixes and
+deferred discards. Legacy compiler/evaluator/component paths remain unchanged;
+this is not a new compiler compatibility claim or completed M2 acceptance.
+Next task remains portable-form HIR/evaluation-order IR and shared runtime
+lowering/loader integration. Keep the user-required review/fix/CI gates and do
+not merge PRs.

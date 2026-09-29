@@ -18,12 +18,25 @@ It is separate from the prototype `Edn` runtime/evaluator representation.
   sequence until conditional selection checks pairing; they are not runtime maps.
 - Metadata prefixes remain separate syntax, in source order. They are not runtime
   metadata and do not add a symbol to a function's argument/declaration sequence.
-- Conditional clauses remain ordered syntax. `resolve_conditionals` selects the
+- Conditional feature/body forms remain a flat ordered syntax sequence; pairing
+  waits for prefixes/discards to find their retained targets within that sequence.
+  `resolve_conditionals` selects the
   first `:suss`, `:cljs` or `:default` clause where encountered, recursively, and
-  removes unmatched forms. Selection happens before map entry pairing.
+  skips unselected bodies as syntax without selecting their nested conditionals.
+  It removes unmatched forms. Selection happens before map entry pairing and before
+  reader prefixes find their retained targets. Metadata applies to the selected
+  target, or the next retained target after an unmatched conditional; scalar
+  targets and missing targets fail with located diagnostics.
 
 Comments, commas, quote/syntax-quote/unquote/deref/var-quote, sets and discard are
-recognized. Nesting is bounded to 64 forms for ordinary thread-stack safety.
+recognized. Quote/deref/var-quote and related syntax prefixes remain `Kind::Prefix`
+with operator/target spans until selection lowers them to lists. A discard whose
+target depends on conditional selection remains `Kind::Discard` until selection;
+ordinary discards are removed while reading. Prefix target lookup stays within
+its containing sequence; it never crosses a collection or enclosing conditional
+boundary.
+Both raw syntax and synthesized prefix nesting are bounded to 64 forms for
+ordinary thread-stack safety.
 Unsupported dispatch, splicing conditionals, auto-resolved keywords and numeric
 precision/ratio forms return located errors. This is a bounded syntax foundation;
 it does not promise all upstream reader syntax or numeric spellings.
@@ -38,7 +51,7 @@ The shared, original 14-case scalar corpus is `tests/oracle/reader-cases.json`.
 compares float bits and UTF-16 units exactly, then runs the Rust boundary checks.
 The JVM and Node remain development-only.
 
-Eight reader tests check syntax, byte spans, metadata, ordering, rejection and
+Eleven reader tests check syntax, byte spans, metadata, ordering, rejection and
 stack bounds. Two `reader_runtime` tests check the same scalar corpus and transfer
 parsed values into the generated ABI v1 runtime, inspect actual GC fields/units
 and force collection. The initial surrogate regression failed against the old
