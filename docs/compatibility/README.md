@@ -94,3 +94,10 @@ cargo test -p suss-compile --test conformance record_known_failures -- --ignored
 Review every diff. Do not accept new failures merely to get a green build. Fix
 regressions and remove resolved entries. The broader upstream differential oracle,
 lossless UTF-16/float transport and effect traces are still roadmap work.
+
+The conformance loader rejects missing files, empty/malformed suites, duplicate
+or unknown fields/IDs, namespaced schema keys and non-Boolean/true skip values.
+Baseline/catalog JSON maps reject duplicate keys and trailing data. Executing
+negative GC fixtures verify unknown tags, malformed boxes and non-string arrays
+fail decoding. Harness regressions also check new/changed failures and unexpected
+passes against exact stage/diagnostic records.

@@ -84,7 +84,8 @@
       "validation": "cargo test -p suss-compile --test conformance -- --nocapture",
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
       "evidence": [
-        "Independent host decoder, strict case parsing, reviewed 201-case input/expectation catalog and exact known-failure baseline. All 201 legacy cases and harness checks passed; no known failures or skips."
+        "Independent host decoder, strict case parsing, reviewed 201-case input/expectation catalog and exact known-failure baseline. All 201 legacy cases and harness checks passed; no known failures or skips.",
+        "Eight conformance harness tests pass, with only two explicit manual recorders ignored. New regressions reject malformed/missing cases, duplicate evidence JSON keys/trailing data, unexpected passes/changed failures, and executed unknown/malformed GC layouts. All 201 reviewed case inputs/expectations and zero known failures remain unchanged."
       ]
     },
     {

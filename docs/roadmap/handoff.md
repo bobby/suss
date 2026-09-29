@@ -672,3 +672,42 @@ would cancel that live validation and prevent its successful cache save. This
 is a resource/evidence decision, not a permission blocker. User authorization to
 commit/push/open PRs remains in force. The existing PR #40 head is still a070a5e;
 include the new browser coverage and update issue #4/PR when that run finishes.
+
+
+## M1-01 malformed evidence and executed decoder failures — 2026-09-29
+
+Audit found that unknown case fields were ignored, namespaced schema keys were
+reduced to unqualified names, and non-Boolean skip values passed validation.
+The case loader now rejects those inputs, empty names/expressions, invalid
+categories and duplicate IDs/fields; missing files are explicit errors rather
+than an empty suite. The existing source corpus/catalog/expectations are unchanged.
+
+Baseline/catalog JSON uses a unique-key map decoder; serde_json's default map
+behavior would discard duplicate keys. Serde is now a direct development-only
+dependency, already present at the same locked version; the Cargo.lock diff adds
+only that dependency edge. Exact failure comparison regressions reject new
+failures, changed stage/diagnostics and unexpected passes. Executed custom Wasm
+GC fixtures reject unknown i31/struct tags, malformed float boxes and raw non-string
+arrays; no opaque value is accepted as a wildcard.
+
+Validation:
+
+- `cargo test -p suss-compile --test conformance --locked -j2 -- --test-threads=2`: 8 passed, 2 manual evidence/catalog recorders ignored, 20.39s. The strict baseline executes all 201 reviewed cases with zero known failures/skips.
+- A temporary bypass of field validation causes the malformed-case regression
+  to fail (exit 101); source was restored in a finally block and the focused test
+  passes afterward. No bypass remains.
+- `rustfmt --edition 2024` on the changed harness and `git diff --check`: passed.
+
+Local M1-01 acceptance now has executing regressions for wrong values/collections,
+malformed/missing cases, unknown layouts and exact baseline changes. This does
+not establish the future lossless ClojureScript oracle, f64/UTF-16 runtime contract,
+complete portable API coverage or effect traces; those remain M1-02/M2/M7 work.
+Native production code did not change. The new harness executes independently
+under the already-verified optimized profile; its known-failure/catalog files
+were not regenerated to hide changes.
+
+Linux run 36626065207 remains confirmed live on a070a5e. Browser commit 22c8fc1
+and this harness increment are queued locally; hold publication until that run
+is terminal to preserve the current validation/cache work. User push/PR
+permission remains in force. Next unblocked implementation: pinned ClojureScript
+development oracle and lossless tagged value/effect corpus (M1-02).
