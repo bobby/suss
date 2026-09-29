@@ -1,5 +1,10 @@
 # ClojureScript compatibility evidence
 
+The [development oracle](../../tests/oracle/README.md) executes the pinned
+ClojureScript source in Node and records lossless tagged reference observations.
+Its initial 12-case transport fixture is reference evidence only; independent
+Suss decoding and differential comparison remain M1-02 work.
+
 The contract is [the design specification](../design/suss-0.3.1.md), using the
 pinned ClojureScript submodule. `cljs-core.edn` contains **1,065 source declarations**
 from core.cljs and core.cljc, with declaration kind, phase, source range, reader

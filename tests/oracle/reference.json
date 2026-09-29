@@ -1,0 +1,348 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "condition-once",
+      "status": "value",
+      "value": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      },
+      "effects": [
+        {
+          "tag": "keyword",
+          "namespace": {
+            "tag": "nil"
+          },
+          "name": {
+            "tag": "string",
+            "units": [
+              99,
+              111,
+              110,
+              100,
+              105,
+              116,
+              105,
+              111,
+              110
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "argument-order",
+      "status": "value",
+      "value": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      },
+      "effects": [
+        {
+          "tag": "keyword",
+          "namespace": {
+            "tag": "nil"
+          },
+          "name": {
+            "tag": "string",
+            "units": [
+              108,
+              101,
+              102,
+              116
+            ]
+          }
+        },
+        {
+          "tag": "keyword",
+          "namespace": {
+            "tag": "nil"
+          },
+          "name": {
+            "tag": "string",
+            "units": [
+              114,
+              105,
+              103,
+              104,
+              116
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "binary64-rounding",
+      "status": "value",
+      "value": {
+        "tag": "f64",
+        "bits": "4340000000000000"
+      },
+      "effects": []
+    },
+    {
+      "id": "negative-zero",
+      "status": "value",
+      "value": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      },
+      "effects": []
+    },
+    {
+      "id": "positive-infinity",
+      "status": "value",
+      "value": {
+        "tag": "f64",
+        "bits": "7ff0000000000000"
+      },
+      "effects": []
+    },
+    {
+      "id": "nan",
+      "status": "value",
+      "value": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      },
+      "effects": []
+    },
+    {
+      "id": "utf16-surrogate",
+      "status": "value",
+      "value": {
+        "tag": "string",
+        "units": [
+          55296
+        ]
+      },
+      "effects": []
+    },
+    {
+      "id": "utf16-pair",
+      "status": "value",
+      "value": {
+        "tag": "string",
+        "units": [
+          55357,
+          56832
+        ]
+      },
+      "effects": []
+    },
+    {
+      "id": "nested-values",
+      "status": "value",
+      "value": {
+        "tag": "map",
+        "entries": [
+          [
+            {
+              "tag": "keyword",
+              "namespace": {
+                "tag": "nil"
+              },
+              "name": {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              }
+            },
+            {
+              "tag": "vector",
+              "items": [
+                {
+                  "tag": "nil"
+                },
+                {
+                  "tag": "bool",
+                  "value": false
+                },
+                {
+                  "tag": "f64",
+                  "bits": "4045000000000000"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "tag": "keyword",
+              "namespace": {
+                "tag": "nil"
+              },
+              "name": {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              }
+            },
+            {
+              "tag": "set",
+              "items": [
+                {
+                  "tag": "f64",
+                  "bits": "3ff0000000000000"
+                },
+                {
+                  "tag": "f64",
+                  "bits": "4000000000000000"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "tag": "keyword",
+              "namespace": {
+                "tag": "nil"
+              },
+              "name": {
+                "tag": "string",
+                "units": [
+                  99
+                ]
+              }
+            },
+            {
+              "tag": "seq",
+              "items": [
+                {
+                  "tag": "f64",
+                  "bits": "4008000000000000"
+                },
+                {
+                  "tag": "f64",
+                  "bits": "4010000000000000"
+                }
+              ]
+            }
+          ]
+        ]
+      },
+      "effects": []
+    },
+    {
+      "id": "reduce-empty",
+      "status": "value",
+      "value": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      },
+      "effects": []
+    },
+    {
+      "id": "variadic-arity",
+      "status": "value",
+      "value": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "seq",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4000000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4008000000000000"
+              }
+            ]
+          }
+        ]
+      },
+      "effects": []
+    },
+    {
+      "id": "exception-effect",
+      "status": "exception",
+      "data": {
+        "tag": "map",
+        "entries": [
+          [
+            {
+              "tag": "keyword",
+              "namespace": {
+                "tag": "nil"
+              },
+              "name": {
+                "tag": "string",
+                "units": [
+                  114,
+                  101,
+                  97,
+                  115,
+                  111,
+                  110
+                ]
+              }
+            },
+            {
+              "tag": "keyword",
+              "namespace": {
+                "tag": "nil"
+              },
+              "name": {
+                "tag": "string",
+                "units": [
+                  101,
+                  120,
+                  112,
+                  101,
+                  99,
+                  116,
+                  101,
+                  100
+                ]
+              }
+            }
+          ]
+        ]
+      },
+      "message": {
+        "tag": "string",
+        "units": [
+          112,
+          114,
+          111,
+          98,
+          101
+        ]
+      },
+      "effects": [
+        {
+          "tag": "keyword",
+          "namespace": {
+            "tag": "nil"
+          },
+          "name": {
+            "tag": "string",
+            "units": [
+              98,
+              101,
+              102,
+              111,
+              114,
+              101,
+              45,
+              116,
+              104,
+              114,
+              111,
+              119
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

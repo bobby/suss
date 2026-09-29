@@ -24,3 +24,7 @@ target/
 # Development inventory tools
 __pycache__/
 *.pyc
+
+# Development-only ClojureScript oracle build/cache
+/tests/oracle/.cpcache/
+/tests/oracle/out/

@@ -711,3 +711,55 @@ and this harness increment are queued locally; hold publication until that run
 is terminal to preserve the current validation/cache work. User push/PR
 permission remains in force. Next unblocked implementation: pinned ClojureScript
 development oracle and lossless tagged value/effect corpus (M1-02).
+
+
+## Linux baseline terminal result and pinned oracle transport — 2026-09-29
+
+Optimized Linux run [36626065207](https://github.com/bobby/suss/actions/runs/36626065207)
+on PR #40 head a070a5e is completed/success. The full downloaded job log confirms
+14 CLI, 54 compiler, 316 expression (12 existing ignored), 28 component,
+4 conformance (2 manual recorders ignored), 3 shared-runtime, 8 async, 8 profile,
+8 core and 19 reader tests passed; 2 existing doc examples remain ignored.
+Build: 11m22s; expressions: 377.66s; conformance: 205.89s. The job finished
+within the existing 25-minute budget, then uploaded all 411,109,289 cache bytes.
+This is Linux evidence for a070a5e, not the newer browser/conformance/oracle
+commits. It resolves the earlier live-run publication hold; those increments can
+now be pushed under the user's explicit branch/PR authorization. The full local
+baseline and this remote run establish the current bounded baseline evidence;
+M1-03 remains open for acceptance review, with no future milestone completion.
+
+The new original development oracle compiles the clean pinned ClojureScript
+submodule (c4295f303100bbf5afac449242d30bca1126f1a1, 1.12.134) using explicitly
+pinned Clojure 1.12.1 and executes it in Node. The transport preserves f64 bits
+(including signed zero, NaN/infinity), UTF-16 code units (including a lone
+surrogate), collection kinds, exception data/message and ordered effect labels.
+The strict Python validator rejects missing/duplicate/unknown fields and IDs,
+unknown layouts, changed boundaries, reordered effects and serializer exceptions
+substituted for required values. Snapshot provenance and limitations are in
+`tests/oracle/README.md`; no upstream core source was ported in this increment.
+Java/Node are development-only tools, not shipped dependencies.
+
+Commands/results:
+
+- `scripts/test-oracle.sh`: passed; 12 reference observations verified. Clojure
+  CLI 1.12.1.1550 / Java 21.0.2 / Node v24.5.0. Cold Maven downloads required
+  network escalation; task-specific configuration/Maven caches stay under /tmp.
+  A first Node invocation from the repository root failed on relative output
+  paths; the runner now changes to tests/oracle before build and execution.
+- `python3 scripts/oracle_transport.py tests/oracle/out/observations.json`: passed
+  after the final validator changes. Output explicitly disclaims a Suss pass.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 32 passed (7 new
+  malformed/reference transport regressions). CI includes these Python tests.
+- `gh run view 36626065207 --repo bobby/suss --log`: completed/success job log
+  downloaded to /tmp/suss-ci-optimized-success.log and suite/cache results audited.
+
+M1-02 remains partial: the source corpus must be shared with Suss, an independent
+lossless Suss result decoder/comparator must execute, and failure stages and
+semantic differences must be recorded exactly. The reference fixture cannot
+establish the current integer/UTF-8 runtime's binary64/UTF-16 conformance. JVM/
+Node compilation is not yet a CI gate. No full Rust rerun is needed for this
+pure development transport increment; d3d476e's focused conformance execution
+and the prior full baselines remain the relevant production/harness evidence.
+Next unblocked task: implement the shared differential corpus and independent
+Suss observation path for M1-02, preserving unsupported cases as honest failures
+before M2 representation changes.
