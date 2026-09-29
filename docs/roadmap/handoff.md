@@ -329,3 +329,17 @@ through the public Wasmtime API; guest subtask cancellation does not establish
 Suss interactive session interruption. Generated official WASI bindings, optional
 Wasm compiler-component repairs and M1–M9 remain future work. M0-02 and milestone
 M0 remain open until their full acceptance evidence is reviewable.
+
+
+## Publication approval blocker — 2026-09-29
+
+The executing async-import/cancellation/external-id increment is local commit
+`3e8bad2`. Automatic approval review rejected both pushing it to the existing
+`bobby/suss` branch `resurrection/m0-toolchain` and posting its result summary to
+M0-02 issue #2. Its stated reason was lack of explicit trusted user authorization
+for these external payloads/destinations. The repository origin was checked as
+`https://github.com/bobby/suss.git`, private, with ADMIN viewer permission; the
+review still rejected the push after those checks. No alternative publication
+route was attempted. The remote branch retains `64437bd`; the new issue comment
+was not sent. Ask the user to approve publishing the local increment and posting
+the verified test summary to issue #2. Local implementation work is unblocked.
