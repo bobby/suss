@@ -1000,3 +1000,112 @@ Next unblocked task: migrate the reader/IR value boundary to lossless binary64
 and UTF-16, then lower source expressions into this shared runtime while retaining
 explicit operand order. Wire the version/prelude gate into fragment loading;
 retire prototype code only after its replacements pass the relevant corpus.
+
+
+## Dispatched PR #40 code review — 2026-09-29
+
+The user requires an independent dispatched subagent review for every PR, fixes
+for significant findings pushed to that PR, and passing CI at the final head.
+Do not merge PRs yet. PR #41 is stacked on #40 and must incorporate this base
+review commit before its final validation.
+
+The PR #40 reviewer audited the complete diff against the accepted design:
+production analyzer/lowerer/codegen migration and evaluation order, cleanup and
+arity changes; independent decoders and exact conformance/oracle gates;
+inventory/review-schema and upstream licenses/source locks; executing shared-GC,
+canonical async/map/implements/external-id probes; browser evidence tooling and
+bounded CI. Feasibility fixtures and seven explicitly tracked differential
+failures remain partial evidence, not completed runtime or release claims.
+
+Two significant findings were reproduced and fixed:
+
+- WIT-exported catch/finally code used unshifted logical catch locals, although
+  flattened canonical parameters precede language locals. With an option and
+  scalar parameter, compilation failed final component validation: expected i32,
+  found eqref. The emitter now applies the inherited parameter offset to all
+  catch-local writes and result restoration. An executing component regression
+  covers caught values and normal finally results with both None/Some inputs.
+- Legacy strict conformance classified fuel traps as ordinary execution failures,
+  obscuring the distinction from uncaught language exceptions. An executing
+  regression initially reported execution instead of trap. It now downcasts
+  Wasmtime Trap for the stage and separately verifies a language throw remains
+  an execution failure. No known-failure files or case expectations changed.
+
+Focused commands/results:
+
+- `cargo test -p suss-compile --test component --locked execute_wit_export_catch_and_finally_with_flattened_params -- --exact --test-threads=2`: failed before offset fix (exit 101), passed after.
+- `cargo test -p suss-compile --test component --locked -- --test-threads=2`: 29 passed.
+- `cargo test -p suss-compile --test conformance --locked runtime_traps_are_distinct_from_uncaught_language_exceptions -- --exact --test-threads=2`: failed before stage fix (exit 101), passed after.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 42 passed.
+- Inventory check: 1,065 declarations unchanged; review overlay 0 reviewed/1,065
+  unassessed; offline WIT verification 15 files/6 packages; roadmap preview 10
+  milestones/39 issues. No unsupported cases or unknown evidence became success.
+
+All Cargo commands use CARGO_BUILD_JOBS=2 and the existing shared target directory;
+no RUSTFLAGS override. Full baseline result follows after terminal execution.
+
+PR #40's pre-review head 8fa7a63 has terminal successful Linux CI
+[36634950074](https://github.com/bobby/suss/actions/runs/36634950074), verified by
+the coordinating agent. That result does not certify the new review fixes; the
+new pushed head requires its own successful run before the PR is ready.
+
+Final full baseline: `CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`
+passed (exit 0), using the shared CARGO_TARGET_DIR. Full log:
+/private/tmp/suss-review-pr40-full.log. Results: 14 CLI, 54 compiler, 317
+expressions (12 existing ignored), 29 component, 9 strict conformance (2 manual
+recorders ignored), 4 oracle (1 manual capture ignored), 3 shared-GC, 8 async,
+8 toolchain profile, 8 core and 19 reader passes. Two existing doc examples remain
+ignored. Differential corpus remains 9 passing/7 exact failures/0 skipped; legacy
+201-case baseline remains zero failures/skips. `git diff --check` passed.
+
+Review identified no additional significant findings within this PR's current
+scope. Numeric/UTF-16/ExceptionInfo and full arity coverage, production shared
+runtime integration, canonical allocation/resource lifetime management, broader
+browser coverage and compiled persistence remain the documented roadmap work.
+Next unblocked step: incorporate this base review fix into stacked PR #41, finish
+that PR's dispatched review audit, and observe CI at both final heads. Continue
+M2 reader/IR/shared-runtime integration afterward; do not close future milestones.
+
+## Dispatched PR #41 code review — 2026-09-29
+
+An independent dispatched reviewer inspected all six files in the runtime ABI
+increment at 95a5d90 against the accepted design, roadmap and compatibility
+inventory. The audit covered recursive type canonicalization, packed UTF-16 and
+binary64 operations, closure callbacks and arity bounds, binding roots across GC,
+exception tagging, manifest parsing and actual prelude verification before
+initializer effects. Tests execute generated modules and independently inspect
+their fields and units. No additional significant defect was found within this
+explicitly bounded foundation increment; no artificial refactor was introduced.
+
+The reviewer incorporated PR #40's independently reproduced fixes at fb3ec0a:
+canonical WIT catch/finally local offsets and strict conformance trap-stage
+classification. The branch integration preserves both handoff evidence sections;
+this does not merge either pull request. The inherited code diff was inspected
+and both new executing regressions pass on the combined runtime branch.
+
+Commands/results, with CARGO_BUILD_JOBS=2 and the shared CARGO_TARGET_DIR:
+
+- `cargo test -p suss-compile --test runtime_abi --locked -- --test-threads=2`:
+  7 passed, 0 ignored, on the original PR head.
+- `cargo test --workspace --locked -- --test-threads=2`: passed at 95a5d90;
+  log /private/tmp/suss-pr41-review-full.log. All enabled suites passed, including
+  317 expressions, 28 components, 8 conformance, 4 oracle and 7 runtime ABI tests.
+  Existing ignores remain explicit; no expected results were changed.
+- After integrating fb3ec0a,
+  `cargo test -p suss-compile --test component --test conformance --test runtime_abi --locked -- --test-threads=2`:
+  29 component, 9 conformance (2 manual recorders ignored), and 7 runtime ABI
+  tests passed; log /private/tmp/suss-pr41-review-integration.log. No RUSTFLAGS
+  override and no new semantic skips.
+
+This review does not establish reader/HIR/IR/backend migration, source-level
+immutable strings and checked dynamic operations, complete multi-arity dispatch,
+unbound-var behavior, nominal protocols, ExceptionInfo or persistent REPL support.
+Those remain documented integration/roadmap work. Source differential evidence
+is still 9 passing, 7 exact known failures and 0 skipped; M2-03 is incomplete.
+
+The user's ongoing rule is to open PRs, dispatch an independent review agent for
+each, push fixes for significant findings, and require successful CI at each
+final head before readiness. Do not merge PRs yet. CI for the combined pushed
+head must be observed separately; local passes and earlier-head CI do not certify
+it. Next unblocked task remains the reader/IR binary64 and UTF-16 migration into
+the shared runtime, with explicit operand order and loader gating.
