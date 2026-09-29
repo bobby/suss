@@ -1175,11 +1175,15 @@ explicit source-order IR and shared runtime lowering, as described above.
 Prior reviewed PR heads have terminal successful CI: #40 fb3ec0a in
 [36636314840](https://github.com/bobby/suss/actions/runs/36636314840), and #41
 2b4d2fe in [36636495795](https://github.com/bobby/suss/actions/runs/36636495795).
-Both remain open drafts, unmerged. Each had the required dispatched review;
-#40's two significant findings were pushed and inherited by #41. No milestone
+Both were verified open/draft and unmerged when those runs completed. A later
+remote check shows both were externally merged into main, whose current head
+is fad9ee9; their source branches were deleted. This agent did not merge them.
+Each had the required dispatched review; #40's two significant findings were
+pushed and inherited by #41. No milestone
 was closed and M2–M9 remain incomplete.
 
-Next increment, on resurrection/portable-reader-forms stacked on #41, introduces
+Next increment, on resurrection/portable-reader-forms based on the now-updated
+main (including #41), introduces
 `suss_reader::forms`. Source forms retain byte spans, ordered metadata, binary64
 numbers and UTF-16 strings separately from prototype EDN runtime values. Character
 literals are one-unit strings; raw astral strings and escaped lone surrogates
