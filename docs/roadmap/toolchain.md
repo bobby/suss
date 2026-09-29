@@ -54,8 +54,23 @@ fixture also pass on the new engine. These are feasibility/legacy fixtures, not
 Suss support for the full boundary graph. Unimplemented Suss boundary types and
 async functions now produce explicit Unsupported diagnostics.
 
-M0-02 still requires canonical callback async/cancellation and future/stream
-execution, plus executing external-id semantics.
+Three `toolchain_async` tests now execute a stackless canonical callback that
+yields before task.return, plus typed future and stream endpoint round-trips
+through a core guest. The future remains a future and separately delivers 42;
+the stream separately delivers boundary bytes. This certifies endpoint transport,
+not guest-memory payload reads, nested async values, EOF, backpressure, cancellation
+or production Suss scheduling. The callback fixture retains upstream license and
+hash provenance under `crates/suss-compile/tests/fixtures/`.
+
+```sh
+cargo test -p suss-compile --test toolchain_async --locked -- --test-threads=2
+```
+
+M0-02 still requires canonical async imports, guest-driven cancellation and
+executing external-id semantics. Wasmtime 49.0.1 has no public API to cancel an
+individual started host call; its referenced upstream issue #11833 remains open.
+Dropping a Rust call future is not cancellation. Record this limit until an
+executing cancellation path satisfies the intended contract.
 The optional Wasm compiler-component build fails on native-only CLI imports;
 see the handoff for its failed command and limits. The production bundled WIT remains
 in use pending replacement binding tests.

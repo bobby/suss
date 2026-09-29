@@ -33,7 +33,7 @@ preserves existing issue bodies.
 ### M0: Contract and feasibility
 
 - **M0-01 — Contract and upstream inventory** (in-progress). Record the accepted design, pin ClojureScript and inventory core declarations without guessing portability.
-- **M0-02 — Lock toolchain and official WIT packages** (in-progress). Select a tested Wasmtime/compiler-tools/WIT package set for WASI 0.3.1. Official source graph is locked; candidate Rust family passes focused executing probes. Full migration baseline passes; async transfer gates remain.
+- **M0-02 — Lock toolchain and official WIT packages** (in-progress). Select a tested Wasmtime/compiler-tools/WIT package set for WASI 0.3.1. Official source graph is locked; Rust baseline, canonical map/callback and typed endpoint probes pass. Async imports, cancellation and external-id execution remain.
 - **M0-03 — Prove shared GC fragments** (in-progress). Build a minimal shared-runtime plus two separately compiled fragments before replacing the REPL.
 - **M0-04 — Prove browser loading and suspension** (in-progress). Load a minimal core GC module through ES modules and bridge one asynchronous operation.
 

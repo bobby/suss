@@ -124,9 +124,11 @@ Continue **M0-02** before a production dependency/runtime replacement:
    bundled WIT until the replacement bindings pass executing tests.
 2. The Rust family migration now passes the full baseline (see below).
    Continue canonical callback, cancellation and future/stream feasibility.
-3. Add actual bidirectional map values and canonical async/callback execution,
-   including cancellation and future/stream transfers. Type declarations alone
-   do not satisfy this gate. Record unsupported features explicitly.
+3. Complete executing external-id, canonical async imports and guest-driven
+   cancellation probes. Map values, callback suspension/resumption and typed
+   endpoint round-trips now execute (see below). Payload reads in guest memory,
+   EOF/backpressure and cancellation remain unverified; do not treat endpoint
+   round-trips as complete async interoperability.
 4. Extend the M0-04 Chrome fixture to the full feature profile and compare the
    optional Jco path before committing browser packaging. Then implement
    spans/namespace phases and the general verified IR (M2).
@@ -217,3 +219,45 @@ been exercised through a hand-written engine fixture; Suss map adapters are
 still unsupported. external-id has parser evidence but no execution fixture.
 The old bundled WIT remains active until generated replacement bindings pass
 executing tests. The persistent compiled REPL and language ABI have not changed.
+
+## M0-02 stackless callback and endpoint feasibility — 2026-09-29
+
+The Rust migration was committed as `8156c97` after the complete migrated
+baseline passed. Three new `toolchain_async` tests execute separately:
+
+* A stackless canonical async lift enters, returns YIELD with the task pending,
+  then receives a callback and invokes `task.return` once. Rust observes value
+  42 and exact ordered trace `[1, 2, 3]`. Stackful async is explicitly disabled.
+* A typed `future<u32>` read endpoint is lowered through a core guest and lifted
+  back as a future, rather than implicitly awaiting it. A separate Rust consumer
+  receives its payload 42 and consumes the endpoint with `pipe`.
+* A typed `stream<u8>` endpoint similarly crosses the guest in both directions;
+  a separate Rust consumer receives bytes `[0, 255, 42]` and closes after them.
+  This bounded transport fixture does not certify EOF or backpressure semantics.
+
+Regression-first: the callback test failed with a missing artifact before its
+fixture existed; the future/stream tests likewise failed before their transfer
+fixture was added. Final command:
+`cargo test -p suss-compile --test toolchain_async --locked -j 2 -- --test-threads=2`
+passed all three, with no ignored tests. Log: `/tmp/suss-endpoint-final.log`.
+The bounded local future driver has a five-second deadline; the callback guest
+also has Wasmtime fuel. No production compiler/runtime code changed after the
+successful full migration baseline, so these tests were checked directly.
+
+`callback-resume.wat` is adapted from the upstream Wasmtime callback WAST fixture
+at `46c23a87dac1465986a8ad53ba6a7ae49372857b`. Source URL/hash, adaptation and
+fixture hash are in `callback-provenance.json`; the upstream Apache-2.0 WITH
+LLVM-exception license is retained beside the fixture. The endpoint WAT is an
+original hand-written Suss feasibility fixture. Neither is compiled Suss async
+nor the production scheduler or full WASI binding graph.
+
+Pinned Wasmtime public API limitation: `call_concurrent` documentation says that
+dropping its Rust future does **not** cancel a started guest task; individual
+host-driven cancellation is unavailable. Upstream
+[issue #11833](https://github.com/bytecodealliance/wasmtime/issues/11833) was
+verified open. This is source/API evidence, not a passing cancellation execution
+test. Do not substitute store destruction for the specified session/task API.
+Guest-driven `subtask.cancel`/task cancellation remains the next unblocked probe,
+along with canonical async imports and executing external-id semantics.
+M0-02 and milestone M0 stay open. Suss async lowering and Suss boundary adapters
+remain unsupported; M6 lifetime/cleanup and stress gates remain future work.
