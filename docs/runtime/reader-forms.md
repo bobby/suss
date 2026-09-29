@@ -38,12 +38,19 @@ The shared, original 14-case scalar corpus is `tests/oracle/reader-cases.json`.
 compares float bits and UTF-16 units exactly, then runs the Rust boundary checks.
 The JVM and Node remain development-only.
 
-Seven reader tests check syntax, byte spans, metadata, ordering, rejection and
+Eight reader tests check syntax, byte spans, metadata, ordering, rejection and
 stack bounds. Two `reader_runtime` tests check the same scalar corpus and transfer
 parsed values into the generated ABI v1 runtime, inspect actual GC fields/units
 and force collection. The initial surrogate regression failed against the old
 EDN path, and the first excessive-nesting test exposed an actual stack overflow;
 both now pass with explicit results/diagnostics.
+
+The dispatched PR review reproduced a token-termination regression against the
+pinned tools.reader: apostrophes continue symbols and keywords, while an
+apostrophe at the start of a form is quote syntax. The reader now distinguishes
+these cases and preserves apostrophe as an octal-escape macro boundary. The
+regression covers qualified/trailing-prime tokens, quote prefixes and character
+rejection, without expanding the currently supported reader syntax.
 
 ## Integration still required
 

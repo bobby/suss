@@ -1241,3 +1241,45 @@ manifest/layout gate into fragment loading. Migrate AOT/REPL/macros through the
 same pipeline and retire prototype parser/runtime paths after acceptance. This
 increment requires its own dispatched reviewer, fixes pushed for significant
 findings and successful final-head CI; do not merge any PRs yet.
+
+## Dispatched PR #42 code review — 2026-09-29
+
+The independently dispatched reviewer audited the full 13-file increment at
+81bc3c1 against the accepted design, roadmap, inventory and handoff. Review
+covered scalar binary64/UTF-16 parsing, metadata/source spans, conditional
+selection and map pairing, quote/discard/character syntax, malformed input and
+stack bounds, the development-only pinned oracle, actual GC runtime transfers
+and the explicit legacy-pipeline integration limitations.
+
+One significant defect was reproduced and fixed: apostrophes were incorrectly
+token terminators. Valid portable names such as `form'`, `ns/form'` and `:name'`
+were split into quote syntax or failed with an unexpected end-of-input error.
+Direct execution of the freshly compiled pinned tools.reader confirms these
+names stay single tokens; it also rejects `\\'x` as an unsupported character
+token while accepting `\\'`. The regression FAILED before the repair (exit 101)
+and passes after it. Apostrophe now continues tokens but starts quote syntax at
+a form boundary. Octal string escapes retain their separate reader-macro
+termination rule, so `"\\1'"` remains units [1, 39]. No upstream source was copied.
+
+Validation, with CARGO_BUILD_JOBS=2 and the existing shared CARGO_TARGET_DIR:
+
+- `cargo test -p suss-reader --locked apostrophes_continue_tokens_but_quote_at_form_start -- --exact --test-threads=2`: red before the fix.
+- `cargo test -p suss-reader --locked -- --test-threads=2`: 19 legacy and 8
+  portable reader tests passed, 0 ignored, including the new regression.
+- `cargo test --workspace --locked -- --test-threads=2`: passed, exit 0;
+  /private/tmp/suss-review-pr42-full.log. All enabled suites pass, including
+  317 expressions, 29 components, 9 conformance, 4 oracle, 2 reader-runtime,
+  7 ABI, 3 shared-GC, 8 async, 8 profile, 8 core and 27 reader tests. Existing
+  12 expression, 2 conformance, 1 oracle and 2 doc-example ignores remain.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 42 passed.
+- `rustfmt --edition 2024` on the touched Rust files and `git diff --check`:
+  passed. No RUSTFLAGS override, new dependencies or known-failure changes.
+
+No additional significant finding was identified within this bounded reader
+foundation. Compiler/evaluator/component paths still use legacy EDN; namespace
+phases, full syntax-quote/splicing and production HIR/IR/backend integration
+remain open. The scalar corpus remains 14 reader observations, separate from
+9 passing/7 exact failing/0 skipped compiler observations; M2-01 is incomplete.
+Next unblocked task remains portable-form HIR/evaluation-order IR and shared-ABI
+lowering/loader integration. Push this review fix to PR #42 and require successful
+CI at that final head before readiness. Do not merge PRs.

@@ -111,20 +111,7 @@ fn delimiter(c: char) -> bool {
     c.is_whitespace()
         || matches!(
             c,
-            ',' | '('
-                | ')'
-                | '['
-                | ']'
-                | '{'
-                | '}'
-                | '"'
-                | ';'
-                | '\''
-                | '`'
-                | '~'
-                | '@'
-                | '^'
-                | '\\'
+            ',' | '(' | ')' | '[' | ']' | '{' | '}' | '"' | ';' | '`' | '~' | '@' | '^' | '\\'
         )
 }
 
@@ -392,7 +379,9 @@ impl Reader<'_> {
                                         self.take();
                                         unit = unit * 8 + c as u16 - '0' as u16;
                                     }
-                                    Some(c) if !delimiter(c) && c != '#' => {
+                                    // Octal escapes stop at all reader macros,
+                                    // including non-token-terminating quote/dispatch.
+                                    Some(c) if !delimiter(c) && !matches!(c, '#' | '\'') => {
                                         self.take();
                                         return Err(
                                             self.fail(escape_start, "Invalid octal escape digit")

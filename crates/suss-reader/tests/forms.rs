@@ -1,6 +1,29 @@
 use suss_reader::forms::{Kind, read_forms, resolve_conditionals};
 
 #[test]
+fn apostrophes_continue_tokens_but_quote_at_form_start() {
+    let source = "form' ns/form' :name' 'form'";
+    let forms = read_forms(source).unwrap();
+    assert_eq!(forms.len(), 4);
+    assert!(matches!(&forms[0].kind, Kind::Symbol(symbol) if symbol.name == "form'"));
+    assert!(
+        matches!(&forms[1].kind, Kind::Symbol(symbol) if symbol.namespace.as_deref() == Some("ns") && symbol.name == "form'")
+    );
+    assert!(matches!(&forms[2].kind, Kind::Keyword(keyword) if keyword.name == "name'"));
+    let Kind::List(quoted) = &forms[3].kind else {
+        panic!("expected quote")
+    };
+    assert!(matches!(&quoted[1].kind, Kind::Symbol(symbol) if symbol.name == "form'"));
+    assert_eq!(&source[forms[0].span.clone()], "form'");
+    assert_eq!(read_forms("\\'").unwrap()[0].kind, Kind::String(vec![39]));
+    assert!(read_forms("\\'x").is_err());
+    assert_eq!(
+        read_forms(r#""\1'""#).unwrap()[0].kind,
+        Kind::String(vec![1, 39])
+    );
+}
+
+#[test]
 fn utf16_literals_preserve_lone_surrogates_and_astral_units() {
     let source = r#""\uD800\u0000😀""#;
     let forms = read_forms(source).unwrap();
