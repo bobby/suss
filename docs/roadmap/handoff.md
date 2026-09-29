@@ -404,3 +404,49 @@ Next unblocked work: audit M0-03's shared GC fragment acceptance on the selected
 engine and M0-01's inventory/license gates, then finish M0-04's browser feature
 profile and optional Jco comparison. Continue local implementation while remote
 publishing awaits explicit approval.
+
+
+## M0-03 shared GC fragment acceptance — 2026-09-29
+
+The previously passing fixture compared an ABI version but did not demonstrate
+that incompatible fragment initialization is prevented. It now uses a probe-only
+loader that checks the fragment's declared ABI before engine instantiation. Two
+negative execution probes verify:
+
+- Version mismatch rejects the fragment with the precise ABI diagnostic and
+  leaves its imported effect global zero. Matching ABI initializes it to 99.
+- A separately validated fragment with a different recursive descriptor field
+  layout (i64 instead of i32) fails linking despite a matching version label.
+  Its start effect also remains zero.
+
+The shared-GC fixture additionally captures the original closure, redefines the
+shared binding and forces GC. A lookup returns 104 while the retained capture
+returns 44; the earlier object's fields and descriptor identity also survive GC.
+
+Commands/results:
+
+- `cargo test -p suss-compile --test shared_runtime --locked -j2 -- --test-threads=2`: initially compile-failed before the new probe loader existed; after implementation, three passed.
+- A deliberate temporary bypass of the ABI gate caused `incompatible_fragment_abi_is_rejected_before_start_effects` to fail (exit 101, instantiated instead of rejecting). The original source was restored in a finally block; the focused suite then passed again. No bypass remains.
+- `cargo test -p suss-compile --test shared_runtime --test toolchain_profile --test toolchain_async --locked -j2 -- --test-threads=2`: 3 shared + 8 profile + 8 async passed, zero ignored/failures.
+- The changed Rust test file was rustfmt-formatted; `git diff --check` passed.
+
+Local acceptance audit:
+
+| M0-03 criterion | Evidence |
+| --- | --- |
+| One Store shares recursive GC types across fragments | Runtime/A/B are separately compiled, use identical recursive groups and instantiate in one Store |
+| Roots survive forced GC | Only runtime globals retain closures/objects; GC before loading B and after nominal redefinition preserves callable closures and old fields |
+| Closures cross fragments | A's function reference/environment are invoked by B through call_ref |
+| Nominal descriptors | Same layout and numeric descriptor payload still have different ref.eq identities; old object's descriptor survives |
+| Incompatible ABI rejected | Declared version check runs before instantiation/start; engine rejects incompatible recursive layout with matching label |
+
+All local M0-03 named feasibility criteria have evidence on Wasmtime 49.0.1.
+Issue #3 and milestone M0 remain open; remote publication is still pending
+explicit authorization after automatic review rejected the earlier push/comment.
+The three new tests only change feasibility infrastructure. They do not implement
+production artifact manifests, stable language binding-cell layouts, source spans,
+macro phases or the persistent compiled REPL, and do not change the accepted design.
+
+Next unblocked task: audit M0-01's deterministic inventory and source/license
+policy, then finish M0-04's complete browser feature profile and optional Jco
+comparison. Keep implementation, evidence and stable GitHub issue IDs aligned.

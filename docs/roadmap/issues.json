@@ -43,10 +43,12 @@
       "objective": "Build a minimal shared-runtime plus two separately compiled fragments before replacing the REPL.",
       "acceptance": "One Store shares recursive GC types, roots, closures and nominal descriptors across fragments; forced GC preserves earlier values; incompatible ABI is rejected.",
       "spec_sections": "6\u20137",
-      "validation": "cargo test -p suss-compile --test shared_runtime",
+      "validation": "cargo test -p suss-compile --test shared_runtime --locked -- --test-threads=2",
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
       "evidence": [
-        "tests/shared_runtime.rs: shared closures, forced GC, nominal descriptors and ABI mismatch probe pass on production dependency Wasmtime 39.0.1. Must repeat on selected candidate before replacing REPL."
+        "crates/suss-compile/tests/shared_runtime.rs: three executing probes pass on locked Wasmtime 49.0.1. One Store shares recursive GC groups, closures, runtime-global roots and nominal descriptors across independently compiled fragments; forced GC preserves old values and captured closures after binding redefinition.",
+        "Probe-only fragment loader rejects a mismatched declared ABI before initializer effects. A matching version label with a different recursive descriptor layout fails engine linking before start. Deliberately bypassing the version gate makes the negative test fail; restored gate passes.",
+        "Local M0-03 feasibility acceptance passes; production runtime manifests, binding cells and incremental REPL remain M2/M3 work. GitHub acceptance update awaits publication approval; milestone M0 remains open."
       ]
     },
     {
@@ -112,7 +114,7 @@
       "validation": "cargo test --workspace --locked -- --test-threads=2",
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
       "evidence": [
-        "Cargo.lock, lean test profiles, shared engines, bounded conformance fuel/traversal, and .github/workflows/ci.yml added. Remote CI has not run."
+        "Cargo.lock, lean test profiles, shared engines, bounded conformance fuel/traversal, and .github/workflows/ci.yml added. Remote CI run 36620372831 on head 64437bd was observed live/in_progress; no conclusion is claimed. The later local probes are not part of that published head."
       ]
     },
     {

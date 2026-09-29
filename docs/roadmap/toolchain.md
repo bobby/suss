@@ -27,11 +27,18 @@ python3 scripts/probe_toolchain.py \
 cargo test -p suss-compile --test shared_runtime
 ```
 
-The shared-runtime test now passes with Wasmtime 49.0.1. It proves that modules
-with matching recursive type groups share closures and rooted objects across GC,
-and that descriptor identity distinguishes two same-layout types. This probe is now repeated on the candidate engine; full production REPL
-acceptance is still future work. This is a feasibility
-fixture, not the production runtime ABI.
+Three shared-runtime probes now pass with Wasmtime 49.0.1. Matching recursive
+type groups share closures and rooted objects across independently compiled
+fragments in one Store. Forced GC preserves old objects and captured closures;
+shared binding lookup observes a replacement while the captured closure keeps
+its old behavior. Descriptor identity distinguishes two same-layout nominal types.
+
+A probe-only loader checks the declared ABI before instantiation. A mismatch
+cannot run the module initializer. The engine also rejects a different recursive
+layout even when the version label matches. Deliberately bypassing the ABI gate
+makes the rejection test fail; restoring it passes. The local M0-03 feasibility
+gate is now evidenced on the selected engine. This is not the production runtime
+ABI, manifest format or incremental REPL; those remain M2/M3 acceptance work.
 
 The official WIT graph is now vendored byte for byte under `vendor/wasi/`.
 [The lock](wasi-wit-lock.json) pins the release commit/archive and all 15 WIT
