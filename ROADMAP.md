@@ -32,16 +32,21 @@ preserves existing issue bodies.
 
 ### M0: Contract and feasibility
 
-- **M0-01 — Contract and upstream inventory** (in-progress). Pinned inventory regeneration is deterministic; strict review-schema/hash validation and core source/license policy now pass locally. All 1,065 declarations remain unassessed; remote acceptance update awaits PR review.
-- **M0-02 — Lock toolchain and official WIT packages** (in-progress). Select a tested Wasmtime/compiler-tools/WIT package set for WASI 0.3.1. Official source graph and exact versions are locked. Local named feasibility probes pass, including guest future/stream payload reads, bounded demand/EOF and read cancellation. Published in draft PR #40; issue acceptance update awaits review; generated Suss async adapters remain M5/M6 work.
-- **M0-03 — Prove shared GC fragments** (in-progress). Three local probes pass on Wasmtime 49.0.1: shared closures/GC roots/nominal descriptors, old captures after binding redefinition, and ABI rejection before initializer effects. Published in draft PR #40; remote acceptance update awaits review; the production REPL remains future work.
-- **M0-04 — Prove browser loading and suspension** (in-progress). Local Chrome probes pass for required core features, typed values, Promise suspension/cancellation and feature-error diagnostics. Optional Jco GC component packaging executes; cross-browser/product interoperability remains M8 work.
+- **M0-01 — Contract and upstream inventory** (completed). Deterministic pinned inventory, source hashes/reader branches, strict review schema and provenance policy pass. All 1,065 declarations remain unassessed for M4/M7 implementation.
+- **M0-02 — Lock toolchain and official WIT packages** (completed). Locked official package hashes and executing GC/tail-call/EH/map/implements/external-id/async/future/stream probes pass. Generated Suss adapters remain M5/M6 work.
+- **M0-03 — Prove shared GC fragments** (completed). Shared roots/closures/nominal descriptors survive forced GC; incompatible ABI fails before initialization. Production persistent sessions remain M2/M3 work.
+- **M0-04 — Prove browser loading and suspension** (completed). Chrome executes typed core/Promise/cancellation/feature-error fixtures and optional Jco GC packaging. Teardown timeout is recorded separately; cross-browser/product delivery remains M8 work.
 
 ### M1: Trustworthy evidence
 
-- **M1-01 — Strict conformance decoding and baseline** (in-progress). Replace wildcard GC results and non-failing conformance reports with independent decoding and explicit failures.
-- **M1-02 — ClojureScript oracle and semantic regressions** (in-progress). Pinned Node reference and independent Suss GC decoding execute one source corpus: 9 differential passing, 7 exact tracked failures, 0 skipped. ExceptionInfo implementation and broader semantic/arity coverage remain; the current runtime does not meet binary64/UTF-16 semantics.
-- **M1-03 — Bounded CI and reproducible baseline** (in-progress). Bound test resource use and make baseline results reproducible.
+- **M1-01 — Strict conformance decoding and baseline** (completed). Executing negative regressions reject wrong/malformed/unknown results, missing cases, changed failures and unexpected passes; 201 reviewed legacy cases pass.
+- **M1-02 — ClojureScript oracle and semantic regressions** (completed). Fresh pinned Node and independently decoded Suss artifacts compare one corpus covering ordered effects, binary64 bits, UTF-16, arities and exceptions: 9 differential passes, 7 exact failures, 0 skips. This completes the evidence harness; repairing semantic failures and broader compatibility remain M2/M4/M7 work.
+- **M1-03 — Bounded CI and reproducible baseline** (completed). Lockfiles, shared engines, bounded fuel/traversal, two workers and a 25-minute CI budget are exercised by successful reviewed-head and merged-main full baselines. Ignored/manual tests remain explicit.
+
+The [acceptance audit](docs/roadmap/acceptance-m0-m1.md) maps every M0/M1 criterion
+to merged implementation, executing evidence and its scope. GitHub issues remain
+open until the reconciliation PR merges with explicit closing links; milestones
+remain open until their linked issues are closed and their exit gates rechecked.
 
 ### M2: Compiler and runtime foundation
 

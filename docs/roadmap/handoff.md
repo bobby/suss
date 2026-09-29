@@ -1109,3 +1109,37 @@ final head before readiness. Do not merge PRs yet. CI for the combined pushed
 head must be observed separately; local passes and earlier-head CI do not certify
 it. Next unblocked task remains the reader/IR binary64 and UTF-16 migration into
 the shared runtime, with explicit operand order and loader gating.
+
+## M0/M1 issue reconciliation after merged PR #40 — 2026-09-29
+
+The user merged #40/#41. PR #40 used related-issue references instead of closing
+links, so completed acceptance work left issues #1–#7 open. Reconciliation now
+maps each unchanged criterion to actual evidence in
+[acceptance-m0-m1.md](acceptance-m0-m1.md). Local package statuses are completed
+for bounded M0 feasibility and M1 evidence harnesses. This supersedes historical
+notes that review or Linux CI still awaits PR #40 publication. Known semantic
+failures remain failures; no production compiler, REPL, WASI or browser milestone
+is inferred complete from a fixture.
+
+Fresh checks use merged main fad9ee929224cec46265fb92b1acd3c9db82bab1:
+
+- Two independent inventory generations match tracked SHA256 b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c; 1,065 declarations remain unassessed. Review policy and 15-file/six-package WIT lock pass.
+- 42 Python tests and offline roadmap preview pass.
+- Focused toolchain_profile/toolchain_async/shared_runtime/conformance: 8/8/3/9 pass, two manual conformance ignores; /private/tmp/suss-acceptance-focused.log.
+- Fresh scripts/test-oracle.sh passes: 16 reference observations, 9 differential passes/7 exact failures/0 skips; four Rust passes/one manual ignore. /private/tmp/suss-acceptance-oracle.log. No expectations changed.
+- Fresh Chrome/Jco semantic and packaging fixture passes; /private/tmp/suss-acceptance-browser.json matches committed evidence exactly, including all 11 source and three generated hashes. Browser teardown still requires termination after complete DOM output; actual exit remains null.
+- CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target cargo test --workspace --locked -- --test-threads=2: full baseline passed, exit 0; /private/tmp/suss-acceptance-full.log. No RUSTFLAGS changes, blanket skips, new dependencies or runtime modifications.
+- Reviewed PR #40 CI36636314840 on fb3ec0a and merged-main CI36639533936 on fad9ee9 remain terminal success. The reconciliation PR requires its own dispatched review and final-head CI.
+
+The reconciliation PR will use Closes #1 through Closes #7; remote issues remain
+open until its user merge. M0/M1 milestone state remains open until linked issues
+close and exit gates are rechecked. #10 (ABI foundation from #41) and #8 (reader
+foundation from #42) remain incomplete; use Refs links for partial work.
+AGENTS.md and the PR template now require full-acceptance closing links, partial
+reference links, a dispatched reviewer with significant fixes pushed, final-head
+CI and no agent merges.
+
+Next unblocked implementation remains portable-form HIR with binding identity
+and source spans, explicit evaluation-order/control-flow IR and shared ABI
+lowering. Keep the lossless forms separate from legacy EDN; retire old paths
+only after replacement acceptance. M2–M9 remain unfinished.

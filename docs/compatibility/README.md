@@ -6,7 +6,8 @@ Its 16-case corpus is shared with independently decoded Suss execution:
 **9 differential passing, 7 failing, 0 skipped**. Exact tagged observations and
 failure stages are tracked separately from the legacy baseline. Stable known
 failures do not establish compatibility; ExceptionInfo implementation and broader
-semantic/arity coverage remain M1-02 work.
+semantic/arity coverage remain M2/M4/M7 work. The bounded M1-02 evidence-harness
+acceptance is complete; known failures are not compatibility successes.
 
 The contract is [the design specification](../design/suss-0.3.1.md), using the
 pinned ClojureScript submodule. `cljs-core.edn` contains **1,065 source declarations**
