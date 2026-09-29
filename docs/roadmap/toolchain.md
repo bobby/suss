@@ -56,29 +56,39 @@ fixture also pass on the new engine. These are feasibility/legacy fixtures, not
 Suss support for the full boundary graph. Unimplemented Suss boundary types and
 async functions now produce explicit Unsupported diagnostics.
 
-Five `toolchain_async` tests now execute a stackless canonical callback that
-yields before task.return, plus typed future and stream endpoint round-trips
-through a core guest. The future remains a future and separately delivers 42;
-the stream separately delivers boundary bytes. This certifies endpoint transport,
-not guest-memory payload reads, nested async values, EOF, backpressure or
-production Suss scheduling. Separate probes force a canonical async import to
-return Pending and complete through a waitable callback, and cancel a pending
-host import from the guest. The cancellation callback checks RETURN_CANCELLED
-and reclaims the host future before Store teardown. This requires the separate
-`wasm_component_model_more_async_builtins(true)` feature; enabling only async
-rejects the fixture during validation. The callback fixture retains upstream license and
-hash provenance under `crates/suss-compile/tests/fixtures/`.
+Eight `toolchain_async` tests execute stackless canonical callbacks and typed
+future/stream endpoint transfers. Canonical imports actually return Pending,
+complete via a waitable callback, and can be cancelled from the guest. Separate
+future and stream probes now read payloads from guest memory: the future returns
+u32::MAX, and one-byte stream reads preserve `[0, 255, 42]` and explicitly observe
+EOF. The stream producer sees capacity one, produces only on demand and retains
+no read-ahead buffer. These are narrow demand/backpressure checks, not arbitrary
+buffer or stress tests.
+
+Future and stream read cancellation return the exact CANCELLED event with zero
+items, ask the Rust producer to finish, and leave the guest memory sentinel
+unchanged. Async cancellation requires the separate
+`wasm_component_model_more_async_builtins(true)` feature; enabling only component
+async rejects the subtask cancellation fixture during validation. The adapted
+callback fixture retains upstream license and hash provenance under
+`crates/suss-compile/tests/fixtures/`; the new read/cancel fixtures are original.
 
 ```sh
-cargo test -p suss-compile --test toolchain_async --locked -- --test-threads=2
+cargo test -p suss-compile --test toolchain_profile --test toolchain_async \
+  --test shared_runtime --locked -j2 -- --test-threads=2
 ```
 
-M0-02 remains open while future/stream guest payload reads, EOF/backpressure
-and cancellation across those endpoints are unverified. Wasmtime 49.0.1 has no public API to cancel an
-individual started host call; its referenced upstream issue #11833 remains open.
-Dropping a Rust call future is not cancellation. The executing guest-driven
-subtask cancellation path above does not establish top-level host interruption
-or Suss session cancellation.
+The local M0-02 named feasibility acceptance probes now pass. Issue #2 remains
+open while publishing the local commits/results requires approval. See the
+criterion-by-criterion audit in the handoff. This does not establish generated
+Suss boundary adapters, nested async values, arbitrary payload shapes, endpoint
+write cancellation or production Suss scheduling. These belong to the M5/M6
+acceptance suites.
+
+Wasmtime 49.0.1 has no public API to cancel an individual started host call;
+its referenced upstream issue #11833 remains open. Dropping a Rust call future
+is not cancellation. The executing guest-driven cancellation paths above do
+not establish top-level host interruption or Suss session cancellation.
 The optional Wasm compiler-component build fails on native-only CLI imports;
 see the handoff for its failed command and limits. The production bundled WIT remains
 in use pending replacement binding tests.

@@ -124,10 +124,10 @@ Continue **M0-02** before a production dependency/runtime replacement:
    bundled WIT until the replacement bindings pass executing tests.
 2. The Rust family migration now passes the full baseline (see below).
    Continue canonical callback, cancellation and future/stream feasibility.
-3. Canonical async imports, guest-driven host-subtask cancellation and external-id
-   now execute (see the latest increment below). Complete future/stream payload
-   reads in guest memory, EOF/backpressure and endpoint cancellation; do not treat
-   endpoint round-trips as complete async interoperability.
+3. Named M0-02 local feasibility probes now pass, including future/stream guest
+   payload reads, one-byte demand/EOF and read cancellation (see the audit below).
+   Publication and remote issue acceptance updates await explicit approval.
+   Generated Suss bindings, nested payloads and lifecycle stress remain M5/M6.
 4. Extend the M0-04 Chrome fixture to the full feature profile and compare the
    optional Jco path before committing browser packaging. Then implement
    spans/namespace phases and the general verified IR (M2).
@@ -343,3 +343,64 @@ review still rejected the push after those checks. No alternative publication
 route was attempted. The remote branch retains `64437bd`; the new issue comment
 was not sent. Ask the user to approve publishing the local increment and posting
 the verified test summary to issue #2. Local implementation work is unblocked.
+
+
+## M0-02 guest payload reads and endpoint cancellation — 2026-09-29
+
+Four original fixtures extend the hand-written canonical ABI feasibility probes:
+
+- `async-future-read.wat`: the producer returns Pending before delivering
+  u32::MAX; the guest checks FUTURE_READ/COMPLETED and returns its memory load.
+  Memory starts with a different sentinel to ensure a missing write cannot pass.
+- `async-stream-read.wat`: four pending reads request exactly one byte each.
+  The host produces 0, 255, 42 on the first three, then EOF with zero items.
+  Guest callbacks assert the exact count/status, neighboring memory remains
+  unchanged, and EOF leaves the whole sentinel unchanged. Independent Rust
+  assertions check packed byte order, capacity one and no production before demand.
+- `async-future-cancel-read.wat` and `async-stream-cancel-read.wat`: the guest
+  cancels a pending read, verifies the endpoint-specific callback event and
+  CANCELLED/zero-items result, then drops the read end. The producer poll trace
+  starts with finish=false and ends with finish=true. Guest memory is untouched.
+
+Commands/results:
+
+- Focused future, stream and endpoint-cancel tests: passed individually.
+- `cargo test -p suss-compile --test toolchain_async --test toolchain_profile --test shared_runtime --locked -j2 -- --test-threads=2`: 8 async + 8 profile + 1 shared-runtime passed, zero ignored/failures.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 12 passed.
+- `python3 scripts/cljs_inventory.py --check`: 1,065 declarations verified.
+- `python3 scripts/wasi_lock.py`: 15 WIT files and six official packages verified.
+- `python3 scripts/publish_roadmap.py`: offline preview, 10 milestones/39 stable issues; no remote writes.
+
+### Local M0-02 acceptance audit
+
+The issue's scope is selection/locking and executing feature feasibility, not
+M5/M6's generated production interoperability suites.
+
+| Acceptance requirement | Authoritative executing/locked evidence |
+| --- | --- |
+| Core GC, tail calls, exceptions | `rust_engine_executes_required_core_features` executes each and returns 42; typed function references also execute |
+| Maps | `canonical_map_values_cross_guest_memory_in_both_directions` executes empty and Unicode-key maps with u32::MAX through canonical memory |
+| implements/external-id | Named implements import invokes the Rust host; external-id survives WIT encoding and selects an executing export |
+| Async functions | Callback YIELD/resume, canonical lower actually Pending/complete, guest subtask cancellation |
+| Future | Read-end transfer without implicit await; independent host consumption; pending guest-memory payload read and read cancellation |
+| Stream | Read-end transfer; independent boundary-byte consumption; guest-memory one-byte demand/order, EOF and read cancellation |
+| Exact versions | Cargo.toml/Cargo.lock pin Wasmtime 49.0.1, wasm-tools family 0.258.0 and wit-bindgen 0.61.1; focused runtime tests execute that lock |
+| Official WIT hashes | `wasi-wit-lock.json` pins release/archive/file hashes; offline verifier checks 15 files/six packages; original package versions resolve in the executing profile suite |
+| Report unsupported individually | Prototype rejects async exports and map/future/stream/error-context boundary adapters explicitly; public top-level host cancellation is unavailable; optional Wasm CLI compiler-component build fails native-only imports |
+
+All named local feasibility requirements now have passing evidence. Issue #2 and
+milestone M0 remain open; the external publication blocker above is unchanged.
+The remote CI run on earlier head 64437bd was still live/in_progress at 19:54 UTC
+and is not evidence for these unpublished tests. Do not restart it on observation
+timeouts.
+
+Limits: these are hand-written feasibility artifacts. No production Suss
+adapters/scheduler were implemented. Nested types/resources, arbitrary buffering,
+zero-length readiness reads, cancellation races/retry/write cancellation and
+lifetime/stress coverage remain the M5/M6 suites. No complete WASI alpha or M0
+milestone claim follows from this local M0-02 audit.
+
+Next unblocked work: audit M0-03's shared GC fragment acceptance on the selected
+engine and M0-01's inventory/license gates, then finish M0-04's browser feature
+profile and optional Jco comparison. Continue local implementation while remote
+publishing awaits explicit approval.

@@ -26,10 +26,12 @@
       "objective": "Select a tested Wasmtime/compiler-tools/WIT package set for WASI 0.3.1.",
       "acceptance": "Execute probes for core GC, tail calls, exceptions, maps, implements/external-id, async functions, future and stream; lock exact versions and WIT hashes; report unsupported features individually.",
       "spec_sections": "8\u201310",
-      "validation": "cargo test -p suss-compile --test toolchain_profile",
+      "validation": "cargo test -p suss-compile --test toolchain_profile --test toolchain_async --locked -- --test-threads=2",
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
       "evidence": [
-        "docs/roadmap/toolchain-probes.json: four core execution probes, three component declaration compilation probes, and WIT map/async/external-id parsing pass with Wasmtime 49.0.1 and wasm-tools 1.258.0. Official WIT locks and production Rust migration remain."
+        "Cargo.toml/Cargo.lock: Wasmtime/wasmtime-wasi 49.0.1, wasm-tools Rust family 0.258.0, wit-bindgen 0.61.1; official 15-file/six-package release graph locked by byte hashes in docs/roadmap/wasi-wit-lock.json.",
+        "Executing Rust suites: eight toolchain_profile tests and eight toolchain_async tests pass. Core GC/function references/tail calls/EH, canonical maps, implements/external-id, callback lift/async lower, future/stream transport and guest-memory reads, one-byte stream demand/EOF, guest subtask/read cancellation. See docs/roadmap/handoff.md for acceptance audit and explicit unsupported production features.",
+        "Local named feasibility acceptance passes; GitHub issue remains open because publication of the later commits/results requires explicit approval. Migrated native workspace baseline passed; optional Wasm compiler-component build remains a recorded failure."
       ]
     },
     {

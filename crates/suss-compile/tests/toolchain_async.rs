@@ -341,3 +341,235 @@ fn guest_cancels_pending_host_import_and_observes_terminal_event() {
         "cancellation reclaims the host future before Store teardown"
     );
 }
+
+#[test]
+fn future_payload_is_read_from_guest_memory_after_pending_event() {
+    use std::sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    };
+    use wasmtime::component::FutureReader;
+    let wat = std::fs::read_to_string(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/fixtures/async-future-read.wat"
+    ))
+    .unwrap();
+    let mut config = Config::new();
+    config
+        .wasm_component_model_async(true)
+        .wasm_component_model_async_stackful(false)
+        .consume_fuel(true);
+    let engine = Engine::new(&config).unwrap();
+    let component = Component::new(&engine, wat).unwrap();
+    let mut store = Store::new(&engine, ());
+    store.set_fuel(100_000).unwrap();
+    let instance = drive(Linker::new(&engine).instantiate_async(&mut store, &component)).unwrap();
+    let read = instance
+        .get_typed_func::<(FutureReader<u32>,), (u32,)>(&mut store, "read")
+        .unwrap();
+    let polls = Arc::new(AtomicUsize::new(0));
+    let count = polls.clone();
+    let input = FutureReader::new(&mut store, async move {
+        std::future::poll_fn(|context| {
+            if count.fetch_add(1, Ordering::SeqCst) == 0 {
+                context.waker().wake_by_ref();
+                Poll::Pending
+            } else {
+                Poll::Ready(())
+            }
+        })
+        .await;
+        wasmtime::error::Ok(u32::MAX)
+    })
+    .unwrap();
+    assert_eq!(
+        drive(
+            store.run_concurrent(async |accessor| read.call_concurrent(accessor, (input,)).await)
+        )
+        .unwrap()
+        .unwrap(),
+        (u32::MAX,)
+    );
+    assert!(polls.load(Ordering::SeqCst) >= 2);
+}
+
+struct BoundedByteProducer {
+    index: usize,
+    waiting: bool,
+    delivered: std::sync::Arc<std::sync::Mutex<Vec<usize>>>,
+}
+impl wasmtime::component::StreamProducer<()> for BoundedByteProducer {
+    type Item = u8;
+    type Buffer = wasmtime::component::VecBuffer<u8>;
+    fn poll_produce(
+        mut self: std::pin::Pin<&mut Self>,
+        context: &mut Context<'_>,
+        mut store: wasmtime::StoreContextMut<'_, ()>,
+        destination: wasmtime::component::Destination<'_, u8, Self::Buffer>,
+        finish: bool,
+    ) -> Poll<wasmtime::Result<wasmtime::component::StreamResult>> {
+        assert!(!finish, "ordinary reads must not request cancellation");
+        assert_eq!(destination.remaining(&mut store), Some(1));
+        if !self.waiting {
+            self.waiting = true;
+            context.waker().wake_by_ref();
+            return Poll::Pending;
+        }
+        self.waiting = false;
+        self.delivered.lock().unwrap().push(self.index);
+        let mut destination = destination.as_direct(store, 1);
+        assert_eq!(destination.remaining().len(), 1);
+        if self.index == 3 {
+            Poll::Ready(Ok(wasmtime::component::StreamResult::Dropped))
+        } else {
+            destination.remaining()[0] = [0, 255, 42][self.index];
+            destination.mark_written(1);
+            self.index += 1;
+            Poll::Ready(Ok(wasmtime::component::StreamResult::Completed))
+        }
+    }
+}
+
+#[test]
+fn stream_guest_reads_bound_production_preserve_byte_order_and_observe_eof() {
+    use wasmtime::component::StreamReader;
+    let wat = std::fs::read_to_string(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/fixtures/async-stream-read.wat"
+    ))
+    .unwrap();
+    let mut config = Config::new();
+    config
+        .wasm_component_model_async(true)
+        .wasm_component_model_async_stackful(false)
+        .consume_fuel(true);
+    let engine = Engine::new(&config).unwrap();
+    let component = Component::new(&engine, wat).unwrap();
+    let mut store = Store::new(&engine, ());
+    store.set_fuel(100_000).unwrap();
+    let instance = drive(Linker::new(&engine).instantiate_async(&mut store, &component)).unwrap();
+    let read = instance
+        .get_typed_func::<(StreamReader<u8>,), (u32,)>(&mut store, "read")
+        .unwrap();
+    let delivered = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let input = StreamReader::new(
+        &mut store,
+        BoundedByteProducer {
+            index: 0,
+            waiting: false,
+            delivered: delivered.clone(),
+        },
+    )
+    .unwrap();
+    assert!(
+        delivered.lock().unwrap().is_empty(),
+        "no production before guest demand"
+    );
+    assert_eq!(
+        drive(
+            store.run_concurrent(async |accessor| read.call_concurrent(accessor, (input,)).await)
+        )
+        .unwrap()
+        .unwrap(),
+        (0x2aff00,)
+    );
+    assert_eq!(
+        *delivered.lock().unwrap(),
+        [0, 1, 2, 3],
+        "one item per requested read, followed by EOF"
+    );
+}
+
+struct CancelledProducer(std::sync::Arc<std::sync::Mutex<Vec<bool>>>);
+impl wasmtime::component::FutureProducer<()> for CancelledProducer {
+    type Item = u32;
+    fn poll_produce(
+        self: std::pin::Pin<&mut Self>,
+        _: &mut Context<'_>,
+        _: wasmtime::StoreContextMut<'_, ()>,
+        finish: bool,
+    ) -> Poll<wasmtime::Result<Option<u32>>> {
+        self.0.lock().unwrap().push(finish);
+        if finish {
+            Poll::Ready(Ok(None))
+        } else {
+            Poll::Pending
+        }
+    }
+}
+impl wasmtime::component::StreamProducer<()> for CancelledProducer {
+    type Item = u8;
+    type Buffer = wasmtime::component::VecBuffer<u8>;
+    fn poll_produce(
+        self: std::pin::Pin<&mut Self>,
+        _: &mut Context<'_>,
+        mut store: wasmtime::StoreContextMut<'_, ()>,
+        destination: wasmtime::component::Destination<'_, u8, Self::Buffer>,
+        finish: bool,
+    ) -> Poll<wasmtime::Result<wasmtime::component::StreamResult>> {
+        assert_eq!(destination.remaining(&mut store), Some(1));
+        self.0.lock().unwrap().push(finish);
+        if finish {
+            Poll::Ready(Ok(wasmtime::component::StreamResult::Cancelled))
+        } else {
+            Poll::Pending
+        }
+    }
+}
+
+#[test]
+fn guest_cancels_pending_future_and_stream_reads_without_writing_memory() {
+    use wasmtime::component::{FutureReader, StreamReader};
+    for kind in ["future", "stream"] {
+        let path = format!(
+            "{}/tests/fixtures/async-{kind}-cancel-read.wat",
+            env!("CARGO_MANIFEST_DIR")
+        );
+        let wat = std::fs::read_to_string(path).unwrap();
+        let mut config = Config::new();
+        config
+            .wasm_component_model_async(true)
+            .wasm_component_model_more_async_builtins(true)
+            .wasm_component_model_async_stackful(false)
+            .consume_fuel(true);
+        let engine = Engine::new(&config).unwrap();
+        let component = Component::new(&engine, wat).unwrap();
+        let mut store = Store::new(&engine, ());
+        store.set_fuel(100_000).unwrap();
+        let instance =
+            drive(Linker::new(&engine).instantiate_async(&mut store, &component)).unwrap();
+        let trace = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+        let result =
+            if kind == "future" {
+                let input =
+                    FutureReader::new(&mut store, CancelledProducer(trace.clone())).unwrap();
+                let read = instance
+                    .get_typed_func::<(FutureReader<u32>,), (u32,)>(&mut store, "read")
+                    .unwrap();
+                drive(store.run_concurrent(async |accessor| {
+                    read.call_concurrent(accessor, (input,)).await
+                }))
+                .unwrap()
+                .unwrap()
+            } else {
+                let input =
+                    StreamReader::new(&mut store, CancelledProducer(trace.clone())).unwrap();
+                let read = instance
+                    .get_typed_func::<(StreamReader<u8>,), (u32,)>(&mut store, "read")
+                    .unwrap();
+                drive(store.run_concurrent(async |accessor| {
+                    read.call_concurrent(accessor, (input,)).await
+                }))
+                .unwrap()
+                .unwrap()
+            };
+        assert_eq!(result, (99,), "{kind} cancellation acknowledgment");
+        let trace = trace.lock().unwrap();
+        assert_eq!(trace.first(), Some(&false), "{kind} first polls normally");
+        assert_eq!(
+            trace.last(),
+            Some(&true),
+            "{kind} producer acknowledges finish"
+        );
+    }
+}
