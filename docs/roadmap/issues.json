@@ -62,10 +62,12 @@
       "objective": "Load a minimal core GC module through ES modules and bridge one asynchronous operation.",
       "acceptance": "A supported browser loads the runtime, returns typed values, suspends/resumes through a Promise and reports feature failures; document direct loading and optional Jco routes.",
       "spec_sections": "9\u201310",
-      "validation": "npm run test:browser-probe",
+      "validation": "python3 scripts/probe_browser.py --chrome /path/to/chrome --wasm-tools /path/to/wasm-tools --jco /path/to/jco --output docs/roadmap/browser-probe.json",
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
       "evidence": [
-        "tests/browser and docs/roadmap/browser-probe.json: Chrome 154 loads ES modules/WasmGC, resumes a GC continuation through a Promise, cancels and isolates stale callbacks. Browser emitted passing DOM but required termination during shutdown. Cross-browser profile and Jco comparison remain."
+        "Chrome 154.0.8037.58 executes GC, typed function references, tail calls and exceptions, returning 42; ES modules retain a GC continuation across Promise suspension and test cancellation/stale callbacks. Malformed artifact verifies feature-name and original CompileError diagnostics.",
+        "Jco 1.35.0 transpiles an original simple GC component; generated ESM/core Wasm executes its typed u32 export in Chrome and returns 42. This is optional packaging feasibility only, not async WIT/WASI or full Suss browser output.",
+        "docs/roadmap/browser-probe.json records source/harness/generated artifact hashes and strict complete-result validation. Chrome DOM passes but teardown times out; actual exit is unknown/null, not replaced with zero. Other browsers and production canonical/typed host corpus remain M8 work. Local M0-04 named feasibility acceptance passes; issue/milestone remain open during PR review."
       ]
     },
     {

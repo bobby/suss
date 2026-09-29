@@ -23,7 +23,7 @@ export async function initialize() {
     },
   };
   const bytes = await (await fetch(new URL('./continuation.wasm', import.meta.url))).arrayBuffer();
-  ({instance} = await WebAssembly.instantiate(bytes, imports));
+  ({instance} = await instantiateRequired(bytes, imports, 'GC continuation'));
   return {
     addLater(base, delta) {
       if (active) throw new Error('fixture supports one active task');
@@ -44,4 +44,18 @@ export async function initialize() {
     },
     pending: () => instance.exports.pending() !== 0,
   };
+}
+
+// Surface the required feature and original engine diagnostic. A compile error
+// may be unsupported syntax or bad input; never convert it into a passed probe.
+export async function instantiateRequired(bytes, imports, feature) {
+  try {
+    const module = new WebAssembly.Module(bytes);
+    return {module, instance: new WebAssembly.Instance(module, imports)};
+  } catch (cause) {
+    if (!(cause instanceof WebAssembly.CompileError)) throw cause;
+    const error = new Error(`Cannot compile required Wasm feature ${feature}: ${cause.message}`, {cause});
+    error.feature = feature;
+    throw error;
+  }
 }

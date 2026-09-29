@@ -35,7 +35,7 @@ preserves existing issue bodies.
 - **M0-01 — Contract and upstream inventory** (in-progress). Pinned inventory regeneration is deterministic; strict review-schema/hash validation and core source/license policy now pass locally. All 1,065 declarations remain unassessed; remote acceptance update awaits PR review.
 - **M0-02 — Lock toolchain and official WIT packages** (in-progress). Select a tested Wasmtime/compiler-tools/WIT package set for WASI 0.3.1. Official source graph and exact versions are locked. Local named feasibility probes pass, including guest future/stream payload reads, bounded demand/EOF and read cancellation. Published in draft PR #40; issue acceptance update awaits review; generated Suss async adapters remain M5/M6 work.
 - **M0-03 — Prove shared GC fragments** (in-progress). Three local probes pass on Wasmtime 49.0.1: shared closures/GC roots/nominal descriptors, old captures after binding redefinition, and ABI rejection before initializer effects. Published in draft PR #40; remote acceptance update awaits review; the production REPL remains future work.
-- **M0-04 — Prove browser loading and suspension** (in-progress). Load a minimal core GC module through ES modules and bridge one asynchronous operation.
+- **M0-04 — Prove browser loading and suspension** (in-progress). Local Chrome probes pass for required core features, typed values, Promise suspension/cancellation and feature-error diagnostics. Optional Jco GC component packaging executes; cross-browser/product interoperability remains M8 work.
 
 ### M1: Trustworthy evidence
 

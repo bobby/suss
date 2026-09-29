@@ -99,19 +99,36 @@ not establish top-level host interruption or Suss session cancellation.
 The optional Wasm compiler-component build fails on native-only CLI imports;
 see the handoff for its failed command and limits. The production bundled WIT remains
 in use pending replacement binding tests.
-M0-04 now has an actual browser fixture in `tests/browser/`. Chrome
-154.0.8037.58 loaded the ES module and core-GC module, retained a continuation
-across Promise suspension, and passed cancellation/stale-callback checks.
-[The result](browser-probe.json) records source hashes. Chrome emitted the
-completed passing DOM but hung during display teardown; the harness terminated
-the isolated process after 20 seconds. This limitation remains explicit.
+M0-04 executes the full required core feature probe set in Chrome
+154.0.8037.58: GC, typed function references, tail calls and exceptions return 42.
+The ES module bridge retains a GC continuation through Promise suspension,
+cleans up cancellation and isolates stale callbacks. A malformed artifact checks
+that a compile rejection preserves both the required feature name and original
+engine diagnostic; it is not mislabeled as a valid unsupported feature.
+
+The optional Jco 1.35.0 route transpiles a small GC component and loads its
+ES module/core Wasm in Chrome; its typed u32 export returns 42. This certifies
+simple GC component packaging, not async WIT values, WASI capabilities, nested
+boundaries or the production Suss browser artifact. Direct core loading remains
+the minimum browser route; Jco is separately tested optional packaging. Its
+[instantiation API](https://github.com/bytecodealliance/jco/blob/main/docs/src/transpiling.md)
+lets the browser loader provide modules/imports explicitly.
+
+[The result](browser-probe.json) records source/harness hashes, generated Jco
+artifact hashes and each required check. Python rejects incomplete or unknown
+results; a Jco result is required only when that route was requested. Chrome
+again emitted complete passing DOM but timed out during teardown. The probe
+records a semantic pass and a null process exit code, with termination explicitly
+recorded; clean process shutdown is not claimed.
 
 ```sh
 python3 scripts/probe_browser.py --chrome /path/to/chrome \
-  --wasm-tools /path/to/wasm-tools-1.258.0 \
+  --wasm-tools /path/to/wasm-tools-1.258.0 --jco /path/to/jco-1.35.0 \
   --output docs/roadmap/browser-probe.json
 ```
 
-The server binds only to localhost and Chrome uses a temporary isolated profile.
-This checks a hand-written continuation fixture, not compiled Suss, browser-wide
-compatibility, or the canonical ABI. Jco packaging comparison remains M0/M8 work.
+Jco was installed with install scripts disabled under /tmp for this development
+probe; it is not a shipped dependency. The HTTP server binds only to localhost
+and Chrome uses a temporary isolated profile. Other browsers, production typed
+host bindings, canonical async browser interoperability and distributable browser
+artifacts remain M8 acceptance work.

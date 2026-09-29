@@ -1,11 +1,29 @@
 {
   "schema": 1,
+  "semantic_probe_status": "passed",
+  "validation_error": null,
   "browser": "Google Chrome 154.0.8037.58",
   "wasm-tools": "wasm-tools 1.258.0 (5c6d31c78 2026-08-24)",
   "scope": "single-browser feasibility fixture; not Suss browser output or canonical ABI",
   "result": {
     "status": "passed",
+    "features": [
+      "gc",
+      "function-references",
+      "tail-call",
+      "exceptions"
+    ],
+    "jco": {
+      "status": "passed",
+      "checks": [
+        "transpiled ES module import",
+        "component export returns 42",
+        "core GC payload executes"
+      ]
+    },
     "checks": [
+      "required core features execute",
+      "feature compile rejection diagnostic",
       "ES module loading",
       "WasmGC continuation",
       "Promise suspension and resume",
@@ -13,11 +31,25 @@
       "stale callback isolation"
     ]
   },
+  "jco_version": "1.35.0",
+  "jco_generated_sha256": {
+    "gc-probe.core.wasm": "f1f51a14715a2912700c0ac2f63f9534fa6c9a97c81a224a5741ffe1ba77c569",
+    "gc-probe.d.ts": "5f6af0158323fd934d91467afa00448753c49948468aeb23b8e0fdbd2c001b3b",
+    "gc-probe.js": "aedfcb1ce8762540fe95698251f8207443f258c2fe9a5eada6870104b76114f4"
+  },
   "browser_terminated_after_dom_timeout": true,
+  "browser_process_exit_code": null,
   "source_sha256": {
-    "bridge.mjs": "90e01210d9a93945ce4c9e73132809364b3aa7cb9320306720af992b0546b5cd",
-    "continuation.wat": "d79d50d95205e2642cb90500346ddf52468f4532805b4f0904efbe34672e6d4b",
-    "index.html": "b1eca9f6e4b47f7d9d352873a758fc9f620ff4df1b60d4ead895372ee7d85b20",
-    "probe.mjs": "cbc241c721f6f992c27077135a47fec6bb6157d1e9de8d1d8be2f1107a94e346"
+    "scripts/probe_browser.py": "851dcb372e458128385db50b9ba068a05f2ffbcc5d37394ed36f91ee09d02dfe",
+    "tests/browser/bridge.mjs": "9dd85ff1a251ea3ee828ba63cb711953378b1cb55e46ce78dd71954279713915",
+    "tests/browser/continuation.wat": "d79d50d95205e2642cb90500346ddf52468f4532805b4f0904efbe34672e6d4b",
+    "tests/browser/index.html": "b1eca9f6e4b47f7d9d352873a758fc9f620ff4df1b60d4ead895372ee7d85b20",
+    "tests/browser/jco-gc-component.wat": "7f13c4a7919ae0bb59869c84cfb6289cb41b64798ac79e0c80c9cd684360dd5b",
+    "tests/browser/jco-probe.mjs": "1481e463e03df943b9b5618116c88e6aa395837b6589bb049a9e35ef80bd3be4",
+    "tests/browser/probe.mjs": "d64f15427bd5e8eb0adf58ff6c30cb0c5082245db451f89fc7f121901cacd272",
+    "tests/toolchain/exceptions.wat": "8f9657ccc0215049761e32746cc385fc508a14949e6e5cc83d9c60ac1dcc0a07",
+    "tests/toolchain/function-references.wat": "729bc644023b8aa7006700bcfe6cac7e9c1a877fefd57ce3b63de88fab13013f",
+    "tests/toolchain/gc.wat": "427d1626f11164856a8ece8c0a6bdabd9af14ec411224f8704eaab0338aa44a5",
+    "tests/toolchain/tail-call.wat": "9f2215e870247a1b3d5dca19e4dbb5b936dac9f0d714b5b22c0a9bf6b82b88e7"
   }
 }

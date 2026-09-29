@@ -599,3 +599,76 @@ review-overlay and WIT lock verification pass. No baseline expectations changed.
 Next: publish this profile/workflow change, observe the new PR run and retain
 M1-03 open until its full acceptance is proved. Continue M0-04 browser/Jco work
 while CI runs.
+
+
+The optimized profile/workflow is published as a070a5e in PR #40. New PR run
+[36626065207](https://github.com/bobby/suss/actions/runs/36626065207) is verified
+live/in_progress on that exact head; no duplicate branch-push run was created.
+The superseded aa3057a PR run lacks the new concurrency group, so cancellation
+was explicitly requested only after the successor was confirmed live. Its
+terminal result is not yet claimed. Follow the new handle without restarting it
+on observation timeouts. Include this post-push observation with the next code
+increment instead of pushing a status-only commit and triggering extra CI.
+
+
+## M0-04 core feature profile and optional Jco route — 2026-09-29
+
+The browser fixture now executes the required GC/function-reference/tail-call/EH
+WAT probes, each returning 42, before the existing Promise/GC-continuation,
+cancellation and stale callback checks. `instantiateRequired` preserves the
+feature name and engine CompileError cause; invalid bytes explicitly exercise
+that failure path. It does not classify every compilation error as unsupported
+syntax. The minimal bridge still has signed-i32 fixture values, not the future
+Suss f64/UTF-16 runtime contract.
+
+The first run was sandbox-blocked from binding localhost. The authorized isolated
+headless harness was then rerun outside that restriction. Its first expanded run
+returned RUNNING instead of a complete DOM result; it failed, not skipped. Tiny
+probe compilation now uses synchronous WebAssembly.Module/Instance constructors
+within the async initialization helper to avoid virtual-time racing background
+compilation. The full fixture subsequently passed.
+
+Optional Jco comparison: exact @bytecodealliance/jco 1.35.0 was installed under
+/tmp with --ignore-scripts; npm reports Apache-2.0 WITH LLVM-exception and integrity
+`sha512-O53cWIMm/M1SpwLxKRicvAMDnzWf4zWs6I6qFZIGbn3HUovDMCCe9blkGxxYuyocHjVf/cXgNmlMu/x7Tyi77A==`.
+Node v24.5.0/npm 11.5.1 are development tools only. The original
+`jco-gc-component.wat` is transpiled with explicit async instantiation and browser
+module loading, then its generated GC core actually executes and typed export
+returns 42. Generated JS/Wasm/declaration hashes are recorded; generated third-
+party runtime code is not vendored or shipped. The temporary installation lock
+is /tmp/suss-jco-1.35.0/package-lock.json. Future production packaging requires
+its own dependency/license lock and the full M8 suite.
+
+The Python result validator now requires all four feature labels and every exact
+acceptance check. Requested Jco results cannot be absent, partial or default to
+success. Five new malformed-result tests cover those failures. Raw browser output
+and validated semantic status are separate. Timeout teardown no longer creates
+an invented zero exit code: evidence preserves null and the explicit termination
+flag. Passing DOM proves the semantic fixture only, not clean Chrome shutdown.
+
+Commands/results:
+
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 25 passed.
+- `node --check` for bridge, direct probe and Jco probe modules: passed.
+- `python3 scripts/probe_browser.py --chrome '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --wasm-tools /tmp/suss-toolchain-49/wasm-tools-1.258.0-aarch64-macos/wasm-tools --jco /tmp/suss-jco-1.35.0/node_modules/.bin/jco --output docs/roadmap/browser-probe.json`: executing semantic/packaging probes passed; Chrome teardown required termination after complete DOM output.
+
+Local acceptance audit: supported browser/core module loading, typed result 42,
+Promise suspend/resume, required feature failure diagnostics and direct/optional
+Jco routes now all have executing evidence. This does not establish cross-browser
+support, arbitrary browser/WIT shapes, canonical async values or compiled Suss
+browser output. Issue #4 and milestone M0 remain open during acceptance review.
+The native Rust baseline from a070a5e remains applicable; this increment changes
+browser/tooling fixtures only. The optimized Linux CI handle 36626065207 was
+observed still live/in_progress, not a terminal pass, while these tests ran.
+
+Next unblocked task: observe that same CI handle to finish M1-03 evidence, audit
+M1-01 strict decoder gates, and implement the pinned ClojureScript development
+oracle (M1-02) before replacing foundation/runtime semantics in M2.
+
+
+The browser increment is validated for a local commit. Hold its branch push
+until optimized Linux run 36626065207 becomes terminal: publishing a new PR head
+would cancel that live validation and prevent its successful cache save. This
+is a resource/evidence decision, not a permission blocker. User authorization to
+commit/push/open PRs remains in force. The existing PR #40 head is still a070a5e;
+include the new browser coverage and update issue #4/PR when that run finishes.
