@@ -86,13 +86,41 @@ ignored during ordinary tests because they write evidence.
   termination after completed DOM (see toolchain.md).
 * `git diff --check`: passed.
 
+## M0-02 source-lock increment — 2026-09-29
+
+Discovery changes were committed as `6306fd6`. The unrelated pre-existing
+`reference/BUSINESS_DSL_RESEARCH.md` and `reference/clojure-site/` remain untouched.
+
+Vendored the byte-exact official WASI v0.3.1 WIT release archive under
+`vendor/wasi/wasi-wit-0.3.1/`, with upstream license and source provenance.
+`wasi-wit-lock.json` pins release commit, archive hash, all 15 file hashes,
+six original package identities and their local dependency graphs. The optional
+`--archive` check also verifies the downloaded archive hash and exact member
+contents against the tracked source lock. Dependency
+copies may contain subsets of the primary package; they are preserved exactly.
+A version-preservation regression uses a 0.2.7 dependency in a 0.3.1 package.
+
+* Regression-first: `test_wasi_lock.py` initially failed because the verifier
+  did not exist. Tests now reject missing/changed/extra files, missing local
+  dependencies and altered lock graphs, while accepting exact dependency subsets.
+* `python3 -m unittest discover -s scripts -p 'test_*.py'`: 12 passed.
+* `python3 scripts/wasi_lock.py`: 15 files/six packages verified offline.
+* `python3 scripts/wasi_lock.py --wasm-tools /tmp/suss-toolchain-49/wasm-tools-1.258.0-aarch64-macos/wasm-tools --output docs/roadmap/wasi-wit-probes.json`: all six graphs resolved and validated binary WIT round-trips passed.
+* CI now checks the source lock offline, alongside inventory checks.
+
+This proves source integrity, dependency resolution and package encoding only.
+It does not prove actual WASI imports, canonical async execution, maps crossing
+a boundary or Suss binding generation. M0-02 and milestone M0 remain open.
+The prototype bundled WIT and production Rust versions are unchanged.
+Progress was posted to [M0-02](https://github.com/bobby/suss/issues/2#issuecomment-5896703530);
+the issue retains milestone M0 and remains open.
+
 ## Next implementation package
 
 Continue **M0-02** before a production dependency/runtime replacement:
 
-1. Lock the official WASI 0.3.1 package graph with source versions and hashes.
-   Preserve each package's own published version; do not rewrite all versions
-   to 0.3.1. Keep the old bundled WIT only until its replacement passes tests.
+1. The official WIT source graph is now locked (see above). Keep the old
+   bundled WIT until the replacement bindings pass executing tests.
 2. Migrate Rust dependencies to the candidate compatible family (Wasmtime 49.0.1,
    wasm-tools libraries 0.258.0, matching wit-bindgen). Re-run shared_runtime and
    component fixtures using the new engine. CLI acceptance is not Rust API proof.
@@ -128,4 +156,17 @@ Continue **M0-02** before a production dependency/runtime replacement:
   runtime work. Use two test workers locally and retain bounded CI timeouts.
 * Existing untracked `.codex/`, `reference/BUSINESS_DSL_RESEARCH.md` and
   `reference/clojure-site/` were left untouched. AGENTS.md was already untracked
-  and was intentionally rewritten. No Git commit or push was made.
+  and was intentionally rewritten during discovery. Discovery was subsequently
+  committed as `6306fd6`; no push has been made.
+
+Current increment runtime check:
+`cargo test -p suss-compile --test shared_runtime --locked -- --test-threads=2`
+passed (one executing shared-GC fixture) on the existing Wasmtime 39.0.1 engine.
+
+The exact full baseline command `cargo test --workspace --locked -- --test-threads=2`
+was launched for discovery commit `6306fd6` and is still running in exec session
+`72926`; output is `/tmp/suss-discovery-baseline.log`. CLI and compiler unit tests
+have passed; expression integrations are in progress. Poll that session before
+claiming a full result or starting the dependency migration. No Rust source or
+manifest has changed since it started. The subsequent source-lock changes have
+12 passing Python tests and six passing upstream package probes.

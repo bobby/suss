@@ -17,6 +17,7 @@ jobs:
         run: |
           python3 -m unittest discover -s scripts -p 'test_*.py'
           python3 scripts/cljs_inventory.py --check
+          python3 scripts/wasi_lock.py
           python3 scripts/publish_roadmap.py
       - name: Test prototype, strict conformance baseline and runtime probe
         run: cargo test --workspace --locked -j 2 -- --test-threads=2

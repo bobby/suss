@@ -30,8 +30,22 @@ and that descriptor identity distinguishes two same-layout types. Repeat this
 probe with the candidate engine before migrating the REPL. This is a feasibility
 fixture, not the production runtime ABI.
 
-M0-02 still requires the official WIT package graph/content locks, candidate Rust
-dependency migration, canonical async execution and bidirectional map transfers.
+The official WIT graph is now vendored byte for byte under `vendor/wasi/`.
+[The lock](wasi-wit-lock.json) pins the release commit/archive and all 15 WIT
+file hashes, with original versions and local dependency copies preserved.
+[Package probes](wasi-wit-probes.json) record successful resolution and validated
+binary WIT round-trips for all six official packages with wasm-tools 1.258.0.
+This is package encoding evidence, not execution of WASI capabilities.
+
+```sh
+python3 scripts/wasi_lock.py
+python3 scripts/wasi_lock.py --wasm-tools /path/to/wasm-tools-1.258.0 \
+  --output docs/roadmap/wasi-wit-probes.json
+```
+
+M0-02 still requires candidate Rust dependency migration, canonical async
+execution and bidirectional map transfers. The production bundled WIT remains
+in use pending replacement binding tests.
 M0-04 now has an actual browser fixture in `tests/browser/`. Chrome
 154.0.8037.58 loaded the ES module and core-GC module, retained a continuation
 across Promise suspension, and passed cancellation/stale-callback checks.
