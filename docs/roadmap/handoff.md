@@ -938,6 +938,70 @@ Publish this focused correction to PR #40 first; the new M2 runtime implementati
 will be a separate stacked branch/PR based on that head. Neither milestone is
 closed. No shipped Java/Node path or production arithmetic was changed here.
 
+
+## M2-03 generated shared runtime foundation — 2026-09-29
+
+The original production `runtime_abi` module now generates a shared GC ABI v1
+runtime with wasm-encoder; it is not another reader/source compiler and does not
+replace the legacy backend yet. `docs/runtime/abi-v1.md` records all ten recursive
+layouts, intrinsics, manifest checks and integration limitations. No upstream
+core implementation was copied; repository license applies. No dependency or
+Cargo.lock change, no Java/Node or target host imports, no linear-memory ABI.
+
+Real generated Wasm implements boxed f64 arithmetic/storage, packed UTF-16 unit
+storage, i31 nil/Boolean sentinels, universal closures with minimum/maximum arity
+(including variadic), initialized binding cells and a rooted built-in error
+descriptor. Wrong arity throws a language exception caught by an independently
+loaded module, with UTF-16 diagnostic independently decoded. Old captured closure
+values survive forced GC and binding replacement while current cell lookup sees
+the replacement. Scalar types canonicalize across generated runtime, producer
+and consumer modules. Lone surrogates/astral pairs stay distinct code units;
+invalid unit/index writes are rejected without mutation or truncation.
+
+Manifest verification records compiler package/runtime ABI/wasm-tools versions,
+rejects malformed/duplicate/absent/mismatched records, and compares the actual
+explicit recursive group against the generated prelude. It checks before any
+initializer. A new regression changed the Number layout to valid i64 while
+retaining matching metadata: the old version-only check FAILED the regression
+because initializer effects ran. The strengthened prelude check now rejects
+before effects. Function semantics still require engine validation/linking and
+executing tests; version metadata is not a blanket proof of compatibility.
+
+Validation:
+
+- Numeric runtime regression initially failed (missing runtime export), then
+  passes on actual generated module. A test fixture first needed an explicit
+  f64 type annotation; that compile failure was corrected before semantic proof.
+- `cargo test -p suss-compile --test runtime_abi --locked -- --test-threads=2`
+  with CARGO_BUILD_JOBS=2: final 7 passed/0 ignored, ~0.03s. Heap fields/units are
+  inspected independently; boxed NaN payload and signed-zero bits are exact.
+  Arithmetic covers add/subtract/multiply/divide/negate and binary64 rounding;
+  arithmetic NaN class is checked separately from exact boxed-bit storage.
+- Manifest/prelude mismatch regression: failed before strengthening, passed
+  afterward, with incompatible initializer effect count 0 and compatible count 1.
+- `cargo test --workspace --locked -- --test-threads=2` with CARGO_BUILD_JOBS=2:
+  final pass, /tmp/suss-abi-v1-final-full.log. 317 expressions/12 existing ignored
+  in 53.27s; strict legacy conformance 8 passes/2 manual ignored in 20.49s;
+  oracle 4 passes/1 manual ignored; 7 new runtime ABI passes/0 ignored. Shared
+  source corpus stays 9 differential passing/7 exact known failures/0 skipped.
+- Python suite: 42 passed. `rustfmt --edition 2024` for new runtime/harness and
+  `git diff --check`: passed. Existing source files/legacy ignores are retained.
+
+Commit/publish on resurrection/runtime-abi-v1, with a stacked PR based on
+resurrection/m0-toolchain (8fa7a63 canonical-NaN correction). User branch/PR
+permission remains in force. M2-03 is in-progress, not complete: reader/HIR/IR
+lowering still uses prototype integer/UTF-8 layouts; the source float/UTF-16
+cases do not yet exercise these new intrinsics. Existing CLI/AOT artifacts and
+loaders have not migrated to the manifest gate. Complete protocols/nominal types,
+ExceptionInfo/dynamic scope, unbound-var diagnostics, persistent REPL, scheduler,
+target adapters and publishing metadata remain their original roadmap work.
+
+Next unblocked task: migrate the reader/IR value boundary to lossless binary64
+and UTF-16, then lower source expressions into this shared runtime while retaining
+explicit operand order. Wire the version/prelude gate into fragment loading;
+retire prototype code only after its replacements pass the relevant corpus.
+
+
 ## Dispatched PR #40 code review — 2026-09-29
 
 The user requires an independent dispatched subagent review for every PR, fixes
@@ -1001,3 +1065,47 @@ browser coverage and compiled persistence remain the documented roadmap work.
 Next unblocked step: incorporate this base review fix into stacked PR #41, finish
 that PR's dispatched review audit, and observe CI at both final heads. Continue
 M2 reader/IR/shared-runtime integration afterward; do not close future milestones.
+
+## Dispatched PR #41 code review — 2026-09-29
+
+An independent dispatched reviewer inspected all six files in the runtime ABI
+increment at 95a5d90 against the accepted design, roadmap and compatibility
+inventory. The audit covered recursive type canonicalization, packed UTF-16 and
+binary64 operations, closure callbacks and arity bounds, binding roots across GC,
+exception tagging, manifest parsing and actual prelude verification before
+initializer effects. Tests execute generated modules and independently inspect
+their fields and units. No additional significant defect was found within this
+explicitly bounded foundation increment; no artificial refactor was introduced.
+
+The reviewer incorporated PR #40's independently reproduced fixes at fb3ec0a:
+canonical WIT catch/finally local offsets and strict conformance trap-stage
+classification. The branch integration preserves both handoff evidence sections;
+this does not merge either pull request. The inherited code diff was inspected
+and both new executing regressions pass on the combined runtime branch.
+
+Commands/results, with CARGO_BUILD_JOBS=2 and the shared CARGO_TARGET_DIR:
+
+- `cargo test -p suss-compile --test runtime_abi --locked -- --test-threads=2`:
+  7 passed, 0 ignored, on the original PR head.
+- `cargo test --workspace --locked -- --test-threads=2`: passed at 95a5d90;
+  log /private/tmp/suss-pr41-review-full.log. All enabled suites passed, including
+  317 expressions, 28 components, 8 conformance, 4 oracle and 7 runtime ABI tests.
+  Existing ignores remain explicit; no expected results were changed.
+- After integrating fb3ec0a,
+  `cargo test -p suss-compile --test component --test conformance --test runtime_abi --locked -- --test-threads=2`:
+  29 component, 9 conformance (2 manual recorders ignored), and 7 runtime ABI
+  tests passed; log /private/tmp/suss-pr41-review-integration.log. No RUSTFLAGS
+  override and no new semantic skips.
+
+This review does not establish reader/HIR/IR/backend migration, source-level
+immutable strings and checked dynamic operations, complete multi-arity dispatch,
+unbound-var behavior, nominal protocols, ExceptionInfo or persistent REPL support.
+Those remain documented integration/roadmap work. Source differential evidence
+is still 9 passing, 7 exact known failures and 0 skipped; M2-03 is incomplete.
+
+The user's ongoing rule is to open PRs, dispatch an independent review agent for
+each, push fixes for significant findings, and require successful CI at each
+final head before readiness. Do not merge PRs yet. CI for the combined pushed
+head must be observed separately; local passes and earlier-head CI do not certify
+it. Next unblocked task remains the reader/IR binary64 and UTF-16 migration into
+the shared runtime, with explicit operand order and loader gating.

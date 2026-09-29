@@ -47,7 +47,7 @@ preserves existing issue bodies.
 
 - **M2-01 — Reader forms, metadata and namespace phases** (planned). Introduce source spans, retained metadata and deterministic namespace/reader conditional resolution.
 - **M2-02 — Explicit evaluation-order IR** (in-progress). Lower effectful operands into explicit temporaries and blocks.
-- **M2-03 — Runtime ABI v1 and closures** (planned). Implement stable GC prelude, f64 numbers, UTF-16 strings, closure ABI and binding cells.
+- **M2-03 — Runtime ABI v1 and closures** (in-progress). New generated shared runtime executes boxed f64/UTF-16, universal closures/central arity, initialized binding cells and manifest/prelude gates in seven focused tests. Reader/IR/backend migration and source-corpus acceptance remain; see [ABI v1](docs/runtime/abi-v1.md).
 - **M2-04 — Nominal types, protocols and exceptions** (planned). Introduce descriptor identity and protocol/exception machinery on the stable ABI.
 
 ### M3: Persistent development environment
