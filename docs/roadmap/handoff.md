@@ -2429,3 +2429,35 @@ from these partial gates. Existing legacy differential 9 passes/7 exact failures
 skips and manual/legacy/doc ignores remain separate and unchanged. Next complete
 extended closure signatures and general control flow/core foundations needed by
 source import and production frontend replacement. M2–M9 remain open.
+
+## PR #62 independent review — 2026-09-30
+
+Reviewed 23c33d4 in isolated /private/tmp/suss-review-pr62 against the accepted
+design and reviewed predecessor cf6eb51. Audited phase-specific canonical arithmetic
+cells, staged HIR materialization, module-plan cell aggregation, core redefinition,
+original captures, GC identity, native bootstrap/reset counters, shared recursive
+Invoke identity and declarative ref.func elements. Checked central minimum/variadic
+arity, unary identity and primitive left-fold coercions. Existing universal-call
+tests observe an exact ordered callee/read/invoke trace; arithmetic session tests
+also execute callee/argument effects once. Source oracle provisioning and the four
+manual in-progress inventory entries retain honest dependencies and provenance.
+No significant production defect or remaining review finding was found in this
+bounded increment. No semantic change, dependency, ignore or upstream source copy
+was introduced by review.
+
+Commands/results (CARGO_BUILD_JOBS=2, shared CARGO_TARGET_DIR, no RUSTFLAGS override;
+native Cargo feature graphs run sequentially):
+
+- Compiler modules/definitions/closures/pipeline/resolution/runtime_abi focused suite: 70 pass, zero ignored, exit 0; /private/tmp/suss-pr62-review-compiler.log.
+- Native Session library/persistent_session focus: 21 pass (four private/seventeen integration), zero ignored, exit 0; /private/tmp/suss-pr62-review-session.log. Combined focused scope: 91.
+- Required `cargo test --workspace --locked -- --test-threads=2`: passes including CLI rustdoc, exit 0; /private/tmp/suss-pr62-review-full.log. Code remained frozen during this run; existing legacy/manual/doc ignores unchanged.
+- Fresh pinned source reference regenerated with oracle_cases.py, portable_oracle.py generate, cljs.main and Node, then portable_oracle.py compare: 176 observations match, exit 0; /private/tmp/suss-pr62-review-oracle-comparison.log. The compiler focus independently executes and decodes all 176 cases in its fourteen pipeline tests. The clean pinned root submodule was a read-only source reference. Upstream non-number arithmetic warnings remain visible.
+- Python regression suite: 54 pass, exit 0; /private/tmp/suss-pr62-review-python.log.
+- Inventory/review: 1,065 declarations/four in-progress reviews/1,061 unassessed. WIT: fifteen files/six packages. Numeric artifact integrity, offline roadmap preview and touched Rust formatting with workspace edition 2024 pass. An initial formatting invocation incorrectly selected edition 2021; corrected to the actual workspace edition, without changing source.
+
+This review records evidence only. Require successful CI on the exact final
+reviewed head, including this handoff update, before readiness. Keep Refs #9/#10:
+object coercion, full core/macro import, extended signatures, production frontend
+migration and M2–M9 acceptance remain unfinished. The next unblocked task is
+extended closure signatures and control-flow/core foundations; no milestone or
+issue closes from this partial increment. Do not merge.
