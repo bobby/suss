@@ -305,7 +305,7 @@
       "id": "M4-01",
       "milestone": "M4",
       "title": "Upstream extraction and adaptation provenance",
-      "status": "planned",
+      "status": "in-progress",
       "dependencies": [
         "M2"
       ],
@@ -314,7 +314,9 @@
       "spec_sections": "3",
       "validation": "scripts/verify-core-import.sh",
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
-      "evidence": []
+      "evidence": [
+        "Prerequisite reviewed-form extractor selects exact pinned IDs/UTF-8 ranges, validates review/source hashes and explicit whole-form patches, reproduces canonical core source plus original forms/notices/EPL files and hash manifest. The first identity bootstrap adaptation executes through native Session with exact values, GC/object identity, aliases/redefinition, ordered arguments and arity recovery; a separate 14-case primary corpus compares pinned upstream behavior. Complete dependencies/compiled macros/automatic core loading remain incomplete; Refs #16, not Closes. See docs/compatibility/CORE-IMPORT.md and handoff for actual commands/results."
+      ]
     },
     {
       "id": "M4-02",

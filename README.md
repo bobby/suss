@@ -29,3 +29,6 @@ ClojureScript differential oracle may use Java and Node during development.
 The core compiler and Rust source use the repository license. The ClojureScript
 reference and any future imported forms retain their upstream EPL notices.
 Contributors and coding agents should read [AGENTS.md](AGENTS.md).
+
+The [bootstrap core import](docs/compatibility/CORE-IMPORT.md) packages its
+ClojureScript-derived source and byte-preserved EPL notices/licenses separately.

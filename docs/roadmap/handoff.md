@@ -3557,3 +3557,91 @@ explicit and unchanged. No native/reference process remains live; all review han
 Push significant fix and evidence, then require exact final-head CI before readiness.
 Next continue complete Error/core/callable/collection/compiler requirements; issues9/11
 and M2–M9 remain incomplete. No merge or issue closure.
+
+## Reviewed PR70 readiness and reproducible core import — 2026-09-30
+
+Previous implementation turn made progress: independent PR70 review pushed the
+live ex-info self-call fix a3fbc4f131ea351977f6991cf033473fcd1c57de, full local
+baseline/fresh303 comparison passed, and exact final-head CI36723153710 passed.
+Actual enabled-suite CI log inspected at /private/tmp/suss-pr70-final-ci.log.
+PR70 was marked ready, remains OPEN, no merge. Issue9/11 progress comments
+5912907944/5912907274 retain Refs and incomplete acceptance. Proposed ADR remains
+unaccepted. Current full ROADMAP goal remains active; M2–M9 are incomplete.
+
+Next bounded prerequisite for M4-01/issue16: reproducible reviewed upstream form
+extraction/explicit adaptation and license packaging. Isolated worktree
+/private/tmp/suss-core-import, branch resurrection/reproducible-core-import, is
+based on exact reviewed PR70 head a3fbc4f. Root repository's unrelated untracked
+reference/BUSINESS_DSL_RESEARCH.md and reference/clojure-site/ are preserved.
+
+New scripts/core_import.py selects reviewed IDs from the exact pinned source/form
+inventory, records UTF-8 byte ranges/context and source hashes, verifies clean
+source and byte-preserved pinned license files, checks explicit source-hash-bound
+single-declaration patches, and reproduces runtime/core-import. Manifest records
+source/tool/recipe/review/inventory/patch/artifact/license hashes plus dependencies
+and semantic test references. Original extracted form/notices are retained. Extra
+or changed/missing generated files fail checks rather than being silently removed.
+Duplicate IDs/JSON keys, stale/unreviewed/excluded forms, phase mismatch, missing
+notices and escaping input paths fail. This is provenance, not semantic certification.
+
+First selected form runtime:identity:2691 retains upstream source/EPL-1.0 notice
+and full byte-preserved LICENSE/epl-v10.html. Explicit patch converts the single
+fixed defn to def/fn for the bounded bootstrap compiler, retaining the original
+body; original docstring remains in extracted source. No full compiled defn macro,
+metadata API or automatic production core loading is claimed. Review overlay now
+17 in-progress /1048 unassessed, no new exclusion or completion. Canonical suss.core
+artifact executes through the persistent Session; cljs.core aliases the same cell.
+
+Commands/results (two native jobs/shared target, no RUSTFLAGS override; all native
+Cargo graphs sequential):
+
+- New tool tests first failed missing core_import module, /private/tmp/suss-core-import-red.log; implementation now has11 focused positive/negative provenance tests. No semantic success inferred from this tooling failure.
+- Initial executing native import focus:3 passed, zero ignored, exit0, /private/tmp/suss-core-import-native.log (65903 terminal). Tests prove absence before load, exact scalar/object/function identity through GC, canonical aliases/live redefinition/old closures, once-only argument evaluation and typed arity-error recovery.
+- Initial primary runner failed unknown invented utf16 transport tag, /private/tmp/suss-core-import-oracle.log (55497 terminal1); corrected to existing strict string tag. Next fresh14 observations passed but native corpus fixture failed to compile because CLI lacked serde_json dev dependency, /private/tmp/suss-core-import-oracle-fixed.log (6708 terminal101). Added dev-only existing serde_json1; offline lock update changes only suss-cli dependency edge, no crate version/new package/runtime dependency.
+- Expanded native focus:4 passed, zero ignored, /private/tmp/suss-core-import-native-corpus.log (56768 terminal0). Shared14-case scalar corpus is independently decoded through actual imported Suss execution; malformed/wrong layouts and unknown expected tags fail. Exact sentinels/binary64/UTF-16 retained.
+- Final CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-core-import-oracle.sh:14 fresh pinned upstream observations match, actual native4 passed, exit0, /private/tmp/suss-core-import-oracle-final.log (29227 terminal). Primary runner invokes upstream identity, not the patched form; JVM/Node remain development-only.
+- Python suite65 passed, exit0, /private/tmp/suss-core-import-python-final.log. Inventory1065/overlay17, WIT15/six packages, numeric integrity and offline roadmap preview pass. Generated artifacts reproduce byte-identically; shell syntax/touched Rust formatting/diff checks pass. CI now verifies import provenance alongside existing inventory and full workspace checks.
+- Required CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2 passed exit0, /private/tmp/suss-core-import-workspace.log (95575 terminal). Includes native74 (four new core-import tests), ABI14/source303 and all legacy/component/reader/core/doc targets including CLI. Existing manual/legacy ignores and legacy9pass/7fail remain explicit and unchanged.
+- Bounded scripts/verify-core-import.sh passes exact inventory/overlay/artifact checks and native4, /private/tmp/suss-core-import-verify.log (54569 terminal0). It is prerequisite evidence, not a full M4/M7 gate.
+
+Publish stacked on PR70 with Refs #16, dispatch independent PR review, push
+significant findings and require CI on exact final reviewed commit. Do not merge.
+M4-01 stays in progress: full reviewed dependencies, macro/phase bootstrap,
+namespace privacy/doc metadata, collection foundations and automatic production
+core loading remain incomplete. Next extend the reviewed core foundations needed
+for collection ports while implementing the compiled macro/core bootstrap; do not
+replace upstream behavior with opaque encoding-only collection stubs or claim all
+portable forms load. Keep stable roadmap IDs and source provenance aligned.
+
+## Independent PR71 core-import review — 2026-09-30
+
+Reviewed exact candidate 0b87bf9b948d9b661bd4835fbac4fffff8d9d4e2 against
+reviewed PR70 a3fbc4f131ea351977f6991cf033473fcd1c57de in isolated
+/private/tmp/suss-review-pr71. Significant finding: extraction retained source
+context only as manifest metadata, but accepted contextual selections and emitted
+them as unconditional top-level declarations. This could activate a :clj-only
+reader branch or discard a let initializer's captured binding while producing a
+valid provenance manifest. Independent negative build regressions for both cases
+failed before repair (two accepted invalid contexts),
+/private/tmp/suss-review-pr71-red.log. Import now rejects any nonempty declaration
+context with an explicit unsupported diagnostic before adaptation/output. Exact
+source ranges/context remain in the inventory; context-preserving import is future
+work. Selected identity has empty context, so its source semantics stay unchanged.
+Updated import documentation, corrected review-count arithmetic, and regenerated
+the manifest's importer hash. No upstream form, patch, review, license or runtime
+ABI changes. No semantic success is inferred from packaging/source hashes.
+
+Python66 passed, /private/tmp/suss-review-pr71-python.log. Focused native core-import4
+passed, zero ignored, /private/tmp/suss-review-pr71-focused.log, handle59614 terminal0.
+Fresh14 pinned primary observations and all4 actual native imported-form tests passed,
+/private/tmp/suss-review-pr71-oracle.log, handle99199 terminal0. Inventory1065,
+overlay17 in-progress/1048 unassessed and regenerated artifact verification pass.
+Required CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target
+CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2 passed exit0,
+/private/tmp/suss-review-pr71-workspace.log, handle13853 terminal0. All native,
+compiler, legacy, component, reader/core and CLI doc targets passed; existing
+manual/legacy ignores remain unchanged. No native/reference process remains live;
+all review handles59614/99199/13853 terminal and shared native graph released.
+No RUSTFLAGS override; shared target and two build jobs. Require exact final pushed-head CI; no merge or issue closure.
+M4-01 remains incomplete: context-preserving import, dependency/core/macro/phase
+bootstrap, collections and automatic production loading remain next work.

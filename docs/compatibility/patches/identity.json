@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "4997a405f43df040b92909ac831f031385fd1ac86948cb1be06dd3529323504e",
+  "replacement": "(def identity (fn [x] x))",
+  "rationale": "Explicit single fixed-arity defn bootstrap adaptation to def/fn. The original form and docstring remain in the extracted artifact; the shipped compiler does not yet import the upstream defn macro."
+}

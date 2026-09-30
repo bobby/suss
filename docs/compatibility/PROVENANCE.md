@@ -29,11 +29,13 @@ private supporting forms, macros, protocols, generated constructors and both
 reader branches. The scanner's source declarations are the starting inventory;
 manual review must account for macro-generated public APIs.
 
-This is the M0 policy and schema gate, not a completed core extraction system.
-The current review overlay records sixteen arithmetic/nominal/dynamic/exception declarations as adapted and
-in progress; 1,049 declarations remain unassessed. These original runtime
-intrinsics do not establish completed upstream form ports. Reproducible extraction,
-patch verification and shipped core-form license packaging are M4 acceptance work.
+The M0 policy/schema gate remains complete. The review overlay now records
+seventeen in-progress declarations; 1,048 remain unassessed. Original runtime
+intrinsics do not establish upstream form ports. The first reproducible bootstrap
+source import selects `identity`, retaining its original form/notices and applying
+an explicit reviewed defn adaptation. Its generated directory packages the
+byte-preserved EPL files. See [core import](CORE-IMPORT.md) for commands, hashes,
+executing scope and remaining M4 acceptance work. No complete core-port claim follows.
 The legacy adapted conformance corpus retains its own
 [attribution](../../reference/cljs-tests/README.md); it is a small curated baseline,
 not proof of complete source provenance or upstream differential compatibility.

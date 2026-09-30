@@ -38,7 +38,7 @@ preserves existing issue bodies.
 
 ### M0: Contract and feasibility
 
-- **M0-01 — Contract and upstream inventory** (completed). Deterministic pinned inventory, source hashes/reader branches, strict review schema and provenance policy pass. Sixteen arithmetic/nominal/dynamic/exception declarations now have in-progress manual reviews; 1,049 remain unassessed for M4/M7 implementation.
+- **M0-01 — Contract and upstream inventory** (completed). Deterministic pinned inventory, source hashes/reader branches, strict review schema and provenance policy pass. Seventeen arithmetic/nominal/dynamic/exception/bootstrap declarations now have in-progress manual reviews; 1,048 remain unassessed for M4/M7 implementation.
 - **M0-02 — Lock toolchain and official WIT packages** (completed). Locked official package hashes and executing GC/tail-call/EH/map/implements/external-id/async/future/stream probes pass. Generated Suss adapters remain M5/M6 work.
 - **M0-03 — Prove shared GC fragments** (completed). Shared roots/closures/nominal descriptors survive forced GC; incompatible ABI fails before initialization. Production persistent sessions remain M2/M3 work.
 - **M0-04 — Prove browser loading and suspension** (completed). Chrome executes typed core/Promise/cancellation/feature-error fixtures and optional Jco GC packaging. Teardown timeout is recorded separately; cross-browser/product delivery remains M8 work.
@@ -70,7 +70,7 @@ closed after their exit gates were rechecked. M2–M9 remain open.
 
 ### M4: Portable persistent collections
 
-- **M4-01 — Upstream extraction and adaptation provenance** (planned). Create reproducible form extraction and patching for reviewed core definitions.
+- **M4-01 — Upstream extraction and adaptation provenance** (in-progress). Reviewed ID selection now reproduces exact source forms, explicit hash-bound patches, EPL packaging and a generated canonical core artifact. One bootstrap identity form executes with GC/redefinition/order regressions and a separate 14-case primary corpus. Full core dependencies/macros/loading acceptance remains; see [core import](docs/compatibility/CORE-IMPORT.md).
 - **M4-02 — Sequences, lists and vectors** (planned). Port collection foundations, lazy/chunked sequences, vector/subvector and map entries.
 - **M4-03 — Maps, sets, queues, records and sorted types** (planned). Port HAMTs, sorted collections, queues and record behavior.
 - **M4-04 — Hashing, metadata, transients and reduction** (planned). Complete shared collection protocols and all reduction paths.
