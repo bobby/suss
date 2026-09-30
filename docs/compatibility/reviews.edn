@@ -1,7 +1,27 @@
-;; Human-reviewed overlay; these twenty-four entries are partial, not compatibility completions.
+;; Human-reviewed overlay; these twenty-six entries are partial, not compatibility completions.
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:boolean:2357"
+  {:source-sha256 "d13b02303b1116038a1c1d42a9bd49dd1128cc4401300e86e72e2c8607fc1e22" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:cond:159" "macro:nil?:923" "macro:false?:991"]
+   :classification :adapted
+   :rationale "Pinned fixed-arity truthiness logic is imported with retained source/EPL provenance and an explicit defn/cond-to-def/fn/if bootstrap patch. Branch semantics preserve nil/false/internal undefined and truthy zero/NaN/empty strings/objects; captured originals do not accidentally read redefined public nil?/false? vars. Compiled upstream macros and source metadata remain incomplete."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/boolean.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_import.rs" "tests/oracle/core-import-cases.json"]}
+  "runtime:not:263"
+  {:source-sha256 "8f5e1b64540b46461b1d8735613c4c61599a1b6d07b4cfa628798d5df8ad6658" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:cond:159" "macro:nil?:923" "macro:false?:991"]
+   :classification :adapted
+   :rationale "Pinned fixed-arity truthiness logic is imported with retained source/EPL provenance and an explicit defn/cond-to-def/fn/if bootstrap patch. Branch semantics preserve nil/false/internal undefined and truthy zero/NaN/empty strings/objects; captured originals do not accidentally read redefined public nil?/false? vars. Compiled upstream macros and source metadata remain incomplete."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/not.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_import.rs" "tests/oracle/core-import-cases.json"]}
   "runtime:identical?:241"
   {:source-sha256 "61d13ddf9984fe1b410bd00fe433388e0f7bcaae0c24d4b3a0e3e2d954af066e" :visibility :public
    :arities {:fixed [2] :variadic-min nil}

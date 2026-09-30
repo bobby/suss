@@ -169,3 +169,9 @@ current overlay to 24 in-progress reviews and 1,041 unassessed declarations.
 The portable source corpus now has 397 inputs, retaining the original 303 and adding 94
 primitive type/identity cases. This does not certify compiled predicate macros,
 collection equality/hash or complete core compatibility.
+
+Two additional [source-backed bootstrap imports](CORE-IMPORT.md), not and boolean,
+bring the current overlay to 26 in-progress reviews and 1,039 unassessed declarations.
+Three forms retain source/patch/license hashes and execute against a separate
+50-case fresh primary corpus; the portable pipeline corpus remains 397 inputs.
+Full core/macro/metadata/collection acceptance remains incomplete.

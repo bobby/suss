@@ -8,6 +8,16 @@
       "id": "runtime:identity:2691",
       "source-sha256": "4997a405f43df040b92909ac831f031385fd1ac86948cb1be06dd3529323504e",
       "patch": "docs/compatibility/patches/identity.json"
+    },
+    {
+      "id": "runtime:not:263",
+      "source-sha256": "8f5e1b64540b46461b1d8735613c4c61599a1b6d07b4cfa628798d5df8ad6658",
+      "patch": "docs/compatibility/patches/not.json"
+    },
+    {
+      "id": "runtime:boolean:2357",
+      "source-sha256": "d13b02303b1116038a1c1d42a9bd49dd1128cc4401300e86e72e2c8607fc1e22",
+      "patch": "docs/compatibility/patches/boolean.json"
     }
   ]
 }

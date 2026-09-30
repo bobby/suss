@@ -177,5 +177,164 @@ fn imported_core_matches_independently_decoded_pinned_scalar_corpus() {
         };
         assert_eq!(actual, case["expected"], "{source}");
     }
-    assert_eq!(ids.len(), 14);
+    assert_eq!(ids.len(), 50);
+}
+
+fn boolean(session: &mut Session, value: &SessionValue) -> bool {
+    session
+        .inspect(value, |store, value| {
+            match value
+                .unwrap_anyref()
+                .unwrap()
+                .as_i31(&store)?
+                .unwrap()
+                .get_u32()
+            {
+                2 => Ok(false),
+                4 => Ok(true),
+                sentinel => panic!("unexpected Boolean {sentinel}"),
+            }
+        })
+        .unwrap()
+}
+
+#[test]
+fn imported_boolean_ports_use_cljs_truthiness_for_primitives_and_objects() {
+    let mut session = loaded();
+    session.eval("(deftype Item [value])").unwrap();
+    for (source, truth) in [
+        ("nil", false),
+        ("false", false),
+        ("true", true),
+        ("0", true),
+        ("-0.0", true),
+        ("##NaN", true),
+        ("##Inf", true),
+        ("\"\"", true),
+        ("\"\\uD800😀\"", true),
+        ("(fn [] 42)", true),
+        ("(Item. 7)", true),
+        ("(ex-info \"m\" 7)", true),
+        ("(ex-data (new ExceptionInfo \"m\"))", false),
+        ("(ExceptionInfo)", true),
+    ] {
+        for (name, expected) in [("boolean", truth), ("not", !truth)] {
+            let value = session.eval(&format!("({name} {source})")).unwrap();
+            session.collect().unwrap();
+            assert_eq!(boolean(&mut session, &value), expected, "{name}: {source}");
+        }
+    }
+}
+
+#[test]
+fn imported_boolean_ports_keep_original_behavior_and_canonical_live_bindings() {
+    let mut session = loaded();
+    let old_not = session.eval("not").unwrap();
+    let old_boolean = session.eval("boolean").unwrap();
+    for name in ["not", "boolean"] {
+        let original = session.eval(name).unwrap();
+        let root = session
+            .inspect(&original, |store, value| {
+                value.unwrap_anyref().unwrap().to_owned_rooted(store)
+            })
+            .unwrap();
+        let alias = session.eval(&format!("cljs.core/{name}")).unwrap();
+        assert!(
+            session
+                .inspect(&alias, |store, value| Rooted::ref_eq(
+                    &store,
+                    &root,
+                    value.unwrap_anyref().unwrap()
+                ))
+                .unwrap()
+        );
+    }
+    session.eval("(def read (fn [x] (not x)))").unwrap();
+    session.enter_namespace("suss.core").unwrap();
+    session
+        .eval("(def nil? (fn [x] false)) (def false? (fn [x] false))")
+        .unwrap();
+    session.enter_namespace("user").unwrap();
+    session.collect().unwrap();
+    let value = session.eval("(not nil)").unwrap();
+    assert!(boolean(&mut session, &value));
+    let value = session.eval("(boolean false)").unwrap();
+    assert!(!boolean(&mut session, &value));
+    session.enter_namespace("suss.core").unwrap();
+    session
+        .eval("(def not (fn [x] false)) (def boolean (fn [x] false))")
+        .unwrap();
+    session.enter_namespace("user").unwrap();
+    let value = session.eval("(read nil)").unwrap();
+    assert!(!boolean(&mut session, &value));
+    let nil = session.eval("nil").unwrap();
+    let truthy = session.eval("0").unwrap();
+    session.collect().unwrap();
+    let value = session.invoke(&old_not, &[&nil]).unwrap();
+    assert!(boolean(&mut session, &value));
+    let value = session.invoke(&old_boolean, &[&truthy]).unwrap();
+    assert!(boolean(&mut session, &value));
+}
+
+#[test]
+fn imported_boolean_port_arguments_run_once_before_arity_errors() {
+    let mut session = loaded();
+    session
+        .eval("(def count 0) (def next (fn [] (def count (+ count 1))))")
+        .unwrap();
+    for name in ["not", "boolean"] {
+        let value = session.eval(&format!("({name} (next))")).unwrap();
+        assert_eq!(boolean(&mut session, &value), name == "boolean");
+        assert!(matches!(
+            session.eval(&format!("({name} (next) (next))")),
+            Err(SessionError::Language(_))
+        ));
+        assert!(matches!(
+            session.eval(&format!("({name})")),
+            Err(SessionError::Language(_))
+        ));
+    }
+    let count = session.eval("count").unwrap();
+    assert_eq!(number(&mut session, &count), 6.0f64.to_bits());
+    let value = session.eval("(not nil)").unwrap();
+    assert!(boolean(&mut session, &value));
+}
+
+#[test]
+fn imported_boolean_callee_is_captured_before_argument_rebinding_and_core_reload() {
+    let mut session = loaded();
+    session
+        .eval("(ns app (:require [cljs.core :as core])) (def old-not core/not) (def old-boolean core/boolean)")
+        .unwrap();
+    session.collect().unwrap();
+    // The call's callee read precedes an argument which replaces that same cell.
+    let value = session
+        .eval("(core/boolean (do (set! core/boolean (fn [x] false)) 0))")
+        .unwrap();
+    assert!(boolean(&mut session, &value));
+    let value = session.eval("(core/boolean 0)").unwrap();
+    assert!(!boolean(&mut session, &value));
+    let replacement = session.eval("core/boolean").unwrap();
+    let value = session
+        .eval("(core/not (do (set! core/not (fn [x] false)) nil))")
+        .unwrap();
+    assert!(boolean(&mut session, &value));
+    let value = session.eval("(core/not nil)").unwrap();
+    assert!(!boolean(&mut session, &value));
+    session.collect().unwrap();
+    session.eval(CORE).unwrap();
+    session.enter_namespace("app").unwrap();
+    session.collect().unwrap();
+    for source in [
+        "(core/boolean 0)",
+        "(core/not nil)",
+        "(old-boolean 0)",
+        "(old-not nil)",
+    ] {
+        let value = session.eval(source).unwrap();
+        assert!(boolean(&mut session, &value), "{source}");
+    }
+    let arg = session.eval("0").unwrap();
+    let value = session.invoke(&replacement, &[&arg]).unwrap();
+    assert!(!boolean(&mut session, &value));
 }

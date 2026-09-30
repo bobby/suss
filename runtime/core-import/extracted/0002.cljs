@@ -6,11 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-;; Generated reviewed core import; see ../manifest.json.
-(ns suss.core)
-
-(def identity (fn [x] x))
-
-(def not (fn [x] (if x false true)))
-
-(def boolean (fn [x] (if x true false)))
+(defn boolean
+  "Coerce to boolean"
+  [x]
+  (cond
+    (nil? x) false
+    (false? x) false
+    :else true))

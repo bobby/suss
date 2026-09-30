@@ -2,10 +2,14 @@
 
 `scripts/core_import.py` selects reviewed declaration IDs from the pinned form
 inventory, extracts exact UTF-8 byte ranges, and applies explicit hash-bound
-whole-form patches. The recipe is [core-import.json](core-import.json); the first
-selection is `runtime:identity:2691`. It retains the upstream body through an
-explicit single-arity `defn` to `def`/`fn` bootstrap adaptation. Its original form
-and docstring remain in the extracted source. This is source adaptation, not a
+whole-form patches. The recipe is [core-import.json](core-import.json); the current
+selections are `runtime:identity:2691`, `runtime:not:263` and
+`runtime:boolean:2357`. Identity retains its body through a single-arity `defn`
+to `def`/`fn` adaptation. Not and boolean adapt their nil?/false?/cond macro tests
+to the portable `if` branch test, preserving nil/false/internal undefined and
+truthy zero/NaN/empty strings/objects. This also avoids reading redefined public
+predicate vars where the upstream functions use compiled primitive macros.
+Original forms and docstrings remain in the extracted source. This is source adaptation, not a
 claim that the upstream `defn` macro has been compiled or bootstrapped.
 
 The generated [artifact directory](../../runtime/core-import/) contains original
@@ -42,15 +46,17 @@ Native `core_import` tests load the generated source into the canonical `suss.co
 namespace and execute independently decoded results. They cover aliases, old
 captured function values, live redefinition, exact identity of scalars/functions/
 nominal objects through GC, ordered once-only arguments and wrong-arity recovery.
-The development-only oracle executes the pinned upstream `identity` definition,
-using the same 14-case scalar corpus as native execution and strict lossless
+The development-only oracle executes the pinned upstream identity/not/boolean
+definitions, using the same 50-case scalar/truthiness/redefinition corpus as native execution and strict lossless
 transport for binary64, nil/booleans and UTF-16. JVM/Node are needed only for this
 reference runner, not extraction, verification or Suss execution.
 
-This is prerequisite evidence for issue #16, not completed M4-01 acceptance. Only
-one runtime form is selected; general core dependency resolution, complete form
+This is prerequisite evidence for issue #16, not completed M4-01 acceptance. Three
+runtime forms are selected; general core dependency resolution, complete form
 review, upstream macro compilation, namespace privacy/doc metadata, phase bootstrap,
 collection foundations and production automatic core loading remain unfinished.
-The default CLI/REPL still uses prototype paths. The manifest is byte provenance;
+The default CLI/REPL still uses prototype paths. `some?` and additional foundations
+remain unported; its nil? macro versus live not binding must be preserved during
+adaptation rather than guessed from default scalar results. The manifest is byte provenance;
 executing evidence remains separate. Future source/tool/review changes require
 regeneration and renewed semantic review.

@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "d179d529bbb9f888d096eba1980db355950d0c9491d58dcee883a1d31464d8ca",
-  "reviews-sha256": "9300d4ee6485a5ec19a9937dbe80e75623889cb5e6ffd13264f9e136f5548d4a",
+  "recipe-sha256": "bba6d46376bab3fe5267610ee706b288f398035ab756d6c6c4566772511fdd38",
+  "reviews-sha256": "9b41420d3c792e15086595c3a63f2b80ccac1c7bec79f37131947d91afe9ede1",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -38,12 +38,78 @@
         "crates/suss-cli/tests/core_import.rs",
         "scripts/test_core_import.py"
       ]
+    },
+    {
+      "id": "runtime:not:263",
+      "name": "not",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 263,
+      "end-line": 269,
+      "byte-start": 7633,
+      "byte-end": 7769,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8f5e1b64540b46461b1d8735613c4c61599a1b6d07b4cfa628798d5df8ad6658",
+      "extracted": "extracted/0001.cljs",
+      "extracted-sha256": "0d27d0346a31538b261c7943df5bb6d74c4f98c8098f6ab826752d7165be7bbd",
+      "patch": "docs/compatibility/patches/not.json",
+      "patch-sha256": "da71bce2fb85ea9cc3cf0e02aeec932c5e8a442e224842bb175eeb8c9d93de50",
+      "adapted-form-sha256": "e35c5d47041acf90706ca458573f7bfb4679b18f80855f465dd4977d9a3209cc",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "macro:cond:159",
+        "macro:nil?:923",
+        "macro:false?:991"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_import.rs",
+        "tests/oracle/core-import-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:boolean:2357",
+      "name": "boolean",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2357,
+      "end-line": 2363,
+      "byte-start": 63963,
+      "byte-end": 64069,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "d13b02303b1116038a1c1d42a9bd49dd1128cc4401300e86e72e2c8607fc1e22",
+      "extracted": "extracted/0002.cljs",
+      "extracted-sha256": "a99b626fc99b41bd2f599975407a10d9907224d9a45c5393820cd513e330a462",
+      "patch": "docs/compatibility/patches/boolean.json",
+      "patch-sha256": "471ecfeb6bb1bf63f0bcf6f6bc651461c87fd4dac86edad6be152248afafc844",
+      "adapted-form-sha256": "8710a41c3db8610efc730dda7dceebd7d24061637299dc6aeb6106dc546eced1",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "macro:cond:159",
+        "macro:nil?:923",
+        "macro:false?:991"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_import.rs",
+        "tests/oracle/core-import-cases.json"
+      ]
     }
   ],
   "files": {
     "LICENSE": "2890ecd78ff9ee48e754e43db3d82d6ac8745170960580e7e6d458dc0d85ea66",
     "epl-v10.html": "d0d35c5fb45696fcaa98858f6c1f1cf0d41400302f4adb966eb9a54fa9b9a226",
     "extracted/0000.cljs": "fe594689bf27c99c119f86d1ecf12f5a7de68d754e7490e114e71239ab877fb0",
-    "suss/core.sus": "27a4e6a25633abf1649e73f2b1c8b385a8c14f40b5216b8a760177f05f352b4c"
+    "extracted/0001.cljs": "0d27d0346a31538b261c7943df5bb6d74c4f98c8098f6ab826752d7165be7bbd",
+    "extracted/0002.cljs": "a99b626fc99b41bd2f599975407a10d9907224d9a45c5393820cd513e330a462",
+    "suss/core.sus": "29779c51d46368216bc62f2a55c13e6ab5450eea91a42cb4fbd8f03f5b1f7dd5"
   }
 }
