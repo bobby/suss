@@ -5,8 +5,8 @@ The replacement pipeline now lowers bounded `deftype`, `defprotocol`, `extend-ty
 shared ABI operations. This is original bootstrap/runtime code, not copied upstream
 macro source or completed issue #11. Selected primitive/native fallback now has separate
 [native protocol evidence](native-protocols.md). Arbitrary host classes/properties,
-field attributes, metadata and general compiled macro/core integration
-remain unfinished.
+general field attributes, runtime metadata and compiled macro/core integration
+remain unfinished. Scoped mutable fields have the bounded support described below.
 
 User objects retain a Descriptor and field array in the existing ten-type prelude.
 No per-source-type Wasm layout is generated. Descriptors retain schema names,
@@ -94,3 +94,32 @@ focused tests. The 245-case shared source corpus includes 35 nominal cases and e
 both pinned Node observations and independently decoded Suss fragments. These counts
 are bounded evidence, not complete type/protocol/core or M2 acceptance. No PR readiness
 is claimed before full baseline, independent review/fixes and exact-head CI.
+
+## Scoped mutable fields
+
+`deftype` recognizes pinned `:mutable`, `:unsynchronized-mutable` and
+`:volatile-mutable` field metadata, including metadata maps. False/nil flags do
+not make a field writable. Type tags are compile metadata, with no runtime value
+restriction. Other field attributes remain explicitly unsupported.
+
+Within a method or its nested closure, `set!` of a mutable field lowers to a
+verified two-value nominal operation: the original physical receiver and the RHS.
+The RHS evaluates once before the existing checked `object-field-set`, whose
+return is the same assigned value. This uses the existing GC-owned field Args;
+there is no new runtime helper, global registry, layout or ABI change. Aliases and
+captured readers/setters retain the same owner. Receiver anchoring across `recur`
+matches field reads. Lexical bindings/parameters shadow fields and remain
+nonassignable; immutable fields reject before evaluation. Dynamic binding remains
+restricted to global vars.
+
+Pinned analyzer.cljc2727–2730 checks these three flags and rejects ordinary locals
+and nonmutable fields; its deftype field metadata retention is at3624–3626.
+The 32-case mutable-field corpus runs fresh pinned ClojureScript and independently
+decoded Suss with forced GC. Additional native coverage retains a setter/reader
+after clearing constructor and object globals. Compiler guards cover false/nil
+flags, type-only hints, local shadowing, scope leakage and forged FieldSet HIR/IR.
+Independent review adds exact primary cases for outer metadata precedence, truthy
+zero flags, independent alternate flags and field-scope restoration after RHS
+closures shadow the field name.
+This original lowering copies no upstream form. Sequence/list/hash-cache support
+still requires source imports and acceptance; issue #11 remains incomplete.

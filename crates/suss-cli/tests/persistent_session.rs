@@ -1112,7 +1112,7 @@ fn nominal_unknown_types_preserve_order_and_failed_analysis_does_not_publish_bin
     for source in [
         "(deftype Leaked []) (defprotocol BadProtocol (bad []))",
         "(deftype Leaked [value value])",
-        "(deftype Leaked [^:mutable value])",
+        "(deftype Leaked [^:unsupported-field-attribute value])",
         "(defprotocol BadProtocol (bad [this] [other]))",
         "(defprotocol BadProtocol (bad [this])) (deftype Leaked [] BadProtocol (other [this] 7))",
         "(defprotocol BadProtocol (bad [this])) (deftype Leaked [] BadProtocol (bad [this x] x))",

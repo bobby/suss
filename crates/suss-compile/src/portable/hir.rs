@@ -159,6 +159,7 @@ pub enum Nominal {
     Construct,
     Instance,
     Field(usize),
+    FieldSet(usize),
     Key(usize),
     Dispatcher,
     Set,
@@ -189,6 +190,7 @@ impl Nominal {
                 }
                 Self::Set => count == 3,
                 Self::Field(index) | Self::Key(index) => count == 1 && index <= i32::MAX as usize,
+                Self::FieldSet(index) => count == 2 && index <= i32::MAX as usize,
                 Self::Class | Self::Protocol | Self::Dispatcher => count == 1,
             }
     }
@@ -313,7 +315,7 @@ struct Analyzer {
     environment: Environment,
     phase: Phase,
     locals: HashMap<String, (BindingId, Type)>,
-    fields: HashMap<String, Hir>,
+    fields: HashMap<String, (Hir, bool)>,
     next: usize,
     next_loop: usize,
     target: Option<(LoopId, usize)>,
@@ -360,7 +362,7 @@ impl Analyzer {
                 let (kind, ty) = if symbol.namespace.is_none() {
                     if let Some((id, ty)) = self.locals.get(&symbol.name) {
                         (Expression::Local(*id), *ty)
-                    } else if let Some(field) = self.fields.get(&symbol.name) {
+                    } else if let Some((field, _)) = self.fields.get(&symbol.name) {
                         (field.kind.clone(), field.ty)
                     } else {
                         self.global_value(symbol, form.span.clone())?
@@ -753,7 +755,8 @@ impl Analyzer {
                     Nominal::Field(index),
                     vec![self.local(field, receiver)],
                 );
-                self.fields.insert(symbol.name.clone(), value);
+                self.fields
+                    .insert(symbol.name.clone(), (value, Self::field_mutable(field)?));
             }
         }
         // Field reads occur at the original use, including in nested closures;
@@ -872,6 +875,27 @@ impl Analyzer {
         if bare && symbol.name == "set!" {
             if args.len() != 2 {
                 return Err(fail(form.span.clone(), "set! requires a var and value"));
+            }
+            if let Kind::Symbol(name) = &args[0].kind {
+                if name.namespace.is_none() && !self.locals.contains_key(&name.name) {
+                    if let Some((field, mutable)) = self.fields.get(&name.name).cloned() {
+                        if !mutable {
+                            return Err(fail(
+                                args[0].span.clone(),
+                                "Cannot assign a local or immutable field",
+                            ));
+                        }
+                        let Expression::Nominal {
+                            operation: Nominal::Field(index),
+                            mut arguments,
+                        } = field.kind
+                        else {
+                            unreachable!()
+                        };
+                        arguments.push(self.form(&args[1])?);
+                        return Ok(self.nominal(form, Nominal::FieldSet(index), arguments));
+                    }
+                }
             }
             let global = self.assignment_target(&args[0])?;
             return Ok(Hir {

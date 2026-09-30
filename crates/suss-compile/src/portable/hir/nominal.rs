@@ -231,6 +231,59 @@ impl Analyzer {
             }
         }
     }
+    // Pinned analyzer retains these three field flags; type hints do not impose
+    // a runtime guard. Other field attributes remain outside this bounded port.
+    pub(super) fn field_mutable(field: &Form) -> Result<bool, Diagnostic> {
+        let mut flags = [false; 3];
+        for metadata in field.metadata.iter().rev() {
+            let mut apply = |key: &Form, value: bool| -> Result<(), Diagnostic> {
+                let Kind::Keyword(key) = &key.kind else {
+                    return Err(fail(
+                        metadata.span.clone(),
+                        "Unsupported type field attribute",
+                    ));
+                };
+                if key.namespace.is_some() {
+                    return Err(fail(
+                        metadata.span.clone(),
+                        "Unsupported type field attribute",
+                    ));
+                }
+                match key.name.as_str() {
+                    "mutable" => flags[0] = value,
+                    "unsynchronized-mutable" => flags[1] = value,
+                    "volatile-mutable" => flags[2] = value,
+                    "tag" => {}
+                    _ => {
+                        return Err(fail(
+                            metadata.span.clone(),
+                            "Unsupported type field attribute",
+                        ));
+                    }
+                }
+                Ok(())
+            };
+            match &metadata.kind {
+                Kind::Keyword(_) => apply(metadata, true)?,
+                Kind::Symbol(_) | Kind::String(_) => {} // shorthand type tag
+                Kind::Map(entries) => {
+                    for entry in entries.chunks_exact(2) {
+                        apply(
+                            &entry[0],
+                            !matches!(entry[1].kind, Kind::Nil | Kind::Bool(false)),
+                        )?;
+                    }
+                }
+                _ => {
+                    return Err(fail(
+                        metadata.span.clone(),
+                        "Unsupported type field attribute",
+                    ));
+                }
+            }
+        }
+        Ok(flags.into_iter().any(|flag| flag))
+    }
     fn type_definition(&mut self, form: &Form, args: &[Form]) -> Result<Hir, Diagnostic> {
         if args.len() < 2 {
             return Err(fail(
@@ -260,12 +313,7 @@ impl Analyzer {
                     "Type field names must be unqualified and distinct",
                 ));
             }
-            if !field.metadata.is_empty() {
-                return Err(fail(
-                    field.span.clone(),
-                    "Type field attributes are not implemented yet",
-                ));
-            }
+            Self::field_mutable(field)?;
             schema.push(
                 self.literal_form(field, Literal::String(symbol.name.encode_utf16().collect())),
             );

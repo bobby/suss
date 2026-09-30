@@ -125,6 +125,9 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::Field(_) => {
                             names.insert("object-field-get");
                         }
+                        Nominal::FieldSet(_) => {
+                            names.insert("object-field-set");
+                        }
                         Nominal::Key(_) => {
                             names.insert("protocol-key");
                         }
@@ -171,6 +174,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "object-instance" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
             }
+            "object-field-set" => (vec![VALUE, ValType::I32, VALUE], vec![]),
             "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "protocol-marker-set" => (vec![VALUE, VALUE], vec![VALUE]),
             "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
@@ -712,6 +716,14 @@ fn emit_function(
                             if *operation == Nominal::Set {
                                 function.instruction(&LocalGet(arguments[2].0 as u32 + offset));
                             }
+                        }
+                        Nominal::FieldSet(field) => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&I32Const(*field as i32))
+                                .instruction(&LocalGet(arguments[1].0 as u32 + offset))
+                                .instruction(&Call(index("object-field-set")))
+                                .instruction(&LocalGet(arguments[1].0 as u32 + offset));
                         }
                         Nominal::Field(field) | Nominal::Key(field) => {
                             function

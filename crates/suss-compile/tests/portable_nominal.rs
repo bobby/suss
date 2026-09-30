@@ -23,6 +23,7 @@ fn nominal_public_hir_and_ir_reject_bad_shapes_before_emission() {
         Nominal::Construct,
         Nominal::Instance,
         Nominal::Field(usize::MAX),
+        Nominal::FieldSet(usize::MAX),
         Nominal::Key(usize::MAX),
         Nominal::Dispatcher,
         Nominal::LiveDispatcher,
@@ -67,6 +68,7 @@ fn nominal_public_hir_and_ir_reject_bad_shapes_before_emission() {
     for operation in [
         Nominal::Descriptor,
         Nominal::Field(usize::MAX),
+        Nominal::FieldSet(usize::MAX),
         Nominal::Set,
         Nominal::Marker,
     ] {
@@ -151,4 +153,48 @@ fn live_protocol_cell_reference_rejects_forged_hir_and_ir_result_types() {
     let result = function.blocks[0].instructions[0].result;
     function.values[result.0].ty = Type::Bool;
     assert!(ir::verify(&function).is_err());
+}
+
+#[test]
+fn mutable_field_assignment_rejects_immutable_flags_and_shadowing_locals() {
+    let prefix = "(defprotocol P (read [this]) (write [this v])) ";
+    for field in [
+        "x",
+        "^{:mutable false} x",
+        "^{:mutable nil} x",
+        "^number x",
+        "^{:mutable false} ^:mutable x",
+    ] {
+        let source =
+            format!("{prefix}(deftype T [{field}] P (read [this] x) (write [this v] (set! x v)))");
+        let error = portable::compile(&source).unwrap_err();
+        assert!(
+            error.message.contains("immutable field"),
+            "{source}: {error:?}"
+        );
+    }
+    for body in [
+        "(let [x 0] (set! x v))",
+        "((fn [x] (set! x v)) 0)",
+        "(set! this v)",
+        "(set! v 0)",
+    ] {
+        let source =
+            format!("{prefix}(deftype T [^:mutable x] P (read [this] x) (write [this v] {body}))");
+        assert!(
+            portable::compile(&source)
+                .unwrap_err()
+                .message
+                .contains("local"),
+            "{source}"
+        );
+    }
+    assert!(
+        portable::compile("(deftype T [^:unknown x])")
+            .unwrap_err()
+            .message
+            .contains("Unsupported type field attribute")
+    );
+    // Scope metadata does not leak out of a method into unrelated local bindings.
+    assert!(portable::compile(&format!("{prefix}(deftype T [^:mutable x] P (read [this] x) (write [this v] (set! x v))) (let [x 1] (set! x 2))")).is_err());
 }

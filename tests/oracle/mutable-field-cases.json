@@ -1,0 +1,262 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "mutable-field-read",
+      "source": "(do (defprotocol MutableProbe (read-cell [this]) (write-cell [this value]) (capture-cell [this]) (set-from [this thunk])) (deftype MutableCell [^:mutable x] MutableProbe (read-cell [this] x) (write-cell [this value] (set! x value)) (capture-cell [this] (fn [] x)) (set-from [this thunk] (set! x (thunk)))) (def mutable-cell (MutableCell. 1)) (read-cell mutable-cell))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "mutable-write-return",
+      "source": "(write-cell mutable-cell 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "mutable-write-visible",
+      "source": "(read-cell mutable-cell)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "mutable-alias-visible",
+      "source": "(let [alias mutable-cell] (write-cell alias 11) (read-cell mutable-cell))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    },
+    {
+      "id": "mutable-captured-read",
+      "source": "(do (def mutable-reader (capture-cell mutable-cell)) (mutable-reader))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    },
+    {
+      "id": "mutable-captured-read-live",
+      "source": "(do (write-cell mutable-cell 20) (mutable-reader))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4034000000000000"
+      }
+    },
+    {
+      "id": "mutable-instances-independent",
+      "source": "(do (def other-cell (MutableCell. 30)) (write-cell other-cell 31) (read-cell mutable-cell))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4034000000000000"
+      }
+    },
+    {
+      "id": "mutable-false-result",
+      "source": "(false? (write-cell mutable-cell false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mutable-false-read",
+      "source": "(false? (mutable-reader))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mutable-nil-result",
+      "source": "(nil? (write-cell mutable-cell nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mutable-nil-read",
+      "source": "(nil? (read-cell mutable-cell))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mutable-closure-stored",
+      "source": "(do (write-cell mutable-cell (fn [x] (+ x 40))) ((read-cell mutable-cell) 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "mutable-array-stored",
+      "source": "(do (write-cell mutable-cell (array 7 8)) (aget (mutable-reader) 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "mutable-undefined-constructor",
+      "source": "(let [c (new MutableCell)] (undefined? (read-cell c)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mutable-set-rhs-error-keeps-value",
+      "source": "(do (write-cell mutable-cell 7) (try (set-from mutable-cell (fn [] (throw 9))) (catch :default e nil)) (read-cell mutable-cell))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "mutable-set-rhs-once",
+      "source": "(do (def mutable-effects 0) (set-from mutable-cell (fn [] (def mutable-effects (+ mutable-effects 1)) 9)) mutable-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "mutable-map-attribute",
+      "source": "(do (deftype MutableMapCell [^{:mutable true} x] MutableProbe (read-cell [this] x) (write-cell [this value] (set! x value))) (def map-cell (MutableMapCell. 1)) (write-cell map-cell 12))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "unsynchronized-mutable-attribute",
+      "source": "(do (deftype UnsyncCell [^:unsynchronized-mutable x] MutableProbe (read-cell [this] x) (write-cell [this value] (set! x value))) (def unsync-cell (UnsyncCell. 1)) (write-cell unsync-cell 13))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402a000000000000"
+      }
+    },
+    {
+      "id": "volatile-mutable-attribute",
+      "source": "(do (deftype VolatileCell [^:volatile-mutable x] MutableProbe (read-cell [this] x) (write-cell [this value] (set! x value))) (def volatile-cell (VolatileCell. 1)) (write-cell volatile-cell 14))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402c000000000000"
+      }
+    },
+    {
+      "id": "mutable-tag-is-not-runtime-check",
+      "source": "(do (deftype TaggedCell [^{:mutable true :tag number} x] MutableProbe (read-cell [this] x) (write-cell [this value] (set! x value))) (def tagged-cell (TaggedCell. 1)) (false? (write-cell tagged-cell false)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "mutable-nested-setter",
+      "source": "(do (defprotocol SetterProbe (setter [this])) (deftype NestedSetter [^:mutable x] MutableProbe (read-cell [this] x) SetterProbe (setter [this] (fn [v] (set! x v)))) (def nested-cell (NestedSetter. 1)) (def nested-setter (setter nested-cell)) (nested-setter 23))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "mutable-nested-setter-visible",
+      "source": "(read-cell nested-cell)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "mutable-local-shadows-read",
+      "source": "(do (defprotocol ShadowProbe (shadow-value [this x])) (deftype ShadowCell [^:mutable x] MutableProbe (read-cell [this] x) (write-cell [this value] (set! x value)) ShadowProbe (shadow-value [this x] x)) (def shadow-cell (ShadowCell. 5)) (shadow-value shadow-cell 99))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4058c00000000000"
+      }
+    },
+    {
+      "id": "mutable-local-shadow-does-not-change-field",
+      "source": "(read-cell shadow-cell)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4014000000000000"
+      }
+    },
+    {
+      "id": "mutable-recur-physical-receiver",
+      "source": "(do (defprotocol RecurMutable (bump [this other n])) (deftype RecurCell [^:mutable x] MutableProbe (read-cell [this] x) RecurMutable (bump [this other n] (set! x (+ x 1)) (if (nil? n) x (recur other other nil)))) (def recur-cell (RecurCell. 1)) (def recur-other (RecurCell. 10)) (bump recur-cell recur-other 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "mutable-recur-other-unchanged",
+      "source": "(read-cell recur-other)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "mutable-omitted-recur-receiver",
+      "source": "(read-cell recur-cell)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "mutable-two-fields",
+      "source": "(do (defprotocol PairMutable (pair-write [this a b]) (pair-read [this])) (deftype PairCell [^:mutable x ^:mutable y] PairMutable (pair-write [this a b] (set! x a) (set! y b)) (pair-read [this] (+ (* x 10) y))) (def pair-cell (PairCell. 1 2)) (pair-write pair-cell 3 4) (pair-read pair-cell))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "review-mutable-outer-metadata-wins",
+      "source": "(do (deftype ReviewOuter [^{:mutable true} ^{:mutable false} x] MutableProbe (read-cell [this] x) (write-cell [this v] (set! x v))) (def review-outer (ReviewOuter. 1)) (write-cell review-outer 61))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404e800000000000"
+      }
+    },
+    {
+      "id": "review-mutable-truthy-zero",
+      "source": "(do (deftype ReviewTruthy [^{:mutable 0 :volatile-mutable false} x] MutableProbe (read-cell [this] x) (write-cell [this v] (set! x v))) (write-cell (ReviewTruthy. 1) 62))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404f000000000000"
+      }
+    },
+    {
+      "id": "review-mutable-independent-flags",
+      "source": "(do (deftype ReviewFlags [^{:mutable false :unsynchronized-mutable true} x] MutableProbe (read-cell [this] x) (write-cell [this v] (set! x v))) (write-cell (ReviewFlags. 1) 63))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404f800000000000"
+      }
+    },
+    {
+      "id": "review-mutable-rhs-shadow-restoration",
+      "source": "(do (deftype ReviewScope [^:mutable x] MutableProbe (read-cell [this] x) (write-cell [this v] (set! x (let [x v] ((fn [x] (+ x 1)) x))) (set! x (+ x 1)))) (def review-scope (ReviewScope. 1)) (write-cell review-scope 63) (read-cell review-scope))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    }
+  ]
+}
