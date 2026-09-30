@@ -1,0 +1,326 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "empty-array-length",
+      "source": "(alength (array))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "array-length",
+      "source": "(alength (array 1 nil false 4))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "array-number",
+      "source": "(aget (array 7 8) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "array-nil",
+      "source": "(nil? (aget (array 7 nil) 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-false",
+      "source": "(false? (aget (array false) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-missing-undefined",
+      "source": "(undefined? (aget (array 1) 5))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-missing-nil-predicate",
+      "source": "(nil? (aget (array) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-negative-key-undefined",
+      "source": "(undefined? (aget (array 1) -1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-fractional-key-undefined",
+      "source": "(undefined? (aget (array 1 2) 0.5))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-identity",
+      "source": "(let [a (array 1)] (identical? a a))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "arrays-distinct",
+      "source": "(identical? (array 1) (array 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "array-mutation-return",
+      "source": "(let [a (array 1)] (aset a 0 9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "array-mutation-alias",
+      "source": "(let [a (array 1) b a] (aset a 0 9) (aget b 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "array-grow-length",
+      "source": "(let [a (array 1)] (aset a 3 7) (alength a))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "array-grow-hole-undefined",
+      "source": "(let [a (array 1)] (aset a 3 7) (undefined? (aget a 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-grow-value",
+      "source": "(let [a (array)] (aset a 4 8) (aget a 4))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "clone-length",
+      "source": "(alength (aclone (array 1 2 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "clone-distinct",
+      "source": "(let [a (array 1)] (identical? a (aclone a)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "clone-isolated",
+      "source": "(let [a (array 1) b (aclone a)] (aset b 0 9) (aget a 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "clone-shallow",
+      "source": "(let [inner (array 7) a (array inner) b (aclone a)] (identical? (aget a 0) (aget b 0)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "make-array-literal-length",
+      "source": "(alength (make-array 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "make-array-literal-filled-nil",
+      "source": "(undefined? (aget (make-array 2) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "make-array-dynamic-hole",
+      "source": "(let [n 2] (undefined? (aget (make-array n) 0)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "make-array-ignored-type",
+      "source": "(alength (make-array nil 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "make-array-first-class-hole",
+      "source": "(let [f make-array] (undefined? (aget (f 2) 0)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nested-get",
+      "source": "(aget (array (array 1 2)) 0 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "nested-set",
+      "source": "(let [a (array (array 1 2))] (aset a 0 1 9) (aget a 0 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "multidimensional-length",
+      "source": "(alength (aget (make-array nil 2 3) 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "multidimensional-distinct",
+      "source": "(let [a (make-array nil 2 3)] (identical? (aget a 0) (aget a 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "array-first-class",
+      "source": "(let [f array] (alength (f 1 2 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "aget-first-class",
+      "source": "(let [f aget] (f (array 5 6) 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "aset-first-class",
+      "source": "(let [f aset a (array 1)] (f a 0 8) (aget a 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "alength-first-class",
+      "source": "(let [f alength] (f (array 1 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "array-native-dispatch",
+      "source": "(do (defprotocol ArrayProbe (read-array [x])) (extend-type array ArrayProbe (read-array [x] (alength x))) (read-array (array 1 2 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "array-native-membership",
+      "source": "(satisfies? ArrayProbe (array))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ordinary-object-not-array",
+      "source": "(satisfies? ArrayProbe (ex-info \"m\" nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "array-once-order",
+      "source": "(do (def array-effect 0) (def array-tick (fn [] (def array-effect (+ array-effect 1)))) (let [a (array (array-tick) (array-tick))] (+ (* (aget a 0) 100) (* (aget a 1) 10) array-effect)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405e800000000000"
+      }
+    },
+    {
+      "id": "array-get-once-order",
+      "source": "(do (def array-read-effect 0) (def array-read-tick (fn [] (def array-read-effect (+ array-read-effect 1)))) (aget (do (array-read-tick) (array 7 8)) (do (array-read-tick) 1)) array-read-effect)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "array-set-once-order",
+      "source": "(do (def array-set-effect 0) (def array-set-tick (fn [] (def array-set-effect (+ array-set-effect 1)))) (def ordered-array (array 0)) (aset (do (array-set-tick) ordered-array) (do (array-set-tick) 0) (array-set-tick)) (+ (* (aget ordered-array 0) 10) array-set-effect))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "array-function-value-survives",
+      "source": "(let [f (fn [x] (+ x 1)) a (array f)] ((aget a 0) 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    }
+  ]
+}

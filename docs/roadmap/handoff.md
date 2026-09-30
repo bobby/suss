@@ -4092,3 +4092,40 @@ Review required full baseline completed successfully: graph74362 terminal0,
 `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
 Python66, pinned inventory1065, review overlay28+1037 and exact eight core-import
 artifacts also pass. All review native/reference graphs are terminal and released.
+
+## PR77 review and array reference preparation — 2026-09-30
+
+Previous goal turn made concrete progress: full native protocol baseline passed,
+implementation committed/pushed c9806c9 and draft PR77 opened against main with
+Refs #11. Independent review dispatched as /root/review_pr77. Reviewer found no
+significant production defect and pushed qualified-namespace/live-cell/GC regression
+and evidence at1022fdafa8a1eff8f71f3d9455d5defddf7101d2. Native11/ABI16/nominal3,
+fresh29, Python66/inventory1065/reviews28+1037/artifact8 and required full workspace
+baseline passed. Reviewer explicitly released all terminal local native/reference
+graphs. Root fast-forwarded the native worktree; final-head CI36752018955 is live
+for exact1022fda. PR77 remains draft until that actual run passes; no merge.
+
+Prepared isolated /private/tmp/suss-array-foundation, branch
+resurrection/portable-array-foundation, based on reviewed1022fda. Its own untracked
+preparation was stashed/restored during review-head reconciliation; only that
+temporary stash was dropped. Unrelated root files/worktrees/stashes preserved.
+Pinned submodule initialized from local reference source. Array declarations/macros
+are audited in docs/runtime/arrays.md. No public source arrays are implemented yet.
+
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target sh scripts/test-array-oracle.sh`
+compiled and executed fresh primary40, all exact comparisons passed, then the
+Suss missing-feature regression failed with located unresolved alength. Combined
+graph67049 terminal101, /private/tmp/suss-array-primary-and-red.log; actual primary
+success is separate from the missing-feature failure. Compiler replacement warnings
+for the three effect counters are retained in the log, not suppressed.
+
+Expanded focused regression groups cover scalar/identity/missing storage,
+mutation/growth/shallow clones, literal/dynamic/nested allocation, first-class/
+native protocols and ordered effects/function retention. Required focused command
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-cli --test portable_arrays --locked -- --test-threads=2`
+failed all6 as expected on current production code, graph26505 terminal101,
+/private/tmp/suss-array-focused-red.log. No skip, baseline weakening or compatibility
+claim. Macro make-array literal nil fill differs from dynamic/first-class undefined
+holes; source architecture must preserve it. Next implement GC-owned mutable arrays,
+source/macro arities and native classification before broader sequence/list/variadic
+and persistent collection source porting. Full M2–M9 goal remains active.
