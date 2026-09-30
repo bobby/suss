@@ -128,7 +128,7 @@ fn imported_interfaces_match_independently_encoded_primary_adapter_observations(
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 31);
+    assert_eq!(cases.len(), 35);
     let mut session = Session::new().unwrap();
     session.eval(CORE).unwrap();
     session.enter_namespace("user").unwrap();
@@ -147,4 +147,49 @@ fn imported_interfaces_match_independently_encoded_primary_adapter_observations(
         assert_eq!(actual, case["expected"], "{id}: {source}");
         session.collect().unwrap();
     }
+}
+
+#[test]
+fn canonical_core_aliases_and_retained_methods_survive_source_reload() {
+    let mut session = Session::new().unwrap();
+    session.eval(CORE).unwrap();
+    session.enter_namespace("user").unwrap();
+    session.eval("(deftype ReloadIndexed [value] cljs.core/IIndexed (-nth [this n] (+ value n)) (-nth [this n missing] (+ value n missing))) (def retained-indexed (ReloadIndexed. 10)) (def retained-nth cljs.core/-nth)").unwrap();
+    session.collect().unwrap();
+    session.eval(CORE).unwrap();
+    session.enter_namespace("user").unwrap();
+    session.collect().unwrap();
+    for source in [
+        "(suss.core/-nth retained-indexed 2 40)",
+        "(cljs.core/-nth retained-indexed 2 40)",
+        "(retained-nth retained-indexed 2 40)",
+    ] {
+        assert_eq!(
+            eval_number(&mut session, source),
+            52.0f64.to_bits(),
+            "{source}"
+        );
+    }
+    assert!(eval_bool(
+        &mut session,
+        "(implements? suss.core/IIndexed retained-indexed)"
+    ));
+    assert!(eval_bool(
+        &mut session,
+        "(implements? cljs.core/IIndexed retained-indexed)"
+    ));
+    for source in [
+        "(cljs.core/-nth)",
+        "(cljs.core/-nth retained-indexed)",
+        "(cljs.core/-nth retained-indexed 0 1 2)",
+    ] {
+        assert!(
+            session.eval(source).is_err(),
+            "invalid method arity accepted: {source}"
+        );
+    }
+    assert_eq!(
+        eval_number(&mut session, "(retained-nth retained-indexed 3)"),
+        13.0f64.to_bits()
+    );
 }

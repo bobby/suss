@@ -249,6 +249,38 @@
         "tag": "bool",
         "value": false
       }
+    },
+    {
+      "id": "indexed-distinct-two",
+      "source": "(do (deftype IndexedArityProbe [base] cljs.core/IIndexed (-nth [this n] (+ base n)) (-nth [this n not-found] (+ base n not-found))) (def indexed-arity-probe (IndexedArityProbe. 10)) (cljs.core/-nth indexed-arity-probe 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "indexed-distinct-three",
+      "source": "(cljs.core/-nth indexed-arity-probe 2 40)",
+      "expected": {
+        "tag": "f64",
+        "bits": "404a000000000000"
+      }
+    },
+    {
+      "id": "indexed-operand-order",
+      "source": "(do (def indexed-order 0) (cljs.core/-nth (do (set! indexed-order (+ (* indexed-order 10) 1)) indexed-arity-probe) (do (set! indexed-order (+ (* indexed-order 10) 2)) 2) (do (set! indexed-order (+ (* indexed-order 10) 3)) 40)) indexed-order)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "captured-method-call",
+      "source": "(do (def indexed-call cljs.core/-nth) (indexed-call indexed-arity-probe 3 50))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404f800000000000"
+      }
     }
   ]
 }

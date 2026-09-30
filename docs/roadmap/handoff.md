@@ -4744,3 +4744,41 @@ unchanged. All root Cargo/JVM/Node graphs terminal and slots released. Publish
 this isolated import as a stacked draft, Refs #11/#16/#17; independent review and
 exact final-head CI remain required before readiness. Future sequence48-case red
 preparation is not included in this passing source import branch.
+
+
+## Independent PR #85 review — 2026-09-30
+
+Reviewed candidate e1f9e93 against main6364495 in isolated
+/private/tmp/suss-review-pr85. Fifteen selected whole protocol forms are exact
+pinned source with patch:null; source hashes/notices/EPL packaging and generated
+25-file manifest verify. Twenty-one forms and68 partial reviews/997 unassessed
+remain prerequisites, not persistent collection or compiled macro acceptance.
+No significant production defect found. The earlier same-result -nth fixture
+did not distinguish arity dispatch, so added four independent observations for
+distinct arity results, left-to-right operand effects and a captured method value.
+Original31 case dictionaries are unchanged; fresh graph9522 completed terminal0:
+35 exact pinned scalar observations/native2,
+/private/tmp/suss-pr85-review-interface-oracle.log.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-core-interface-oracle.sh`.
+
+Added a third native lifecycle test: after source reload/forced GC, both canonical
+core aliases and captured method values operate on retained instances; invalid
+method arities fail and subsequent calls recover. Focus70530 completed terminal0:
+core_import17/interfaces3, /private/tmp/suss-pr85-review-focus.log. Existing fresh
+graph89239 completed terminal0: original117 exact observations/core_import17,
+/private/tmp/suss-pr85-review-existing-oracle.log, using
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-core-import-oracle.sh`.
+Provenance6747 completed terminal0: Python71/inventory1065/reviews68+997/25artifacts,
+WIT15files6packages/numeric locks/offline10milestones39issues,
+/private/tmp/suss-pr85-review-provenance.log. Required full baseline follows its
+authoritative completion. No RUSTFLAGS, unrelated deletions, acceptance or merge
+claim. Next push review coverage, require exact final-head CI, then implement
+retained sequence types and UTF-16 indexing/variadic rest/apply dependencies.
+
+Required review full baseline79552 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-pr85-review-baseline.log. Existing manual/legacy ignores and
+separate diagnostic differential9pass7fail remain explicit. All review local
+Cargo/JVM/Node graphs are terminal and released. Push the independent coverage
+commit and require its exact final-head CI before readiness. No merge or issue
+closure; retained source sequence/collection implementations remain next work.

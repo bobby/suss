@@ -10,14 +10,16 @@ and generated manifest. Source forms and upstream EPL notices/licenses are
 retained. No source text is removed or patched for these declarations.
 
 Before import, the executing regression failed on unresolved cljs.core/ISeqable
-while loading the existing six-function core artifact. After import, two native
+while loading the existing six-function core artifact. After import, three native
 tests load the actual generated artifact and exercise every direct marker and
 method through a nominal test adapter. Number results are independently decoded
 from binary64 fields; Booleans require exact sentinel values. GC runs between
-calls. Both -nth signatures execute, along with clone/conj/metadata adapters,
+calls. A separate lifecycle test reloads the source artifact and checks canonical
+suss.core/cljs.core aliases, captured method values, invalid arities and recovery.
+Both -nth signatures execute with distinct results, along with clone/conj/metadata adapters,
 seq identity, same/different object equivalence and nil-returning methods.
 
-The development-only pinned ClojureScript runner certifies a separate 31-case
+The development-only pinned ClojureScript runner certifies a separate 35-case
 source corpus using strict scalar transport. Native execution checks those same
 observations independently. JVM/Node are development dependencies only.
 
