@@ -582,3 +582,105 @@ fn persistent_session_arithmetic_values_evaluate_callee_and_arguments_once() {
     );
     assert_eq!(eval_number(&mut session, "counter"), 5.0f64.to_bits());
 }
+
+#[test]
+fn persistent_session_loop_and_function_recur_replace_bindings_in_parallel() {
+    let mut session = Session::new().unwrap();
+    for (source, expected) in [
+        (
+            "(loop [flag true x 1 y 2] (if flag (recur false y x) (- x y)))",
+            1.0,
+        ),
+        ("(loop [x 1 y (+ x 2)] y)", 3.0),
+        ("(loop [flag true x nil] (if flag (recur false 9) x))", 9.0),
+        (
+            "((fn [flag x y] (if flag (recur false y x) (- x y))) true 1 2)",
+            1.0,
+        ),
+        ("(loop [] 42)", 42.0),
+    ] {
+        assert_eq!(
+            eval_number(&mut session, source),
+            f64::to_bits(expected),
+            "{source}"
+        );
+    }
+    let value = session
+        .eval("((fn [flag x] (if flag (recur false \"42\") x)) true nil)")
+        .unwrap();
+    assert_eq!(units(&mut session, &value), vec![52, 50]);
+}
+
+#[test]
+fn recurrence_preserves_old_iteration_captures_effect_order_and_dynamic_types() {
+    let mut session = Session::new().unwrap();
+    assert_eq!(
+        eval_number(
+            &mut session,
+            "(loop [flag true x 1 f nil] (if flag (recur false 2 (fn [] x)) (f)))"
+        ),
+        1.0f64.to_bits()
+    );
+    assert_eq!(
+        eval_number(
+            &mut session,
+            "(let [outer 10] ((fn [flag x] (if flag (recur false 2) (+ outer x))) true 1))"
+        ),
+        12.0f64.to_bits()
+    );
+    assert_eq!(
+        eval_number(
+            &mut session,
+            "(loop [x 2] ((fn [flag y] (if flag (recur false (+ y 1)) y)) true x))"
+        ),
+        3.0f64.to_bits()
+    );
+    let text = session
+        .eval("(loop [flag true x 100] (if flag (recur false \"2\") (+ x 1)))")
+        .unwrap();
+    session.collect().unwrap();
+    assert_eq!(units(&mut session, &text), [50, 49]);
+    session
+        .eval("(def counter 0) (def next (fn [] (def counter (+ counter 1))))")
+        .unwrap();
+    assert_eq!(
+        eval_number(
+            &mut session,
+            "(loop [flag true x 0 y 0] (if flag (recur false (next) (next)) (+ (* x 10) y)))"
+        ),
+        12.0f64.to_bits()
+    );
+    assert_eq!(eval_number(&mut session, "counter"), 2.0f64.to_bits());
+    let saved = session
+        .eval("(loop [flag true x 1] (if flag (recur false (fn [] x)) x))")
+        .unwrap();
+    session.collect().unwrap();
+    let result = session.invoke(&saved, &[]).unwrap();
+    assert_eq!(number(&mut session, &result), 1.0f64.to_bits());
+}
+
+#[test]
+fn recurrence_fuel_traps_and_compile_errors_leave_the_session_usable() {
+    let mut session = Session::new().unwrap();
+    session.eval("(def old 7)").unwrap();
+    let before = session.stats();
+    assert!(matches!(
+        session.eval("(def old (loop [x 1] (+ (recur 2) x)))"),
+        Err(SessionError::Compile(_))
+    ));
+    assert_eq!(session.stats(), before);
+    session.set_operation_fuel(500);
+    assert!(matches!(
+        session.eval("(loop [] (if true (recur) (recur)))"),
+        Err(SessionError::Trap(_))
+    ));
+    session.set_operation_fuel(100_000);
+    assert_eq!(eval_number(&mut session, "(+ old 1)"), 8.0f64.to_bits());
+    session.set_operation_fuel(500);
+    assert!(matches!(
+        session.eval("((fn [] (recur)))"),
+        Err(SessionError::Trap(_))
+    ));
+    session.set_operation_fuel(100_000);
+    assert_eq!(eval_number(&mut session, "old"), 7.0f64.to_bits());
+}

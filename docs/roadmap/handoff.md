@@ -2461,3 +2461,86 @@ object coercion, full core/macro import, extended signatures, production fronten
 migration and M2–M9 acceptance remain unfinished. The next unblocked task is
 extended closure signatures and control-flow/core foundations; no milestone or
 issue closes from this partial increment. Do not merge.
+
+## Source loop/recur: pre-implementation evidence — 2026-09-30
+
+Successor branch resurrection/portable-recur in /private/tmp/suss-portable-recur
+starts from PR #62's independently reviewed e22b45d94fc35746e856fabb51b5350ff26d47cc.
+The reviewer reproduced 91 focused checks, Python54, full workspace baseline and
+fresh 176 observations, found no significant defect, and pushed review evidence.
+Predecessor CI 36681661474 was cancelled. Exact reviewed-head CI 36682291901 passed on e22b45d94fc35746e856fabb51b5350ff26d47cc.
+Root verified executing arithmetic/phase/capture regressions and updated the PR
+and issues #9/#10 to reviewed-head readiness. No PR merged.
+
+Added a focused native Session regression for sequential loop initializers,
+parallel recur swaps, changing parameter types, function recur and zero bindings.
+It fails with the existing located Unresolved Runtime name loop diagnostic,
+exit 101; /private/tmp/suss-portable-recur-red.log. Native Cargo is terminal.
+No source implementation or successor PR exists yet; do not skip that red test.
+
+Fresh pinned ClojureScript reference probes execute 14 scalar cases covering
+these boundaries plus shadowing, empty body, nil, truthy zero, nested targets,
+tail let and ordered replacement effects. Exact tagged observations are validated:
+/private/tmp/suss-recur-probe-inputs.json, /private/tmp/suss-recur-probe-observations.json,
+and /private/tmp/suss-recur-reference-probe.log. These are reference-only observations,
+not compiler compatibility passes. The implementation plan is recorded in
+/private/tmp/suss-recur-implementation-plan.md.
+
+Next add lexical target identity and true tail-position analysis, isolating fn
+boundaries; reject outside-target, non-tail and arity errors with spans. Lower
+initializers/replacements once into explicit header parameters and backedges;
+all replacement values must precede assignments. Represent diverging flow without
+fabricated nil or unreachable joins. Existing IR edge emission already supports
+parallel assignment, but source recurrence does not yet reach it. Add executed
+positive/negative, nested capture, changing-type and fuel/recovery regressions;
+then fresh common corpus, focused/full checks, docs/inventory evidence, linked PR,
+independent review/pushed fixes and exact final-head CI. M2–M9 remain unfinished.
+
+Four additional fresh pinned recurrence reference cases validate original closure
+captures from a prior iteration, outer captures through function recur, nested
+function target isolation and changing Number-to-String arithmetic (result UTF-16
+"21"). Exact inputs/observations are /private/tmp/suss-recur-capture-probe-inputs.json
+and -observations.json; log /private/tmp/suss-recur-capture-reference-probe.log.
+All 18 reference rows are strict-tag validated, with no Suss pass claimed.
+No native/reference/CI handle remains live. Successor changes are uncommitted in
+this isolated worktree; PR #62's worktree remains clean at reviewed e22b45d.
+
+## Source loop/recur: implementation validation — 2026-09-30
+
+Simple-symbol loop/loop* and fixed-function recur now lower into explicit header
+parameters/backedges. Initializers and replacements evaluate once in source order;
+all edge values precede writes. Tail position and nearest target are checked in
+source analysis and independently for public HIR, with function isolation and
+located arity/outside/non-tail errors. Function bodies use synthetic loops with
+fresh parameter identities; old iteration captures and immutable outer captures
+remain stable. Mutable headers use Value facts. Divergent flow has no fabricated
+nil or unreachable joins; fuel traps remain separate and subsequent input recovers.
+
+The original unresolved-loop regression now passes. Additional source/HIR negative,
+parallel/capture/effect/type/GC and zero-parameter fuel tests execute. An initial
+new session test used nonexistent Session::call; corrected to Session::invoke.
+An initial compiler test treated Diagnostic as a vector; corrected its fixture.
+These compile failures are preserved in /private/tmp/suss-portable-recur-session.log
+and -compiler.log, not skipped. cargo fmt --all exposed unrelated legacy format
+changes; restored those bytes from HEAD and formatted only touched Rust files.
+
+Sequential native commands use CARGO_BUILD_JOBS=2 and shared CARGO_TARGET_DIR, with
+no RUSTFLAGS override. Results: compiler six-suite focus 72 pass/zero ignored,
+exit 0, /private/tmp/suss-portable-recur-compiler-fixed.log; native integration
+20 pass/zero ignored, exit 0, /private/tmp/suss-portable-recur-session-fixed.log.
+Fresh pinned source oracle now has 194 exact observations, with 16 independently
+decoded pipeline tests passing, exit 0, /private/tmp/suss-portable-recur-oracle.log.
+Python54 pass, /private/tmp/suss-portable-recur-python.log. Inventory1065 with four
+in-progress reviews/1061 unassessed, WIT15/six packages, numeric integrity, offline
+roadmap preview and touched formatting/diff gates pass. No core source copied,
+ABI/dependency/helper artifact change or shipped JVM/Node introduced. Provenance
+and limits are in docs/runtime/recurrence.md; full upstream loop destructuring
+and compiled macro behavior are still unassessed.
+
+Required full workspace baseline is currently running as native session79919,
+/private/tmp/suss-portable-recur-full.log; do not overlap another native graph.
+Publish stacked on #62 with Refs #9/#10, independent review/pushed fixes and exact
+final-head CI required before readiness. Collections/dispatch/general exception/
+effect IR, extended signatures, compiled core/macros and production frontend
+migration remain. Next extend closure signatures and prerequisite core/collection
+foundations. No complete issue/milestone claimed; all M2–M9 remain unfinished.

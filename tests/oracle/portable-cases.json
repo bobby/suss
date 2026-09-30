@@ -1628,6 +1628,154 @@
         "tag": "f64",
         "bits": "8000000000000000"
       }
+    },
+    {
+      "id": "loop-value",
+      "source": "(loop [x 42] x)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "loop-empty-bindings",
+      "source": "(loop [] 42)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "loop-empty-body",
+      "source": "(loop [x 1])",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "loop-sequential-initializers",
+      "source": "(loop [x 1 y (+ x 2)] y)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "loop-shadow-initializer",
+      "source": "(let [x 10] (loop [x (+ x 1)] x))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    },
+    {
+      "id": "loop-parallel-swap",
+      "source": "(loop [flag true x 1 y 2] (if flag (recur false y x) (- x y)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "loop-changing-value-type",
+      "source": "(loop [flag true x nil] (if flag (recur false 9) x))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "loop-nil-remains-value",
+      "source": "(loop [flag true x 1] (if flag (recur false nil) x))",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "loop-truthy-zero",
+      "source": "(loop [flag 0 x 1] (if flag (recur false (+ x 1)) x))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "loop-nested-target",
+      "source": "(loop [flag true x 1] (if flag (recur false (loop [inner true y x] (if inner (recur false (+ y 2)) y))) x))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "fn-recur-parallel-swap",
+      "source": "((fn [flag x y] (if flag (recur false y x) (- x y))) true 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "fn-recur-changing-value",
+      "source": "((fn [flag x] (if flag (recur false \"42\") x)) true nil)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          52,
+          50
+        ]
+      }
+    },
+    {
+      "id": "loop-recur-tail-let",
+      "source": "(loop [flag true x 1] (let [next (+ x 1)] (if flag (recur false next) x)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "loop-recur-ordered-effects",
+      "source": "(do (def loop-effect-counter 0) (loop [flag true x 1 y 2] (if flag (recur false (do (def loop-effect-counter (+ loop-effect-counter 1)) y) (do (def loop-effect-counter (+ loop-effect-counter 1)) x)) (+ (* loop-effect-counter 10) (- x y)))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "loop-closure-retains-old-parameter",
+      "source": "((loop [flag true x 1 f (fn [] 0)] (if flag (recur false 2 (fn [] x)) f)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "function-recur-retains-outer-capture",
+      "source": "(let [outside 10] ((fn [flag x] (if flag (recur false (+ x outside)) x)) true 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "nested-function-recur-targets",
+      "source": "((fn [flag x] (if flag (recur false ((fn [inner y] (if inner (recur false (+ y 1)) y)) true x)) x)) true 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "loop-changing-type-arithmetic",
+      "source": "(loop [flag true x 100] (if flag (recur false \"2\") (+ x 1)))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          50,
+          49
+        ]
+      }
     }
   ]
 }

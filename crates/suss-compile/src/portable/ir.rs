@@ -1,7 +1,7 @@
 //! Explicit values, blocks and edge parameters. Verification precedes emission.
 use super::{
     Diagnostic,
-    hir::{Arithmetic, BindingId, Expression, Hir, Literal, Type, arithmetic_type},
+    hir::{Arithmetic, BindingId, Expression, Hir, Literal, LoopId, Type, arithmetic_type},
     resolve::Global,
 };
 use std::{
@@ -79,6 +79,7 @@ struct Lowerer {
     function: Function,
     current: usize,
     bindings: HashMap<BindingId, ValueId>,
+    targets: HashMap<LoopId, (usize, usize)>,
 }
 impl Lowerer {
     fn new(span: Range<usize>) -> Self {
@@ -90,6 +91,7 @@ impl Lowerer {
             },
             current: 0,
             bindings: HashMap::new(),
+            targets: HashMap::new(),
         };
         lowerer.block(Vec::new());
         lowerer
@@ -107,7 +109,9 @@ impl Lowerer {
     }
     fn finish(mut self, hir: &Hir) -> Result<Function, Diagnostic> {
         let value = self.expression(hir)?;
-        self.function.blocks[self.current].terminator = Terminator::Return(value);
+        if let Some(value) = value {
+            self.function.blocks[self.current].terminator = Terminator::Return(value);
+        }
         Ok(self.function)
     }
     fn value(&mut self, ty: Type, span: Range<usize>) -> ValueId {
@@ -139,8 +143,14 @@ impl Lowerer {
         let ty = value.ty();
         self.emit(Operation::Literal(value), ty, span)
     }
-    fn expression(&mut self, hir: &Hir) -> Result<ValueId, Diagnostic> {
-        Ok(match &hir.kind {
+    fn operand(&mut self, hir: &Hir) -> Result<ValueId, Diagnostic> {
+        self.expression(hir)?.ok_or_else(|| Diagnostic {
+            span: hir.span.clone(),
+            message: "HIR recurrence in a value-required position".into(),
+        })
+    }
+    fn expression(&mut self, hir: &Hir) -> Result<Option<ValueId>, Diagnostic> {
+        Ok(Some(match &hir.kind {
             Expression::Literal(value) => self.literal(value.clone(), hir.span.clone()),
             Expression::Global(global) => self.emit(
                 Operation::GlobalRead(global.clone()),
@@ -176,7 +186,7 @@ impl Lowerer {
                             arguments: vec![nil],
                         };
                         self.current = unbound;
-                        let value = self.expression(initializer)?;
+                        let value = self.operand(initializer)?;
                         let value = self.emit(
                             Operation::GlobalWrite {
                                 global: global.clone(),
@@ -192,7 +202,7 @@ impl Lowerer {
                         self.current = join;
                         result
                     } else {
-                        let value = self.expression(initializer)?;
+                        let value = self.operand(initializer)?;
                         self.emit(
                             Operation::GlobalWrite {
                                 global: global.clone(),
@@ -218,9 +228,9 @@ impl Lowerer {
                 message: "HIR references an undefined binding".into(),
             })?,
             Expression::Call { callee, arguments } => {
-                let mut operands = vec![self.expression(callee)?];
+                let mut operands = vec![self.operand(callee)?];
                 for argument in arguments {
-                    operands.push(self.expression(argument)?);
+                    operands.push(self.operand(argument)?);
                 }
                 self.emit(Operation::Call { operands }, Type::Value, hir.span.clone())
             }
@@ -260,16 +270,78 @@ impl Lowerer {
                 )
             }
             Expression::Do(items) => {
-                let mut result = None;
-                for item in items {
-                    result = Some(self.expression(item)?);
+                if items.is_empty() {
+                    self.literal(Literal::Nil, hir.span.clone())
+                } else {
+                    for item in &items[..items.len() - 1] {
+                        self.operand(item)?;
+                    }
+                    return self.expression(items.last().unwrap());
                 }
-                result.unwrap_or_else(|| self.literal(Literal::Nil, hir.span.clone()))
+            }
+            Expression::Loop {
+                target,
+                bindings,
+                body,
+            } => {
+                if self.targets.contains_key(target) {
+                    return Err(Diagnostic {
+                        span: hir.span.clone(),
+                        message: "HIR recurrence target defined twice".into(),
+                    });
+                }
+                let mut initial = Vec::new();
+                let mut parameters = Vec::new();
+                for binding in bindings {
+                    let value = self.operand(&binding.value)?;
+                    if self.bindings.insert(binding.id, value).is_some() {
+                        return Err(Diagnostic {
+                            span: binding.span.clone(),
+                            message: "HIR binding identity is defined twice".into(),
+                        });
+                    }
+                    initial.push(value);
+                    parameters.push(self.value(Type::Value, binding.span.clone()));
+                }
+                let header = self.block(parameters.clone());
+                self.function.blocks[self.current].terminator = Terminator::Jump {
+                    target: header,
+                    arguments: initial,
+                };
+                for (binding, value) in bindings.iter().zip(parameters) {
+                    self.bindings.insert(binding.id, value);
+                }
+                self.targets.insert(*target, (header, bindings.len()));
+                self.current = header;
+                let result = self.expression(body);
+                self.targets.remove(target);
+                return result;
+            }
+            Expression::Recur { target, arguments } => {
+                let &(header, arity) = self.targets.get(target).ok_or_else(|| Diagnostic {
+                    span: hir.span.clone(),
+                    message: "HIR recurrence target is undefined".into(),
+                })?;
+                if arguments.len() != arity {
+                    return Err(Diagnostic {
+                        span: hir.span.clone(),
+                        message: "HIR recurrence arity mismatch".into(),
+                    });
+                }
+                let values = arguments
+                    .iter()
+                    .map(|arg| self.operand(arg))
+                    .collect::<Result<Vec<_>, _>>()?;
+                self.function.blocks[self.current].terminator = Terminator::Jump {
+                    target: header,
+                    arguments: values,
+                };
+                return Ok(None);
             }
             Expression::Let { bindings, body } => {
                 // Binding identities, rather than names, distinguish shadowed values.
                 for binding in bindings {
-                    let value = self.expression(&binding.value)?;
+                    let value = self.operand(&binding.value)?;
                     if self.bindings.insert(binding.id, value).is_some() {
                         return Err(Diagnostic {
                             span: binding.span.clone(),
@@ -277,35 +349,40 @@ impl Lowerer {
                         });
                     }
                 }
-                self.expression(body)?
+                return self.expression(body);
             }
             Expression::If {
                 condition,
                 consequent,
                 alternative,
             } => {
-                let condition = self.expression(condition)?;
-                let result = self.value(hir.ty, hir.span.clone());
+                let condition = self.operand(condition)?;
                 let then_block = self.block(Vec::new());
                 let else_block = self.block(Vec::new());
-                let join = self.block(vec![result]);
                 self.function.blocks[self.current].terminator = Terminator::Branch {
                     condition,
                     consequent: then_block,
                     alternative: else_block,
                 };
                 self.current = then_block;
-                let value = self.expression(consequent)?;
-                self.function.blocks[self.current].terminator = Terminator::Jump {
-                    target: join,
-                    arguments: vec![value],
-                };
+                let then_value = self.expression(consequent)?;
+                let then_end = self.current;
                 self.current = else_block;
-                let value = self.expression(alternative)?;
-                self.function.blocks[self.current].terminator = Terminator::Jump {
-                    target: join,
-                    arguments: vec![value],
-                };
+                let else_value = self.expression(alternative)?;
+                let else_end = self.current;
+                if then_value.is_none() && else_value.is_none() {
+                    return Ok(None);
+                }
+                let result = self.value(hir.ty, hir.span.clone());
+                let join = self.block(vec![result]);
+                for (end, value) in [(then_end, then_value), (else_end, else_value)] {
+                    if let Some(value) = value {
+                        self.function.blocks[end].terminator = Terminator::Jump {
+                            target: join,
+                            arguments: vec![value],
+                        };
+                    }
+                }
                 self.current = join;
                 result
             }
@@ -326,40 +403,40 @@ impl Lowerer {
                 // Evaluate every operand before entering the arithmetic operation.
                 let values = arguments
                     .iter()
-                    .map(|arg| self.expression(arg))
+                    .map(|arg| self.operand(arg))
                     .collect::<Result<Vec<_>, _>>()?;
                 if values.is_empty() {
-                    return Ok(self.literal(
+                    return Ok(Some(self.literal(
                         Literal::Number(if *operator == Arithmetic::Add {
                             0.0
                         } else {
                             1.0
                         }),
                         hir.span.clone(),
-                    ));
+                    )));
                 }
                 let mut result = values[0];
                 if values.len() == 1 {
                     if matches!(operator, Arithmetic::Subtract | Arithmetic::Negate) {
-                        return Ok(self.emit(
+                        return Ok(Some(self.emit(
                             Operation::Arithmetic {
                                 operator: Arithmetic::Negate,
                                 arguments: values,
                             },
                             Type::Number,
                             hir.span.clone(),
-                        ));
+                        )));
                     }
                     if *operator == Arithmetic::Divide {
                         let one = self.literal(Literal::Number(1.0), hir.span.clone());
-                        return Ok(self.emit(
+                        return Ok(Some(self.emit(
                             Operation::Arithmetic {
                                 operator: *operator,
                                 arguments: vec![one, result],
                             },
                             Type::Number,
                             hir.span.clone(),
-                        ));
+                        )));
                     }
                 }
                 for value in &values[1..] {
@@ -385,10 +462,91 @@ impl Lowerer {
                 }
                 result
             }
-        })
+        }))
     }
 }
+/// Public HIR callers must obey the same lexical target and tail contract as source.
+fn verify_recurrence(
+    hir: &Hir,
+    targets: &mut Vec<(LoopId, usize)>,
+    tail: bool,
+) -> Result<(), Diagnostic> {
+    let error = |message: &str| Diagnostic {
+        span: hir.span.clone(),
+        message: message.into(),
+    };
+    match &hir.kind {
+        Expression::Loop {
+            target,
+            bindings,
+            body,
+        } => {
+            if targets.iter().any(|(id, _)| id == target) {
+                return Err(error("HIR recurrence target defined twice"));
+            }
+            for binding in bindings {
+                verify_recurrence(&binding.value, targets, false)?;
+            }
+            targets.push((*target, bindings.len()));
+            let result = verify_recurrence(body, targets, true);
+            targets.pop();
+            result?;
+        }
+        Expression::Recur { target, arguments } => {
+            if !tail {
+                return Err(error("HIR recurrence must be in tail position"));
+            }
+            if targets.last() != Some(&(*target, arguments.len())) {
+                return Err(error("HIR recurrence target or arity mismatch"));
+            }
+            // Only the innermost target is legal: inner loop cannot recur an outer loop.
+            for argument in arguments {
+                verify_recurrence(argument, targets, false)?;
+            }
+        }
+        Expression::Function { body, .. } => verify_recurrence(body, &mut Vec::new(), true)?,
+        Expression::Let { bindings, body } => {
+            for binding in bindings {
+                verify_recurrence(&binding.value, targets, false)?;
+            }
+            verify_recurrence(body, targets, tail)?;
+        }
+        Expression::Do(items) => {
+            for (index, item) in items.iter().enumerate() {
+                verify_recurrence(item, targets, tail && index + 1 == items.len())?;
+            }
+        }
+        Expression::If {
+            condition,
+            consequent,
+            alternative,
+        } => {
+            verify_recurrence(condition, targets, false)?;
+            verify_recurrence(consequent, targets, tail)?;
+            verify_recurrence(alternative, targets, tail)?;
+        }
+        Expression::Call { callee, arguments } => {
+            verify_recurrence(callee, targets, false)?;
+            for argument in arguments {
+                verify_recurrence(argument, targets, false)?;
+            }
+        }
+        Expression::Arithmetic { arguments, .. } => {
+            for argument in arguments {
+                verify_recurrence(argument, targets, false)?;
+            }
+        }
+        Expression::Definition {
+            initializer: Some(value),
+            ..
+        } => verify_recurrence(value, targets, false)?,
+        _ => {}
+    }
+    Ok(())
+}
+
 pub fn lower(hir: &Hir) -> Result<Function, Diagnostic> {
+    verify_recurrence(hir, &mut Vec::new(), false)?;
     Lowerer::new(hir.span.clone()).finish(hir)
 }
 
