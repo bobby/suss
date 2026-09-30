@@ -1,20 +1,32 @@
 //! Emit only verified IR. Operands are local value IDs, never source expressions.
 use super::{
     Diagnostic,
-    hir::{Arithmetic, Literal},
+    hir::{Arithmetic, Literal, Type},
     ir::{self, ClosureBody, Function as IrFunction, Operation, Terminator},
 };
 use crate::runtime_abi;
 use std::{borrow::Cow, collections::BTreeSet};
 use wasm_encoder::*;
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
-fn arithmetic_name(operator: Arithmetic) -> &'static str {
-    match operator {
-        Arithmetic::Add => "number-add",
-        Arithmetic::Subtract => "number-subtract",
-        Arithmetic::Multiply => "number-multiply",
-        Arithmetic::Divide => "number-divide",
-        Arithmetic::Negate => "number-negate",
+fn arithmetic_name(
+    operator: Arithmetic,
+    arguments: &[ir::ValueId],
+    function: &IrFunction,
+) -> &'static str {
+    let numeric = arguments
+        .iter()
+        .all(|arg| function.values[arg.0].ty == Type::Number);
+    match (operator, numeric) {
+        (Arithmetic::Add, true) => "number-add",
+        (Arithmetic::Subtract, true) => "number-subtract",
+        (Arithmetic::Multiply, true) => "number-multiply",
+        (Arithmetic::Divide, true) => "number-divide",
+        (Arithmetic::Negate, true) => "number-negate",
+        (Arithmetic::Add, false) => "value-add",
+        (Arithmetic::Subtract, false) => "value-subtract",
+        (Arithmetic::Multiply, false) => "value-multiply",
+        (Arithmetic::Divide, false) => "value-divide",
+        (Arithmetic::Negate, false) => "value-negate",
     }
 }
 pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
@@ -59,8 +71,11 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Call { .. } => {
                         names.insert("invoke");
                     }
-                    Operation::Arithmetic { operator, .. } => {
-                        names.insert(arithmetic_name(*operator));
+                    Operation::Arithmetic {
+                        operator,
+                        arguments,
+                    } => {
+                        names.insert(arithmetic_name(*operator, arguments, function));
                     }
                     _ => {}
                 }
@@ -87,7 +102,9 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 ],
                 vec![VALUE],
             ),
-            "binding-get" | "binding-bound" | "number-negate" => (vec![VALUE], vec![VALUE]),
+            "binding-get" | "binding-bound" | "number-negate" | "value-negate" => {
+                (vec![VALUE], vec![VALUE])
+            }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "string-new" => (vec![ValType::I32], vec![VALUE]),
             "string-set-unit" => (vec![VALUE, ValType::I32, ValType::I32], vec![ValType::I32]),
@@ -335,7 +352,7 @@ fn emit_function(
                         function.instruction(&LocalGet(argument.0 as u32 + offset));
                     }
                     function
-                        .instruction(&Call(index(arithmetic_name(*operator))))
+                        .instruction(&Call(index(arithmetic_name(*operator, arguments, ir))))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
             }

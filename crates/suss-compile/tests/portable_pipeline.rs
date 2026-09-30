@@ -196,10 +196,16 @@ fn unary_sum_and_product_preserve_operand_types_and_closure_arity() {
     let error = portable::compile(source).unwrap_err();
     assert_eq!(error.span, 0..source.len());
     assert!(error.message.contains("Wrong arity"));
-    // Binary coercions are still unsupported; identity must not let a String
-    // masquerade as a verified Number for a subsequent arithmetic operation.
-    let error = portable::compile("(+ (+ \"x\") 1)").unwrap_err();
-    assert!(error.message.contains("verified Number"));
+    // Identity must retain String information when a later addition concatenates.
+    let source = "(+ (+ \"x\") 1)";
+    assert_eq!(portable::analyze(source).unwrap().ty, Type::String);
+    let (mut store, value) = execute(source);
+    assert_eq!(
+        tagged(&mut store, &value),
+        serde_json::json!({"tag":"string","units":[120,49]})
+    );
+    let error = portable::compile("(- (+ (fn [] 1)))").unwrap_err();
+    assert!(error.message.contains("object coercions"));
 }
 #[test]
 fn arithmetic_import_trace_observes_once_only_source_order_and_short_circuit() {
@@ -290,21 +296,14 @@ fn hir_retains_binding_identity_metadata_and_located_diagnostics() {
     assert_eq!(&source[items[1].span.clone()], "^:last x");
     for (source, needle) in [
         ("(let [x missing] x)", "missing"),
-        ("(+ 1 false)", "false"),
+        ("(+ 1 (fn [] 2))", "(fn [] 2)"),
         ("(let [+ (fn [x] x)] (+ 2 3))", "(+ 2 3)"),
         ("(other.core/+ 1 2)", "other.core/+"),
     ] {
         let error = portable::compile(source).unwrap_err();
         assert_eq!(&source[error.span], needle);
     }
-    for source in [
-        "(/)",
-        "(-)",
-        "(if 1)",
-        "(let [x] x)",
-        "(recur 1)",
-        "(+ (if true 1 nil) 2)",
-    ] {
+    for source in ["(/)", "(-)", "(if 1)", "(let [x] x)", "(recur 1)"] {
         assert!(portable::compile(source).is_err(), "{source}");
     }
 }
@@ -509,7 +508,7 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
         let (mut store, value) = execute(source);
         assert_eq!(tagged(&mut store, &value), case["expected"], "{source}");
     }
-    assert_eq!(ids.len(), 54);
+    assert_eq!(ids.len(), 158);
 }
 #[test]
 fn independently_compiled_fragment_values_remain_live_across_gc() {

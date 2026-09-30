@@ -439,6 +439,1030 @@
         "tag": "bool",
         "value": false
       }
+    },
+    {
+      "id": "primitive-coercion-1",
+      "source": "(+ nil 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "primitive-coercion-2",
+      "source": "(+ false 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "primitive-coercion-3",
+      "source": "(+ true 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "primitive-coercion-4",
+      "source": "(+ \"\" 2)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          50
+        ]
+      }
+    },
+    {
+      "id": "primitive-coercion-5",
+      "source": "(+ 2 \"x\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          50,
+          120
+        ]
+      }
+    },
+    {
+      "id": "primitive-coercion-6",
+      "source": "(- nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "primitive-coercion-7",
+      "source": "(- \" 2 \" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "primitive-coercion-8",
+      "source": "(* \"2\" 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "primitive-coercion-9",
+      "source": "(* false 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "primitive-coercion-10",
+      "source": "(/ nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff0000000000000"
+      }
+    },
+    {
+      "id": "primitive-coercion-11",
+      "source": "(- \"bogus\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "primitive-coercion-12",
+      "source": "((fn [x y] (+ x y)) nil 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "primitive-coercion-13",
+      "source": "((fn [x y] (* x y)) \"2\" 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "number-to-string-1",
+      "source": "(+ 0 \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          48
+        ]
+      }
+    },
+    {
+      "id": "number-to-string-2",
+      "source": "(+ -0.0 \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          48
+        ]
+      }
+    },
+    {
+      "id": "number-to-string-3",
+      "source": "(+ 1 \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49
+        ]
+      }
+    },
+    {
+      "id": "number-to-string-4",
+      "source": "(+ 1e-7 \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49,
+          101,
+          45,
+          55
+        ]
+      }
+    },
+    {
+      "id": "number-to-string-5",
+      "source": "(+ 1e-6 \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          48,
+          46,
+          48,
+          48,
+          48,
+          48,
+          48,
+          49
+        ]
+      }
+    },
+    {
+      "id": "number-to-string-6",
+      "source": "(+ 1e-5 \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          48,
+          46,
+          48,
+          48,
+          48,
+          48,
+          49
+        ]
+      }
+    },
+    {
+      "id": "number-to-string-7",
+      "source": "(+ 1e20 \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48
+        ]
+      }
+    },
+    {
+      "id": "number-to-string-8",
+      "source": "(+ 1e21 \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49,
+          101,
+          43,
+          50,
+          49
+        ]
+      }
+    },
+    {
+      "id": "number-to-string-9",
+      "source": "(+ 1e22 \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49,
+          101,
+          43,
+          50,
+          50
+        ]
+      }
+    },
+    {
+      "id": "number-to-string-10",
+      "source": "(+ 1000000000000000100 \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          49,
+          48,
+          48
+        ]
+      }
+    },
+    {
+      "id": "number-to-string-11",
+      "source": "(+ 1.2345678901234567e19 \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          48,
+          48,
+          48
+        ]
+      }
+    },
+    {
+      "id": "number-to-string-12",
+      "source": "(+ 5e-324 \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          53,
+          101,
+          45,
+          51,
+          50,
+          52
+        ]
+      }
+    },
+    {
+      "id": "number-to-string-13",
+      "source": "(+ 1.7976931348623157e308 \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49,
+          46,
+          55,
+          57,
+          55,
+          54,
+          57,
+          51,
+          49,
+          51,
+          52,
+          56,
+          54,
+          50,
+          51,
+          49,
+          53,
+          55,
+          101,
+          43,
+          51,
+          48,
+          56
+        ]
+      }
+    },
+    {
+      "id": "string-to-number-1",
+      "source": "(* \"\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-2",
+      "source": "(* \" \\t\\n\\r\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-3",
+      "source": "(* \"\\ufeff\\u00a0 1.25 \\u3000\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff4000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-4",
+      "source": "(* \"+.5\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3fe0000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-5",
+      "source": "(* \"1.\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-6",
+      "source": "(* \"-0\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-7",
+      "source": "(* \"-0.0\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-8",
+      "source": "(* \"-1e-9999\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-9",
+      "source": "(* \"1e309\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff0000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-10",
+      "source": "(* \"-1e309\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "fff0000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-11",
+      "source": "(* \"2.4703282292062327e-324\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-12",
+      "source": "(* \"2.4703282292062328e-324\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000001"
+      }
+    },
+    {
+      "id": "string-to-number-13",
+      "source": "(* \"9007199254740993\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4340000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-14",
+      "source": "(* \"9007199254740995\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4340000000000002"
+      }
+    },
+    {
+      "id": "string-to-number-15",
+      "source": "(* \"0x20000000000001\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4340000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-16",
+      "source": "(* \"0x20000000000003\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4340000000000002"
+      }
+    },
+    {
+      "id": "string-to-number-17",
+      "source": "(* \"0XFF\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "406fe00000000000"
+      }
+    },
+    {
+      "id": "string-to-number-18",
+      "source": "(* \"0o777\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "407ff00000000000"
+      }
+    },
+    {
+      "id": "string-to-number-19",
+      "source": "(* \"0b1010\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-20",
+      "source": "(* \"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff0000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-21",
+      "source": "(* \"0x10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff0000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-22",
+      "source": "(* \"inf\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-23",
+      "source": "(* \"infinity\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-24",
+      "source": "(* \"NaN\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-25",
+      "source": "(* \"-NaN\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-26",
+      "source": "(* \"0x\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-27",
+      "source": "(* \"0b2\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-28",
+      "source": "(* \"0o8\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-29",
+      "source": "(* \"+0x1\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-30",
+      "source": "(* \"-0x1\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-31",
+      "source": "(* \"1_0\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-32",
+      "source": "(* \"1e\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-33",
+      "source": "(* \".\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-34",
+      "source": "(* \"+\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-35",
+      "source": "(* \"1f\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-36",
+      "source": "(* \"123abc\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-37",
+      "source": "(* \"0x1p2\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-38",
+      "source": "(* \"\\u00851\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-39",
+      "source": "(* \"\\u180e1\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-40",
+      "source": "(* \"\\u200b1\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-41",
+      "source": "(* \"\\ud800\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-42",
+      "source": "(* \"\\ud8001\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-43",
+      "source": "(* \"\\uffff\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-44",
+      "source": "(* \"\\t-0\\t\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-45",
+      "source": "(* \"\\n-0\\n\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-46",
+      "source": "(* \"\\u000b-0\\u000b\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-47",
+      "source": "(* \"\\f-0\\f\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-48",
+      "source": "(* \"\\r-0\\r\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-49",
+      "source": "(* \" -0 \" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-50",
+      "source": "(* \"\\u00a0-0\\u00a0\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-51",
+      "source": "(* \"\\u1680-0\\u1680\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-52",
+      "source": "(* \"\\u2000-0\\u2000\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-53",
+      "source": "(* \"\\u2001-0\\u2001\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-54",
+      "source": "(* \"\\u2002-0\\u2002\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-55",
+      "source": "(* \"\\u2003-0\\u2003\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-56",
+      "source": "(* \"\\u2004-0\\u2004\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-57",
+      "source": "(* \"\\u2005-0\\u2005\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-58",
+      "source": "(* \"\\u2006-0\\u2006\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-59",
+      "source": "(* \"\\u2007-0\\u2007\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-60",
+      "source": "(* \"\\u2008-0\\u2008\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-61",
+      "source": "(* \"\\u2009-0\\u2009\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-62",
+      "source": "(* \"\\u200a-0\\u200a\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-63",
+      "source": "(* \"\\u2028-0\\u2028\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-64",
+      "source": "(* \"\\u2029-0\\u2029\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-65",
+      "source": "(* \"\\u202f-0\\u202f\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-66",
+      "source": "(* \"\\u205f-0\\u205f\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-67",
+      "source": "(* \"\\u3000-0\\u3000\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "string-to-number-68",
+      "source": "(* \"\\ufeff-0\\ufeff\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "primitive-concat-surrogates",
+      "source": "(+ \"\\uD800\" \"\ud83d\ude00\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          55296,
+          55357,
+          56832
+        ]
+      }
+    },
+    {
+      "id": "primitive-concat-null",
+      "source": "(+ nil \"x\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          110,
+          117,
+          108,
+          108,
+          120
+        ]
+      }
+    },
+    {
+      "id": "primitive-concat-bools",
+      "source": "(+ \"\" false true)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          102,
+          97,
+          108,
+          115,
+          101,
+          116,
+          114,
+          117,
+          101
+        ]
+      }
+    },
+    {
+      "id": "primitive-concat-left-fold",
+      "source": "(+ 1 2 \"s\" 4)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          51,
+          115,
+          52
+        ]
+      }
+    },
+    {
+      "id": "primitive-concat-dynamic-fold",
+      "source": "((fn [x y z] (+ x y z)) 1 2 \"x\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          51,
+          120
+        ]
+      }
+    },
+    {
+      "id": "primitive-concat-branch",
+      "source": "(+ (if true \"x\" 1) 2)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          120,
+          50
+        ]
+      }
+    },
+    {
+      "id": "primitive-arithmetic-branch",
+      "source": "(+ (if false 1 nil) 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "primitive-format-infinity",
+      "source": "(+ (/ 1 0) \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          73,
+          110,
+          102,
+          105,
+          110,
+          105,
+          116,
+          121
+        ]
+      }
+    },
+    {
+      "id": "primitive-format-neg-infinity",
+      "source": "(+ (/ -1 0) \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          45,
+          73,
+          110,
+          102,
+          105,
+          110,
+          105,
+          116,
+          121
+        ]
+      }
+    },
+    {
+      "id": "primitive-format-nan",
+      "source": "(+ (/ 0 0) \"\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          78,
+          97,
+          78
+        ]
+      }
     }
   ]
 }

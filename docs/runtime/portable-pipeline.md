@@ -33,15 +33,20 @@ HIR retains byte spans, ordered reader metadata, inferred scalar information and
 unique lexical binding identities, including binding-name metadata. Supported
 forms are nil/booleans, ordinary binary64 numbers, lossless UTF-16 strings,
 lexical `let`, `do`, `if`, fixed anonymous `fn`/`fn*`, universal calls and
-statically verified numeric `+`, `-`, `*`, `/` calls. One-argument `+` and `*`
+primitive arithmetic `+`, `-`, `*`, `/` calls. One-argument `+` and `*`
 are identity for every supported value, including dynamic globals/parameters and
 closures; they retain the operand's inferred type and perform no numeric cast.
 Numeric zero and empty strings are truthy. Missing `if` alternatives and empty
 bodies yield nil. Known wrong arities, unsupported forms and unresolved names
 return located diagnostics. Dynamic call failures raise language exceptions;
-source call-site annotation remains open. Dynamic numeric checking/coercion is not implemented;
-operands of actual numeric operations that cannot be proven Number are rejected rather than passed to an
-unchecked runtime cast. No complete upstream arithmetic inventory item is claimed.
+source call-site annotation remains open. Dynamic numbers, nil, booleans and
+UTF-16 strings now use checked primitive coercions. Addition concatenates when
+one operand is a string; other arithmetic uses primitive Number conversion.
+Invalid numeric strings become NaN, nil becomes zero, and booleans become zero/one.
+Only statically proven Number operands select unchecked number intrinsics.
+Known closures requiring object conversion produce located unsupported diagnostics;
+dynamic objects raise an explicit language exception. Full object conversion and
+first-class arithmetic core bindings remain unfinished. No complete upstream arithmetic inventory item is claimed.
 
 IR contains typed value IDs, ordered instructions, explicit blocks, branch/jump
 terminators and edge parameters. Every operand is evaluated to a value before
@@ -53,7 +58,7 @@ replacement. Source-level loop/recur and tail-position checking are still open.
 
 Verification checks entry shape, reachability, edge targets, unique/complete
 value definitions, dominance/order, edge arities/types and resolved intrinsic
-arities/Number operands. Malformed HIR binding identities and arithmetic arities
+arities and arithmetic operand/result type propagation. Malformed HIR binding identities and arithmetic arities
 produce diagnostics.
 Direct HIR Negate retains unary negation, including the sign of zero.
 `compile_ir` runs verification before emission and validates the final Wasm.
@@ -75,10 +80,15 @@ compiled fragments in one Store; this is not a persistent compiled session.
 
 Fourteen focused tests validate/link/execute actual artifacts and independently
 inspect the heap after forced GC. The original 14 scalar reader cases now also
-execute through compiled source fragments. A separate original 54-case source
+execute through compiled source fragments. A separate original 158-case source
 corpus matches freshly compiled pinned ClojureScript/Node observations exactly,
 covering numeric bits/arities, conditional values, lexical shadowing, strings and
-unary sum/product identity over nil/booleans/UTF-16/dynamic values/closures.
+unary sum/product identity over nil/booleans/UTF-16/dynamic values/closures,
+primitive coercions, ECMAScript whitespace/decimal/radix grammar, rounding,
+subnormals, overflow and shortest number formatting boundaries.
+A separate 1,024-sample binary64 matrix checks actual runtime formatting and
+StringToNumber round trips against fresh pinned observations; see the
+[private numeric build input](../../runtime/numeric/README.md).
 A wrapping runtime import records once-only ordered calls through unary identities
 and proves unselected arithmetic does not execute. Adversarial IR tests reject malformed definitions,
 dominance, types and edge/call arities before an artifact can be emitted.
@@ -102,6 +112,6 @@ These bounded observations do not replace the existing 16-case legacy compiler
 corpus: it remains **9 differential passes, 7 exact failures, 0 skips**. No
 expected failures changed. M2-01/02/03 remain incomplete. Next, complete source namespace/
 phase/definition loading and production clients, extended closure signatures,
-dynamic checks and the source corpus; add collection/dispatch/recur/exception/
+object conversion, first-class core bindings and the source corpus; add collection/dispatch/recur/exception/
 async IR forms and migrate AOT/REPL/macros through the same pipeline. Retire the
 old backend only when replacement acceptance passes.

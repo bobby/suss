@@ -1,0 +1,23 @@
+[package]
+name = "suss-numeric-intrinsics"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+# A private build input, embedded as core Wasm by suss-compile. No allocator,
+# JavaScript, WASI, or host imports are part of the shipped conversion path.
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+ryu-js = "=1.0.3"
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
+strip = true
+lto = true
+codegen-units = 1

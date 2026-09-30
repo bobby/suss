@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "toolchain": {
+    "rustc_release": "1.98.0",
+    "rustc_commit": "88d9e12ae178fab0fb5cc050a94da85685d449ea",
+    "target": "wasm32-unknown-unknown",
+    "profile": "release"
+  },
+  "formatter": {
+    "crate": "ryu-js",
+    "version": "1.0.3",
+    "registry_checksum": "04d056b875a9d2e6cb9a61d127afee9ac5999b9f87bcb32079d1318e505be714",
+    "licenses": [
+      "Apache-2.0",
+      "BSL-1.0"
+    ]
+  },
+  "wasm_sha256": "440cc93a477cb286c4427cd13e76abccf062a5ce222bbc6a218876a6286228f4",
+  "inputs": {
+    "Cargo.toml": "5d16e9d0de6c2b287c858cfe7ad97cdd8b1bb583a7be14e508d0cf1950919a27",
+    "Cargo.lock": "286e5afd967ce416482baa691424bbdfef0eae2a2135cdf8cac0bf80e17fdb8e",
+    "rust-toolchain.toml": "1cb7c7277a8ab958399e3e18605e77ad27a78e47b8913468c335cb9cc87ee7d2",
+    "src/lib.rs": "2700d6eb03addd8aeaff3214b05c3682c88f17ac99bca7ed621e081f969d3bc4",
+    "licenses/ryu-js-APACHE.txt": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+    "licenses/ryu-js-BOOST.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+    "licenses/Rust-1.98.0-COPYRIGHT-library.html": "68129500b616d5838629e68f55ff3aed5e096dacf60ce9eb41bbe599a563afa6",
+    "NOTICE": "c7b7d0cbd449a55f18ca58baaac5e46b572c2314d3e80715ed3d73ff78bda4e0"
+  }
+}

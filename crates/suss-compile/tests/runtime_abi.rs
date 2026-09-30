@@ -4,6 +4,171 @@ use suss_compile::runtime_abi;
 use wasmtime::{Instance, Module, Store, Val};
 
 #[test]
+fn runtime_abi_numeric_samples_match_pinned_formatting_and_parsing() {
+    let corpus: serde_json::Value =
+        serde_json::from_str(include_str!("../../../tests/oracle/numeric-cases.json")).unwrap();
+    assert_eq!(corpus["schema"], 1);
+    assert_eq!(
+        corpus["upstream"],
+        "c4295f303100bbf5afac449242d30bca1126f1a1"
+    );
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let boxed = runtime.get_func(&mut store, "number-box").unwrap();
+    let formatted = runtime.get_func(&mut store, "coerce-string").unwrap();
+    let parsed = runtime.get_func(&mut store, "coerce-number").unwrap();
+    let memory = runtime
+        .get_memory(&mut store, "numeric-scratch-memory")
+        .unwrap();
+    let mut identities = std::collections::HashSet::new();
+    let mut capacity = 0;
+    for (index, case) in corpus["cases"].as_array().unwrap().iter().enumerate() {
+        let input = case["bits"].as_str().unwrap();
+        assert_eq!(case["id"], input);
+        assert!(identities.insert(input));
+        {
+            let mut scope = wasmtime::RootScope::new(&mut store);
+            let mut value = [Val::null_any_ref()];
+            let bits = u64::from_str_radix(input, 16).unwrap();
+            boxed
+                .call(&mut scope, &[Val::F64(bits)], &mut value)
+                .unwrap();
+            let object = value[0]
+                .unwrap_anyref()
+                .unwrap()
+                .as_struct(&scope)
+                .unwrap()
+                .unwrap();
+            assert_eq!(
+                object.field(&mut scope, 0).unwrap().unwrap_f64().to_bits(),
+                bits
+            );
+            let mut text = [Val::null_any_ref()];
+            formatted.call(&mut scope, &value, &mut text).unwrap();
+            let array = text[0]
+                .unwrap_anyref()
+                .unwrap()
+                .as_array(&scope)
+                .unwrap()
+                .unwrap();
+            let units = array
+                .elems(&mut scope)
+                .unwrap()
+                .map(|unit| unit.unwrap_i32() as u16)
+                .collect::<Vec<_>>();
+            assert_eq!(
+                serde_json::json!({"tag":"string","units":units}),
+                case["formatted"],
+                "{input}"
+            );
+            let mut number = [Val::F64(0)];
+            parsed.call(&mut scope, &text, &mut number).unwrap();
+            let bits = number[0].unwrap_f64().to_bits();
+            assert_eq!(
+                serde_json::json!({"tag":"f64","bits":format!("{bits:016x}")}),
+                case["parsed"],
+                "{input}"
+            );
+        }
+        if index == 0 {
+            capacity = memory.data_size(&store);
+        }
+        assert_eq!(memory.data_size(&store), capacity);
+        if index % 64 == 0 {
+            store.gc(None).unwrap();
+        }
+    }
+    assert_eq!(identities.len(), 1024);
+}
+
+#[test]
+fn runtime_abi_numeric_allocation_failure_is_typed_and_not_nan_or_a_trap() {
+    let engine = support::engine();
+    let module = Module::new(&engine, runtime_abi::module()).unwrap();
+    let minimum = module
+        .exports()
+        .find_map(|export| match export.ty() {
+            wasmtime::ExternType::Memory(memory) => Some(memory.minimum() as usize * 65536),
+            _ => None,
+        })
+        .unwrap();
+    let limits = wasmtime::StoreLimitsBuilder::new()
+        .memory_size(minimum)
+        .build();
+    let mut store = Store::new(&engine, limits);
+    store.limiter(|limits| limits);
+    let runtime = Instance::new(&mut store, &module, &[]).unwrap();
+    let memory = runtime
+        .get_memory(&mut store, "numeric-scratch-memory")
+        .unwrap();
+    let function = runtime.get_func(&mut store, "numeric-reserve").unwrap();
+    let mut output = [Val::I32(0)];
+    let error = function
+        .call(&mut store, &[Val::I64(32)], &mut output)
+        .unwrap_err();
+    assert!(error.is::<wasmtime::ThrownException>());
+    let exception = store.take_pending_exception().unwrap();
+    let tag = exception.tag(&mut store).unwrap();
+    let expected = runtime.get_tag(&mut store, "language-exception").unwrap();
+    assert!(wasmtime::Tag::eq(&tag, &expected, &store));
+    let value = exception.field(&mut store, 0).unwrap();
+    let value = value
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap();
+    let fields = value.fields(&mut store).unwrap().collect::<Vec<_>>();
+    assert_eq!(fields.len(), 4);
+    let descriptor = fields[0]
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap();
+    assert_eq!(descriptor.field(&mut store, 0).unwrap().unwrap_i64(), 6);
+    let message = fields[1]
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap();
+    let units = message
+        .elems(&mut store)
+        .unwrap()
+        .map(|unit| unit.unwrap_i32() as u16)
+        .collect::<Vec<_>>();
+    assert_eq!(
+        String::from_utf16(&units).unwrap(),
+        "Numeric conversion scratch allocation failed"
+    );
+    assert_eq!(memory.data_size(&store), minimum);
+    assert!(!store.has_pending_exception());
+    let mut result = [Val::null_any_ref()];
+    runtime
+        .get_func(&mut store, "number-box")
+        .unwrap()
+        .call(&mut store, &[Val::F64(42.0f64.to_bits())], &mut result)
+        .unwrap();
+    let object = result[0]
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        object.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
+        42.0f64.to_bits()
+    );
+}
+
+#[test]
 fn runtime_abi_numbers_keep_binary64_bits_and_rounding() {
     let engine = support::engine();
     let module = Module::new(&engine, runtime_abi::module()).unwrap();

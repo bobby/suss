@@ -1,0 +1,22 @@
+Suss numeric conversion helper
+
+The parser and GC integration are original Suss code, licensed MIT OR Apache-2.0.
+The helper links ryu-js 1.0.3, a Rust implementation of Ulf Adams' Ryū algorithm
+adapted for ECMAScript formatting by the boa-dev project. Upstream repository:
+https://github.com/boa-dev/ryu-js (crate registry checksum is in Cargo.lock and
+artifact/manifest.json). Copyright 2018 Ulf Adams; Rust port contributors include
+David Tolnay and the boa-dev contributors. Upstream Apache-2.0 and Boost Software
+License 1.0 texts are retained byte-for-byte in licenses/ryu-js-*.txt.
+
+The compiled helper also links Rust core/compiler support from Rust 1.98.0,
+commit 88d9e12ae178fab0fb5cc050a94da85685d449ea. The toolchain's complete
+standard-library copyright and license report is retained byte-for-byte as
+licenses/Rust-1.98.0-COPYRIGHT-library.html, including its third-party notices.
+This report is broader than the code linked into this allocator-free helper;
+retaining it does not assert that every listed dependency is linked.
+Source: https://github.com/rust-lang/rust/tree/88d9e12ae178fab0fb5cc050a94da85685d449ea
+
+Distribute these notices and license files with the numeric Wasm build input and
+with distributions containing the generated Suss runtime. No ClojureScript source
+was copied into the parser or bridges. The pinned ClojureScript source is a
+semantic reference and development oracle, with its original EPL notices intact.

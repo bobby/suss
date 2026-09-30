@@ -2194,3 +2194,62 @@ M2/M3 acceptance, command frontend migration and later milestones remain open.
 Next implement dynamic arithmetic with pinned primitive coercion/concatenation
 semantics; a blanket Number guard would not fulfill the contract. Do not merge
 or close incomplete issues.
+
+## Primitive dynamic arithmetic — 2026-09-30
+
+PR #59 final reviewed head 90bcd8c91fa5d65d84c0b57d1f82b7c8925d3638 passed CI
+36669735862. PR #60 final reviewed head 12f66581315effe943b4f05c8bb0e9f1f2336cd5
+passed CI 36671317970; predecessor run 36670850506 was cancelled, not successful.
+Both remain open, as does #49. This increment branches from reviewed #60 and will
+use Refs #9 and Refs #10. Neither issue's full acceptance is completed here.
+
+Portable HIR/IR now retains primitive arithmetic result types and chooses checked
+value intrinsics for dynamic globals/parameters and non-number primitives. Proven
+Number operands retain the fast path. Unary +/* remain identity. Nil/booleans and
+UTF-16 strings follow pinned primitive Number conversion; addition concatenates
+when either primitive is a string. Operand expressions are still evaluated once
+in source order before calls. Known closure coercions have located unsupported
+diagnostics; dynamic object conversion throws explicit descriptor 5. First-class
+arithmetic bindings and complete object/core conversion remain future work.
+
+A private allocator-free Rust helper implements original ECMAScript grammar,
+whitespace and correctly rounded radix parsing, Rust core decimal conversion and
+pinned ryu-js 1.0.3 shortest formatting. It has no host imports, JVM/Node, allocator,
+table or start. Its ordinary types/global references relocate after the unchanged
+recursive GC prelude. Separate private linear memory holds Rust stack/static data
+and reusable checked scratch; it is not canonical component memory. Allocation
+failure throws descriptor 6. GC strings are copied, never modified. Stack pointer
+reset before every non-reentrant helper call recovers after an actual fuel trap.
+SessionStats adds numeric_memory_capacity; reset replaces it with the Store.
+
+Source/dependency/toolchain/license/Wasm hashes and exact compiler commit are pinned
+in runtime/numeric/artifact/manifest.json. Byte-preserved ryu-js license texts and
+the toolchain's complete library copyright report are retained with NOTICE. The
+report intentionally includes notices broader than linked code. Distributions of
+the generated runtime must retain these files. No ClojureScript implementation was
+copied; pinned EPL-1.0 source informs semantics/development oracles only.
+
+Commands/results (CARGO_BUILD_JOBS=2, no RUSTFLAGS override; native Cargo runs
+sequentially; private helper builds use an isolated temporary target):
+
+- Pre-implementation pipeline regression failed at (+ nil 1), exit 101; /private/tmp/suss-primitive-arithmetic-red.log. An initial encoder compile failed on a u32/i64 constant mismatch and was corrected. Existing negative arithmetic fixtures were then updated to test unsupported object coercion rather than reject newly supported primitives; no skip was introduced.
+- Compiler focused modules/definitions/closures/pipeline/resolution/runtime_abi suite: 68 passed, zero ignored, exit 0; /private/tmp/suss-primitive-compiler-focused.log.
+- `cargo test -p suss-cli --lib --test persistent_session --locked -- --test-threads=2`: 18 passed (14 integration/4 private), zero ignored, exit 0; /private/tmp/suss-primitive-session-final.log. Combined focused scope: 86.
+- `sh scripts/test-portable-pipeline-oracle.sh`: all 158 expanded source cases match fresh pinned observations; 14 independently decoded pipeline tests passed, exit 0; /private/tmp/suss-primitive-portable-oracle.log. All prior 54 cases are retained. Parsing grammar/whitespace/radix rounding/subnormal/overflow/formatting boundaries and UTF-16 concatenation are covered.
+- `sh scripts/test-numeric-oracle.sh`: 1,024 unique binary64 inputs match fresh pinned ClojureScript formatting/round-trip observations and actual GC runtime execution, exit 0; /private/tmp/suss-primitive-numeric-oracle.log. Strict tagged transport remains exact; sampling is not exhaustive numeric compatibility.
+- A temporary removal of both stack-reset instructions fails the interrupted Rust-frame recovery regression, exit 101 (1048560 versus initial 1048576); /private/tmp/suss-primitive-stack-reset-negative.log. Mutation fully restored. The initial test incorrectly assumed inspect starts an operation fuel budget; corrected to set the actual Store fuel, not weaken the runtime check.
+- Allocation-limited runtime regression passes with exact shared language tag/descriptor/message, unchanged capacity and a successful next independently decoded value; /private/tmp/suss-primitive-allocation-focused.log.
+- `python3 scripts/numeric_runtime.py --record`, then `--rebuild-check`: successful byte-identical pinned builds, including final retained notice hashes; /private/tmp/suss-primitive-notices-record.log and /private/tmp/suss-primitive-notices-rebuild.log.
+- Python regression suite: 54 passed, exit 0; /private/tmp/suss-primitive-python-final.log. Inventory/review: 1,065 declarations/0 reviewed/1,065 unassessed. WIT: 15 files/six packages. Numeric integrity, offline roadmap preview, touched Rust formatting and git diff checks pass. Stable issue IDs/statuses retained.
+- Full `cargo test --workspace --locked -- --test-threads=2`: passed, exit 0 including CLI rustdoc; /private/tmp/suss-primitive-full.log. No overlapping native Cargo feature graph. Existing legacy/manual/doc ignores remain unchanged.
+
+Remaining: extended signatures, first-class core arithmetic and object conversion,
+collections/dispatch/recur/effect IR, full ExceptionInfo, production command/REPL
+migration and printing, reload/cache/privacy, compiled macros, async I/O/cancellation,
+canonical memory and target packaging. Legacy differential evidence stays separate:
+9 passes/7 exact failures/0 skips; inventory remains unassessed. M2–M9 remain open.
+Next remove the first-class arithmetic binding restriction while preserving unary
+identity, dynamic coercion, central invocation/arity and once-only evaluation; then
+continue the shared frontend/core prerequisites. Do not retire legacy paths until
+replacement acceptance. Publish stacked on #60, dispatch independent PR review,
+push significant fixes and require CI on the exact final reviewed head. Do not merge.

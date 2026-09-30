@@ -48,6 +48,31 @@ pub enum Arithmetic {
     Divide,
     Negate,
 }
+/// Primitive result information. Dynamic operands are checked/coerced at runtime;
+/// object conversions remain an explicit unsupported boundary, not Number casts.
+pub(crate) fn arithmetic_type(operator: Arithmetic, arguments: &[Type]) -> Option<Type> {
+    if arguments.len() == 1 && matches!(operator, Arithmetic::Add | Arithmetic::Multiply) {
+        return Some(arguments[0]);
+    }
+    if arguments.iter().any(|ty| matches!(ty, Type::Closure(_))) {
+        return None;
+    }
+    if operator != Arithmetic::Add || arguments.is_empty() {
+        return Some(Type::Number);
+    }
+    Some(arguments[1..].iter().fold(arguments[0], |left, &right| {
+        if left == Type::String || right == Type::String {
+            Type::String
+        } else if [left, right]
+            .iter()
+            .all(|ty| matches!(ty, Type::Nil | Type::Bool | Type::Number))
+        {
+            Type::Number
+        } else {
+            Type::Value
+        }
+    }))
+}
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct BindingId(pub usize);
 #[derive(Debug, Clone)]
@@ -517,24 +542,17 @@ impl Analyzer {
                     .iter()
                     .map(|arg| self.form(arg))
                     .collect::<Result<Vec<_>, _>>()?;
-                // The pinned + and * one-argument arities are identity,
-                // including for non-numeric values. Preserve the operand's
-                // information rather than asserting a Number result.
-                let ty = if arguments.len() == 1
-                    && matches!(operator, Arithmetic::Add | Arithmetic::Multiply)
-                {
-                    arguments[0].ty
-                } else {
-                    for arg in &arguments {
-                        if arg.ty != Type::Number {
-                            return Err(fail(
-                                arg.span.clone(),
-                                "Arithmetic requires verified Number operands; dynamic checking is not lowered yet",
-                            ));
-                        }
-                    }
-                    Type::Number
-                };
+                let types = arguments.iter().map(|arg| arg.ty).collect::<Vec<_>>();
+                let ty = arithmetic_type(operator, &types).ok_or_else(|| {
+                    let operand = arguments
+                        .iter()
+                        .find(|arg| matches!(arg.ty, Type::Closure(_)))
+                        .unwrap();
+                    fail(
+                        operand.span.clone(),
+                        "Arithmetic object coercions are not lowered yet",
+                    )
+                })?;
                 (
                     Expression::Arithmetic {
                         operator,
