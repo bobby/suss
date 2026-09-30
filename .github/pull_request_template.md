@@ -6,6 +6,10 @@ Describe the problem and resulting behavior.
 
 Use `Closes #N` for each issue whose full acceptance criteria this PR fulfills.
 Use `Refs #N` for partial work. Explain remaining work for referenced issues.
+For a stacked PR, retarget to the default branch after its predecessor lands;
+GitHub ignores description closing keywords on other bases. Also include each
+fully fulfilled `Closes #N` in a commit message and preserve it when squashing,
+so the issue closes when that commit reaches the default branch.
 
 ## Validation
 

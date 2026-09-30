@@ -2598,3 +2598,73 @@ compiled and strict-tag validated 11 extended-signature reference-only cases:
 fixture failure remains in -reference.log. The successor plan is
 /private/tmp/suss-signatures-next-plan.md. These are not Suss compatibility passes
 and do not enlarge this PR's recurrence scope. M2–M9 remain unfinished.
+
+## M2-03 acceptance reconciliation — 2026-09-30
+
+A read-only follow-up independent audit of issue #10 against its actual four
+criteria found no remaining foundation requirement: cross-fragment scalar/closure/
+UTF-16 roots survive GC, universal fixed/variadic invocation guards arity, exact
+binary64/UTF-16 corpus passes (194 source/1024 numeric), and version/actual-layout
+mismatches fail before initializer effects. Broader signatures/core/macros/nominal
+machinery/frontends belong to #9/#11/M3–M7. Earlier blanket incomplete notes mixed
+work-package boundaries; do not keep a fulfilled issue open for unrelated future
+work. Root verified the named tests and native install gate ordering against code.
+
+Isolated /private/tmp/suss-abi-v1-acceptance, resurrection/abi-v1-acceptance, is based
+on reviewed7912975. docs/roadmap/acceptance-runtime-abi-v1.md maps every criterion
+to executable tests, prior full/fresh observations and remaining separate work.
+ROADMAP and stable M2-03 manifest status now reflect completion on this branch;
+GitHub closure and default-branch completion await merge of its Closes #10 PR.
+M2 overall and #9 remain incomplete; other IDs/statuses/dependencies unchanged.
+Stale ABI closure/call/definition/native-loader statements reconciled. No runtime,
+source implementation, ABI layout, dependency, upstream copy or license changed.
+
+Exact runtime_abi focus: 10 pass, zero ignored, exit0;
+/private/tmp/suss-abi-v1-acceptance-focused.log. Command cargo test -p suss-compile
+--test runtime_abi --locked -- --test-threads=2, CARGO_BUILD_JOBS=2/sharedtarget,
+no RUSTFLAGS override. Python54 pass, exit0;
+/private/tmp/suss-abi-v1-acceptance-python.log. Offline publish_roadmap preview and
+diff checks pass, with stable issue IDs. Root/independent full baseline and194fresh
+observations from unchanged implementation are recorded above. Independent audit
+PR review and exact final-head CI are required; do not merge or close manually.
+PR63 final-head CI36686074513 is currently confirmed live; no pass claimed yet.
+Next implement named/multiple closure signatures from the genuine isolated red
+regression and fresh11reference observations, then broader foundations/M2–M9.
+
+## PR #64 independent acceptance review — 2026-09-30
+
+Dispatched reviewer /root/review_pr64 audited 77a436a against reviewed PR #63
+7912975 in isolated /private/tmp/suss-review-pr64. Read the accepted design,
+roadmap, inventory and handoff, the remote issue #10's four published criteria,
+runtime construction/invocation/gate code and the named executing regressions.
+All four foundation criteria are supported; no unresolved significant production
+or acceptance defect was found. M2 overall and #9/#11 remain incomplete, and
+branch completion is explicitly distinguished from unmerged default-branch state.
+Stable work-package IDs and dependencies are unchanged.
+
+Corrected an evidence overstatement: the native private installation regression
+checks malformed artifacts and missing cell imports, whereas actual changed-layout
+rejection before effects is proved by the runtime host-marker test. Native install
+verifies/validates before staging cells and publishes only after linking all
+fragments. No runtime/code/ABI change was needed.
+
+Independent sequential checks with CARGO_BUILD_JOBS=2/shared CARGO_TARGET_DIR and
+no RUSTFLAGS override passed, all exit 0 and zero ignored in focused native suites:
+runtime_abi 10 (/private/tmp/suss-pr64-review-runtime.log); portable_pipeline 16,
+including execution/independent decoding of all 194 corpus fragments
+(/private/tmp/suss-pr64-review-pipeline.log); native artifact-install gate 1
+(/private/tmp/suss-pr64-review-native-gate.log); old source closures/owned UTF-16
+across rebinding and GC 1 (/private/tmp/suss-pr64-review-native-roots.log); Python54
+(/private/tmp/suss-pr64-review-python.log). Offline roadmap preview reports stable
+10 milestones/39 issues; diff checks pass. Reviewed prior unchanged-code full
+baseline and fresh194 reference comparison evidence; no unnecessary full rerun
+for this documentation-only audit. Existing legacy/manual ignores remain explicit.
+All native handles are terminal. Exact final acceptance-head CI is still required.
+
+Verified GitHub's official closing-keyword rules: descriptions only auto-close
+when targeting the default branch; commit keywords close when the commit reaches
+that branch. Audit and PR template now explain predecessor landing/retargeting and
+preserving closing keywords on squash. This review commit includes Closes #10,
+because all its actual criteria pass; no other incomplete issue is closed.
+Do not merge or manually close. Next unblocked implementation remains extended
+source signatures and broader M2–M9 acceptance.
