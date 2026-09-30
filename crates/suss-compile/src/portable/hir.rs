@@ -208,7 +208,12 @@ impl Analyzer<'_> {
             kind: Expression::Call { callee, arguments },
         })
     }
-    fn function(&mut self, form: &Form, args: &[Form]) -> Result<Hir, Diagnostic> {
+    fn function(
+        &mut self,
+        form: &Form,
+        args: &[Form],
+        bootstrap_macro: bool,
+    ) -> Result<Hir, Diagnostic> {
         let Some(params) = args.first() else {
             return Err(fail(form.span.clone(), "fn requires a parameter vector"));
         };
@@ -218,6 +223,25 @@ impl Analyzer<'_> {
                 "Named/multiple-arity functions are not lowered yet; expected parameter vector",
             ));
         };
+        // Pinned cljs.core/fn reads conditions from signature metadata as well
+        // as a leading body map. fn* receives already-expanded syntax instead.
+        if bootstrap_macro {
+            for metadata in &params.metadata {
+                let condition_key = |form: &Form| {
+                    matches!(&form.kind, Kind::Keyword(key)
+                        if key.namespace.is_none() && matches!(key.name.as_str(), "pre" | "post"))
+                };
+                if condition_key(metadata)
+                    || matches!(&metadata.kind, Kind::Map(entries)
+                        if entries.chunks_exact(2).any(|entry| condition_key(&entry[0])))
+                {
+                    return Err(fail(
+                        params.span.clone(),
+                        "Function pre/post conditions are not lowered yet",
+                    ));
+                }
+            }
+        }
         let outer = self.locals.clone();
         let mut parameters = Vec::new();
         for name in names {
@@ -285,7 +309,11 @@ impl Analyzer<'_> {
         if (bare && symbol.name == "fn*")
             || matches!(resolved, Some(ResolvedBinding::BootstrapFn(_)))
         {
-            return self.function(form, args);
+            return self.function(
+                form,
+                args,
+                matches!(resolved, Some(ResolvedBinding::BootstrapFn(_))),
+            );
         }
         let (kind, ty) = match (bare, symbol.name.as_str()) {
             (true, "do") => {

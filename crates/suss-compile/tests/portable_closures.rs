@@ -283,6 +283,39 @@ fn source_wrong_arity_and_unimplemented_signatures_are_located_diagnostics() {
 }
 
 #[test]
+fn bootstrap_fn_rejects_parameter_metadata_pre_and_post_conditions() {
+    for source in [
+        "((fn ^{:pre [false]} [] 1))",
+        "((cljs.core/fn ^{:post [false]} [] 1))",
+        "((fn ^:pre [] 1))",
+    ] {
+        let error = portable::compile(source).unwrap_err();
+        assert!(error.message.contains("pre/post"));
+        assert!(source[error.span].starts_with('^'));
+    }
+    let mut env = portable::resolve::Environment::default();
+    env.refer(
+        portable::resolve::Phase::Runtime,
+        "function",
+        "cljs.core",
+        "fn",
+    )
+    .unwrap();
+    let error = portable::compile_in(
+        "((function ^{:pre [false]} [] 1))",
+        &env,
+        portable::resolve::Phase::Runtime,
+    )
+    .unwrap_err();
+    assert!(error.message.contains("pre/post"));
+    // Only the fn macro interprets signature conditions; fn* is already expanded.
+    let (mut store, value) = execute("((fn* ^{:pre [false]} [] 1))");
+    assert_eq!(bits(&mut store, &value), 1.0f64.to_bits());
+    let (mut store, value) = execute("((fn ^:signature [] 2))");
+    assert_eq!(bits(&mut store, &value), 2.0f64.to_bits());
+}
+
+#[test]
 fn calls_evaluate_computed_callee_then_each_argument_exactly_once() {
     use portable::resolve::{Environment, Phase};
     use wasmtime::Func;

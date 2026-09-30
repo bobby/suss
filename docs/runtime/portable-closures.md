@@ -13,9 +13,11 @@ alias/refer/exclusion and phase environment as `let`. Runtime vars do not hide
 macros; lexical locals do. Bare `fn*` is a true special form. Function parameters
 retain unique identities, spans and reader metadata. They remain dynamic Value
 regardless of type hints. Named/recursive signatures, multiple arities,
-destructuring, pre/post maps and variadic rest sequences are not lowered; unsupported
+destructuring, pre/post conditions (including parameter-vector metadata) and variadic rest sequences are not lowered; unsupported
 syntax returns located diagnostics, never an argument-array masquerading as a
-portable sequence. Empty bodies return nil; duplicate parameter names retain the
+portable sequence. The fn macro rejects pre/post signature metadata conservatively,
+including keys whose values are nil or false; ordinary annotations and fn* metadata
+remain accepted. Empty bodies return nil; duplicate parameter names retain the
 pinned reference behavior, with the final binding shadowing earlier parameters.
 
 Capture analysis computes only free lexical identities, in deterministic order.
@@ -64,7 +66,7 @@ recovery, although tests catch actual tags and reuse the Store after an error.
 
 ## Evidence and remaining integration
 
-Eleven focused tests validate/link/execute source-generated closures and independently
+Twelve focused tests validate/link/execute source-generated closures and independently
 decode numeric bits, UTF-16 and tagged exceptions. A wrapping import trace records
 computed callee evaluation before each argument and one invocation per call.
 Cross-fragment tests distinguish a captured old function value from a live global

@@ -1613,3 +1613,49 @@ Next unblocked task: connect source namespace/module/definition loading to the
 resolved shared cells and persistent compiled clients, then extend signatures,
 checked core coercions and the remaining IR forms. Keep the full roadmap active;
 retire obsolete paths only after replacement acceptance. Do not merge PRs.
+
+
+## Dispatched PR #46 code review — 2026-09-30
+
+The independent reviewer audited the entire closure increment at published head
+5e59e616661827db669db69d13c49e4349c29db6 in an isolated worktree. Review covered
+fn macro/lexical precedence, free binding identities and metadata, nested captures,
+public HIR/IR entry/type/arity/dominance guards, universal function references and
+local offsets, once-only callee-before-argument effects, cross-fragment roots/live
+rebinding and actual tagged language errors. One significant semantic omission was
+reproduced and fixed; no additional significant finding remained.
+
+Pinned cljs/core.cljc's fn macro reads :pre/:post from parameter-vector metadata
+when no explicit condition map exists. `((fn ^{:pre [false]} [] 1))` previously
+compiled a validated fragment ignoring the precondition. The regression FAILED
+at the published head, exit 101, /private/tmp/suss-pr46-review-red.log. Bootstrap
+fn now rejects signature pre/post metadata with a located unsupported-feature
+diagnostic. Regressions cover bare, qualified and renamed referred core fn,
+shorthand metadata, ordinary annotations and actual fn* execution. Rejection is
+conservative even for nil/false condition values or overwritten metadata keys;
+pre/post support remains incomplete. The true fn* special form does not expand
+these macro conditions and retains its previous behavior.
+
+A fresh development-only pinned ClojureScript/Node fixture confirms pre and post
+conditions reject the value, while fn* with the same metadata returns 1. Generated
+ignored fixture: tests/oracle/out/generated/suss_oracle/pr46_review.cljs; build and
+observations: /private/tmp/suss-pr46-review-reference.log. No upstream code was
+copied and no shipped Java/Node dependency was introduced.
+
+Commands/results (CARGO_BUILD_JOBS=2 and shared CARGO_TARGET_DIR; no RUSTFLAGS):
+
+- `cargo test -p suss-compile --test portable_closures --test portable_pipeline --test portable_resolution --test runtime_abi --locked -- --test-threads=2`: published head 41 passes; repaired final focused suite 42 passes (12 closure/13 pipeline/10 resolution/7 ABI), zero ignored. Logs /private/tmp/suss-pr46-review-focused.log and /private/tmp/suss-pr46-review-final-focused.log.
+- `cargo test --workspace --locked -- --test-threads=2`: published head and repaired implementation both pass, exit 0; /private/tmp/suss-pr46-review-full.log and /private/tmp/suss-pr46-review-final-full.log. The repaired full run began before the final renamed-refer assertion was added; the final focused run above covers that assertion. No implementation changed afterward.
+- Pinned reference: `clojure -Srepro -M -m cljs.main` with Node target compiling suss-oracle.pr46-review, then `node out/pr46-review.js`: exit 0; observations pre rejected, post rejected, 1.
+- rustfmt on touched Rust and `git diff --check`: pass.
+
+Enabled baseline suites remain green; existing manual/legacy/doc ignores and the
+legacy oracle's 9 differential passes/7 exact failures/0 skips are unchanged.
+The original 34-source portable corpus remains passing; all 1,065 inventory
+entries remain unassessed. Extended signatures, pre/post execution, dynamic numeric
+coercions/core values, source namespace/module/definition loading, full IFn,
+exceptions/effects/recur/async, compiled macros and production client migration
+remain incomplete. No M2 package or broad issue is closed. Next unblocked work:
+source namespace/module/definition loading connected to resolved shared cells and
+persistent compiled clients. Push the review repair to PR #46 and require
+successful CI on the repaired head before readiness. Do not merge PRs.
