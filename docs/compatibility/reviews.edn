@@ -1,7 +1,17 @@
-;; Human-reviewed overlay; these sixteen entries are partial, not compatibility completions.
+;; Human-reviewed overlay; these seventeen entries are partial, not compatibility completions.
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:identity:2691"
+  {:source-sha256 "4997a405f43df040b92909ac831f031385fd1ac86948cb1be06dd3529323504e" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies []
+   :classification :adapted
+   :rationale "The pinned single-arity body is retained through an explicit defn-to-def/fn bootstrap patch. Extracted source, docstring and EPL notice remain packaged. Full compiled macro/core bootstrap and metadata APIs are not established by this foundation import."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/identity.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_import.rs" "scripts/test_core_import.py"]}
   "runtime:+:2724"
   {:source-sha256 "0d082f92b029008bb9b5572120ade90cbe49376dbb6d758cb6e634e81c465431" :visibility :public
    :arities {:fixed [0 1 2] :variadic-min 2}

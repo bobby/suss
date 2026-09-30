@@ -1,0 +1,121 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "nil",
+      "source": "(identity nil)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "false",
+      "source": "(identity false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "true",
+      "source": "(identity true)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "zero",
+      "source": "(identity 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "negative-zero",
+      "source": "(identity -0.0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "rounding",
+      "source": "(identity 9007199254740993)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4340000000000000"
+      }
+    },
+    {
+      "id": "nan",
+      "source": "(identity ##NaN)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "infinity",
+      "source": "(identity ##Inf)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff0000000000000"
+      }
+    },
+    {
+      "id": "negative-infinity",
+      "source": "(identity ##-Inf)",
+      "expected": {
+        "tag": "f64",
+        "bits": "fff0000000000000"
+      }
+    },
+    {
+      "id": "empty",
+      "source": "(identity \"\")",
+      "expected": {
+        "tag": "string",
+        "units": []
+      }
+    },
+    {
+      "id": "string",
+      "source": "(identity \"\\uD800\ud83d\ude00\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          55296,
+          55357,
+          56832
+        ]
+      }
+    },
+    {
+      "id": "alias",
+      "source": "(cljs.core/identity 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "first-class",
+      "source": "(let [f identity] (f 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "closure",
+      "source": "((identity (fn [] 7)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    }
+  ]
+}

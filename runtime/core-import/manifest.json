@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "upstream-commit": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "namespace": "suss.core",
+  "phase": "runtime",
+  "tool": "scripts/core_import.py",
+  "tool-sha256": "1a38eb4cce47454661a837aaae0b67e0fbcadb47f04ac307997c0ac7aeae6e5f",
+  "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
+  "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
+  "recipe": "docs/compatibility/core-import.json",
+  "recipe-sha256": "d179d529bbb9f888d096eba1980db355950d0c9491d58dcee883a1d31464d8ca",
+  "reviews-sha256": "feac2181dfc289fc57716476935af946b701bcc261ba2e89ae01fd3601989d79",
+  "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
+  "forms": [
+    {
+      "id": "runtime:identity:2691",
+      "name": "identity",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2691,
+      "end-line": 2693,
+      "byte-start": 72553,
+      "byte-end": 72602,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "4997a405f43df040b92909ac831f031385fd1ac86948cb1be06dd3529323504e",
+      "extracted": "extracted/0000.cljs",
+      "extracted-sha256": "fe594689bf27c99c119f86d1ecf12f5a7de68d754e7490e114e71239ab877fb0",
+      "patch": "docs/compatibility/patches/identity.json",
+      "patch-sha256": "6be6400fbac59ecf88e31c181e5de4a9759f58568e459eb862effbfa2013aa3c",
+      "adapted-form-sha256": "aa3bfc2605eb14e5f01919c04c1048f54d91b456acba3db2831faceeff9f351d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_import.rs",
+        "scripts/test_core_import.py"
+      ]
+    }
+  ],
+  "files": {
+    "LICENSE": "2890ecd78ff9ee48e754e43db3d82d6ac8745170960580e7e6d458dc0d85ea66",
+    "epl-v10.html": "d0d35c5fb45696fcaa98858f6c1f1cf0d41400302f4adb966eb9a54fa9b9a226",
+    "extracted/0000.cljs": "fe594689bf27c99c119f86d1ecf12f5a7de68d754e7490e114e71239ab877fb0",
+    "suss/core.sus": "27a4e6a25633abf1649e73f2b1c8b385a8c14f40b5216b8a760177f05f352b4c"
+  }
+}

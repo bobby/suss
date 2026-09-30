@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "upstream-commit": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "namespace": "suss.core",
+  "phase": "runtime",
+  "forms": [
+    {
+      "id": "runtime:identity:2691",
+      "source-sha256": "4997a405f43df040b92909ac831f031385fd1ac86948cb1be06dd3529323504e",
+      "patch": "docs/compatibility/patches/identity.json"
+    }
+  ]
+}
