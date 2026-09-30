@@ -55,6 +55,23 @@ fn renames(form: &Form) -> Result<Vec<(&Form, &Form)>, Diagnostic> {
     Ok(out)
 }
 fn require(env: &mut Environment, phase: Phase, spec: &Form) -> Result<(), Diagnostic> {
+    // Pinned ns analysis reads reload policy from libspec metadata. Retaining
+    // the directive cannot implement its required initialization behavior.
+    for metadata in &spec.metadata {
+        let reload = |form: &Form| {
+            matches!(&form.kind, Kind::Keyword(key)
+                if key.namespace.is_none() && key.name == "reload")
+        };
+        if reload(metadata)
+            || matches!(&metadata.kind, Kind::Map(entries)
+                if entries.chunks_exact(2).any(|entry| reload(&entry[0])))
+        {
+            return Err(error(
+                spec,
+                "Require reload metadata needs source loading and initialization policy, not yet integrated",
+            ));
+        }
+    }
     let items = match &spec.kind {
         Kind::Symbol(_) => std::slice::from_ref(spec),
         Kind::Vector(items) | Kind::List(items) if !items.is_empty() => items,

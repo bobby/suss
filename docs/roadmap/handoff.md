@@ -1769,3 +1769,61 @@ Next unblocked task: recursive source namespace/module loading connected to stag
 compiler declarations and persistent compiled clients, including deterministic
 missing/mismatched/ambiguous/cyclic errors and initializer policy. Keep the full
 roadmap active; retire obsolete paths only after replacement acceptance.
+
+
+## Dispatched PR #48 review — 2026-09-30
+
+The independent reviewer audited source definition/namespace preparation, staged
+compiler state, special/macro precedence, metadata and qualification, nested
+captures, bound/write dominance and imports, initializer publication/failure
+ordering and actual shared-tag errors/GC. Published de2197f passed the 52-test
+focused suite and full workspace baseline before the stack reconciliation. Review
+resumed on reconciled 6d199ab77e2082e7e60f67fafc89e26f3bb8ba2b over parent
+d77f29edc7ccbf407485513211ffc51ee9d74fb9; the reconciliation changed no runtime
+code. Two significant boundary omissions reproduced and were repaired.
+
+Source require libspec ^:reload metadata previously compiled while silently
+losing initialization policy. Pinned cljs/analyzer.cljc explicitly reads that
+metadata. It now produces a located unsupported diagnostic until source loading
+and reload policy exist. Rejection is conservative for false/overwritten reload
+keys; ordinary retained metadata remains accepted and executes.
+
+Initializerless def previously invented a nil result in arbitrary expression
+contexts even though the pinned direct-argument fixture emitted invalid JS.
+It now fails with a located unsupported diagnostic in initializer, call operand,
+condition and closure-result contexts. Analysis propagates statement context
+through do/let/if; top-level and intermediate declaration statements still execute
+and preserve existing cells. Initializer-bearing def/defonce behavior is unchanged.
+The new regressions failed first (10 passing/2 failing, exit 101;
+/private/tmp/suss-pr48-review-red.log); neither failure was skipped.
+
+Commands and terminal results (CARGO_BUILD_JOBS=2, shared CARGO_TARGET_DIR, no
+RUSTFLAGS override):
+
+- `cargo test -p suss-compile --test portable_definitions --test portable_closures --test portable_pipeline --test portable_resolution --test runtime_abi --locked -- --test-threads=2`: final 54 passes (12 definitions/12 closures/13 pipeline/10 resolution/7 ABI), zero ignored, exit 0; /private/tmp/suss-pr48-review-final-focused.log.
+- `cargo test --workspace --locked -- --test-threads=2`: published and repaired full baselines passed, exit 0; /private/tmp/suss-pr48-review-full.log and /private/tmp/suss-pr48-review-final-full.log. Final implementation changed only by an explanatory comment after focused compilation; the full baseline covers that comment. Existing manual/legacy/doc ignores remain unchanged.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 passes, exit 0; /private/tmp/suss-pr48-review-python.log.
+- Offline `python3 scripts/publish_roadmap.py`: passed, exit 0; /private/tmp/suss-pr48-review-roadmap-preview.json. Stable issue IDs retained.
+- Touched-file rustfmt check and `git diff --check`: passed. An initial workspace-wide format invocation touched legacy files; every unrelated formatting edit was restored before the final full run.
+
+Original source cases remain 42; fresh pinned oracle execution on the repaired
+published head and final-head CI are pending root verification. Legacy differential
+results remain 9 passes/7 exact failures/0 skips, and all 1,065 inventory declarations
+remain unassessed. Original review code/tests copy no upstream implementation;
+pinned EPL-1.0 analyzer informed the reload restriction. No shipped Java/Node
+path, new dependency or runtime ABI layout change was introduced.
+
+Merged #43 main a9a910d passed CI 36659402729; root independently verified its
+acceptance evidence and closed remote M0/M1 milestones after issues #1–#7 were
+already closed. Repository M0/M1 completion remains intact; M2–M9 remain open.
+The reviewer and root did not merge any PR during this review.
+
+No additional significant finding remained. Push the repair to PR #48 and require
+successful CI at the final reviewed commit. Recursive source loading, declared-ns
+validation, cycles/privacy/reload policy, source macro imports, runtime attributes,
+compiled macros, persistent production CLI/AOT/REPL clients, dynamic core coercions,
+extended signatures/collections and remaining exception/effect/recur/async IR
+remain unfinished. Next unblocked task: recursive source namespace/module loading
+connected to staged declarations and persistent compiled clients, with deterministic
+dependency errors and explicit initializer policy. Do not merge PRs or close
+incomplete M2/M3 packages.

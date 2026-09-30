@@ -124,10 +124,18 @@ struct Analyzer {
     next: usize,
 }
 impl Analyzer {
-    fn body(&mut self, forms: &[Form], span: Range<usize>) -> Result<Hir, Diagnostic> {
+    fn body(
+        &mut self,
+        forms: &[Form],
+        span: Range<usize>,
+        statement: bool,
+    ) -> Result<Hir, Diagnostic> {
+        // Intermediate forms discard their result; only the final form inherits
+        // its caller context. A fragment itself is a sequence of statements.
         let items = forms
             .iter()
-            .map(|form| self.form(form))
+            .enumerate()
+            .map(|(index, form)| self.form_in(form, statement || index + 1 < forms.len()))
             .collect::<Result<Vec<_>, _>>()?;
         let ty = items.last().map_or(Type::Nil, |item| item.ty);
         Ok(Hir {
@@ -138,6 +146,9 @@ impl Analyzer {
         })
     }
     fn form(&mut self, form: &Form) -> Result<Hir, Diagnostic> {
+        self.form_in(form, false)
+    }
+    fn form_in(&mut self, form: &Form, statement: bool) -> Result<Hir, Diagnostic> {
         let kind = match &form.kind {
             Kind::Nil => Expression::Literal(Literal::Nil),
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
@@ -160,7 +171,7 @@ impl Analyzer {
                     kind,
                 });
             }
-            Kind::List(items) if !items.is_empty() => return self.list(form, items),
+            Kind::List(items) if !items.is_empty() => return self.list(form, items, statement),
             _ => {
                 return Err(fail(
                     form.span.clone(),
@@ -354,7 +365,7 @@ impl Analyzer {
                 span: name.span.clone(),
             });
         }
-        let body = Box::new(self.body(&args[1..], form.span.clone())?);
+        let body = Box::new(self.body(&args[1..], form.span.clone(), false)?);
         self.locals = outer;
         let bound = parameters.iter().map(|parameter| parameter.id).collect();
         let mut captures = BTreeSet::new();
@@ -370,7 +381,7 @@ impl Analyzer {
             },
         })
     }
-    fn list(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
+    fn list(&mut self, form: &Form, items: &[Form], statement: bool) -> Result<Hir, Diagnostic> {
         let Kind::Symbol(symbol) = &items[0].kind else {
             return self.call(form, items);
         };
@@ -394,6 +405,12 @@ impl Analyzer {
             )
         };
         if bare && symbol.name == "def" {
+            if args.len() == 1 && !statement {
+                return Err(fail(
+                    form.span.clone(),
+                    "Initializerless def expression results are not certified yet; use a declaration statement",
+                ));
+            }
             return self.definition(form, args, false);
         }
         if matches!(resolved, Some(ResolvedBinding::BootstrapDefonce(_))) {
@@ -410,7 +427,7 @@ impl Analyzer {
         }
         let (kind, ty) = match (bare, symbol.name.as_str()) {
             (true, "do") => {
-                let body = self.body(args, form.span.clone())?;
+                let body = self.body(args, form.span.clone(), statement)?;
                 (body.kind, body.ty)
             }
             (true, "if") => {
@@ -418,9 +435,9 @@ impl Analyzer {
                     return Err(fail(form.span.clone(), "if requires two or three operands"));
                 }
                 let condition = Box::new(self.form(&args[0])?);
-                let consequent = Box::new(self.form(&args[1])?);
+                let consequent = Box::new(self.form_in(&args[1], statement)?);
                 let alternative = Box::new(if args.len() == 3 {
-                    self.form(&args[2])?
+                    self.form_in(&args[2], statement)?
                 } else {
                     Hir {
                         span: form.span.clone(),
@@ -480,7 +497,7 @@ impl Analyzer {
                         value,
                     });
                 }
-                let body = Box::new(self.body(&args[1..], form.span.clone())?);
+                let body = Box::new(self.body(&args[1..], form.span.clone(), statement)?);
                 self.locals = outer;
                 let ty = body.ty;
                 (Expression::Let { bindings, body }, ty)
@@ -602,6 +619,6 @@ pub(crate) fn prepare(
         locals: HashMap::new(),
         next: 0,
     };
-    let hir = analyzer.body(forms, span)?;
+    let hir = analyzer.body(forms, span, true)?;
     Ok((hir, analyzer.environment))
 }

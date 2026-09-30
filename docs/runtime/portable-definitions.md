@@ -29,9 +29,12 @@ GlobalWrite publishes its value. The write returns that same value through the
 universal Value boundary. A failed initializer preserves the old cell value;
 arbitrary preceding effects, including other completed definitions, are not
 rolled back. An initializerless declaration preserves an existing binding and
-leaves a new cell unbound; its fragment result is nil. Source-declaration use as
-an expression is not separately certified: the pinned compiler produced invalid
-JavaScript when a no-initializer def was supplied directly as a println argument.
+leaves a new cell unbound; a top-level declaration fragment returns nil.
+Initializerless def in expression context is a located unsupported-feature error:
+the pinned compiler produced invalid JavaScript when such a declaration was
+supplied directly as a println argument. Statement context propagates through
+top-level do/let/if bodies; intermediate body forms are statements, while closure
+results, initializers, callees, arguments and conditions require expressions.
 
 `defonce` checks the cell's bound flag before entering its initializer block.
 Bound nil and false count as initialized. A skipped initializer performs no
@@ -65,7 +68,9 @@ values. Reader metadata is not claimed as runtime metadata.
 This does not locate/load dependency graphs, verify a file's declared namespace,
 handle cycles, privacy, reload/cache/initialization policy or permit multiple ns
 changes inside one fragment. Source `:require-macros` is a located unsupported
-feature until isolated compiled macro imports exist. `const`, `dynamic`, `private`,
+feature until isolated compiled macro imports exist. Require libspec :reload
+metadata is also explicitly rejected until source loading and initialization
+policy exist, including conservative rejection of false or overwritten keys. `const`, `dynamic`, `private`,
 `macro` and `export` definition attributes also fail explicitly rather than being
 silently ignored. General runtime metadata/nominal types/protocols/exceptions,
 extended signatures, dynamic numeric coercions and portable core values remain
@@ -73,11 +78,12 @@ unfinished.
 
 ## Executing evidence and provenance
 
-Ten definition tests execute actual fragments in a long-lived test Store. They
+Twelve definition tests execute actual fragments in a long-lived test Store. They
 cover live rebinding versus old captures, definitions inside functions, bound
 nil/false and skipped effects, compiler snapshots, failed initializer publication
 with preserved effects, namespace scope replacement, canonical aliases/renames,
-separate phase identities and malformed public IR. Test-only Wasm catchers catch
+separate phase identities, malformed public IR and located declaration-expression/
+reload-metadata restrictions. Ordinary retained metadata still executes. Test-only Wasm catchers catch
 the exact shared language tag and independently decode descriptor/message/nil
 payloads after GC; traps cannot pass as language exceptions.
 

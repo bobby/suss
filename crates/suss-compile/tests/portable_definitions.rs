@@ -550,3 +550,55 @@ fn namespace_declarations_replace_import_scopes_but_keep_existing_cells() {
     let value = session.eval("value");
     assert_eq!(session.bits(&value), 7.0f64.to_bits());
 }
+
+#[test]
+fn declaration_expression_contexts_are_explicitly_unsupported() {
+    let environment = Environment::default();
+    for source in [
+        "((fn [x] x) (def value))",
+        "(def other (def value))",
+        "(let [x (def value)] x)",
+        "(fn [] (def value))",
+        "(if (def value) 1 2)",
+        "((fn [x] x) (do 1 (def value)))",
+        "((fn [x] x) (let [] (def value)))",
+        "((fn [x] x) (if true (def value) nil))",
+    ] {
+        let error = match portable::prepare_fragment(source, &environment, Phase::Runtime) {
+            Err(error) => error,
+            Ok(_) => panic!("compiled uncertified declaration expression: {source}"),
+        };
+        assert!(error.message.contains("Initializerless def"), "{error}");
+        assert!(error.span.start < error.span.end);
+        assert!(environment.cells().is_empty());
+    }
+    let mut session = Session::new();
+    let value = session.eval("(def value 7) (def value)");
+    assert_eq!(session.sentinel(&value), 0);
+    let value = session.eval("((fn [] (def value) value))");
+    assert_eq!(session.bits(&value), 7.0f64.to_bits());
+    let value = session.eval("(if true (def value) nil)");
+    assert_eq!(session.sentinel(&value), 0);
+}
+
+#[test]
+fn source_require_reload_metadata_is_explicitly_unsupported() {
+    let environment = Environment::default();
+    for source in [
+        "(ns app (:require ^:reload [cljs.core :as core]))",
+        "(ns app (:require ^{:reload :reload-all} [cljs.core :as core]))",
+        "(ns app (:require ^{:reload false} [cljs.core :as core]))",
+        "(ns app (:require ^{:reload true :reload false} [cljs.core :as core]))",
+    ] {
+        let error = match portable::prepare_fragment(source, &environment, Phase::Runtime) {
+            Err(error) => error,
+            Ok(_) => panic!("compiled unsupported reload metadata: {source}"),
+        };
+        assert!(error.message.contains("reload"), "{error}");
+        assert!(error.span.start < error.span.end);
+        assert!(!environment.has_namespace(Phase::Runtime, "app"));
+    }
+    let mut session = Session::new();
+    let value = session.eval("(ns app (:require ^:retained [cljs.core :as core])) (core/+ 1 2)");
+    assert_eq!(session.bits(&value), 3.0f64.to_bits());
+}
