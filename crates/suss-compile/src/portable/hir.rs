@@ -517,20 +517,30 @@ impl Analyzer {
                     .iter()
                     .map(|arg| self.form(arg))
                     .collect::<Result<Vec<_>, _>>()?;
-                for arg in &arguments {
-                    if arg.ty != Type::Number {
-                        return Err(fail(
-                            arg.span.clone(),
-                            "Arithmetic requires verified Number operands; dynamic checking is not lowered yet",
-                        ));
+                // The pinned + and * one-argument arities are identity,
+                // including for non-numeric values. Preserve the operand's
+                // information rather than asserting a Number result.
+                let ty = if arguments.len() == 1
+                    && matches!(operator, Arithmetic::Add | Arithmetic::Multiply)
+                {
+                    arguments[0].ty
+                } else {
+                    for arg in &arguments {
+                        if arg.ty != Type::Number {
+                            return Err(fail(
+                                arg.span.clone(),
+                                "Arithmetic requires verified Number operands; dynamic checking is not lowered yet",
+                            ));
+                        }
                     }
-                }
+                    Type::Number
+                };
                 (
                     Expression::Arithmetic {
                         operator,
                         arguments,
                     },
-                    Type::Number,
+                    ty,
                 )
             }
         };

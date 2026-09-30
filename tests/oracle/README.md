@@ -95,7 +95,7 @@ The legacy compiler still uses its EDN reader. See [portable forms](../../docs/r
 ## Portable compiler bootstrap
 
 `scripts/test-portable-pipeline-oracle.sh` compiles and executes the separate
-original 42-case `portable-cases.json` corpus in pinned ClojureScript/Node, checks
+original 54-case `portable-cases.json` corpus in pinned ClojureScript/Node, checks
 strict typed observations, then executes generated shared-ABI fragments in Rust.
 It uses an ignored generated `.cljc` fixture so reader conditionals are allowed.
 This source oracle covers the current scalar/let/do/if/numeric bootstrap only.

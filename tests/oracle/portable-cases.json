@@ -339,6 +339,106 @@
         "tag": "bool",
         "value": false
       }
+    },
+    {
+      "id": "unary-plus-nil",
+      "source": "(+ nil)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "unary-product-false",
+      "source": "(* false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "unary-plus-true",
+      "source": "(+ true)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "unary-product-surrogate",
+      "source": "(* \"\\uD800\ud83d\ude00\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          55296,
+          55357,
+          56832
+        ]
+      }
+    },
+    {
+      "id": "unary-plus-parameter",
+      "source": "((fn [x] (+ x)) \"\\uD800\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          55296
+        ]
+      }
+    },
+    {
+      "id": "unary-product-parameter",
+      "source": "((fn [x] (* x)) nil)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "unary-plus-global",
+      "source": "(do (def portable-unary-value false) (+ portable-unary-value))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "unary-product-global",
+      "source": "(do (def portable-unary-product \"\") (* portable-unary-product))",
+      "expected": {
+        "tag": "string",
+        "units": []
+      }
+    },
+    {
+      "id": "unary-plus-closure",
+      "source": "((+ (fn [x] x)) 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "unary-product-closure",
+      "source": "((* (fn [] -0.0)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "unary-plus-branch",
+      "source": "(+ (if false nil \"\"))",
+      "expected": {
+        "tag": "string",
+        "units": []
+      }
+    },
+    {
+      "id": "unary-product-nested",
+      "source": "(* (+ false))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
     }
   ]
 }

@@ -19,6 +19,51 @@ fn eval_number(session: &mut Session, source: &str) -> u64 {
 }
 
 #[test]
+fn persistent_session_unary_arithmetic_retains_dynamic_values_and_old_closures() {
+    let mut session = Session::new().unwrap();
+    session
+        .eval("(def effect 0) (def f (let [x 7] (fn [] x))) (def identity (fn [x] (* (+ x))))")
+        .unwrap();
+    let old = session.eval("(+ (do (def effect 1) (* f)))").unwrap();
+    session.eval("(def f (fn [] 9))").unwrap();
+    session.collect().unwrap();
+    let returned = session.invoke(&old, &[]).unwrap();
+    assert_eq!(number(&mut session, &returned), 7.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "effect"), 1.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "((* f))"), 9.0f64.to_bits());
+    for (source, sentinel) in [
+        ("(identity nil)", 0),
+        ("(identity false)", 2),
+        ("(identity true)", 4),
+    ] {
+        let value = session.eval(source).unwrap();
+        session.collect().unwrap();
+        let actual = session
+            .inspect(&value, |store, value| {
+                Ok(value
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_i31(&store)?
+                    .unwrap()
+                    .get_u32())
+            })
+            .unwrap();
+        assert_eq!(actual, sentinel);
+    }
+    let value = session.eval("(identity \"\\uD800😀\")").unwrap();
+    session.collect().unwrap();
+    let units = session
+        .inspect(&value, |mut store, value| {
+            let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+            Ok(array
+                .elems(&mut store)?
+                .map(|v| v.unwrap_i32() as u16)
+                .collect::<Vec<_>>())
+        })
+        .unwrap();
+    assert_eq!(units, [0xd800, 0xd83d, 0xde00]);
+}
+#[test]
 fn persistent_session_initializers_execute_once_and_defonce_skips_effects() {
     let mut session = Session::new().unwrap();
     session
