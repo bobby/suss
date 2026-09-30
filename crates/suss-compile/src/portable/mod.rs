@@ -5,6 +5,7 @@ mod emit;
 pub mod hir;
 pub mod ir;
 pub mod resolve;
+mod source;
 use std::ops::Range;
 use suss_reader::forms::{read_forms, resolve_conditionals};
 
@@ -28,13 +29,15 @@ pub fn analyze_in(
     environment: &resolve::Environment,
     phase: resolve::Phase,
 ) -> Result<hir::Hir, Diagnostic> {
-    let forms = read_forms(source)
+    let mut forms = read_forms(source)
         .and_then(resolve_conditionals)
         .map_err(|error| Diagnostic {
             span: error.span,
             message: error.message,
         })?;
-    hir::analyze_in(&forms, 0..source.len(), environment, phase)
+    let mut snapshot = environment.clone();
+    source::namespace(&mut forms, &mut snapshot, phase)?;
+    hir::analyze_in(&forms, 0..source.len(), &snapshot, phase)
 }
 pub fn compile(source: &str) -> Result<Vec<u8>, Diagnostic> {
     compile_in(
@@ -57,4 +60,41 @@ pub fn compile_in(
 /// Emit a normalized function only after graph/type verification and Wasm validation.
 pub fn compile_ir(function: &ir::Function) -> Result<Vec<u8>, Diagnostic> {
     emit::emit(function)
+}
+
+/// A validated fragment and staged compiler state. Install cells in one shared
+/// runtime before execution; reuse existing cells by Global identity. A compiler
+/// error never changes the supplied Environment. This does not load source files.
+pub struct PreparedFragment {
+    pub wasm: Vec<u8>,
+    pub environment: resolve::Environment,
+    pub cells: Vec<resolve::Global>,
+    pub namespace_directive: Option<suss_reader::forms::Form>,
+}
+pub fn prepare_fragment(
+    source: &str,
+    environment: &resolve::Environment,
+    phase: resolve::Phase,
+) -> Result<PreparedFragment, Diagnostic> {
+    let mut forms = read_forms(source)
+        .and_then(resolve_conditionals)
+        .map_err(|error| Diagnostic {
+            span: error.span,
+            message: error.message,
+        })?;
+    let mut snapshot = environment.clone();
+    let namespace_directive = source::namespace(&mut forms, &mut snapshot, phase)?;
+    let (hir, environment) = hir::prepare(&forms, 0..source.len(), &snapshot, phase)?;
+    let wasm = compile_ir(&ir::lower(&hir)?)?;
+    let cells = environment
+        .cells()
+        .into_iter()
+        .filter(|cell| cell.phase() == phase)
+        .collect();
+    Ok(PreparedFragment {
+        wasm,
+        environment,
+        cells,
+        namespace_directive,
+    })
 }

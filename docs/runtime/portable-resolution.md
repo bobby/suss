@@ -78,7 +78,7 @@ numeric bits, nil and UTF-16 exception payloads, and test phase isolation, alias
 refer/exclusion persistence, core alias deduplication, missing/wrong cell imports,
 unknown names, dynamic type rejection and source ambiguity. Runtime-import traces
 prove once-only source order and short circuiting. A fresh pinned ClojureScript/
-Node run matches the expanded 34-case portable corpus, including qualified core
+Node run matches the expanded 42-case portable corpus, including qualified core
 `let` and new closures; the existing 14 compiled reader cases and 13 pipeline tests also pass.
 The original implementation and new cases copy no upstream code. Resolution was
 checked against pinned `cljs/analyzer.cljc` (`resolve-var`/`get-expander*`) at
@@ -93,3 +93,7 @@ passes, 7 exact failures, 0 skips; all 1,065 inventory declarations remain
 unassessed. M2 remains incomplete. Next, connect source namespace loading/definitions, extended signatures, portable
 coercions and unified
 AOT/REPL/macro clients rather than maintaining a second production pipeline.
+
+Source namespace directives and definitions now use this environment in
+[definition preparation](portable-definitions.md). Required declarations must be
+supplied; recursive file loading and source macro imports remain unfinished.

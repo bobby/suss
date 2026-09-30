@@ -74,7 +74,7 @@ lookup after rebinding/forced GC. Negative IR tests reject malformed captures,
 body entries and calls before emission. Existing 13 pipeline/10 resolution/7 ABI
 tests still pass; former unsupported-call expectations now assert actual calls.
 
-The expanded original 34-case portable corpus matches fresh pinned
+The expanded original 42-case portable corpus matches fresh pinned
 ClojureScript/Node observations exactly, including binary64 rounding/signed zero,
 surrogates, nested/higher-order captures, computed callees, qualified `fn`, `fn*`,
 empty bodies and duplicate parameter names. The implementation/cases are original;

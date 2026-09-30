@@ -82,3 +82,9 @@ the shared universal ABI; central invocation checks non-callable and malformed
 argument arrays before casts. Eleven source/IR tests supplement the prior suites;
 see [closure lowering](portable-closures.md). Extended signatures, source namespace
 loading and production migration remain incomplete.
+
+Source definitions now use explicit bound checks/writes through this ABI. Ten
+executing definition tests verify nil/false defonce state, skipped effects and
+failed initializer publication; see [definition lowering](portable-definitions.md).
+The ten-type layout is unchanged; binding-bound is an additional private intrinsic.
+Production session/module loading and migration remain incomplete.

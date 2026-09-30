@@ -16,7 +16,8 @@ source -> conditional selection -> phase-specific namespace/lexical resolution +
 
 The explicit environment now resolves phase-specific aliases/refers/exclusions and
 live cells; see [namespace/cell boundary](portable-resolution.md). Fixed closures
-and universal calls also execute; see [closure lowering](portable-closures.md). Source namespace
+and universal calls also execute; see [closure lowering](portable-closures.md). Source definitions and leading namespace directives also execute; see
+[definition preparation](portable-definitions.md). Recursive source namespace
 loading and compiled macro expansion remain integration work. Bootstrap
 `let` syntax is handled directly until source-backed macro expansion is available.
 Arithmetic bootstrap bindings resolve to intrinsic identities; `suss.core` and
@@ -56,7 +57,7 @@ Direct HIR Negate retains unary negation, including the sign of zero.
 `compile_ir` runs verification before emission and validates the final Wasm.
 The closed instruction set currently admits constants, allocating numeric
 intrinsics, closure construction, universal calls and potentially throwing
-live-cell reads. Generic throws/catch, suspension and effect analysis are future
+live-cell reads, bound checks and definition writes. Generic throws/catch, suspension and effect analysis are future
 IR extensions, not certified by these restricted tests.
 
 ## Generated artifacts and executing evidence
@@ -72,7 +73,7 @@ compiled fragments in one Store; this is not a persistent compiled session.
 
 Thirteen focused tests validate/link/execute actual artifacts and independently
 inspect the heap after forced GC. The original 14 scalar reader cases now also
-execute through compiled source fragments. A separate original 34-case source
+execute through compiled source fragments. A separate original 42-case source
 corpus matches freshly compiled pinned ClojureScript/Node observations exactly,
 covering numeric bits/arities, conditional values, lexical shadowing and strings.
 A wrapping runtime import records once-only ordered calls and proves unselected

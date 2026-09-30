@@ -49,6 +49,7 @@ pub enum Binding {
     },
     BootstrapLet(Global),
     BootstrapFn(Global),
+    BootstrapDefonce(Global),
 }
 impl Binding {
     pub fn global(&self) -> &Global {
@@ -56,6 +57,7 @@ impl Binding {
             Self::Cell(g)
             | Self::BootstrapLet(g)
             | Self::BootstrapFn(g)
+            | Self::BootstrapDefonce(g)
             | Self::Arithmetic { global: g, .. } => g,
         }
     }
@@ -160,7 +162,7 @@ impl Environment {
                 env.bindings
                     .insert(global.clone(), Binding::Arithmetic { global, operator });
             }
-            for name in ["let", "fn"] {
+            for name in ["let", "fn", "defonce"] {
                 let global = Global {
                     phase,
                     namespace: "suss.core".into(),
@@ -168,8 +170,10 @@ impl Environment {
                 };
                 let binding = if name == "let" {
                     Binding::BootstrapLet(global.clone())
-                } else {
+                } else if name == "fn" {
                     Binding::BootstrapFn(global.clone())
+                } else {
+                    Binding::BootstrapDefonce(global.clone())
                 };
                 env.bindings.insert(global, binding);
             }
@@ -184,6 +188,23 @@ impl Environment {
         self.scopes
             .get_mut(&(phase, namespace))
             .expect("declared current scope")
+    }
+    pub fn current_namespace(&self, phase: Phase) -> &str {
+        &self.current[&phase]
+    }
+    /// Explicit declarations, not evidence that any source file has loaded.
+    pub fn has_namespace(&self, phase: Phase, namespace: &str) -> bool {
+        self.namespaces
+            .contains(&(phase, canonical(namespace).into()))
+    }
+    pub fn cells(&self) -> Vec<Global> {
+        self.bindings
+            .values()
+            .filter_map(|binding| match binding {
+                Binding::Cell(global) => Some(global.clone()),
+                _ => None,
+            })
+            .collect()
     }
     pub fn declare_namespace(&mut self, phase: Phase, namespace: &str) -> Result<(), Diagnostic> {
         valid_namespace(namespace)?;
@@ -207,6 +228,18 @@ impl Environment {
             .entry((phase, namespace.into()))
             .or_insert_with(|| Scope::new(namespace));
         self.current.insert(phase, namespace.into());
+        Ok(())
+    }
+    /// An ns declaration replaces imports; entering a REPL namespace preserves them.
+    pub(crate) fn reset_namespace(
+        &mut self,
+        phase: Phase,
+        namespace: &str,
+    ) -> Result<(), Diagnostic> {
+        self.enter_namespace(phase, namespace)?;
+        let namespace = self.current[&phase].clone();
+        self.scopes
+            .insert((phase, namespace.clone()), Scope::new(&namespace));
         Ok(())
     }
     pub fn declare_cell(
@@ -316,18 +349,21 @@ impl Environment {
                 .aliases
                 .get(namespace)
                 .map_or(namespace.as_str(), String::as_str);
-            (canonical(namespace) == "suss.core" && matches!(symbol.name.as_str(), "let" | "fn"))
-                .then_some(symbol.name.as_str())
+            (canonical(namespace) == "suss.core"
+                && matches!(symbol.name.as_str(), "let" | "fn" | "defonce"))
+            .then_some(symbol.name.as_str())
         } else if let Some(global) = scope.refers.get(&symbol.name) {
-            if global.namespace == "suss.core" && matches!(global.name.as_str(), "let" | "fn") {
+            if global.namespace == "suss.core"
+                && matches!(global.name.as_str(), "let" | "fn" | "defonce")
+            {
                 Some(global.name.as_str())
             } else {
-                (matches!(symbol.name.as_str(), "let" | "fn")
+                (matches!(symbol.name.as_str(), "let" | "fn" | "defonce")
                     && !scope.excluded_core.contains(&symbol.name))
                 .then_some(symbol.name.as_str())
             }
         } else {
-            (matches!(symbol.name.as_str(), "let" | "fn")
+            (matches!(symbol.name.as_str(), "let" | "fn" | "defonce")
                 && !scope.excluded_core.contains(&symbol.name))
             .then_some(symbol.name.as_str())
         }?;
@@ -338,8 +374,10 @@ impl Environment {
         };
         Some(if name == "let" {
             Binding::BootstrapLet(global)
-        } else {
+        } else if name == "fn" {
             Binding::BootstrapFn(global)
+        } else {
+            Binding::BootstrapDefonce(global)
         })
     }
     pub fn resolve(

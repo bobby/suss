@@ -78,6 +78,14 @@ pub enum Expression {
     Local(BindingId),
     /// Read a live cell by resolved language identity, never by a Wasm index.
     Global(Global),
+    Definition {
+        global: Global,
+        name_metadata: Vec<Form>,
+        name_span: Range<usize>,
+        docstring: Option<Vec<u16>>,
+        initializer: Option<Box<Hir>>,
+        once: bool,
+    },
     Let {
         bindings: Vec<Binding>,
         body: Box<Hir>,
@@ -109,17 +117,25 @@ fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
         message: message.into(),
     }
 }
-struct Analyzer<'a> {
-    environment: &'a Environment,
+struct Analyzer {
+    environment: Environment,
     phase: Phase,
     locals: HashMap<String, (BindingId, Type)>,
     next: usize,
 }
-impl Analyzer<'_> {
-    fn body(&mut self, forms: &[Form], span: Range<usize>) -> Result<Hir, Diagnostic> {
+impl Analyzer {
+    fn body(
+        &mut self,
+        forms: &[Form],
+        span: Range<usize>,
+        statement: bool,
+    ) -> Result<Hir, Diagnostic> {
+        // Intermediate forms discard their result; only the final form inherits
+        // its caller context. A fragment itself is a sequence of statements.
         let items = forms
             .iter()
-            .map(|form| self.form(form))
+            .enumerate()
+            .map(|(index, form)| self.form_in(form, statement || index + 1 < forms.len()))
             .collect::<Result<Vec<_>, _>>()?;
         let ty = items.last().map_or(Type::Nil, |item| item.ty);
         Ok(Hir {
@@ -130,6 +146,9 @@ impl Analyzer<'_> {
         })
     }
     fn form(&mut self, form: &Form) -> Result<Hir, Diagnostic> {
+        self.form_in(form, false)
+    }
+    fn form_in(&mut self, form: &Form, statement: bool) -> Result<Hir, Diagnostic> {
         let kind = match &form.kind {
             Kind::Nil => Expression::Literal(Literal::Nil),
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
@@ -152,7 +171,7 @@ impl Analyzer<'_> {
                     kind,
                 });
             }
-            Kind::List(items) if !items.is_empty() => return self.list(form, items),
+            Kind::List(items) if !items.is_empty() => return self.list(form, items, statement),
             _ => {
                 return Err(fail(
                     form.span.clone(),
@@ -206,6 +225,85 @@ impl Analyzer<'_> {
             metadata: form.metadata.clone(),
             ty: Type::Value,
             kind: Expression::Call { callee, arguments },
+        })
+    }
+    fn definition(&mut self, form: &Form, args: &[Form], once: bool) -> Result<Hir, Diagnostic> {
+        if (once && args.len() != 2) || (!once && !(1..=3).contains(&args.len())) {
+            return Err(fail(
+                form.span.clone(),
+                "Definition requires a name and optional initializer; defonce requires both",
+            ));
+        }
+        let Kind::Symbol(name) = &args[0].kind else {
+            return Err(fail(
+                args[0].span.clone(),
+                "Definition name must be a symbol",
+            ));
+        };
+        for metadata in &args[0].metadata {
+            let unsupported = |form: &Form| {
+                matches!(&form.kind, Kind::Keyword(key)
+                if key.namespace.is_none() && matches!(key.name.as_str(), "const" | "dynamic" | "private" | "macro" | "export"))
+            };
+            if unsupported(metadata)
+                || matches!(&metadata.kind, Kind::Map(entries)
+                if entries.chunks_exact(2).any(|entry| unsupported(&entry[0])))
+            {
+                return Err(fail(
+                    args[0].span.clone(),
+                    "Definition const/dynamic/private/macro/export attributes are not implemented yet",
+                ));
+            }
+        }
+        let namespace = self.environment.current_namespace(self.phase).to_owned();
+        if name
+            .namespace
+            .as_deref()
+            .is_some_and(|ns| ns != namespace && !(namespace == "suss.core" && ns == "cljs.core"))
+        {
+            return Err(fail(
+                args[0].span.clone(),
+                "Cannot define a name in another namespace",
+            ));
+        }
+        let global = self
+            .environment
+            .declare_cell(self.phase, &namespace, &name.name)
+            .map_err(|mut error| {
+                error.span = args[0].span.clone();
+                error
+            })?;
+        let init = if args.len() == 3 {
+            if !matches!(args[1].kind, Kind::String(_)) {
+                return Err(fail(
+                    args[1].span.clone(),
+                    "Definition docstring must be a string",
+                ));
+            }
+            Some(&args[2])
+        } else {
+            args.get(1)
+        };
+        let initializer = init.map(|init| self.form(init).map(Box::new)).transpose()?;
+        Ok(Hir {
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: Expression::Definition {
+                global,
+                name_metadata: args[0].metadata.clone(),
+                name_span: args[0].span.clone(),
+                docstring: if args.len() == 3 {
+                    match &args[1].kind {
+                        Kind::String(units) => Some(units.clone()),
+                        _ => unreachable!(),
+                    }
+                } else {
+                    None
+                },
+                initializer,
+                once,
+            },
         })
     }
     fn function(
@@ -267,7 +365,7 @@ impl Analyzer<'_> {
                 span: name.span.clone(),
             });
         }
-        let body = Box::new(self.body(&args[1..], form.span.clone())?);
+        let body = Box::new(self.body(&args[1..], form.span.clone(), false)?);
         self.locals = outer;
         let bound = parameters.iter().map(|parameter| parameter.id).collect();
         let mut captures = BTreeSet::new();
@@ -283,14 +381,14 @@ impl Analyzer<'_> {
             },
         })
     }
-    fn list(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
+    fn list(&mut self, form: &Form, items: &[Form], statement: bool) -> Result<Hir, Diagnostic> {
         let Kind::Symbol(symbol) = &items[0].kind else {
             return self.call(form, items);
         };
         let args = &items[1..];
         let bare = symbol.namespace.is_none();
         // Only true special forms bypass lexical and namespace resolution.
-        let resolved = if bare && matches!(symbol.name.as_str(), "if" | "do" | "fn*") {
+        let resolved = if bare && matches!(symbol.name.as_str(), "if" | "do" | "fn*" | "def") {
             None
         } else {
             if bare && self.locals.contains_key(&symbol.name) {
@@ -306,6 +404,18 @@ impl Analyzer<'_> {
                 },
             )
         };
+        if bare && symbol.name == "def" {
+            if args.len() == 1 && !statement {
+                return Err(fail(
+                    form.span.clone(),
+                    "Initializerless def expression results are not certified yet; use a declaration statement",
+                ));
+            }
+            return self.definition(form, args, false);
+        }
+        if matches!(resolved, Some(ResolvedBinding::BootstrapDefonce(_))) {
+            return self.definition(form, args, true);
+        }
         if (bare && symbol.name == "fn*")
             || matches!(resolved, Some(ResolvedBinding::BootstrapFn(_)))
         {
@@ -317,7 +427,7 @@ impl Analyzer<'_> {
         }
         let (kind, ty) = match (bare, symbol.name.as_str()) {
             (true, "do") => {
-                let body = self.body(args, form.span.clone())?;
+                let body = self.body(args, form.span.clone(), statement)?;
                 (body.kind, body.ty)
             }
             (true, "if") => {
@@ -325,9 +435,9 @@ impl Analyzer<'_> {
                     return Err(fail(form.span.clone(), "if requires two or three operands"));
                 }
                 let condition = Box::new(self.form(&args[0])?);
-                let consequent = Box::new(self.form(&args[1])?);
+                let consequent = Box::new(self.form_in(&args[1], statement)?);
                 let alternative = Box::new(if args.len() == 3 {
-                    self.form(&args[2])?
+                    self.form_in(&args[2], statement)?
                 } else {
                     Hir {
                         span: form.span.clone(),
@@ -387,7 +497,7 @@ impl Analyzer<'_> {
                         value,
                     });
                 }
-                let body = Box::new(self.body(&args[1..], form.span.clone())?);
+                let body = Box::new(self.body(&args[1..], form.span.clone(), statement)?);
                 self.locals = outer;
                 let ty = body.ty;
                 (Expression::Let { bindings, body }, ty)
@@ -434,6 +544,10 @@ impl Analyzer<'_> {
 }
 fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<BindingId>) {
     match &hir.kind {
+        Expression::Definition {
+            initializer: Some(value),
+            ..
+        } => free_bindings(value, bound, free),
         Expression::Local(id) => {
             if !bound.contains(id) {
                 free.insert(*id);
@@ -490,11 +604,21 @@ pub fn analyze_in(
     environment: &Environment,
     phase: Phase,
 ) -> Result<Hir, Diagnostic> {
-    Analyzer {
-        environment,
+    Ok(prepare(forms, span, environment, phase)?.0)
+}
+/// Analyze with a private environment snapshot; failure cannot mutate caller state.
+pub(crate) fn prepare(
+    forms: &[Form],
+    span: Range<usize>,
+    environment: &Environment,
+    phase: Phase,
+) -> Result<(Hir, Environment), Diagnostic> {
+    let mut analyzer = Analyzer {
+        environment: environment.clone(),
         phase,
         locals: HashMap::new(),
         next: 0,
-    }
-    .body(forms, span)
+    };
+    let hir = analyzer.body(forms, span, true)?;
+    Ok((hir, analyzer.environment))
 }
