@@ -811,3 +811,62 @@ fn malformed_public_hir_cannot_recur_from_operands_or_to_outer_targets() {
             .contains("target or arity")
     );
 }
+
+#[test]
+fn nil_test_verifier_checks_result_type_and_operand_definition() {
+    use portable::{
+        hir::Type,
+        ir::{self, Operation, ValueId},
+    };
+    let hir = portable::analyze("(suss.bootstrap/nil? nil)").unwrap();
+    let function = ir::lower(&hir).unwrap();
+    ir::verify(&function).unwrap();
+    let instruction = function
+        .blocks
+        .iter()
+        .flat_map(|b| &b.instructions)
+        .find(|i| matches!(i.operation, Operation::NilTest(_)))
+        .unwrap();
+    let mut bad = function.clone();
+    bad.values[instruction.result.0].ty = Type::Number;
+    assert!(ir::verify(&bad).unwrap_err().message.contains("nil-test"));
+    let mut bad = function.clone();
+    let operation = bad
+        .blocks
+        .iter_mut()
+        .flat_map(|b| &mut b.instructions)
+        .find(|i| matches!(i.operation, Operation::NilTest(_)))
+        .unwrap();
+    operation.operation = Operation::NilTest(ValueId(usize::MAX));
+    assert!(
+        ir::verify(&bad)
+            .unwrap_err()
+            .message
+            .contains("no definition")
+    );
+    let mut bad = function.clone();
+    let instruction = bad
+        .blocks
+        .iter_mut()
+        .flat_map(|b| &mut b.instructions)
+        .find(|i| matches!(i.operation, Operation::NilTest(_)))
+        .unwrap();
+    instruction.operation = Operation::NilTest(instruction.result);
+    assert!(
+        ir::verify(&bad)
+            .unwrap_err()
+            .message
+            .contains("does not dominate")
+    );
+    let mut bad_hir = hir;
+    let portable::hir::Expression::Do(items) = &mut bad_hir.kind else {
+        panic!("top-level forms")
+    };
+    items[0].ty = Type::Number;
+    assert!(
+        ir::lower(&bad_hir)
+            .unwrap_err()
+            .message
+            .contains("nil-test HIR")
+    );
+}

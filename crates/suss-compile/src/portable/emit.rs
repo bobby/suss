@@ -574,6 +574,24 @@ fn emit_function(
                             .instruction(&ArraySet(runtime_abi::ARGS));
                     }
                 }
+                Operation::NilTest(value) => {
+                    function
+                        .instruction(&LocalGet(value.0 as u32 + offset))
+                        .instruction(&I32Const(0))
+                        .instruction(&RefI31)
+                        .instruction(&RefEq)
+                        .instruction(&LocalGet(value.0 as u32 + offset))
+                        .instruction(&I32Const(runtime_abi::UNDEFINED))
+                        .instruction(&RefI31)
+                        .instruction(&RefEq)
+                        .instruction(&I32Or)
+                        .instruction(&I32Const(2))
+                        .instruction(&I32Mul)
+                        .instruction(&I32Const(2))
+                        .instruction(&I32Add)
+                        .instruction(&RefI31)
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
                 Operation::Nominal {
                     operation,
                     arguments,

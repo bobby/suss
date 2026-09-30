@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "28d482299025338e58268b5b0aebd0291e8db3ecc4bd5d05ab59981619d4356b",
+  "replacement": "(def some? (fn [x] (if (suss.bootstrap/nil? x) false true)))",
+  "rationale": "Explicit fixed-arity defn bootstrap adaptation. Fresh pinned generated core.js emits !(x == null), ignoring redefinitions of both nil? and not, even for a captured first-class some? function. The private compiler nil-test checks nil/internal undefined once using an evaluated IR value. Original source, boolean metadata/docstring and EPL notice remain retained; full source metadata and compiled upstream macros remain incomplete."
+}

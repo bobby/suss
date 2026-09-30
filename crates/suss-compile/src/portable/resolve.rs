@@ -133,6 +133,9 @@ fn error(message: impl Into<String>) -> Diagnostic {
     }
 }
 pub(crate) fn valid_namespace(namespace: &str) -> Result<(), Diagnostic> {
+    if namespace == "suss.bootstrap" {
+        return Err(error("Compiler bootstrap namespace is reserved"));
+    }
     if namespace.is_empty()
         || namespace.split('.').any(|part| {
             part.is_empty()

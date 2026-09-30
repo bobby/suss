@@ -404,6 +404,182 @@
         "tag": "bool",
         "value": false
       }
+    },
+    {
+      "id": "some-nil",
+      "source": "(let [f some?] (f nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "some-false",
+      "source": "(let [f some?] (f false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-true",
+      "source": "(let [f some?] (f true))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-zero",
+      "source": "(let [f some?] (f 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-negative-zero",
+      "source": "(let [f some?] (f -0.0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-nan",
+      "source": "(let [f some?] (f ##NaN))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-infinity",
+      "source": "(let [f some?] (f ##Inf))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-empty",
+      "source": "(let [f some?] (f \"\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-utf16",
+      "source": "(let [f some?] (f \"\\uD800\ud83d\ude00\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-function",
+      "source": "(let [f some?] (f (fn [] 42)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-object",
+      "source": "(let [f some?] (f (new ExceptionInfo \"m\" 7 nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-ex-info",
+      "source": "(let [f some?] (f (ex-info \"m\" 7)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-undefined",
+      "source": "(let [f some?] (f (ex-data (new ExceptionInfo \"m\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "some-realm",
+      "source": "(let [f some?] (f (ExceptionInfo)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-nil-predicate-redef",
+      "source": "(with-redefs [nil? (fn [x] false)] (let [f some?] (f nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "some-false-predicate-redef",
+      "source": "(with-redefs [nil? (fn [x] true)] (let [f some?] (f false)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-live-not-redef",
+      "source": "(with-redefs [not (fn [x] false)] (let [f some?] (f false)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-not-identity",
+      "source": "(with-redefs [not identity] (let [f some?] (f nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "some-captured-redef",
+      "source": "(let [f some?] (with-redefs [some? (fn [x] true)] (f nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "some-live-redef",
+      "source": "(with-redefs [some? (fn [x] true)] (let [f some?] (f nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-alias",
+      "source": "(let [f cljs.core/some?] (f false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "some-not-nonboolean",
+      "source": "(with-redefs [not (fn [x] 7)] (let [f some?] (f nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
     }
   ]
 }

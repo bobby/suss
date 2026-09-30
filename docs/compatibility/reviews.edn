@@ -1,7 +1,17 @@
-;; Human-reviewed overlay; these twenty-six entries are partial, not compatibility completions.
+;; Human-reviewed overlay; these twenty-seven entries are partial, not compatibility completions.
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:some?:271"
+  {:source-sha256 "28d482299025338e58268b5b0aebd0291e8db3ecc4bd5d05ab59981619d4356b" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:nil?:923" "runtime:not:263" "compiler boolean-not optimization"]
+   :classification :adapted
+   :rationale "Source-backed bootstrap form retains EPL/source/patch provenance. Fresh captured-function observations and emitted pinned core.js establish an intrinsic non-nil test independent of mutable nil?/not vars; explicit typed IR evaluates the operand once. Full upstream compiled macros and source boolean metadata remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/some.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_import.rs" "tests/oracle/core-import-cases.json"]}
   "runtime:boolean:2357"
   {:source-sha256 "d13b02303b1116038a1c1d42a9bd49dd1128cc4401300e86e72e2c8607fc1e22" :visibility :public
    :arities {:fixed [1] :variadic-min nil}

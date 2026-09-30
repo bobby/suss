@@ -153,6 +153,8 @@ pub struct Hir {
 }
 #[derive(Debug, Clone)]
 pub enum Expression {
+    /// Compiler bootstrap primitive, independent of mutable core vars.
+    NilTest(Box<Hir>),
     DynamicScope {
         bindings: Vec<(Global, Hir)>,
         body: Box<Hir>,
@@ -717,6 +719,20 @@ impl Analyzer {
         };
         let args = &items[1..];
         let bare = symbol.namespace.is_none();
+        if symbol.namespace.as_deref() == Some("suss.bootstrap") && symbol.name == "nil?" {
+            if args.len() != 1 {
+                return Err(fail(
+                    form.span.clone(),
+                    "Bootstrap nil? requires one operand",
+                ));
+            }
+            return Ok(Hir {
+                span: form.span.clone(),
+                metadata: form.metadata.clone(),
+                ty: Type::Bool,
+                kind: Expression::NilTest(Box::new(self.form(&args[0])?)),
+            });
+        }
         if symbol.name.ends_with('.') && symbol.name.len() > 1 {
             let mut constructor = items[0].clone();
             let Kind::Symbol(name) = &mut constructor.kind else {
@@ -1019,7 +1035,7 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
             }
             free_bindings(body, bound, free);
         }
-        Expression::Throw(value) => free_bindings(value, bound, free),
+        Expression::Throw(value) | Expression::NilTest(value) => free_bindings(value, bound, free),
         Expression::Try { regions } => {
             for region in regions {
                 free_bindings(region, bound, free);

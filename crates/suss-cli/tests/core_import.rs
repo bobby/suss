@@ -177,7 +177,7 @@ fn imported_core_matches_independently_decoded_pinned_scalar_corpus() {
         };
         assert_eq!(actual, case["expected"], "{source}");
     }
-    assert_eq!(ids.len(), 50);
+    assert_eq!(ids.len(), 72);
 }
 
 fn boolean(session: &mut Session, value: &SessionValue) -> bool {
@@ -337,4 +337,131 @@ fn imported_boolean_callee_is_captured_before_argument_rebinding_and_core_reload
     let arg = session.eval("0").unwrap();
     let value = session.invoke(&replacement, &[&arg]).unwrap();
     assert!(!boolean(&mut session, &value));
+}
+
+#[test]
+fn imported_some_distinguishes_nil_from_false_and_survives_gc() {
+    let mut session = loaded();
+    let function = session.eval("some?").unwrap();
+    for (source, expected) in [
+        ("nil", false),
+        ("false", true),
+        ("0", true),
+        ("##NaN", true),
+        ("\"\"", true),
+        ("\"\\uD800😀\"", true),
+        ("(fn [] 42)", true),
+        ("(ex-info \"m\" 7)", true),
+        ("(ex-data (new ExceptionInfo \"m\"))", false),
+    ] {
+        let argument = session.eval(source).unwrap();
+        session.collect().unwrap();
+        let value = session.invoke(&function, &[&argument]).unwrap();
+        session.collect().unwrap();
+        assert_eq!(boolean(&mut session, &value), expected, "{source}");
+    }
+}
+
+#[test]
+fn imported_some_ignores_redefined_predicate_and_not_vars() {
+    let mut session = loaded();
+    let function = session.eval("some?").unwrap();
+    let nil = session.eval("nil").unwrap();
+    let falsity = session.eval("false").unwrap();
+    session.enter_namespace("suss.core").unwrap();
+    session.eval("(def nil? (fn [x] false))").unwrap();
+    session.collect().unwrap();
+    let value = session.invoke(&function, &[&nil]).unwrap();
+    assert!(!boolean(&mut session, &value));
+    let value = session.invoke(&function, &[&falsity]).unwrap();
+    assert!(boolean(&mut session, &value));
+    session.eval("(def not identity)").unwrap();
+    session.collect().unwrap();
+    let value = session.invoke(&function, &[&nil]).unwrap();
+    assert!(!boolean(&mut session, &value));
+    let value = session.invoke(&function, &[&falsity]).unwrap();
+    assert!(boolean(&mut session, &value));
+    session.eval("(def not (fn [x] 7))").unwrap();
+    let value = session.invoke(&function, &[&nil]).unwrap();
+    assert!(!boolean(&mut session, &value));
+}
+
+#[test]
+fn imported_some_evaluates_arguments_once_before_arity_error() {
+    let mut session = loaded();
+    session
+        .eval("(def count 0) (def next (fn [] (def count (+ count 1))))")
+        .unwrap();
+    let value = session.eval("(some? (next))").unwrap();
+    assert!(boolean(&mut session, &value));
+    assert!(matches!(
+        session.eval("(some? (next) (next))"),
+        Err(SessionError::Language(_))
+    ));
+    assert!(matches!(
+        session.eval("(some?)"),
+        Err(SessionError::Language(_))
+    ));
+    let count = session.eval("count").unwrap();
+    assert_eq!(number(&mut session, &count), 3.0f64.to_bits());
+    let value = session.eval("(some? false)").unwrap();
+    assert!(boolean(&mut session, &value));
+}
+
+#[test]
+fn bootstrap_nil_test_evaluates_once_and_propagates_exceptions() {
+    let mut session = loaded();
+    session
+        .eval("(def count 0) (def next (fn [] (def count (+ count 1)) nil))")
+        .unwrap();
+    let value = session.eval("(suss.bootstrap/nil? (next))").unwrap();
+    assert!(boolean(&mut session, &value));
+    let count = session.eval("count").unwrap();
+    assert_eq!(number(&mut session, &count), 1.0f64.to_bits());
+    let value = session
+        .eval("(try (suss.bootstrap/nil? (throw 7)) (catch :default e e))")
+        .unwrap();
+    assert_eq!(number(&mut session, &value), 7.0f64.to_bits());
+    for source in [
+        "(suss.bootstrap/nil?)",
+        "(suss.bootstrap/nil? nil false)",
+        "suss.bootstrap/nil?",
+        "(loop [x nil] (suss.bootstrap/nil? (recur x)))",
+        "(ns app (:require [cljs.core :as suss.bootstrap]))",
+        "(ns suss.bootstrap) (def nil? (fn [x] false))",
+    ] {
+        assert!(
+            matches!(session.eval(source), Err(SessionError::Compile(_))),
+            "{source}"
+        );
+    }
+    let value = session.eval("(some? false)").unwrap();
+    assert!(boolean(&mut session, &value));
+}
+
+#[test]
+fn bootstrap_nil_test_captures_values_across_fragments_and_loop_edges() {
+    let mut session = loaded();
+    let factory = session
+        .eval("(fn [x] (fn [] (suss.bootstrap/nil? x)))")
+        .unwrap();
+    for (source, expected) in [
+        ("nil", true),
+        ("false", false),
+        ("(fn [] 42)", false),
+        ("(ex-data (new ExceptionInfo \"m\"))", true),
+    ] {
+        let argument = session.eval(source).unwrap();
+        let captured = session.invoke(&factory, &[&argument]).unwrap();
+        session.collect().unwrap();
+        session.eval("(def unrelated 7)").unwrap();
+        let result = session.invoke(&captured, &[]).unwrap();
+        assert_eq!(boolean(&mut session, &result), expected, "{source}");
+    }
+    // The operand is a join value produced by parallel recur replacements;
+    // neither the stale initial nil nor the unselected throwing branch may win.
+    let result = session
+        .eval("(suss.bootstrap/nil? (loop [again true x nil] (if again (recur false false) (if again (throw 7) x))))")
+        .unwrap();
+    assert!(!boolean(&mut session, &result));
 }
