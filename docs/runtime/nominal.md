@@ -3,8 +3,9 @@
 The replacement pipeline now lowers bounded `deftype`, `defprotocol`, `extend-type`,
 `new`/dotted construction, `instance?` and `satisfies?` through verified HIR/IR and
 shared ABI operations. This is original bootstrap/runtime code, not copied upstream
-macro source or completed issue #11. Builtin types/native dispatch, field attributes,
-metadata, general compiled macro/core integration, exceptions and dynamic scope
+macro source or completed issue #11. Selected primitive/native fallback now has separate
+[native protocol evidence](native-protocols.md). Arbitrary host classes/properties,
+field attributes, metadata and general compiled macro/core integration
 remain unfinished.
 
 User objects retain a Descriptor and field array in the existing ten-type prelude.
@@ -44,7 +45,8 @@ An already captured implementation closure retains its own environment.
 value alias, and evaluates the receiver once. Its membership fast path avoids
 reading a replaced protocol var; nil/undefined protocol values reject in the
 fallback. User-object native property tables are an explicit unsupported boundary,
-not fabricated false results. Builtin/native/wildcard extension remains unfinished.
+not fabricated false results. Selected native kinds and default fallback now execute with closure-owned tables;
+arbitrary native object properties and full source/core integration remain unfinished.
 
 Empty and partial protocol declarations use the shared opaque sentinel for
 membership, matching the pin. An empty extension returns that same object, not a

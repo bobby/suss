@@ -371,7 +371,7 @@ pub(super) fn functions(b: &mut Builder, binding_set: u32, try_invoke: u32) -> V
             RefFunc(callback),
             I32Const(0),
             I32Const(0),
-            StructNew(4),
+            Call(b.names["closure-new"]),
             Call(try_invoke),
         ],
     );

@@ -47,7 +47,7 @@ fn factory(
             RefFunc(function),
             I32Const(arity),
             I32Const(arity),
-            StructNew(4),
+            Call(b.names["closure-new"]),
         ],
     );
     function

@@ -116,7 +116,7 @@ pub(super) fn functions(b: &mut Builder, primitives: [u32; 5]) -> Vec<u32> {
                 RefFunc(invoke),
                 I32Const(minimum),
                 I32Const(-1),
-                StructNew(4),
+                Call(b.names["closure-new"]),
             ],
         );
     }

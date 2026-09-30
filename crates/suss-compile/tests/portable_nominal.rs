@@ -3,7 +3,7 @@
 use suss_compile::{
     portable::{
         self,
-        hir::{Expression, Hir, Literal, Nominal, Type},
+        hir::{Expression, Hir, Literal, NativeKind, Nominal, Type},
         ir,
         resolve::{Environment, Phase},
     },
@@ -25,6 +25,9 @@ fn nominal_public_hir_and_ir_reject_bad_shapes_before_emission() {
         Nominal::Field(usize::MAX),
         Nominal::Key(usize::MAX),
         Nominal::Dispatcher,
+        Nominal::LiveDispatcher,
+        Nominal::NativeMarker(NativeKind::Nil),
+        Nominal::NativeSet(NativeKind::Default),
         Nominal::Set,
         Nominal::Marker,
         Nominal::Satisfies,
@@ -122,4 +125,30 @@ fn nominal_compiler_keys_are_phase_isolated_stable_and_inaccessible_to_source() 
     };
     assert_eq!(keys(&runtime.environment), keys(&redeclared.environment));
     assert_ne!(keys(&runtime.environment), keys(&macro_phase.environment));
+}
+
+#[test]
+fn live_protocol_cell_reference_rejects_forged_hir_and_ir_result_types() {
+    let mut environment = Environment::default();
+    let global = environment
+        .declare_cell(Phase::Runtime, "user", "read")
+        .unwrap();
+    let mut hir = Hir {
+        span: 1..4,
+        metadata: vec![],
+        ty: Type::Number,
+        kind: Expression::GlobalCell(global),
+    };
+    assert!(
+        ir::lower(&hir)
+            .unwrap_err()
+            .message
+            .contains("cell-reference")
+    );
+    hir.ty = Type::Value;
+    let mut function = ir::lower(&hir).unwrap();
+    ir::verify(&function).unwrap();
+    let result = function.blocks[0].instructions[0].result;
+    function.values[result.0].ty = Type::Bool;
+    assert!(ir::verify(&function).is_err());
 }

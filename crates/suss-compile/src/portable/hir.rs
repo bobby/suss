@@ -79,10 +79,46 @@ pub(crate) fn arithmetic_type(operator: Arithmetic, arguments: &[Type]) -> Optio
         }
     }))
 }
+/// Primitive receiver kinds used only by the native protocol bootstrap.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NativeKind {
+    Nil,
+    Boolean,
+    Number,
+    String,
+    Function,
+    Object,
+    Array,
+    Default,
+}
+impl NativeKind {
+    pub(crate) fn index(self) -> i32 {
+        self as i32
+    }
+    pub(crate) fn from_form(form: &Form) -> Option<Self> {
+        match &form.kind {
+            Kind::Nil => Some(Self::Nil),
+            Kind::Symbol(symbol) if symbol.namespace.is_none() => match symbol.name.as_str() {
+                "boolean" => Some(Self::Boolean),
+                "number" => Some(Self::Number),
+                "string" => Some(Self::String),
+                "function" => Some(Self::Function),
+                "object" => Some(Self::Object),
+                "array" => Some(Self::Array),
+                "default" => Some(Self::Default),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+}
 /// Original private nominal lowering operations. Arrays here are internal
 /// construction storage, never source-language persistent collections.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Nominal {
+    LiveDispatcher,
+    NativeMarker(NativeKind),
+    NativeSet(NativeKind),
     Array,
     Descriptor,
     Class,
@@ -100,7 +136,9 @@ pub enum Nominal {
 impl Nominal {
     pub fn result(self) -> Type {
         match self {
-            Self::Instance | Self::Satisfies | Self::NativeSatisfies => Type::Bool,
+            Self::Instance | Self::Satisfies | Self::NativeSatisfies | Self::NativeMarker(_) => {
+                Type::Bool
+            }
             _ => Type::Value,
         }
     }
@@ -109,6 +147,8 @@ impl Nominal {
         count <= i32::MAX as usize
             && match self {
                 Self::Array => true,
+                Self::LiveDispatcher | Self::NativeSet(_) => count == 2,
+                Self::NativeMarker(_) => count == 1,
                 Self::Descriptor => arguments.iter().all(|ty| *ty == Type::String),
                 Self::Construct => count >= 1,
                 Self::Instance | Self::Satisfies | Self::NativeSatisfies | Self::Marker => {
@@ -177,6 +217,8 @@ pub enum Expression {
     Local(BindingId),
     /// Read a live cell by resolved language identity, never by a Wasm index.
     Global(Global),
+    /// Private cell identity for a captured live protocol fallback.
+    GlobalCell(Global),
     Definition {
         global: Global,
         name_metadata: Vec<Form>,

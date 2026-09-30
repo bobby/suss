@@ -36,6 +36,7 @@ pub enum Operation {
     },
     Literal(Literal),
     GlobalRead(Global),
+    GlobalCell(Global),
     GlobalBound(Global),
     /// Publish only an already evaluated value; result is that same dynamic value.
     GlobalWrite {
@@ -233,6 +234,19 @@ impl Lowerer {
                 self.emit(Operation::Try { regions }, Type::Value, hir.span.clone())
             }
             Expression::Literal(value) => self.literal(value.clone(), hir.span.clone()),
+            Expression::GlobalCell(global) => {
+                if hir.ty != Type::Value {
+                    return Err(Diagnostic {
+                        span: hir.span.clone(),
+                        message: "Invalid cell-reference HIR type".into(),
+                    });
+                }
+                self.emit(
+                    Operation::GlobalCell(global.clone()),
+                    Type::Value,
+                    hir.span.clone(),
+                )
+            }
             Expression::Global(global) => self.emit(
                 Operation::GlobalRead(global.clone()),
                 Type::Value,
@@ -758,7 +772,10 @@ pub fn lower(hir: &Hir) -> Result<Function, Diagnostic> {
 
 fn operands(operation: &Operation) -> &[ValueId] {
     match operation {
-        Operation::Literal(_) | Operation::GlobalRead(_) | Operation::GlobalBound(_) => &[],
+        Operation::Literal(_)
+        | Operation::GlobalRead(_)
+        | Operation::GlobalCell(_)
+        | Operation::GlobalBound(_) => &[],
         Operation::GlobalWrite { value, .. } | Operation::NilTest(value) => {
             std::slice::from_ref(value)
         }
@@ -920,7 +937,7 @@ fn verify_function(
                 Operation::Literal(value) if result_ty != value.ty() => {
                     return Err(fail("IR literal result type mismatch"));
                 }
-                Operation::GlobalRead(_) if result_ty != Type::Value => {
+                Operation::GlobalRead(_) | Operation::GlobalCell(_) if result_ty != Type::Value => {
                     return Err(fail("IR global reads require dynamic Value type"));
                 }
                 Operation::GlobalBound(_) if result_ty != Type::Bool => {

@@ -183,3 +183,12 @@ probes show that some? ignores redefinitions of both nil? and not; the explicit
 compiler nil-test primitive preserves that behavior. Earlier speculation about
 a live not dependency was incorrect. Full macros/metadata/core loading and
 collection acceptance remain unfinished.
+
+The original native-satisfies? runtime adaptation brings the current overlay to28
+in-progress reviews and1,037 unassessed declarations. A separate29-case primary
+corpus establishes native nil/primitive/object/default protocol lookup, live
+function/protocol tables, plain native argument filling/truncation, receiver recur
+and public helper replacement. Existing portable397 and source-import72 corpora
+remain separate. Closure-owned property storage preserves the ten-type ABI and
+original callback environments. Full macros/metadata/host properties/collections
+remain incomplete; see [native protocol evidence](../runtime/native-protocols.md).

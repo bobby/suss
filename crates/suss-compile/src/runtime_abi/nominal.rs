@@ -7,7 +7,7 @@ pub(super) const ERROR_GLOBAL: u32 = ID_GLOBAL + 1;
 pub(super) const SENTINEL_GLOBAL: u32 = ERROR_GLOBAL + 1;
 const OBJECT: u32 = 7;
 
-fn error(body: &mut Vec<Instruction<'static>>) {
+pub(super) fn error(body: &mut Vec<Instruction<'static>>) {
     use Instruction::*;
     let message: Vec<_> = "Invalid nominal operation".encode_utf16().collect();
     body.push(GlobalGet(ERROR_GLOBAL));
@@ -371,7 +371,12 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
                 array_size: 1,
             });
         }
-        body.extend([RefFunc(callback), LocalGet(1), LocalGet(1), StructNew(4)]);
+        body.extend([
+            RefFunc(callback),
+            LocalGet(1),
+            LocalGet(1),
+            Call(b.names["closure-new"]),
+        ]);
         b.function_with_locals(
             name,
             &[VALUE],
@@ -382,7 +387,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     }
     let mut body = vec![];
     guard(&mut body, 0, 4);
-    get(&mut body, 0, 4, 0);
+    body.extend([LocalGet(0), Call(b.names["closure-environment"])]);
     body.push(LocalSet(1));
     guard(&mut body, 1, DESCRIPTOR);
     body.push(LocalGet(1));
@@ -403,7 +408,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         RefFunc(ordinary_type),
         I32Const(0),
         I32Const(-1),
-        StructNew(4),
+        Call(b.names["closure-new"]),
     ]);
     b.function("class-value-new", &[VALUE], &[VALUE], &body);
     let mut body = vec![];
@@ -413,12 +418,12 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         RefFunc(ordinary_type),
         I32Const(0),
         I32Const(-1),
-        StructNew(4),
+        Call(b.names["closure-new"]),
     ]);
     b.function("protocol-value-new", &[VALUE], &[VALUE], &body);
     let mut body = vec![];
     guard(&mut body, 0, 4);
-    get(&mut body, 0, 4, 0);
+    body.extend([LocalGet(0), Call(b.names["closure-environment"])]);
     body.push(LocalSet(2));
     guard(&mut body, 2, ARGS);
     body.extend([LocalGet(1)]);
@@ -487,40 +492,6 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         &[ValType::I32],
         &body,
     );
-    let mut body = vec![LocalGet(0), RefIsNull, If(BlockType::Empty)];
-    error(&mut body);
-    body.push(End);
-    for sentinel in [0, UNDEFINED] {
-        body.extend([
-            LocalGet(0),
-            I32Const(sentinel),
-            RefI31,
-            RefEq,
-            If(BlockType::Empty),
-        ]);
-        error(&mut body);
-        body.push(End);
-    }
-    // A user object could carry native dispatch properties by field name. That
-    // table interpretation is not implemented yet: reject rather than replace
-    // an unknown result with false.
-    body.extend([
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(OBJECT)),
-        If(BlockType::Empty),
-    ]);
-    error(&mut body);
-    body.push(End);
-    // No native/builtin extension table is implemented yet. Valid protocol
-    // objects and non-null primitive aliases have no such entries; false here
-    // records absence rather than claiming builtin extension support.
-    body.push(I32Const(0));
-    b.function(
-        "protocol-native-satisfies",
-        &[VALUE, VALUE],
-        &[ValType::I32],
-        &body,
-    );
     // The source constructor follows the pin's JS constructor convention: all
     // arguments evaluate, extra fields are ignored, missing fields become undefined.
     let mut body = vec![];
@@ -582,7 +553,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         RefFunc(source_constructor),
         I32Const(0),
         I32Const(-1),
-        StructNew(4),
+        Call(b.names["closure-new"]),
     ]);
     b.function_with_locals(
         "source-constructor-new",
@@ -591,7 +562,11 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         &[(1, VALUE)],
         &body,
     );
-    vec![constructor, dispatcher, ordinary_type, source_constructor]
+    let native_functions =
+        native_protocols::functions(b, generic_invoke, method_get, object_descriptor);
+    let mut functions = vec![constructor, dispatcher, ordinary_type, source_constructor];
+    functions.extend(native_functions);
+    functions
 }
 
 fn invoke_body(b: &mut Builder, instructions: &[Instruction<'_>]) -> u32 {

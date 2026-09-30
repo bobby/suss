@@ -199,6 +199,7 @@ impl Environment {
                     .insert(global.clone(), Binding::Arithmetic { global, operator });
             }
             for (name, export) in [
+                ("native-satisfies?", "native-satisfies-function"),
                 ("nil?", "predicate-nil"),
                 ("false?", "predicate-false"),
                 ("true?", "predicate-true"),

@@ -252,7 +252,7 @@ fn session_lifecycle_reset_rejects_old_values_and_distinguishes_code_from_roots(
     let mut session = Session::new().unwrap();
     let bootstrap_cells = session.stats().binding_cells;
     assert_eq!(
-        bootstrap_cells, 16,
+        bootstrap_cells, 17,
         "canonical arithmetic, ExceptionInfo and predicate cells are resident"
     );
     let value = session.eval("(def old 7) old").unwrap();
@@ -1176,13 +1176,15 @@ fn nominal_empty_extensions_return_the_shared_non_boolean_protocol_marker() {
             Ok(value.unwrap_anyref().unwrap().to_owned_rooted(store)?)
         })
         .unwrap();
-    assert!(session
-        .inspect(&b, |store, value| wasmtime::Rooted::ref_eq(
-            &store,
-            &a_reference,
-            value.unwrap_anyref().unwrap()
-        ))
-        .unwrap());
+    assert!(
+        session
+            .inspect(&b, |store, value| wasmtime::Rooted::ref_eq(
+                &store,
+                &a_reference,
+                value.unwrap_anyref().unwrap()
+            ))
+            .unwrap()
+    );
 }
 
 #[test]
@@ -1224,11 +1226,13 @@ fn nominal_undefined_constructor_results_preserve_truthiness_numeric_and_string_
 #[test]
 fn nominal_review_grouped_extension_and_protocol_expression_coercions() {
     let mut session = Session::new().unwrap();
-    assert!(f64::from_bits(eval_number(
-        &mut session,
-        "(+ (defprotocol ReviewNumberProtocol) 1)"
-    ))
-    .is_nan());
+    assert!(
+        f64::from_bits(eval_number(
+            &mut session,
+            "(+ (defprotocol ReviewNumberProtocol) 1)"
+        ))
+        .is_nan()
+    );
     let value = session
         .eval("(+ (defprotocol ReviewStringProtocol) \"x\")")
         .unwrap();
