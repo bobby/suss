@@ -4,6 +4,7 @@
 use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
+mod exceptions;
 mod nominal;
 mod numeric;
 
@@ -614,6 +615,7 @@ fn build_module() -> Vec<u8> {
     let primitives = numeric::intrinsics(&mut b, numeric_info);
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
+    exceptions::functions(&mut b, generic_invoke);
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
     let mut tags = TagSection::new();

@@ -40,11 +40,16 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     collect_bodies(ir, &mut bodies, &mut dispatchers);
     let all_functions = std::iter::once(ir).chain(bodies.iter().map(|body| &body.function));
     let mut names = BTreeSet::new();
+    let mut throws = false;
     let mut globals = BTreeSet::new();
     for function in all_functions {
         for block in &function.blocks {
+            throws |= matches!(&block.terminator, Terminator::Throw(_));
             for inst in &block.instructions {
                 match &inst.operation {
+                    Operation::Try { .. } => {
+                        names.insert("try-invoke");
+                    }
                     Operation::Literal(Literal::Number(_)) => {
                         names.insert("number-box");
                     }
@@ -138,6 +143,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let type_count = runtime_abi::TYPE_COUNT;
     for (i, name) in names.iter().enumerate() {
         let (params, results) = match *name {
+            "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
             "object-instance" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
             }
@@ -193,6 +199,17 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     }
     let eval_type = type_count + names.len() as u32;
     types.ty().function([], [VALUE]);
+    if throws {
+        types.ty().function([VALUE], []);
+        imports.import(
+            "suss.runtime",
+            "language-exception",
+            EntityType::Tag(TagType {
+                kind: TagKind::Exception,
+                func_type_idx: eval_type + 1,
+            }),
+        );
+    }
     let mut functions = FunctionSection::new();
     functions.function(eval_type);
     let mut exports = ExportSection::new();
@@ -370,6 +387,14 @@ fn emit_function(
             .instruction(&If(BlockType::Empty));
         for inst in &block.instructions {
             match &inst.operation {
+                Operation::Try { regions } => {
+                    for region in regions {
+                        function.instruction(&LocalGet(region.0 as u32 + offset));
+                    }
+                    function
+                        .instruction(&Call(index("try-invoke")))
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
                 Operation::Literal(literal @ (Literal::Nil | Literal::Undefined)) => {
                     function
                         .instruction(&I32Const(if matches!(literal, Literal::Undefined) {
@@ -626,6 +651,11 @@ fn emit_function(
             }
         }
         match &block.terminator {
+            Terminator::Throw(value) => {
+                function
+                    .instruction(&LocalGet(value.0 as u32 + offset))
+                    .instruction(&Throw(0));
+            }
             Terminator::Return(value) => {
                 function
                     .instruction(&LocalGet(value.0 as u32 + offset))

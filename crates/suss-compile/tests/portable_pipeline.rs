@@ -557,7 +557,7 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
         let (mut store, value) = execute(source);
         assert_eq!(tagged(&mut store, &value), case["expected"], "{source}");
     }
-    assert_eq!(ids.len(), 245);
+    assert_eq!(ids.len(), 259);
 }
 #[test]
 fn independently_compiled_fragment_values_remain_live_across_gc() {

@@ -1,4 +1,5 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
+mod exceptions;
 mod nominal;
 use super::{
     Diagnostic,
@@ -151,6 +152,12 @@ pub struct Hir {
 }
 #[derive(Debug, Clone)]
 pub enum Expression {
+    /// A terminal language throw of an evaluated portable value.
+    Throw(Box<Hir>),
+    /// Private compiled regions: body/cleanup arity0, handler arity1 or nil.
+    Try {
+        regions: [Box<Hir>; 3],
+    },
     Nominal {
         operation: Nominal,
         arguments: Vec<Hir>,
@@ -729,7 +736,7 @@ impl Analyzer {
         let resolved = if bare
             && matches!(
                 symbol.name.as_str(),
-                "if" | "do" | "fn*" | "def" | "loop*" | "recur"
+                "if" | "do" | "fn*" | "def" | "loop*" | "recur" | "throw" | "try"
             ) {
             None
         } else {
@@ -754,6 +761,23 @@ impl Analyzer {
         }) = &resolved
         {
             return self.nominal_form(form, args, *nominal_form);
+        }
+        if bare && symbol.name == "throw" {
+            if args.len() != 1 {
+                return Err(fail(
+                    form.span.clone(),
+                    "throw requires exactly one operand",
+                ));
+            }
+            return Ok(Hir {
+                span: form.span.clone(),
+                metadata: form.metadata.clone(),
+                ty: Type::Value,
+                kind: Expression::Throw(Box::new(self.form(&args[0])?)),
+            });
+        }
+        if bare && symbol.name == "try" {
+            return self.try_form(form, args, statement);
         }
         if bare && symbol.name == "recur" {
             let Some((target, arity)) = self.target else {
@@ -961,6 +985,12 @@ impl Analyzer {
 }
 fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<BindingId>) {
     match &hir.kind {
+        Expression::Throw(value) => free_bindings(value, bound, free),
+        Expression::Try { regions } => {
+            for region in regions {
+                free_bindings(region, bound, free);
+            }
+        }
         Expression::Definition {
             initializer: Some(value),
             ..

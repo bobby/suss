@@ -2201,6 +2201,126 @@
         "tag": "f64",
         "bits": "4032000000000000"
       }
+    },
+    {
+      "id": "exception-body-finally-value",
+      "source": "(try 42 (finally 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "exception-throw-nil",
+      "source": "(try (throw nil) (catch :default error error))",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "exception-throw-false",
+      "source": "(try (throw false) (catch :default error error))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "exception-throw-string",
+      "source": "(try (throw \"payload\") (catch :default error error))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          112,
+          97,
+          121,
+          108,
+          111,
+          97,
+          100
+        ]
+      }
+    },
+    {
+      "id": "exception-throw-negative-zero",
+      "source": "(try (throw -0.0) (catch :default error error))",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "exception-throw-surrogate",
+      "source": "(try (throw \"\\uD800\") (catch :default error error))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          55296
+        ]
+      }
+    },
+    {
+      "id": "exception-catch-finally-value",
+      "source": "(try (throw 7) (catch :default error (+ error 35)) (finally 9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "exception-catch-rethrow-finally",
+      "source": "(try (try (throw 7) (catch :default error (throw (+ error 2))) (finally 11)) (catch :default error error))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "exception-finally-supersedes-body",
+      "source": "(try (try (throw 7) (finally (throw 42))) (catch :default error error))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "exception-finally-supersedes-catch",
+      "source": "(try (try (throw 7) (catch :default error (throw 9)) (finally (throw 42))) (catch :default error error))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "exception-typed-catch-identity",
+      "source": "(do (deftype ExceptionA []) (deftype ExceptionB []) (try (throw (ExceptionB.)) (catch ExceptionA error 7) (catch ExceptionB error 42) (catch :default error 9)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "exception-nested-finally-order",
+      "source": "(do (def exception-counter 0) (try (try (do (def exception-counter (+ (* exception-counter 10) 1)) (throw 7)) (catch :default error (def exception-counter (+ (* exception-counter 10) 2)) (throw error)) (finally (def exception-counter (+ (* exception-counter 10) 3)))) (catch :default error (def exception-counter (+ (* exception-counter 10) 4)))) exception-counter)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4093480000000000"
+      }
+    },
+    {
+      "id": "exception-empty-try",
+      "source": "(try)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "exception-try-local-capture",
+      "source": "(let [outside 35] ((fn [] (try (throw 7) (catch :default error (+ outside error))))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
     }
   ]
 }
