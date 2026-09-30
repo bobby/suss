@@ -154,3 +154,45 @@ fn array_bounds_arity_and_errors_preserve_session_recovery() {
         0.0f64.to_bits()
     );
 }
+
+#[test]
+fn qualified_array_macros_and_clone_aliases_survive_gc_and_growth() {
+    let mut session = Session::new().unwrap();
+    session
+        .eval("(ns review.arrays (:require [cljs.core :as c]))")
+        .unwrap();
+    session.eval("(def a (c/array (c/array 7)))").unwrap();
+    session.eval("(def copy (aclone a))").unwrap();
+    session.eval("(def alias a)").unwrap();
+    session.eval("(def a nil)").unwrap();
+    session.collect().unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(c/aset alias 3 42)"),
+        42.0f64.to_bits()
+    );
+    assert_eq!(
+        eval_number(&mut session, "(c/alength alias)"),
+        4.0f64.to_bits()
+    );
+    assert_eq!(
+        eval_number(&mut session, "(c/alength copy)"),
+        1.0f64.to_bits()
+    );
+    assert!(eval_bool(&mut session, "(undefined? (c/aget alias 2))"));
+    session.eval("(c/aset copy 0 0 19)").unwrap();
+    session.collect().unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(c/aget alias 0 0)"),
+        19.0f64.to_bits()
+    );
+    // A local runtime var hides only the unqualified auto-referred macro.
+    session.eval("(def alength (fn [a] 99))").unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(alength alias)"),
+        99.0f64.to_bits()
+    );
+    assert_eq!(
+        eval_number(&mut session, "(c/alength alias)"),
+        4.0f64.to_bits()
+    );
+}

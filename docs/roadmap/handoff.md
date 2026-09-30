@@ -4200,3 +4200,33 @@ CI. Then continue source-backed sequence/list/variadic rest/apply foundations an
 the remaining M2–M9 acceptance. Full ROADMAP goal remains active.
 
 Required full workspace baseline52701 completed terminal0, /private/tmp/suss-array-baseline.log: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`. All local native/reference graphs are terminal. Complete source/provenance/manifest/diff checks passed before publication. No RUSTFLAGS override or unrelated deletions. Publish the partial array foundation PR and dispatch independent review; final-head CI remains required.
+
+## Independent PR #78 review — 2026-09-30
+
+Reviewed candidate ef129249 against accepted design, partial compatibility reviews,
+actual Wasm storage/IR and pinned array runtime/macro declarations. No significant
+production defect was found in the documented supported source surface. Private
+source-array descriptor identity keeps Args separate; construction copies Args,
+growth retains the same owner, and shallow clones own separate storage while
+retaining shared element values. Traversal/evaluation order, macro literal fill,
+dynamic sizes, multidimensional resource guards and malformed-storage exceptions
+were inspected. General host keys/string access, checked-array options and full
+source collection integration remain unfinished; no acceptance status changed.
+
+Added an independent alias-qualified macro regression across namespaces, dropped
+original var roots, forced GC, alias-preserving growth, independent shallow-clone
+length, shared nested mutation and user runtime alength hiding only unqualified
+macro lookup. Corrected the resolver's stale explanatory comment accordingly.
+Focused native10/compiler-array1/ABI18 passed graph86982 terminal0,
+/private/tmp/suss-pr78-review-focus.log. Fresh pinned primary56 comparisons and
+native10 passed graph18776 terminal0, /private/tmp/suss-pr78-review-oracle.log.
+Required full workspace baseline is recorded below upon terminal completion.
+No merge or issue closure. Final-head CI remains required before readiness.
+
+Review required full baseline completed successfully: graph72602 terminal0,
+/private/tmp/suss-pr78-review-baseline.log, command
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Python66, pinned inventory1065, review overlay40+1025 and exact eight core-import
+artifacts also pass. All review Cargo and primary reference graphs are terminal.
+Next require exact reviewed-head CI, then continue source-backed sequence/list and
+variadic rest/apply foundations. Full M2–M9 goal remains active.

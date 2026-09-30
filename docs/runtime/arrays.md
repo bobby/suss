@@ -79,11 +79,13 @@ CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 c
 
 The initial 40 fresh primary observations passed while all six original Suss feature
 regressions failed with located unresolved array/alength names. Original 40 then
-passed against the runtime implementation. All 56 fresh primary observations match actual Wasm execution. Nine native tests
+passed against the runtime implementation. All 56 fresh primary observations match actual Wasm execution. Ten native tests
 and 18 ABI tests pass; the full locked workspace baseline passes. Additional ABI tests independently verify Args isolation, GC ownership,
 growth/clone identity and typed invalid-schema/input/capacity failures. Native
 checks retain arrays and old core function values across fragments/rebinding/GC;
-compiler checks reject forged arities/types/non-dominating operands.
+compiler checks reject forged arities/types/non-dominating operands. An independent
+review regression executes alias-qualified macros, owner-preserving growth and
+shallow-clone nested sharing after dropping var roots and forcing GC.
 
 Full upstream dependency/macro/core extraction, compiler checked-array options,
 source array literals, general host properties and complete sequence/collection

@@ -485,7 +485,8 @@ impl Environment {
         Ok(())
     }
     /// The bounded bootstrap macro lookup is separate from ordinary var lookup:
-    /// runtime vars do not hide macros, but lexical locals (handled by HIR) do.
+    /// lexical locals (handled by HIR) hide macros. User runtime definitions also
+    /// hide auto-referred array macros, as observed in the pinned compiler.
     /// General compiled macro imports/expansion remain a later integration.
     pub fn resolve_bootstrap_macro(&self, phase: Phase, symbol: &Symbol) -> Option<Binding> {
         let scope = self.scope(phase);
