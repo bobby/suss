@@ -154,3 +154,56 @@ fn predicate_calls_evaluate_callee_and_arguments_once_and_recover_after_arity_er
     }
     check(&mut s, "(number? 42)", true);
 }
+
+#[test]
+fn every_predicate_factory_is_first_class_and_retained_across_collection() {
+    let mut s = Session::new().unwrap();
+    for (name, source, expected) in [
+        ("nil?", "nil", true),
+        ("false?", "false", true),
+        ("true?", "true", true),
+        ("undefined?", "(ex-data (new ExceptionInfo \"m\"))", true),
+        ("number?", "##NaN", true),
+        ("string?", "\"\\uD800😀\"", true),
+    ] {
+        let function = s.eval(name).unwrap();
+        let value = s.eval(source).unwrap();
+        s.collect().unwrap();
+        let answer = s.invoke(&function, &[&value]).unwrap();
+        assert_eq!(boolean(&mut s, &answer), expected, "{name}");
+        assert!(matches!(
+            s.invoke(&function, &[]),
+            Err(SessionError::Language(_))
+        ));
+        assert!(matches!(
+            s.invoke(&function, &[&value, &value]),
+            Err(SessionError::Language(_))
+        ));
+    }
+}
+
+#[test]
+fn utf16_identity_loop_obeys_fuel_and_recovers_with_rooted_inputs() {
+    let mut s = Session::new().unwrap();
+    let function = s.eval("identical?").unwrap();
+    let text = "😀\\uD800".repeat(4096);
+    let left = s.eval(&format!("\"{text}\"")).unwrap();
+    let right = s.eval(&format!("\"{text}\"")).unwrap();
+    let different = s.eval(&format!("\"{text}x\"")).unwrap();
+    s.collect().unwrap();
+    s.set_operation_fuel(5000);
+    let SessionError::Trap(error) = s.invoke(&function, &[&left, &right]).unwrap_err() else {
+        panic!("expected fuel trap inside UTF-16 identity loop")
+    };
+    assert_eq!(
+        error.downcast_ref::<wasmtime::Trap>(),
+        Some(&wasmtime::Trap::OutOfFuel)
+    );
+    s.collect().unwrap();
+    s.set_operation_fuel(1_000_000);
+    let answer = s.invoke(&function, &[&left, &right]).unwrap();
+    assert!(boolean(&mut s, &answer));
+    let answer = s.invoke(&function, &[&left, &different]).unwrap();
+    assert!(!boolean(&mut s, &answer));
+    check(&mut s, "(true? true)", true);
+}

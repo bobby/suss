@@ -22,10 +22,13 @@ descriptors compare runtime reference identity; equal fields do not make differe
 nominal objects identical. Nil and internal undefined remain distinct for identity.
 The string loop inspects already evaluated values, without re-emitting operands.
 
-Four native regressions independently inspect Boolean sentinels and numeric effect
+Six native regressions independently inspect Boolean sentinels and numeric effect
 traces after GC. They cover primitive distinctions, nominal/function identity,
 canonical aliases/rebinding, retained original closures, callee/argument order,
-wrong arity and subsequent recovery. The shared source corpus retains all prior
+wrong arity and subsequent recovery. Independent review also executes every unary
+factory through retained first-class values and interrupts a long UTF-16 identity
+comparison with fuel exhaustion, then collects and reuses the rooted inputs.
+The shared source corpus retains all prior
 303 cases and adds 94 predicate/identity cases: 397 inputs total, with binary64/
 Boolean/UTF-16 results decoded independently of Suss equality or printing. The
 separate bootstrap-import corpus remains 14 cases; legacy full differential evidence
