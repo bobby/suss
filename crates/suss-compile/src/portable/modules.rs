@@ -36,7 +36,8 @@ impl ModuleIdentity {
 pub struct ModuleDiagnostic {
     pub namespace: String,
     /// Location of the source containing the diagnostic, including require edges.
-    /// None means the root source could not be located; no byte location is invented.
+    /// None means a root lookup failure or an inline input require edge.
+    /// Lookup failures have an empty span; inline input spans locate its text.
     pub source_path: Option<PathBuf>,
     pub span: Range<usize>,
     pub message: String,
@@ -217,22 +218,7 @@ pub fn prepare_modules<P: AsRef<Path>>(
         snapshots: Vec::new(),
     };
     discovery.visit(identity.clone(), None, 0..0)?;
-    let mut snapshot = environment.clone();
-    let mut modules = Vec::new();
-    for unit in discovery.snapshots {
-        let PreparedFragment {
-            wasm, environment, ..
-        } = prepare_fragment(&unit.source, &snapshot, phase)
-            .map_err(|error| located(&unit.identity, Some(&unit.path), error))?;
-        snapshot = environment;
-        modules.push(PreparedModule {
-            identity: unit.identity,
-            source_path: unit.path,
-            source: unit.source,
-            dependencies: unit.dependencies,
-            wasm,
-        });
-    }
+    let (modules, mut snapshot) = compile_snapshots(discovery.snapshots, environment, phase)?;
     snapshot
         .enter_namespace(phase, &identity.namespace)
         .map_err(|error| located(&identity, None, error))?;
@@ -246,4 +232,85 @@ pub fn prepare_modules<P: AsRef<Path>>(
         environment: snapshot,
         cells,
     })
+}
+
+fn compile_snapshots(
+    snapshots: Vec<Snapshot>,
+    environment: &Environment,
+    phase: Phase,
+) -> Result<(Vec<PreparedModule>, Environment), ModuleDiagnostic> {
+    let mut snapshot = environment.clone();
+    let mut modules = Vec::new();
+    for unit in snapshots {
+        let PreparedFragment {
+            wasm, environment, ..
+        } = prepare_fragment(&unit.source, &snapshot, phase)
+            .map_err(|error| located(&unit.identity, Some(&unit.path), error))?;
+        snapshot = environment;
+        modules.push(PreparedModule {
+            identity: unit.identity,
+            source_path: unit.path,
+            source: unit.source,
+            dependencies: unit.dependencies,
+            wasm,
+        });
+    }
+    Ok((modules, snapshot))
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum InputDiagnostic {
+    #[error(transparent)]
+    Compile(Diagnostic),
+    #[error(transparent)]
+    Dependency(ModuleDiagnostic),
+}
+/// Dependencies and the input are compiled together before any host publication.
+pub struct PreparedInput {
+    pub modules: Vec<PreparedModule>,
+    pub fragment: PreparedFragment,
+}
+/// Prepare one incremental input, discovering dependencies from its optional leading
+/// ns using the same grammar as file modules. An error changes no caller state.
+pub fn prepare_input<P: AsRef<Path>>(
+    source_text: &str,
+    roots: &[P],
+    environment: &Environment,
+    phase: Phase,
+    provided: &BTreeSet<ModuleIdentity>,
+) -> Result<PreparedInput, InputDiagnostic> {
+    let forms = read_forms(source_text)
+        .and_then(resolve_conditionals)
+        .map_err(|error| {
+            InputDiagnostic::Compile(Diagnostic {
+                span: error.span,
+                message: error.message,
+            })
+        })?;
+    let header = source::input_header(&forms).map_err(InputDiagnostic::Compile)?;
+    let mut discovery = Discovery {
+        roots,
+        environment,
+        provided,
+        active: Vec::new(),
+        done: BTreeSet::new(),
+        snapshots: Vec::new(),
+    };
+    if let Some((_, _, dependencies)) = header {
+        for (namespace, span) in dependencies {
+            let identity =
+                ModuleIdentity::new(phase, &namespace).map_err(InputDiagnostic::Compile)?;
+            discovery
+                .visit(identity, None, span)
+                .map_err(InputDiagnostic::Dependency)?;
+        }
+    }
+    let (modules, mut snapshot) = compile_snapshots(discovery.snapshots, environment, phase)
+        .map_err(InputDiagnostic::Dependency)?;
+    snapshot
+        .enter_namespace(phase, environment.current_namespace(phase))
+        .map_err(InputDiagnostic::Compile)?;
+    let fragment =
+        prepare_fragment(source_text, &snapshot, phase).map_err(InputDiagnostic::Compile)?;
+    Ok(PreparedInput { modules, fragment })
 }

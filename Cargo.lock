@@ -1823,6 +1823,7 @@ dependencies = [
  "rustyline",
  "suss-compile",
  "suss-reader",
+ "tempfile",
  "wasmtime",
  "wasmtime-wasi",
  "wit-bindgen 0.61.1",

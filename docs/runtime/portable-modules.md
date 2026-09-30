@@ -5,8 +5,8 @@ discovers and compiles an immutable source dependency graph. It returns a
 dependency-first `ModulePlan` with validated Wasm, exact source snapshots, paths,
 phase-qualified module identities, dependencies, staged declarations and cell
 identities. It executes no initializer and never mutates the supplied Environment.
-This compiler API is groundwork for persistent compiled clients; the production
-CLI/AOT/REPL still need migration.
+This compiler API is groundwork for persistent compiled clients; the native [session host](portable-session.md) now consumes these plans; production
+command/AOT/REPL frontends still need migration.
 
 ## Discovery and compilation
 
@@ -87,3 +87,9 @@ compiled macro sessions, runtime metadata and broader language/core lowering rem
 unfinished. Source reload metadata and `:require-macros` remain explicit unsupported
 diagnostics. M2/M3 acceptance is incomplete. Next connect these staged plans to a
 production persistent session with runtime recovery and no source replay.
+
+Compiler `prepare_input` now prepares optional inline ns dependencies and the input
+as one transaction, sharing discovery/header/compilation code with file plans.
+Dependency failures retain file locations or inline input require spans. The
+[native session host](portable-session.md) validates/links all artifacts before
+initialization and publishes only successfully initialized module identities.

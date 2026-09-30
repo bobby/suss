@@ -240,27 +240,21 @@ fn header(form: &Form) -> Result<Option<Header<'_>>, Diagnostic> {
     Ok(Some(Header { name, clauses }))
 }
 /// A loader and ordinary source preparation share exactly the same header grammar.
-pub(crate) fn dependencies(
+pub(crate) fn input_header(
     forms: &[Form],
 ) -> Result<
-    (
+    Option<(
         String,
         std::ops::Range<usize>,
         Vec<(String, std::ops::Range<usize>)>,
-    ),
+    )>,
     Diagnostic,
 > {
     let Some(first) = forms.first() else {
-        return Err(Diagnostic {
-            span: 0..0,
-            message: "Source module requires a leading ns declaration".into(),
-        });
+        return Ok(None);
     };
     let Some(header) = header(first)? else {
-        return Err(error(
-            first,
-            "Source module requires a leading ns declaration",
-        ));
+        return Ok(None);
     };
     let mut dependencies = Vec::new();
     for clause in &header.clauses {
@@ -272,11 +266,26 @@ pub(crate) fn dependencies(
             }
         }
     }
-    Ok((
+    Ok(Some((
         symbol(header.name)?.to_owned(),
         header.name.span.clone(),
         dependencies,
-    ))
+    )))
+}
+pub(crate) fn dependencies(
+    forms: &[Form],
+) -> Result<
+    (
+        String,
+        std::ops::Range<usize>,
+        Vec<(String, std::ops::Range<usize>)>,
+    ),
+    Diagnostic,
+> {
+    input_header(forms)?.ok_or_else(|| Diagnostic {
+        span: forms.first().map_or(0..0, |form| form.span.clone()),
+        message: "Source module requires a leading ns declaration".into(),
+    })
 }
 /// Consume a leading source declaration using a private compilation snapshot.
 pub(crate) fn namespace(
