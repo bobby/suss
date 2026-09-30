@@ -2735,3 +2735,35 @@ arrays; destructuring/conditions, core/macros, collections/nominal dispatch/gene
 exception/effect/async IR and production frontend acceptance remain. No future
 milestone or inventory completion claimed. Next build persistent sequence/core
 foundations for full signatures and #11/runtime nominal machinery. M2–M9 unfinished.
+
+## Independent PR #65 review — 2026-09-30
+
+Reviewed 90bab7e independently in /private/tmp/suss-review-pr65, based on the
+reviewed PR #64 d52b740. Read the accepted design, roadmap, inventory and handoff;
+audited signature normalization, lexical self identity/shadowing, selected-method
+captures, isolated recur targets, public IR verification, shared Invoke dispatch,
+arity gaps and cyclic environment initialization before publication. No significant
+production defect was found. Linking resolves the additive arity-error import
+before any fragment eval; the ABI recursive layout/version remains unchanged.
+Corrected stale PROVENANCE.md wording: the overlay has four adapted in-progress
+arithmetic reviews and 1,061 unassessed declarations, with no completed upstream
+form ports. No source implementation, dependency or artifact changed in review.
+
+Independent sequential checks used CARGO_BUILD_JOBS=2 and shared CARGO_TARGET_DIR,
+without a RUSTFLAGS override. Focused portable_closures 13, portable_pipeline 16
+and runtime_abi 10 passed, exit 0, zero ignored;
+/private/tmp/suss-pr65-review-focused-fixed.log. An initial command incorrectly
+named nonexistent portable_recur and failed before running tests, exit 101;
+/private/tmp/suss-pr65-review-focused.log. It was corrected rather than skipped.
+Python54 passed, exit 0, /private/tmp/suss-pr65-review-python.log. Required full
+cargo test --workspace --locked -- --test-threads=2 passed, exit 0 including CLI
+rustdoc and all 27 session tests, /private/tmp/suss-pr65-review-full.log. Existing
+legacy/manual ignores remain explicit. Fresh pinned source oracle210 observations
+matched exactly and all16 actual decoded pipeline tests passed, exit 0;
+/private/tmp/suss-pr65-review-oracle.log. cljs_reviews.py verifies 4/1061; diff
+checks pass. Every review process is terminal, with no overlapping Cargo graphs.
+
+Push this review evidence to PR #65, then require successful CI on that exact
+final head before readiness. Refs #9/#10 only; do not merge or close incomplete
+issues. Next unblocked work remains portable persistent sequence/core foundations,
+rest signatures and broader nominal machinery; M2–M9 are unfinished.
