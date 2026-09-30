@@ -148,6 +148,27 @@ class CoreImportBuildTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'missing upstream notice'):
             self.build()
 
+    def test_contextual_declarations_are_not_flattened_into_unconditional_source(self):
+        source_path = self.root / 'clojurescript' / self.importer.SOURCES[0]
+        original = source_path.read_text()
+        # Both preserve the selected form/hash/line while changing its execution
+        # context: a nonportable reader branch, or a lexical capture.
+        for contextual in ['#?(:clj (defn identity [x] x))',
+                           '(let [captured 42] (defn identity [x] captured))']:
+            source_path.write_text(original[:original.index('(defn')] + contextual + '\n')
+            if 'captured' in contextual:
+                import hashlib, json
+                original_hash = self.digest
+                self.digest = hashlib.sha256(b'(defn identity [x] captured)').hexdigest()
+                self.recipe['forms'][0]['source-sha256'] = self.digest
+                self.recipe_path.write_text(json.dumps(self.recipe))
+                self.reviews.write_text(self.reviews.read_text().replace(original_hash, self.digest))
+                from unittest.mock import patch
+                patch.object(self.importer, 'inventory_records', return_value=[{
+                    'id': self.identity, 'kind': 'defn', 'sha256': self.digest}]).start()
+            with self.subTest(context=contextual), self.assertRaisesRegex(ValueError, 'unsupported declaration context'):
+                self.build()
+
     def test_license_path_escaping_repository_is_rejected(self):
         with self.assertRaises(ValueError):
             self.importer.repository_file(self.root, '../outside')

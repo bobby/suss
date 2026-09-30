@@ -143,6 +143,11 @@ def build(root=ROOT):
             raise ValueError(f'unreviewed declaration: {identity}')
         form = forms[identity]
         review = overlay[identity]
+        # Inventory context is provenance, not executable wrapping. Flattening
+        # a reader branch changes feature selection; flattening let/binding loses
+        # lexical/dynamic bindings. Reject until import preserves those semantics.
+        if form['context']:
+            raise ValueError(f'unsupported declaration context for {identity}: {form["context"]}')
         if form['phase'] != recipe['phase']:
             raise ValueError('phase mismatch in selected form')
         raw = form['form'].encode()

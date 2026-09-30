@@ -4,7 +4,7 @@
   "namespace": "suss.core",
   "phase": "runtime",
   "tool": "scripts/core_import.py",
-  "tool-sha256": "1a38eb4cce47454661a837aaae0b67e0fbcadb47f04ac307997c0ac7aeae6e5f",
+  "tool-sha256": "3bd72456451aec023a61e0008db22c2ddb630f92de8150a32a7f11a1bc09acb4",
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",

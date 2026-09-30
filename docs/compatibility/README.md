@@ -153,11 +153,13 @@ and [dynamic binding evidence](../runtime/dynamic-bindings.md). None is certifie
 implemented.
 
 Five ExceptionInfo constructor/getter definitions now join the eleven existing
-reviews as in-progress adaptations:16 reviewed,1,048 unassessed. Raw fields, live
+reviews as in-progress adaptations:16 reviewed,1,049 unassessed. Raw fields, live
 class identity, missing/reordered field names and GC execute; persistent map data,
 printing/stack, full Error surfaces and ordinary host-global constructor behavior
 remain unfinished. See [ExceptionInfo evidence](../runtime/exception-info.md).
 
 The first [reproducible bootstrap core import](CORE-IMPORT.md) retains exact source,
-explicit patches and EPL packaging. Its one selected form is separate from complete
+explicit patches and EPL packaging. The identity review brings the current overlay
+to 17 in-progress reviews and 1,048 unassessed declarations. Its one selected form
+is separate from complete
 core compatibility and the legacy differential baseline.

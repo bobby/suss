@@ -3612,3 +3612,36 @@ core loading remain incomplete. Next extend the reviewed core foundations needed
 for collection ports while implementing the compiled macro/core bootstrap; do not
 replace upstream behavior with opaque encoding-only collection stubs or claim all
 portable forms load. Keep stable roadmap IDs and source provenance aligned.
+
+## Independent PR71 core-import review — 2026-09-30
+
+Reviewed exact candidate 0b87bf9b948d9b661bd4835fbac4fffff8d9d4e2 against
+reviewed PR70 a3fbc4f131ea351977f6991cf033473fcd1c57de in isolated
+/private/tmp/suss-review-pr71. Significant finding: extraction retained source
+context only as manifest metadata, but accepted contextual selections and emitted
+them as unconditional top-level declarations. This could activate a :clj-only
+reader branch or discard a let initializer's captured binding while producing a
+valid provenance manifest. Independent negative build regressions for both cases
+failed before repair (two accepted invalid contexts),
+/private/tmp/suss-review-pr71-red.log. Import now rejects any nonempty declaration
+context with an explicit unsupported diagnostic before adaptation/output. Exact
+source ranges/context remain in the inventory; context-preserving import is future
+work. Selected identity has empty context, so its source semantics stay unchanged.
+Updated import documentation, corrected review-count arithmetic, and regenerated
+the manifest's importer hash. No upstream form, patch, review, license or runtime
+ABI changes. No semantic success is inferred from packaging/source hashes.
+
+Python66 passed, /private/tmp/suss-review-pr71-python.log. Focused native core-import4
+passed, zero ignored, /private/tmp/suss-review-pr71-focused.log, handle59614 terminal0.
+Fresh14 pinned primary observations and all4 actual native imported-form tests passed,
+/private/tmp/suss-review-pr71-oracle.log, handle99199 terminal0. Inventory1065,
+overlay17 in-progress/1048 unassessed and regenerated artifact verification pass.
+Required CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target
+CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2 passed exit0,
+/private/tmp/suss-review-pr71-workspace.log, handle13853 terminal0. All native,
+compiler, legacy, component, reader/core and CLI doc targets passed; existing
+manual/legacy ignores remain unchanged. No native/reference process remains live;
+all review handles59614/99199/13853 terminal and shared native graph released.
+No RUSTFLAGS override; shared target and two build jobs. Require exact final pushed-head CI; no merge or issue closure.
+M4-01 remains incomplete: context-preserving import, dependency/core/macro/phase
+bootstrap, collections and automatic production loading remain next work.

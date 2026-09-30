@@ -17,8 +17,10 @@ EPL-1.0, separately from the repository's Rust license.
 The manifest records the exact source commit/path/range/context, source-file and
 form hashes, extracted and adapted hashes, patch path/hash, recipe/inventory/review
 hashes, extraction/scanner/validator tool hashes and every generated file's hash.
-No timestamp or local absolute path enters the output. Reader branches are retained
-as inventory context and reviewed selections; the extractor never removes forms
+No timestamp or local absolute path enters the output. Reader branches and enclosing executable containers are retained
+as inventory context. Selected declarations must have empty context: the importer
+rejects reader branches and lexical/dynamic containers until context-preserving
+import is implemented; the extractor never removes forms
 because they contain JS interop. The recipe order is explicit dependency order.
 
 ```sh
@@ -30,7 +32,7 @@ scripts/test-core-import-oracle.sh
 
 The verifier recomputes artifacts from a clean pinned source and the validated
 review overlay. It rejects stale inventory/reviews/source hashes, unreviewed or
-excluded selections, duplicate IDs/JSON keys, phase mismatch, missing notices,
+excluded selections, duplicate IDs/JSON keys, phase mismatch, unsupported declaration context, missing notices,
 changed upstream license bytes, extra generated files and modified/missing outputs.
 Patches must match the reviewed adaptation path, name the exact original hash,
 state a rationale and replace exactly one declaration with the same name. This
