@@ -55,7 +55,7 @@ fn comparisons_match_independently_encoded_primary_corpus() {
         assert_eq!(actual, case["expected"], "{source}");
         session.collect().unwrap();
     }
-    assert_eq!(ids.len(), 119);
+    assert_eq!(ids.len(), 123);
 }
 
 #[test]
@@ -209,4 +209,38 @@ fn runtime_comparison_large_arity_uses_bounded_callback_code_without_macro_expan
         Err(SessionError::Compile(_))
     ));
     assert!(eval_bool(&mut session, "(< 1 2)"));
+}
+
+#[test]
+fn explicitly_referred_user_comparisons_hide_bootstrap_macros() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("comparison_provider.sus"), "(ns comparison-provider) (def < (fn [x y] 77)) (def <= (fn [x y] 78)) (def > (fn [x y] 79)) (def >= (fn [x y] 80)) (def == (fn [x y] 81))").unwrap();
+    let mut session = Session::with_options(suss_cli::portable_session::SessionOptions {
+        source_paths: vec![root.path().into()],
+        ..Default::default()
+    })
+    .unwrap();
+    session
+        .eval(
+            "(ns comparison-referrer (:require [comparison-provider :as p :refer [< <= > >= ==]]))",
+        )
+        .unwrap();
+    session.collect().unwrap();
+    for (name, expected) in [
+        ("<", 77.0_f64),
+        ("<=", 78.0),
+        (">", 79.0),
+        (">=", 80.0),
+        ("==", 81.0),
+    ] {
+        assert_eq!(
+            eval_number(&mut session, &format!("({name} 1 2)")),
+            expected.to_bits()
+        );
+        assert_eq!(
+            eval_number(&mut session, &format!("(p/{name} 1 2)")),
+            expected.to_bits()
+        );
+    }
+    assert!(eval_bool(&mut session, "(cljs.core/< 1 2)"));
 }

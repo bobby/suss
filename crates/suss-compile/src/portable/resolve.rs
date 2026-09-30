@@ -1,7 +1,7 @@
 //! Phase-specific namespace identities. No runtime values or source replay live here.
 use super::{
-    hir::{Arithmetic, ArrayOperation, Comparison},
     Diagnostic,
+    hir::{Arithmetic, ArrayOperation, Comparison},
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -162,7 +162,7 @@ pub(crate) fn valid_namespace(namespace: &str) -> Result<(), Diagnostic> {
     Ok(())
 }
 fn valid_name(name: &str) -> Result<(), Diagnostic> {
-    use suss_reader::forms::{read_forms, Kind};
+    use suss_reader::forms::{Kind, read_forms};
     match read_forms(name).ok().as_deref() {
         Some([form])
             if form.metadata.is_empty()
@@ -500,6 +500,17 @@ impl Environment {
     /// General compiled macro imports/expansion remain a later integration.
     pub fn resolve_bootstrap_macro(&self, phase: Phase, symbol: &Symbol) -> Option<Binding> {
         let scope = self.scope(phase);
+        // An explicit refer to a user var takes precedence over the automatic
+        // core comparison macro, just as an own declaration or lexical binding.
+        if symbol.namespace.is_none()
+            && matches!(symbol.name.as_str(), "<" | "<=" | ">" | ">=" | "==")
+            && scope
+                .refers
+                .get(&symbol.name)
+                .is_some_and(|global| global.namespace != "suss.core")
+        {
+            return None;
+        }
         let name = if let Some(namespace) = &symbol.namespace {
             let namespace = scope
                 .aliases

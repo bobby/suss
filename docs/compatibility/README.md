@@ -216,7 +216,7 @@ no issue or milestone acceptance is claimed by this prerequisite port.
 
 
 Comparison primitives and bounded macro expansion add ten partial source reviews;
-the current overlay is52 in-progress/1013 unassessed. The separate119-case primary
+the current overlay is52 in-progress/1013 unassessed. The separate123-case primary
 corpus covers scalar/UTF-16 order and macro/runtime operand effects. Five exact
 pinned captured-wrapper TypeErrors remain in an explicit divergence catalog,
 with accepted native old-capture behavior tested separately. These are not five

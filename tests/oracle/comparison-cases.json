@@ -953,6 +953,38 @@
         "tag": "bool",
         "value": false
       }
+    },
+    {
+      "id": "macro-first-throw-order",
+      "source": "(do (def comparison-review-effects 0) (try (< (throw 7) (do (def comparison-review-effects 1) 2)) (catch :default e (def comparison-review-effects (+ comparison-review-effects e))) (finally (def comparison-review-effects (+ comparison-review-effects 10)))) comparison-review-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "runtime-first-throw-order",
+      "source": "(do (def comparison-review-effects 0) (try (let [f <] (f (throw 7) (do (def comparison-review-effects 1) 2))) (catch :default e (def comparison-review-effects (+ comparison-review-effects e))) (finally (def comparison-review-effects (+ comparison-review-effects 10)))) comparison-review-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "macro-false-skips-throw",
+      "source": "(try (if (< 3 2 (throw 7)) 1 2) (catch :default e e))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "runtime-false-evaluates-throw",
+      "source": "(try (let [f <] (if (f 3 2 (throw 7)) 1 2)) (catch :default e e))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
     }
   ]
 }

@@ -4483,3 +4483,44 @@ Next publish comparison foundation with Refs #9/#11/#17, dispatch independent
 review, push significant fixes and require exact final-head CI before readiness.
 Do not merge. Then continue source sequence/list, variadic rest/apply and remaining
 M2–M9 acceptance, including the deferred public -equiv integration.
+
+## Independent PR #82 review — 2026-09-30
+
+Reviewed candidate2314fcc against pinned comparison runtime/macro forms and
+accepted scalar/UTF-16/evaluation-order/retained-capture contracts in isolated
+/private/tmp/suss-review-pr82. Significant finding: an explicit :refer of a user
+<, <=, >, >= or == incorrectly selected the automatic core comparison macro,
+returning a Boolean instead of invoking the referred function. An actual source
+module regression failed before the fix (/private/tmp/suss-pr82-review-refers-red.log,
+terminal101); bootstrap lookup now respects those explicit user refers. The fixed
+regression covers all five names, qualified aliases, forced GC and explicit core
+qualification. The initial fixture attempted to require an unsourced namespace;
+corrected it to a real source file before reproducing the semantic failure.
+
+Added four independent thrown-operand/finally/short-circuit observations to the
+primary/native corpus; original119 observations and all five explicit captured
+wrapper divergences are unchanged. Fresh pinned graph65259 completed terminal0:
+123 exact observations plus five separately reproduced TypeErrors and native7,
+/private/tmp/suss-pr82-review-oracle-final.log. Focus graph3095 passed native7 and
+compiler2, /private/tmp/suss-pr82-review-refers-fixed.log. Commands:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-cli --test portable_comparisons -p suss-compile --test portable_comparisons --locked -- --test-threads=2`
+and `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-comparison-oracle.sh`.
+Python/provenance72269 completed terminal0:70 tests/inventory1065/reviews52+1013,
+exact ten source artifacts/WIT locks/numeric manifest/offline preview,
+/private/tmp/suss-pr82-review-provenance.log. Public -equiv hooks, arbitrary object
+coercion and source macro/core integration remain explicitly unfinished. No issue
+or milestone acceptance is inferred. GitHub issues #9 and #10 are already closed;
+remaining implementation gaps are separate from those user-controlled live states.
+
+Required full workspace baseline result is recorded below after completion. Next
+push this review fix/evidence, require exact final-head CI before readiness, then
+continue source sequence/list, variadic rest/apply and remaining M2–M9 acceptance.
+Do not merge.
+
+Review full baseline89349 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-pr82-review-baseline.log. All Cargo/reference graphs are terminal
+and released. Existing manual ignores/differential9pass7fail remain explicit;
+no RUSTFLAGS override, unrelated file deletion or acceptance change. The original
+119 case dictionaries and five-divergence catalog were independently checked
+unchanged. Push the review commit and require final-head CI before readiness.

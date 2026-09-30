@@ -16,12 +16,14 @@ runtime numeric equivalence implementation. Lexical callable bindings hide macro
 lookup. Namespace/qualified macro versus runtime-var replacement needs explicit
 source-backed execution, not inference from symbol spelling.
 
-The separate119-case primary corpus verifies primitive scalar/UTF-16 order,
+The separate123-case primary corpus verifies primitive scalar/UTF-16 order,
 signed zero, NaN, infinity, nil/undefined, unary effects, repeated middle effects,
 short-circuit chains, runtime lookup, qualified macros and lexical shadowing.
-Native execution now passes this corpus. Additional regressions cover located
+Native execution now passes this corpus, preserving the original119 observations
+and adding four independent thrown-operand/finally/short-circuit probes. Additional regressions cover located
 macro arity/resource errors, universal runtime arity rejection, erased unary
-throws, retained values through GC, lexical and namespace resolution, a300-operand
+throws, retained values through GC, lexical and namespace resolution (including
+explicitly referred user comparison vars hiding automatic core macros), a300-operand
 runtime call, UTF-16 loop fuel recovery and typed unsupported-object coercion.
 Public HIR/IR guards reject wrong arity/result types and non-dominating operands.
 
