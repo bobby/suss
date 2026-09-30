@@ -3485,3 +3485,19 @@ legacy expressions. Source/code frozen while it runs; no parallel native graph.
 Publishing a draft candidate permits independent diff review while final local
 baseline runs. Reviewer must wait for root's release before editing or testing.
 Readiness still requires terminal full baseline, significant fixes and exact CI.
+
+ExceptionInfo candidate full required baseline terminal exit0, handle59201:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2,
+/private/tmp/suss-exception-info-workspace.log. Includes native67, selected portable
+compiler83 with ABI14/source303, legacy317/12 existing ignores, components29,
+conformance9/2 manual ignores, oracle4/1 manual capture ignored, reader/core and
+all doc targets including suss_cli. Existing ignores and legacy9pass/7fail
+baseline unchanged. All local native/reference handles terminal.
+
+Committed26fd461bc1bf94da2ba14a9eb5a83a332caee0df and pushed branch
+resurrection/portable-exception-info. Draft PR #70 against main uses Refs #9/#11;
+independent review must push significant fixes and final-head CI must pass before
+readiness. No merge or issue closure. Root owns no native graph now; reviewer may
+run bounded focus/full/fresh checks without overlap. Next resolve review findings,
+verify exact CI, then continue complete Error/core/collection/compiler requirements.
