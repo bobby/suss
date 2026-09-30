@@ -505,6 +505,21 @@ fn build_module() -> Vec<u8> {
         },
         CallRef(INVOKE),
     ]);
+    let mut arity_error = vec![GlobalGet(0)];
+    arity_error.extend(message.iter().map(|unit| I32Const(*unit as i32)));
+    arity_error.extend([
+        ArrayNewFixed {
+            array_type_index: STRING,
+            array_size: message.len() as u32,
+        },
+        I32Const(0),
+        RefI31,
+        I32Const(0),
+        RefI31,
+        StructNew(8),
+        Throw(0),
+    ]);
+    b.function("arity-error", &[], &[VALUE], &arity_error);
     b.function("invoke", &[VALUE, VALUE], &[VALUE], &invoke);
     b.function(
         "binding-new",

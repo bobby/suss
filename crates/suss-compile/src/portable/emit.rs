@@ -2,7 +2,7 @@
 use super::{
     Diagnostic,
     hir::{Arithmetic, Literal, Type},
-    ir::{self, ClosureBody, Function as IrFunction, Operation, Terminator},
+    ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, Operation, Terminator},
 };
 use crate::runtime_abi;
 use std::{borrow::Cow, collections::BTreeSet};
@@ -36,7 +36,8 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         message: message.into(),
     };
     let mut bodies = Vec::new();
-    collect_bodies(ir, &mut bodies);
+    let mut dispatchers = Vec::new();
+    collect_bodies(ir, &mut bodies, &mut dispatchers);
     let all_functions = std::iter::once(ir).chain(bodies.iter().map(|body| &body.function));
     let mut names = BTreeSet::new();
     let mut globals = BTreeSet::new();
@@ -65,6 +66,10 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         globals.insert(global.clone());
                         names.insert("binding-set");
                     }
+                    Operation::MakeGeneralClosure { .. } => {
+                        names.insert("closure-new");
+                        names.insert("arity-error");
+                    }
                     Operation::MakeClosure { .. } => {
                         names.insert("closure-new");
                     }
@@ -89,6 +94,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let type_count = runtime_abi::TYPE_COUNT;
     for (i, name) in names.iter().enumerate() {
         let (params, results) = match *name {
+            "arity-error" => (vec![], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
             "closure-new" => (
                 vec![
@@ -135,7 +141,14 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let mut exports = ExportSection::new();
     exports.export("eval", ExportKind::Func, names.len() as u32);
     let mut code = CodeSection::new();
-    code.function(&emit_function(ir, None, &names, &globals, &bodies)?);
+    code.function(&emit_function(
+        ir,
+        None,
+        &names,
+        &globals,
+        &bodies,
+        &dispatchers,
+    )?);
     for body in &bodies {
         functions.function(runtime_abi::INVOKE);
         code.function(&emit_function(
@@ -144,11 +157,16 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             &names,
             &globals,
             &bodies,
+            &dispatchers,
         )?);
     }
+    for dispatcher in &dispatchers {
+        functions.function(runtime_abi::INVOKE);
+        code.function(&emit_dispatcher(dispatcher, &names, &bodies));
+    }
     let mut elements = ElementSection::new();
-    if !bodies.is_empty() {
-        let indices = (0..bodies.len())
+    if !bodies.is_empty() || !dispatchers.is_empty() {
+        let indices = (0..bodies.len() + dispatchers.len())
             .map(|i| u32::try_from(names.len() + 1 + i).map_err(|_| fail("Too many functions")))
             .collect::<Result<Vec<_>, _>>()?;
         elements.declared(Elements::Functions(Cow::Owned(indices)));
@@ -160,7 +178,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&imports)
         .section(&functions)
         .section(&exports);
-    if !bodies.is_empty() {
+    if !bodies.is_empty() || !dispatchers.is_empty() {
         module.section(&elements);
     }
     module.section(&code);
@@ -180,15 +198,59 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     Ok(bytes)
 }
 
-fn collect_bodies<'a>(function: &'a IrFunction, bodies: &mut Vec<&'a ClosureBody>) {
+fn collect_bodies<'a>(
+    function: &'a IrFunction,
+    bodies: &mut Vec<&'a ClosureBody>,
+    dispatchers: &mut Vec<&'a GeneralClosureBody>,
+) {
     for block in &function.blocks {
         for inst in &block.instructions {
-            if let Operation::MakeClosure { body, .. } = &inst.operation {
-                bodies.push(body);
-                collect_bodies(&body.function, bodies);
+            match &inst.operation {
+                Operation::MakeClosure { body, .. } => {
+                    bodies.push(body);
+                    collect_bodies(&body.function, bodies, dispatchers);
+                }
+                Operation::MakeGeneralClosure { body, .. } => {
+                    dispatchers.push(body);
+                    for method in &body.methods {
+                        bodies.push(method);
+                        collect_bodies(&method.function, bodies, dispatchers);
+                    }
+                }
+                _ => {}
             }
         }
     }
+}
+fn emit_dispatcher(body: &GeneralClosureBody, names: &[&str], bodies: &[&ClosureBody]) -> Function {
+    use Instruction::*;
+    let mut function = Function::new([(1, ValType::I32)]);
+    function
+        .instruction(&LocalGet(1))
+        .instruction(&ArrayLen)
+        .instruction(&LocalSet(2));
+    for method in &body.methods {
+        let index = bodies
+            .iter()
+            .position(|candidate| std::ptr::eq(*candidate, method))
+            .expect("collected method");
+        function
+            .instruction(&LocalGet(2))
+            .instruction(&I32Const(method.arity as i32))
+            .instruction(&I32Eq)
+            .instruction(&If(BlockType::Empty))
+            .instruction(&LocalGet(0))
+            .instruction(&LocalGet(1))
+            .instruction(&Call((names.len() + 1 + index) as u32))
+            .instruction(&Return)
+            .instruction(&End);
+    }
+    let error = names
+        .iter()
+        .position(|name| *name == "arity-error")
+        .expect("arity helper");
+    function.instruction(&Call(error as u32)).instruction(&End);
+    function
 }
 fn emit_function(
     ir: &IrFunction,
@@ -196,6 +258,7 @@ fn emit_function(
     names: &[&str],
     globals: &[super::resolve::Global],
     bodies: &[&ClosureBody],
+    dispatchers: &[&GeneralClosureBody],
 ) -> Result<Function, Diagnostic> {
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
@@ -203,8 +266,12 @@ fn emit_function(
     };
     let count = u32::try_from(ir.values.len()).map_err(|_| fail("Too many IR values"))?;
     let offset = if capture_count.is_some() { 2 } else { 0 };
-    let pc = count
+    let scratch = count
         .checked_add(offset)
+        .ok_or_else(|| fail("Too many IR locals"))?;
+    let pc = count
+        .checked_add(1)
+        .and_then(|count| count.checked_add(offset))
         .ok_or_else(|| fail("Too many IR locals"))?;
     let index = |name: &str| {
         names
@@ -213,7 +280,7 @@ fn emit_function(
             .expect("collected import") as u32
     };
     // Every SSA value has one GC local. The last local is the block dispatcher.
-    let mut function = Function::new([(count, VALUE), (1, ValType::I32)]);
+    let mut function = Function::new([(count + 1, VALUE), (1, ValType::I32)]);
     use Instruction::*;
     if let Some(capture_count) = capture_count {
         for (index, value) in ir.blocks[0].parameters.iter().enumerate() {
@@ -343,6 +410,54 @@ fn emit_function(
                         .instruction(&I32Const(body.arity as i32))
                         .instruction(&Call(index("closure-new")))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
+                Operation::MakeGeneralClosure { body, captures } => {
+                    for value in captures {
+                        function.instruction(&LocalGet(value.0 as u32 + offset));
+                    }
+                    if body.self_capture {
+                        function.instruction(&I32Const(0)).instruction(&RefI31);
+                    }
+                    let size = u32::try_from(captures.len() + usize::from(body.self_capture))
+                        .map_err(|_| fail("Too many captures"))?;
+                    let dispatcher = dispatchers
+                        .iter()
+                        .position(|candidate| std::ptr::eq(*candidate, body.as_ref()))
+                        .expect("collected dispatcher");
+                    let dispatcher_function =
+                        u32::try_from(names.len() + 1 + bodies.len() + dispatcher)
+                            .map_err(|_| fail("Too many functions"))?;
+                    let minimum = body
+                        .methods
+                        .iter()
+                        .map(|method| method.arity)
+                        .min()
+                        .expect("verified methods");
+                    let maximum = body
+                        .methods
+                        .iter()
+                        .map(|method| method.arity)
+                        .max()
+                        .expect("verified methods");
+                    function
+                        .instruction(&ArrayNewFixed {
+                            array_type_index: runtime_abi::ARGS,
+                            array_size: size,
+                        })
+                        .instruction(&LocalTee(scratch))
+                        .instruction(&RefFunc(dispatcher_function))
+                        .instruction(&I32Const(minimum as i32))
+                        .instruction(&I32Const(maximum as i32))
+                        .instruction(&Call(index("closure-new")))
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    if body.self_capture {
+                        function
+                            .instruction(&LocalGet(scratch))
+                            .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
+                            .instruction(&I32Const(captures.len() as i32))
+                            .instruction(&LocalGet(inst.result.0 as u32 + offset))
+                            .instruction(&ArraySet(runtime_abi::ARGS));
+                    }
                 }
                 Operation::Arithmetic {
                     operator,

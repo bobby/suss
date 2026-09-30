@@ -85,7 +85,8 @@ production command/REPL frontends remain separate migration work.
 Fixed source closures and generic local/global/computed calls now lower through
 the shared universal ABI; central invocation checks non-callable and malformed
 argument arrays before casts. Twelve source/IR tests supplement the prior suites;
-see [closure lowering](portable-closures.md). Named/multiple/variadic source signatures and production frontend migration remain
+see [closure lowering](portable-closures.md). Named/multiple fixed signatures now execute; see [closure signatures](closure-signatures.md).
+Variadic/destructured source signatures and production frontend migration remain
 incomplete. Fixed-function recur and source namespace loading now execute.
 
 Source definitions now use explicit bound checks/writes through this ABI. Twelve

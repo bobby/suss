@@ -2668,3 +2668,70 @@ preserving closing keywords on squash. This review commit includes Closes #10,
 because all its actual criteria pass; no other incomplete issue is closed.
 Do not merge or manually close. Next unblocked implementation remains extended
 source signatures and broader M2–M9 acceptance.
+
+## Extended closure signatures: pre-implementation regression — 2026-09-30
+
+Isolated /private/tmp/suss-portable-signatures on resurrection/portable-signatures
+is based on PR #64's final independently reviewed d52b7404ccbfc3f1a5b624ea1df756ef6dfd17cc.
+PR #63 reviewed-head CI36686074513 passed on exact7912975; root inspected actual executing recurrence/source tests and CLI rustdoc. PR #64 exact final-head CI36687560807 passed on d52b740; root verified named runtime/source/native gates and marked the unmerged PR ready. Issue10 stays open until default-branch merge.
+Added native source regression for multiple fixed signatures, per-signature recur,
+outer/nested captures, named functions and direct/higher-order self-reference.
+Exact focused command CARGO_BUILD_JOBS=2 with shared CARGO_TARGET_DIR,
+cargo test -p suss-cli --test persistent_session
+persistent_session_named_and_multiple_fixed_signatures --locked -- --test-threads=2
+fails exit101 with located bytes5..12 "Named/multiple-arity functions are not lowered
+yet; expected parameter vector". /private/tmp/suss-portable-signatures-red.log.
+Native handle76303 is terminal. No source implementation or successor PR yet;
+the regression remains red and must not be skipped. Eleven fresh pinned scalar
+observations are reference-only as above. The next implementation must preserve
+active-signature recur scope, true named callable identity, captures/GC/rebinding
+and arity gaps with typed language diagnostics; raw array rest values cannot stand
+in for portable sequences. All broader acceptance remains unfinished.
+
+## Named/multiple fixed signatures: implementation validation — 2026-09-30
+
+GeneralFunction HIR retains independent methods and source-aware named binding;
+MakeGeneralClosure IR verifies shared outer captures, optional self slot and method
+entry shape/arity. Generated shared Invoke dispatcher reads argument length once
+and routes exact methods; arity-error is an additive private runtime export using
+the central descriptor/tag/message. Named construction initializes the reserved
+self slot before publication; immutable outer captures remain unchanged. No ABI
+layout/version change, helper artifact/dependency/license change or copied source.
+Semantic provenance and limits are in docs/runtime/closure-signatures.md.
+
+Original source red now passes all11named/multiple reference cases. A first compiler
+invocation failed because local dispatcher index shadowed the import lookup closure;
+renamed to dispatcher_function and preserved /private/tmp/suss-portable-signatures-first.log.
+Corrected regression passes, -first-fixed.log. Fresh six-case reference probe shows
+last-body duplicate-arity behavior (upstream warnings retained), parameter shadowing,
+empty body and exact self identity; /private/tmp/suss-signature-edges-observations.json
+and -reference.log. Normalization retains the last signature and recomputes captures.
+Five scalar edge cases join eleven prior cases in the common210source corpus;
+identity is independently inspected in native tests, not forged into scalar success.
+
+New native tests prove exact self reference identity after GC, nested self capture,
+old named functions across global replacement, duplicate/shadow behavior and arity
+gaps with source-order effects retained and no body effects. Public IR mutation
+tests reject missing methods/duplicates/capture/self corruption/usize::MAX arity;
+source negative tests isolate active-signature recur and tail scopes. Old unsupported
+name/multiple assertions are replaced by executing coverage; variadic/destructuring/
+condition restrictions remain explicit. No skips or legacy failures hidden.
+
+Sequential native graphs use CARGO_BUILD_JOBS=2/shared CARGO_TARGET_DIR and no
+RUSTFLAGS override. Compiler six-suite focus73passes/zeroignored, exit0,
+/private/tmp/suss-portable-signatures-compiler-final.log. Session27passes (23integration/
+fourprivate)/zeroignored, exit0, -session-final.log. Fresh pinned oracle210exact
+observations plus16actual decoded pipeline tests pass, exit0, -oracle.log. Python54
+passes, -python.log. Inventory1065/fourin-progress/1061unassessed, WIT15/sixpackages,
+numeric integrity, offline roadmap preview and touched formatting/diff checks pass.
+Required full workspace baseline passed, exit0 including CLI rustdoc;
+/private/tmp/suss-portable-signatures-full.log. Nativehandle75972 is terminal;
+all source/reference/native processes are terminal and no graphs overlapped.
+
+Next publish stacked on reviewed/CIpassingPR64d52b740 with Refs #9/#10, independent
+subagent review/pushed significant fixes and exact final-headCI before readiness.
+Variadic rest requires real portable persistent sequences rather than argument
+arrays; destructuring/conditions, core/macros, collections/nominal dispatch/general
+exception/effect/async IR and production frontend acceptance remain. No future
+milestone or inventory completion claimed. Next build persistent sequence/core
+foundations for full signatures and #11/runtime nominal machinery. M2–M9 unfinished.

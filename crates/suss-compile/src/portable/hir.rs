@@ -93,6 +93,11 @@ pub struct Parameter {
     pub span: Range<usize>,
 }
 #[derive(Debug, Clone)]
+pub struct Method {
+    pub parameters: Vec<Parameter>,
+    pub body: Box<Hir>,
+}
+#[derive(Debug, Clone)]
 pub struct Hir {
     pub span: Range<usize>,
     pub metadata: Vec<Form>,
@@ -136,6 +141,11 @@ pub enum Expression {
         parameters: Vec<Parameter>,
         captures: Vec<BindingId>,
         body: Box<Hir>,
+    },
+    GeneralFunction {
+        methods: Vec<Method>,
+        captures: Vec<BindingId>,
+        self_binding: Option<Parameter>,
     },
     Call {
         callee: Box<Hir>,
@@ -358,6 +368,121 @@ impl Analyzer {
         })
     }
     fn function(
+        &mut self,
+        form: &Form,
+        args: &[Form],
+        bootstrap_macro: bool,
+    ) -> Result<Hir, Diagnostic> {
+        if args
+            .first()
+            .is_some_and(|arg| matches!(arg.kind, Kind::Vector(_)))
+        {
+            return self.fixed_function(form, args, bootstrap_macro);
+        }
+        let outer = self.locals.clone();
+        let (self_binding, signatures) = if let Some(Form {
+            kind: Kind::Symbol(name),
+            ..
+        }) = args.first()
+        {
+            if name.namespace.is_some() || name.name == "&" {
+                return Err(fail(
+                    args[0].span.clone(),
+                    "Function name must be unqualified",
+                ));
+            }
+            let id = BindingId(self.next);
+            self.next += 1;
+            self.locals.insert(name.name.clone(), (id, Type::Value));
+            (
+                Some(Parameter {
+                    id,
+                    name: name.name.clone(),
+                    metadata: args[0].metadata.clone(),
+                    span: args[0].span.clone(),
+                }),
+                &args[1..],
+            )
+        } else {
+            (None, args)
+        };
+        let mut methods = Vec::new();
+        let mut captures = BTreeSet::new();
+        if signatures
+            .first()
+            .is_some_and(|arg| matches!(arg.kind, Kind::Vector(_)))
+        {
+            let method = self.fixed_function(form, signatures, bootstrap_macro)?;
+            let Expression::Function {
+                parameters,
+                body,
+                captures: free,
+            } = method.kind
+            else {
+                unreachable!()
+            };
+            captures.extend(free);
+            methods.push(Method { parameters, body });
+        } else {
+            for signature in signatures {
+                let Kind::List(items) = &signature.kind else {
+                    return Err(fail(
+                        signature.span.clone(),
+                        "Function signature requires a parameter vector and body",
+                    ));
+                };
+                let method = self.fixed_function(signature, items, bootstrap_macro)?;
+                let Expression::Function {
+                    parameters,
+                    body,
+                    captures: free,
+                } = method.kind
+                else {
+                    unreachable!()
+                };
+                captures.extend(free);
+                methods.push(Method { parameters, body });
+            }
+        }
+        // The pinned compiler warns on duplicate fixed arities and executes the last body.
+        methods.reverse();
+        let mut arities = BTreeSet::new();
+        methods.retain(|method| arities.insert(method.parameters.len()));
+        methods.reverse();
+        captures.clear();
+        for method in &methods {
+            let mut bound: BTreeSet<_> = method
+                .parameters
+                .iter()
+                .map(|parameter| parameter.id)
+                .collect();
+            if let Some(parameter) = &self_binding {
+                bound.insert(parameter.id);
+            }
+            free_bindings(&method.body, &bound, &mut captures);
+        }
+        self.locals = outer;
+        if methods.is_empty() {
+            return Err(fail(
+                form.span.clone(),
+                "Function requires at least one signature",
+            ));
+        }
+        if let Some(parameter) = &self_binding {
+            captures.remove(&parameter.id);
+        }
+        Ok(Hir {
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: Expression::GeneralFunction {
+                methods,
+                captures: captures.into_iter().collect(),
+                self_binding,
+            },
+        })
+    }
+    fn fixed_function(
         &mut self,
         form: &Form,
         args: &[Form],
@@ -713,7 +838,7 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
                 free.insert(*id);
             }
         }
-        Expression::Function { captures, .. } => {
+        Expression::Function { captures, .. } | Expression::GeneralFunction { captures, .. } => {
             for id in captures {
                 if !bound.contains(id) {
                     free.insert(*id);

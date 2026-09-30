@@ -1,6 +1,6 @@
 # Portable universal closure and call lowering
 
-The portable source pipeline now executes fixed-arity anonymous `fn`/`fn*`,
+The portable source pipeline now executes fixed-arity anonymous/named and multiple-signature `fn`/`fn*`,
 lexical captures, computed/local/live-global callees and higher-order calls.
 It uses the shared ABI v1 universal `(environment, argument-array) -> Value`
 signature. It does not delegate to prototype analysis/emission or migrate the
@@ -13,8 +13,9 @@ alias/refer/exclusion and phase environment as `let`. Runtime vars do not hide
 macros; lexical locals do. Bare `fn*` is a true special form. Function parameters
 retain unique identities, spans and reader metadata. They remain dynamic Value
 regardless of type hints. Fixed-function `recur` is supported through synthetic
-loop headers, with tail-position and arity checks; named functions and named
-self-recursive calls, multiple arities, destructuring, pre/post conditions
+loop headers, with tail-position and arity checks. Named self references and multiple
+fixed signatures are supported; see [closure signatures](closure-signatures.md).
+Destructuring, pre/post conditions
 (including parameter-vector metadata) and variadic rest sequences are not
 lowered; unsupported
 syntax returns located diagnostics, never an argument-array masquerading as a
@@ -40,7 +41,7 @@ protocols/collections remain unfinished.
 
 ## Explicit IR and executable functions
 
-HIR contains Function and Call nodes. IR MakeClosure carries a separate verified
+HIR contains Function, GeneralFunction and Call nodes. IR MakeClosure/MakeGeneralClosure carries a separate verified
 body, capture types/operands and arity. Body entry parameters explicitly represent
 captures followed by user arguments. Call operands contain the callee first,
 then all arguments, each normalized exactly once in source order. Verification
@@ -70,17 +71,17 @@ recovery, although tests catch actual tags and reuse the Store after an error.
 
 ## Evidence and remaining integration
 
-Twelve focused closure tests validate/link/execute source-generated functions and independently
+Thirteen focused closure tests validate/link/execute source-generated functions and independently
 decode numeric bits, UTF-16 and tagged exceptions. A wrapping import trace records
 computed callee evaluation before each argument and one invocation per call.
 Cross-fragment tests distinguish a captured old function value from a live global
 lookup after rebinding/forced GC. Negative IR tests reject malformed captures,
-body entries and calls before emission. Current compiler focus has 72 tests,
+body entries and calls before emission. Current compiler focus has 73 tests,
 including 16 pipeline/11 resolution/10 ABI tests; current native session focus
-has 24 tests (20 integration/four private). Recurrence regressions check parallel
+has 27 tests (23 integration/four private). Recurrence regressions check parallel
 replacement, target isolation, original captures, dynamic types and fuel recovery.
 
-The expanded original 194-case portable corpus matches fresh pinned
+The expanded original 210-case portable corpus matches fresh pinned
 ClojureScript/Node observations exactly, including binary64 rounding/signed zero,
 surrogates, nested/higher-order captures, computed callees, qualified `fn`, `fn*`,
 empty bodies and duplicate parameter names. The implementation/cases are original;
@@ -96,6 +97,6 @@ is in the handoff and PR. The original legacy source corpus remains 9 differenti
 passes / 7 exact failures / 0 skips; four arithmetic declarations have in-progress
 manual reviews and 1,061 remain unassessed. M2 remains incomplete. Namespace/module/
 definition loading and native persistent sessions now share resolved cells; the
-legacy production frontends still require migration. Next extend signatures,
+legacy production frontends still require migration. Next complete variadic/destructured signatures,
 core/collection foundations, dispatch/exception/async IR and compiled macros,
 then retire the old backend only after replacement acceptance.

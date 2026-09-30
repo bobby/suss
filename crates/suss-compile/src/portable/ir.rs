@@ -29,6 +29,10 @@ pub enum Operation {
         body: Box<ClosureBody>,
         captures: Vec<ValueId>,
     },
+    MakeGeneralClosure {
+        body: Box<GeneralClosureBody>,
+        captures: Vec<ValueId>,
+    },
     /// Callee is the first operand; all arguments are already evaluated values.
     Call {
         operands: Vec<ValueId>,
@@ -74,6 +78,12 @@ pub struct ClosureBody {
     pub capture_types: Vec<Type>,
     pub arity: usize,
     pub function: Function,
+}
+#[derive(Debug, Clone)]
+pub struct GeneralClosureBody {
+    pub capture_types: Vec<Type>,
+    pub methods: Vec<ClosureBody>,
+    pub self_capture: bool,
 }
 struct Lowerer {
     function: Function,
@@ -266,6 +276,54 @@ impl Lowerer {
                         captures: captured,
                     },
                     Type::Closure(parameters.len()),
+                    hir.span.clone(),
+                )
+            }
+            Expression::GeneralFunction {
+                methods,
+                captures,
+                self_binding,
+            } => {
+                let mut captured = Vec::new();
+                let mut capture_types = Vec::new();
+                for id in captures {
+                    let value = *self.bindings.get(id).ok_or_else(|| Diagnostic {
+                        span: hir.span.clone(),
+                        message: "Undefined HIR capture".into(),
+                    })?;
+                    captured.push(value);
+                    capture_types.push(self.function.values[value.0].ty);
+                }
+                let mut lowered = Vec::new();
+                for method in methods {
+                    let mut inner = Lowerer::new(method.body.span.clone());
+                    for (id, ty) in captures.iter().zip(&capture_types) {
+                        inner.parameter(*id, *ty, hir.span.clone())?;
+                    }
+                    let mut environment_types = capture_types.clone();
+                    if let Some(parameter) = self_binding {
+                        inner.parameter(parameter.id, Type::Value, parameter.span.clone())?;
+                        environment_types.push(Type::Value);
+                    }
+                    for parameter in &method.parameters {
+                        inner.parameter(parameter.id, Type::Value, parameter.span.clone())?;
+                    }
+                    lowered.push(ClosureBody {
+                        capture_types: environment_types,
+                        arity: method.parameters.len(),
+                        function: inner.finish(&method.body)?,
+                    });
+                }
+                self.emit(
+                    Operation::MakeGeneralClosure {
+                        body: Box::new(GeneralClosureBody {
+                            capture_types,
+                            methods: lowered,
+                            self_capture: self_binding.is_some(),
+                        }),
+                        captures: captured,
+                    },
+                    Type::Value,
                     hir.span.clone(),
                 )
             }
@@ -505,6 +563,14 @@ fn verify_recurrence(
             }
         }
         Expression::Function { body, .. } => verify_recurrence(body, &mut Vec::new(), true)?,
+        Expression::GeneralFunction { methods, .. } => {
+            if methods.is_empty() {
+                return Err(error("HIR function requires a signature"));
+            }
+            for method in methods {
+                verify_recurrence(&method.body, &mut Vec::new(), true)?;
+            }
+        }
         Expression::Let { bindings, body } => {
             for binding in bindings {
                 verify_recurrence(&binding.value, targets, false)?;
@@ -555,7 +621,8 @@ fn operands(operation: &Operation) -> &[ValueId] {
         Operation::Literal(_) | Operation::GlobalRead(_) | Operation::GlobalBound(_) => &[],
         Operation::GlobalWrite { value, .. } => std::slice::from_ref(value),
         Operation::Arithmetic { arguments, .. } => arguments,
-        Operation::MakeClosure { captures, .. } => captures,
+        Operation::MakeClosure { captures, .. }
+        | Operation::MakeGeneralClosure { captures, .. } => captures,
         Operation::Call { operands } => operands,
     }
 }
@@ -721,6 +788,47 @@ fn verify_function(
                     let mut entry = body.capture_types.clone();
                     entry.extend(std::iter::repeat_n(Type::Value, body.arity));
                     verify_function(&body.function, &entry, depth + 1)?;
+                }
+                Operation::MakeGeneralClosure { body, captures } => {
+                    if body.methods.is_empty()
+                        || body.capture_types.len() != captures.len()
+                        || result_ty != Type::Value
+                    {
+                        return Err(fail("IR general closure shape mismatch"));
+                    }
+                    for (value, expected) in captures.iter().zip(&body.capture_types) {
+                        if ty(*value)? != *expected {
+                            return Err(fail("IR capture type mismatch"));
+                        }
+                    }
+                    let mut environment = body.capture_types.clone();
+                    if body.self_capture {
+                        environment.push(Type::Value);
+                    }
+                    let mut arities = HashSet::new();
+                    for method in &body.methods {
+                        if method.arity > i32::MAX as usize
+                            || method.capture_types != environment
+                            || !arities.insert(method.arity)
+                        {
+                            return Err(fail("IR general closure method shape mismatch"));
+                        }
+                        let expected = environment
+                            .len()
+                            .checked_add(method.arity)
+                            .ok_or_else(|| fail("IR closure entry count overflow"))?;
+                        if !method
+                            .function
+                            .blocks
+                            .first()
+                            .is_some_and(|block| block.parameters.len() == expected)
+                        {
+                            return Err(fail("IR closure entry shape mismatch"));
+                        }
+                        let mut entry = environment.clone();
+                        entry.extend(std::iter::repeat_n(Type::Value, method.arity));
+                        verify_function(&method.function, &entry, depth + 1)?;
+                    }
                 }
                 Operation::Call { operands } => {
                     if operands.is_empty() || result_ty != Type::Value {
