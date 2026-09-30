@@ -3,15 +3,16 @@
 Issue #10 is the stable runtime foundation work package. Its objective is the GC
 prelude, binary64 numbers, UTF-16 strings, closure ABI and binding cells. All four
 published acceptance criteria are fulfilled on the reviewed implementation stack
-through PR #63 (`791297524ab1aaa2bafc27d28c596c00ab6de771`). The acceptance PR
-uses `Closes #10`; GitHub closure follows merge into the default branch. The stack
-is still unmerged. This is not a claim that main or the M2 milestone is complete.
+through PR #63 (`791297524ab1aaa2bafc27d28c596c00ab6de771`). Acceptance
+PR #64 was independently reviewed at `d52b7404ccbfc3f1a5b624ea1df756ef6dfd17cc`
+and externally merged at `9ede0d2edc7cc204b2f0905f005fbdfba3f2df62` on
+2026-09-30T12:48:38Z. Its squash commit preserves `Closes #10`; GitHub records
+that commit closing issue #10 at 2026-09-30T12:48:43Z. The merged acceptance is
+an ancestor of verified main `055282f9a2be9d7f63e25cb9c91b9bebffb38eb0`.
+This runtime foundation does not complete the full compiler/core contract or M2.
 
-Because this PR initially targets its predecessor branch, its description's
-closing keyword becomes effective after retargeting to main when that predecessor
-lands. The review commit also contains `Closes #10`, so closure follows that commit
-reaching main through the stack. Preserve the keyword in any squash message.
-See [GitHub's closing-keyword rules](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue).
+Future PRs use `Closes #N` only after every issue acceptance criterion is fulfilled;
+partial work uses `Refs #N`. See [GitHub's closing-keyword rules](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue).
 
 | Published criterion | Executing evidence |
 | --- | --- |
@@ -38,8 +39,9 @@ baseline (including CLI rustdoc), compiler72, native Session24 and Python54; fre
 194 source observations match. Logs: /private/tmp/suss-portable-recur-full.log,
 /private/tmp/suss-pr63-review-full.log, -compiler.log, -session.log, -python.log and
 -oracle-comparison.log. Native graphs were sequential with CARGO_BUILD_JOBS=2 and
-shared CARGO_TARGET_DIR; no RUSTFLAGS override. Final acceptance-PR independent
-review and exact final-head CI are required before merge readiness.
+shared CARGO_TARGET_DIR; no RUSTFLAGS override. Acceptance PR #64 independent
+review and exact final-head CI [36687560807](https://github.com/bobby/suss/actions/runs/36687560807)
+passed before its external merge.
 
 The old prototype's separate differential baseline remains 9 passes/7 exact
 failures/0 skips. It is not the replacement ABI corpus and is not called certified.
@@ -47,6 +49,9 @@ Legacy/manual/doc ignores are unchanged. Complete nominal protocol/exception/
 dynamic-binding machinery belongs to #11; collection/string/core coverage, named/
 multiple/variadic source signatures, compiled macros, production command/REPL
 migration, canonical memory and target adapters remain in their own work packages.
-M2 and issue #9 remain incomplete. Completing this foundation does not certify all
+M2 and documented remaining compiler implementation remain incomplete. Issue #9
+was manually closed by bobby at 2026-09-30T14:19:40Z; preserve that tracking state
+without inferring the remaining compiler gaps are fulfilled. Completing this
+foundation does not certify all
 of accepted design sections 4–6 or close a future milestone. No upstream source,
 runtime code, dependency, license or ABI layout is changed by this audit.

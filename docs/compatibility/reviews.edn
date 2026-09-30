@@ -167,11 +167,11 @@
    :arities {:fixed [2] :variadic-min 2}
    :dependencies ["macro:aget:1043" "runtime:apply"]
    :classification :adapted
-   :rationale "Original shared-GC runtime and bounded explicit macro lowering adapt numeric indexed arrays, growth/aliasing, shallow clones, nested dimensions and native array dispatch. Fresh56 primary observations preserve literal nil/dynamic undefined fill, ignored macro type operands, expansion order, errors and runtime-var/qualified macro distinctions. Resource limits produce typed diagnostics. Host named/coerced properties, checked-array compiler options, array literals and full upstream compiled macro/core extraction remain unfinished; no upstream form is copied."
+   :rationale "Original shared-GC runtime and bounded explicit macro lowering adapt numeric indexed arrays, growth/aliasing, shallow clones, nested dimensions and native array dispatch. Fresh56 primary observations preserve literal nil/dynamic undefined fill, ignored macro type operands, expansion order, errors and runtime-var/qualified macro distinctions. Resource limits produce typed diagnostics. Numeric string indexing and length now use UTF-16 units, including lone surrogates, with missing indexes returning internal undefined; separate fresh25 source observations include old captured functions and qualified macro calls after runtime redefinition. String writes and host named/coerced properties, checked-array compiler options, array literals and full upstream compiled macro/core extraction remain unfinished; no upstream form is copied."
    :status :in-progress
    :adaptation-path "docs/runtime/arrays.md"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json" "crates/suss-cli/tests/portable_indexed_strings.rs" "tests/oracle/indexed-string-cases.json"]}
   "runtime:aset:545"
   {:source-sha256 "7e3c6fbfcefbe31ac061e641fb0e6942d8dd1a41d45a5cf6e7d54aae9cd43299" :visibility :public
    :arities {:fixed [3] :variadic-min 3}
@@ -187,11 +187,11 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["macro:alength:2748"]
    :classification :adapted
-   :rationale "Original shared-GC runtime and bounded explicit macro lowering adapt numeric indexed arrays, growth/aliasing, shallow clones, nested dimensions and native array dispatch. Fresh56 primary observations preserve literal nil/dynamic undefined fill, ignored macro type operands, expansion order, errors and runtime-var/qualified macro distinctions. Resource limits produce typed diagnostics. Host named/coerced properties, checked-array compiler options, array literals and full upstream compiled macro/core extraction remain unfinished; no upstream form is copied."
+   :rationale "Original shared-GC runtime and bounded explicit macro lowering adapt numeric indexed arrays, growth/aliasing, shallow clones, nested dimensions and native array dispatch. Fresh56 primary observations preserve literal nil/dynamic undefined fill, ignored macro type operands, expansion order, errors and runtime-var/qualified macro distinctions. Resource limits produce typed diagnostics. Numeric string indexing and length now use UTF-16 units, including lone surrogates, with missing indexes returning internal undefined; separate fresh25 source observations include old captured functions and qualified macro calls after runtime redefinition. String writes and host named/coerced properties, checked-array compiler options, array literals and full upstream compiled macro/core extraction remain unfinished; no upstream form is copied."
    :status :in-progress
    :adaptation-path "docs/runtime/arrays.md"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json" "crates/suss-cli/tests/portable_indexed_strings.rs" "tests/oracle/indexed-string-cases.json"]}
   "macro:array:2635"
   {:source-sha256 "7ffb6cf9424a1dadc1f30489b405c14fd96ad0fbf9ad0ec2317ac41abdda4161" :visibility :public
    :arities {:fixed [] :variadic-min 0}
@@ -217,11 +217,11 @@
    :arities {:fixed [2] :variadic-min 2}
    :dependencies ["ana/checked-arrays" "runtime:checked-aget" "runtime:checked-aget'" "js* adapted to explicit nested array IR"]
    :classification :adapted
-   :rationale "Original shared-GC runtime and bounded explicit macro lowering adapt numeric indexed arrays, growth/aliasing, shallow clones, nested dimensions and native array dispatch. Fresh56 primary observations preserve literal nil/dynamic undefined fill, ignored macro type operands, expansion order, errors and runtime-var/qualified macro distinctions. Resource limits produce typed diagnostics. Host named/coerced properties, checked-array compiler options, array literals and full upstream compiled macro/core extraction remain unfinished; no upstream form is copied."
+   :rationale "Original shared-GC runtime and bounded explicit macro lowering adapt numeric indexed arrays, growth/aliasing, shallow clones, nested dimensions and native array dispatch. Fresh56 primary observations preserve literal nil/dynamic undefined fill, ignored macro type operands, expansion order, errors and runtime-var/qualified macro distinctions. Resource limits produce typed diagnostics. Numeric string indexing and length now use UTF-16 units, including lone surrogates, with missing indexes returning internal undefined; separate fresh25 source observations include old captured functions and qualified macro calls after runtime redefinition. String writes and host named/coerced properties, checked-array compiler options, array literals and full upstream compiled macro/core extraction remain unfinished; no upstream form is copied."
    :status :in-progress
    :adaptation-path "docs/runtime/arrays.md"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json" "crates/suss-cli/tests/portable_indexed_strings.rs" "tests/oracle/indexed-string-cases.json"]}
   "macro:aset:1056"
   {:source-sha256 "c95028d204020700e718532cf0d6d07f4581e18ce4aaf51b131044fe565bf332" :visibility :public
    :arities {:fixed [3] :variadic-min 3}
@@ -237,11 +237,11 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["js* length property adapted to shared-GC array intrinsic"]
    :classification :adapted
-   :rationale "Original shared-GC runtime and bounded explicit macro lowering adapt numeric indexed arrays, growth/aliasing, shallow clones, nested dimensions and native array dispatch. Fresh56 primary observations preserve literal nil/dynamic undefined fill, ignored macro type operands, expansion order, errors and runtime-var/qualified macro distinctions. Resource limits produce typed diagnostics. Host named/coerced properties, checked-array compiler options, array literals and full upstream compiled macro/core extraction remain unfinished; no upstream form is copied."
+   :rationale "Original shared-GC runtime and bounded explicit macro lowering adapt numeric indexed arrays, growth/aliasing, shallow clones, nested dimensions and native array dispatch. Fresh56 primary observations preserve literal nil/dynamic undefined fill, ignored macro type operands, expansion order, errors and runtime-var/qualified macro distinctions. Resource limits produce typed diagnostics. Numeric string indexing and length now use UTF-16 units, including lone surrogates, with missing indexes returning internal undefined; separate fresh25 source observations include old captured functions and qualified macro calls after runtime redefinition. String writes and host named/coerced properties, checked-array compiler options, array literals and full upstream compiled macro/core extraction remain unfinished; no upstream form is copied."
    :status :in-progress
    :adaptation-path "docs/runtime/arrays.md"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json" "crates/suss-cli/tests/portable_indexed_strings.rs" "tests/oracle/indexed-string-cases.json"]}
   "runtime:native-satisfies?:322"
   {:source-sha256 "7b9335769e4222111766bbccd557e2fce96620266b129e3fb5230c947a96cfce" :visibility :public
    :arities {:fixed [2] :variadic-min nil}
