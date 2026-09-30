@@ -3,6 +3,11 @@
 Status: accepted target design, 2026-09-29. **This describes the intended system,
 not features already implemented.** Implementation evidence lives in
 [the roadmap](../../ROADMAP.md) and [the session handoff](../roadmap/handoff.md).
+
+[ADR-0001](../adr/0001-result-option-and-panic.md) proposes a staged move to nominal
+Result/Option types and eventually native semantics without nil or throw/catch.
+It is **not accepted** and does not supersede this contract.
+
 This supersedes earlier architecture claims in README, ROADMAP, CLAUDE and
 METADATA_DESIGN. Changes to this contract require a dated decision entry below.
 
