@@ -3645,3 +3645,67 @@ all review handles59614/99199/13853 terminal and shared native graph released.
 No RUSTFLAGS override; shared target and two build jobs. Require exact final pushed-head CI; no merge or issue closure.
 M4-01 remains incomplete: context-preserving import, dependency/core/macro/phase
 bootstrap, collections and automatic production loading remain next work.
+
+## PR71 readiness and portable primitive predicates — 2026-09-30
+
+Previous goal turn made progress: published draft PR71 and dispatched independent
+review. Reviewer found a significant semantic provenance defect: contextual reader
+branches/lexical definitions could be flattened into unconditional source. Two
+independent regressions failed before repair. Reviewed19cf741df410221201bf39e8a2cc999a7afca18b
+now rejects nonempty context explicitly until context-preserving import exists;
+retains actual context in inventory and updates docs/manifest. Independent native4,
+fresh14 primary observations, Python66 and full workspace passed. Exact final-head
+CI36728380154 passed; actual suite log /private/tmp/suss-pr71-final-ci.log inspected.
+PR71 marked ready, remains OPEN/unmerged; issue16 progress comment5913673258 keeps
+Refs. No agent merge or issue closure. All reviewer/native/reference processes terminal.
+
+Next core/collection prerequisite: seven primitive predicate bindings and strict
+identity on the shared runtime. Isolated /private/tmp/suss-scalar-predicates, branch
+resurrection/portable-scalar-predicates, based on reviewed19cf741. Canonical runtime
+cells provide nil?/false?/true?/undefined?/number?/string?/identical? with fixed
+universal arities. Runtime nil? treats internal missing-field undefined as nil-like,
+while undefined? and identical? distinguish it. Identical? compares Number f64
+values (signed zeros match, NaN always differs), UTF-16 code units, and other
+language objects/functions by reference. No operand/source expression is re-emitted.
+
+Original Rust/Wasm callbacks use existing INVOKE closure type and append factory
+exports without changing the stable ten-type prelude, ABI1/compilerformat2, numeric
+helper bytes or dependency versions. Native Session initialization automatically
+installs no-environment factories; standalone test hosts initialize the same names.
+Bootstrap resident cells are now16, up from9; reset regression preserves this count.
+Runtime/Macro phase core names remain separate compiler cells, but compiled predicate
+macro/metadata/core import is explicitly unfinished, not certified by runtime tests.
+
+Seven runtime inventory entries retain exact pin/hashes/arities and primary macro
+dependencies;24 in-progress/1041 unassessed. No item newly marked implemented/excluded.
+These intrinsics copy no upstream forms; the existing identity source import retains
+its EPL source/notice/license files. Its manifest is regenerated for the changed
+review overlay hash, not new extracted forms. Only one upstream form is still imported.
+
+Commands/results (shared target/two native jobs; no RUSTFLAGS override; native/oracle
+Cargo graphs sequential, original repository's unrelated untracked files preserved):
+
+- New four executing native regressions failed unresolved nil?/identical? before implementation, /private/tmp/suss-scalar-predicates-red.log, handle58753 terminal101. Primary source reviewed at pinned core.cljs241–258/307/2323–2339 and core.cljc923–937/988–998/1017–1035.
+- First focus: native4 pass, zero ignored, /private/tmp/suss-scalar-predicates-focused.log (84993 terminal0). Covers exact primitive distinctions including NaN self-identity and UTF-16 concatenation, nominal/functions after GC, aliases/live cells/original captures, callee/argument order and language arity recovery.
+- Surrounding native private/session/core-import/dynamic/exception/Info/predicate focus:78 pass, zero ignored, /private/tmp/suss-scalar-predicates-native.log (81649 terminal0). Reset's new cell count is exact rather than hidden.
+- Expanded corpus retains prior303 source cases unchanged and adds94. Fresh397 primary observations initially passed, but runtime suite failed only its obsolete final303 count assertion after comparing every case, /private/tmp/suss-scalar-predicates-oracle.log (30606 terminal101). Updated count397; no value/failure/skip expectations changed.
+- Compiler pipeline16 and runtime ABI14 pass, /private/tmp/suss-scalar-predicates-compiler.log (21113 terminal0). Full ABI validation/execution and earlier schema/identity regressions preserved.
+- Final CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-portable-pipeline-oracle.sh:397 fresh pinned observations match,16 actual independently decoded pipeline tests pass, /private/tmp/suss-scalar-predicates-oracle-final.log (4963 terminal0). No skip/new failure accepted. Separate core-import14 and legacy9pass/7fail remain separate evidence.
+- Python66 pass, /private/tmp/suss-scalar-predicates-python.log. Inventory1065/overlay24+1041, core artifact reproduction, WIT15/six packages, numeric integrity, offline roadmap preview and diff checks pass.
+- Required CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2 is currently running alone as handle44781, /private/tmp/suss-scalar-predicates-workspace.log. Final result must be recorded before publication/readiness.
+
+Next finish the baseline, publish stacked on PR71 with Refs #9/#16, dispatch
+independent review, push significant findings and require exact final-head CI.
+Do not merge. After these intrinsics, extend provenance-backed not/boolean/some?
+source foundations needed by collection ports and compiled macro/core bootstrap;
+then continue sequence/collection and full M2/M3 requirements. Do not mistake strict
+primitive identity for persistent equality/hash or claim compiled predicate macro
+expansion/redefinition semantics complete. M2–M9 and the full ROADMAP goal remain active.
+
+Predicate full baseline terminal exit0, handle44781, same required command/log.
+All workspace targets including CLI doc tests passed. Includes the focused shared
+session/runtime78, compiler ABI14/source397, legacy317/12 existing ignores,
+components29, strict conformance9/2 manual ignores, full oracle4/1 manual capture
+ignored and reader/core/documentation targets. Existing ignores and legacy9pass/7fail
+unchanged. All root native/reference handles terminal; independent reviewer may
+own the next exclusive graph. Publish and review remain required; no merge/closure.

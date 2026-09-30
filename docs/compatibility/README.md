@@ -163,3 +163,9 @@ explicit patches and EPL packaging. The identity review brings the current overl
 to 17 in-progress reviews and 1,048 unassessed declarations. Its one selected form
 is separate from complete
 core compatibility and the legacy differential baseline.
+
+Seven [scalar predicate adaptations](../runtime/scalar-predicates.md) bring the
+current overlay to 24 in-progress reviews and 1,041 unassessed declarations.
+The portable source corpus now has 397 inputs, retaining the original 303 and adding 94
+primitive type/identity cases. This does not certify compiled predicate macros,
+collection equality/hash or complete core compatibility.

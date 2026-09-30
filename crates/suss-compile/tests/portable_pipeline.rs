@@ -56,6 +56,13 @@ fn execute_fragment(bytes: Vec<u8>, cells: Vec<portable::resolve::Global>) -> (S
         };
         let core_export = if identity.namespace() == "suss.core" {
             match identity.name() {
+                "nil?" => Some("predicate-nil"),
+                "false?" => Some("predicate-false"),
+                "true?" => Some("predicate-true"),
+                "undefined?" => Some("predicate-undefined"),
+                "number?" => Some("predicate-number"),
+                "string?" => Some("predicate-string"),
+                "identical?" => Some("predicate-identical"),
                 "ExceptionInfo" => Some("core-exception-info-class"),
                 "ex-info" => Some("core-ex-info"),
                 "ex-data" => Some("core-ex-data"),
@@ -98,7 +105,15 @@ fn execute_fragment(bytes: Vec<u8>, cells: Vec<portable::resolve::Global>) -> (S
                 runtime
                     .get_func(&mut store, export)
                     .unwrap()
-                    .call(&mut store, &class_cell, &mut function)
+                    .call(
+                        &mut store,
+                        if export.starts_with("predicate-") {
+                            &[]
+                        } else {
+                            &class_cell
+                        },
+                        &mut function,
+                    )
                     .unwrap();
                 runtime
                     .get_func(&mut store, "binding-new")
@@ -621,7 +636,7 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
         let (mut store, value) = execute(source);
         assert_eq!(tagged(&mut store, &value), case["expected"], "{source}");
     }
-    assert_eq!(ids.len(), 303);
+    assert_eq!(ids.len(), 397);
 }
 #[test]
 fn independently_compiled_fragment_values_remain_live_across_gc() {
