@@ -4864,3 +4864,57 @@ Required independent full baseline88748 completed terminal0 using
 separate differential9pass7fail remain explicit. All review local Cargo/JVM/Node
 graphs are terminal and released. Push independent review coverage and require
 exact final-head CI before readiness; no merge or issue closure claimed.
+
+## Retained-source control macro prerequisite — 2026-09-30
+
+Isolated /private/tmp/suss-core-control-flow, portable/core-control-flow, based on
+reviewed PR86 52e9fe2. The previous goal turn made implementation progress:15
+retained protocols/21 imported forms published in PR85 and UTF-16 indexed storage
+published in PR86. Independent review expanded interface35 and string31 primary
+observations, with unchanged117 function/56 array corpora and terminal baselines.
+Root inspected exact final CI36784876092 at847fca7 and36786314737 at52e9fe2,
+/private/tmp/suss-pr85-final-ci.log and /private/tmp/suss-pr86-final-ci.log. Both
+PRs marked ready without merging. Their partial issue links remain intact.
+
+Next retained seq/list source needs when/when-not/if-not/and/or/cond. Original
+candidate44 observations freshly matched primary execution in graph40798, then
+native failed terminal101 on unresolved Runtime and;
+/private/tmp/suss-control-flow-primary-and-red.log. Original bounded Rust HIR
+expansion uses existing if/do/let IR and fresh binding IDs; it introduces no
+runtime helper/global/layout/version. Once-only test evaluation, actual short
+circuit values, nominal identity, ordered effects, throws/finally and tail contexts
+execute. Literal keyword tests fold to true for conditional branching, without
+claiming materialized keyword values. Full compiled macros/metadata/&form/&env/
+syntax quote/gensym and binding/destructuring macros remain unfinished.
+
+Initial compile graph32177 terminal101 caught missing HIR binding span/metadata;
+fixed those fields. Secondfocus12742 terminal0/native1. Expanded graph48366
+terminal0:54 primary matches/native2, original44 expectations unchanged. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-control-flow-oracle.sh`;
+/private/tmp/suss-control-flow-expanded-primary.log. Extra cases distinguish own
+runtime functions, lexical shadowing and qualified macros; a user not function
+cannot change a qualified primitive if-not. Six source-hash reviews retain
+inventory reader contexts and record partial bootstrap adaptations, with no
+upstream form copied. Overlay74 in-progress/991 unassessed; regenerated25 source
+artifacts change only the review manifest hash.
+
+Guarded focus5228 completed terminal0: controls3/interfaces3/comparisons7/
+implements3, compiler comparisons2/pipeline17,
+/private/tmp/suss-control-flow-guarded-focus.log. Earlier misspecified package/test
+selection did not run tests; corrected command selected the actual compiler
+pipeline target. Controls include located arity/odd-pair/non-tail/resource errors,
+compile atomicity, aliases/exclusions and both phase compilation paths.
+Provenance6885 terminal0: Python71/inventory1065/reviews74+991/artifacts25/WIT/
+numeric locks/offline10 milestones39 issues. Required baseline83970 is live;
+record authoritative terminal result before publishing. No RUSTFLAGS override or
+concurrent local Cargo/reference graph. Next canonical empty-list/source types,
+hashing/reduction/storage and persistent rest/apply dependencies. M2–M9 remain
+unfinished; use partial Refs, independent review and exact final-head CI. No merge.
+
+Required baseline83970 completed terminal0 with
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-control-flow-baseline.log. Existing diagnostic differential
+9pass7fail and legacy/manual ignores remain explicit. All root Cargo/JVM/Node
+graphs terminal and slots released. Publish stacked draft based on reviewed86;
+Refs #11/#14/#16/#17. Require independent subagent review, significant fixes and
+exact final-head CI before readiness. No issue/milestone closure or merge.

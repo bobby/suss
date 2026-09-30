@@ -250,3 +250,12 @@ units, missing numeric indexes, nested order and retained functions after GC and
 redefinition. Four existing source reviews are extended; counts remain68/997.
 Full string/property/macro and sequence acceptance remain unfinished; see
 [indexed strings](../runtime/indexed-strings.md).
+
+
+Six control macros needed by retained collection source have bounded checked
+bootstrap expansions: when/when-not/if-not/and/or/cond. A separate54-case primary
+corpus exercises scalar results, operand effects, throws/finally, nominal identity,
+tail recur and shadowing. Six new partial reviews bring the overlay to74/991.
+No source form is copied, and the25-file source artifact only updates its review
+hash. Full compiled macros/core and persistent collections remain unfinished;
+see [control macros](../runtime/control-flow.md).

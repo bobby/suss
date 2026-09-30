@@ -1,0 +1,427 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "and-empty",
+      "source": "(and)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "or-empty",
+      "source": "(or)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "cond-empty",
+      "source": "(cond)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "and-single",
+      "source": "(and 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "or-single",
+      "source": "(or false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "and-nil",
+      "source": "(and 1 nil 3)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "and-false",
+      "source": "(and 1 false 3)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "and-zero-truthy",
+      "source": "(and 0 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "and-empty-string-truthy",
+      "source": "(and \"\" 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "or-zero-truthy",
+      "source": "(or false nil 0 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "or-empty-string-truthy",
+      "source": "(or nil \"\" 9)",
+      "expected": {
+        "tag": "string",
+        "units": []
+      }
+    },
+    {
+      "id": "or-final-false",
+      "source": "(or nil false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "or-final-nil",
+      "source": "(or false nil)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "when-nil",
+      "source": "(when nil 7)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "when-false",
+      "source": "(when false 7)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "when-zero",
+      "source": "(when 0 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "when-empty-body",
+      "source": "(when true)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "when-many-body",
+      "source": "(when true 1 2 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "when-not-nil",
+      "source": "(when-not nil 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "when-not-zero",
+      "source": "(when-not 0 7)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "when-not-empty-body",
+      "source": "(when-not false)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "if-not-false",
+      "source": "(if-not false 7 8)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "if-not-zero",
+      "source": "(if-not 0 7 8)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "if-not-missing-else",
+      "source": "(if-not true 7)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "cond-ordered-values",
+      "source": "(cond false 1 nil 2 0 3 true 4)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "cond-no-match",
+      "source": "(cond false 1 nil 2)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "and-local-hygiene",
+      "source": "(let [and__auto__ 91 x false] (and x and__auto__))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "or-local-hygiene",
+      "source": "(let [or__auto__ 91 x false] (or x or__auto__))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4056c00000000000"
+      }
+    },
+    {
+      "id": "or-object-identity",
+      "source": "(do (deftype ControlProbe []) (def control-object (ControlProbe.)) (identical? (or false control-object 7) control-object))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "and-object-identity",
+      "source": "(identical? (and true control-object) control-object)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "when-tail-recur",
+      "source": "(loop [n 3] (when true (if (> n 0) (recur (- n 1)) n)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "when-not-tail-recur",
+      "source": "(loop [n 3] (when-not false (if (> n 0) (recur (- n 1)) n)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "if-not-tail-recur",
+      "source": "(loop [n 3] (if-not (== n 0) (recur (- n 1)) n))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "cond-tail-recur",
+      "source": "(loop [n 3] (cond (> n 0) (recur (- n 1)) :else n))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "and-tail-recur",
+      "source": "(loop [n 3] (and true (if (> n 0) (recur (- n 1)) n)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "or-tail-recur",
+      "source": "(loop [n 3] (or false (if (> n 0) (recur (- n 1)) n)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "when-ordered-once",
+      "source": "(do (def control-events 0) (when (do (set! control-events (+ (* control-events 10) 1)) true) (set! control-events (+ (* control-events 10) 2)) (set! control-events (+ (* control-events 10) 3))) control-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "when-not-ordered-once",
+      "source": "(do (def control-events 0) (when-not (do (set! control-events (+ (* control-events 10) 1)) false) (set! control-events (+ (* control-events 10) 2))) control-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "if-not-once",
+      "source": "(do (def control-events 0) (if-not (do (set! control-events (+ (* control-events 10) 1)) false) (set! control-events (+ (* control-events 10) 2)) (throw 7)) control-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "and-short-circuit",
+      "source": "(do (def control-events 0) (and (do (set! control-events (+ (* control-events 10) 1)) true) (do (set! control-events (+ (* control-events 10) 2)) false) (throw 7)) control-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "or-short-circuit",
+      "source": "(do (def control-events 0) (or (do (set! control-events (+ (* control-events 10) 1)) false) (do (set! control-events (+ (* control-events 10) 2)) 0) (throw 7)) control-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "cond-skips-unselected",
+      "source": "(do (def control-events 0) (cond (do (set! control-events (+ (* control-events 10) 1)) false) (throw 7) (do (set! control-events (+ (* control-events 10) 2)) true) (set! control-events (+ (* control-events 10) 3)) :else (throw 8)) control-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "or-thrown-operand-finally",
+      "source": "(do (def control-events 0) (try (or false (throw 7) (set! control-events 9)) (catch :default e (set! control-events e)) (finally (set! control-events (+ (* control-events 10) 1)))) control-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4051c00000000000"
+      }
+    },
+    {
+      "id": "and-thrown-operand-finally",
+      "source": "(do (def control-events 0) (try (and true (throw 8) (set! control-events 9)) (catch :default e (set! control-events e)) (finally (set! control-events (+ (* control-events 10) 1)))) control-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4054400000000000"
+      }
+    },
+    {
+      "id": "qualified-and",
+      "source": "(cljs.core/and true 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "qualified-or",
+      "source": "(cljs.core/or false 8)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "qualified-when",
+      "source": "(cljs.core/when true 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "qualified-when-not",
+      "source": "(cljs.core/when-not false 10)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "qualified-if-not",
+      "source": "(cljs.core/if-not false 11 12)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    },
+    {
+      "id": "qualified-cond",
+      "source": "(cljs.core/cond false 13 true 14)",
+      "expected": {
+        "tag": "f64",
+        "bits": "402c000000000000"
+      }
+    },
+    {
+      "id": "lexical-and-call",
+      "source": "(let [and (fn [x] 17)] (and false))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "own-runtime-or",
+      "source": "(do (def or (fn [x y] 18)) (or false 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4032000000000000"
+      }
+    },
+    {
+      "id": "qualified-or-after-own-definition",
+      "source": "(cljs.core/or false 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "if-not-ignores-public-not-rebinding",
+      "source": "(do (def not (fn [x] true)) (cljs.core/if-not true 7 8))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    }
+  ]
+}
