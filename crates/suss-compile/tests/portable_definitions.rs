@@ -602,3 +602,55 @@ fn source_require_reload_metadata_is_explicitly_unsupported() {
     let value = session.eval("(ns app (:require ^:retained [cljs.core :as core])) (core/+ 1 2)");
     assert_eq!(session.bits(&value), 3.0f64.to_bits());
 }
+
+#[test]
+fn reviewed_declaration_preserves_source_metadata_and_phase_identity() {
+    use suss_reader::forms::Kind;
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let environment = Environment::new("review.declaration").unwrap();
+        let source = "(declare ^:retained first second first)";
+        let hir = portable::analyze_in(source, &environment, phase).unwrap();
+        let portable::hir::Expression::Do(body) = hir.kind else {
+            panic!()
+        };
+        let portable::hir::Expression::Do(definitions) = &body[0].kind else {
+            panic!()
+        };
+        assert_eq!(definitions.len(), 3);
+        for (index, expected_name) in ["first", "second", "first"].into_iter().enumerate() {
+            let portable::hir::Expression::Definition {
+                global,
+                name_metadata,
+                name_span,
+                initializer,
+                ..
+            } = &definitions[index].kind
+            else {
+                panic!()
+            };
+            assert_eq!(global.phase(), phase);
+            assert_eq!(global.namespace(), "review.declaration");
+            assert_eq!(global.name(), expected_name);
+            assert!(initializer.is_none());
+            assert!(source[name_span.clone()].ends_with(expected_name));
+            assert_eq!(name_metadata.len(), if index == 0 { 2 } else { 1 });
+            if index == 0 {
+                assert!(
+                    matches!(&name_metadata[0].kind, Kind::Keyword(key) if key.name == "retained")
+                );
+            }
+            let Kind::Map(entries) = &name_metadata.last().unwrap().kind else {
+                panic!()
+            };
+            assert_eq!(entries.len(), 2);
+            assert!(
+                matches!(&entries[0].kind, Kind::Keyword(key) if key.name == "declared" && key.namespace.is_none())
+            );
+            assert!(matches!(entries[1].kind, Kind::Bool(true)));
+        }
+        // Analysis uses a snapshot even on successful declaration expansion.
+        assert!(environment
+            .resolve(phase, &suss_reader::Symbol::new("first"), 0..1)
+            .is_err());
+    }
+}

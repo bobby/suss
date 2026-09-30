@@ -5048,3 +5048,40 @@ doc-tests passing; /private/tmp/suss-forward-declaration-baseline-repeat.log. No
 
 Root validation is complete; next gate is independent PR review, significant
 fixes if any, and exact final-head CI. No merge or issue closure is authorized.
+
+## PR88 independent review — 2026-09-30
+
+Reviewed candidate2e6592a independently in /private/tmp/suss-review-pr88 against
+PR87 base2afef8a. No significant production defect found within the explicitly
+partial declaration contract. Audited declaration namespace/scoping, source order,
+metadata, analyzer snapshot atomicity, phase identities, live cell/closure reads,
+defonce initialization and the separate direct internal binding-get exception.
+Declaration expression results, runtime Var metadata and compiled macros remain
+unsupported/pending; this does not complete full core, collections or M2–M9.
+
+Added seven independent primary probes: bound false survives declare/defonce,
+old closure reads undefined before initialization then observes the later value,
+failed initializer leaves declaration undefined and defonce recovers it, lexical
+declare acts as a function, and an own runtime declare hides the automatic macro
+while qualified core declare still works. Original17 observations are unchanged;
+current24 are exact independently decoded scalar observations with GC between
+native cases. Added compiler metadata/source-span/order/duplicate-name and both
+phase identity checks, including successful analysis snapshot isolation.
+
+Fresh reference/native graph33546 terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-forward-declaration-oracle.sh`;
+24 exact primary observations, native2, /private/tmp/suss-pr88-review-primary.log.
+First metadata test compile95253 ended101 on reviewer private-field access;
+corrected to public getters. Focused repeat80808 terminal0: definitions13,
+resolution11, ABI18, /private/tmp/suss-pr88-review-focus-repeat.log.
+Required full workspace90452 terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`;
+all enabled tests/doc-tests passed, /private/tmp/suss-pr88-review-baseline.log.
+Provenance99543 terminal0: Python71, inventory1065, partial reviews75/unassessed990,
+generated25 artifacts, official WIT15 files/6 packages, numeric manifest and
+10-milestone/39-issue offline preview. Review count update changes only the
+manifest review hash; no source/ABI layout change. No RUSTFLAGS override,
+unrelated deletion, issue closure or merge. All local reference/Cargo graphs are
+terminal; next gate is exact reviewed-head CI. Next implementation task remains
+actual source EmptyList/List/Cons/IndexedSeq with canonical empty list,
+hashing/reduction and persistent rest/apply.

@@ -29,10 +29,13 @@ hash-bound partial review documents original Rust lowering; no upstream form
 is copied. Generated licensed source retains25 files with an updated review
 manifest hash. Runtime Var metadata and compiled macro execution remain pending.
 
-Seventeen shared primary observations are independently decoded after actual
+Twenty-four shared primary observations are independently decoded after actual
 Wasm execution. Native execution first loads the generated canonical core source
 for its boolean function, enters the reference fixture namespace and forces GC
-between cases. Tests cover undefined reads, existing values, mutual fixed
+between cases. Independent review adds bound false preservation, old-closure reads
+before and after initialization, failed initializer recovery, lexical/runtime
+macro shadowing, and source metadata/phase/order checks. Tests cover undefined
+reads, existing values, mutual fixed
 functions, old closures/live cells, defonce, qualified names and catchable calls.
 Located malformed declarations, unknown names, aliases/exclusions and compile
 atomicity have separate native checks. The original regression failed on
