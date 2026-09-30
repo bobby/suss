@@ -216,7 +216,7 @@ no issue or milestone acceptance is claimed by this prerequisite port.
 
 
 Comparison primitives and bounded macro expansion add ten partial source reviews;
-the current overlay is52 in-progress/1013 unassessed. The separate123-case primary
+the overlay reached52 in-progress/1013 unassessed in that increment. The separate123-case primary
 corpus covers scalar/UTF-16 order and macro/runtime operand effects. Five exact
 pinned captured-wrapper TypeErrors remain in an explicit divergence catalog,
 with accepted native old-capture behavior tested separately. These are not five
@@ -228,3 +228,9 @@ Ten additional pinned/native namespace probes preserve the difference between
 explicit user comparison refers (automatic core macros remain active) and provider
 aliases (user functions execute). These are separate from the123 shared cases
 and five retained-capture divergences; the earlier review inference was withdrawn.
+
+The direct protocol `implements?` bootstrap adds one partial hash-bound macro
+review:53 in progress /1012 unassessed. Its29 fresh pinned observations remain
+separate from earlier corpora. Direct markers differ from native/default fallback;
+full compiled macros/core/metadata implementations remain unfinished. See
+[implementation predicate](../runtime/implements.md).

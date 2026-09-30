@@ -130,6 +130,20 @@ impl Analyzer {
                     .collect::<Result<Vec<_>, _>>()?;
                 Ok(self.nominal(form, Nominal::Instance, arguments))
             }
+            NominalForm::Implements => {
+                if args.len() != 2 {
+                    return Err(fail(
+                        form.span.clone(),
+                        "implements? requires a protocol name and value",
+                    ));
+                }
+                // The pin resolves the protocol syntactically and tests direct
+                // implementation only. Native/default fallback is satisfies?.
+                let protocol = self.named_global(&args[0])?;
+                let marker = self.stable_key(&args[0], &protocol, "", 0, vec![]);
+                let value = self.form(&args[1])?;
+                Ok(self.nominal(form, Nominal::Satisfies, vec![marker, value]))
+            }
             NominalForm::Satisfies => {
                 if args.len() != 2 {
                     return Err(fail(

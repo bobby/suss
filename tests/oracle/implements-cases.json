@@ -1,0 +1,270 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "direct-deftype",
+      "source": "(do (defprotocol ImplementProbe (implementation-read [x])) (deftype ImplementItem [] ImplementProbe (implementation-read [x] 1)) (deftype ImplementBare []) (def implementation-item (ImplementItem.)) (def implementation-bare (ImplementBare.)) (implements? ImplementProbe implementation-item))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "bare-negative",
+      "source": "(implements? ImplementProbe implementation-bare)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "nil-negative",
+      "source": "(implements? ImplementProbe nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "false-negative",
+      "source": "(implements? ImplementProbe false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "zero-negative",
+      "source": "(implements? ImplementProbe 0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "empty-string-negative",
+      "source": "(implements? ImplementProbe \"\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "function-negative",
+      "source": "(implements? ImplementProbe (fn [] 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "undefined-negative",
+      "source": "(implements? ImplementProbe (aget (array) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "nil-native-not-direct",
+      "source": "(do (extend-type nil ImplementProbe (implementation-read [x] 2)) (implements? ImplementProbe nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "nil-native-satisfies",
+      "source": "(satisfies? ImplementProbe nil)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "number-native-not-direct",
+      "source": "(do (extend-type number ImplementProbe (implementation-read [x] 3)) (implements? ImplementProbe 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "number-native-satisfies",
+      "source": "(satisfies? ImplementProbe 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boolean-native-not-direct",
+      "source": "(do (extend-type boolean ImplementProbe (implementation-read [x] 4)) (implements? ImplementProbe false))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "string-native-not-direct",
+      "source": "(do (extend-type string ImplementProbe (implementation-read [x] 5)) (implements? ImplementProbe \"\"))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "default-not-direct",
+      "source": "(do (extend-type default ImplementProbe (implementation-read [x] 6)) (implements? ImplementProbe implementation-bare))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "default-satisfies",
+      "source": "(satisfies? ImplementProbe implementation-bare)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "extended-type-direct",
+      "source": "(do (extend-type ImplementBare ImplementProbe (implementation-read [x] 7)) (implements? ImplementProbe implementation-bare))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-expression-once",
+      "source": "(do (def implementation-trace 0) (implements? ImplementProbe (do (set! implementation-trace (+ implementation-trace 1)) implementation-item)) implementation-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "false-expression-once",
+      "source": "(do (set! implementation-trace 0) (implements? ImplementProbe (do (set! implementation-trace (+ implementation-trace 1)) false)) implementation-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "lexical-macro-shadow",
+      "source": "(let [implements? (fn [p x] 9)] (implements? ImplementProbe implementation-item))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "qualified-core",
+      "source": "(cljs.core/implements? ImplementProbe implementation-item)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-protocol-direct",
+      "source": "(do (defprotocol ImplementEmpty) (deftype ImplementEmptyItem [] ImplementEmpty) (implements? ImplementEmpty (ImplementEmptyItem.)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-protocol-native",
+      "source": "(do (extend-type number ImplementEmpty) (implements? ImplementEmpty 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "redeclared-direct-marker",
+      "source": "(do (defprotocol ImplementProbe (implementation-read [x])) (implements? ImplementProbe implementation-item))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "thrown-operand-finally",
+      "source": "(do (set! implementation-trace 0) (try (implements? ImplementProbe (do (set! implementation-trace 1) (throw 7))) (catch :default e (set! implementation-trace (+ (* implementation-trace 10) e))) (finally (set! implementation-trace (+ (* implementation-trace 10) 2)))) implementation-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4065800000000000"
+      }
+    },
+    {
+      "id": "local-runtime-shadow",
+      "source": "(do (def implements? (fn [p x] 8)) (implements? ImplementProbe implementation-item))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "qualified-after-shadow",
+      "source": "(if (cljs.core/implements? ImplementProbe implementation-item) 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "lexical-protocol-name-does-not-replace-marker",
+      "source": "(let [ImplementProbe 7] (cljs.core/implements? ImplementProbe implementation-item))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "runtime-protocol-alias-is-not-syntactic-marker",
+      "source": "(do (def ImplementationAlias ImplementProbe) (cljs.core/implements? ImplementationAlias implementation-item))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "review-operand-extends-existing-object",
+      "source": "(do (defprotocol ReviewImplement (review-read [x])) (deftype ReviewBare []) (def review-object (ReviewBare.)) (cljs.core/implements? ReviewImplement (do (extend-type ReviewBare ReviewImplement (review-read [x] 3)) review-object)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-protocol-value-rebinding-does-not-change-marker",
+      "source": "(cljs.core/implements? ReviewImplement (do (set! ReviewImplement nil) review-object))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-finally-returned-object-keeps-direct-marker",
+      "source": "(do (set! implementation-trace 0) (if (cljs.core/implements? ReviewImplement (try review-object (finally (set! implementation-trace 9)))) implementation-trace 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "review-caught-operand-throw-returns-nondirect",
+      "source": "(do (set! implementation-trace 0) (if (cljs.core/implements? ReviewImplement (try (throw 5) (catch :default e (do (set! implementation-trace e) false)) (finally (set! implementation-trace (+ (* implementation-trace 10) 2))))) 0 implementation-trace))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404a000000000000"
+      }
+    }
+  ]
+}

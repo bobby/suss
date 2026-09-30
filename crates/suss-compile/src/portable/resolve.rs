@@ -50,6 +50,7 @@ pub enum NominalForm {
     ExtendType,
     Instance,
     Satisfies,
+    Implements,
 }
 #[derive(Debug, Clone)]
 pub(crate) struct ProtocolMethod {
@@ -252,6 +253,7 @@ impl Environment {
                 ("extend-type", NominalForm::ExtendType),
                 ("instance?", NominalForm::Instance),
                 ("satisfies?", NominalForm::Satisfies),
+                ("implements?", NominalForm::Implements),
             ] {
                 let global = Global {
                     phase,
@@ -496,7 +498,7 @@ impl Environment {
     }
     /// The bounded bootstrap macro lookup is separate from ordinary var lookup:
     /// lexical locals (handled by HIR) hide macros. User runtime definitions also
-    /// hide auto-referred array/comparison macros, as observed in the pinned compiler.
+    /// hide auto-referred array/comparison/implements? macros, as observed in the pinned compiler.
     /// General compiled macro imports/expansion remain a later integration.
     pub fn resolve_bootstrap_macro(&self, phase: Phase, symbol: &Symbol) -> Option<Binding> {
         let scope = self.scope(phase);
@@ -519,6 +521,7 @@ impl Environment {
                         | "extend-type"
                         | "instance?"
                         | "satisfies?"
+                        | "implements?"
                         | "array"
                         | "make-array"
                         | "alength"
@@ -546,6 +549,7 @@ impl Environment {
                         | "extend-type"
                         | "instance?"
                         | "satisfies?"
+                        | "implements?"
                         | "array"
                         | "make-array"
                         | "alength"
@@ -573,6 +577,7 @@ impl Environment {
                         | "extend-type"
                         | "instance?"
                         | "satisfies?"
+                        | "implements?"
                         | "array"
                         | "make-array"
                         | "alength"
@@ -600,6 +605,7 @@ impl Environment {
                     | "extend-type"
                     | "instance?"
                     | "satisfies?"
+                    | "implements?"
                     | "array"
                     | "make-array"
                     | "alength"
@@ -619,7 +625,8 @@ impl Environment {
             && scope.namespace != "suss.core"
             && matches!(
                 name,
-                "array"
+                "implements?"
+                    | "array"
                     | "make-array"
                     | "alength"
                     | "aget"
@@ -680,6 +687,7 @@ impl Environment {
                         "defprotocol" => NominalForm::Defprotocol,
                         "instance?" => NominalForm::Instance,
                         "satisfies?" => NominalForm::Satisfies,
+                        "implements?" => NominalForm::Implements,
                         _ => NominalForm::ExtendType,
                     },
                 }

@@ -198,3 +198,35 @@ fn mutable_field_assignment_rejects_immutable_flags_and_shadowing_locals() {
     // Scope metadata does not leak out of a method into unrelated local bindings.
     assert!(portable::compile(&format!("{prefix}(deftype T [^:mutable x] P (read [this] x) (write [this v] (set! x v))) (let [x 1] (set! x 2))")).is_err());
 }
+
+#[test]
+fn implements_bootstrap_uses_phase_local_protocol_keys_and_located_diagnostics() {
+    let environment = Environment::default();
+    let source = "(defprotocol Probe (read [x])) (deftype Item [] Probe (read [x] 1)) (implements? Probe (Item.))";
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let fragment = portable::prepare_fragment(source, &environment, phase).unwrap();
+        runtime_abi::verify_artifact(&fragment.wasm, &runtime_abi::Manifest::default()).unwrap();
+        assert!(fragment.cells.iter().all(|cell| cell.phase() == phase));
+        assert!(
+            portable::compile_in("(implements? Probe nil)", &fragment.environment, phase).is_ok()
+        );
+        let other = if phase == Phase::Runtime {
+            Phase::Macro
+        } else {
+            Phase::Runtime
+        };
+        assert!(
+            portable::compile_in("(implements? Probe nil)", &fragment.environment, other).is_err()
+        );
+        for source in [
+            "(implements? Probe)",
+            "(implements? Probe nil 1)",
+            "(implements? Missing nil)",
+            "(implements? (do Probe) nil)",
+        ] {
+            let error = portable::compile_in(source, &fragment.environment, phase).unwrap_err();
+            assert!(error.span.end <= source.len());
+            assert!(error.span.start < error.span.end);
+        }
+    }
+}

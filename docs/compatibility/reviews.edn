@@ -522,4 +522,14 @@
    :adaptation-path "docs/runtime/exception-info.md"
    :alternative nil
    :tests ["crates/suss-cli/tests/portable_exception_info.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
+  "macro:implements?:2227"
+  {:source-sha256 "adf4c249c620bd28592ecfeb417189f2495b4858f57deb3fe4abcf49598ed808" :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:protocol-prefix:1326" "macro:fast-path-protocols:813" "macro:bool-expr:893" "portable descriptor-backed protocol markers"]
+   :classification :adapted
+   :rationale "Original bounded macro lowering preserves direct nominal implementation tests without native/default fallback, phase-local protocol key identity, once-only value evaluation and phase/name/alias/exclusion/shadowing behavior. Explicit user runtime refers retain automatic macro lookup, while qualified provider aliases invoke runtime functions. Existing portable markers represent direct protocol masks. Full compiled upstream macro/core, metadata protocol implementations and arbitrary host prototype properties remain unfinished. No upstream form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/implements.md"
+   :alternative nil
+   :tests ["tests/oracle/implements-cases.json" "crates/suss-cli/tests/portable_implements.rs" "crates/suss-compile/tests/portable_nominal.rs"]}
  }}

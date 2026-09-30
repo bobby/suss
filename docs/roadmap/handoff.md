@@ -4565,3 +4565,134 @@ Public -equiv, arbitrary object coercion and complete source macro/core integrat
 remain pending. Push this correction and require its exact-head CI before readiness;
 next source sequence/list, variadic rest/apply and remaining M2–M9 acceptance.
 No merge or issue/milestone acceptance is claimed.
+
+## Direct implementation predicate prerequisite — 2026-09-30
+
+Current worktree /private/tmp/suss-implements-foundation, branch
+resurrection/portable-implements, based on independently reviewed comparison
+634c368. GitHub82 remains OPEN/ready with exact CI36774744617 SUCCESS; no agent
+merge. Root's separate local sequence/list preparation is
+7a99cfd579ab2dc36d31a99b34f961e84af71849 at
+/private/tmp/suss-sequence-list-foundation:48 certified reference observations and
+native unresolved-seq red, with verified historical issue10/PR64 merge tracking.
+Verify its live branch rather than inferring native support from the preparation.
+All prior native/reference graphs released before starting this prerequisite.
+
+Source seq/first/rest/next require direct-only implements? distinct from native
+satisfies?. Initial fresh graph89427 certified24 exact independently encoded
+observations then actual native regression failed unresolved Runtime implements?
+(terminal101), /private/tmp/suss-implements-primary-and-native-red.log. Original
+bootstrap lowering reuses checked Nominal::Satisfies/direct marker storage without
+native/default tables, new runtime globals/helpers/layout/cells/version or copied
+source. It resolves protocol names syntactically with phase-local stable keys;
+lexical/own/referred user vars hide the macro, aliases/core qualification/exclusions
+remain separate. First-class macro values and malformed names/arities are located
+errors. Full source core/masks/prototype/metadata and compiled macros remain partial.
+
+First focus22429 passed native1/compiler4 (terminal0),
+/private/tmp/suss-implements-first-focus.log. Expanded fresh32557 passed27 exact
+primary/native3 (terminal0), /private/tmp/suss-implements-primary-final.log:
+original24 retained, three added throw/finally and own-runtime-var/qualified probes.
+Reference protocol/redefinition/JS-keyword namespace warnings remain in logs;
+no skipped/opaque success. Guarded38567 passed native3, native protocols11,
+comparisons7/compiler comparisons2, nominal compiler5 and ABI18 (terminal0),
+/private/tmp/suss-implements-guarded-focus.log. Compiler additions verify actual
+artifact manifests/phase key isolation and located malformed-call diagnostics.
+Native additions cover sourced user refers/core aliases/exclusions, retained
+objects/functions after forced GC and language throw recovery.
+
+Commands: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-implements-oracle.sh`
+and `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-cli --test portable_implements --test portable_native_protocols --test portable_comparisons -p suss-compile --test portable_nominal --test runtime_abi --locked -- --test-threads=2`.
+Python70/inventory1065/reviews53 partial+1012 unassessed/exact ten core artifacts,
+WIT15files6packages/numeric locks/offline preview10milestones39issues pass,
+/private/tmp/suss-implements-provenance.log. Required full graph81049 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-implements-baseline.log. Existing manual/legacy ignores and
+differential9pass7fail remain explicit. Final reference namespace probe92344
+is running; record its outcome only after authoritative completion. No RUSTFLAGS,
+unrelated file deletion, issue/milestone closure or readiness claim. Next publish
+partial Refs #11/#17, dispatch independent review with pushed significant fixes,
+require exact final-head CI, and continue source-backed sequences/lists and proper
+variadic rest/apply. Full M2–M9 remains active; do not merge.
+
+Supplementary namespace graph92344 failed primary compilation with a macro
+expander NullPointerException before observations/native execution (terminal1),
+/private/tmp/suss-implements-refers-primary-final.log. The explicit runtime user
+refer still selects the automatic implements? macro, so a nil protocol operand
+is invalid. This contradicted the inferred refer-hides-macro candidate behavior.
+Root removed implements? from the comparison-specific refer-hiding guard and
+changed the previously uncertified refer fixture to match direct marker selection;
+qualified provider aliases still invoke the function. Original27 certified corpus
+expectations unchanged. A proper declared protocol/type replaces nil in the
+supplementary pinned namespace fixture. Two additional syntactic protocol name
+hygiene probes are prepared (29 total), not yet freshly certified.
+
+This raised uncertainty about PR82's comparison explicit-refer fix. Root returned
+PR82 to draft and dispatched its independent reviewer for fresh provider/referrer
+primary artifact audit; reviewer exclusively owns all Cargo/JVM/Node graphs until
+release. Do not infer comparison behavior from implements? or own declarations.
+The previous exact CI634c368 is green but no longer sufficient to claim readiness
+until the new semantic uncertainty is resolved. Root makes only isolated edits
+while audit runs. Focused/fresh/full checks must repeat after any verified repair.
+
+After reviewer release, root rebased onto corrected PR82 head3d2a4d5. Autostash
+0205f6de63d937b2ec91ed57dd82a79fb12a9fcd restored code but two append-only evidence
+docs conflicted; resolved by retaining both histories. Automatic approval review
+rejected deleting that stash before restoration verification because local work
+could be lost; stash is retained untouched. All unrelated stashes/files preserved.
+
+Corrected fresh root graph14074 completed terminal0:29 exact observations/native3,
+/private/tmp/suss-implements-corrected-primary.log. Original27 unchanged, two added
+syntactic-name/local shadow and runtime-protocol-alias probes freshly certified.
+The proper declared-protocol provider/referrer fixture passes before JSON output:
+unqualified explicit refer keeps automatic macro, qualified provider alias calls
+runtime function. The earlier nil-protocol fixture failed primary macro expansion,
+not a compatibility success. Required corrected full baseline is now running;
+record only its terminal result before publication. PR82 corrected exact CI36779310477
+is running at3d2a4d5, not ready yet. No merge or issue closure claimed.
+
+Corrected required full graph33751 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-implements-corrected-baseline.log. All local Cargo/JVM/Node graphs
+terminal and released. Final Python71/inventory1065/reviews53+1012/artifacts10,
+WIT/numeric locks/offline preview pass; /private/tmp/suss-implements-corrected-provenance.log.
+Original27 shared observations remain unchanged; corrected29 total and separate
+namespace fixture passed with native3. Publish stacked draft based on corrected
+comparison3d2a4d5, partial Refs #11/#17. Dispatch independent review, push significant
+findings and require exact final-head CI. Full source sequence/list/rest/apply and
+M2–M9 acceptance remain incomplete. Do not merge; retained recovery stash0205f6d
+is not removed, and user stashes/files remain untouched.
+
+
+## Independent PR #83 review — 2026-09-30
+
+Reviewed candidate 66730bc against corrected comparison base 3d2a4d5 in isolated
+/private/tmp/suss-review-pr83. Pinned core.cljc 2227–2251 confirms syntactic
+protocol resolution with locals removed and direct-only mask/marker tests.
+Existing portable stable descriptors correctly preserve the implemented domain;
+native/default fallback remains satisfies?. No significant production defect
+found. Full source masks/prototypes/metadata/core and compiled macros remain
+explicitly unfinished; no issue or milestone acceptance is claimed.
+
+Added four independent observations for direct extension during operand
+evaluation, runtime protocol var rebinding without changing the syntactic marker,
+finally-returned objects and caught operand throws. Original 29 case dictionaries
+are unchanged. Focus 37351 completed terminal 0 (native 3/compiler nominal 5),
+/private/tmp/suss-pr83-review-focus.log. Fresh pinned graph 61529 completed
+terminal 0:33 exact observations and native 3; the mandatory provider/referrer
+fixture also passes before JSON output.
+/private/tmp/suss-pr83-review-oracle.log retains actual primary warnings and
+results. Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-implements-oracle.sh`.
+Python/provenance 15555 completed terminal 0:71 tests/inventory 1065/reviews 53+1012,
+exact ten source artifacts/WIT 15 files/6 packages/numeric manifest and offline
+roadmap 10 milestones/39 issues. Required full baseline result follows after its
+authoritative completion. No RUSTFLAGS override, unrelated deletion or merge.
+Next require exact final-head CI, then source-backed sequence/list dependencies
+and variadic rest/apply; complete M2–M9 acceptance remains open.
+
+Review required full baseline 10991 completed terminal 0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-pr83-review-baseline.log. Existing manual legacy ignores and
+diagnostic differential outcomes remain explicit and unchanged. All review
+Cargo/JVM/Node graphs are terminal and released. Push the review observations
+and require exact final-head CI before readiness; do not merge.
