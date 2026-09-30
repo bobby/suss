@@ -1416,3 +1416,64 @@ namespace/phase/binding-cell resolution and universal closure/callee lowering wi
 dynamic checks, then collection/dispatch/recur/exception/async IR and unified
 AOT/REPL/macro migration. Keep the portable source corpus as acceptance evidence;
 retire obsolete backend paths only after the replacement passes their gates.
+
+
+## Dispatched PR #44 code review — 2026-09-29
+
+The independent reviewer audited the bounded portable compiler increment at
+7fbfd02, including lexical resolution, spans/annotations and binding identities,
+source order, numeric lowering, graph definitions/dominance/edge types, actual
+shared-ABI emission/validation and strict oracle transport. Two significant
+findings were reproduced with red regressions and repaired:
+
+- `let` is a macro hidden by local bindings in pinned ClojureScript, unlike the
+  actual `if`/`do` special forms. `(let [let 7] (let [] 1))` previously emitted
+  a fragment returning 1. The located diagnostic regression FAILED at 7fbfd02
+  (exit 101), `/private/tmp/suss-pr44-review-red.log`. Bootstrap resolution now
+  reports the existing local-call closure-lowering diagnostic at the inner
+  `let`, instead of silently invoking binding syntax. Executing positive
+  regressions preserve true special forms and restore `let` after lexical scope.
+  Fresh pinned ClojureScript/Node execution of the original review probe
+  `(let [let (fn [& args] 42)] (let [] 1))` prints 42; the scalar-local probe
+  throws TypeError. These are development-only reference observations, not
+  claimed Suss closure support. No upstream implementation was copied.
+- Public HIR directly representing `Arithmetic::Negate` silently returned its
+  operand; zero-argument subtract/divide/negate silently produced an identity.
+  The executing signed-zero regression FAILED at 7fbfd02: bits
+  0000000000000000 instead of 8000000000000000 (exit 101),
+  `/private/tmp/suss-pr44-review-negation-red.log`. Lowering now emits unary
+  negation and rejects invalid Negate/Subtract/Divide arities with the HIR span.
+  The repaired regression executes validated/linked Wasm and independently
+  decodes negative-zero bits, then checks four malformed HIR arities.
+
+Focused validation uses CARGO_BUILD_JOBS=2 and the shared CARGO_TARGET_DIR;
+no RUSTFLAGS override, new dependency, expected-failure change or blanket skip:
+
+- `cargo test -p suss-compile --test portable_pipeline --locked -- --test-threads=2`:
+  13 passed, 0 ignored; `/private/tmp/suss-pr44-review-focused.log`.
+- Fresh review reference: generated ignored `suss-oracle.pr44-review` fixture,
+  `clojure -Srepro -M -m cljs.main` with Node target, then
+  `node out/pr44-review.js`: exit 0, observations 42 and TypeError, using the
+  initialized pinned submodule and existing development-only oracle deps.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 passed.
+- `rustfmt --edition 2024` on touched Rust files and `git diff --check`: passed.
+
+Full baseline: `cargo test --workspace --locked -- --test-threads=2`, with
+CARGO_BUILD_JOBS=2 and the shared CARGO_TARGET_DIR, passed (exit 0);
+`/private/tmp/suss-pr44-review-full.log`. All enabled suites pass, including
+14 CLI, 54 compiler, 317 expressions/12 existing ignores, 29 components,
+9 conformance/2 manual ignores, 4 oracle/1 manual ignore, 13 pipeline,
+2 reader-runtime, 7 ABI, 3 shared-GC, 8 async, 8 profile, 8 core and
+19 legacy/11 portable reader tests. Two doc examples remain explicitly ignored.
+Inventory regeneration and review overlay checks pass (0 reviewed/1,065
+unassessed). Local green is ready for publication; final-head CI must be observed
+by the coordinating agent after push.
+The original 20-case bounded source corpus and 14 scalar observations remain
+separate from the unchanged legacy 9 passes/7 exact failures/0 skips; all 1,065
+inventory declarations remain unassessed. No M2 milestone, issue or PR is closed.
+General closures/callees, namespace/phase/binding-cell resolution, dynamic checks,
+collections/recur/exceptions/async and CLI/AOT/REPL/macros migration remain open.
+Next unblocked task remains namespace/phase/binding-cell resolution and universal
+closure lowering with dynamic checks. Push these fixes to PR #44 and observe
+successful CI on their final head; initial-head CI does not certify repairs.
+Do not merge PRs.

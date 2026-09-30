@@ -150,7 +150,13 @@ impl Analyzer {
         };
         let args = &items[1..];
         let bare = symbol.namespace.is_none();
-        // Special forms cannot be shadowed; ordinary callable bindings can.
+        // if/do are special forms; let is a bootstrap macro hidden by locals.
+        if bare && symbol.name == "let" && self.locals.contains_key(&symbol.name) {
+            return Err(fail(
+                items[0].span.clone(),
+                "Calling a local binding requires closure lowering",
+            ));
+        }
         let (kind, ty) = match (bare, symbol.name.as_str()) {
             (true, "do") => {
                 let body = self.body(args, form.span.clone())?;

@@ -481,3 +481,52 @@ fn independently_compiled_fragment_values_remain_live_across_gc() {
         serde_json::json!({"tag":"f64","bits":"4340000000000000"})
     );
 }
+
+#[test]
+fn lexical_bindings_hide_the_bootstrap_let_macro() {
+    let source = "(let [let 7] (let [] 1))";
+    let error = portable::compile(source).unwrap_err();
+    assert_eq!(&source[error.span], "let");
+    assert!(error.message.contains("closure lowering"));
+    // True special forms remain special even when their names are locals.
+    assert_eq!(number("(let [if 7 do 8] (if true (do 1 2) 3))"), 2.0);
+    // A nested local hiding let does not escape its lexical scope.
+    assert_eq!(number("(do (let [let 7] let) (let [x 3] x))"), 3.0);
+}
+
+#[test]
+fn public_hir_negation_executes_and_malformed_arithmetic_is_rejected() {
+    use portable::hir::{Arithmetic, Expression, Hir, Literal, Type};
+    let make = |operator, count| Hir {
+        span: 4..12,
+        metadata: Vec::new(),
+        ty: Type::Number,
+        kind: Expression::Arithmetic {
+            operator,
+            arguments: (0..count)
+                .map(|_| Hir {
+                    span: 7..8,
+                    metadata: Vec::new(),
+                    ty: Type::Number,
+                    kind: Expression::Literal(Literal::Number(0.0)),
+                })
+                .collect(),
+        },
+    };
+    let ir = portable::ir::lower(&make(Arithmetic::Negate, 1)).unwrap();
+    let (mut store, value) = execute_bytes(portable::compile_ir(&ir).unwrap());
+    assert_eq!(
+        tagged(&mut store, &value),
+        serde_json::json!({"tag":"f64","bits":"8000000000000000"})
+    );
+    for (operator, count) in [
+        (Arithmetic::Negate, 0),
+        (Arithmetic::Negate, 2),
+        (Arithmetic::Subtract, 0),
+        (Arithmetic::Divide, 0),
+    ] {
+        let error = portable::ir::lower(&make(operator, count)).unwrap_err();
+        assert_eq!(error.span, 4..12);
+        assert!(error.message.contains("arity"));
+    }
+}

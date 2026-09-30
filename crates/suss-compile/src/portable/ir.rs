@@ -149,6 +149,16 @@ impl Lowerer {
                 operator,
                 arguments,
             } => {
+                // Public HIR can represent Negate directly or malformed call arities.
+                if (*operator == Arithmetic::Negate && arguments.len() != 1)
+                    || (matches!(operator, Arithmetic::Subtract | Arithmetic::Divide)
+                        && arguments.is_empty())
+                {
+                    return Err(Diagnostic {
+                        span: hir.span.clone(),
+                        message: "HIR arithmetic arity mismatch".into(),
+                    });
+                }
                 // Evaluate every operand before entering the arithmetic operation.
                 let values = arguments
                     .iter()
@@ -166,7 +176,7 @@ impl Lowerer {
                 }
                 let mut result = values[0];
                 if values.len() == 1 {
-                    if *operator == Arithmetic::Subtract {
+                    if matches!(operator, Arithmetic::Subtract | Arithmetic::Negate) {
                         return Ok(self.emit(
                             Operation::Arithmetic {
                                 operator: Arithmetic::Negate,

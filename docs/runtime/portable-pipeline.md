@@ -19,7 +19,9 @@ Namespace loading and compiled macro expansion remain integration work. Bootstra
 Arithmetic bootstrap bindings resolve to intrinsic identities; `suss.core` and
 `cljs.core` qualified arithmetic calls select the same identity. This is not full
 namespace/phase resolution or live core binding cells. Lexical bindings shadow
-ordinary callables, so a local `+` never silently calls the global intrinsic.
+ordinary callables and the bootstrap `let` macro, so a local `+` never silently
+calls the global intrinsic and a local `let` never invokes binding syntax.
+The actual `if` and `do` special forms remain unshadowable.
 
 ## HIR and IR contracts
 
@@ -43,7 +45,9 @@ replacement. Source-level loop/recur and tail-position checking are still open.
 
 Verification checks entry shape, reachability, edge targets, unique/complete
 value definitions, dominance/order, edge arities/types and resolved intrinsic
-arities/Number operands. Malformed HIR binding identities produce diagnostics.
+arities/Number operands. Malformed HIR binding identities and arithmetic arities
+produce diagnostics.
+Direct HIR Negate retains unary negation, including the sign of zero.
 `compile_ir` runs verification before emission and validates the final Wasm.
 The closed instruction set currently admits constants and allocating numeric
 intrinsics; general calls, throws, suspension and effect analysis are future IR
@@ -60,7 +64,7 @@ backend dispatches explicit blocks through a program-counter local. It is not an
 optimizing backend. GC locals/host roots retain values across independently
 compiled fragments in one Store; this is not a persistent compiled session.
 
-Eleven focused tests validate/link/execute actual artifacts and independently
+Thirteen focused tests validate/link/execute actual artifacts and independently
 inspect the heap after forced GC. The original 14 scalar reader cases now also
 execute through compiled source fragments. A separate original 20-case source
 corpus matches freshly compiled pinned ClojureScript/Node observations exactly,
