@@ -225,6 +225,38 @@
         "tag": "f64",
         "bits": "4041000000000000"
       }
+    },
+    {
+      "id": "review-mutable-outer-metadata-wins",
+      "source": "(do (deftype ReviewOuter [^{:mutable true} ^{:mutable false} x] MutableProbe (read-cell [this] x) (write-cell [this v] (set! x v))) (def review-outer (ReviewOuter. 1)) (write-cell review-outer 61))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404e800000000000"
+      }
+    },
+    {
+      "id": "review-mutable-truthy-zero",
+      "source": "(do (deftype ReviewTruthy [^{:mutable 0 :volatile-mutable false} x] MutableProbe (read-cell [this] x) (write-cell [this v] (set! x v))) (write-cell (ReviewTruthy. 1) 62))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404f000000000000"
+      }
+    },
+    {
+      "id": "review-mutable-independent-flags",
+      "source": "(do (deftype ReviewFlags [^{:mutable false :unsynchronized-mutable true} x] MutableProbe (read-cell [this] x) (write-cell [this v] (set! x v))) (write-cell (ReviewFlags. 1) 63))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404f800000000000"
+      }
+    },
+    {
+      "id": "review-mutable-rhs-shadow-restoration",
+      "source": "(do (deftype ReviewScope [^:mutable x] MutableProbe (read-cell [this] x) (write-cell [this v] (set! x (let [x v] ((fn [x] (+ x 1)) x))) (set! x (+ x 1)))) (def review-scope (ReviewScope. 1)) (write-cell review-scope 63) (read-cell review-scope))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
     }
   ]
 }

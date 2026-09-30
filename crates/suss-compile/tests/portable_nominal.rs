@@ -141,10 +141,12 @@ fn live_protocol_cell_reference_rejects_forged_hir_and_ir_result_types() {
         ty: Type::Number,
         kind: Expression::GlobalCell(global),
     };
-    assert!(ir::lower(&hir)
-        .unwrap_err()
-        .message
-        .contains("cell-reference"));
+    assert!(
+        ir::lower(&hir)
+            .unwrap_err()
+            .message
+            .contains("cell-reference")
+    );
     hir.ty = Type::Value;
     let mut function = ir::lower(&hir).unwrap();
     ir::verify(&function).unwrap();
@@ -156,7 +158,13 @@ fn live_protocol_cell_reference_rejects_forged_hir_and_ir_result_types() {
 #[test]
 fn mutable_field_assignment_rejects_immutable_flags_and_shadowing_locals() {
     let prefix = "(defprotocol P (read [this]) (write [this v])) ";
-    for field in ["x", "^{:mutable false} x", "^{:mutable nil} x", "^number x"] {
+    for field in [
+        "x",
+        "^{:mutable false} x",
+        "^{:mutable nil} x",
+        "^number x",
+        "^{:mutable false} ^:mutable x",
+    ] {
         let source =
             format!("{prefix}(deftype T [{field}] P (read [this] x) (write [this v] (set! x v)))");
         let error = portable::compile(&source).unwrap_err();
@@ -181,10 +189,12 @@ fn mutable_field_assignment_rejects_immutable_flags_and_shadowing_locals() {
             "{source}"
         );
     }
-    assert!(portable::compile("(deftype T [^:unknown x])")
-        .unwrap_err()
-        .message
-        .contains("Unsupported type field attribute"));
+    assert!(
+        portable::compile("(deftype T [^:unknown x])")
+            .unwrap_err()
+            .message
+            .contains("Unsupported type field attribute")
+    );
     // Scope metadata does not leak out of a method into unrelated local bindings.
     assert!(portable::compile(&format!("{prefix}(deftype T [^:mutable x] P (read [this] x) (write [this v] (set! x v))) (let [x 1] (set! x 2))")).is_err());
 }

@@ -114,9 +114,12 @@ restricted to global vars.
 
 Pinned analyzer.cljc2727–2730 checks these three flags and rejects ordinary locals
 and nonmutable fields; its deftype field metadata retention is at3624–3626.
-The 28-case mutable-field corpus runs fresh pinned ClojureScript and independently
+The 32-case mutable-field corpus runs fresh pinned ClojureScript and independently
 decoded Suss with forced GC. Additional native coverage retains a setter/reader
 after clearing constructor and object globals. Compiler guards cover false/nil
 flags, type-only hints, local shadowing, scope leakage and forged FieldSet HIR/IR.
+Independent review adds exact primary cases for outer metadata precedence, truthy
+zero flags, independent alternate flags and field-scope restoration after RHS
+closures shadow the field name.
 This original lowering copies no upstream form. Sequence/list/hash-cache support
 still requires source imports and acceptance; issue #11 remains incomplete.

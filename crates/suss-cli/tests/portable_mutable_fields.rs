@@ -57,7 +57,7 @@ fn mutable_fields_match_independently_encoded_primary_corpus() {
         assert_eq!(actual, case["expected"], "{source}");
         session.collect().unwrap();
     }
-    assert_eq!(ids.len(), 28);
+    assert_eq!(ids.len(), 32);
 }
 
 #[test]

@@ -4278,3 +4278,35 @@ Required full mutable-field baseline81267 completed terminal0:
 /private/tmp/suss-mutable-field-baseline-final.log. All local Cargo/primary graphs
 are terminal; no RUSTFLAGS override or unrelated deletion. Publish for independent
 review; exact reviewed-head CI remains required and no merge is authorized.
+
+
+## Independent PR #79 review — 2026-09-30
+
+Reviewed fa97d6d against the accepted contract and pinned analyzer field metadata,
+set! checks and physical method receiver behavior. No significant production
+finding in the supported surface. Checked setter reuses existing owned Args and
+bounds/schema guards; RHS values are emitted once and returned without reevaluation.
+Nested closure capture and lexical scope restoration retain the physical receiver.
+Other field attributes and general host property assignment remain unfinished.
+
+Added four fresh pinned/native regression observations for outer repeated metadata
+precedence, truthy zero mutability, independently retained alternate flags and RHS
+nested lexical shadow restoration. Added compiler rejection for outer false metadata
+overriding an inner true shorthand. All32 primary observations match exactly and
+native2/compiler4 pass. Focus85034 and fresh oracle32776 are terminal0:
+/private/tmp/suss-pr79-review-focus.log and /private/tmp/suss-pr79-review-oracle.log.
+Commands: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-cli --test portable_mutable_fields -p suss-compile --test portable_nominal --locked -- --test-threads=2`
+and `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-mutable-field-oracle.sh`.
+Python66/inventory1065/review overlay40+1025/exact eight core-import artifacts pass.
+Workspace-wide formatting check reports pre-existing unrelated drift; only the
+changed review compiler test was formatted. No broad formatting edit or skipped test.
+Required full baseline result is recorded below upon terminal completion. Next
+require exact reviewed-head CI, then continue source-backed sequence/list and
+variadic rest/apply foundations. Full M2–M9 remains active; no merge/issue closure.
+
+
+Review required full baseline96773 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-pr79-review-baseline.log. All review Cargo/fresh reference graphs
+are terminal and released. Push this review regression/evidence commit and require
+its exact final-head CI before readiness. No merge is authorized.
