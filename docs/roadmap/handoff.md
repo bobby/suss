@@ -4246,3 +4246,35 @@ No implementation or acceptance status changed in this preparation. Next impleme
 checked scoped mutable-field assignment, preserve immutable/local rejection and
 receiver anchoring, then run focused and full acceptance before publication/review.
 No local Cargo or fresh reference graph remains live. Full M2–M9 remains active.
+
+## Mutable-field implementation validation — 2026-09-30
+
+Original HIR FieldSet lowers through the already existing checked runtime setter;
+no runtime helper/layout/global/ABI changes. Scoped field metadata records the three
+pinned mutability flags and ignores type hints at runtime; immutable and shadowing
+locals reject. Physical receiver anchoring survives recur and nested closures.
+First native corpus run16613 passed28 cases (terminal0). Guarded focus48347 passed
+native2, native protocols11, nominal compiler4 and ABI18 (terminal0),
+/private/tmp/suss-mutable-field-guarded-focus.log. Fresh primary43447 passed all28
+exact observations and native2 (terminal0), /private/tmp/suss-mutable-field-primary-final.log.
+Initial full baseline17141 failed one stale negative atomicity case that expected
+mutable metadata to reject; replaced that case with an explicitly unsupported
+attribute, preserving compile-error binding publication assertions. Focus14595
+passed (terminal0), /private/tmp/suss-mutable-field-atomicity-focus.log. Final full
+baseline81267 is recorded below only upon terminal completion. Python66, inventory1065,
+review overlay40+1025, exact eight source artifacts, numeric manifest, WIT lock and
+offline roadmap preview pass. No certified oracle expectations changed or skips
+added. Mutable/nominal/list/core issue acceptance remains incomplete.
+
+PR #78's reviewed headb364a2a CI36759096530 passed; actual enabled-suite log was
+inspected at /private/tmp/suss-pr78-final-ci.log. Independent review/pushed regression
+evidence is in its PR body; #78 marked ready without merge. #77 remains unmerged.
+Next publish scoped mutable fields as partial Refs #9/#11/#17, dispatch independent
+review/pushed significant fixes and require exact final-head CI before readiness.
+Then continue source sequence/list, variadic rest/apply and remaining M2–M9.
+
+Required full mutable-field baseline81267 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-mutable-field-baseline-final.log. All local Cargo/primary graphs
+are terminal; no RUSTFLAGS override or unrelated deletion. Publish for independent
+review; exact reviewed-head CI remains required and no merge is authorized.

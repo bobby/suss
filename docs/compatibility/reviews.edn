@@ -287,11 +287,11 @@
    :arities {:fixed [] :variadic-min 2}
    :dependencies ["macro:extend-type:1668" "macro:defprotocol:2041" "shared ABI Descriptor/UserObject/Invoke"]
    :classification :adapted
-   :rationale "Original bounded HIR bootstrap constructs descriptor-backed class values, generated arrows and protocol methods. Same-layout identity, redefinition, receiver anchoring, fields and undefined constructor results execute; field attributes, metadata, builtin classes and complete compiled macro/core import remain unfinished. No upstream source form is copied."
+   :rationale "Original bounded HIR bootstrap constructs descriptor-backed class values, generated arrows and protocol methods. Same-layout identity, redefinition, receiver anchoring, fields, scoped mutable-field assignment and undefined constructor results execute; general field attributes, runtime metadata, builtin classes and complete compiled macro/core import remain unfinished. No upstream source form is copied."
    :status :in-progress
    :adaptation-path "docs/runtime/nominal.md"
    :alternative nil
-   :tests ["crates/suss-compile/tests/portable_nominal.rs" "crates/suss-cli/tests/persistent_session.rs" "tests/oracle/portable-cases.json"]}
+   :tests ["crates/suss-compile/tests/portable_nominal.rs" "crates/suss-cli/tests/persistent_session.rs" "crates/suss-cli/tests/portable_mutable_fields.rs" "tests/oracle/mutable-field-cases.json" "tests/oracle/portable-cases.json"]}
   "macro:defprotocol:2041"
   {:source-sha256 "8748b4d0fc143b90cdcdef7af2b26fc9343f67f6bd75ea520010cb7616dfe7f9" :visibility :public
    :arities {:fixed [] :variadic-min 1}

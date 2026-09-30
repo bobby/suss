@@ -1,4 +1,4 @@
-use suss_cli::portable_session::{Session, SessionError, SessionValue};
+use suss_cli::portable_session::{Session, SessionValue};
 use wasmtime::Val;
 
 fn number(session: &mut Session, value: &SessionValue) -> u64 {
@@ -60,3 +60,20 @@ fn mutable_fields_match_independently_encoded_primary_corpus() {
     assert_eq!(ids.len(), 28);
 }
 
+#[test]
+fn retained_mutable_field_setter_keeps_owner_alive_without_global_roots() {
+    let mut session = Session::new().unwrap();
+    session.eval("(defprotocol P (reader [this]) (setter [this])) (deftype T [^:mutable x] P (reader [this] (fn [] x)) (setter [this] (fn [v] (set! x v)))) (def owner (T. 1))").unwrap();
+    let reader = session.eval("(reader owner)").unwrap();
+    let setter = session.eval("(setter owner)").unwrap();
+    session
+        .eval("(def owner nil) (def T nil) (def ->T nil) (def reader nil) (def setter nil)")
+        .unwrap();
+    session.collect().unwrap();
+    let replacement = session.eval("42").unwrap();
+    let result = session.invoke(&setter, &[&replacement]).unwrap();
+    assert_eq!(number(&mut session, &result), 42.0f64.to_bits());
+    session.collect().unwrap();
+    let result = session.invoke(&reader, &[]).unwrap();
+    assert_eq!(number(&mut session, &result), 42.0f64.to_bits());
+}
