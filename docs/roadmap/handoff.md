@@ -3802,3 +3802,41 @@ Continue complete core/bootstrap/collections and M2/M3/M4 prerequisites; three f
 and two Boolean operations are not the full M4 gate. The full ROADMAP goal remains
 active, M2–M9 unfinished. Root owns no native/reference process after this baseline;
 a dispatched reviewer may take exclusive graph ownership.
+
+## Independent PR74 source-backed Boolean review — 2026-09-30
+
+Reviewed candidate446f2276bc6e4f8e717f1107c51484a8ca8d878d against independently
+reviewed PR73 c4a36760028b5cbec2abc3d53597b9a173346f62 in isolated
+/private/tmp/suss-review-pr74. No significant defect found in the bounded runtime
+adaptations. Checked exact pinned source ranges/hashes, macro dependencies,
+empty declaration context, retained originals/docstrings/notices, whole-form
+patches, three-form dependency order, deterministic manifest and packaged EPL
+files. Actual license bytes match upstream with cmp. Pinned nil? expands loose
+nil equality (including internal undefined), false? strict false; portable if
+preserves their union without reading mutable public predicate vars. Source-backed
+not/boolean still observe canonical live var replacements and retained original
+functions. Compiled upstream macros, privacy/doc metadata, production automatic
+core loading, some? and collections remain incomplete; no full core claim.
+
+Added an independent executing regression for namespace aliases, callee capture
+before argument set! replaces that cell, core reload, retained originals and a
+retained replacement across GC. An initial fixture used an unsupported def into
+another namespace and correctly received an explicit diagnostic; repaired the
+fixture to supported global set!. This was not a production semantic failure or
+fix. Corpus remains50 (prior14 retained plus36 Boolean cases); overlay remains26
+in-progress/1039 unassessed and imported forms remain3. No runtime/compiler,
+source patch, manifest, dependency, helper/prelude or ABI change.
+
+Commands/results (exclusive graph, shared target/two jobs; no RUSTFLAGS override):
+- Candidate native7 passed, /private/tmp/suss-review-pr74-focused.log,94223 terminal0.
+- Expanded first fixture7 pass/1 rejected cross-namespace def, /private/tmp/suss-review-pr74-expanded.log,62130 terminal101; repaired native8 passed, /private/tmp/suss-review-pr74-expanded-final.log,74457 terminal0. No test weakened or skipped.
+- Fresh50 pinned primary observations match exactly, native8 pass with zero ignored, /private/tmp/suss-review-pr74-oracle.log,78877 terminal0. Raw primary wrong-arity warnings for ordinary ExceptionInfo calls remain recorded.
+- Python66 passed, /private/tmp/suss-review-pr74-python.log; inventory1065, overlay26+1039 and deterministic seven-file artifact verified,66619 terminal0. Rust formatting and diff checks passed; LICENSE/epl-v10.html cmp passed.
+- Required CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2 passed exit0, /private/tmp/suss-review-pr74-workspace.log,41491 terminal0. All workspace targets including native8, actual source397/pipeline16/ABI14, legacy, component, conformance, oracle, reader/core and CLI doc tests passed. Existing legacy/manual ignores and separate legacy9pass/7fail evidence unchanged.
+
+Every review native/reference/process handle is terminal; shared graph released.
+Remote PR73/74 still open on the reviewed stack at publication check. Push only
+this regression/review evidence to PR74 and require exact final-head CI before
+readiness. Refs #16 remains partial; no issue closure or PR merge. Next unblocked
+work: explicit primitive adaptation for some?, compiled core/macro bootstrap and
+sequence/collection foundations. M2–M9 and the full ROADMAP goal remain incomplete.

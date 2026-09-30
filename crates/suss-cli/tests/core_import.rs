@@ -299,3 +299,42 @@ fn imported_boolean_port_arguments_run_once_before_arity_errors() {
     let value = session.eval("(not nil)").unwrap();
     assert!(boolean(&mut session, &value));
 }
+
+#[test]
+fn imported_boolean_callee_is_captured_before_argument_rebinding_and_core_reload() {
+    let mut session = loaded();
+    session
+        .eval("(ns app (:require [cljs.core :as core])) (def old-not core/not) (def old-boolean core/boolean)")
+        .unwrap();
+    session.collect().unwrap();
+    // The call's callee read precedes an argument which replaces that same cell.
+    let value = session
+        .eval("(core/boolean (do (set! core/boolean (fn [x] false)) 0))")
+        .unwrap();
+    assert!(boolean(&mut session, &value));
+    let value = session.eval("(core/boolean 0)").unwrap();
+    assert!(!boolean(&mut session, &value));
+    let replacement = session.eval("core/boolean").unwrap();
+    let value = session
+        .eval("(core/not (do (set! core/not (fn [x] false)) nil))")
+        .unwrap();
+    assert!(boolean(&mut session, &value));
+    let value = session.eval("(core/not nil)").unwrap();
+    assert!(!boolean(&mut session, &value));
+    session.collect().unwrap();
+    session.eval(CORE).unwrap();
+    session.enter_namespace("app").unwrap();
+    session.collect().unwrap();
+    for source in [
+        "(core/boolean 0)",
+        "(core/not nil)",
+        "(old-boolean 0)",
+        "(old-not nil)",
+    ] {
+        let value = session.eval(source).unwrap();
+        assert!(boolean(&mut session, &value), "{source}");
+    }
+    let arg = session.eval("0").unwrap();
+    let value = session.invoke(&replacement, &[&arg]).unwrap();
+    assert!(!boolean(&mut session, &value));
+}
