@@ -422,6 +422,46 @@
         "tag": "f64",
         "bits": "4020000000000000"
       }
+    },
+    {
+      "id": "field-and-hides-macro",
+      "source": "(do (defprotocol ControlFieldInvoke (invoke-control [this])) (deftype ControlFieldHolder [and] ControlFieldInvoke (invoke-control [this] (and false))) (invoke-control (ControlFieldHolder. (fn [x] 23))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "nested-control-capture",
+      "source": "(let [x 24] ((cljs.core/or false (cljs.core/and true (fn [] x)))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4038000000000000"
+      }
+    },
+    {
+      "id": "arbitrary-keyword-condition",
+      "source": "(cljs.core/cond :arbitrary-keyword 25 true (throw 99))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4039000000000000"
+      }
+    },
+    {
+      "id": "if-not-two-branch-tail",
+      "source": "(loop [n 5] (cljs.core/if-not (== n 0) (recur (- n 1)) (cljs.core/when true n)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "cond-test-finally-order",
+      "source": "(do (def control-review-events 0) (try (cljs.core/cond (do (set! control-review-events 3) (throw 7)) 9 :else 8) (catch :default e (set! control-review-events (+ (* control-review-events 10) e))) (finally (set! control-review-events (+ (* control-review-events 10) 1)))) control-review-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4077300000000000"
+      }
     }
   ]
 }

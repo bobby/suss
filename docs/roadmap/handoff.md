@@ -4918,3 +4918,32 @@ Required baseline83970 completed terminal0 with
 graphs terminal and slots released. Publish stacked draft based on reviewed86;
 Refs #11/#14/#16/#17. Require independent subagent review, significant fixes and
 exact final-head CI before readiness. No issue/milestone closure or merge.
+
+## Independent PR #87 review — 2026-09-30
+
+Reviewed candidate7a6bdc1 against the accepted design and actual pinned control
+macro forms in isolated /private/tmp/suss-review-pr87. Audited checked if/do/let
+lowering, hygienic binding identities, field/local/runtime shadowing, phase and
+alias resolution, keyword test folding, short circuit values and tail contexts.
+No significant production defect found. Corrected the resolver's stale comment
+about the scope of runtime definition shadowing.
+
+Five independent shared probes execute callable nominal fields hiding macros,
+closure capture through nested temporary bindings, arbitrary keyword truthiness,
+selected if-not loop recurrence and thrown cond-test catch/finally effect order.
+Original54 observations remain unchanged; fresh graph83012 completed terminal0
+with59 exact pinned primary observations and native3 tests, after forced GC.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-control-flow-oracle.sh`;
+/private/tmp/suss-pr87-review-oracle.log. Python71, inventory1065, overlay74 reviewed/
+991 unassessed and regenerated25 source files verify. Six partial review rationale
+counts and manifest overlay hash align with the expanded corpus. No copied source
+or new ABI/dependency. Full compiled macro and persistent collection acceptance
+remain unfinished; no issue closure or merge.
+
+Required reviewer baseline61320 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-pr87-review-baseline.log. Legacy/manual ignores and existing
+9pass/7fail diagnostic differential remain explicit. All reviewer Cargo/JVM/Node
+graphs terminal, exclusive shared-target slot released to root. Push this review
+coverage and require exact reviewed-head CI before readiness; then continue actual
+retained sequence/list types and dependencies. No merge or milestone closure.

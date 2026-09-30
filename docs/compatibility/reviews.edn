@@ -687,7 +687,7 @@
    :arities {:fixed [] :variadic-min 0}
    :dependencies ["special if/do" "checked HIR/IR lexical binding identity"]
    :classification :adapted
-   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh54 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
+   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh59 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
    :status :in-progress
    :adaptation-path "docs/runtime/control-flow.md"
    :alternative nil
@@ -697,7 +697,7 @@
    :arities {:fixed [2 3] :variadic-min nil}
    :dependencies ["special if/do" "checked HIR/IR lexical binding identity"]
    :classification :adapted
-   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh54 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
+   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh59 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
    :status :in-progress
    :adaptation-path "docs/runtime/control-flow.md"
    :alternative nil
@@ -707,7 +707,7 @@
    :arities {:fixed [] :variadic-min 1}
    :dependencies ["special if/do" "checked HIR/IR lexical binding identity"]
    :classification :adapted
-   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh54 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
+   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh59 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
    :status :in-progress
    :adaptation-path "docs/runtime/control-flow.md"
    :alternative nil
@@ -717,7 +717,7 @@
    :arities {:fixed [] :variadic-min 1}
    :dependencies ["special if/do" "checked HIR/IR lexical binding identity"]
    :classification :adapted
-   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh54 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
+   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh59 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
    :status :in-progress
    :adaptation-path "docs/runtime/control-flow.md"
    :alternative nil
@@ -727,7 +727,7 @@
    :arities {:fixed [0 1] :variadic-min 1}
    :dependencies ["special if/do" "checked HIR/IR lexical binding identity"]
    :classification :adapted
-   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh54 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
+   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh59 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
    :status :in-progress
    :adaptation-path "docs/runtime/control-flow.md"
    :alternative nil
@@ -737,7 +737,7 @@
    :arities {:fixed [0 1] :variadic-min 1}
    :dependencies ["special if/do" "checked HIR/IR lexical binding identity"]
    :classification :adapted
-   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh54 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
+   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh59 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
    :status :in-progress
    :adaptation-path "docs/runtime/control-flow.md"
    :alternative nil

@@ -539,7 +539,7 @@ impl Environment {
     }
     /// The bounded bootstrap macro lookup is separate from ordinary var lookup:
     /// lexical locals (handled by HIR) hide macros. User runtime definitions also
-    /// hide auto-referred array/comparison/implements? macros, as observed in the pinned compiler.
+    /// hide automatic core bootstrap macros, as observed in the pinned compiler.
     /// General compiled macro imports/expansion remain a later integration.
     pub fn resolve_bootstrap_macro(&self, phase: Phase, symbol: &Symbol) -> Option<Binding> {
         let scope = self.scope(phase);
@@ -684,7 +684,7 @@ impl Environment {
             ) && !scope.excluded_core.contains(&symbol.name))
             .then_some(symbol.name.as_str())
         }?;
-        // A new runtime definition hides the auto-referred array/comparison macro;
+        // A new runtime definition hides these automatic core bootstrap macros;
         // explicit core qualification remains independent of that user var.
         if symbol.namespace.is_none()
             && scope.namespace != "suss.core"

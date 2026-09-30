@@ -24,7 +24,7 @@ in the pinned submodule. Licensed generated core source retains its25 files with
 an updated review overlay hash. The bootstrap has a256-operand expansion limit
 with located diagnostics; this is not the reference language's arity limit.
 
-A separate54-case corpus is freshly compiled/executed by the pinned development
+A separate59-case corpus is freshly compiled/executed by the pinned development
 runner, then independently decoded from actual native Wasm. Exact binary64,
 Boolean/nil sentinels and UTF-16 results are checked; unknown values fail. GC runs
 between cases. Effects, short circuiting, exception/finally cleanup, nominal
@@ -44,3 +44,9 @@ if-not lowering, as independently observed. No new runtime ABI layout, helper
 index, global or dependency is introduced. Next retain the real sequence/list
 source, including canonical empty-list literals and its hashing/reduction/rest
 dependencies. No issue or milestone closure follows from these partial reviews.
+
+Independent PR review added five exact primary/native probes: a callable nominal
+field hides an automatic macro; closures retain source captures through nested
+control temporaries; arbitrary keyword conditions are truthy; selected if-not
+branches preserve loop tail recurrence; thrown cond tests preserve catch/finally
+source order. The original54 observations remain unchanged.
