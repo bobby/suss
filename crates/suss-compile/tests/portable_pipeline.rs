@@ -557,7 +557,7 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
         let (mut store, value) = execute(source);
         assert_eq!(tagged(&mut store, &value), case["expected"], "{source}");
     }
-    assert_eq!(ids.len(), 176);
+    assert_eq!(ids.len(), 194);
 }
 #[test]
 fn independently_compiled_fragment_values_remain_live_across_gc() {
@@ -645,4 +645,90 @@ fn public_hir_negation_executes_and_malformed_arithmetic_is_rejected() {
         assert_eq!(error.span, 4..12);
         assert!(error.message.contains("arity"));
     }
+}
+
+#[test]
+fn recurrence_rejects_non_tail_wrong_arity_and_cross_function_targets_with_spans() {
+    for (source, message) in [
+        ("(recur)", "enclosing"),
+        ("(loop [x 1] (recur))", "arity"),
+        ("(loop [x 1] (+ (recur 2) 1))", "tail position"),
+        ("(loop [x 1] (if (recur 2) x x))", "tail position"),
+        ("(loop [x 1] (do (recur 2) x))", "tail position"),
+        ("(loop [x 1] (let [y (recur 2)] y))", "tail position"),
+        ("(loop [x 1] (fn [] (recur 2)))", "arity"),
+        ("(loop [x 1] ((recur 2)))", "tail position"),
+        ("(loop [x 1] (recur (recur 2)))", "tail position"),
+    ] {
+        let errors = portable::compile(source).unwrap_err();
+        assert!(errors.message.contains(message), "{source}: {errors:?}");
+        assert!(
+            source[errors.span.clone()].starts_with("(recur"),
+            "{source}: {errors:?}"
+        );
+    }
+    assert_eq!(number("(let [loop (fn [x] x)] (loop 7))"), 7.0);
+    assert_eq!(
+        number("(cljs.core/loop [flag true x 1] (if flag (recur false 2) x))"),
+        2.0
+    );
+    assert_eq!(number("(loop* [x 3] x)"), 3.0);
+}
+
+#[test]
+fn malformed_public_hir_cannot_recur_from_operands_or_to_outer_targets() {
+    use portable::hir::{Expression, Hir, LoopId, Type};
+    let recur = Hir {
+        span: 8..15,
+        metadata: vec![],
+        ty: Type::Value,
+        kind: Expression::Recur {
+            target: LoopId(0),
+            arguments: vec![],
+        },
+    };
+    let mut root = Hir {
+        span: 0..20,
+        metadata: vec![],
+        ty: Type::Value,
+        kind: Expression::Loop {
+            target: LoopId(0),
+            bindings: vec![],
+            body: Box::new(recur.clone()),
+        },
+    };
+    let graph = portable::ir::lower(&root).unwrap();
+    portable::ir::verify(&graph).unwrap();
+    if let Expression::Loop { body, .. } = &mut root.kind {
+        *body = Box::new(Hir {
+            span: 8..18,
+            metadata: vec![],
+            ty: Type::Value,
+            kind: Expression::Do(vec![recur.clone(), recur.clone()]),
+        });
+    }
+    assert!(
+        portable::ir::lower(&root)
+            .unwrap_err()
+            .message
+            .contains("tail position")
+    );
+    if let Expression::Loop { body, .. } = &mut root.kind {
+        *body = Box::new(Hir {
+            span: 8..18,
+            metadata: vec![],
+            ty: Type::Value,
+            kind: Expression::Loop {
+                target: LoopId(1),
+                bindings: vec![],
+                body: Box::new(recur),
+            },
+        });
+    }
+    assert!(
+        portable::ir::lower(&root)
+            .unwrap_err()
+            .message
+            .contains("target or arity")
+    );
 }

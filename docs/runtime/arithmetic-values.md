@@ -27,7 +27,7 @@ new standalone type with the same signature. Declarative elements permit ref.fun
 The ten-type prelude and ABI version remain unchanged; new factory exports are
 additive and actual linking rejects absent exports before eval.
 
-The 176-case source corpus includes 18 newly executed pinned ClojureScript
+The 194-case source corpus includes 18 newly executed pinned ClojureScript
 function-value cases. Independent GC tests cover closure min/max fields, exact
 number bits after GC, zero/unary/ordered variadic behavior and exception tag/
 descriptor. Session tests inspect reference identity, original captures after core
@@ -48,5 +48,5 @@ A development with-redefs probe showed the upstream generated JS wrapper can rea
 a replaced global's arity property when an old core function is called; that exact
 TypeError is recorded in handoff, not adopted over the accepted old-capture contract.
 Object conversion, complete macro/core import, extended signatures, collections,
-ExceptionInfo/recur/effects and production command/REPL migration remain open.
+ExceptionInfo/effects and production command/REPL migration remain open.
 This increment uses Refs #9/#10; full acceptance is not complete.

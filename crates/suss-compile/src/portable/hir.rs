@@ -75,6 +75,8 @@ pub(crate) fn arithmetic_type(operator: Arithmetic, arguments: &[Type]) -> Optio
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct BindingId(pub usize);
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct LoopId(pub usize);
 #[derive(Debug, Clone)]
 pub struct Binding {
     pub id: BindingId,
@@ -115,6 +117,15 @@ pub enum Expression {
         bindings: Vec<Binding>,
         body: Box<Hir>,
     },
+    Loop {
+        target: LoopId,
+        bindings: Vec<Binding>,
+        body: Box<Hir>,
+    },
+    Recur {
+        target: LoopId,
+        arguments: Vec<Hir>,
+    },
     If {
         condition: Box<Hir>,
         consequent: Box<Hir>,
@@ -147,6 +158,8 @@ struct Analyzer {
     phase: Phase,
     locals: HashMap<String, (BindingId, Type)>,
     next: usize,
+    next_loop: usize,
+    target: Option<(LoopId, usize)>,
 }
 impl Analyzer {
     fn body(
@@ -154,13 +167,20 @@ impl Analyzer {
         forms: &[Form],
         span: Range<usize>,
         statement: bool,
+        tail: bool,
     ) -> Result<Hir, Diagnostic> {
         // Intermediate forms discard their result; only the final form inherits
         // its caller context. A fragment itself is a sequence of statements.
         let items = forms
             .iter()
             .enumerate()
-            .map(|(index, form)| self.form_in(form, statement || index + 1 < forms.len()))
+            .map(|(index, form)| {
+                self.form_in(
+                    form,
+                    statement || index + 1 < forms.len(),
+                    tail && index + 1 == forms.len(),
+                )
+            })
             .collect::<Result<Vec<_>, _>>()?;
         let ty = items.last().map_or(Type::Nil, |item| item.ty);
         Ok(Hir {
@@ -171,9 +191,9 @@ impl Analyzer {
         })
     }
     fn form(&mut self, form: &Form) -> Result<Hir, Diagnostic> {
-        self.form_in(form, false)
+        self.form_in(form, false, false)
     }
-    fn form_in(&mut self, form: &Form, statement: bool) -> Result<Hir, Diagnostic> {
+    fn form_in(&mut self, form: &Form, statement: bool, tail: bool) -> Result<Hir, Diagnostic> {
         let kind = match &form.kind {
             Kind::Nil => Expression::Literal(Literal::Nil),
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
@@ -196,7 +216,9 @@ impl Analyzer {
                     kind,
                 });
             }
-            Kind::List(items) if !items.is_empty() => return self.list(form, items, statement),
+            Kind::List(items) if !items.is_empty() => {
+                return self.list(form, items, statement, tail);
+            }
             _ => {
                 return Err(fail(
                     form.span.clone(),
@@ -394,7 +416,40 @@ impl Analyzer {
                 span: name.span.clone(),
             });
         }
-        let body = Box::new(self.body(&args[1..], form.span.clone(), false)?);
+        let target = LoopId(self.next_loop);
+        self.next_loop += 1;
+        let outer_target = self.target.replace((target, parameters.len()));
+        let mut bindings = Vec::new();
+        for parameter in &parameters {
+            let id = BindingId(self.next);
+            self.next += 1;
+            bindings.push(Binding {
+                id,
+                name: parameter.name.clone(),
+                metadata: parameter.metadata.clone(),
+                span: parameter.span.clone(),
+                value: Hir {
+                    span: parameter.span.clone(),
+                    metadata: Vec::new(),
+                    ty: Type::Value,
+                    kind: Expression::Local(parameter.id),
+                },
+            });
+            self.locals
+                .insert(parameter.name.clone(), (id, Type::Value));
+        }
+        let inner_body = self.body(&args[1..], form.span.clone(), false, true)?;
+        self.target = outer_target;
+        let body = Box::new(Hir {
+            span: form.span.clone(),
+            metadata: Vec::new(),
+            ty: inner_body.ty,
+            kind: Expression::Loop {
+                target,
+                bindings,
+                body: Box::new(inner_body),
+            },
+        });
         self.locals = outer;
         let bound = parameters.iter().map(|parameter| parameter.id).collect();
         let mut captures = BTreeSet::new();
@@ -410,14 +465,24 @@ impl Analyzer {
             },
         })
     }
-    fn list(&mut self, form: &Form, items: &[Form], statement: bool) -> Result<Hir, Diagnostic> {
+    fn list(
+        &mut self,
+        form: &Form,
+        items: &[Form],
+        statement: bool,
+        tail: bool,
+    ) -> Result<Hir, Diagnostic> {
         let Kind::Symbol(symbol) = &items[0].kind else {
             return self.call(form, items);
         };
         let args = &items[1..];
         let bare = symbol.namespace.is_none();
         // Only true special forms bypass lexical and namespace resolution.
-        let resolved = if bare && matches!(symbol.name.as_str(), "if" | "do" | "fn*" | "def") {
+        let resolved = if bare
+            && matches!(
+                symbol.name.as_str(),
+                "if" | "do" | "fn*" | "def" | "loop*" | "recur"
+            ) {
             None
         } else {
             if bare && self.locals.contains_key(&symbol.name) {
@@ -433,6 +498,36 @@ impl Analyzer {
                 },
             )
         };
+        if bare && symbol.name == "recur" {
+            let Some((target, arity)) = self.target else {
+                return Err(fail(
+                    form.span.clone(),
+                    "recur requires an enclosing loop or function",
+                ));
+            };
+            if !tail {
+                return Err(fail(form.span.clone(), "recur must be in tail position"));
+            }
+            if args.len() != arity {
+                return Err(fail(
+                    form.span.clone(),
+                    format!(
+                        "recur arity mismatch: expected {arity}, received {}",
+                        args.len()
+                    ),
+                ));
+            }
+            let arguments = args
+                .iter()
+                .map(|arg| self.form(arg))
+                .collect::<Result<Vec<_>, _>>()?;
+            return Ok(Hir {
+                span: form.span.clone(),
+                metadata: form.metadata.clone(),
+                ty: Type::Value,
+                kind: Expression::Recur { target, arguments },
+            });
+        }
         if bare && symbol.name == "def" {
             if args.len() == 1 && !statement {
                 return Err(fail(
@@ -456,7 +551,7 @@ impl Analyzer {
         }
         let (kind, ty) = match (bare, symbol.name.as_str()) {
             (true, "do") => {
-                let body = self.body(args, form.span.clone(), statement)?;
+                let body = self.body(args, form.span.clone(), statement, tail)?;
                 (body.kind, body.ty)
             }
             (true, "if") => {
@@ -464,9 +559,9 @@ impl Analyzer {
                     return Err(fail(form.span.clone(), "if requires two or three operands"));
                 }
                 let condition = Box::new(self.form(&args[0])?);
-                let consequent = Box::new(self.form_in(&args[1], statement)?);
+                let consequent = Box::new(self.form_in(&args[1], statement, tail)?);
                 let alternative = Box::new(if args.len() == 3 {
-                    self.form_in(&args[2], statement)?
+                    self.form_in(&args[2], statement, tail)?
                 } else {
                     Hir {
                         span: form.span.clone(),
@@ -489,7 +584,14 @@ impl Analyzer {
                     ty,
                 )
             }
-            _ if matches!(resolved, Some(ResolvedBinding::BootstrapLet(_))) => {
+            _ if (bare && symbol.name == "loop*")
+                || matches!(
+                    resolved,
+                    Some(ResolvedBinding::BootstrapLet(_) | ResolvedBinding::BootstrapLoop(_))
+                ) =>
+            {
+                let is_loop = (bare && symbol.name == "loop*")
+                    || matches!(resolved, Some(ResolvedBinding::BootstrapLoop(_)));
                 if args.is_empty() {
                     return Err(fail(form.span.clone(), "let requires a binding vector"));
                 }
@@ -517,7 +619,10 @@ impl Analyzer {
                     let value = self.form(&pair[1])?;
                     let id = BindingId(self.next);
                     self.next += 1;
-                    self.locals.insert(name.name.clone(), (id, value.ty));
+                    self.locals.insert(
+                        name.name.clone(),
+                        (id, if is_loop { Type::Value } else { value.ty }),
+                    );
                     bindings.push(Binding {
                         id,
                         name: name.name.clone(),
@@ -526,10 +631,33 @@ impl Analyzer {
                         value,
                     });
                 }
-                let body = Box::new(self.body(&args[1..], form.span.clone(), statement)?);
+                let target = LoopId(self.next_loop);
+                let outer_target = self.target;
+                if is_loop {
+                    self.next_loop += 1;
+                    self.target = Some((target, bindings.len()));
+                }
+                let body = Box::new(self.body(
+                    &args[1..],
+                    form.span.clone(),
+                    statement,
+                    is_loop || tail,
+                )?);
+                self.target = outer_target;
                 self.locals = outer;
                 let ty = body.ty;
-                (Expression::Let { bindings, body }, ty)
+                (
+                    if is_loop {
+                        Expression::Loop {
+                            target,
+                            bindings,
+                            body,
+                        }
+                    } else {
+                        Expression::Let { bindings, body }
+                    },
+                    ty,
+                )
             }
             _ => {
                 let Some(ResolvedBinding::Arithmetic { operator, .. }) = resolved else {
@@ -592,7 +720,7 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
                 }
             }
         }
-        Expression::Let { bindings, body } => {
+        Expression::Let { bindings, body } | Expression::Loop { bindings, body, .. } => {
             let mut bound = bound.clone();
             for binding in bindings {
                 free_bindings(&binding.value, &bound, free);
@@ -609,7 +737,10 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
                 free_bindings(item, bound, free);
             }
         }
-        Expression::Do(items)
+        Expression::Recur {
+            arguments: items, ..
+        }
+        | Expression::Do(items)
         | Expression::Arithmetic {
             arguments: items, ..
         } => {
@@ -650,7 +781,9 @@ pub(crate) fn prepare(
         phase,
         locals: HashMap::new(),
         next: 0,
+        next_loop: 0,
+        target: None,
     };
-    let hir = analyzer.body(forms, span, true)?;
+    let hir = analyzer.body(forms, span, true, false)?;
     Ok((hir, analyzer.environment))
 }

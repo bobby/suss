@@ -95,7 +95,7 @@ initializer recovery, foreign/reset handles, dependency transaction compilation,
 reverse-order diamond effects, successful dependency reuse after failure, canonical
 core provisioning, scope/catalog distinctions, artifact/import gates, foreign
 callback exception recovery (including translated errors and swallowed throws)
-and fuel trap recovery. Existing 70 focused compiler
+and fuel trap recovery. Existing 72 focused compiler
 checks also pass. No new test is ignored.
 
 Initial API regression compilation failed because the native library host did not
@@ -111,12 +111,12 @@ Implementation/tests are original; pinned EPL-1.0 ClojureScript namespace/defini
 semantics inform the portable contract, with no copied upstream implementation.
 Only the already-locked tempfile package is added as a CLI development dependency;
 no package version changes or shipped JVM/Node dependency are introduced. The
-existing 176-case portable oracle and legacy 9-pass/7-failure/0-skip baseline remain
+existing 194-case portable oracle and legacy 9-pass/7-failure/0-skip baseline remain
 separate evidence, and four runtime arithmetic declarations are reviewed as in-progress and 1,061 remain unassessed.
 
 Production REPL/command frontend migration and printing, atoms/types/collections,
 extended closure signatures, object coercions and complete source core/macros, complete
-ExceptionInfo/effect/recur IR, reload/cache/privacy policy, compiled macro sessions,
+ExceptionInfo/effect IR, reload/cache/privacy policy, compiled macro sessions,
 async I/O/cancellation and live heap accounting remain unfinished. Unsupported
 source forms still return located diagnostics. Source declaration/unbound-var
 semantics are not fully certified. Do not close #10/#12/#13/#15 from this API alone.
@@ -136,3 +136,7 @@ Arithmetic values now read canonical live cells, including higher-order/computed
 calls and old captures after rebinding/GC; see [arithmetic values](arithmetic-values.md).
 Four bootstrap arithmetic cells are included in binding_cells from startup and
 reprovisioned on reset. Caller evaluation of callee/arguments remains once in order.
+
+Source loop/fixed-function recur executes through this host with parallel replacement,
+old iteration captures, changing types and fuel recovery; see [recurrence](recurrence.md).
+The native focused scope is 24 tests (20 integration/four private).

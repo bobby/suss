@@ -54,7 +54,7 @@ numeric calls or truthiness inspection. The emitter receives value IDs and
 cannot re-emit source expressions to inspect a type. Branches evaluate only the
 selected block. All replacement values are pushed before assigning any edge
 parameter; an executed backedge swap regression distinguishes this from sequential
-replacement. Source-level loop/recur and tail-position checking are still open.
+replacement. Source-level loop/fixed-function recur now uses these backedges with lexical tail checks; see [recurrence](recurrence.md).
 
 Verification checks entry shape, reachability, edge targets, unique/complete
 value definitions, dominance/order, edge arities/types and resolved intrinsic
@@ -80,7 +80,7 @@ compiled fragments in one Store; this is not a persistent compiled session.
 
 Fourteen focused tests validate/link/execute actual artifacts and independently
 inspect the heap after forced GC. The original 14 scalar reader cases now also
-execute through compiled source fragments. A separate original 176-case source
+execute through compiled source fragments. A separate original 194-case source
 corpus matches freshly compiled pinned ClojureScript/Node observations exactly,
 covering numeric bits/arities, conditional values, lexical shadowing, strings and
 unary sum/product identity over nil/booleans/UTF-16/dynamic values/closures,
@@ -112,6 +112,6 @@ These bounded observations do not replace the existing 16-case legacy compiler
 corpus: it remains **9 differential passes, 7 exact failures, 0 skips**. No
 expected failures changed. M2-01/02/03 remain incomplete. Next, complete source namespace/
 phase/definition loading and production clients, extended closure signatures,
-object conversion, complete source macro/core import and the source corpus; add collection/dispatch/recur/exception/
+object conversion, complete source macro/core import and the source corpus; add collection/dispatch/exception/
 async IR forms and migrate AOT/REPL/macros through the same pipeline. Retire the
 old backend only when replacement acceptance passes.

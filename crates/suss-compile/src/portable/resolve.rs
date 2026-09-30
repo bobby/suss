@@ -48,6 +48,7 @@ pub enum Binding {
         operator: Arithmetic,
     },
     BootstrapLet(Global),
+    BootstrapLoop(Global),
     BootstrapFn(Global),
     BootstrapDefonce(Global),
 }
@@ -55,6 +56,7 @@ impl Binding {
     pub fn global(&self) -> &Global {
         match self {
             Self::Cell(g)
+            | Self::BootstrapLoop(g)
             | Self::BootstrapLet(g)
             | Self::BootstrapFn(g)
             | Self::BootstrapDefonce(g)
@@ -164,7 +166,7 @@ impl Environment {
                 env.bindings
                     .insert(global.clone(), Binding::Arithmetic { global, operator });
             }
-            for name in ["let", "fn", "defonce"] {
+            for name in ["let", "loop", "fn", "defonce"] {
                 let global = Global {
                     phase,
                     namespace: "suss.core".into(),
@@ -172,6 +174,8 @@ impl Environment {
                 };
                 let binding = if name == "let" {
                     Binding::BootstrapLet(global.clone())
+                } else if name == "loop" {
+                    Binding::BootstrapLoop(global.clone())
                 } else if name == "fn" {
                     Binding::BootstrapFn(global.clone())
                 } else {
@@ -371,20 +375,20 @@ impl Environment {
                 .get(namespace)
                 .map_or(namespace.as_str(), String::as_str);
             (canonical(namespace) == "suss.core"
-                && matches!(symbol.name.as_str(), "let" | "fn" | "defonce"))
+                && matches!(symbol.name.as_str(), "let" | "loop" | "fn" | "defonce"))
             .then_some(symbol.name.as_str())
         } else if let Some(global) = scope.refers.get(&symbol.name) {
             if global.namespace == "suss.core"
-                && matches!(global.name.as_str(), "let" | "fn" | "defonce")
+                && matches!(global.name.as_str(), "let" | "loop" | "fn" | "defonce")
             {
                 Some(global.name.as_str())
             } else {
-                (matches!(symbol.name.as_str(), "let" | "fn" | "defonce")
+                (matches!(symbol.name.as_str(), "let" | "loop" | "fn" | "defonce")
                     && !scope.excluded_core.contains(&symbol.name))
                 .then_some(symbol.name.as_str())
             }
         } else {
-            (matches!(symbol.name.as_str(), "let" | "fn" | "defonce")
+            (matches!(symbol.name.as_str(), "let" | "loop" | "fn" | "defonce")
                 && !scope.excluded_core.contains(&symbol.name))
             .then_some(symbol.name.as_str())
         }?;
@@ -395,6 +399,8 @@ impl Environment {
         };
         Some(if name == "let" {
             Binding::BootstrapLet(global)
+        } else if name == "loop" {
+            Binding::BootstrapLoop(global.clone())
         } else if name == "fn" {
             Binding::BootstrapFn(global)
         } else {
