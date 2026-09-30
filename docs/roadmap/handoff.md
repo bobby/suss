@@ -4230,3 +4230,19 @@ Python66, pinned inventory1065, review overlay40+1025 and exact eight core-impor
 artifacts also pass. All review Cargo and primary reference graphs are terminal.
 Next require exact reviewed-head CI, then continue source-backed sequence/list and
 variadic rest/apply foundations. Full M2–M9 goal remains active.
+
+## Mutable nominal fields — primary evidence and native regression
+
+The next source sequence prerequisites use mutable fields: List/Cons hash caches,
+LazySeq realization and IndexedSeqIterator position. Added 28 independently encoded
+source cases covering all three pinned mutability flags, metadata map/type hints,
+assignment return values, alias/captured reader/setter lifetime across GC, undefined
+constructor fields, RHS throws/effects and the physical receiver across recur.
+Fresh pinned reference run57892 completed: all28 observations match exactly.
+The same native corpus fails as expected on unsupported type field attributes
+(terminal101), /private/tmp/suss-mutable-field-primary-and-red.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target sh scripts/test-mutable-field-oracle.sh`.
+No implementation or acceptance status changed in this preparation. Next implement
+checked scoped mutable-field assignment, preserve immutable/local rejection and
+receiver anchoring, then run focused and full acceptance before publication/review.
+No local Cargo or fresh reference graph remains live. Full M2–M9 remains active.
