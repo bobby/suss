@@ -45,6 +45,14 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         globals.insert(global.clone());
                         names.insert("binding-get");
                     }
+                    Operation::GlobalBound(global) => {
+                        globals.insert(global.clone());
+                        names.insert("binding-bound");
+                    }
+                    Operation::GlobalWrite { global, .. } => {
+                        globals.insert(global.clone());
+                        names.insert("binding-set");
+                    }
                     Operation::MakeClosure { .. } => {
                         names.insert("closure-new");
                     }
@@ -79,7 +87,8 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 ],
                 vec![VALUE],
             ),
-            "binding-get" | "number-negate" => (vec![VALUE], vec![VALUE]),
+            "binding-get" | "binding-bound" | "number-negate" => (vec![VALUE], vec![VALUE]),
+            "binding-set" => (vec![VALUE, VALUE], vec![]),
             "string-new" => (vec![ValType::I32], vec![VALUE]),
             "string-set-unit" => (vec![VALUE, ValType::I32, ValType::I32], vec![ValType::I32]),
             _ => (vec![VALUE, VALUE], vec![VALUE]),
@@ -260,6 +269,24 @@ fn emit_function(
                     function
                         .instruction(&GlobalGet(index_global))
                         .instruction(&Call(index("binding-get")))
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
+                Operation::GlobalBound(global) => {
+                    let index_global =
+                        globals.binary_search(global).expect("collected global") as u32;
+                    function
+                        .instruction(&GlobalGet(index_global))
+                        .instruction(&Call(index("binding-bound")))
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
+                Operation::GlobalWrite { global, value } => {
+                    let index_global =
+                        globals.binary_search(global).expect("collected global") as u32;
+                    function
+                        .instruction(&GlobalGet(index_global))
+                        .instruction(&LocalGet(value.0 as u32 + offset))
+                        .instruction(&Call(index("binding-set")))
+                        .instruction(&LocalGet(value.0 as u32 + offset))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Call { operands } => {

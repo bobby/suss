@@ -19,6 +19,12 @@ pub struct Value {
 pub enum Operation {
     Literal(Literal),
     GlobalRead(Global),
+    GlobalBound(Global),
+    /// Publish only an already evaluated value; result is that same dynamic value.
+    GlobalWrite {
+        global: Global,
+        value: ValueId,
+    },
     MakeClosure {
         body: Box<ClosureBody>,
         captures: Vec<ValueId>,
@@ -141,6 +147,72 @@ impl Lowerer {
                 Type::Value,
                 hir.span.clone(),
             ),
+            Expression::Definition {
+                global,
+                initializer,
+                once,
+                ..
+            } => {
+                if let Some(initializer) = initializer {
+                    if *once {
+                        let condition = self.emit(
+                            Operation::GlobalBound(global.clone()),
+                            Type::Bool,
+                            hir.span.clone(),
+                        );
+                        let result = self.value(Type::Value, hir.span.clone());
+                        let bound = self.block(Vec::new());
+                        let unbound = self.block(Vec::new());
+                        let join = self.block(vec![result]);
+                        self.function.blocks[self.current].terminator = Terminator::Branch {
+                            condition,
+                            consequent: bound,
+                            alternative: unbound,
+                        };
+                        self.current = bound;
+                        let nil = self.literal(Literal::Nil, hir.span.clone());
+                        self.function.blocks[self.current].terminator = Terminator::Jump {
+                            target: join,
+                            arguments: vec![nil],
+                        };
+                        self.current = unbound;
+                        let value = self.expression(initializer)?;
+                        let value = self.emit(
+                            Operation::GlobalWrite {
+                                global: global.clone(),
+                                value,
+                            },
+                            Type::Value,
+                            hir.span.clone(),
+                        );
+                        self.function.blocks[self.current].terminator = Terminator::Jump {
+                            target: join,
+                            arguments: vec![value],
+                        };
+                        self.current = join;
+                        result
+                    } else {
+                        let value = self.expression(initializer)?;
+                        self.emit(
+                            Operation::GlobalWrite {
+                                global: global.clone(),
+                                value,
+                            },
+                            Type::Value,
+                            hir.span.clone(),
+                        )
+                    }
+                } else {
+                    // A declaration does not reset an existing cell or bind an unbound one.
+                    if *once {
+                        return Err(Diagnostic {
+                            span: hir.span.clone(),
+                            message: "HIR defonce requires initializer".into(),
+                        });
+                    }
+                    self.literal(Literal::Nil, hir.span.clone())
+                }
+            }
             Expression::Local(id) => *self.bindings.get(id).ok_or_else(|| Diagnostic {
                 span: hir.span.clone(),
                 message: "HIR references an undefined binding".into(),
@@ -311,7 +383,8 @@ pub fn lower(hir: &Hir) -> Result<Function, Diagnostic> {
 
 fn operands(operation: &Operation) -> &[ValueId] {
     match operation {
-        Operation::Literal(_) | Operation::GlobalRead(_) => &[],
+        Operation::Literal(_) | Operation::GlobalRead(_) | Operation::GlobalBound(_) => &[],
+        Operation::GlobalWrite { value, .. } => std::slice::from_ref(value),
         Operation::Arithmetic { arguments, .. } => arguments,
         Operation::MakeClosure { captures, .. } => captures,
         Operation::Call { operands } => operands,
@@ -444,6 +517,12 @@ fn verify_function(
                 }
                 Operation::GlobalRead(_) if result_ty != Type::Value => {
                     return Err(fail("IR global reads require dynamic Value type"));
+                }
+                Operation::GlobalBound(_) if result_ty != Type::Bool => {
+                    return Err(fail("IR bound checks require Bool result"));
+                }
+                Operation::GlobalWrite { .. } if result_ty != Type::Value => {
+                    return Err(fail("IR global writes require dynamic Value result"));
                 }
                 Operation::MakeClosure { body, captures } => {
                     if body.arity > i32::MAX as usize

@@ -494,6 +494,26 @@ pub fn module() -> Vec<u8> {
         &[VALUE],
         &[I32Const(0), RefI31, I32Const(0), StructNew(5)],
     );
+    b.function(
+        "binding-bound",
+        &[VALUE],
+        &[VALUE],
+        &[
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(5)),
+            StructGet {
+                struct_type_index: 5,
+                field_index: 1,
+            },
+            If(BlockType::Result(VALUE)),
+            I32Const(4),
+            RefI31,
+            Else,
+            I32Const(2),
+            RefI31,
+            End,
+        ],
+    );
     let mut binding_get = vec![
         LocalGet(0),
         RefCastNonNull(HeapType::Concrete(5)),

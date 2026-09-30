@@ -3,11 +3,19 @@ use suss_compile::{portable, runtime_abi};
 use wasmtime::{Instance, Linker, Module, Store, Val};
 
 fn execute(source: &str) -> (Store<()>, Val) {
-    let bytes = portable::compile(source).unwrap();
-    execute_bytes(bytes)
+    let fragment = portable::prepare_fragment(
+        source,
+        &portable::resolve::Environment::default(),
+        portable::resolve::Phase::Runtime,
+    )
+    .unwrap();
+    execute_fragment(fragment.wasm, fragment.cells)
 }
 
 fn execute_bytes(bytes: Vec<u8>) -> (Store<()>, Val) {
+    execute_fragment(bytes, Vec::new())
+}
+fn execute_fragment(bytes: Vec<u8>, cells: Vec<portable::resolve::Global>) -> (Store<()>, Val) {
     runtime_abi::verify_artifact(&bytes, &runtime_abi::Manifest::default()).unwrap();
     let engine = support::engine();
     let mut store = Store::new(&engine, ());
@@ -21,6 +29,39 @@ fn execute_bytes(bytes: Vec<u8>) -> (Store<()>, Val) {
     linker
         .instance(&mut store, "suss.runtime", runtime)
         .unwrap();
+    for identity in cells {
+        let mut value = [Val::null_any_ref()];
+        runtime
+            .get_func(&mut store, "binding-unbound")
+            .unwrap()
+            .call(&mut store, &[], &mut value)
+            .unwrap();
+        let ty = value[0]
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap()
+            .ty(&store)
+            .unwrap();
+        let global = wasmtime::Global::new(
+            &mut store,
+            wasmtime::GlobalType::new(
+                wasmtime::ValType::Ref(wasmtime::RefType::new(false, ty.into())),
+                wasmtime::Mutability::Const,
+            ),
+            value[0].clone(),
+        )
+        .unwrap();
+        linker
+            .define(
+                &store,
+                identity.import_module(),
+                &identity.import_name(),
+                global,
+            )
+            .unwrap();
+    }
     let fragment = linker
         .instantiate(&mut store, &Module::new(&engine, bytes).unwrap())
         .unwrap();
@@ -439,7 +480,7 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
         let (mut store, value) = execute(source);
         assert_eq!(tagged(&mut store, &value), case["expected"], "{source}");
     }
-    assert_eq!(ids.len(), 34);
+    assert_eq!(ids.len(), 42);
 }
 #[test]
 fn independently_compiled_fragment_values_remain_live_across_gc() {

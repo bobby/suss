@@ -276,6 +276,69 @@
       "expected": {
         "tag": "nil"
       }
+    },
+    {
+      "id": "def-rounded",
+      "source": "(do (def portable-rounded 9007199254740993) portable-rounded)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4340000000000000"
+      }
+    },
+    {
+      "id": "def-return",
+      "source": "(def portable-return -0.0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "def-declaration-preserves",
+      "source": "(do (def portable-declared 7) (def portable-declared) portable-declared)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "def-lexical-init",
+      "source": "(let [x 3] (def portable-local x))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "def-function-live",
+      "source": "(do (def portable-live 7) (def portable-function (fn [] portable-live)) (def portable-live 9) (portable-function))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "defonce-skips-effects",
+      "source": "(do (def portable-effect 0) (defonce portable-once 7) (defonce portable-once (def portable-effect 9)) portable-effect)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "defonce-nil-bound",
+      "source": "(do (defonce portable-nil nil) (defonce portable-nil 9) portable-nil)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "defonce-false-bound",
+      "source": "(do (defonce portable-false false) (defonce portable-false 9) portable-false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
     }
   ]
 }

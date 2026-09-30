@@ -1688,3 +1688,84 @@ is merged by this repair. Next unblocked implementation remains source namespace
 module and definition loading through resolved shared cells and persistent
 compiled clients; the unfinished portable-definitions work is not part of this
 repair. Full baseline and final-head CI results must be reported after completion.
+## Source definition and namespace preparation — 2026-09-30
+
+PR #46's dispatched reviewer pushed significant metadata-condition fix 7b42b4d;
+final CI 36657734298 passed on 7b42b4d2e87997238ad25dc53f9f035ed286814d. It remains
+open/draft and unmerged. This increment originally built on that head in
+resurrection/portable-definitions. During publication, the user-authorized stack
+repair rebased the parent onto merged #43; this increment was then replayed onto
+d77f29edc7ccbf407485513211ffc51ee9d74fb9, retaining both appended handoff sections
+and the merged M0/M1 acceptance/policy changes. Runtime code was unchanged by
+that reconciliation. No agent merged PRs or closed incomplete issues.
+
+An executing source `(def value 7) value` regression FAILED on the old frontend:
+unresolved def, exit 101, /private/tmp/suss-definitions-red.log. Source def and
+bounded bootstrap defonce now register stable identities in a private compiler
+snapshot and lower to explicit GlobalBound/GlobalWrite IR. Initializers evaluate
+once before cell publication; a failure preserves the previous value while
+preceding completed effects remain. Bound nil/false skip defonce initialization.
+Declarations preserve existing cells and leave new ones unbound. Def is a true
+special form; defonce retains core macro identity/lexical shadowing rules.
+Name metadata/spans and optional UTF-16 docstrings remain in HIR. Unsupported
+const/dynamic/private/macro/export definition attributes are located errors.
+
+prepare_fragment returns validated Wasm, staged Environment, current-phase cell
+identities and retained leading ns directive. Source callers share one pipeline.
+Leading ns supports bounded require aliases/refers/renames and core exclusions/
+renames against supplied declarations, not a recursive file loader. Failed source
+compilation cannot mutate the caller environment or allocate host bindings. Tests
+reuse one Store and cells without replay, but are not a production session API.
+An ns scope reset regression FAILED because an old + exclusion survived a fresh
+ns declaration (exit 101, /private/tmp/suss-definitions-ns-reset-red.log). Source ns
+now replaces that phase's imports/exclusions while preserving cells; API namespace
+re-entry still preserves scopes. Qualified cljs.core definitions initially failed
+as a different namespace (exit 101, /private/tmp/suss-definitions-core-alias-red.log);
+they now select the canonical suss.core cell and the regression executes.
+
+Fresh pinned ClojureScript execution confirms def value returns, declaration
+statements preserving existing values, nil/false defonce and lexical initializers.
+An initial oracle fixture put initializerless def directly in a println argument;
+the pinned compiler emitted invalid JavaScript and Node failed. A corrected
+statement-context fixture executes, exit 0; /private/tmp/suss-definitions-reference-corrected.log.
+The failed fixture is retained as a limitation, not called successful. Test fixture
+float annotations and a metadata-span expectation were also corrected; reader
+spans include the metadata prefix. No semantic failure was skipped.
+
+Validation (CARGO_BUILD_JOBS=2; no RUSTFLAGS override):
+
+- `cargo test -p suss-compile --test portable_definitions --test portable_closures --test portable_pipeline --test portable_resolution --test runtime_abi --locked -- --test-threads=2`: final 52 passes, zero ignored (10 definitions/12 closures/13 pipeline/10 resolution/7 ABI); /private/tmp/suss-definitions-final-52-focused.log, exit 0.
+- `scripts/test-portable-pipeline-oracle.sh`: fresh pinned ClojureScript/Node observations match all 42 original portable source cases; 13 executing pipeline tests pass. /private/tmp/suss-definitions-oracle.log, exit 0. The last core namespace fix affects a separate executing regression, not these cases.
+- `cargo test --workspace --locked -- --test-threads=2`: preceding implementation baseline and ns-reset repaired baseline pass, exit 0; /private/tmp/suss-definitions-full.log and /private/tmp/suss-definitions-final-full.log. Final publication baseline on the frozen core-alias repair also passed, exit 0; /private/tmp/suss-definitions-publish-full.log.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 pass; /private/tmp/suss-definitions-python.log. Inventory/hash checks retain 1,065 declarations, zero reviewed / 1,065 unassessed.
+- `python3 scripts/wasi_lock.py`: 15 WIT files / 6 official packages verified. Final offline roadmap preview passes with 10 milestones / 39 stable issues; /private/tmp/suss-definitions-final-roadmap-preview.json.
+- rustfmt check on touched Rust and `git diff --check`: pass.
+
+Actual artifacts validate/link/execute across fragments, retain captures and live
+lookups after rebinding/GC, and preserve initializer publication/effect order.
+Test-only Wasm catchers catch the specific shared language tag, independently
+inspecting descriptor IDs, UTF-16 messages and nil payloads; traps cannot pass.
+Malformed public bound/write IR is rejected before emission. Production ABI
+recursive layouts are unchanged; binding-bound is a new private intrinsic.
+
+Implementation/tests are original; pinned cljs/core.cljc defonce and
+cljs/analyzer.cljc def/ns, licensed EPL-1.0, informed semantics. No implementation
+was copied; future upstream ports still require notices/extraction/patch hashes.
+No new dependency or shipped JVM/Node path exists. The original legacy corpus
+remains 9 differential passes / 7 exact failures / 0 skips; inventory items and
+expected failures are unchanged. See docs/runtime/portable-definitions.md.
+
+Limits: recursive source dependency/file loading, declared namespace validation,
+cycle/privacy/reload/initialization policy, source require-macros and isolated
+compiled macro sessions, runtime metadata/attributes, persistent production
+CLI/AOT/REPL clients, extended signatures/core coercions/collections and remaining
+exception/effect/recur/async IR are unfinished. Initializerless def used as a value
+is not separately certified against an executable pinned artifact. M2/M3 acceptance
+stays incomplete. Publish stacked on #46 with Refs #8/#9/#10/#13, dispatch an
+independent reviewer to push significant repairs, and require final-head CI. Review
+and CI are pending publication. Do not merge.
+
+Next unblocked task: recursive source namespace/module loading connected to staged
+compiler declarations and persistent compiled clients, including deterministic
+missing/mismatched/ambiguous/cyclic errors and initializer policy. Keep the full
+roadmap active; retire obsolete paths only after replacement acceptance.

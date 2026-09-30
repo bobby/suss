@@ -78,6 +78,14 @@ pub enum Expression {
     Local(BindingId),
     /// Read a live cell by resolved language identity, never by a Wasm index.
     Global(Global),
+    Definition {
+        global: Global,
+        name_metadata: Vec<Form>,
+        name_span: Range<usize>,
+        docstring: Option<Vec<u16>>,
+        initializer: Option<Box<Hir>>,
+        once: bool,
+    },
     Let {
         bindings: Vec<Binding>,
         body: Box<Hir>,
@@ -109,13 +117,13 @@ fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
         message: message.into(),
     }
 }
-struct Analyzer<'a> {
-    environment: &'a Environment,
+struct Analyzer {
+    environment: Environment,
     phase: Phase,
     locals: HashMap<String, (BindingId, Type)>,
     next: usize,
 }
-impl Analyzer<'_> {
+impl Analyzer {
     fn body(&mut self, forms: &[Form], span: Range<usize>) -> Result<Hir, Diagnostic> {
         let items = forms
             .iter()
@@ -208,6 +216,85 @@ impl Analyzer<'_> {
             kind: Expression::Call { callee, arguments },
         })
     }
+    fn definition(&mut self, form: &Form, args: &[Form], once: bool) -> Result<Hir, Diagnostic> {
+        if (once && args.len() != 2) || (!once && !(1..=3).contains(&args.len())) {
+            return Err(fail(
+                form.span.clone(),
+                "Definition requires a name and optional initializer; defonce requires both",
+            ));
+        }
+        let Kind::Symbol(name) = &args[0].kind else {
+            return Err(fail(
+                args[0].span.clone(),
+                "Definition name must be a symbol",
+            ));
+        };
+        for metadata in &args[0].metadata {
+            let unsupported = |form: &Form| {
+                matches!(&form.kind, Kind::Keyword(key)
+                if key.namespace.is_none() && matches!(key.name.as_str(), "const" | "dynamic" | "private" | "macro" | "export"))
+            };
+            if unsupported(metadata)
+                || matches!(&metadata.kind, Kind::Map(entries)
+                if entries.chunks_exact(2).any(|entry| unsupported(&entry[0])))
+            {
+                return Err(fail(
+                    args[0].span.clone(),
+                    "Definition const/dynamic/private/macro/export attributes are not implemented yet",
+                ));
+            }
+        }
+        let namespace = self.environment.current_namespace(self.phase).to_owned();
+        if name
+            .namespace
+            .as_deref()
+            .is_some_and(|ns| ns != namespace && !(namespace == "suss.core" && ns == "cljs.core"))
+        {
+            return Err(fail(
+                args[0].span.clone(),
+                "Cannot define a name in another namespace",
+            ));
+        }
+        let global = self
+            .environment
+            .declare_cell(self.phase, &namespace, &name.name)
+            .map_err(|mut error| {
+                error.span = args[0].span.clone();
+                error
+            })?;
+        let init = if args.len() == 3 {
+            if !matches!(args[1].kind, Kind::String(_)) {
+                return Err(fail(
+                    args[1].span.clone(),
+                    "Definition docstring must be a string",
+                ));
+            }
+            Some(&args[2])
+        } else {
+            args.get(1)
+        };
+        let initializer = init.map(|init| self.form(init).map(Box::new)).transpose()?;
+        Ok(Hir {
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: Expression::Definition {
+                global,
+                name_metadata: args[0].metadata.clone(),
+                name_span: args[0].span.clone(),
+                docstring: if args.len() == 3 {
+                    match &args[1].kind {
+                        Kind::String(units) => Some(units.clone()),
+                        _ => unreachable!(),
+                    }
+                } else {
+                    None
+                },
+                initializer,
+                once,
+            },
+        })
+    }
     fn function(
         &mut self,
         form: &Form,
@@ -290,7 +377,7 @@ impl Analyzer<'_> {
         let args = &items[1..];
         let bare = symbol.namespace.is_none();
         // Only true special forms bypass lexical and namespace resolution.
-        let resolved = if bare && matches!(symbol.name.as_str(), "if" | "do" | "fn*") {
+        let resolved = if bare && matches!(symbol.name.as_str(), "if" | "do" | "fn*" | "def") {
             None
         } else {
             if bare && self.locals.contains_key(&symbol.name) {
@@ -306,6 +393,12 @@ impl Analyzer<'_> {
                 },
             )
         };
+        if bare && symbol.name == "def" {
+            return self.definition(form, args, false);
+        }
+        if matches!(resolved, Some(ResolvedBinding::BootstrapDefonce(_))) {
+            return self.definition(form, args, true);
+        }
         if (bare && symbol.name == "fn*")
             || matches!(resolved, Some(ResolvedBinding::BootstrapFn(_)))
         {
@@ -434,6 +527,10 @@ impl Analyzer<'_> {
 }
 fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<BindingId>) {
     match &hir.kind {
+        Expression::Definition {
+            initializer: Some(value),
+            ..
+        } => free_bindings(value, bound, free),
         Expression::Local(id) => {
             if !bound.contains(id) {
                 free.insert(*id);
@@ -490,11 +587,21 @@ pub fn analyze_in(
     environment: &Environment,
     phase: Phase,
 ) -> Result<Hir, Diagnostic> {
-    Analyzer {
-        environment,
+    Ok(prepare(forms, span, environment, phase)?.0)
+}
+/// Analyze with a private environment snapshot; failure cannot mutate caller state.
+pub(crate) fn prepare(
+    forms: &[Form],
+    span: Range<usize>,
+    environment: &Environment,
+    phase: Phase,
+) -> Result<(Hir, Environment), Diagnostic> {
+    let mut analyzer = Analyzer {
+        environment: environment.clone(),
         phase,
         locals: HashMap::new(),
         next: 0,
-    }
-    .body(forms, span)
+    };
+    let hir = analyzer.body(forms, span)?;
+    Ok((hir, analyzer.environment))
 }
