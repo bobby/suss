@@ -250,3 +250,38 @@ fn native_satisfies_function_is_first_class_and_macro_fallback_observes_redefini
         4
     );
 }
+
+#[test]
+fn qualified_native_extension_updates_captured_dispatcher_across_namespaces_and_gc() {
+    let mut session = Session::new().unwrap();
+    session.enter_namespace("protocol.owner").unwrap();
+    session
+        .eval("(defprotocol P (read [x])) (extend-type number P (read [x] 1))")
+        .unwrap();
+    session.enter_namespace("protocol.client").unwrap();
+    session.eval("(def captured protocol.owner/read)").unwrap();
+    session.collect().unwrap();
+    assert_eq!(eval_number(&mut session, "(captured 7)"), 1.0f64.to_bits());
+    session
+        .eval("(extend-type number protocol.owner/P (read [x] 2))")
+        .unwrap();
+    session.collect().unwrap();
+    assert_eq!(eval_number(&mut session, "(captured 7)"), 2.0f64.to_bits());
+    assert!(eval_bool(&mut session, "(satisfies? protocol.owner/P 7)"));
+    session.enter_namespace("protocol.owner").unwrap();
+    session.eval("(def read (fn [x] 9))").unwrap();
+    session.enter_namespace("protocol.client").unwrap();
+    assert!(matches!(
+        session.eval("(captured 7)"),
+        Err(SessionError::Language(_))
+    ));
+    session
+        .eval("(extend-type number protocol.owner/P (read [x] 3))")
+        .unwrap();
+    session.collect().unwrap();
+    assert_eq!(eval_number(&mut session, "(captured 7)"), 3.0f64.to_bits());
+    assert_eq!(
+        eval_number(&mut session, "(protocol.owner/read 7)"),
+        9.0f64.to_bits()
+    );
+}

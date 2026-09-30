@@ -4063,3 +4063,32 @@ four forms; only their manifest's review-overlay hash changed. No ABI prelude,
 numeric helper, shipped dependency, issue acceptance status or milestone changed.
 
 Required full baseline passed: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`, graph20021 terminal0, /private/tmp/suss-native-protocols-baseline.log. No native or fresh oracle graph remains live. Next publish the native foundation PR against main, dispatch independent review/fixes, and require exact final-head CI. Then continue source-backed sequence/collection foundations and the remaining M2–M9 acceptance; the full ROADMAP goal remains active.
+
+## Independent PR #77 review — 2026-09-30
+
+Reviewed candidate c9806c9 against accepted design, source provenance and pinned
+ClojureScript native dispatch expansions. No significant production defect was
+found in the supported source surface. Direct descriptor methods precede live
+specific/default tables; the current binding cell is read during native fallback,
+not protocol construction. Closure ownership preserves original callback
+arguments, avoids a globally rooted registry and retains raw foreign environments.
+GlobalCell HIR/IR type guards and private runtime argument/schema checks were
+inspected and executed. Arbitrary native host properties remain a documented
+unsupported boundary rather than a claim of full core compatibility.
+
+Added an independent regression for qualified native extension from a different
+namespace, captured dispatch, current method replacement and re-extension after
+forced GC. Native11 passes; initial ABI16/nominal3 focus also passes.
+Fresh pinned native29 observations match exactly and native11 passes via
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-native-protocol-oracle.sh`.
+Review logs: /private/tmp/suss-pr77-review-focus.log,
+/private/tmp/suss-pr77-review-native.log and /private/tmp/suss-pr77-review-oracle.log.
+Required final review workspace baseline is recorded below upon completion.
+No issue acceptance or milestone status changes; next require exact reviewed-head
+CI before ready, then continue sequence/collection/core foundations. Do not merge.
+
+Review required full baseline completed successfully: graph74362 terminal0,
+/private/tmp/suss-pr77-review-baseline.log, command
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Python66, pinned inventory1065, review overlay28+1037 and exact eight core-import
+artifacts also pass. All review native/reference graphs are terminal and released.

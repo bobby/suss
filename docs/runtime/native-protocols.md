@@ -67,7 +67,7 @@ redefinition/redeclaration and native Boolean extension results; the expanded
 29-case corpus adds whole-function replacement, receiver-changing recur,
 missing/surplus native parameters, a public first-class native-satisfies? function
 and its live macro fallback.
-Fresh29 observations match exactly; the full locked workspace baseline passes. Seven missing-feature native regressions initially failed; native10
+Fresh29 observations match exactly; the full locked workspace baseline passes. Seven missing-feature native regressions initially failed; native11
 now passes against actual Wasm execution, including the corpus decoder. The
 surrounding session/core/dynamic/exception/predicate/compiler suites pass.
 Low-level ABI16 passes, including ownership/foreign-environment checks.
