@@ -208,7 +208,7 @@ fn diamond_graph_initializes_once_in_require_order_and_reuses_provided_modules()
     file(
         root.path(),
         "app.sus",
-        "(ns app (:require [left :as left] [right :as right] [shared :as shared])) (def value 4) shared/value",
+        "(ns app (:require [right :as right] [left :as left] [shared :as shared])) (def value 4) shared/value",
     );
     let mut host = Host::new();
     let plan = host.plan("app", &[root.path()], Phase::Runtime).unwrap();
@@ -217,7 +217,7 @@ fn diamond_graph_initializes_once_in_require_order_and_reuses_provided_modules()
             .iter()
             .map(|module| module.identity.namespace())
             .collect::<Vec<_>>(),
-        ["shared", "left", "right", "app"]
+        ["shared", "right", "left", "app"]
     );
     let values = host.run(plan).unwrap();
     assert_eq!(host.bits(values.last().unwrap()), 1.0f64.to_bits());
@@ -225,8 +225,8 @@ fn diamond_graph_initializes_once_in_require_order_and_reuses_provided_modules()
         host.store.data(),
         &[
             1.0f64.to_bits(),
-            2.0f64.to_bits(),
             3.0f64.to_bits(),
+            2.0f64.to_bits(),
             4.0f64.to_bits()
         ]
     );

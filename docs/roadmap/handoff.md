@@ -1944,3 +1944,44 @@ Next unblocked task: connect immutable module plans and staged fragments to a
 production persistent session with shared runtime/cells, distinct language-error
 recovery, no source replay and explicit resident-code/reset policy. Continue the
 full roadmap; do not retire legacy paths before replacement acceptance.
+
+## Dispatched PR #49 review — 2026-09-30
+
+Independent review at published 31f2aeff18c7ff76a1c6916235aa32ac8db62821 audited
+shared namespace header parsing, source snapshots and staged compilation, DFS
+require order/deduplication/cycles, canonical source ambiguity and declarations,
+explicit provided authority and phase/core identities, diagnostics, artifact gates,
+shared-cell initialization and typed failure/retry evidence. No significant
+production defect was found. The existing diamond listed siblings alphabetically,
+so an accidental dependency sort could pass its order assertions. The review
+strengthens that regression to require right before left and checks both emitted
+plan order and actual writes [1,3,2,4]. No compiler/runtime implementation changes.
+
+A temporary alphabetical-sort mutation fails the strengthened test with the exact
+wrong module order, exit 101; /private/tmp/suss-pr49-review-sorting-negative.log.
+The mutation was restored completely and is not part of the PR. Root's fresh
+pinned ClojureScript/Node reverse-order diamond independently observes
+shared/right/left/app/result 1; /private/tmp/suss-modules-order-observations.txt.
+An initial upstream fixture path setup failed before being corrected; that failure
+is not called a successful execution. The probe is development-only and does not
+claim full module/core compatibility.
+
+Commands and terminal results (CARGO_BUILD_JOBS=2, shared CARGO_TARGET_DIR,
+no RUSTFLAGS override):
+
+- `cargo test -p suss-compile --test portable_modules --test portable_definitions --test portable_closures --test portable_pipeline --test portable_resolution --test runtime_abi --locked -- --test-threads=2`: published and repaired 65 passes, zero ignored, exit 0; /private/tmp/suss-pr49-review-focused.log and /private/tmp/suss-pr49-review-final-focused.log.
+- `cargo test --workspace --locked -- --test-threads=2`: published and repaired baselines pass, exit 0; /private/tmp/suss-pr49-review-full.log and /private/tmp/suss-pr49-review-final-full.log. The repaired full run covers the final test/compiler tree; only documentation was edited while it ran.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 pass, exit 0; /private/tmp/suss-pr49-review-python.log.
+- Offline `python3 scripts/publish_roadmap.py`: pass, exit 0; /private/tmp/suss-pr49-review-roadmap-preview.json. Stable issue IDs retained.
+- Touched-file rustfmt checks and `git diff --check`: pass.
+
+No remaining significant review finding. Existing manual/legacy/doc ignores,
+42-case portable corpus, legacy 9 passes/7 exact failures/0 skips and all 1,065
+unassessed inventory entries are unchanged. No implementation was copied from
+upstream; the test/evidence repair adds no dependency, ABI change or shipped
+JVM/Node path. Production sessions, source reload/cache/privacy, compiled macros,
+full core/IR/targets and M2/M3 acceptance remain incomplete. Next connect module
+plans and fragments to the production persistent session with explicit error
+recovery and resident-code/reset policy. Push the review repair and require CI on
+the exact final reviewed head before readiness. Do not merge or close incomplete
+roadmap packages.

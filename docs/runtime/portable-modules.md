@@ -66,7 +66,9 @@ compile-error atomicity and immutable source snapshots. Corrupting a later artif
 rejects the graph before cell allocation or effects. A failing initializer is
 verified as the exact shared language tag with independently inspected NotCallable
 descriptor after GC; prior effects/binding survive and retry does not replay its
-successful dependency. An ordinary namespace declaration cannot bypass loading.
+successful dependency. The diamond lists siblings in reverse lexical order and
+asserts the actual write trace, so accidentally sorting dependencies cannot pass.
+An ordinary namespace declaration cannot bypass loading.
 
 The existing 42-case portable source corpus is independently compared with fresh
 pinned ClojureScript/Node output, then executed as actual Suss artifacts. The
