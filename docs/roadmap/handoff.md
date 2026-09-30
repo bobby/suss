@@ -3230,3 +3230,18 @@ Required full cargo test --workspace --locked -- --test-threads=2 now starts
 alone, /private/tmp/suss-dynamic-workspace.log, using shared target/two build jobs.
 Verify its actual terminal outcome before commit/push/review. No PR exists yet;
 issues9/11 and M2–M9 remain incomplete.
+
+Dynamic candidate required full baseline terminal exit0:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2,
+/private/tmp/suss-dynamic-workspace.log. Includes native56, selected portable
+compiler82, actual278 source artifacts, runtimeABI13, legacy expressions317/12
+existing ignores, components29, strict conformance9/2 manual ignores and all
+reader/core/doc targets including suss_cli. Existing ignores and legacy
+9pass/7fail differential baseline unchanged. No native/reference process live.
+
+Committed implementation3937b7c58246f1f0c82292f9eece3231b26dc4c2 and pushed
+resurrection/portable-dynamic-bindings. Draft PR #68 stacked on #67 uses
+Refs #9/#11. Independent review and exact final-head CI remain required; no
+readiness claim, issue closure or merge. Next reviewer inspects and pushes
+significant fixes, then verify its actual results and final-head CI.
