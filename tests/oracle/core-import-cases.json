@@ -932,6 +932,38 @@
         "tag": "f64",
         "bits": "7ff8000000000000"
       }
+    },
+    {
+      "id": "inc-callee-before-operand-rebinding",
+      "source": "(with-redefs [inc inc] ((if true inc identity) (do (set! inc (fn [x] 90)) 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "inc-thrown-operand-finally",
+      "source": "(do (def review-effects 0) (try (let [f inc] (f (do (def review-effects (+ review-effects 1)) (throw 7)))) (catch :default e nil) (finally (def review-effects (+ review-effects 10)))) review-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    },
+    {
+      "id": "dec-callee-before-operand-rebinding",
+      "source": "(with-redefs [dec dec] ((if true dec identity) (do (set! dec (fn [x] 90)) 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "dec-thrown-operand-finally",
+      "source": "(do (def review-effects 0) (try (let [f dec] (f (do (def review-effects (+ review-effects 1)) (throw 7)))) (catch :default e nil) (finally (def review-effects (+ review-effects 10)))) review-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
     }
   ]
 }

@@ -70,7 +70,7 @@ closed after their exit gates were rechecked. M2–M9 remain open.
 
 ### M4: Portable persistent collections
 
-- **M4-01 — Upstream extraction and adaptation provenance** (in-progress). Reviewed ID selection now reproduces exact source forms, explicit hash-bound patches, EPL packaging and a generated canonical core artifact. Six bootstrap identity/not/boolean/some?/inc/dec forms execute with GC/redefinition/order regressions and a separate 113-case primary corpus. Full core dependencies/macros/loading acceptance remains; see [core import](docs/compatibility/CORE-IMPORT.md).
+- **M4-01 — Upstream extraction and adaptation provenance** (in-progress). Reviewed ID selection now reproduces exact source forms, explicit hash-bound patches, EPL packaging and a generated canonical core artifact. Six bootstrap identity/not/boolean/some?/inc/dec forms execute with GC/redefinition/order regressions and a separate 117-case primary corpus. Full core dependencies/macros/loading acceptance remains; see [core import](docs/compatibility/CORE-IMPORT.md).
 - **M4-02 — Sequences, lists and vectors** (in-progress). GC-owned mutable array storage, scoped nominal field mutation and bounded source macro/runtime adaptations now establish prerequisites for IndexedSeq, list and variadic rest; see [array foundations](docs/runtime/arrays.md). Persistent sequence/list/vector/subvector/map-entry and lazy/chunked acceptance remain unfinished.
 - **M4-03 — Maps, sets, queues, records and sorted types** (planned). Port HAMTs, sorted collections, queues and record behavior.
 - **M4-04 — Hashing, metadata, transients and reduction** (planned). Complete shared collection protocols and all reduction paths.

@@ -4354,3 +4354,36 @@ Final Python66, inventory1065, reviews42+1023, exact ten artifacts, numeric/WIT
 locks and offline preview pass. No RUSTFLAGS override or unrelated deletions.
 Publish the partial source import and dispatch independent review; final-head CI
 remains required before readiness. No merge or issue/milestone closure.
+
+## Independent PR #80 review — 2026-09-30
+
+Reviewed candidate8d184c8 against retained pinned inc/dec forms, arithmetic macros,
+emitted reference core.js, hash-bound patches and generated EPL artifacts. No
+significant production finding in the documented supported surface. Arithmetic
+bodies remain primitive operations independent of mutable public arithmetic vars;
+first-class inc concatenates UTF-16 strings whereas dec numerically coerces them.
+Source macro bootstrap, object conversion, metadata/privacy and automatic core
+loading remain unfinished; no acceptance or milestone status changed.
+
+Added four independent fresh primary/native observations for callee capture before
+operand rebinding and thrown operands with finally cleanup. Original113 certified
+observations remain unchanged. Native alias-qualified regression also forces GC
+and verifies restoration after temporary runtime binding replacement. Focus41191
+and fresh pinned graph28719 completed terminal0: native17 and117 exact primary
+observations. Logs: /private/tmp/suss-pr80-review-focus.log and
+/private/tmp/suss-pr80-review-oracle.log. Deliberate reference redefinition warnings
+remain recorded; no skipped or opaque observations.
+Commands: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-cli --test core_import --locked -- --test-threads=2`
+and `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-core-import-oracle.sh`.
+Python66/inventory1065/reviews42+1023/exact ten source artifacts pass in
+/private/tmp/suss-pr80-review-provenance.log. Required full workspace baseline
+result is recorded below after terminal completion. Next require exact reviewed
+head CI before readiness, then continue source sequences/lists, variadic rest/apply
+and remaining M2–M9 acceptance. No merge or issue closure is authorized.
+
+Review required full baseline52286 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-pr80-review-baseline.log. All review Cargo and fresh primary
+reference graphs are terminal and released. No RUSTFLAGS override or unrelated
+file deletions. Push this independent regression/evidence commit and require exact
+final-head CI before readiness. Full M2–M9 goal remains active; do not merge.

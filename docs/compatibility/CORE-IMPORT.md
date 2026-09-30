@@ -53,7 +53,7 @@ namespace and execute independently decoded results. They cover aliases, old
 captured function values, live redefinition, exact identity of scalars/functions/
 nominal objects through GC, ordered once-only arguments and wrong-arity recovery.
 The development-only oracle executes the pinned upstream identity/not/boolean/some?/inc/dec
-definitions, using the same 113-case scalar/truthiness/redefinition corpus as native execution and strict lossless
+definitions, using the same 117-case scalar/truthiness/redefinition corpus as native execution and strict lossless
 transport for binary64, nil/booleans and UTF-16. JVM/Node are needed only for this
 reference runner, not extraction, verification or Suss execution.
 
@@ -77,6 +77,8 @@ Fresh captured-function cases and emitted core.js show `(x + 1)` and `(x - 1)`
 without public arithmetic var lookups. Inc preserves string concatenation, dec
 performs numeric coercion; nil/booleans, signed zero, infinities and binary64
 rounding follow the pinned runtime. The original72 certified observations are
-unchanged;41 new first-class cases extend the source import corpus to113.
+unchanged;45 new first-class cases extend the source import corpus to117.
+Independent review adds callee capture before operand rebinding and thrown-operand
+finally cleanup, with namespace-alias restoration and forced GC in native tests.
 Object coercion and compiled inc/dec/defn macro bootstrap remain incomplete;
 these two partial reviews do not establish complete collection/core acceptance.

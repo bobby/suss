@@ -207,7 +207,7 @@ sequence/collection/core integration remain unfinished. This does not change the
 
 Two more retained-source forms, inc/dec, have explicit hash-bound defn patches,
 original source/docstrings/notices and byte-preserved EPL packaging. The fresh
-source import corpus now has113 observations (original72 unchanged);41 added
+source import corpus now has117 observations (original72 unchanged);45 added
 cases cover first-class scalar coercion, inc UTF-16 concatenation, binary64
 rounding, aliases, primitive arithmetic independence and current runtime cells.
 The current overlay is42 in-progress reviews/1023 unassessed. Full compiled
