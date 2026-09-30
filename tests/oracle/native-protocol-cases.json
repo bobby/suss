@@ -1,0 +1,238 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "nil-dispatch",
+      "source": "(do (defprotocol ProbeNil (probe-nil [x])) (extend-type nil ProbeNil (probe-nil [x] 10)) (probe-nil nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "nil-membership",
+      "source": "(satisfies? ProbeNil nil)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "number-dispatch",
+      "source": "(do (defprotocol ProbeNumber (probe-number [x])) (extend-type number ProbeNumber (probe-number [x] 20)) (probe-number 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4034000000000000"
+      }
+    },
+    {
+      "id": "number-membership",
+      "source": "(satisfies? ProbeNumber 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boolean-dispatch",
+      "source": "(do (defprotocol ProbeBoolean (probe-boolean [x])) (extend-type boolean ProbeBoolean (probe-boolean [x] 30)) (probe-boolean false))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403e000000000000"
+      }
+    },
+    {
+      "id": "boolean-membership",
+      "source": "(satisfies? ProbeBoolean false)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-dispatch",
+      "source": "(do (defprotocol ProbeString (probe-string [x])) (extend-type string ProbeString (probe-string [x] 40)) (probe-string \"\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4044000000000000"
+      }
+    },
+    {
+      "id": "string-membership",
+      "source": "(satisfies? ProbeString \"\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "function-dispatch",
+      "source": "(do (defprotocol ProbeFunction (probe-function [x])) (extend-type function ProbeFunction (probe-function [x] 50)) (probe-function (fn [] 1)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4049000000000000"
+      }
+    },
+    {
+      "id": "function-membership",
+      "source": "(satisfies? ProbeFunction (fn [] 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "object-dispatch",
+      "source": "(do (defprotocol ProbeObject (probe-object [x])) (extend-type object ProbeObject (probe-object [x] 60)) (probe-object (ex-info \"m\" 7)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404e000000000000"
+      }
+    },
+    {
+      "id": "object-membership",
+      "source": "(satisfies? ProbeObject (ex-info \"m\" 7))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "undefined-is-nil",
+      "source": "(probe-nil (ex-data (new ExceptionInfo \"m\")))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "empty-native-extension",
+      "source": "(do (defprotocol NativeEmpty) (extend-type nil NativeEmpty))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "default-dispatch",
+      "source": "(do (defprotocol NativeDefault (probe-default [x])) (extend-type default NativeDefault (probe-default [x] 9)) (probe-default false))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "default-membership",
+      "source": "(satisfies? NativeDefault false)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "specific-before-default",
+      "source": "(do (extend-type boolean NativeDefault (probe-default [x] 8)) (probe-default false))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "direct-before-object",
+      "source": "(do (defprotocol NativeDirect (probe-direct [x])) (deftype NativeItem [] NativeDirect (probe-direct [x] 1)) (extend-type object NativeDirect (probe-direct [x] 2)) (probe-direct (NativeItem.)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "captured-live-method-table",
+      "source": "(do (defprotocol NativeLive (probe-live [x])) (extend-type number NativeLive (probe-live [x] 1)) (def captured-live probe-live) (def probe-live (fn [x] 9)) (try (captured-live 7) (catch :default e true)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "captured-reextended-table",
+      "source": "(do (defprotocol NativeLive (probe-live [x])) (extend-type number NativeLive (probe-live [x] 2)) (captured-live 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "redeclared-membership",
+      "source": "(do (defprotocol NativeReset (probe-reset [x])) (extend-type number NativeReset (probe-reset [x] 1)) (def captured-reset probe-reset) (defprotocol NativeReset (probe-reset [x])) (satisfies? NativeReset 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "redeclared-method",
+      "source": "(try (captured-reset 7) (catch :default e true))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "native-recur-receiver",
+      "source": "(do (defprotocol NativeRecur (probe-recur [x] [x y])) (extend-type number NativeRecur (probe-recur ([x] 1) ([x y] 2))) (def captured-recur probe-recur) (extend-type number NativeRecur (probe-recur [x] (if (nil? x) 3 (recur nil)))) (captured-recur 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "native-arity-replacement",
+      "source": "(try (captured-recur 7 8) (catch :default e true))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "native-core-helper",
+      "source": "(native-satisfies? NativeEmpty nil)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "native-core-helper-firstclass",
+      "source": "(let [f native-satisfies?] (f NativeDefault false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "native-core-helper-live-fallback",
+      "source": "(with-redefs [native-satisfies? (fn [p x] 7)] (satisfies? NativeDefault false))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "native-core-helper-fast-path",
+      "source": "(do (deftype NativeMarked [] NativeEmpty) (with-redefs [native-satisfies? (fn [p x] 7)] (satisfies? NativeEmpty (NativeMarked.))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "native-missing-parameter",
+      "source": "(do (extend-type number NativeRecur (probe-recur [x y] (undefined? y))) (captured-recur 7))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

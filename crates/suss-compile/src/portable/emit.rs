@@ -65,6 +65,9 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                             names.insert("string-set-unit");
                         }
                     }
+                    Operation::GlobalCell(global) => {
+                        globals.insert(global.clone());
+                    }
                     Operation::GlobalRead(global) => {
                         globals.insert(global.clone());
                         names.insert("binding-get");
@@ -89,6 +92,15 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::Nominal { operation, .. } => match operation {
                         Nominal::Array => {}
+                        Nominal::LiveDispatcher => {
+                            names.insert("protocol-live-dispatcher-new");
+                        }
+                        Nominal::NativeMarker(_) => {
+                            names.insert("protocol-native-marker-set");
+                        }
+                        Nominal::NativeSet(_) => {
+                            names.insert("protocol-native-method-set");
+                        }
                         Nominal::Descriptor => {
                             names.insert("descriptor-new");
                         }
@@ -149,6 +161,9 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let type_count = runtime_abi::TYPE_COUNT;
     for (i, name) in names.iter().enumerate() {
         let (params, results) = match *name {
+            "protocol-live-dispatcher-new" => (vec![VALUE, VALUE], vec![VALUE]),
+            "protocol-native-marker-set" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
+            "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
             "object-instance" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
@@ -462,6 +477,15 @@ fn emit_function(
                             .instruction(&Drop);
                     }
                 }
+                Operation::GlobalCell(global) => {
+                    let index_global = globals
+                        .binary_search(global)
+                        .expect("collected cell identity")
+                        as u32;
+                    function
+                        .instruction(&GlobalGet(index_global))
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
                 Operation::GlobalRead(global) => {
                     let index_global =
                         globals.binary_search(global).expect("collected global") as u32;
@@ -597,6 +621,27 @@ fn emit_function(
                     arguments,
                 } => {
                     match operation {
+                        Nominal::LiveDispatcher => {
+                            for argument in arguments {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&Call(index("protocol-live-dispatcher-new")));
+                        }
+                        Nominal::NativeMarker(kind) | Nominal::NativeSet(kind) => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&I32Const(kind.index()));
+                            if let Some(argument) = arguments.get(1) {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&Call(index(
+                                if matches!(operation, Nominal::NativeMarker(_)) {
+                                    "protocol-native-marker-set"
+                                } else {
+                                    "protocol-native-method-set"
+                                },
+                            )));
+                        }
                         Nominal::Array | Nominal::Descriptor => {
                             for argument in arguments {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));

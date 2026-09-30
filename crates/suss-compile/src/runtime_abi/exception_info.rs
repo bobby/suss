@@ -185,7 +185,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             RefFunc(ordinary),
             I32Const(0),
             I32Const(-1),
-            StructNew(4),
+            Call(b.names["closure-new"]),
         ],
     );
     let binding_get = b.names["binding-get"];
@@ -265,7 +265,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             RefFunc(make),
             I32Const(2),
             I32Const(3),
-            StructNew(4),
+            Call(b.names["closure-new"]),
         ],
     );
     for (name, field) in [("ex-message", 0), ("ex-data", 1), ("ex-cause", 2)] {
@@ -338,7 +338,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 RefFunc(getter),
                 I32Const(1),
                 I32Const(1),
-                StructNew(4),
+                Call(b.names["closure-new"]),
             ],
         );
     }

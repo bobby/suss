@@ -151,12 +151,29 @@ impl Analyzer {
                     ty: Type::Value,
                     kind: Expression::Global(protocol),
                 };
-                let alternative =
-                    self.nominal(form, Nominal::NativeSatisfies, vec![protocol_value, value]);
+                let symbol = suss_reader::Symbol {
+                    namespace: Some("suss.core".into()),
+                    name: "native-satisfies?".into(),
+                };
+                let (callee, ty) = self.global_value(&symbol, form.span.clone())?;
+                let alternative = Hir {
+                    span: form.span.clone(),
+                    metadata: Vec::new(),
+                    ty: Type::Value,
+                    kind: Expression::Call {
+                        callee: Box::new(Hir {
+                            span: form.span.clone(),
+                            metadata: Vec::new(),
+                            ty,
+                            kind: callee,
+                        }),
+                        arguments: vec![protocol_value, value],
+                    },
+                };
                 let body = Hir {
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
-                    ty: Type::Bool,
+                    ty: Type::Value,
                     kind: Expression::If {
                         condition: Box::new(condition),
                         consequent: Box::new(self.literal_form(form, Literal::Bool(true))),
@@ -166,7 +183,7 @@ impl Analyzer {
                 Ok(Hir {
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
-                    ty: Type::Bool,
+                    ty: Type::Value,
                     kind: Expression::Let {
                         bindings: vec![binding],
                         body: Box::new(body),
@@ -179,6 +196,20 @@ impl Analyzer {
                 let Some(class) = args.first() else {
                     return Err(fail(form.span.clone(), "extend-type requires a type"));
                 };
+                if let Some(kind) = NativeKind::from_form(class) {
+                    let mut effects = self.native_protocol_extensions(form, &args[1..], kind)?;
+                    if effects.is_empty() {
+                        effects.push(self.literal_form(form, Literal::Nil));
+                    }
+                    return Ok(self.do_hir(form, effects));
+                }
+                if matches!(&class.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && matches!(symbol.name.as_str(), "symbol" | "bigint"))
+                {
+                    return Err(fail(
+                        class.span.clone(),
+                        "Native symbol/bigint values are not lowered yet",
+                    ));
+                }
                 let value = self.form(class)?;
                 let binding = self.fresh_binding(class, value);
                 let class_value = self.local(class, binding.id);
@@ -431,7 +462,18 @@ impl Analyzer {
                 let key = self.fresh_binding(params, descriptor);
                 let key_value = self.local(params, key.id);
                 bindings.push(key);
-                let dispatcher = self.nominal(params, Nominal::Dispatcher, vec![key_value]);
+                let namespace = self.environment.current_namespace(self.phase).to_owned();
+                let method_global =
+                    self.environment
+                        .declare_cell(self.phase, &namespace, &symbol.name)?;
+                let cell = Hir {
+                    span: method_name.span.clone(),
+                    metadata: Vec::new(),
+                    ty: Type::Value,
+                    kind: Expression::GlobalCell(method_global),
+                };
+                let dispatcher =
+                    self.nominal(params, Nominal::LiveDispatcher, vec![key_value, cell]);
                 let dispatcher = self.fresh_binding(params, dispatcher);
                 captures.push(dispatcher.id);
                 let callee = self.local(params, dispatcher.id);
@@ -528,6 +570,146 @@ impl Analyzer {
                 body: Box::new(body),
             },
         })
+    }
+    fn native_protocol_extensions(
+        &mut self,
+        form: &Form,
+        args: &[Form],
+        kind: NativeKind,
+    ) -> Result<Vec<Hir>, Diagnostic> {
+        let mut effects = Vec::new();
+        let mut index = 0;
+        while index < args.len() {
+            let protocol_name = &args[index];
+            index += 1;
+            let global = self.named_global(protocol_name)?;
+            let methods = self
+                .environment
+                .protocols
+                .get(&global)
+                .cloned()
+                .ok_or_else(|| {
+                    fail(
+                        protocol_name.span.clone(),
+                        "Extension requires a declared protocol",
+                    )
+                })?;
+            let protocol = Hir {
+                span: protocol_name.span.clone(),
+                metadata: protocol_name.metadata.clone(),
+                ty: Type::Value,
+                kind: Expression::Global(global.clone()),
+            };
+            effects.push(self.nominal(protocol_name, Nominal::NativeMarker(kind), vec![protocol]));
+            while index < args.len() && matches!(args[index].kind, Kind::List(_)) {
+                let method_form = &args[index];
+                index += 1;
+                let Kind::List(items) = &method_form.kind else {
+                    unreachable!()
+                };
+                let Some(method_name) = items.first() else {
+                    return Err(fail(method_form.span.clone(), "Empty extension method"));
+                };
+                let Kind::Symbol(symbol) = &method_name.kind else {
+                    return Err(fail(
+                        method_name.span.clone(),
+                        "Extension method requires a name",
+                    ));
+                };
+                let method = methods
+                    .iter()
+                    .find(|method| method.name == symbol.name && symbol.namespace.is_none())
+                    .ok_or_else(|| {
+                        fail(
+                            method_name.span.clone(),
+                            "Method is not declared by this protocol",
+                        )
+                    })?;
+                let signatures = if items
+                    .get(1)
+                    .is_some_and(|item| matches!(item.kind, Kind::Vector(_)))
+                {
+                    vec![&items[1..]]
+                } else {
+                    items[1..]
+                        .iter()
+                        .map(|item| {
+                            if let Kind::List(items) = &item.kind {
+                                Ok(items.as_slice())
+                            } else {
+                                Err(fail(
+                                    item.span.clone(),
+                                    "Extension signature requires a list",
+                                ))
+                            }
+                        })
+                        .collect::<Result<Vec<_>, _>>()?
+                };
+                if signatures.is_empty() {
+                    return Err(fail(
+                        method_form.span.clone(),
+                        "Extension method requires a signature",
+                    ));
+                }
+                for signature in &signatures {
+                    let Some(params) = signature.first() else {
+                        return Err(fail(method_form.span.clone(), "Empty extension signature"));
+                    };
+                    let Kind::Vector(parameters) = &params.kind else {
+                        return Err(fail(
+                            params.span.clone(),
+                            "Extension signature requires a parameter vector",
+                        ));
+                    };
+                    if !method
+                        .signatures
+                        .iter()
+                        .any(|(arity, _)| *arity == parameters.len())
+                    {
+                        return Err(fail(
+                            params.span.clone(),
+                            "Extension arity is not declared by this protocol",
+                        ));
+                    }
+                }
+                // Base-type assignment replaces one entire multi-arity function,
+                // unlike independent prototype slots on a nominal extension.
+                let operator = Form {
+                    span: method_name.span.clone(),
+                    metadata: Vec::new(),
+                    kind: Kind::Symbol(suss_reader::Symbol {
+                        namespace: None,
+                        name: "fn*".into(),
+                    }),
+                };
+                let mut function_items = vec![operator];
+                function_items.extend_from_slice(&items[1..]);
+                let function_form = Form {
+                    span: method_form.span.clone(),
+                    metadata: method_form.metadata.clone(),
+                    kind: Kind::List(function_items),
+                };
+                let implementation = self.form(&function_form)?;
+                let method_symbol = suss_reader::Symbol {
+                    namespace: Some(global.namespace().into()),
+                    name: method.name.clone(),
+                };
+                let (method_value, ty) =
+                    self.global_value(&method_symbol, method_name.span.clone())?;
+                let method_value = Hir {
+                    span: method_name.span.clone(),
+                    metadata: Vec::new(),
+                    ty,
+                    kind: method_value,
+                };
+                effects.push(self.nominal(
+                    form,
+                    Nominal::NativeSet(kind),
+                    vec![method_value, implementation],
+                ));
+            }
+        }
+        Ok(effects)
     }
     fn protocol_extensions(
         &mut self,

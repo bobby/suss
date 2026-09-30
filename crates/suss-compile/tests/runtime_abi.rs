@@ -1445,7 +1445,28 @@ fn runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access() 
         "protocol-dispatcher-new",
         &[descriptor.clone()],
     );
+    let cell = nominal_value(&mut store, runtime, "binding-unbound", &[]);
     for (name, args, returns_value) in [
+        (
+            "protocol-live-dispatcher-new",
+            vec![invalid_schema.clone(), cell.clone()],
+            true,
+        ),
+        (
+            "protocol-live-dispatcher-new",
+            vec![descriptor.clone(), nil.clone()],
+            true,
+        ),
+        (
+            "protocol-native-invoke",
+            vec![dispatcher.clone(), nil.clone()],
+            true,
+        ),
+        (
+            "closure-property-set",
+            vec![nil.clone(), Val::I32(0), nil.clone()],
+            true,
+        ),
         ("constructor-descriptor", vec![dispatcher], true),
         ("descriptor-new", vec![nil.clone()], true),
         ("object-new", vec![invalid_schema, schema.clone()], true),
@@ -1756,4 +1777,238 @@ fn runtime_abi_exception_info_getters_reject_malformed_named_schema_without_trap
             &store
         ));
     }
+}
+
+#[test]
+fn runtime_abi_closure_properties_keep_assigned_values_through_gc_and_reject_bad_keys() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let mut function = [Val::null_any_ref()];
+    runtime
+        .get_func(&mut store, "predicate-nil")
+        .unwrap()
+        .call(&mut store, &[], &mut function)
+        .unwrap();
+    let set = runtime
+        .get_func(&mut store, "closure-property-set")
+        .unwrap();
+    let get = runtime
+        .get_func(&mut store, "closure-property-get")
+        .unwrap();
+    let boxed = runtime.get_func(&mut store, "number-box").unwrap();
+    // The only surviving root for each assigned Number is its owning closure.
+    for kind in 0..8 {
+        let mut scope = wasmtime::RootScope::new(&mut store);
+        let mut value = [Val::null_any_ref()];
+        boxed
+            .call(
+                &mut scope,
+                &[Val::F64((40.0 + f64::from(kind)).to_bits())],
+                &mut value,
+            )
+            .unwrap();
+        let mut returned = [Val::null_any_ref()];
+        set.call(
+            &mut scope,
+            &[function[0].clone(), Val::I32(kind), value[0].clone()],
+            &mut returned,
+        )
+        .unwrap();
+    }
+    store.gc(None).unwrap();
+    for kind in 0..8 {
+        let mut value = [Val::null_any_ref()];
+        get.call(
+            &mut store,
+            &[function[0].clone(), Val::I32(kind)],
+            &mut value,
+        )
+        .unwrap();
+        let object = value[0]
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            object.field(&mut store, 0).unwrap().unwrap_f64(),
+            40.0 + f64::from(kind)
+        );
+    }
+    for kind in [-1, 8] {
+        let error = set
+            .call(
+                &mut store,
+                &[function[0].clone(), Val::I32(kind), function[0].clone()],
+                &mut [Val::null_any_ref()],
+            )
+            .unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>());
+        assert!(!error.is::<wasmtime::Trap>());
+    }
+    // Property mutation does not replace the callback's original environment.
+    let mut environment = [Val::null_any_ref()];
+    runtime
+        .get_func(&mut store, "closure-environment")
+        .unwrap()
+        .call(&mut store, &function, &mut environment)
+        .unwrap();
+    assert_eq!(
+        environment[0]
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&store)
+            .unwrap()
+            .unwrap()
+            .get_u32(),
+        0
+    );
+    let mut args = [Val::null_any_ref()];
+    runtime
+        .get_func(&mut store, "args-new")
+        .unwrap()
+        .call(&mut store, &[Val::I32(1)], &mut args)
+        .unwrap();
+    let mut result = [Val::null_any_ref()];
+    runtime
+        .get_func(&mut store, "invoke")
+        .unwrap()
+        .call(
+            &mut store,
+            &[function[0].clone(), args[0].clone()],
+            &mut result,
+        )
+        .unwrap();
+    assert_eq!(
+        result[0]
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&store)
+            .unwrap()
+            .unwrap()
+            .get_u32(),
+        4
+    );
+}
+
+#[test]
+fn runtime_abi_accepts_foreign_raw_closure_environments_without_properties() {
+    use std::borrow::Cow;
+    use wasm_encoder::*;
+    let value = ValType::Ref(RefType::EQREF);
+    let mut types = runtime_abi::prelude();
+    types.ty().function([value], [value]);
+    let mut functions = FunctionSection::new();
+    functions.function(3).function(10);
+    let mut exports = ExportSection::new();
+    exports.export("make", ExportKind::Func, 1);
+    let mut elements = ElementSection::new();
+    elements.declared(Elements::Functions(Cow::Borrowed(&[0])));
+    let mut code = CodeSection::new();
+    let mut callback = Function::new([]);
+    callback
+        .instruction(&Instruction::LocalGet(0))
+        .instruction(&Instruction::End);
+    code.function(&callback);
+    let mut make = Function::new([]);
+    make.instruction(&Instruction::LocalGet(0))
+        .instruction(&Instruction::RefFunc(0))
+        .instruction(&Instruction::I32Const(0))
+        .instruction(&Instruction::I32Const(0))
+        .instruction(&Instruction::StructNew(4))
+        .instruction(&Instruction::End);
+    code.function(&make);
+    let mut module = Module::new();
+    module
+        .section(&types)
+        .section(&functions)
+        .section(&exports)
+        .section(&elements)
+        .section(&code)
+        .section(&runtime_abi::Manifest::default().section());
+    let bytes = module.finish();
+    runtime_abi::verify_artifact(&bytes, &runtime_abi::Manifest::default()).unwrap();
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &wasmtime::Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let foreign = Instance::new(
+        &mut store,
+        &wasmtime::Module::new(&engine, bytes).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let mut environment = [Val::null_any_ref()];
+    runtime
+        .get_func(&mut store, "number-box")
+        .unwrap()
+        .call(&mut store, &[Val::F64(7.0f64.to_bits())], &mut environment)
+        .unwrap();
+    let mut function = [Val::null_any_ref()];
+    foreign
+        .get_func(&mut store, "make")
+        .unwrap()
+        .call(&mut store, &environment, &mut function)
+        .unwrap();
+    store.gc(None).unwrap();
+    let mut args = [Val::null_any_ref()];
+    runtime
+        .get_func(&mut store, "args-new")
+        .unwrap()
+        .call(&mut store, &[Val::I32(0)], &mut args)
+        .unwrap();
+    let mut result = [Val::null_any_ref()];
+    runtime
+        .get_func(&mut store, "invoke")
+        .unwrap()
+        .call(
+            &mut store,
+            &[function[0].clone(), args[0].clone()],
+            &mut result,
+        )
+        .unwrap();
+    assert!(
+        wasmtime::Rooted::ref_eq(
+            &store,
+            result[0].unwrap_anyref().unwrap(),
+            environment[0].unwrap_anyref().unwrap()
+        )
+        .unwrap()
+    );
+    runtime
+        .get_func(&mut store, "closure-property-get")
+        .unwrap()
+        .call(&mut store, &[function[0].clone(), Val::I32(0)], &mut result)
+        .unwrap();
+    assert_eq!(
+        result[0]
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&store)
+            .unwrap()
+            .unwrap()
+            .get_u32(),
+        0
+    );
+    let error = runtime
+        .get_func(&mut store, "closure-property-set")
+        .unwrap()
+        .call(
+            &mut store,
+            &[function[0].clone(), Val::I32(0), environment[0].clone()],
+            &mut result,
+        )
+        .unwrap_err();
+    assert!(error.is::<wasmtime::ThrownException>());
+    assert!(!error.is::<wasmtime::Trap>());
 }

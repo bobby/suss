@@ -3939,3 +3939,156 @@ open on the unchanged reviewed stack at publication check. No PR merged or issue
 closed. Refs #9/#16 remain partial. Next unblocked work: compiled core/macro
 bootstrap and sequence/collection foundations; M2–M9 and the full ROADMAP remain
 unfinished.
+
+## Native protocol collection prerequisite — 2026-09-30
+
+Previous goal turn made progress: published source-backed some? as draft PR75,
+validated full baseline/fresh72 and dispatched independent review. The reviewer
+now pushed56038c089d0698cc61d17df1d810d4521d5b0deb; native13/compiler17/fresh72/
+Python66/provenance/license and full baseline passed. All reviewer handles terminal,
+including57109 baseline and26887 push; graphs explicitly released. Root fast-forwarded
+both PR75 and the next worktree to that reviewed head. Exact final-head
+CI36743548741 is authoritatively in progress, not called successful; PR75 stays draft.
+PR73/74/75 remained open on their reviewed stack at the latest state query. No merge.
+
+Next worktree /private/tmp/suss-native-protocols, branch
+resurrection/portable-native-protocols, has UNCOMMITTED preparation for native
+protocol dispatch, needed before source-backed nil/string/collection protocols
+can load. Production implementation is not changed yet. Do not publish or call
+these native tests passing. Added seven semantic native regressions and a separate
+22-case development-only strict primary corpus/runner:
+- Native nil/undefined/number/boolean/string/function/object dispatch and membership.
+- Direct user-object method before native object before wildcard/default fallback.
+- Captured method/live extension across GC and multiple arities.
+- Native membership reads current replaced protocol value.
+- Missing methods preserve ordered argument effects and typed language recovery.
+- Captured method fallback consults current method var after replacement.
+- Protocol redeclaration resets native fallback tables but direct object methods survive.
+
+Commands/results:
+- Initial native test compilation failed only ambiguous Rust float fixture type,
+  /private/tmp/suss-native-protocols-red.log; corrected expected10.0f64. No production fix.
+- Fresh pinned compiler build62268 terminal0, /private/tmp/suss-native-protocols-primary-build.log; Node terminal0. python3 scripts/native_protocol_oracle.py compare reports22 exact primary observations. Generated core macro output and raw observations remain tests/oracle/out/native-protocol*. No observation skipped or default guessed.
+- CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-cli --test portable_native_protocols --locked -- --test-threads=2 failed all7 as expected on reviewed production code, /private/tmp/suss-native-protocols-red-final.log,54160 terminal101. nil extensions currently raise language errors; number/default names are unresolved. All graphs terminal; no RUSTFLAGS override. This is a failing missing-feature regression, not successful compatibility evidence.
+
+Pinned primary sources core.cljc1332 base-type,1477 base-assign-impls,
+2124–2147 expand-dyn and core.cljs322 native-satisfies? explain the result.
+Native empty extension returns true (nominal extension uses opaque sentinel).
+Captured method functions consult the CURRENT method function's native property
+tables: replacing the method var with an ordinary function removes its old fallback;
+re-extending the new method makes the old capture call the new implementation.
+Redeclaring defprotocol resets new protocol/method native tables but retains direct
+user-object slot dispatch. Simply adding primitive descriptors to existing stable
+method-key tables would violate these fresh observations.
+
+Next unblocked task: implement closure-owned mutable native property tables and
+current-method-cell fallback, preserving direct descriptor dispatch first and
+specific/default fallback order. Keep property storage reachable from the owning
+closure so replacement can release it with GC; do not use a process-global rooted
+registry retaining every replaced closure. The existing ten-type ABI has immutable
+Closure fields and a generic environment Value; any environment wrapper must
+preserve all callback/environment consumers and actual cross-fragment ABI tests.
+Validate storage/lifetime and source effects before classifying support. Preserve
+nil/internal undefined normalization, protocol replacement/redeclaration and the
+native Boolean extension result. No shipped JS/JVM path, no persistent collection
+claim, no issue closure. Array/symbol/bigint native surfaces and complete compiled
+macro/core/collection semantics remain broader work; do not silently fabricate them.
+Finish exact-head PR75 CI before readiness, then continue full M2/M3/M4 milestones.
+The full ROADMAP goal remains active; M2–M9 are incomplete.
+
+## Closure-owned native fallback implementation — 2026-09-30
+
+Previous goal turn made progress: fresh22 primary probes, native7 missing-feature
+regressions and issue11 evidence identified current-cell/table lifetime semantics.
+PR75 exact reviewed56038c0 CI36743548741 passed; actual enabled suites inspected
+at /private/tmp/suss-pr75-final-ci.log. Body updated and PR75 marked ready. User
+then externally merged73/74/75:3ed2df3e,9b8517d9,008cb758bbd85ad1f847d4d2094ae77adef71192.
+Fetched main; complete tree diff between reviewed56038c0 and main008cb758 is empty.
+Stashed only this isolated native work with untracked files, rebased the branch
+with no own commits onto that verified main, restored WIP successfully and dropped
+only that temporary reconciliation stash. Older unrelated stashes/files preserved.
+Next native PR will target main; no agent merge or issue closure.
+
+Original runtime implementation now owns native property tables through a private
+UserObject environment wrapper per shipped closure. One tag global appends after
+existing globals; no shared prelude/version/numeric helper change. Universal
+invocation and class/protocol environment inspectors recover original callback
+environments. No globally rooted registry retains replaced functions. Private
+GlobalCell IR preserves a method cell reference without a premature var read.
+NativeMarker/NativeSet operations and live dispatchers implement direct nominal,
+current function's specific kind, then default fallback. Native implementations
+replace all arities together and let recur replace their first parameter; source
+protocol redeclaration resets native tables while direct descriptor methods persist.
+Source arrays/Symbol/bigint/native host properties remain explicitly unfinished.
+
+Commands/results (shared target/two native jobs, no RUSTFLAGS; sequential graphs):
+- Initial wrapper checks passed core-import13/runtimeABI14, /private/tmp/suss-native-protocols-properties-focused.log,88054 terminal0. All earlier source-backed forms and ABI callback/root behavior retained.
+- First native implementation focus failed generated fragment validation because NativeMarker returned eqref where the emitter's Boolean operation expects i32, /private/tmp/suss-native-protocols-focused.log,34988 terminal101. Corrected private marker result to i32 comparison form; no invalid artifact is accepted. Final native7 passed, /private/tmp/suss-native-protocols-focused-final.log,47705 terminal0.
+- Expanded native9 includes strict decoded24-case source corpus and complete arity replacement/receiver-changing recur. Surrounding native core13/session33/dynamic10/Info12/exceptions10/predicates6, compiler pipeline17/runtimeABI14 and auxiliary focused tests all passed, /private/tmp/suss-native-protocols-expanded.log,69519 terminal0. Existing source397/manual/legacy evidence unchanged.
+- Python66, inventory1065, unchanged overlay27+1038 and exact eight-file core artifact check passed; review documentation/manifest will be updated after public native helper validation.
+- Two additional actual runtimeABI ownership/foreign raw-environment regressions are building as handle55938, /private/tmp/suss-native-protocols-properties-expanded.log; this exact Cargo graph remains live and must not overlap native/oracle graphs. No outcome claimed yet.
+
+Next finish new ABI tests, expose and test the core native-satisfies? helper used by
+upstream foundations, rerun expanded fresh corpus and focused tests, update reviewed
+provenance/docs, require full workspace baseline, publish and dispatch independent
+review/fixes, then require exact final-head CI. Continue complete collection/core
+bootstrap and remaining M2–M9; no milestone or full ROADMAP completion claim.
+
+## Expanded native protocol reference and guards — 2026-09-30
+
+ABI ownership/foreign raw-environment graph55938 completed successfully (ABI16),
+/private/tmp/suss-native-protocols-properties-expanded.log. Public native-satisfies?
+is a first-class two-argument resident core function; the satisfies? native fallback
+reads its current binding, while the syntactic direct marker fast path remains.
+Public focused graph13984 passed native9/session33/pipeline17/ABI16,
+/private/tmp/suss-native-protocols-public-focused.log.
+
+Fresh expanded primary graph64062 failed comparison for one newly added, previously
+unvalidated arity expectation: a valid protocol call selecting a plain single-arity
+native implementation ignores surplus arguments and returns Number3, rather than
+throwing. The pinned implementation also fills missing parameters with undefined.
+Corrected that new expectation and the native call adapter; the original22 verified
+observations remain unchanged. No oracle result was skipped or replaced with success.
+Final fresh29 primary plus independently decoded native10 passed graph92316,
+/private/tmp/suss-native-protocols-oracle-final.log. Reproduce with
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target sh scripts/test-native-protocol-oracle.sh`.
+
+Final surrounding focus graph8287 passed native10/core13/session33/nominal3/
+pipeline17/ABI16, /private/tmp/suss-native-protocols-final-focus.log. Additional
+private-helper wrong-schema/cell/Args/owner guards passed native10/ABI16 graph95567,
+/private/tmp/suss-native-protocols-guards.log; typed language exceptions are checked
+before storage access. Python66, inventory1065, review overlay28+1037, exact eight
+core artifacts and offline roadmap preview passed. Source imports remain the same
+four forms; only their manifest's review-overlay hash changed. No ABI prelude,
+numeric helper, shipped dependency, issue acceptance status or milestone changed.
+
+Required full baseline passed: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`, graph20021 terminal0, /private/tmp/suss-native-protocols-baseline.log. No native or fresh oracle graph remains live. Next publish the native foundation PR against main, dispatch independent review/fixes, and require exact final-head CI. Then continue source-backed sequence/collection foundations and the remaining M2–M9 acceptance; the full ROADMAP goal remains active.
+
+## Independent PR #77 review — 2026-09-30
+
+Reviewed candidate c9806c9 against accepted design, source provenance and pinned
+ClojureScript native dispatch expansions. No significant production defect was
+found in the supported source surface. Direct descriptor methods precede live
+specific/default tables; the current binding cell is read during native fallback,
+not protocol construction. Closure ownership preserves original callback
+arguments, avoids a globally rooted registry and retains raw foreign environments.
+GlobalCell HIR/IR type guards and private runtime argument/schema checks were
+inspected and executed. Arbitrary native host properties remain a documented
+unsupported boundary rather than a claim of full core compatibility.
+
+Added an independent regression for qualified native extension from a different
+namespace, captured dispatch, current method replacement and re-extension after
+forced GC. Native11 passes; initial ABI16/nominal3 focus also passes.
+Fresh pinned native29 observations match exactly and native11 passes via
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-native-protocol-oracle.sh`.
+Review logs: /private/tmp/suss-pr77-review-focus.log,
+/private/tmp/suss-pr77-review-native.log and /private/tmp/suss-pr77-review-oracle.log.
+Required final review workspace baseline is recorded below upon completion.
+No issue acceptance or milestone status changes; next require exact reviewed-head
+CI before ready, then continue sequence/collection/core foundations. Do not merge.
+
+Review required full baseline completed successfully: graph74362 terminal0,
+/private/tmp/suss-pr77-review-baseline.log, command
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Python66, pinned inventory1065, review overlay28+1037 and exact eight core-import
+artifacts also pass. All review native/reference graphs are terminal and released.

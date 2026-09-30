@@ -4,10 +4,12 @@
 use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
+mod closure_properties;
 mod dynamic;
 mod exception_info;
 mod exceptions;
 mod nominal;
+mod native_protocols;
 mod numeric;
 mod predicates;
 
@@ -413,12 +415,14 @@ fn build_module() -> Vec<u8> {
         &[VALUE],
         &[I32Const(0), RefI31, LocalGet(0), ArrayNew(ARGS)],
     );
+    let (wrap_environment, closure_environment) = closure_properties::functions(&mut b);
     b.function(
         "closure-new",
         &[VALUE, reference(INVOKE), ValType::I32, ValType::I32],
         &[VALUE],
         &[
             LocalGet(0),
+            Call(wrap_environment),
             LocalGet(1),
             LocalGet(2),
             LocalGet(3),
@@ -504,11 +508,7 @@ fn build_module() -> Vec<u8> {
         Throw(0),
         End,
         LocalGet(0),
-        RefCastNonNull(closure),
-        StructGet {
-            struct_type_index: 4,
-            field_index: 0,
-        },
+        Call(closure_environment),
         LocalGet(1),
         RefCastNonNull(args),
         LocalGet(0),
@@ -760,6 +760,24 @@ fn build_module() -> Vec<u8> {
             shared: false,
         },
         &ConstExpr::extended(ordinary_root),
+    );
+    // Owner tag for closure environments/properties; identity is reference based.
+    globals.global(
+        GlobalType {
+            val_type: reference(DESCRIPTOR),
+            mutable: false,
+            shared: false,
+        },
+        &ConstExpr::extended([
+            I64Const(0),
+            I32Const(0),
+            ArrayNewDefault(ARGS),
+            I32Const(0),
+            ArrayNewDefault(ARGS),
+            I32Const(0),
+            RefI31,
+            StructNew(DESCRIPTOR),
+        ]),
     );
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);
