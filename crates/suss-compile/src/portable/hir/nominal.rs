@@ -22,7 +22,7 @@ impl Analyzer {
             kind: Expression::Local(id),
         }
     }
-    fn literal_form(&self, form: &Form, literal: Literal) -> Hir {
+    pub(super) fn literal_form(&self, form: &Form, literal: Literal) -> Hir {
         Hir {
             span: form.span.clone(),
             metadata: form.metadata.clone(),

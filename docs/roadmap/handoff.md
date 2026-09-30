@@ -2996,3 +2996,135 @@ unchanged after the full baseline. Every review native/reference graph is termin
 and no Cargo graphs overlapped. Push this reviewed fix/evidence, then require
 successful CI on that exact final head before PR readiness. Do not merge or close
 issues #9/#11.
+
+
+## Portable exceptions acceptance preparation — 2026-09-30
+
+A separate /private/tmp/suss-portable-exceptions worktree/branch now prepares
+remaining issue11 exception acceptance, initially based on PR66 candidate d0efeb1, now synchronized to independent review fix426e7a272f88204d55472c661e9765b9416bc9f5.
+Six new executing integration regressions in crates/suss-cli/tests/portable_exceptions.rs
+cover exact thrown nil/false/binary64/surrogate values and prompt recovery; body/catch
+results with finally cleanup and superseding throws; same-layout nominal typed catch
+identity with retained payload roots; captured/shadowed catch locals across GC;
+located malformed handler/cross-region recurrence rejection without publication;
+and runtime arity errors leaving old definition cells unchanged despite prior effects.
+These tests are not executed yet: review_pr66 exclusively holds the shared native
+Cargo target while verifying its significant defprotocol undefined-return repair.
+No exception implementation, test pass, PR or issue closure is claimed.
+
+Primary pinned analyzer.cljc1891–1994 confirms exact single-operand throw,
+ordered nominal instance? catch selection/default rethrow, disallowed recurrence
+across try/catch/finally, and expression/statement handler contexts. An original
+reference-only fixture executed14 tagged exception observations in the pinned
+ClojureScript/Node oracle; strict ID/schema/value validation and exact scalar
+expectations passed. /private/tmp/suss-exception-reference-inputs.json and
+/private/tmp/suss-exception-reference-observations.json preserve observations.
+Body42 survives finally7; catch/rethrow retains9; finally42 supersedes body/catch
+throws; two same-layout catch types select the actual descriptor; nested side
+effects produce1234; negative zero/lone surrogate/nil/false payloads remain exact.
+Empty try is nil-like and captured local35 plus caught7 returns42. Initial fixture
+creation used a wrong relative path and the compiler failed; retained
+/private/tmp/suss-exception-reference.log. Corrected compile exited0 with ordinary
+var replacement warnings preserved, /private/tmp/suss-exception-reference-fixed.log;
+Node/strict validation exited0. This is reference evidence only, not Suss success.
+
+Next synchronize the exception branch to the final independently reviewed nominal
+head, execute these regressions to establish the actual red boundary, and implement
+explicit throw/handler control flow in verified HIR/IR and Wasm typed exception tags.
+Preserve operand order, exact payloads, catch scope/captures, compile atomicity and
+finally behavior on normal return/body throw/catch throw/cleanup throw. Dynamic
+bindings and ExceptionInfo/core surfaces remain required issue11 work; no milestone
+is complete. Nominal PR66 remains draft pending review fixes and exact final-head CI.
+
+
+Exception boundary execution after review release: next branch now actually
+rebases on origin/resurrection/portable-nominal426e7a272f88204d55472c661e9765b9416bc9f5
+(the local nominal ref initially still pointed at d0efeb1; authoritative remote
+tracking ref and subsequent rebase verified the final head). First test build
+failed from returning a borrowed Rooted through inspect; repaired the test to use
+to_owned_rooted, preserving the diagnostic log /private/tmp/suss-portable-exceptions-red.log.
+Then CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test -p suss-cli --test portable_exceptions --locked -- --test-threads=2
+exited101 with all6 regressions failing, zero ignored. This is the intended actual
+red source boundary, not a compiler build failure: try remains unresolved at
+located spans1..4/20..23 and throw does not yet produce a language payload.
+/private/tmp/suss-portable-exceptions-red-fixed.log. All native/reference handles
+are terminal and no graphs overlapped. No passing exception acceptance claimed.
+
+PR66 independent review has pushed its significant defprotocol result fix and
+verified local full workspace, fresh245 source observations/16 actual pipeline,
+compiler78/native37/Python54. Root synchronized the local nominal branch and PR
+body to that exact reviewed head. Final-head CI36707481991 is confirmed running
+on426e7a272f88204d55472c661e9765b9416bc9f5; do not mark ready until its actual
+success. No issue or PR was closed/merged. Next implement the complete exception
+control flow against these actual red regressions; source dynamic scope and
+ExceptionInfo plus broader nominal/core boundaries remain issue11 obligations.
+
+
+## Source throw/try implementation and nominal PR readiness — 2026-09-30
+
+PR66 is now ready, independently reviewed426e7a272f88204d55472c661e9765b9416bc9f5,
+exact CI36707481991success verified through current PR head and actual workflow
+logs (/private/tmp/suss-pr66-final-ci.log) including source fragments/native/full
+workspace/doc targets. Body and issue9/11 comments record significant defprotocol
+fix and current245-source/37-native evidence; readiness comments5910311861 (11)
+and5910312205 (9). No PR merged or incomplete issue closed.
+
+The isolated exception worktree now implements original HIR Throw/Try and verified
+IR terminal Throw edges/Try regions. Compiled body/handler/cleanup closures use the
+existing shared Invoke ABI; runtime try-invoke uses nested typed language regions
+so cleanup runs once on normal/body/catch paths and cleanup exceptions supersede
+pending payloads. Typed source catches evaluate nominal tests in order, default is
+last, exact payloads and catch captures survive GC. Divergent operands stop later
+effects/publication; defonce retains its bound path when the initializer path
+throws. Region recurrence cannot target outside loops/functions, while inner
+loops/functions remain legal. Manifestformat2, runtimeABI1, prelude, numeric
+helper/dependencies are unchanged. See docs/runtime/exceptions.md for boundaries.
+
+First implementation build failed on sibling helper visibility and Catch enum/name
+collision; corrected and retained /private/tmp/suss-portable-exceptions-first.log.
+The actual next run passed5/6, with the final regression exposing a test's statically
+known wrong arity (compile error, not runtime throw). Repaired its callee to a live
+cell, retaining /private/tmp/suss-portable-exceptions-first-fixed.log; all6 then
+passed /private/tmp/suss-portable-exceptions-source-fixed.log. Added seventh ordered
+divergence/defonce/loop/callee/nested-throw regression; native private4+integration33
++exception7 passed44, /private/tmp/suss-portable-exceptions-native-expanded.log.
+No failures were skipped, masked or declared successful.
+
+Public exception guards first failed because the test assumed a loop body omitted
+its retained Do wrapper, /private/tmp/suss-portable-exceptions-compiler.log. Corrected
+actual-tree traversal, then compiler eight-suite80 passed with zero ignores:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test -p suss-compile --test runtime_abi --test portable_closures
+--test portable_pipeline --test portable_definitions --test portable_modules
+--test portable_resolution --test portable_nominal --test portable_exceptions
+--locked -- --test-threads=2; /private/tmp/suss-portable-exceptions-compiler-fixed.log.
+
+Fresh current sh scripts/test-portable-pipeline-oracle.sh with the same target/two
+jobs exited0:259 pinned source observations match and16 actual decoded pipeline
+tests pass, /private/tmp/suss-portable-exceptions-oracle.log. Fourteen new exception
+inputs reuse strictly validated primary observations; original245 inputs unchanged.
+Python54/inventory1065/reviews9 in-progress+1056 unassessed/offline roadmap preview
+and diff checks pass. No core form copied or certified; pinned analyzer.cljc provenance
+is development-only. All focused/reference processes are terminal.
+
+Full required cargo test --workspace --locked -- --test-threads=2 is running alone,
+/private/tmp/suss-portable-exceptions-workspace.log, with the shared target/two jobs.
+Changes remain uncommitted, no exception PR/review/final-head CI exists yet. Next
+verify full baseline, commit/push a stacked exception PR against ready #66 using
+Refs #9/#11, dispatch independent review, push significant fixes and require exact
+CI. Then implement dynamic scope/ExceptionInfo and broader nominal/core requirements;
+#11 and M2–M9 remain incomplete. Fuel traps/foreign host tags remain distinct;
+portable language handlers do not silently turn them into nil values.
+
+
+Required exception candidate full baseline now terminal exit0:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2,
+/private/tmp/suss-portable-exceptions-workspace.log. Includes native44, compiler
+unit54, legacy expressions317/12 existing ignores, components29, conformance9/2
+manual ignores, oracle4/1 manual capture ignored, portable compiler80 including
+259-case actual source artifacts, reader/core suites and all doc targets including
+suss_cli. Existing ignores/legacy9pass7fail differential baseline unchanged.
+No native/reference handle remains live. Independent review/fixes and exact final-head
+CI remain required for the next PR. No issue closure or merge.

@@ -153,3 +153,5 @@ type cells, and old captured protocol dispatchers observe later table updates.
 Compile failures publish no staged class/arrow/key bindings. Runtime nominal errors
 leave the prompt usable. [Nominal source support](nominal.md) remains bounded; the
 command frontend and full M3/M2-04 acceptance are still incomplete.
+
+Seven additional [source exception regressions](exceptions.md) execute exact payloads, handler captures/GC, ordered cleanup, divergent operands and failed publication. Together with private4 and existing integration33, the current native session gates total44 passing tests. ExceptionInfo/core error surfaces, dynamic binding and asynchronous interruption remain unfinished.

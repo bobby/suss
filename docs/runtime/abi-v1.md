@@ -136,3 +136,5 @@ branching and NaN/`undefined` coercion separately from nil0. Older compiler mani
 reject before initializer effects. Nominal counter/error/protocol sentinel globals
 append after numeric stack global6; [nominal evidence](nominal.md) describes the
 current source/runtime subset and unfinished acceptance work.
+
+The additive [source exception regions](exceptions.md) import the existing language-exception tag and use original try-invoke dispatch over shared Invoke closures. They preserve the recursive prelude, runtime ABIversion1, compilerformat2, numeric helper and dependency lock. Exact thrown values and cleanup execute in actual fragments.

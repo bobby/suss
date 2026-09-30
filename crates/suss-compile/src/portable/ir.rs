@@ -19,6 +19,10 @@ pub struct Value {
 }
 #[derive(Debug, Clone)]
 pub enum Operation {
+    /// Evaluated compiled regions, in body/handler/cleanup order.
+    Try {
+        regions: [ValueId; 3],
+    },
     Nominal {
         operation: Nominal,
         arguments: Vec<ValueId>,
@@ -56,6 +60,7 @@ pub struct Instruction {
 }
 #[derive(Debug, Clone)]
 pub enum Terminator {
+    Throw(ValueId),
     Return(ValueId),
     Jump {
         target: usize,
@@ -159,14 +164,31 @@ impl Lowerer {
         let ty = value.ty();
         self.emit(Operation::Literal(value), ty, span)
     }
-    fn operand(&mut self, hir: &Hir) -> Result<ValueId, Diagnostic> {
-        self.expression(hir)?.ok_or_else(|| Diagnostic {
-            span: hir.span.clone(),
-            message: "HIR recurrence in a value-required position".into(),
-        })
-    }
     fn expression(&mut self, hir: &Hir) -> Result<Option<ValueId>, Diagnostic> {
+        // Divergent operands stop lowering following effects, including publication.
+        macro_rules! operand {
+            ($value:expr) => {
+                match self.expression($value)? {
+                    Some(value) => value,
+                    None => return Ok(None),
+                }
+            };
+        }
+
         Ok(Some(match &hir.kind {
+            Expression::Throw(value) => {
+                let value = operand!(value);
+                self.function.blocks[self.current].terminator = Terminator::Throw(value);
+                return Ok(None);
+            }
+            Expression::Try { regions } => {
+                let regions = [
+                    operand!(&regions[0]),
+                    operand!(&regions[1]),
+                    operand!(&regions[2]),
+                ];
+                self.emit(Operation::Try { regions }, Type::Value, hir.span.clone())
+            }
             Expression::Literal(value) => self.literal(value.clone(), hir.span.clone()),
             Expression::Global(global) => self.emit(
                 Operation::GlobalRead(global.clone()),
@@ -202,23 +224,24 @@ impl Lowerer {
                             arguments: vec![nil],
                         };
                         self.current = unbound;
-                        let value = self.operand(initializer)?;
-                        let value = self.emit(
-                            Operation::GlobalWrite {
-                                global: global.clone(),
-                                value,
-                            },
-                            Type::Value,
-                            hir.span.clone(),
-                        );
-                        self.function.blocks[self.current].terminator = Terminator::Jump {
-                            target: join,
-                            arguments: vec![value],
-                        };
+                        if let Some(value) = self.expression(initializer)? {
+                            let value = self.emit(
+                                Operation::GlobalWrite {
+                                    global: global.clone(),
+                                    value,
+                                },
+                                Type::Value,
+                                hir.span.clone(),
+                            );
+                            self.function.blocks[self.current].terminator = Terminator::Jump {
+                                target: join,
+                                arguments: vec![value],
+                            };
+                        }
                         self.current = join;
                         result
                     } else {
-                        let value = self.operand(initializer)?;
+                        let value = operand!(initializer);
                         self.emit(
                             Operation::GlobalWrite {
                                 global: global.clone(),
@@ -244,9 +267,9 @@ impl Lowerer {
                 message: "HIR references an undefined binding".into(),
             })?,
             Expression::Call { callee, arguments } => {
-                let mut operands = vec![self.operand(callee)?];
+                let mut operands = vec![operand!(callee)];
                 for argument in arguments {
-                    operands.push(self.operand(argument)?);
+                    operands.push(operand!(argument));
                 }
                 self.emit(Operation::Call { operands }, Type::Value, hir.span.clone())
             }
@@ -338,7 +361,7 @@ impl Lowerer {
                     self.literal(Literal::Nil, hir.span.clone())
                 } else {
                     for item in &items[..items.len() - 1] {
-                        self.operand(item)?;
+                        operand!(item);
                     }
                     return self.expression(items.last().unwrap());
                 }
@@ -357,7 +380,7 @@ impl Lowerer {
                 let mut initial = Vec::new();
                 let mut parameters = Vec::new();
                 for binding in bindings {
-                    let value = self.operand(&binding.value)?;
+                    let value = operand!(&binding.value);
                     if self.bindings.insert(binding.id, value).is_some() {
                         return Err(Diagnostic {
                             span: binding.span.clone(),
@@ -365,6 +388,8 @@ impl Lowerer {
                         });
                     }
                     initial.push(value);
+                }
+                for binding in bindings {
                     parameters.push(self.value(Type::Value, binding.span.clone()));
                 }
                 let header = self.block(parameters.clone());
@@ -392,10 +417,10 @@ impl Lowerer {
                         message: "HIR recurrence arity mismatch".into(),
                     });
                 }
-                let values = arguments
-                    .iter()
-                    .map(|arg| self.operand(arg))
-                    .collect::<Result<Vec<_>, _>>()?;
+                let mut values = Vec::new();
+                for argument in arguments {
+                    values.push(operand!(argument));
+                }
                 self.function.blocks[self.current].terminator = Terminator::Jump {
                     target: header,
                     arguments: values,
@@ -405,7 +430,7 @@ impl Lowerer {
             Expression::Let { bindings, body } => {
                 // Binding identities, rather than names, distinguish shadowed values.
                 for binding in bindings {
-                    let value = self.operand(&binding.value)?;
+                    let value = operand!(&binding.value);
                     if self.bindings.insert(binding.id, value).is_some() {
                         return Err(Diagnostic {
                             span: binding.span.clone(),
@@ -420,7 +445,7 @@ impl Lowerer {
                 consequent,
                 alternative,
             } => {
-                let condition = self.operand(condition)?;
+                let condition = operand!(condition);
                 let then_block = self.block(Vec::new());
                 let else_block = self.block(Vec::new());
                 self.function.blocks[self.current].terminator = Terminator::Branch {
@@ -464,10 +489,11 @@ impl Lowerer {
                         message: "Invalid nominal HIR shape".into(),
                     });
                 }
-                let arguments = arguments
-                    .iter()
-                    .map(|argument| self.operand(argument))
-                    .collect::<Result<Vec<_>, _>>()?;
+                let mut values = Vec::new();
+                for argument in arguments {
+                    values.push(operand!(argument));
+                }
+                let arguments = values;
                 self.emit(
                     Operation::Nominal {
                         operation: *operation,
@@ -492,10 +518,10 @@ impl Lowerer {
                     });
                 }
                 // Evaluate every operand before entering the arithmetic operation.
-                let values = arguments
-                    .iter()
-                    .map(|arg| self.operand(arg))
-                    .collect::<Result<Vec<_>, _>>()?;
+                let mut values = Vec::new();
+                for argument in arguments {
+                    values.push(operand!(argument));
+                }
                 if values.is_empty() {
                     return Ok(Some(self.literal(
                         Literal::Number(if *operator == Arithmetic::Add {
@@ -567,6 +593,21 @@ fn verify_recurrence(
         message: message.into(),
     };
     match &hir.kind {
+        Expression::Throw(value) => verify_recurrence(value, targets, false)?,
+        Expression::Try { regions } => {
+            if hir.ty != Type::Value {
+                return Err(error("HIR handler result must be dynamic Value"));
+            }
+            for (index, region) in regions.iter().enumerate() {
+                let arity = usize::from(index == 1);
+                if !matches!(&region.kind, Expression::Function { parameters, .. } if parameters.len() == arity)
+                    && !(index > 0 && matches!(&region.kind, Expression::Literal(Literal::Nil)))
+                {
+                    return Err(error("HIR handler region shape mismatch"));
+                }
+                verify_recurrence(region, &mut Vec::new(), false)?;
+            }
+        }
         Expression::Loop {
             target,
             bindings,
@@ -657,6 +698,7 @@ fn operands(operation: &Operation) -> &[ValueId] {
         Operation::MakeClosure { captures, .. }
         | Operation::MakeGeneralClosure { captures, .. } => captures,
         Operation::Call { operands } => operands,
+        Operation::Try { regions } => regions,
     }
 }
 /// Check graph integrity, unique definitions, dominance, edge arities and types.
@@ -708,7 +750,7 @@ fn verify_function(
             }
         }
         let targets = match &block.terminator {
-            Terminator::Return(_) => Vec::new(),
+            Terminator::Return(_) | Terminator::Throw(_) => Vec::new(),
             Terminator::Jump { target, .. } => vec![*target],
             Terminator::Branch {
                 consequent,
@@ -781,6 +823,15 @@ fn verify_function(
             }
             let result_ty = ty(inst.result)?;
             match &inst.operation {
+                Operation::Try { regions } => {
+                    if result_ty != Type::Value
+                        || ty(regions[0])? != Type::Closure(0)
+                        || !matches!(ty(regions[1])?, Type::Nil | Type::Closure(1))
+                        || !matches!(ty(regions[2])?, Type::Nil | Type::Closure(0))
+                    {
+                        return Err(fail("IR handler region shape mismatch"));
+                    }
+                }
                 Operation::Literal(value) if result_ty != value.ty() => {
                     return Err(fail("IR literal result type mismatch"));
                 }
@@ -910,7 +961,9 @@ fn verify_function(
         }
         let position = block.parameters.len() + block.instructions.len();
         match &block.terminator {
-            Terminator::Return(value) => check_use(*value, block_id, position)?,
+            Terminator::Return(value) | Terminator::Throw(value) => {
+                check_use(*value, block_id, position)?
+            }
             Terminator::Jump { target, arguments } => {
                 let parameters = &function.blocks[*target].parameters;
                 if parameters.len() != arguments.len() {

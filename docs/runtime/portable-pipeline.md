@@ -80,7 +80,7 @@ compiled fragments in one Store; this is not a persistent compiled session.
 
 Fourteen focused tests validate/link/execute actual artifacts and independently
 inspect the heap after forced GC. The original 14 scalar reader cases now also
-execute through compiled source fragments. A separate original 245-case source
+execute through compiled source fragments. A separate original 259-case source
 corpus matches freshly compiled pinned ClojureScript/Node observations exactly,
 covering numeric bits/arities, conditional values, lexical shadowing, strings and
 unary sum/product identity over nil/booleans/UTF-16/dynamic values/closures,
@@ -124,3 +124,5 @@ before effects; ABI prelude/version1 stays unchanged. Internal undefined sentine
 is distinct from nil0, including falsey branching and NaN/string coercion. See
 [nominal evidence and remaining work](nominal.md); general exceptions/dynamic scope,
 builtin/native dispatch and complete core/macros remain unfinished.
+
+Source throw/try now has explicit terminal throw edges and compiled handler regions, preserving operand divergence, nominal catch order and finally cleanup. See [exception regions](exceptions.md) for259-source-case evidence and incomplete dynamic-scope/core/async boundaries.
