@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "initializerless-definition-is-undefined",
+      "source": "(do (def forward-definition-only) (undefined? forward-definition-only))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "new-declared-value-is-undefined",
+      "source": "(do (declare forward-one) (undefined? forward-one))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "new-declared-value-is-nil-like",
+      "source": "(nil? forward-one)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "declared-value-is-falsey",
+      "source": "(boolean forward-one)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "declare-preserves-bound-value",
+      "source": "(do (def forward-kept 7) (declare forward-kept) forward-kept)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "declare-allows-later-definition",
+      "source": "(do (def forward-one 9) forward-one)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "declare-does-not-reset-later-value",
+      "source": "(do (declare forward-one) forward-one)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "declare-empty-does-not-evaluate-arguments",
+      "source": "(do (declare) 11)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    },
+    {
+      "id": "declared-function-read-in-prior-closure",
+      "source": "(do (declare forward-fn) (def forward-wrapper (fn [n] (forward-fn n))) (def forward-fn (fn [n] (+ n 1))) (forward-wrapper 8))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "declared-cell-redefinition-is-live",
+      "source": "(do (def forward-fn (fn [n] (+ n 2))) (forward-wrapper 8))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "mutual-forward-functions",
+      "source": "(do (declare forward-left forward-right) (def forward-left (fn [n] (if (== n 0) 7 (forward-right (- n 1))))) (def forward-right (fn [n] (if (== n 0) 8 (forward-left (- n 1))))) (forward-left 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "declare-keeps-nil-bound",
+      "source": "(do (def forward-nil nil) (declare forward-nil) (defonce forward-nil 17) (nil? forward-nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "defonce-initializes-forward-declaration",
+      "source": "(do (declare forward-once) (defonce forward-once 17) forward-once)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "qualified-declaration",
+      "source": "(do (cljs.core/declare forward-qualified) (undefined? forward-qualified))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "failed-declared-call-is-catchable",
+      "source": "(do (declare forward-not-callable) (try (forward-not-callable) (catch :default e true)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

@@ -4947,3 +4947,43 @@ Required reviewer baseline61320 completed terminal0:
 graphs terminal, exclusive shared-target slot released to root. Push this review
 coverage and require exact reviewed-head CI before readiness; then continue actual
 retained sequence/list types and dependencies. No merge or milestone closure.
+
+## Source forward-declaration evidence — 2026-09-30
+
+PR87 independent reviewer pushed2afef8a, fresh59 observations/native3 and required
+full61320 terminal0; original54 expectations unchanged. Reviews74+991/artifacts25
+and Python71 pass. Root fast-forwarded clean source worktree. Exact reviewed-head
+CI36788771234 remains authoritatively live; keep draft until successful enabled
+logs are inspected. No merge. Review graph slots explicitly released before the
+next reference run.
+
+New isolated /private/tmp/suss-core-forward-declarations, branch
+portable/core-forward-declarations based on reviewed87. Pinned source declares
+array-seq/prim-seq/IndexedSeq at core.cljs1257, hash-map/list/equiv-sequential1436,
+and hash-coll/cons/drop/count/nth/RSeq/List1600. These are real source load-cycle
+prerequisites, not optional metadata. Original candidate14 shared scalar probes
+freshly match primary in graph84915, then native fails terminal101 on unresolved
+Runtime declare; /private/tmp/suss-forward-declaration-primary-and-red.log.
+
+Added an ordinary initializerless definition probe before declare so the existing
+source read behavior is independently exposed. Expanded graph44956 terminal101:
+15 exact primary observations, then native language error reading the known
+initializerless variable; /private/tmp/suss-forward-definition-primary-and-red.log.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-forward-declaration-oracle.sh`.
+The reference shows undefined/nil-like/falsey reads, preserving existing values,
+mutually referenced fixed functions, live redefinition and defonce initialization
+of fresh declarations. Expectations are independently encoded Booleans/binary64,
+not unknown-object successes. No semantic implementation or review count changed.
+
+Next repair source-level declared-variable reads and add bounded declare lowering,
+while preserving defonce's uninitialized test and the runtime ABI's internal
+binding-cell checks. Compiler.cljc855–892 emits no initializer assignment for a
+declaration, corroborating the executed reference. Existing HIR Definition None
+only declares compiler identity; IR currently emits nil without binding the cell,
+and source GlobalRead uses the internal unbound-read error helper. Do not silently
+mark an undefined declaration initialized or reset an existing cell. Re-run the
+fresh15 and focused definition/session/ABI suites after repair, then required full
+baseline and independent PR review/final-head CI. The local red preparation is
+unpublished. Actual source EmptyList/List/Cons/IndexedSeq and hashing/reduction/
+persistent rest/apply remain unfinished; M2–M9 goal remains active. All reference
+and Cargo graphs terminal/released; no RUSTFLAGS override or unrelated deletion.
