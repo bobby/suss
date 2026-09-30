@@ -2,7 +2,8 @@
 use super::{
     Diagnostic,
     hir::{
-        Arithmetic, BindingId, Expression, Hir, Literal, LoopId, Nominal, Type, arithmetic_type,
+        Arithmetic, ArrayOperation, BindingId, Expression, Hir, Literal, LoopId, Nominal, Type,
+        arithmetic_type,
     },
     resolve::Global,
 };
@@ -19,6 +20,10 @@ pub struct Value {
 }
 #[derive(Debug, Clone)]
 pub enum Operation {
+    Array {
+        operation: ArrayOperation,
+        arguments: Vec<ValueId>,
+    },
     /// Nil or internal undefined, applied to one already evaluated value.
     NilTest(ValueId),
     /// Snapshot operands, initializer operands and compiled body, in that order.
@@ -542,6 +547,34 @@ impl Lowerer {
                 let value = operand!(value);
                 self.emit(Operation::NilTest(value), Type::Bool, hir.span.clone())
             }
+            Expression::Array {
+                operation,
+                arguments,
+            } => {
+                let types = arguments
+                    .iter()
+                    .map(|argument| argument.ty)
+                    .collect::<Vec<_>>();
+                if !operation.valid(types.len()) || hir.ty != Type::Value {
+                    return Err(Diagnostic {
+                        span: hir.span.clone(),
+                        message: "Invalid array HIR shape".into(),
+                    });
+                }
+                let mut values = Vec::new();
+                for argument in arguments {
+                    values.push(operand!(argument));
+                }
+                let arguments = values;
+                self.emit(
+                    Operation::Array {
+                        operation: *operation,
+                        arguments,
+                    },
+                    hir.ty,
+                    hir.span.clone(),
+                )
+            }
             Expression::Nominal {
                 operation,
                 arguments,
@@ -751,7 +784,9 @@ fn verify_recurrence(
             }
         }
         Expression::NilTest(value) => verify_recurrence(value, targets, false)?,
-        Expression::Arithmetic { arguments, .. } | Expression::Nominal { arguments, .. } => {
+        Expression::Arithmetic { arguments, .. }
+        | Expression::Array { arguments, .. }
+        | Expression::Nominal { arguments, .. } => {
             for argument in arguments {
                 verify_recurrence(argument, targets, false)?;
             }
@@ -779,7 +814,9 @@ fn operands(operation: &Operation) -> &[ValueId] {
         Operation::GlobalWrite { value, .. } | Operation::NilTest(value) => {
             std::slice::from_ref(value)
         }
-        Operation::Arithmetic { arguments, .. } | Operation::Nominal { arguments, .. } => arguments,
+        Operation::Arithmetic { arguments, .. }
+        | Operation::Array { arguments, .. }
+        | Operation::Nominal { arguments, .. } => arguments,
         Operation::MakeClosure { captures, .. }
         | Operation::MakeGeneralClosure { captures, .. } => captures,
         Operation::Call { operands } | Operation::DynamicScope { operands, .. } => operands,
@@ -1029,6 +1066,14 @@ fn verify_function(
                 Operation::NilTest(_) => {
                     if result_ty != Type::Bool {
                         return Err(fail("IR nil-test result must be Boolean"));
+                    }
+                }
+                Operation::Array {
+                    operation,
+                    arguments,
+                } => {
+                    if !operation.valid(arguments.len()) || result_ty != Type::Value {
+                        return Err(fail("Invalid array IR shape"));
                     }
                 }
                 Operation::Nominal {

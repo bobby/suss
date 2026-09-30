@@ -4129,3 +4129,74 @@ claim. Macro make-array literal nil fill differs from dynamic/first-class undefi
 holes; source architecture must preserve it. Next implement GC-owned mutable arrays,
 source/macro arities and native classification before broader sequence/list/variadic
 and persistent collection source porting. Full M2–M9 goal remains active.
+
+## GC-owned array implementation and PR77 readiness — 2026-09-30
+
+Previous goal turn committed verified40 array reference observations and six
+missing-feature regressions at92f3f9e9dda124b74099bbcd2d946cdfc855d77a, on the
+isolated array branch based on reviewed1022fda. This turn revalidated actual
+PR77 final-head CI36752018955: SUCCESS at exact1022fdafa8a1eff8f71f3d9455d5defddf7101d2.
+Inspected actual enabled Python66/reviews28+1037/artifact8/native11/ABI16/full
+workspace output in /private/tmp/suss-pr77-final-ci.log. Body updated and PR77
+marked ready; no merge or issue closure. Reviewer graphs and CI watch are terminal.
+
+Original array runtime now owns mutable element buffers through a private tagged
+UserObject, copying Args at construction and preserving owner identity through
+growth. Clone ownership is distinct and shallow. One descriptor global appends
+without changing the ten-type prelude/version or numeric helper/global indices.
+New Array HIR/IR normalizes effectful operands and verifies arity/type/dominance.
+Native protocol classification recognizes source arrays before object fallback.
+Core array/array?/make-array/aclone/aget/aset/alength factories are resident in each
+phase; canonical aliases and old captures use live cells/universal invocation.
+
+First implementation focus60978 failed Rust compilation (pattern bindings,
+emission insertion and encoder f64 constant types), /private/tmp/suss-array-first-focus.log.
+Corrected construction errors; second focus10269 passed all6 against original40,
+/private/tmp/suss-array-second-focus.log. An intermediate order focus26789 failed
+a Rust impl lifetime annotation; fixed Analyzer's actual shape before continuing.
+
+Expanded fresh53 comparison85682 failed two newly added, previously unvalidated
+expectations: aset evaluates the final value before invalid-target failure, and
+an unqualified user alength definition hides the auto-referred macro (both calls
+returned42). Actual pinned observations were inspected, new expectations corrected
+and eager SetTarget validation removed. The original40 certified observations
+remain unchanged. A follow-up script57063 stopped at the same uncorrected comparison
+after a local patch script stopped early; no success was claimed. Final expanded54
+primary/native7 passed2012, /private/tmp/suss-array-expanded-primary-validated.log.
+
+Two further source-audited multidimensional macro cases retain literal outer-size
+ceil/negative-empty behavior, while inner/runtime sizes remain dynamic integers.
+Final fresh56 and native9 passed95073, /private/tmp/suss-array-primary-final.log.
+Warnings for deliberate effect-counter and alength definitions remain in raw logs.
+No primary result was skipped, compared loosely or fabricated.
+
+Guarded surrounding focus80622 passed native7/native-protocol11/session33/pipeline17/
+ABI16, /private/tmp/suss-array-guarded-focus-final.log. One local delimiter edit
+failed before Cargo execution in /private/tmp/suss-array-guarded-focus.log; fixed
+before that successful rerun. Storage/GC/compiler negative focus21530 then passed
+native8/compiler-array1/ABI18, /private/tmp/suss-array-storage-focus.log. Final
+bounded focus56721 passed native9/compiler-array1/ABI18,
+/private/tmp/suss-array-bounded-focus.log. Independent low-level guards cover wrong
+Args/owners/indices/dimensions/fill values and malformed owner storage; all produce
+language exceptions rather than traps. Args isolation, GC-owned stored Numbers,
+growth/clone identity and retained functions are executed, not encoding-only.
+
+Bootstrap allocation/growth caps1,000,000 elements; multidimensional total cells
+also cap1,000,000, dimensions buffer64. Typed diagnostics precede allocation and
+invalid casts/accesses. Empty outer dimensions do not validate unused leaves.
+Named/coerced host keys, negative/fractional property writes, string access via
+array macros, checked-array options, source literals and full compiled core/macros
+remain unfinished. None of these are claimed as exclusions/completed compatibility.
+
+Python66/inventory1065/review overlay40+1025/exact eight source-core artifacts and
+offline roadmap preview passed45561. Twelve runtime/macro source declarations have
+partial hash-bound provenance reviews; no source form copied or shipped dependency
+added. Existing four source imports and license bytes remain unchanged; only
+manifest review hash changes. Full required workspace baseline runs alone as52701,
+/private/tmp/suss-array-baseline.log; await terminal before publication. No other
+local Cargo/reference graph is live. Next publish partial array foundation with
+Refs #9/#11/#17, dispatch independent review/pushed fixes and require exact final-head
+CI. Then continue source-backed sequence/list/variadic rest/apply foundations and
+the remaining M2–M9 acceptance. Full ROADMAP goal remains active.
+
+Required full workspace baseline52701 completed terminal0, /private/tmp/suss-array-baseline.log: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`. All local native/reference graphs are terminal. Complete source/provenance/manifest/diff checks passed before publication. No RUSTFLAGS override or unrelated deletions. Publish the partial array foundation PR and dispatch independent review; final-head CI remains required.

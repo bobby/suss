@@ -90,6 +90,9 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Call { .. } => {
                         names.insert("invoke");
                     }
+                    Operation::Array { operation, .. } => {
+                        names.insert(operation.export());
+                    }
                     Operation::Nominal { operation, .. } => match operation {
                         Nominal::Array => {}
                         Nominal::LiveDispatcher => {
@@ -178,6 +181,12 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "source-constructor-new"
             | "constructor-descriptor"
             | "protocol-dispatcher-new" => (vec![VALUE], vec![VALUE]),
+            "source-array-new"
+            | "source-array-make"
+            | "source-array-make-literal"
+            | "source-array-length-args"
+            | "source-array-get-indices"
+            | "source-array-set-indices" => (vec![VALUE], vec![VALUE]),
             "arity-error" => (vec![], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
             "closure-new" => (
@@ -614,6 +623,21 @@ fn emit_function(
                         .instruction(&I32Const(2))
                         .instruction(&I32Add)
                         .instruction(&RefI31)
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
+                Operation::Array {
+                    operation,
+                    arguments,
+                } => {
+                    for argument in arguments {
+                        function.instruction(&LocalGet(argument.0 as u32 + offset));
+                    }
+                    function
+                        .instruction(&ArrayNewFixed {
+                            array_type_index: runtime_abi::ARGS,
+                            array_size: arguments.len() as u32,
+                        })
+                        .instruction(&Call(index(operation.export())))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Nominal {

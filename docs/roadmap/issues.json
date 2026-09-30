@@ -326,7 +326,7 @@
       "id": "M4-02",
       "milestone": "M4",
       "title": "Sequences, lists and vectors",
-      "status": "planned",
+      "status": "in-progress",
       "dependencies": [
         "M2",
         "M4-01"
@@ -336,7 +336,9 @@
       "spec_sections": "4",
       "validation": "cargo test -p suss-compile collections_sequences",
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
-      "evidence": []
+      "evidence": [
+        "GC-owned mutable array and bounded macro/runtime adaptations establish IndexedSeq/list/variadic prerequisites: 56 fresh primary observations, native9/compiler-array1/runtimeABI18 and the required full locked workspace baseline pass. Private descriptor identity preserves Args isolation, growth/clone GC ownership and native array dispatch. Persistent sequences/lists/vectors, metadata/hash/equality, checked arrays/general host properties and complete core bootstrap remain unfinished; issue #17 stays open. See docs/runtime/arrays.md."
+      ]
     },
     {
       "id": "M4-03",

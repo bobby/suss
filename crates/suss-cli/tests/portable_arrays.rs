@@ -59,7 +59,7 @@ fn check_array_cases(range: std::ops::Range<usize>) {
 
 #[test]
 fn arrays_match_independently_encoded_primary_corpus() {
-    check_array_cases(0..40);
+    check_array_cases(0..56);
 }
 #[test]
 fn array_scalar_storage_identity_and_missing_slots() {
@@ -80,4 +80,77 @@ fn array_first_class_functions_and_native_protocols() {
 #[test]
 fn array_argument_order_and_retained_function_values() {
     check_array_cases(36..40);
+}
+
+#[test]
+fn array_macro_allocation_and_error_effects() {
+    check_array_cases(40..56);
+}
+
+#[test]
+fn retained_arrays_functions_and_old_core_values_cross_fragments_after_gc() {
+    let mut session = Session::new().unwrap();
+    session
+        .eval("(def old (let [n 40] (array (fn [x] (+ n x)))))")
+        .unwrap();
+    let array = session.eval("old").unwrap();
+    let getter = session.eval("aget").unwrap();
+    let zero = session.eval("0").unwrap();
+    let two = session.eval("2").unwrap();
+    session.eval("(def old nil)").unwrap();
+    session.collect().unwrap();
+    let function = session.invoke(&getter, &[&array, &zero]).unwrap();
+    let result = session.invoke(&function, &[&two]).unwrap();
+    assert_eq!(number(&mut session, &result), 42.0f64.to_bits());
+    let creator = session.eval("array").unwrap();
+    session.enter_namespace("suss.core").unwrap();
+    session.eval("(def array (fn [x] 99))").unwrap();
+    session.enter_namespace("user").unwrap();
+    session.collect().unwrap();
+    let result = session.invoke(&creator, &[&two]).unwrap();
+    let item = session.invoke(&getter, &[&result, &zero]).unwrap();
+    assert_eq!(number(&mut session, &item), 2.0f64.to_bits());
+    // The qualified macro remains separate from a redefined runtime function.
+    assert_eq!(
+        eval_number(&mut session, "(alength (cljs.core/array 7 8))"),
+        2.0f64.to_bits()
+    );
+}
+
+#[test]
+fn array_bounds_arity_and_errors_preserve_session_recovery() {
+    use suss_cli::portable_session::SessionError;
+    let mut session = Session::new().unwrap();
+    for source in [
+        "(let [f alength] (f))",
+        "(let [f aclone] (f nil nil))",
+        "(let [f aget] (f (array)))",
+        "(let [f aset] (f (array) 0))",
+        "(let [n -1] (make-array n))",
+        "(let [n 1000001] (make-array n))",
+        "(make-array nil 2000 2000)",
+    ] {
+        assert!(
+            matches!(session.eval(source), Err(SessionError::Language(_))),
+            "{source}"
+        );
+        assert_eq!(eval_number(&mut session, "7"), 7.0f64.to_bits());
+    }
+    for source in [
+        "(alength)",
+        "(aget (array))",
+        "(aset (array) 0)",
+        "(make-array)",
+        "(make-array 1000001)",
+    ] {
+        assert!(
+            matches!(session.eval(source), Err(SessionError::Compile(_))),
+            "{source}"
+        );
+    }
+    // An outer empty dimension does not allocate or validate inaccessible leaves.
+    assert_eq!(
+        eval_number(&mut session, "(alength (make-array nil 0 -1))"),
+        0.0f64.to_bits()
+    );
 }

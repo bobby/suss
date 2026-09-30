@@ -192,3 +192,14 @@ and public helper replacement. Existing portable397 and source-import72 corpora
 remain separate. Closure-owned property storage preserves the ten-type ABI and
 original callback environments. Full macros/metadata/host properties/collections
 remain incomplete; see [native protocol evidence](../runtime/native-protocols.md).
+
+## Mutable array foundation
+
+The [array boundary](../runtime/arrays.md) adapts numeric indexed GC storage,
+growth/identity, shallow clones, nested dimensions and bounded macro/runtime
+semantics. Its separate56-case primary corpus preserves literal nil/dynamic
+undefined fill, expansion order and error effects. Twelve source declarations
+add partial hash-bound reviews: current overlay40 reviewed/1025 unassessed.
+Named/coerced host properties, checked-array options, source literals and full
+sequence/collection/core integration remain unfinished. This does not change the
+397 portable or72 source-core corpus counts, close an issue or certify M4.

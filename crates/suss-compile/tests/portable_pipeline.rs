@@ -56,6 +56,13 @@ fn execute_fragment(bytes: Vec<u8>, cells: Vec<portable::resolve::Global>) -> (S
         };
         let core_export = if identity.namespace() == "suss.core" {
             match identity.name() {
+                "array" => Some("array-function"),
+                "array?" => Some("array-predicate-function"),
+                "make-array" => Some("array-make-function"),
+                "aclone" => Some("array-clone-function"),
+                "aget" => Some("array-get-function"),
+                "aset" => Some("array-set-function"),
+                "alength" => Some("array-length-function"),
                 "native-satisfies?" => Some("native-satisfies-function"),
                 "nil?" => Some("predicate-nil"),
                 "false?" => Some("predicate-false"),
@@ -108,7 +115,9 @@ fn execute_fragment(bytes: Vec<u8>, cells: Vec<portable::resolve::Global>) -> (S
                     .unwrap()
                     .call(
                         &mut store,
-                        if export.starts_with("predicate-") || export == "native-satisfies-function"
+                        if export.starts_with("predicate-")
+                            || export.starts_with("array-")
+                            || export == "native-satisfies-function"
                         {
                             &[]
                         } else {
