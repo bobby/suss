@@ -1,4 +1,5 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
+mod nominal;
 use super::{
     Diagnostic,
     resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
@@ -26,6 +27,8 @@ impl Type {
 #[derive(Debug, Clone)]
 pub enum Literal {
     Nil,
+    /// Internal bootstrap result; there is no undefined source literal.
+    Undefined,
     Bool(bool),
     Number(f64),
     String(Vec<u16>),
@@ -34,6 +37,7 @@ impl Literal {
     pub fn ty(&self) -> Type {
         match self {
             Self::Nil => Type::Nil,
+            Self::Undefined => Type::Value,
             Self::Bool(_) => Type::Bool,
             Self::Number(_) => Type::Number,
             Self::String(_) => Type::String,
@@ -73,6 +77,47 @@ pub(crate) fn arithmetic_type(operator: Arithmetic, arguments: &[Type]) -> Optio
         }
     }))
 }
+/// Original private nominal lowering operations. Arrays here are internal
+/// construction storage, never source-language persistent collections.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Nominal {
+    Array,
+    Descriptor,
+    Class,
+    Protocol,
+    Construct,
+    Instance,
+    Field(usize),
+    Key(usize),
+    Dispatcher,
+    Set,
+    Marker,
+    Satisfies,
+    NativeSatisfies,
+}
+impl Nominal {
+    pub fn result(self) -> Type {
+        match self {
+            Self::Instance | Self::Satisfies | Self::NativeSatisfies => Type::Bool,
+            _ => Type::Value,
+        }
+    }
+    pub(crate) fn valid(self, arguments: &[Type]) -> bool {
+        let count = arguments.len();
+        count <= i32::MAX as usize
+            && match self {
+                Self::Array => true,
+                Self::Descriptor => arguments.iter().all(|ty| *ty == Type::String),
+                Self::Construct => count >= 1,
+                Self::Instance | Self::Satisfies | Self::NativeSatisfies | Self::Marker => {
+                    count == 2
+                }
+                Self::Set => count == 3,
+                Self::Field(index) | Self::Key(index) => count == 1 && index <= i32::MAX as usize,
+                Self::Class | Self::Protocol | Self::Dispatcher => count == 1,
+            }
+    }
+}
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct BindingId(pub usize);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -106,6 +151,10 @@ pub struct Hir {
 }
 #[derive(Debug, Clone)]
 pub enum Expression {
+    Nominal {
+        operation: Nominal,
+        arguments: Vec<Hir>,
+    },
     Literal(Literal),
     Local(BindingId),
     /// Read a live cell by resolved language identity, never by a Wasm index.
@@ -167,6 +216,7 @@ struct Analyzer {
     environment: Environment,
     phase: Phase,
     locals: HashMap<String, (BindingId, Type)>,
+    fields: HashMap<String, Hir>,
     next: usize,
     next_loop: usize,
     target: Option<(LoopId, usize)>,
@@ -213,6 +263,8 @@ impl Analyzer {
                 let (kind, ty) = if symbol.namespace.is_none() {
                     if let Some((id, ty)) = self.locals.get(&symbol.name) {
                         (Expression::Local(*id), *ty)
+                    } else if let Some(field) = self.fields.get(&symbol.name) {
+                        (field.kind.clone(), field.ty)
                     } else {
                         self.global_value(symbol, form.span.clone())?
                     }
@@ -488,6 +540,16 @@ impl Analyzer {
         args: &[Form],
         bootstrap_macro: bool,
     ) -> Result<Hir, Diagnostic> {
+        self.fixed_function_fields(form, args, bootstrap_macro, &[], false)
+    }
+    fn fixed_function_fields(
+        &mut self,
+        form: &Form,
+        args: &[Form],
+        bootstrap_macro: bool,
+        fields: &[Form],
+        method_receiver: bool,
+    ) -> Result<Hir, Diagnostic> {
         let Some(params) = args.first() else {
             return Err(fail(form.span.clone(), "fn requires a parameter vector"));
         };
@@ -517,6 +579,7 @@ impl Analyzer {
             }
         }
         let outer = self.locals.clone();
+        let outer_fields = self.fields.clone();
         let mut parameters = Vec::new();
         for name in names {
             let Kind::Symbol(symbol) = &name.kind else {
@@ -563,6 +626,41 @@ impl Analyzer {
             self.locals
                 .insert(parameter.name.clone(), (id, Type::Value));
         }
+        if method_receiver {
+            let parameter = parameters
+                .first()
+                .ok_or_else(|| fail(form.span.clone(), "Protocol method requires a receiver"))?;
+            // The pin anchors a method's physical receiver across recur. The
+            // first recur operand still evaluates, but does not replace `this`.
+            self.locals
+                .insert(parameter.name.clone(), (parameter.id, Type::Value));
+        }
+        if !fields.is_empty() {
+            let receiver = parameters
+                .first()
+                .ok_or_else(|| fail(form.span.clone(), "Protocol method requires a receiver"))?
+                .id;
+            for (index, field) in fields.iter().enumerate() {
+                let Kind::Symbol(symbol) = &field.kind else {
+                    unreachable!()
+                };
+                if parameters
+                    .iter()
+                    .any(|parameter| parameter.name == symbol.name)
+                {
+                    continue;
+                }
+                self.locals.remove(&symbol.name);
+                let value = self.nominal(
+                    field,
+                    Nominal::Field(index),
+                    vec![self.local(field, receiver)],
+                );
+                self.fields.insert(symbol.name.clone(), value);
+            }
+        }
+        // Field reads occur at the original use, including in nested closures;
+        // unreferenced fields must not introduce checks or effects before a body.
         let inner_body = self.body(&args[1..], form.span.clone(), false, true)?;
         self.target = outer_target;
         let body = Box::new(Hir {
@@ -576,6 +674,7 @@ impl Analyzer {
             },
         });
         self.locals = outer;
+        self.fields = outer_fields;
         let bound = parameters.iter().map(|parameter| parameter.id).collect();
         let mut captures = BTreeSet::new();
         free_bindings(&body, &bound, &mut captures);
@@ -602,6 +701,30 @@ impl Analyzer {
         };
         let args = &items[1..];
         let bare = symbol.namespace.is_none();
+        if symbol.name.ends_with('.') && symbol.name.len() > 1 {
+            let mut constructor = items[0].clone();
+            let Kind::Symbol(name) = &mut constructor.kind else {
+                unreachable!()
+            };
+            name.name.pop();
+            let mut arguments = vec![self.form(&constructor)?];
+            arguments.extend(
+                args.iter()
+                    .map(|argument| self.form(argument))
+                    .collect::<Result<Vec<_>, _>>()?,
+            );
+            return Ok(self.nominal(form, Nominal::Construct, arguments));
+        }
+        if bare && symbol.name == "new" {
+            if args.is_empty() {
+                return Err(fail(form.span.clone(), "new requires a constructor"));
+            }
+            let arguments = args
+                .iter()
+                .map(|argument| self.form(argument))
+                .collect::<Result<Vec<_>, _>>()?;
+            return Ok(self.nominal(form, Nominal::Construct, arguments));
+        }
         // Only true special forms bypass lexical and namespace resolution.
         let resolved = if bare
             && matches!(
@@ -610,7 +733,10 @@ impl Analyzer {
             ) {
             None
         } else {
-            if bare && self.locals.contains_key(&symbol.name) {
+            if bare
+                && (self.locals.contains_key(&symbol.name)
+                    || self.fields.contains_key(&symbol.name))
+            {
                 return self.call(form, items);
             }
             Some(
@@ -623,6 +749,12 @@ impl Analyzer {
                 },
             )
         };
+        if let Some(ResolvedBinding::Nominal {
+            form: nominal_form, ..
+        }) = &resolved
+        {
+            return self.nominal_form(form, args, *nominal_form);
+        }
         if bare && symbol.name == "recur" {
             let Some((target, arity)) = self.target else {
                 return Err(fail(
@@ -868,6 +1000,9 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
         | Expression::Do(items)
         | Expression::Arithmetic {
             arguments: items, ..
+        }
+        | Expression::Nominal {
+            arguments: items, ..
         } => {
             for item in items {
                 free_bindings(item, bound, free);
@@ -905,6 +1040,7 @@ pub(crate) fn prepare(
         environment: environment.clone(),
         phase,
         locals: HashMap::new(),
+        fields: HashMap::new(),
         next: 0,
         next_loop: 0,
         target: None,

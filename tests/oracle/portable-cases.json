@@ -1903,6 +1903,304 @@
       "expected": {
         "tag": "nil"
       }
+    },
+    {
+      "id": "nominal-own-identity",
+      "source": "(do (deftype OracleOwn [value]) (instance? OracleOwn (OracleOwn. 7)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nominal-same-layout-distinct",
+      "source": "(do (deftype OracleSameA [value]) (deftype OracleSameB [value]) (instance? OracleSameA (OracleSameB. 7)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "nominal-nil-instance",
+      "source": "(do (deftype OracleNil []) (instance? OracleNil nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "nominal-constructor-alias",
+      "source": "(do (deftype OracleAlias [value]) (let [klass OracleAlias] (instance? klass (new klass 7))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nominal-arrow-construction",
+      "source": "(do (deftype OracleArrow [value]) (instance? OracleArrow (->OracleArrow 7)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nominal-type-expression",
+      "source": "(if (deftype OracleExpression []) 7 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "nominal-ordinary-call",
+      "source": "(do (deftype OracleOrdinary [value]) (OracleOrdinary 7))",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "nominal-ordinary-zero-call",
+      "source": "(do (deftype OracleOrdinaryZero [value]) (OracleOrdinaryZero))",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "nominal-ordinary-extra-call",
+      "source": "(do (deftype OracleOrdinaryExtra [value]) (OracleOrdinaryExtra 7 9))",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "nominal-single-method",
+      "source": "(do (defprotocol OracleSingleP (oracle-single [this])) (deftype OracleSingle [value] OracleSingleP (oracle-single [this] value)) (oracle-single (OracleSingle. 7)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "nominal-multiple-method-arity",
+      "source": "(do (defprotocol OracleMultiP (oracle-multi [this] [this x])) (deftype OracleMulti [value] OracleMultiP (oracle-multi [this] value) (oracle-multi [this x] (+ value x))) (oracle-multi (OracleMulti. 7) 11))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4032000000000000"
+      }
+    },
+    {
+      "id": "nominal-parameter-shadows-field",
+      "source": "(do (defprotocol OracleShadowP (oracle-shadow [this value])) (deftype OracleShadow [value] OracleShadowP (oracle-shadow [this value] value)) (oracle-shadow (OracleShadow. 7) 11))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    },
+    {
+      "id": "nominal-field-closure-capture",
+      "source": "(do (defprotocol OracleCaptureP (oracle-capture [this])) (deftype OracleCapture [value] OracleCaptureP (oracle-capture [this] (fn [] value))) ((oracle-capture (OracleCapture. 7))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "nominal-callable-field",
+      "source": "(do (defprotocol OracleCallableP (oracle-callable [this x])) (deftype OracleCallable [f] OracleCallableP (oracle-callable [this x] (f x))) (oracle-callable (OracleCallable. (fn [x] (+ x 7))) 11))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4032000000000000"
+      }
+    },
+    {
+      "id": "nominal-empty-membership",
+      "source": "(do (defprotocol OracleEmptyP) (deftype OracleEmpty [] OracleEmptyP) (satisfies? OracleEmptyP (OracleEmpty.)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nominal-partial-membership",
+      "source": "(do (defprotocol OraclePartialP (oracle-partial [this]) (oracle-missing [this])) (deftype OraclePartial [] OraclePartialP (oracle-partial [this] 7)) (satisfies? OraclePartialP (OraclePartial.)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nominal-before-extension",
+      "source": "(do (defprotocol OracleBeforeP (oracle-before [this])) (deftype OracleBefore []) (satisfies? OracleBeforeP (OracleBefore.)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "nominal-existing-object-extension",
+      "source": "(do (defprotocol OracleExtendP (oracle-extend [this])) (deftype OracleExtend []) (def oracle-extended-object (OracleExtend.)) (extend-type OracleExtend OracleExtendP (oracle-extend [this] 42)) (oracle-extend oracle-extended-object))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "nominal-empty-extension-truthiness",
+      "source": "(do (defprotocol OracleMarkerP) (deftype OracleMarker []) (if (extend-type OracleMarker OracleMarkerP) 7 9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "nominal-protocol-expression",
+      "source": "(if (defprotocol OracleProtocolExpression) 7 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "nominal-missing-field",
+      "source": "(do (defprotocol OracleMissingP (oracle-missing-field [this])) (deftype OracleMissing [value] OracleMissingP (oracle-missing-field [this] value)) (oracle-missing-field (OracleMissing.)))",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "nominal-extra-field",
+      "source": "(do (defprotocol OracleExtraP (oracle-extra-field [this])) (deftype OracleExtra [value] OracleExtraP (oracle-extra-field [this] value)) (oracle-extra-field (OracleExtra. 11 12)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    },
+    {
+      "id": "nominal-undefined-number",
+      "source": "(do (defprotocol OracleUndefinedP (oracle-undefined [this])) (deftype OracleUndefined [value] OracleUndefinedP (oracle-undefined [this] value)) (+ (oracle-undefined (OracleUndefined.)) 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "nominal-ordinary-undefined-number",
+      "source": "(do (deftype OracleUndefinedCall [value]) (+ (OracleUndefinedCall 7) 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "nominal-undefined-string",
+      "source": "(do (defprotocol OracleStringP (oracle-string [this])) (deftype OracleString [value] OracleStringP (oracle-string [this] value)) (+ (oracle-string (OracleString.)) \"x\"))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          117,
+          110,
+          100,
+          101,
+          102,
+          105,
+          110,
+          101,
+          100,
+          120
+        ]
+      }
+    },
+    {
+      "id": "nominal-undefined-truthiness",
+      "source": "(do (defprotocol OracleTruthyP (oracle-truthy [this])) (deftype OracleTruthy [value] OracleTruthyP (oracle-truthy [this] value)) (if (oracle-truthy (OracleTruthy.)) 7 9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "nominal-type-redefinition",
+      "source": "(do (deftype OracleRedef [value]) (def oracle-old-instance (OracleRedef. 7)) (deftype OracleRedef [value]) (instance? OracleRedef oracle-old-instance))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "nominal-old-type-alias",
+      "source": "(do (deftype OracleOldAlias [value]) (def oracle-old-class OracleOldAlias) (def oracle-alias-instance (OracleOldAlias. 7)) (deftype OracleOldAlias [value]) (instance? oracle-old-class oracle-alias-instance))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nominal-old-arrow-live-type",
+      "source": "(do (deftype OracleOldArrow [value]) (def oracle-old-arrow ->OracleOldArrow) (deftype OracleOldArrow [value]) (instance? OracleOldArrow (oracle-old-arrow 7)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nominal-protocol-redefinition",
+      "source": "(do (defprotocol OracleRedefP (oracle-redef-method [this])) (deftype OracleRedefType [value] OracleRedefP (oracle-redef-method [this] value)) (def oracle-redef-instance (OracleRedefType. 7)) (defprotocol OracleRedefP (oracle-redef-method [this])) (oracle-redef-method oracle-redef-instance))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "nominal-protocol-value-alias",
+      "source": "(do (defprotocol OracleAliasP) (deftype OracleAliasType [] OracleAliasP) (def oracle-protocol-alias OracleAliasP) (satisfies? oracle-protocol-alias (OracleAliasType.)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "nominal-method-recur-receiver",
+      "source": "(do (defprotocol OracleRecurP (oracle-recur [this again])) (deftype OracleRecur [a] OracleRecurP (oracle-recur [this again] (if again (recur nil false) (+ a (if (instance? OracleRecur this) 100 200))))) (oracle-recur (OracleRecur. 1) true))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4059400000000000"
+      }
+    },
+    {
+      "id": "nominal-defprotocol-number-coercion",
+      "source": "(+ (defprotocol ReviewNumberProtocol) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "nominal-defprotocol-string-coercion",
+      "source": "(+ (defprotocol ReviewStringProtocol) \"x\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          117,
+          110,
+          100,
+          101,
+          102,
+          105,
+          110,
+          101,
+          100,
+          120
+        ]
+      }
+    },
+    {
+      "id": "nominal-grouped-extend-type-signatures",
+      "source": "(do (defprotocol ReviewGroupedProtocol (review-grouped [this] [this x])) (deftype ReviewGrouped []) (extend-type ReviewGrouped ReviewGroupedProtocol (review-grouped ([this] 7) ([this x] (+ x 7)))) (review-grouped (ReviewGrouped.) 11))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4032000000000000"
+      }
     }
   ]
 }

@@ -80,7 +80,7 @@ compiled fragments in one Store; this is not a persistent compiled session.
 
 Fourteen focused tests validate/link/execute actual artifacts and independently
 inspect the heap after forced GC. The original 14 scalar reader cases now also
-execute through compiled source fragments. A separate original 210-case source
+execute through compiled source fragments. A separate original 245-case source
 corpus matches freshly compiled pinned ClojureScript/Node observations exactly,
 covering numeric bits/arities, conditional values, lexical shadowing, strings and
 unary sum/product identity over nil/booleans/UTF-16/dynamic values/closures,
@@ -115,3 +115,12 @@ phase/definition loading and production clients, extended closure signatures,
 object conversion, complete source macro/core import and the source corpus; add collection/dispatch/exception/
 async IR forms and migrate AOT/REPL/macros through the same pipeline. Retire the
 old backend only when replacement acceptance passes.
+
+
+Bounded nominal source operations now retain descriptor identities and ordered
+constructor/predicate/field/protocol operands in verified HIR/IR. The current
+compiler manifest format is `0.1.0+portable.2`, rejecting earlier artifact formats
+before effects; ABI prelude/version1 stays unchanged. Internal undefined sentinel6
+is distinct from nil0, including falsey branching and NaN/string coercion. See
+[nominal evidence and remaining work](nominal.md); general exceptions/dynamic scope,
+builtin/native dispatch and complete core/macros remain unfinished.

@@ -1,7 +1,7 @@
 //! Emit only verified IR. Operands are local value IDs, never source expressions.
 use super::{
     Diagnostic,
-    hir::{Arithmetic, Literal, Type},
+    hir::{Arithmetic, Literal, Nominal, Type},
     ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, Operation, Terminator},
 };
 use crate::runtime_abi;
@@ -76,6 +76,50 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Call { .. } => {
                         names.insert("invoke");
                     }
+                    Operation::Nominal { operation, .. } => match operation {
+                        Nominal::Array => {}
+                        Nominal::Descriptor => {
+                            names.insert("descriptor-new");
+                        }
+                        Nominal::Protocol => {
+                            names.insert("protocol-value-new");
+                        }
+                        Nominal::Class => {
+                            names.insert("class-value-new");
+                        }
+                        Nominal::Construct => {
+                            names.insert("constructor-descriptor");
+                            names.insert("source-constructor-new");
+                            names.insert("invoke");
+                        }
+                        Nominal::Instance => {
+                            names.insert("constructor-descriptor");
+                            names.insert("object-instance");
+                        }
+                        Nominal::Field(_) => {
+                            names.insert("object-field-get");
+                        }
+                        Nominal::Key(_) => {
+                            names.insert("protocol-key");
+                        }
+                        Nominal::Dispatcher => {
+                            names.insert("protocol-dispatcher-new");
+                        }
+                        Nominal::Marker => {
+                            names.insert("constructor-descriptor");
+                            names.insert("protocol-marker-set");
+                        }
+                        Nominal::Set => {
+                            names.insert("constructor-descriptor");
+                            names.insert("protocol-method-set");
+                        }
+                        Nominal::NativeSatisfies => {
+                            names.insert("protocol-native-satisfies");
+                        }
+                        Nominal::Satisfies => {
+                            names.insert("protocol-marker-satisfies");
+                        }
+                    },
                     Operation::Arithmetic {
                         operator,
                         arguments,
@@ -94,6 +138,19 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let type_count = runtime_abi::TYPE_COUNT;
     for (i, name) in names.iter().enumerate() {
         let (params, results) = match *name {
+            "object-instance" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
+                (vec![VALUE, VALUE], vec![ValType::I32])
+            }
+            "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
+            "protocol-marker-set" => (vec![VALUE, VALUE], vec![VALUE]),
+            "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
+            "descriptor-new"
+            | "class-value-new"
+            | "protocol-value-new"
+            | "constructor-new"
+            | "source-constructor-new"
+            | "constructor-descriptor"
+            | "protocol-dispatcher-new" => (vec![VALUE], vec![VALUE]),
             "arity-error" => (vec![], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
             "closure-new" => (
@@ -313,9 +370,13 @@ fn emit_function(
             .instruction(&If(BlockType::Empty));
         for inst in &block.instructions {
             match &inst.operation {
-                Operation::Literal(Literal::Nil) => {
+                Operation::Literal(literal @ (Literal::Nil | Literal::Undefined)) => {
                     function
-                        .instruction(&I32Const(0))
+                        .instruction(&I32Const(if matches!(literal, Literal::Undefined) {
+                            runtime_abi::UNDEFINED
+                        } else {
+                            0
+                        }))
                         .instruction(&RefI31)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
@@ -459,6 +520,98 @@ fn emit_function(
                             .instruction(&ArraySet(runtime_abi::ARGS));
                     }
                 }
+                Operation::Nominal {
+                    operation,
+                    arguments,
+                } => {
+                    match operation {
+                        Nominal::Array | Nominal::Descriptor => {
+                            for argument in arguments {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&ArrayNewFixed {
+                                array_type_index: runtime_abi::ARGS,
+                                array_size: arguments.len() as u32,
+                            });
+                            if *operation == Nominal::Descriptor {
+                                function.instruction(&Call(index("descriptor-new")));
+                            }
+                        }
+                        Nominal::Construct => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&Call(index("constructor-descriptor")))
+                                .instruction(&Call(index("source-constructor-new")));
+                            for argument in &arguments[1..] {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function
+                                .instruction(&ArrayNewFixed {
+                                    array_type_index: runtime_abi::ARGS,
+                                    array_size: arguments.len() as u32 - 1,
+                                })
+                                .instruction(&Call(index("invoke")));
+                        }
+                        Nominal::Instance | Nominal::Set | Nominal::Marker => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&Call(index("constructor-descriptor")));
+                            for argument in &arguments[1..] {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&Call(index(
+                                if *operation == Nominal::Instance {
+                                    "object-instance"
+                                } else if *operation == Nominal::Marker {
+                                    "protocol-marker-set"
+                                } else {
+                                    "protocol-method-set"
+                                },
+                            )));
+                            if *operation == Nominal::Set {
+                                function.instruction(&LocalGet(arguments[2].0 as u32 + offset));
+                            }
+                        }
+                        Nominal::Field(field) | Nominal::Key(field) => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&I32Const(*field as i32))
+                                .instruction(&Call(index(
+                                    if matches!(operation, Nominal::Field(_)) {
+                                        "object-field-get"
+                                    } else {
+                                        "protocol-key"
+                                    },
+                                )));
+                        }
+                        Nominal::Class
+                        | Nominal::Protocol
+                        | Nominal::Dispatcher
+                        | Nominal::Satisfies
+                        | Nominal::NativeSatisfies => {
+                            for argument in arguments {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&Call(index(match operation {
+                                Nominal::Class => "class-value-new",
+                                Nominal::Protocol => "protocol-value-new",
+                                Nominal::Dispatcher => "protocol-dispatcher-new",
+                                Nominal::NativeSatisfies => "protocol-native-satisfies",
+                                _ => "protocol-marker-satisfies",
+                            })));
+                        }
+                    }
+                    if operation.result() == Type::Bool {
+                        function
+                            .instruction(&If(BlockType::Result(ValType::I32)))
+                            .instruction(&I32Const(4))
+                            .instruction(&Else)
+                            .instruction(&I32Const(2))
+                            .instruction(&End)
+                            .instruction(&RefI31);
+                    }
+                    function.instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
                 Operation::Arithmetic {
                     operator,
                     arguments,
@@ -496,7 +649,7 @@ fn emit_function(
                 consequent,
                 alternative,
             } => {
-                // Only the nil and false ABI sentinels are falsey, including for
+                // Nil, false and internal undefined are falsey, including for
                 // boxed numeric zero and empty UTF-16 strings.
                 function
                     .instruction(&LocalGet(condition.0 as u32 + offset))
@@ -506,6 +659,12 @@ fn emit_function(
                 function
                     .instruction(&LocalGet(condition.0 as u32 + offset))
                     .instruction(&I32Const(2))
+                    .instruction(&RefI31)
+                    .instruction(&RefEq)
+                    .instruction(&I32Or);
+                function
+                    .instruction(&LocalGet(condition.0 as u32 + offset))
+                    .instruction(&I32Const(runtime_abi::UNDEFINED))
                     .instruction(&RefI31)
                     .instruction(&RefEq)
                     .instruction(&I32Or);

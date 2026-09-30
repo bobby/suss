@@ -1,7 +1,9 @@
 //! Explicit values, blocks and edge parameters. Verification precedes emission.
 use super::{
     Diagnostic,
-    hir::{Arithmetic, BindingId, Expression, Hir, Literal, LoopId, Type, arithmetic_type},
+    hir::{
+        Arithmetic, BindingId, Expression, Hir, Literal, LoopId, Nominal, Type, arithmetic_type,
+    },
     resolve::Global,
 };
 use std::{
@@ -17,6 +19,10 @@ pub struct Value {
 }
 #[derive(Debug, Clone)]
 pub enum Operation {
+    Nominal {
+        operation: Nominal,
+        arguments: Vec<ValueId>,
+    },
     Literal(Literal),
     GlobalRead(Global),
     GlobalBound(Global),
@@ -444,6 +450,33 @@ impl Lowerer {
                 self.current = join;
                 result
             }
+            Expression::Nominal {
+                operation,
+                arguments,
+            } => {
+                let types = arguments
+                    .iter()
+                    .map(|argument| argument.ty)
+                    .collect::<Vec<_>>();
+                if !operation.valid(&types) || hir.ty != operation.result() {
+                    return Err(Diagnostic {
+                        span: hir.span.clone(),
+                        message: "Invalid nominal HIR shape".into(),
+                    });
+                }
+                let arguments = arguments
+                    .iter()
+                    .map(|argument| self.operand(argument))
+                    .collect::<Result<Vec<_>, _>>()?;
+                self.emit(
+                    Operation::Nominal {
+                        operation: *operation,
+                        arguments,
+                    },
+                    hir.ty,
+                    hir.span.clone(),
+                )
+            }
             Expression::Arithmetic {
                 operator,
                 arguments,
@@ -597,7 +630,7 @@ fn verify_recurrence(
                 verify_recurrence(argument, targets, false)?;
             }
         }
-        Expression::Arithmetic { arguments, .. } => {
+        Expression::Arithmetic { arguments, .. } | Expression::Nominal { arguments, .. } => {
             for argument in arguments {
                 verify_recurrence(argument, targets, false)?;
             }
@@ -620,7 +653,7 @@ fn operands(operation: &Operation) -> &[ValueId] {
     match operation {
         Operation::Literal(_) | Operation::GlobalRead(_) | Operation::GlobalBound(_) => &[],
         Operation::GlobalWrite { value, .. } => std::slice::from_ref(value),
-        Operation::Arithmetic { arguments, .. } => arguments,
+        Operation::Arithmetic { arguments, .. } | Operation::Nominal { arguments, .. } => arguments,
         Operation::MakeClosure { captures, .. }
         | Operation::MakeGeneralClosure { captures, .. } => captures,
         Operation::Call { operands } => operands,
@@ -838,6 +871,18 @@ fn verify_function(
                         if arity != operands.len() - 1 {
                             return Err(fail("IR known closure call arity mismatch"));
                         }
+                    }
+                }
+                Operation::Nominal {
+                    operation,
+                    arguments,
+                } => {
+                    let types = arguments
+                        .iter()
+                        .map(|argument| ty(*argument))
+                        .collect::<Result<Vec<_>, _>>()?;
+                    if !operation.valid(&types) || result_ty != operation.result() {
+                        return Err(fail("Invalid nominal IR shape"));
                     }
                 }
                 Operation::Arithmetic {

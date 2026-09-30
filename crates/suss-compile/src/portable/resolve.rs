@@ -40,9 +40,23 @@ impl Global {
         format!("{}/{}", self.namespace, self.name)
     }
 }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NominalForm {
+    Deftype,
+    Defprotocol,
+    ExtendType,
+    Instance,
+    Satisfies,
+}
+#[derive(Debug, Clone)]
+pub(crate) struct ProtocolMethod {
+    pub name: String,
+    pub signatures: Vec<(usize, usize)>, // argument arity, bundle key index
+}
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Binding {
     Cell(Global),
+    InternalCell(Global),
     Arithmetic {
         global: Global,
         operator: Arithmetic,
@@ -51,16 +65,22 @@ pub enum Binding {
     BootstrapLoop(Global),
     BootstrapFn(Global),
     BootstrapDefonce(Global),
+    Nominal {
+        global: Global,
+        form: NominalForm,
+    },
 }
 impl Binding {
     pub fn global(&self) -> &Global {
         match self {
             Self::Cell(g)
+            | Self::InternalCell(g)
             | Self::BootstrapLoop(g)
             | Self::BootstrapLet(g)
             | Self::BootstrapFn(g)
             | Self::BootstrapDefonce(g)
-            | Self::Arithmetic { global: g, .. } => g,
+            | Self::Arithmetic { global: g, .. }
+            | Self::Nominal { global: g, .. } => g,
         }
     }
 }
@@ -90,6 +110,7 @@ pub struct Environment {
     scopes: BTreeMap<(Phase, String), Scope>,
     current: BTreeMap<Phase, String>,
     materialized_arithmetic: BTreeSet<Global>,
+    pub(crate) protocols: BTreeMap<Global, Vec<ProtocolMethod>>,
 }
 pub(crate) fn canonical(namespace: &str) -> &str {
     if namespace == "cljs.core" {
@@ -143,6 +164,7 @@ impl Environment {
             scopes: BTreeMap::new(),
             current: BTreeMap::new(),
             materialized_arithmetic: BTreeSet::new(),
+            protocols: BTreeMap::new(),
         };
         for phase in [Phase::Runtime, Phase::Macro] {
             env.scopes.insert(
@@ -165,6 +187,21 @@ impl Environment {
                 };
                 env.bindings
                     .insert(global.clone(), Binding::Arithmetic { global, operator });
+            }
+            for (name, form) in [
+                ("deftype", NominalForm::Deftype),
+                ("defprotocol", NominalForm::Defprotocol),
+                ("extend-type", NominalForm::ExtendType),
+                ("instance?", NominalForm::Instance),
+                ("satisfies?", NominalForm::Satisfies),
+            ] {
+                let global = Global {
+                    phase,
+                    namespace: "suss.core".into(),
+                    name: name.into(),
+                };
+                env.bindings
+                    .insert(global.clone(), Binding::Nominal { global, form });
             }
             for name in ["let", "loop", "fn", "defonce"] {
                 let global = Global {
@@ -207,7 +244,7 @@ impl Environment {
         self.bindings
             .values()
             .filter_map(|binding| match binding {
-                Binding::Cell(global) => Some(global.clone()),
+                Binding::Cell(global) | Binding::InternalCell(global) => Some(global.clone()),
                 _ => None,
             })
             .chain(self.materialized_arithmetic.iter().cloned())
@@ -292,10 +329,32 @@ impl Environment {
         {
             return Err(error(format!("Ambiguous binding {name}")));
         }
+        if matches!(self.bindings.get(&global), Some(Binding::InternalCell(_))) {
+            return Err(error("Cannot redefine a compiler-owned binding"));
+        }
         self.declare_namespace(phase, &global.namespace)?;
         self.bindings
             .insert(global.clone(), Binding::Cell(global.clone()));
         Ok(global)
+    }
+    pub(crate) fn protocol_key(&mut self, protocol: &Global, method: &str, arity: usize) -> Global {
+        let identity = format!(
+            "{}/{}/{}/{}",
+            protocol.namespace, protocol.name, method, arity
+        );
+        let name = identity
+            .as_bytes()
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>();
+        let global = Global {
+            phase: protocol.phase,
+            namespace: "suss.internal.protocol-keys".into(),
+            name: format!("key-{name}"),
+        };
+        self.bindings
+            .insert(global.clone(), Binding::InternalCell(global.clone()));
+        global
     }
     pub fn alias(&mut self, phase: Phase, alias: &str, namespace: &str) -> Result<(), Diagnostic> {
         valid_namespace(alias)?;
@@ -375,21 +434,63 @@ impl Environment {
                 .get(namespace)
                 .map_or(namespace.as_str(), String::as_str);
             (canonical(namespace) == "suss.core"
-                && matches!(symbol.name.as_str(), "let" | "loop" | "fn" | "defonce"))
+                && matches!(
+                    symbol.name.as_str(),
+                    "let"
+                        | "loop"
+                        | "fn"
+                        | "defonce"
+                        | "deftype"
+                        | "defprotocol"
+                        | "extend-type"
+                        | "instance?"
+                        | "satisfies?"
+                ))
             .then_some(symbol.name.as_str())
         } else if let Some(global) = scope.refers.get(&symbol.name) {
             if global.namespace == "suss.core"
-                && matches!(global.name.as_str(), "let" | "loop" | "fn" | "defonce")
+                && matches!(
+                    global.name.as_str(),
+                    "let"
+                        | "loop"
+                        | "fn"
+                        | "defonce"
+                        | "deftype"
+                        | "defprotocol"
+                        | "extend-type"
+                        | "instance?"
+                        | "satisfies?"
+                )
             {
                 Some(global.name.as_str())
             } else {
-                (matches!(symbol.name.as_str(), "let" | "loop" | "fn" | "defonce")
-                    && !scope.excluded_core.contains(&symbol.name))
+                (matches!(
+                    symbol.name.as_str(),
+                    "let"
+                        | "loop"
+                        | "fn"
+                        | "defonce"
+                        | "deftype"
+                        | "defprotocol"
+                        | "extend-type"
+                        | "instance?"
+                        | "satisfies?"
+                ) && !scope.excluded_core.contains(&symbol.name))
                 .then_some(symbol.name.as_str())
             }
         } else {
-            (matches!(symbol.name.as_str(), "let" | "loop" | "fn" | "defonce")
-                && !scope.excluded_core.contains(&symbol.name))
+            (matches!(
+                symbol.name.as_str(),
+                "let"
+                    | "loop"
+                    | "fn"
+                    | "defonce"
+                    | "deftype"
+                    | "defprotocol"
+                    | "extend-type"
+                    | "instance?"
+                    | "satisfies?"
+            ) && !scope.excluded_core.contains(&symbol.name))
             .then_some(symbol.name.as_str())
         }?;
         let global = Global {
@@ -403,8 +504,19 @@ impl Environment {
             Binding::BootstrapLoop(global.clone())
         } else if name == "fn" {
             Binding::BootstrapFn(global)
-        } else {
+        } else if name == "defonce" {
             Binding::BootstrapDefonce(global)
+        } else {
+            Binding::Nominal {
+                global,
+                form: match name {
+                    "deftype" => NominalForm::Deftype,
+                    "defprotocol" => NominalForm::Defprotocol,
+                    "instance?" => NominalForm::Instance,
+                    "satisfies?" => NominalForm::Satisfies,
+                    _ => NominalForm::ExtendType,
+                },
+            }
         })
     }
     pub fn resolve(
@@ -450,6 +562,7 @@ impl Environment {
         };
         self.bindings
             .get(&global)
+            .filter(|binding| !matches!(binding, Binding::InternalCell(_)))
             .cloned()
             .ok_or_else(|| Diagnostic {
                 span,

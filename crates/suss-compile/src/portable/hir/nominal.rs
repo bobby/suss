@@ -1,0 +1,653 @@
+//! Bounded original bootstrap lowering, not copied upstream macro source.
+use super::*;
+use crate::portable::resolve::{NominalForm, ProtocolMethod};
+
+impl Analyzer {
+    pub(super) fn nominal(&self, form: &Form, operation: Nominal, arguments: Vec<Hir>) -> Hir {
+        Hir {
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: operation.result(),
+            kind: Expression::Nominal {
+                operation,
+                arguments,
+            },
+        }
+    }
+    pub(super) fn local(&self, form: &Form, id: BindingId) -> Hir {
+        Hir {
+            span: form.span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Value,
+            kind: Expression::Local(id),
+        }
+    }
+    fn literal_form(&self, form: &Form, literal: Literal) -> Hir {
+        Hir {
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: literal.ty(),
+            kind: Expression::Literal(literal),
+        }
+    }
+    fn fresh_binding(&mut self, form: &Form, value: Hir) -> Binding {
+        let id = BindingId(self.next);
+        self.next += 1;
+        Binding {
+            id,
+            name: format!("$nominal{}", id.0),
+            span: form.span.clone(),
+            metadata: Vec::new(),
+            value,
+        }
+    }
+    fn nominal_definition(
+        &mut self,
+        form: &Form,
+        name: &Form,
+        initializer: Hir,
+    ) -> Result<Hir, Diagnostic> {
+        let mut definition = self.definition(form, &[name.clone()], false)?;
+        let Expression::Definition {
+            initializer: target,
+            ..
+        } = &mut definition.kind
+        else {
+            unreachable!()
+        };
+        *target = Some(Box::new(initializer));
+        Ok(definition)
+    }
+    fn stable_key(
+        &mut self,
+        form: &Form,
+        protocol: &Global,
+        method: &str,
+        arity: usize,
+        schema: Vec<Hir>,
+    ) -> Hir {
+        let global = self.environment.protocol_key(protocol, method, arity);
+        let descriptor = self.nominal(form, Nominal::Descriptor, schema);
+        let initialize = Hir {
+            span: form.span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Value,
+            kind: Expression::Definition {
+                global: global.clone(),
+                name_metadata: Vec::new(),
+                name_span: form.span.clone(),
+                docstring: None,
+                initializer: Some(Box::new(descriptor)),
+                once: true,
+            },
+        };
+        let read = Hir {
+            span: form.span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Value,
+            kind: Expression::Global(global),
+        };
+        self.do_hir(form, vec![initialize, read])
+    }
+    fn named_global(&self, name: &Form) -> Result<Global, Diagnostic> {
+        let Kind::Symbol(symbol) = &name.kind else {
+            return Err(fail(
+                name.span.clone(),
+                "Expected a resolved type/protocol name",
+            ));
+        };
+        Ok(self
+            .environment
+            .resolve(self.phase, symbol, name.span.clone())?
+            .global()
+            .clone())
+    }
+    fn do_hir(&self, form: &Form, items: Vec<Hir>) -> Hir {
+        Hir {
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: items.last().map_or(Type::Nil, |item| item.ty),
+            kind: Expression::Do(items),
+        }
+    }
+    pub(super) fn nominal_form(
+        &mut self,
+        form: &Form,
+        args: &[Form],
+        operation: NominalForm,
+    ) -> Result<Hir, Diagnostic> {
+        match operation {
+            NominalForm::Instance => {
+                if args.len() != 2 {
+                    return Err(fail(
+                        form.span.clone(),
+                        "instance? requires exactly two operands",
+                    ));
+                }
+                let arguments = args
+                    .iter()
+                    .map(|argument| self.form(argument))
+                    .collect::<Result<Vec<_>, _>>()?;
+                Ok(self.nominal(form, Nominal::Instance, arguments))
+            }
+            NominalForm::Satisfies => {
+                if args.len() != 2 {
+                    return Err(fail(
+                        form.span.clone(),
+                        "satisfies? requires a protocol name and value",
+                    ));
+                }
+                let protocol = self.named_global(&args[0])?;
+                // Like the pin's macro, the marker follows the resolved syntactic
+                // protocol name, not a runtime alias of a protocol object.
+                let marker = self.stable_key(&args[0], &protocol, "", 0, vec![]);
+                let value = self.form(&args[1])?;
+                let binding = self.fresh_binding(&args[1], value);
+                let value = self.local(&args[1], binding.id);
+                let condition = self.nominal(form, Nominal::Satisfies, vec![marker, value.clone()]);
+                let protocol_value = Hir {
+                    span: args[0].span.clone(),
+                    metadata: args[0].metadata.clone(),
+                    ty: Type::Value,
+                    kind: Expression::Global(protocol),
+                };
+                let alternative =
+                    self.nominal(form, Nominal::NativeSatisfies, vec![protocol_value, value]);
+                let body = Hir {
+                    span: form.span.clone(),
+                    metadata: form.metadata.clone(),
+                    ty: Type::Bool,
+                    kind: Expression::If {
+                        condition: Box::new(condition),
+                        consequent: Box::new(self.literal_form(form, Literal::Bool(true))),
+                        alternative: Box::new(alternative),
+                    },
+                };
+                Ok(Hir {
+                    span: form.span.clone(),
+                    metadata: form.metadata.clone(),
+                    ty: Type::Bool,
+                    kind: Expression::Let {
+                        bindings: vec![binding],
+                        body: Box::new(body),
+                    },
+                })
+            }
+            NominalForm::Deftype => self.type_definition(form, args),
+            NominalForm::Defprotocol => self.protocol_definition(form, args),
+            NominalForm::ExtendType => {
+                let Some(class) = args.first() else {
+                    return Err(fail(form.span.clone(), "extend-type requires a type"));
+                };
+                let value = self.form(class)?;
+                let binding = self.fresh_binding(class, value);
+                let class_value = self.local(class, binding.id);
+                let mut effects =
+                    self.protocol_extensions(form, &args[1..], class_value, &[], false)?;
+                if effects.is_empty() {
+                    effects.push(self.literal_form(form, Literal::Nil));
+                }
+                let body = self.do_hir(form, effects);
+                Ok(Hir {
+                    span: form.span.clone(),
+                    metadata: form.metadata.clone(),
+                    ty: body.ty,
+                    kind: Expression::Let {
+                        bindings: vec![binding],
+                        body: Box::new(body),
+                    },
+                })
+            }
+        }
+    }
+    fn type_definition(&mut self, form: &Form, args: &[Form]) -> Result<Hir, Diagnostic> {
+        if args.len() < 2 {
+            return Err(fail(
+                form.span.clone(),
+                "deftype requires a name and field vector",
+            ));
+        }
+        let Kind::Vector(fields) = &args[1].kind else {
+            return Err(fail(
+                args[1].span.clone(),
+                "deftype requires a field vector",
+            ));
+        };
+        let mut seen = BTreeSet::new();
+        let mut schema = Vec::new();
+        for field in fields {
+            let Kind::Symbol(symbol) = &field.kind else {
+                return Err(fail(
+                    field.span.clone(),
+                    "Type fields require unqualified symbols",
+                ));
+            };
+            if symbol.namespace.is_some() || symbol.name == "&" || !seen.insert(symbol.name.clone())
+            {
+                return Err(fail(
+                    field.span.clone(),
+                    "Type field names must be unqualified and distinct",
+                ));
+            }
+            if !field.metadata.is_empty() {
+                return Err(fail(
+                    field.span.clone(),
+                    "Type field attributes are not implemented yet",
+                ));
+            }
+            schema.push(
+                self.literal_form(field, Literal::String(symbol.name.encode_utf16().collect())),
+            );
+        }
+        // Declare the source identity before method analysis, for self type references.
+        let declaration = self.definition(form, &[args[0].clone()], false)?;
+        let Expression::Definition {
+            global: class_global,
+            ..
+        } = &declaration.kind
+        else {
+            unreachable!()
+        };
+        let class_global = class_global.clone();
+        let Kind::Symbol(symbol) = &args[0].kind else {
+            unreachable!()
+        };
+        let arrow_name = Form {
+            span: args[0].span.clone(),
+            metadata: Vec::new(),
+            kind: Kind::Symbol(suss_reader::Symbol {
+                namespace: symbol.namespace.clone(),
+                name: format!("->{}", symbol.name),
+            }),
+        };
+        // Own generated constructor references are available during method analysis.
+        self.definition(form, &[arrow_name.clone()], false)?;
+        let descriptor = self.nominal(form, Nominal::Descriptor, schema);
+        let class = self.nominal(form, Nominal::Class, vec![descriptor]);
+        let binding = self.fresh_binding(form, class);
+        let class_value = self.local(form, binding.id);
+        let mut effects =
+            self.protocol_extensions(form, &args[2..], class_value.clone(), fields, true)?;
+        effects.push(class_value);
+        let body = self.do_hir(form, effects);
+        let initialization = Hir {
+            span: form.span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Value,
+            kind: Expression::Let {
+                bindings: vec![binding],
+                body: Box::new(body),
+            },
+        };
+        let class_binding = self.fresh_binding(form, initialization);
+        let class_value = self.local(form, class_binding.id);
+        let mut definition = declaration;
+        let Expression::Definition {
+            initializer: target,
+            ..
+        } = &mut definition.kind
+        else {
+            unreachable!()
+        };
+        *target = Some(Box::new(class_value.clone()));
+        let mut parameters = Vec::new();
+        let mut arguments = vec![Hir {
+            span: args[0].span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Value,
+            kind: Expression::Global(class_global),
+        }];
+        for field in fields {
+            let Kind::Symbol(symbol) = &field.kind else {
+                unreachable!()
+            };
+            let id = BindingId(self.next);
+            self.next += 1;
+            parameters.push(Parameter {
+                id,
+                name: symbol.name.clone(),
+                metadata: field.metadata.clone(),
+                span: field.span.clone(),
+            });
+            arguments.push(self.local(field, id));
+        }
+        let arrow = Hir {
+            span: form.span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Closure(parameters.len()),
+            kind: Expression::Function {
+                parameters,
+                captures: vec![],
+                body: Box::new(self.nominal(form, Nominal::Construct, arguments)),
+            },
+        };
+        let arrow = self.nominal_definition(form, &arrow_name, arrow)?;
+        let body = self.do_hir(form, vec![definition, arrow, class_value]);
+        Ok(Hir {
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: Expression::Let {
+                bindings: vec![class_binding],
+                body: Box::new(body),
+            },
+        })
+    }
+    fn protocol_definition(&mut self, form: &Form, args: &[Form]) -> Result<Hir, Diagnostic> {
+        let Some(name) = args.first() else {
+            return Err(fail(form.span.clone(), "defprotocol requires a name"));
+        };
+        let declaration = self.definition(form, &[name.clone()], false)?;
+        let Expression::Definition {
+            global: protocol, ..
+        } = &declaration.kind
+        else {
+            unreachable!()
+        };
+        let mut bindings = Vec::new();
+        let marker = self.stable_key(form, protocol, "", 0, vec![]);
+        bindings.push(self.fresh_binding(form, marker));
+        let mut methods = Vec::new();
+        let mut definitions = Vec::new();
+        let mut method_names = BTreeSet::new();
+        let mut declarations = &args[1..];
+        if declarations
+            .first()
+            .is_some_and(|arg| matches!(arg.kind, Kind::String(_)))
+        {
+            declarations = &declarations[1..];
+        }
+        for declaration in declarations {
+            let Kind::List(items) = &declaration.kind else {
+                return Err(fail(
+                    declaration.span.clone(),
+                    "Protocol method declaration requires a list",
+                ));
+            };
+            let Some(method_name) = items.first() else {
+                return Err(fail(
+                    declaration.span.clone(),
+                    "Empty protocol method declaration",
+                ));
+            };
+            let Kind::Symbol(symbol) = &method_name.kind else {
+                return Err(fail(
+                    method_name.span.clone(),
+                    "Protocol method name requires a symbol",
+                ));
+            };
+            if symbol.namespace.is_some() || !method_names.insert(symbol.name.clone()) {
+                return Err(fail(
+                    method_name.span.clone(),
+                    "Protocol method names must be unqualified and distinct",
+                ));
+            }
+            let mut signatures = Vec::new();
+            let mut wrappers = Vec::new();
+            let mut captures = Vec::new();
+            let mut arities = BTreeSet::new();
+            for params in &items[1..] {
+                if matches!(params.kind, Kind::String(_)) {
+                    continue;
+                }
+                let Kind::Vector(parameters) = &params.kind else {
+                    return Err(fail(
+                        params.span.clone(),
+                        "Protocol signature requires a fixed parameter vector",
+                    ));
+                };
+                if parameters.is_empty() || !arities.insert(parameters.len()) {
+                    return Err(fail(
+                        params.span.clone(),
+                        "Protocol signatures require a receiver and distinct arities",
+                    ));
+                }
+                let mut names = BTreeSet::new();
+                let mut schema = Vec::new();
+                for parameter in parameters {
+                    let Kind::Symbol(symbol) = &parameter.kind else {
+                        return Err(fail(
+                            parameter.span.clone(),
+                            "Protocol parameters require symbols",
+                        ));
+                    };
+                    if symbol.namespace.is_some()
+                        || symbol.name == "&"
+                        || !names.insert(symbol.name.clone())
+                    {
+                        return Err(fail(
+                            parameter.span.clone(),
+                            "Protocol parameters must be unqualified fixed names",
+                        ));
+                    }
+                    schema.push(self.literal_form(
+                        parameter,
+                        Literal::String(symbol.name.encode_utf16().collect()),
+                    ));
+                }
+                let key_index = bindings.len();
+                let descriptor =
+                    self.stable_key(params, protocol, &symbol.name, parameters.len(), schema);
+                let key = self.fresh_binding(params, descriptor);
+                let key_value = self.local(params, key.id);
+                bindings.push(key);
+                let dispatcher = self.nominal(params, Nominal::Dispatcher, vec![key_value]);
+                let dispatcher = self.fresh_binding(params, dispatcher);
+                captures.push(dispatcher.id);
+                let callee = self.local(params, dispatcher.id);
+                // Dispatcher locals are not part of the public protocol bundle.
+                let mut wrapper_params = Vec::new();
+                let mut arguments = Vec::new();
+                for parameter in parameters {
+                    let Kind::Symbol(symbol) = &parameter.kind else {
+                        unreachable!()
+                    };
+                    let id = BindingId(self.next);
+                    self.next += 1;
+                    wrapper_params.push(Parameter {
+                        id,
+                        name: symbol.name.clone(),
+                        metadata: parameter.metadata.clone(),
+                        span: parameter.span.clone(),
+                    });
+                    arguments.push(self.local(parameter, id));
+                }
+                wrappers.push(Method {
+                    parameters: wrapper_params,
+                    body: Box::new(Hir {
+                        span: declaration.span.clone(),
+                        metadata: Vec::new(),
+                        ty: Type::Value,
+                        kind: Expression::Call {
+                            callee: Box::new(callee),
+                            arguments,
+                        },
+                    }),
+                });
+                definitions.push((method_name.clone(), dispatcher));
+                signatures.push((parameters.len(), key_index));
+            }
+            if signatures.is_empty() {
+                return Err(fail(
+                    declaration.span.clone(),
+                    "Protocol method requires a signature",
+                ));
+            }
+            let function = Hir {
+                span: declaration.span.clone(),
+                metadata: declaration.metadata.clone(),
+                ty: Type::Value,
+                kind: Expression::GeneralFunction {
+                    methods: wrappers,
+                    captures,
+                    self_binding: None,
+                },
+            };
+            methods.push(ProtocolMethod {
+                name: symbol.name.clone(),
+                signatures,
+            });
+            // Store each complete method definition after its dispatcher bindings.
+            definitions.push((
+                method_name.clone(),
+                self.fresh_binding(declaration, function),
+            ));
+        }
+        self.environment.protocols.insert(protocol.clone(), methods);
+        let bundle = self.nominal(
+            form,
+            Nominal::Array,
+            bindings
+                .iter()
+                .map(|binding| self.local(form, binding.id))
+                .collect(),
+        );
+        let protocol_value = self.nominal(form, Nominal::Protocol, vec![bundle]);
+        let mut effects = vec![self.nominal_definition(form, name, protocol_value)?];
+        // Only the last entry for each method is the complete wrapper; preceding
+        // entries are the captured dispatcher bindings, initialized in order.
+        for (method_name, binding) in definitions {
+            if matches!(binding.value.kind, Expression::GeneralFunction { .. }) {
+                let value = self.local(&method_name, binding.id);
+                bindings.push(binding);
+                effects.push(self.nominal_definition(form, &method_name, value)?);
+            } else {
+                bindings.push(binding);
+            }
+        }
+        // The pin's trailing compiler-only unchecked-if set! emits undefined,
+        // which is nil-like to the encoder but has distinct coercions.
+        effects.push(self.literal_form(form, Literal::Undefined));
+        let body = self.do_hir(form, effects);
+        Ok(Hir {
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: Expression::Let {
+                bindings,
+                body: Box::new(body),
+            },
+        })
+    }
+    fn protocol_extensions(
+        &mut self,
+        form: &Form,
+        args: &[Form],
+        class: Hir,
+        fields: &[Form],
+        in_deftype: bool,
+    ) -> Result<Vec<Hir>, Diagnostic> {
+        let mut effects = Vec::new();
+        let mut index = 0;
+        while index < args.len() {
+            let protocol_name = &args[index];
+            index += 1;
+            let global = self.named_global(protocol_name)?;
+            let methods = self
+                .environment
+                .protocols
+                .get(&global)
+                .cloned()
+                .ok_or_else(|| {
+                    fail(
+                        protocol_name.span.clone(),
+                        "Extension requires a declared protocol",
+                    )
+                })?;
+            let protocol = Hir {
+                span: protocol_name.span.clone(),
+                metadata: protocol_name.metadata.clone(),
+                ty: Type::Value,
+                kind: Expression::Global(global),
+            };
+            let marker = self.nominal(protocol_name, Nominal::Key(0), vec![protocol.clone()]);
+            effects.push(self.nominal(protocol_name, Nominal::Marker, vec![class.clone(), marker]));
+            while index < args.len() && matches!(args[index].kind, Kind::List(_)) {
+                let method_form = &args[index];
+                index += 1;
+                let Kind::List(items) = &method_form.kind else {
+                    unreachable!()
+                };
+                let Some(method_name) = items.first() else {
+                    return Err(fail(method_form.span.clone(), "Empty extension method"));
+                };
+                let Kind::Symbol(symbol) = &method_name.kind else {
+                    return Err(fail(
+                        method_name.span.clone(),
+                        "Extension method requires a name",
+                    ));
+                };
+                let method = methods
+                    .iter()
+                    .find(|method| method.name == symbol.name && symbol.namespace.is_none())
+                    .ok_or_else(|| {
+                        fail(
+                            method_name.span.clone(),
+                            "Method is not declared by this protocol",
+                        )
+                    })?;
+                let mut signatures = Vec::new();
+                if items
+                    .get(1)
+                    .is_some_and(|item| matches!(item.kind, Kind::Vector(_)))
+                {
+                    signatures.push(&items[1..]);
+                } else {
+                    if in_deftype {
+                        return Err(fail(
+                            method_form.span.clone(),
+                            "deftype overloads require separate method forms with parameter vectors",
+                        ));
+                    }
+                    for signature in &items[1..] {
+                        let Kind::List(signature) = &signature.kind else {
+                            return Err(fail(
+                                method_form.span.clone(),
+                                "Extension signature requires a list",
+                            ));
+                        };
+                        signatures.push(signature.as_slice());
+                    }
+                }
+                if signatures.is_empty() {
+                    return Err(fail(
+                        method_form.span.clone(),
+                        "Extension method requires a signature",
+                    ));
+                }
+                for signature in signatures {
+                    let Some(params) = signature.first() else {
+                        return Err(fail(method_form.span.clone(), "Empty extension signature"));
+                    };
+                    let Kind::Vector(parameters) = &params.kind else {
+                        return Err(fail(
+                            params.span.clone(),
+                            "Extension signature requires a parameter vector",
+                        ));
+                    };
+                    let key_index = method
+                        .signatures
+                        .iter()
+                        .find(|(arity, _)| *arity == parameters.len())
+                        .map(|(_, key)| *key)
+                        .ok_or_else(|| {
+                            fail(
+                                params.span.clone(),
+                                "Extension arity is not declared by this protocol",
+                            )
+                        })?;
+                    let implementation =
+                        self.fixed_function_fields(method_form, signature, true, fields, true)?;
+                    let key =
+                        self.nominal(method_name, Nominal::Key(key_index), vec![protocol.clone()]);
+                    effects.push(self.nominal(
+                        method_form,
+                        Nominal::Set,
+                        vec![class.clone(), key, implementation],
+                    ));
+                }
+            }
+        }
+        Ok(effects)
+    }
+}

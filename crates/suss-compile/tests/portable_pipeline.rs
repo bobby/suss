@@ -513,7 +513,7 @@ fn tagged(store: &mut Store<()>, value: &Val) -> serde_json::Value {
         .expect("unexpected Wasm null, not language nil");
     if let Some(i31) = reference.as_i31(&*store).unwrap() {
         return match i31.get_u32() {
-            0 => serde_json::json!({"tag":"nil"}),
+            0 | 6 => serde_json::json!({"tag":"nil"}),
             2 => serde_json::json!({"tag":"bool","value":false}),
             4 => serde_json::json!({"tag":"bool","value":true}),
             _ => panic!("unknown i31 runtime value"),
@@ -557,7 +557,7 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
         let (mut store, value) = execute(source);
         assert_eq!(tagged(&mut store, &value), case["expected"], "{source}");
     }
-    assert_eq!(ids.len(), 210);
+    assert_eq!(ids.len(), 245);
 }
 #[test]
 fn independently_compiled_fragment_values_remain_live_across_gc() {
