@@ -1220,3 +1220,30 @@ fn nominal_undefined_constructor_results_preserve_truthiness_numeric_and_string_
         .unwrap();
     assert_eq!(String::from_utf16(&units).unwrap(), "undefinedx");
 }
+
+#[test]
+fn nominal_review_grouped_extension_and_protocol_expression_coercions() {
+    let mut session = Session::new().unwrap();
+    assert!(f64::from_bits(eval_number(
+        &mut session,
+        "(+ (defprotocol ReviewNumberProtocol) 1)"
+    ))
+    .is_nan());
+    let value = session
+        .eval("(+ (defprotocol ReviewStringProtocol) \"x\")")
+        .unwrap();
+    assert_eq!(
+        units(&mut session, &value),
+        "undefinedx".encode_utf16().collect::<Vec<_>>()
+    );
+    session.eval("(defprotocol ReviewGroupedProtocol (review-grouped [this] [this x])) (deftype ReviewGrouped []) (def review-object (ReviewGrouped.)) (extend-type ReviewGrouped ReviewGroupedProtocol (review-grouped ([this] 7) ([this x] (+ x 7))))").unwrap();
+    session.collect().unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(review-grouped review-object)"),
+        7.0f64.to_bits()
+    );
+    assert_eq!(
+        eval_number(&mut session, "(review-grouped review-object 11)"),
+        18.0f64.to_bits()
+    );
+}

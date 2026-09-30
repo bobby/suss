@@ -80,7 +80,7 @@ compiled fragments in one Store; this is not a persistent compiled session.
 
 Fourteen focused tests validate/link/execute actual artifacts and independently
 inspect the heap after forced GC. The original 14 scalar reader cases now also
-execute through compiled source fragments. A separate original 242-case source
+execute through compiled source fragments. A separate original 245-case source
 corpus matches freshly compiled pinned ClojureScript/Node observations exactly,
 covering numeric bits/arities, conditional values, lexical shadowing, strings and
 unary sum/product identity over nil/booleans/UTF-16/dynamic values/closures,

@@ -522,7 +522,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         &body,
     );
     // The source constructor follows the pin's JS constructor convention: all
-    // arguments evaluate, extra fields are ignored, missing fields become nil.
+    // arguments evaluate, extra fields are ignored, missing fields become undefined.
     let mut body = vec![];
     get(&mut body, 0, DESCRIPTOR, 1);
     body.extend([

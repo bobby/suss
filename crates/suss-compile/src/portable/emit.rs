@@ -370,9 +370,13 @@ fn emit_function(
             .instruction(&If(BlockType::Empty));
         for inst in &block.instructions {
             match &inst.operation {
-                Operation::Literal(Literal::Nil) => {
+                Operation::Literal(literal @ (Literal::Nil | Literal::Undefined)) => {
                     function
-                        .instruction(&I32Const(0))
+                        .instruction(&I32Const(if matches!(literal, Literal::Undefined) {
+                            runtime_abi::UNDEFINED
+                        } else {
+                            0
+                        }))
                         .instruction(&RefI31)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }

@@ -515,12 +515,14 @@ impl Analyzer {
                 bindings.push(binding);
             }
         }
-        effects.push(self.literal_form(form, Literal::Nil));
+        // The pin's trailing compiler-only unchecked-if set! emits undefined,
+        // which is nil-like to the encoder but has distinct coercions.
+        effects.push(self.literal_form(form, Literal::Undefined));
         let body = self.do_hir(form, effects);
         Ok(Hir {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
-            ty: Type::Nil,
+            ty: Type::Value,
             kind: Expression::Let {
                 bindings,
                 body: Box::new(body),

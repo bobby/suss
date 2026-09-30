@@ -27,6 +27,8 @@ impl Type {
 #[derive(Debug, Clone)]
 pub enum Literal {
     Nil,
+    /// Internal bootstrap result; there is no undefined source literal.
+    Undefined,
     Bool(bool),
     Number(f64),
     String(Vec<u16>),
@@ -35,6 +37,7 @@ impl Literal {
     pub fn ty(&self) -> Type {
         match self {
             Self::Nil => Type::Nil,
+            Self::Undefined => Type::Value,
             Self::Bool(_) => Type::Bool,
             Self::Number(_) => Type::Number,
             Self::String(_) => Type::String,

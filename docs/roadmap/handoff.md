@@ -2937,3 +2937,62 @@ components29, conformance9/2 manual ignores, oracle4/1 manual capture ignored,
 portable nominal2/runtime13 and all remaining suites and CLI/doc-test targets.
 Existing ignores and the legacy source differential failures are unchanged.
 This verifies the local candidate, not independent review or final-head CI.
+
+## Independent PR #66 review and semantic correction — 2026-09-30
+
+The preceding uncommitted/publication statements describe earlier snapshots.
+Candidate d0efeb129a56bb5683604017162368277e956ecf was committed and published as
+stacked draft PR #66 against reviewed PR #65, with Refs #9 and Refs #11.
+Independently reviewed in /private/tmp/suss-review-pr66: accepted design, roadmap,
+inventory/handoff, source bootstrap, lexical/phase identities, canonical key cells,
+HIR/IR shape and source ordering, descriptor reference identity, guarded tables,
+constructor normalization, receiver anchoring, live dispatch and publication.
+No merge or incomplete issue closure is authorized.
+
+Significant finding: defprotocol's expression result was incorrectly source nil.
+Fresh pinned execution shows undefined: adding 1 yields NaN, and adding "x"
+yields "undefinedx", rather than 1/"nullx". Existing falseyness and nil-like tagged
+transport missed this distinction. The new native regression failed exit101 before
+repair (/private/tmp/suss-pr66-review-defprotocol-red.log). Added internal HIR
+Undefined literal, typed Value, emitted as the existing i31 sentinel6; no source
+undefined literal or ABI/compiler-format change. Defprotocol now returns that value.
+Corrected focused native test passes, -defprotocol-fixed.log. A stale comment about
+missing constructor fields becoming nil was also corrected to undefined.
+
+Three shared cases add both coercions and grouped extend-type overloads, the latter
+explicitly supported by pinned core.cljc1668–1708 and executed successfully in Node
+and the native session over an existing object after GC. Corpus now245, with35
+nominal cases; ten native nominal tests bring session focus to37 (33 integration,
+four private). Current counts/docs updated, historical evidence left intact.
+First oracle invocation failed before execution because review-authored expected
+number tags were incorrectly named "number"; strict transport rejected them,
+/private/tmp/suss-pr66-review-oracle.log. Correcting to f64 exposed the actual
+reference mismatch above, -oracle-fixed.log. No failure was skipped or hidden.
+
+Independent sequential commands used CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target
+and CARGO_BUILD_JOBS=2, without RUSTFLAGS overrides. Fresh sh
+scripts/test-portable-pipeline-oracle.sh passed245 exact pinned observations and16
+actual decoded fragment tests, exit0, /private/tmp/suss-pr66-review-oracle-final.log.
+Compiler seven-suite focus78 passed, exit0, -compiler.log; native --lib and
+persistent_session37 passed, exit0, -session.log. Python54 passed, -python.log;
+cljs_inventory.py --check verifies1065 and cljs_reviews.py verifies9 in-progress
+reviews/1056 unassessed. Diff checks pass. Required full workspace baseline follows
+before pushing review changes; readiness still requires exact final-head CI.
+
+Builtin/native/wildcard tables, field attributes/metadata, complete core/compiled
+macros, general exceptions and dynamic scope remain unfinished. Those limits are
+explicit rather than inferred success. Next finish broader #11 exception/dynamic
+scope and nominal acceptance, persistent sequence foundations and full #9 source
+signatures; M2–M9 remain incomplete. No new significant findings remain in the
+bounded implementation reviewed here; this does not certify full protocol/core
+compatibility.
+
+Independent required cargo test --workspace --locked -- --test-threads=2 passed,
+exit0, /private/tmp/suss-pr66-review-workspace.log, including all session tests,
+executing compiler/runtime suites and CLI rustdoc. Existing legacy/manual ignores
+remain explicit and unchanged. The final sign-neutral NaN regression assertion
+also passed its focused rerun, exit0, -final-regression.log; production code was
+unchanged after the full baseline. Every review native/reference graph is terminal
+and no Cargo graphs overlapped. Push this reviewed fix/evidence, then require
+successful CI on that exact final head before PR readiness. Do not merge or close
+issues #9/#11.

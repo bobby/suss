@@ -25,7 +25,8 @@ type replacement; an old captured class value retains its original descriptor.
 Undefined uses internal i31 sentinel6, distinct from source nil0, false2 and true4.
 It is falsey, numerically coerces to NaN and string-coerces to `undefined`; source
 nil still coerces to zero/`null`. Ordinary protocol-object calls also return
-undefined. The scalar development transport categorizes undefined as nil-like,
+undefined. A `defprotocol` expression also returns undefined; downstream numeric
+and string coercions distinguish it from nil. The scalar development transport categorizes undefined as nil-like,
 like the pinned encoder, but downstream arithmetic/string/truthiness regressions
 retain its different behavior. Compiler manifests now identify `0.1.0+portable.2`;
 pre-format2 artifacts reject before initialization. The recursive ABI/version1,
@@ -49,7 +50,8 @@ Empty and partial protocol declarations use the shared opaque sentinel for
 membership, matching the pin. An empty extension returns that same object, not a
 boolean; a method extension returns the final implementation. Fixed overloads in
 `deftype` require separate method forms. The implementation rejects grouped deftype
-signatures instead of treating them as portable successful overloads. Method `this`
+signatures instead of treating them as portable successful overloads. Grouped
+`extend-type` signatures execute against the pinned reference. Method `this`
 and implicit fields retain the original receiver across recur; the ignored first
 recur operand still evaluates. Field reads occur at their original use, including
 inside captured closures, rather than being hoisted before a method body.
@@ -83,10 +85,10 @@ Reproducible extraction/patch records and full core license packaging remain M4 
 
 Executing runtime tests use independently generated fragments and forced GC, including
 forged identities, copied storage, live updates, retained captures and typed rejection.
-Nine native nominal tests cover source forms, overloads, membership/redeclaration,
+Ten native nominal tests cover source forms, overloads, membership/redeclaration,
 constructor aliases/arrows, effects, receiver anchoring, undefined coercion, marker
 identity and compile-error atomicity. Public HIR/IR and phase/key guards have two
-focused tests. The 242-case shared source corpus includes 32 nominal cases and executes
+focused tests. The 245-case shared source corpus includes 35 nominal cases and executes
 both pinned Node observations and independently decoded Suss fragments. These counts
 are bounded evidence, not complete type/protocol/core or M2 acceptance. No PR readiness
 is claimed before full baseline, independent review/fixes and exact-head CI.

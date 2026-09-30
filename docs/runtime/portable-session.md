@@ -111,7 +111,7 @@ Implementation/tests are original; pinned EPL-1.0 ClojureScript namespace/defini
 semantics inform the portable contract, with no copied upstream implementation.
 Only the already-locked tempfile package is added as a CLI development dependency;
 no package version changes or shipped JVM/Node dependency are introduced. The
-existing 242-case portable oracle and legacy 9-pass/7-failure/0-skip baseline remain
+existing 245-case portable oracle and legacy 9-pass/7-failure/0-skip baseline remain
 separate evidence, and nine arithmetic/nominal declarations are reviewed as in-progress and 1,056 remain unassessed.
 
 Production REPL/command frontend migration and printing, atoms/types/collections,
@@ -146,7 +146,7 @@ behavior after GC/rebinding, with typed arity-hole errors after ordered operands
 see [closure signatures](closure-signatures.md).
 
 
-Nine nominal source regressions bring the current native focus to36 (32 integration,
+Ten nominal source regressions bring the current native focus to37 (33 integration,
 four private). Descriptor-backed objects/classes/protocol keys remain rooted across
 fragments and GC; old class values retain identity, old generated arrows read current
 type cells, and old captured protocol dispatchers observe later table updates.
