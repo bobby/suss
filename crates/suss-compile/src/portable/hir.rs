@@ -1,4 +1,5 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
+mod arrays;
 mod dynamic;
 mod exceptions;
 mod nominal;
@@ -112,6 +113,38 @@ impl NativeKind {
         }
     }
 }
+/// Bounded array macro operations; operands are evaluated once before execution.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ArrayOperation {
+    Literal,
+    Make,
+    MakeLiteral,
+    Length,
+    Get,
+    Set,
+}
+impl ArrayOperation {
+    pub(crate) fn export(self) -> &'static str {
+        match self {
+            Self::Literal => "source-array-new",
+            Self::Make => "source-array-make",
+            Self::MakeLiteral => "source-array-make-literal",
+            Self::Length => "source-array-length-args",
+            Self::Get => "source-array-get-indices",
+            Self::Set => "source-array-set-indices",
+        }
+    }
+    pub(crate) fn valid(self, count: usize) -> bool {
+        count <= i32::MAX as usize
+            && match self {
+                Self::Literal => true,
+                Self::Make => count >= 1,
+                Self::MakeLiteral | Self::Length => count == 1,
+                Self::Get => count >= 2,
+                Self::Set => count >= 3,
+            }
+    }
+}
 /// Original private nominal lowering operations. Arrays here are internal
 /// construction storage, never source-language persistent collections.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -195,6 +228,10 @@ pub struct Hir {
 pub enum Expression {
     /// Compiler bootstrap primitive, independent of mutable core vars.
     NilTest(Box<Hir>),
+    Array {
+        operation: ArrayOperation,
+        arguments: Vec<Hir>,
+    },
     DynamicScope {
         bindings: Vec<(Global, Hir)>,
         body: Box<Hir>,
@@ -823,6 +860,9 @@ impl Analyzer {
                 },
             )
         };
+        if let Some(ResolvedBinding::BootstrapArray { operation, .. }) = &resolved {
+            return self.array_form(form, args, *operation);
+        }
         if let Some(ResolvedBinding::Nominal {
             form: nominal_form, ..
         }) = &resolved
@@ -1121,6 +1161,9 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
         }
         | Expression::Do(items)
         | Expression::Arithmetic {
+            arguments: items, ..
+        }
+        | Expression::Array {
             arguments: items, ..
         }
         | Expression::Nominal {

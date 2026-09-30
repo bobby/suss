@@ -1,5 +1,8 @@
 //! Phase-specific namespace identities. No runtime values or source replay live here.
-use super::{Diagnostic, hir::Arithmetic};
+use super::{
+    Diagnostic,
+    hir::{Arithmetic, ArrayOperation},
+};
 use std::{
     collections::{BTreeMap, BTreeSet},
     ops::Range,
@@ -55,6 +58,10 @@ pub(crate) struct ProtocolMethod {
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Binding {
+    BootstrapArray {
+        global: Global,
+        operation: ArrayOperation,
+    },
     Core {
         global: Global,
         export: &'static str,
@@ -78,7 +85,8 @@ pub enum Binding {
 impl Binding {
     pub fn global(&self) -> &Global {
         match self {
-            Self::Core { global: g, .. }
+            Self::BootstrapArray { global: g, .. }
+            | Self::Core { global: g, .. }
             | Self::Cell(g)
             | Self::InternalCell(g)
             | Self::BootstrapLoop(g)
@@ -199,6 +207,13 @@ impl Environment {
                     .insert(global.clone(), Binding::Arithmetic { global, operator });
             }
             for (name, export) in [
+                ("array", "array-function"),
+                ("array?", "array-predicate-function"),
+                ("make-array", "array-make-function"),
+                ("aclone", "array-clone-function"),
+                ("aget", "array-get-function"),
+                ("aset", "array-set-function"),
+                ("alength", "array-length-function"),
                 ("native-satisfies?", "native-satisfies-function"),
                 ("nil?", "predicate-nil"),
                 ("false?", "predicate-false"),
@@ -470,7 +485,8 @@ impl Environment {
         Ok(())
     }
     /// The bounded bootstrap macro lookup is separate from ordinary var lookup:
-    /// runtime vars do not hide macros, but lexical locals (handled by HIR) do.
+    /// lexical locals (handled by HIR) hide macros. User runtime definitions also
+    /// hide auto-referred array macros, as observed in the pinned compiler.
     /// General compiled macro imports/expansion remain a later integration.
     pub fn resolve_bootstrap_macro(&self, phase: Phase, symbol: &Symbol) -> Option<Binding> {
         let scope = self.scope(phase);
@@ -493,6 +509,11 @@ impl Environment {
                         | "extend-type"
                         | "instance?"
                         | "satisfies?"
+                        | "array"
+                        | "make-array"
+                        | "alength"
+                        | "aget"
+                        | "aset"
                 ))
             .then_some(symbol.name.as_str())
         } else if let Some(global) = scope.refers.get(&symbol.name) {
@@ -510,6 +531,11 @@ impl Environment {
                         | "extend-type"
                         | "instance?"
                         | "satisfies?"
+                        | "array"
+                        | "make-array"
+                        | "alength"
+                        | "aget"
+                        | "aset"
                 )
             {
                 Some(global.name.as_str())
@@ -527,6 +553,11 @@ impl Environment {
                         | "extend-type"
                         | "instance?"
                         | "satisfies?"
+                        | "array"
+                        | "make-array"
+                        | "alength"
+                        | "aget"
+                        | "aset"
                 ) && !scope.excluded_core.contains(&symbol.name))
                 .then_some(symbol.name.as_str())
             }
@@ -544,36 +575,65 @@ impl Environment {
                     | "extend-type"
                     | "instance?"
                     | "satisfies?"
+                    | "array"
+                    | "make-array"
+                    | "alength"
+                    | "aget"
+                    | "aset"
             ) && !scope.excluded_core.contains(&symbol.name))
             .then_some(symbol.name.as_str())
         }?;
+        // A new runtime definition hides the auto-referred array macro;
+        // explicit core qualification remains independent of that user var.
+        if symbol.namespace.is_none()
+            && scope.namespace != "suss.core"
+            && matches!(name, "array" | "make-array" | "alength" | "aget" | "aset")
+            && self.bindings.contains_key(&Global {
+                phase,
+                namespace: scope.namespace.clone(),
+                name: symbol.name.clone(),
+            })
+        {
+            return None;
+        }
         let global = Global {
             phase,
             namespace: "suss.core".into(),
             name: name.into(),
         };
-        Some(if name == "let" {
-            Binding::BootstrapLet(global)
-        } else if name == "loop" {
-            Binding::BootstrapLoop(global.clone())
-        } else if name == "fn" {
-            Binding::BootstrapFn(global)
-        } else if name == "defonce" {
-            Binding::BootstrapDefonce(global)
-        } else if name == "binding" || name == "with-redefs" {
-            Binding::BootstrapBinding(global)
-        } else {
-            Binding::Nominal {
-                global,
-                form: match name {
-                    "deftype" => NominalForm::Deftype,
-                    "defprotocol" => NominalForm::Defprotocol,
-                    "instance?" => NominalForm::Instance,
-                    "satisfies?" => NominalForm::Satisfies,
-                    _ => NominalForm::ExtendType,
-                },
-            }
-        })
+        Some(
+            if let Some(operation) = match name {
+                "array" => Some(ArrayOperation::Literal),
+                "make-array" => Some(ArrayOperation::Make),
+                "alength" => Some(ArrayOperation::Length),
+                "aget" => Some(ArrayOperation::Get),
+                "aset" => Some(ArrayOperation::Set),
+                _ => None,
+            } {
+                Binding::BootstrapArray { global, operation }
+            } else if name == "let" {
+                Binding::BootstrapLet(global)
+            } else if name == "loop" {
+                Binding::BootstrapLoop(global.clone())
+            } else if name == "fn" {
+                Binding::BootstrapFn(global)
+            } else if name == "defonce" {
+                Binding::BootstrapDefonce(global)
+            } else if name == "binding" || name == "with-redefs" {
+                Binding::BootstrapBinding(global)
+            } else {
+                Binding::Nominal {
+                    global,
+                    form: match name {
+                        "deftype" => NominalForm::Deftype,
+                        "defprotocol" => NominalForm::Defprotocol,
+                        "instance?" => NominalForm::Instance,
+                        "satisfies?" => NominalForm::Satisfies,
+                        _ => NominalForm::ExtendType,
+                    },
+                }
+            },
+        )
     }
     pub fn resolve(
         &self,

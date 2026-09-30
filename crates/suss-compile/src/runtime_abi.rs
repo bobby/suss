@@ -4,12 +4,13 @@
 use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
+mod arrays;
 mod closure_properties;
 mod dynamic;
 mod exception_info;
 mod exceptions;
-mod nominal;
 mod native_protocols;
+mod nominal;
 mod numeric;
 mod predicates;
 
@@ -604,6 +605,7 @@ fn build_module() -> Vec<u8> {
     let binding_set = dynamic::binding_set(&mut b, dynamic_lookup);
     let primitives = numeric::intrinsics(&mut b, numeric_info);
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
+    arithmetic_functions.extend(arrays::functions(&mut b));
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
     let try_invoke = exceptions::functions(&mut b, generic_invoke);
     arithmetic_functions.extend(dynamic::functions(&mut b, binding_set, try_invoke));
@@ -762,6 +764,24 @@ fn build_module() -> Vec<u8> {
         &ConstExpr::extended(ordinary_root),
     );
     // Owner tag for closure environments/properties; identity is reference based.
+    globals.global(
+        GlobalType {
+            val_type: reference(DESCRIPTOR),
+            mutable: false,
+            shared: false,
+        },
+        &ConstExpr::extended([
+            I64Const(0),
+            I32Const(0),
+            ArrayNewDefault(ARGS),
+            I32Const(0),
+            ArrayNewDefault(ARGS),
+            I32Const(0),
+            RefI31,
+            StructNew(DESCRIPTOR),
+        ]),
+    );
+    // Private source-array identity; appended without changing old global indices.
     globals.global(
         GlobalType {
             val_type: reference(DESCRIPTOR),

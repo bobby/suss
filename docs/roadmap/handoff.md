@@ -4092,3 +4092,141 @@ Review required full baseline completed successfully: graph74362 terminal0,
 `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
 Python66, pinned inventory1065, review overlay28+1037 and exact eight core-import
 artifacts also pass. All review native/reference graphs are terminal and released.
+
+## PR77 review and array reference preparation — 2026-09-30
+
+Previous goal turn made concrete progress: full native protocol baseline passed,
+implementation committed/pushed c9806c9 and draft PR77 opened against main with
+Refs #11. Independent review dispatched as /root/review_pr77. Reviewer found no
+significant production defect and pushed qualified-namespace/live-cell/GC regression
+and evidence at1022fdafa8a1eff8f71f3d9455d5defddf7101d2. Native11/ABI16/nominal3,
+fresh29, Python66/inventory1065/reviews28+1037/artifact8 and required full workspace
+baseline passed. Reviewer explicitly released all terminal local native/reference
+graphs. Root fast-forwarded the native worktree; final-head CI36752018955 is live
+for exact1022fda. PR77 remains draft until that actual run passes; no merge.
+
+Prepared isolated /private/tmp/suss-array-foundation, branch
+resurrection/portable-array-foundation, based on reviewed1022fda. Its own untracked
+preparation was stashed/restored during review-head reconciliation; only that
+temporary stash was dropped. Unrelated root files/worktrees/stashes preserved.
+Pinned submodule initialized from local reference source. Array declarations/macros
+are audited in docs/runtime/arrays.md. No public source arrays are implemented yet.
+
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target sh scripts/test-array-oracle.sh`
+compiled and executed fresh primary40, all exact comparisons passed, then the
+Suss missing-feature regression failed with located unresolved alength. Combined
+graph67049 terminal101, /private/tmp/suss-array-primary-and-red.log; actual primary
+success is separate from the missing-feature failure. Compiler replacement warnings
+for the three effect counters are retained in the log, not suppressed.
+
+Expanded focused regression groups cover scalar/identity/missing storage,
+mutation/growth/shallow clones, literal/dynamic/nested allocation, first-class/
+native protocols and ordered effects/function retention. Required focused command
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-cli --test portable_arrays --locked -- --test-threads=2`
+failed all6 as expected on current production code, graph26505 terminal101,
+/private/tmp/suss-array-focused-red.log. No skip, baseline weakening or compatibility
+claim. Macro make-array literal nil fill differs from dynamic/first-class undefined
+holes; source architecture must preserve it. Next implement GC-owned mutable arrays,
+source/macro arities and native classification before broader sequence/list/variadic
+and persistent collection source porting. Full M2–M9 goal remains active.
+
+## GC-owned array implementation and PR77 readiness — 2026-09-30
+
+Previous goal turn committed verified40 array reference observations and six
+missing-feature regressions at92f3f9e9dda124b74099bbcd2d946cdfc855d77a, on the
+isolated array branch based on reviewed1022fda. This turn revalidated actual
+PR77 final-head CI36752018955: SUCCESS at exact1022fdafa8a1eff8f71f3d9455d5defddf7101d2.
+Inspected actual enabled Python66/reviews28+1037/artifact8/native11/ABI16/full
+workspace output in /private/tmp/suss-pr77-final-ci.log. Body updated and PR77
+marked ready; no merge or issue closure. Reviewer graphs and CI watch are terminal.
+
+Original array runtime now owns mutable element buffers through a private tagged
+UserObject, copying Args at construction and preserving owner identity through
+growth. Clone ownership is distinct and shallow. One descriptor global appends
+without changing the ten-type prelude/version or numeric helper/global indices.
+New Array HIR/IR normalizes effectful operands and verifies arity/type/dominance.
+Native protocol classification recognizes source arrays before object fallback.
+Core array/array?/make-array/aclone/aget/aset/alength factories are resident in each
+phase; canonical aliases and old captures use live cells/universal invocation.
+
+First implementation focus60978 failed Rust compilation (pattern bindings,
+emission insertion and encoder f64 constant types), /private/tmp/suss-array-first-focus.log.
+Corrected construction errors; second focus10269 passed all6 against original40,
+/private/tmp/suss-array-second-focus.log. An intermediate order focus26789 failed
+a Rust impl lifetime annotation; fixed Analyzer's actual shape before continuing.
+
+Expanded fresh53 comparison85682 failed two newly added, previously unvalidated
+expectations: aset evaluates the final value before invalid-target failure, and
+an unqualified user alength definition hides the auto-referred macro (both calls
+returned42). Actual pinned observations were inspected, new expectations corrected
+and eager SetTarget validation removed. The original40 certified observations
+remain unchanged. A follow-up script57063 stopped at the same uncorrected comparison
+after a local patch script stopped early; no success was claimed. Final expanded54
+primary/native7 passed2012, /private/tmp/suss-array-expanded-primary-validated.log.
+
+Two further source-audited multidimensional macro cases retain literal outer-size
+ceil/negative-empty behavior, while inner/runtime sizes remain dynamic integers.
+Final fresh56 and native9 passed95073, /private/tmp/suss-array-primary-final.log.
+Warnings for deliberate effect-counter and alength definitions remain in raw logs.
+No primary result was skipped, compared loosely or fabricated.
+
+Guarded surrounding focus80622 passed native7/native-protocol11/session33/pipeline17/
+ABI16, /private/tmp/suss-array-guarded-focus-final.log. One local delimiter edit
+failed before Cargo execution in /private/tmp/suss-array-guarded-focus.log; fixed
+before that successful rerun. Storage/GC/compiler negative focus21530 then passed
+native8/compiler-array1/ABI18, /private/tmp/suss-array-storage-focus.log. Final
+bounded focus56721 passed native9/compiler-array1/ABI18,
+/private/tmp/suss-array-bounded-focus.log. Independent low-level guards cover wrong
+Args/owners/indices/dimensions/fill values and malformed owner storage; all produce
+language exceptions rather than traps. Args isolation, GC-owned stored Numbers,
+growth/clone identity and retained functions are executed, not encoding-only.
+
+Bootstrap allocation/growth caps1,000,000 elements; multidimensional total cells
+also cap1,000,000, dimensions buffer64. Typed diagnostics precede allocation and
+invalid casts/accesses. Empty outer dimensions do not validate unused leaves.
+Named/coerced host keys, negative/fractional property writes, string access via
+array macros, checked-array options, source literals and full compiled core/macros
+remain unfinished. None of these are claimed as exclusions/completed compatibility.
+
+Python66/inventory1065/review overlay40+1025/exact eight source-core artifacts and
+offline roadmap preview passed45561. Twelve runtime/macro source declarations have
+partial hash-bound provenance reviews; no source form copied or shipped dependency
+added. Existing four source imports and license bytes remain unchanged; only
+manifest review hash changes. Full required workspace baseline runs alone as52701,
+/private/tmp/suss-array-baseline.log; await terminal before publication. No other
+local Cargo/reference graph is live. Next publish partial array foundation with
+Refs #9/#11/#17, dispatch independent review/pushed fixes and require exact final-head
+CI. Then continue source-backed sequence/list/variadic rest/apply foundations and
+the remaining M2–M9 acceptance. Full ROADMAP goal remains active.
+
+Required full workspace baseline52701 completed terminal0, /private/tmp/suss-array-baseline.log: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`. All local native/reference graphs are terminal. Complete source/provenance/manifest/diff checks passed before publication. No RUSTFLAGS override or unrelated deletions. Publish the partial array foundation PR and dispatch independent review; final-head CI remains required.
+
+## Independent PR #78 review — 2026-09-30
+
+Reviewed candidate ef129249 against accepted design, partial compatibility reviews,
+actual Wasm storage/IR and pinned array runtime/macro declarations. No significant
+production defect was found in the documented supported source surface. Private
+source-array descriptor identity keeps Args separate; construction copies Args,
+growth retains the same owner, and shallow clones own separate storage while
+retaining shared element values. Traversal/evaluation order, macro literal fill,
+dynamic sizes, multidimensional resource guards and malformed-storage exceptions
+were inspected. General host keys/string access, checked-array options and full
+source collection integration remain unfinished; no acceptance status changed.
+
+Added an independent alias-qualified macro regression across namespaces, dropped
+original var roots, forced GC, alias-preserving growth, independent shallow-clone
+length, shared nested mutation and user runtime alength hiding only unqualified
+macro lookup. Corrected the resolver's stale explanatory comment accordingly.
+Focused native10/compiler-array1/ABI18 passed graph86982 terminal0,
+/private/tmp/suss-pr78-review-focus.log. Fresh pinned primary56 comparisons and
+native10 passed graph18776 terminal0, /private/tmp/suss-pr78-review-oracle.log.
+Required full workspace baseline is recorded below upon terminal completion.
+No merge or issue closure. Final-head CI remains required before readiness.
+
+Review required full baseline completed successfully: graph72602 terminal0,
+/private/tmp/suss-pr78-review-baseline.log, command
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Python66, pinned inventory1065, review overlay40+1025 and exact eight core-import
+artifacts also pass. All review Cargo and primary reference graphs are terminal.
+Next require exact reviewed-head CI, then continue source-backed sequence/list and
+variadic rest/apply foundations. Full M2–M9 goal remains active.

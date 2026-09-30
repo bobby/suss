@@ -59,6 +59,14 @@ pub(super) fn functions(
             End,
         ]);
     }
+    body.extend([
+        LocalGet(0),
+        Call(b.names["source-array?"]),
+        If(BlockType::Empty),
+        I32Const(6),
+        Return,
+        End,
+    ]);
     for (ty, kind) in [(NUMBER, 2), (STRING, 3), (4, 4), (ARGS, 6)] {
         body.extend([
             LocalGet(0),

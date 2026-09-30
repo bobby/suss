@@ -38,7 +38,7 @@ preserves existing issue bodies.
 
 ### M0: Contract and feasibility
 
-- **M0-01 — Contract and upstream inventory** (completed). Deterministic pinned inventory, source hashes/reader branches, strict review schema and provenance policy pass. Twenty-eight arithmetic/nominal/dynamic/exception/bootstrap/predicate declarations now have in-progress manual reviews; 1,037 remain unassessed for M4/M7 implementation.
+- **M0-01 — Contract and upstream inventory** (completed). Deterministic pinned inventory, source hashes/reader branches, strict review schema and provenance policy pass. Forty arithmetic/nominal/dynamic/exception/bootstrap/predicate/array declarations now have in-progress manual reviews; 1,025 remain unassessed for M4/M7 implementation.
 - **M0-02 — Lock toolchain and official WIT packages** (completed). Locked official package hashes and executing GC/tail-call/EH/map/implements/external-id/async/future/stream probes pass. Generated Suss adapters remain M5/M6 work.
 - **M0-03 — Prove shared GC fragments** (completed). Shared roots/closures/nominal descriptors survive forced GC; incompatible ABI fails before initialization. Production persistent sessions remain M2/M3 work.
 - **M0-04 — Prove browser loading and suspension** (completed). Chrome executes typed core/Promise/cancellation/feature-error fixtures and optional Jco GC packaging. Teardown timeout is recorded separately; cross-browser/product delivery remains M8 work.
@@ -71,7 +71,7 @@ closed after their exit gates were rechecked. M2–M9 remain open.
 ### M4: Portable persistent collections
 
 - **M4-01 — Upstream extraction and adaptation provenance** (in-progress). Reviewed ID selection now reproduces exact source forms, explicit hash-bound patches, EPL packaging and a generated canonical core artifact. Four bootstrap identity/not/boolean/some? forms execute with GC/redefinition/order regressions and a separate 72-case primary corpus. Full core dependencies/macros/loading acceptance remains; see [core import](docs/compatibility/CORE-IMPORT.md).
-- **M4-02 — Sequences, lists and vectors** (planned). Port collection foundations, lazy/chunked sequences, vector/subvector and map entries.
+- **M4-02 — Sequences, lists and vectors** (in-progress). GC-owned mutable array storage and bounded source macro/runtime adaptations now establish prerequisites for IndexedSeq, list and variadic rest; see [array foundations](docs/runtime/arrays.md). Persistent sequence/list/vector/subvector/map-entry and lazy/chunked acceptance remain unfinished.
 - **M4-03 — Maps, sets, queues, records and sorted types** (planned). Port HAMTs, sorted collections, queues and record behavior.
 - **M4-04 — Hashing, metadata, transients and reduction** (planned). Complete shared collection protocols and all reduction paths.
 

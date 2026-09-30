@@ -2012,3 +2012,218 @@ fn runtime_abi_accepts_foreign_raw_closure_environments_without_properties() {
     assert!(error.is::<wasmtime::ThrownException>());
     assert!(!error.is::<wasmtime::Trap>());
 }
+
+#[test]
+fn runtime_abi_source_arrays_copy_argument_buffers_and_own_values_through_growth_and_gc() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let buffer = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    let value = nominal_value(&mut store, runtime, "source-array-new", &[buffer.clone()]);
+    let zero = nominal_value(
+        &mut store,
+        runtime,
+        "number-box",
+        &[Val::F64(0.0f64.to_bits())],
+    );
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    {
+        let mut scope = wasmtime::RootScope::new(&mut store);
+        let mut number = [Val::null_any_ref()];
+        runtime
+            .get_func(&mut scope, "number-box")
+            .unwrap()
+            .call(&mut scope, &[Val::F64(7.0f64.to_bits())], &mut number)
+            .unwrap();
+        runtime
+            .get_func(&mut scope, "source-array-set")
+            .unwrap()
+            .call(
+                &mut scope,
+                &[value.clone(), zero.clone(), number[0].clone()],
+                &mut [Val::null_any_ref()],
+            )
+            .unwrap();
+    }
+    // Mutating the callback's argument array cannot mutate the source array.
+    buffer
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap()
+        .set(&mut store, 0, nil.clone())
+        .unwrap();
+    let clone = nominal_value(&mut store, runtime, "source-array-clone", &[value.clone()]);
+    assert!(
+        !wasmtime::Rooted::ref_eq(
+            &store,
+            value.unwrap_anyref().unwrap(),
+            clone.unwrap_anyref().unwrap()
+        )
+        .unwrap()
+    );
+    let three = nominal_value(
+        &mut store,
+        runtime,
+        "number-box",
+        &[Val::F64(3.0f64.to_bits())],
+    );
+    nominal_value(
+        &mut store,
+        runtime,
+        "source-array-set",
+        &[value.clone(), three, clone.clone()],
+    );
+    store.gc(None).unwrap();
+    for array in [&value, &clone] {
+        let item = nominal_value(
+            &mut store,
+            runtime,
+            "source-array-get",
+            &[array.clone(), zero.clone()],
+        );
+        let object = item
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap();
+        assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64(), 7.0);
+    }
+    for (array, count) in [(value, 4.0), (clone, 1.0)] {
+        let length = nominal_value(&mut store, runtime, "source-array-length", &[array]);
+        let object = length
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap();
+        assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64(), count);
+    }
+}
+
+#[test]
+fn runtime_abi_source_array_bad_inputs_and_capacity_fail_as_language_errors() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let empty = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    let value = nominal_value(&mut store, runtime, "source-array-new", &[empty.clone()]);
+    let huge = nominal_value(
+        &mut store,
+        runtime,
+        "number-box",
+        &[Val::F64(1_000_001.0f64.to_bits())],
+    );
+    let dimensions = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    dimensions
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap()
+        .set(&mut store, 0, huge.clone())
+        .unwrap();
+    for (export, args) in [
+        ("source-array-new", vec![nil.clone()]),
+        ("source-array-fields", vec![nil.clone()]),
+        ("source-array-storage", vec![nil.clone()]),
+        ("source-array-length", vec![nil.clone()]),
+        ("source-array-clone", vec![nil.clone()]),
+        ("source-array-index", vec![nil.clone()]),
+        ("source-array-get", vec![nil.clone(), huge.clone()]),
+        (
+            "source-array-set",
+            vec![value.clone(), huge.clone(), nil.clone()],
+        ),
+        ("source-array-make", vec![nil.clone()]),
+        ("source-array-make-literal", vec![nil.clone()]),
+        ("source-array-make-literal", vec![dimensions.clone()]),
+        (
+            "source-array-make-dimensions",
+            vec![nil.clone(), Val::I32(0), Val::I32(6)],
+        ),
+        (
+            "source-array-make-dimensions",
+            vec![dimensions.clone(), Val::I32(-1), Val::I32(6)],
+        ),
+        (
+            "source-array-make-dimensions",
+            vec![dimensions, Val::I32(0), Val::I32(2)],
+        ),
+        ("source-array-length-args", vec![empty.clone()]),
+        ("source-array-get-indices", vec![empty.clone()]),
+        ("source-array-set-indices", vec![empty]),
+    ] {
+        let error = runtime
+            .get_func(&mut store, export)
+            .unwrap()
+            .call(&mut store, &args, &mut [Val::null_any_ref()])
+            .unwrap_err();
+        assert!(
+            error.is::<wasmtime::ThrownException>(),
+            "{export}: {error:#}"
+        );
+        assert!(!error.is::<wasmtime::Trap>(), "{export}: {error:#}");
+        assert!(store.take_pending_exception().is_some());
+    }
+    let dims = nominal_value(&mut store, runtime, "args-new", &[Val::I32(2)]);
+    let size = nominal_value(
+        &mut store,
+        runtime,
+        "number-box",
+        &[Val::F64(2000.0f64.to_bits())],
+    );
+    let buffer = dims
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap();
+    buffer.set(&mut store, 0, size.clone()).unwrap();
+    buffer.set(&mut store, 1, size).unwrap();
+    let error = runtime
+        .get_func(&mut store, "source-array-check-dimensions")
+        .unwrap()
+        .call(&mut store, &[dims, Val::I32(0)], &mut [])
+        .unwrap_err();
+    assert!(error.is::<wasmtime::ThrownException>());
+    assert!(!error.is::<wasmtime::Trap>());
+    store.take_pending_exception().unwrap();
+    // Foreign ABI clients can corrupt private storage; guard it before ref.cast.
+    let fields = value
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap()
+        .field(&mut store, 1)
+        .unwrap();
+    fields
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap()
+        .set(&mut store, 0, nil)
+        .unwrap();
+    let error = runtime
+        .get_func(&mut store, "source-array-length")
+        .unwrap()
+        .call(&mut store, &[value], &mut [Val::null_any_ref()])
+        .unwrap_err();
+    assert!(error.is::<wasmtime::ThrownException>());
+    assert!(!error.is::<wasmtime::Trap>());
+}
