@@ -2598,3 +2598,35 @@ compiled and strict-tag validated 11 extended-signature reference-only cases:
 fixture failure remains in -reference.log. The successor plan is
 /private/tmp/suss-signatures-next-plan.md. These are not Suss compatibility passes
 and do not enlarge this PR's recurrence scope. M2–M9 remain unfinished.
+
+## M2-03 acceptance reconciliation — 2026-09-30
+
+A read-only follow-up independent audit of issue #10 against its actual four
+criteria found no remaining foundation requirement: cross-fragment scalar/closure/
+UTF-16 roots survive GC, universal fixed/variadic invocation guards arity, exact
+binary64/UTF-16 corpus passes (194 source/1024 numeric), and version/actual-layout
+mismatches fail before initializer effects. Broader signatures/core/macros/nominal
+machinery/frontends belong to #9/#11/M3–M7. Earlier blanket incomplete notes mixed
+work-package boundaries; do not keep a fulfilled issue open for unrelated future
+work. Root verified the named tests and native install gate ordering against code.
+
+Isolated /private/tmp/suss-abi-v1-acceptance, resurrection/abi-v1-acceptance, is based
+on reviewed7912975. docs/roadmap/acceptance-runtime-abi-v1.md maps every criterion
+to executable tests, prior full/fresh observations and remaining separate work.
+ROADMAP and stable M2-03 manifest status now reflect completion on this branch;
+GitHub closure and default-branch completion await merge of its Closes #10 PR.
+M2 overall and #9 remain incomplete; other IDs/statuses/dependencies unchanged.
+Stale ABI closure/call/definition/native-loader statements reconciled. No runtime,
+source implementation, ABI layout, dependency, upstream copy or license changed.
+
+Exact runtime_abi focus: 10 pass, zero ignored, exit0;
+/private/tmp/suss-abi-v1-acceptance-focused.log. Command cargo test -p suss-compile
+--test runtime_abi --locked -- --test-threads=2, CARGO_BUILD_JOBS=2/sharedtarget,
+no RUSTFLAGS override. Python54 pass, exit0;
+/private/tmp/suss-abi-v1-acceptance-python.log. Offline publish_roadmap preview and
+diff checks pass, with stable issue IDs. Root/independent full baseline and194fresh
+observations from unchanged implementation are recorded above. Independent audit
+PR review and exact final-head CI are required; do not merge or close manually.
+PR63 final-head CI36686074513 is currently confirmed live; no pass claimed yet.
+Next implement named/multiple closure signatures from the genuine isolated red
+regression and fresh11reference observations, then broader foundations/M2–M9.

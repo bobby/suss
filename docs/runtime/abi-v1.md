@@ -5,8 +5,9 @@ This is production runtime implementation, not a second source compiler or the
 M0 hand-written feasibility fixture. The legacy compiler has **not** migrated;
 the source differential corpus still reports 9 passing and 7 known failures.
 The [portable compiler bootstrap](portable-pipeline.md) now executes float and
-UTF-16 source fragments on this ABI. M2-03 remains incomplete: general closure/
-callee lowering, dynamic checks, production loaders and corpus migration remain.
+UTF-16 source fragments on this ABI. M2-03's published foundation criteria are satisfied on the reviewed stack; see
+[acceptance evidence](../roadmap/acceptance-runtime-abi-v1.md). Issue closure awaits
+the acceptance PR merging into the default branch. Main and M2 overall remain incomplete.
 
 Every runtime/fragment begins with the identical explicit recursive group from
 `prelude()`. Additional function types follow it. Construction indices are
@@ -37,11 +38,13 @@ argument arrays and closures, invoke with central arity checks, and create/get/s
 initialized binding cells. Wrong arity throws a typed language exception with
 `Wrong arity` diagnostic; independently loaded callers can catch its exported
 tag. Storage/math intrinsics are for verified lowering, not public core APIs.
-Unchecked allocation/type/index operations require compiler guards before user
-inputs reach them; complete dynamic type diagnostics remain integration work.
+Unchecked storage allocation/type/index operations require verified compiler guards.
+Universal invocation now checks non-callable values, argument arrays and arity;
+primitive arithmetic has checked coercions. Complete object conversions and public
+core dispatch remain their separate work packages.
 String mutation is construction-only; source-level immutable string semantics
-must be enforced by lowering. Binding allocation currently creates initialized
-cells; declaration/unbound-var behavior remains M3 integration work.
+must be enforced by lowering. Native/source declaration paths also create unbound cells, with checked reads and
+bound-state transitions distinct from nil; complete M3 reload/privacy work remains.
 
 `Manifest::section()` records runtime ABI version, compiler package version and
 the pinned wasm-tools family version. `verify_artifact()` rejects absent,
@@ -75,20 +78,22 @@ scheduler, target adapters and persistent REPL are not established by these test
 The portable resolver now emits exact shared cell imports. `binding-unbound`,
 checked `binding-get` and binding-set bound-state transitions distinguish an
 uninitialized var from nil; see [portable resolution](portable-resolution.md).
-Ten executing resolution tests supplement the ten ABI tests. Production
-namespace loading, source definitions and universal call lowering remain open.
+Eleven executing resolution tests supplement the ten ABI tests. Source definitions,
+recursive module preparation and native persistent loading now use this ABI; the
+production command/REPL frontends remain separate migration work.
 
 Fixed source closures and generic local/global/computed calls now lower through
 the shared universal ABI; central invocation checks non-callable and malformed
-argument arrays before casts. Eleven source/IR tests supplement the prior suites;
-see [closure lowering](portable-closures.md). Extended signatures, source namespace
-loading and production migration remain incomplete.
+argument arrays before casts. Twelve source/IR tests supplement the prior suites;
+see [closure lowering](portable-closures.md). Named/multiple/variadic source signatures and production frontend migration remain
+incomplete. Fixed-function recur and source namespace loading now execute.
 
-Source definitions now use explicit bound checks/writes through this ABI. Ten
+Source definitions now use explicit bound checks/writes through this ABI. Twelve
 executing definition tests verify nil/false defonce state, skipped effects and
 failed initializer publication; see [definition lowering](portable-definitions.md).
 The ten-type layout is unchanged; binding-bound is an additional private intrinsic.
-Production session/module loading and migration remain incomplete.
+Native persistent Session/module loading now executes; production command/REPL
+frontend migration remains incomplete.
 
 ## Primitive arithmetic conversion
 
@@ -113,10 +118,10 @@ actual import linking rejects older runtimes before eval. A matching version alo
 does not certify available functions. Artifact integrity checks and byte-identical
 local rebuilds pin source, compiler, dependency, notices and Wasm bytes. Distributions
 containing this runtime must include the helper's retained notices/licenses.
-Nine executing ABI tests include exact allocation-failure exceptions and a
+Ten executing ABI tests include exact allocation-failure exceptions and a
 1,024-sample independently decoded formatting/parsing matrix. Session tests cover
 scratch high water capacity, reset and actual interrupted-stack recovery. None of
-this completes M2-03, canonical memory management, object conversion or core import.
+these checks completes canonical memory management, object conversion or core import.
 
 Universal arithmetic closure factories and their exact shared Invoke types now
 execute in the tenth ABI test; see [arithmetic values](arithmetic-values.md). The
