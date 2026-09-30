@@ -3,6 +3,7 @@
 //! Construction indices below are implementation details, not artifact ABI IDs.
 use std::borrow::Cow;
 use wasm_encoder::*;
+mod arithmetic;
 mod numeric;
 
 pub const VERSION: u32 = 1;
@@ -591,7 +592,10 @@ fn build_module() -> Vec<u8> {
             },
         ],
     );
-    numeric::intrinsics(&mut b, numeric_info);
+    let primitives = numeric::intrinsics(&mut b, numeric_info);
+    let arithmetic_functions = arithmetic::functions(&mut b, primitives);
+    let mut elements = ElementSection::new();
+    elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
     let mut tags = TagSection::new();
     tags.tag(TagType {
         kind: TagKind::Exception,
@@ -643,6 +647,7 @@ fn build_module() -> Vec<u8> {
         .section(&tags)
         .section(&globals)
         .section(&b.exports)
+        .section(&elements)
         .section(&b.code)
         .section(&helper.data)
         .section(&Manifest::default().section());

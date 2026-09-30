@@ -46,7 +46,7 @@ Invalid numeric strings become NaN, nil becomes zero, and booleans become zero/o
 Only statically proven Number operands select unchecked number intrinsics.
 Known closures requiring object conversion produce located unsupported diagnostics;
 dynamic objects raise an explicit language exception. Full object conversion and
-first-class arithmetic core bindings remain unfinished. No complete upstream arithmetic inventory item is claimed.
+complete source macro/core import remains unfinished. Arithmetic function values now read live cells; see [arithmetic values](arithmetic-values.md). No complete upstream arithmetic inventory item is claimed.
 
 IR contains typed value IDs, ordered instructions, explicit blocks, branch/jump
 terminators and edge parameters. Every operand is evaluated to a value before
@@ -80,7 +80,7 @@ compiled fragments in one Store; this is not a persistent compiled session.
 
 Fourteen focused tests validate/link/execute actual artifacts and independently
 inspect the heap after forced GC. The original 14 scalar reader cases now also
-execute through compiled source fragments. A separate original 158-case source
+execute through compiled source fragments. A separate original 176-case source
 corpus matches freshly compiled pinned ClojureScript/Node observations exactly,
 covering numeric bits/arities, conditional values, lexical shadowing, strings and
 unary sum/product identity over nil/booleans/UTF-16/dynamic values/closures,
@@ -112,6 +112,6 @@ These bounded observations do not replace the existing 16-case legacy compiler
 corpus: it remains **9 differential passes, 7 exact failures, 0 skips**. No
 expected failures changed. M2-01/02/03 remain incomplete. Next, complete source namespace/
 phase/definition loading and production clients, extended closure signatures,
-object conversion, first-class core bindings and the source corpus; add collection/dispatch/recur/exception/
+object conversion, complete source macro/core import and the source corpus; add collection/dispatch/recur/exception/
 async IR forms and migrate AOT/REPL/macros through the same pipeline. Retire the
 old backend only when replacement acceptance passes.

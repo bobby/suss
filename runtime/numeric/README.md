@@ -37,7 +37,7 @@ traps. Allocation failure throws a typed language exception. This memory is not
 the canonical component allocator; memory ownership/free/post-return are still
 M5 work. Native session reset replaces the memory together with the Store.
 
-The 158-case source corpus and 1,024-sample formatting/round-trip matrix execute
+The 176-case source corpus and 1,024-sample formatting/round-trip matrix execute
 against fresh pinned ClojureScript observations and independently decoded GC
 results. These bounded tests do not certify all binary64 inputs or public core
 compatibility. Objects/closures requiring primitive conversion remain unsupported.

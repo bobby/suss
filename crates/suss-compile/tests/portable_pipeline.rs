@@ -31,11 +31,36 @@ fn execute_fragment(bytes: Vec<u8>, cells: Vec<portable::resolve::Global>) -> (S
         .unwrap();
     for identity in cells {
         let mut value = [Val::null_any_ref()];
-        runtime
-            .get_func(&mut store, "binding-unbound")
-            .unwrap()
-            .call(&mut store, &[], &mut value)
-            .unwrap();
+        let arithmetic = if identity.namespace() == "suss.core" {
+            match identity.name() {
+                "+" => Some("add"),
+                "-" => Some("subtract"),
+                "*" => Some("multiply"),
+                "/" => Some("divide"),
+                _ => None,
+            }
+        } else {
+            None
+        };
+        if let Some(name) = arithmetic {
+            let mut function = [Val::null_any_ref()];
+            runtime
+                .get_func(&mut store, &format!("arithmetic-{name}"))
+                .unwrap()
+                .call(&mut store, &[], &mut function)
+                .unwrap();
+            runtime
+                .get_func(&mut store, "binding-new")
+                .unwrap()
+                .call(&mut store, &function, &mut value)
+                .unwrap();
+        } else {
+            runtime
+                .get_func(&mut store, "binding-unbound")
+                .unwrap()
+                .call(&mut store, &[], &mut value)
+                .unwrap();
+        }
         let ty = value[0]
             .unwrap_anyref()
             .unwrap()
@@ -532,7 +557,7 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
         let (mut store, value) = execute(source);
         assert_eq!(tagged(&mut store, &value), case["expected"], "{source}");
     }
-    assert_eq!(ids.len(), 158);
+    assert_eq!(ids.len(), 176);
 }
 #[test]
 fn independently_compiled_fragment_values_remain_live_across_gc() {

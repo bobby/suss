@@ -239,6 +239,50 @@ impl Session {
             .ok_or_else(|| wasmtime::Error::msg("Missing numeric scratch memory"))?;
         let mut linker = Linker::new(&engine);
         linker.instance(&mut store, "suss.runtime", runtime)?;
+        let environment = Environment::default();
+        let mut cells = BTreeMap::new();
+        for (identity, operator) in environment.arithmetic_bindings(Phase::Runtime) {
+            use suss_compile::portable::hir::Arithmetic;
+            let name = match operator {
+                Arithmetic::Add => "add",
+                Arithmetic::Subtract => "subtract",
+                Arithmetic::Multiply => "multiply",
+                Arithmetic::Divide => "divide",
+                Arithmetic::Negate => unreachable!("no negate source binding"),
+            };
+            let mut scope = RootScope::new(&mut store);
+            let mut value = [Val::null_any_ref()];
+            runtime
+                .get_func(&mut scope, &format!("arithmetic-{name}"))
+                .unwrap()
+                .call(&mut scope, &[], &mut value)?;
+            let mut cell = [Val::null_any_ref()];
+            runtime
+                .get_func(&mut scope, "binding-new")
+                .unwrap()
+                .call(&mut scope, &value, &mut cell)?;
+            let ty = cell[0]
+                .unwrap_anyref()
+                .unwrap()
+                .as_struct(&scope)?
+                .unwrap()
+                .ty(&scope)?;
+            let global = Global::new(
+                &mut scope,
+                GlobalType::new(
+                    ValType::Ref(RefType::new(false, ty.into())),
+                    Mutability::Const,
+                ),
+                cell[0].clone(),
+            )?;
+            linker.define(
+                &scope,
+                identity.import_module(),
+                &identity.import_name(),
+                global,
+            )?;
+            cells.insert(identity, global);
+        }
         let provided = BTreeSet::from([
             ModuleIdentity::new(Phase::Runtime, "suss.core").map_err(SessionError::Compile)?
         ]);
@@ -251,8 +295,8 @@ impl Session {
             runtime,
             numeric_memory,
             linker,
-            environment: Environment::default(),
-            cells: BTreeMap::new(),
+            environment,
+            cells,
             provided,
             resident: Vec::new(),
             artifact_bytes: 0,

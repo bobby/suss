@@ -2302,3 +2302,162 @@ production frontend migration and M2–M9 acceptance remain unfinished. Next rem
 the first-class arithmetic restriction with central invocation/arity, canonical
 live cells and pinned variadic semantics; preserve once-only evaluation and unary
 identity. Keep Refs #9/#10 rather than closing incomplete issues. Do not merge.
+
+## Arithmetic function values: in-progress follow-up — 2026-09-30
+
+Isolated worktree /private/tmp/suss-arithmetic-values on
+resurrection/portable-arithmetic-values, based on independently reviewed PR #61
+cf6eb51c577834ece2def89fa7ce7f094b2b0930. Root fresh source/numeric oracles passed
+on that exact predecessor (158 source observations/14 pipeline tests and 1,024
+numeric samples/one actual runtime test). Final predecessor CI 36679120849 passed on that exact reviewed head.
+Root verified its actual runtime/verifier/session execution logs and updated the
+PR and issues #9/#10 to reviewed-head readiness; PR #61 remains unmerged. No merge and no successor PR yet.
+
+New native source regression fails with the expected located unsupported core
+function-value diagnostic at (let [f +] (f)), exit 101;
+/private/tmp/suss-arithmetic-values-red.log. It covers zero/unary/variadic calls,
+computed/returned functions, closure identity behavior, higher-order primitive
+coercion and wrong-arity recovery. Source materialization remains unfinished.
+
+Runtime closure factories now create add/subtract/multiply/divide functions with
+shared Invoke type, minimum arities 0/1 and variadic maximum -1. They preserve
+unary +/* identity, negate/reciprocate unary -// and fold evaluated arguments left
+to right through checked primitive intrinsics. No upstream core source copied;
+semantic provenance remains pinned core.cljs 2724–2753, EPL notices upstream.
+Central invoke guards source arity; trusted direct invoker calls also diagnose
+empty -//. No Java/Node or new shipped dependency.
+
+An initial implementation used an appended function type with an identical
+signature, but it does not share the recursive group's Invoke identity; seven
+runtime tests failed actual Wasm validation. Fixed by assigning the invoke bodies
+the exact prelude Invoke type, with declarative ref.func elements. No failure
+hidden: /private/tmp/suss-arithmetic-values-runtime-focused.log records red, and
+/private/tmp/suss-arithmetic-values-runtime-focused-fixed.log records all nine
+existing runtime tests passing, exit 0. New independent GC/arity test passes,
+exit 0; /private/tmp/suss-arithmetic-values-invocation-focused.log. It checks empty,
+unary and ordered variadic results after GC, signed-zero bits, min/max closure
+fields, actual exception tag and wrong-arity descriptor.
+
+All native Cargo invocations are sequential with CARGO_BUILD_JOBS=2 and shared
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target; no RUSTFLAGS override.
+No full successor baseline yet; source regression remains intentionally red until
+implementation. Do not publish or call this follow-up ready from runtime checks.
+
+Fresh pinned private probes establish 18 source arithmetic-function scalar
+observations (/private/tmp/suss-first-class-arithmetic-probe-inputs.json and
+-observations.json). Initial generated fixture path was wrong and namespace lookup
+failed; corrected ignored path then compiled/executed successfully. These are
+reference-only results, not Suss passes. A separate temporary core redefinition
+probe confirms direct arithmetic macro calls remain inlined while function-value
+lookup sees replacement. Captured original + exposed an upstream generated-JS
+arity-property TypeError under a fixed-arity replacement; preserved explicitly
+in /private/tmp/suss-core-arithmetic-redefinition-observations.json, not converted
+to success. Do not adopt JS wrapper dispatch defects over the accepted captured
+function guarantee. Canonical identity and unary closure identity are true.
+
+Next provision stable canonical arithmetic cells, preserve phase isolation,
+suss.core/cljs.core aliases, redefinition and original captured functions. Resolve
+arithmetic values to those live cells; a per-use closure constant is insufficient.
+Add the pinned scalar cases to the common corpus and execute actual fragments.
+Account honestly for resident bootstrap cells in SessionStats. Complete focused
+and full checks, docs/inventory evidence, linked PR, independent review/fixes and
+final-head CI. All larger M2–M9 acceptance remains open.
+
+Source lookup now materializes used arithmetic identities in the staged compiler
+Environment and reads live cells. Native Session provisions four canonical
+runtime-phase arithmetic cells once per Store; current aliases share those cells
+and reset reprovisions them. Source function-value regression now passes, exit 0;
+/private/tmp/suss-arithmetic-values-source-focused.log. The full compiler focused
+scope passes 69 tests, exit 0; /private/tmp/suss-arithmetic-values-compiler-focused.log.
+The initial full session focus had 18 passes/one failure because reset previously
+expected zero cells; the four new bootstrap cells are resident and reported
+truthfully. The reset assertion now compares against the explicitly checked four
+startup cells, not a hidden counter subtraction. Session recheck is pending.
+
+Still required before successor publication: canonical identity/phase isolation,
+core/user redefinition and captured-old-function regressions, shared source corpus
+expansion/fresh pinned execution, independent decoder host provisioning, metric/API
+docs, full baseline, inventory alignment and independent PR review/final CI. No
+full compatibility or successor readiness claim follows from this compiler focus.
+
+Final session recheck passed 19 tests (15 integration/4 private), zero ignored,
+exit 0; /private/tmp/suss-arithmetic-values-session-focused-fixed.log. Combined
+current focused scope is 88 (69 compiler/19 session). The source materialization
+regression is now green; the missing-source red above is pre-implementation evidence.
+No native Cargo process remains live. Successor changes are uncommitted in the
+isolated worktree, with required remaining gates listed above. Root worktree stays
+on PR #61 reviewed cf6eb51 with only the two unrelated reference files untracked.
+
+## Arithmetic function values: publication validation — 2026-09-30
+
+The source/runtime implementation now executes arithmetic functions as values
+through canonical phase-specific live cells and universal invocation. Native
+Session seeds four runtime cells per Store; statistics count them, and reset
+reprovisions them. Repeated alias reads and unary identity retain exact GC reference
+identity. Old owned functions and source captures retain original behavior after
+core replacement and GC; subsequent function-value lookup sees the replacement.
+Callee and argument effects execute exactly once in order. A compile failure leaves
+session state unchanged. Phase fixtures execute distinct runtime/macro cell contents.
+
+The original 158 source cases are retained and 18 pinned reference function-value
+cases added (176 total). The executing corpus host explicitly initializes canonical
+arithmetic cells with the runtime factories. Dynamic object coercion remains an
+explicit unsupported boundary. Extended source signatures and compiled macros/core
+import remain incomplete; direct bootstrap arithmetic is not generalized macro
+expansion. No obsolete frontend is retired or complete milestone claimed.
+
+Four public runtime arithmetic declarations have manual in-progress adapted
+reviews with exact source hashes, fixed/variadic arities, macro/reduction dependencies,
+original adaptation path and executing references. 1,061 remain unassessed; no
+review is marked implemented or excluded. An initial review-generation assertion
+used macro:divide:1160; the actual stable inventory ID is macro:divide:1159, corrected
+before writing the overlay. Generated inventory is unchanged. No core form copied,
+new dependency/lock change or shipped Java/Node path. Existing helper notices remain.
+
+Commands/results (CARGO_BUILD_JOBS=2, CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target,
+no RUSTFLAGS override; native feature graphs sequential):
+
+- Compiler modules/definitions/closures/pipeline/resolution/runtime_abi focus: 70 pass, zero ignored, exit 0; /private/tmp/suss-arithmetic-values-compiler-final.log.
+- Native Session library/persistent_session focus: 21 pass (17 integration/4 private), zero ignored, exit 0; /private/tmp/suss-arithmetic-values-session-final.log. Initial new reference-identity fixture failed to compile because unwrap_anyref already returns a reference; removed the extra reference, then exact ref_eq observations passed. Total focused scope: 91.
+- `sh scripts/test-portable-pipeline-oracle.sh`: fresh pinned 176-case observations match and all 14 independently decoded pipeline tests pass, exit 0; /private/tmp/suss-arithmetic-values-portable-oracle.log. Warnings for upstream non-number arithmetic are retained.
+- Python suite: 54 pass, exit 0; /private/tmp/suss-arithmetic-values-python-final.log. Inventory: 1,065 source declarations verified. Review overlay: four reviewed as in-progress/1,061 unassessed. WIT: 15 files/six packages. Numeric artifact integrity, offline roadmap preview and diff checks pass. Stable issue IDs/statuses retained.
+- Required full `cargo test --workspace --locked -- --test-threads=2`: passed, exit 0 including CLI rustdoc; /private/tmp/suss-arithmetic-values-full.log. No overlapping native Cargo feature graph. Existing ignored/manual checks remain unchanged.
+
+Publish stacked on reviewed PR #61 with Refs #9/#10, dispatch an independent reviewer
+who pushes significant fixes, then require exact final-head CI. No PR or issue closes
+from these partial gates. Existing legacy differential 9 passes/7 exact failures/0
+skips and manual/legacy/doc ignores remain separate and unchanged. Next complete
+extended closure signatures and general control flow/core foundations needed by
+source import and production frontend replacement. M2–M9 remain open.
+
+## PR #62 independent review — 2026-09-30
+
+Reviewed 23c33d4 in isolated /private/tmp/suss-review-pr62 against the accepted
+design and reviewed predecessor cf6eb51. Audited phase-specific canonical arithmetic
+cells, staged HIR materialization, module-plan cell aggregation, core redefinition,
+original captures, GC identity, native bootstrap/reset counters, shared recursive
+Invoke identity and declarative ref.func elements. Checked central minimum/variadic
+arity, unary identity and primitive left-fold coercions. Existing universal-call
+tests observe an exact ordered callee/read/invoke trace; arithmetic session tests
+also execute callee/argument effects once. Source oracle provisioning and the four
+manual in-progress inventory entries retain honest dependencies and provenance.
+No significant production defect or remaining review finding was found in this
+bounded increment. No semantic change, dependency, ignore or upstream source copy
+was introduced by review.
+
+Commands/results (CARGO_BUILD_JOBS=2, shared CARGO_TARGET_DIR, no RUSTFLAGS override;
+native Cargo feature graphs run sequentially):
+
+- Compiler modules/definitions/closures/pipeline/resolution/runtime_abi focused suite: 70 pass, zero ignored, exit 0; /private/tmp/suss-pr62-review-compiler.log.
+- Native Session library/persistent_session focus: 21 pass (four private/seventeen integration), zero ignored, exit 0; /private/tmp/suss-pr62-review-session.log. Combined focused scope: 91.
+- Required `cargo test --workspace --locked -- --test-threads=2`: passes including CLI rustdoc, exit 0; /private/tmp/suss-pr62-review-full.log. Code remained frozen during this run; existing legacy/manual/doc ignores unchanged.
+- Fresh pinned source reference regenerated with oracle_cases.py, portable_oracle.py generate, cljs.main and Node, then portable_oracle.py compare: 176 observations match, exit 0; /private/tmp/suss-pr62-review-oracle-comparison.log. The compiler focus independently executes and decodes all 176 cases in its fourteen pipeline tests. The clean pinned root submodule was a read-only source reference. Upstream non-number arithmetic warnings remain visible.
+- Python regression suite: 54 pass, exit 0; /private/tmp/suss-pr62-review-python.log.
+- Inventory/review: 1,065 declarations/four in-progress reviews/1,061 unassessed. WIT: fifteen files/six packages. Numeric artifact integrity, offline roadmap preview and touched Rust formatting with workspace edition 2024 pass. An initial formatting invocation incorrectly selected edition 2021; corrected to the actual workspace edition, without changing source.
+
+This review records evidence only. Require successful CI on the exact final
+reviewed head, including this handoff update, before readiness. Keep Refs #9/#10:
+object coercion, full core/macro import, extended signatures, production frontend
+migration and M2–M9 acceptance remain unfinished. The next unblocked task is
+extended closure signatures and control-flow/core foundations; no milestone or
+issue closes from this partial increment. Do not merge.

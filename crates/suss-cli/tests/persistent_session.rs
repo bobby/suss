@@ -250,6 +250,11 @@ fn persistent_session_compile_failure_is_atomic_and_language_failure_recovers() 
 #[test]
 fn session_lifecycle_reset_rejects_old_values_and_distinguishes_code_from_roots() {
     let mut session = Session::new().unwrap();
+    let bootstrap_cells = session.stats().binding_cells;
+    assert_eq!(
+        bootstrap_cells, 4,
+        "canonical arithmetic cells are resident"
+    );
     let value = session.eval("(def old 7) old").unwrap();
     let clone = value.clone();
     assert_eq!(session.stats().external_value_handles, 2);
@@ -263,7 +268,7 @@ fn session_lifecycle_reset_rejects_old_values_and_distinguishes_code_from_roots(
     );
     session.reset().unwrap();
     assert_eq!(session.stats().resident_fragments, 0);
-    assert_eq!(session.stats().binding_cells, 0);
+    assert_eq!(session.stats().binding_cells, bootstrap_cells);
     assert_eq!(session.stats().external_value_handles, 0);
     assert!(matches!(
         session.inspect(&value, |_, _| Ok(())),
@@ -468,4 +473,112 @@ fn persistent_session_nil_and_false_are_initialized_defonce_bindings() {
             .unwrap();
         assert_eq!(tag, expected);
     }
+}
+
+#[test]
+fn persistent_session_arithmetic_function_values_use_universal_invocation() {
+    let mut session = Session::new().unwrap();
+    for (source, expected) in [
+        ("(let [f +] (f))", 0.0),
+        ("(let [f *] (f))", 1.0),
+        ("(let [f +] (f 1 2))", 3.0),
+        ("(let [f *] (f \"2\" 3 4))", 24.0),
+        ("(let [f -] (f nil))", -0.0),
+        ("(let [f /] (f \"4\"))", 0.25),
+        ("((if false + *) \"2\" 3)", 6.0),
+        ("((let [f +] (f (fn [] 42))))", 42.0),
+    ] {
+        assert_eq!(
+            eval_number(&mut session, source),
+            f64::to_bits(expected),
+            "{source}"
+        );
+    }
+    let value = session.eval("((fn [f x] (f x 3)) + \"2\")").unwrap();
+    assert_eq!(units(&mut session, &value), vec![50, 51]);
+    let subtract = session.eval("-").unwrap();
+    assert!(matches!(
+        session.invoke(&subtract, &[]),
+        Err(SessionError::Language(_))
+    ));
+    assert_eq!(eval_number(&mut session, "(+ 40 2)"), 42.0f64.to_bits());
+}
+
+#[test]
+fn persistent_session_arithmetic_values_share_cells_and_keep_old_functions() {
+    let mut session = Session::new().unwrap();
+    let original = session.eval("+").unwrap();
+    let root = session
+        .inspect(&original, |mut store, value| {
+            value.unwrap_anyref().unwrap().to_owned_rooted(&mut store)
+        })
+        .unwrap();
+    for source in ["+", "cljs.core/+", "suss.core/+", "(let [f +] (f +))"] {
+        let alias = session.eval(source).unwrap();
+        assert!(
+            session
+                .inspect(&alias, |store, value| wasmtime::Rooted::ref_eq(
+                    &store,
+                    &root,
+                    value.unwrap_anyref().unwrap()
+                ))
+                .unwrap(),
+            "{source}"
+        );
+    }
+    session
+        .eval("(def captured (let [f +] (fn [x y] (f x y))))")
+        .unwrap();
+    session.enter_namespace("suss.core").unwrap();
+    session.eval("(def + (fn [x y] (- x y)))").unwrap();
+    let replacement = session.eval("cljs.core/+").unwrap();
+    assert!(
+        !session
+            .inspect(&replacement, |store, value| wasmtime::Rooted::ref_eq(
+                &store,
+                &root,
+                value.unwrap_anyref().unwrap()
+            ))
+            .unwrap()
+    );
+    session.enter_namespace("user").unwrap();
+    let one = session.eval("1").unwrap();
+    let two = session.eval("2").unwrap();
+    session.collect().unwrap();
+    let result = session.invoke(&original, &[&one, &two]).unwrap();
+    assert_eq!(number(&mut session, &result), 3.0f64.to_bits());
+    let result = session.invoke(&replacement, &[&one, &two]).unwrap();
+    assert_eq!(number(&mut session, &result), (-1.0f64).to_bits());
+    assert_eq!(
+        eval_number(&mut session, "(captured 1 2)"),
+        3.0f64.to_bits()
+    );
+    assert_eq!(
+        eval_number(&mut session, "(let [f +] (f 1 2))"),
+        (-1.0f64).to_bits()
+    );
+    let before = session.stats();
+    assert!(matches!(
+        session.eval("(let [f +] missing)"),
+        Err(SessionError::Compile(_))
+    ));
+    assert_eq!(session.stats(), before);
+}
+
+#[test]
+fn persistent_session_arithmetic_values_evaluate_callee_and_arguments_once() {
+    let mut session = Session::new().unwrap();
+    session
+        .eval("(def counter 0) (def next (fn [] (def counter (+ counter 1)) counter))")
+        .unwrap();
+    assert_eq!(
+        eval_number(&mut session, "((do (next) +) (next) (next))"),
+        5.0f64.to_bits()
+    );
+    assert_eq!(eval_number(&mut session, "counter"), 3.0f64.to_bits());
+    assert_eq!(
+        eval_number(&mut session, "(let [f *] (f (next) (next)))"),
+        20.0f64.to_bits()
+    );
+    assert_eq!(eval_number(&mut session, "counter"), 5.0f64.to_bits());
 }
