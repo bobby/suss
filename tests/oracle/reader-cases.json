@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {"id":"integer-rounding","source":"9007199254740993","expected":{"tag":"f64","bits":"4340000000000000"}},
+    {"id":"float-negative-zero","source":"-0.0","expected":{"tag":"f64","bits":"8000000000000000"}},
+    {"id":"exponent-negative-zero","source":"-0e0","expected":{"tag":"f64","bits":"8000000000000000"}},
+    {"id":"integer-zero","source":"-0","expected":{"tag":"f64","bits":"0000000000000000"}},
+    {"id":"exponent","source":"1e3","expected":{"tag":"f64","bits":"408f400000000000"}},
+    {"id":"hexadecimal","source":"-0x10","expected":{"tag":"f64","bits":"c030000000000000"}},
+    {"id":"octal","source":"010","expected":{"tag":"f64","bits":"4020000000000000"}},
+    {"id":"radix","source":"2r101","expected":{"tag":"f64","bits":"4014000000000000"}},
+    {"id":"infinity","source":"##Inf","expected":{"tag":"f64","bits":"7ff0000000000000"}},
+    {"id":"surrogate","source":"\"\\uD800\"","expected":{"tag":"string","units":[55296]}},
+    {"id":"astral","source":"\"😀\"","expected":{"tag":"string","units":[55357,56832]}},
+    {"id":"character","source":"\\u0041","expected":{"tag":"string","units":[65]}},
+    {"id":"octal-character","source":"\\o377","expected":{"tag":"string","units":[255]}},
+    {"id":"string-escapes","source":"\"\\123z\\7 \\b\\f\"","expected":{"tag":"string","units":[83,122,7,32,8,12]}}
+  ]
+}

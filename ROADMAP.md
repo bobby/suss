@@ -50,7 +50,7 @@ remain open until their linked issues are closed and their exit gates rechecked.
 
 ### M2: Compiler and runtime foundation
 
-- **M2-01 — Reader forms, metadata and namespace phases** (planned). Introduce source spans, retained metadata and deterministic namespace/reader conditional resolution.
+- **M2-01 — Reader forms, metadata and namespace phases** (in-progress). Portable reader forms retain byte spans, metadata, binary64/UTF-16 and source-ordered conditionals; 14 scalar observations match the pinned reader and execute through ABI intrinsics. Compiler/IR and namespace-phase integration remain; see [reader forms](docs/runtime/reader-forms.md).
 - **M2-02 — Explicit evaluation-order IR** (in-progress). Lower effectful operands into explicit temporaries and blocks.
 - **M2-03 — Runtime ABI v1 and closures** (in-progress). New generated shared runtime executes boxed f64/UTF-16, universal closures/central arity, initialized binding cells and manifest/prelude gates in seven focused tests. Reader/IR/backend migration and source-corpus acceptance remain; see [ABI v1](docs/runtime/abi-v1.md).
 - **M2-04 — Nominal types, protocols and exceptions** (planned). Introduce descriptor identity and protocol/exception machinery on the stable ABI.

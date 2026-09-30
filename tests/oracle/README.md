@@ -81,3 +81,13 @@ representation cannot claim the binary64/UTF-16 contract from these reference
 results. CI checks transport/comparator regressions and executes the shared Suss
 corpus against the reference snapshot; it does not build or run the JVM/Node
 oracle. The ordinary 201-case legacy baseline remains separate and unchanged.
+
+## Portable reader boundary
+
+`scripts/test-reader-oracle.sh` executes a separate original 14-case scalar
+corpus in the pinned compiler's tools.reader 1.3.6 dependency and Node, comparing
+binary64 bits and UTF-16 units exactly. Rust reads the same sources and transfers
+parsed scalars into generated ABI runtime objects, inspecting them after GC.
+These are reader-boundary observations, not additional compiler compatibility
+passes; the shared full-source corpus remains 9 passing/7 exact failures/0 skips.
+The legacy compiler still uses its EDN reader. See [portable forms](../../docs/runtime/reader-forms.md).

@@ -1170,3 +1170,180 @@ No PR was merged and no issue or milestone was directly closed.
 
 Next unblocked work remains lossless reader forms into HIR/binding identity,
 explicit source-order IR and shared runtime lowering, as described above.
+## Portable reader forms — 2026-09-29
+
+Prior reviewed PR heads have terminal successful CI: #40 fb3ec0a in
+[36636314840](https://github.com/bobby/suss/actions/runs/36636314840), and #41
+2b4d2fe in [36636495795](https://github.com/bobby/suss/actions/runs/36636495795).
+Both were verified open/draft and unmerged when those runs completed. A later
+remote check shows both were externally merged into main, whose current head
+is fad9ee9; their source branches were deleted. This agent did not merge them.
+Each had the required dispatched review; #40's two significant findings were
+pushed and inherited by #41. No milestone
+was closed and M2–M9 remain incomplete.
+
+Next increment, on resurrection/portable-reader-forms based on the now-updated
+main (including #41), introduces
+`suss_reader::forms`. Source forms retain byte spans, ordered metadata, binary64
+numbers and UTF-16 strings separately from prototype EDN runtime values. Character
+literals are one-unit strings; raw astral strings and escaped lone surrogates
+preserve exact units. Ordinary integer literals round to binary64 rather than
+creating an arbitrary-precision runtime value. Ratios/precision suffixes produce
+explicit diagnostics. Numeric spelling support remains bounded, not a claim of
+all upstream reader forms.
+
+Conditional clauses are preserved in source order; resolution chooses the first
+portable :suss/:cljs/:default clause, removes unmatched syntax and only then
+pairs map entries. Quote/deref prefixes get source spans. Comments/discard and
+unsupported/malformed input have explicit results. Metadata remains syntax,
+not runtime metadata or an extra function argument. See docs/runtime/reader-forms.md.
+
+Failure/repair evidence:
+
+- Initial lone-surrogate regression through the old EDN reader failed with a
+  parse error. The new reader preserves [0xd800, 0, 0xd83d, 0xde00] and passes.
+- Initial 256-depth bound did not prevent actual test-thread stack overflow
+  (SIGABRT). A 64-form bound now rejects excessive nesting with a located error;
+  the regression passes. No blanket skip or increased test thread stack.
+- Initial development Node runner failed resolving a corpus path relative to
+  generated code. It now reads from the script's fixed oracle working directory;
+  a fresh successful compile/execute/compare follows, not a fabricated exit code.
+
+Validation (all Cargo commands use CARGO_BUILD_JOBS=2; no RUSTFLAGS):
+
+- `cargo test -p suss-reader --locked -- --test-threads=2`: 19 existing parser
+  tests plus 7 new portable form tests passed, 0 ignored.
+- `scripts/test-reader-oracle.sh`: freshly compiled pinned ClojureScript with its
+  tools.reader 1.3.6 dependency and Node; 14 original scalar observations match
+  float bits/UTF-16 units exactly. JVM/Node remain development-only. The adapter
+  and Rust implementation are original; no upstream core/reader source copied.
+- `cargo test -p suss-compile --test reader_runtime --locked -- --test-threads=2`:
+  2 passed, 0 ignored. Shared scalar corpus check plus actual generated ABI
+  runtime transfer, independently inspected GC fields/units and forced GC.
+- `cargo test --workspace --locked -- --test-threads=2`: exit 0;
+  /private/tmp/suss-portable-reader-full.log. 317 expressions/12 existing ignored,
+  29 components, 9 conformance/2 manual ignored, 4 oracle/1 manual ignored,
+  2 reader-runtime, 7 ABI, 3 shared, 8 async, 8 profile, 8 core, 19 old reader and
+  7 new reader passes. Two existing doctest examples remain ignored.
+- Python regression suite: 42 passed. Formatting, `git diff --check`, and offline
+  roadmap preview (10 milestones/39 stable issues) passed.
+
+M2-01 is in-progress, not complete. Legacy AOT/REPL/compiler/macro/component reader
+paths have not migrated to the portable forms. The 14 reader passes are not new
+compiler compatibility passes: full source differential corpus remains 9 passing,
+7 exact known failures and 0 skipped. Namespace file ambiguity, aliases/refers,
+phase imports, cljs.core binding aliases, complete reader/syntax-quote behavior
+and splicing conditionals remain work. No known-failure files were changed.
+
+Next unblocked task: make HIR/explicit evaluation-order IR consume portable forms
+without EDN conversion, lower values through shared ABI intrinsics, and wire the
+manifest/layout gate into fragment loading. Migrate AOT/REPL/macros through the
+same pipeline and retire prototype parser/runtime paths after acceptance. This
+increment requires its own dispatched reviewer, fixes pushed for significant
+findings and successful final-head CI; do not merge any PRs yet.
+
+## Dispatched PR #42 code review — 2026-09-29
+
+The independently dispatched reviewer audited the full 13-file increment at
+81bc3c1 against the accepted design, roadmap, inventory and handoff. Review
+covered scalar binary64/UTF-16 parsing, metadata/source spans, conditional
+selection and map pairing, quote/discard/character syntax, malformed input and
+stack bounds, the development-only pinned oracle, actual GC runtime transfers
+and the explicit legacy-pipeline integration limitations.
+
+One significant defect was reproduced and fixed: apostrophes were incorrectly
+token terminators. Valid portable names such as `form'`, `ns/form'` and `:name'`
+were split into quote syntax or failed with an unexpected end-of-input error.
+Direct execution of the freshly compiled pinned tools.reader confirms these
+names stay single tokens; it also rejects `\\'x` as an unsupported character
+token while accepting `\\'`. The regression FAILED before the repair (exit 101)
+and passes after it. Apostrophe now continues tokens but starts quote syntax at
+a form boundary. Octal string escapes retain their separate reader-macro
+termination rule, so `"\\1'"` remains units [1, 39]. No upstream source was copied.
+
+Validation, with CARGO_BUILD_JOBS=2 and the existing shared CARGO_TARGET_DIR:
+
+- `cargo test -p suss-reader --locked apostrophes_continue_tokens_but_quote_at_form_start -- --exact --test-threads=2`: red before the fix.
+- `cargo test -p suss-reader --locked -- --test-threads=2`: 19 legacy and 8
+  portable reader tests passed, 0 ignored, including the new regression.
+- `cargo test --workspace --locked -- --test-threads=2`: passed, exit 0;
+  /private/tmp/suss-review-pr42-full.log. All enabled suites pass, including
+  317 expressions, 29 components, 9 conformance, 4 oracle, 2 reader-runtime,
+  7 ABI, 3 shared-GC, 8 async, 8 profile, 8 core and 27 reader tests. Existing
+  12 expression, 2 conformance, 1 oracle and 2 doc-example ignores remain.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 42 passed.
+- `rustfmt --edition 2024` on the touched Rust files and `git diff --check`:
+  passed. No RUSTFLAGS override, new dependencies or known-failure changes.
+
+No additional significant finding was identified within this bounded reader
+foundation. Compiler/evaluator/component paths still use legacy EDN; namespace
+phases, full syntax-quote/splicing and production HIR/IR/backend integration
+remain open. The scalar corpus remains 14 reader observations, separate from
+9 passing/7 exact failing/0 skipped compiler observations; M2-01 is incomplete.
+Next unblocked task remains portable-form HIR/evaluation-order IR and shared-ABI
+lowering/loader integration. Push this review fix to PR #42 and require successful
+CI at that final head before readiness. Do not merge PRs.
+
+## PR #42 follow-up prefix/conditional review — 2026-09-29
+
+The coordinating agent reopened the dispatched review after spotting premature
+metadata target validation. Pinned tools.reader execution with :read-cond :allow
+and features :suss/:cljs confirms `^:export #?(:suss f :cljs g)` yields f with
+export metadata. A selected scalar is invalid; an unmatched conditional lets
+metadata seek the next retained target. The previous reader rejected even the
+valid selected-symbol case before selection. Its focused regression FAILED at
+94b0d19 (exit 101) and passes after this repair.
+
+The same finding affects quote, deref, var-quote and discard: an unmatched target
+conditional must disappear before a prefix finds its logical target. The old
+quote wrapper produced a malformed one-item quote list plus an unwrapped next
+form; its focused regression FAILED at 94b0d19 (two forms instead of one).
+Raw syntax now retains Prefix(operator,target) and conditional-dependent
+Discard(target) forms. Selection consumes retained targets in source order,
+lowers prefixes to lists, and validates metadata only on the retained target.
+Missing targets and scalar metadata targets produce located diagnostics.
+
+Conditional feature/body syntax must also remain flat until prefix/discard
+selection establishes its logical pairs. The deferred-discard clause regression
+FAILED at 94b0d19 (premature odd-pair diagnostic) and passes after the repair.
+Pinned Node execution confirms both ordinary and conditional-dependent discard
+clause examples yield 2. Unselected branch bodies suppress nested feature
+selection: `#?(:jvm #?(:jvm 1) :suss 2)` yields 2. Prefix target lookup stays
+within its containing sequence or enclosing conditional; it cannot consume a
+target outside a closing delimiter. Metadata order, operator byte spans,
+multi-discard chains, map pairing and conditional-body boundaries are tested.
+Both raw and synthesized nesting are bounded to 64, including many flat raw
+prefixes that would otherwise build an unbounded resolved chain. No test stack
+increase or blanket skip was added. No upstream implementation was copied.
+
+The predecessor head 94b0d19 had terminal successful CI
+[36641499909](https://github.com/bobby/suss/actions/runs/36641499909), verified by
+the coordinating agent. This does not certify the follow-up fix. New-head CI
+must pass after publication; no PR was merged by either agent.
+
+Focused validation (CARGO_BUILD_JOBS=2, shared CARGO_TARGET_DIR, no RUSTFLAGS):
+
+- `cargo test -p suss-reader --locked metadata_targets_are_checked_after_conditional_selection -- --exact --test-threads=2`: red at 94b0d19.
+- `cargo test -p suss-reader --locked reader_prefixes_continue_after_unmatched_conditionals_with_bounded_depth -- --exact --test-threads=2`: red at 94b0d19.
+- `cargo test -p suss-reader --locked conditional_clause_pairing_follows_deferred_prefix_selection -- --exact --test-threads=2`: red at 94b0d19.
+- `cargo test -p suss-reader --locked -- --test-threads=2`: 19 legacy plus
+  11 portable tests passed, 0 ignored, including all three repaired regressions.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 42 passed.
+- Formatting and `git diff --check`: passed. Final full baseline follows.
+
+Final full baseline: `cargo test --workspace --locked -- --test-threads=2`
+with CARGO_BUILD_JOBS=2 and the shared CARGO_TARGET_DIR passed (exit 0).
+Log: /private/tmp/suss-review-pr42-prefix-verified-full.log. Results: 14 CLI,
+54 compiler, 317 expressions/12 existing ignored (54.32s), 29 components,
+9 conformance/2 manual ignored (22.13s), 4 oracle/1 manual ignored,
+2 reader-runtime, 7 ABI, 3 shared-GC, 8 async, 8 profile, 8 core,
+19 legacy reader and 11 portable reader passes. Two existing doc examples
+remain ignored. Differential corpus remains 9 passing/7 exact failures/0 skipped;
+no known-failure or expected scalar observations changed.
+
+The syntax contract now documents flat conditional forms, pending prefixes and
+deferred discards. Legacy compiler/evaluator/component paths remain unchanged;
+this is not a new compiler compatibility claim or completed M2 acceptance.
+Next task remains portable-form HIR/evaluation-order IR and shared runtime
+lowering/loader integration. Keep the user-required review/fix/CI gates and do
+not merge PRs.

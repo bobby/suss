@@ -112,3 +112,11 @@ Baseline/catalog JSON maps reject duplicate keys and trailing data. Executing
 negative GC fixtures verify unknown tags, malformed boxes and non-string arrays
 fail decoding. Harness regressions also check new/changed failures and unexpected
 passes against exact stage/diagnostic records.
+
+## Portable reader foundation
+
+The separate [reader-form boundary](../runtime/reader-forms.md) preserves source
+spans, metadata, binary64 and UTF-16. Its 14 scalar observations match fresh
+pinned ClojureScript reader execution and are transferred through ABI runtime
+intrinsics. They do not change the compiler corpus's 9 passing/7 failing/0 skipped
+counts; reader/IR/backend and namespace-phase integration remain incomplete.

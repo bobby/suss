@@ -1,9 +1,11 @@
 //! Suss Reader - S-expression parser for the Suss language
 //!
-//! This crate provides a chumsky-based parser for Suss source code,
-//! supporting the full EDN data literal syntax plus Suss extensions.
+//! `forms` provides portable source syntax with byte spans, binary64 and UTF-16.
+//! The legacy chumsky EDN API remains a prototype boundary pending compiler
+//! migration; neither API claims full upstream reader support.
 
 mod parser;
+pub mod forms;
 
 #[cfg(all(feature = "component", target_family = "wasm"))]
 mod component;

@@ -135,7 +135,7 @@
       "id": "M2-01",
       "milestone": "M2",
       "title": "Reader forms, metadata and namespace phases",
-      "status": "planned",
+      "status": "in-progress",
       "dependencies": [
         "M0",
         "M1"
@@ -145,7 +145,10 @@
       "spec_sections": "3\u20135",
       "validation": "cargo test -p suss-reader; cargo test -p suss-compile namespace",
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
-      "evidence": []
+      "evidence": [
+        "Portable source-form API retains byte spans, ordered metadata, binary64/UTF-16 literals and conditional clauses. Eleven focused syntax/diagnostic tests and two compiler boundary tests execute parsed scalars through production ABI intrinsics.",
+        "Fourteen original scalar cases match freshly compiled pinned ClojureScript/tools.reader observations exactly. Legacy compiler/evaluator/component readers have not migrated; namespace ambiguity, aliases and phase imports remain acceptance work. See docs/runtime/reader-forms.md and handoff."
+      ]
     },
     {
       "id": "M2-02",
