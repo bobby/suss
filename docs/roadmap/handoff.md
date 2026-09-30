@@ -1985,3 +1985,112 @@ plans and fragments to the production persistent session with explicit error
 recovery and resident-code/reset policy. Push the review repair and require CI on
 the exact final reviewed head before readiness. Do not merge or close incomplete
 roadmap packages.
+
+## Native persistent session host — 2026-09-30
+
+PR #49 remains open at independently reviewed 8e12024bd574326db0ff453274887dd3ec9eabdb;
+final-head CI 36665168895 passed. Root reran the fresh pinned 42-case portable
+oracle and actual pipeline artifacts on that reviewed head, exit 0;
+/private/tmp/suss-modules-reviewed-portable-oracle.log. Linux CI logs explicitly
+execute the reverse-order diamond and failed initializer/retry regressions;
+/private/tmp/suss-modules-final-ci.log. PR/issue #8/#13 progress was updated to
+reviewed-head readiness without claiming complete acceptance. No PR was merged.
+
+The new suss_cli native library Session owns one Store/shared production runtime,
+compiler Environment, live binding cells, successful module identities and resident
+instances. Inputs compile through the portable pipeline; no source history is
+stored/replayed. prepare_input stages optional leading-ns dependency graphs and the
+input as one compiler transaction, sharing header/discovery/compilation code with
+file plans. The host validates every artifact before cells, stages actual imports,
+links all fragments before publication/eval and initializes in require order.
+
+Owned SessionValue handles retain values/captures through later inputs/rebinding/GC.
+Source errors change no session state. Failed initializers preserve old bindings
+and completed effects; successful dependencies remain loaded, failed modules retry
+without dependency replay. Exact language tags are taken/normalized separately
+from traps/host errors; payloads remain rooted and the next input executes. Native
+inspection callback errors also clear pending exception state and cannot classify
+foreign tags as language success. Fuel budgets cover the whole operation, including
+its dependencies. Reset replaces the Store/state and rejects old/foreign handles
+before GC access or guest execution. load_namespace preserves caller scope;
+input ns may set active scope and subsequent inputs preserve aliases/refers.
+
+Counters report resident instances, sum of their input artifact sizes, cells,
+provided modules excluding bootstrap core, current external handles and allocated
+GC heap capacity. They do not measure actual JIT bytes, live objects or leaks.
+Linked failed/uninitialized instances conservatively remain resident until reset.
+No async scheduler, I/O cancellation or release acceptance is claimed.
+
+Commands and terminal results (CARGO_BUILD_JOBS=2; no RUSTFLAGS override):
+
+- Initial `cargo test -p suss-cli --test persistent_session --locked -- --test-threads=2` failed because the native library/API did not exist; /private/tmp/suss-session-red.log (also a consequent unknown-type inference diagnostic). Initial implemented host had 2 passes/2 failures on fixtures using dynamic global/parameter arithmetic; the existing compiler correctly reported located unsupported Number lowering. Fixtures now isolate persistence with literal writes/captures; no dynamic arithmetic repair or skip is claimed.
+- `cargo test -p suss-cli --lib --test persistent_session --locked -- --test-threads=2`: 13 pass (11 integration/2 host regressions), zero ignored, exit 0; /private/tmp/suss-session-focused.log.
+- `cargo test -p suss-compile --test portable_modules --test portable_definitions --test portable_closures --test portable_pipeline --test portable_resolution --test runtime_abi --locked -- --test-threads=2`: 65 pass, zero ignored, exit 0; /private/tmp/suss-session-compiler-focused.log. Combined focused scope: 78 tests.
+- `cargo test --workspace --locked -- --test-threads=2`: final sequential run passed, exit 0; /private/tmp/suss-session-full-sequential.log. First full run passed runtime suites but failed CLI rustdoc E0463 while a concurrent oracle Cargo invocation rebuilt shared reader/compiler artifacts; /private/tmp/suss-session-full.log. After that process was terminal, the identical full command passed including the CLI doc check. No doctest was disabled or failure hidden. Avoid concurrent Cargo feature graphs sharing un-hashed reader artifacts.
+- `sh scripts/test-portable-pipeline-oracle.sh`: fresh pinned output matches all 42 cases and 13 actual pipeline tests pass, exit 0; /private/tmp/suss-session-portable-oracle.log. Legacy differential baseline remains 9 passes/7 exact failures/0 skips in the full baseline; manual/legacy/doc ignores remain unchanged.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 pass, exit 0; /private/tmp/suss-session-python.log. Inventory/review checks: 1,065 / zero reviewed / 1,065 unassessed, exit 0. WIT check: 15 files / six official packages verified, exit 0.
+- Offline `python3 scripts/publish_roadmap.py`, touched Rust rustfmt checks and `git diff --check`: passed; stable issue IDs retained.
+
+Tests independently inspect actual Number layouts/bits, UTF-16 units, sentinel
+values and exception descriptors after GC. Reverse-order diamond effects execute
+through shared source closures and cells. Corrupt later artifacts and missing
+actual imports reject before binding publication/eval. Foreign/reset values are
+rejected before runtime use; OutOfFuel remains an exact engine trap. No new test
+is ignored. Implementation/fixtures are original; pinned EPL-1.0 cljs namespace/def
+semantics informed the contract, with no upstream implementation copied.
+
+Cargo.lock changes only the suss-cli dependency list to include already-locked
+workspace tempfile for development tests; no package version changes. No shipped
+Java/Node path or runtime ABI layout change. Proposal-only ADR work in a separate
+user turn did not change the accepted contract and is outside this implementation.
+See docs/runtime/portable-session.md for API, lifecycle and limits.
+
+Publish stacked on #49 with Refs #10/#12/#13/#15; this is runtime/host prerequisite
+evidence, not completed M3 delivery. Dispatch an independent reviewer to reproduce
+and push significant fixes; require CI on the exact final reviewed head. Review/CI
+are pending publication. Do not merge or close these incomplete packages.
+
+Remaining: actual production command/REPL frontend migration and printing, atoms/
+nominal types/collections, extended signatures and dynamic arithmetic/core coercions,
+full exception/effect/recur IR, source declaration/unbound-var certification,
+reload/cache/privacy and compiled macros, async I/O/cancellation/live heap counters,
+WIT/browser/CSP targets. Next connect the actual REPL frontend to this host as
+portable lowering/printing coverage reaches replacement acceptance; dynamic
+numeric/global/parameter lowering is an immediate compiler prerequisite. Retire
+source replay/obsolete paths only after replacement acceptance. M2–M9 remain open.
+
+## PR #59 independent review — 2026-09-30
+
+Reviewed the published portable-session head 81cfdad in an isolated worktree.
+Found a native callback recovery gap: a callback that translates a thrown exception
+into an ordinary host error left the Store carrying its pending exception. The
+new focused regression reproduced it before repair, exit 101;
+/private/tmp/suss-pr59-review-red.log. The host now clears pending exception state
+when propagating translated errors and rejects a callback that returns success
+while leaving a pending exception. Properly propagated exceptions still use exact
+tag identity; foreign tags remain host errors and traps remain distinct.
+
+The regression covers translated error and swallowed-throw success paths, exact
+host messages, pending state removal, unchanged external root count and an
+independently decoded next-input Number 42. An intermediate repair failed to compile
+because RootScope does not expose has_pending_exception directly; corrected through
+StoreContextMut, with no skipped test or weakened assertion.
+
+Commands and terminal results (CARGO_BUILD_JOBS=2, shared CARGO_TARGET_DIR, no
+RUSTFLAGS override; Cargo invocations sequential):
+
+- `cargo test -p suss-cli --lib --test persistent_session --locked -- --test-threads=2`: 14 pass, zero ignored, exit 0; /private/tmp/suss-pr59-review-session-focused.log.
+- `cargo test -p suss-compile --test portable_modules --test portable_definitions --test portable_closures --test portable_pipeline --test portable_resolution --test runtime_abi --locked -- --test-threads=2`: 65 pass, zero ignored, exit 0; /private/tmp/suss-pr59-review-compiler-focused.log. Combined focused scope: 79 tests.
+- `cargo test --workspace --locked -- --test-threads=2`: pass including CLI rustdoc, exit 0; /private/tmp/suss-pr59-review-full.log. No overlapping Cargo invocation.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 pass, exit 0; /private/tmp/suss-pr59-review-python.log.
+- Offline `python3 scripts/publish_roadmap.py`: pass, exit 0; /private/tmp/suss-pr59-review-roadmap-preview.json. Stable issue IDs retained.
+- Touched Rust rustfmt and `git diff --check`: pass.
+
+No remaining significant review finding. No upstream implementation copied,
+dependency changes, runtime ABI changes or source-semantic changes in the review repair. Existing unassessed inventory,
+portable oracle and legacy differential scope remain unchanged. Production
+command/REPL migration, dynamic arithmetic/core lowering, full M2/M3 acceptance,
+async cancellation and live heap accounting remain incomplete. Next implement the
+compiler prerequisites for frontend migration, then replace source replay after
+replacement acceptance. Require CI on the exact final reviewed head; do not merge
+or close incomplete issues.
