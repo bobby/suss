@@ -76,3 +76,8 @@ Complete compiled macros, source warnings/options, protocol implementations via
 metadata, arbitrary UserObject native property tables, full Error surfaces and
 collection/production frontend migration remain unfinished. Review/provenance
 statuses stay in progress. No issue closure or merge follows from these foundations.
+
+The [implements? bootstrap](implements.md) now exposes direct nominal markers
+without native/default fallback, with29 separate fresh primary observations.
+It supplies source seq/first/rest/next dispatch prerequisites; complete collection
+and compiled core/macro acceptance remains unfinished.
