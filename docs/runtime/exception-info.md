@@ -38,7 +38,7 @@ dependencies and in-progress adaptations in docs/compatibility/reviews.edn. Upst
 copyright/EPL remain in the pinned submodule. No upstream form is copied; complete
 extraction/patch/license packaging remains M4 work.
 
-Nine original native regressions plus the surrounding suites have executing evidence; the earlier complete surrounding focus passed66 before
+Nine original native regressions plus three independent review regressions plus the surrounding suites have executing evidence; the earlier complete surrounding focus passed66 before
 adding the ordinary-call regression. New getters/class/GC/source order tests failed before implementation.
 Live-cell factory initialization first exposed a scoped-root lifetime error; a
 reordered-class regression then exposed positional rather than named field lookup.
@@ -67,3 +67,20 @@ own phase core cells; the compiled macro session remains M3 work.
 Full workspace baseline, independent PR review and exact final-head CI are required
 before readiness. This work closes neither issue by itself. Full portable exception
 and core compatibility, production migration and M2–M9 remain incomplete.
+
+## Selected arities and remaining JS wrapper adaptation
+
+The two-argument ex-info implementation calls the live canonical ex-info binding
+with a nil cause. Its escaped original three-argument implementation still constructs
+using the live ExceptionInfo cell. Independent native invocation regressions retain
+both behaviors through GC. The pinned development oracle's apply observations
+confirm this distinction (two arguments call the replacement, three retain original
+construction). Runtime factory initialization roots both class and self binding cells.
+
+The pinned generated JavaScript generic wrapper also consults global arity slots:
+a saved generic call can dispatch to the replacement's corresponding arity, and a
+fixed-arity replacement lacking those JS slots can cause a host TypeError. These
+raw observations are retained in the review handoff. The current universal callable
+ABI selects captured implementations; generic JS wrapper/global-slot compatibility
+is an unresolved adaptation, not a claimed passing source behavior. Full core callable
+compatibility remains incomplete.

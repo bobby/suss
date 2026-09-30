@@ -70,16 +70,42 @@ fn execute_fragment(bytes: Vec<u8>, cells: Vec<portable::resolve::Global>) -> (S
             value = class_cell.clone();
         } else if let Some(export) = core_export {
             let mut function = [Val::null_any_ref()];
-            runtime
-                .get_func(&mut store, export)
-                .unwrap()
-                .call(&mut store, &class_cell, &mut function)
-                .unwrap();
-            runtime
-                .get_func(&mut store, "binding-new")
-                .unwrap()
-                .call(&mut store, &function, &mut value)
-                .unwrap();
+            if export == "core-ex-info" {
+                let nil = runtime.get_func(&mut store, "nil").unwrap();
+                nil.call(&mut store, &[], &mut value).unwrap();
+                let mut cell = [Val::null_any_ref()];
+                runtime
+                    .get_func(&mut store, "binding-new")
+                    .unwrap()
+                    .call(&mut store, &value, &mut cell)
+                    .unwrap();
+                runtime
+                    .get_func(&mut store, export)
+                    .unwrap()
+                    .call(
+                        &mut store,
+                        &[class_cell[0].clone(), cell[0].clone()],
+                        &mut function,
+                    )
+                    .unwrap();
+                runtime
+                    .get_func(&mut store, "binding-set")
+                    .unwrap()
+                    .call(&mut store, &[cell[0].clone(), function[0].clone()], &mut [])
+                    .unwrap();
+                value = cell;
+            } else {
+                runtime
+                    .get_func(&mut store, export)
+                    .unwrap()
+                    .call(&mut store, &class_cell, &mut function)
+                    .unwrap();
+                runtime
+                    .get_func(&mut store, "binding-new")
+                    .unwrap()
+                    .call(&mut store, &function, &mut value)
+                    .unwrap();
+            }
         } else if let Some(name) = arithmetic {
             let mut function = [Val::null_any_ref()];
             runtime

@@ -3501,3 +3501,59 @@ independent review must push significant fixes and final-head CI must pass befor
 readiness. No merge or issue closure. Root owns no native graph now; reviewer may
 run bounded focus/full/fresh checks without overlap. Next resolve review findings,
 verify exact CI, then continue complete Error/core/collection/compiler requirements.
+
+## Independent PR70 ExceptionInfo review — 2026-09-30
+
+Reviewed candidate bc69bd6543d605bc11755f8191267205eaf59c9e against main
+614ae356d6d4afd2e1ff2337a65d17cfd8874914 in isolated
+/private/tmp/suss-review-pr70. Read accepted design/roadmap/inventory/handoff and
+pinned core.cljs11756–11823; proposed ADR-0001 remains unaccepted.
+
+Significant finding: the original selected two-argument ex-info implementation
+must call the live ex-info binding with nil cause. The candidate directly constructed
+an object and ignored that body-level self-call. Runtime closures now retain the
+canonical class and self binding cells; native and standalone hosts initialize the
+self cell before publishing its factory value. Three-argument captured implementation
+still constructs using the live class. No shared prelude/ABI version/compiler format
+or dependency/helper bytes change.
+
+Primary pinned probes compiled and executed successfully: fixed replacement input
+/private/tmp/suss-review70-reference-fixed-input.cljs, -reference.log and
+-reference-observations.json; multi-arity replacement input retained in isolated
+ignored tests/oracle/out/generated/suss_oracle/review70.cljs, -reference-multi.log
+and -reference-multi-observations.json (all logs share /private/tmp/suss-review70).
+The multi-arity replacement yields generic saved/local2=41 and3=42, but apply saved2=42
+and3=original data7. Fixed fn3 replacement produces missing JS arity-slot TypeErrors
+for generic saved/local calls and apply2; apply3 retains original data7. These raw
+primary differences are not called source successes. Current universal invocation
+selects a captured arity implementation, matching the apply selected-arity observation.
+Generic JavaScript wrapper/global-slot dispatch remains explicitly unresolved.
+
+Initial native regression failed, -live-overload-red.log. First repair focus passed10,
+-focused.log, compiler pipeline16/ABI14 passed, -compiler.log. Expanded final native
+focus first failed11/1 because its fixture def shadowed the canonical binding in user
+namespace; repaired by explicitly defining in suss.core, -focused-final2.log:
+12 pass, zero ignored, exit0. Independent additions cover selected arity invocation
+through GC/redefinition, ordered once-only source arguments and ex-message's original
+Error family after class replacement. This does not certify incomplete Error source
+surfaces, printing/stack, source field mutation, persistent map data or compiled core.
+
+Python54 and overlay16 reviewed/1049 unassessed passed, -python.log/-reviews.log.
+Full required workspace baseline passed exit0, -workspace.log, handle55383 terminal,
+before the last test-only additions. Fresh303/16 pipeline oracle is currently running
+alone, handle12979, -oracle.log. Final full baseline must follow that graph and verify
+all12 Info regressions. No merge or issue closure; exact final pushed-head CI remains
+required before readiness. Root owns no native graph while this reviewer is testing.
+
+Independent fresh oracle terminal exit0, handle12979:303 pinned source observations
+match and16 actual decoded pipeline tests pass, -oracle.log. Independent final
+required cargo test --workspace --locked -- --test-threads=2 terminal exit0,
+handle15292, -workspace-final.log, using shared target/two build jobs and no
+RUSTFLAGS override. Includes native70 (private5/persistent33/dynamic10/exception10/
+Info12), ABI14, selected portable compiler83, source303 and all legacy/component/
+reader/core/doc targets including suss_cli. Existing manual/legacy ignores remain
+explicit and unchanged. No native/reference process remains live; all review handles
+5570/92190/1291/96710/72327/8133/55383/11532/90756/12979/15292 terminal.
+Push significant fix and evidence, then require exact final-head CI before readiness.
+Next continue complete Error/core/callable/collection/compiler requirements; issues9/11
+and M2–M9 remain incomplete. No merge or issue closure.

@@ -192,12 +192,42 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     let constructor_descriptor = b.names["constructor-descriptor"];
     let source_constructor = b.names["source-constructor-new"];
     let invoke = b.names["invoke"];
+    // The pinned two-argument overload calls the current three-argument
+    // binding, including when this original function value escaped a redefinition.
     let mut body = vec![
+        LocalGet(1),
+        ArrayLen,
+        I32Const(2),
+        I32Eq,
+        If(BlockType::Empty),
         LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(1),
+        ArrayGet(ARGS),
+        Call(binding_get),
+    ];
+    argument(&mut body, 0);
+    argument(&mut body, 1);
+    body.extend([
+        I32Const(0),
+        RefI31,
+        ArrayNewFixed {
+            array_type_index: ARGS,
+            array_size: 3,
+        },
+        Call(invoke),
+        Return,
+        End,
+    ]);
+    body.extend([
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        ArrayGet(ARGS),
         Call(binding_get),
         Call(constructor_descriptor),
         Call(source_constructor),
-    ];
+    ]);
     argument(&mut body, 0);
     argument(&mut body, 1);
     body.extend([
@@ -223,10 +253,15 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     declared.push(make);
     b.function(
         "core-ex-info",
-        &[VALUE],
+        &[VALUE, VALUE],
         &[VALUE],
         &[
             LocalGet(0),
+            LocalGet(1),
+            ArrayNewFixed {
+                array_type_index: ARGS,
+                array_size: 2,
+            },
             RefFunc(make),
             I32Const(2),
             I32Const(3),

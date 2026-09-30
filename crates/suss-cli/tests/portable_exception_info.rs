@@ -218,3 +218,57 @@ fn ordinary_exception_info_calls_return_a_truthy_non_exception_realm_value() {
         true
     );
 }
+
+#[test]
+fn selected_two_argument_ex_info_calls_the_live_three_argument_binding() {
+    let mut s = Session::new().unwrap();
+    let saved = s.eval("ex-info").unwrap();
+    let message = s.eval("\"message\"").unwrap();
+    let data = s.eval("7").unwrap();
+    let cause = s.eval("9").unwrap();
+    s.eval("(ns suss.core) (def ex-info (fn [message data cause] (if cause 99 42)))")
+        .unwrap();
+    s.collect().unwrap();
+    // Invoke selects the original arity implementation, like pinned apply.
+    let result = s.invoke(&saved, &[&message, &data]).unwrap();
+    assert_eq!(number(&mut s, &result), 42.0f64.to_bits());
+    let error = s.invoke(&saved, &[&message, &data, &cause]).unwrap();
+    let getter = s.eval("ex-data").unwrap();
+    let result = s.invoke(&getter, &[&error]).unwrap();
+    assert_eq!(number(&mut s, &result), 7.0f64.to_bits());
+}
+
+#[test]
+fn exception_info_source_arguments_run_once_before_construction() {
+    let mut s = Session::new().unwrap();
+    s.eval("(def seen 0)").unwrap();
+    assert_eq!(
+        eval(
+            &mut s,
+            "(ex-cause (ex-info (do (set! seen (+ (* seen 10) 1)) seen) (do (set! seen (+ (* seen 10) 2)) seen) (do (set! seen (+ (* seen 10) 3)) seen)))"
+        ),
+        123.0f64.to_bits()
+    );
+    assert_eq!(eval(&mut s, "seen"), 123.0f64.to_bits());
+}
+
+#[test]
+fn error_message_family_remains_original_when_info_class_is_replaced() {
+    let mut s = Session::new().unwrap();
+    s.eval("(def original (ex-info 42 7)) (deftype Other [message data cause])")
+        .unwrap();
+    assert_eq!(
+        eval(
+            &mut s,
+            "(with-redefs [ExceptionInfo Other] (ex-message original))"
+        ),
+        42.0f64.to_bits()
+    );
+    assert_eq!(
+        eval(
+            &mut s,
+            "(with-redefs [ExceptionInfo Other] (if (ex-message (Other. 99 7 nil)) 1 0))"
+        ),
+        0.0f64.to_bits()
+    );
+}

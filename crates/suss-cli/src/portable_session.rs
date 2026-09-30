@@ -317,25 +317,46 @@ impl Session {
         for (identity, export) in initializers {
             let mut scope = RootScope::new(&mut store);
             let mut value = [Val::null_any_ref()];
-            let arguments = if export.starts_with("core-") && export != "core-exception-info-class"
-            {
-                vec![
-                    exception_class_cell
-                        .expect("class initialized first")
-                        .get(&mut scope),
-                ]
-            } else {
-                vec![]
-            };
+            let mut cell = [Val::null_any_ref()];
+            if export == "core-ex-info" {
+                runtime
+                    .get_func(&mut scope, "nil")
+                    .unwrap()
+                    .call(&mut scope, &[], &mut value)?;
+                runtime
+                    .get_func(&mut scope, "binding-new")
+                    .unwrap()
+                    .call(&mut scope, &value, &mut cell)?;
+            }
+            let mut arguments =
+                if export.starts_with("core-") && export != "core-exception-info-class" {
+                    vec![
+                        exception_class_cell
+                            .expect("class initialized first")
+                            .get(&mut scope),
+                    ]
+                } else {
+                    vec![]
+                };
+            if export == "core-ex-info" {
+                arguments.push(cell[0].clone());
+            }
             runtime
                 .get_func(&mut scope, &export)
                 .unwrap()
                 .call(&mut scope, &arguments, &mut value)?;
-            let mut cell = [Val::null_any_ref()];
-            runtime
-                .get_func(&mut scope, "binding-new")
-                .unwrap()
-                .call(&mut scope, &value, &mut cell)?;
+            if export == "core-ex-info" {
+                runtime.get_func(&mut scope, "binding-set").unwrap().call(
+                    &mut scope,
+                    &[cell[0].clone(), value[0].clone()],
+                    &mut [],
+                )?;
+            } else {
+                runtime
+                    .get_func(&mut scope, "binding-new")
+                    .unwrap()
+                    .call(&mut scope, &value, &mut cell)?;
+            }
             let ty = cell[0]
                 .unwrap_anyref()
                 .unwrap()
