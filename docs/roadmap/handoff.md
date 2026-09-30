@@ -3128,3 +3128,42 @@ manual ignores, oracle4/1 manual capture ignored, portable compiler80 including
 suss_cli. Existing ignores/legacy9pass7fail differential baseline unchanged.
 No native/reference handle remains live. Independent review/fixes and exact final-head
 CI remain required for the next PR. No issue closure or merge.
+
+
+## Independent PR67 exception review — 2026-09-30
+
+Reviewed candidate a83bffd700101984bab26e2ac9d40156481e07b2 against accepted
+suss-0.3.1, roadmap/inventory and pinned analyzer.cljc1891–1994 in isolated
+/private/tmp/suss-review-pr67. No significant production defect found. Added three
+executing regressions: unhandled nil/closure payloads with exactly-once cleanup,
+closure invocation after GC; lazy source-ordered computed nominal catch operands,
+skipped tests after match and a throwing catch test superseded through cleanup;
+and nested field/loop captures across exception regions. All10 exception integration
+regressions pass, including the candidate's original7. These additions increase
+native session gates to47; public exception shape/recurrence guards remain2.
+
+Focused cargo test -p suss-cli --test portable_exceptions -p suss-compile
+--test portable_exceptions --locked -- --test-threads=2 passed9 original guards/
+source tests; expanded suss-cli target passed10. Required cargo test --workspace
+--locked -- --test-threads=2 passed including47 native gates, compiler80 selected
+portable suites, 259-source actual artifacts, legacy317/12 existing ignores,
+components29 and all doc targets including suss_cli. Logs:
+/private/tmp/suss-review67-focused.log, /private/tmp/suss-review67-expanded.log,
+/private/tmp/suss-review67-workspace.log. Every native invocation used
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2;
+no RUSTFLAGS override and no overlapping Cargo graphs.
+
+Fresh sh scripts/test-portable-pipeline-oracle.sh then passed259 pinned observations
+and16 independently decoded actual pipeline tests; /private/tmp/suss-review67-oracle.log.
+No source corpus input changed. Python54 and review overlay9/1056 pass. Initial
+review overlay failed before the isolated pinned submodule was initialized; fixed
+by initializing exact c4295f303100bbf5afac449242d30bca1126f1a1. Initial Python
+invocation used a nonexistent scripts/tests directory; retained failures in
+/private/tmp/suss-review67-python.log and -python-fixed.log; corrected
+python3 -m unittest discover -s scripts -p 'test_*.py' passed54, -python-corrected.log.
+No failing semantic result was hidden or skipped. All process handles terminal.
+
+Push review regressions/evidence to PR67, then require CI on the exact final pushed
+head before readiness. No merge or issue closure. Dynamic binding, ExceptionInfo/
+public Error surfaces and broader nominal/core criteria remain issue11 obligations;
+source collections, compiled macros, production migration and M2–M9 remain open.

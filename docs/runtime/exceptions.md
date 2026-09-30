@@ -48,9 +48,11 @@ original Rust/Wasm code, not an extracted upstream form. Upstream source and its
 notice remain in the pinned development-only submodule. No JVM or Node is introduced
 in shipped code, and no inventory item is classified implemented by this increment.
 
-Seven executing native regressions cover exact thrown scalars and GC, typed nominal
+Ten executing native regressions cover exact thrown scalars and GC, typed nominal
 selection, handler capture/shadowing, cleanup/superseding exceptions, ordered divergent
-operands, failed publication and located compile atomicity. Two public HIR/IR guard
+operands, failed publication and located compile atomicity. Independent review adds unhandled
+nil/closure cleanup with GC, lazy ordered computed catch tests (including a throwing
+test), and field/loop capture through nested regions. Two public HIR/IR guard
 tests cover malformed handler/throw shapes and cross-region recurrence. The shared
 259-case source corpus includes14 exception observations matched against fresh pinned
 Node execution and independently decoded Suss fragments. These are bounded executing

@@ -122,15 +122,13 @@ fn source_typed_catches_use_descriptor_identity_and_preserve_payload_roots() {
         .unwrap();
     session.collect().unwrap();
     let original = session.eval("thrown").unwrap();
-    assert!(
-        session
-            .inspect(&original, |store, value| wasmtime::Rooted::ref_eq(
-                &store,
-                &root,
-                value.unwrap_anyref().unwrap()
-            ))
-            .unwrap()
-    );
+    assert!(session
+        .inspect(&original, |store, value| wasmtime::Rooted::ref_eq(
+            &store,
+            &root,
+            value.unwrap_anyref().unwrap()
+        ))
+        .unwrap());
     assert_eq!(
         eval_number(
             &mut session,
@@ -289,4 +287,65 @@ fn source_throw_divergence_stops_later_operands_and_failed_publication() {
     );
     session.eval("(defonce unbound 42)").unwrap();
     assert_eq!(eval_number(&mut session, "unbound"), 42.0f64.to_bits());
+}
+
+#[test]
+fn unhandled_nil_and_closure_run_cleanup_without_replacing_payload() {
+    let mut session = Session::new().unwrap();
+    session.eval("(def counter 0)").unwrap();
+    let nil = language(
+        &mut session,
+        "(try (throw nil) (finally (def counter (+ counter 1))))",
+    );
+    assert_eq!(eval_number(&mut session, "counter"), 1.0f64.to_bits());
+    assert_eq!(
+        session
+            .inspect(&nil, |store, value| Ok(value
+                .unwrap_anyref()
+                .unwrap()
+                .as_i31(&store)?
+                .unwrap()
+                .get_u32()))
+            .unwrap(),
+        0
+    );
+    let closure = language(
+        &mut session,
+        "(let [captured 42] (try (throw (fn [] captured)) (finally (def counter (+ counter 1)))))",
+    );
+    session.collect().unwrap();
+    let value = session.invoke(&closure, &[]).unwrap();
+    assert_eq!(number(&mut session, &value), 42.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), 2.0f64.to_bits());
+}
+
+#[test]
+fn typed_catch_operands_are_lazy_ordered_and_short_circuit_after_matching() {
+    let mut session = Session::new().unwrap();
+    session
+        .eval("(deftype First []) (deftype Second []) (def counter 0)")
+        .unwrap();
+    assert_eq!(
+        eval_number(
+            &mut session,
+            "(try 42 (catch (do (def counter 99) First) error 7))"
+        ),
+        42.0f64.to_bits()
+    );
+    assert_eq!(eval_number(&mut session, "counter"), 0.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(try (throw (Second.)) (catch (do (def counter (+ (* counter 10) 1)) First) error 7) (catch (do (def counter (+ (* counter 10) 2)) Second) error 42) (catch (do (def counter 99) First) error 9) (finally (def counter (+ (* counter 10) 3))))"), 42.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), 123.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(try (try (throw 7) (catch (throw 42) error 9) (finally (def counter (+ counter 1)))) (catch :default error error))"), 42.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), 124.0f64.to_bits());
+}
+
+#[test]
+fn nested_exception_regions_capture_nominal_fields_and_loop_bindings() {
+    let mut session = Session::new().unwrap();
+    session.eval("(defprotocol ReadCaptured (read-captured [this])) (deftype Captured [value] ReadCaptured (read-captured [this] (try (throw value) (catch :default error (fn [] (+ error value))) (finally 7)))) (def object (Captured. 21))").unwrap();
+    let closure = session.eval("(read-captured object)").unwrap();
+    session.collect().unwrap();
+    let value = session.invoke(&closure, &[]).unwrap();
+    assert_eq!(number(&mut session, &value), 42.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(loop [again true value 7] (if again (recur false (try (throw (+ value 35)) (catch :default error error) (finally 9))) value))"), 42.0f64.to_bits());
 }
