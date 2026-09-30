@@ -70,3 +70,9 @@ initializer effects. A valid i64 Number-layout mutation with an unchanged
 manifest must fail before initialization. Full source compatibility, reader
 metadata/spans, lowering dominance/effects, nominal protocols, complete exceptions,
 scheduler, target adapters and persistent REPL are not established by these tests.
+
+The portable resolver now emits exact shared cell imports. `binding-unbound`,
+checked `binding-get` and binding-set bound-state transitions distinguish an
+uninitialized var from nil; see [portable resolution](portable-resolution.md).
+Ten executing resolution tests supplement the seven ABI tests. Production
+namespace loading, source definitions and universal call lowering remain open.

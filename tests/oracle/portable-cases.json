@@ -163,6 +163,14 @@
           56832
         ]
       }
+    },
+    {
+      "id": "qualified-core-let",
+      "source": "(cljs.core/let [x 6] x)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
     }
   ]
 }

@@ -25,6 +25,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     };
     let count = u32::try_from(ir.values.len()).map_err(|_| fail("Too many IR values"))?;
     let mut names = BTreeSet::new();
+    let mut globals = BTreeSet::new();
     for block in &ir.blocks {
         for inst in &block.instructions {
             match &inst.operation {
@@ -37,6 +38,10 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert("string-set-unit");
                     }
                 }
+                Operation::GlobalRead(global) => {
+                    globals.insert(global.clone());
+                    names.insert("binding-get");
+                }
                 Operation::Arithmetic { operator, .. } => {
                     names.insert(arithmetic_name(*operator));
                 }
@@ -45,6 +50,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         }
     }
     let names = names.into_iter().collect::<Vec<_>>();
+    let globals = globals.into_iter().collect::<Vec<_>>();
     let index = |name: &str| names.iter().position(|item| *item == name).unwrap() as u32;
     let mut types = runtime_abi::prelude();
     let mut imports = ImportSection::new();
@@ -52,7 +58,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     for (i, name) in names.iter().enumerate() {
         let (params, results) = match *name {
             "number-box" => (vec![ValType::F64], vec![VALUE]),
-            "number-negate" => (vec![VALUE], vec![VALUE]),
+            "binding-get" | "number-negate" => (vec![VALUE], vec![VALUE]),
             "string-new" => (vec![ValType::I32], vec![VALUE]),
             "string-set-unit" => (vec![VALUE, ValType::I32, ValType::I32], vec![ValType::I32]),
             _ => (vec![VALUE, VALUE], vec![VALUE]),
@@ -62,6 +68,17 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "suss.runtime",
             name,
             EntityType::Function(type_count + i as u32),
+        );
+    }
+    for global in &globals {
+        imports.import(
+            global.import_module(),
+            &global.import_name(),
+            EntityType::Global(GlobalType {
+                val_type: runtime_abi::binding_cell_type(),
+                mutable: false,
+                shared: false,
+            }),
         );
     }
     let eval_type = type_count + names.len() as u32;
@@ -119,6 +136,14 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                             .instruction(&Call(index("string-set-unit")))
                             .instruction(&Drop);
                     }
+                }
+                Operation::GlobalRead(global) => {
+                    let index_global =
+                        globals.binary_search(global).expect("collected global") as u32;
+                    function
+                        .instruction(&GlobalGet(index_global))
+                        .instruction(&Call(index("binding-get")))
+                        .instruction(&LocalSet(inst.result.0 as u32));
                 }
                 Operation::Arithmetic {
                     operator,

@@ -1477,3 +1477,78 @@ Next unblocked task remains namespace/phase/binding-cell resolution and universa
 closure lowering with dynamic checks. Push these fixes to PR #44 and observe
 successful CI on their final head; initial-head CI does not certify repairs.
 Do not merge PRs.
+
+## Portable namespace identities and live-cell reads — 2026-09-29
+
+The previous turn made concrete progress: dispatched PR #44 reviewer pushed two
+significant fixes at 2ab729fe659ab39a7de12f33ace373f5f0c5747b; final-head CI
+36650580806 completed successfully at 2026-09-30T00:41:05Z. PR #42/#43/#44 remain
+open/unmerged as this increment starts; main is fad9ee9. No agent merged a PR.
+Issue #9 records review/final-CI evidence; PR #43 carries closing links for #1–#7,
+while partial M2 increments use Refs only. Keep the full roadmap goal active.
+
+New branch resurrection/portable-resolution builds on reviewed PR #44. An
+original qualified-global integration probe FAILED in the old portable frontend
+(`app/value`, unsupported form, exit 101; /private/tmp/suss-resolution-red.log).
+The final regression declares the var explicitly in an Environment and links its
+runtime cell; an undeclared `app/value` still correctly fails. HIR/IR now retain
+stable phase/namespace/name identities and emit ordered dynamic Value reads,
+importing exact shared binding-cell types. No legacy EDN conversion or source
+replay is involved. Canonical core aliases share one cell import. Namespace scopes
+retain aliases/refers/exclusions independently by namespace and phase. Configuration
+rejects ambiguity before mutation; source analysis cannot mutate the Environment.
+The path resolver rejects ambiguous .sus/.cljs/.cljc sources across all roots,
+deduplicates canonical files, and diagnoses invalid/missing namespace paths.
+
+An executing unbound-cell regression FAILED because binding-get ignored the bound
+flag and returned nil (exit 101, /private/tmp/suss-resolution-unbound-red.log).
+The shared runtime now has binding-unbound, a checked getter raising tagged
+Unbound binding and a setter marking cells bound, including nil. The test catches
+the specific language tag in validated Wasm and independently inspects descriptor,
+UTF-16 message and nil fields, then observes bound nil. No ABI layout changed.
+A namespace re-entry regression FAILED when the initial Environment erased aliases
+(exit 101, /private/tmp/suss-resolution-scope-red.log); namespace/phase scopes now
+persist and dormant refers also reject conflicting declarations. A test fixture
+borrow error and an incorrect metadata-span expectation were repaired; metadata
+form spans include their reader prefix. These were not skipped or called success.
+
+Bootstrap macro lookup remains bounded but separate from runtime vars, matching
+pinned cljs/analyzer.cljc resolve-var/get-expander*: runtime vars do not hide core
+let, lexical locals do, and referred/qualified macros retain identity after runtime
+var redefinition. Arbitrary compiled macros are not implemented. Original Rust,
+tests and the new qualified-core-let case copy no upstream implementation. Future
+core ports still need the EPL/provenance process.
+
+Final local evidence (CARGO_BUILD_JOBS=2; no RUSTFLAGS override):
+
+- `cargo test -p suss-compile --test portable_resolution --test portable_pipeline --test runtime_abi --locked -- --test-threads=2`: 10 namespace/cell, 13 pipeline and 7 ABI tests pass, 0 ignored; /private/tmp/suss-resolution-final-focused.log.
+- `scripts/test-portable-pipeline-oracle.sh`: fresh pinned ClojureScript/Node observations match all 21 source cases exactly, including qualified cljs.core/let; 13 executing pipeline tests pass. /private/tmp/suss-resolution-oracle.log. The original 14 scalar reader cases also still execute through compiled fragments.
+- `cargo test --workspace --locked -- --test-threads=2`: final full baseline passed, exit 0; /private/tmp/suss-resolution-full.log. First full run passed too; after the final macro-reference fix, focused/full suites were rerun. Existing enabled suites pass and manual/legacy/doc ignores remain unchanged; new namespace/cell suite: 10 passes.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 passed. Inventory check and review overlay: 1,065 declarations, 0 reviewed, 1,065 unassessed, unchanged pin/hashes.
+- `python3 scripts/wasi_lock.py`: verifies 15 WIT files / 6 packages; /private/tmp/suss-resolution-wit.log. An attempted unsupported --check option exited 2 before checks; the correct command above passed.
+- Offline `python3 scripts/publish_roadmap.py` preview: passed, 10 milestones/39 stable issues; /private/tmp/suss-resolution-roadmap-preview.json. No issues or milestones closed.
+- rustfmt check on touched Rust and `git diff --check`: passed.
+
+Actual fragments validate/link/execute, independently decoded numeric/exception
+values survive GC, old code reads updated cells while old returned values remain
+live, and a wrapping getter traces once-only source order/short circuiting. Missing
+and wrong-type cell imports fail before eval. Mutable globals never inherit stale
+Number facts into unchecked arithmetic. Separate phase identities execute distinct
+cells; this is not an isolated compiled macro session. The legacy source corpus
+remains 9 differential passes/7 exact failures/0 skips; no known failure changed.
+
+Limits: source ns/require forms, module dependency loading/declared-ns validation,
+privacy/cycles, source def/defonce, live callable values/universal closure calls,
+dynamic checking, compiled macros, generic effects/throws/catch/suspensions,
+collections/recur and CLI/AOT/REPL migration remain. The path resolver only locates
+files. API callers supply phase-specific declarations and cells; a real linker
+must share correct var identities and enforce dependency/cache/initialization
+policy. Bootstrap numeric intrinsics are not a fully live core function library.
+No M2 acceptance package is complete. See docs/runtime/portable-resolution.md.
+
+Open this increment stacked on PR #44 while it remains unmerged, Refs #8/#9/#10.
+Dispatch an independent PR reviewer to push significant fixes, then require CI
+success at the final reviewed commit. Do not merge PRs. Next unblocked integration:
+universal closures/callee/argument lowering and dynamic checks through resolved
+live globals, followed by source namespace/definition loading and one production
+pipeline for AOT/REPL/compiled macros. Retire obsolete paths only after acceptance.

@@ -1,5 +1,8 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
-use super::Diagnostic;
+use super::{
+    Diagnostic,
+    resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
+};
 use std::{collections::HashMap, ops::Range};
 use suss_reader::forms::{Form, Kind};
 
@@ -62,6 +65,8 @@ pub struct Hir {
 pub enum Expression {
     Literal(Literal),
     Local(BindingId),
+    /// Read a live cell by resolved language identity, never by a Wasm index.
+    Global(Global),
     Let {
         bindings: Vec<Binding>,
         body: Box<Hir>,
@@ -84,11 +89,13 @@ fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
         message: message.into(),
     }
 }
-struct Analyzer {
+struct Analyzer<'a> {
+    environment: &'a Environment,
+    phase: Phase,
     locals: HashMap<String, (BindingId, Type)>,
     next: usize,
 }
-impl Analyzer {
+impl Analyzer<'_> {
     fn body(&mut self, forms: &[Form], span: Range<usize>) -> Result<Hir, Diagnostic> {
         let items = forms
             .iter()
@@ -108,18 +115,21 @@ impl Analyzer {
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
             Kind::String(value) => Expression::Literal(Literal::String(value.clone())),
-            Kind::Symbol(symbol) if symbol.namespace.is_none() => {
-                let (id, ty) = self.locals.get(&symbol.name).ok_or_else(|| {
-                    fail(
-                        form.span.clone(),
-                        format!("Unresolved name {}", symbol.name),
-                    )
-                })?;
+            Kind::Symbol(symbol) => {
+                let (kind, ty) = if symbol.namespace.is_none() {
+                    if let Some((id, ty)) = self.locals.get(&symbol.name) {
+                        (Expression::Local(*id), *ty)
+                    } else {
+                        self.global_value(symbol, form.span.clone())?
+                    }
+                } else {
+                    self.global_value(symbol, form.span.clone())?
+                };
                 return Ok(Hir {
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
-                    ty: *ty,
-                    kind: Expression::Local(*id),
+                    ty,
+                    kind,
                 });
             }
             Kind::List(items) if !items.is_empty() => return self.list(form, items),
@@ -141,6 +151,19 @@ impl Analyzer {
             kind,
         })
     }
+    fn global_value(
+        &self,
+        symbol: &suss_reader::Symbol,
+        span: Range<usize>,
+    ) -> Result<(Expression, Type), Diagnostic> {
+        match self.environment.resolve(self.phase, symbol, span.clone())? {
+            ResolvedBinding::Cell(global) => Ok((Expression::Global(global), Type::Value)),
+            _ => Err(fail(
+                span,
+                "Bootstrap callable values require closure lowering",
+            )),
+        }
+    }
     fn list(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
         let Kind::Symbol(symbol) = &items[0].kind else {
             return Err(fail(
@@ -150,13 +173,26 @@ impl Analyzer {
         };
         let args = &items[1..];
         let bare = symbol.namespace.is_none();
-        // if/do are special forms; let is a bootstrap macro hidden by locals.
-        if bare && symbol.name == "let" && self.locals.contains_key(&symbol.name) {
-            return Err(fail(
-                items[0].span.clone(),
-                "Calling a local binding requires closure lowering",
-            ));
-        }
+        // Only true special forms bypass lexical and namespace resolution.
+        let resolved = if bare && matches!(symbol.name.as_str(), "if" | "do") {
+            None
+        } else {
+            if bare && self.locals.contains_key(&symbol.name) {
+                return Err(fail(
+                    items[0].span.clone(),
+                    "Calling a local binding requires closure lowering",
+                ));
+            }
+            Some(
+                if let Some(binding) = self.environment.resolve_bootstrap_macro(self.phase, symbol)
+                {
+                    binding
+                } else {
+                    self.environment
+                        .resolve(self.phase, symbol, items[0].span.clone())?
+                },
+            )
+        };
         let (kind, ty) = match (bare, symbol.name.as_str()) {
             (true, "do") => {
                 let body = self.body(args, form.span.clone())?;
@@ -192,7 +228,7 @@ impl Analyzer {
                     ty,
                 )
             }
-            (true, "let") => {
+            _ if matches!(resolved, Some(ResolvedBinding::BootstrapLet(_))) => {
                 if args.is_empty() {
                     return Err(fail(form.span.clone(), "let requires a binding vector"));
                 }
@@ -235,25 +271,11 @@ impl Analyzer {
                 (Expression::Let { bindings, body }, ty)
             }
             _ => {
-                if bare && self.locals.contains_key(&symbol.name) {
+                let Some(ResolvedBinding::Arithmetic { operator, .. }) = resolved else {
                     return Err(fail(
                         items[0].span.clone(),
-                        "Calling a local binding requires closure lowering",
+                        "Calling a global binding requires closure lowering",
                     ));
-                }
-                let core =
-                    bare || matches!(symbol.namespace.as_deref(), Some("suss.core" | "cljs.core"));
-                let operator = match (core, symbol.name.as_str()) {
-                    (true, "+") => Arithmetic::Add,
-                    (true, "-") => Arithmetic::Subtract,
-                    (true, "*") => Arithmetic::Multiply,
-                    (true, "/") => Arithmetic::Divide,
-                    _ => {
-                        return Err(fail(
-                            items[0].span.clone(),
-                            format!("Unresolved callable {}", symbol),
-                        ));
-                    }
                 };
                 if args.is_empty() && matches!(operator, Arithmetic::Subtract | Arithmetic::Divide)
                 {
@@ -291,9 +313,19 @@ impl Analyzer {
         })
     }
 }
-/// Analyze selected forms. Namespace/macro expansion is still a later integration.
+/// Analyze selected forms using an explicit phase-specific namespace environment.
 pub fn analyze(forms: &[Form], span: Range<usize>) -> Result<Hir, Diagnostic> {
+    analyze_in(forms, span, &Environment::default(), Phase::Runtime)
+}
+pub fn analyze_in(
+    forms: &[Form],
+    span: Range<usize>,
+    environment: &Environment,
+    phase: Phase,
+) -> Result<Hir, Diagnostic> {
     Analyzer {
+        environment,
+        phase,
         locals: HashMap::new(),
         next: 0,
     }

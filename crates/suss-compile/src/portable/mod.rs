@@ -1,9 +1,10 @@
 //! Replacement source -> HIR -> verified explicit IR -> shared-ABI fragments.
 //! The CLI/AOT/macro paths still use the prototype; migration remains incomplete.
-//! This bootstrap supports scalars, lexical let/do/if and verified numeric calls.
+//! This bootstrap supports scalars, phase-resolved live cells, let/do/if and numeric calls.
 mod emit;
 pub mod hir;
 pub mod ir;
+pub mod resolve;
 use std::ops::Range;
 use suss_reader::forms::{read_forms, resolve_conditionals};
 
@@ -15,16 +16,40 @@ pub struct Diagnostic {
 }
 
 pub fn analyze(source: &str) -> Result<hir::Hir, Diagnostic> {
+    analyze_in(
+        source,
+        &resolve::Environment::default(),
+        resolve::Phase::Runtime,
+    )
+}
+
+pub fn analyze_in(
+    source: &str,
+    environment: &resolve::Environment,
+    phase: resolve::Phase,
+) -> Result<hir::Hir, Diagnostic> {
     let forms = read_forms(source)
         .and_then(resolve_conditionals)
         .map_err(|error| Diagnostic {
             span: error.span,
             message: error.message,
         })?;
-    hir::analyze(&forms, 0..source.len())
+    hir::analyze_in(&forms, 0..source.len(), environment, phase)
 }
 pub fn compile(source: &str) -> Result<Vec<u8>, Diagnostic> {
-    let hir = analyze(source)?;
+    compile_in(
+        source,
+        &resolve::Environment::default(),
+        resolve::Phase::Runtime,
+    )
+}
+
+pub fn compile_in(
+    source: &str,
+    environment: &resolve::Environment,
+    phase: resolve::Phase,
+) -> Result<Vec<u8>, Diagnostic> {
+    let hir = analyze_in(source, environment, phase)?;
     let ir = ir::lower(&hir)?;
     compile_ir(&ir)
 }

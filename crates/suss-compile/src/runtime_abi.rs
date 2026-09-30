@@ -20,6 +20,10 @@ fn reference(index: u32) -> ValType {
         heap_type: HeapType::Concrete(index),
     })
 }
+/// Exact shared binding-cell reference type for fragment imports.
+pub(crate) fn binding_cell_type() -> ValType {
+    reference(5)
+}
 fn field(ty: ValType, mutable: bool) -> FieldType {
     FieldType {
         element_type: StorageType::Val(ty),
@@ -457,18 +461,44 @@ pub fn module() -> Vec<u8> {
         &[LocalGet(0), I32Const(1), StructNew(5)],
     );
     b.function(
-        "binding-get",
+        "binding-unbound",
+        &[],
         &[VALUE],
-        &[VALUE],
-        &[
-            LocalGet(0),
-            RefCastNonNull(HeapType::Concrete(5)),
-            StructGet {
-                struct_type_index: 5,
-                field_index: 0,
-            },
-        ],
+        &[I32Const(0), RefI31, I32Const(0), StructNew(5)],
     );
+    let mut binding_get = vec![
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(5)),
+        StructGet {
+            struct_type_index: 5,
+            field_index: 1,
+        },
+        I32Eqz,
+        If(BlockType::Empty),
+        GlobalGet(1),
+    ];
+    let unbound_message: Vec<_> = "Unbound binding".encode_utf16().collect();
+    binding_get.extend(unbound_message.iter().map(|unit| I32Const(*unit as i32)));
+    binding_get.extend([
+        ArrayNewFixed {
+            array_type_index: STRING,
+            array_size: unbound_message.len() as u32,
+        },
+        I32Const(0),
+        RefI31,
+        I32Const(0),
+        RefI31,
+        StructNew(8),
+        Throw(0),
+        End,
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(5)),
+        StructGet {
+            struct_type_index: 5,
+            field_index: 0,
+        },
+    ]);
+    b.function("binding-get", &[VALUE], &[VALUE], &binding_get);
     b.function(
         "binding-set",
         &[VALUE, VALUE],
@@ -481,6 +511,13 @@ pub fn module() -> Vec<u8> {
                 struct_type_index: 5,
                 field_index: 0,
             },
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(5)),
+            I32Const(1),
+            StructSet {
+                struct_type_index: 5,
+                field_index: 1,
+            },
         ],
     );
     let mut tags = TagSection::new();
@@ -490,24 +527,26 @@ pub fn module() -> Vec<u8> {
     });
     b.types.ty().function([VALUE], []);
     let mut globals = GlobalSection::new();
-    // One rooted descriptor per runtime instance, shared by all arity errors.
-    globals.global(
-        GlobalType {
-            val_type: reference(DESCRIPTOR),
-            mutable: false,
-            shared: false,
-        },
-        &ConstExpr::extended([
-            I64Const(1),
-            I32Const(0),
-            RefI31,
-            I32Const(0),
-            RefI31,
-            I32Const(0),
-            RefI31,
-            StructNew(DESCRIPTOR),
-        ]),
-    );
+    // Stable, separately rooted descriptors for arity (1) and unbound binding (2).
+    for identity in [1, 2] {
+        globals.global(
+            GlobalType {
+                val_type: reference(DESCRIPTOR),
+                mutable: false,
+                shared: false,
+            },
+            &ConstExpr::extended([
+                I64Const(identity),
+                I32Const(0),
+                RefI31,
+                I32Const(0),
+                RefI31,
+                I32Const(0),
+                RefI31,
+                StructNew(DESCRIPTOR),
+            ]),
+        );
+    }
     b.exports.export("language-exception", ExportKind::Tag, 0);
     let mut runtime = Module::new();
     runtime
