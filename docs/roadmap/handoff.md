@@ -3291,3 +3291,28 @@ and16 actual decoded fragment tests, exit0, /private/tmp/suss-review68-oracle.lo
 Both used shared target/two build jobs, no RUSTFLAGS override. All review process
 handles12204/6955/21068/84178 are terminal; no native Cargo graphs overlapped.
 Push review coverage/evidence, then require exact final-head CI before readiness.
+
+## Stack #69 rebase onto current main — 2026-09-30
+
+In the new /private/tmp/suss-stack-69 worktree, `gh stack checkout 69` imported
+11 active branches (PRs #49 and #59–#68). Existing occupied stack worktrees were
+detached at their original commits, preserving their files and the primary
+worktree's untracked reference material; the original mapping is recorded in
+/private/tmp/suss-stack-69-original-worktrees.json.
+
+`gh stack rebase` fetched main 86e3852 and stopped on one handoff append conflict.
+Retained both the proposed ADR-0001 publication evidence from main and the
+immutable module implementation evidence. `GIT_EDITOR=true gh stack rebase
+--continue` then successfully rebased all 11 branches. Before this evidence entry,
+the top tree differed from its previous remote head only by the six documentation
+files introduced by main; no implementation, test, inventory or dependency changed.
+
+`git diff --check origin/resurrection/portable-dynamic-bindings HEAD` passed.
+`python3 -m unittest discover -s scripts -p 'test_*.py'` passed all 54 tests,
+zero skips, exit 0; /private/tmp/suss-stack-69-python.log. No local Rust baseline
+was repeated for this documentation-only rebase; existing results apply to the
+unchanged implementation. Independent per-PR rebase-integrity review is pending,
+followed by `gh stack push` and CI on every exact final head. This entry does not
+claim those pending results. No PR was merged and no acceptance status changed.
+Next unblocked task: finish rebase review/push/final-head CI, then continue the
+existing production frontend/core prerequisites and open roadmap work.
