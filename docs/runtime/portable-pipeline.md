@@ -33,12 +33,14 @@ HIR retains byte spans, ordered reader metadata, inferred scalar information and
 unique lexical binding identities, including binding-name metadata. Supported
 forms are nil/booleans, ordinary binary64 numbers, lossless UTF-16 strings,
 lexical `let`, `do`, `if`, fixed anonymous `fn`/`fn*`, universal calls and
-statically verified numeric `+`, `-`, `*`, `/` calls.
+statically verified numeric `+`, `-`, `*`, `/` calls. One-argument `+` and `*`
+are identity for every supported value, including dynamic globals/parameters and
+closures; they retain the operand's inferred type and perform no numeric cast.
 Numeric zero and empty strings are truthy. Missing `if` alternatives and empty
 bodies yield nil. Known wrong arities, unsupported forms and unresolved names
 return located diagnostics. Dynamic call failures raise language exceptions;
 source call-site annotation remains open. Dynamic numeric checking/coercion is not implemented;
-operands that cannot be proven Number are rejected rather than passed to an
+operands of actual numeric operations that cannot be proven Number are rejected rather than passed to an
 unchecked runtime cast. No complete upstream arithmetic inventory item is claimed.
 
 IR contains typed value IDs, ordered instructions, explicit blocks, branch/jump
@@ -71,11 +73,12 @@ backend dispatches explicit blocks through a program-counter local. It is not an
 optimizing backend. GC locals/host roots retain values across independently
 compiled fragments in one Store; this is not a persistent compiled session.
 
-Thirteen focused tests validate/link/execute actual artifacts and independently
+Fourteen focused tests validate/link/execute actual artifacts and independently
 inspect the heap after forced GC. The original 14 scalar reader cases now also
-execute through compiled source fragments. A separate original 42-case source
+execute through compiled source fragments. A separate original 54-case source
 corpus matches freshly compiled pinned ClojureScript/Node observations exactly,
-covering numeric bits/arities, conditional values, lexical shadowing and strings.
+covering numeric bits/arities, conditional values, lexical shadowing, strings and
+unary sum/product identity over nil/booleans/UTF-16/dynamic values/closures.
 A wrapping runtime import records once-only ordered calls and proves unselected
 arithmetic does not execute. Adversarial IR tests reject malformed definitions,
 dominance, types and edge/call arities before an artifact can be emitted.
@@ -88,7 +91,11 @@ missing/duplicate/changed results, boolean/integer confusion and extra/trailing
 data. JVM/Node are development-only. The implementation and cases are original;
 no upstream core code was copied. Semantics were checked against pinned
 ClojureScript `c4295f303100bbf5afac449242d30bca1126f1a1`, including its EPL-1.0
-core macro source for optional `let` bodies. Future imported core forms still
+core macro source for optional `let` bodies and unary `+`/`*` identity
+(`core.cljs` lines 2724–2744; `core.cljc` arithmetic macros). The pinned compiler
+warns about non-number operands while executing these identity cases; warnings
+are retained in the oracle log, and the resulting values match exactly.
+Future imported core forms still
 require extraction/patch hashes and retained licenses.
 
 These bounded observations do not replace the existing 16-case legacy compiler

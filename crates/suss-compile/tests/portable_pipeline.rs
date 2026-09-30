@@ -176,6 +176,32 @@ fn numeric_calls_and_truthiness_execute_with_portable_bits() {
     assert_eq!(number("(/ 1 0)"), f64::INFINITY);
 }
 #[test]
+fn unary_sum_and_product_preserve_operand_types_and_closure_arity() {
+    use portable::hir::Type;
+    for (source, expected) in [
+        ("(+ nil)", Type::Nil),
+        ("(* false)", Type::Bool),
+        ("(+ \"\\uD800\")", Type::String),
+        ("(* (fn [x] x))", Type::Closure(1)),
+        ("(+ (if true 1 nil))", Type::Value),
+    ] {
+        let forms = suss_reader::forms::read_forms(source).unwrap();
+        let hir = portable::hir::analyze(&forms, 0..source.len()).unwrap();
+        assert_eq!(hir.ty, expected, "{source}");
+        // Validate and execute the fragment; the shared corpus independently
+        // checks the scalar results and calls identity-returned closures.
+        execute(source);
+    }
+    let source = "((+ (fn [x] x)))";
+    let error = portable::compile(source).unwrap_err();
+    assert_eq!(error.span, 0..source.len());
+    assert!(error.message.contains("Wrong arity"));
+    // Binary coercions are still unsupported; identity must not let a String
+    // masquerade as a verified Number for a subsequent arithmetic operation.
+    let error = portable::compile("(+ (+ \"x\") 1)").unwrap_err();
+    assert!(error.message.contains("verified Number"));
+}
+#[test]
 fn arithmetic_import_trace_observes_once_only_source_order_and_short_circuit() {
     use wasmtime::Func;
     let engine = support::engine();
@@ -480,7 +506,7 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
         let (mut store, value) = execute(source);
         assert_eq!(tagged(&mut store, &value), case["expected"], "{source}");
     }
-    assert_eq!(ids.len(), 42);
+    assert_eq!(ids.len(), 54);
 }
 #[test]
 fn independently_compiled_fragment_values_remain_live_across_gc() {

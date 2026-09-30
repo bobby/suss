@@ -2094,3 +2094,62 @@ async cancellation and live heap accounting remain incomplete. Next implement th
 compiler prerequisites for frontend migration, then replace source replay after
 replacement acceptance. Require CI on the exact final reviewed head; do not merge
 or close incomplete issues.
+
+## Unary sum/product identity — 2026-09-30
+
+PR #59's dispatched reviewer pushed 90bcd8c91fa5d65d84c0b57d1f82b7c8925d3638,
+repairing pending exceptions after native callbacks translate or swallow a throw.
+Fourteen session and 65 compiler checks (79 focused), the sequential full baseline,
+Python47 and roadmap preview pass. Root synced the exact review fix and reran
+fresh pinned 42-case observations plus 13 actual pipeline tests, exit 0;
+/private/tmp/suss-session-reviewed-portable-oracle.log. Final-head Linux CI
+36669735862 is still running at this point; readiness requires its terminal result.
+
+The pinned core source specifies one-argument + and * as identity, even for
+non-number values. The portable analyzer incorrectly demanded a proven Number
+and assigned a Number result. It now retains the operand type for precisely these
+arities; existing IR returns the evaluated operand directly. All actual numeric
+operations retain their existing Number guard. No runtime ABI change, implicit
+coercion or new checked-Number semantic substitute is introduced.
+
+The original regression fails before the repair at (+ nil), with located unsupported
+Number lowering (exit 101); /private/tmp/suss-unary-red.log. Its first draft failed
+to compile due to incorrect reader/analyzer API names, corrected before recording
+the semantic red. The fresh reference corpus was expanded without dropping cases:
+54 pinned observations match, then Suss fails the new cases before the repair
+(12 pipeline tests pass/2 fail); /private/tmp/suss-unary-oracle-red.log. The pinned
+compiler's non-number arithmetic warnings remain visible, with successful exact
+values. After the repair, an old hard-coded corpus-count assertion still expected
+42; updated to 54 without weakening decoding/comparison or changing expectations.
+
+New executing cases cover nil, booleans, UTF-16/lone surrogates, dynamic parameters/
+globals, nested identity, mixed-type branches and returned closures. HIR type and
+known closure-arity checks distinguish identity from a fabricated Number result;
+a subsequent binary String arithmetic call remains a located unsupported error.
+The production session invokes old captured closures after rebinding/GC, verifies
+completed effects, current global function lookup and independently decodes sentinel/
+string values after GC. Tests are original; no upstream forms were copied. Semantic
+provenance: pinned c4295f303100bbf5afac449242d30bca1126f1a1 EPL-1.0 core.cljs
+2724–2744 and arithmetic macros in core.cljc.
+
+Commands and terminal results (CARGO_BUILD_JOBS=2; no RUSTFLAGS override; Cargo
+feature graphs run sequentially):
+
+- `cargo test -p suss-compile --test portable_modules --test portable_definitions --test portable_closures --test portable_pipeline --test portable_resolution --test runtime_abi --locked -- --test-threads=2`: 66 pass, zero ignored, exit 0; /private/tmp/suss-unary-compiler-focused.log.
+- `cargo test -p suss-cli --lib --test persistent_session --locked -- --test-threads=2`: 15 pass, zero ignored, exit 0; /private/tmp/suss-unary-session-focused.log. Combined focused scope: 81 tests.
+- `sh scripts/test-portable-pipeline-oracle.sh`: fresh 54-case pinned source observations match and 14 pipeline tests pass, exit 0; /private/tmp/suss-unary-portable-oracle.log.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 pass, exit 0; /private/tmp/suss-unary-python.log. Inventory/review verification: 1,065 / zero reviewed / 1,065 unassessed.
+- `python3 scripts/wasi_lock.py`: 15 files/six official WIT packages verified, exit 0. An initial command used a nonexistent check_wit_packages.py name and failed; the repository's actual verifier was then run successfully.
+- Offline roadmap preview, touched Rust formatting and `git diff --check` pass; stable issue IDs and statuses retained.
+
+`cargo test --workspace --locked -- --test-threads=2` completed successfully,
+exit 0 including CLI rustdoc; /private/tmp/suss-unary-full.log. Legacy differential
+baseline remains 9 passes/7 exact failures/0 skips; existing ignores are unchanged.
+Publish a PR stacked on #59 with Refs #9/#10.
+Dispatch an independent review with significant fixes pushed, then require exact
+reviewed-head CI. Do not merge or close incomplete issues. The broad M2/M3 gates,
+actual command frontend, binary arithmetic/coercions, extended signatures,
+collections/recur/effects/macros and all later milestone acceptance remain open.
+Next implement dynamic arithmetic with the pinned coercion contract; unary identity
+must not be replaced by a Number type assertion. Retire legacy source replay only
+after replacement acceptance.
