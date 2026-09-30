@@ -63,7 +63,7 @@ closed after their exit gates were rechecked. M2–M9 remain open.
 
 ### M3: Persistent development environment
 
-- **M3-01 — Incremental compiled REPL** (planned). Replace source replay with one runtime and compiled input fragments. A native persistent session embedding API and thirteen session tests establish prerequisites; the command frontend, atoms and full acceptance remain; see [session host](docs/runtime/portable-session.md).
+- **M3-01 — Incremental compiled REPL** (planned). Replace source replay with one runtime and compiled input fragments. A native persistent session embedding API and fourteen session tests establish prerequisites; the command frontend, atoms and full acceptance remain; see [session host](docs/runtime/portable-session.md).
 - **M3-02 — Namespace loading and redefinition** (planned). Implement live binding cells, namespace loading, defonce and reload semantics. Source graph preparation and eleven executing module tests now establish compiler prerequisites; persistent production clients and reload/cache/privacy policy remain; see [module preparation](docs/runtime/portable-modules.md).
 - **M3-03 — Compiled macro bootstrap** (planned). Run macros in a separate compiled phase session and remove the temporary evaluator.
 - **M3-04 — Session lifecycle and interruption** (planned). Define reset, roots, code residency and cancellation while interactive I/O is pending. Native session reset/owned handles/fuel recovery/residency counters now have executing evidence; interactive cancellation and live heap accounting remain.

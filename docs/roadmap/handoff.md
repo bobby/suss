@@ -2058,3 +2058,39 @@ WIT/browser/CSP targets. Next connect the actual REPL frontend to this host as
 portable lowering/printing coverage reaches replacement acceptance; dynamic
 numeric/global/parameter lowering is an immediate compiler prerequisite. Retire
 source replay/obsolete paths only after replacement acceptance. M2–M9 remain open.
+
+## PR #59 independent review — 2026-09-30
+
+Reviewed the published portable-session head 81cfdad in an isolated worktree.
+Found a native callback recovery gap: a callback that translates a thrown exception
+into an ordinary host error left the Store carrying its pending exception. The
+new focused regression reproduced it before repair, exit 101;
+/private/tmp/suss-pr59-review-red.log. The host now clears pending exception state
+when propagating translated errors and rejects a callback that returns success
+while leaving a pending exception. Properly propagated exceptions still use exact
+tag identity; foreign tags remain host errors and traps remain distinct.
+
+The regression covers translated error and swallowed-throw success paths, exact
+host messages, pending state removal, unchanged external root count and an
+independently decoded next-input Number 42. An intermediate repair failed to compile
+because RootScope does not expose has_pending_exception directly; corrected through
+StoreContextMut, with no skipped test or weakened assertion.
+
+Commands and terminal results (CARGO_BUILD_JOBS=2, shared CARGO_TARGET_DIR, no
+RUSTFLAGS override; Cargo invocations sequential):
+
+- `cargo test -p suss-cli --lib --test persistent_session --locked -- --test-threads=2`: 14 pass, zero ignored, exit 0; /private/tmp/suss-pr59-review-session-focused.log.
+- `cargo test -p suss-compile --test portable_modules --test portable_definitions --test portable_closures --test portable_pipeline --test portable_resolution --test runtime_abi --locked -- --test-threads=2`: 65 pass, zero ignored, exit 0; /private/tmp/suss-pr59-review-compiler-focused.log. Combined focused scope: 79 tests.
+- `cargo test --workspace --locked -- --test-threads=2`: pass including CLI rustdoc, exit 0; /private/tmp/suss-pr59-review-full.log. No overlapping Cargo invocation.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 pass, exit 0; /private/tmp/suss-pr59-review-python.log.
+- Offline `python3 scripts/publish_roadmap.py`: pass, exit 0; /private/tmp/suss-pr59-review-roadmap-preview.json. Stable issue IDs retained.
+- Touched Rust rustfmt and `git diff --check`: pass.
+
+No remaining significant review finding. No upstream implementation copied,
+dependency changes, runtime ABI changes or source-semantic changes in the review repair. Existing unassessed inventory,
+portable oracle and legacy differential scope remain unchanged. Production
+command/REPL migration, dynamic arithmetic/core lowering, full M2/M3 acceptance,
+async cancellation and live heap accounting remain incomplete. Next implement the
+compiler prerequisites for frontend migration, then replace source replay after
+replacement acceptance. Require CI on the exact final reviewed head; do not merge
+or close incomplete issues.

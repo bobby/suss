@@ -185,6 +185,9 @@ fn execution_error(
     handles: &Arc<AtomicUsize>,
 ) -> SessionError {
     if !error.is::<wasmtime::ThrownException>() {
+        // Native callbacks may translate an exception into an ordinary host error.
+        // It must not leave the Store carrying a stale pending exception.
+        scope.as_context_mut().take_pending_exception();
         return error.into();
     }
     let payload = (|| -> Result<SessionValue, SessionError> {
@@ -298,7 +301,14 @@ impl Session {
         self.check(value)?;
         let mut scope = RootScope::new(&mut self.store);
         let value = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
-        f(scope.as_context_mut(), value).map_err(|error| {
+        let result = f(scope.as_context_mut(), value);
+        let result = match result {
+            Ok(_) if scope.as_context_mut().has_pending_exception() => Err(wasmtime::Error::msg(
+                "Native callback returned success with a pending exception",
+            )),
+            result => result,
+        };
+        result.map_err(|error| {
             execution_error(
                 &mut scope,
                 self.runtime,
@@ -516,6 +526,53 @@ mod tests {
         assert!(matches!(error, SessionError::Host(_)));
         assert!(!session.store.has_pending_exception());
         session.eval("42").unwrap();
+    }
+    #[test]
+    fn session_lifecycle_callback_translated_exception_clears_pending_state() {
+        let mut session = Session::new().unwrap();
+        let value = session.eval("7").unwrap();
+        for translated_success in [false, true] {
+            let error = session
+                .inspect(&value, |mut store, _| -> wasmtime::Result<()> {
+                    let ty = wasmtime::ExnType::new(store.engine(), [ValType::I32])?;
+                    let tag = Tag::new(&mut store, &ty.tag_type())?;
+                    let allocator = wasmtime::ExnRefPre::new(&mut store, ty);
+                    let exception =
+                        wasmtime::ExnRef::new(&mut store, &allocator, &tag, &[Val::I32(42)])?;
+                    let thrown = store.throw::<()>(exception);
+                    if translated_success {
+                        let _ = thrown;
+                        Ok(())
+                    } else {
+                        thrown.map_err(|_| {
+                            wasmtime::Error::msg("native callback translated exception")
+                        })
+                    }
+                })
+                .unwrap_err();
+            let SessionError::Host(error) = error else {
+                panic!("translated callback exceptions must be host errors")
+            };
+            assert!(error.to_string().contains(if translated_success {
+                "returned success with a pending exception"
+            } else {
+                "native callback translated exception"
+            }));
+            assert!(!session.store.has_pending_exception());
+            assert_eq!(session.stats().external_value_handles, 1);
+            let next = session.eval("42").unwrap();
+            let bits = session
+                .inspect(&next, |mut store, value| {
+                    let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                    let fields = number.fields(&mut store)?.collect::<Vec<_>>();
+                    let [Val::F64(bits)] = fields.as_slice() else {
+                        panic!("expected exact Number layout")
+                    };
+                    Ok(*bits)
+                })
+                .unwrap();
+            assert_eq!(bits, 42.0f64.to_bits());
+        }
     }
     #[test]
     fn session_lifecycle_all_artifacts_are_gated_before_allocating_or_publishing_cells() {

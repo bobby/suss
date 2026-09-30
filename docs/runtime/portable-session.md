@@ -35,7 +35,9 @@ runs; this conservative residency policy lasts until reset.
 shared-tag language exceptions, engine traps and host failures. Language payloads
 remain owned values; pending exception state is taken before returning to the
 native caller. Foreign tags are host failures, never fabricated language success.
-Inspection callbacks follow the same exception-state normalization. Fuel exhaustion
+Inspection callbacks follow the same exception-state normalization. Translated host
+errors clear pending exceptions, and a callback that returns success while leaving
+a pending exception is rejected as a host error. Fuel exhaustion
 is an engine trap, distinct from wrong arity/type language errors. A fresh operation
 budget lets the next input execute after either kind of error. This is synchronous
 runtime recovery, not cancellation or an asynchronous scheduler.
@@ -86,13 +88,14 @@ engines must enable GC/function references/tail calls/exceptions and fuel.
 
 ## Evidence and limits
 
-Eleven integration tests plus two private host regressions execute real fragments,
+Eleven integration tests plus three private host regressions execute real fragments,
 rooted values and shared cells: once-only initialization/defonce, bound nil/false,
 old captures/live rebinding, UTF-16 after GC, compile failure isolation, exact-tag
 initializer recovery, foreign/reset handles, dependency transaction compilation,
 reverse-order diamond effects, successful dependency reuse after failure, canonical
 core provisioning, scope/catalog distinctions, artifact/import gates, foreign
-callback exception recovery and fuel trap recovery. Existing 65 focused compiler
+callback exception recovery (including translated errors and swallowed throws)
+and fuel trap recovery. Existing 65 focused compiler
 checks also pass. No new test is ignored.
 
 Initial API regression compilation failed because the native library host did not
