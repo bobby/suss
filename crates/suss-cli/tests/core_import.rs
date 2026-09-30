@@ -177,7 +177,7 @@ fn imported_core_matches_independently_decoded_pinned_scalar_corpus() {
         };
         assert_eq!(actual, case["expected"], "{source}");
     }
-    assert_eq!(ids.len(), 72);
+    assert_eq!(ids.len(), 117);
 }
 
 fn boolean(session: &mut Session, value: &SessionValue) -> bool {
@@ -464,4 +464,103 @@ fn bootstrap_nil_test_captures_values_across_fragments_and_loop_edges() {
         .eval("(suss.bootstrap/nil? (loop [again true x nil] (if again (recur false false) (if again (throw 7) x))))")
         .unwrap();
     assert!(!boolean(&mut session, &result));
+}
+
+#[test]
+fn imported_inc_dec_preserve_primitives_captured_arithmetic_and_live_bindings() {
+    let mut session = loaded();
+    for (name, primitive, expected) in [("inc", "+", 3.0f64), ("dec", "-", 1.0f64)] {
+        let original = session.eval(name).unwrap();
+        let argument = session.eval("2").unwrap();
+        for alias in [format!("cljs.core/{name}"), format!("suss.core/{name}")] {
+            let returned = session.eval(&format!("(let [f {alias}] (f 2))")).unwrap();
+            assert_eq!(number(&mut session, &returned), expected.to_bits());
+        }
+        session.enter_namespace("suss.core").unwrap();
+        session
+            .eval(&format!(
+                "(def {primitive} (fn [x y] 90)) (def {name} (fn [x] 80))"
+            ))
+            .unwrap();
+        session.enter_namespace("user").unwrap();
+        session.collect().unwrap();
+        let returned = session.invoke(&original, &[&argument]).unwrap();
+        assert_eq!(number(&mut session, &returned), expected.to_bits());
+        let returned = session.eval(&format!("(let [f {name}] (f 2))")).unwrap();
+        assert_eq!(number(&mut session, &returned), 80.0f64.to_bits());
+    }
+}
+
+#[test]
+fn imported_inc_dec_evaluate_arguments_before_typed_arity_failure_and_recover() {
+    let mut session = loaded();
+    session
+        .eval("(def effects 0) (def tick (fn [] (def effects (+ effects 1))))")
+        .unwrap();
+    for name in ["inc", "dec"] {
+        let before = session.eval("effects").unwrap();
+        let before = f64::from_bits(number(&mut session, &before));
+        assert!(matches!(
+            session.eval(&format!("({name} (tick) (tick))")),
+            Err(SessionError::Language(_))
+        ));
+        let after = session.eval("effects").unwrap();
+        assert_eq!(number(&mut session, &after), (before + 2.0).to_bits());
+        assert!(matches!(
+            session.eval(&format!("({name})")),
+            Err(SessionError::Language(_))
+        ));
+        let value = session.eval(&format!("({name} 4)")).unwrap();
+        assert_eq!(
+            number(&mut session, &value),
+            (if name == "inc" { 5.0f64 } else { 3.0 }).to_bits()
+        );
+    }
+}
+
+#[test]
+fn imported_inc_dec_unsupported_object_coercion_is_typed_and_recovers() {
+    let mut session = loaded();
+    session.eval("(deftype O [])").unwrap();
+    for name in ["inc", "dec"] {
+        for argument in ["(O.)", "(array 1)", "(fn [] 1)"] {
+            assert!(
+                matches!(
+                    session.eval(&format!("({name} {argument})")),
+                    Err(SessionError::Language(_))
+                ),
+                "{name}: {argument}"
+            );
+            let value = session.eval(&format!("({name} 3)")).unwrap();
+            assert_eq!(
+                number(&mut session, &value),
+                (if name == "inc" { 4.0f64 } else { 2.0 }).to_bits()
+            );
+        }
+    }
+}
+
+#[test]
+fn imported_inc_dec_alias_calls_capture_callee_before_mutating_operand() {
+    let mut session = loaded();
+    session
+        .eval("(ns review (:require [cljs.core :as core]))")
+        .unwrap();
+    for (name, expected) in [("inc", 3.0f64), ("dec", 1.0f64)] {
+        let source = format!(
+            "(with-redefs [core/{name} core/{name}] ((if true core/{name} core/identity) (do (set! core/{name} (fn [x] 90)) 2)))"
+        );
+        let value = session.eval(&source).unwrap();
+        assert_eq!(number(&mut session, &value), expected.to_bits());
+        session.collect().unwrap();
+        let value = session
+            .eval(&format!("(let [f core/{name}] (f 2))"))
+            .unwrap();
+        assert_eq!(number(&mut session, &value), expected.to_bits());
+        let source = format!(
+            "(do (def effects 0) (try (let [f core/{name}] (f (do (def effects (+ effects 1)) (throw 7)))) (catch :default e nil) (finally (def effects (+ effects 10)))) effects)"
+        );
+        let value = session.eval(&source).unwrap();
+        assert_eq!(number(&mut session, &value), 11.0f64.to_bits());
+    }
 }

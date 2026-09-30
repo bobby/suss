@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "541c69f33a2aae92c9ecfb28882730449d8aaf1e0ebe95a5b5a6fb284b850f58",
+  "replacement": "(def inc (fn [x] (cljs.core/+ x 1)))",
+  "rationale": "Explicit single fixed-arity defn bootstrap adaptation preserving the original body. Fresh captured-function observations and pinned emitted core.js establish primitive + behavior independent of public arithmetic var redefinitions. Original form/docstring/copyright and EPL packaging remain retained. Object conversion, source metadata and compiled upstream inc/defn macros remain incomplete."
+}

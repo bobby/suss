@@ -1,7 +1,27 @@
-;; Human-reviewed overlay; these forty entries are partial, not compatibility completions.
+;; Human-reviewed overlay; these forty-two entries are partial, not compatibility completions.
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:inc:1505"
+  {:source-sha256 "541c69f33a2aae92c9ecfb28882730449d8aaf1e0ebe95a5b5a6fb284b850f58" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:+:1084" "macro:inc:1192"]
+   :classification :adapted
+   :rationale "Retained original pinned form/docstring/notices with explicit defn bootstrap patch. First-class scalar coercions, binary64 rounding, UTF-16 inc concatenation, aliases, captured primitive arithmetic and live runtime redefinition execute against fresh primary evidence. Object conversion, metadata/privacy, upstream compiled macros and automatic core loading remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/inc.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_import.rs" "tests/oracle/core-import-cases.json"]}
+  "runtime:dec:2803"
+  {:source-sha256 "788ed81afdee829b502192198cce828c3084664f3267605307e56d23f0a8dfd5" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:defn:3364" "macro:-:1143" "macro:dec:1189"]
+   :classification :adapted
+   :rationale "Retained original pinned form/docstring/notices with explicit defn bootstrap patch. First-class scalar coercions, binary64 rounding, UTF-16 inc concatenation, aliases, captured primitive arithmetic and live runtime redefinition execute against fresh primary evidence. Object conversion, metadata/privacy, upstream compiled macros and automatic core loading remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/dec.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_import.rs" "tests/oracle/core-import-cases.json"]}
   "runtime:array?:251"
   {:source-sha256 "81cae57adc1072784432d10029198e646a4bb9f7a0b2455510bab5d6947c78a3" :visibility :public
    :arities {:fixed [1] :variadic-min nil}
