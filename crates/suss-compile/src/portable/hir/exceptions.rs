@@ -2,7 +2,7 @@
 use super::*;
 
 impl Analyzer {
-    fn exception_region(&self, form: &Form, parameters: Vec<Parameter>, body: Hir) -> Hir {
+    pub(super) fn exception_region(&self, form: &Form, parameters: Vec<Parameter>, body: Hir) -> Hir {
         let bound = parameters.iter().map(|parameter| parameter.id).collect();
         let mut free = BTreeSet::new();
         free_bindings(&body, &bound, &mut free);

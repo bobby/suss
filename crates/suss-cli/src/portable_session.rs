@@ -167,6 +167,59 @@ fn own(
         handles: handles.clone(),
     })
 }
+// Snapshot the caller's rooted dynamic context, including native interop calls.
+fn dynamic_checkpoint(
+    scope: &mut RootScope<&mut Store<()>>,
+    runtime: Instance,
+) -> Result<OwnedRooted<AnyRef>, SessionError> {
+    let frame = runtime
+        .get_global(&mut *scope, "dynamic-frame")
+        .ok_or_else(|| wasmtime::Error::msg("Missing dynamic frame root"))?
+        .get(&mut *scope);
+    Ok(frame
+        .unwrap_anyref()
+        .ok_or_else(|| wasmtime::Error::msg("Null dynamic frame root"))?
+        .to_owned_rooted(scope)?)
+}
+fn restore_dynamic(
+    scope: &mut RootScope<&mut Store<()>>,
+    runtime: Instance,
+    checkpoint: &OwnedRooted<AnyRef>,
+) -> Result<(), SessionError> {
+    let global = runtime
+        .get_global(&mut *scope, "dynamic-frame")
+        .ok_or_else(|| wasmtime::Error::msg("Missing dynamic frame root"))?;
+    let pop = runtime
+        .get_func(&mut *scope, "dynamic-pop")
+        .ok_or_else(|| wasmtime::Error::msg("Missing dynamic frame restoration"))?;
+    let fuel = scope.as_context_mut().get_fuel()?;
+    // Restoration executes only finite, checked runtime frame/cell operations,
+    // never a source body or finally callback. Preserve the operation's fuel.
+    scope.as_context_mut().set_fuel(u64::MAX)?;
+    let result = (|| -> wasmtime::Result<()> {
+        loop {
+            let current = global.get(&mut *scope);
+            let current = current
+                .unwrap_anyref()
+                .ok_or_else(|| wasmtime::Error::msg("Null dynamic frame root"))?;
+            let expected = checkpoint.to_rooted(&mut *scope);
+            if wasmtime::Rooted::ref_eq(&*scope, current, &expected)? {
+                return Ok(());
+            }
+            // Reaching nil before the checkpoint means a native callback invalidated it.
+            if current.as_i31(&*scope)?.is_some() {
+                return Err(wasmtime::Error::msg("Dynamic caller context was removed"));
+            }
+            let current = Val::AnyRef(Some(*current));
+            pop.call(&mut *scope, &[current], &mut [])?;
+        }
+    })();
+    scope.as_context_mut().set_fuel(fuel)?;
+    if result.is_err() {
+        scope.as_context_mut().take_pending_exception();
+    }
+    result.map_err(SessionError::Host)
+}
 fn call(
     scope: &mut RootScope<&mut Store<()>>,
     runtime: Instance,
@@ -175,11 +228,14 @@ fn call(
     identity: u64,
     handles: &Arc<AtomicUsize>,
 ) -> Result<SessionValue, SessionError> {
+    let checkpoint = dynamic_checkpoint(scope, runtime)?;
     let mut result = [Val::null_any_ref()];
-    function
-        .call(&mut *scope, args, &mut result)
-        .map_err(|error| execution_error(scope, runtime, error, identity, handles))?;
-    own(scope, result[0].clone(), identity, handles)
+    let outcome = match function.call(&mut *scope, args, &mut result) {
+        Ok(()) => own(scope, result[0].clone(), identity, handles),
+        Err(error) => Err(execution_error(scope, runtime, error, identity, handles)),
+    };
+    restore_dynamic(scope, runtime, &checkpoint)?;
+    outcome
 }
 fn execution_error(
     scope: &mut RootScope<&mut Store<()>>,
@@ -353,6 +409,7 @@ impl Session {
     ) -> Result<R, SessionError> {
         self.check(value)?;
         let mut scope = RootScope::new(&mut self.store);
+        let checkpoint = dynamic_checkpoint(&mut scope, self.runtime)?;
         let value = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
         let result = f(scope.as_context_mut(), value);
         let result = match result {
@@ -361,7 +418,7 @@ impl Session {
             )),
             result => result,
         };
-        result.map_err(|error| {
+        let outcome = result.map_err(|error| {
             execution_error(
                 &mut scope,
                 self.runtime,
@@ -369,7 +426,9 @@ impl Session {
                 self.identity,
                 &self.handles,
             )
-        })
+        });
+        restore_dynamic(&mut scope, self.runtime, &checkpoint)?;
+        outcome
     }
     fn budget(&mut self) -> Result<(), SessionError> {
         self.store
@@ -562,6 +621,42 @@ impl Session {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn session_lifecycle_native_callback_trap_restores_dynamic_context() {
+        let mut session = Session::new().unwrap();
+        session.eval("(def ^:dynamic *value* 1)").unwrap();
+        let body = session
+            .eval("(fn [] (binding [*value* 7] (loop [] (recur))))")
+            .unwrap();
+        let invoke = session
+            .runtime
+            .get_func(&mut session.store, "invoke")
+            .unwrap();
+        let args_new = session
+            .runtime
+            .get_func(&mut session.store, "args-new")
+            .unwrap();
+        session.store.set_fuel(5_000).unwrap();
+        let result = session.inspect(&body, |mut store, body| {
+            let mut args = [Val::null_any_ref()];
+            args_new.call(&mut store, &[Val::I32(0)], &mut args)?;
+            invoke.call(
+                &mut store,
+                &[body, args[0].clone()],
+                &mut [Val::null_any_ref()],
+            )
+        });
+        assert!(matches!(result, Err(SessionError::Trap(_))));
+        session.set_operation_fuel(50_000);
+        let value = session.eval("*value*").unwrap();
+        let bits = session
+            .inspect(&value, |mut store, value| {
+                let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                Ok(number.field(&mut store, 0)?.unwrap_f64())
+            })
+            .unwrap();
+        assert_eq!(bits.to_bits(), 1.0f64.to_bits());
+    }
     #[test]
     fn session_lifecycle_numeric_helper_trap_resets_interrupted_rust_stack() {
         let mut session = Session::new().unwrap();

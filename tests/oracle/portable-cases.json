@@ -2321,6 +2321,158 @@
         "tag": "f64",
         "bits": "4045000000000000"
       }
+    },
+    {
+      "id": "dynamic-parallel-initializers",
+      "source": "(do (def ^:dynamic *parallel-x* 1) (def ^:dynamic *parallel-y* 2) (binding [*parallel-x* 7 *parallel-y* *parallel-x*] (+ (* *parallel-x* 10) *parallel-y*)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4051c00000000000"
+      }
+    },
+    {
+      "id": "dynamic-nested-restoration",
+      "source": "(do (def ^:dynamic *nested* 1) (binding [*nested* 2] (+ (* (binding [*nested* 7] *nested*) 10) *nested*)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4052000000000000"
+      }
+    },
+    {
+      "id": "dynamic-root-restoration",
+      "source": "(do (def ^:dynamic *root* 1) (binding [*root* 7] *root*) *root*)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "dynamic-called-function",
+      "source": "(do (def ^:dynamic *called* 1) (def read-called (fn [] *called*)) (binding [*called* 7] (read-called)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "dynamic-escaped-reader",
+      "source": "(do (def ^:dynamic *escaped* 1) (def escaped-reader (binding [*escaped* 7] (fn [] *escaped*))) (escaped-reader))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "dynamic-captured-local",
+      "source": "(do (def ^:dynamic *local* 1) ((binding [*local* 7] (let [saved *local*] (fn [] saved)))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "dynamic-nil-false-values",
+      "source": "(do (def ^:dynamic *nil* 7) (def ^:dynamic *false* 9) (binding [*nil* nil *false* false] (+ (if *nil* 1 10) (if *false* 2 20))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403e000000000000"
+      }
+    },
+    {
+      "id": "dynamic-exception-restoration",
+      "source": "(do (def ^:dynamic *exception* 1) (try (binding [*exception* 7] (throw *exception*)) (catch :default error (+ (* error 10) *exception*))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4051c00000000000"
+      }
+    },
+    {
+      "id": "dynamic-cleanup-order",
+      "source": "(do (def ^:dynamic *cleanup* 1) (def cleanup-seen 0) (try (binding [*cleanup* 7] (try (throw 42) (finally (def cleanup-seen *cleanup*)))) (catch :default error (+ cleanup-seen *cleanup*))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "dynamic-snapshot-before-initializers",
+      "source": "(do (def ^:dynamic *snapshot* 1) (binding [*snapshot* (do (set! *snapshot* 2) 7)] *snapshot*) *snapshot*)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "dynamic-initializer-throw-keeps-effects",
+      "source": "(do (def ^:dynamic *initial-error* 1) (try (binding [*initial-error* (do (set! *initial-error* 2) (throw 7))] 42) (catch :default error *initial-error*)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "dynamic-duplicate-target",
+      "source": "(do (def ^:dynamic *duplicate* 1) (binding [*duplicate* 7 *duplicate* 9] *duplicate*))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "dynamic-assignment-inside-binding",
+      "source": "(do (def ^:dynamic *assigned* 1) (binding [*assigned* 7] (set! *assigned* 9)) *assigned*)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "dynamic-definition-inside-binding",
+      "source": "(do (def ^:dynamic *defined* 1) (binding [*defined* 7] (def *defined* 9)) *defined*)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "dynamic-non-dynamic-binding",
+      "source": "(do (def plain-binding 1) (binding [plain-binding 7] plain-binding))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "dynamic-with-redefs-function",
+      "source": "(do (def original-function (fn [] 1)) (with-redefs [original-function (fn [] 42)] (original-function)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "dynamic-set-expression-result",
+      "source": "(do (def assignment-result 1) (set! assignment-result 42))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "dynamic-arithmetic-macro-preserved",
+      "source": "(with-redefs [+ (fn [x y] 42)] (+ 1 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "dynamic-arithmetic-value-overridden",
+      "source": "((with-redefs [+ (fn [x y] 42)] +) 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
     }
   ]
 }

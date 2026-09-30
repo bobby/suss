@@ -65,6 +65,7 @@ pub enum Binding {
     BootstrapLoop(Global),
     BootstrapFn(Global),
     BootstrapDefonce(Global),
+    BootstrapBinding(Global),
     Nominal {
         global: Global,
         form: NominalForm,
@@ -79,6 +80,7 @@ impl Binding {
             | Self::BootstrapLet(g)
             | Self::BootstrapFn(g)
             | Self::BootstrapDefonce(g)
+            | Self::BootstrapBinding(g)
             | Self::Arithmetic { global: g, .. }
             | Self::Nominal { global: g, .. } => g,
         }
@@ -203,7 +205,7 @@ impl Environment {
                 env.bindings
                     .insert(global.clone(), Binding::Nominal { global, form });
             }
-            for name in ["let", "loop", "fn", "defonce"] {
+            for name in ["let", "loop", "fn", "defonce", "binding", "with-redefs"] {
                 let global = Global {
                     phase,
                     namespace: "suss.core".into(),
@@ -215,6 +217,8 @@ impl Environment {
                     Binding::BootstrapLoop(global.clone())
                 } else if name == "fn" {
                     Binding::BootstrapFn(global.clone())
+                } else if name == "binding" || name == "with-redefs" {
+                    Binding::BootstrapBinding(global.clone())
                 } else {
                     Binding::BootstrapDefonce(global.clone())
                 };
@@ -440,6 +444,8 @@ impl Environment {
                         | "loop"
                         | "fn"
                         | "defonce"
+                        | "binding"
+                        | "with-redefs"
                         | "deftype"
                         | "defprotocol"
                         | "extend-type"
@@ -455,6 +461,8 @@ impl Environment {
                         | "loop"
                         | "fn"
                         | "defonce"
+                        | "binding"
+                        | "with-redefs"
                         | "deftype"
                         | "defprotocol"
                         | "extend-type"
@@ -470,6 +478,8 @@ impl Environment {
                         | "loop"
                         | "fn"
                         | "defonce"
+                        | "binding"
+                        | "with-redefs"
                         | "deftype"
                         | "defprotocol"
                         | "extend-type"
@@ -485,6 +495,8 @@ impl Environment {
                     | "loop"
                     | "fn"
                     | "defonce"
+                    | "binding"
+                    | "with-redefs"
                     | "deftype"
                     | "defprotocol"
                     | "extend-type"
@@ -506,6 +518,8 @@ impl Environment {
             Binding::BootstrapFn(global)
         } else if name == "defonce" {
             Binding::BootstrapDefonce(global)
+        } else if name == "binding" || name == "with-redefs" {
+            Binding::BootstrapBinding(global)
         } else {
             Binding::Nominal {
                 global,

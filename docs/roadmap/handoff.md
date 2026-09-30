@@ -3167,3 +3167,152 @@ Push review regressions/evidence to PR67, then require CI on the exact final pus
 head before readiness. No merge or issue closure. Dynamic binding, ExceptionInfo/
 public Error surfaces and broader nominal/core criteria remain issue11 obligations;
 source collections, compiled macros, production migration and M2–M9 remain open.
+
+## Dynamic binding work in progress — 2026-09-30
+
+Worktree /private/tmp/suss-portable-dynamic-bindings, branch
+resurrection/portable-dynamic-bindings, based on independently reviewed PR67 head
+5ea35107a42099cc7289060549acc6214a54c3eb. PR67 exact-head CI36710520777
+passed; root inspected actual full workflow log /private/tmp/suss-pr67-final-ci.log.
+PR67 readiness comments5910927247 (#11)/5910927737 (#9). No merge or issue closure.
+
+Original rooted Frame9/Cell5 scope lowering now implements binding/with-redefs,
+global set!, accepted dynamic name metadata and parallel snapshot/publication order.
+Escaped functions read current scope; lexical captures retain values. Body/cleanup
+closures preserve typed throw/finally behavior. Compiler guards enforce complete
+snapshot/value pairs and fixed body arity. Native eval/invoke/inspect retain caller
+frame checkpoints; fuel traps remain traps and recovery runs private runtime pops,
+not source finally callbacks. Full macro warnings/import, async context, ExceptionInfo,
+public Error classes and broader issues9/11 remain incomplete. See dynamic-bindings.md.
+
+Primary pin valid19 dynamic observations compiled and executed through Node:
+/private/tmp/suss-dynamic-reference-valid.log. Exact schema/IDs/binary64 values
+validated against /private/tmp/suss-dynamic-reference-observations.json. Original20
+probe failed on local assignment (correct pinned rejection), retained separately
+/private/tmp/suss-dynamic-reference.log. Non-dynamic-var warnings are preserved;
+the bootstrap permits behavior but does not emit equivalent warnings yet.
+Fresh sh scripts/test-portable-pipeline-oracle.sh passed278 source observations and
+16 actual decoded pipeline tests before final pop hardening:
+/private/tmp/suss-dynamic-oracle.log. Prior259 source inputs unchanged.
+
+Native first6 regressions failed before implementation, -native-red.log; all6
+subsequently passed -native-first.log. Actual fuel regression failed with leaked7
+instead of1, -fuel-red.log; checkpoint restoration passed native54,
+-native-guard.log. Compiler focus first failed on obsolete unsupported ^:dynamic
+expectation, -compiler.log; removed that now-supported negative case, retained
+executing metadata/scope tests. Nine selected compiler suites82 then passed,
+-compiler-fixed.log. All logs use prefix /private/tmp/suss-dynamic.
+
+A new 1..1200 fuel sweep actually failed at fuel430: body had entered, but root2
+survived instead of pre-initializer snapshot1, -pop-fuel-red.log. Fixed pop to write
+through an explicit parent context and publish parent only after restoration ends.
+The child stays rooted, allowing interrupted reverse snapshot writes to be retried
+idempotently. First refactor attempt missed helper local-index adjustments and
+failed six cases, -pop-fuel-fixed.log; corrected actual indices. All8 dynamic tests
+including sweep now pass, -pop-fuel-fixed2.log. No failures skipped or called green.
+
+Two manual macro reviews added with exact pinned hashes, 11 in-progress/1054
+unassessed; Python54 passed, -reviews.log/-python.log. No upstream form copied,
+no dependency/lock/helper byte changes or Java/Node shipped runtime introduced.
+ABI1 and compiler manifestformat2 unchanged. Current native full focus is running
+alone, /private/tmp/suss-dynamic-native-final.log; includes new inspect callback
+trap restoration regression. Next verify its actual outcome, rerun compiler/source
+focus after hardening, then required full workspace baseline with shared target,
+two build jobs and --test-threads=2. Commit/push stacked draft PR against #67 using
+Refs #9/#11, dispatch independent review, push significant fixes and require exact
+final-head CI. Changes remain uncommitted; no dynamic PR/review exists yet.
+
+Final native focus terminal exit0, -native-final.log: private5 + persistent33 +
+exception10 + dynamic8 =56 passed, zero ignored. Fresh final source rerun terminal
+exit0, -oracle-final.log:278 pinned observations and16 actual decoded pipeline
+tests pass after pop hardening. No native/reference process remains live.
+Required full cargo test --workspace --locked -- --test-threads=2 now starts
+alone, /private/tmp/suss-dynamic-workspace.log, using shared target/two build jobs.
+Verify its actual terminal outcome before commit/push/review. No PR exists yet;
+issues9/11 and M2–M9 remain incomplete.
+
+Dynamic candidate required full baseline terminal exit0:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2,
+/private/tmp/suss-dynamic-workspace.log. Includes native56, selected portable
+compiler82, actual278 source artifacts, runtimeABI13, legacy expressions317/12
+existing ignores, components29, strict conformance9/2 manual ignores and all
+reader/core/doc targets including suss_cli. Existing ignores and legacy
+9pass/7fail differential baseline unchanged. No native/reference process live.
+
+Committed implementation3937b7c58246f1f0c82292f9eece3231b26dc4c2 and pushed
+resurrection/portable-dynamic-bindings. Draft PR #68 stacked on #67 uses
+Refs #9/#11. Independent review and exact final-head CI remain required; no
+readiness claim, issue closure or merge. Next reviewer inspects and pushes
+significant fixes, then verify its actual results and final-head CI.
+
+## Independent PR68 dynamic binding review — 2026-09-30
+
+Reviewed candidate b87aefd3a2e37fb884f416790c031d63f04283aa against base
+5ea35107a42099cc7289060549acc6214a54c3eb in isolated
+/private/tmp/suss-review-pr68. Read accepted design, roadmap, compatibility inventory
+and handoff, and inspected pinned core.cljc2301–2340. No significant production
+finding in the bounded synchronous implementation. Checked parallel original/value
+ordering, actual imported cell identity, copied frame entries, rooted parent/child
+restoration, universal closure cleanup, typed payload ownership and native eval/
+invoke/inspect checkpoint recovery. This does not certify async context, cancellation,
+compiled macro/core import, warning policy or the remaining issues9/11 criteria.
+
+Added independent regressions for nested multi-target/duplicate scopes interrupted
+at every fuel1..2000, including initializer mutations and restartable reverse pop
+writes; and escaping/thrown closure values retained through frame exit and GC.
+All10 dynamic tests pass (candidate8 plus2), zero ignored, exit0:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test -p suss-cli --test portable_dynamic_bindings --locked -- --test-threads=2,
+/private/tmp/suss-review68-focused.log. Python54 and overlay11 reviewed/1054
+unassessed pass, /private/tmp/suss-review68-python.log and -reviews.log.
+Pinned submodule initialization confirmed exact c4295f303100bbf5afac449242d30bca1126f1a1.
+Current docs now distinguish278 source cases and synchronous frame support from
+historical259 exception evidence and pending async context. No inventory item
+marked implemented; no upstream form copied or dependency/helper change.
+
+Candidate CI36714342812 was running on b87aefd when root last checked;
+predecessor3937b7c CI36714257887 cancelled, not a pass. Draft PR68 progress
+comments5911235754 (#11) and5911236089 (#9) remain partial references.
+The root candidate full baseline passed /private/tmp/suss-dynamic-workspace.log.
+Independent full required workspace baseline and fresh source oracle follow;
+readiness requires actual successful CI on the exact final pushed review head.
+No merge or issue closure. Next after review/readiness continue ExceptionInfo,
+public Error classes, builtin/native protocol/core requirements and source collections;
+M2–M9 remain incomplete.
+
+Independent required cargo test --workspace --locked -- --test-threads=2 passed,
+exit0, /private/tmp/suss-review68-workspace.log. Includes native58 (private5,
+persistent33, exception10, dynamic10), compiler82 selected portable suites,
+278-source actual artifacts, legacy/component/reader/core suites and CLI doc target.
+Existing manual/legacy ignores remain explicit and unchanged. Fresh independent
+sh scripts/test-portable-pipeline-oracle.sh then passed278 pinned source observations
+and16 actual decoded fragment tests, exit0, /private/tmp/suss-review68-oracle.log.
+Both used shared target/two build jobs, no RUSTFLAGS override. All review process
+handles12204/6955/21068/84178 are terminal; no native Cargo graphs overlapped.
+Push review coverage/evidence, then require exact final-head CI before readiness.
+
+## Stack #69 rebase onto current main — 2026-09-30
+
+In the new /private/tmp/suss-stack-69 worktree, `gh stack checkout 69` imported
+11 active branches (PRs #49 and #59–#68). Existing occupied stack worktrees were
+detached at their original commits, preserving their files and the primary
+worktree's untracked reference material; the original mapping is recorded in
+/private/tmp/suss-stack-69-original-worktrees.json.
+
+`gh stack rebase` fetched main 86e3852 and stopped on one handoff append conflict.
+Retained both the proposed ADR-0001 publication evidence from main and the
+immutable module implementation evidence. `GIT_EDITOR=true gh stack rebase
+--continue` then successfully rebased all 11 branches. Before this evidence entry,
+the top tree differed from its previous remote head only by the six documentation
+files introduced by main; no implementation, test, inventory or dependency changed.
+
+`git diff --check origin/resurrection/portable-dynamic-bindings HEAD` passed.
+`python3 -m unittest discover -s scripts -p 'test_*.py'` passed all 54 tests,
+zero skips, exit 0; /private/tmp/suss-stack-69-python.log. No local Rust baseline
+was repeated for this documentation-only rebase; existing results apply to the
+unchanged implementation. Independent per-PR rebase-integrity review is pending,
+followed by `gh stack push` and CI on every exact final head. This entry does not
+claim those pending results. No PR was merged and no acceptance status changed.
+Next unblocked task: finish rebase review/push/final-head CI, then continue the
+existing production frontend/core prerequisites and open roadmap work.
