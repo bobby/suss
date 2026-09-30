@@ -2,6 +2,7 @@
 use super::{
     Diagnostic,
     hir::{Arithmetic, BindingId, Expression, Hir, Literal, Type},
+    resolve::Global,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -17,6 +18,7 @@ pub struct Value {
 #[derive(Debug, Clone)]
 pub enum Operation {
     Literal(Literal),
+    GlobalRead(Global),
     Arithmetic {
         operator: Arithmetic,
         arguments: Vec<ValueId>,
@@ -91,6 +93,11 @@ impl Lowerer {
     fn expression(&mut self, hir: &Hir) -> Result<ValueId, Diagnostic> {
         Ok(match &hir.kind {
             Expression::Literal(value) => self.literal(value.clone(), hir.span.clone()),
+            Expression::Global(global) => self.emit(
+                Operation::GlobalRead(global.clone()),
+                Type::Value,
+                hir.span.clone(),
+            ),
             Expression::Local(id) => *self.bindings.get(id).ok_or_else(|| Diagnostic {
                 span: hir.span.clone(),
                 message: "HIR references an undefined binding".into(),
@@ -230,12 +237,13 @@ pub fn lower(hir: &Hir) -> Result<Function, Diagnostic> {
 }
 fn operands(operation: &Operation) -> &[ValueId] {
     match operation {
-        Operation::Literal(_) => &[],
+        Operation::Literal(_) | Operation::GlobalRead(_) => &[],
         Operation::Arithmetic { arguments, .. } => arguments,
     }
 }
 /// Check graph integrity, unique definitions, dominance, edge arities and types.
-/// All supported calls are resolved Number intrinsics; no unknown effect is emitted.
+/// Supported calls are resolved Number intrinsics and potentially throwing cell reads.
+/// General call/exception/effect lowering remains incomplete.
 pub fn verify(function: &Function) -> Result<(), Diagnostic> {
     let fail = |message: &str| Diagnostic {
         span: function.span.clone(),
@@ -338,6 +346,9 @@ pub fn verify(function: &Function) -> Result<(), Diagnostic> {
             match &inst.operation {
                 Operation::Literal(value) if result_ty != value.ty() => {
                     return Err(fail("IR literal result type mismatch"));
+                }
+                Operation::GlobalRead(_) if result_ty != Type::Value => {
+                    return Err(fail("IR global reads require dynamic Value type"));
                 }
                 Operation::Arithmetic {
                     operator,

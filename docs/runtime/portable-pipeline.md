@@ -9,12 +9,14 @@ pipeline under construction, not a completed second production compiler.
 The currently executing boundary is:
 
 ```
-source -> conditional selection -> lexical/bootstrap resolution + HIR
+source -> conditional selection -> phase-specific namespace/lexical resolution + HIR
        -> explicit control-flow IR -> verification -> shared-ABI Wasm
        -> ABI/prelude verification + Wasm validation
 ```
 
-Namespace loading and compiled macro expansion remain integration work. Bootstrap
+The explicit environment now resolves phase-specific aliases/refers/exclusions and
+live cells; see [namespace/cell boundary](portable-resolution.md). Source namespace
+loading and compiled macro expansion remain integration work. Bootstrap
 `let` syntax is handled directly until source-backed macro expansion is available.
 Arithmetic bootstrap bindings resolve to intrinsic identities; `suss.core` and
 `cljs.core` qualified arithmetic calls select the same identity. This is not full
@@ -49,15 +51,15 @@ arities/Number operands. Malformed HIR binding identities and arithmetic arities
 produce diagnostics.
 Direct HIR Negate retains unary negation, including the sign of zero.
 `compile_ir` runs verification before emission and validates the final Wasm.
-The closed instruction set currently admits constants and allocating numeric
-intrinsics; general calls, throws, suspension and effect analysis are future IR
+The closed instruction set currently admits constants, allocating numeric
+intrinsics and potentially throwing live-cell reads; general calls, throws, suspension and effect analysis are future IR
 extensions, not certified by these restricted tests.
 
 ## Generated artifacts and executing evidence
 
 Fragments begin with the exact shared recursive ABI v1 group and its compiler/
 ABI/tool versions manifest. They import only used intrinsics from `suss.runtime`,
-export parameterless `eval -> Value`, and have no hidden print/WASI imports or
+import used cells through exact shared cell types, export parameterless `eval -> Value`, and have no hidden print/WASI imports or
 canonical memory. Numbers/strings are constructed with the runtime's verified
 storage helpers; no legacy integer tags or UTF-8 values appear. The current
 backend dispatches explicit blocks through a program-counter local. It is not an
@@ -66,7 +68,7 @@ compiled fragments in one Store; this is not a persistent compiled session.
 
 Thirteen focused tests validate/link/execute actual artifacts and independently
 inspect the heap after forced GC. The original 14 scalar reader cases now also
-execute through compiled source fragments. A separate original 20-case source
+execute through compiled source fragments. A separate original 21-case source
 corpus matches freshly compiled pinned ClojureScript/Node observations exactly,
 covering numeric bits/arities, conditional values, lexical shadowing and strings.
 A wrapping runtime import records once-only ordered calls and proves unselected
@@ -86,8 +88,8 @@ require extraction/patch hashes and retained licenses.
 
 These bounded observations do not replace the existing 16-case legacy compiler
 corpus: it remains **9 differential passes, 7 exact failures, 0 skips**. No
-expected failures changed. M2-01/02/03 remain incomplete. Next, connect namespace/
-phase resolution and binding cells, then universal closure/callee lowering,
+expected failures changed. M2-01/02/03 remain incomplete. Next, complete source namespace/
+phase loading and connect universal closure/callee lowering,
 dynamic checks and the source corpus; add collection/dispatch/recur/exception/
 async IR forms and migrate AOT/REPL/macros through the same pipeline. Retire the
 old backend only when replacement acceptance passes.
