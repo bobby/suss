@@ -4662,3 +4662,37 @@ comparison3d2a4d5, partial Refs #11/#17. Dispatch independent review, push signi
 findings and require exact final-head CI. Full source sequence/list/rest/apply and
 M2–M9 acceptance remain incomplete. Do not merge; retained recovery stash0205f6d
 is not removed, and user stashes/files remain untouched.
+
+
+## Independent PR #83 review — 2026-09-30
+
+Reviewed candidate 66730bc against corrected comparison base 3d2a4d5 in isolated
+/private/tmp/suss-review-pr83. Pinned core.cljc 2227–2251 confirms syntactic
+protocol resolution with locals removed and direct-only mask/marker tests.
+Existing portable stable descriptors correctly preserve the implemented domain;
+native/default fallback remains satisfies?. No significant production defect
+found. Full source masks/prototypes/metadata/core and compiled macros remain
+explicitly unfinished; no issue or milestone acceptance is claimed.
+
+Added four independent observations for direct extension during operand
+evaluation, runtime protocol var rebinding without changing the syntactic marker,
+finally-returned objects and caught operand throws. Original 29 case dictionaries
+are unchanged. Focus 37351 completed terminal 0 (native 3/compiler nominal 5),
+/private/tmp/suss-pr83-review-focus.log. Fresh pinned graph 61529 completed
+terminal 0:33 exact observations and native 3; the mandatory provider/referrer
+fixture also passes before JSON output.
+/private/tmp/suss-pr83-review-oracle.log retains actual primary warnings and
+results. Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-implements-oracle.sh`.
+Python/provenance 15555 completed terminal 0:71 tests/inventory 1065/reviews 53+1012,
+exact ten source artifacts/WIT 15 files/6 packages/numeric manifest and offline
+roadmap 10 milestones/39 issues. Required full baseline result follows after its
+authoritative completion. No RUSTFLAGS override, unrelated deletion or merge.
+Next require exact final-head CI, then source-backed sequence/list dependencies
+and variadic rest/apply; complete M2–M9 acceptance remains open.
+
+Review required full baseline 10991 completed terminal 0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-pr83-review-baseline.log. Existing manual legacy ignores and
+diagnostic differential outcomes remain explicit and unchanged. All review
+Cargo/JVM/Node graphs are terminal and released. Push the review observations
+and require exact final-head CI before readiness; do not merge.

@@ -34,9 +34,11 @@ macro expansion remain unfinished. The declaration stays in progress.
 Twenty-four initial independently encoded primary observations passed while the
 native regression failed unresolved implements? before implementation. Three
 additional probes certify throw/finally order and own-var/qualified shadowing;
-all29 fresh pinned observations match actual scalar-decoded Wasm execution.
-The original27 remain unchanged; two additional probes distinguish syntactic
-protocol names from local shadowing and runtime protocol aliases. A separate
+all 33 fresh pinned observations match actual scalar-decoded Wasm execution.
+The original 27 remain unchanged; two additional probes distinguish syntactic
+protocol names from local shadowing and runtime protocol aliases. Four independent
+review probes cover direct extension during operand evaluation, protocol var
+rebinding, finally-returned objects and caught operand throws. A separate
 pinned provider/referrer fixture verifies automatic macro lookup versus runtime
 provider aliases before printing the observations.
 Three native tests additionally cover aliased/excluded/referred bindings, retained

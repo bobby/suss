@@ -41,7 +41,7 @@ fn implements_matches_independently_encoded_primary_observations() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/implements-cases.json")).unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 29);
+    assert_eq!(cases.len(), 33);
     let mut session = Session::new().unwrap();
     let mut ids = std::collections::BTreeSet::new();
     for case in cases {

@@ -233,6 +233,38 @@
         "tag": "bool",
         "value": false
       }
+    },
+    {
+      "id": "review-operand-extends-existing-object",
+      "source": "(do (defprotocol ReviewImplement (review-read [x])) (deftype ReviewBare []) (def review-object (ReviewBare.)) (cljs.core/implements? ReviewImplement (do (extend-type ReviewBare ReviewImplement (review-read [x] 3)) review-object)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-protocol-value-rebinding-does-not-change-marker",
+      "source": "(cljs.core/implements? ReviewImplement (do (set! ReviewImplement nil) review-object))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-finally-returned-object-keeps-direct-marker",
+      "source": "(do (set! implementation-trace 0) (if (cljs.core/implements? ReviewImplement (try review-object (finally (set! implementation-trace 9)))) implementation-trace 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "review-caught-operand-throw-returns-nondirect",
+      "source": "(do (set! implementation-trace 0) (if (cljs.core/implements? ReviewImplement (try (throw 5) (catch :default e (do (set! implementation-trace e) false)) (finally (set! implementation-trace (+ (* implementation-trace 10) 2))))) 0 implementation-trace))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404a000000000000"
+      }
     }
   ]
 }
