@@ -203,3 +203,13 @@ add partial hash-bound reviews: current overlay40 reviewed/1025 unassessed.
 Named/coerced host properties, checked-array options, source literals and full
 sequence/collection/core integration remain unfinished. This does not change the
 397 portable or72 source-core corpus counts, close an issue or certify M4.
+
+
+Two more retained-source forms, inc/dec, have explicit hash-bound defn patches,
+original source/docstrings/notices and byte-preserved EPL packaging. The fresh
+source import corpus now has113 observations (original72 unchanged);41 added
+cases cover first-class scalar coercion, inc UTF-16 concatenation, binary64
+rounding, aliases, primitive arithmetic independence and current runtime cells.
+The current overlay is42 in-progress reviews/1023 unassessed. Full compiled
+macros, object coercion, privacy/metadata and automatic core loading remain open;
+no issue or milestone acceptance is claimed by this prerequisite port.

@@ -23,6 +23,16 @@
       "id": "runtime:some?:271",
       "source-sha256": "28d482299025338e58268b5b0aebd0291e8db3ecc4bd5d05ab59981619d4356b",
       "patch": "docs/compatibility/patches/some.json"
+    },
+    {
+      "id": "runtime:inc:1505",
+      "source-sha256": "541c69f33a2aae92c9ecfb28882730449d8aaf1e0ebe95a5b5a6fb284b850f58",
+      "patch": "docs/compatibility/patches/inc.json"
+    },
+    {
+      "id": "runtime:dec:2803",
+      "source-sha256": "788ed81afdee829b502192198cce828c3084664f3267605307e56d23f0a8dfd5",
+      "patch": "docs/compatibility/patches/dec.json"
     }
   ]
 }

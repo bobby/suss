@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "a6eccc6376cf0691596ea31f73597a972ba07da15e79914573d62af41bd26f38",
-  "reviews-sha256": "fc41f4b3c9d45123529784d17107fb6e72d4aeb348650b86a3dfc87c259e100a",
+  "recipe-sha256": "1cfcb73081b8229be6bda21b5671e06fc7f5b6d84052221a6a83ab126294335a",
+  "reviews-sha256": "1f80655c09c1b1d210fac2964968cf931a791aba9a8130c301ea3288d515cba7",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -134,6 +134,68 @@
         "crates/suss-cli/tests/core_import.rs",
         "tests/oracle/core-import-cases.json"
       ]
+    },
+    {
+      "id": "runtime:inc:1505",
+      "name": "inc",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1505,
+      "end-line": 1507,
+      "byte-start": 43645,
+      "byte-end": 43722,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "541c69f33a2aae92c9ecfb28882730449d8aaf1e0ebe95a5b5a6fb284b850f58",
+      "extracted": "extracted/0004.cljs",
+      "extracted-sha256": "4882c3dfb121525cc3cac6a58a7581f0ea852897b1b85e2be9df127aa0847e43",
+      "patch": "docs/compatibility/patches/inc.json",
+      "patch-sha256": "f7b5945d8ed78760b9485ba0c1c78ec07b1b91a5bd9500b4501fcab2893afc65",
+      "adapted-form-sha256": "822228f6fde1bb5dca667041b9ed93c92b0cf35464be5fa0385a81fc6a7f7973",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "macro:+:1084",
+        "macro:inc:1192"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_import.rs",
+        "tests/oracle/core-import-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:dec:2803",
+      "name": "dec",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2803,
+      "end-line": 2805,
+      "byte-start": 75747,
+      "byte-end": 75811,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "788ed81afdee829b502192198cce828c3084664f3267605307e56d23f0a8dfd5",
+      "extracted": "extracted/0005.cljs",
+      "extracted-sha256": "6620d33e2f8c0e59edf4364da1241f0c3a237b116dc385f9c17aeb34095812ef",
+      "patch": "docs/compatibility/patches/dec.json",
+      "patch-sha256": "2ce2a65efbc484b2c768b1c8267526e0df8fed4f25d93478353260cb2672dffb",
+      "adapted-form-sha256": "6aa8ddaacca91ce3fab5b2be4e46b99617c23e8911882a43baf1422c7a582f91",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "macro:-:1143",
+        "macro:dec:1189"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_import.rs",
+        "tests/oracle/core-import-cases.json"
+      ]
     }
   ],
   "files": {
@@ -143,6 +205,8 @@
     "extracted/0001.cljs": "0d27d0346a31538b261c7943df5bb6d74c4f98c8098f6ab826752d7165be7bbd",
     "extracted/0002.cljs": "a99b626fc99b41bd2f599975407a10d9907224d9a45c5393820cd513e330a462",
     "extracted/0003.cljs": "877df94d83271fb53f95e431a4e07835e572cd9dbe5dd2017fb84c78c5d24ec8",
-    "suss/core.sus": "672d364b243e3e7a8981ec8b9a80c755bb2bb8721530b080c7a29cc9ddab9e13"
+    "extracted/0004.cljs": "4882c3dfb121525cc3cac6a58a7581f0ea852897b1b85e2be9df127aa0847e43",
+    "extracted/0005.cljs": "6620d33e2f8c0e59edf4364da1241f0c3a237b116dc385f9c17aeb34095812ef",
+    "suss/core.sus": "217581b4dd58a234b72cc4e8de6aaa4c2419273b27f73babd31a7e9a3fb71be1"
   }
 }

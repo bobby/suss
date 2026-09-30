@@ -4,7 +4,7 @@
 inventory, extracts exact UTF-8 byte ranges, and applies explicit hash-bound
 whole-form patches. The recipe is [core-import.json](core-import.json); the current
 selections are `runtime:identity:2691`, `runtime:not:263` and
-`runtime:boolean:2357` and `runtime:some?:271`. Identity retains its body through a single-arity `defn`
+`runtime:boolean:2357`, `runtime:some?:271`, `runtime:inc:1505` and `runtime:dec:2803`. Identity retains its body through a single-arity `defn`
 to `def`/`fn` adaptation. Not and boolean adapt their nil?/false?/cond macro tests
 to the portable `if` branch test, preserving nil/false/internal undefined and
 truthy zero/NaN/empty strings/objects. This also avoids reading redefined public
@@ -52,12 +52,12 @@ Native `core_import` tests load the generated source into the canonical `suss.co
 namespace and execute independently decoded results. They cover aliases, old
 captured function values, live redefinition, exact identity of scalars/functions/
 nominal objects through GC, ordered once-only arguments and wrong-arity recovery.
-The development-only oracle executes the pinned upstream identity/not/boolean/some?
-definitions, using the same 72-case scalar/truthiness/redefinition corpus as native execution and strict lossless
+The development-only oracle executes the pinned upstream identity/not/boolean/some?/inc/dec
+definitions, using the same 113-case scalar/truthiness/redefinition corpus as native execution and strict lossless
 transport for binary64, nil/booleans and UTF-16. JVM/Node are needed only for this
 reference runner, not extraction, verification or Suss execution.
 
-This is prerequisite evidence for issue #16, not completed M4-01 acceptance. Four
+This is prerequisite evidence for issue #16, not completed M4-01 acceptance. Six
 runtime forms are selected; general core dependency resolution, complete form
 review, upstream macro compilation, namespace privacy/doc metadata, phase bootstrap,
 collection foundations and production automatic core loading remain unfinished.
@@ -68,3 +68,15 @@ and yields a Boolean. The namespace is reserved and the intrinsic cannot be read
 as a first-class value. Complete upstream predicate macro expansion remains open. The manifest is byte provenance;
 executing evidence remains separate. Future source/tool/review changes require
 regeneration and renewed semantic review.
+
+
+The inc/dec adaptations retain their original arithmetic bodies after explicit
+fixed-arity defn patches. Pinned core.cljs1505–1507/2803–2805 and core.cljc
+inc1192/dec1189 plus arithmetic macro expansions establish the source provenance.
+Fresh captured-function cases and emitted core.js show `(x + 1)` and `(x - 1)`
+without public arithmetic var lookups. Inc preserves string concatenation, dec
+performs numeric coercion; nil/booleans, signed zero, infinities and binary64
+rounding follow the pinned runtime. The original72 certified observations are
+unchanged;41 new first-class cases extend the source import corpus to113.
+Object coercion and compiled inc/dec/defn macro bootstrap remain incomplete;
+these two partial reviews do not establish complete collection/core acceptance.

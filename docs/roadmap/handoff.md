@@ -4323,3 +4323,34 @@ tests pass. Next retain original pinned forms/notices, add explicit defn patches
 and partial hash-bound reviews, regenerate artifacts and validate execution.
 This worktree includes independently reviewed mutable head01785e4; all local
 reference/Cargo graphs are terminal and root owns the next graph. Full M2–M9 remains active.
+
+## inc/dec source imports — 2026-09-30
+
+Retain pinned inc1505 and dec2803 source forms/docstrings/notices with explicit
+fixed defn patches and byte-preserved EPL packaging. Original arithmetic bodies
+remain; fresh primary and emitted core.js confirm captured primitives ignore
+public arithmetic redefinitions. Six forms now generate ten deterministic artifact
+files; two partial hash-bound reviews bring overlay42/1023. No compiler/runtime
+implementation, ABI/layout/global/helper/dependency change. Full source macros,
+metadata/privacy, object conversion and automatic core loading remain unfinished.
+
+Initial native graph66287 passed15 imports (terminal0), /private/tmp/suss-inc-dec-first-focus.log.
+Fresh graph84980 passed107 exact primary/native15 (terminal0),
+/private/tmp/suss-inc-dec-primary-final.log. Added six NaN/undefined/nonnumeric-string
+probes and typed unsupported-object recovery; fresh graph54052 passed113 exact
+primary/native16 (terminal0), /private/tmp/suss-inc-dec-expanded-primary.log.
+Original72 certified observations unchanged; all41 new expectations verified
+independently against the pin, no skipped observations or opaque decoding.
+Python66/inventory1065/reviews42+1023/exact ten source artifacts/offline preview pass.
+Required full baseline recorded below only after terminal completion.
+Next publish partial Refs #9/#16/#17, independent review with pushed significant
+fixes, exact final-head CI; no merge. Then continue comparisons/sequence/list,
+variadic rest/apply and full M2–M9 acceptance. Full roadmap goal remains active.
+
+Required full inc/dec baseline32414 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-inc-dec-baseline.log. All local Cargo/reference graphs terminal.
+Final Python66, inventory1065, reviews42+1023, exact ten artifacts, numeric/WIT
+locks and offline preview pass. No RUSTFLAGS override or unrelated deletions.
+Publish the partial source import and dispatch independent review; final-head CI
+remains required before readiness. No merge or issue/milestone closure.

@@ -177,7 +177,7 @@ fn imported_core_matches_independently_decoded_pinned_scalar_corpus() {
         };
         assert_eq!(actual, case["expected"], "{source}");
     }
-    assert_eq!(ids.len(), 107);
+    assert_eq!(ids.len(), 113);
 }
 
 fn boolean(session: &mut Session, value: &SessionValue) -> bool {
@@ -515,5 +515,18 @@ fn imported_inc_dec_evaluate_arguments_before_typed_arity_failure_and_recover() 
             number(&mut session, &value),
             (if name == "inc" { 5.0f64 } else { 3.0 }).to_bits()
         );
+    }
+}
+
+#[test]
+fn imported_inc_dec_unsupported_object_coercion_is_typed_and_recovers() {
+    let mut session = loaded();
+    session.eval("(deftype O [])").unwrap();
+    for name in ["inc", "dec"] {
+        for argument in ["(O.)", "(array 1)", "(fn [] 1)"] {
+            assert!(matches!(session.eval(&format!("({name} {argument})")), Err(SessionError::Language(_))), "{name}: {argument}");
+            let value = session.eval(&format!("({name} 3)")).unwrap();
+            assert_eq!(number(&mut session, &value), (if name == "inc" {4.0f64} else {2.0}).to_bits());
+        }
     }
 }

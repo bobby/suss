@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "788ed81afdee829b502192198cce828c3084664f3267605307e56d23f0a8dfd5",
+  "replacement": "(def dec (fn [x] (- x 1)))",
+  "rationale": "Explicit single fixed-arity defn bootstrap adaptation preserving the original body. Fresh captured-function observations and pinned emitted core.js establish primitive - behavior independent of public arithmetic var redefinitions. Original form/docstring/copyright and EPL packaging remain retained. Object conversion, source metadata and compiled upstream dec/defn macros remain incomplete."
+}

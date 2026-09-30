@@ -6,17 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-;; Generated reviewed core import; see ../manifest.json.
-(ns suss.core)
-
-(def identity (fn [x] x))
-
-(def not (fn [x] (if x false true)))
-
-(def boolean (fn [x] (if x true false)))
-
-(def some? (fn [x] (if (suss.bootstrap/nil? x) false true)))
-
-(def inc (fn [x] (cljs.core/+ x 1)))
-
-(def dec (fn [x] (- x 1)))
+(defn inc
+  "Returns a number one greater than num."
+  [x] (cljs.core/+ x 1))

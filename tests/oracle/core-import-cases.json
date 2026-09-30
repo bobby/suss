@@ -870,6 +870,68 @@
         "tag": "f64",
         "bits": "3ff0000000000000"
       }
+    },
+    {
+      "id": "inc-nan",
+      "source": "(let [f inc] (f ##NaN))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "inc-undefined",
+      "source": "(let [f inc] (f (ex-data (new ExceptionInfo \"m\"))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "dec-nan",
+      "source": "(let [f dec] (f ##NaN))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "dec-undefined",
+      "source": "(let [f dec] (f (ex-data (new ExceptionInfo \"m\"))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "inc-nonnumeric-string",
+      "source": "(let [f inc] (f \"not-a-number\"))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          110,
+          111,
+          116,
+          45,
+          97,
+          45,
+          110,
+          117,
+          109,
+          98,
+          101,
+          114,
+          49
+        ]
+      }
+    },
+    {
+      "id": "dec-nonnumeric-string",
+      "source": "(let [f dec] (f \"not-a-number\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
     }
   ]
 }
