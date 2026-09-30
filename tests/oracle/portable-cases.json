@@ -1463,6 +1463,171 @@
           78
         ]
       }
+    },
+    {
+      "id": "function-add-zero",
+      "source": "(let [f +] (f))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "function-multiply-zero",
+      "source": "(let [f *] (f))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "function-add-identity-nil",
+      "source": "(let [f +] (f nil))",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "function-multiply-identity-string",
+      "source": "(let [f *] (f \"\\uD800\"))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          55296
+        ]
+      }
+    },
+    {
+      "id": "function-subtract-negative-zero",
+      "source": "(let [f -] (f nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "function-divide-unary",
+      "source": "(let [f /] (f \"4\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3fd0000000000000"
+      }
+    },
+    {
+      "id": "function-add-coercion",
+      "source": "(let [f +] (f true 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "function-add-string-fold",
+      "source": "(let [f +] (f 1 2 \"3\" 4))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          51,
+          51,
+          52
+        ]
+      }
+    },
+    {
+      "id": "function-multiply-fold",
+      "source": "(let [f *] (f \"2\" 3 4))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4038000000000000"
+      }
+    },
+    {
+      "id": "function-subtract-fold",
+      "source": "(let [f -] (f \"10\" true \"2\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "function-divide-fold",
+      "source": "(let [f /] (f \"24\" 3 \"2\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "function-qualified-alias",
+      "source": "(let [f cljs.core/+] (f \"x\" nil))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          120,
+          110,
+          117,
+          108,
+          108
+        ]
+      }
+    },
+    {
+      "id": "function-higher-order",
+      "source": "((fn [f x] (f x 3)) + \"2\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          50,
+          51
+        ]
+      }
+    },
+    {
+      "id": "function-computed-callee",
+      "source": "((if false + *) \"2\" 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "function-returned-callee",
+      "source": "(((fn [] +)) \"x\" false)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          120,
+          102,
+          97,
+          108,
+          115,
+          101
+        ]
+      }
+    },
+    {
+      "id": "function-closure-identity",
+      "source": "((let [f +] (f (fn [] 42))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "function-invalid-numeric-string",
+      "source": "(let [f *] (f \"junk\" 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "function-negative-zero-string",
+      "source": "(let [f *] (f \"-0\" 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
     }
   ]
 }

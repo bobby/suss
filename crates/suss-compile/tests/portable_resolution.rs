@@ -654,3 +654,42 @@ fn namespace_core_aliases_import_one_canonical_live_cell() {
     store.gc(None).unwrap();
     assert_eq!(bits(&mut store, &value), 42.0f64.to_bits());
 }
+
+#[test]
+fn namespace_arithmetic_values_materialize_canonical_phase_cells() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = runtime(&mut store);
+    let environment = Environment::default();
+    let mut linker = Linker::new(&engine);
+    linker
+        .instance(&mut store, "suss.runtime", runtime)
+        .unwrap();
+    let mut identities = Vec::new();
+    for (phase, factory, expected) in [
+        (Phase::Runtime, "arithmetic-add", 5.0f64),
+        (Phase::Macro, "arithmetic-multiply", 6.0f64),
+    ] {
+        let prepared =
+            portable::prepare_fragment("(let [f cljs.core/+] (f 2 3))", &environment, phase)
+                .unwrap();
+        assert_eq!(prepared.cells.len(), 1);
+        let identity = &prepared.cells[0];
+        assert_eq!(identity.namespace(), "suss.core");
+        assert_eq!(identity.phase(), phase);
+        let value = call(&mut store, runtime, factory, &[]);
+        let cell = call(&mut store, runtime, "binding-new", &[value]);
+        define(&mut store, &mut linker, identity, &cell);
+        let instance = fragment(&mut store, &linker, prepared.wasm);
+        let value = eval(&mut store, instance);
+        assert_eq!(bits(&mut store, &value), expected.to_bits());
+        identities.push(identity.clone());
+    }
+    assert_ne!(identities[0], identities[1]);
+    assert!(
+        environment.cells().is_empty(),
+        "analysis must not change its input"
+    );
+    assert_eq!(environment.arithmetic_bindings(Phase::Runtime).len(), 4);
+    assert_eq!(environment.arithmetic_bindings(Phase::Macro).len(), 4);
+}

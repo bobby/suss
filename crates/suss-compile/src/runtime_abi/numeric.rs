@@ -261,7 +261,7 @@ fn check(
     code
 }
 
-pub(super) fn intrinsics(b: &mut Builder, helper: Info) {
+pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
     use Instruction::*;
     let number = HeapType::Concrete(NUMBER);
     let string = HeapType::Concrete(STRING);
@@ -562,13 +562,14 @@ pub(super) fn intrinsics(b: &mut Builder, helper: Info) {
         F64Add,
         StructNew(NUMBER),
     ];
-    b.function("value-add", &[VALUE, VALUE], &[VALUE], &add);
+    let add = b.function("value-add", &[VALUE, VALUE], &[VALUE], &add);
+    let mut binary = Vec::new();
     for (name, operation) in [
         ("value-subtract", F64Sub),
         ("value-multiply", F64Mul),
         ("value-divide", F64Div),
     ] {
-        b.function(
+        binary.push(b.function(
             name,
             &[VALUE, VALUE],
             &[VALUE],
@@ -580,12 +581,13 @@ pub(super) fn intrinsics(b: &mut Builder, helper: Info) {
                 operation,
                 StructNew(NUMBER),
             ],
-        );
+        ));
     }
-    b.function(
+    let negate = b.function(
         "value-negate",
         &[VALUE],
         &[VALUE],
         &[LocalGet(0), Call(convert), F64Neg, StructNew(NUMBER)],
     );
+    [add, binary[0], binary[1], binary[2], negate]
 }

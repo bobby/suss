@@ -1,4 +1,45 @@
-;; Human-reviewed overlay. No upstream declarations have yet completed review.
+;; Human-reviewed overlay; these four entries are partial, not compatibility completions.
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
- :reviews {}}
+ :reviews {
+  "runtime:+:2724"
+  {:source-sha256 "0d082f92b029008bb9b5572120ade90cbe49376dbb6d758cb6e634e81c465431" :visibility :public
+   :arities {:fixed [0 1 2] :variadic-min 2}
+   :dependencies ["macro:+:1084" "runtime:reduce:2628" "runtime:+:2724"]
+   :classification :adapted
+   :rationale "Original GC intrinsic adaptation replaces JS primitive arithmetic and variadic reduction with universal closure dispatch. Primitive numbers/nil/booleans/UTF-16 and function-value arities execute; object coercion, complete macro integration and upstream core import remain unfinished. No source form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/arithmetic-values.md"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/runtime_abi.rs::runtime_abi_arithmetic_function_values_check_arity_and_fold_in_order" "crates/suss-cli/tests/persistent_session.rs::persistent_session_arithmetic_function_values_use_universal_invocation" "tests/oracle/portable-cases.json"]}
+  "runtime:-:2732"
+  {:source-sha256 "218306d3b463edae5f83ddd5cfaf8bb4aba487cb0f63b78ba715f6e0388005e4" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["macro:-:1143" "runtime:reduce:2628" "runtime:-:2732"]
+   :classification :adapted
+   :rationale "Original GC intrinsic adaptation replaces JS primitive arithmetic and variadic reduction with universal closure dispatch. Primitive numbers/nil/booleans/UTF-16 and function-value arities execute; object coercion, complete macro integration and upstream core import remain unfinished. No source form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/arithmetic-values.md"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/runtime_abi.rs::runtime_abi_arithmetic_function_values_check_arity_and_fold_in_order" "crates/suss-cli/tests/persistent_session.rs::persistent_session_arithmetic_function_values_use_universal_invocation" "tests/oracle/portable-cases.json"]}
+  "runtime:*:2739"
+  {:source-sha256 "bcbe8796d05ed24107b5459f49058a91e88c59a99f26579b4cfe26daea7cf83a" :visibility :public
+   :arities {:fixed [0 1 2] :variadic-min 2}
+   :dependencies ["macro:*:1148" "runtime:reduce:2628" "runtime:*:2739"]
+   :classification :adapted
+   :rationale "Original GC intrinsic adaptation replaces JS primitive arithmetic and variadic reduction with universal closure dispatch. Primitive numbers/nil/booleans/UTF-16 and function-value arities execute; object coercion, complete macro integration and upstream core import remain unfinished. No source form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/arithmetic-values.md"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/runtime_abi.rs::runtime_abi_arithmetic_function_values_check_arity_and_fold_in_order" "crates/suss-cli/tests/persistent_session.rs::persistent_session_arithmetic_function_values_use_universal_invocation" "tests/oracle/portable-cases.json"]}
+  "runtime:/:2748"
+  {:source-sha256 "65a119015f0c5c7256d57472e5f0ddc3bc1e37ef9ab135ac816ad9206d2f4f40" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["macro:/:1154" "macro:divide:1159" "runtime:reduce:2628" "runtime:/:2748"]
+   :classification :adapted
+   :rationale "Original GC intrinsic adaptation replaces JS primitive arithmetic and variadic reduction with universal closure dispatch. Primitive numbers/nil/booleans/UTF-16 and function-value arities execute; object coercion, complete macro integration and upstream core import remain unfinished. No source form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/arithmetic-values.md"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/runtime_abi.rs::runtime_abi_arithmetic_function_values_check_arity_and_fold_in_order" "crates/suss-cli/tests/persistent_session.rs::persistent_session_arithmetic_function_values_use_universal_invocation" "tests/oracle/portable-cases.json"]}
+ }}

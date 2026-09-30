@@ -866,3 +866,137 @@ fn runtime_abi_numeric_operations_and_sentinels_execute() {
         .collect();
     assert_eq!(fields[0].f64().unwrap().to_bits(), (-0.0f64).to_bits());
 }
+
+#[test]
+fn runtime_abi_arithmetic_function_values_check_arity_and_fold_in_order() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let invoke = runtime.get_func(&mut store, "invoke").unwrap();
+    for (name, inputs, expected) in [
+        ("add", vec![], 0.0),
+        ("multiply", vec![], 1.0),
+        ("add", vec![2.0], 2.0),
+        ("multiply", vec![2.0], 2.0),
+        ("subtract", vec![0.0], -0.0),
+        ("divide", vec![4.0], 0.25),
+        ("add", vec![1.0, 2.0, 3.0], 6.0),
+        ("multiply", vec![2.0, 3.0, 4.0], 24.0),
+        ("subtract", vec![10.0, 2.0, 3.0], 5.0),
+        ("divide", vec![24.0, 3.0, 2.0], 4.0),
+    ] {
+        let mut closure = [Val::null_any_ref()];
+        runtime
+            .get_func(&mut store, &format!("arithmetic-{name}"))
+            .unwrap()
+            .call(&mut store, &[], &mut closure)
+            .unwrap();
+        let object = closure[0]
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            object.field(&mut store, 2).unwrap().unwrap_i32(),
+            if matches!(name, "add" | "multiply") {
+                0
+            } else {
+                1
+            }
+        );
+        assert_eq!(object.field(&mut store, 3).unwrap().unwrap_i32(), -1);
+        let mut args = [Val::null_any_ref()];
+        runtime
+            .get_func(&mut store, "args-new")
+            .unwrap()
+            .call(&mut store, &[Val::I32(inputs.len() as i32)], &mut args)
+            .unwrap();
+        let array = args[0]
+            .unwrap_anyref()
+            .unwrap()
+            .as_array(&store)
+            .unwrap()
+            .unwrap();
+        for (index, input) in inputs.into_iter().enumerate() {
+            let mut value = [Val::null_any_ref()];
+            runtime
+                .get_func(&mut store, "number-box")
+                .unwrap()
+                .call(&mut store, &[Val::F64(f64::to_bits(input))], &mut value)
+                .unwrap();
+            array
+                .set(&mut store, index as u32, value[0].clone())
+                .unwrap();
+        }
+        store.gc(None).unwrap();
+        let mut result = [Val::null_any_ref()];
+        invoke
+            .call(
+                &mut store,
+                &[closure[0].clone(), args[0].clone()],
+                &mut result,
+            )
+            .unwrap();
+        let object = result[0]
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            object.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
+            f64::to_bits(expected),
+            "{name}"
+        );
+    }
+    for name in ["subtract", "divide"] {
+        let mut closure = [Val::null_any_ref()];
+        runtime
+            .get_func(&mut store, &format!("arithmetic-{name}"))
+            .unwrap()
+            .call(&mut store, &[], &mut closure)
+            .unwrap();
+        let mut args = [Val::null_any_ref()];
+        runtime
+            .get_func(&mut store, "args-new")
+            .unwrap()
+            .call(&mut store, &[Val::I32(0)], &mut args)
+            .unwrap();
+        let error = invoke
+            .call(
+                &mut store,
+                &[closure[0].clone(), args[0].clone()],
+                &mut [Val::null_any_ref()],
+            )
+            .unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>());
+        let exception = store.take_pending_exception().unwrap();
+        assert!(wasmtime::Tag::eq(
+            &exception.tag(&mut store).unwrap(),
+            &runtime.get_tag(&mut store, "language-exception").unwrap(),
+            &store
+        ));
+        let value = exception.field(&mut store, 0).unwrap();
+        let object = value
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap();
+        let descriptor = object
+            .field(&mut store, 0)
+            .unwrap()
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap();
+        assert_eq!(descriptor.field(&mut store, 0).unwrap().unwrap_i64(), 1);
+    }
+}

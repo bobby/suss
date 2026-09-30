@@ -87,6 +87,7 @@ pub struct Environment {
     bindings: BTreeMap<Global, Binding>,
     scopes: BTreeMap<(Phase, String), Scope>,
     current: BTreeMap<Phase, String>,
+    materialized_arithmetic: BTreeSet<Global>,
 }
 pub(crate) fn canonical(namespace: &str) -> &str {
     if namespace == "cljs.core" {
@@ -139,6 +140,7 @@ impl Environment {
             bindings: BTreeMap::new(),
             scopes: BTreeMap::new(),
             current: BTreeMap::new(),
+            materialized_arithmetic: BTreeSet::new(),
         };
         for phase in [Phase::Runtime, Phase::Macro] {
             env.scopes.insert(
@@ -202,6 +204,25 @@ impl Environment {
             .values()
             .filter_map(|binding| match binding {
                 Binding::Cell(global) => Some(global.clone()),
+                _ => None,
+            })
+            .chain(self.materialized_arithmetic.iter().cloned())
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect()
+    }
+    pub(crate) fn materialize_arithmetic(&mut self, global: Global) {
+        self.materialized_arithmetic.insert(global);
+    }
+    /// Bootstrap cell initializers for native hosts; source values share these
+    /// canonical identities and later declarations may replace their contents.
+    pub fn arithmetic_bindings(&self, phase: Phase) -> Vec<(Global, Arithmetic)> {
+        self.bindings
+            .values()
+            .filter_map(|binding| match binding {
+                Binding::Arithmetic { global, operator } if global.phase == phase => {
+                    Some((global.clone(), *operator))
+                }
                 _ => None,
             })
             .collect()

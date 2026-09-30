@@ -216,12 +216,16 @@ impl Analyzer {
         })
     }
     fn global_value(
-        &self,
+        &mut self,
         symbol: &suss_reader::Symbol,
         span: Range<usize>,
     ) -> Result<(Expression, Type), Diagnostic> {
         match self.environment.resolve(self.phase, symbol, span.clone())? {
             ResolvedBinding::Cell(global) => Ok((Expression::Global(global), Type::Value)),
+            ResolvedBinding::Arithmetic { global, .. } => {
+                self.environment.materialize_arithmetic(global.clone());
+                Ok((Expression::Global(global), Type::Value))
+            }
             _ => Err(fail(
                 span,
                 "Bootstrap core function/macro values are not materialized yet",

@@ -124,15 +124,22 @@ counts; reader/IR/backend and namespace-phase integration remain incomplete.
 ## Portable compiler bootstrap evidence
 
 The [new HIR/IR path](../runtime/portable-pipeline.md) compiles the 14 scalar reader
-cases into actual ABI fragments and executes a separate 158-case source corpus
+cases into actual ABI fragments and executes a separate 176-case source corpus
 whose observations match fresh pinned ClojureScript/Node exactly. It remains a
 bounded bootstrap; legacy CLI/AOT/macros and the 16-case full source corpus have
 not migrated. The latter remains 9 passing/7 exact failures/0 skips. No inventory
-entry is marked implemented by these counts; all 1,065 remain unassessed.
+entry is marked implemented by these counts; four arithmetic runtime declarations are reviewed as in-progress; 1,061 remain unassessed.
 
 Primitive arithmetic now has executing dynamic number/nil/boolean/string coercion
 evidence, supplemented by a fresh pinned 1,024-sample number formatting/parsing
-matrix. Object conversion, first-class arithmetic bindings and complete public
+matrix. Object conversion, complete arithmetic macro integration and public
 numeric core remain unfinished; these counts do not classify inventory items.
 See [numeric build input](../../runtime/numeric/README.md) for pinned dependency,
 artifact fingerprints, retained licenses and scratch-memory policy.
+
+The manual overlay now reviews runtime +, -, * and / as public adapted definitions
+with explicit fixed/variadic arities, source hashes and macro/reduction dependencies.
+All four are in-progress because object conversion and source-backed core/macros
+remain unfinished. No item is marked implemented or excluded. The generated
+inventory remains byte-exact; source import still requires retained EPL provenance.
+See [arithmetic values](../runtime/arithmetic-values.md) for actual executing scope.

@@ -63,7 +63,7 @@ Validation command:
 cargo test -p suss-compile --test runtime_abi --locked -- --test-threads=2
 ```
 
-Nine executing tests independently inspect heap fields/units and verify signed
+Ten executing tests independently inspect heap fields/units and verify signed
 zero, infinity, NaN payload storage, binary64 rounding, lone surrogates, astral
 pairs, checked writes, forced GC, shared types across runtime/producer/consumer,
 old captures after binding replacement, fixed/variadic arity, and rejection before
@@ -75,7 +75,7 @@ scheduler, target adapters and persistent REPL are not established by these test
 The portable resolver now emits exact shared cell imports. `binding-unbound`,
 checked `binding-get` and binding-set bound-state transitions distinguish an
 uninitialized var from nil; see [portable resolution](portable-resolution.md).
-Ten executing resolution tests supplement the nine ABI tests. Production
+Ten executing resolution tests supplement the ten ABI tests. Production
 namespace loading, source definitions and universal call lowering remain open.
 
 Fixed source closures and generic local/global/computed calls now lower through
@@ -117,3 +117,8 @@ Nine executing ABI tests include exact allocation-failure exceptions and a
 1,024-sample independently decoded formatting/parsing matrix. Session tests cover
 scratch high water capacity, reset and actual interrupted-stack recovery. None of
 this completes M2-03, canonical memory management, object conversion or core import.
+
+Universal arithmetic closure factories and their exact shared Invoke types now
+execute in the tenth ABI test; see [arithmetic values](arithmetic-values.md). The
+factories are provisioned into live cells by native hosts, with central arity and
+old-capture behavior after rebinding. No recursive layout change is introduced.

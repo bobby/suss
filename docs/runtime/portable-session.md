@@ -88,14 +88,14 @@ engines must enable GC/function references/tail calls/exceptions and fuel.
 
 ## Evidence and limits
 
-Fourteen integration tests plus four private host regressions execute real fragments,
+Seventeen integration tests plus four private host regressions execute real fragments,
 rooted values and shared cells: once-only initialization/defonce, bound nil/false,
 old captures/live rebinding, UTF-16 after GC, compile failure isolation, exact-tag
 initializer recovery, foreign/reset handles, dependency transaction compilation,
 reverse-order diamond effects, successful dependency reuse after failure, canonical
 core provisioning, scope/catalog distinctions, artifact/import gates, foreign
 callback exception recovery (including translated errors and swallowed throws)
-and fuel trap recovery. Existing 68 focused compiler
+and fuel trap recovery. Existing 70 focused compiler
 checks also pass. No new test is ignored.
 
 Initial API regression compilation failed because the native library host did not
@@ -111,11 +111,11 @@ Implementation/tests are original; pinned EPL-1.0 ClojureScript namespace/defini
 semantics inform the portable contract, with no copied upstream implementation.
 Only the already-locked tempfile package is added as a CLI development dependency;
 no package version changes or shipped JVM/Node dependency are introduced. The
-existing 158-case portable oracle and legacy 9-pass/7-failure/0-skip baseline remain
-separate evidence, and all 1,065 inventory items remain unassessed.
+existing 176-case portable oracle and legacy 9-pass/7-failure/0-skip baseline remain
+separate evidence, and four runtime arithmetic declarations are reviewed as in-progress and 1,061 remain unassessed.
 
 Production REPL/command frontend migration and printing, atoms/types/collections,
-extended closure signatures, object coercions and first-class core arithmetic, complete
+extended closure signatures, object coercions and complete source core/macros, complete
 ExceptionInfo/effect/recur IR, reload/cache/privacy policy, compiled macro sessions,
 async I/O/cancellation and live heap accounting remain unfinished. Unsupported
 source forms still return located diagnostics. Source declaration/unbound-var
@@ -131,3 +131,8 @@ exceptions and successful next inputs after fuel traps. A private regression
 interrupts an actual Rust helper frame and verifies the following conversion resets
 its stack pointer; a missing-reset mutation fails that regression. Trusted inspect
 callbacks use the Store's remaining fuel rather than starting a new operation budget.
+
+Arithmetic values now read canonical live cells, including higher-order/computed
+calls and old captures after rebinding/GC; see [arithmetic values](arithmetic-values.md).
+Four bootstrap arithmetic cells are included in binding_cells from startup and
+reprovisioned on reset. Caller evaluation of callee/arguments remains once in order.
