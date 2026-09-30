@@ -1,0 +1,254 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "source-adapter-initial-direct-marker",
+      "source": "(do (deftype CoreProtocolProbe [value] cljs.core/ISeqable (-seq [this] this) cljs.core/ISeq (-first [this] value) (-rest [this] nil) cljs.core/INext (-next [this] nil) cljs.core/ASeq cljs.core/ISequential cljs.core/IList cljs.core/ICounted (-count [this] 1) cljs.core/ICollection (-conj [this x] (CoreProtocolProbe. x)) cljs.core/IEmptyableCollection (-empty [this] nil) cljs.core/IIndexed (-nth [this n] value) (-nth [this n not-found] value) cljs.core/IMeta (-meta [this] value) cljs.core/IWithMeta (-with-meta [this m] (CoreProtocolProbe. m)) cljs.core/IEquiv (-equiv [this other] (identical? this other)) cljs.core/IHash (-hash [this] value) cljs.core/ICloneable (-clone [this] (CoreProtocolProbe. value))) (def interface-probe (CoreProtocolProbe. 17)) (cljs.core/implements? cljs.core/ISeqable interface-probe))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-ISeq",
+      "source": "(cljs.core/implements? cljs.core/ISeq interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-INext",
+      "source": "(cljs.core/implements? cljs.core/INext interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-ASeq",
+      "source": "(cljs.core/implements? cljs.core/ASeq interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-ISequential",
+      "source": "(cljs.core/implements? cljs.core/ISequential interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-IList",
+      "source": "(cljs.core/implements? cljs.core/IList interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-ICounted",
+      "source": "(cljs.core/implements? cljs.core/ICounted interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-ICollection",
+      "source": "(cljs.core/implements? cljs.core/ICollection interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-IEmptyableCollection",
+      "source": "(cljs.core/implements? cljs.core/IEmptyableCollection interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-IIndexed",
+      "source": "(cljs.core/implements? cljs.core/IIndexed interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-IMeta",
+      "source": "(cljs.core/implements? cljs.core/IMeta interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-IWithMeta",
+      "source": "(cljs.core/implements? cljs.core/IWithMeta interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-IEquiv",
+      "source": "(cljs.core/implements? cljs.core/IEquiv interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-IHash",
+      "source": "(cljs.core/implements? cljs.core/IHash interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-ICloneable",
+      "source": "(cljs.core/implements? cljs.core/ICloneable interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "first",
+      "source": "(cljs.core/-first interface-probe)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "count",
+      "source": "(cljs.core/-count interface-probe)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "indexed-two",
+      "source": "(cljs.core/-nth interface-probe 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "indexed-three",
+      "source": "(cljs.core/-nth interface-probe 0 99)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "meta",
+      "source": "(cljs.core/-meta interface-probe)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "hash",
+      "source": "(cljs.core/-hash interface-probe)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "clone",
+      "source": "(cljs.core/-first (cljs.core/-clone interface-probe))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "conj",
+      "source": "(cljs.core/-first (cljs.core/-conj interface-probe 8))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "with-meta",
+      "source": "(cljs.core/-meta (cljs.core/-with-meta interface-probe 9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "seq-identity",
+      "source": "(identical? interface-probe (cljs.core/-seq interface-probe))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equiv-identity",
+      "source": "(cljs.core/-equiv interface-probe interface-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equiv-distinct",
+      "source": "(cljs.core/-equiv interface-probe (CoreProtocolProbe. 17))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "rest-nil",
+      "source": "(nil? (cljs.core/-rest interface-probe))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "next-nil",
+      "source": "(nil? (cljs.core/-next interface-probe))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-nil",
+      "source": "(nil? (cljs.core/-empty interface-probe))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-not-direct",
+      "source": "(cljs.core/implements? cljs.core/ISeqable nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    }
+  ]
+}

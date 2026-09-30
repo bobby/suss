@@ -20,3 +20,85 @@
 (def inc (fn [x] (cljs.core/+ x 1)))
 
 (def dec (fn [x] (- x 1)))
+
+(defprotocol ICloneable
+  "Protocol for cloning a value."
+  (^clj -clone [value]
+    "Creates a clone of value."))
+
+(defprotocol ICounted
+  "Protocol for adding the ability to count a collection in constant time."
+  (^number -count [coll]
+    "Calculates the count of coll in constant time. Used by cljs.core/count."))
+
+(defprotocol IEmptyableCollection
+  "Protocol for creating an empty collection."
+  (-empty [coll]
+    "Returns an empty collection of the same category as coll. Used
+     by cljs.core/empty."))
+
+(defprotocol ICollection
+  "Protocol for adding to a collection."
+  (^clj -conj [coll o]
+    "Returns a new collection of coll with o added to it. The new item
+     should be added to the most efficient place, e.g.
+     (conj [1 2 3 4] 5) => [1 2 3 4 5]
+     (conj '(2 3 4 5) 1) => '(1 2 3 4 5)"))
+
+(defprotocol IIndexed
+  "Protocol for collections to provide indexed-based access to their items."
+  (-nth [coll n] [coll n not-found]
+    "Returns the value at the index n in the collection coll.
+     Returns not-found if index n is out of bounds and not-found is supplied."))
+
+(defprotocol ASeq
+  "Marker protocol indicating an array sequence.")
+
+(defprotocol ISeq
+  "Protocol for collections to provide access to their items as sequences."
+  (-first [coll]
+    "Returns the first item in the collection coll. Used by cljs.core/first.")
+  (^clj -rest [coll]
+    "Returns a new collection of coll without the first item. It should
+     always return a seq, e.g.
+     (rest []) => ()
+     (rest nil) => ()"))
+
+(defprotocol INext
+  "Protocol for accessing the next items of a collection."
+  (^clj-or-nil -next [coll]
+    "Returns a new collection of coll without the first item. In contrast to
+     rest, it should return nil if there are no more items, e.g.
+     (next []) => nil
+     (next nil) => nil"))
+
+(defprotocol IMeta
+  "Protocol for accessing the metadata of an object."
+  (^clj-or-nil -meta [o]
+    "Returns the metadata of object o."))
+
+(defprotocol IWithMeta
+  "Protocol for adding metadata to an object."
+  (^clj -with-meta [o meta]
+    "Returns a new object with value of o and metadata meta added to it."))
+
+(defprotocol IEquiv
+  "Protocol for adding value comparison functionality to a type."
+  (^boolean -equiv [o other]
+    "Returns true if o and other are equal, false otherwise."))
+
+(defprotocol IHash
+  "Protocol for adding hashing functionality to a type."
+  (-hash [o]
+    "Returns the hash code of o."))
+
+(defprotocol ISeqable
+  "Protocol for adding the ability to a type to be transformed into a sequence."
+  (^clj-or-nil -seq [o]
+    "Returns a seq of o, or nil if o is empty."))
+
+(defprotocol ISequential
+  "Marker interface indicating a persistent collection of sequential items")
+
+(defprotocol IList
+  "Marker interface indicating a persistent list")

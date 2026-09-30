@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "1cfcb73081b8229be6bda21b5671e06fc7f5b6d84052221a6a83ab126294335a",
-  "reviews-sha256": "08109f80a835685901b922f0b62811c2d1ba7be8ac863c3b4103c1f2446d29b1",
+  "recipe-sha256": "8a19aad4791e2bac3ff8cb60e6200c6a309cc74cf041a8f00a73310825bbbef4",
+  "reviews-sha256": "bd693880da91e14b83ab04c5ff2cdfa9611026dfe313d24018c7db0c4b920b49",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -196,6 +196,456 @@
         "crates/suss-cli/tests/core_import.rs",
         "tests/oracle/core-import-cases.json"
       ]
+    },
+    {
+      "id": "runtime:ICloneable:614",
+      "name": "ICloneable",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 614,
+      "end-line": 617,
+      "byte-start": 16825,
+      "byte-end": 16939,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "bd5647df0b14eb824f8859d66ac75f3b8ba1a7b03742908a85cbb8df1ee89a1a",
+      "extracted": "extracted/0006.cljs",
+      "extracted-sha256": "ffcfc69f71c94d3a347ea2a0311c7b11198c26312d7ecd987523a9f4621dcd90",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "bd5647df0b14eb824f8859d66ac75f3b8ba1a7b03742908a85cbb8df1ee89a1a",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:ICounted:619",
+      "name": "ICounted",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 619,
+      "end-line": 622,
+      "byte-start": 16941,
+      "byte-end": 17143,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "71975c1a52326c8a4dca6392f54bce241501207e74fbc926338eeaecfa7b03b0",
+      "extracted": "extracted/0007.cljs",
+      "extracted-sha256": "795b4338bc0a652bcfa80afcff45cc1046a9912a00f1ffc2dea7aae8cdbda179",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "71975c1a52326c8a4dca6392f54bce241501207e74fbc926338eeaecfa7b03b0",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:IEmptyableCollection:624",
+      "name": "IEmptyableCollection",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 624,
+      "end-line": 628,
+      "byte-start": 17145,
+      "byte-end": 17338,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c87f30b5c43f8b83064f1bc9f55ce559cff143cb7a0aed034d01542c055b6828",
+      "extracted": "extracted/0008.cljs",
+      "extracted-sha256": "059169615fe8e05431a28d798d7fd9f9762f5a18332736d83bd8e3241078cb0c",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "c87f30b5c43f8b83064f1bc9f55ce559cff143cb7a0aed034d01542c055b6828",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:ICollection:630",
+      "name": "ICollection",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 630,
+      "end-line": 636,
+      "byte-start": 17340,
+      "byte-end": 17637,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "d859caa3b42c3044cd83deffcc65783255d01e4df70bf29ff1edf50e7147d111",
+      "extracted": "extracted/0009.cljs",
+      "extracted-sha256": "c5494f4a7bb92274415a43c0e49c9bf64e3e22b26b509cafd44ba66268c72f2b",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "d859caa3b42c3044cd83deffcc65783255d01e4df70bf29ff1edf50e7147d111",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:IIndexed:641",
+      "name": "IIndexed",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 641,
+      "end-line": 645,
+      "byte-start": 17685,
+      "byte-end": 17962,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "82c66d215a92cd1303649660aeb16ddf15ede1cd2fbefa8d821648bc6da82ec8",
+      "extracted": "extracted/0010.cljs",
+      "extracted-sha256": "7cb4ade7b2350aa8241bb88b3923e69c4e2bc7779022c80468235486d620dcd1",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "82c66d215a92cd1303649660aeb16ddf15ede1cd2fbefa8d821648bc6da82ec8",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:ASeq:647",
+      "name": "ASeq",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 647,
+      "end-line": 648,
+      "byte-start": 17964,
+      "byte-end": 18032,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "660ab8b32ce4325b052e8aca87e601a9b560f6cb4a3fa60a23533fda2808aabd",
+      "extracted": "extracted/0011.cljs",
+      "extracted-sha256": "268a291f824b8606b090460bd6a0485028011f420d9ff878749256966f78b74e",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "660ab8b32ce4325b052e8aca87e601a9b560f6cb4a3fa60a23533fda2808aabd",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:ISeq:650",
+      "name": "ISeq",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 650,
+      "end-line": 658,
+      "byte-start": 18034,
+      "byte-end": 18393,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "1aa5bf12a8efbcfbaa355ee10ce4f6014c7b5dfafe48b626a42e16c1bea60ddb",
+      "extracted": "extracted/0012.cljs",
+      "extracted-sha256": "0edaa6d0bf6d85c21186e53462e22ca25bae5c7c8d24dd9bd307155321426c25",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "1aa5bf12a8efbcfbaa355ee10ce4f6014c7b5dfafe48b626a42e16c1bea60ddb",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:INext:660",
+      "name": "INext",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 660,
+      "end-line": 666,
+      "byte-start": 18395,
+      "byte-end": 18690,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "6cfe3852875871148bae804264bf6e6b4ee8633926fc5c21b994ddf2c2dcf19c",
+      "extracted": "extracted/0013.cljs",
+      "extracted-sha256": "0d1fe632acee3032cd2d54819794114b5735491f846d025c151ed28feac3f8c2",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "6cfe3852875871148bae804264bf6e6b4ee8633926fc5c21b994ddf2c2dcf19c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:IMeta:728",
+      "name": "IMeta",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 728,
+      "end-line": 731,
+      "byte-start": 20787,
+      "byte-end": 20926,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "dc2222645eff6191e94621e8e3b97e15fd4af440299bb45317549fbbfa34db0d",
+      "extracted": "extracted/0014.cljs",
+      "extracted-sha256": "6dbdc05fbff4fc4b73d1fdb60b4f5b88b9152227485f950d039b4bc1b08af5b3",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "dc2222645eff6191e94621e8e3b97e15fd4af440299bb45317549fbbfa34db0d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:IWithMeta:733",
+      "name": "IWithMeta",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 733,
+      "end-line": 736,
+      "byte-start": 20928,
+      "byte-end": 21101,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "aaaf6cd1facd291dfd67daca3ce832d3eb1ab208afa3dbade730183aff936cc2",
+      "extracted": "extracted/0015.cljs",
+      "extracted-sha256": "a48348cc5341267fed212bbf0113ebee16157896a71097561697b016e8f8c53d",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "aaaf6cd1facd291dfd67daca3ce832d3eb1ab208afa3dbade730183aff936cc2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:IEquiv:753",
+      "name": "IEquiv",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 753,
+      "end-line": 756,
+      "byte-start": 21745,
+      "byte-end": 21923,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "84667a2dd901b6a2f5d75518a34c3d7f30fb58fc0044a7414ca3a298fb6e3e1b",
+      "extracted": "extracted/0016.cljs",
+      "extracted-sha256": "3053a23ce113e03daef336a4ecedce6dcf8192811e9ba35b10b4f5d4978971a3",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "84667a2dd901b6a2f5d75518a34c3d7f30fb58fc0044a7414ca3a298fb6e3e1b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:IHash:758",
+      "name": "IHash",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 758,
+      "end-line": 761,
+      "byte-start": 21925,
+      "byte-end": 22049,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "d399756d9c6dcc723dd4b062a85ae127f09f0f4a9e2f14a304f73475e82c4829",
+      "extracted": "extracted/0017.cljs",
+      "extracted-sha256": "8c889466f0713afe3df911a911b0021d70e7281adcf0619a5575f2b75fae3ebf",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "d399756d9c6dcc723dd4b062a85ae127f09f0f4a9e2f14a304f73475e82c4829",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:ISeqable:763",
+      "name": "ISeqable",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 763,
+      "end-line": 766,
+      "byte-start": 22051,
+      "byte-end": 22227,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "0e2ceddeb51407ef720b7555233407e49ef4103c6d9eb2dbc77d9838bde7aa69",
+      "extracted": "extracted/0018.cljs",
+      "extracted-sha256": "49f22abb3dcbb659a7afccbd5f5018acab88739edb96d286a2bd1d627332a96a",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "0e2ceddeb51407ef720b7555233407e49ef4103c6d9eb2dbc77d9838bde7aa69",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:ISequential:768",
+      "name": "ISequential",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 768,
+      "end-line": 769,
+      "byte-start": 22229,
+      "byte-end": 22330,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "3c27b5f35861117d58755c1b264c9e9d741ad04b1dd1a92bcc68c6fe70bbb211",
+      "extracted": "extracted/0019.cljs",
+      "extracted-sha256": "eae7fb3d9baa328700e0890ac3aba4d61c730bdde27fd615bd2ecacdb71f7019",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "3c27b5f35861117d58755c1b264c9e9d741ad04b1dd1a92bcc68c6fe70bbb211",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:IList:771",
+      "name": "IList",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 771,
+      "end-line": 772,
+      "byte-start": 22332,
+      "byte-end": 22401,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c4c0de3d872bfddda90f45551a683d6afe4ba99deafdc478ea7235faf89245f9",
+      "extracted": "extracted/0020.cljs",
+      "extracted-sha256": "f115f42c4f137db28ab420f06ca57bc7667bf2c728481f61d1f6c66f33775519",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "c4c0de3d872bfddda90f45551a683d6afe4ba99deafdc478ea7235faf89245f9",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041",
+        "shared ABI nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_sequence_interfaces.rs",
+        "tests/oracle/core-interface-cases.json"
+      ]
     }
   ],
   "files": {
@@ -207,6 +657,21 @@
     "extracted/0003.cljs": "877df94d83271fb53f95e431a4e07835e572cd9dbe5dd2017fb84c78c5d24ec8",
     "extracted/0004.cljs": "4882c3dfb121525cc3cac6a58a7581f0ea852897b1b85e2be9df127aa0847e43",
     "extracted/0005.cljs": "6620d33e2f8c0e59edf4364da1241f0c3a237b116dc385f9c17aeb34095812ef",
-    "suss/core.sus": "217581b4dd58a234b72cc4e8de6aaa4c2419273b27f73babd31a7e9a3fb71be1"
+    "extracted/0006.cljs": "ffcfc69f71c94d3a347ea2a0311c7b11198c26312d7ecd987523a9f4621dcd90",
+    "extracted/0007.cljs": "795b4338bc0a652bcfa80afcff45cc1046a9912a00f1ffc2dea7aae8cdbda179",
+    "extracted/0008.cljs": "059169615fe8e05431a28d798d7fd9f9762f5a18332736d83bd8e3241078cb0c",
+    "extracted/0009.cljs": "c5494f4a7bb92274415a43c0e49c9bf64e3e22b26b509cafd44ba66268c72f2b",
+    "extracted/0010.cljs": "7cb4ade7b2350aa8241bb88b3923e69c4e2bc7779022c80468235486d620dcd1",
+    "extracted/0011.cljs": "268a291f824b8606b090460bd6a0485028011f420d9ff878749256966f78b74e",
+    "extracted/0012.cljs": "0edaa6d0bf6d85c21186e53462e22ca25bae5c7c8d24dd9bd307155321426c25",
+    "extracted/0013.cljs": "0d1fe632acee3032cd2d54819794114b5735491f846d025c151ed28feac3f8c2",
+    "extracted/0014.cljs": "6dbdc05fbff4fc4b73d1fdb60b4f5b88b9152227485f950d039b4bc1b08af5b3",
+    "extracted/0015.cljs": "a48348cc5341267fed212bbf0113ebee16157896a71097561697b016e8f8c53d",
+    "extracted/0016.cljs": "3053a23ce113e03daef336a4ecedce6dcf8192811e9ba35b10b4f5d4978971a3",
+    "extracted/0017.cljs": "8c889466f0713afe3df911a911b0021d70e7281adcf0619a5575f2b75fae3ebf",
+    "extracted/0018.cljs": "49f22abb3dcbb659a7afccbd5f5018acab88739edb96d286a2bd1d627332a96a",
+    "extracted/0019.cljs": "eae7fb3d9baa328700e0890ac3aba4d61c730bdde27fd615bd2ecacdb71f7019",
+    "extracted/0020.cljs": "f115f42c4f137db28ab420f06ca57bc7667bf2c728481f61d1f6c66f33775519",
+    "suss/core.sus": "9f8d5d2ab55d8acf6ba65f40d4aa6dee74afad3d80ec30ded05d105621a15597"
   }
 }

@@ -57,8 +57,8 @@ definitions, using the same 117-case scalar/truthiness/redefinition corpus as na
 transport for binary64, nil/booleans and UTF-16. JVM/Node are needed only for this
 reference runner, not extraction, verification or Suss execution.
 
-This is prerequisite evidence for issue #16, not completed M4-01 acceptance. Six
-runtime forms are selected; general core dependency resolution, complete form
+This is prerequisite evidence for issue #16, not completed M4-01 acceptance. Twenty-one
+runtime forms are selected (six adapted functions and fifteen unmodified protocols); general core dependency resolution, complete form
 review, upstream macro compilation, namespace privacy/doc metadata, phase bootstrap,
 collection foundations and production automatic core loading remain unfinished.
 The default CLI/REPL still uses prototype paths. Additional foundations remain unported. The private `suss.bootstrap/nil?`
@@ -82,3 +82,23 @@ Independent review adds callee capture before operand rebinding and thrown-opera
 finally cleanup, with namespace-alias restoration and forced GC in native tests.
 Object coercion and compiled inc/dec/defn macro bootstrap remain incomplete;
 these two partial reviews do not establish complete collection/core acceptance.
+
+
+The retained protocol family is ICloneable, ICounted, IEmptyableCollection,
+ICollection, IIndexed, ASeq, ISeq, INext, IMeta, IWithMeta, IEquiv, IHash,
+ISeqable, ISequential and IList. These whole forms use `patch: null` in the
+recipe, retain their original source order and have individual hash-bound partial
+reviews. The generated directory now contains 25 files. Method signatures belong
+to these declarations; marker interfaces have no methods. The compiler's existing
+bounded defprotocol adapter executes them; this does not establish compiled
+upstream defprotocol macro or full protocol reflection compatibility.
+
+`scripts/test-core-interface-oracle.sh` executes 31 separate pinned observations
+against an original development fixture, then both native interface tests. The
+fixture implements all fifteen imported protocols on a nominal adapter and checks
+direct markers, method calls, both -nth arities, identity, and scalar results.
+Native execution loads the generated core artifact and forces GC between calls.
+The adapter is not a source List, EmptyList, Cons or IndexedSeq implementation;
+its method bodies do not certify persistent collection behavior. The earlier
+117-case six-function corpus remains separate and must continue passing. See
+[core interfaces](../runtime/core-interfaces.md) for evidence and limitations.

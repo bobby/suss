@@ -532,4 +532,154 @@
    :adaptation-path "docs/runtime/implements.md"
    :alternative nil
    :tests ["tests/oracle/implements-cases.json" "crates/suss-cli/tests/portable_implements.rs" "crates/suss-compile/tests/portable_nominal.rs"]}
+  "runtime:ICloneable:614"
+  {:source-sha256 "bd5647df0b14eb824f8859d66ac75f3b8ba1a7b03742908a85cbb8df1ee89a1a" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated -clone/1 signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:ICounted:619"
+  {:source-sha256 "71975c1a52326c8a4dca6392f54bce241501207e74fbc926338eeaecfa7b03b0" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated -count/1 signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:IEmptyableCollection:624"
+  {:source-sha256 "c87f30b5c43f8b83064f1bc9f55ce559cff143cb7a0aed034d01542c055b6828" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated -empty/1 signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:ICollection:630"
+  {:source-sha256 "d859caa3b42c3044cd83deffcc65783255d01e4df70bf29ff1edf50e7147d111" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated -conj/2 signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:IIndexed:641"
+  {:source-sha256 "82c66d215a92cd1303649660aeb16ddf15ede1cd2fbefa8d821648bc6da82ec8" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated -nth/2,3 signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:ASeq:647"
+  {:source-sha256 "660ab8b32ce4325b052e8aca87e601a9b560f6cb4a3fa60a23533fda2808aabd" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated marker only signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:ISeq:650"
+  {:source-sha256 "1aa5bf12a8efbcfbaa355ee10ce4f6014c7b5dfafe48b626a42e16c1bea60ddb" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated -first/1 and -rest/1 signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:INext:660"
+  {:source-sha256 "6cfe3852875871148bae804264bf6e6b4ee8633926fc5c21b994ddf2c2dcf19c" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated -next/1 signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:IMeta:728"
+  {:source-sha256 "dc2222645eff6191e94621e8e3b97e15fd4af440299bb45317549fbbfa34db0d" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated -meta/1 signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:IWithMeta:733"
+  {:source-sha256 "aaaf6cd1facd291dfd67daca3ce832d3eb1ab208afa3dbade730183aff936cc2" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated -with-meta/2 signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:IEquiv:753"
+  {:source-sha256 "84667a2dd901b6a2f5d75518a34c3d7f30fb58fc0044a7414ca3a298fb6e3e1b" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated -equiv/2 signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:IHash:758"
+  {:source-sha256 "d399756d9c6dcc723dd4b062a85ae127f09f0f4a9e2f14a304f73475e82c4829" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated -hash/1 signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:ISeqable:763"
+  {:source-sha256 "0e2ceddeb51407ef720b7555233407e49ef4103c6d9eb2dbc77d9838bde7aa69" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated -seq/1 signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:ISequential:768"
+  {:source-sha256 "3c27b5f35861117d58755c1b264c9e9d741ad04b1dd1a92bcc68c6fe70bbb211" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated marker only signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:IList:771"
+  {:source-sha256 "c4c0de3d872bfddda90f45551a683d6afe4ba99deafdc478ea7235faf89245f9" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration; generated marker only signatures are exercised through an original nominal adapter and actual Wasm after GC. Original documentation and annotations are retained in licensed artifacts. Complete compiled defprotocol macro, runtime reflection/metadata, all builtin native extensions and persistent collection implementations remain unfinished; declaration import does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
  }}

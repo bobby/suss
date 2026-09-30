@@ -33,6 +33,81 @@
       "id": "runtime:dec:2803",
       "source-sha256": "788ed81afdee829b502192198cce828c3084664f3267605307e56d23f0a8dfd5",
       "patch": "docs/compatibility/patches/dec.json"
+    },
+    {
+      "id": "runtime:ICloneable:614",
+      "source-sha256": "bd5647df0b14eb824f8859d66ac75f3b8ba1a7b03742908a85cbb8df1ee89a1a",
+      "patch": null
+    },
+    {
+      "id": "runtime:ICounted:619",
+      "source-sha256": "71975c1a52326c8a4dca6392f54bce241501207e74fbc926338eeaecfa7b03b0",
+      "patch": null
+    },
+    {
+      "id": "runtime:IEmptyableCollection:624",
+      "source-sha256": "c87f30b5c43f8b83064f1bc9f55ce559cff143cb7a0aed034d01542c055b6828",
+      "patch": null
+    },
+    {
+      "id": "runtime:ICollection:630",
+      "source-sha256": "d859caa3b42c3044cd83deffcc65783255d01e4df70bf29ff1edf50e7147d111",
+      "patch": null
+    },
+    {
+      "id": "runtime:IIndexed:641",
+      "source-sha256": "82c66d215a92cd1303649660aeb16ddf15ede1cd2fbefa8d821648bc6da82ec8",
+      "patch": null
+    },
+    {
+      "id": "runtime:ASeq:647",
+      "source-sha256": "660ab8b32ce4325b052e8aca87e601a9b560f6cb4a3fa60a23533fda2808aabd",
+      "patch": null
+    },
+    {
+      "id": "runtime:ISeq:650",
+      "source-sha256": "1aa5bf12a8efbcfbaa355ee10ce4f6014c7b5dfafe48b626a42e16c1bea60ddb",
+      "patch": null
+    },
+    {
+      "id": "runtime:INext:660",
+      "source-sha256": "6cfe3852875871148bae804264bf6e6b4ee8633926fc5c21b994ddf2c2dcf19c",
+      "patch": null
+    },
+    {
+      "id": "runtime:IMeta:728",
+      "source-sha256": "dc2222645eff6191e94621e8e3b97e15fd4af440299bb45317549fbbfa34db0d",
+      "patch": null
+    },
+    {
+      "id": "runtime:IWithMeta:733",
+      "source-sha256": "aaaf6cd1facd291dfd67daca3ce832d3eb1ab208afa3dbade730183aff936cc2",
+      "patch": null
+    },
+    {
+      "id": "runtime:IEquiv:753",
+      "source-sha256": "84667a2dd901b6a2f5d75518a34c3d7f30fb58fc0044a7414ca3a298fb6e3e1b",
+      "patch": null
+    },
+    {
+      "id": "runtime:IHash:758",
+      "source-sha256": "d399756d9c6dcc723dd4b062a85ae127f09f0f4a9e2f14a304f73475e82c4829",
+      "patch": null
+    },
+    {
+      "id": "runtime:ISeqable:763",
+      "source-sha256": "0e2ceddeb51407ef720b7555233407e49ef4103c6d9eb2dbc77d9838bde7aa69",
+      "patch": null
+    },
+    {
+      "id": "runtime:ISequential:768",
+      "source-sha256": "3c27b5f35861117d58755c1b264c9e9d741ad04b1dd1a92bcc68c6fe70bbb211",
+      "patch": null
+    },
+    {
+      "id": "runtime:IList:771",
+      "source-sha256": "c4c0de3d872bfddda90f45551a683d6afe4ba99deafdc478ea7235faf89245f9",
+      "patch": null
     }
   ]
 }
