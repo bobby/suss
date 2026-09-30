@@ -4387,3 +4387,46 @@ Review required full baseline52286 completed terminal0:
 reference graphs are terminal and released. No RUSTFLAGS override or unrelated
 file deletions. Push this independent regression/evidence commit and require exact
 final-head CI before readiness. Full M2–M9 goal remains active; do not merge.
+
+## Comparison preparation — 2026-09-30
+
+Root comparison worktree /private/tmp/suss-comparison-foundation, branch
+resurrection/portable-comparisons, based on independently reviewed inc/dec
+24c16ca9a6f0066ab21466dab559123383318125. Reviewer80 released all Cargo/reference
+graphs after native17, fresh117 and required full baseline passed. Its exact-head
+CI36765282719 remains running; no readiness claimed. PR79 reviewed head01785e4
+passed exact CI36762904497 with actual enabled-suite logs inspected at
+/private/tmp/suss-pr79-final-ci.log; body updated and marked ready without merge.
+
+Prepared119 shared source comparison cases plus four explicit capture divergences.
+Initial123-case graph89629 failed in the primary runner with a captured-core
+wrapper TypeError under fixed-arity runtime replacement (terminal1),
+/private/tmp/suss-comparison-primary-and-red.log. This reproduces the arithmetic
+boundary already documented in docs/runtime/arithmetic-values.md: accepted design
+section7 requires retained original captures, while pinned core generic wrappers
+read replacement var arity properties. It is not a new semantics decision.
+All four original probes remain in a separate strict catalog with exact pinned
+error name/message and separate expected accepted-native behavior; neither outcome
+is claimed equivalent, hidden, skipped or replaced by an unknown success.
+
+Fresh graph3385 verified119 exact primary observations and four captured TypeError
+classes, then native2 failed unresolved< (terminal101),
+/private/tmp/suss-comparison-primary-and-native-red.log. Fresh graph34513 additionally
+verified the exact four error name/messages, then native2 failed unresolved<
+(terminal101), /private/tmp/suss-comparison-documented-captures-and-red.log.
+Focused graph67189 compiled all three native regressions and failed as expected
+only on unresolved comparison names (terminal101),
+/private/tmp/suss-comparison-focused-red.log. Offline strict comparison verification
+also passes after exact pin/schema/capture-catalog guards. All local graphs terminal.
+
+Primary evidence establishes scalar/UTF-16 relational order, strict macro identity,
+unary operand erasure versus runtime evaluation, repeated middle macro operands,
+short-circuit chains, qualified/runtime replacement and lexical shadowing.
+No comparison implementation, copied form, declaration status or acceptance gate
+changed yet; see docs/runtime/comparisons.md. Next add original checked binary
+comparison runtime primitives, canonical first-class functions and verified HIR/IR
+with bounded macro expansion preserving these observations. Keep the four accepted
+old-capture divergences explicit. Then focused/fresh/full baseline, partial source
+reviews/provenance, PR with Refs #9/#11/#17, independent review/pushed significant
+fixes and exact final-head CI; no merge. Complete sequence/list, variadic rest/apply
+and all remaining M2–M9 acceptance remain the full active goal.

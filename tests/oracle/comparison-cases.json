@@ -1,0 +1,958 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "lt-ascending",
+      "source": "(let [f <] (f 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "lt-descending",
+      "source": "(let [f <] (f 2 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "lt-equal",
+      "source": "(let [f <] (f 1 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "lt-signed-zero",
+      "source": "(let [f <] (f -0.0 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "lt-nan",
+      "source": "(let [f <] (f ##NaN 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "lt-infinity",
+      "source": "(let [f <] (f ##Inf 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "lt-negative-infinity",
+      "source": "(let [f <] (f ##-Inf 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "lt-nil",
+      "source": "(let [f <] (f nil 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "lt-false",
+      "source": "(let [f <] (f false 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "lt-true",
+      "source": "(let [f <] (f true 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "lt-strings",
+      "source": "(let [f <] (f \"10\" \"2\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "lt-mixed-string",
+      "source": "(let [f <] (f \"10\" 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "lt-bad-string",
+      "source": "(let [f <] (f \"n\" 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "lt-empty-string",
+      "source": "(let [f <] (f \"\" 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "lt-astral-order",
+      "source": "(let [f <] (f \"\ud83d\ude00\" \"\\uE000\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "lt-surrogate-order",
+      "source": "(let [f <] (f \"\\uD800\" \"\\uD801\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "lt-undefined",
+      "source": "(let [f <] (f (ex-data (new ExceptionInfo \"m\")) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "lt-unary-runtime",
+      "source": "(let [f <] (f (fn [] 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "lt-macro-unary",
+      "source": "(do (def comparison-effects 0) (< (do (def comparison-effects (+ comparison-effects 1)) 1)) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "lt-runtime-unary",
+      "source": "(do (def comparison-effects 0) (let [f <] (f (do (def comparison-effects (+ comparison-effects 1)) 1))) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "lt-macro-chain",
+      "source": "(do (def comparison-effects 0) (def comparison-tick (fn [] (do (def comparison-effects (+ comparison-effects 1)) comparison-effects))) (< (comparison-tick) (comparison-tick) (comparison-tick)) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "lt-runtime-chain",
+      "source": "(do (def comparison-effects 0) (def comparison-tick (fn [] (do (def comparison-effects (+ comparison-effects 1)) comparison-effects))) (let [f <] (f (comparison-tick) (comparison-tick) (comparison-tick))) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "lt-live-runtime",
+      "source": "(with-redefs [< (fn [x y] false)] (let [f <] (f 1 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "lt-qualified-macro",
+      "source": "(with-redefs [< (fn [x y] false)] (cljs.core/< 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "le-ascending",
+      "source": "(let [f <=] (f 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "le-descending",
+      "source": "(let [f <=] (f 2 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "le-equal",
+      "source": "(let [f <=] (f 1 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "le-signed-zero",
+      "source": "(let [f <=] (f -0.0 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "le-nan",
+      "source": "(let [f <=] (f ##NaN 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "le-infinity",
+      "source": "(let [f <=] (f ##Inf 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "le-negative-infinity",
+      "source": "(let [f <=] (f ##-Inf 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "le-nil",
+      "source": "(let [f <=] (f nil 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "le-false",
+      "source": "(let [f <=] (f false 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "le-true",
+      "source": "(let [f <=] (f true 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "le-strings",
+      "source": "(let [f <=] (f \"10\" \"2\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "le-mixed-string",
+      "source": "(let [f <=] (f \"10\" 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "le-bad-string",
+      "source": "(let [f <=] (f \"n\" 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "le-empty-string",
+      "source": "(let [f <=] (f \"\" 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "le-astral-order",
+      "source": "(let [f <=] (f \"\ud83d\ude00\" \"\\uE000\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "le-surrogate-order",
+      "source": "(let [f <=] (f \"\\uD800\" \"\\uD801\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "le-undefined",
+      "source": "(let [f <=] (f (ex-data (new ExceptionInfo \"m\")) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "le-unary-runtime",
+      "source": "(let [f <=] (f (fn [] 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "le-macro-unary",
+      "source": "(do (def comparison-effects 0) (<= (do (def comparison-effects (+ comparison-effects 1)) 1)) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "le-runtime-unary",
+      "source": "(do (def comparison-effects 0) (let [f <=] (f (do (def comparison-effects (+ comparison-effects 1)) 1))) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "le-macro-chain",
+      "source": "(do (def comparison-effects 0) (def comparison-tick (fn [] (do (def comparison-effects (+ comparison-effects 1)) comparison-effects))) (<= (comparison-tick) (comparison-tick) (comparison-tick)) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "le-runtime-chain",
+      "source": "(do (def comparison-effects 0) (def comparison-tick (fn [] (do (def comparison-effects (+ comparison-effects 1)) comparison-effects))) (let [f <=] (f (comparison-tick) (comparison-tick) (comparison-tick))) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "le-live-runtime",
+      "source": "(with-redefs [<= (fn [x y] false)] (let [f <=] (f 1 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "le-qualified-macro",
+      "source": "(with-redefs [<= (fn [x y] false)] (cljs.core/<= 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "gt-ascending",
+      "source": "(let [f >] (f 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-descending",
+      "source": "(let [f >] (f 2 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "gt-equal",
+      "source": "(let [f >] (f 1 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-signed-zero",
+      "source": "(let [f >] (f -0.0 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-nan",
+      "source": "(let [f >] (f ##NaN 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-infinity",
+      "source": "(let [f >] (f ##Inf 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "gt-negative-infinity",
+      "source": "(let [f >] (f ##-Inf 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-nil",
+      "source": "(let [f >] (f nil 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-false",
+      "source": "(let [f >] (f false 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-true",
+      "source": "(let [f >] (f true 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-strings",
+      "source": "(let [f >] (f \"10\" \"2\"))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-mixed-string",
+      "source": "(let [f >] (f \"10\" 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "gt-bad-string",
+      "source": "(let [f >] (f \"n\" 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-empty-string",
+      "source": "(let [f >] (f \"\" 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-astral-order",
+      "source": "(let [f >] (f \"\ud83d\ude00\" \"\\uE000\"))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-surrogate-order",
+      "source": "(let [f >] (f \"\\uD800\" \"\\uD801\"))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-undefined",
+      "source": "(let [f >] (f (ex-data (new ExceptionInfo \"m\")) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-unary-runtime",
+      "source": "(let [f >] (f (fn [] 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "gt-macro-unary",
+      "source": "(do (def comparison-effects 0) (> (do (def comparison-effects (+ comparison-effects 1)) 1)) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "gt-runtime-unary",
+      "source": "(do (def comparison-effects 0) (let [f >] (f (do (def comparison-effects (+ comparison-effects 1)) 1))) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "gt-macro-chain",
+      "source": "(do (def comparison-effects 0) (def comparison-tick (fn [] (do (def comparison-effects (+ comparison-effects 1)) (- 0 comparison-effects)))) (> (comparison-tick) (comparison-tick) (comparison-tick)) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "gt-runtime-chain",
+      "source": "(do (def comparison-effects 0) (def comparison-tick (fn [] (do (def comparison-effects (+ comparison-effects 1)) (- 0 comparison-effects)))) (let [f >] (f (comparison-tick) (comparison-tick) (comparison-tick))) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "gt-live-runtime",
+      "source": "(with-redefs [> (fn [x y] false)] (let [f >] (f 1 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-qualified-macro",
+      "source": "(with-redefs [> (fn [x y] false)] (cljs.core/> 2 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ge-ascending",
+      "source": "(let [f >=] (f 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "ge-descending",
+      "source": "(let [f >=] (f 2 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ge-equal",
+      "source": "(let [f >=] (f 1 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ge-signed-zero",
+      "source": "(let [f >=] (f -0.0 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ge-nan",
+      "source": "(let [f >=] (f ##NaN 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "ge-infinity",
+      "source": "(let [f >=] (f ##Inf 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ge-negative-infinity",
+      "source": "(let [f >=] (f ##-Inf 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "ge-nil",
+      "source": "(let [f >=] (f nil 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ge-false",
+      "source": "(let [f >=] (f false 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ge-true",
+      "source": "(let [f >=] (f true 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ge-strings",
+      "source": "(let [f >=] (f \"10\" \"2\"))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "ge-mixed-string",
+      "source": "(let [f >=] (f \"10\" 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ge-bad-string",
+      "source": "(let [f >=] (f \"n\" 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "ge-empty-string",
+      "source": "(let [f >=] (f \"\" 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ge-astral-order",
+      "source": "(let [f >=] (f \"\ud83d\ude00\" \"\\uE000\"))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "ge-surrogate-order",
+      "source": "(let [f >=] (f \"\\uD800\" \"\\uD801\"))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "ge-undefined",
+      "source": "(let [f >=] (f (ex-data (new ExceptionInfo \"m\")) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "ge-unary-runtime",
+      "source": "(let [f >=] (f (fn [] 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ge-macro-unary",
+      "source": "(do (def comparison-effects 0) (>= (do (def comparison-effects (+ comparison-effects 1)) 1)) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "ge-runtime-unary",
+      "source": "(do (def comparison-effects 0) (let [f >=] (f (do (def comparison-effects (+ comparison-effects 1)) 1))) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "ge-macro-chain",
+      "source": "(do (def comparison-effects 0) (def comparison-tick (fn [] (do (def comparison-effects (+ comparison-effects 1)) (- 0 comparison-effects)))) (>= (comparison-tick) (comparison-tick) (comparison-tick)) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "ge-runtime-chain",
+      "source": "(do (def comparison-effects 0) (def comparison-tick (fn [] (do (def comparison-effects (+ comparison-effects 1)) (- 0 comparison-effects)))) (let [f >=] (f (comparison-tick) (comparison-tick) (comparison-tick))) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "ge-live-runtime",
+      "source": "(with-redefs [>= (fn [x y] false)] (let [f >=] (f 1 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "ge-qualified-macro",
+      "source": "(with-redefs [>= (fn [x y] false)] (cljs.core/>= 2 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "numeric-eq-ascending",
+      "source": "(let [f ==] (f 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "numeric-eq-descending",
+      "source": "(let [f ==] (f 2 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "numeric-eq-equal",
+      "source": "(let [f ==] (f 1 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "numeric-eq-signed-zero",
+      "source": "(let [f ==] (f -0.0 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "numeric-eq-nan",
+      "source": "(let [f ==] (f ##NaN 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "numeric-eq-infinity",
+      "source": "(let [f ==] (f ##Inf 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "numeric-eq-negative-infinity",
+      "source": "(let [f ==] (f ##-Inf 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "macro-eq-strings",
+      "source": "(== \"s\" \"s\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "macro-eq-mixed",
+      "source": "(== 1 \"1\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "macro-eq-boolean-number",
+      "source": "(== true 1)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "macro-eq-false-number",
+      "source": "(== false 0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "macro-eq-nil-false",
+      "source": "(== nil false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "macro-eq-nil-undefined",
+      "source": "(== nil (ex-data (new ExceptionInfo \"m\")))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "macro-eq-nil-nil",
+      "source": "(== nil nil)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "eq-unary-macro-erases",
+      "source": "(do (def comparison-effects 0) (== (do (def comparison-effects 1) 1)) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "eq-unary-runtime-effects",
+      "source": "(do (def comparison-effects 0) (let [f ==] (f (do (def comparison-effects 1) 1))) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "eq-chain-macro",
+      "source": "(do (def comparison-effects 0) (def comparison-tick (fn [] (do (def comparison-effects (+ comparison-effects 1)) 0))) (== (comparison-tick) (comparison-tick) (comparison-tick)) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "eq-chain-runtime",
+      "source": "(do (def comparison-effects 0) (def comparison-tick (fn [] (do (def comparison-effects (+ comparison-effects 1)) 0))) (let [f ==] (f (comparison-tick) (comparison-tick) (comparison-tick))) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "false-chain-macro",
+      "source": "(do (def comparison-effects 0) (def comparison-tick (fn [] (do (def comparison-effects (+ comparison-effects 1)) comparison-effects))) (< (comparison-tick) 0 (comparison-tick)) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "false-chain-runtime",
+      "source": "(do (def comparison-effects 0) (def comparison-tick (fn [] (do (def comparison-effects (+ comparison-effects 1)) comparison-effects))) (let [f <] (f (comparison-tick) 0 (comparison-tick))) comparison-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "lexical-lt-shadow",
+      "source": "(let [< (fn [x y] 77)] (< 1 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4053400000000000"
+      }
+    },
+    {
+      "id": "strict-object-identity",
+      "source": "(do (deftype ComparisonObject []) (def comparison-object (ComparisonObject.)) (== comparison-object comparison-object))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "strict-object-distinct",
+      "source": "(== (ComparisonObject.) (ComparisonObject.))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    }
+  ]
+}
