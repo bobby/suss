@@ -5,6 +5,8 @@ numeric_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 numeric_pin=c4295f303100bbf5afac449242d30bca1126f1a1
 [ "$(git -C "$numeric_root/clojurescript" rev-parse HEAD)" = "$numeric_pin" ] || { echo 'wrong numeric oracle source pin' >&2; exit 1; }
 [ -z "$(git -C "$numeric_root/clojurescript" status --porcelain)" ] || { echo 'dirty numeric oracle source' >&2; exit 1; }
+# The shared transport namespace also requires the generated base corpus.
+python3 "$numeric_root/scripts/oracle_cases.py"
 python3 "$numeric_root/scripts/numeric_oracle.py" generate
 cd "$numeric_root/tests/oracle"
 CLJ_CONFIG=/tmp/suss-oracle-clojure-config CLJ_CACHE=/tmp/suss-oracle-clojure-cache \

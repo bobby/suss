@@ -2253,3 +2253,52 @@ identity, dynamic coercion, central invocation/arity and once-only evaluation; t
 continue the shared frontend/core prerequisites. Do not retire legacy paths until
 replacement acceptance. Publish stacked on #60, dispatch independent PR review,
 push significant fixes and require CI on the exact final reviewed head. Do not merge.
+
+## PR #61 independent review — 2026-09-30
+
+Reviewed published bb446608e459f5d8696872a36391f04e7143e8b1 in an isolated
+worktree against the accepted portable contract. Audited primitive arithmetic
+type propagation, source evaluation order, helper type/global relocation,
+no-import/no-allocator shape, checked scratch growth, typed allocation failures,
+interrupted Rust stack recovery, immutable GC strings and session reset. No
+significant production semantic defect was found in this bounded primitive scope.
+
+Found a reproducibility defect in the new numeric oracle runner: its transport
+namespace requires generated suss-oracle.cases, but the runner generated only
+numeric-cases. In the fresh worktree the exact runner failed with missing
+suss-oracle.cases, exit 1; /private/tmp/suss-pr61-review-numeric-clean-red.log.
+The runner now generates the shared base corpus before compiling the oracle.
+It then passed fresh pinned 1,024-row observations and actual GC runtime execution,
+exit 0; /private/tmp/suss-pr61-review-numeric-clean-fixed.log. The isolated worktree
+used the existing clean pinned submodule as a read-only source reference.
+
+Strengthened the existing verifier regression to reject String and dynamic Value
+arithmetic results forged as Number. Both verification and compile_ir reject
+these graphs, preventing unchecked Number assumptions in later lowering. Removing
+the arithmetic result check temporarily makes this regression fail, exit 101;
+/private/tmp/suss-pr61-review-arithmetic-type-negative.log. The mutation was fully
+restored before final checks. Also removed the executable bit from the numeric
+Wasm build input; its bytes and manifest hash remain unchanged.
+
+Commands and terminal results (CARGO_BUILD_JOBS=2, no RUSTFLAGS override;
+native Cargo feature graphs run sequentially in the isolated worktree):
+
+- Compiler modules/definitions/closures/pipeline/resolution/runtime_abi focused suite: 68 pass, zero ignored, exit 0; /private/tmp/suss-pr61-review-compiler-final.log.
+- `cargo test -p suss-cli --lib --test persistent_session --locked -- --test-threads=2`: 18 pass (four private/fourteen integration), zero ignored, exit 0; /private/tmp/suss-pr61-review-session-focused.log. Combined focused scope: 86.
+- `cargo test --workspace --locked -- --test-threads=2`: pass including CLI rustdoc, exit 0; /private/tmp/suss-pr61-review-full.log. Code was frozen during the full run; no overlapping Cargo invocation or new ignore.
+- Fixed `sh scripts/test-numeric-oracle.sh`: fresh pinned 1,024-sample comparison and actual runtime test pass, exit 0; /private/tmp/suss-pr61-review-numeric-clean-fixed.log.
+- `python3 scripts/numeric_runtime.py --rebuild-check`: byte-identical pinned helper rebuild, exit 0; /private/tmp/suss-pr61-review-helper-rebuild.log. Integrity check still passes after the file-mode repair.
+- Python regression suite: 54 pass, exit 0; /private/tmp/suss-pr61-review-python-final.log.
+- Inventory/review checks: 1,065 declarations/zero reviewed/1,065 unassessed. WIT: 15 files/six official packages. Offline roadmap preview, touched Rust formatting, shell syntax and git diff checks pass; stable issue IDs/statuses retained.
+
+Predecessor CI 36677683283 succeeded on bb446608e459f5d8696872a36391f04e7143e8b1;
+it does not certify this review repair. Require a new successful CI run on the
+exact final reviewed head before readiness. No remaining significant review finding.
+The repair changes no production semantics, dependencies, ABI layouts or upstream
+implementation. All 158 source cases and 1,024 numeric samples remain intact;
+legacy differential evidence remains 9 passes/7 exact failures/zero skips.
+Object conversion, first-class arithmetic bindings, complete public numeric core,
+production frontend migration and M2–M9 acceptance remain unfinished. Next remove
+the first-class arithmetic restriction with central invocation/arity, canonical
+live cells and pinned variadic semantics; preserve once-only evaluation and unary
+identity. Keep Refs #9/#10 rather than closing incomplete issues. Do not merge.

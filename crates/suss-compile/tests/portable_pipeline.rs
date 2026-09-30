@@ -360,6 +360,30 @@ fn verifier_rejects_undefined_non_dominating_wrong_type_and_arity_values() {
             .contains("intrinsic arity")
     );
     assert!(portable::compile_ir(&bad).is_err());
+
+    // A forged Number result would let a subsequent intrinsic use an unchecked
+    // Number cast even though addition can produce a string or dynamic value.
+    for source in ["(+ \"1\" 2)", "(+ (if true 1 nil) 2)"] {
+        let mut bad = ir::lower(&portable::analyze(source).unwrap()).unwrap();
+        ir::verify(&bad).unwrap();
+        let result = bad
+            .blocks
+            .iter()
+            .flat_map(|block| &block.instructions)
+            .find(|instruction| matches!(instruction.operation, Operation::Arithmetic { .. }))
+            .unwrap()
+            .result;
+        assert_ne!(bad.values[result.0].ty, Type::Number);
+        bad.values[result.0].ty = Type::Number;
+        assert!(
+            ir::verify(&bad)
+                .unwrap_err()
+                .message
+                .contains("arithmetic operand/result type mismatch"),
+            "{source}"
+        );
+        assert!(portable::compile_ir(&bad).is_err(), "{source}");
+    }
 }
 
 #[test]
