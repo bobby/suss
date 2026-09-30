@@ -438,3 +438,30 @@ fn bootstrap_nil_test_evaluates_once_and_propagates_exceptions() {
     let value = session.eval("(some? false)").unwrap();
     assert!(boolean(&mut session, &value));
 }
+
+#[test]
+fn bootstrap_nil_test_captures_values_across_fragments_and_loop_edges() {
+    let mut session = loaded();
+    let factory = session
+        .eval("(fn [x] (fn [] (suss.bootstrap/nil? x)))")
+        .unwrap();
+    for (source, expected) in [
+        ("nil", true),
+        ("false", false),
+        ("(fn [] 42)", false),
+        ("(ex-data (new ExceptionInfo \"m\"))", true),
+    ] {
+        let argument = session.eval(source).unwrap();
+        let captured = session.invoke(&factory, &[&argument]).unwrap();
+        session.collect().unwrap();
+        session.eval("(def unrelated 7)").unwrap();
+        let result = session.invoke(&captured, &[]).unwrap();
+        assert_eq!(boolean(&mut session, &result), expected, "{source}");
+    }
+    // The operand is a join value produced by parallel recur replacements;
+    // neither the stale initial nil nor the unselected throwing branch may win.
+    let result = session
+        .eval("(suss.bootstrap/nil? (loop [again true x nil] (if again (recur false false) (if again (throw 7) x))))")
+        .unwrap();
+    assert!(!boolean(&mut session, &result));
+}

@@ -3892,3 +3892,50 @@ targets including CLI doc tests pass; native12 and pipeline17/397 included. Exis
 legacy/manual ignores and legacy9pass/7fail baseline unchanged. Root native/fresh
 reference handles all terminal; review may take exclusive graph ownership.
 Offline roadmap preview, inventory/reviews and exact eight-file regeneration pass.
+
+
+## Independent PR75 source-backed some? review — 2026-09-30
+
+Reviewed exact candidate555c099e89015aebdc318514e8184d80d2ae70f4 against
+reviewed PR74 d2cd29c7ed7cfe3764c2a943168f1fc5ea6eb2b4 in isolated
+/private/tmp/suss-review-pr75. No significant production defect found within the
+bounded primitive/source-import scope. Inspected private syntax arity/source spans,
+reserved namespace/alias APIs, HIR free-variable capture and recurrence traversal,
+IR operand definition/dominance and Boolean result typing, and emission using an
+already evaluated value with nil/internal undefined sentinels. Both comparisons
+read the normalized local; they do not replay source effects. No ABI/runtime,
+numeric helper, dependency or upstream source/patch changes.
+
+Verified pinned runtime some? source and compiler Boolean-not optimization;
+fresh generated core.js independently confirms some_QMARK_ returns !(x == null).
+Captured upstream some? therefore ignores public nil?/not redefinitions, while
+its own canonical live cell remains redefinable. Exact retained source, metadata/
+docstring, byte range/hash, explicit patch and dependencies, deterministic eight
+files and byte-preserved EPL license packaging all checked. Full compiled macros,
+source metadata/privacy, complete core loading/collections and production command
+migration remain unfinished. Imported forms remain4; overlay27 in-progress/1038
+unassessed; separate core corpus72 and portable pipeline397 remain distinct.
+
+Added an executing regression for nested closure capture of primitive nil-test
+operands across fragments/GC (nil, false, functions, missing-field undefined), plus
+loop-edge replacement and an unselected throwing branch. Added a forged IR
+self-use rejection to test nil-test dominance. An initial review-fixture edit
+placed this assertion in an older test whose IR contains no NilTest, correctly
+failing on the fixture's unwrap; moved it to the intended nil-test test. This was
+not a production defect. No expectation weakened, failure hidden or skip added.
+
+Commands/results (exclusive graphs; shared target/two jobs; no RUSTFLAGS override):
+- Candidate native12 passed, /private/tmp/suss-review-pr75-focused.log,40069 terminal0.
+- Expanded native13 passed, /private/tmp/suss-review-pr75-expanded.log,23426 terminal0.
+- Initial compiler fixture16 pass/1 fail, /private/tmp/suss-review-pr75-compiler.log,65827 terminal101; corrected pipeline17 passed, /private/tmp/suss-review-pr75-compiler-final.log,69165 terminal0.
+- Python66 passed, /private/tmp/suss-review-pr75-python.log; inventory1065, overlay27/1038, deterministic eight-file artifact and LICENSE/epl-v10.html comparisons passed,83372 terminal0. Touched Rust formatting and diff checks passed.
+- Fresh CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-core-import-oracle.sh passed:72 exact independently encoded primary observations and actual native13, /private/tmp/suss-review-pr75-oracle.log,77554 terminal0. Raw primary ExceptionInfo arity warnings remain recorded. Prior50 expectations/cases unchanged; no failures or skips accepted.
+- Required CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2 passed exit0, /private/tmp/suss-review-pr75-workspace.log,57109 terminal0. Includes actual native13, source397/pipeline17/ABI14, legacy, component, conformance, oracle, reader/core and all documentation targets including CLI. Existing manual/legacy ignores and separate legacy9pass/7fail evidence unchanged.
+
+All review native/reference/process handles are terminal; shared native and fresh
+reference graph ownership released. Push only the two review regressions and
+handoff to PR75; require exact final-head CI before readiness. PR73/74/75 remained
+open on the unchanged reviewed stack at publication check. No PR merged or issue
+closed. Refs #9/#16 remain partial. Next unblocked work: compiled core/macro
+bootstrap and sequence/collection foundations; M2–M9 and the full ROADMAP remain
+unfinished.

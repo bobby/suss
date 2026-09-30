@@ -844,6 +844,20 @@ fn nil_test_verifier_checks_result_type_and_operand_definition() {
             .message
             .contains("no definition")
     );
+    let mut bad = function.clone();
+    let instruction = bad
+        .blocks
+        .iter_mut()
+        .flat_map(|b| &mut b.instructions)
+        .find(|i| matches!(i.operation, Operation::NilTest(_)))
+        .unwrap();
+    instruction.operation = Operation::NilTest(instruction.result);
+    assert!(
+        ir::verify(&bad)
+            .unwrap_err()
+            .message
+            .contains("does not dominate")
+    );
     let mut bad_hir = hir;
     let portable::hir::Expression::Do(items) = &mut bad_hir.kind else {
         panic!("top-level forms")
