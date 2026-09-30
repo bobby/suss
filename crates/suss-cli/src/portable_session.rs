@@ -18,8 +18,8 @@ use suss_compile::{
     runtime_abi,
 };
 use wasmtime::{
-    AnyRef, AsContextMut, Config, Engine, Func, Global, GlobalType, Instance, Linker, Module,
-    Mutability, OwnedRooted, RefType, RootScope, Store, StoreContextMut, Tag, Val, ValType,
+    AnyRef, AsContextMut, Config, Engine, Func, Global, GlobalType, Instance, Linker, Memory,
+    Module, Mutability, OwnedRooted, RefType, RootScope, Store, StoreContextMut, Tag, Val, ValType,
 };
 
 #[derive(Clone, Debug)]
@@ -113,6 +113,9 @@ pub struct SessionStats {
     pub external_value_handles: usize,
     /// Allocated GC heap capacity; this is not a live-object or leak counter.
     pub gc_heap_capacity: usize,
+    /// Private runtime numeric memory capacity (stack/data/scratch), separate
+    /// from GC language objects. Scratch retains a high-water capacity until reset.
+    pub numeric_memory_capacity: usize,
 }
 
 pub struct Session {
@@ -122,6 +125,7 @@ pub struct Session {
     handles: Arc<AtomicUsize>,
     store: Store<()>,
     runtime: Instance,
+    numeric_memory: Memory,
     linker: Linker<()>,
     environment: Environment,
     cells: BTreeMap<CellIdentity, Global>,
@@ -230,6 +234,9 @@ impl Session {
         runtime_abi::verify_artifact(&runtime_bytes, &runtime_abi::Manifest::default())
             .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
         let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_bytes)?, &[])?;
+        let numeric_memory = runtime
+            .get_memory(&mut store, "numeric-scratch-memory")
+            .ok_or_else(|| wasmtime::Error::msg("Missing numeric scratch memory"))?;
         let mut linker = Linker::new(&engine);
         linker.instance(&mut store, "suss.runtime", runtime)?;
         let provided = BTreeSet::from([
@@ -242,6 +249,7 @@ impl Session {
             handles: Arc::new(AtomicUsize::new(0)),
             store,
             runtime,
+            numeric_memory,
             linker,
             environment: Environment::default(),
             cells: BTreeMap::new(),
@@ -272,6 +280,7 @@ impl Session {
             loaded_modules: self.provided.len() - 1,
             external_value_handles: self.handles.load(Ordering::Relaxed),
             gc_heap_capacity: self.store.gc_heap_capacity(),
+            numeric_memory_capacity: self.numeric_memory.data_size(&self.store),
         }
     }
     pub fn collect(&mut self) -> Result<(), SessionError> {
@@ -509,6 +518,53 @@ impl Session {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn session_lifecycle_numeric_helper_trap_resets_interrupted_rust_stack() {
+        let mut session = Session::new().unwrap();
+        let value = session.eval("\"1.2345678901234567890123456789\"").unwrap();
+        let function = session
+            .runtime
+            .get_func(&mut session.store, "coerce-number")
+            .unwrap();
+        let stack = session
+            .runtime
+            .get_global(&mut session.store, "numeric-stack-pointer")
+            .unwrap();
+        let initial = stack.get(&mut session.store).unwrap_i32();
+        let mut interrupted = false;
+        for fuel in (64..=4096).step_by(64) {
+            stack.set(&mut session.store, Val::I32(initial)).unwrap();
+            session.store.set_fuel(fuel).unwrap();
+            let result = session.inspect(&value, |mut scope, value| {
+                let mut output = [Val::F64(0)];
+                function.call(&mut scope, &[value], &mut output)?;
+                Ok(output[0].unwrap_f64())
+            });
+            if matches!(result, Err(SessionError::Trap(ref error)) if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel))
+                && stack.get(&mut session.store).unwrap_i32() != initial
+            {
+                interrupted = true;
+                break;
+            }
+        }
+        assert!(
+            interrupted,
+            "must actually interrupt a Rust helper frame, not just its GC copy loop"
+        );
+        session.set_operation_fuel(100000);
+        let output = session.eval("(+ 42 \"\")").unwrap();
+        let units = session
+            .inspect(&output, |mut scope, value| {
+                let array = value.unwrap_anyref().unwrap().as_array(&scope)?.unwrap();
+                Ok(array
+                    .elems(&mut scope)?
+                    .map(|unit| unit.unwrap_i32() as u16)
+                    .collect::<Vec<_>>())
+            })
+            .unwrap();
+        assert_eq!(units, [52, 50]);
+        assert_eq!(stack.get(&mut session.store).unwrap_i32(), initial);
+    }
     #[test]
     fn session_lifecycle_native_callback_foreign_exception_does_not_poison_the_store() {
         let mut session = Session::new().unwrap();

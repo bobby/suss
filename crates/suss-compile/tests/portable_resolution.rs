@@ -343,9 +343,19 @@ fn namespace_cell_imports_reject_missing_or_incompatible_objects_before_eval() {
             .contains("dynamic Value")
     );
     // Mutable bindings carry no stale scalar facts into unchecked arithmetic.
-    let error = portable::compile_in("(+ value 1)", &env, Phase::Runtime).unwrap_err();
-    assert_eq!(error.span, 3..8);
-    assert!(error.message.contains("dynamic checking"));
+    let fragment = portable::compile_in("(+ value 1)", &env, Phase::Runtime).unwrap();
+    let mut arithmetic_imports = Vec::new();
+    for payload in wasmparser::Parser::new(0).parse_all(&fragment) {
+        if let wasmparser::Payload::ImportSection(section) = payload.unwrap() {
+            for import in section.into_imports() {
+                let import = import.unwrap();
+                if import.module == "suss.runtime" && import.name.ends_with("-add") {
+                    arithmetic_imports.push(import.name);
+                }
+            }
+        }
+    }
+    assert_eq!(arithmetic_imports, ["value-add"]);
 }
 
 #[test]

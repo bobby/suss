@@ -17,6 +17,110 @@ fn eval_number(session: &mut Session, source: &str) -> u64 {
     let value = session.eval(source).unwrap();
     number(session, &value)
 }
+fn units(session: &mut Session, value: &SessionValue) -> Vec<u16> {
+    session
+        .inspect(value, |mut store, value| {
+            let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+            Ok(array
+                .elems(&mut store)?
+                .map(|unit| unit.unwrap_i32() as u16)
+                .collect())
+        })
+        .unwrap()
+}
+
+#[test]
+fn persistent_session_arithmetic_coerces_live_cells_and_evaluates_operands_once() {
+    let mut session = Session::new().unwrap();
+    session
+        .eval("(def counter 0) (def next (fn [] (def counter (+ counter 1))))")
+        .unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(+ (next) (* (next) 10) (next))"),
+        24.0f64.to_bits()
+    );
+    assert_eq!(eval_number(&mut session, "counter"), 3.0f64.to_bits());
+    session
+        .eval("(def value 3) (def read (fn [] (+ value 1)))")
+        .unwrap();
+    assert_eq!(eval_number(&mut session, "(read)"), 4.0f64.to_bits());
+    session.eval("(def value \"4\")").unwrap();
+    let text = session.eval("(read)").unwrap();
+    session.collect().unwrap();
+    assert_eq!(units(&mut session, &text), [52, 49]);
+    assert_eq!(
+        eval_number(&mut session, "((fn [x] (* x 3)) \"2\")"),
+        6.0f64.to_bits()
+    );
+    assert_eq!(eval_number(&mut session, "(- nil)"), (-0.0f64).to_bits());
+    session.eval("(def old 7) (def object (fn [] 1))").unwrap();
+    let error = session
+        .eval("(def old (do (next) (+ object 1)))")
+        .unwrap_err();
+    let SessionError::Language(payload) = error else {
+        panic!("expected explicit unsupported object coercion")
+    };
+    let message = session
+        .inspect(&payload, |mut store, value| {
+            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
+            assert_eq!(fields.len(), 4);
+            let descriptor = fields[0]
+                .unwrap_anyref()
+                .unwrap()
+                .as_struct(&store)?
+                .unwrap();
+            assert_eq!(descriptor.field(&mut store, 0)?.unwrap_i64(), 5);
+            let message = fields[1]
+                .unwrap_anyref()
+                .unwrap()
+                .as_array(&store)?
+                .unwrap();
+            Ok(message
+                .elems(&mut store)?
+                .map(|unit| unit.unwrap_i32() as u16)
+                .collect::<Vec<_>>())
+        })
+        .unwrap();
+    assert_eq!(
+        String::from_utf16(&message).unwrap(),
+        "Unsupported arithmetic object coercion"
+    );
+    assert_eq!(eval_number(&mut session, "old"), 7.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), 4.0f64.to_bits());
+}
+
+#[test]
+fn session_lifecycle_numeric_memory_has_bounded_high_water_capacity_and_reset() {
+    let mut session = Session::new().unwrap();
+    let initial = session.stats().numeric_memory_capacity;
+    let text = format!("0.{}1", "0".repeat(40000));
+    session.eval(&format!("(def text {text:?})")).unwrap();
+    assert_eq!(eval_number(&mut session, "(* text 1)"), 0.0f64.to_bits());
+    let capacity = session.stats().numeric_memory_capacity;
+    assert!(capacity > initial);
+    for _ in 0..20 {
+        assert_eq!(eval_number(&mut session, "(* text 1)"), 0.0f64.to_bits());
+    }
+    session.collect().unwrap();
+    assert_eq!(session.stats().numeric_memory_capacity, capacity);
+    let value = session.eval("text").unwrap();
+    assert_eq!(
+        units(&mut session, &value),
+        text.encode_utf16().collect::<Vec<_>>()
+    );
+    session.set_operation_fuel(500);
+    assert!(matches!(
+        session.eval("(* text 1)"),
+        Err(SessionError::Trap(_))
+    ));
+    session.set_operation_fuel(100000);
+    let output = session.eval("(+ 42 \"\")").unwrap();
+    assert_eq!(units(&mut session, &output), [52, 50]);
+    session.reset().unwrap();
+    assert_eq!(session.stats().numeric_memory_capacity, initial);
+    assert_eq!(session.stats().external_value_handles, 0);
+}
 
 #[test]
 fn persistent_session_unary_arithmetic_retains_dynamic_values_and_old_closures() {

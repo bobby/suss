@@ -77,7 +77,7 @@ bootstrap intrinsics, not the complete portable core library.
 
 `SessionStats` exposes resident instance count, the sum of their input artifact
 sizes, binding cell count, successfully loaded module count, current-generation
-external value handle count and allocated GC heap capacity. Artifact sizes are not
+external value handle count, allocated GC heap capacity and numeric memory capacity. Artifact sizes are not
 actual JIT bytes or retained raw Wasm. Handle counts exclude internal cell/runtime
 roots; heap capacity is not live-object usage. These counters separate residency
 from caller-owned roots but do not prove absence of leaks or full M3-04 acceptance.
@@ -88,34 +88,46 @@ engines must enable GC/function references/tail calls/exceptions and fuel.
 
 ## Evidence and limits
 
-Eleven integration tests plus three private host regressions execute real fragments,
+Fourteen integration tests plus four private host regressions execute real fragments,
 rooted values and shared cells: once-only initialization/defonce, bound nil/false,
 old captures/live rebinding, UTF-16 after GC, compile failure isolation, exact-tag
 initializer recovery, foreign/reset handles, dependency transaction compilation,
 reverse-order diamond effects, successful dependency reuse after failure, canonical
 core provisioning, scope/catalog distinctions, artifact/import gates, foreign
 callback exception recovery (including translated errors and swallowed throws)
-and fuel trap recovery. Existing 65 focused compiler
+and fuel trap recovery. Existing 68 focused compiler
 checks also pass. No new test is ignored.
 
 Initial API regression compilation failed because the native library host did not
 exist. Two initial fixtures then failed with the existing located unsupported
-numeric diagnostic; globals/parameters do not yet have dynamic arithmetic lowering.
-The persistence fixtures use literal writes and captures to isolate replay/ownership
-behavior. Those failures were not skipped and do not establish a numeric repair.
+numeric diagnostic; this preceded primitive dynamic arithmetic lowering.
+The original persistence fixtures use literal writes and captures to isolate
+replay/ownership behavior. Subsequent regressions now execute arithmetic over live
+cells and parameters, preserve once-only operand effects and independently decode
+primitive conversions. Unsupported object coercion preserves completed effects
+and the previous failed-initializer binding.
 
 Implementation/tests are original; pinned EPL-1.0 ClojureScript namespace/definition
 semantics inform the portable contract, with no copied upstream implementation.
 Only the already-locked tempfile package is added as a CLI development dependency;
 no package version changes or shipped JVM/Node dependency are introduced. The
-existing 42-case portable oracle and legacy 9-pass/7-failure/0-skip baseline remain
+existing 158-case portable oracle and legacy 9-pass/7-failure/0-skip baseline remain
 separate evidence, and all 1,065 inventory items remain unassessed.
 
 Production REPL/command frontend migration and printing, atoms/types/collections,
-extended closure signatures and dynamic arithmetic/core coercions, complete
+extended closure signatures, object coercions and first-class core arithmetic, complete
 ExceptionInfo/effect/recur IR, reload/cache/privacy policy, compiled macro sessions,
 async I/O/cancellation and live heap accounting remain unfinished. Unsupported
 source forms still return located diagnostics. Source declaration/unbound-var
 semantics are not fully certified. Do not close #10/#12/#13/#15 from this API alone.
 Next connect the actual REPL frontend to this host as portable lowering/printing
 coverage reaches replacement acceptance; retire source replay after that gate.
+
+Numeric memory capacity includes Rust stack/static data and conversion scratch,
+not live GC objects or JIT code. It grows to a checked high water mark and stays
+bounded for repeated same-sized conversions until reset replaces the Store.
+Tests inspect unchanged original UTF-16 strings, exact allocation-failure language
+exceptions and successful next inputs after fuel traps. A private regression
+interrupts an actual Rust helper frame and verifies the following conversion resets
+its stack pointer; a missing-reset mutation fails that regression. Trusted inspect
+callbacks use the Store's remaining fuel rather than starting a new operation budget.

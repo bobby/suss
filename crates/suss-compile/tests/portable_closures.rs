@@ -260,8 +260,14 @@ fn captures_use_lexical_identity_and_retain_parameter_metadata() {
     assert_eq!(captures, &[bindings[1].id]);
     assert_eq!(parameters[0].metadata.len(), 1);
     assert_eq!(&source[parameters[0].span.clone()], "^:argument a");
-    let error = portable::compile("(fn [^number x] (+ x 1))").unwrap_err();
-    assert!(error.message.contains("dynamic checking"));
+    // A hint is not an unchecked cast: actual primitive values are coerced.
+    for (source, expected) in [
+        ("((fn [^number x] (+ x 1)) 7)", 8.0f64),
+        ("((fn [^number x] (+ x 1)) false)", 1.0f64),
+    ] {
+        let (mut store, value) = execute(source);
+        assert_eq!(bits(&mut store, &value), expected.to_bits());
+    }
 }
 
 #[test]

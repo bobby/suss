@@ -1,7 +1,7 @@
 //! Explicit values, blocks and edge parameters. Verification precedes emission.
 use super::{
     Diagnostic,
-    hir::{Arithmetic, BindingId, Expression, Hir, Literal, Type},
+    hir::{Arithmetic, BindingId, Expression, Hir, Literal, Type, arithmetic_type},
     resolve::Global,
 };
 use std::{
@@ -363,12 +363,23 @@ impl Lowerer {
                     }
                 }
                 for value in &values[1..] {
+                    let ty = arithmetic_type(
+                        *operator,
+                        &[
+                            self.function.values[result.0].ty,
+                            self.function.values[value.0].ty,
+                        ],
+                    )
+                    .ok_or_else(|| Diagnostic {
+                        span: hir.span.clone(),
+                        message: "HIR unsupported arithmetic operands".into(),
+                    })?;
                     result = self.emit(
                         Operation::Arithmetic {
                             operator: *operator,
                             arguments: vec![result, *value],
                         },
-                        Type::Number,
+                        ty,
                         hir.span.clone(),
                     );
                 }
@@ -575,12 +586,12 @@ fn verify_function(
                     if arguments.len() != arity {
                         return Err(fail("IR intrinsic arity mismatch"));
                     }
-                    if result_ty != Type::Number
-                        || arguments
-                            .iter()
-                            .any(|arg| !matches!(ty(*arg), Ok(Type::Number)))
-                    {
-                        return Err(fail("IR intrinsic requires Number values"));
+                    let operand_types = arguments
+                        .iter()
+                        .map(|arg| ty(*arg))
+                        .collect::<Result<Vec<_>, _>>()?;
+                    if arithmetic_type(*operator, &operand_types) != Some(result_ty) {
+                        return Err(fail("IR arithmetic operand/result type mismatch"));
                     }
                 }
                 _ => {}

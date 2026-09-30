@@ -3,6 +3,7 @@
 //! Construction indices below are implementation details, not artifact ABI IDs.
 use std::borrow::Cow;
 use wasm_encoder::*;
+mod numeric;
 
 pub const VERSION: u32 = 1;
 const MANIFEST: &str = "suss.runtime-abi";
@@ -215,6 +216,7 @@ struct Builder {
     exports: ExportSection,
     code: CodeSection,
     count: u32,
+    next_type: u32,
 }
 impl Builder {
     fn function(
@@ -223,34 +225,55 @@ impl Builder {
         params: &[ValType],
         results: &[ValType],
         instructions: &[Instruction<'_>],
-    ) {
+    ) -> u32 {
+        self.function_with_locals(name, params, results, &[], instructions)
+    }
+    fn function_with_locals(
+        &mut self,
+        name: &str,
+        params: &[ValType],
+        results: &[ValType],
+        locals: &[(u32, ValType)],
+        instructions: &[Instruction<'_>],
+    ) -> u32 {
+        let index = self.count;
         self.types
             .ty()
             .function(params.iter().copied(), results.iter().copied());
-        self.functions.function(TYPE_COUNT + self.count);
+        self.functions.function(self.next_type);
+        self.next_type += 1;
         self.exports.export(name, ExportKind::Func, self.count);
-        let mut function = Function::new([]);
+        let mut function = Function::new(locals.iter().copied());
         for instruction in instructions {
             function.instruction(instruction);
         }
         function.instruction(&Instruction::End);
         self.code.function(&function);
         self.count += 1;
+        index
     }
 }
 
-/// Generate the production core runtime, without target imports or linear memory.
+/// Generate the production core runtime, without target imports. Private numeric
+/// conversion scratch memory is separate from GC language storage.
 /// These storage/numeric intrinsics are for verified lowering, not user APIs.
 /// Generic invocation checks arity centrally and throws a language error.
 /// Target adapters and compiler lowering remain separate.
 pub fn module() -> Vec<u8> {
+    static BYTES: std::sync::OnceLock<Vec<u8>> = std::sync::OnceLock::new();
+    BYTES.get_or_init(build_module).clone()
+}
+fn build_module() -> Vec<u8> {
     use Instruction::*;
+    let helper = numeric::helper();
+    let numeric_info = helper.info();
     let mut b = Builder {
-        types: prelude(),
-        functions: FunctionSection::new(),
+        types: helper.types,
+        functions: helper.functions,
         exports: ExportSection::new(),
-        code: CodeSection::new(),
-        count: 0,
+        code: helper.code,
+        count: helper.function_count,
+        next_type: helper.type_count,
     };
     let number = HeapType::Concrete(NUMBER);
     let string = HeapType::Concrete(STRING);
@@ -568,15 +591,16 @@ pub fn module() -> Vec<u8> {
             },
         ],
     );
+    numeric::intrinsics(&mut b, numeric_info);
     let mut tags = TagSection::new();
     tags.tag(TagType {
         kind: TagKind::Exception,
-        func_type_idx: TYPE_COUNT + b.count,
+        func_type_idx: b.next_type,
     });
     b.types.ty().function([VALUE], []);
     let mut globals = GlobalSection::new();
     // Separate rooted descriptors: arity, unbound, not callable, invalid arguments.
-    for identity in [1, 2, 3, 4] {
+    for identity in 1..=numeric::ERROR_GLOBALS {
         globals.global(
             GlobalType {
                 val_type: reference(DESCRIPTOR),
@@ -584,7 +608,7 @@ pub fn module() -> Vec<u8> {
                 shared: false,
             },
             &ConstExpr::extended([
-                I64Const(identity),
+                I64Const(identity.into()),
                 I32Const(0),
                 RefI31,
                 I32Const(0),
@@ -595,15 +619,32 @@ pub fn module() -> Vec<u8> {
             ]),
         );
     }
+    globals.global(
+        GlobalType {
+            val_type: ValType::I32,
+            mutable: true,
+            shared: false,
+        },
+        &ConstExpr::i32_const(numeric_info.stack_top),
+    );
+    b.exports
+        .export("numeric-scratch-memory", ExportKind::Memory, 0);
+    b.exports.export(
+        "numeric-stack-pointer",
+        ExportKind::Global,
+        numeric_info.stack_global,
+    );
     b.exports.export("language-exception", ExportKind::Tag, 0);
     let mut runtime = Module::new();
     runtime
         .section(&b.types)
         .section(&b.functions)
+        .section(&helper.memory)
         .section(&tags)
         .section(&globals)
         .section(&b.exports)
         .section(&b.code)
+        .section(&helper.data)
         .section(&Manifest::default().section());
     runtime.finish()
 }

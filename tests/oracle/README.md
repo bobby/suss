@@ -95,10 +95,23 @@ The legacy compiler still uses its EDN reader. See [portable forms](../../docs/r
 ## Portable compiler bootstrap
 
 `scripts/test-portable-pipeline-oracle.sh` compiles and executes the separate
-original 54-case `portable-cases.json` corpus in pinned ClojureScript/Node, checks
+original 158-case `portable-cases.json` corpus in pinned ClojureScript/Node, checks
 strict typed observations, then executes generated shared-ABI fragments in Rust.
 It uses an ignored generated `.cljc` fixture so reader conditionals are allowed.
 This source oracle covers the current scalar/let/do/if/numeric bootstrap only.
 The 16-case legacy source corpus and 14-case reader corpus retain their separate
 counts and purposes; known failures are unchanged. See the
 [compiler contract](../../docs/runtime/portable-pipeline.md) for remaining work.
+
+## Primitive numeric helper matrix
+
+`sh scripts/test-numeric-oracle.sh` executes 1,024 unique binary64 bit patterns
+through fresh pinned ClojureScript NumberToString/StringToNumber arithmetic, then
+executes the embedded Wasm helper through the generated GC runtime and independently
+inspects UTF-16 and f64 results. `numeric-cases.json` retains boundary cases and
+deterministic sampled inputs with exact tagged expectations. Strict transport
+rejects changed pins, duplicate/missing samples, boolean/schema/unit confusion and
+wrong value tags. This bounded matrix does not certify every number or core API.
+The source corpus additionally checks parsing grammar, whitespace, radix rounding,
+UTF-16 concatenation and dynamic arithmetic. No JVM/Node enters the shipped path.
+See [numeric build provenance](../../runtime/numeric/README.md).

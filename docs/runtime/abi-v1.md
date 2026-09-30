@@ -54,7 +54,8 @@ yet use this gate; dependency graph/target metadata belongs to integration.
 
 The original Rust runtime and encoder tests retain the repository license; no
 upstream ClojureScript implementation was copied. Java/Node are not runtime
-dependencies, and this module has no host imports or canonical linear memory.
+dependencies, and this module has no host imports. Primitive numeric conversion now uses private
+linear scratch memory, separate from future canonical component memory.
 
 Validation command:
 
@@ -62,7 +63,7 @@ Validation command:
 cargo test -p suss-compile --test runtime_abi --locked -- --test-threads=2
 ```
 
-Seven executing tests independently inspect heap fields/units and verify signed
+Nine executing tests independently inspect heap fields/units and verify signed
 zero, infinity, NaN payload storage, binary64 rounding, lone surrogates, astral
 pairs, checked writes, forced GC, shared types across runtime/producer/consumer,
 old captures after binding replacement, fixed/variadic arity, and rejection before
@@ -74,7 +75,7 @@ scheduler, target adapters and persistent REPL are not established by these test
 The portable resolver now emits exact shared cell imports. `binding-unbound`,
 checked `binding-get` and binding-set bound-state transitions distinguish an
 uninitialized var from nil; see [portable resolution](portable-resolution.md).
-Ten executing resolution tests supplement the seven ABI tests. Production
+Ten executing resolution tests supplement the nine ABI tests. Production
 namespace loading, source definitions and universal call lowering remain open.
 
 Fixed source closures and generic local/global/computed calls now lower through
@@ -88,3 +89,31 @@ executing definition tests verify nil/false defonce state, skipped effects and
 failed initializer publication; see [definition lowering](portable-definitions.md).
 The ten-type layout is unchanged; binding-bound is an additional private intrinsic.
 Production session/module loading and migration remain incomplete.
+
+## Primitive arithmetic conversion
+
+Additive value-add/subtract/multiply/divide/negate exports accept boxed numbers,
+nil, booleans and UTF-16 strings. Addition chooses string concatenation when
+either primitive is a string; other operations use Number conversion. Unary +/*
+identity is handled by the compiler and preserves any supported value.
+Unsupported object conversion throws descriptor 5; scratch allocation failure
+throws descriptor 6. These are explicit prototype boundaries, not complete
+ClojureScript object conversion or public numeric core APIs.
+
+The [pinned private helper](../../runtime/numeric/README.md) supplies allocator-free
+parsing/formatting with no imports. Its ordinary types follow the unchanged ten-type
+recursive prelude, and references to types/globals are relocated. Private memory
+and stack-pointer exports support trusted native inspection. Scratch starts after
+Rust stack/static data, grows only as needed and is reused. GC strings remain
+unchanged. The Rust stack pointer resets before each non-reentrant helper call,
+including after a fuel trap; helper calls cannot reenter through host imports.
+
+The ABI layout/version remains 1. New fragments require the additive exports;
+actual import linking rejects older runtimes before eval. A matching version alone
+does not certify available functions. Artifact integrity checks and byte-identical
+local rebuilds pin source, compiler, dependency, notices and Wasm bytes. Distributions
+containing this runtime must include the helper's retained notices/licenses.
+Nine executing ABI tests include exact allocation-failure exceptions and a
+1,024-sample independently decoded formatting/parsing matrix. Session tests cover
+scratch high water capacity, reset and actual interrupted-stack recovery. None of
+this completes M2-03, canonical memory management, object conversion or core import.
