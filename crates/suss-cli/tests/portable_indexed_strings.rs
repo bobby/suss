@@ -8,7 +8,7 @@ fn indexed_strings_match_independently_decoded_primary_observations_after_gc() {
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 25);
+    assert_eq!(cases.len(), 31);
     let mut session = Session::new().unwrap();
     let mut ids = std::collections::BTreeSet::new();
     for case in cases {
@@ -67,4 +67,38 @@ fn indexed_strings_match_independently_decoded_primary_observations_after_gc() {
         assert_eq!(actual, case["expected"], "{id}: {source}");
         session.collect().unwrap();
     }
+}
+
+#[test]
+fn unsupported_string_operations_are_language_errors_and_session_recovers() {
+    use suss_cli::portable_session::SessionError;
+    let mut session = Session::new().unwrap();
+    for source in [
+        "(aget \"xy\" nil)",
+        "(aget \"xy\" true)",
+        "(aget \"xy\" \"0\")",
+        "(aget nil 0)",
+        "(alength nil)",
+        "(aset \"xy\" 0 \"z\")",
+        "(aclone \"xy\")",
+        "(let [f aget] (f \"xy\"))",
+        "(let [f alength] (f \"xy\" 0))",
+    ] {
+        assert!(
+            matches!(session.eval(source), Err(SessionError::Language(_))),
+            "{source}"
+        );
+        session.collect().unwrap();
+        let value = session.eval("(aget \"\\uD800\" 0)").unwrap();
+        let unit = session
+            .inspect(&value, |mut store, value| {
+                let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+                assert_eq!(array.len(&store)?, 1);
+                Ok(array.get(&mut store, 0)?.unwrap_i32())
+            })
+            .unwrap();
+        assert_eq!(unit, 0xd800);
+    }
+    // Host property coercions and writes remain explicit unsupported boundaries.
+    // This test checks typed recovery, not compatibility of those domains.
 }

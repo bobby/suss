@@ -19,12 +19,16 @@ Four existing hash-bound reviews record this original Rust adaptation; no new
 upstream form is copied. Generated core artifacts retain their source and EPL
 packaging with an updated review hash. These reviews remain in progress.
 
-The separate25-case corpus uses fresh compiled/executed primary observations and
+The separate 31-case corpus uses fresh compiled/executed primary observations and
 independent native decoding of binary64, exact Boolean sentinels and UTF-16
 arrays. Native GC runs between cases, including retained string owners and old
 first-class aget/alength functions after public runtime redefinition. Explicit
 qualified macros still use primitive storage behavior. Before implementation,
 the native regression failed with a language error on astral string length.
+Independent review adds large unsigned index boundaries and nested read/throw/
+finally effects. A separate native guard verifies unsupported properties, writes,
+clones and wrong runtime arities are language errors, followed by successful
+lone-surrogate reads after GC; it does not claim compatibility for those domains.
 
 ```sh
 CARGO_BUILD_JOBS=2 sh scripts/test-indexed-string-oracle.sh

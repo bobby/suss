@@ -219,6 +219,54 @@
         "tag": "f64",
         "bits": "4008000000000000"
       }
+    },
+    {
+      "id": "review-large-index-2147483648",
+      "source": "(undefined? (cljs.core/aget \"xy\" 2147483648))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-large-index-4294967294",
+      "source": "(undefined? (cljs.core/aget \"xy\" 4294967294))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-large-index-4294967295",
+      "source": "(undefined? (cljs.core/aget \"xy\" 4294967295))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-large-index-4294967296",
+      "source": "(undefined? (cljs.core/aget \"xy\" 4294967296))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-nested-read-short-circuit",
+      "source": "(do (def review-string-events 0) (try (cljs.core/aget (do (set! review-string-events (+ (* review-string-events 10) 1)) \"xy\") (do (set! review-string-events (+ (* review-string-events 10) 2)) 9) (do (set! review-string-events (+ (* review-string-events 10) 3)) 0) (do (set! review-string-events (+ (* review-string-events 10) 4)) 0)) (catch :default e nil)) review-string-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "review-owner-throw-finally",
+      "source": "(do (def review-string-events 0) (try (cljs.core/aget (do (set! review-string-events 1) (throw 7)) (do (set! review-string-events 2) 0)) (catch :default e nil) (finally (set! review-string-events (+ (* review-string-events 10) 3)))) review-string-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "402a000000000000"
+      }
     }
   ]
 }

@@ -245,7 +245,7 @@ collection acceptance. See [core interfaces](../runtime/core-interfaces.md).
 
 
 UTF-16 indexed storage now supports numeric alength/aget on strings as required
-by pinned IndexedSeq. A separate25-case fresh primary/native corpus covers exact
+by pinned IndexedSeq. A separate 31-case fresh primary/native corpus covers exact
 units, missing numeric indexes, nested order and retained functions after GC and
 redefinition. Four existing source reviews are extended; counts remain68/997.
 Full string/property/macro and sequence acceptance remain unfinished; see

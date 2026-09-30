@@ -4826,3 +4826,41 @@ Required full baseline65743 completed terminal0 using
 9pass7fail and manual/legacy ignores remain explicit. All root Cargo/JVM/Node
 graphs terminal and released. Publish a stacked draft based on reviewed PR85,
 Refs #11/#16/#17, then independent review and exact final-head CI. No merge.
+
+
+## Independent PR #86 review — 2026-09-30
+
+Reviewed candidate88d5b70 against reviewed PR85 847fca7 in isolated
+/private/tmp/suss-review-pr86. Existing STRING guards and unsigned bounds preserve
+exact UTF-16 units and keep malformed input on language exceptions. No significant
+production defect found. Added six independent scalar probes for large unsigned
+index boundaries and nested read/owner-throw/finally effects; original25 case
+dictionaries unchanged. Fresh graph44907 completed terminal0:31 exact pinned
+observations and native corpus1, /private/tmp/suss-pr86-review-oracle.log, using
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-indexed-string-oracle.sh`.
+
+Added separate native typed-recovery guards for unsupported host properties,
+string writes/clones and wrong runtime arities, followed by lone-surrogate reads
+after GC. These are explicit unsupported boundaries, not compatibility claims.
+Focus78674 terminal0: strings2/arrays10/interfaces3/compiler arrays1/ABI18,
+/private/tmp/suss-pr86-review-focus.log. Existing array graph80274 terminal0:
+original56 exact primary observations/native10 unchanged,
+/private/tmp/suss-pr86-review-array-oracle.log. Provenance48345 terminal0:
+Python71/inventory1065/reviews68+997/artifacts25/WIT/numeric/offline10/39,
+/private/tmp/suss-pr86-review-provenance.log. GitHub event/PR audit independently
+confirms issue10 automatically closed by acceptance PR64 commit9ede0d2 at
+12:48:43Z; issue9 manual closure has no commit at14:19:40Z.
+
+Required full baseline88748 is running; record its authoritative terminal outcome
+before publication. No RUSTFLAGS override or overlapping local reference/Cargo
+graphs. Full source sequences/core, compiled macros, host property domains and
+M2–M9 acceptance remain incomplete. Next push review coverage and require exact
+final-head CI, then retained EmptyList/List/Cons/IndexedSeq and rest/apply
+semantics. Do not merge or close partial issues.
+
+Required independent full baseline88748 completed terminal0 using
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-pr86-review-baseline.log. Existing manual/legacy ignores and
+separate differential9pass7fail remain explicit. All review local Cargo/JVM/Node
+graphs are terminal and released. Push independent review coverage and require
+exact final-head CI before readiness; no merge or issue closure claimed.
