@@ -23,7 +23,8 @@ Native execution now passes this corpus, preserving the original119 observations
 and adding four independent thrown-operand/finally/short-circuit probes. Additional regressions cover located
 macro arity/resource errors, universal runtime arity rejection, erased unary
 throws, retained values through GC, lexical and namespace resolution (including
-explicitly referred user comparison vars hiding automatic core macros), a300-operand
+explicit user refers retaining automatic core macros while provider-qualified
+aliases invoke user vars), a300-operand
 runtime call, UTF-16 loop fuel recovery and typed unsupported-object coercion.
 Public HIR/IR guards reject wrong arity/result types and non-dominating operands.
 
@@ -55,3 +56,10 @@ remain unfinished. Recursive macro expansion is limited to256 operands with a
 located diagnostic; runtime first-class calls use constant callback code and a
 loop. Full baseline, independent review/pushed fixes and exact-head CI are required
 before PR readiness. No acceptance gate is complete from this prerequisite slice.
+
+A separate ten-case pinned/native referral corpus certifies all five operators:
+with a user provider explicitly referred into another namespace, unqualified
+calls still expand the automatic core macro. Provider-qualified alias calls
+invoke the user functions. This differs from an own runtime declaration hiding
+an automatically referred comparison macro. Independent fresh source compilation
+corrected the initial review's unsupported inference that both behaved alike.

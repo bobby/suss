@@ -7,7 +7,8 @@ class ComparisonObservationTests(unittest.TestCase):
     def setUp(self):
         self.expected = {'schema': 1, 'upstream': PIN,
                          'cases': [{'id': 'ordered', 'value': {'tag': 'bool', 'value': True}}],
-                         'capture-divergences': [{'id': 'captured', 'value': {'tag': 'string', 'units': [84]}}]}
+                         'capture-divergences': [{'id': 'captured', 'value': {'tag': 'string', 'units': [84]}}],
+                         'referrals': [{'id': 'referred', 'value': {'tag': 'bool', 'value': True}}]}
 
     def test_boolean_schema_does_not_equal_integer_schema(self):
         validate_observations(self.expected, self.expected)
@@ -34,5 +35,12 @@ class ComparisonObservationTests(unittest.TestCase):
         for field, replacement in [('cases', []), ('cases', self.expected['cases'] * 2), ('capture-divergences', [{'id': 'captured', 'value': {'tag': 'string', 'units': [70]}}])]:
             data = copy.deepcopy(self.expected)
             data[field] = replacement
+            with self.assertRaises(ValueError):
+                validate_observations(data, self.expected)
+
+    def test_missing_or_replaced_referral_observations_are_rejected(self):
+        for referrals in [[], [{'id': 'referred', 'value': {'tag': 'f64', 'bits': '4053400000000000'}}]]:
+            data = copy.deepcopy(self.expected)
+            data['referrals'] = referrals
             with self.assertRaises(ValueError):
                 validate_observations(data, self.expected)

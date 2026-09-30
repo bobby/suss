@@ -4524,3 +4524,44 @@ and released. Existing manual ignores/differential9pass7fail remain explicit;
 no RUSTFLAGS override, unrelated file deletion or acceptance change. The original
 119 case dictionaries and five-divergence catalog were independently checked
 unchanged. Push the review commit and require final-head CI before readiness.
+
+## PR #82 follow-up pinned namespace audit — 2026-09-30
+
+The earlier independent review's explicit-ref shadowing claim and fix are
+WITHDRAWN: they inferred behavior from own declarations without executing the
+corresponding pinned namespace source. Root's implements? oracle exposed that
+assumption. Fresh original provider/referrer comparison sources compiled and
+executed at the pinned ClojureScript commit (graph80524 terminal0) returned
+[true,77,true,78,false,79,false,80,false,81]: unqualified explicit user refers
+still select automatic comparison macros; alias-qualified calls invoke user
+functions. /private/tmp/suss-pr82-referral-audit.log records actual output and
+expected redefinition warnings. Initial55241 failed namespace lookup because the
+temporary fixture was written under a wrong relative output path; corrected the
+fixture before the authoritative compilation.
+
+A shared ten-case tagged referral corpus and original development-only provider
+now reproduce that distinction through actual pinned artifacts and independently
+decoded native execution. The strict oracle includes a mandatory referrals field;
+dropped or replaced observations fail. Regression84012 failed against reviewed
+head634c368 (terminal101), /private/tmp/suss-pr82-pinned-refers-red.log. Removed
+the incorrect lookup guard and replaced the inferred regression with the certified
+one. Focus88641 passed native7/compiler2 (terminal0),
+/private/tmp/suss-pr82-pinned-refers-fixed.log. Original123 shared cases and five
+explicit captured-wrapper divergences are preserved. This corrects a review-introduced
+regression; it is not a new semantics decision or an acceptance claim.
+
+Follow-up fresh70911 completed terminal0:123 unchanged shared observations,
+five unchanged explicit divergences and ten certified referred/aliased values,
+native7, /private/tmp/suss-pr82-referral-oracle-final.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-comparison-oracle.sh`.
+Python/provenance61921 completed terminal0:71 tests/inventory1065/reviews52+1013,
+exact ten artifacts/WIT/numeric/offline preview,
+/private/tmp/suss-pr82-referral-provenance.log.
+Required full follow-up baseline53868 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-pr82-referral-baseline.log. All Cargo/JVM/Node graphs terminal
+and released. No RUSTFLAGS override, hidden failures or unrelated deletions.
+Public -equiv, arbitrary object coercion and complete source macro/core integration
+remain pending. Push this correction and require its exact-head CI before readiness;
+next source sequence/list, variadic rest/apply and remaining M2–M9 acceptance.
+No merge or issue/milestone acceptance is claimed.

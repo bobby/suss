@@ -212,7 +212,7 @@ fn runtime_comparison_large_arity_uses_bounded_callback_code_without_macro_expan
 }
 
 #[test]
-fn explicitly_referred_user_comparisons_hide_bootstrap_macros() {
+fn explicit_user_refers_preserve_pinned_core_macros_but_aliases_call_user_vars() {
     let root = tempfile::tempdir().unwrap();
     std::fs::write(root.path().join("comparison_provider.sus"), "(ns comparison-provider) (def < (fn [x y] 77)) (def <= (fn [x y] 78)) (def > (fn [x y] 79)) (def >= (fn [x y] 80)) (def == (fn [x y] 81))").unwrap();
     let mut session = Session::with_options(suss_cli::portable_session::SessionOptions {
@@ -226,21 +226,18 @@ fn explicitly_referred_user_comparisons_hide_bootstrap_macros() {
         )
         .unwrap();
     session.collect().unwrap();
-    for (name, expected) in [
-        ("<", 77.0_f64),
-        ("<=", 78.0),
-        (">", 79.0),
-        (">=", 80.0),
-        ("==", 81.0),
-    ] {
-        assert_eq!(
-            eval_number(&mut session, &format!("({name} 1 2)")),
-            expected.to_bits()
-        );
-        assert_eq!(
-            eval_number(&mut session, &format!("(p/{name} 1 2)")),
-            expected.to_bits()
-        );
+    let corpus: serde_json::Value =
+        serde_json::from_str(include_str!("../../../tests/oracle/comparison-refers.json")).unwrap();
+    for case in corpus["cases"].as_array().unwrap() {
+        let source = case["source"].as_str().unwrap();
+        let actual = match case["expected"]["tag"].as_str().unwrap() {
+            "bool" => serde_json::json!({"tag":"bool", "value":eval_bool(&mut session, source)}),
+            "f64" => {
+                serde_json::json!({"tag":"f64", "bits":format!("{:016x}",eval_number(&mut session, source))})
+            }
+            tag => panic!("unexpected referral tag {tag}"),
+        };
+        assert_eq!(actual, case["expected"], "{source}");
     }
     assert!(eval_bool(&mut session, "(cljs.core/< 1 2)"));
 }

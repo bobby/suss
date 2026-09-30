@@ -223,3 +223,8 @@ with accepted native old-capture behavior tested separately. These are not five
 additional matches or skipped successes. Object coercion, full IEquiv/core imports
 and compiled upstream macros remain unfinished; see [comparisons](../runtime/comparisons.md).
 The existing portable397 and source-import117 corpora remain separate.
+
+Ten additional pinned/native namespace probes preserve the difference between
+explicit user comparison refers (automatic core macros remain active) and provider
+aliases (user functions execute). These are separate from the123 shared cases
+and five retained-capture divergences; the earlier review inference was withdrawn.

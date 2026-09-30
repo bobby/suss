@@ -500,17 +500,6 @@ impl Environment {
     /// General compiled macro imports/expansion remain a later integration.
     pub fn resolve_bootstrap_macro(&self, phase: Phase, symbol: &Symbol) -> Option<Binding> {
         let scope = self.scope(phase);
-        // An explicit refer to a user var takes precedence over the automatic
-        // core comparison macro, just as an own declaration or lexical binding.
-        if symbol.namespace.is_none()
-            && matches!(symbol.name.as_str(), "<" | "<=" | ">" | ">=" | "==")
-            && scope
-                .refers
-                .get(&symbol.name)
-                .is_some_and(|global| global.namespace != "suss.core")
-        {
-            return None;
-        }
         let name = if let Some(namespace) = &symbol.namespace {
             let namespace = scope
                 .aliases

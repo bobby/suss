@@ -25,11 +25,27 @@ def divergences():
     return data["cases"]
 
 
+def referrals():
+    data = json.loads((oracle.ROOT / 'tests/oracle/comparison-refers.json').read_text(), object_pairs_hook=unique)
+    fields(data, 'schema upstream cases')
+    if type(data['schema']) is not int or data['schema'] != 1 or data['upstream'] != oracle.PIN or not isinstance(data['cases'], list):
+        raise ValueError('invalid comparison referral corpus')
+    ids = set()
+    for case in data['cases']:
+        fields(case, 'id source expected'); value(case['expected'])
+        if not isinstance(case['id'], str) or case['id'] in ids or not isinstance(case['source'], str) or not case['source'].strip():
+            raise ValueError('invalid comparison referral case')
+        ids.add(case['id'])
+    if ids != {f'{op}-{mode}' for op in ['lt', 'le', 'gt', 'ge', 'eq'] for mode in ['referred', 'aliased']}:
+        raise ValueError('missing or unexpected comparison referrals')
+    return data['cases']
+
+
 def validate_observations(observations, expected):
-    fields(observations, 'schema upstream cases capture-divergences')
+    fields(observations, 'schema upstream cases capture-divergences referrals')
     if type(observations['schema']) is not int or observations['schema'] != 1 or observations['upstream'] != oracle.PIN:
         raise ValueError('invalid comparison schema or pin')
-    for key in ['cases', 'capture-divergences']:
+    for key in ['cases', 'capture-divergences', 'referrals']:
         if not isinstance(observations[key], list):
             raise ValueError('invalid comparison observations')
         for case in observations[key]:
@@ -46,15 +62,20 @@ def generate():
                         for case in corpus['cases'])
     captures = '\n'.join(f'    #js {{:id {json.dumps(case["id"])} :value (try (encode {case["source"]}) (catch :default error (encode (str (.-name error) ": " (.-message error)))))}}' for case in divergences())
     target.write_text('(ns suss-oracle.comparison-cases)\n(defn observations [encode]\n [\n' + entries + '\n ])\n(defn capture-divergences [encode]\n [\n' + captures + '\n ])\n')
+    referral_target = target.with_name('comparison_referral_cases.cljs')
+    entries = '\n'.join(f'    #js {{:id {json.dumps(case["id"])} :value (encode {case["source"]})}}' for case in referrals())
+    referral_target.write_text('(ns suss-oracle.comparison-referral-cases\n (:require [suss-oracle.comparison-provider :as p :refer [< <= > >= ==]]))\n(defn observations [encode]\n [\n' + entries + '\n ])\n')
+
 
 
 def compare():
     observations = json.loads(oracle.OBSERVATIONS.read_text(), object_pairs_hook=unique)
     expected = {'schema': 1, 'upstream': oracle.PIN,
                 'cases': [{'id': c['id'], 'value': c['expected']} for c in oracle.load()['cases']],
-                'capture-divergences': [{'id': c['id'], 'value': c['expected-primary']} for c in divergences()]}
+                'capture-divergences': [{'id': c['id'], 'value': c['expected-primary']} for c in divergences()],
+                'referrals': [{'id': c['id'], 'value': c['expected']} for c in referrals()]}
     validate_observations(observations, expected)
-    print(f"{len(expected['cases'])} exact primary observations; {len(expected['capture-divergences'])} explicit capture divergences reproduced")
+    print(f"{len(expected['cases'])} exact primary observations; {len(expected['capture-divergences'])} explicit capture divergences reproduced; {len(expected['referrals'])} exact referred/aliased observations")
 
 if __name__ == '__main__':
     oracle.CORPUS = oracle.ROOT / 'tests/oracle/comparison-cases.json'
