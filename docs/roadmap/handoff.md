@@ -2537,10 +2537,64 @@ ABI/dependency/helper artifact change or shipped JVM/Node introduced. Provenance
 and limits are in docs/runtime/recurrence.md; full upstream loop destructuring
 and compiled macro behavior are still unassessed.
 
-Required full workspace baseline is currently running as native session79919,
-/private/tmp/suss-portable-recur-full.log; do not overlap another native graph.
+Required full workspace baseline completed successfully, exit 0 including CLI
+rustdoc; /private/tmp/suss-portable-recur-full.log. Native session79919 is terminal.
+No native Cargo feature graph overlapped this run.
 Publish stacked on #62 with Refs #9/#10, independent review/pushed fixes and exact
 final-head CI required before readiness. Collections/dispatch/general exception/
 effect IR, extended signatures, compiled core/macros and production frontend
 migration remain. Next extend closure signatures and prerequisite core/collection
 foundations. No complete issue/milestone claimed; all M2–M9 remain unfinished.
+
+
+## PR #63 independent recurrence review — 2026-09-30
+
+A dispatched independent reviewer inspected head 51359f0 against reviewed base
+e22b45d in /private/tmp/suss-review-pr63. Reviewed lexical target/tail analysis,
+sequential initializer scope, parallel edge assignment, divergence-aware joins,
+function isolation, dynamic header facts, old iteration/outer capture rooting,
+public HIR target/arity checks and executable negative/reference coverage.
+No significant production-code defect was found. Documentation corrections
+reconcile fixed-function recur versus unsupported named self-recursion, current
+primitive/core arithmetic and session evidence, and the M2-02/M2-03 issue manifest.
+Stable issue IDs/statuses and all incomplete acceptance gates remain unchanged.
+
+Independent sequential native checks used CARGO_BUILD_JOBS=2, shared
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target and no RUSTFLAGS override:
+
+- Six compiler suites: 72 passed, zero ignored, exit 0;
+  /private/tmp/suss-pr63-review-compiler.log.
+- Native Session library/integration: 24 passed (four private/20 integration),
+  zero ignored, exit 0; /private/tmp/suss-pr63-review-session.log.
+- Required cargo test --workspace --locked -- --test-threads=2: passed, exit 0
+  including CLI rustdoc; /private/tmp/suss-pr63-review-full.log. Existing legacy,
+  manual and documentation ignores are retained; this is not full compatibility.
+- Python regression suite: 54 passed, exit 0;
+  /private/tmp/suss-pr63-review-python.log.
+- Fresh clean pinned ClojureScript c4295f303100bbf5afac449242d30bca1126f1a1,
+  generated with oracle_cases.py/portable_oracle.py, compiled by cljs.main and
+  executed in Node: 194 observations match exactly, exit 0;
+  /private/tmp/suss-pr63-review-oracle-build.log and
+  /private/tmp/suss-pr63-review-oracle-comparison.log. Pipeline tests independently
+  execute/decode every corpus artifact. Upstream arithmetic warnings remain visible.
+- Inventory: 1,065 exact declarations/four in-progress reviews/1,061 unassessed.
+  Pinned WIT source lock, numeric artifact/source fingerprints, offline roadmap
+  preview and git diff --check pass. Initial review utility invocations used
+  incorrect relative/script paths and a nonexistent wasi_lock --check option;
+  corrected to actual scripts and wasi_lock.verify. No failed invocation is
+  interpreted as success and no source/runtime repair was needed.
+
+All native and reference handles are terminal. Require successful CI on the exact
+final reviewed head including these documentation changes before readiness.
+PR #63 remains unmerged and uses Refs #9/#10, because collections/dispatch/general
+exception/effect IR, extended signatures, source-backed core/macros and production
+frontend migration still prevent full acceptance. No milestone closes here.
+
+Next unblocked task: extend closure signatures with full active-signature targets
+and callable identities, while preserving ABI v1 and exact captures. Root separately
+compiled and strict-tag validated 11 extended-signature reference-only cases:
+/private/tmp/suss-extended-signature-probe-inputs.json and -observations.json,
+/private/tmp/suss-extended-signature-reference-fixed.log. An initial namespace-path
+fixture failure remains in -reference.log. The successor plan is
+/private/tmp/suss-signatures-next-plan.md. These are not Suss compatibility passes
+and do not enlarge this PR's recurrence scope. M2–M9 remain unfinished.

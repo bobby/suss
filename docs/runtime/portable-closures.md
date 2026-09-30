@@ -12,8 +12,11 @@ The bounded `fn` bootstrap macro resolves through the same canonical core,
 alias/refer/exclusion and phase environment as `let`. Runtime vars do not hide
 macros; lexical locals do. Bare `fn*` is a true special form. Function parameters
 retain unique identities, spans and reader metadata. They remain dynamic Value
-regardless of type hints. Named/recursive signatures, multiple arities,
-destructuring, pre/post conditions (including parameter-vector metadata) and variadic rest sequences are not lowered; unsupported
+regardless of type hints. Fixed-function `recur` is supported through synthetic
+loop headers, with tail-position and arity checks; named functions and named
+self-recursive calls, multiple arities, destructuring, pre/post conditions
+(including parameter-vector metadata) and variadic rest sequences are not
+lowered; unsupported
 syntax returns located diagnostics, never an argument-array masquerading as a
 portable sequence. The fn macro rejects pre/post signature metadata conservatively,
 including keys whose values are nil or false; ordinary annotations and fn* metadata
@@ -28,12 +31,12 @@ the body unless explicitly bound to a local before capture. Reader metadata is
 not runtime metadata. Known fixed closure arities produce located compile errors;
 dynamic calls use the runtime's central arity check.
 
-This does not implement a live public core function library. Bootstrap arithmetic
-still handles only statically proven Number operands, including immutable numeric
-captures. Parameters/global values and call results do not acquire unchecked
-numeric facts. Portable dynamic numeric coercions, first-class core arithmetic
-values and broader callable protocols/collections remain work; they are not
-certified by identity/selection function tests.
+Canonical arithmetic values now use live binding cells and the shared universal
+closure ABI. Primitive Number/nil/boolean/UTF-16 coercions are checked at runtime;
+parameters, globals and recurring bindings do not acquire unchecked numeric facts.
+See [arithmetic values](arithmetic-values.md) and [recurrence](recurrence.md).
+Object conversion, full source-backed core/macros and broader callable
+protocols/collections remain unfinished.
 
 ## Explicit IR and executable functions
 
@@ -44,8 +47,9 @@ then all arguments, each normalized exactly once in source order. Verification
 checks entry shape/types, capture facts, dominance/order, closure result shape,
 known arities and dynamic call results before emission. Public malformed arity
 metadata fails before allocating an unbounded synthetic parameter vector.
-Closure body nesting is bounded to 64. General effect/throw/catch/suspension and
-source recur/tail-position analysis remain incomplete.
+Closure body nesting is bounded to 64. General effect/throw/catch and
+suspension control flow remain incomplete. Source recurrence now uses explicit header parameters/backedges and independently checked tail
+positions; closure captures retain their original iteration values.
 
 The backend emits real functions with the exact universal ABI type, declares
 function references, constructs private GC capture/argument arrays and calls
@@ -66,15 +70,17 @@ recovery, although tests catch actual tags and reuse the Store after an error.
 
 ## Evidence and remaining integration
 
-Twelve focused tests validate/link/execute source-generated closures and independently
+Twelve focused closure tests validate/link/execute source-generated functions and independently
 decode numeric bits, UTF-16 and tagged exceptions. A wrapping import trace records
 computed callee evaluation before each argument and one invocation per call.
 Cross-fragment tests distinguish a captured old function value from a live global
 lookup after rebinding/forced GC. Negative IR tests reject malformed captures,
-body entries and calls before emission. Existing 13 pipeline/10 resolution/7 ABI
-tests still pass; former unsupported-call expectations now assert actual calls.
+body entries and calls before emission. Current compiler focus has 72 tests,
+including 16 pipeline/11 resolution/10 ABI tests; current native session focus
+has 24 tests (20 integration/four private). Recurrence regressions check parallel
+replacement, target isolation, original captures, dynamic types and fuel recovery.
 
-The expanded original 42-case portable corpus matches fresh pinned
+The expanded original 194-case portable corpus matches fresh pinned
 ClojureScript/Node observations exactly, including binary64 rounding/signed zero,
 surrogates, nested/higher-order captures, computed callees, qualified `fn`, `fn*`,
 empty bodies and duplicate parameter names. The implementation/cases are original;
@@ -87,8 +93,9 @@ Run `cargo test -p suss-compile --test portable_closures --test portable_pipelin
 --test portable_resolution --test runtime_abi --locked -- --test-threads=2` and
 `scripts/test-portable-pipeline-oracle.sh`. Full baseline/review/final-CI evidence
 is in the handoff and PR. The original legacy source corpus remains 9 differential
-passes / 7 exact failures / 0 skips; all 1,065 inventory declarations are still
-unassessed. M2 remains incomplete. Next connect source namespace/module/definition
-loading and persistent compiled clients through resolved cells; extend signatures,
-checked portable core coercions, collections/dispatch/recur/exception/async IR and
-compiled macros, then retire the old backend only after replacement acceptance.
+passes / 7 exact failures / 0 skips; four arithmetic declarations have in-progress
+manual reviews and 1,061 remain unassessed. M2 remains incomplete. Namespace/module/
+definition loading and native persistent sessions now share resolved cells; the
+legacy production frontends still require migration. Next extend signatures,
+core/collection foundations, dispatch/exception/async IR and compiled macros,
+then retire the old backend only after replacement acceptance.
