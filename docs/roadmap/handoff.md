@@ -3840,3 +3840,55 @@ this regression/review evidence to PR74 and require exact final-head CI before
 readiness. Refs #16 remains partial; no issue closure or PR merge. Next unblocked
 work: explicit primitive adaptation for some?, compiled core/macro bootstrap and
 sequence/collection foundations. M2–M9 and the full ROADMAP goal remain incomplete.
+
+## PR74 readiness and source-backed some? increment — 2026-09-30
+
+Previous goal turn verified merged PR40/41 had no closing issue links; partial
+acceptance remained open. Future complete acceptance uses Closes, partial uses
+Refs. The preceding implementation turn published the Boolean port; independent
+review then pushed d2cd29c7ed7cfe3764c2a943168f1fc5ea6eb2b4. Review native8,
+fresh50, Python66, provenance/license and required full baseline passed; all
+review handles terminal and graph ownership explicitly released. Exact final-head
+CI36739168634 passed; actual enabled-suite log inspected at
+/private/tmp/suss-pr74-final-ci.log. PR74 body updated and marked ready, without
+merge or issue closure. PR73 remains the reviewed stack base.
+
+Next branch /private/tmp/suss-some-core-import,
+resurrection/portable-some-core-import, starts from reviewed d2cd29c. Four source
+forms now retain source/patch/EPL provenance; some? uses a typed private
+suss.bootstrap/nil? primitive, normalized to one IR value. Its HIR result type,
+IR result/dominance/definition, recurrence operand and namespace reservation are
+checked. Emission compares the evaluated value to nil/internal undefined, without
+re-emitting source operands. No shared ABI/runtime/helper/dependency change.
+
+A source-reading assumption in earlier handoff/body text was WRONG: some?'s
+source (not (nil? x)) does not call live not in pinned compiled core. Fresh
+captured-function probes under not redefinition returned unchanged Boolean values,
+including identity and non-Boolean replacement functions. Generated core.js:
+some_QMARK_(x) returns !(x == null). Pinned compiler.cljc1205–1206/1262–1263
+optimizes not on inferred Boolean operands. Public nil? redefinitions also do
+not alter the compiled primitive. Corrected new corpus/test expectations only
+after inspecting these primary observations and exact emitted implementation;
+prior50 observations unchanged. PR74 body speculation corrected. This bounded
+port does not certify complete Boolean inference/macros/source metadata.
+
+Commands/results, shared target/two jobs/no RUSTFLAGS, sequential native graphs:
+- Fresh primary build94324 terminal0, /private/tmp/suss-some-core-import-primary-build.log. Initial 72-case compare failed on the three incorrect live-not assumptions; emitted code and raw observations reviewed, expectations corrected to actual primary behavior. Final strict72 comparisons pass. Raw generated/reference data remain tests/oracle/out.
+- Three initial native regressions failed unresolved some?, /private/tmp/suss-some-core-import-red.log,78241 terminal101. Initial focused24083 also failed because unsupported importer --write flag did not regenerate artifact; corrected documented no-argument generation produced eight files. No failure/skip hidden.
+- Final native11 passed, /private/tmp/suss-some-core-import-focused-final.log,86790 terminal0. Expanded native12 plus compiler pipeline17 pass, /private/tmp/suss-some-core-import-expanded.log,15771 terminal0. Includes false versus nil/undefined, scalars/objects/GC, ignored predicate/not redefinitions, once-only arguments/arity errors, private operand effects/throws, invalid arities/first-class reads/reserved namespace and non-tail recurrence. Forged HIR/IR result and undefined operand regressions pass.
+- Full fresh CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-core-import-oracle.sh passed72 exact primary comparisons/native12, /private/tmp/suss-some-core-import-oracle.log,75764 terminal0. Prior50 retained,22 added; no changed prior expectations/new failures/skips.
+- Python66 passed, /private/tmp/suss-some-core-import-python.log,58881 terminal0. Inventory1065/overlay27 in-progress+1038 unassessed and exact eight-file manifest reproduction pass. Rustfmt/diff checks pass; unrelated rustfmt child change restored.
+- Required CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2 is live83337 alone, /private/tmp/suss-some-core-import-workspace.log. Must record terminal result before publication/readiness.
+
+Next finish full baseline, publish stacked on reviewed PR74 with Refs #9/#16,
+dispatch independent review, push significant fixes and require exact final-head
+CI. Do not merge. Then continue source-backed sequence/collection and compiled
+macro/core bootstrap prerequisites; public macro inference, metadata/privacy,
+complete import/loading/collections and production CLI migration remain unfinished.
+M2–M9 and the full ROADMAP goal remain active. No milestone completion inferred.
+
+Some? required full baseline83337 terminal exit0, same command/log. All workspace
+targets including CLI doc tests pass; native12 and pipeline17/397 included. Existing
+legacy/manual ignores and legacy9pass/7fail baseline unchanged. Root native/fresh
+reference handles all terminal; review may take exclusive graph ownership.
+Offline roadmap preview, inventory/reviews and exact eight-file regeneration pass.

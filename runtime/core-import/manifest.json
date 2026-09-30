@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "bba6d46376bab3fe5267610ee706b288f398035ab756d6c6c4566772511fdd38",
-  "reviews-sha256": "9b41420d3c792e15086595c3a63f2b80ccac1c7bec79f37131947d91afe9ede1",
+  "recipe-sha256": "a6eccc6376cf0691596ea31f73597a972ba07da15e79914573d62af41bd26f38",
+  "reviews-sha256": "02283aaac0b4fe61669f573db785171978515c46e94dd5875ff7fe6bb5bbb79b",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -102,6 +102,38 @@
         "crates/suss-cli/tests/core_import.rs",
         "tests/oracle/core-import-cases.json"
       ]
+    },
+    {
+      "id": "runtime:some?:271",
+      "name": "some?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 271,
+      "end-line": 273,
+      "byte-start": 7771,
+      "byte-end": 7864,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "28d482299025338e58268b5b0aebd0291e8db3ecc4bd5d05ab59981619d4356b",
+      "extracted": "extracted/0003.cljs",
+      "extracted-sha256": "877df94d83271fb53f95e431a4e07835e572cd9dbe5dd2017fb84c78c5d24ec8",
+      "patch": "docs/compatibility/patches/some.json",
+      "patch-sha256": "5e17b56a961c5ba8fe8087160ab36e94b4bd39dd4b6af63c20c0617a06e8958f",
+      "adapted-form-sha256": "5e9c699c64cc6b8f24320d4668681a9253c8941bc8a9000c4f5659e2e2c73673",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defn:3364",
+        "macro:nil?:923",
+        "runtime:not:263",
+        "compiler boolean-not optimization"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/core_import.rs",
+        "tests/oracle/core-import-cases.json"
+      ]
     }
   ],
   "files": {
@@ -110,6 +142,7 @@
     "extracted/0000.cljs": "fe594689bf27c99c119f86d1ecf12f5a7de68d754e7490e114e71239ab877fb0",
     "extracted/0001.cljs": "0d27d0346a31538b261c7943df5bb6d74c4f98c8098f6ab826752d7165be7bbd",
     "extracted/0002.cljs": "a99b626fc99b41bd2f599975407a10d9907224d9a45c5393820cd513e330a462",
-    "suss/core.sus": "29779c51d46368216bc62f2a55c13e6ab5450eea91a42cb4fbd8f03f5b1f7dd5"
+    "extracted/0003.cljs": "877df94d83271fb53f95e431a4e07835e572cd9dbe5dd2017fb84c78c5d24ec8",
+    "suss/core.sus": "672d364b243e3e7a8981ec8b9a80c755bb2bb8721530b080c7a29cc9ddab9e13"
   }
 }

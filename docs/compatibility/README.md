@@ -175,3 +175,11 @@ bring the current overlay to 26 in-progress reviews and 1,039 unassessed declara
 Three forms retain source/patch/license hashes and execute against a separate
 50-case fresh primary corpus; the portable pipeline corpus remains 397 inputs.
 Full core/macro/metadata/collection acceptance remains incomplete.
+
+The next source-backed selection, some?, brings the current overlay to 27
+in-progress reviews and 1,038 unassessed declarations. Four retained-source forms
+execute against 72 fresh primary cases. Pinned generated code and captured-function
+probes show that some? ignores redefinitions of both nil? and not; the explicit
+compiler nil-test primitive preserves that behavior. Earlier speculation about
+a live not dependency was incorrect. Full macros/metadata/core loading and
+collection acceptance remain unfinished.

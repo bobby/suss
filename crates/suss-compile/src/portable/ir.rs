@@ -19,6 +19,8 @@ pub struct Value {
 }
 #[derive(Debug, Clone)]
 pub enum Operation {
+    /// Nil or internal undefined, applied to one already evaluated value.
+    NilTest(ValueId),
     /// Snapshot operands, initializer operands and compiled body, in that order.
     DynamicScope {
         globals: Vec<Global>,
@@ -516,6 +518,16 @@ impl Lowerer {
                 self.current = join;
                 result
             }
+            Expression::NilTest(value) => {
+                if hir.ty != Type::Bool {
+                    return Err(Diagnostic {
+                        span: hir.span.clone(),
+                        message: "Invalid nil-test HIR result type".into(),
+                    });
+                }
+                let value = operand!(value);
+                self.emit(Operation::NilTest(value), Type::Bool, hir.span.clone())
+            }
             Expression::Nominal {
                 operation,
                 arguments,
@@ -724,6 +736,7 @@ fn verify_recurrence(
                 verify_recurrence(argument, targets, false)?;
             }
         }
+        Expression::NilTest(value) => verify_recurrence(value, targets, false)?,
         Expression::Arithmetic { arguments, .. } | Expression::Nominal { arguments, .. } => {
             for argument in arguments {
                 verify_recurrence(argument, targets, false)?;
@@ -746,7 +759,9 @@ pub fn lower(hir: &Hir) -> Result<Function, Diagnostic> {
 fn operands(operation: &Operation) -> &[ValueId] {
     match operation {
         Operation::Literal(_) | Operation::GlobalRead(_) | Operation::GlobalBound(_) => &[],
-        Operation::GlobalWrite { value, .. } => std::slice::from_ref(value),
+        Operation::GlobalWrite { value, .. } | Operation::NilTest(value) => {
+            std::slice::from_ref(value)
+        }
         Operation::Arithmetic { arguments, .. } | Operation::Nominal { arguments, .. } => arguments,
         Operation::MakeClosure { captures, .. }
         | Operation::MakeGeneralClosure { captures, .. } => captures,
@@ -992,6 +1007,11 @@ fn verify_function(
                         if arity != operands.len() - 1 {
                             return Err(fail("IR known closure call arity mismatch"));
                         }
+                    }
+                }
+                Operation::NilTest(_) => {
+                    if result_ty != Type::Bool {
+                        return Err(fail("IR nil-test result must be Boolean"));
                     }
                 }
                 Operation::Nominal {
