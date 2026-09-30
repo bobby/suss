@@ -742,4 +742,14 @@
    :adaptation-path "docs/runtime/control-flow.md"
    :alternative nil
    :tests ["crates/suss-cli/tests/portable_control_flow.rs" "tests/oracle/control-flow-cases.json"]}
+  "macro:declare:174"
+  {:source-sha256 "988d57ef7da3c0657ea56e8122459da0740e614dfa893d07ca1dc0e241e4ed1f" :visibility :public
+   :arities {:fixed [] :variadic-min 0}
+   :dependencies ["special def" "source global read and initialization state" "reader source metadata"]
+   :classification :adapted
+   :rationale "Original bounded bootstrap lowers declaration statements to initializerless source definitions, retaining name metadata plus generated declared:true. Fresh17 primary/native observations establish undefined/nil-like/falsey source reads before initialization, value preservation, mutual function references, live rebinding and defonce behavior. Source GlobalRead guards the existing internal binding-get with binding-bound; an uninitialized source read yields internal undefined without changing initialization state. Internal ABI unbound-read errors remain intact. No upstream form is copied and the inventory retains the :cljs source context. Full compiled macros, runtime Var metadata, declaration expression results and complete source core loading remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/runtime/forward-declarations.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_forward_declarations.rs" "crates/suss-compile/tests/portable_definitions.rs" "tests/oracle/forward-declaration-cases.json"]}
  }}

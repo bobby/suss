@@ -121,6 +121,22 @@
         "tag": "bool",
         "value": true
       }
+    },
+    {
+      "id": "skipped-defonce-declaration-is-undefined",
+      "source": "(do (def forward-cached 7) (defonce forward-cached (def forward-skipped 9)) (undefined? forward-skipped))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "self-qualified-declaration",
+      "source": "(do (declare suss-oracle.forward-declaration-cases/qualified-self) (undefined? qualified-self))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
     }
   ]
 }

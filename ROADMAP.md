@@ -38,7 +38,7 @@ preserves existing issue bodies.
 
 ### M0: Contract and feasibility
 
-- **M0-01 — Contract and upstream inventory** (completed). Deterministic pinned inventory, source hashes/reader branches, strict review schema and provenance policy pass. Seventy-four arithmetic/nominal/dynamic/exception/bootstrap/predicate/array/comparison/direct-implementation/collection-protocol/control-macro declarations now have in-progress manual reviews; 991 remain unassessed for M4/M7 implementation.
+- **M0-01 — Contract and upstream inventory** (completed). Deterministic pinned inventory, source hashes/reader branches, strict review schema and provenance policy pass. Seventy-five arithmetic/nominal/dynamic/exception/bootstrap/predicate/array/comparison/direct-implementation/collection-protocol/control-macro declarations now have in-progress manual reviews; 990 remain unassessed for M4/M7 implementation.
 - **M0-02 — Lock toolchain and official WIT packages** (completed). Locked official package hashes and executing GC/tail-call/EH/map/implements/external-id/async/future/stream probes pass. Generated Suss adapters remain M5/M6 work.
 - **M0-03 — Prove shared GC fragments** (completed). Shared roots/closures/nominal descriptors survive forced GC; incompatible ABI fails before initialization. Production persistent sessions remain M2/M3 work.
 - **M0-04 — Prove browser loading and suspension** (completed). Chrome executes typed core/Promise/cancellation/feature-error fixtures and optional Jco GC packaging. Teardown timeout is recorded separately; cross-browser/product delivery remains M8 work.
@@ -65,7 +65,7 @@ closed after their exit gates were rechecked. M2–M9 remain open.
 
 - **M3-01 — Incremental compiled REPL** (planned). Replace source replay with one runtime and compiled input fragments. A native persistent session embedding API and forty-four session tests establish prerequisites; the command frontend, atoms and full acceptance remain; see [session host](docs/runtime/portable-session.md).
 - **M3-02 — Namespace loading and redefinition** (planned). Implement live binding cells, namespace loading, defonce and reload semantics. Source graph preparation and eleven executing module tests now establish compiler prerequisites; persistent production clients and reload/cache/privacy policy remain; see [module preparation](docs/runtime/portable-modules.md).
-- **M3-03 — Compiled macro bootstrap** (planned). Run macros in a separate compiled phase session and remove the temporary evaluator. Six bounded checked control-macro expansions now establish retained-source prerequisites; this is not compiled macro acceptance. See [control macros](docs/runtime/control-flow.md).
+- **M3-03 — Compiled macro bootstrap** (planned). Run macros in a separate compiled phase session and remove the temporary evaluator. Six bounded checked control-macro expansions now establish retained-source prerequisites; this is not compiled macro acceptance. See [control macros](docs/runtime/control-flow.md). Forward declarations now preserve source undefined reads and defonce initialization; see [declarations](docs/runtime/forward-declarations.md).
 - **M3-04 — Session lifecycle and interruption** (planned). Define reset, roots, code residency and cancellation while interactive I/O is pending. Native session reset/owned handles/fuel recovery/residency counters now have executing evidence; interactive cancellation and live heap accounting remain.
 
 ### M4: Portable persistent collections

@@ -8,8 +8,14 @@ fn forward_declarations_match_independently_decoded_primary_observations_after_g
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 15);
+    assert_eq!(cases.len(), 17);
     let mut session = Session::new().unwrap();
+    session
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .unwrap();
+    session
+        .enter_namespace("suss-oracle.forward-declaration-cases")
+        .unwrap();
     let mut ids = std::collections::BTreeSet::new();
     for case in cases {
         let id = case["id"].as_str().unwrap();
@@ -84,4 +90,55 @@ fn forward_declarations_match_independently_decoded_primary_observations_after_g
         assert_eq!(actual, case["expected"], "{id}: {source}");
         session.collect().unwrap();
     }
+}
+
+#[test]
+fn declaration_errors_are_atomic_and_unknown_names_still_fail_resolution() {
+    use suss_cli::portable_session::SessionError;
+    let mut session = Session::new().unwrap();
+    for source in [
+        "(declare declaration-ghost 3)",
+        "(declare [x])",
+        "(declare other/name)",
+        "(let [x (declare declaration-ghost)] x)",
+    ] {
+        assert!(
+            matches!(session.eval(source), Err(SessionError::Compile(_))),
+            "{source}"
+        );
+        assert!(matches!(
+            session.eval("declaration-ghost"),
+            Err(SessionError::Compile(_))
+        ));
+    }
+    assert!(matches!(
+        session.eval("never-declared"),
+        Err(SessionError::Compile(_))
+    ));
+    session
+        .eval("(ns declaration.alias (:require [cljs.core :as c])) (c/declare aliased)")
+        .unwrap();
+    let value = session.eval("(undefined? aliased)").unwrap();
+    session
+        .inspect(&value, |store, value| {
+            assert_eq!(
+                value
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_i31(&store)?
+                    .unwrap()
+                    .get_u32(),
+                4
+            );
+            Ok(())
+        })
+        .unwrap();
+    session
+        .eval("(ns declaration.excluded (:refer-clojure :exclude [declare]))")
+        .unwrap();
+    assert!(matches!(
+        session.eval("(declare excluded)"),
+        Err(SessionError::Compile(_))
+    ));
+    session.eval("(cljs.core/declare qualified)").unwrap();
 }

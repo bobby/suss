@@ -257,13 +257,11 @@ fn source_definitions_rebind_live_globals_without_changing_old_captures() {
     assert_eq!(session.bits(&value), 7.0f64.to_bits());
     let old_code = session.compile("(function)", Phase::Runtime).unwrap();
     let old_function = session.eval("(def original function)");
-    assert!(
-        old_function
-            .unwrap_anyref()
-            .unwrap()
-            .is_struct(&session.store)
-            .unwrap()
-    );
+    assert!(old_function
+        .unwrap_anyref()
+        .unwrap()
+        .is_struct(&session.store)
+        .unwrap());
     session.eval("(def value 9) (def function (fn [] 11))");
     for (source, expected) in [
         ("(function)", 11.0f64),
@@ -288,9 +286,12 @@ fn source_defonce_checks_bound_state_and_skips_initializer_effects() {
         assert_eq!(session.sentinel(&value), 0);
         let value = session.eval(name);
         assert_eq!(session.sentinel(&value), sentinel);
-        let fragment = session.compile("forbidden", Phase::Runtime).unwrap();
-        session.catch(fragment, 2, "Unbound binding");
+        let value = session.eval("forbidden");
+        assert_eq!(session.sentinel(&value), 6);
+        // Reading undefined must not mark the cell initialized.
     }
+    let value = session.eval("(defonce forbidden 17) forbidden");
+    assert_eq!(session.bits(&value), 17.0f64.to_bits());
     let value = session.eval("(def declaration) (defonce declaration 5) declaration");
     assert_eq!(session.bits(&value), 5.0f64.to_bits());
     let value = session.eval("(defonce declaration 8)");

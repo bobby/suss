@@ -60,6 +60,7 @@ pub enum ControlForm {
     And,
     Or,
     Cond,
+    Declare,
 }
 impl ControlForm {
     fn from_name(name: &str) -> Option<Self> {
@@ -70,6 +71,7 @@ impl ControlForm {
             "and" => Self::And,
             "or" => Self::Or,
             "cond" => Self::Cond,
+            "declare" => Self::Declare,
             _ => return None,
         })
     }
@@ -290,7 +292,7 @@ impl Environment {
                 env.bindings
                     .insert(global.clone(), Binding::Nominal { global, form });
             }
-            for name in ["when", "when-not", "if-not", "and", "or", "cond"] {
+            for name in ["when", "when-not", "if-not", "and", "or", "cond", "declare"] {
                 let global = Global {
                     phase,
                     namespace: "suss.core".into(),
@@ -579,6 +581,7 @@ impl Environment {
                         | "and"
                         | "or"
                         | "cond"
+                        | "declare"
                 ))
             .then_some(symbol.name.as_str())
         } else if let Some(global) = scope.refers.get(&symbol.name) {
@@ -613,6 +616,7 @@ impl Environment {
                         | "and"
                         | "or"
                         | "cond"
+                        | "declare"
                 )
             {
                 Some(global.name.as_str())
@@ -647,6 +651,7 @@ impl Environment {
                         | "and"
                         | "or"
                         | "cond"
+                        | "declare"
                 ) && !scope.excluded_core.contains(&symbol.name))
                 .then_some(symbol.name.as_str())
             }
@@ -681,6 +686,7 @@ impl Environment {
                     | "and"
                     | "or"
                     | "cond"
+                    | "declare"
             ) && !scope.excluded_core.contains(&symbol.name))
             .then_some(symbol.name.as_str())
         }?;
@@ -707,6 +713,7 @@ impl Environment {
                     | "and"
                     | "or"
                     | "cond"
+                    | "declare"
             )
             && self.bindings.contains_key(&Global {
                 phase,

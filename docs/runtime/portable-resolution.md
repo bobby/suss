@@ -97,3 +97,11 @@ AOT/REPL/macro clients rather than maintaining a second production pipeline.
 Source namespace directives and definitions now use this environment in
 [definition preparation](portable-definitions.md). Required declarations must be
 supplied; recursive file loading and source macro imports remain unfinished.
+
+
+Source GlobalRead now checks binding-bound before binding-get and yields internal
+undefined for an uninitialized, already resolved source variable. This does not
+initialize its cell; defonce remains able to run. Unresolved names still fail
+compilation, and direct internal ABI binding-get still raises its unbound error.
+Fresh [forward-declaration evidence](forward-declarations.md) supersedes the old
+source-read assumption while preserving the ABI cell distinction.

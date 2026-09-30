@@ -4987,3 +4987,64 @@ baseline and independent PR review/final-head CI. The local red preparation is
 unpublished. Actual source EmptyList/List/Cons/IndexedSeq and hashing/reduction/
 persistent rest/apply remain unfinished; M2–M9 goal remains active. All reference
 and Cargo graphs terminal/released; no RUSTFLAGS override or unrelated deletion.
+
+## Source declaration implementation — 2026-09-30
+
+Previous continuation made concrete progress: added source GlobalRead bound guard
+and bounded declare lowering against two prior pinned/native red graphs. This
+continuation revalidated worktree/process state. Prior focus31610 handle was
+missing after tool context refresh; its completed log showed all four suites
+passing, but that was not used as a fresh terminal exit-code claim. Fresh graphs
+below provide authoritative results. No surviving reference graph was restarted.
+
+Source GlobalRead now calls existing binding-bound and binding-get for initialized
+cells, otherwise returns existing undefined sentinel6 without writing the cell.
+Internal binding-get behavior stays unchanged. Initial implementation11965 failed
+Wasm validation: binding-bound returns tagged Boolean eqref, not i32; converted
+its canonical true sentinel before branching. Corrected12855 exposed fixture's
+unloaded boolean function; native test now loads generated core artifact and enters
+the primary fixture namespace. Loaded53948 passed native15 then failed the old
+compiler test expecting an unbound-read exception after skipped defonce. Fresh
+76027 independently established16 exact observations including that skipped-source
+read; updated the regression to exact undefined and retained later defonce17 check.
+
+Fresh77202 completed terminal0:17 exact observations/native2, including self-qualified
+declaration names. Source-qualified names use existing def namespace checks. Macro
+metadata retains original name metadata plus generated declared:true. Expression
+results remain explicitly unsupported rather than invented. Metadata runtime
+reflection and full compiled macros remain pending. Final focus51507 terminal0:
+persistent_session33/forward declarations2/compiler definitions12/ABI18,
+/private/tmp/suss-forward-declaration-final-focus.log. Fresh final97430 terminal0:
+17 exact primary/native2, /private/tmp/suss-forward-declaration-final-primary.log.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-forward-declaration-oracle.sh`.
+
+One partial source-hash review macro:declare:174 at988d57ef… retains :cljs context;
+no upstream form copied. Overlay75 in progress/990 unassessed. Generated25 source
+artifacts only change the review manifest hash. Provenance56858 terminal0:
+Python71/inventory1065/reviews75+990/artifacts25/WIT15files6packages/numeric/offline
+10 milestones39 issues. Required full baseline44806 ended101 on a stale
+source-resolution unbound-read expectation;
+/private/tmp/suss-forward-declaration-baseline.log. Require authoritative terminal
+success before publishing, then independent review/fixes and exact final-head CI.
+No RUSTFLAGS override, unrelated deletion, issue closure or PR merge.
+
+PR87 exact reviewed CI36788771234 succeeded at2afef8a. Root inspected enabled
+provenance/workspace logs /private/tmp/suss-pr87-final-ci.log, including all three
+control tests, and marked it ready without merging. Next actual retained list/
+sequence source with canonical empty list, storage, hashing/reduction and persistent
+rest/apply; complete M2–M9 acceptance remains unfinished. Source import dependencies
+must stay executable and unknown behavior must remain explicit until implemented.
+
+
+Full baseline44806 exposed the remaining source-resolution expectation. Updated
+that test to decode exact undefined6 and unchanged bound flag0, while a separately
+constructed direct binding-get fragment preserves its typed language exception,
+UTF-16 "Unbound binding" message and later initialized nil behavior. Test wrapper
+first failed compilation on private constants, then failed import validation on
+its cell-typed parameter; corrected to the existing eqref helper signature.
+Fresh focused45811 terminal0: compiler definitions12/resolution11/ABI18.
+Required workspace repeat25487 completed terminal0, all enabled suites and
+doc-tests passing; /private/tmp/suss-forward-declaration-baseline-repeat.log. No internal ABI behavior or unknown-name resolution was relaxed.
+
+Root validation is complete; next gate is independent PR review, significant
+fixes if any, and exact final-head CI. No merge or issue closure is authorized.
