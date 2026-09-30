@@ -4310,3 +4310,16 @@ Review required full baseline96773 completed terminal0:
 /private/tmp/suss-pr79-review-baseline.log. All review Cargo/fresh reference graphs
 are terminal and released. Push this review regression/evidence commit and require
 its exact final-head CI before readiness. No merge is authorized.
+
+## inc/dec source prerequisites — primary evidence and native failures
+
+Prepared35 new source-import cases (107 total, original72 unchanged) for captured
+first-class inc/dec over scalar coercions, UTF-16 concatenation, binary64 rounding,
+canonical aliases, arithmetic/runtime-var redefinitions and once-only operands.
+Fresh pinned graph76820 matched all107 exactly; native corpus plus two new focused
+tests fail unresolved inc/dec (terminal101), /private/tmp/suss-inc-dec-primary-and-red.log.
+No source port or completion status changed in this preparation. Existing12 import
+tests pass. Next retain original pinned forms/notices, add explicit defn patches
+and partial hash-bound reviews, regenerate artifacts and validate execution.
+This worktree includes independently reviewed mutable head01785e4; all local
+reference/Cargo graphs are terminal and root owns the next graph. Full M2–M9 remains active.

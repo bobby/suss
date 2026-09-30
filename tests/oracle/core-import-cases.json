@@ -580,6 +580,296 @@
         "tag": "bool",
         "value": false
       }
+    },
+    {
+      "id": "inc-nil",
+      "source": "(let [f inc] (f nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "inc-false",
+      "source": "(let [f inc] (f false))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "inc-true",
+      "source": "(let [f inc] (f true))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "inc-zero",
+      "source": "(let [f inc] (f 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "inc-negative-zero",
+      "source": "(let [f inc] (f -0.0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "inc-fraction",
+      "source": "(let [f inc] (f 1.5))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4004000000000000"
+      }
+    },
+    {
+      "id": "inc-rounding",
+      "source": "(let [f inc] (f 9007199254740992))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4340000000000000"
+      }
+    },
+    {
+      "id": "inc-negative-rounding",
+      "source": "(let [f inc] (f -9007199254740992))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c33fffffffffffff"
+      }
+    },
+    {
+      "id": "inc-infinity",
+      "source": "(let [f inc] (f ##Inf))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff0000000000000"
+      }
+    },
+    {
+      "id": "inc-negative-infinity",
+      "source": "(let [f inc] (f ##-Inf))",
+      "expected": {
+        "tag": "f64",
+        "bits": "fff0000000000000"
+      }
+    },
+    {
+      "id": "inc-numeric-string",
+      "source": "(let [f inc] (f \"2\"))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          50,
+          49
+        ]
+      }
+    },
+    {
+      "id": "inc-empty-string",
+      "source": "(let [f inc] (f \"\"))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49
+        ]
+      }
+    },
+    {
+      "id": "inc-primitive-redef",
+      "source": "(with-redefs [+ (fn [x y] 90)] (let [f inc] (f 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "inc-captured-redef",
+      "source": "(let [f inc] (with-redefs [inc (fn [x] 90)] (f 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "inc-live-redef",
+      "source": "(with-redefs [inc (fn [x] 90)] (let [f inc] (f 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4056800000000000"
+      }
+    },
+    {
+      "id": "inc-alias",
+      "source": "(let [f cljs.core/inc] (f 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "dec-nil",
+      "source": "(let [f dec] (f nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "dec-false",
+      "source": "(let [f dec] (f false))",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "dec-true",
+      "source": "(let [f dec] (f true))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "dec-zero",
+      "source": "(let [f dec] (f 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "dec-negative-zero",
+      "source": "(let [f dec] (f -0.0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "dec-fraction",
+      "source": "(let [f dec] (f 1.5))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3fe0000000000000"
+      }
+    },
+    {
+      "id": "dec-rounding",
+      "source": "(let [f dec] (f 9007199254740992))",
+      "expected": {
+        "tag": "f64",
+        "bits": "433fffffffffffff"
+      }
+    },
+    {
+      "id": "dec-negative-rounding",
+      "source": "(let [f dec] (f -9007199254740992))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c340000000000000"
+      }
+    },
+    {
+      "id": "dec-infinity",
+      "source": "(let [f dec] (f ##Inf))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff0000000000000"
+      }
+    },
+    {
+      "id": "dec-negative-infinity",
+      "source": "(let [f dec] (f ##-Inf))",
+      "expected": {
+        "tag": "f64",
+        "bits": "fff0000000000000"
+      }
+    },
+    {
+      "id": "dec-numeric-string",
+      "source": "(let [f dec] (f \"2\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "dec-empty-string",
+      "source": "(let [f dec] (f \"\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "dec-primitive-redef",
+      "source": "(with-redefs [- (fn [x y] 90)] (let [f dec] (f 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "dec-captured-redef",
+      "source": "(let [f dec] (with-redefs [dec (fn [x] 90)] (f 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "dec-live-redef",
+      "source": "(with-redefs [dec (fn [x] 90)] (let [f dec] (f 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4056800000000000"
+      }
+    },
+    {
+      "id": "dec-alias",
+      "source": "(let [f cljs.core/dec] (f 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "inc-utf16-string",
+      "source": "(let [f inc] (f \"\\uD800\ud83d\ude00\"))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          55296,
+          55357,
+          56832,
+          49
+        ]
+      }
+    },
+    {
+      "id": "inc-operand-once",
+      "source": "(do (def inc-effects 0) (let [f inc] (f (do (def inc-effects (+ inc-effects 1)) inc-effects))) inc-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "dec-operand-once",
+      "source": "(do (def dec-effects 0) (let [f dec] (f (do (def dec-effects (+ dec-effects 1)) dec-effects))) dec-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
     }
   ]
 }
