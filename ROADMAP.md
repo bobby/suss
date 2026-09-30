@@ -4,6 +4,12 @@ The accepted target is [the design specification](docs/design/suss-0.3.1.md).
 The prototype has not reached the WASI alpha gate. Work below is dependency ordered;
 status is evidence-based and is not a calendar promise. See the [handoff](docs/roadmap/handoff.md).
 
+[ADR-0001](docs/adr/0001-result-option-and-panic.md) proposes separate tactical and
+strategic adoption of Result/Option/panic semantics. Its
+[dedicated milestone and work packages](docs/adr/README.md#adr-0001-work-tracking)
+track decisions, design, implementation, and acceptance separately from M0–M9.
+The proposal has not changed this roadmap's accepted semantics or release gates.
+
 | Milestone | Depends on | Exit gate |
 | --- | --- | --- |
 | M0: Contract and feasibility | — | All M0 acceptance criteria pass |

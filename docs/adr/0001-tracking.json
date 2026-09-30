@@ -1,0 +1,88 @@
+{
+  "repository": "bobby/suss",
+  "adr": "ADR-0001",
+  "status": "proposed",
+  "milestone": {
+    "number": 11,
+    "url": "https://github.com/bobby/suss/milestone/11",
+    "title": "ADR-0001: Result, Option, and panic adoption"
+  },
+  "issues": [
+    {
+      "id": "ADR1-01",
+      "number": 50,
+      "url": "https://github.com/bobby/suss/issues/50",
+      "title": "Decide tactical and strategic adoption of ADR-0001",
+      "dependencies": []
+    },
+    {
+      "id": "ADR1-02",
+      "number": 51,
+      "url": "https://github.com/bobby/suss/issues/51",
+      "title": "Specify nominal types, propagation, and migration contracts",
+      "dependencies": [
+        "ADR1-01"
+      ]
+    },
+    {
+      "id": "ADR1-03",
+      "number": 52,
+      "url": "https://github.com/bobby/suss/issues/52",
+      "title": "Implement nominal Result, Option, Unit, and error inspection",
+      "dependencies": [
+        "ADR1-02"
+      ]
+    },
+    {
+      "id": "ADR1-04",
+      "number": 53,
+      "url": "https://github.com/bobby/suss/issues/53",
+      "title": "Adopt nominal WIT types and explicit compatibility adapters",
+      "dependencies": [
+        "ADR1-03"
+      ]
+    },
+    {
+      "id": "ADR1-05",
+      "number": 54,
+      "url": "https://github.com/bobby/suss/issues/54",
+      "title": "Implement result/option matching and lexical propagation",
+      "dependencies": [
+        "ADR1-03"
+      ]
+    },
+    {
+      "id": "ADR1-06",
+      "number": 55,
+      "url": "https://github.com/bobby/suss/issues/55",
+      "title": "Implement panic, cleanup, and asynchronous supervision",
+      "dependencies": [
+        "ADR1-02",
+        "ADR1-03"
+      ]
+    },
+    {
+      "id": "ADR1-07",
+      "number": 56,
+      "url": "https://github.com/bobby/suss/issues/56",
+      "title": "Migrate native core from nil and throw/catch to explicit outcomes",
+      "dependencies": [
+        "ADR1-04",
+        "ADR1-05",
+        "ADR1-06"
+      ]
+    },
+    {
+      "id": "ADR1-08",
+      "number": 57,
+      "url": "https://github.com/bobby/suss/issues/57",
+      "title": "Audit adoption gates and publish compatibility/migration evidence",
+      "dependencies": [
+        "ADR1-04",
+        "ADR1-05",
+        "ADR1-06",
+        "ADR1-07"
+      ]
+    }
+  ]
+}

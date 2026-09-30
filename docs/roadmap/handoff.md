@@ -1827,3 +1827,62 @@ remain unfinished. Next unblocked task: recursive source namespace/module loadin
 connected to staged declarations and persistent compiled clients, with deterministic
 dependency errors and explicit initializer policy. Do not merge PRs or close
 incomplete M2/M3 packages.
+
+## Proposed Result/Option/panic semantic direction — 2026-09-29
+
+Added [ADR-0001](../adr/0001-result-option-and-panic.md) at the user's request,
+with an ADR index and a proposal-only link from the accepted design. It describes
+complete native adoption of nominal Result/Option/Unit, optional Error diagnostic
+protocol, recoverable values and panic in place of application throw/catch, and
+separate replacements for nil's absence/completion/exhaustion/null roles. It also
+describes tactical nominal WIT bindings alongside unchanged ClojureScript
+exception/nil semantics, including Some(nil), explicit lossy conversions, and
+language-exception adapters that cannot swallow traps or panic.
+
+Both stages remain proposed. The accepted semantics, runtime ABI, implementation,
+inventory classifications, known failures, roadmap issue IDs and milestone
+acceptance statuses were not changed. Examples and test gates are design targets,
+not executing features or passing evidence. Panic cleanup/supervision, detailed
+core migration, profile/linking policy and final API syntax remain open decisions.
+No PR, publication, merge, upstream core port or shipped dependency was introduced.
+
+Validation: `git diff --check` passed. A Python pathlib/re check verified balanced
+code fences in the two new ADR files and accepted-design document, and all 11
+local Markdown link targets in those files exist. Primary WIT/Rust documentation
+was checked for options, results, payloadless cases and Result/panic distinctions;
+the ADR links those references. Rust tests were not run for this documentation-only
+proposal; no compiler/runtime/test behavior changed.
+
+Next unblocked ADR task: review and decide whether to accept the tactical boundary
+change and/or strategic goal, then specify nominal constructors, matching and
+independent cross-fragment/WIT acceptance fixtures before implementation. Existing
+production-session roadmap work remains unblocked by this proposal.
+
+## Isolated ADR-0001 publication and work tracking — 2026-09-29
+
+At the user's request, copied only the ADR documentation into the separate
+/private/tmp/suss-adr0001-worktree worktree on proposal/result-option-panic,
+based on origin/main 8686437. The active portable-session worktree and its
+implementation files were not modified by publication work.
+
+Created dedicated GitHub milestone 11 and eight open work packages ADR1-01 through
+ADR1-08 (issues #50–#57). docs/adr/0001-tracking.json records their remote links
+and dependencies; the ADR index and ROADMAP link this separate proposal track.
+Existing M0–M9 IDs, acceptance states, inventory and known failures are unchanged.
+Decision/design gates precede implementation, and native migration requires
+explicit strategic acceptance. No issue or milestone was closed.
+
+The dispatched independent review approved the final documentation/tracking and
+all eight live issue bodies with no significant findings or edits. Final-head
+PR CI remains pending publication; this entry does not claim its result. `git diff --check` passed. The focused
+Python documentation check passed for four Markdown files, 22 local link targets,
+balanced fences, and eight unique/topologically ordered tracking entries matching
+the index links. GitHub API verification confirms milestone 11 has eight open
+issues and zero closed issues, all #50–#57 assigned correctly. Rust tests were
+not run locally for these documentation-only changes; final-head CI runs the
+required full locked two-thread workspace baseline. No compiler/runtime code changes
+or new runtime support are claimed; the proposal remains Proposed.
+
+Next unblocked proposal task: ADR1-01 (#50), deciding tactical and strategic
+adoption separately. Production-session work can continue independently. Do not
+merge the proposal PR without a later explicit user instruction.
