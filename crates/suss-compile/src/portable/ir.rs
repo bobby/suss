@@ -19,6 +19,14 @@ pub struct Value {
 pub enum Operation {
     Literal(Literal),
     GlobalRead(Global),
+    MakeClosure {
+        body: Box<ClosureBody>,
+        captures: Vec<ValueId>,
+    },
+    /// Callee is the first operand; all arguments are already evaluated values.
+    Call {
+        operands: Vec<ValueId>,
+    },
     Arithmetic {
         operator: Arithmetic,
         arguments: Vec<ValueId>,
@@ -55,12 +63,47 @@ pub struct Function {
     pub blocks: Vec<Block>,
     pub span: Range<usize>,
 }
+#[derive(Debug, Clone)]
+pub struct ClosureBody {
+    pub capture_types: Vec<Type>,
+    pub arity: usize,
+    pub function: Function,
+}
 struct Lowerer {
     function: Function,
     current: usize,
     bindings: HashMap<BindingId, ValueId>,
 }
 impl Lowerer {
+    fn new(span: Range<usize>) -> Self {
+        let mut lowerer = Self {
+            function: Function {
+                values: Vec::new(),
+                blocks: Vec::new(),
+                span,
+            },
+            current: 0,
+            bindings: HashMap::new(),
+        };
+        lowerer.block(Vec::new());
+        lowerer
+    }
+    fn parameter(&mut self, id: BindingId, ty: Type, span: Range<usize>) -> Result<(), Diagnostic> {
+        let value = self.value(ty, span.clone());
+        if self.bindings.insert(id, value).is_some() {
+            return Err(Diagnostic {
+                span,
+                message: "HIR capture/parameter identity defined twice".into(),
+            });
+        }
+        self.function.blocks[0].parameters.push(value);
+        Ok(())
+    }
+    fn finish(mut self, hir: &Hir) -> Result<Function, Diagnostic> {
+        let value = self.expression(hir)?;
+        self.function.blocks[self.current].terminator = Terminator::Return(value);
+        Ok(self.function)
+    }
     fn value(&mut self, ty: Type, span: Range<usize>) -> ValueId {
         let id = ValueId(self.function.values.len());
         self.function.values.push(Value { ty, span });
@@ -102,6 +145,48 @@ impl Lowerer {
                 span: hir.span.clone(),
                 message: "HIR references an undefined binding".into(),
             })?,
+            Expression::Call { callee, arguments } => {
+                let mut operands = vec![self.expression(callee)?];
+                for argument in arguments {
+                    operands.push(self.expression(argument)?);
+                }
+                self.emit(Operation::Call { operands }, Type::Value, hir.span.clone())
+            }
+            Expression::Function {
+                parameters,
+                captures,
+                body,
+            } => {
+                let mut captured = Vec::new();
+                let mut capture_types = Vec::new();
+                let mut inner = Lowerer::new(body.span.clone());
+                for id in captures {
+                    let value = *self.bindings.get(id).ok_or_else(|| Diagnostic {
+                        span: hir.span.clone(),
+                        message: "Undefined HIR capture".into(),
+                    })?;
+                    let ty = self.function.values[value.0].ty;
+                    captured.push(value);
+                    capture_types.push(ty);
+                    inner.parameter(*id, ty, hir.span.clone())?;
+                }
+                for parameter in parameters {
+                    inner.parameter(parameter.id, Type::Value, parameter.span.clone())?;
+                }
+                let function = inner.finish(body)?;
+                self.emit(
+                    Operation::MakeClosure {
+                        body: Box::new(ClosureBody {
+                            capture_types,
+                            arity: parameters.len(),
+                            function,
+                        }),
+                        captures: captured,
+                    },
+                    Type::Closure(parameters.len()),
+                    hir.span.clone(),
+                )
+            }
             Expression::Do(items) => {
                 let mut result = None;
                 for item in items {
@@ -221,37 +306,47 @@ impl Lowerer {
     }
 }
 pub fn lower(hir: &Hir) -> Result<Function, Diagnostic> {
-    let mut lowerer = Lowerer {
-        function: Function {
-            values: Vec::new(),
-            blocks: Vec::new(),
-            span: hir.span.clone(),
-        },
-        current: 0,
-        bindings: HashMap::new(),
-    };
-    lowerer.block(Vec::new());
-    let result = lowerer.expression(hir)?;
-    lowerer.function.blocks[lowerer.current].terminator = Terminator::Return(result);
-    Ok(lowerer.function)
+    Lowerer::new(hir.span.clone()).finish(hir)
 }
+
 fn operands(operation: &Operation) -> &[ValueId] {
     match operation {
         Operation::Literal(_) | Operation::GlobalRead(_) => &[],
         Operation::Arithmetic { arguments, .. } => arguments,
+        Operation::MakeClosure { captures, .. } => captures,
+        Operation::Call { operands } => operands,
     }
 }
 /// Check graph integrity, unique definitions, dominance, edge arities and types.
-/// Supported calls are resolved Number intrinsics and potentially throwing cell reads.
-/// General call/exception/effect lowering remains incomplete.
+/// Calls have ordered operands, verified closure/capture shape and known arities.
+/// General exception/effect/suspension and tail-position analysis remain incomplete.
 pub fn verify(function: &Function) -> Result<(), Diagnostic> {
+    verify_function(function, &[], 0)
+}
+fn verify_function(
+    function: &Function,
+    entry_types: &[Type],
+    depth: usize,
+) -> Result<(), Diagnostic> {
     let fail = |message: &str| Diagnostic {
         span: function.span.clone(),
         message: message.into(),
     };
     let n = function.blocks.len();
-    if n == 0 || !function.blocks[0].parameters.is_empty() {
-        return Err(fail("IR requires a parameterless entry block"));
+    if depth > 64 {
+        return Err(fail("Closure nesting exceeds 64"));
+    }
+    if n == 0 || function.blocks[0].parameters.len() != entry_types.len() {
+        return Err(fail("IR entry parameter shape mismatch"));
+    }
+    for (id, expected) in function.blocks[0].parameters.iter().zip(entry_types) {
+        if !function
+            .values
+            .get(id.0)
+            .is_some_and(|value| value.ty == *expected)
+        {
+            return Err(fail("IR entry parameter type mismatch"));
+        }
     }
     let mut definitions = vec![None; function.values.len()];
     let mut predecessors = vec![Vec::new(); n];
@@ -349,6 +444,45 @@ pub fn verify(function: &Function) -> Result<(), Diagnostic> {
                 }
                 Operation::GlobalRead(_) if result_ty != Type::Value => {
                     return Err(fail("IR global reads require dynamic Value type"));
+                }
+                Operation::MakeClosure { body, captures } => {
+                    if body.arity > i32::MAX as usize
+                        || body.capture_types.len() != captures.len()
+                        || result_ty != Type::Closure(body.arity)
+                    {
+                        return Err(fail("IR closure shape mismatch"));
+                    }
+                    for (value, expected) in captures.iter().zip(&body.capture_types) {
+                        if ty(*value)? != *expected {
+                            return Err(fail("IR capture type mismatch"));
+                        }
+                    }
+                    let expected = body
+                        .capture_types
+                        .len()
+                        .checked_add(body.arity)
+                        .ok_or_else(|| fail("IR closure entry count overflow"))?;
+                    if !body
+                        .function
+                        .blocks
+                        .first()
+                        .is_some_and(|block| block.parameters.len() == expected)
+                    {
+                        return Err(fail("IR closure entry shape mismatch"));
+                    }
+                    let mut entry = body.capture_types.clone();
+                    entry.extend(std::iter::repeat_n(Type::Value, body.arity));
+                    verify_function(&body.function, &entry, depth + 1)?;
+                }
+                Operation::Call { operands } => {
+                    if operands.is_empty() || result_ty != Type::Value {
+                        return Err(fail("IR call requires callee and dynamic result"));
+                    }
+                    if let Type::Closure(arity) = ty(operands[0])? {
+                        if arity != operands.len() - 1 {
+                            return Err(fail("IR known closure call arity mismatch"));
+                        }
+                    }
                 }
                 Operation::Arithmetic {
                     operator,

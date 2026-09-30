@@ -8,8 +8,8 @@ pub const VERSION: u32 = 1;
 const MANIFEST: &str = "suss.runtime-abi";
 const NUMBER: u32 = 0;
 const STRING: u32 = 1;
-const ARGS: u32 = 2;
-const INVOKE: u32 = 3;
+pub(crate) const ARGS: u32 = 2;
+pub(crate) const INVOKE: u32 = 3;
 const DESCRIPTOR: u32 = 6;
 pub(crate) const TYPE_COUNT: u32 = 10;
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
@@ -389,7 +389,35 @@ pub fn module() -> Vec<u8> {
     );
     let closure = HeapType::Concrete(4);
     let args = HeapType::Concrete(ARGS);
-    let mut invoke = vec![
+    let mut invoke = Vec::new();
+    for (local, kind, descriptor, message) in [
+        (0, closure, 2, "Not callable"),
+        (1, args, 3, "Invalid argument array"),
+    ] {
+        invoke.extend([
+            LocalGet(local),
+            RefTestNonNull(kind),
+            I32Eqz,
+            If(BlockType::Empty),
+            GlobalGet(descriptor),
+        ]);
+        let units: Vec<_> = message.encode_utf16().collect();
+        invoke.extend(units.iter().map(|unit| I32Const(*unit as i32)));
+        invoke.extend([
+            ArrayNewFixed {
+                array_type_index: STRING,
+                array_size: units.len() as u32,
+            },
+            I32Const(0),
+            RefI31,
+            I32Const(0),
+            RefI31,
+            StructNew(8),
+            Throw(0),
+            End,
+        ]);
+    }
+    invoke.extend([
         LocalGet(1),
         RefCastNonNull(args),
         ArrayLen,
@@ -422,7 +450,7 @@ pub fn module() -> Vec<u8> {
         I32Or,
         If(BlockType::Empty),
         GlobalGet(0),
-    ];
+    ]);
     let message: Vec<_> = "Wrong arity".encode_utf16().collect();
     invoke.extend(message.iter().map(|unit| I32Const(*unit as i32)));
     invoke.extend([
@@ -527,8 +555,8 @@ pub fn module() -> Vec<u8> {
     });
     b.types.ty().function([VALUE], []);
     let mut globals = GlobalSection::new();
-    // Stable, separately rooted descriptors for arity (1) and unbound binding (2).
-    for identity in [1, 2] {
+    // Separate rooted descriptors: arity, unbound, not callable, invalid arguments.
+    for identity in [1, 2, 3, 4] {
         globals.global(
             GlobalType {
                 val_type: reference(DESCRIPTOR),

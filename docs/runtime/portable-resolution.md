@@ -31,7 +31,9 @@ runtime var named `let` does not hide its core macro, but a lexical local does.
 Qualified/aliased/referred core `let` works. True `if`/`do` special forms bypass
 ordinary lookup. Arbitrary macro definitions and expansion remain unsupported.
 Arithmetic bootstrap bindings still lower to checked intrinsic identities;
-live callable cells and callable values return located closure-lowering errors.
+live callable cells and computed/local callees now execute through universal
+closure calls; see [closure lowering](portable-closures.md). Bootstrap core
+function values remain unsupported.
 They never silently fall through to a core intrinsic. Dynamic cells are always
 HIR/IR `Value`; they carry no inferred Number fact across redefinition.
 
@@ -76,8 +78,8 @@ numeric bits, nil and UTF-16 exception payloads, and test phase isolation, alias
 refer/exclusion persistence, core alias deduplication, missing/wrong cell imports,
 unknown names, dynamic type rejection and source ambiguity. Runtime-import traces
 prove once-only source order and short circuiting. A fresh pinned ClojureScript/
-Node run matches the expanded 21-case portable corpus, including qualified core
-`let`; the existing 14 compiled reader cases and 13 pipeline tests also pass.
+Node run matches the expanded 34-case portable corpus, including qualified core
+`let` and new closures; the existing 14 compiled reader cases and 13 pipeline tests also pass.
 The original implementation and new cases copy no upstream code. Resolution was
 checked against pinned `cljs/analyzer.cljc` (`resolve-var`/`get-expander*`) at
 `c4295f303100bbf5afac449242d30bca1126f1a1`; imported upstream implementations still
@@ -88,7 +90,6 @@ Commands: `cargo test -p suss-compile --test portable_resolution --test portable
 `scripts/test-portable-pipeline-oracle.sh`. Full baseline and review evidence are
 recorded in the handoff/PR. The legacy source corpus remains 9 differential
 passes, 7 exact failures, 0 skips; all 1,065 inventory declarations remain
-unassessed. M2 remains incomplete. Next, lower universal closures and general
-callee/argument calls through these resolved globals, with dynamic checks and
-central arity errors; connect source namespace loading/definitions and unified
+unassessed. M2 remains incomplete. Next, connect source namespace loading/definitions, extended signatures, portable
+coercions and unified
 AOT/REPL/macro clients rather than maintaining a second production pipeline.

@@ -171,6 +171,111 @@
         "tag": "f64",
         "bits": "4018000000000000"
       }
+    },
+    {
+      "id": "fn-rounded-identity",
+      "source": "((fn [x] x) 9007199254740993)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4340000000000000"
+      }
+    },
+    {
+      "id": "fn-old-capture",
+      "source": "(let [x 7 f (fn [] x) x 9] (f))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "fn-nested-negative-zero",
+      "source": "(((fn [x] (fn [] x)) -0.0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "fn-higher-order",
+      "source": "((fn [f] (f 7)) (fn [x] x))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "fn-captured-arithmetic",
+      "source": "(let [x 5 f (fn [] (+ x 1))] (f))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "fn-conditional-callee",
+      "source": "((if false (fn [] 1) (fn [] 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "fn-local-shadow",
+      "source": "(let [fn (fn [x] x)] (fn 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "fn-qualified-core",
+      "source": "((cljs.core/fn [x] x) 6)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "fn-special-form",
+      "source": "((fn* [x] x) 8)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "fn-duplicate-parameter",
+      "source": "((fn [x x] x) 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "fn-dynamic-truthiness",
+      "source": "((fn [x] (if x 1 2)) 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "fn-surrogate-identity",
+      "source": "((fn [x] x) \"\\uD800\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          55296
+        ]
+      }
+    },
+    {
+      "id": "fn-empty-body",
+      "source": "((fn []))",
+      "expected": {
+        "tag": "nil"
+      }
     }
   ]
 }

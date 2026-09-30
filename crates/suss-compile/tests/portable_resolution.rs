@@ -174,9 +174,18 @@ fn namespace_aliases_refers_exclusions_and_shadowing_share_resolution() {
     assert_eq!(bits(&mut store, &result), 9.0f64.to_bits());
     env.refer(Phase::Runtime, "+", "dependency", "value")
         .unwrap();
-    let error = portable::compile_in("(+ 1 2)", &env, Phase::Runtime).unwrap_err();
-    assert!(error.message.contains("global binding"));
-    assert_eq!(error.span, 1..2);
+    let hir = portable::analyze_in("(+ 1 2)", &env, Phase::Runtime).unwrap();
+    let portable::hir::Expression::Do(body) = hir.kind else {
+        panic!()
+    };
+    let portable::hir::Expression::Call { callee, .. } = &body[0].kind else {
+        panic!()
+    };
+    let portable::hir::Expression::Global(global) = &callee.kind else {
+        panic!()
+    };
+    assert_eq!(global, &target);
+    assert!(portable::compile_in("(+ 1 2)", &env, Phase::Runtime).is_ok());
     env.declare_cell(Phase::Runtime, "app", "let").unwrap();
     // Runtime vars do not hide core macros; only a lexical local does.
     let (mut store, result) = execute_in("(let [x 8] x)", &env, Phase::Runtime);

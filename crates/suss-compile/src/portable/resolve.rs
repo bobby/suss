@@ -48,11 +48,15 @@ pub enum Binding {
         operator: Arithmetic,
     },
     BootstrapLet(Global),
+    BootstrapFn(Global),
 }
 impl Binding {
     pub fn global(&self) -> &Global {
         match self {
-            Self::Cell(g) | Self::BootstrapLet(g) | Self::Arithmetic { global: g, .. } => g,
+            Self::Cell(g)
+            | Self::BootstrapLet(g)
+            | Self::BootstrapFn(g)
+            | Self::Arithmetic { global: g, .. } => g,
         }
     }
 }
@@ -156,13 +160,19 @@ impl Environment {
                 env.bindings
                     .insert(global.clone(), Binding::Arithmetic { global, operator });
             }
-            let global = Global {
-                phase,
-                namespace: "suss.core".into(),
-                name: "let".into(),
-            };
-            env.bindings
-                .insert(global.clone(), Binding::BootstrapLet(global));
+            for name in ["let", "fn"] {
+                let global = Global {
+                    phase,
+                    namespace: "suss.core".into(),
+                    name: name.into(),
+                };
+                let binding = if name == "let" {
+                    Binding::BootstrapLet(global.clone())
+                } else {
+                    Binding::BootstrapFn(global.clone())
+                };
+                env.bindings.insert(global, binding);
+            }
         }
         Ok(env)
     }
@@ -301,24 +311,35 @@ impl Environment {
     /// General compiled macro imports/expansion remain a later integration.
     pub fn resolve_bootstrap_macro(&self, phase: Phase, symbol: &Symbol) -> Option<Binding> {
         let scope = self.scope(phase);
-        let core = if let Some(namespace) = &symbol.namespace {
+        let name = if let Some(namespace) = &symbol.namespace {
             let namespace = scope
                 .aliases
                 .get(namespace)
                 .map_or(namespace.as_str(), String::as_str);
-            canonical(namespace) == "suss.core" && symbol.name == "let"
+            (canonical(namespace) == "suss.core" && matches!(symbol.name.as_str(), "let" | "fn"))
+                .then_some(symbol.name.as_str())
         } else if let Some(global) = scope.refers.get(&symbol.name) {
-            (global.namespace == "suss.core" && global.name == "let")
-                || (symbol.name == "let" && !scope.excluded_core.contains("let"))
+            if global.namespace == "suss.core" && matches!(global.name.as_str(), "let" | "fn") {
+                Some(global.name.as_str())
+            } else {
+                (matches!(symbol.name.as_str(), "let" | "fn")
+                    && !scope.excluded_core.contains(&symbol.name))
+                .then_some(symbol.name.as_str())
+            }
         } else {
-            symbol.name == "let" && !scope.excluded_core.contains("let")
+            (matches!(symbol.name.as_str(), "let" | "fn")
+                && !scope.excluded_core.contains(&symbol.name))
+            .then_some(symbol.name.as_str())
+        }?;
+        let global = Global {
+            phase,
+            namespace: "suss.core".into(),
+            name: name.into(),
         };
-        core.then(|| {
-            Binding::BootstrapLet(Global {
-                phase,
-                namespace: "suss.core".into(),
-                name: "let".into(),
-            })
+        Some(if name == "let" {
+            Binding::BootstrapLet(global)
+        } else {
+            Binding::BootstrapFn(global)
         })
     }
     pub fn resolve(

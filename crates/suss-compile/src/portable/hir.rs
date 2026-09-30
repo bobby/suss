@@ -3,7 +3,10 @@ use super::{
     Diagnostic,
     resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
 };
-use std::{collections::HashMap, ops::Range};
+use std::{
+    collections::{BTreeSet, HashMap},
+    ops::Range,
+};
 use suss_reader::forms::{Form, Kind};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -13,6 +16,7 @@ pub enum Type {
     Number,
     String,
     Value,
+    Closure(usize),
 }
 impl Type {
     pub(crate) fn accepts(self, other: Self) -> bool {
@@ -44,7 +48,7 @@ pub enum Arithmetic {
     Divide,
     Negate,
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct BindingId(pub usize);
 #[derive(Debug, Clone)]
 pub struct Binding {
@@ -53,6 +57,13 @@ pub struct Binding {
     pub metadata: Vec<Form>,
     pub span: Range<usize>,
     pub value: Hir,
+}
+#[derive(Debug, Clone)]
+pub struct Parameter {
+    pub id: BindingId,
+    pub name: String,
+    pub metadata: Vec<Form>,
+    pub span: Range<usize>,
 }
 #[derive(Debug, Clone)]
 pub struct Hir {
@@ -77,6 +88,15 @@ pub enum Expression {
         alternative: Box<Hir>,
     },
     Do(Vec<Hir>),
+    Function {
+        parameters: Vec<Parameter>,
+        captures: Vec<BindingId>,
+        body: Box<Hir>,
+    },
+    Call {
+        callee: Box<Hir>,
+        arguments: Vec<Hir>,
+    },
     /// Resolved bootstrap intrinsic identity, never an unresolved name.
     Arithmetic {
         operator: Arithmetic,
@@ -160,28 +180,97 @@ impl Analyzer<'_> {
             ResolvedBinding::Cell(global) => Ok((Expression::Global(global), Type::Value)),
             _ => Err(fail(
                 span,
-                "Bootstrap callable values require closure lowering",
+                "Bootstrap core function/macro values are not materialized yet",
             )),
         }
     }
+    fn call(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
+        let callee = Box::new(self.form(&items[0])?);
+        let arguments = items[1..]
+            .iter()
+            .map(|arg| self.form(arg))
+            .collect::<Result<Vec<_>, _>>()?;
+        if let Type::Closure(arity) = callee.ty {
+            if arity != arguments.len() {
+                return Err(fail(
+                    form.span.clone(),
+                    format!(
+                        "Wrong arity: expected {arity}, received {}",
+                        arguments.len()
+                    ),
+                ));
+            }
+        }
+        Ok(Hir {
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: Expression::Call { callee, arguments },
+        })
+    }
+    fn function(&mut self, form: &Form, args: &[Form]) -> Result<Hir, Diagnostic> {
+        let Some(params) = args.first() else {
+            return Err(fail(form.span.clone(), "fn requires a parameter vector"));
+        };
+        let Kind::Vector(names) = &params.kind else {
+            return Err(fail(
+                params.span.clone(),
+                "Named/multiple-arity functions are not lowered yet; expected parameter vector",
+            ));
+        };
+        let outer = self.locals.clone();
+        let mut parameters = Vec::new();
+        for name in names {
+            let Kind::Symbol(symbol) = &name.kind else {
+                return Err(fail(
+                    name.span.clone(),
+                    "Parameter destructuring is not lowered yet",
+                ));
+            };
+            if symbol.namespace.is_some() || symbol.name == "&" {
+                return Err(fail(
+                    name.span.clone(),
+                    "Parameters must be unqualified; variadic rest sequences are not lowered yet",
+                ));
+            }
+            let id = BindingId(self.next);
+            self.next += 1;
+            self.locals.insert(symbol.name.clone(), (id, Type::Value));
+            parameters.push(Parameter {
+                id,
+                name: symbol.name.clone(),
+                metadata: name.metadata.clone(),
+                span: name.span.clone(),
+            });
+        }
+        let body = Box::new(self.body(&args[1..], form.span.clone())?);
+        self.locals = outer;
+        let bound = parameters.iter().map(|parameter| parameter.id).collect();
+        let mut captures = BTreeSet::new();
+        free_bindings(&body, &bound, &mut captures);
+        Ok(Hir {
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Closure(parameters.len()),
+            kind: Expression::Function {
+                parameters,
+                captures: captures.into_iter().collect(),
+                body,
+            },
+        })
+    }
     fn list(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
         let Kind::Symbol(symbol) = &items[0].kind else {
-            return Err(fail(
-                items[0].span.clone(),
-                "Computed callees require closure lowering",
-            ));
+            return self.call(form, items);
         };
         let args = &items[1..];
         let bare = symbol.namespace.is_none();
         // Only true special forms bypass lexical and namespace resolution.
-        let resolved = if bare && matches!(symbol.name.as_str(), "if" | "do") {
+        let resolved = if bare && matches!(symbol.name.as_str(), "if" | "do" | "fn*") {
             None
         } else {
             if bare && self.locals.contains_key(&symbol.name) {
-                return Err(fail(
-                    items[0].span.clone(),
-                    "Calling a local binding requires closure lowering",
-                ));
+                return self.call(form, items);
             }
             Some(
                 if let Some(binding) = self.environment.resolve_bootstrap_macro(self.phase, symbol)
@@ -193,6 +282,11 @@ impl Analyzer<'_> {
                 },
             )
         };
+        if (bare && symbol.name == "fn*")
+            || matches!(resolved, Some(ResolvedBinding::BootstrapFn(_)))
+        {
+            return self.function(form, args);
+        }
         let (kind, ty) = match (bare, symbol.name.as_str()) {
             (true, "do") => {
                 let body = self.body(args, form.span.clone())?;
@@ -272,10 +366,7 @@ impl Analyzer<'_> {
             }
             _ => {
                 let Some(ResolvedBinding::Arithmetic { operator, .. }) = resolved else {
-                    return Err(fail(
-                        items[0].span.clone(),
-                        "Calling a global binding requires closure lowering",
-                    ));
+                    return self.call(form, items);
                 };
                 if args.is_empty() && matches!(operator, Arithmetic::Subtract | Arithmetic::Divide)
                 {
@@ -311,6 +402,54 @@ impl Analyzer<'_> {
             ty,
             kind,
         })
+    }
+}
+fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<BindingId>) {
+    match &hir.kind {
+        Expression::Local(id) => {
+            if !bound.contains(id) {
+                free.insert(*id);
+            }
+        }
+        Expression::Function { captures, .. } => {
+            for id in captures {
+                if !bound.contains(id) {
+                    free.insert(*id);
+                }
+            }
+        }
+        Expression::Let { bindings, body } => {
+            let mut bound = bound.clone();
+            for binding in bindings {
+                free_bindings(&binding.value, &bound, free);
+                bound.insert(binding.id);
+            }
+            free_bindings(body, &bound, free);
+        }
+        Expression::If {
+            condition,
+            consequent,
+            alternative,
+        } => {
+            for item in [condition, consequent, alternative] {
+                free_bindings(item, bound, free);
+            }
+        }
+        Expression::Do(items)
+        | Expression::Arithmetic {
+            arguments: items, ..
+        } => {
+            for item in items {
+                free_bindings(item, bound, free);
+            }
+        }
+        Expression::Call { callee, arguments } => {
+            free_bindings(callee, bound, free);
+            for arg in arguments {
+                free_bindings(arg, bound, free);
+            }
+        }
+        _ => {}
     }
 }
 /// Analyze selected forms using an explicit phase-specific namespace environment.

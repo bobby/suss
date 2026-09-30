@@ -15,7 +15,8 @@ source -> conditional selection -> phase-specific namespace/lexical resolution +
 ```
 
 The explicit environment now resolves phase-specific aliases/refers/exclusions and
-live cells; see [namespace/cell boundary](portable-resolution.md). Source namespace
+live cells; see [namespace/cell boundary](portable-resolution.md). Fixed closures
+and universal calls also execute; see [closure lowering](portable-closures.md). Source namespace
 loading and compiled macro expansion remain integration work. Bootstrap
 `let` syntax is handled directly until source-backed macro expansion is available.
 Arithmetic bootstrap bindings resolve to intrinsic identities; `suss.core` and
@@ -30,10 +31,12 @@ The actual `if` and `do` special forms remain unshadowable.
 HIR retains byte spans, ordered reader metadata, inferred scalar information and
 unique lexical binding identities, including binding-name metadata. Supported
 forms are nil/booleans, ordinary binary64 numbers, lossless UTF-16 strings,
-lexical `let`, `do`, `if` and statically verified numeric `+`, `-`, `*`, `/` calls.
+lexical `let`, `do`, `if`, fixed anonymous `fn`/`fn*`, universal calls and
+statically verified numeric `+`, `-`, `*`, `/` calls.
 Numeric zero and empty strings are truthy. Missing `if` alternatives and empty
-bodies yield nil. Wrong arity, unsupported forms and unresolved names return
-located diagnostics. Dynamic numeric checking/coercion is not implemented;
+bodies yield nil. Known wrong arities, unsupported forms and unresolved names
+return located diagnostics. Dynamic call failures raise language exceptions;
+source call-site annotation remains open. Dynamic numeric checking/coercion is not implemented;
 operands that cannot be proven Number are rejected rather than passed to an
 unchecked runtime cast. No complete upstream arithmetic inventory item is claimed.
 
@@ -52,8 +55,9 @@ produce diagnostics.
 Direct HIR Negate retains unary negation, including the sign of zero.
 `compile_ir` runs verification before emission and validates the final Wasm.
 The closed instruction set currently admits constants, allocating numeric
-intrinsics and potentially throwing live-cell reads; general calls, throws, suspension and effect analysis are future IR
-extensions, not certified by these restricted tests.
+intrinsics, closure construction, universal calls and potentially throwing
+live-cell reads. Generic throws/catch, suspension and effect analysis are future
+IR extensions, not certified by these restricted tests.
 
 ## Generated artifacts and executing evidence
 
@@ -68,7 +72,7 @@ compiled fragments in one Store; this is not a persistent compiled session.
 
 Thirteen focused tests validate/link/execute actual artifacts and independently
 inspect the heap after forced GC. The original 14 scalar reader cases now also
-execute through compiled source fragments. A separate original 21-case source
+execute through compiled source fragments. A separate original 34-case source
 corpus matches freshly compiled pinned ClojureScript/Node observations exactly,
 covering numeric bits/arities, conditional values, lexical shadowing and strings.
 A wrapping runtime import records once-only ordered calls and proves unselected
@@ -89,7 +93,7 @@ require extraction/patch hashes and retained licenses.
 These bounded observations do not replace the existing 16-case legacy compiler
 corpus: it remains **9 differential passes, 7 exact failures, 0 skips**. No
 expected failures changed. M2-01/02/03 remain incomplete. Next, complete source namespace/
-phase loading and connect universal closure/callee lowering,
+phase/definition loading and production clients, extended closure signatures,
 dynamic checks and the source corpus; add collection/dispatch/recur/exception/
 async IR forms and migrate AOT/REPL/macros through the same pipeline. Retire the
 old backend only when replacement acceptance passes.
