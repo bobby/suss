@@ -1,11 +1,12 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
+mod comparisons;
 mod dynamic;
 mod exceptions;
 mod nominal;
 use super::{
-    Diagnostic,
     resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
+    Diagnostic,
 };
 use std::{
     collections::{BTreeSet, HashMap},
@@ -145,6 +146,26 @@ impl ArrayOperation {
             }
     }
 }
+/// Original checked binary comparison primitive used after bounded macro expansion.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Comparison {
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
+    StrictEqual,
+}
+impl Comparison {
+    pub(crate) fn export(self) -> &'static str {
+        match self {
+            Self::Less => "comparison-less",
+            Self::LessEqual => "comparison-less-equal",
+            Self::Greater => "comparison-greater",
+            Self::GreaterEqual => "comparison-greater-equal",
+            Self::StrictEqual => "comparison-strict-equal",
+        }
+    }
+}
 /// Original private nominal lowering operations. Arrays here are internal
 /// construction storage, never source-language persistent collections.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -228,6 +249,10 @@ pub struct Hir {
 }
 #[derive(Debug, Clone)]
 pub enum Expression {
+    Comparison {
+        operation: Comparison,
+        arguments: Vec<Hir>,
+    },
     /// Compiler bootstrap primitive, independent of mutable core vars.
     NilTest(Box<Hir>),
     Array {
@@ -863,6 +888,9 @@ impl Analyzer {
                 },
             )
         };
+        if let Some(ResolvedBinding::BootstrapComparison { operation, .. }) = &resolved {
+            return self.comparison_form(form, args, *operation);
+        }
         if let Some(ResolvedBinding::BootstrapArray { operation, .. }) = &resolved {
             return self.array_form(form, args, *operation);
         }
@@ -1185,6 +1213,9 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
         }
         | Expression::Do(items)
         | Expression::Arithmetic {
+            arguments: items, ..
+        }
+        | Expression::Comparison {
             arguments: items, ..
         }
         | Expression::Array {

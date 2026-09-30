@@ -4430,3 +4430,56 @@ old-capture divergences explicit. Then focused/fresh/full baseline, partial sour
 reviews/provenance, PR with Refs #9/#11/#17, independent review/pushed significant
 fixes and exact final-head CI; no merge. Complete sequence/list, variadic rest/apply
 and all remaining M2–M9 acceptance remain the full active goal.
+
+## Comparison implementation and merged stack — 2026-09-30
+
+User merged PRs77–80; GitHub verifies all four MERGED with no closing issue
+references, appropriate for their partial acceptance work. Main055282f9a2be9d7f63e25cb9c91b9bebffb38eb0
+has exactly the independently reviewed PR80 tree24c16ca. Its final CI36765282719
+passed; actual enabled-suite logs are /private/tmp/suss-pr80-final-ci.log.
+Comparison preparation was rebased onto this main using explicit --onto24c16ca;
+an initial default rebase replayed squash-merged ancestors and was aborted.
+Own temporary autostashes were restored; unrelated user work was preserved.
+
+Original comparison helpers now implement UTF-16 string ordering, supported scalar
+numeric coercion and strict identity, with five canonical first-class functions.
+Checked HIR/IR binary operations and bounded macro expansion preserve unary operand
+erasure, repeated middle syntax and short-circuit evaluation. Macro expansion is
+limited to256 operands; a runtime300-argument call is verified separately.
+There are29 bootstrap cells, no new globals/layout/version or shipped dependency.
+Public numeric== is limited to the documented primitive domain; full -equiv hook
+and redefinition, object coercion, compiled source macros and source protocols are
+unfinished. No issue or milestone acceptance is claimed.
+
+Focused red67189 failed unresolved comparisons before implementation. First
+implementation focus84282 passed. Guarded80892 exposed an invalid new namespace
+fixture combining explicit refer and own declaration; corrected the fixture and
+kept the established ambiguity rejection. Guarded9363 passed native5/compiler1,
+session33/pipeline17/ABI18. Bounded focus11296 passed native6/compiler2.
+Logs: /private/tmp/suss-comparison-focused-red.log,
+/private/tmp/suss-comparison-first-focus.log,
+/private/tmp/suss-comparison-guarded-focus-final.log,
+/private/tmp/suss-comparison-bounded-focus.log. All graphs terminal.
+
+Fresh pinned graph47440 passed119 unchanged shared observations, five explicit
+capture-wrapper divergences and native6 (terminal0),
+/private/tmp/suss-comparison-five-captures-final.log. Numeric== adds the fifth
+exact reference TypeError/native retained-capture observation; the other four
+and119 shared expectations remain unchanged. These are119 matches plus five
+documented differences, never124 equivalences. Strict comparison parser tests
+reject Boolean schema values, malformed tags, dropped/diverted observations,
+duplicate cases and changed error text. Python70 passed.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-comparison-oracle.sh`.
+
+Required full baseline37118 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-comparison-baseline.log. Existing manual legacy ignores and
+diagnostic differential outcomes are unchanged. Final provenance27995 passed
+Python70/inventory1065/reviews52+1013/exact ten core artifacts/WIT15files6packages,
+numeric locks and offline preview10milestones39issues. No RUSTFLAGS override,
+unrelated deletion or acceptance change. All Cargo/reference graphs released.
+
+Next publish comparison foundation with Refs #9/#11/#17, dispatch independent
+review, push significant fixes and require exact final-head CI before readiness.
+Do not merge. Then continue source sequence/list, variadic rest/apply and remaining
+M2–M9 acceptance, including the deferred public -equiv integration.

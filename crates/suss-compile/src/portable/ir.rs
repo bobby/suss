@@ -1,11 +1,11 @@
 //! Explicit values, blocks and edge parameters. Verification precedes emission.
 use super::{
-    Diagnostic,
     hir::{
-        Arithmetic, ArrayOperation, BindingId, Expression, Hir, Literal, LoopId, Nominal, Type,
-        arithmetic_type,
+        arithmetic_type, Arithmetic, ArrayOperation, BindingId, Comparison, Expression, Hir,
+        Literal, LoopId, Nominal, Type,
     },
     resolve::Global,
+    Diagnostic,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -20,6 +20,10 @@ pub struct Value {
 }
 #[derive(Debug, Clone)]
 pub enum Operation {
+    Comparison {
+        operation: Comparison,
+        arguments: Vec<ValueId>,
+    },
     Array {
         operation: ArrayOperation,
         arguments: Vec<ValueId>,
@@ -547,6 +551,29 @@ impl Lowerer {
                 let value = operand!(value);
                 self.emit(Operation::NilTest(value), Type::Bool, hir.span.clone())
             }
+            Expression::Comparison {
+                operation,
+                arguments,
+            } => {
+                if arguments.len() != 2 || hir.ty != Type::Bool {
+                    return Err(Diagnostic {
+                        span: hir.span.clone(),
+                        message: "Invalid comparison HIR shape".into(),
+                    });
+                }
+                let mut values = Vec::new();
+                for argument in arguments {
+                    values.push(operand!(argument));
+                }
+                self.emit(
+                    Operation::Comparison {
+                        operation: *operation,
+                        arguments: values,
+                    },
+                    Type::Bool,
+                    hir.span.clone(),
+                )
+            }
             Expression::Array {
                 operation,
                 arguments,
@@ -785,6 +812,7 @@ fn verify_recurrence(
         }
         Expression::NilTest(value) => verify_recurrence(value, targets, false)?,
         Expression::Arithmetic { arguments, .. }
+        | Expression::Comparison { arguments, .. }
         | Expression::Array { arguments, .. }
         | Expression::Nominal { arguments, .. } => {
             for argument in arguments {
@@ -815,6 +843,7 @@ fn operands(operation: &Operation) -> &[ValueId] {
             std::slice::from_ref(value)
         }
         Operation::Arithmetic { arguments, .. }
+        | Operation::Comparison { arguments, .. }
         | Operation::Array { arguments, .. }
         | Operation::Nominal { arguments, .. } => arguments,
         Operation::MakeClosure { captures, .. }
@@ -1066,6 +1095,11 @@ fn verify_function(
                 Operation::NilTest(_) => {
                     if result_ty != Type::Bool {
                         return Err(fail("IR nil-test result must be Boolean"));
+                    }
+                }
+                Operation::Comparison { arguments, .. } => {
+                    if arguments.len() != 2 || result_ty != Type::Bool {
+                        return Err(fail("Invalid comparison IR shape"));
                     }
                 }
                 Operation::Array {

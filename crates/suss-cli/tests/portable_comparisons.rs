@@ -112,3 +112,101 @@ fn comparison_macro_arity_erasure_and_lexical_shadowing_remain_distinct_from_val
         assert_eq!(sentinel, 4);
     }
 }
+
+#[test]
+fn comparison_macro_and_runtime_names_preserve_aliases_user_shadowing_and_gc() {
+    let mut session = Session::new().unwrap();
+    // Explicit refers conflict with an own declaration under the accepted
+    // namespace contract. Auto-referred core values permit user shadowing.
+    assert!(matches!(
+        session.eval(
+            "(ns comparison-conflict (:require [cljs.core :refer [<]])) (def < (fn [x y] 77))"
+        ),
+        Err(SessionError::Compile(_))
+    ));
+    session
+        .eval("(ns comparison-consumer (:require [cljs.core :as c])) (def retained <)")
+        .unwrap();
+    session.eval("(def < (fn [x y] 77))").unwrap();
+    assert_eq!(eval_number(&mut session, "(< 1 2)"), 77.0f64.to_bits());
+    assert!(eval_bool(&mut session, "(c/< 1 2)"));
+    assert!(eval_bool(&mut session, "(let [f retained] (f 1 2))"));
+    let function = session.eval("retained").unwrap();
+    session.eval("(def retained nil)").unwrap();
+    session.collect().unwrap();
+    let left = session.eval("1").unwrap();
+    let right = session.eval("2").unwrap();
+    let value = session.invoke(&function, &[&left, &right]).unwrap();
+    let sentinel = session
+        .inspect(&value, |store, value| {
+            Ok(value
+                .unwrap_anyref()
+                .unwrap()
+                .as_i31(&store)?
+                .unwrap()
+                .get_u32())
+        })
+        .unwrap();
+    assert_eq!(sentinel, 4);
+    session
+        .eval("(ns comparison-excluded (:refer-clojure :exclude [<]))")
+        .unwrap();
+    assert!(matches!(
+        session.eval("(< 1 2)"),
+        Err(SessionError::Compile(_))
+    ));
+    assert!(eval_bool(&mut session, "(cljs.core/< 1 2)"));
+}
+
+#[test]
+fn comparison_utf16_prefix_loop_has_fuel_recovery_and_typed_coercion_errors() {
+    let mut session = Session::new().unwrap();
+    let function = session.eval("<").unwrap();
+    let text = "😀".repeat(4096);
+    let left = session.eval(&format!("\"{text}\"")).unwrap();
+    let right = session.eval(&format!("\"{text}x\"")).unwrap();
+    session.collect().unwrap();
+    session.set_operation_fuel(5000);
+    let SessionError::Trap(error) = session.invoke(&function, &[&left, &right]).unwrap_err() else {
+        panic!("expected UTF-16 comparison fuel exhaustion")
+    };
+    assert_eq!(
+        error.downcast_ref::<wasmtime::Trap>(),
+        Some(&wasmtime::Trap::OutOfFuel)
+    );
+    session.collect().unwrap();
+    session.set_operation_fuel(1_000_000);
+    let answer = session.invoke(&function, &[&left, &right]).unwrap();
+    let sentinel = session
+        .inspect(&answer, |store, value| {
+            Ok(value
+                .unwrap_anyref()
+                .unwrap()
+                .as_i31(&store)?
+                .unwrap()
+                .get_u32())
+        })
+        .unwrap();
+    assert_eq!(sentinel, 4);
+    session.eval("(deftype ComparisonBad [])").unwrap();
+    assert!(matches!(
+        session.eval("(< (ComparisonBad.) 2)"),
+        Err(SessionError::Language(_))
+    ));
+    assert!(eval_bool(&mut session, "(< 1 2)"));
+}
+
+#[test]
+fn runtime_comparison_large_arity_uses_bounded_callback_code_without_macro_expansion() {
+    let mut session = Session::new().unwrap();
+    let args = (0..300)
+        .map(|n| n.to_string())
+        .collect::<Vec<_>>()
+        .join(" ");
+    assert!(eval_bool(&mut session, &format!("(let [f <] (f {args}))")));
+    assert!(matches!(
+        session.eval(&format!("(< {args})")),
+        Err(SessionError::Compile(_))
+    ));
+    assert!(eval_bool(&mut session, "(< 1 2)"));
+}

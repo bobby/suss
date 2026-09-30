@@ -1,7 +1,107 @@
-;; Human-reviewed overlay; these forty-two entries are partial, not compatibility completions.
+;; Human-reviewed overlay; these fifty-two entries are partial, not compatibility completions.
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:<:2755"
+  {:source-sha256 "8e6815b3743ce86c57184635707893f159446faaa3811979fb1fedee40576b53" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["macro:defn:3364" "runtime:first:1309" "runtime:next:1333" "GC universal Invoke and primitive numeric/UTF-16 comparisons"]
+   :classification :adapted
+   :rationale "Original checked GC primitives and universal first-class closures implement scalar relational comparison and numeric equality. Exact primary cases cover binary64/UTF-16/coercion, arities, ordered operands, captures and live vars. Five pinned captured-wrapper TypeErrors are recorded separately from accepted old-capture behavior. Object coercion, source protocol/core import and compiled macros remain incomplete; no upstream form copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/comparisons.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_comparisons.rs" "crates/suss-compile/tests/portable_comparisons.rs" "tests/oracle/comparison-cases.json" "tests/oracle/comparison-capture-divergences.json"]}
+  "runtime:<=:2767"
+  {:source-sha256 "1d6f961e3925566639b4ee15279b750de81b11f93500f86aa86beca840078242" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["macro:defn:3364" "runtime:first:1309" "runtime:next:1333" "GC universal Invoke and primitive numeric/UTF-16 comparisons"]
+   :classification :adapted
+   :rationale "Original checked GC primitives and universal first-class closures implement scalar relational comparison and numeric equality. Exact primary cases cover binary64/UTF-16/coercion, arities, ordered operands, captures and live vars. Five pinned captured-wrapper TypeErrors are recorded separately from accepted old-capture behavior. Object coercion, source protocol/core import and compiled macros remain incomplete; no upstream form copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/comparisons.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_comparisons.rs" "crates/suss-compile/tests/portable_comparisons.rs" "tests/oracle/comparison-cases.json" "tests/oracle/comparison-capture-divergences.json"]}
+  "runtime:>:2779"
+  {:source-sha256 "19b441b9ca5005d0e095227d911f951a79f033b8d249a0ff2cc04907c03b7c99" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["macro:defn:3364" "runtime:first:1309" "runtime:next:1333" "GC universal Invoke and primitive numeric/UTF-16 comparisons"]
+   :classification :adapted
+   :rationale "Original checked GC primitives and universal first-class closures implement scalar relational comparison and numeric equality. Exact primary cases cover binary64/UTF-16/coercion, arities, ordered operands, captures and live vars. Five pinned captured-wrapper TypeErrors are recorded separately from accepted old-capture behavior. Object coercion, source protocol/core import and compiled macros remain incomplete; no upstream form copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/comparisons.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_comparisons.rs" "crates/suss-compile/tests/portable_comparisons.rs" "tests/oracle/comparison-cases.json" "tests/oracle/comparison-capture-divergences.json"]}
+  "runtime:>=:2791"
+  {:source-sha256 "5005e0a62652ad2e49a44080338742b23301ac4dc2636f62b87e101ae17ea5ce" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["macro:defn:3364" "runtime:first:1309" "runtime:next:1333" "GC universal Invoke and primitive numeric/UTF-16 comparisons"]
+   :classification :adapted
+   :rationale "Original checked GC primitives and universal first-class closures implement scalar relational comparison and numeric equality. Exact primary cases cover binary64/UTF-16/coercion, arities, ordered operands, captures and live vars. Five pinned captured-wrapper TypeErrors are recorded separately from accepted old-capture behavior. Object coercion, source protocol/core import and compiled macros remain incomplete; no upstream form copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/comparisons.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_comparisons.rs" "crates/suss-compile/tests/portable_comparisons.rs" "tests/oracle/comparison-cases.json" "tests/oracle/comparison-capture-divergences.json"]}
+  "runtime:==:3064"
+  {:source-sha256 "a80c751f9954b4a58eaf7343785f8953aadb30559af0d673f663ff2b8d906ba5" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["macro:defn:3364" "runtime:first:1309" "runtime:next:1333" "GC universal Invoke and primitive numeric/UTF-16 comparisons" "runtime:-equiv protocol; non-number numeric== behavior unspecified"]
+   :classification :adapted
+   :rationale "Original checked GC primitives and universal first-class closures implement scalar relational comparison and numeric equality. Exact primary cases cover binary64/UTF-16/coercion, arities, ordered operands, captures and live vars. Five pinned captured-wrapper TypeErrors are recorded separately from accepted old-capture behavior. Object coercion, source protocol/core import and compiled macros remain incomplete; no upstream form copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/comparisons.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_comparisons.rs" "crates/suss-compile/tests/portable_comparisons.rs" "tests/oracle/comparison-cases.json" "tests/oracle/comparison-capture-divergences.json"]}
+  "macro:<:1164"
+  {:source-sha256 "45235684a8177641e6a6187b2b800fb870874f9ec37de3b1fbc88138a083c883" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["macro:and:901" "macro:bool-expr:893" "checked comparison HIR/IR"]
+   :classification :adapted
+   :rationale "Original bounded HIR expansion preserves pinned unary operand erasure, repeated middle syntax, pair order, short-circuiting and strict macro identity. Verified binary IR operates only on evaluated values. Macro compilation is bounded to256 operands with located diagnostics; full compiled upstream macro/core import and metadata remain unfinished. No upstream form copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/comparisons.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_comparisons.rs" "crates/suss-compile/tests/portable_comparisons.rs" "tests/oracle/comparison-cases.json" "tests/oracle/comparison-capture-divergences.json"]}
+  "macro:<=:1169"
+  {:source-sha256 "2877d861554b9b4d22afd077776f2ebd39c2983b2c7e0f9cbd8597928f24378b" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["macro:and:901" "macro:bool-expr:893" "checked comparison HIR/IR"]
+   :classification :adapted
+   :rationale "Original bounded HIR expansion preserves pinned unary operand erasure, repeated middle syntax, pair order, short-circuiting and strict macro identity. Verified binary IR operates only on evaluated values. Macro compilation is bounded to256 operands with located diagnostics; full compiled upstream macro/core import and metadata remain unfinished. No upstream form copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/comparisons.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_comparisons.rs" "crates/suss-compile/tests/portable_comparisons.rs" "tests/oracle/comparison-cases.json" "tests/oracle/comparison-capture-divergences.json"]}
+  "macro:>:1174"
+  {:source-sha256 "205f4c57fa27dadc8b6296100667ce15c256260a0398946ac38c5b61a5fc4a90" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["macro:and:901" "macro:bool-expr:893" "checked comparison HIR/IR"]
+   :classification :adapted
+   :rationale "Original bounded HIR expansion preserves pinned unary operand erasure, repeated middle syntax, pair order, short-circuiting and strict macro identity. Verified binary IR operates only on evaluated values. Macro compilation is bounded to256 operands with located diagnostics; full compiled upstream macro/core import and metadata remain unfinished. No upstream form copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/comparisons.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_comparisons.rs" "crates/suss-compile/tests/portable_comparisons.rs" "tests/oracle/comparison-cases.json" "tests/oracle/comparison-capture-divergences.json"]}
+  "macro:>=:1179"
+  {:source-sha256 "2715ad4aca063ebba810cec5c7f5950010d31c981903c7824ea7a605254b08c3" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["macro:and:901" "macro:bool-expr:893" "checked comparison HIR/IR"]
+   :classification :adapted
+   :rationale "Original bounded HIR expansion preserves pinned unary operand erasure, repeated middle syntax, pair order, short-circuiting and strict macro identity. Verified binary IR operates only on evaluated values. Macro compilation is bounded to256 operands with located diagnostics; full compiled upstream macro/core import and metadata remain unfinished. No upstream form copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/comparisons.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_comparisons.rs" "crates/suss-compile/tests/portable_comparisons.rs" "tests/oracle/comparison-cases.json" "tests/oracle/comparison-capture-divergences.json"]}
+  "macro:==:1184"
+  {:source-sha256 "5dff4d7c81f019be4ec89363dfad53ec5bcccc38efdbe9906d74a87a404c2045" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["macro:and:901" "macro:bool-expr:893" "checked comparison HIR/IR"]
+   :classification :adapted
+   :rationale "Original bounded HIR expansion preserves pinned unary operand erasure, repeated middle syntax, pair order, short-circuiting and strict macro identity. Verified binary IR operates only on evaluated values. Macro compilation is bounded to256 operands with located diagnostics; full compiled upstream macro/core import and metadata remain unfinished. No upstream form copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/comparisons.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_comparisons.rs" "crates/suss-compile/tests/portable_comparisons.rs" "tests/oracle/comparison-cases.json" "tests/oracle/comparison-capture-divergences.json"]}
   "runtime:inc:1505"
   {:source-sha256 "541c69f33a2aae92c9ecfb28882730449d8aaf1e0ebe95a5b5a6fb284b850f58" :visibility :public
    :arities {:fixed [1] :variadic-min nil}
