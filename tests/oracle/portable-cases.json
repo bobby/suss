@@ -1,0 +1,168 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "rounding",
+      "source": "(+ 9007199254740992 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4340000000000000"
+      }
+    },
+    {
+      "id": "negative-zero",
+      "source": "(- 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "unary-plus-zero",
+      "source": "(+ -0.0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "unary-divide",
+      "source": "(/ 4)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3fd0000000000000"
+      }
+    },
+    {
+      "id": "sum-empty",
+      "source": "(+)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "product-empty",
+      "source": "(*)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "subtract-many",
+      "source": "(- 10 3 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4014000000000000"
+      }
+    },
+    {
+      "id": "divide-many",
+      "source": "(/ 20 2 5)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "zero-truthy",
+      "source": "(if 0 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "string-truthy",
+      "source": "(if \"\" 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "nil-falsey",
+      "source": "(if nil 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "false-falsey",
+      "source": "(if false 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "true-truthy",
+      "source": "(if true 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "lexical-shadowing",
+      "source": "(let [x 2 x (+ x 3)] (let [x 7] x) (* x 4))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4034000000000000"
+      }
+    },
+    {
+      "id": "nested-branches",
+      "source": "(+ (if false (* 3 4) (/ 8 2)) (if true 2 9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "core-qualified",
+      "source": "#?(:jvm 1 :cljs (cljs.core/+ 1 (cljs.core/* 2 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "empty-let-body",
+      "source": "(let [x 1])",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "empty-do",
+      "source": "(do)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "selected-bool",
+      "source": "(if nil true false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "selected-surrogate",
+      "source": "(if false \"unused\" \"\\uD800\ud83d\ude00\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          55296,
+          55357,
+          56832
+        ]
+      }
+    }
+  ]
+}

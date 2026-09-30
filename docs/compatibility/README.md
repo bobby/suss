@@ -120,3 +120,12 @@ spans, metadata, binary64 and UTF-16. Its 14 scalar observations match fresh
 pinned ClojureScript reader execution and are transferred through ABI runtime
 intrinsics. They do not change the compiler corpus's 9 passing/7 failing/0 skipped
 counts; reader/IR/backend and namespace-phase integration remain incomplete.
+
+## Portable compiler bootstrap evidence
+
+The [new HIR/IR path](../runtime/portable-pipeline.md) compiles the 14 scalar reader
+cases into actual ABI fragments and executes a separate 20-case source corpus
+whose observations match fresh pinned ClojureScript/Node exactly. It remains a
+bounded bootstrap; legacy CLI/AOT/macros and the 16-case full source corpus have
+not migrated. The latter remains 9 passing/7 exact failures/0 skips. No inventory
+entry is marked implemented by these counts; all 1,065 remain unassessed.

@@ -1347,3 +1347,72 @@ this is not a new compiler compatibility claim or completed M2 acceptance.
 Next task remains portable-form HIR/evaluation-order IR and shared runtime
 lowering/loader integration. Keep the user-required review/fix/CI gates and do
 not merge PRs.
+
+## Portable HIR/IR to executing shared-ABI fragments — 2026-09-29
+
+The coordinating agent replaced a temporary legacy delegation with the first
+lossless source compiler path in `suss_compile::portable`. Reader selection feeds
+HIR containing spans, ordered annotations and lexical binding identity, then
+explicit typed blocks/values/edge parameters. Verification checks graph targets,
+reachability, definitions/dominance, edge arities/types and numeric intrinsic
+arity/types before emission. The backend cannot re-emit source operands: it only
+reads value IDs. It emits the identical ABI group/manifest, imports used runtime
+intrinsics and validates actual Wasm before returning an `eval -> Value` fragment.
+No source form passes through EDN; no hidden print import, canonical memory, new
+dependency or shipped Java/Node path was introduced.
+
+The initial executing boundary regression FAILED with legacy delegation:
+`missing runtime ABI manifest`, /private/tmp/suss-portable-pipeline-red.log.
+After replacement, its generated artifact validates/links/executes and heap
+inspection observes rounded binary64, not a legacy integer. An expanded semantic
+regression then FAILED on `(let [x 1])` because the new frontend mistakenly
+required a body; pinned macro source accepts optional body. Empty bodies now
+return nil. Metadata remains separate syntax, and local callable shadowing
+cannot fall through to a global arithmetic intrinsic.
+
+Eleven focused tests execute/inspect fragments after GC, match the 14 scalar
+reader cases, match a new 20-case compiled-source corpus, trace arithmetic imports
+for once-only left-to-right behavior and short circuiting, inspect distinct
+binding identities/annotations/diagnostics, reject malformed HIR/IR, execute a
+backedge parameter swap to distinguish parallel from sequential assignment, and
+retain earlier fragment values in one Store across later compilation/forced GC.
+The source-level loop/recur compiler is not implemented by that IR-only swap.
+
+Fresh source oracle: the first generated `.cljs` fixture FAILED with `Conditional
+read not allowed`. The runner now generates `.cljc` for the #? case; fresh pinned
+ClojureScript/Node observations match all 20 reviewed sources exactly, then Rust
+executes the same source cases through actual generated ABI fragments. Five
+Python regressions reject missing/duplicate/changed transport, invalid pin/schema,
+boolean/integer confusion and extra/trailing data. The original 16-case legacy
+corpus remains 9 differential passes/7 exact failures/0 skips; none of its expected
+failures changed. All 1,065 inventory entries remain unassessed. No upstream core
+implementation was copied; the bootstrap and original corpus have pinned source
+provenance described in docs/runtime/portable-pipeline.md.
+
+Commands/results (CARGO_BUILD_JOBS=2, no RUSTFLAGS override):
+
+- `cargo test -p suss-compile --test portable_pipeline --locked -- --test-threads=2`: 11 passed, 0 ignored; /private/tmp/suss-portable-pipeline-final-focused.log.
+- `scripts/test-portable-pipeline-oracle.sh`: fresh 20 source observations match exactly; all 11 executing/negative Rust tests pass. /private/tmp/suss-portable-pipeline-oracle.log. Initial .cljs harness failure is recorded above, not called success.
+- `cargo test --workspace --locked -- --test-threads=2`: full baseline passed, exit 0; /private/tmp/suss-portable-pipeline-full.log. Existing 317 expressions/12 ignored, 29 components, 9 conformance/2 manual ignores, 4 oracle/1 manual ignore, 7 ABI, 3 shared-GC, 8 async, 8 profile, 8 core and 19+11 reader passes remain. New pipeline tests: 11 passes. Two existing doc examples remain ignored.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 passed.
+- Inventory check/review overlay/WIT lock/offline roadmap preview: passed, unchanged pin/hashes and 10 milestones/39 stable issues.
+- Formatting on new Rust files and `git diff --check`: passed.
+
+This is the replacement bootstrap, not production migration. CLI/AOT/components,
+macro evaluator and source-replaying REPL still use the legacy pipeline. Namespace
+files/aliases/refers/phases, full macro expansion, general closures/callees, live
+binding cells, dynamic checking/coercion, collections/dispatch, source recur/tail
+checks, throws/suspensions and target adapters remain. Arithmetic is restricted
+to statically proven Number operands; dynamic operands fail with locations rather
+than reaching unchecked casts. No inventory definition or M2 milestone is marked
+complete. M2-03 machine status is reconciled from planned to in-progress to match
+its already merged runtime foundation and new partial source lowering.
+
+Open this increment stacked on reviewed PR #42 if it remains unmerged; use
+Refs #8, Refs #9 and Refs #10, never closing links for incomplete packages.
+Dispatch the required independent code-review agent, push significant fixes and
+observe successful CI on the final head. Do not merge PRs. Next unblocked work:
+namespace/phase/binding-cell resolution and universal closure/callee lowering with
+dynamic checks, then collection/dispatch/recur/exception/async IR and unified
+AOT/REPL/macro migration. Keep the portable source corpus as acceptance evidence;
+retire obsolete backend paths only after the replacement passes their gates.
