@@ -50,8 +50,9 @@ Nineteen new reference observations cover parallel/nested/duplicate bindings,
 old/escaped functions and lexical captures, nil/false, throws/finally, snapshots
 before initializer side effects, failed initializers, assignment, ordinary vars,
 function redefinition and arithmetic macro/value separation. The fresh 278-case
-portable source comparison and 16 actual pipeline tests passed again after interruption hardening. All 56 focused native tests pass,
-including the fine fuel sweep and native inspection callback trap recovery.
+portable source comparison and 16 actual pipeline tests passed again after interruption hardening. All 58 focused native tests pass,
+including independent nested multi-target/duplicate fuel sweeps, escaped/thrown
+closure retention across GC and native inspection callback trap recovery.
 Full-baseline/review/final-head CI results belong in handoff.
 
 Executing regressions are crates/suss-cli/tests/portable_dynamic_bindings.rs and

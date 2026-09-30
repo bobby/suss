@@ -3245,3 +3245,49 @@ resurrection/portable-dynamic-bindings. Draft PR #68 stacked on #67 uses
 Refs #9/#11. Independent review and exact final-head CI remain required; no
 readiness claim, issue closure or merge. Next reviewer inspects and pushes
 significant fixes, then verify its actual results and final-head CI.
+
+## Independent PR68 dynamic binding review — 2026-09-30
+
+Reviewed candidate b87aefd3a2e37fb884f416790c031d63f04283aa against base
+5ea35107a42099cc7289060549acc6214a54c3eb in isolated
+/private/tmp/suss-review-pr68. Read accepted design, roadmap, compatibility inventory
+and handoff, and inspected pinned core.cljc2301–2340. No significant production
+finding in the bounded synchronous implementation. Checked parallel original/value
+ordering, actual imported cell identity, copied frame entries, rooted parent/child
+restoration, universal closure cleanup, typed payload ownership and native eval/
+invoke/inspect checkpoint recovery. This does not certify async context, cancellation,
+compiled macro/core import, warning policy or the remaining issues9/11 criteria.
+
+Added independent regressions for nested multi-target/duplicate scopes interrupted
+at every fuel1..2000, including initializer mutations and restartable reverse pop
+writes; and escaping/thrown closure values retained through frame exit and GC.
+All10 dynamic tests pass (candidate8 plus2), zero ignored, exit0:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test -p suss-cli --test portable_dynamic_bindings --locked -- --test-threads=2,
+/private/tmp/suss-review68-focused.log. Python54 and overlay11 reviewed/1054
+unassessed pass, /private/tmp/suss-review68-python.log and -reviews.log.
+Pinned submodule initialization confirmed exact c4295f303100bbf5afac449242d30bca1126f1a1.
+Current docs now distinguish278 source cases and synchronous frame support from
+historical259 exception evidence and pending async context. No inventory item
+marked implemented; no upstream form copied or dependency/helper change.
+
+Candidate CI36714342812 was running on b87aefd when root last checked;
+predecessor3937b7c CI36714257887 cancelled, not a pass. Draft PR68 progress
+comments5911235754 (#11) and5911236089 (#9) remain partial references.
+The root candidate full baseline passed /private/tmp/suss-dynamic-workspace.log.
+Independent full required workspace baseline and fresh source oracle follow;
+readiness requires actual successful CI on the exact final pushed review head.
+No merge or issue closure. Next after review/readiness continue ExceptionInfo,
+public Error classes, builtin/native protocol/core requirements and source collections;
+M2–M9 remain incomplete.
+
+Independent required cargo test --workspace --locked -- --test-threads=2 passed,
+exit0, /private/tmp/suss-review68-workspace.log. Includes native58 (private5,
+persistent33, exception10, dynamic10), compiler82 selected portable suites,
+278-source actual artifacts, legacy/component/reader/core suites and CLI doc target.
+Existing manual/legacy ignores remain explicit and unchanged. Fresh independent
+sh scripts/test-portable-pipeline-oracle.sh then passed278 pinned source observations
+and16 actual decoded fragment tests, exit0, /private/tmp/suss-review68-oracle.log.
+Both used shared target/two build jobs, no RUSTFLAGS override. All review process
+handles12204/6955/21068/84178 are terminal; no native Cargo graphs overlapped.
+Push review coverage/evidence, then require exact final-head CI before readiness.

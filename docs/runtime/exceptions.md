@@ -35,8 +35,9 @@ artifact change is required for these additive operations.
 
 Wasm fuel traps and foreign host exception tags remain distinct from portable language
 exceptions. They do not become catchable nil values. Host cancellation/async cleanup,
-ExceptionInfo/public Error classes, dynamic binding frames, compiled macro/core import,
-collections and production CLI/AOT migration remain explicit roadmap work. This
+ExceptionInfo/public Error classes, asynchronous dynamic contexts, compiled macro/core import,
+collections and production CLI/AOT migration remain explicit roadmap work. Rooted synchronous [dynamic frames](dynamic-bindings.md) now preserve bindings across
+language exceptions and native fuel recovery. This
 increment does not fulfill all issue #11 criteria or complete M2.
 
 ## Evidence and provenance

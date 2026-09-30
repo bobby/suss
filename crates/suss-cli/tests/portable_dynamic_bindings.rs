@@ -231,3 +231,44 @@ fn fuel_interruption_during_frame_pop_restores_pre_initializer_snapshot() {
     }
     assert!(interrupted > 0, "actually interrupt after body entry");
 }
+
+#[test]
+fn nested_multi_target_pop_is_restartable_at_every_fuel_boundary() {
+    let mut s = Session::new().unwrap();
+    s.eval("(def ^:dynamic *x* 1) (def ^:dynamic *y* 2) (def entered false)")
+        .unwrap();
+    let mut interrupted = 0;
+    for fuel in 1..=2000 {
+        s.set_operation_fuel(50_000);
+        s.eval("(set! *x* 1) (set! *y* 2) (set! entered false)")
+            .unwrap();
+        s.set_operation_fuel(fuel);
+        let result = s.eval("(binding [*x* (do (set! *x* 3) 7) *y* (do (set! *y* 4) 8)] (binding [*x* (do (set! *x* 9) 11) *y* (do (set! *y* 10) 12) *x* 13] (set! entered true) 42))");
+        s.set_operation_fuel(50_000);
+        if eval(&mut s, "(if entered 1 0)") == 1.0f64.to_bits() {
+            if matches!(result, Err(SessionError::Trap(_))) {
+                interrupted += 1;
+            }
+            assert_eq!(eval(&mut s, "*x*"), 1.0f64.to_bits(), "x at fuel {fuel}");
+            assert_eq!(eval(&mut s, "*y*"), 2.0f64.to_bits(), "y at fuel {fuel}");
+        }
+    }
+    assert!(interrupted > 0);
+}
+
+#[test]
+fn closure_values_and_thrown_closures_survive_frame_restoration_and_gc() {
+    let mut s = Session::new().unwrap();
+    s.eval("(def ^:dynamic *f* (fn [] 1))").unwrap();
+    let replacement = s.eval("(binding [*f* (fn [] 42)] *f*)").unwrap();
+    let thrown = match s.eval("(binding [*f* (fn [] 7)] (throw *f*))").unwrap_err() {
+        SessionError::Language(value) => value,
+        error => panic!("language closure payload: {error:?}"),
+    };
+    s.collect().unwrap();
+    let value = s.invoke(&replacement, &[]).unwrap();
+    assert_eq!(number(&mut s, &value), 42.0f64.to_bits());
+    let value = s.invoke(&thrown, &[]).unwrap();
+    assert_eq!(number(&mut s, &value), 7.0f64.to_bits());
+    assert_eq!(eval(&mut s, "(*f*)"), 1.0f64.to_bits());
+}
