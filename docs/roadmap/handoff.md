@@ -1886,3 +1886,61 @@ or new runtime support are claimed; the proposal remains Proposed.
 Next unblocked proposal task: ADR1-01 (#50), deciding tactical and strategic
 adoption separately. Production-session work can continue independently. Do not
 merge the proposal PR without a later explicit user instruction.
+## Immutable source module graphs — 2026-09-30
+
+The earlier PR stack #42/#44/#45/#46/#48 was merged by the user. Current main
+8686437 has the same committed tree as reviewed #48 fadb530; the new unpushed
+portable-modules branch was aligned with that main without discarding edits.
+Root independently completed the repaired #48 fresh portable oracle: 42 matching
+source observations and 13 actual pipeline execution tests, exit 0;
+/private/tmp/suss-definitions-reviewed-oracle.log. Reviewed-head CI 36661005170
+passed on fadb5300aa681521477632ddb61149a00bb20364. M0/M1 remote milestones and
+issues #1–#7 are closed; M2–M9 remain incomplete.
+
+New portable::modules::prepare_modules discovers an immutable dependency graph
+through the same namespace header grammar as fragment preparation. It checks all
+source roots/extensions, declared namespaces and conditional branches, preserves
+require order, deduplicates canonical phase identities and produces deterministic
+located missing/mismatched/ambiguous/cyclic errors. A prototype guard rejects graph
+nesting beyond 64. Compilation uses exact retained source text and private staged
+Environments before returning dependency-first validated artifacts and cell IDs.
+The caller's catalog/bindings cannot change on discovery or compilation failure.
+
+Already-provided modules are explicit host authority, not inferred from a namespace
+catalog entry. Runtime/macro identities are separate; canonical cljs.core uses the
+bounded bootstrap core only if explicitly provided. The integration test host
+validates every artifact before allocating cells, links every module before eval,
+reuses shared cells in one Store and marks only successful initializers provided.
+Diamond dependency writes execute once in require order. A failed initializer is
+a verified ThrownException with the exact shared language tag and independently
+inspected NotCallable descriptor after GC; prior writes/effects survive and retry
+never replays a successful dependency. This is test host evidence, not shipped
+session recovery or a complete source reload/cache/privacy policy.
+
+Commands and terminal results (CARGO_BUILD_JOBS=2; no RUSTFLAGS override):
+
+- `cargo test -p suss-compile --test portable_modules --test portable_definitions --test portable_closures --test portable_pipeline --test portable_resolution --test runtime_abi --locked -- --test-threads=2`: 64 passes with the initial ten module tests, zero ignored, exit 0; /private/tmp/suss-modules-focused.log. Initial harness compilation failed because ModulePlan lacked Debug and a test borrowed Store twice; both were repaired, not skipped.
+- `cargo test -p suss-compile --test portable_modules --locked -- --test-threads=2`: 11 passes including initializer failure/retry, zero ignored, exit 0; /private/tmp/suss-modules-failure-focused.log. Combined focused scope is now 65 tests.
+- `cargo test --workspace --locked -- --test-threads=2`: full baseline passed, exit 0; /private/tmp/suss-modules-full.log. Existing legacy/manual/doc ignores remain unchanged.
+- `sh scripts/test-portable-pipeline-oracle.sh`: fresh pinned Node output matches all 42 portable source observations, followed by 13 actual pipeline tests, exit 0; /private/tmp/suss-modules-portable-oracle.log.
+- `sh scripts/test-oracle.sh`: unchanged 9 differential passes / 7 exact failures / 0 skips, four executing oracle tests pass with one explicit manual recorder ignored, exit 0; /private/tmp/suss-modules-oracle.log.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 passes, exit 0; /private/tmp/suss-modules-python.log.
+- `python3 scripts/cljs_inventory.py --check` and `python3 scripts/cljs_reviews.py`: 1,065 declarations / zero reviewed / 1,065 unassessed, exit 0. `python3 scripts/wasi_lock.py`: 15 official WIT files / six packages verified, exit 0.
+
+Implementation/tests are original; pinned EPL-1.0 cljs/analyzer.cljc and core.cljc
+inform namespace/definition semantics, with no upstream implementation copied.
+No new dependency, ABI layout change or shipped JVM/Node path is introduced.
+See docs/runtime/portable-modules.md for API, host obligations and limits.
+
+M2-01 and M3-02 gain prerequisite evidence only; no broad issue acceptance is
+claimed. Publish with Refs #8/#13, dispatch an independent reviewer to push
+significant fixes and require successful final-reviewed-head CI. Review/CI are
+pending publication. Do not merge. Source require-macros and reload metadata remain
+located unsupported diagnostics. Source caching/versioned macro dependency keys,
+privacy/runtime attributes, isolated compiled macros, persistent production
+CLI/AOT/REPL clients and full core/IR/target/lifecycle coverage remain unfinished.
+
+Next unblocked task: connect immutable module plans and staged fragments to a
+production persistent session with shared runtime/cells, distinct language-error
+recovery, no source replay and explicit resident-code/reset policy. Continue the
+full roadmap; do not retire legacy paths before replacement acceptance.
