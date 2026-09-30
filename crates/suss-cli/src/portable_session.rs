@@ -297,6 +297,11 @@ impl Session {
         linker.instance(&mut store, "suss.runtime", runtime)?;
         let environment = Environment::default();
         let mut cells = BTreeMap::new();
+        let mut initializers = environment
+            .core_bindings(Phase::Runtime)
+            .into_iter()
+            .map(|(global, export)| (global, export.to_string()))
+            .collect::<Vec<_>>();
         for (identity, operator) in environment.arithmetic_bindings(Phase::Runtime) {
             use suss_compile::portable::hir::Arithmetic;
             let name = match operator {
@@ -306,12 +311,26 @@ impl Session {
                 Arithmetic::Divide => "divide",
                 Arithmetic::Negate => unreachable!("no negate source binding"),
             };
+            initializers.push((identity, format!("arithmetic-{name}")));
+        }
+        let mut exception_class_cell: Option<Global> = None;
+        for (identity, export) in initializers {
             let mut scope = RootScope::new(&mut store);
             let mut value = [Val::null_any_ref()];
+            let arguments = if export.starts_with("core-") && export != "core-exception-info-class"
+            {
+                vec![
+                    exception_class_cell
+                        .expect("class initialized first")
+                        .get(&mut scope),
+                ]
+            } else {
+                vec![]
+            };
             runtime
-                .get_func(&mut scope, &format!("arithmetic-{name}"))
+                .get_func(&mut scope, &export)
                 .unwrap()
-                .call(&mut scope, &[], &mut value)?;
+                .call(&mut scope, &arguments, &mut value)?;
             let mut cell = [Val::null_any_ref()];
             runtime
                 .get_func(&mut scope, "binding-new")
@@ -331,6 +350,9 @@ impl Session {
                 ),
                 cell[0].clone(),
             )?;
+            if export == "core-exception-info-class" {
+                exception_class_cell = Some(global);
+            }
             linker.define(
                 &scope,
                 identity.import_module(),

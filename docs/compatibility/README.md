@@ -151,3 +151,9 @@ in-progress adaptations: 11 reviewed, 1,054 unassessed. Their exact source hashe
 and remaining warning/compiled macro/async requirements are recorded in the overlay
 and [dynamic binding evidence](../runtime/dynamic-bindings.md). None is certified
 implemented.
+
+Five ExceptionInfo constructor/getter definitions now join the eleven existing
+reviews as in-progress adaptations:16 reviewed,1,049 unassessed. Raw fields, live
+class identity, missing/reordered field names and GC execute; persistent map data,
+printing/stack, full Error surfaces and ordinary host-global constructor behavior
+remain unfinished. See [ExceptionInfo evidence](../runtime/exception-info.md).

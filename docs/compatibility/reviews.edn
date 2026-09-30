@@ -1,4 +1,4 @@
-;; Human-reviewed overlay; these eleven entries are partial, not compatibility completions.
+;; Human-reviewed overlay; these sixteen entries are partial, not compatibility completions.
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
@@ -112,4 +112,54 @@
    :adaptation-path "docs/runtime/dynamic-bindings.md"
    :alternative nil
    :tests ["crates/suss-compile/tests/portable_dynamic_bindings.rs" "crates/suss-cli/tests/portable_dynamic_bindings.rs" "tests/oracle/portable-cases.json"]}
+  "runtime:ExceptionInfo:11767"
+  {:source-sha256 "1294e4580b608d483d6f51be8f1c0491fa1e2b47b768b69b720113034a5d7213" :visibility :public
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["runtime:pr-writer-ex-info:11756" "runtime:IPrintWithWriter:806" "shared ABI descriptor/UserObject"]
+   :classification :adapted
+   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Full core import, persistent map data, printing/stack and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/exception-info.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_exception_info.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
+  "runtime:ex-info:11796"
+  {:source-sha256 "6adac249468e989f760ef2e59abfe32b972a8f88c4190a0266b93b244704d79a" :visibility :public
+   :arities {:fixed [2 3] :variadic-min nil}
+   :dependencies ["runtime:ExceptionInfo:11767"]
+   :classification :adapted
+   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Full core import, persistent map data, printing/stack and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/exception-info.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_exception_info.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
+  "runtime:ex-data:11803"
+  {:source-sha256 "b5f4cb8c6d109d5782d8cb9e38385934430ffeedaa867b5295297e50fc4704c5" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:ExceptionInfo:11767" "macro:instance?:1025"]
+   :classification :adapted
+   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Full core import, persistent map data, printing/stack and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/exception-info.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_exception_info.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
+  "runtime:ex-message:11810"
+  {:source-sha256 "6810570d21bf19912c121528242dc82b028384a1b1c8a16952b31c81a58abd76" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:ExceptionInfo:11767" "shared ABI Error adaptation"]
+   :classification :adapted
+   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Full core import, persistent map data, printing/stack and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/exception-info.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_exception_info.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
+  "runtime:ex-cause:11817"
+  {:source-sha256 "6a4fb9f70c839b6c8c136aad2d0e7a1ed53216b614b1c546d898188867e4d5e3" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:ExceptionInfo:11767" "macro:instance?:1025"]
+   :classification :adapted
+   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Full core import, persistent map data, printing/stack and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/exception-info.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_exception_info.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
  }}

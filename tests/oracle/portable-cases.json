@@ -2473,6 +2473,206 @@
         "tag": "f64",
         "bits": "4045000000000000"
       }
+    },
+    {
+      "id": "exception-info-data",
+      "source": "(ex-data (ex-info \"message\" 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "exception-info-cause",
+      "source": "(ex-cause (ex-info \"message\" 7 9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "exception-info-message-value",
+      "source": "(ex-message (ex-info 42 nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "exception-info-default-cause",
+      "source": "(if (ex-cause (ex-info \"message\" 7)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "exception-info-false-data",
+      "source": "(ex-data (ex-info \"message\" false))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "exception-info-false-message",
+      "source": "(ex-message (ex-info false nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "exception-info-false-cause",
+      "source": "(ex-cause (ex-info \"message\" nil false))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "exception-info-non-info-data",
+      "source": "(if (ex-data 7) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "exception-info-non-error-message",
+      "source": "(if (ex-message \"message\") 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "exception-info-identity",
+      "source": "(if (instance? ExceptionInfo (ex-info \"message\" 7)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "exception-info-typed-catch",
+      "source": "(try (throw (ex-info \"message\" 7)) (catch ExceptionInfo error (ex-data error)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "exception-info-first-class",
+      "source": "((let [getter ex-data] getter) (ex-info \"message\" 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "exception-info-redefinition",
+      "source": "(with-redefs [ex-data (fn [x] 42)] (ex-data (ex-info \"message\" 7)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "exception-info-missing-constructor-cause",
+      "source": "(+ (ex-cause (ExceptionInfo. \"message\" 7)) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "exception-info-missing-constructor-data",
+      "source": "(+ (ex-data (ExceptionInfo. \"message\")) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "exception-info-fake-instance",
+      "source": "(do (deftype Fake [message data cause]) (if (instance? ExceptionInfo (Fake. 1 2 3)) 1 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "exception-info-fake-message",
+      "source": "(do (deftype FakeMessage [message data cause]) (if (ex-message (FakeMessage. 1 2 3)) 1 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "exception-info-constructor-extra-fields",
+      "source": "(ex-cause (ExceptionInfo. \"message\" 7 9 42))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "exception-info-reordered-fields",
+      "source": "(do (deftype ReorderedInfo [data message cause]) (with-redefs [ExceptionInfo ReorderedInfo] (ex-data (ReorderedInfo. 42 \"message\" 9))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "exception-info-missing-field",
+      "source": "(do (deftype MissingInfo [message data]) (with-redefs [ExceptionInfo MissingInfo] (if (ex-cause (MissingInfo. \"message\" 7)) 1 0)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "exception-info-class-predicate-live",
+      "source": "(do (deftype AlternateInfo [message data cause]) (let [original (ex-info \"message\" 7)] (with-redefs [ExceptionInfo AlternateInfo] (if (ex-data original) 1 0))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "exception-info-constructor-class-live",
+      "source": "(do (deftype AlternateConstructorInfo [message data cause]) (with-redefs [ExceptionInfo AlternateConstructorInfo] (ex-data (ex-info \"message\" 42 9))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "exception-info-ordinary-truthiness",
+      "source": "(if (ExceptionInfo \"message\" 7 nil) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "exception-info-ordinary-membership",
+      "source": "(if (instance? ExceptionInfo (ExceptionInfo \"message\" 7 nil)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "exception-info-ordinary-data",
+      "source": "(if (ex-data (ExceptionInfo \"message\" 7 nil)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
     }
   ]
 }

@@ -1046,7 +1046,7 @@ fn nominal_fragment() -> Vec<u8> {
     }
     // Deliberately malformed descriptors remain valid Wasm with the exact prelude.
     // They probe guards and prove numeric identity alone cannot forge a type.
-    types.ty().function([value, value], [value]);
+    types.ty().function([value, value, ValType::I64], [value]);
     functions.function(10 + signatures.len() as u32);
     exports.export(
         "forge-descriptor",
@@ -1055,7 +1055,7 @@ fn nominal_fragment() -> Vec<u8> {
     );
     let mut forge = Function::new([]);
     forge
-        .instruction(&Instruction::I64Const(8))
+        .instruction(&Instruction::LocalGet(2))
         .instruction(&Instruction::LocalGet(0))
         .instruction(&Instruction::LocalGet(1))
         .instruction(&Instruction::I32Const(0))
@@ -1155,7 +1155,19 @@ fn runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_
         &mut store,
         producer,
         "forge-descriptor",
-        &[schema.clone(), schema.clone()],
+        &[schema.clone(), schema.clone(), Val::I64(a_identity)],
+    );
+    assert_eq!(
+        forged
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap()
+            .field(&mut store, 0)
+            .unwrap()
+            .unwrap_i64(),
+        a_identity
     );
     let mut forged_instance = [Val::I32(-1)];
     consumer
@@ -1163,7 +1175,6 @@ fn runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_
         .unwrap()
         .call(&mut store, &[forged, object.clone()], &mut forged_instance)
         .unwrap();
-    assert_eq!(a_identity, 8);
     assert_eq!(forged_instance[0].unwrap_i32(), 0);
 
     let nil = nominal_value(&mut store, runtime, "nil", &[]);
@@ -1414,19 +1425,19 @@ fn runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access() 
         &mut store,
         fragment,
         "forge-descriptor",
-        &[nil.clone(), schema.clone()],
+        &[nil.clone(), schema.clone(), Val::I64(8)],
     );
     let invalid_table = nominal_value(
         &mut store,
         fragment,
         "forge-descriptor",
-        &[schema.clone(), nil.clone()],
+        &[schema.clone(), nil.clone(), Val::I64(8)],
     );
     let odd_table = nominal_value(
         &mut store,
         fragment,
         "forge-descriptor",
-        &[schema.clone(), schema.clone()],
+        &[schema.clone(), schema.clone(), Val::I64(8)],
     );
     let dispatcher = nominal_value(
         &mut store,
@@ -1687,4 +1698,62 @@ fn runtime_abi_nominal_callables_reject_arity_missing_methods_and_non_objects() 
         )
         .unwrap()
     );
+}
+
+#[test]
+fn runtime_abi_exception_info_getters_reject_malformed_named_schema_without_trapping() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    // Storage is well typed, but nil is not a field name. This is forged host
+    // input; source constructors supply UTF-16 names.
+    let schema = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    let descriptor = nominal_value(&mut store, runtime, "descriptor-new", &[schema.clone()]);
+    let class = nominal_value(
+        &mut store,
+        runtime,
+        "class-value-new",
+        &[descriptor.clone()],
+    );
+    let class_cell = nominal_value(&mut store, runtime, "binding-new", &[class]);
+    let object = nominal_value(&mut store, runtime, "object-new", &[descriptor, schema]);
+    let arguments = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    arguments
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap()
+        .set(&mut store, 0, object)
+        .unwrap();
+    for export in ["core-ex-data", "core-ex-cause"] {
+        let getter = nominal_value(&mut store, runtime, export, &[class_cell.clone()]);
+        store.gc(None).unwrap();
+        let error = runtime
+            .get_func(&mut store, "invoke")
+            .unwrap()
+            .call(
+                &mut store,
+                &[getter, arguments.clone()],
+                &mut [Val::null_any_ref()],
+            )
+            .unwrap_err();
+        assert!(
+            error.is::<wasmtime::ThrownException>(),
+            "{export}: {error:#}"
+        );
+        assert!(!error.is::<wasmtime::Trap>());
+        let exception = store.take_pending_exception().unwrap();
+        let tag = exception.tag(&mut store).unwrap();
+        assert!(wasmtime::Tag::eq(
+            &tag,
+            &runtime.get_tag(&mut store, "language-exception").unwrap(),
+            &store
+        ));
+    }
 }

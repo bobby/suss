@@ -322,8 +322,8 @@ impl Analyzer {
     ) -> Result<(Expression, Type), Diagnostic> {
         match self.environment.resolve(self.phase, symbol, span.clone())? {
             ResolvedBinding::Cell(global) => Ok((Expression::Global(global), Type::Value)),
-            ResolvedBinding::Arithmetic { global, .. } => {
-                self.environment.materialize_arithmetic(global.clone());
+            ResolvedBinding::Arithmetic { global, .. } | ResolvedBinding::Core { global, .. } => {
+                self.environment.materialize_bootstrap(global.clone());
                 Ok((Expression::Global(global), Type::Value))
             }
             _ => Err(fail(

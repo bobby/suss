@@ -29,6 +29,18 @@ fn execute_fragment(bytes: Vec<u8>, cells: Vec<portable::resolve::Global>) -> (S
     linker
         .instance(&mut store, "suss.runtime", runtime)
         .unwrap();
+    let mut class = [Val::null_any_ref()];
+    runtime
+        .get_func(&mut store, "core-exception-info-class")
+        .unwrap()
+        .call(&mut store, &[], &mut class)
+        .unwrap();
+    let mut class_cell = [Val::null_any_ref()];
+    runtime
+        .get_func(&mut store, "binding-new")
+        .unwrap()
+        .call(&mut store, &class, &mut class_cell)
+        .unwrap();
     for identity in cells {
         let mut value = [Val::null_any_ref()];
         let arithmetic = if identity.namespace() == "suss.core" {
@@ -42,7 +54,33 @@ fn execute_fragment(bytes: Vec<u8>, cells: Vec<portable::resolve::Global>) -> (S
         } else {
             None
         };
-        if let Some(name) = arithmetic {
+        let core_export = if identity.namespace() == "suss.core" {
+            match identity.name() {
+                "ExceptionInfo" => Some("core-exception-info-class"),
+                "ex-info" => Some("core-ex-info"),
+                "ex-data" => Some("core-ex-data"),
+                "ex-message" => Some("core-ex-message"),
+                "ex-cause" => Some("core-ex-cause"),
+                _ => None,
+            }
+        } else {
+            None
+        };
+        if identity.namespace() == "suss.core" && identity.name() == "ExceptionInfo" {
+            value = class_cell.clone();
+        } else if let Some(export) = core_export {
+            let mut function = [Val::null_any_ref()];
+            runtime
+                .get_func(&mut store, export)
+                .unwrap()
+                .call(&mut store, &class_cell, &mut function)
+                .unwrap();
+            runtime
+                .get_func(&mut store, "binding-new")
+                .unwrap()
+                .call(&mut store, &function, &mut value)
+                .unwrap();
+        } else if let Some(name) = arithmetic {
             let mut function = [Val::null_any_ref()];
             runtime
                 .get_func(&mut store, &format!("arithmetic-{name}"))
@@ -557,7 +595,7 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
         let (mut store, value) = execute(source);
         assert_eq!(tagged(&mut store, &value), case["expected"], "{source}");
     }
-    assert_eq!(ids.len(), 278);
+    assert_eq!(ids.len(), 303);
 }
 #[test]
 fn independently_compiled_fragment_values_remain_live_across_gc() {

@@ -3316,3 +3316,172 @@ followed by `gh stack push` and CI on every exact final head. This entry does no
 claim those pending results. No PR was merged and no acceptance status changed.
 Next unblocked task: finish rebase review/push/final-head CI, then continue the
 existing production frontend/core prerequisites and open roadmap work.
+
+## Next ExceptionInfo work started — 2026-09-30
+
+Isolated worktree /private/tmp/suss-portable-exception-info, branch
+resurrection/portable-exception-info, fast-forwarded onto PR68 independent review
+7aa3c532dbbb1613ce2d0bae6173c09af0669286. Reviewer reported no significant
+production defect; added two semantic regressions, native58/full workspace and
+fresh278/16 pipeline/Python54 pass, all handles terminal. Root ff-synced PR68
+worktree. Exact reviewed-head CI36715066879 was queued; no readiness claim yet.
+Predecessor CI36714342812 was still running and cannot establish final readiness.
+
+New original native portable_exception_info target contains five tests for core
+constructors/getters, arbitrary raw message/data/cause values, nominal class
+identity versus same-shaped user objects, typed catches, retained closures through
+frame exit/GC, first-class canonical live bindings, lexical shadowing and arity
+argument order/recovery. Actual focused command with shared target/two build jobs:
+cargo test -p suss-cli --test portable_exception_info --locked -- --test-threads=2
+failed all5, zero ignored, at unresolved ex-info/ExceptionInfo/getter names;
+/private/tmp/suss-exception-info-native-red.log, handle38115 terminal101.
+These are failing regressions for missing support, not a successful implementation.
+
+Read pinned core.cljs11756–11823 and exact inventory hashes: constructor retains
+supplied raw values; ex-info has fixed2/3 arities; getters distinguish ExceptionInfo
+and Error identity. No copied upstream source. Original18-case pinned reference
+probe is compiling in initialized arithmetic-values development oracle worktree,
+/private/tmp/suss-exception-info-reference.log, inputs
+/private/tmp/suss-exception-info-reference-inputs.json. Includes raw falsy values,
+first-class getters/redefinition, ordinary/same-shaped values, nominal catch,
+Error-parent catch and missing constructor arguments. Exact Node observations must
+be obtained and validated before source corpus additions; no result claimed yet.
+Next implement full portable constructor/getter behavior with shared rooted identity,
+source core cells and phase/alias handling, execute focused/fresh/full gates, then
+publish a stacked PR with independent review and exact-head CI. Persistent map data,
+printing/error stack adaptation and full ExceptionInfo/core import acceptance must
+remain explicit until their own executing evidence exists. No new PR or issue closure.
+
+Primary ExceptionInfo probe compile and Node execution are now both terminal exit0,
+/private/tmp/suss-exception-info-reference.log and -reference-observations.json.
+Strict validation checked all18 ordered IDs, exact schema and expected binary64
+bits against recorded inputs. Raw false message/data/cause survive distinctly;
+missing constructor fields are not identical to nil, while ex-info's omitted cause
+is nil. The pinned exception also matches js/Error catch; JS source interop itself
+remains outside the portable source promise, so any portable Error alternative needs
+explicit adaptation documentation. No copied core form or implementation claim.
+Added sixth native regression for exact false/nil/undefined storage, not yet run;
+first5 actual red regressions remain preserved. Next execute expanded red baseline
+then implement; PR68 reviewed-head CI remains running, not yet successful.
+
+Expanded ExceptionInfo native red target terminal exit101, handle1574:
+/private/tmp/suss-exception-info-native-expanded-red.log. All6 fail at missing
+core bindings, zero ignored; Rust fixture compiles. All root native/reference
+processes terminal. These tests and handoff remain uncommitted WIP on the isolated
+ExceptionInfo branch; no implementation, PR or readiness claim yet.
+
+ExceptionInfo first implementation uses original descriptor-backed UserObject7,
+existing universal closures and canonical bootstrap core cells. All6 original native
+regressions passed, -native-first.log. Subsequent inspection found getters and
+construction must consult the live ExceptionInfo class cell rather than freezing
+its descriptor. Core closures now capture that cell and use shared binding-get,
+constructor-descriptor/source-constructor and Invoke. Initial live factory change
+failed all6 because a scoped raw Val was reused after its RootScope ended,
+-native-live.log. Fixed by retaining/re-reading the rooted native Global; all7
+(including live class redefinition) pass, -native-live-fixed.log. Logs prefix
+/private/tmp/suss-exception-info; source/provider/helper changes remain WIP.
+
+Expanded primary20 probe compiled and executed exit0, -reference-expanded.log and
+-reference-expanded-observations.json; strict ID/schema/binary64 validation passed.
+Ordinary constructor call does not throw under this pin, extra fields are ignored;
+raw host-global return semantics are not yet modeled/certified. No such behavior is
+silently classified supported. Source-based property getters must preserve names,
+not positional assumptions when the class binding changes.
+
+Added eighth regression for reordered/missing fields under a redefined class.
+Actual focused run -named-fields-red.log terminal101:7 pass/1 fails when positional
+ex-data returns a String instead of numeric field. This is a real semantic bug to
+repair before readiness. Broader CLI focus -native-expanded.log stopped on existing
+persistent reset count assertion4 versus actual9 core cells;32/33 passed. Updated
+that resident bootstrap assertion to9 (four arithmetic plus five ExceptionInfo),
+not yet rerun. Dynamic/exception suites were not reached by that failed graph and
+are not claimed passed on this candidate. Full/new fresh source/review/CI not run.
+Next implement checked field-name lookup/missing-field undefined semantics, source
+host provider initialization, expand reference/fresh corpus and rerun focused/full.
+
+PR68 reviewed7aa3c532dbbb1613ce2d0bae6173c09af0669286 CI36715066879 completed
+success; root inspected actual full log /private/tmp/suss-pr68-final-ci.log, updated
+PR body/readiness evidence and comments5911611653 (#11)/5911612221 (#9).
+Authoritative follow-up discovered external rebasing/merge: PR68 actual head is
+6b5c5eddfcd42d50bfb3fb67f265ff5a4f182f83, merged2026-09-30T12:48:41Z into
+614ae356d6d4afd2e1ff2337a65d17cfd8874914; no open PRs remain. Root issued no
+merge command. Rebased-head CI36717209838 was running and cannot be called green
+from predecessor evidence. origin/main fetched; compared to7aa only documentation
+adds493-ish lines (diffstat492), source trees identical. Next safely rebase this
+isolated uncommitted ExceptionInfo WIP onto actual main, preserve new upstream
+handoff/ADR text, read dated design changes; do not adopt proposed ADR policy as
+accepted. No new PR/issue closure or goal-completion claim. All local native/reference
+handles in this turn terminal.
+
+ExceptionInfo WIP is now rebased onto actual merged main614ae356; source changes
+were preserved via a local stash. Handoff append conflict resolved by retaining
+all new main evidence and the full ExceptionInfo append. Owned stash remains as
+a backup until this WIP is committed; no unrelated work was changed.
+
+## ExceptionInfo named properties and executing source expansion — 2026-09-30
+
+Current isolated branch based on actual merged main614ae356; accepted design,
+roadmap/inventory and latest handoff read. Proposed ADR remains unaccepted.
+Named-field lookup now checks descriptor schema/field storage and UTF-16 names,
+uses property names after class redefinition and returns undefined for absent
+fields. Info descriptor stores actual message/data/cause names. Native entire
+focus terminal0, -native-named-fixed.log:private5/persistent33/dynamic10/exception10/
+Info8 =66 pass. Field-order regression first failed7pass/1fail, -named-fields-red.log.
+All source operands remain evaluated once before universal runtime invocation.
+
+Standalone actual source host now initializes canonical core class/getter cells and
+passes the same rooted class cell to factories. First compiler source expansion
+failed on unsupported identical? used only as a test predicate, -compiler.log.
+Replaced those predicate tests with stronger direct decoded false values and
+undefined arithmetic observations; primitive identity support itself remains
+unimplemented and is not claimed successful. Original exploratory cases retained.
+Source inputs prior278 unchanged. Fresh current300 comparison/16 actual pipeline
+tests passed, -oracle.log, terminal0. Added22 Info source observations, including
+raw false/nil/undefined, named fields, live class, constructor arities and ordinary
+values. Native storage tests also independently distinguish exact sentinel values.
+
+Compiler focus -compiler-direct-values.log passed source suites, then failed a
+nominal test's hardcoded first identity8 vs9 after reserving Info. Repaired the
+forged-descriptor fixture to take the actual allocated numeric ID and assert the
+collision, preserving the actual reference-identity test. First repaired ABI run
+failed because three malformed-fixture callers still passed two instead of three
+arguments, -runtime-abi-fixed.log; fixed those calls. ABI13 then passed,
+-runtime-abi-fixed2.log. Added independent malformed named-schema invocation
+regression; actual ABI14 passed, -runtime-abi-guard.log, typed language exception
+rather than trap after GC. No failure skipped or classified green.
+
+Review overlay16 in-progress/1049 unassessed and inventory1065 pass. Python54 pass,
+-python.log. Original implementation retains upstream provenance and EPL in the
+pinned submodule; no core form copied, dependency/lock/helper bytes unchanged.
+Descriptor and per-runtime realm roots add globals but preserve ABI1/prelude and
+compilerformat2. Reserved numeric identity counter now starts above those roots;
+actual descriptor identity is reference identity, not the counter value.
+
+Further fidelity check: ordinary pinned ExceptionInfo calls explicitly return their
+realm object, so the initial undefined callback was observably falsey. Original
+bootstrap now retains a truthy per-runtime realm object with non-Info descriptor
+and mutable message/data/cause fields; missing fields use undefined. Ordinary
+source calls and GC/nonmembership regression pass:Info9 plus ABI14, -ordinary.log,
+terminal0. This is a portable realm adaptation, not JS global-property interop;
+ordinary-object coercion/prototype surfaces, printing/stack, persistent map data,
+full Error classes and compiled core/macro import remain unfinished.
+
+Added3 ordinary-call source cases, now303 total. Fresh expanded oracle is running
+alone, /private/tmp/suss-exception-info-oracle-expanded.log. No outcome yet claimed.
+Next verify it, run required full locked workspace baseline with shared target/two
+jobs/test-threads2, then commit/push draft PR against actual main, dispatch independent
+review, push significant fixes and require exact final-head CI. Current changes remain
+uncommitted; no Info PR exists. Issues9/11 and M2–M9 remain incomplete.
+
+Expanded fresh oracle terminal exit0, handle22998:303 source observations match,
+16 actual pipeline tests pass, -oracle-expanded.log. Docs/corpus evidence updated;
+original278 sources unchanged. All local native/reference handles terminal.
+Required full cargo test --workspace --locked -- --test-threads=2 now starts alone,
+/private/tmp/suss-exception-info-workspace.log, shared target/two build jobs.
+Verify terminal outcome before publishing readiness; no PR/review exists yet.
+
+ExceptionInfo full baseline still confirmed live, handle59201, now through most
+legacy expressions. Source/code frozen while it runs; no parallel native graph.
+Publishing a draft candidate permits independent diff review while final local
+baseline runs. Reviewer must wait for root's release before editing or testing.
+Readiness still requires terminal full baseline, significant fixes and exact CI.
