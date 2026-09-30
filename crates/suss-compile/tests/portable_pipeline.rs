@@ -228,7 +228,10 @@ fn arithmetic_import_trace_observes_once_only_source_order_and_short_circuit() {
             .define(&store, "suss.runtime", name, wrapper)
             .unwrap();
     }
-    let bytes = portable::compile("(+ (if (* 2 3) (/ 8 4) (* 9 9)) (* 3 4))").unwrap();
+    // Unary identities must return each already-evaluated operand without
+    // replaying it. The ordered import trace catches duplicate evaluation;
+    // assigning an identical literal to a binding twice would not.
+    let bytes = portable::compile("(+ (+ (if (* 2 3) (/ 8 4) (* 9 9))) (* (* 3 4)))").unwrap();
     let fragment = linker
         .instantiate(&mut store, &Module::new(&engine, bytes).unwrap())
         .unwrap();

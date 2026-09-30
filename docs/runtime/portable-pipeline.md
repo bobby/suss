@@ -79,8 +79,8 @@ execute through compiled source fragments. A separate original 54-case source
 corpus matches freshly compiled pinned ClojureScript/Node observations exactly,
 covering numeric bits/arities, conditional values, lexical shadowing, strings and
 unary sum/product identity over nil/booleans/UTF-16/dynamic values/closures.
-A wrapping runtime import records once-only ordered calls and proves unselected
-arithmetic does not execute. Adversarial IR tests reject malformed definitions,
+A wrapping runtime import records once-only ordered calls through unary identities
+and proves unselected arithmetic does not execute. Adversarial IR tests reject malformed definitions,
 dominance, types and edge/call arities before an artifact can be emitted.
 
 Run `scripts/test-portable-pipeline-oracle.sh` for fresh reference observations

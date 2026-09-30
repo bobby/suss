@@ -2153,3 +2153,44 @@ collections/recur/effects/macros and all later milestone acceptance remain open.
 Next implement dynamic arithmetic with the pinned coercion contract; unary identity
 must not be replaced by a Number type assertion. Retire legacy source replay only
 after replacement acceptance.
+
+## PR #60 independent review — 2026-09-30
+
+Reviewed published e73f544 in an isolated worktree against the accepted portable
+contract and pinned EPL-1.0 core.cljs unary definitions. Audited analyzer arity/type
+propagation, identity IR lowering, closure arity/captures, dynamic globals and
+parameters, mixed branch types, independent scalar decoders, owned session values
+through GC/rebinding, strict 54-case transport and remaining unsupported numeric
+operations. No significant production defect was found.
+
+The new session effect fixture assigns an identical literal, so it cannot alone
+detect accidental repeated operand evaluation. Strengthened the existing ordered
+runtime import trace by wrapping effectful operands in unary + and *. It observes
+exactly multiply/divide/multiply/add, retains the unselected-branch assertion and
+independently checks Number 14. A temporary duplicate-evaluation IR mutation fails
+with repeated multiply/divide calls, exit 101;
+/private/tmp/suss-pr60-review-duplicate-negative.log. The mutation was restored
+entirely before final checks; compiler implementation is unchanged in this repair.
+
+Commands and terminal results (CARGO_BUILD_JOBS=2, shared CARGO_TARGET_DIR,
+no RUSTFLAGS override; Cargo feature graphs ran sequentially):
+
+- `cargo test -p suss-compile --test portable_modules --test portable_definitions --test portable_closures --test portable_pipeline --test portable_resolution --test runtime_abi --locked -- --test-threads=2`: 66 pass, zero ignored, exit 0; /private/tmp/suss-pr60-review-compiler-focused.log.
+- `cargo test -p suss-cli --lib --test persistent_session --locked -- --test-threads=2`: 15 pass, zero ignored, exit 0; /private/tmp/suss-pr60-review-session-focused.log. Combined focused scope: 81 tests.
+- `cargo test --workspace --locked -- --test-threads=2`: pass including CLI rustdoc, exit 0; /private/tmp/suss-pr60-review-full.log. Code was frozen for the full run.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 pass, exit 0; /private/tmp/suss-pr60-review-python.log.
+- Offline `python3 scripts/publish_roadmap.py`: pass, exit 0; /private/tmp/suss-pr60-review-roadmap-preview.json. Stable issue IDs retained.
+- Touched Rust rustfmt and `git diff --check`: pass.
+
+PR #59 final-head CI 36669735862 is now confirmed successful on independently
+reviewed 90bcd8c91fa5d65d84c0b57d1f82b7c8925d3638. Root verified its executing
+callback recovery/session regressions and updated its PR and issue progress;
+the PR remains open. PR #60 still requires CI on the exact final reviewed head.
+
+No remaining significant review finding. This original test/evidence repair adds
+no dependencies, ABI change, upstream implementation or shipped JVM/Node path.
+All existing ignores, inventory statuses and 54 portable cases remain unchanged.
+M2/M3 acceptance, command frontend migration and later milestones remain open.
+Next implement dynamic arithmetic with pinned primitive coercion/concatenation
+semantics; a blanket Number guard would not fulfill the contract. Do not merge
+or close incomplete issues.
