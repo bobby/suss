@@ -1170,6 +1170,7 @@ No PR was merged and no issue or milestone was directly closed.
 
 Next unblocked work remains lossless reader forms into HIR/binding identity,
 explicit source-order IR and shared runtime lowering, as described above.
+
 ## Portable reader forms — 2026-09-29
 
 Prior reviewed PR heads have terminal successful CI: #40 fb3ec0a in
@@ -1659,3 +1660,31 @@ remain incomplete. No M2 package or broad issue is closed. Next unblocked work:
 source namespace/module/definition loading connected to resolved shared cells and
 persistent compiled clients. Push the review repair to PR #46 and require
 successful CI on the repaired head before readiness. Do not merge PRs.
+
+
+## Open PR stack conflict repair — 2026-09-30
+
+At the user's request, rebased #42 -> #44 -> #45 -> #46 onto merged main
+a9a910d in /private/tmp/suss-stack-rebase. The only conflict was concurrent
+append-only handoff evidence from #43 and #42; both sections are retained.
+Dependent commits replayed cleanly. Runtime code, test cases, expected failures,
+source pins, issue IDs and incomplete M2 statuses are unchanged. Merged M0/M1
+acceptance and policy changes now survive throughout the stack. An independent
+subagent reviewed each of the four rebased PRs and found no significant issue.
+The original portable-definitions checkout and its unfinished work are untouched.
+
+Validation (CARGO_BUILD_JOBS=2, existing shared CARGO_TARGET_DIR; no RUSTFLAGS):
+
+- `cargo test -p suss-reader -p suss-compile --test forms --test reader_runtime --test portable_pipeline --test portable_resolution --test portable_closures --test runtime_abi --locked -- --test-threads=2`: 55 passed, zero ignored; /private/tmp/suss-stack-focused.log.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 passed.
+- `python3 scripts/cljs_inventory.py --check` and `python3 scripts/cljs_reviews.py`: pinned 1,065 declarations verified, zero reviewed / 1,065 unassessed. Initial checks failed because the isolated worktree lacked an initialized reference checkout; a local worktree at the exact pinned ClojureScript revision repaired setup, then both checks passed. No pin or expected result changed.
+- `python3 scripts/wasi_lock.py`: 15 files / six packages verified.
+- `python3 scripts/publish_roadmap.py`: offline preview passed; /private/tmp/suss-stack-roadmap.json.
+- Per-PR `git range-diff` and `git diff --check`: pass; original implementation patches retained.
+- `cargo test --workspace --locked -- --test-threads=2`: passed, exit 0; /private/tmp/suss-stack-full.log. Existing explicit manual/legacy/doc ignores are unchanged. Final-head GitHub CI remains pending and must be observed separately.
+
+Publish all four rewritten heads atomically with explicit old-head leases. No PR
+is merged by this repair. Next unblocked implementation remains source namespace,
+module and definition loading through resolved shared cells and persistent
+compiled clients; the unfinished portable-definitions work is not part of this
+repair. Full baseline and final-head CI results must be reported after completion.
