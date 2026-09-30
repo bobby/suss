@@ -76,3 +76,9 @@ checked `binding-get` and binding-set bound-state transitions distinguish an
 uninitialized var from nil; see [portable resolution](portable-resolution.md).
 Ten executing resolution tests supplement the seven ABI tests. Production
 namespace loading, source definitions and universal call lowering remain open.
+
+Fixed source closures and generic local/global/computed calls now lower through
+the shared universal ABI; central invocation checks non-callable and malformed
+argument arrays before casts. Eleven source/IR tests supplement the prior suites;
+see [closure lowering](portable-closures.md). Extended signatures, source namespace
+loading and production migration remain incomplete.

@@ -1,6 +1,6 @@
 //! Replacement source -> HIR -> verified explicit IR -> shared-ABI fragments.
 //! The CLI/AOT/macro paths still use the prototype; migration remains incomplete.
-//! This bootstrap supports scalars, phase-resolved live cells, let/do/if and numeric calls.
+//! Supports scalars, resolved cells, fixed closures/universal calls and numeric bootstrap.
 mod emit;
 pub mod hir;
 pub mod ir;

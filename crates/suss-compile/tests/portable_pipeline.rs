@@ -221,7 +221,7 @@ fn hir_retains_binding_identity_metadata_and_located_diagnostics() {
     for (source, needle) in [
         ("(let [x missing] x)", "missing"),
         ("(+ 1 false)", "false"),
-        ("(let [+ 1] (+ 2 3))", "+"),
+        ("(let [+ (fn [x] x)] (+ 2 3))", "(+ 2 3)"),
         ("(other.core/+ 1 2)", "other.core/+"),
     ] {
         let error = portable::compile(source).unwrap_err();
@@ -439,7 +439,7 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
         let (mut store, value) = execute(source);
         assert_eq!(tagged(&mut store, &value), case["expected"], "{source}");
     }
-    assert_eq!(ids.len(), 21);
+    assert_eq!(ids.len(), 34);
 }
 #[test]
 fn independently_compiled_fragment_values_remain_live_across_gc() {
@@ -484,10 +484,8 @@ fn independently_compiled_fragment_values_remain_live_across_gc() {
 
 #[test]
 fn lexical_bindings_hide_the_bootstrap_let_macro() {
-    let source = "(let [let 7] (let [] 1))";
-    let error = portable::compile(source).unwrap_err();
-    assert_eq!(&source[error.span], "let");
-    assert!(error.message.contains("closure lowering"));
+    // The local callee now lowers to a universal call rather than a bootstrap macro.
+    assert_eq!(number("(let [let (fn [x] x)] (let 7))"), 7.0);
     // True special forms remain special even when their names are locals.
     assert_eq!(number("(let [if 7 do 8] (if true (do 1 2) 3))"), 2.0);
     // A nested local hiding let does not escape its lexical scope.

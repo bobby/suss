@@ -1170,6 +1170,7 @@ No PR was merged and no issue or milestone was directly closed.
 
 Next unblocked work remains lossless reader forms into HIR/binding identity,
 explicit source-order IR and shared runtime lowering, as described above.
+
 ## Portable reader forms — 2026-09-29
 
 Prior reviewed PR heads have terminal successful CI: #40 fb3ec0a in
@@ -1552,3 +1553,138 @@ success at the final reviewed commit. Do not merge PRs. Next unblocked integrati
 universal closures/callee/argument lowering and dynamic checks through resolved
 live globals, followed by source namespace/definition loading and one production
 pipeline for AOT/REPL/compiled macros. Retire obsolete paths only after acceptance.
+
+
+## Source closures and ordered universal calls — 2026-09-30
+
+PR #45's independently reviewed head 6e57ee12ebc99e3069b7ba575cfaaf139f56e813
+passed final CI run 36653523291. It remains open and unmerged. This increment
+builds on that head in resurrection/portable-closures; no agent merged any PR.
+
+An original source-capture regression failed on the preceding frontend because
+fn/local calls were unsupported (exit 101; /private/tmp/suss-closures-red.log).
+The portable pipeline now lowers fixed anonymous fn/fn*, lexical captures and
+computed/local/live-global calls into actual shared-ABI function references.
+Captures use unique lexical identities and immutable value references; globals
+remain live reads unless explicitly captured via a local. Nested closures capture
+only required free values. Callee and arguments normalize once in source order.
+Parameters retain source metadata without turning hints into unchecked type facts.
+The verifier checks separate closure body entries, capture facts, calls and known
+arities, bounding nesting and rejecting malformed huge arities before allocation.
+
+The runtime checks callable/argument-array types before casts and central arity
+before invocation, raising specific shared language exceptions rather than Wasm
+cast traps. Executing wrappers prove argument effects occur even when the callee
+is not callable. Cross-fragment tests preserve old captured function values after
+rebinding/GC while live lookup sees the replacement. A test-only Wasm catcher
+independently decodes actual tagged errors and reuses the Store after failure;
+this does not claim production REPL recovery or source exception integration.
+
+An emitter fixture initially failed compilation because a UTF-16 unit index
+shadowed the SSA local offset; it was corrected. An ambiguous test float was also
+corrected. No failing cases were skipped or replaced with success.
+
+Validation (CARGO_BUILD_JOBS=2; no RUSTFLAGS override):
+
+- `cargo test -p suss-compile --test portable_closures --test portable_pipeline --test portable_resolution --test runtime_abi --locked -- --test-threads=2`: 11 closure, 13 pipeline, 10 resolution and 7 ABI tests pass, zero ignored. Final run after the last diagnostic-text change: /private/tmp/suss-closures-publish-focused.log, exit 0.
+- `scripts/test-portable-pipeline-oracle.sh`: all 34 original portable source cases match fresh pinned ClojureScript/Node observations exactly; 13 executing pipeline tests pass. /private/tmp/suss-closures-oracle.log, exit 0.
+- `cargo test --workspace --locked -- --test-threads=2`: full baseline passes, exit 0; /private/tmp/suss-closures-full.log. This run preceded the final unsupported-core-value diagnostic-text/comment edits; the focused suite above covers those edits, and PR review will validate the published head. Existing manual/legacy/doc ignores remain unchanged.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 pass. Inventory and review validation retain 1,065 declarations, zero reviewed and 1,065 unassessed; source pins/hashes unchanged.
+- `python3 scripts/wasi_lock.py`: 15 WIT files / 6 packages verified. Offline roadmap publisher preview passes with 10 milestones / 39 stable issues; /private/tmp/suss-closures-roadmap-preview.json.
+- rustfmt check on touched Rust and `git diff --check`: pass.
+
+The original legacy corpus remains 9 differential passes / 7 exact failures /
+0 skips; expected failures are unchanged. Original Rust and cases copy no upstream
+implementation. Syntax/resolution was checked against pinned cljs/core.cljc and
+cljs/analyzer.cljc at c4295f303100bbf5afac449242d30bca1126f1a1. Future core ports
+still require EPL notices and extraction/patch hashes. No new dependency, shipped
+Java/Node path, table or linear memory was introduced.
+
+Limits: named/multi-arity/variadic/destructuring/pre-post signatures, dynamic
+numeric checking/coercion and first-class bootstrap core values remain open.
+Dynamic error payloads still lack source call-site annotations. Full IFn dispatch,
+source exceptions/effects/recur/async lowering, source ns/module/definition loading,
+compiled macros and CLI/AOT/REPL migration are not complete. See
+[closure lowering](../runtime/portable-closures.md). M2 packages stay in progress.
+
+Publish stacked on #45 with Refs #9 and Refs #10, never closing incomplete issues.
+Dispatch an independent PR reviewer, require fixes for significant findings and
+successful CI at the final reviewed commit. Review and CI are pending publication.
+Next unblocked task: connect source namespace/module/definition loading to the
+resolved shared cells and persistent compiled clients, then extend signatures,
+checked core coercions and the remaining IR forms. Keep the full roadmap active;
+retire obsolete paths only after replacement acceptance. Do not merge PRs.
+
+
+## Dispatched PR #46 code review — 2026-09-30
+
+The independent reviewer audited the entire closure increment at published head
+5e59e616661827db669db69d13c49e4349c29db6 in an isolated worktree. Review covered
+fn macro/lexical precedence, free binding identities and metadata, nested captures,
+public HIR/IR entry/type/arity/dominance guards, universal function references and
+local offsets, once-only callee-before-argument effects, cross-fragment roots/live
+rebinding and actual tagged language errors. One significant semantic omission was
+reproduced and fixed; no additional significant finding remained.
+
+Pinned cljs/core.cljc's fn macro reads :pre/:post from parameter-vector metadata
+when no explicit condition map exists. `((fn ^{:pre [false]} [] 1))` previously
+compiled a validated fragment ignoring the precondition. The regression FAILED
+at the published head, exit 101, /private/tmp/suss-pr46-review-red.log. Bootstrap
+fn now rejects signature pre/post metadata with a located unsupported-feature
+diagnostic. Regressions cover bare, qualified and renamed referred core fn,
+shorthand metadata, ordinary annotations and actual fn* execution. Rejection is
+conservative even for nil/false condition values or overwritten metadata keys;
+pre/post support remains incomplete. The true fn* special form does not expand
+these macro conditions and retains its previous behavior.
+
+A fresh development-only pinned ClojureScript/Node fixture confirms pre and post
+conditions reject the value, while fn* with the same metadata returns 1. Generated
+ignored fixture: tests/oracle/out/generated/suss_oracle/pr46_review.cljs; build and
+observations: /private/tmp/suss-pr46-review-reference.log. No upstream code was
+copied and no shipped Java/Node dependency was introduced.
+
+Commands/results (CARGO_BUILD_JOBS=2 and shared CARGO_TARGET_DIR; no RUSTFLAGS):
+
+- `cargo test -p suss-compile --test portable_closures --test portable_pipeline --test portable_resolution --test runtime_abi --locked -- --test-threads=2`: published head 41 passes; repaired final focused suite 42 passes (12 closure/13 pipeline/10 resolution/7 ABI), zero ignored. Logs /private/tmp/suss-pr46-review-focused.log and /private/tmp/suss-pr46-review-final-focused.log.
+- `cargo test --workspace --locked -- --test-threads=2`: published head and repaired implementation both pass, exit 0; /private/tmp/suss-pr46-review-full.log and /private/tmp/suss-pr46-review-final-full.log. The repaired full run began before the final renamed-refer assertion was added; the final focused run above covers that assertion. No implementation changed afterward.
+- Pinned reference: `clojure -Srepro -M -m cljs.main` with Node target compiling suss-oracle.pr46-review, then `node out/pr46-review.js`: exit 0; observations pre rejected, post rejected, 1.
+- rustfmt on touched Rust and `git diff --check`: pass.
+
+Enabled baseline suites remain green; existing manual/legacy/doc ignores and the
+legacy oracle's 9 differential passes/7 exact failures/0 skips are unchanged.
+The original 34-source portable corpus remains passing; all 1,065 inventory
+entries remain unassessed. Extended signatures, pre/post execution, dynamic numeric
+coercions/core values, source namespace/module/definition loading, full IFn,
+exceptions/effects/recur/async, compiled macros and production client migration
+remain incomplete. No M2 package or broad issue is closed. Next unblocked work:
+source namespace/module/definition loading connected to resolved shared cells and
+persistent compiled clients. Push the review repair to PR #46 and require
+successful CI on the repaired head before readiness. Do not merge PRs.
+
+
+## Open PR stack conflict repair — 2026-09-30
+
+At the user's request, rebased #42 -> #44 -> #45 -> #46 onto merged main
+a9a910d in /private/tmp/suss-stack-rebase. The only conflict was concurrent
+append-only handoff evidence from #43 and #42; both sections are retained.
+Dependent commits replayed cleanly. Runtime code, test cases, expected failures,
+source pins, issue IDs and incomplete M2 statuses are unchanged. Merged M0/M1
+acceptance and policy changes now survive throughout the stack. An independent
+subagent reviewed each of the four rebased PRs and found no significant issue.
+The original portable-definitions checkout and its unfinished work are untouched.
+
+Validation (CARGO_BUILD_JOBS=2, existing shared CARGO_TARGET_DIR; no RUSTFLAGS):
+
+- `cargo test -p suss-reader -p suss-compile --test forms --test reader_runtime --test portable_pipeline --test portable_resolution --test portable_closures --test runtime_abi --locked -- --test-threads=2`: 55 passed, zero ignored; /private/tmp/suss-stack-focused.log.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 47 passed.
+- `python3 scripts/cljs_inventory.py --check` and `python3 scripts/cljs_reviews.py`: pinned 1,065 declarations verified, zero reviewed / 1,065 unassessed. Initial checks failed because the isolated worktree lacked an initialized reference checkout; a local worktree at the exact pinned ClojureScript revision repaired setup, then both checks passed. No pin or expected result changed.
+- `python3 scripts/wasi_lock.py`: 15 files / six packages verified.
+- `python3 scripts/publish_roadmap.py`: offline preview passed; /private/tmp/suss-stack-roadmap.json.
+- Per-PR `git range-diff` and `git diff --check`: pass; original implementation patches retained.
+- `cargo test --workspace --locked -- --test-threads=2`: passed, exit 0; /private/tmp/suss-stack-full.log. Existing explicit manual/legacy/doc ignores are unchanged. Final-head GitHub CI remains pending and must be observed separately.
+
+Publish all four rewritten heads atomically with explicit old-head leases. No PR
+is merged by this repair. Next unblocked implementation remains source namespace,
+module and definition loading through resolved shared cells and persistent
+compiled clients; the unfinished portable-definitions work is not part of this
+repair. Full baseline and final-head CI results must be reported after completion.
