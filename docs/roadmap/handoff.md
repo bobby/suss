@@ -2630,3 +2630,41 @@ PR review and exact final-head CI are required; do not merge or close manually.
 PR63 final-head CI36686074513 is currently confirmed live; no pass claimed yet.
 Next implement named/multiple closure signatures from the genuine isolated red
 regression and fresh11reference observations, then broader foundations/M2–M9.
+
+## PR #64 independent acceptance review — 2026-09-30
+
+Dispatched reviewer /root/review_pr64 audited 77a436a against reviewed PR #63
+7912975 in isolated /private/tmp/suss-review-pr64. Read the accepted design,
+roadmap, inventory and handoff, the remote issue #10's four published criteria,
+runtime construction/invocation/gate code and the named executing regressions.
+All four foundation criteria are supported; no unresolved significant production
+or acceptance defect was found. M2 overall and #9/#11 remain incomplete, and
+branch completion is explicitly distinguished from unmerged default-branch state.
+Stable work-package IDs and dependencies are unchanged.
+
+Corrected an evidence overstatement: the native private installation regression
+checks malformed artifacts and missing cell imports, whereas actual changed-layout
+rejection before effects is proved by the runtime host-marker test. Native install
+verifies/validates before staging cells and publishes only after linking all
+fragments. No runtime/code/ABI change was needed.
+
+Independent sequential checks with CARGO_BUILD_JOBS=2/shared CARGO_TARGET_DIR and
+no RUSTFLAGS override passed, all exit 0 and zero ignored in focused native suites:
+runtime_abi 10 (/private/tmp/suss-pr64-review-runtime.log); portable_pipeline 16,
+including execution/independent decoding of all 194 corpus fragments
+(/private/tmp/suss-pr64-review-pipeline.log); native artifact-install gate 1
+(/private/tmp/suss-pr64-review-native-gate.log); old source closures/owned UTF-16
+across rebinding and GC 1 (/private/tmp/suss-pr64-review-native-roots.log); Python54
+(/private/tmp/suss-pr64-review-python.log). Offline roadmap preview reports stable
+10 milestones/39 issues; diff checks pass. Reviewed prior unchanged-code full
+baseline and fresh194 reference comparison evidence; no unnecessary full rerun
+for this documentation-only audit. Existing legacy/manual ignores remain explicit.
+All native handles are terminal. Exact final acceptance-head CI is still required.
+
+Verified GitHub's official closing-keyword rules: descriptions only auto-close
+when targeting the default branch; commit keywords close when the commit reaches
+that branch. Audit and PR template now explain predecessor landing/retargeting and
+preserving closing keywords on squash. This review commit includes Closes #10,
+because all its actual criteria pass; no other incomplete issue is closed.
+Do not merge or manually close. Next unblocked implementation remains extended
+source signatures and broader M2–M9 acceptance.
