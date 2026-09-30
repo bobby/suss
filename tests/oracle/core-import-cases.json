@@ -116,6 +116,294 @@
         "tag": "f64",
         "bits": "401c000000000000"
       }
+    },
+    {
+      "id": "not-nil",
+      "source": "(not nil)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boolean-nil",
+      "source": "(boolean nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "not-false",
+      "source": "(not false)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boolean-false",
+      "source": "(boolean false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "not-true",
+      "source": "(not true)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "boolean-true",
+      "source": "(boolean true)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-zero",
+      "source": "(not 0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "boolean-zero",
+      "source": "(boolean 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-negative-zero",
+      "source": "(not -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "boolean-negative-zero",
+      "source": "(boolean -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-nan",
+      "source": "(not ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "boolean-nan",
+      "source": "(boolean ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-infinity",
+      "source": "(not ##Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "boolean-infinity",
+      "source": "(boolean ##Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-empty",
+      "source": "(not \"\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "boolean-empty",
+      "source": "(boolean \"\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-utf16",
+      "source": "(not \"\\uD800\ud83d\ude00\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "boolean-utf16",
+      "source": "(boolean \"\\uD800\ud83d\ude00\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-function",
+      "source": "(not (fn [] 42))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "boolean-function",
+      "source": "(boolean (fn [] 42))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-object",
+      "source": "(not (new ExceptionInfo \"m\" 7 nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "boolean-object",
+      "source": "(boolean (new ExceptionInfo \"m\" 7 nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-ex-info",
+      "source": "(not (ex-info \"m\" 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "boolean-ex-info",
+      "source": "(boolean (ex-info \"m\" 7))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-undefined",
+      "source": "(not (ex-data (new ExceptionInfo \"m\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boolean-undefined",
+      "source": "(boolean (ex-data (new ExceptionInfo \"m\")))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "not-realm",
+      "source": "(not (ExceptionInfo))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "boolean-realm",
+      "source": "(boolean (ExceptionInfo))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-alias",
+      "source": "(cljs.core/not nil)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boolean-alias",
+      "source": "(cljs.core/boolean 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-first-class",
+      "source": "(let [f not] (f false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boolean-first-class",
+      "source": "(let [f boolean] (f \"\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-predicate-redefs",
+      "source": "(with-redefs [nil? (fn [x] false) false? (fn [x] false)] (let [f not] (f nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boolean-predicate-redefs",
+      "source": "(with-redefs [nil? (fn [x] false) false? (fn [x] false)] (let [f boolean] (f nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "not-captured-redef",
+      "source": "(let [f not] (with-redefs [not (fn [x] false)] (f nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "boolean-live-redef",
+      "source": "(with-redefs [boolean (fn [x] false)] (let [f boolean] (f 0)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
     }
   ]
 }

@@ -3748,3 +3748,57 @@ CI before readiness. Refs #9/#16 remain partial; no issue closed or PR merged.
 Next unblocked task: provenance-backed not/boolean/some? foundations followed by
 sequence/collection ports and complete compiled macro/core bootstrap. M2–M9 and
 the full roadmap remain incomplete.
+
+## PR73 final review and source-backed boolean ports — 2026-09-30
+
+Previous goal turn made progress: primitive predicates/identity implemented, tested
+and published as draft PR73 with dispatched independent review. The reviewer found
+no significant semantic defect; added all-factory first-class/GC/arity and long
+UTF-16 identity fuel-recovery regressions. Final native6/fresh397/pipeline16/Python66
+and required full baseline passed. Externally merged PR70/71 main trees match the
+reviewed base; reviewer rebased only predicate work onto actual mainc713c80 with
+source tree preserved, then pushed c4a36760028b5cbec2abc3d53597b9a173346f62.
+All review handles terminal, including18963 baseline and30296 push; no agent merge.
+
+PR73 retargeted to main. No CI check existed on the rebased final head: PR/check-run
+and workflow-run APIs showed only successful predecessor e2c87cc run36732518761.
+Closed/reopened draft PR73 to trigger its configured reopened event without a code
+or head change. Exact c4a3676 run36734926071 is now confirmed IN_PROGRESS. It is not
+called successful and PR73 remains draft until that exact run passes. Root's local
+old predicate worktree still preserves e2c87cc; next branch starts from reviewed c4.
+
+Next source-backed core prerequisite in isolated /private/tmp/suss-boolean-core-import,
+branch resurrection/portable-boolean-core-import, based on c4a3676: not and boolean
+join identity in the reviewed extraction recipe. Original source forms/docstrings,
+exact byte ranges/hashes and EPL notice/files remain retained. Explicit whole-form
+patches adapt fixed defn/cond/nil?/false? macro logic to existing def/fn/if bootstrap
+forms. If preserves falsey nil/false/internal undefined and truthy numeric zero,
+NaN, empty UTF-16 strings and objects; it avoids a wrong live nil?/false? dependency
+where the pinned functions use compiled primitive macros. Captured not/boolean
+originals survive public predicate redefinition; current core var reads still see
+not/boolean replacements. This behavior is executed against the actual primary oracle.
+
+No compiler/runtime implementation/dependency/prelude/ABI/helper changes. Generated
+artifact now contains three source forms and seven files, with the existing exact
+license bytes. Two new partial runtime reviews retain actual macro:defn:3364,
+macro:cond:159, macro:nil?:923 and macro:false?:991 dependencies. Overlay26 in-progress/
+1039 unassessed; neither form newly certified complete. Native command frontends,
+compiled upstream macros, source metadata/privacy, full core/collection loading and
+some? remain unfinished. Some?'s nil? macro versus live not binding needs an explicit
+primitive/compiled macro adaptation; do not substitute a default-only equivalent.
+
+Commands/results (two native jobs/shared target, no RUSTFLAGS override; graphs
+sequential; unrelated root untracked files preserved):
+
+- Three added source-import regressions first failed unresolved not/boolean, /private/tmp/suss-boolean-core-import-red.log (95960 terminal101). Source pin is unchanged c4295f303100bbf5afac449242d30bca1126f1a1; core.cljs263–269/2357–2364 and referenced core.cljc macro declarations reviewed. An initially guessed cond dependency ID was corrected to actual159 before final provenance generation; no incorrect ID is claimed as validated semantics.
+- Expanded native core_import7 passed, zero ignored, /private/tmp/suss-boolean-core-import-focused.log (69405 terminal0). Includes truthiness over primitives/objects/missing fields/ordinary realm value, canonical aliases, captured pure functions versus redefined predicate vars, live not/boolean replacements, once-only argument effects before typed arity errors and recovery; existing identity regressions retained.
+- Fresh CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-core-import-oracle.sh passed:50 independently encoded primary observations and actual native7, /private/tmp/suss-boolean-core-import-oracle.log (12758 terminal0). Previous14 cases unchanged;36 new truthiness/first-class/alias/redefinition cases. Development-only JVM/Node remain outside the shipped runtime. Primary arity warnings for ordinary ExceptionInfo calls remain raw, not hidden as skips.
+- Python66 passed, /private/tmp/suss-boolean-core-import-python.log. Inventory1065/overlay26+1039, exact seven-file artifact regeneration, offline roadmap preview, touched Rust formatting and diff checks pass. Stable issue IDs and partial status preserved.
+- Required CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2 passed exit0, /private/tmp/suss-boolean-core-import-workspace.log (10064 terminal). All workspace/native/component/legacy/reader/core/doc targets including CLI pass; source pipeline397 and existing manual/legacy ignores remain unchanged. Existing legacy differential9pass/7fail remains separate.
+
+Next publish stacked on PR73 with Refs #16, dispatch independent review, push
+significant findings and require exact final-head CI. Do not merge or close issue16.
+Continue complete core/bootstrap/collections and M2/M3/M4 prerequisites; three forms
+and two Boolean operations are not the full M4 gate. The full ROADMAP goal remains
+active, M2–M9 unfinished. Root owns no native/reference process after this baseline;
+a dispatched reviewer may take exclusive graph ownership.

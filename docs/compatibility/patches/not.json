@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8f5e1b64540b46461b1d8735613c4c61599a1b6d07b4cfa628798d5df8ad6658",
+  "replacement": "(def not (fn [x] (if x false true)))",
+  "rationale": "Explicit single fixed-arity defn/cond bootstrap adaptation to def/fn/if. The pinned nil?/false? tests in this body are macro primitives; the existing portable branch test preserves nil/false/internal undefined truthiness without reading redefined public predicate vars. Original form/docstring and EPL notice remain extracted."
+}
