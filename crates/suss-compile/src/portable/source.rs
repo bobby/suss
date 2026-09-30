@@ -54,7 +54,7 @@ fn renames(form: &Form) -> Result<Vec<(&Form, &Form)>, Diagnostic> {
     }
     Ok(out)
 }
-fn require(env: &mut Environment, phase: Phase, spec: &Form) -> Result<(), Diagnostic> {
+fn requirement(spec: &Form) -> Result<Requirement<'_>, Diagnostic> {
     // Pinned ns analysis reads reload policy from libspec metadata. Retaining
     // the directive cannot implement its required initialization behavior.
     for metadata in &spec.metadata {
@@ -77,13 +77,7 @@ fn require(env: &mut Environment, phase: Phase, spec: &Form) -> Result<(), Diagn
         Kind::Vector(items) | Kind::List(items) if !items.is_empty() => items,
         _ => return Err(error(spec, "Require expects a namespace symbol or libspec")),
     };
-    let namespace = symbol(&items[0])?;
-    if !env.has_namespace(phase, namespace) {
-        return Err(error(
-            &items[0],
-            "Required namespace has no supplied declaration; source loading is not integrated yet",
-        ));
-    }
+    symbol(&items[0])?;
     if items.len() % 2 == 0 {
         return Err(error(spec, "Require option has no value"));
     }
@@ -114,9 +108,6 @@ fn require(env: &mut Environment, phase: Phase, spec: &Form) -> Result<(), Diagn
             _ => return Err(error(&pair[0], "Require option is not supported")),
         }
     }
-    if let Some(alias) = alias {
-        located(env.alias(phase, symbol(alias)?, namespace), alias)?;
-    }
     for (original, _) in &renamed {
         if !referred
             .iter()
@@ -125,61 +116,83 @@ fn require(env: &mut Environment, phase: Phase, spec: &Form) -> Result<(), Diagn
             return Err(error(original, "Renamed name must be referred"));
         }
     }
-    for original in referred {
+    Ok(Requirement {
+        namespace: &items[0],
+        alias,
+        referred,
+        renamed,
+    })
+}
+struct Requirement<'a> {
+    namespace: &'a Form,
+    alias: Option<&'a Form>,
+    referred: Vec<&'a Form>,
+    renamed: Vec<(&'a Form, &'a Form)>,
+}
+fn apply_requirement(
+    env: &mut Environment,
+    phase: Phase,
+    requirement: &Requirement<'_>,
+) -> Result<(), Diagnostic> {
+    let namespace = symbol(requirement.namespace)?;
+    if !env.has_namespace(phase, namespace) {
+        return Err(error(
+            requirement.namespace,
+            "Required namespace has no supplied declaration; use module graph preparation for source loading",
+        ));
+    }
+    if let Some(alias) = requirement.alias {
+        located(env.alias(phase, symbol(alias)?, namespace), alias)?;
+    }
+    for original in &requirement.referred {
         let name = symbol(original)?;
-        let target = renamed
+        let target = requirement
+            .renamed
             .iter()
             .find(|(old, _)| symbol(old).ok() == Some(name))
-            .map_or(original, |(_, new)| *new);
+            .map_or(*original, |(_, new)| *new);
         located(env.refer(phase, symbol(target)?, namespace, name), target)?;
     }
     Ok(())
 }
-fn core_options(
-    env: &mut Environment,
-    phase: Phase,
-    items: &[Form],
-    form: &Form,
-) -> Result<(), Diagnostic> {
+enum CoreOption<'a> {
+    Exclude(Vec<&'a Form>),
+    Rename(Vec<(&'a Form, &'a Form)>),
+}
+fn core_options<'a>(items: &'a [Form], form: &Form) -> Result<Vec<CoreOption<'a>>, Diagnostic> {
     if items.len() % 2 != 0 {
         return Err(error(form, "Core refer option has no value"));
     }
-    let mut options = std::collections::BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
+    let mut options = Vec::new();
     for pair in items.chunks_exact(2) {
         let key = keyword(&pair[0])?;
-        if !options.insert(key) {
+        if !seen.insert(key) {
             return Err(error(&pair[0], "Duplicate core refer option"));
         }
-        match key {
+        options.push(match key {
             "exclude" => {
-                for name in sequence(&pair[1])? {
-                    located(env.exclude_core(phase, symbol(name)?), name)?;
+                let names = sequence(&pair[1])?;
+                for name in names {
+                    symbol(name)?;
                 }
+                CoreOption::Exclude(names.iter().collect())
             }
-            "rename" => {
-                for (old, new) in renames(&pair[1])? {
-                    located(env.exclude_core(phase, symbol(old)?), old)?;
-                    located(
-                        env.refer(phase, symbol(new)?, "suss.core", symbol(old)?),
-                        new,
-                    )?;
-                }
-            }
+            "rename" => CoreOption::Rename(renames(&pair[1])?),
             _ => return Err(error(&pair[0], "Core refer option is not supported")),
-        }
+        });
     }
-    Ok(())
+    Ok(options)
 }
-/// Only a leading top-level ns directive is currently consumed. All mutations
-/// occur in the caller's private compilation snapshot, never its live catalog.
-pub(crate) fn namespace(
-    forms: &mut [Form],
-    env: &mut Environment,
-    phase: Phase,
-) -> Result<Option<Form>, Diagnostic> {
-    let Some(form) = forms.first_mut() else {
-        return Ok(None);
-    };
+enum Clause<'a> {
+    Require(Vec<Requirement<'a>>),
+    Core(Vec<CoreOption<'a>>),
+}
+struct Header<'a> {
+    name: &'a Form,
+    clauses: Vec<Clause<'a>>,
+}
+fn header(form: &Form) -> Result<Option<Header<'_>>, Diagnostic> {
     let Kind::List(items) = &form.kind else {
         return Ok(None);
     };
@@ -190,7 +203,7 @@ pub(crate) fn namespace(
     let Some(name) = items.get(1) else {
         return Err(error(form, "Namespace name is required"));
     };
-    located(env.reset_namespace(phase, symbol(name)?), name)?;
+    located(super::resolve::valid_namespace(symbol(name)?), name)?;
     let mut rest = &items[2..];
     if rest
         .first()
@@ -204,7 +217,8 @@ pub(crate) fn namespace(
     {
         rest = &rest[1..];
     }
-    let mut clauses = std::collections::BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
+    let mut clauses = Vec::new();
     for clause in rest {
         let Kind::List(items) = &clause.kind else {
             return Err(error(clause, "Namespace clause must be a list"));
@@ -213,25 +227,100 @@ pub(crate) fn namespace(
             return Err(error(clause, "Namespace clause is empty"));
         };
         let key = keyword(head)?;
-        if !clauses.insert(key) {
+        if !seen.insert(key) {
             return Err(error(clause, "Duplicate namespace clause"));
         }
-        match key {
-            "require" => {
-                for spec in &items[1..] {
-                    require(env, phase, spec)?;
+        clauses.push(match key {
+            "require" => Clause::Require(items[1..].iter().map(requirement).collect::<Result<_, _>>()?),
+            "refer-clojure" => Clause::Core(core_options(&items[1..], clause)?),
+            "require-macros" => return Err(error(clause, "Source macro imports require an isolated compiled macro session, not yet integrated")),
+            _ => return Err(error(head, "Namespace clause is not supported")),
+        });
+    }
+    Ok(Some(Header { name, clauses }))
+}
+/// A loader and ordinary source preparation share exactly the same header grammar.
+pub(crate) fn dependencies(
+    forms: &[Form],
+) -> Result<
+    (
+        String,
+        std::ops::Range<usize>,
+        Vec<(String, std::ops::Range<usize>)>,
+    ),
+    Diagnostic,
+> {
+    let Some(first) = forms.first() else {
+        return Err(Diagnostic {
+            span: 0..0,
+            message: "Source module requires a leading ns declaration".into(),
+        });
+    };
+    let Some(header) = header(first)? else {
+        return Err(error(
+            first,
+            "Source module requires a leading ns declaration",
+        ));
+    };
+    let mut dependencies = Vec::new();
+    for clause in &header.clauses {
+        if let Clause::Require(requirements) = clause {
+            for requirement in requirements {
+                let name = symbol(requirement.namespace)?;
+                located(super::resolve::valid_namespace(name), requirement.namespace)?;
+                dependencies.push((name.to_owned(), requirement.namespace.span.clone()));
+            }
+        }
+    }
+    Ok((
+        symbol(header.name)?.to_owned(),
+        header.name.span.clone(),
+        dependencies,
+    ))
+}
+/// Consume a leading source declaration using a private compilation snapshot.
+pub(crate) fn namespace(
+    forms: &mut [Form],
+    env: &mut Environment,
+    phase: Phase,
+) -> Result<Option<Form>, Diagnostic> {
+    let Some(form) = forms.first_mut() else {
+        return Ok(None);
+    };
+    let Some(header) = header(form)? else {
+        return Ok(None);
+    };
+    located(
+        env.reset_namespace(phase, symbol(header.name)?),
+        header.name,
+    )?;
+    for clause in &header.clauses {
+        match clause {
+            Clause::Require(requirements) => {
+                for requirement in requirements {
+                    apply_requirement(env, phase, requirement)?;
                 }
             }
-            "refer-clojure" => {
-                core_options(env, phase, &items[1..], clause)?;
+            Clause::Core(options) => {
+                for option in options {
+                    match option {
+                        CoreOption::Exclude(names) => {
+                            for name in names {
+                                located(env.exclude_core(phase, symbol(name)?), name)?;
+                            }
+                        }
+                        CoreOption::Rename(names) => {
+                            for (old, new) in names {
+                                located(env.exclude_core(phase, symbol(old)?), old)?;
+                                located(
+                                    env.refer(phase, symbol(new)?, "suss.core", symbol(old)?),
+                                    new,
+                                )?;
+                            }
+                        }
+                    }
+                }
             }
-            "require-macros" => {
-                return Err(error(
-                    clause,
-                    "Source macro imports require an isolated compiled macro session, not yet integrated",
-                ));
-            }
-            _ => return Err(error(head, "Namespace clause is not supported")),
         }
     }
     let directive = form.clone();

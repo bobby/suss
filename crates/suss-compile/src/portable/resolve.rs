@@ -88,7 +88,7 @@ pub struct Environment {
     scopes: BTreeMap<(Phase, String), Scope>,
     current: BTreeMap<Phase, String>,
 }
-fn canonical(namespace: &str) -> &str {
+pub(crate) fn canonical(namespace: &str) -> &str {
     if namespace == "cljs.core" {
         "suss.core"
     } else {
@@ -101,7 +101,7 @@ fn error(message: impl Into<String>) -> Diagnostic {
         message: message.into(),
     }
 }
-fn valid_namespace(namespace: &str) -> Result<(), Diagnostic> {
+pub(crate) fn valid_namespace(namespace: &str) -> Result<(), Diagnostic> {
     if namespace.is_empty()
         || namespace.split('.').any(|part| {
             part.is_empty()

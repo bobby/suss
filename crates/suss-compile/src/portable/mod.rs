@@ -4,6 +4,7 @@
 mod emit;
 pub mod hir;
 pub mod ir;
+pub mod modules;
 pub mod resolve;
 mod source;
 use std::ops::Range;

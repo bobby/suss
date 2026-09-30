@@ -3,7 +3,8 @@
 The portable compiler now lowers source `def` and a bounded `defonce` bootstrap
 through the same HIR/IR/shared-runtime pipeline as ordinary expressions. A leading
 `ns` directive configures a private environment snapshot. This is compiler and
-runtime groundwork, not a production session or recursive source loader. CLI,
+runtime groundwork, not a production session. Recursive source graphs now use
+[module preparation](portable-modules.md). CLI,
 AOT, source-replaying REPL and macro clients still require migration.
 
 ## Compilation and publication
@@ -65,8 +66,10 @@ its existing cells; API `enter_namespace` preserves scopes for future REPL re-en
 The original ns directive, including metadata, is retained separately from runtime
 values. Reader metadata is not claimed as runtime metadata.
 
-This does not locate/load dependency graphs, verify a file's declared namespace,
-handle cycles, privacy, reload/cache/initialization policy or permit multiple ns
+Fragment preparation does not locate dependencies. The separate
+[module preparation API](portable-modules.md) discovers graphs, validates declared
+namespaces and rejects cycles before returning staged artifacts. Neither API
+implements privacy, reload/cache policy or permits multiple ns
 changes inside one fragment. Source `:require-macros` is a located unsupported
 feature until isolated compiled macro imports exist. Require libspec :reload
 metadata is also explicitly rejected until source loading and initialization
@@ -103,8 +106,8 @@ hashes and retained notices. JVM/Node remain development-only. All 1,065 invento
 declarations remain unassessed and legacy differential results stay 9 passes /
 7 exact failures / 0 skips. M2/M3 acceptance is not complete.
 
-Next integrate recursive source namespace/module loading and persistent compiled
-clients, including deterministic dependency errors and initializer policy. Then
+Next integrate source module plans with persistent compiled clients and explicit
+runtime recovery, reload/cache and lifecycle policy. Then
 extend signatures/core coercions/collections and the remaining IR forms, compiled
 macros and target adapters. Retire the legacy backend only after replacement
 acceptance. Commands and actual review/CI evidence belong in the handoff and PR.

@@ -50,13 +50,13 @@ preserves existing issue bodies.
 - **M1-03 — Bounded CI and reproducible baseline** (completed). Lockfiles, shared engines, bounded fuel/traversal, two workers and a 25-minute CI budget are exercised by successful reviewed-head and merged-main full baselines. Ignored/manual tests remain explicit.
 
 The [acceptance audit](docs/roadmap/acceptance-m0-m1.md) maps every M0/M1 criterion
-to merged implementation, executing evidence and its scope. GitHub issues remain
-open until the reconciliation PR merges with explicit closing links; milestones
-remain open until their linked issues are closed and their exit gates rechecked.
+to merged implementation, executing evidence and its scope. Reconciliation PR #43
+merged with explicit closing links; GitHub issues #1–#7 and milestones M0/M1 are
+closed after their exit gates were rechecked. M2–M9 remain open.
 
 ### M2: Compiler and runtime foundation
 
-- **M2-01 — Reader forms, metadata and namespace phases** (in-progress). Portable reader forms retain byte spans, metadata, binary64/UTF-16 and source-ordered conditionals; 14 scalar observations match the pinned reader and execute through ABI intrinsics. Explicit phase namespace environments now resolve aliases/refers/exclusions and shared live cells; leading source ns directives and def/defonce now compile against supplied declarations; recursive source loading and compiled macro integration remain; see [reader forms](docs/runtime/reader-forms.md).
+- **M2-01 — Reader forms, metadata and namespace phases** (in-progress). Portable reader forms retain byte spans, metadata, binary64/UTF-16 and source-ordered conditionals; 14 scalar observations match the pinned reader and execute through ABI intrinsics. Explicit phase namespace environments now resolve aliases/refers/exclusions and shared live cells; leading source ns directives and def/defonce now compile against supplied declarations; immutable recursive source graphs now compile in require order with located dependency errors; production loading and compiled macro integration remain; see [reader forms](docs/runtime/reader-forms.md).
 - **M2-02 — Explicit evaluation-order IR** (in-progress). Replacement HIR/IR now emits validated shared-ABI fragments for scalars, lexical let/do/if and checked numeric calls. Thirteen executing tests cover source order, short circuiting, binding identity, dominance and parallel edge replacement. Ten additional namespace/cell tests cover ordered global reads, phase isolation, cell updates and source ambiguity. Twelve source-closure tests cover universal computed/local/global calls, captures, arity/type checks and cross-fragment function values. Twelve definition tests also cover ordered publication, failed initializers, namespace directives and explicit declaration-expression/reload restrictions. Collections, extended signatures, dispatch/recur/effects and production migration remain; see [portable pipeline](docs/runtime/portable-pipeline.md).
 - **M2-03 — Runtime ABI v1 and closures** (in-progress). New generated shared runtime executes boxed f64/UTF-16, universal closures/central arity, initialized binding cells and manifest/prelude gates in seven focused tests. Portable IR now emits typed live-cell reads and checked unbound/nil transitions; fixed source closures/general calls now use the universal ABI; source def/defonce now publish through live cells with bound nil/false and failed initializer guarantees; extended signatures and production/source-loading migration remain; see [ABI v1](docs/runtime/abi-v1.md).
 - **M2-04 — Nominal types, protocols and exceptions** (planned). Introduce descriptor identity and protocol/exception machinery on the stable ABI.
@@ -64,7 +64,7 @@ remain open until their linked issues are closed and their exit gates rechecked.
 ### M3: Persistent development environment
 
 - **M3-01 — Incremental compiled REPL** (planned). Replace source replay with one runtime and compiled input fragments.
-- **M3-02 — Namespace loading and redefinition** (planned). Implement live binding cells, namespace loading, defonce and reload semantics.
+- **M3-02 — Namespace loading and redefinition** (planned). Implement live binding cells, namespace loading, defonce and reload semantics. Source graph preparation and eleven executing module tests now establish compiler prerequisites; persistent production clients and reload/cache/privacy policy remain; see [module preparation](docs/runtime/portable-modules.md).
 - **M3-03 — Compiled macro bootstrap** (planned). Run macros in a separate compiled phase session and remove the temporary evaluator.
 - **M3-04 — Session lifecycle and interruption** (planned). Define reset, roots, code residency and cancellation while interactive I/O is pending.
 
