@@ -30,7 +30,7 @@ reader branches. The scanner's source declarations are the starting inventory;
 manual review must account for macro-generated public APIs.
 
 The M0 policy/schema gate remains complete. The review overlay now records
-seventeen in-progress declarations; 1,048 remain unassessed. Original runtime
+twenty-four in-progress declarations; 1,041 remain unassessed. Original runtime
 intrinsics do not establish upstream form ports. The first reproducible bootstrap
 source import selects `identity`, retaining its original form/notices and applying
 an explicit reviewed defn adaptation. Its generated directory packages the

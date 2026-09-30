@@ -2673,6 +2673,758 @@
         "tag": "f64",
         "bits": "0000000000000000"
       }
+    },
+    {
+      "id": "predicate-nil-nil",
+      "source": "(nil? nil)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-nil-false",
+      "source": "(nil? false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-nil-true",
+      "source": "(nil? true)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-nil-zero",
+      "source": "(nil? 0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-nil-negative-zero",
+      "source": "(nil? -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-nil-nan",
+      "source": "(nil? ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-nil-infinity",
+      "source": "(nil? ##Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-nil-empty",
+      "source": "(nil? \"\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-nil-utf16",
+      "source": "(nil? \"\\uD800\ud83d\ude00\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-nil-function",
+      "source": "(nil? (fn [] 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-nil-object",
+      "source": "(nil? (new ExceptionInfo \"m\" 7 nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-nil-undefined",
+      "source": "(nil? (ex-data (new ExceptionInfo \"m\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-false-nil",
+      "source": "(false? nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-false-false",
+      "source": "(false? false)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-false-true",
+      "source": "(false? true)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-false-zero",
+      "source": "(false? 0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-false-negative-zero",
+      "source": "(false? -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-false-nan",
+      "source": "(false? ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-false-infinity",
+      "source": "(false? ##Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-false-empty",
+      "source": "(false? \"\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-false-utf16",
+      "source": "(false? \"\\uD800\ud83d\ude00\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-false-function",
+      "source": "(false? (fn [] 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-false-object",
+      "source": "(false? (new ExceptionInfo \"m\" 7 nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-false-undefined",
+      "source": "(false? (ex-data (new ExceptionInfo \"m\")))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-true-nil",
+      "source": "(true? nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-true-false",
+      "source": "(true? false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-true-true",
+      "source": "(true? true)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-true-zero",
+      "source": "(true? 0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-true-negative-zero",
+      "source": "(true? -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-true-nan",
+      "source": "(true? ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-true-infinity",
+      "source": "(true? ##Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-true-empty",
+      "source": "(true? \"\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-true-utf16",
+      "source": "(true? \"\\uD800\ud83d\ude00\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-true-function",
+      "source": "(true? (fn [] 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-true-object",
+      "source": "(true? (new ExceptionInfo \"m\" 7 nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-true-undefined",
+      "source": "(true? (ex-data (new ExceptionInfo \"m\")))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-undefined-nil",
+      "source": "(undefined? nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-undefined-false",
+      "source": "(undefined? false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-undefined-true",
+      "source": "(undefined? true)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-undefined-zero",
+      "source": "(undefined? 0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-undefined-negative-zero",
+      "source": "(undefined? -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-undefined-nan",
+      "source": "(undefined? ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-undefined-infinity",
+      "source": "(undefined? ##Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-undefined-empty",
+      "source": "(undefined? \"\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-undefined-utf16",
+      "source": "(undefined? \"\\uD800\ud83d\ude00\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-undefined-function",
+      "source": "(undefined? (fn [] 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-undefined-object",
+      "source": "(undefined? (new ExceptionInfo \"m\" 7 nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-undefined-undefined",
+      "source": "(undefined? (ex-data (new ExceptionInfo \"m\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-number-nil",
+      "source": "(number? nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-number-false",
+      "source": "(number? false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-number-true",
+      "source": "(number? true)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-number-zero",
+      "source": "(number? 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-number-negative-zero",
+      "source": "(number? -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-number-nan",
+      "source": "(number? ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-number-infinity",
+      "source": "(number? ##Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-number-empty",
+      "source": "(number? \"\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-number-utf16",
+      "source": "(number? \"\\uD800\ud83d\ude00\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-number-function",
+      "source": "(number? (fn [] 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-number-object",
+      "source": "(number? (new ExceptionInfo \"m\" 7 nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-number-undefined",
+      "source": "(number? (ex-data (new ExceptionInfo \"m\")))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-string-nil",
+      "source": "(string? nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-string-false",
+      "source": "(string? false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-string-true",
+      "source": "(string? true)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-string-zero",
+      "source": "(string? 0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-string-negative-zero",
+      "source": "(string? -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-string-nan",
+      "source": "(string? ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-string-infinity",
+      "source": "(string? ##Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-string-empty",
+      "source": "(string? \"\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-string-utf16",
+      "source": "(string? \"\\uD800\ud83d\ude00\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-string-function",
+      "source": "(string? (fn [] 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-string-object",
+      "source": "(string? (new ExceptionInfo \"m\" 7 nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-string-undefined",
+      "source": "(string? (ex-data (new ExceptionInfo \"m\")))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-identical-numbers",
+      "source": "(identical? 7 7)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-identical-different-numbers",
+      "source": "(identical? 7 8)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-identical-signed-zero",
+      "source": "(identical? 0 -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-identical-nan",
+      "source": "(identical? ##NaN ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-identical-same-nan",
+      "source": "(let [n ##NaN] (identical? n n))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-identical-infinity",
+      "source": "(identical? ##Inf ##Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-identical-boolean-number",
+      "source": "(identical? 0 false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-identical-nil-false",
+      "source": "(identical? nil false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-identical-false",
+      "source": "(identical? false false)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-identical-strings",
+      "source": "(identical? \"same\" (+ \"sa\" \"me\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-identical-utf16",
+      "source": "(identical? \"\\uD800\ud83d\ude00\" (+ \"\\uD800\" \"\ud83d\ude00\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-identical-string-length",
+      "source": "(identical? \"ab\" \"a\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-identical-string-unit",
+      "source": "(identical? \"ab\" \"ac\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-identical-string-number",
+      "source": "(identical? \"7\" 7)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-identical-same-function",
+      "source": "(let [f (fn [] 7)] (identical? f f))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-identical-different-functions",
+      "source": "(identical? (fn [] 7) (fn [] 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-identical-same-object",
+      "source": "(let [o (new ExceptionInfo \"m\" 7 nil)] (identical? o o))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-identical-different-objects",
+      "source": "(identical? (new ExceptionInfo \"m\" 7 nil) (new ExceptionInfo \"m\" 7 nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-identical-nil-undefined",
+      "source": "(identical? nil (ex-data (new ExceptionInfo \"m\")))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "predicate-identical-first-class",
+      "source": "(let [f identical?] (f 7 7))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-identical-alias",
+      "source": "(cljs.core/identical? 7 7)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "predicate-identical-first-class-nil",
+      "source": "(let [f nil?] (f nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
     }
   ]
 }

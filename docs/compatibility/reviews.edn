@@ -1,7 +1,77 @@
-;; Human-reviewed overlay; these seventeen entries are partial, not compatibility completions.
+;; Human-reviewed overlay; these twenty-four entries are partial, not compatibility completions.
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:identical?:241"
+  {:source-sha256 "61d13ddf9984fe1b410bd00fe433388e0f7bcaae0c24d4b3a0e3e2d954af066e" :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:identical?:1022"]
+   :classification :adapted
+   :rationale "Original shared-GC primitive closures adapt pinned strict number/string/object identity and nil/boolean/type tests without JS. Universal invocation, canonical live runtime cells, once-only operands and exact primitive observations execute; complete compiled predicate macros/core import and other persistent type predicates remain unfinished. No upstream form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/scalar-predicates.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_scalar_predicates.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
+  "runtime:nil?:246"
+  {:source-sha256 "ce62c7f46e30e102bbd4ea2aae4c65b8a415d13e7444accfd1122859307370f3" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:coercive-=:935"]
+   :classification :adapted
+   :rationale "Original shared-GC primitive closures adapt pinned strict number/string/object identity and nil/boolean/type tests without JS. Universal invocation, canonical live runtime cells, once-only operands and exact primitive observations execute; complete compiled predicate macros/core import and other persistent type predicates remain unfinished. No upstream form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/scalar-predicates.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_scalar_predicates.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
+  "runtime:number?:258"
+  {:source-sha256 "84795e815f940e43a5edab631fb7b6316ce11e316a16430b4566f61dfe80616f" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:number?:1034"]
+   :classification :adapted
+   :rationale "Original shared-GC primitive closures adapt pinned strict number/string/object identity and nil/boolean/type tests without JS. Universal invocation, canonical live runtime cells, once-only operands and exact primitive observations execute; complete compiled predicate macros/core import and other persistent type predicates remain unfinished. No upstream form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/scalar-predicates.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_scalar_predicates.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
+  "runtime:string?:307"
+  {:source-sha256 "5fc7bac904f224cca6d1abe44797015518ccd2e22e566cb93f0fcf5275b9b11a" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:string?:994"]
+   :classification :adapted
+   :rationale "Original shared-GC primitive closures adapt pinned strict number/string/object identity and nil/boolean/type tests without JS. Universal invocation, canonical live runtime cells, once-only operands and exact primitive observations execute; complete compiled predicate macros/core import and other persistent type predicates remain unfinished. No upstream form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/scalar-predicates.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_scalar_predicates.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
+  "runtime:false?:2323"
+  {:source-sha256 "ee551fa676421b0807c211f5a2e00aeb3e220314b69a66428ed37549d387e32d" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:false?:991"]
+   :classification :adapted
+   :rationale "Original shared-GC primitive closures adapt pinned strict number/string/object identity and nil/boolean/type tests without JS. Universal invocation, canonical live runtime cells, once-only operands and exact primitive observations execute; complete compiled predicate macros/core import and other persistent type predicates remain unfinished. No upstream form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/scalar-predicates.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_scalar_predicates.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
+  "runtime:true?:2327"
+  {:source-sha256 "c8ac5ae529f71ba7d4a138cd0fec8dd8fce58df0b3cd7b605b6749e94aa778f4" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:true?:988"]
+   :classification :adapted
+   :rationale "Original shared-GC primitive closures adapt pinned strict number/string/object identity and nil/boolean/type tests without JS. Universal invocation, canonical live runtime cells, once-only operands and exact primitive observations execute; complete compiled predicate macros/core import and other persistent type predicates remain unfinished. No upstream form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/scalar-predicates.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_scalar_predicates.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
+  "runtime:undefined?:2335"
+  {:source-sha256 "1716245ff87e4f00a17c6b9cc1764f55ec022dc1cb372b71a0598ce1cd697cc1" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:undefined?:1017"]
+   :classification :adapted
+   :rationale "Original shared-GC primitive closures adapt pinned strict number/string/object identity and nil/boolean/type tests without JS. Universal invocation, canonical live runtime cells, once-only operands and exact primitive observations execute; complete compiled predicate macros/core import and other persistent type predicates remain unfinished. No upstream form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/scalar-predicates.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_scalar_predicates.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
   "runtime:identity:2691"
   {:source-sha256 "4997a405f43df040b92909ac831f031385fd1ac86948cb1be06dd3529323504e" :visibility :public
    :arities {:fixed [1] :variadic-min nil}

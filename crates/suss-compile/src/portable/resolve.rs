@@ -196,6 +196,13 @@ impl Environment {
                     .insert(global.clone(), Binding::Arithmetic { global, operator });
             }
             for (name, export) in [
+                ("nil?", "predicate-nil"),
+                ("false?", "predicate-false"),
+                ("true?", "predicate-true"),
+                ("undefined?", "predicate-undefined"),
+                ("number?", "predicate-number"),
+                ("string?", "predicate-string"),
+                ("identical?", "predicate-identical"),
                 ("ExceptionInfo", "core-exception-info-class"),
                 ("ex-info", "core-ex-info"),
                 ("ex-data", "core-ex-data"),
