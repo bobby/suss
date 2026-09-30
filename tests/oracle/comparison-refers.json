@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "lt-referred",
+      "source": "(< 1 2)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "lt-aliased",
+      "source": "(p/< 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4053400000000000"
+      }
+    },
+    {
+      "id": "le-referred",
+      "source": "(<= 1 2)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "le-aliased",
+      "source": "(p/<= 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4053800000000000"
+      }
+    },
+    {
+      "id": "gt-referred",
+      "source": "(> 1 2)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "gt-aliased",
+      "source": "(p/> 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4053c00000000000"
+      }
+    },
+    {
+      "id": "ge-referred",
+      "source": "(>= 1 2)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "ge-aliased",
+      "source": "(p/>= 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4054000000000000"
+      }
+    },
+    {
+      "id": "eq-referred",
+      "source": "(== 1 2)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "eq-aliased",
+      "source": "(p/== 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4054400000000000"
+      }
+    }
+  ]
+}

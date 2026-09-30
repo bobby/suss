@@ -13,6 +13,7 @@ mod native_protocols;
 mod nominal;
 mod numeric;
 mod predicates;
+mod comparisons;
 
 pub const VERSION: u32 = 1;
 // Internal constructor/ordinary-type-call undefined, distinct from source nil.
@@ -611,6 +612,7 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(dynamic::functions(&mut b, binding_set, try_invoke));
     arithmetic_functions.extend(exception_info::functions(&mut b));
     arithmetic_functions.extend(predicates::functions(&mut b));
+    arithmetic_functions.extend(comparisons::functions(&mut b));
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
     let mut tags = TagSection::new();

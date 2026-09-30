@@ -213,3 +213,18 @@ rounding, aliases, primitive arithmetic independence and current runtime cells.
 The current overlay is42 in-progress reviews/1023 unassessed. Full compiled
 macros, object coercion, privacy/metadata and automatic core loading remain open;
 no issue or milestone acceptance is claimed by this prerequisite port.
+
+
+Comparison primitives and bounded macro expansion add ten partial source reviews;
+the current overlay is52 in-progress/1013 unassessed. The separate123-case primary
+corpus covers scalar/UTF-16 order and macro/runtime operand effects. Five exact
+pinned captured-wrapper TypeErrors remain in an explicit divergence catalog,
+with accepted native old-capture behavior tested separately. These are not five
+additional matches or skipped successes. Object coercion, full IEquiv/core imports
+and compiled upstream macros remain unfinished; see [comparisons](../runtime/comparisons.md).
+The existing portable397 and source-import117 corpora remain separate.
+
+Ten additional pinned/native namespace probes preserve the difference between
+explicit user comparison refers (automatic core macros remain active) and provider
+aliases (user functions execute). These are separate from the123 shared cases
+and five retained-capture divergences; the earlier review inference was withdrawn.

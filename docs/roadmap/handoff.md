@@ -4387,3 +4387,181 @@ Review required full baseline52286 completed terminal0:
 reference graphs are terminal and released. No RUSTFLAGS override or unrelated
 file deletions. Push this independent regression/evidence commit and require exact
 final-head CI before readiness. Full M2–M9 goal remains active; do not merge.
+
+## Comparison preparation — 2026-09-30
+
+Root comparison worktree /private/tmp/suss-comparison-foundation, branch
+resurrection/portable-comparisons, based on independently reviewed inc/dec
+24c16ca9a6f0066ab21466dab559123383318125. Reviewer80 released all Cargo/reference
+graphs after native17, fresh117 and required full baseline passed. Its exact-head
+CI36765282719 remains running; no readiness claimed. PR79 reviewed head01785e4
+passed exact CI36762904497 with actual enabled-suite logs inspected at
+/private/tmp/suss-pr79-final-ci.log; body updated and marked ready without merge.
+
+Prepared119 shared source comparison cases plus four explicit capture divergences.
+Initial123-case graph89629 failed in the primary runner with a captured-core
+wrapper TypeError under fixed-arity runtime replacement (terminal1),
+/private/tmp/suss-comparison-primary-and-red.log. This reproduces the arithmetic
+boundary already documented in docs/runtime/arithmetic-values.md: accepted design
+section7 requires retained original captures, while pinned core generic wrappers
+read replacement var arity properties. It is not a new semantics decision.
+All four original probes remain in a separate strict catalog with exact pinned
+error name/message and separate expected accepted-native behavior; neither outcome
+is claimed equivalent, hidden, skipped or replaced by an unknown success.
+
+Fresh graph3385 verified119 exact primary observations and four captured TypeError
+classes, then native2 failed unresolved< (terminal101),
+/private/tmp/suss-comparison-primary-and-native-red.log. Fresh graph34513 additionally
+verified the exact four error name/messages, then native2 failed unresolved<
+(terminal101), /private/tmp/suss-comparison-documented-captures-and-red.log.
+Focused graph67189 compiled all three native regressions and failed as expected
+only on unresolved comparison names (terminal101),
+/private/tmp/suss-comparison-focused-red.log. Offline strict comparison verification
+also passes after exact pin/schema/capture-catalog guards. All local graphs terminal.
+
+Primary evidence establishes scalar/UTF-16 relational order, strict macro identity,
+unary operand erasure versus runtime evaluation, repeated middle macro operands,
+short-circuit chains, qualified/runtime replacement and lexical shadowing.
+No comparison implementation, copied form, declaration status or acceptance gate
+changed yet; see docs/runtime/comparisons.md. Next add original checked binary
+comparison runtime primitives, canonical first-class functions and verified HIR/IR
+with bounded macro expansion preserving these observations. Keep the four accepted
+old-capture divergences explicit. Then focused/fresh/full baseline, partial source
+reviews/provenance, PR with Refs #9/#11/#17, independent review/pushed significant
+fixes and exact final-head CI; no merge. Complete sequence/list, variadic rest/apply
+and all remaining M2–M9 acceptance remain the full active goal.
+
+## Comparison implementation and merged stack — 2026-09-30
+
+User merged PRs77–80; GitHub verifies all four MERGED with no closing issue
+references, appropriate for their partial acceptance work. Main055282f9a2be9d7f63e25cb9c91b9bebffb38eb0
+has exactly the independently reviewed PR80 tree24c16ca. Its final CI36765282719
+passed; actual enabled-suite logs are /private/tmp/suss-pr80-final-ci.log.
+Comparison preparation was rebased onto this main using explicit --onto24c16ca;
+an initial default rebase replayed squash-merged ancestors and was aborted.
+Own temporary autostashes were restored; unrelated user work was preserved.
+
+Original comparison helpers now implement UTF-16 string ordering, supported scalar
+numeric coercion and strict identity, with five canonical first-class functions.
+Checked HIR/IR binary operations and bounded macro expansion preserve unary operand
+erasure, repeated middle syntax and short-circuit evaluation. Macro expansion is
+limited to256 operands; a runtime300-argument call is verified separately.
+There are29 bootstrap cells, no new globals/layout/version or shipped dependency.
+Public numeric== is limited to the documented primitive domain; full -equiv hook
+and redefinition, object coercion, compiled source macros and source protocols are
+unfinished. No issue or milestone acceptance is claimed.
+
+Focused red67189 failed unresolved comparisons before implementation. First
+implementation focus84282 passed. Guarded80892 exposed an invalid new namespace
+fixture combining explicit refer and own declaration; corrected the fixture and
+kept the established ambiguity rejection. Guarded9363 passed native5/compiler1,
+session33/pipeline17/ABI18. Bounded focus11296 passed native6/compiler2.
+Logs: /private/tmp/suss-comparison-focused-red.log,
+/private/tmp/suss-comparison-first-focus.log,
+/private/tmp/suss-comparison-guarded-focus-final.log,
+/private/tmp/suss-comparison-bounded-focus.log. All graphs terminal.
+
+Fresh pinned graph47440 passed119 unchanged shared observations, five explicit
+capture-wrapper divergences and native6 (terminal0),
+/private/tmp/suss-comparison-five-captures-final.log. Numeric== adds the fifth
+exact reference TypeError/native retained-capture observation; the other four
+and119 shared expectations remain unchanged. These are119 matches plus five
+documented differences, never124 equivalences. Strict comparison parser tests
+reject Boolean schema values, malformed tags, dropped/diverted observations,
+duplicate cases and changed error text. Python70 passed.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-comparison-oracle.sh`.
+
+Required full baseline37118 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-comparison-baseline.log. Existing manual legacy ignores and
+diagnostic differential outcomes are unchanged. Final provenance27995 passed
+Python70/inventory1065/reviews52+1013/exact ten core artifacts/WIT15files6packages,
+numeric locks and offline preview10milestones39issues. No RUSTFLAGS override,
+unrelated deletion or acceptance change. All Cargo/reference graphs released.
+
+Next publish comparison foundation with Refs #9/#11/#17, dispatch independent
+review, push significant fixes and require exact final-head CI before readiness.
+Do not merge. Then continue source sequence/list, variadic rest/apply and remaining
+M2–M9 acceptance, including the deferred public -equiv integration.
+
+## Independent PR #82 review — 2026-09-30
+
+Reviewed candidate2314fcc against pinned comparison runtime/macro forms and
+accepted scalar/UTF-16/evaluation-order/retained-capture contracts in isolated
+/private/tmp/suss-review-pr82. Significant finding: an explicit :refer of a user
+<, <=, >, >= or == incorrectly selected the automatic core comparison macro,
+returning a Boolean instead of invoking the referred function. An actual source
+module regression failed before the fix (/private/tmp/suss-pr82-review-refers-red.log,
+terminal101); bootstrap lookup now respects those explicit user refers. The fixed
+regression covers all five names, qualified aliases, forced GC and explicit core
+qualification. The initial fixture attempted to require an unsourced namespace;
+corrected it to a real source file before reproducing the semantic failure.
+
+Added four independent thrown-operand/finally/short-circuit observations to the
+primary/native corpus; original119 observations and all five explicit captured
+wrapper divergences are unchanged. Fresh pinned graph65259 completed terminal0:
+123 exact observations plus five separately reproduced TypeErrors and native7,
+/private/tmp/suss-pr82-review-oracle-final.log. Focus graph3095 passed native7 and
+compiler2, /private/tmp/suss-pr82-review-refers-fixed.log. Commands:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-cli --test portable_comparisons -p suss-compile --test portable_comparisons --locked -- --test-threads=2`
+and `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-comparison-oracle.sh`.
+Python/provenance72269 completed terminal0:70 tests/inventory1065/reviews52+1013,
+exact ten source artifacts/WIT locks/numeric manifest/offline preview,
+/private/tmp/suss-pr82-review-provenance.log. Public -equiv hooks, arbitrary object
+coercion and source macro/core integration remain explicitly unfinished. No issue
+or milestone acceptance is inferred. GitHub issues #9 and #10 are already closed;
+remaining implementation gaps are separate from those user-controlled live states.
+
+Required full workspace baseline result is recorded below after completion. Next
+push this review fix/evidence, require exact final-head CI before readiness, then
+continue source sequence/list, variadic rest/apply and remaining M2–M9 acceptance.
+Do not merge.
+
+Review full baseline89349 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-pr82-review-baseline.log. All Cargo/reference graphs are terminal
+and released. Existing manual ignores/differential9pass7fail remain explicit;
+no RUSTFLAGS override, unrelated file deletion or acceptance change. The original
+119 case dictionaries and five-divergence catalog were independently checked
+unchanged. Push the review commit and require final-head CI before readiness.
+
+## PR #82 follow-up pinned namespace audit — 2026-09-30
+
+The earlier independent review's explicit-ref shadowing claim and fix are
+WITHDRAWN: they inferred behavior from own declarations without executing the
+corresponding pinned namespace source. Root's implements? oracle exposed that
+assumption. Fresh original provider/referrer comparison sources compiled and
+executed at the pinned ClojureScript commit (graph80524 terminal0) returned
+[true,77,true,78,false,79,false,80,false,81]: unqualified explicit user refers
+still select automatic comparison macros; alias-qualified calls invoke user
+functions. /private/tmp/suss-pr82-referral-audit.log records actual output and
+expected redefinition warnings. Initial55241 failed namespace lookup because the
+temporary fixture was written under a wrong relative output path; corrected the
+fixture before the authoritative compilation.
+
+A shared ten-case tagged referral corpus and original development-only provider
+now reproduce that distinction through actual pinned artifacts and independently
+decoded native execution. The strict oracle includes a mandatory referrals field;
+dropped or replaced observations fail. Regression84012 failed against reviewed
+head634c368 (terminal101), /private/tmp/suss-pr82-pinned-refers-red.log. Removed
+the incorrect lookup guard and replaced the inferred regression with the certified
+one. Focus88641 passed native7/compiler2 (terminal0),
+/private/tmp/suss-pr82-pinned-refers-fixed.log. Original123 shared cases and five
+explicit captured-wrapper divergences are preserved. This corrects a review-introduced
+regression; it is not a new semantics decision or an acceptance claim.
+
+Follow-up fresh70911 completed terminal0:123 unchanged shared observations,
+five unchanged explicit divergences and ten certified referred/aliased values,
+native7, /private/tmp/suss-pr82-referral-oracle-final.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-comparison-oracle.sh`.
+Python/provenance61921 completed terminal0:71 tests/inventory1065/reviews52+1013,
+exact ten artifacts/WIT/numeric/offline preview,
+/private/tmp/suss-pr82-referral-provenance.log.
+Required full follow-up baseline53868 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-pr82-referral-baseline.log. All Cargo/JVM/Node graphs terminal
+and released. No RUSTFLAGS override, hidden failures or unrelated deletions.
+Public -equiv, arbitrary object coercion and complete source macro/core integration
+remain pending. Push this correction and require its exact-head CI before readiness;
+next source sequence/list, variadic rest/apply and remaining M2–M9 acceptance.
+No merge or issue/milestone acceptance is claimed.

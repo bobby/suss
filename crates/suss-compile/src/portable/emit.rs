@@ -1,8 +1,8 @@
 //! Emit only verified IR. Operands are local value IDs, never source expressions.
 use super::{
-    Diagnostic,
     hir::{Arithmetic, Literal, Nominal, Type},
     ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, Operation, Terminator},
+    Diagnostic,
 };
 use crate::runtime_abi;
 use std::{borrow::Cow, collections::BTreeSet};
@@ -90,6 +90,9 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Call { .. } => {
                         names.insert("invoke");
                     }
+                    Operation::Comparison { operation, .. } => {
+                        names.insert(operation.export());
+                    }
                     Operation::Array { operation, .. } => {
                         names.insert(operation.export());
                     }
@@ -174,6 +177,11 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "object-instance" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
             }
+            "comparison-less"
+            | "comparison-less-equal"
+            | "comparison-greater"
+            | "comparison-greater-equal"
+            | "comparison-strict-equal" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-field-set" => (vec![VALUE, ValType::I32, VALUE], vec![]),
             "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "protocol-marker-set" => (vec![VALUE, VALUE], vec![VALUE]),
@@ -627,6 +635,17 @@ fn emit_function(
                         .instruction(&I32Const(2))
                         .instruction(&I32Add)
                         .instruction(&RefI31)
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
+                Operation::Comparison {
+                    operation,
+                    arguments,
+                } => {
+                    for argument in arguments {
+                        function.instruction(&LocalGet(argument.0 as u32 + offset));
+                    }
+                    function
+                        .instruction(&Call(index(operation.export())))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Array {

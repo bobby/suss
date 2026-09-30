@@ -1,7 +1,7 @@
 //! Phase-specific namespace identities. No runtime values or source replay live here.
 use super::{
     Diagnostic,
-    hir::{Arithmetic, ArrayOperation},
+    hir::{Arithmetic, ArrayOperation, Comparison},
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -58,6 +58,10 @@ pub(crate) struct ProtocolMethod {
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Binding {
+    BootstrapComparison {
+        global: Global,
+        operation: Comparison,
+    },
     BootstrapArray {
         global: Global,
         operation: ArrayOperation,
@@ -85,7 +89,8 @@ pub enum Binding {
 impl Binding {
     pub fn global(&self) -> &Global {
         match self {
-            Self::BootstrapArray { global: g, .. }
+            Self::BootstrapComparison { global: g, .. }
+            | Self::BootstrapArray { global: g, .. }
             | Self::Core { global: g, .. }
             | Self::Cell(g)
             | Self::InternalCell(g)
@@ -207,6 +212,11 @@ impl Environment {
                     .insert(global.clone(), Binding::Arithmetic { global, operator });
             }
             for (name, export) in [
+                ("<", "comparison-less-function"),
+                ("<=", "comparison-less-equal-function"),
+                (">", "comparison-greater-function"),
+                (">=", "comparison-greater-equal-function"),
+                ("==", "comparison-strict-equal-function"),
                 ("array", "array-function"),
                 ("array?", "array-predicate-function"),
                 ("make-array", "array-make-function"),
@@ -486,7 +496,7 @@ impl Environment {
     }
     /// The bounded bootstrap macro lookup is separate from ordinary var lookup:
     /// lexical locals (handled by HIR) hide macros. User runtime definitions also
-    /// hide auto-referred array macros, as observed in the pinned compiler.
+    /// hide auto-referred array/comparison macros, as observed in the pinned compiler.
     /// General compiled macro imports/expansion remain a later integration.
     pub fn resolve_bootstrap_macro(&self, phase: Phase, symbol: &Symbol) -> Option<Binding> {
         let scope = self.scope(phase);
@@ -514,6 +524,11 @@ impl Environment {
                         | "alength"
                         | "aget"
                         | "aset"
+                        | "<"
+                        | "<="
+                        | ">"
+                        | ">="
+                        | "=="
                 ))
             .then_some(symbol.name.as_str())
         } else if let Some(global) = scope.refers.get(&symbol.name) {
@@ -536,6 +551,11 @@ impl Environment {
                         | "alength"
                         | "aget"
                         | "aset"
+                        | "<"
+                        | "<="
+                        | ">"
+                        | ">="
+                        | "=="
                 )
             {
                 Some(global.name.as_str())
@@ -558,6 +578,11 @@ impl Environment {
                         | "alength"
                         | "aget"
                         | "aset"
+                        | "<"
+                        | "<="
+                        | ">"
+                        | ">="
+                        | "=="
                 ) && !scope.excluded_core.contains(&symbol.name))
                 .then_some(symbol.name.as_str())
             }
@@ -580,14 +605,31 @@ impl Environment {
                     | "alength"
                     | "aget"
                     | "aset"
+                    | "<"
+                    | "<="
+                    | ">"
+                    | ">="
+                    | "=="
             ) && !scope.excluded_core.contains(&symbol.name))
             .then_some(symbol.name.as_str())
         }?;
-        // A new runtime definition hides the auto-referred array macro;
+        // A new runtime definition hides the auto-referred array/comparison macro;
         // explicit core qualification remains independent of that user var.
         if symbol.namespace.is_none()
             && scope.namespace != "suss.core"
-            && matches!(name, "array" | "make-array" | "alength" | "aget" | "aset")
+            && matches!(
+                name,
+                "array"
+                    | "make-array"
+                    | "alength"
+                    | "aget"
+                    | "aset"
+                    | "<"
+                    | "<="
+                    | ">"
+                    | ">="
+                    | "=="
+            )
             && self.bindings.contains_key(&Global {
                 phase,
                 namespace: scope.namespace.clone(),
@@ -603,6 +645,15 @@ impl Environment {
         };
         Some(
             if let Some(operation) = match name {
+                "<" => Some(Comparison::Less),
+                "<=" => Some(Comparison::LessEqual),
+                ">" => Some(Comparison::Greater),
+                ">=" => Some(Comparison::GreaterEqual),
+                "==" => Some(Comparison::StrictEqual),
+                _ => None,
+            } {
+                Binding::BootstrapComparison { global, operation }
+            } else if let Some(operation) = match name {
                 "array" => Some(ArrayOperation::Literal),
                 "make-array" => Some(ArrayOperation::Make),
                 "alength" => Some(ArrayOperation::Length),
