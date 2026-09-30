@@ -4,9 +4,13 @@
 use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
+mod nominal;
 mod numeric;
 
 pub const VERSION: u32 = 1;
+// Internal constructor/ordinary-type-call undefined, distinct from source nil.
+pub(crate) const UNDEFINED: i32 = 6;
+const PORTABLE_FORMAT_VERSION: u32 = 2;
 const MANIFEST: &str = "suss.runtime-abi";
 const NUMBER: u32 = 0;
 const STRING: u32 = 1;
@@ -107,7 +111,7 @@ impl Default for Manifest {
     fn default() -> Self {
         Self {
             runtime_abi: VERSION,
-            compiler: env!("CARGO_PKG_VERSION").into(),
+            compiler: format!("{}+portable.{PORTABLE_FORMAT_VERSION}", env!("CARGO_PKG_VERSION")),
             wasm_tools: "0.258.0".into(),
         }
     }
@@ -520,7 +524,7 @@ fn build_module() -> Vec<u8> {
         Throw(0),
     ]);
     b.function("arity-error", &[], &[VALUE], &arity_error);
-    b.function("invoke", &[VALUE, VALUE], &[VALUE], &invoke);
+    let generic_invoke = b.function("invoke", &[VALUE, VALUE], &[VALUE], &invoke);
     b.function(
         "binding-new",
         &[VALUE],
@@ -608,7 +612,8 @@ fn build_module() -> Vec<u8> {
         ],
     );
     let primitives = numeric::intrinsics(&mut b, numeric_info);
-    let arithmetic_functions = arithmetic::functions(&mut b, primitives);
+    let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
+    arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
     let mut tags = TagSection::new();
@@ -645,6 +650,37 @@ fn build_module() -> Vec<u8> {
             shared: false,
         },
         &ConstExpr::i32_const(numeric_info.stack_top),
+    );
+    // Append after the pinned numeric stack global; never relocate its index.
+    globals.global(
+        GlobalType {
+            val_type: ValType::I64,
+            mutable: true,
+            shared: false,
+        },
+        &ConstExpr::i64_const(i64::from(numeric::ERROR_GLOBALS) + 2),
+    );
+    globals.global(
+        GlobalType {
+            val_type: reference(DESCRIPTOR),
+            mutable: false,
+            shared: false,
+        },
+        &ConstExpr::extended([
+            I64Const(i64::from(numeric::ERROR_GLOBALS) + 1),
+            I32Const(0),
+            RefI31,
+            I32Const(0),
+            RefI31,
+            I32Const(0),
+            RefI31,
+            StructNew(DESCRIPTOR),
+        ]),
+    );
+    // A rooted opaque protocol marker, distinct from booleans and callables.
+    globals.global(
+        GlobalType { val_type: reference(DESCRIPTOR), mutable: false, shared: false },
+        &ConstExpr::extended([I64Const(0), I32Const(0), RefI31, I32Const(0), RefI31, I32Const(0), RefI31, StructNew(DESCRIPTOR)]),
     );
     b.exports
         .export("numeric-scratch-memory", ExportKind::Memory, 0);

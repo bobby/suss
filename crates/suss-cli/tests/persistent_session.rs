@@ -833,3 +833,390 @@ fn multiple_fixed_arity_gaps_throw_before_body_effects_after_ordered_arguments()
         6.0f64.to_bits()
     );
 }
+#[test]
+fn nominal_same_layout_types_keep_distinct_identity_through_aliases_and_gc() {
+    let mut session = Session::new().unwrap();
+    session.eval("(deftype NominalA [value]) (deftype NominalB [value]) (def a (NominalA. 7)) (def b (NominalB. 7))").unwrap();
+    session.collect().unwrap();
+    for (source, expected) in [
+        ("(instance? NominalA a)", 4),
+        ("(instance? NominalA b)", 2),
+        ("(instance? NominalB b)", 4),
+        ("(instance? NominalB a)", 2),
+        ("(instance? NominalA nil)", 2),
+        ("(let [klass NominalA] (instance? klass a))", 4),
+    ] {
+        let value = session.eval(source).unwrap();
+        let actual = session
+            .inspect(&value, |store, value| {
+                Ok(value
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_i31(&store)?
+                    .unwrap()
+                    .get_u32())
+            })
+            .unwrap();
+        assert_eq!(actual, expected, "{source}");
+    }
+}
+
+#[test]
+fn nominal_protocol_extensions_update_existing_objects_across_fragments() {
+    let mut session = Session::new().unwrap();
+    session.eval("(defprotocol NominalReader (read-value [this])) (deftype NominalRead [value] NominalReader (read-value [this] value)) (deftype NominalLater [value]) (def early (NominalRead. 7)) (def later (NominalLater. 9))").unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(read-value early)"),
+        7.0f64.to_bits()
+    );
+    let before = session.eval("(satisfies? NominalReader later)").unwrap();
+    let before = session
+        .inspect(&before, |store, value| {
+            Ok(value
+                .unwrap_anyref()
+                .unwrap()
+                .as_i31(&store)?
+                .unwrap()
+                .get_u32())
+        })
+        .unwrap();
+    assert_eq!(before, 2);
+    session
+        .eval("(extend-type NominalLater NominalReader (read-value [this] 42))")
+        .unwrap();
+    session.collect().unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(read-value later)"),
+        42.0f64.to_bits()
+    );
+    assert_eq!(
+        eval_number(&mut session, "(read-value early)"),
+        7.0f64.to_bits()
+    );
+    let after = session.eval("(satisfies? NominalReader later)").unwrap();
+    let after = session
+        .inspect(&after, |store, value| {
+            Ok(value
+                .unwrap_anyref()
+                .unwrap()
+                .as_i31(&store)?
+                .unwrap()
+                .get_u32())
+        })
+        .unwrap();
+    assert_eq!(after, 4);
+}
+
+fn nominal_bool(session: &mut Session, source: &str) -> u32 {
+    let value = session.eval(source).unwrap();
+    session
+        .inspect(&value, |store, value| {
+            Ok(value
+                .unwrap_anyref()
+                .unwrap()
+                .as_i31(&store)?
+                .unwrap()
+                .get_u32())
+        })
+        .unwrap()
+}
+
+#[test]
+fn nominal_constructor_aliases_arrows_redefinitions_and_missing_fields_follow_the_pin() {
+    let mut session = Session::new().unwrap();
+    session.eval("(defprotocol FieldReader (read-field [this])) (deftype Changing [value] FieldReader (read-field [this] value)) (def old-type Changing) (def old-arrow ->Changing) (def old-object (->Changing 7))").unwrap();
+    let old_constructor = session.eval("Changing").unwrap();
+    let ordinary = session.invoke(&old_constructor, &[]).unwrap();
+    session
+        .inspect(&ordinary, |store, value| {
+            assert_eq!(
+                value
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_i31(&store)?
+                    .unwrap()
+                    .get_u32(),
+                6
+            );
+            Ok(())
+        })
+        .unwrap();
+    session.eval("(deftype Changing [value])").unwrap();
+    session.collect().unwrap();
+    assert_eq!(
+        nominal_bool(&mut session, "(instance? Changing old-object)"),
+        2
+    );
+    assert_eq!(
+        nominal_bool(&mut session, "(instance? old-type old-object)"),
+        4
+    );
+    assert_eq!(
+        nominal_bool(&mut session, "(instance? old-type (old-arrow 11))"),
+        2
+    );
+    assert_eq!(
+        nominal_bool(&mut session, "(instance? Changing (->Changing 12))"),
+        4
+    );
+    assert_eq!(
+        eval_number(&mut session, "(read-field (new old-type 11 12))"),
+        11.0f64.to_bits()
+    );
+    assert_eq!(
+        eval_number(
+            &mut session,
+            "(read-field (let [klass old-type] (new klass 13)))"
+        ),
+        13.0f64.to_bits()
+    );
+    let missing = session.eval("(read-field (new old-type))").unwrap();
+    session
+        .inspect(&missing, |store, value| {
+            assert_eq!(
+                value
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_i31(&store)?
+                    .unwrap()
+                    .get_u32(),
+                6
+            );
+            Ok(())
+        })
+        .unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(if (deftype ExpressionType []) 7 9)"),
+        7.0f64.to_bits()
+    );
+}
+
+#[test]
+fn nominal_protocol_membership_and_method_keys_survive_redeclaration() {
+    let mut session = Session::new().unwrap();
+    session.eval("(defprotocol Redeclared (read-redeclared [this])) (deftype InitialRead [value] Redeclared (read-redeclared [this] value)) (def old-object (InitialRead. 7)) (def old-protocol Redeclared) (def old-method read-redeclared)").unwrap();
+    session
+        .eval("(defprotocol Redeclared (read-redeclared [this]))")
+        .unwrap();
+    session.collect().unwrap();
+    assert_eq!(
+        nominal_bool(&mut session, "(satisfies? Redeclared old-object)"),
+        4
+    );
+    // The pin's macro follows the resolved syntactic protocol name, not the value alias.
+    assert_eq!(
+        nominal_bool(&mut session, "(satisfies? old-protocol old-object)"),
+        2
+    );
+    assert_eq!(
+        eval_number(&mut session, "(read-redeclared old-object)"),
+        7.0f64.to_bits()
+    );
+    assert_eq!(
+        eval_number(&mut session, "(old-method old-object)"),
+        7.0f64.to_bits()
+    );
+    session
+        .eval("(extend-type InitialRead Redeclared (read-redeclared [this] 42))")
+        .unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(read-redeclared old-object)"),
+        42.0f64.to_bits()
+    );
+    assert_eq!(
+        eval_number(&mut session, "(old-method old-object)"),
+        42.0f64.to_bits()
+    );
+    // Membership uses the canonical marker before consulting the protocol value.
+    session.eval("(def Redeclared nil)").unwrap();
+    assert_eq!(
+        nominal_bool(&mut session, "(satisfies? Redeclared old-object)"),
+        4
+    );
+    assert!(matches!(
+        session.eval("(satisfies? Redeclared 7)"),
+        Err(SessionError::Language(_))
+    ));
+    assert_eq!(eval_number(&mut session, "(+ 20 22)"), 42.0f64.to_bits());
+}
+
+#[test]
+fn nominal_protocol_multiple_signatures_empty_partial_membership_and_field_captures() {
+    let mut session = Session::new().unwrap();
+    session.eval("(defprotocol Compute (compute [this] [this x])) (defprotocol EmptyProtocol) (defprotocol PartialProtocol (one-method [this]) (missing-method [this])) (deftype Computed [value] Compute (compute [this] value) (compute [this x] (+ value x)) EmptyProtocol PartialProtocol (one-method [this] (fn [] value))) (def computed (Computed. 7))").unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(compute computed)"),
+        7.0f64.to_bits()
+    );
+    assert_eq!(
+        eval_number(&mut session, "(compute computed 11)"),
+        18.0f64.to_bits()
+    );
+    assert_eq!(
+        nominal_bool(&mut session, "(satisfies? EmptyProtocol computed)"),
+        4
+    );
+    assert_eq!(
+        nominal_bool(&mut session, "(satisfies? PartialProtocol computed)"),
+        4
+    );
+    let saved = session.eval("(one-method computed)").unwrap();
+    session.eval("(deftype Computed [value])").unwrap();
+    session.collect().unwrap();
+    let result = session.invoke(&saved, &[]).unwrap();
+    assert_eq!(number(&mut session, &result), 7.0f64.to_bits());
+    assert!(matches!(
+        session.eval("(missing-method computed)"),
+        Err(SessionError::Language(_))
+    ));
+    assert_eq!(
+        eval_number(&mut session, "(if (defprotocol ExpressionProtocol) 7 9)"),
+        9.0f64.to_bits()
+    );
+    assert_eq!(
+        eval_number(
+            &mut session,
+            "(if (extend-type Computed ExpressionProtocol) 7 9)"
+        ),
+        7.0f64.to_bits()
+    );
+}
+
+#[test]
+fn nominal_method_receiver_fields_and_callable_fields_preserve_recur_and_evaluation_order() {
+    let mut session = Session::new().unwrap();
+    session.eval("(def counter 0) (defprotocol RecurProtocol (step [this again]) (call-field [this x])) (deftype RecurType [a unused f] RecurProtocol (step [this again] (if again (recur (do (def counter (+ counter 1)) nil) false) (do (def counter (+ counter 10)) (+ a (if (instance? RecurType this) 100 200))))) (call-field [this x] (f x))) (def recur-object (RecurType. 1 2 (fn [x] (+ x 7))))").unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(step recur-object true)"),
+        101.0f64.to_bits()
+    );
+    assert_eq!(eval_number(&mut session, "counter"), 11.0f64.to_bits());
+    assert_eq!(
+        eval_number(&mut session, "(call-field recur-object 11)"),
+        18.0f64.to_bits()
+    );
+    session.collect().unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(step recur-object false)"),
+        101.0f64.to_bits()
+    );
+}
+
+#[test]
+fn nominal_unknown_types_preserve_order_and_failed_analysis_does_not_publish_bindings() {
+    let mut session = Session::new().unwrap();
+    session
+        .eval("(def counter 0) (def next (fn [] (def counter (+ counter 1))))")
+        .unwrap();
+    let before = session.stats().binding_cells;
+    for source in [
+        "(deftype Leaked []) (defprotocol BadProtocol (bad []))",
+        "(deftype Leaked [value value])",
+        "(deftype Leaked [^:mutable value])",
+        "(defprotocol BadProtocol (bad [this] [other]))",
+        "(defprotocol BadProtocol (bad [this])) (deftype Leaked [] BadProtocol (other [this] 7))",
+        "(defprotocol BadProtocol (bad [this])) (deftype Leaked [] BadProtocol (bad [this x] x))",
+        "(defprotocol BadProtocol (bad [this] [this x])) (deftype Leaked [] BadProtocol (bad ([this] 7) ([this x] x)))",
+        "(new UnknownType 7)",
+    ] {
+        let error = session.eval(source).unwrap_err();
+        let SessionError::Compile(diagnostic) = error else {
+            panic!("expected located compile rejection for {source}")
+        };
+        assert!(
+            diagnostic.span.start < diagnostic.span.end && diagnostic.span.end <= source.len(),
+            "{source}: {diagnostic:?}"
+        );
+        assert_eq!(session.stats().binding_cells, before, "{source}");
+    }
+    assert!(matches!(
+        session.eval("Leaked"),
+        Err(SessionError::Compile(_))
+    ));
+    assert!(matches!(
+        session.eval("->Leaked"),
+        Err(SessionError::Compile(_))
+    ));
+    assert!(matches!(
+        session.eval("BadProtocol"),
+        Err(SessionError::Compile(_))
+    ));
+    assert!(matches!(
+        session.eval("(new (do (next) 7) (next) (next))"),
+        Err(SessionError::Language(_))
+    ));
+    assert_eq!(eval_number(&mut session, "counter"), 3.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(+ 20 22)"), 42.0f64.to_bits());
+}
+
+#[test]
+fn nominal_empty_extensions_return_the_shared_non_boolean_protocol_marker() {
+    let mut session = Session::new().unwrap();
+    session
+        .eval("(defprotocol MarkerProtocol) (deftype MarkerA []) (deftype MarkerB [])")
+        .unwrap();
+    let a = session
+        .eval("(extend-type MarkerA MarkerProtocol)")
+        .unwrap();
+    let b = session
+        .eval("(extend-type MarkerB MarkerProtocol)")
+        .unwrap();
+    session.collect().unwrap();
+    session
+        .inspect(&a, |mut store, value| {
+            let reference = value.unwrap_anyref().unwrap();
+            assert!(reference.as_i31(&store)?.is_none());
+            let descriptor = reference.as_struct(&store)?.unwrap();
+            assert_eq!(descriptor.field(&mut store, 0)?.unwrap_i64(), 0);
+            Ok(())
+        })
+        .unwrap();
+    let a_reference = session
+        .inspect(&a, |store, value| {
+            Ok(value.unwrap_anyref().unwrap().to_owned_rooted(store)?)
+        })
+        .unwrap();
+    assert!(session
+        .inspect(&b, |store, value| wasmtime::Rooted::ref_eq(
+            &store,
+            &a_reference,
+            value.unwrap_anyref().unwrap()
+        ))
+        .unwrap());
+}
+
+#[test]
+fn nominal_undefined_constructor_results_preserve_truthiness_numeric_and_string_coercion() {
+    let mut session = Session::new().unwrap();
+    session.eval("(defprotocol UndefinedReader (undefined-field [this])) (deftype UndefinedType [value] UndefinedReader (undefined-field [this] value))").unwrap();
+    for source in [
+        "(+ (undefined-field (UndefinedType.)) 1)",
+        "(+ (UndefinedType 7) 1)",
+    ] {
+        // Both values decode nil-like but retain undefined numeric behavior.
+        assert!(
+            f64::from_bits(eval_number(&mut session, &source)).is_nan(),
+            "{source}"
+        );
+    }
+    assert_eq!(
+        eval_number(&mut session, "(if (undefined-field (UndefinedType.)) 7 9)"),
+        9.0f64.to_bits()
+    );
+    let text = session
+        .eval(r#"(+ (undefined-field (UndefinedType.)) "x")"#)
+        .unwrap();
+    let units = session
+        .inspect(&text, |mut store, value| {
+            Ok(value
+                .unwrap_anyref()
+                .unwrap()
+                .as_array(&store)?
+                .unwrap()
+                .elems(&mut store)?
+                .map(|unit| unit.unwrap_i32() as u16)
+                .collect::<Vec<_>>())
+        })
+        .unwrap();
+    assert_eq!(String::from_utf16(&units).unwrap(), "undefinedx");
+}

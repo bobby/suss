@@ -445,6 +445,10 @@ fn runtime_abi_manifest_gate_precedes_initializer_effects() {
             ..expected.clone()
         },
         runtime_abi::Manifest {
+            compiler: env!("CARGO_PKG_VERSION").into(), // pre-undefined portable format
+            ..expected.clone()
+        },
+        runtime_abi::Manifest {
             compiler: "different".into(),
             ..expected.clone()
         },
@@ -999,4 +1003,688 @@ fn runtime_abi_arithmetic_function_values_check_arity_and_fold_in_order() {
             .unwrap();
         assert_eq!(descriptor.field(&mut store, 0).unwrap().unwrap_i64(), 1);
     }
+}
+
+// Real independently emitted callers; all nominal values use the shared prelude.
+fn nominal_fragment() -> Vec<u8> {
+    use wasm_encoder::*;
+    let value = ValType::Ref(RefType::EQREF);
+    let signatures = [
+        ("descriptor-new", vec![value], vec![value]),
+        ("constructor-new", vec![value], vec![value]),
+        ("constructor-descriptor", vec![value], vec![value]),
+        ("protocol-dispatcher-new", vec![value], vec![value]),
+        ("object-new", vec![value, value], vec![value]),
+        ("object-instance", vec![value, value], vec![ValType::I32]),
+        ("object-descriptor", vec![value], vec![value]),
+        ("object-field-get", vec![value, ValType::I32], vec![value]),
+        ("object-field-set", vec![value, ValType::I32, value], vec![]),
+        ("protocol-method-get", vec![value, value], vec![value]),
+        ("protocol-method-set", vec![value, value, value], vec![]),
+    ];
+    let mut types = runtime_abi::prelude();
+    let mut imports = ImportSection::new();
+    let mut functions = FunctionSection::new();
+    let mut exports = ExportSection::new();
+    let mut code = CodeSection::new();
+    for (i, (name, params, results)) in signatures.iter().enumerate() {
+        let index = i as u32;
+        types
+            .ty()
+            .function(params.iter().copied(), results.iter().copied());
+        imports.import("rt", name, EntityType::Function(10 + index));
+        functions.function(10 + index);
+        exports.export(name, ExportKind::Func, signatures.len() as u32 + index);
+        let mut function = Function::new([]);
+        for argument in 0..params.len() {
+            function.instruction(&Instruction::LocalGet(argument as u32));
+        }
+        function
+            .instruction(&Instruction::Call(index))
+            .instruction(&Instruction::End);
+        code.function(&function);
+    }
+    // Deliberately malformed descriptors remain valid Wasm with the exact prelude.
+    // They probe guards and prove numeric identity alone cannot forge a type.
+    types.ty().function([value, value], [value]);
+    functions.function(10 + signatures.len() as u32);
+    exports.export(
+        "forge-descriptor",
+        ExportKind::Func,
+        2 * signatures.len() as u32,
+    );
+    let mut forge = Function::new([]);
+    forge
+        .instruction(&Instruction::I64Const(8))
+        .instruction(&Instruction::LocalGet(0))
+        .instruction(&Instruction::LocalGet(1))
+        .instruction(&Instruction::I32Const(0))
+        .instruction(&Instruction::RefI31)
+        .instruction(&Instruction::StructNew(6))
+        .instruction(&Instruction::End);
+    code.function(&forge);
+    let mut module = Module::new();
+    module
+        .section(&types)
+        .section(&imports)
+        .section(&functions)
+        .section(&exports)
+        .section(&code)
+        .section(&runtime_abi::Manifest::default().section());
+    module.finish()
+}
+
+fn nominal_value(store: &mut Store<()>, instance: Instance, name: &str, args: &[Val]) -> Val {
+    let mut result = [Val::null_any_ref()];
+    instance
+        .get_func(&mut *store, name)
+        .unwrap()
+        .call(store, args, &mut result)
+        .unwrap();
+    result[0].clone()
+}
+
+#[test]
+fn runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let mut linker = wasmtime::Linker::new(&engine);
+    linker.instance(&mut store, "rt", runtime).unwrap();
+    let bytes = nominal_fragment();
+    runtime_abi::verify_artifact(&bytes, &runtime_abi::Manifest::default()).unwrap();
+    let module = Module::new(&engine, &bytes).unwrap();
+    let producer = linker.instantiate(&mut store, &module).unwrap();
+    let consumer = linker.instantiate(&mut store, &module).unwrap();
+    let closures = linker
+        .instantiate(
+            &mut store,
+            &Module::new(&engine, closure_fragment(false)).unwrap(),
+        )
+        .unwrap();
+    let schema = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    let a = nominal_value(&mut store, producer, "descriptor-new", &[schema.clone()]);
+    let b = nominal_value(&mut store, producer, "descriptor-new", &[schema.clone()]);
+    let key = nominal_value(&mut store, producer, "descriptor-new", &[schema.clone()]);
+    let other_key = nominal_value(&mut store, producer, "descriptor-new", &[schema.clone()]);
+    let object = nominal_value(
+        &mut store,
+        producer,
+        "object-new",
+        &[a.clone(), schema.clone()],
+    );
+    store.gc(None).unwrap();
+    for (descriptor, expected) in [(&a, 1), (&b, 0)] {
+        let mut result = [Val::I32(-1)];
+        consumer
+            .get_func(&mut store, "object-instance")
+            .unwrap()
+            .call(
+                &mut store,
+                &[descriptor.clone(), object.clone()],
+                &mut result,
+            )
+            .unwrap();
+        assert_eq!(result[0].unwrap_i32(), expected);
+    }
+    let a_identity = a
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap()
+        .field(&mut store, 0)
+        .unwrap()
+        .unwrap_i64();
+    let b_identity = b
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap()
+        .field(&mut store, 0)
+        .unwrap()
+        .unwrap_i64();
+    assert!(a_identity >= 8 && b_identity > a_identity);
+    let forged = nominal_value(
+        &mut store,
+        producer,
+        "forge-descriptor",
+        &[schema.clone(), schema.clone()],
+    );
+    let mut forged_instance = [Val::I32(-1)];
+    consumer
+        .get_func(&mut store, "object-instance")
+        .unwrap()
+        .call(&mut store, &[forged, object.clone()], &mut forged_instance)
+        .unwrap();
+    assert_eq!(a_identity, 8);
+    assert_eq!(forged_instance[0].unwrap_i32(), 0);
+
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    for value in [
+        nil.clone(),
+        nominal_value(
+            &mut store,
+            runtime,
+            "number-box",
+            &[Val::F64(7.0f64.to_bits())],
+        ),
+    ] {
+        let mut result = [Val::I32(-1)];
+        consumer
+            .get_func(&mut store, "object-instance")
+            .unwrap()
+            .call(&mut store, &[a.clone(), value], &mut result)
+            .unwrap();
+        assert_eq!(result[0].unwrap_i32(), 0);
+    }
+    let constructor = nominal_value(&mut store, producer, "constructor-new", &[a.clone()]);
+    let through_invoke = nominal_value(
+        &mut store,
+        runtime,
+        "invoke",
+        &[constructor.clone(), schema.clone()],
+    );
+    let mut instance = [Val::I32(0)];
+    consumer
+        .get_func(&mut store, "object-instance")
+        .unwrap()
+        .call(&mut store, &[a.clone(), through_invoke], &mut instance)
+        .unwrap();
+    assert_eq!(instance[0].unwrap_i32(), 1);
+    let retained_descriptor = nominal_value(
+        &mut store,
+        consumer,
+        "constructor-descriptor",
+        &[constructor],
+    );
+    assert!(
+        wasmtime::Rooted::ref_eq(
+            &store,
+            retained_descriptor.unwrap_anyref().unwrap(),
+            a.unwrap_anyref().unwrap()
+        )
+        .unwrap()
+    );
+    let dispatcher = nominal_value(
+        &mut store,
+        producer,
+        "protocol-dispatcher-new",
+        &[key.clone()],
+    );
+    let mut expected = 0;
+    for iteration in 0..3 {
+        let method = nominal_value(
+            &mut store,
+            closures,
+            "make",
+            &[object.clone(), Val::I32(1), Val::I32(1)],
+        );
+        // Add two keys, then replace the first method without losing the second.
+        let chosen = if iteration == 1 { &other_key } else { &key };
+        consumer
+            .get_func(&mut store, "protocol-method-set")
+            .unwrap()
+            .call(&mut store, &[a.clone(), chosen.clone(), method], &mut [])
+            .unwrap();
+        let field = nominal_value(
+            &mut store,
+            runtime,
+            "number-box",
+            &[Val::F64((7.0 + iteration as f64).to_bits())],
+        );
+        consumer
+            .get_func(&mut store, "object-field-set")
+            .unwrap()
+            .call(&mut store, &[object.clone(), Val::I32(0), field], &mut [])
+            .unwrap();
+        expected = 7 + iteration;
+        store.gc(None).unwrap();
+        let descriptor =
+            nominal_value(&mut store, producer, "object-descriptor", &[object.clone()]);
+        let method = nominal_value(
+            &mut store,
+            producer,
+            "protocol-method-get",
+            &[descriptor, key.clone()],
+        );
+        let result = nominal_value(&mut store, runtime, "invoke", &[method, schema.clone()]);
+        let retained_field = nominal_value(
+            &mut store,
+            producer,
+            "object-field-get",
+            &[result, Val::I32(0)],
+        );
+        let mut decoded = [Val::F64(0)];
+        runtime
+            .get_func(&mut store, "number-unbox")
+            .unwrap()
+            .call(&mut store, &[retained_field], &mut decoded)
+            .unwrap();
+        assert_eq!(decoded[0].unwrap_f64(), expected as f64);
+    }
+    assert_eq!(expected, 9);
+    let receiver_args = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    receiver_args
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap()
+        .set(&mut store, 0, object.clone())
+        .unwrap();
+    let old_method = nominal_value(
+        &mut store,
+        consumer,
+        "protocol-method-get",
+        &[a.clone(), key.clone()],
+    );
+    let replacement_object = nominal_value(
+        &mut store,
+        producer,
+        "object-new",
+        &[b.clone(), schema.clone()],
+    );
+    let replacement_method = nominal_value(
+        &mut store,
+        closures,
+        "make",
+        &[replacement_object.clone(), Val::I32(1), Val::I32(1)],
+    );
+    consumer
+        .get_func(&mut store, "protocol-method-set")
+        .unwrap()
+        .call(
+            &mut store,
+            &[a.clone(), key.clone(), replacement_method],
+            &mut [],
+        )
+        .unwrap();
+    store.gc(None).unwrap();
+    let updated = nominal_value(
+        &mut store,
+        runtime,
+        "invoke",
+        &[dispatcher, receiver_args.clone()],
+    );
+    assert!(
+        wasmtime::Rooted::ref_eq(
+            &store,
+            updated.unwrap_anyref().unwrap(),
+            replacement_object.unwrap_anyref().unwrap()
+        )
+        .unwrap()
+    );
+    let old = nominal_value(
+        &mut store,
+        runtime,
+        "invoke",
+        &[old_method, receiver_args.clone()],
+    );
+    assert!(
+        wasmtime::Rooted::ref_eq(
+            &store,
+            old.unwrap_anyref().unwrap(),
+            object.unwrap_anyref().unwrap()
+        )
+        .unwrap()
+    );
+    let other = nominal_value(
+        &mut store,
+        consumer,
+        "protocol-method-get",
+        &[a.clone(), other_key],
+    );
+    let other = nominal_value(&mut store, runtime, "invoke", &[other, receiver_args]);
+    assert!(
+        wasmtime::Rooted::ref_eq(
+            &store,
+            other.unwrap_anyref().unwrap(),
+            object.unwrap_anyref().unwrap()
+        )
+        .unwrap()
+    );
+    let missing = nominal_value(&mut store, consumer, "protocol-method-get", &[b, key]);
+    assert_eq!(
+        missing
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&store)
+            .unwrap()
+            .unwrap()
+            .get_i32(),
+        0
+    );
+    // Field construction copied the argument storage; mutation did not rewrite it.
+    let original = schema
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap()
+        .get(&mut store, 0)
+        .unwrap();
+    assert_eq!(
+        original
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&store)
+            .unwrap()
+            .unwrap()
+            .get_i32(),
+        0
+    );
+}
+
+#[test]
+fn runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let schema = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    let empty = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    let descriptor = nominal_value(&mut store, runtime, "descriptor-new", &[schema.clone()]);
+    let object = nominal_value(
+        &mut store,
+        runtime,
+        "object-new",
+        &[descriptor.clone(), schema.clone()],
+    );
+    let mut linker = wasmtime::Linker::new(&engine);
+    linker.instance(&mut store, "rt", runtime).unwrap();
+    let fragment = linker
+        .instantiate(
+            &mut store,
+            &Module::new(&engine, nominal_fragment()).unwrap(),
+        )
+        .unwrap();
+    let invalid_schema = nominal_value(
+        &mut store,
+        fragment,
+        "forge-descriptor",
+        &[nil.clone(), schema.clone()],
+    );
+    let invalid_table = nominal_value(
+        &mut store,
+        fragment,
+        "forge-descriptor",
+        &[schema.clone(), nil.clone()],
+    );
+    let odd_table = nominal_value(
+        &mut store,
+        fragment,
+        "forge-descriptor",
+        &[schema.clone(), schema.clone()],
+    );
+    let dispatcher = nominal_value(
+        &mut store,
+        runtime,
+        "protocol-dispatcher-new",
+        &[descriptor.clone()],
+    );
+    for (name, args, returns_value) in [
+        ("constructor-descriptor", vec![dispatcher], true),
+        ("descriptor-new", vec![nil.clone()], true),
+        ("object-new", vec![invalid_schema, schema.clone()], true),
+        (
+            "protocol-method-get",
+            vec![invalid_table, descriptor.clone()],
+            true,
+        ),
+        (
+            "protocol-method-get",
+            vec![odd_table, descriptor.clone()],
+            true,
+        ),
+        ("descriptor-new", vec![Val::null_any_ref()], true),
+        ("constructor-new", vec![nil.clone()], true),
+        ("constructor-descriptor", vec![nil.clone()], true),
+        ("protocol-dispatcher-new", vec![nil.clone()], true),
+        ("object-new", vec![nil.clone(), schema.clone()], true),
+        ("object-new", vec![descriptor.clone(), nil.clone()], true),
+        ("object-new", vec![descriptor.clone(), empty], true),
+        ("object-instance", vec![nil.clone(), object.clone()], false),
+        ("object-descriptor", vec![nil.clone()], true),
+        ("object-field-get", vec![object.clone(), Val::I32(-1)], true),
+        ("object-field-get", vec![object.clone(), Val::I32(1)], true),
+        (
+            "object-field-set",
+            vec![object.clone(), Val::I32(1), nil.clone()],
+            false,
+        ),
+        ("object-field-get", vec![nil.clone(), Val::I32(0)], true),
+        (
+            "protocol-method-get",
+            vec![nil.clone(), descriptor.clone()],
+            true,
+        ),
+        (
+            "protocol-method-get",
+            vec![descriptor.clone(), nil.clone()],
+            true,
+        ),
+        (
+            "protocol-method-set",
+            vec![descriptor.clone(), descriptor.clone(), nil.clone()],
+            false,
+        ),
+    ] {
+        let mut result = if returns_value {
+            vec![Val::null_any_ref()]
+        } else if name == "object-instance" {
+            vec![Val::I32(0)]
+        } else {
+            vec![]
+        };
+        let error = runtime
+            .get_func(&mut store, name)
+            .unwrap()
+            .call(&mut store, &args, &mut result)
+            .unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{name}: {error:#}");
+        let exception = store.take_pending_exception().unwrap();
+        let tag = exception.tag(&mut store).unwrap();
+        assert!(wasmtime::Tag::eq(
+            &tag,
+            &runtime.get_tag(&mut store, "language-exception").unwrap(),
+            &store
+        ));
+        let payload = exception.field(&mut store, 0).unwrap();
+        let payload = payload
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap();
+        let error_descriptor = payload.field(&mut store, 0).unwrap();
+        let identity = error_descriptor
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap()
+            .field(&mut store, 0)
+            .unwrap()
+            .unwrap_i64();
+        assert_eq!(identity, 7, "{name}");
+    }
+    // Rejection did not change a field or protocol table, and prompt use resumes.
+    let field = nominal_value(
+        &mut store,
+        runtime,
+        "object-field-get",
+        &[object, Val::I32(0)],
+    );
+    assert_eq!(
+        field
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&store)
+            .unwrap()
+            .unwrap()
+            .get_i32(),
+        0
+    );
+    let missing = nominal_value(
+        &mut store,
+        runtime,
+        "protocol-method-get",
+        &[descriptor.clone(), descriptor],
+    );
+    assert_eq!(
+        missing
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&store)
+            .unwrap()
+            .unwrap()
+            .get_i32(),
+        0
+    );
+}
+
+#[test]
+fn runtime_abi_nominal_callables_reject_arity_missing_methods_and_non_objects() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let one = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    let none = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    let descriptor = nominal_value(&mut store, runtime, "descriptor-new", &[one.clone()]);
+    let key = nominal_value(&mut store, runtime, "descriptor-new", &[one.clone()]);
+    let constructor = nominal_value(
+        &mut store,
+        runtime,
+        "constructor-new",
+        &[descriptor.clone()],
+    );
+    let dispatcher = nominal_value(
+        &mut store,
+        runtime,
+        "protocol-dispatcher-new",
+        &[key.clone()],
+    );
+    let object = nominal_value(
+        &mut store,
+        runtime,
+        "invoke",
+        &[constructor.clone(), one.clone()],
+    );
+    let receiver = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    receiver
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap()
+        .set(&mut store, 0, object.clone())
+        .unwrap();
+    for (callable, args, identity, message) in [
+        (constructor, none.clone(), 1, "Wrong arity"),
+        (dispatcher.clone(), none, 1, "Wrong arity"),
+        (
+            dispatcher.clone(),
+            one.clone(),
+            7,
+            "Invalid nominal operation",
+        ),
+        (
+            dispatcher.clone(),
+            receiver.clone(),
+            7,
+            "Invalid nominal operation",
+        ),
+    ] {
+        let error = runtime
+            .get_func(&mut store, "invoke")
+            .unwrap()
+            .call(&mut store, &[callable, args], &mut [Val::null_any_ref()])
+            .unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>());
+        let exception = store.take_pending_exception().unwrap();
+        let payload = exception.field(&mut store, 0).unwrap();
+        let payload = payload
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap();
+        let descriptor = payload.field(&mut store, 0).unwrap();
+        let descriptor = descriptor
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            descriptor.field(&mut store, 0).unwrap().unwrap_i64(),
+            identity
+        );
+        let text = payload.field(&mut store, 1).unwrap();
+        let text = text
+            .unwrap_anyref()
+            .unwrap()
+            .as_array(&store)
+            .unwrap()
+            .unwrap();
+        let units = text
+            .elems(&mut store)
+            .unwrap()
+            .map(|unit| unit.unwrap_i32() as u16)
+            .collect::<Vec<_>>();
+        assert_eq!(String::from_utf16(&units).unwrap(), message);
+    }
+    // A newly installed method makes the same captured dispatcher callable.
+    let mut linker = wasmtime::Linker::new(&engine);
+    linker.instance(&mut store, "rt", runtime).unwrap();
+    let closures = linker
+        .instantiate(
+            &mut store,
+            &Module::new(&engine, closure_fragment(false)).unwrap(),
+        )
+        .unwrap();
+    let number = nominal_value(
+        &mut store,
+        runtime,
+        "number-box",
+        &[Val::F64(42.0f64.to_bits())],
+    );
+    let method = nominal_value(
+        &mut store,
+        closures,
+        "make",
+        &[number.clone(), Val::I32(1), Val::I32(1)],
+    );
+    runtime
+        .get_func(&mut store, "protocol-method-set")
+        .unwrap()
+        .call(&mut store, &[descriptor, key, method], &mut [])
+        .unwrap();
+    store.gc(None).unwrap();
+    let result = nominal_value(&mut store, runtime, "invoke", &[dispatcher, receiver]);
+    assert!(
+        wasmtime::Rooted::ref_eq(
+            &store,
+            result.unwrap_anyref().unwrap(),
+            number.unwrap_anyref().unwrap()
+        )
+        .unwrap()
+    );
 }

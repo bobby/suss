@@ -128,3 +128,11 @@ Universal arithmetic closure factories and their exact shared Invoke types now
 execute in the tenth ABI test; see [arithmetic values](arithmetic-values.md). The
 factories are provisioned into live cells by native hosts, with central arity and
 old-capture behavior after rebinding. No recursive layout change is introduced.
+
+
+The recursive prelude remains version1 with nominal source support. Compiler artifact
+format2 (`0.1.0+portable.2`) adds internal undefined sentinel6, preserving falsey
+branching and NaN/`undefined` coercion separately from nil0. Older compiler manifests
+reject before initializer effects. Nominal counter/error/protocol sentinel globals
+append after numeric stack global6; [nominal evidence](nominal.md) describes the
+current source/runtime subset and unfinished acceptance work.

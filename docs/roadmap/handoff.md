@@ -2767,3 +2767,173 @@ Push this review evidence to PR #65, then require successful CI on that exact
 final head before readiness. Refs #9/#10 only; do not merge or close incomplete
 issues. Next unblocked work remains portable persistent sequence/core foundations,
 rest signatures and broader nominal machinery; M2–M9 are unfinished.
+
+
+## Reviewed signature readiness and next nominal source boundary — 2026-09-30
+
+PR #65 final-head CI36691007009 passed on independently reviewed
+838ea406806572eb580f853c18787bb4ec9ac32b. Root verified actual full workspace,
+native session, executing pipeline/ABI and CLI rustdoc results in
+/private/tmp/suss-pr65-reviewed-ci.log. PR marked ready; no merge performed.
+Predecessor36690325724 was cancelled, not passed. Refs #9/#10 only; PR #64
+contains the separate completed runtime foundation audit and Closes #10 linkage.
+
+Next worktree /private/tmp/suss-portable-nominal starts at that reviewed head.
+Two source-level native regressions currently fail: distinct same-layout deftype
+identity through aliases/GC and live protocol extension across fragments.
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test -p suss-cli --test persistent_session nominal_ --locked -- --test-threads=2
+exited101 with two failures/zero passes: located unresolved deftype bytes1..8 and
+defprotocol bytes1..12. /private/tmp/suss-portable-nominal-red.log records this
+actual unsupported boundary. No implementation or successor PR yet.
+
+Pinned development ClojureScript/Node produced eleven strictly validated reference
+observations for distinct nominal identity, constructor aliases and extension of
+existing objects; /private/tmp/suss-nominal-reference-observations.json. This is
+reference evidence only, not Suss compatibility. Initial probe compilation failed
+with unmatched delimiter, then Node failed because no output existed; retained
+/private/tmp/suss-nominal-reference-probe.log. Corrected probe exited0,
+/private/tmp/suss-nominal-reference-probe-fixed.log. All native/reference processes
+are terminal. Next implement real descriptor identity/protocol dispatch in the
+accepted shared prelude, then execute these red tests; preserve #11's full
+exception/dynamic-scope acceptance criteria. M2–M9 remain unfinished.
+
+
+## Nominal runtime implementation before source lowering — 2026-09-30
+
+Added original runtime_abi/nominal.rs: checked descriptor/schema/field storage,
+nominal matching by rooted descriptor reference, live per-descriptor method table,
+constructor and protocol dispatcher shared Invoke factories, and typed nominal
+error descriptor7. Numeric diagnostic identities start8; exhaustion rejects before
+wrapping. New counter/error globals append after numeric stack global6; existing
+helper bytes/dependencies, ten-type prelude and ABIversion1 remain unchanged.
+Schemas/fields are copied; table replacement preserves other entries; growth is
+published only after copying; existing objects/dispatchers see live method updates
+while an old captured method retains its environment. Protocol dispatcher
+environments use an internal one-key array, so constructor-descriptor rejects
+them. No internal array is claimed as a portable persistent collection.
+
+Three executing runtime regressions cover actual independently generated
+fragments/GC, same-layout distinct identities, forged equal numeric identities,
+constructor Invoke, existing/captured protocol dispatch, old method behavior,
+other entries, typed bad schema/table/field/receiver/arity and recovery. Full
+selected compiler/runtime gate76 passed: closures13, definitions12, modules11,
+pipeline16, resolution11, runtime13 (including numeric1024). Exact command used
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test -p suss-compile --test runtime_abi --test portable_closures
+--test portable_pipeline --test portable_definitions --test portable_modules
+--test portable_resolution --locked -- --test-threads=2; exit0, zero ignores,
+/private/tmp/suss-nominal-compiler-runtime-final.log. An intermediate test compile
+failed with nonexistent AnyRef::ref_eq; corrected to Rooted::ref_eq, not skipped,
+/private/tmp/suss-nominal-runtime-callables-focused.log and -focused-fixed.log.
+
+Native current-head command cargo test -p suss-cli --lib --test persistent_session
+--locked -- --test-threads=2 (same target/two jobs) exited101 as expected: private4
+and existing integration23 passed, two new source regressions failed at unresolved
+deftype1..8 and defprotocol1..12. No native pass, full baseline or source support
+is claimed for those red cases. /private/tmp/suss-nominal-native-boundary-final.log.
+Python54 and offline roadmap preview passed, with diff checks clean. Logs
+/private/tmp/suss-nominal-python.log and -roadmap-preview.json. Native graph handles
+are terminal and did not overlap. Initial broad fmt touched unrelated files;
+those formatting-only changes were restored from HEAD, preserving new tests/code.
+
+These are uncommitted implementation changes in /private/tmp/suss-portable-nominal;
+no successor PR, independent review or final-head CI exists yet. Do not publish
+readiness or close #11. Next lower genuine type declarations/constructors and
+protocol declarations/extensions through verified HIR/IR, preserving evaluation
+order, exact phase/name identities and compile-error atomicity; execute the native
+source regressions, broaden fresh pinned scalar evidence, then full required
+workspace baseline, PR review/fixes and exact-head CI. Built-in/protocol-wide
+dispatch, source field mutability/metadata, exceptions and dynamic scope remain
+in #11; M2–M9 are incomplete. No upstream core form copied or certified.
+
+
+Additional pinned frontend probe changes the next lowering decision: a deftype
+expression is truthy, fn? on its constructor is true, dynamic (new klass 7) works,
+but ordinary (NominalCall 7) returns nil (compiler warning retained), not a new
+instance. Four reference-only observations strictly validated;
+/private/tmp/suss-nominal-frontend-reference.json and -reference-fixed.log. Initial
+probe failed on an unmatched delimiter; /private/tmp/suss-nominal-frontend-reference.log
+retained, corrected probe exited0. All processes now terminal. Do not bind a source
+type directly to the private constructor-new callable and accidentally change
+ordinary invocation into object construction. Separate class value/ordinary-call
+behavior from new/dotted constructor lowering; preserve aliases and source operand
+order. Inspect/probe other arities before claiming full constructor semantics.
+
+
+## Nominal source pipeline and fresh reference evidence — 2026-09-30
+
+The formerly red source boundary now lowers bounded deftype, defprotocol,
+extend-type, new/dotted construction, instance? and satisfies? through verified
+HIR/IR and the shared runtime. Current behavior and explicit limits are recorded
+in docs/runtime/nominal.md. Descriptor references establish identity, canonical
+phase/name/method/arity keys survive protocol redeclaration, and live extensions
+reach existing objects/captured dispatchers across fragments and forced GC.
+Generated arrows consult the current type cell while captured class values retain
+the original descriptor. Implicit method fields and physical receiver retain the
+original object across recur; ignored receiver replacements still evaluate.
+Compiler-owned key cells are inaccessible to source and compile errors publish
+no staged bindings. Empty extensions return the rooted opaque protocol sentinel.
+
+Fresh probes exposed two important incorrect assumptions and were repaired:
+source constructor calls permit missing/extra fields, and ordinary type calls
+produce undefined, whose coercions differ from nil. Internal i31 sentinel6 now
+preserves falseyness, NaN number conversion and string “undefined” conversion;
+missing fields use it. The original nine-test native run had one actual failure
+before repair (/private/tmp/suss-nominal-undefined-red-fixed.log). Compiler format
+is now 0.1.0+portable.2; legacy compiler manifests reject before initializer
+side effects. ABIversion1, the ten-type prelude, numeric stack global6, numeric
+helper bytes and dependency lock are unchanged. Protocol values are callable
+closures over private key bundles. Guarded native fallback rejects unsupported
+user-object native tables instead of claiming a false result.
+
+The initial 242-case pinned run failed on incorrectly grouped deftype overloads
+(/private/tmp/suss-nominal-oracle.log); corrected inputs use separate method forms,
+and grouped deftype signatures now have a located compile rejection regression.
+Nothing was skipped or recategorized as a known failure. Fresh reference-only
+probe files preserve constructor warnings, redeclaration/arrows, anchored method
+receiver, opaque marker identity and downstream undefined coercions. Strict tagged
+validation checked protocol5, arrow10, method-recur3 and undefined6 observations;
+these development-only probes are reference evidence, not Suss compatibility.
+
+Current selected compiler/runtime gate78 passed with no ignored tests:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test -p suss-compile --test runtime_abi --test portable_closures
+--test portable_pipeline --test portable_definitions --test portable_modules
+--test portable_resolution --test portable_nominal --locked -- --test-threads=2.
+Log /private/tmp/suss-nominal-current-compiler.log, exit0. Native private4 and
+integration32 (including nine nominal tests) passed on the latest source/runtime:
+cargo test -p suss-cli --lib --test persistent_session --locked -- --test-threads=2
+with the same target/two jobs; /private/tmp/suss-nominal-current-session.log exit0.
+Membership also executes after replacing the protocol var with nil: canonical
+marker fast path succeeds, fallback fails as a language error and prompt recovers.
+
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+sh scripts/test-portable-pipeline-oracle.sh exited0 on the current implementation:
+all242 fresh pinned Node observations match and all16 independently decoded
+portable pipeline tests pass; /private/tmp/suss-nominal-current-oracle.log.
+Python54 passed (/private/tmp/suss-nominal-current-python.log). Review validation
+reports9 in-progress reviews/1056 unassessed; the five nominal macro adaptations
+retain exact source hashes, dependency/evidence references and EPL provenance.
+No form is marked implemented. Offline roadmap preview and diff checks passed.
+The legacy16-case source corpus remains9 passing/7 exact failures/0 skipped.
+
+The required full locked workspace baseline is running separately, with no native
+Cargo graph overlap, /private/tmp/suss-nominal-current-workspace.log. Its result
+must be recorded before publishing readiness. Changes remain uncommitted and no
+nominal PR/review/final-head CI exists yet. Next complete the full baseline, commit
+and push resurrection/portable-nominal, open a stacked PR against #65 with Refs #9
+and Refs #11, dispatch its independent reviewer, push significant fixes and require
+exact final-head CI. Do not close #11 or merge any PR. Builtin/native/wildcard
+protocol dispatch, field attributes/metadata, full source core/compiled macros,
+exceptions and dynamic scope remain necessary work; M2–M9 are incomplete.
+
+
+Required full workspace result: CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target
+CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2 exited0;
+/private/tmp/suss-nominal-current-workspace.log. Includes private session4,
+integration32, compiler unit54, legacy expressions317/12 existing ignores,
+components29, conformance9/2 manual ignores, oracle4/1 manual capture ignored,
+portable nominal2/runtime13 and all remaining suites and CLI/doc-test targets.
+Existing ignores and the legacy source differential failures are unchanged.
+This verifies the local candidate, not independent review or final-head CI.

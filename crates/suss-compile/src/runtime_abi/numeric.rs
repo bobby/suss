@@ -339,7 +339,7 @@ pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
         RefTestNonNull(HeapType::I31),
         If(BlockType::Empty),
     ];
-    for (sentinel, value) in [(0, 0.0), (2, 0.0), (4, 1.0)] {
+    for (sentinel, value) in [(0, 0.0), (2, 0.0), (4, 1.0), (UNDEFINED, f64::NAN)] {
         convert.extend([
             LocalGet(0),
             RefCastNonNull(HeapType::I31),
@@ -420,7 +420,12 @@ pub(super) fn intrinsics(b: &mut Builder, helper: Info) -> [u32; 5] {
         RefTestNonNull(HeapType::I31),
         If(BlockType::Empty),
     ];
-    for (sentinel, value) in [(0, "null"), (2, "false"), (4, "true")] {
+    for (sentinel, value) in [
+        (0, "null"),
+        (2, "false"),
+        (4, "true"),
+        (UNDEFINED, "undefined"),
+    ] {
         to_string.extend([
             LocalGet(0),
             RefCastNonNull(HeapType::I31),

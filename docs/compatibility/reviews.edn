@@ -1,4 +1,4 @@
-;; Human-reviewed overlay; these four entries are partial, not compatibility completions.
+;; Human-reviewed overlay; these nine entries are partial, not compatibility completions.
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
@@ -42,4 +42,54 @@
    :adaptation-path "docs/runtime/arithmetic-values.md"
    :alternative nil
    :tests ["crates/suss-compile/tests/runtime_abi.rs::runtime_abi_arithmetic_function_values_check_arity_and_fold_in_order" "crates/suss-cli/tests/persistent_session.rs::persistent_session_arithmetic_function_values_use_universal_invocation" "tests/oracle/portable-cases.json"]}
+  "macro:deftype:1778"
+  {:source-sha256 "e9308661076599c2f8bc0e4ae09bcc72b1ecb462d1b0b2855797346d46add88c" :visibility :public
+   :arities {:fixed [] :variadic-min 2}
+   :dependencies ["macro:extend-type:1668" "macro:defprotocol:2041" "shared ABI Descriptor/UserObject/Invoke"]
+   :classification :adapted
+   :rationale "Original bounded HIR bootstrap constructs descriptor-backed class values, generated arrows and protocol methods. Same-layout identity, redefinition, receiver anchoring, fields and undefined constructor results execute; field attributes, metadata, builtin classes and complete compiled macro/core import remain unfinished. No upstream source form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/nominal.md"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_nominal.rs" "crates/suss-cli/tests/persistent_session.rs" "tests/oracle/portable-cases.json"]}
+  "macro:defprotocol:2041"
+  {:source-sha256 "8748b4d0fc143b90cdcdef7af2b26fc9343f67f6bd75ea520010cb7616dfe7f9" :visibility :public
+   :arities {:fixed [] :variadic-min 1}
+   :dependencies ["macro:extend-type:1668" "macro:satisfies?:2253" "shared ABI Invoke/binding cells"]
+   :classification :adapted
+   :rationale "Original bounded HIR bootstrap uses canonical phase/name/method/arity keys and captured universal dispatchers. Fixed overloads and repeated declarations execute; general declaration options, builtin/native dispatch and complete compiled macro/core import remain unfinished. No upstream source form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/nominal.md"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_nominal.rs" "crates/suss-cli/tests/persistent_session.rs" "tests/oracle/portable-cases.json"]}
+  "macro:extend-type:1668"
+  {:source-sha256 "c904915ea6c48bd1cce808b3a9c23482dd8e9311126ad4d65d70af9ffb94de52" :visibility :public
+   :arities {:fixed [] :variadic-min 1}
+   :dependencies ["macro:defprotocol:2041" "macro:deftype:1778" "shared ABI Descriptor/protocol table"]
+   :classification :adapted
+   :rationale "Original bounded HIR bootstrap updates descriptor tables for declared user types and returns a shared marker or final method. Existing objects and old captured dispatchers observe updates; builtin targets, native/wildcard dispatch and complete compiled macro/core import remain unfinished. No upstream source form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/nominal.md"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_nominal.rs" "crates/suss-cli/tests/persistent_session.rs" "tests/oracle/portable-cases.json"]}
+  "macro:instance?:1025"
+  {:source-sha256 "e0051e45b26efab4a466ed227ace1013999f57a80826061177c305fbf74d4f81" :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:deftype:1778" "runtime:instance?:1099"]
+   :classification :adapted
+   :rationale "Original resolved bootstrap compares retained descriptor references rather than structural tests or numeric IDs. User-defined types and constructor aliases execute; builtin class predicates and first-class runtime instance? remain unfinished. No upstream source form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/nominal.md"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_nominal.rs" "crates/suss-cli/tests/persistent_session.rs" "tests/oracle/portable-cases.json"]}
+  "macro:satisfies?:2253"
+  {:source-sha256 "b3aaaeee9f0a07ca256ce5f708210373b72099b64aa94619e72100f0756669e3" :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:defprotocol:2041" "macro:extend-type:1668" "runtime:native-satisfies?:322"]
+   :classification :adapted
+   :rationale "Original resolved bootstrap follows syntactic protocol identities, evaluates the receiver once and checks a stable membership marker before a guarded fallback. Empty/partial/redeclared user protocols and value aliases execute; builtin/native property tables and full compiled macro/core import remain unfinished. No upstream source form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/nominal.md"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_nominal.rs" "crates/suss-cli/tests/persistent_session.rs" "tests/oracle/portable-cases.json"]}
  }}
