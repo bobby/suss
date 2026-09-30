@@ -6,7 +6,7 @@
       "id": "M0-01",
       "milestone": "M0",
       "title": "Contract and upstream inventory",
-      "status": "in-progress",
+      "status": "completed",
       "dependencies": [],
       "objective": "Record the accepted design, pin ClojureScript and inventory core declarations without guessing portability.",
       "acceptance": "Inventory regeneration is deterministic; source hashes and reader branches are recorded; portable API review schema and source license policy exist.",
@@ -16,14 +16,15 @@
       "evidence": [
         "Accepted design and pinned 1065-declaration inventory: two independent generations are byte-identical (SHA256 b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c). 811 runtime/254 macro declarations retain source ranges/hashes and both :clj/:cljs reader branch labels.",
         "scripts/cljs_reviews.py validates exact overlay schema, pin/hash identity, duplicate/unknown IDs, visibility, arities, dependencies, classifications, implementation evidence references and individual exclusions. Eight focused overlay tests plus five scanner tests pass; empty overlay reports zero reviewed and 1065 unassessed. docs/compatibility/PROVENANCE.md records source/license/extraction requirements.",
-        "Local M0-01 schema/policy acceptance passes; manual classification, macro-generated public APIs, reproducible core extraction and executing semantic evidence remain M4/M7 work. Published in draft PR #40; remote acceptance update awaits review."
+        "Local M0-01 schema/policy acceptance passes; manual classification, macro-generated public APIs, reproducible core extraction and executing semantic evidence remain M4/M7 work. Published in draft PR #40; remote acceptance update awaits review.",
+        "Acceptance reconciled after user merge of PR #40 and independent review fixes fb3ec0a; final-head CI 36636314840 and merged-main CI 36639533936 pass. See docs/roadmap/acceptance-m0-m1.md for criterion-by-criterion evidence and remaining M2\u2013M8 work. GitHub closure follows the reconciliation PR merge; stable issue IDs are unchanged."
       ]
     },
     {
       "id": "M0-02",
       "milestone": "M0",
       "title": "Lock toolchain and official WIT packages",
-      "status": "in-progress",
+      "status": "completed",
       "dependencies": [],
       "objective": "Select a tested Wasmtime/compiler-tools/WIT package set for WASI 0.3.1.",
       "acceptance": "Execute probes for core GC, tail calls, exceptions, maps, implements/external-id, async functions, future and stream; lock exact versions and WIT hashes; report unsupported features individually.",
@@ -33,14 +34,15 @@
       "evidence": [
         "Cargo.toml/Cargo.lock: Wasmtime/wasmtime-wasi 49.0.1, wasm-tools Rust family 0.258.0, wit-bindgen 0.61.1; official 15-file/six-package release graph locked by byte hashes in docs/roadmap/wasi-wit-lock.json.",
         "Executing Rust suites: eight toolchain_profile tests and eight toolchain_async tests pass. Core GC/function references/tail calls/EH, canonical maps, implements/external-id, callback lift/async lower, future/stream transport and guest-memory reads, one-byte stream demand/EOF, guest subtask/read cancellation. See docs/roadmap/handoff.md for acceptance audit and explicit unsupported production features.",
-        "Local named feasibility acceptance passes; GitHub issue remains open during draft PR #40 acceptance review. Migrated native workspace baseline passed; optional Wasm compiler-component build remains a recorded failure."
+        "Local named feasibility acceptance passes; GitHub issue remains open during draft PR #40 acceptance review. Migrated native workspace baseline passed; optional Wasm compiler-component build remains a recorded failure.",
+        "Acceptance reconciled after user merge of PR #40 and independent review fixes fb3ec0a; final-head CI 36636314840 and merged-main CI 36639533936 pass. See docs/roadmap/acceptance-m0-m1.md for criterion-by-criterion evidence and remaining M2\u2013M8 work. GitHub closure follows the reconciliation PR merge; stable issue IDs are unchanged."
       ]
     },
     {
       "id": "M0-03",
       "milestone": "M0",
       "title": "Prove shared GC fragments",
-      "status": "in-progress",
+      "status": "completed",
       "dependencies": [],
       "objective": "Build a minimal shared-runtime plus two separately compiled fragments before replacing the REPL.",
       "acceptance": "One Store shares recursive GC types, roots, closures and nominal descriptors across fragments; forced GC preserves earlier values; incompatible ABI is rejected.",
@@ -50,14 +52,15 @@
       "evidence": [
         "crates/suss-compile/tests/shared_runtime.rs: three executing probes pass on locked Wasmtime 49.0.1. One Store shares recursive GC groups, closures, runtime-global roots and nominal descriptors across independently compiled fragments; forced GC preserves old values and captured closures after binding redefinition.",
         "Probe-only fragment loader rejects a mismatched declared ABI before initializer effects. A matching version label with a different recursive descriptor layout fails engine linking before start. Deliberately bypassing the version gate makes the negative test fail; restored gate passes.",
-        "Local M0-03 feasibility acceptance passes; production runtime manifests, binding cells and incremental REPL remain M2/M3 work. Published in draft PR #40; GitHub acceptance update awaits review; milestone M0 remains open."
+        "Local M0-03 feasibility acceptance passes; production runtime manifests, binding cells and incremental REPL remain M2/M3 work. Published in draft PR #40; GitHub acceptance update awaits review; milestone M0 remains open.",
+        "Acceptance reconciled after user merge of PR #40 and independent review fixes fb3ec0a; final-head CI 36636314840 and merged-main CI 36639533936 pass. See docs/roadmap/acceptance-m0-m1.md for criterion-by-criterion evidence and remaining M2\u2013M8 work. GitHub closure follows the reconciliation PR merge; stable issue IDs are unchanged."
       ]
     },
     {
       "id": "M0-04",
       "milestone": "M0",
       "title": "Prove browser loading and suspension",
-      "status": "in-progress",
+      "status": "completed",
       "dependencies": [],
       "objective": "Load a minimal core GC module through ES modules and bridge one asynchronous operation.",
       "acceptance": "A supported browser loads the runtime, returns typed values, suspends/resumes through a Promise and reports feature failures; document direct loading and optional Jco routes.",
@@ -67,14 +70,15 @@
       "evidence": [
         "Chrome 154.0.8037.58 executes GC, typed function references, tail calls and exceptions, returning 42; ES modules retain a GC continuation across Promise suspension and test cancellation/stale callbacks. Malformed artifact verifies feature-name and original CompileError diagnostics.",
         "Jco 1.35.0 transpiles an original simple GC component; generated ESM/core Wasm executes its typed u32 export in Chrome and returns 42. This is optional packaging feasibility only, not async WIT/WASI or full Suss browser output.",
-        "docs/roadmap/browser-probe.json records source/harness/generated artifact hashes and strict complete-result validation. Chrome DOM passes but teardown times out; actual exit is unknown/null, not replaced with zero. Other browsers and production canonical/typed host corpus remain M8 work. Local M0-04 named feasibility acceptance passes; issue/milestone remain open during PR review."
+        "docs/roadmap/browser-probe.json records source/harness/generated artifact hashes and strict complete-result validation. Chrome DOM passes but teardown times out; actual exit is unknown/null, not replaced with zero. Other browsers and production canonical/typed host corpus remain M8 work. Local M0-04 named feasibility acceptance passes; issue/milestone remain open during PR review.",
+        "Acceptance reconciled after user merge of PR #40 and independent review fixes fb3ec0a; final-head CI 36636314840 and merged-main CI 36639533936 pass. See docs/roadmap/acceptance-m0-m1.md for criterion-by-criterion evidence and remaining M2\u2013M8 work. GitHub closure follows the reconciliation PR merge; stable issue IDs are unchanged."
       ]
     },
     {
       "id": "M1-01",
       "milestone": "M1",
       "title": "Strict conformance decoding and baseline",
-      "status": "in-progress",
+      "status": "completed",
       "dependencies": [
         "M0"
       ],
@@ -85,14 +89,15 @@
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
       "evidence": [
         "Independent host decoder, strict case parsing, reviewed 201-case input/expectation catalog and exact known-failure baseline. All 201 legacy cases and harness checks passed; no known failures or skips.",
-        "Eight conformance harness tests pass, with only two explicit manual recorders ignored. New regressions reject malformed/missing cases, duplicate evidence JSON keys/trailing data, unexpected passes/changed failures, and executed unknown/malformed GC layouts. All 201 reviewed case inputs/expectations and zero known failures remain unchanged."
+        "Eight conformance harness tests pass, with only two explicit manual recorders ignored. New regressions reject malformed/missing cases, duplicate evidence JSON keys/trailing data, unexpected passes/changed failures, and executed unknown/malformed GC layouts. All 201 reviewed case inputs/expectations and zero known failures remain unchanged.",
+        "Acceptance reconciled after user merge of PR #40 and independent review fixes fb3ec0a; final-head CI 36636314840 and merged-main CI 36639533936 pass. See docs/roadmap/acceptance-m0-m1.md for criterion-by-criterion evidence and remaining M2\u2013M8 work. GitHub closure follows the reconciliation PR merge; stable issue IDs are unchanged."
       ]
     },
     {
       "id": "M1-02",
       "milestone": "M1",
       "title": "ClojureScript oracle and semantic regressions",
-      "status": "in-progress",
+      "status": "completed",
       "dependencies": [
         "M0"
       ],
@@ -102,14 +107,15 @@
       "validation": "scripts/test-oracle.sh",
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
       "evidence": [
-        "Added regressions for repeated conditions, argument order, equality, reduce arities, static arity diagnostics and lexical shadowing. Upstream differential oracle remains."
+        "The pinned development-only ClojureScript/Node oracle and independently decoded Suss execution share 16 cases covering once-only conditions, ordered arguments, binary64 bits, UTF-16 units, reduce/variadic arities and exceptions. Fresh differential evidence is 9 passing/7 exact failures/0 skipped; transport and comparison reject missing or changed observations. JVM/Node are development tools only. Comprehensive semantic/arity coverage and known-failure repairs remain M2/M4/M7 work.",
+        "Acceptance reconciled after user merge of PR #40 and independent review fixes fb3ec0a; final-head CI 36636314840 and merged-main CI 36639533936 pass. See docs/roadmap/acceptance-m0-m1.md for criterion-by-criterion evidence and remaining M2\u2013M8 work. GitHub closure follows the reconciliation PR merge; stable issue IDs are unchanged."
       ]
     },
     {
       "id": "M1-03",
       "milestone": "M1",
       "title": "Bounded CI and reproducible baseline",
-      "status": "in-progress",
+      "status": "completed",
       "dependencies": [
         "M0"
       ],
@@ -121,7 +127,8 @@
       "evidence": [
         "Cargo.lock, lean test profiles, shared engines, bounded conformance fuel/traversal, and .github/workflows/ci.yml exist. Migrated native full baseline passed locally.",
         "Remote CI run 36620372831 on head 64437bd ended cancelled at 2026-09-29T20:01:13Z after about 25 minutes. Inventory checks passed; cold compile finished in 3m56s, then compile_expr ran until cancellation. No complete remote baseline is claimed. Diagnose bounded Linux test performance next; later local probes/review validation are not on the published head.",
-        "Optimized non-workspace test dependencies at Rust opt-level 2 with debug assertions/overflow checks retained. Full local workspace baseline passes: expressions 55.00s vs 319.67s, conformance 21.49s vs 192.07s. CI retains 25-minute budget/two build jobs/two test threads, uses only main push/PR events and cancels superseded PR heads. Linux result remains unverified until the new run completes."
+        "Optimized non-workspace test dependencies at Rust opt-level 2 with debug assertions/overflow checks retained. Full local workspace baseline passes: expressions 55.00s vs 319.67s, conformance 21.49s vs 192.07s. CI retains 25-minute budget/two build jobs/two test threads, uses only main push/PR events and cancels superseded PR heads. Linux result remains unverified until the new run completes.",
+        "Acceptance reconciled after user merge of PR #40 and independent review fixes fb3ec0a; final-head CI 36636314840 and merged-main CI 36639533936 pass. See docs/roadmap/acceptance-m0-m1.md for criterion-by-criterion evidence and remaining M2\u2013M8 work. GitHub closure follows the reconciliation PR merge; stable issue IDs are unchanged."
       ]
     },
     {

@@ -16,6 +16,10 @@ Read [the accepted design](docs/design/suss-0.3.1.md), [ROADMAP](ROADMAP.md),
 * Use `cargo test --workspace --locked -- --test-threads=2` for the full baseline.
   Run focused tests first. Shared Wasmtime engines and lean test profiles keep
   local resource use bounded. Do not delete unrelated files to make disk space.
+* Link PRs to issues: use `Closes #N` only when all issue acceptance criteria
+  are fulfilled; use `Refs #N` for partial progress. Dispatch an independent
+  subagent review for each PR, push significant fixes and require final-head CI.
+  Do not merge PRs without a later explicit user instruction.
 * No Java dependency in shipped code. JVM/Node may be development test oracles.
 * Update docs/roadmap/handoff.md with commands, results, limitations and the next
   unblocked task. Keep roadmap issue IDs stable. Do not mark future work complete.
