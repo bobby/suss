@@ -55,6 +55,10 @@ pub(crate) struct ProtocolMethod {
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Binding {
+    Core {
+        global: Global,
+        export: &'static str,
+    },
     Cell(Global),
     InternalCell(Global),
     Arithmetic {
@@ -74,7 +78,8 @@ pub enum Binding {
 impl Binding {
     pub fn global(&self) -> &Global {
         match self {
-            Self::Cell(g)
+            Self::Core { global: g, .. }
+            | Self::Cell(g)
             | Self::InternalCell(g)
             | Self::BootstrapLoop(g)
             | Self::BootstrapLet(g)
@@ -111,7 +116,7 @@ pub struct Environment {
     bindings: BTreeMap<Global, Binding>,
     scopes: BTreeMap<(Phase, String), Scope>,
     current: BTreeMap<Phase, String>,
-    materialized_arithmetic: BTreeSet<Global>,
+    materialized_bootstrap: BTreeSet<Global>,
     pub(crate) protocols: BTreeMap<Global, Vec<ProtocolMethod>>,
 }
 pub(crate) fn canonical(namespace: &str) -> &str {
@@ -165,7 +170,7 @@ impl Environment {
             bindings: BTreeMap::new(),
             scopes: BTreeMap::new(),
             current: BTreeMap::new(),
-            materialized_arithmetic: BTreeSet::new(),
+            materialized_bootstrap: BTreeSet::new(),
             protocols: BTreeMap::new(),
         };
         for phase in [Phase::Runtime, Phase::Macro] {
@@ -189,6 +194,21 @@ impl Environment {
                 };
                 env.bindings
                     .insert(global.clone(), Binding::Arithmetic { global, operator });
+            }
+            for (name, export) in [
+                ("ExceptionInfo", "core-exception-info-class"),
+                ("ex-info", "core-ex-info"),
+                ("ex-data", "core-ex-data"),
+                ("ex-message", "core-ex-message"),
+                ("ex-cause", "core-ex-cause"),
+            ] {
+                let global = Global {
+                    phase,
+                    namespace: "suss.core".into(),
+                    name: name.into(),
+                };
+                env.bindings
+                    .insert(global.clone(), Binding::Core { global, export });
             }
             for (name, form) in [
                 ("deftype", NominalForm::Deftype),
@@ -251,16 +271,27 @@ impl Environment {
                 Binding::Cell(global) | Binding::InternalCell(global) => Some(global.clone()),
                 _ => None,
             })
-            .chain(self.materialized_arithmetic.iter().cloned())
+            .chain(self.materialized_bootstrap.iter().cloned())
             .collect::<BTreeSet<_>>()
             .into_iter()
             .collect()
     }
-    pub(crate) fn materialize_arithmetic(&mut self, global: Global) {
-        self.materialized_arithmetic.insert(global);
+    pub(crate) fn materialize_bootstrap(&mut self, global: Global) {
+        self.materialized_bootstrap.insert(global);
     }
     /// Bootstrap cell initializers for native hosts; source values share these
     /// canonical identities and later declarations may replace their contents.
+    pub fn core_bindings(&self, phase: Phase) -> Vec<(Global, &'static str)> {
+        self.bindings
+            .values()
+            .filter_map(|binding| match binding {
+                Binding::Core { global, export } if global.phase == phase => {
+                    Some((global.clone(), *export))
+                }
+                _ => None,
+            })
+            .collect()
+    }
     pub fn arithmetic_bindings(&self, phase: Phase) -> Vec<(Global, Arithmetic)> {
         self.bindings
             .values()

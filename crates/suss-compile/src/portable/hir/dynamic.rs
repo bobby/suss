@@ -21,8 +21,8 @@ impl Analyzer {
             .resolve(self.phase, name, form.span.clone())?
         {
             ResolvedBinding::Cell(global) => Ok(global),
-            ResolvedBinding::Arithmetic { global, .. } => {
-                self.environment.materialize_arithmetic(global.clone());
+            ResolvedBinding::Arithmetic { global, .. } | ResolvedBinding::Core { global, .. } => {
+                self.environment.materialize_bootstrap(global.clone());
                 Ok(global)
             }
             _ => Err(fail(

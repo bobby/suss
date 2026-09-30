@@ -5,6 +5,7 @@ use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
 mod dynamic;
+mod exception_info;
 mod exceptions;
 mod nominal;
 mod numeric;
@@ -227,6 +228,7 @@ struct Builder {
     code: CodeSection,
     count: u32,
     next_type: u32,
+    names: std::collections::BTreeMap<String, u32>,
 }
 impl Builder {
     fn function(
@@ -247,6 +249,7 @@ impl Builder {
         instructions: &[Instruction<'_>],
     ) -> u32 {
         let index = self.count;
+        self.names.insert(name.to_owned(), index);
         self.types
             .ty()
             .function(params.iter().copied(), results.iter().copied());
@@ -284,6 +287,7 @@ fn build_module() -> Vec<u8> {
         code: helper.code,
         count: helper.function_count,
         next_type: helper.type_count,
+        names: std::collections::BTreeMap::new(),
     };
     let number = HeapType::Concrete(NUMBER);
     let string = HeapType::Concrete(STRING);
@@ -602,6 +606,7 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
     let try_invoke = exceptions::functions(&mut b, generic_invoke);
     arithmetic_functions.extend(dynamic::functions(&mut b, binding_set, try_invoke));
+    arithmetic_functions.extend(exception_info::functions(&mut b));
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
     let mut tags = TagSection::new();
@@ -646,7 +651,7 @@ fn build_module() -> Vec<u8> {
             mutable: true,
             shared: false,
         },
-        &ConstExpr::i64_const(i64::from(numeric::ERROR_GLOBALS) + 2),
+        &ConstExpr::i64_const(i64::from(numeric::ERROR_GLOBALS) + 4),
     );
     globals.global(
         GlobalType {
@@ -690,6 +695,69 @@ fn build_module() -> Vec<u8> {
             shared: false,
         },
         &ConstExpr::extended([I32Const(0), RefI31]),
+    );
+    let mut info_descriptor = vec![I64Const(i64::from(numeric::ERROR_GLOBALS) + 2)];
+    for field in ["message", "data", "cause"] {
+        let units: Vec<_> = field.encode_utf16().collect();
+        info_descriptor.extend(units.iter().map(|x| I32Const(*x as i32)));
+        info_descriptor.push(ArrayNewFixed {
+            array_type_index: STRING,
+            array_size: units.len() as u32,
+        });
+    }
+    info_descriptor.extend([
+        ArrayNewFixed {
+            array_type_index: ARGS,
+            array_size: 3,
+        },
+        I32Const(0),
+        ArrayNewDefault(ARGS),
+        I32Const(0),
+        RefI31,
+        StructNew(DESCRIPTOR),
+    ]);
+    globals.global(
+        GlobalType {
+            val_type: reference(DESCRIPTOR),
+            mutable: false,
+            shared: false,
+        },
+        &ConstExpr::extended(info_descriptor),
+    );
+    let mut ordinary_root = vec![I64Const(i64::from(numeric::ERROR_GLOBALS) + 3)];
+    for field in ["message", "data", "cause"] {
+        let units: Vec<_> = field.encode_utf16().collect();
+        ordinary_root.extend(units.iter().map(|x| I32Const(*x as i32)));
+        ordinary_root.push(ArrayNewFixed {
+            array_type_index: STRING,
+            array_size: units.len() as u32,
+        });
+    }
+    ordinary_root.extend([
+        ArrayNewFixed {
+            array_type_index: ARGS,
+            array_size: 3,
+        },
+        I32Const(0),
+        ArrayNewDefault(ARGS),
+        I32Const(0),
+        RefI31,
+        StructNew(DESCRIPTOR),
+        I32Const(UNDEFINED),
+        RefI31,
+        I32Const(3),
+        ArrayNew(ARGS),
+        I32Const(0),
+        RefI31,
+        StructNew(7),
+    ]);
+    globals.global(
+        GlobalType {
+            val_type: reference(7),
+            mutable: false,
+            shared: false,
+        },
+        &ConstExpr::extended(ordinary_root),
     );
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

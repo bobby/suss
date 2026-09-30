@@ -297,6 +297,11 @@ impl Session {
         linker.instance(&mut store, "suss.runtime", runtime)?;
         let environment = Environment::default();
         let mut cells = BTreeMap::new();
+        let mut initializers = environment
+            .core_bindings(Phase::Runtime)
+            .into_iter()
+            .map(|(global, export)| (global, export.to_string()))
+            .collect::<Vec<_>>();
         for (identity, operator) in environment.arithmetic_bindings(Phase::Runtime) {
             use suss_compile::portable::hir::Arithmetic;
             let name = match operator {
@@ -306,17 +311,52 @@ impl Session {
                 Arithmetic::Divide => "divide",
                 Arithmetic::Negate => unreachable!("no negate source binding"),
             };
+            initializers.push((identity, format!("arithmetic-{name}")));
+        }
+        let mut exception_class_cell: Option<Global> = None;
+        for (identity, export) in initializers {
             let mut scope = RootScope::new(&mut store);
             let mut value = [Val::null_any_ref()];
-            runtime
-                .get_func(&mut scope, &format!("arithmetic-{name}"))
-                .unwrap()
-                .call(&mut scope, &[], &mut value)?;
             let mut cell = [Val::null_any_ref()];
+            if export == "core-ex-info" {
+                runtime
+                    .get_func(&mut scope, "nil")
+                    .unwrap()
+                    .call(&mut scope, &[], &mut value)?;
+                runtime
+                    .get_func(&mut scope, "binding-new")
+                    .unwrap()
+                    .call(&mut scope, &value, &mut cell)?;
+            }
+            let mut arguments =
+                if export.starts_with("core-") && export != "core-exception-info-class" {
+                    vec![
+                        exception_class_cell
+                            .expect("class initialized first")
+                            .get(&mut scope),
+                    ]
+                } else {
+                    vec![]
+                };
+            if export == "core-ex-info" {
+                arguments.push(cell[0].clone());
+            }
             runtime
-                .get_func(&mut scope, "binding-new")
+                .get_func(&mut scope, &export)
                 .unwrap()
-                .call(&mut scope, &value, &mut cell)?;
+                .call(&mut scope, &arguments, &mut value)?;
+            if export == "core-ex-info" {
+                runtime.get_func(&mut scope, "binding-set").unwrap().call(
+                    &mut scope,
+                    &[cell[0].clone(), value[0].clone()],
+                    &mut [],
+                )?;
+            } else {
+                runtime
+                    .get_func(&mut scope, "binding-new")
+                    .unwrap()
+                    .call(&mut scope, &value, &mut cell)?;
+            }
             let ty = cell[0]
                 .unwrap_anyref()
                 .unwrap()
@@ -331,6 +371,9 @@ impl Session {
                 ),
                 cell[0].clone(),
             )?;
+            if export == "core-exception-info-class" {
+                exception_class_cell = Some(global);
+            }
             linker.define(
                 &scope,
                 identity.import_module(),

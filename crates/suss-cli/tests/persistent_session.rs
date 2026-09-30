@@ -252,8 +252,8 @@ fn session_lifecycle_reset_rejects_old_values_and_distinguishes_code_from_roots(
     let mut session = Session::new().unwrap();
     let bootstrap_cells = session.stats().binding_cells;
     assert_eq!(
-        bootstrap_cells, 4,
-        "canonical arithmetic cells are resident"
+        bootstrap_cells, 9,
+        "canonical arithmetic and ExceptionInfo cells are resident"
     );
     let value = session.eval("(def old 7) old").unwrap();
     let clone = value.clone();
