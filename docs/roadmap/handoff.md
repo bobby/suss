@@ -3709,3 +3709,42 @@ components29, strict conformance9/2 manual ignores, full oracle4/1 manual captur
 ignored and reader/core/documentation targets. Existing ignores and legacy9pass/7fail
 unchanged. All root native/reference handles terminal; independent reviewer may
 own the next exclusive graph. Publish and review remain required; no merge/closure.
+
+## Independent PR73 scalar-predicate review — 2026-09-30
+
+Reviewed exact candidate e2c87cc10f19835fb4624298bbb345ce351eba01 against
+reviewed PR71 19cf741df410221201bf39e8a2cc999a7afca18b in isolated
+/private/tmp/suss-review-pr73. Inspected pinned runtime/macro source, sentinel
+Booleans and nil/internal-undefined distinction, Number NaN/signed-zero/infinity
+identity, UTF-16 unit identity, nominal/function reference identity, factory
+registration and central arity, canonical live cells/aliases and phase-separated
+compiler availability, native/standalone hosts and independently decoded corpus.
+No significant semantic defect found within the explicitly bounded runtime scope.
+Compiled upstream predicate macros and their redefinition behavior remain
+unfinished; this review does not certify them or persistent equality/hash.
+
+Added two independent executing regressions: all six unary factories remain
+first-class/rooted through collection and reject both wrong arity boundaries;
+a long astral/lone-surrogate string identity comparison exhausts operation fuel,
+then its retained function/inputs survive collection and succeed with a larger
+budget. Length mismatch and the next ordinary predicate input also recover.
+No production semantic change, copied upstream source, dependency/helper/prelude
+or ABI/compiler-version change. Native predicate suite now has six regressions.
+
+Externally merged PR70/71 changed main to c713c80f349f5385c439d800aafc5b3e63cdea96.
+Its tree exactly matched reviewed19cf741. Rebased only PR73 and its review tests
+onto that main; complete pre/post-rebase source-tree diff was empty. No agent merge.
+
+Commands/results (exclusive native graph, shared target, two jobs, no RUSTFLAGS):
+- Candidate native4 passed, /private/tmp/suss-review-pr73-focused.log, handle26379 terminal0.
+- Expanded native6 passed with zero ignored, /private/tmp/suss-review-pr73-expanded.log, handle45905 terminal0.
+- Fresh397 pinned primary observations matched exactly; actual portable pipeline16 passed, /private/tmp/suss-review-pr73-oracle.log, handle7185 terminal0. Corpus remains397; no expectation, failure or skip weakened.
+- Python66, inventory1065, overlay24 in-progress/1041 unassessed and five reproducible core-import files verified, /private/tmp/suss-review-pr73-python.log, handle32110 terminal0.
+- Required CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2 passed exit0, /private/tmp/suss-review-pr73-workspace.log, handle18963 terminal0. Includes native predicate6, surrounding native/session tests, actual pipeline397/16 and ABI14, legacy/component/conformance/oracle/core/reader and CLI doc targets. Existing legacy/manual ignores and legacy9pass/7fail evidence unchanged.
+
+All review native/reference/process handles terminal and native graph released.
+Push rebased review head to PR73, retarget it to main, and require exact final-head
+CI before readiness. Refs #9/#16 remain partial; no issue closed or PR merged.
+Next unblocked task: provenance-backed not/boolean/some? foundations followed by
+sequence/collection ports and complete compiled macro/core bootstrap. M2–M9 and
+the full roadmap remain incomplete.
