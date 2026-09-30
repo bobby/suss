@@ -1776,6 +1776,133 @@
           49
         ]
       }
+    },
+    {
+      "id": "multi-zero",
+      "source": "((fn ([] 42) ([x] x)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "multi-one",
+      "source": "((fn ([] 42) ([x] x)) 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "multi-two",
+      "source": "((fn ([x] x) ([x y] (- x y))) 9 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "multi-outer-capture",
+      "source": "(let [outer 10] ((fn ([] outer) ([x] (+ outer x))) 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "multi-recur-own-arity",
+      "source": "((fn ([flag x] (if flag (recur false (+ x 1)) x)) ([x] x)) true 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "multi-nested-capture",
+      "source": "(((fn ([] (fn [] 7)) ([x] (fn [] x))) 9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "named-simple",
+      "source": "((fn identity-local [x] x) 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "named-tail-recur",
+      "source": "((fn local-loop [flag x] (if flag (recur false (+ x 1)) x)) true 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "named-recursive-call",
+      "source": "((fn again [flag x] (if flag (again false (+ x 1)) x)) true 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "named-self-higher-order",
+      "source": "((fn self [flag] (if flag ((fn [f] (f false)) self) 42)) true)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "named-multi-call",
+      "source": "((fn again ([x] x) ([flag x] (if flag (again (+ x 1)) x))) true 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "duplicate-anonymous-arity",
+      "source": "((fn ([x] 1) ([x] 2)) 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "duplicate-named-arity",
+      "source": "((fn local ([x] 1) ([x] 2)) 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "duplicate-higher-order-arity",
+      "source": "(let [f (fn ([x] 1) ([x] 2))] (f 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "named-parameter-shadows-self",
+      "source": "((fn self [self] self) 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "multiple-empty-body",
+      "source": "((fn ([]) ([x] x)))",
+      "expected": {
+        "tag": "nil"
+      }
     }
   ]
 }

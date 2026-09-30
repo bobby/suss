@@ -30,7 +30,9 @@ reader branches. The scanner's source declarations are the starting inventory;
 manual review must account for macro-generated public APIs.
 
 This is the M0 policy and schema gate, not a completed core extraction system.
-The current review overlay has no reviewed core forms. Reproducible extraction,
+The current review overlay records four arithmetic declarations as adapted and
+in progress; 1,061 declarations remain unassessed. These original runtime
+intrinsics do not establish completed upstream form ports. Reproducible extraction,
 patch verification and shipped core-form license packaging are M4 acceptance work.
 The legacy adapted conformance corpus retains its own
 [attribution](../../reference/cljs-tests/README.md); it is a small curated baseline,

@@ -684,3 +684,152 @@ fn recurrence_fuel_traps_and_compile_errors_leave_the_session_usable() {
     session.set_operation_fuel(100_000);
     assert_eq!(eval_number(&mut session, "old"), 7.0f64.to_bits());
 }
+
+#[test]
+fn persistent_session_named_and_multiple_fixed_signatures_preserve_captures_and_recur() {
+    let mut session = Session::new().unwrap();
+    for (source, expected) in [
+        ("((fn ([] 42) ([x] x)))", 42.0f64),
+        ("((fn ([] 42) ([x] x)) 7)", 7.0),
+        ("((fn ([x] x) ([x y] (- x y))) 9 2)", 7.0),
+        (
+            "(let [outer 10] ((fn ([] outer) ([x] (+ outer x))) 2))",
+            12.0,
+        ),
+        (
+            "((fn ([flag x] (if flag (recur false (+ x 1)) x)) ([x] x)) true 2)",
+            3.0,
+        ),
+        ("(((fn ([] (fn [] 7)) ([x] (fn [] x))) 9))", 9.0),
+        ("((fn identity-local [x] x) 7)", 7.0),
+        (
+            "((fn local-loop [flag x] (if flag (recur false (+ x 1)) x)) true 2)",
+            3.0,
+        ),
+        (
+            "((fn again [flag x] (if flag (again false (+ x 1)) x)) true 2)",
+            3.0,
+        ),
+        (
+            "((fn self [flag] (if flag ((fn [f] (f false)) self) 42)) true)",
+            42.0,
+        ),
+        (
+            "((fn again ([x] x) ([flag x] (if flag (again (+ x 1)) x))) true 2)",
+            3.0,
+        ),
+    ] {
+        assert_eq!(
+            eval_number(&mut session, source),
+            expected.to_bits(),
+            "{source}"
+        );
+    }
+}
+
+#[test]
+fn named_function_identity_and_multiple_dispatch_survive_gc_and_rebinding() {
+    let mut session = Session::new().unwrap();
+    let self_function = session.eval("(fn self [] self)").unwrap();
+    let root = session
+        .inspect(&self_function, |store, value| {
+            value.unwrap_anyref().unwrap().to_owned_rooted(store)
+        })
+        .unwrap();
+    session.collect().unwrap();
+    let returned = session.invoke(&self_function, &[]).unwrap();
+    assert!(
+        session
+            .inspect(&returned, |store, value| wasmtime::Rooted::ref_eq(
+                &store,
+                &root,
+                value.unwrap_anyref().unwrap()
+            ))
+            .unwrap()
+    );
+    let outer = session.eval("(fn self [] (fn [] self))").unwrap();
+    let outer_root = session
+        .inspect(&outer, |store, value| {
+            value.unwrap_anyref().unwrap().to_owned_rooted(store)
+        })
+        .unwrap();
+    let nested = session.invoke(&outer, &[]).unwrap();
+    session.collect().unwrap();
+    let returned_outer = session.invoke(&nested, &[]).unwrap();
+    assert!(
+        session
+            .inspect(&returned_outer, |store, value| wasmtime::Rooted::ref_eq(
+                &store,
+                &outer_root,
+                value.unwrap_anyref().unwrap()
+            ))
+            .unwrap()
+    );
+    let original = session.eval("(def dispatch (let [outside 10] (fn local ([x] (+ x outside)) ([flag x] (if flag (local (+ x 1)) x)))))").unwrap();
+    session.eval("(def dispatch (fn [x] 99))").unwrap();
+    session.collect().unwrap();
+    let flag = session.eval("true").unwrap();
+    let two = session.eval("2").unwrap();
+    let result = session.invoke(&original, &[&flag, &two]).unwrap();
+    assert_eq!(number(&mut session, &result), 13.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(dispatch 2)"), 99.0f64.to_bits());
+    for (source, expected) in [
+        ("((fn ([x] 1) ([x] 2)) 0)", 2.0f64),
+        ("((fn local ([x] 1) ([x] 2)) 0)", 2.0),
+        ("(let [f (fn ([x] 1) ([x] 2))] (f 0))", 2.0),
+        ("((fn self [self] self) 7)", 7.0),
+    ] {
+        assert_eq!(eval_number(&mut session, source), expected.to_bits());
+    }
+}
+
+#[test]
+fn multiple_fixed_arity_gaps_throw_before_body_effects_after_ordered_arguments() {
+    let mut session = Session::new().unwrap();
+    session.eval("(def counter 0) (def next (fn [] (def counter (+ counter 1)))) (def dispatch (fn ([x] (do (def counter (+ counter 100)) x)) ([x y z] (+ x y z))))").unwrap();
+    let error = session
+        .eval("((do (next) dispatch) (next) (next))")
+        .unwrap_err();
+    let SessionError::Language(payload) = error else {
+        panic!("expected typed arity gap")
+    };
+    let message = session
+        .inspect(&payload, |mut store, value| {
+            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let descriptor = object
+                .field(&mut store, 0)?
+                .unwrap_anyref()
+                .unwrap()
+                .as_struct(&store)?
+                .unwrap();
+            assert_eq!(descriptor.field(&mut store, 0)?.unwrap_i64(), 1);
+            let text = object
+                .field(&mut store, 1)?
+                .unwrap_anyref()
+                .unwrap()
+                .as_array(&store)?
+                .unwrap();
+            Ok(text
+                .elems(&mut store)?
+                .map(|unit| unit.unwrap_i32() as u16)
+                .collect::<Vec<_>>())
+        })
+        .unwrap();
+    assert_eq!(String::from_utf16(&message).unwrap(), "Wrong arity");
+    assert_eq!(eval_number(&mut session, "counter"), 3.0f64.to_bits());
+    assert_eq!(
+        eval_number(&mut session, "(dispatch (next))"),
+        4.0f64.to_bits()
+    );
+    assert_eq!(eval_number(&mut session, "counter"), 104.0f64.to_bits());
+    for source in ["(dispatch)", "(dispatch 1 2)", "(dispatch 1 2 3 4)"] {
+        assert!(
+            matches!(session.eval(source), Err(SessionError::Language(_))),
+            "{source}"
+        );
+    }
+    assert_eq!(
+        eval_number(&mut session, "(dispatch 1 2 3)"),
+        6.0f64.to_bits()
+    );
+}

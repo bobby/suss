@@ -27,7 +27,7 @@ new standalone type with the same signature. Declarative elements permit ref.fun
 The ten-type prelude and ABI version remain unchanged; new factory exports are
 additive and actual linking rejects absent exports before eval.
 
-The 194-case source corpus includes 18 newly executed pinned ClojureScript
+The 210-case source corpus includes 18 newly executed pinned ClojureScript
 function-value cases. Independent GC tests cover closure min/max fields, exact
 number bits after GC, zero/unary/ordered variadic behavior and exception tag/
 descriptor. Session tests inspect reference identity, original captures after core

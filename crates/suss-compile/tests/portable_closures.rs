@@ -277,12 +277,7 @@ fn source_wrong_arity_and_unimplemented_signatures_are_located_diagnostics() {
         assert!(error.message.contains("Wrong arity"));
         assert!(source[error.span].starts_with('('));
     }
-    for (source, needle) in [
-        ("(fn [& xs] xs)", "&"),
-        ("(fn [[x]] x)", "[x]"),
-        ("(fn named [x] x)", "named"),
-        ("(fn ([x] x) ([] nil))", "([x] x)"),
-    ] {
+    for (source, needle) in [("(fn [& xs] xs)", "&"), ("(fn [[x]] x)", "[x]")] {
         let error = portable::compile(source).unwrap_err();
         assert_eq!(&source[error.span], needle);
     }
@@ -592,4 +587,44 @@ fn malformed_public_closure_arity_does_not_allocate_unbounded_entry_metadata() {
             .message
             .contains("entry shape")
     );
+}
+
+#[test]
+fn multiple_signatures_verify_exact_methods_captures_and_isolated_recur_targets() {
+    use portable::{hir::Type, ir::Operation};
+    let source = "(let [outside 10] (fn local ([x] (+ x outside)) ([flag x] (if flag (recur false (local x)) x))))";
+    let hir = portable::analyze(source).unwrap();
+    let ir = portable::ir::lower(&hir).unwrap();
+    portable::ir::verify(&ir).unwrap();
+    for mutation in 0..5 {
+        let mut bad = ir.clone();
+        let closure = bad
+            .blocks
+            .iter_mut()
+            .flat_map(|block| &mut block.instructions)
+            .find(|instruction| {
+                matches!(instruction.operation, Operation::MakeGeneralClosure { .. })
+            })
+            .unwrap();
+        let Operation::MakeGeneralClosure { body, .. } = &mut closure.operation else {
+            unreachable!()
+        };
+        match mutation {
+            0 => body.methods.clear(),
+            1 => body.methods[1].arity = body.methods[0].arity,
+            2 => body.methods[0].capture_types[0] = Type::String,
+            3 => body.self_capture = false,
+            4 => body.methods[0].arity = usize::MAX,
+            _ => unreachable!(),
+        }
+        assert!(portable::compile_ir(&bad).is_err(), "mutation {mutation}");
+    }
+    for source in [
+        "(fn local ([x] (recur)) ([] 1))",
+        "(fn local ([flag x] (fn [y] (recur flag x))) ([x] x))",
+        "(fn local ([] 1) ([x] (+ (recur x) 1)))",
+    ] {
+        let error = portable::compile(source).unwrap_err();
+        assert!(source[error.span].starts_with("(recur"), "{source}");
+    }
 }
