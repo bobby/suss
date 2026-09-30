@@ -30,8 +30,8 @@ reader branches. The scanner's source declarations are the starting inventory;
 manual review must account for macro-generated public APIs.
 
 This is the M0 policy and schema gate, not a completed core extraction system.
-The current review overlay records nine arithmetic/nominal declarations as adapted and
-in progress; 1,056 declarations remain unassessed. These original runtime
+The current review overlay records eleven arithmetic/nominal/dynamic declarations as adapted and
+in progress; 1,054 declarations remain unassessed. These original runtime
 intrinsics do not establish completed upstream form ports. Reproducible extraction,
 patch verification and shipped core-form license packaging are M4 acceptance work.
 The legacy adapted conformance corpus retains its own

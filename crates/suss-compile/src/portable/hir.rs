@@ -1,4 +1,5 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
+mod dynamic;
 mod exceptions;
 mod nominal;
 use super::{
@@ -152,6 +153,14 @@ pub struct Hir {
 }
 #[derive(Debug, Clone)]
 pub enum Expression {
+    DynamicScope {
+        bindings: Vec<(Global, Hir)>,
+        body: Box<Hir>,
+    },
+    Assign {
+        global: Global,
+        value: Box<Hir>,
+    },
     /// A terminal language throw of an evaluated portable value.
     Throw(Box<Hir>),
     /// Private compiled regions: body/cleanup arity0, handler arity1 or nil.
@@ -363,7 +372,7 @@ impl Analyzer {
         for metadata in &args[0].metadata {
             let unsupported = |form: &Form| {
                 matches!(&form.kind, Kind::Keyword(key)
-                if key.namespace.is_none() && matches!(key.name.as_str(), "const" | "dynamic" | "private" | "macro" | "export"))
+                if key.namespace.is_none() && matches!(key.name.as_str(), "const" | "private" | "macro" | "export"))
             };
             if unsupported(metadata)
                 || matches!(&metadata.kind, Kind::Map(entries)
@@ -371,7 +380,7 @@ impl Analyzer {
             {
                 return Err(fail(
                     args[0].span.clone(),
-                    "Definition const/dynamic/private/macro/export attributes are not implemented yet",
+                    "Definition const/private/macro/export attributes are not implemented yet",
                 ));
             }
         }
@@ -736,7 +745,7 @@ impl Analyzer {
         let resolved = if bare
             && matches!(
                 symbol.name.as_str(),
-                "if" | "do" | "fn*" | "def" | "loop*" | "recur" | "throw" | "try"
+                "if" | "do" | "fn*" | "def" | "loop*" | "recur" | "throw" | "try" | "set!"
             ) {
             None
         } else {
@@ -761,6 +770,24 @@ impl Analyzer {
         }) = &resolved
         {
             return self.nominal_form(form, args, *nominal_form);
+        }
+        if bare && symbol.name == "set!" {
+            if args.len() != 2 {
+                return Err(fail(form.span.clone(), "set! requires a var and value"));
+            }
+            let global = self.assignment_target(&args[0])?;
+            return Ok(Hir {
+                span: form.span.clone(),
+                metadata: form.metadata.clone(),
+                ty: Type::Value,
+                kind: Expression::Assign {
+                    global,
+                    value: Box::new(self.form(&args[1])?),
+                },
+            });
+        }
+        if matches!(resolved, Some(ResolvedBinding::BootstrapBinding(_))) {
+            return self.dynamic_scope(form, args, statement);
         }
         if bare && symbol.name == "throw" {
             if args.len() != 1 {
@@ -985,6 +1012,13 @@ impl Analyzer {
 }
 fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<BindingId>) {
     match &hir.kind {
+        Expression::Assign { value, .. } => free_bindings(value, bound, free),
+        Expression::DynamicScope { bindings, body } => {
+            for (_, value) in bindings {
+                free_bindings(value, bound, free);
+            }
+            free_bindings(body, bound, free);
+        }
         Expression::Throw(value) => free_bindings(value, bound, free),
         Expression::Try { regions } => {
             for region in regions {

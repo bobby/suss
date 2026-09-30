@@ -145,3 +145,9 @@ inventory remains byte-exact; source import still requires retained EPL provenan
 See [arithmetic values](../runtime/arithmetic-values.md) for actual executing scope.
 
 Five nominal macro declarations now join the four arithmetic reviews as in-progress adaptations. Their pinned source hashes, dependencies and bounded executing evidence are recorded in reviews.edn and [nominal runtime/source boundaries](../runtime/nominal.md). None is marked implemented; builtin/native dispatch and complete macro/core integration remain open.
+
+Two dynamic macro declarations now join the nine arithmetic/nominal reviews as
+in-progress adaptations: 11 reviewed, 1,054 unassessed. Their exact source hashes
+and remaining warning/compiled macro/async requirements are recorded in the overlay
+and [dynamic binding evidence](../runtime/dynamic-bindings.md). None is certified
+implemented.

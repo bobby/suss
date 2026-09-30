@@ -1,4 +1,4 @@
-;; Human-reviewed overlay; these nine entries are partial, not compatibility completions.
+;; Human-reviewed overlay; these eleven entries are partial, not compatibility completions.
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
@@ -92,4 +92,24 @@
    :adaptation-path "docs/runtime/nominal.md"
    :alternative nil
    :tests ["crates/suss-compile/tests/portable_nominal.rs" "crates/suss-cli/tests/persistent_session.rs" "tests/oracle/portable-cases.json"]}
+  "macro:with-redefs:2301"
+  {:source-sha256 "a939fe037a20fc79caf0d4eeafa4c2e9039ce8a65eeca36dae2046feb4e1c837" :visibility :public
+   :arities {:fixed [] :variadic-min 1}
+   :dependencies ["macro:let:772" "special:set!" "shared ABI dynamic frames/try-invoke"]
+   :classification :adapted
+   :rationale "Original bounded HIR bootstrap preserves snapshot-before-initializer order, parallel publication, live cell lookup and reverse restoration through rooted GC frames. Source and native trap recovery execute; analyzer warnings, full compiled macro/core import and asynchronous dynamic context remain unfinished. No upstream source form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/dynamic-bindings.md"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_dynamic_bindings.rs" "crates/suss-cli/tests/portable_dynamic_bindings.rs" "tests/oracle/portable-cases.json"]}
+  "macro:binding:2329"
+  {:source-sha256 "886732e2e87dfdcc3d92e6d9326a0195b43e1b3951e84121addd4c6720ea9bdb" :visibility :public
+   :arities {:fixed [] :variadic-min 1}
+   :dependencies ["macro:with-redefs:2301" "cljs.analyzer/confirm-bindings"]
+   :classification :adapted
+   :rationale "Original bounded HIR bootstrap preserves snapshot-before-initializer order, parallel publication, live cell lookup and reverse restoration through rooted GC frames. Source and native trap recovery execute; analyzer warnings, full compiled macro/core import and asynchronous dynamic context remain unfinished. No upstream source form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/dynamic-bindings.md"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_dynamic_bindings.rs" "crates/suss-cli/tests/portable_dynamic_bindings.rs" "tests/oracle/portable-cases.json"]}
  }}

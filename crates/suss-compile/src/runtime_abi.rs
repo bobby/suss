@@ -4,6 +4,7 @@
 use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
+mod dynamic;
 mod exceptions;
 mod nominal;
 mod numeric;
@@ -112,7 +113,10 @@ impl Default for Manifest {
     fn default() -> Self {
         Self {
             runtime_abi: VERSION,
-            compiler: format!("{}+portable.{PORTABLE_FORMAT_VERSION}", env!("CARGO_PKG_VERSION")),
+            compiler: format!(
+                "{}+portable.{PORTABLE_FORMAT_VERSION}",
+                env!("CARGO_PKG_VERSION")
+            ),
             wasm_tools: "0.258.0".into(),
         }
     }
@@ -558,6 +562,7 @@ fn build_module() -> Vec<u8> {
             End,
         ],
     );
+    let dynamic_lookup = dynamic::lookup(&mut b);
     let mut binding_get = vec![
         LocalGet(0),
         RefCastNonNull(HeapType::Concrete(5)),
@@ -590,32 +595,13 @@ fn build_module() -> Vec<u8> {
             field_index: 0,
         },
     ]);
-    b.function("binding-get", &[VALUE], &[VALUE], &binding_get);
-    b.function(
-        "binding-set",
-        &[VALUE, VALUE],
-        &[],
-        &[
-            LocalGet(0),
-            RefCastNonNull(HeapType::Concrete(5)),
-            LocalGet(1),
-            StructSet {
-                struct_type_index: 5,
-                field_index: 0,
-            },
-            LocalGet(0),
-            RefCastNonNull(HeapType::Concrete(5)),
-            I32Const(1),
-            StructSet {
-                struct_type_index: 5,
-                field_index: 1,
-            },
-        ],
-    );
+    dynamic::binding_get(&mut b, dynamic_lookup, binding_get);
+    let binding_set = dynamic::binding_set(&mut b, dynamic_lookup);
     let primitives = numeric::intrinsics(&mut b, numeric_info);
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
-    exceptions::functions(&mut b, generic_invoke);
+    let try_invoke = exceptions::functions(&mut b, generic_invoke);
+    arithmetic_functions.extend(dynamic::functions(&mut b, binding_set, try_invoke));
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
     let mut tags = TagSection::new();
@@ -681,9 +667,32 @@ fn build_module() -> Vec<u8> {
     );
     // A rooted opaque protocol marker, distinct from booleans and callables.
     globals.global(
-        GlobalType { val_type: reference(DESCRIPTOR), mutable: false, shared: false },
-        &ConstExpr::extended([I64Const(0), I32Const(0), RefI31, I32Const(0), RefI31, I32Const(0), RefI31, StructNew(DESCRIPTOR)]),
+        GlobalType {
+            val_type: reference(DESCRIPTOR),
+            mutable: false,
+            shared: false,
+        },
+        &ConstExpr::extended([
+            I64Const(0),
+            I32Const(0),
+            RefI31,
+            I32Const(0),
+            RefI31,
+            I32Const(0),
+            RefI31,
+            StructNew(DESCRIPTOR),
+        ]),
     );
+    globals.global(
+        GlobalType {
+            val_type: VALUE,
+            mutable: true,
+            shared: false,
+        },
+        &ConstExpr::extended([I32Const(0), RefI31]),
+    );
+    b.exports
+        .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);
     b.exports
         .export("numeric-scratch-memory", ExportKind::Memory, 0);
     b.exports.export(

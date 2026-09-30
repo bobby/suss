@@ -19,6 +19,11 @@ pub struct Value {
 }
 #[derive(Debug, Clone)]
 pub enum Operation {
+    /// Snapshot operands, initializer operands and compiled body, in that order.
+    DynamicScope {
+        globals: Vec<Global>,
+        operands: Vec<ValueId>,
+    },
     /// Evaluated compiled regions, in body/handler/cleanup order.
     Try {
         regions: [ValueId; 3],
@@ -176,6 +181,42 @@ impl Lowerer {
         }
 
         Ok(Some(match &hir.kind {
+            Expression::Assign { global, value } => {
+                let value = operand!(value);
+                self.emit(
+                    Operation::GlobalWrite {
+                        global: global.clone(),
+                        value,
+                    },
+                    Type::Value,
+                    hir.span.clone(),
+                )
+            }
+            Expression::DynamicScope { bindings, body } => {
+                let globals = bindings
+                    .iter()
+                    .map(|(global, _)| global.clone())
+                    .collect::<Vec<_>>();
+                let mut operands = globals
+                    .iter()
+                    .map(|global| {
+                        self.emit(
+                            Operation::GlobalRead(global.clone()),
+                            Type::Value,
+                            hir.span.clone(),
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                for (_, value) in bindings {
+                    operands.push(operand!(value));
+                }
+                operands.push(operand!(body));
+                self.emit(
+                    Operation::DynamicScope { globals, operands },
+                    Type::Value,
+                    hir.span.clone(),
+                )
+            }
             Expression::Throw(value) => {
                 let value = operand!(value);
                 self.function.blocks[self.current].terminator = Terminator::Throw(value);
@@ -593,6 +634,18 @@ fn verify_recurrence(
         message: message.into(),
     };
     match &hir.kind {
+        Expression::Assign { value, .. } => verify_recurrence(value, targets, false)?,
+        Expression::DynamicScope { bindings, body } => {
+            if hir.ty != Type::Value
+                || !matches!(&body.kind, Expression::Function { parameters, .. } if parameters.is_empty())
+            {
+                return Err(error("HIR dynamic scope shape mismatch"));
+            }
+            for (_, value) in bindings {
+                verify_recurrence(value, targets, false)?;
+            }
+            verify_recurrence(body, &mut Vec::new(), false)?;
+        }
         Expression::Throw(value) => verify_recurrence(value, targets, false)?,
         Expression::Try { regions } => {
             if hir.ty != Type::Value {
@@ -697,7 +750,7 @@ fn operands(operation: &Operation) -> &[ValueId] {
         Operation::Arithmetic { arguments, .. } | Operation::Nominal { arguments, .. } => arguments,
         Operation::MakeClosure { captures, .. }
         | Operation::MakeGeneralClosure { captures, .. } => captures,
-        Operation::Call { operands } => operands,
+        Operation::Call { operands } | Operation::DynamicScope { operands, .. } => operands,
         Operation::Try { regions } => regions,
     }
 }
@@ -823,6 +876,23 @@ fn verify_function(
             }
             let result_ty = ty(inst.result)?;
             match &inst.operation {
+                Operation::DynamicScope { globals, operands } => {
+                    if globals.len() > i32::MAX as usize / 3
+                        || operands.len() != globals.len() * 2 + 1
+                        || result_ty != Type::Value
+                        || ty(*operands
+                            .last()
+                            .ok_or_else(|| fail("IR dynamic scope missing body"))?)?
+                            != Type::Closure(0)
+                    {
+                        return Err(fail("IR dynamic scope shape mismatch"));
+                    }
+                    for value in &operands[..globals.len()] {
+                        if ty(*value)? != Type::Value {
+                            return Err(fail("IR dynamic snapshot must be Value"));
+                        }
+                    }
+                }
                 Operation::Try { regions } => {
                     if result_ty != Type::Value
                         || ty(regions[0])? != Type::Closure(0)

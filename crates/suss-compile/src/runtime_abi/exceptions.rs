@@ -1,6 +1,6 @@
 //! Original typed language handler invocation, preserving exact payloads/cleanup.
 use super::*;
-pub(super) fn functions(b: &mut Builder, invoke: u32) {
+pub(super) fn functions(b: &mut Builder, invoke: u32) -> u32 {
     use Instruction::*;
     // Parameters body/handler/cleanup. Locals result/payload/pending/empty args.
     let body = vec![
@@ -77,5 +77,5 @@ pub(super) fn functions(b: &mut Builder, invoke: u32) {
         &[VALUE],
         &[(2, VALUE), (1, ValType::I32), (1, VALUE)],
         &body,
-    );
+    )
 }

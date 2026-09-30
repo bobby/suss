@@ -47,6 +47,12 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             throws |= matches!(&block.terminator, Terminator::Throw(_));
             for inst in &block.instructions {
                 match &inst.operation {
+                    Operation::DynamicScope {
+                        globals: targets, ..
+                    } => {
+                        names.insert("dynamic-invoke");
+                        globals.extend(targets.iter().cloned());
+                    }
                     Operation::Try { .. } => {
                         names.insert("try-invoke");
                     }
@@ -387,6 +393,29 @@ fn emit_function(
             .instruction(&If(BlockType::Empty));
         for inst in &block.instructions {
             match &inst.operation {
+                Operation::DynamicScope {
+                    globals: targets,
+                    operands,
+                } => {
+                    for (i, target) in targets.iter().enumerate() {
+                        let global = globals
+                            .iter()
+                            .position(|global| global == target)
+                            .expect("collected dynamic cell");
+                        function
+                            .instruction(&GlobalGet(global as u32))
+                            .instruction(&LocalGet(operands[i].0 as u32 + offset))
+                            .instruction(&LocalGet(operands[targets.len() + i].0 as u32 + offset));
+                    }
+                    function
+                        .instruction(&ArrayNewFixed {
+                            array_type_index: runtime_abi::ARGS,
+                            array_size: targets.len() as u32 * 3,
+                        })
+                        .instruction(&LocalGet(operands.last().unwrap().0 as u32 + offset))
+                        .instruction(&Call(index("dynamic-invoke")))
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
                 Operation::Try { regions } => {
                     for region in regions {
                         function.instruction(&LocalGet(region.0 as u32 + offset));
