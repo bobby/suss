@@ -4,8 +4,9 @@
 This is production runtime implementation, not a second source compiler or the
 M0 hand-written feasibility fixture. The legacy compiler has **not** migrated;
 the source differential corpus still reports 9 passing and 7 known failures.
-M2-03 is incomplete until reader/IR/backend integration executes the float and
-UTF-16 source cases on this ABI.
+The [portable compiler bootstrap](portable-pipeline.md) now executes float and
+UTF-16 source fragments on this ABI. M2-03 remains incomplete: general closure/
+callee lowering, dynamic checks, production loaders and corpus migration remain.
 
 Every runtime/fragment begins with the identical explicit recursive group from
 `prelude()`. Additional function types follow it. Construction indices are

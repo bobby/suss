@@ -48,6 +48,7 @@ mod lower;
 mod wasi;
 pub mod worlds;
 pub mod runtime_abi;
+pub mod portable;
 
 pub use config::{SussConfig, WorldConfig};
 pub use error::{CompileError, CompileResult};

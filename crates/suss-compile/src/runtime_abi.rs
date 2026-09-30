@@ -11,7 +11,7 @@ const STRING: u32 = 1;
 const ARGS: u32 = 2;
 const INVOKE: u32 = 3;
 const DESCRIPTOR: u32 = 6;
-const TYPE_COUNT: u32 = 10;
+pub(crate) const TYPE_COUNT: u32 = 10;
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
 
 fn reference(index: u32) -> ValType {

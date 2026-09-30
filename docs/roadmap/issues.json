@@ -147,7 +147,8 @@
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
       "evidence": [
         "Portable source-form API retains byte spans, ordered metadata, binary64/UTF-16 literals and conditional clauses. Eleven focused syntax/diagnostic tests and two compiler boundary tests execute parsed scalars through production ABI intrinsics.",
-        "Fourteen original scalar cases match freshly compiled pinned ClojureScript/tools.reader observations exactly. Legacy compiler/evaluator/component readers have not migrated; namespace ambiguity, aliases and phase imports remain acceptance work. See docs/runtime/reader-forms.md and handoff."
+        "Fourteen original scalar cases match freshly compiled pinned ClojureScript/tools.reader observations exactly. Legacy compiler/evaluator/component readers have not migrated; namespace ambiguity, aliases and phase imports remain acceptance work. See docs/runtime/reader-forms.md and handoff.",
+        "Portable replacement compiler now consumes lossless forms into span/metadata/binding-aware HIR, verifies explicit typed blocks/values/edge parameters and emits actual ABI fragments. Eleven execution/negative tests pass, including 14 compiled scalar cases and a separate freshly pinned 20-case source corpus. CLI/AOT/macros, namespace phases, generic closures/calls, dynamic checks, collections, dispatch/recur and source-corpus migration remain incomplete. See docs/runtime/portable-pipeline.md and handoff; this increment uses Refs links, not closing links."
       ]
     },
     {
@@ -166,14 +167,15 @@
       "validation": "cargo test -p suss-compile evaluation_order",
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
       "evidence": [
-        "Comparison operands normalized to temporaries, binary arithmetic ordered left-to-right, condition values inspected once, named arity diagnostics. General verified control-flow IR remains."
+        "Comparison operands normalized to temporaries, binary arithmetic ordered left-to-right, condition values inspected once, named arity diagnostics. General verified control-flow IR remains.",
+        "Portable replacement compiler now consumes lossless forms into span/metadata/binding-aware HIR, verifies explicit typed blocks/values/edge parameters and emits actual ABI fragments. Eleven execution/negative tests pass, including 14 compiled scalar cases and a separate freshly pinned 20-case source corpus. CLI/AOT/macros, namespace phases, generic closures/calls, dynamic checks, collections, dispatch/recur and source-corpus migration remain incomplete. See docs/runtime/portable-pipeline.md and handoff; this increment uses Refs links, not closing links."
       ]
     },
     {
       "id": "M2-03",
       "milestone": "M2",
       "title": "Runtime ABI v1 and closures",
-      "status": "planned",
+      "status": "in-progress",
       "dependencies": [
         "M0",
         "M1",
@@ -184,7 +186,10 @@
       "spec_sections": "4, 6",
       "validation": "cargo test -p suss-compile runtime_abi",
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
-      "evidence": []
+      "evidence": [
+        "Merged PR #41 introduced the production ABI v1 runtime; seven executing runtime_abi tests cover shared boxed f64/UTF-16, central fixed/variadic arity checks, initialized binding cells, captures/rebinding/forced GC and declared/actual prelude rejection before initializer effects. Runtime storage helpers require verified lowering; this is not full source compiler migration.",
+        "Portable replacement compiler now consumes lossless forms into span/metadata/binding-aware HIR, verifies explicit typed blocks/values/edge parameters and emits actual ABI fragments. Eleven execution/negative tests pass, including 14 compiled scalar cases and a separate freshly pinned 20-case source corpus. CLI/AOT/macros, namespace phases, generic closures/calls, dynamic checks, collections, dispatch/recur and source-corpus migration remain incomplete. See docs/runtime/portable-pipeline.md and handoff; this increment uses Refs links, not closing links."
+      ]
     },
     {
       "id": "M2-04",

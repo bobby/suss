@@ -70,8 +70,10 @@ rejection, without expanding the currently supported reader syntax.
 The legacy compiler, macro evaluator and component reader still use the old
 `parse`/`parse_all` EDN API. No lossless form is converted through that API here:
 such a conversion would lose surrogates, source spans or portable numeric meaning.
-Next, adapt HIR and the explicit evaluation-order IR to consume these forms and
-emit the shared runtime ABI, then switch AOT/REPL/macros through that one pipeline.
+The [portable compiler bootstrap](portable-pipeline.md) now consumes these forms
+in HIR and explicit control-flow IR and emits executing shared-ABI scalar/numeric
+fragments. Namespace/phase resolution, general closure/call lowering and dynamic
+checks remain integration work before switching AOT/REPL/macros through it.
 Retire the old parser/runtime representation after the replacement meets its
 acceptance tests. Namespace file resolution/ambiguity, aliases/refers/phases,
 `cljs.core` binding aliasing, full syntax-quote expansion and splicing conditionals

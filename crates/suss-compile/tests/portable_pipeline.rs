@@ -1,0 +1,532 @@
+mod support;
+use suss_compile::{portable, runtime_abi};
+use wasmtime::{Instance, Linker, Module, Store, Val};
+
+fn execute(source: &str) -> (Store<()>, Val) {
+    let bytes = portable::compile(source).unwrap();
+    execute_bytes(bytes)
+}
+
+fn execute_bytes(bytes: Vec<u8>) -> (Store<()>, Val) {
+    runtime_abi::verify_artifact(&bytes, &runtime_abi::Manifest::default()).unwrap();
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let mut linker = Linker::new(&engine);
+    linker
+        .instance(&mut store, "suss.runtime", runtime)
+        .unwrap();
+    let fragment = linker
+        .instantiate(&mut store, &Module::new(&engine, bytes).unwrap())
+        .unwrap();
+    let mut result = [Val::null_any_ref()];
+    fragment
+        .get_func(&mut store, "eval")
+        .unwrap()
+        .call(&mut store, &[], &mut result)
+        .unwrap();
+    store.gc(None).unwrap();
+    (store, result[0].clone())
+}
+
+#[test]
+fn compiled_literal_uses_shared_abi_and_binary64_rounding() {
+    let (mut store, value) = execute("9007199254740993");
+    let object = value
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        object.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
+        9007199254740992.0f64.to_bits()
+    );
+}
+
+fn number(source: &str) -> f64 {
+    let (mut store, value) = execute(source);
+    value
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap()
+        .field(&mut store, 0)
+        .unwrap()
+        .unwrap_f64()
+}
+#[test]
+fn empty_let_body_returns_nil() {
+    let (store, value) = execute("(let [x 1])");
+    assert_eq!(
+        value
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&store)
+            .unwrap()
+            .unwrap()
+            .get_u32(),
+        0
+    );
+}
+#[test]
+fn compiled_scalars_match_the_pinned_reader_observations() {
+    let corpus: serde_json::Value =
+        serde_json::from_str(include_str!("../../../tests/oracle/reader-cases.json")).unwrap();
+    assert_eq!(
+        corpus["upstream"],
+        "c4295f303100bbf5afac449242d30bca1126f1a1"
+    );
+    let mut ids = std::collections::HashSet::new();
+    for case in corpus["cases"].as_array().unwrap() {
+        assert!(ids.insert(case["id"].as_str().unwrap()));
+        let (mut store, value) = execute(case["source"].as_str().unwrap());
+        let reference = value.unwrap_anyref().unwrap();
+        let actual = match case["expected"]["tag"].as_str().unwrap() {
+            "f64" => {
+                let object = reference.as_struct(&store).unwrap().unwrap();
+                let bits = object.field(&mut store, 0).unwrap().unwrap_f64().to_bits();
+                serde_json::json!({"tag":"f64","bits":format!("{bits:016x}")})
+            }
+            "string" => {
+                let array = reference.as_array(&store).unwrap().unwrap();
+                let units = array
+                    .elems(&mut store)
+                    .unwrap()
+                    .map(|unit| unit.unwrap_i32() as u16)
+                    .collect::<Vec<_>>();
+                serde_json::json!({"tag":"string","units":units})
+            }
+            _ => panic!("unknown oracle tag"),
+        };
+        assert_eq!(actual, case["expected"], "{}", case["source"]);
+    }
+    assert_eq!(ids.len(), 14);
+}
+#[test]
+fn numeric_calls_and_truthiness_execute_with_portable_bits() {
+    for (source, expected) in [
+        ("(+ 9007199254740992 1)", 9007199254740992.0f64),
+        ("(- 0)", -0.0),
+        ("(+ -0.0)", -0.0),
+        ("(/ 4)", 0.25),
+        ("(+)", 0.0),
+        ("(*)", 1.0),
+        ("(- 10 3 2)", 5.0),
+        ("(/ 20 2 5)", 2.0),
+        ("(if 0 1 2)", 1.0),
+        ("(if \"\" 1 2)", 1.0),
+        ("(if nil 1 2)", 2.0),
+        ("(if false 1 2)", 2.0),
+        ("(if true 1 2)", 1.0),
+        ("(let [x 2 x (+ x 3)] (let [x 7] x) (* x 4))", 20.0),
+        ("(+ (if false (* 3 4) (/ 8 2)) (if true 2 9))", 6.0),
+        ("#?(:jvm 1 :cljs (suss.core/+ 1 (cljs.core/* 2 3)))", 7.0),
+    ] {
+        assert_eq!(number(source).to_bits(), expected.to_bits(), "{source}");
+    }
+    assert!(number("(/ 0 0)").is_nan());
+    assert_eq!(number("(/ 1 0)"), f64::INFINITY);
+}
+#[test]
+fn arithmetic_import_trace_observes_once_only_source_order_and_short_circuit() {
+    use wasmtime::Func;
+    let engine = support::engine();
+    let mut store = Store::new(&engine, Vec::<String>::new());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let mut linker = Linker::new(&engine);
+    linker
+        .instance(&mut store, "suss.runtime", runtime)
+        .unwrap();
+    linker.allow_shadowing(true);
+    for name in ["number-add", "number-multiply", "number-divide"] {
+        let function = runtime.get_func(&mut store, name).unwrap();
+        let ty = function.ty(&store);
+        let wrapper = Func::new(&mut store, ty, move |mut caller, args, results| {
+            caller.data_mut().push(name.into());
+            function.call(&mut caller, args, results)
+        });
+        linker
+            .define(&store, "suss.runtime", name, wrapper)
+            .unwrap();
+    }
+    let bytes = portable::compile("(+ (if (* 2 3) (/ 8 4) (* 9 9)) (* 3 4))").unwrap();
+    let fragment = linker
+        .instantiate(&mut store, &Module::new(&engine, bytes).unwrap())
+        .unwrap();
+    let mut result = [Val::null_any_ref()];
+    fragment
+        .get_func(&mut store, "eval")
+        .unwrap()
+        .call(&mut store, &[], &mut result)
+        .unwrap();
+    assert_eq!(
+        store.data(),
+        &[
+            "number-multiply",
+            "number-divide",
+            "number-multiply",
+            "number-add"
+        ]
+    );
+    store.gc(None).unwrap();
+    let value = result[0]
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap()
+        .field(&mut store, 0)
+        .unwrap()
+        .unwrap_f64();
+    assert_eq!(value, 14.0);
+}
+#[test]
+fn hir_retains_binding_identity_metadata_and_located_diagnostics() {
+    use portable::hir::Expression;
+    let source = "(let [^:first x 1] (let [x 2] x) ^:last x)";
+    let hir = portable::analyze(source).unwrap();
+    let Expression::Do(top) = hir.kind else {
+        panic!()
+    };
+    let Expression::Let { bindings, body } = &top[0].kind else {
+        panic!()
+    };
+    assert_eq!(bindings[0].metadata.len(), 1);
+    let outer = bindings[0].id;
+    let Expression::Do(items) = &body.kind else {
+        panic!()
+    };
+    let Expression::Let {
+        bindings: inner, ..
+    } = &items[0].kind
+    else {
+        panic!()
+    };
+    assert_ne!(outer, inner[0].id);
+    assert!(matches!(items[1].kind,Expression::Local(id) if id==outer));
+    assert_eq!(items[1].metadata.len(), 1);
+    assert_eq!(&source[items[1].span.clone()], "^:last x");
+    for (source, needle) in [
+        ("(let [x missing] x)", "missing"),
+        ("(+ 1 false)", "false"),
+        ("(let [+ 1] (+ 2 3))", "+"),
+        ("(other.core/+ 1 2)", "other.core/+"),
+    ] {
+        let error = portable::compile(source).unwrap_err();
+        assert_eq!(&source[error.span], needle);
+    }
+    for source in [
+        "(/)",
+        "(-)",
+        "(if 1)",
+        "(let [x] x)",
+        "(recur 1)",
+        "(+ (if true 1 nil) 2)",
+    ] {
+        assert!(portable::compile(source).is_err(), "{source}");
+    }
+}
+#[test]
+fn verifier_rejects_undefined_non_dominating_wrong_type_and_arity_values() {
+    use portable::{
+        hir::Type,
+        ir::{self, Operation, Terminator, ValueId},
+    };
+    let source = "(+ (if true 1 2) 3)";
+    let function = ir::lower(&portable::analyze(source).unwrap()).unwrap();
+    ir::verify(&function).unwrap();
+    let mut bad = function.clone();
+    if let Terminator::Branch { condition, .. } = &mut bad.blocks[0].terminator {
+        *condition = ValueId(usize::MAX);
+    }
+    assert!(
+        ir::verify(&bad)
+            .unwrap_err()
+            .message
+            .contains("no definition")
+    );
+    let mut bad = function.clone();
+    let then_value = bad.blocks[1].instructions[0].result;
+    if let Terminator::Branch { condition, .. } = &mut bad.blocks[0].terminator {
+        *condition = then_value;
+    }
+    assert!(ir::verify(&bad).unwrap_err().message.contains("dominate"));
+    let mut bad = function.clone();
+    bad.values[then_value.0].ty = Type::String;
+    assert!(
+        ir::verify(&bad)
+            .unwrap_err()
+            .message
+            .contains("literal result")
+    );
+    let mut bad = function.clone();
+    if let Terminator::Jump { arguments, .. } = &mut bad.blocks[1].terminator {
+        arguments.clear();
+    }
+    assert!(ir::verify(&bad).unwrap_err().message.contains("edge arity"));
+    let mut bad = function.clone();
+    for block in &mut bad.blocks {
+        for instruction in &mut block.instructions {
+            if let Operation::Arithmetic { arguments, .. } = &mut instruction.operation {
+                arguments.clear();
+            }
+        }
+    }
+    assert!(
+        ir::verify(&bad)
+            .unwrap_err()
+            .message
+            .contains("intrinsic arity")
+    );
+    assert!(portable::compile_ir(&bad).is_err());
+}
+
+#[test]
+fn malformed_hir_returns_a_located_lowering_diagnostic() {
+    use portable::hir::{BindingId, Expression, Hir, Type};
+    let hir = Hir {
+        span: 3..9,
+        metadata: Vec::new(),
+        ty: Type::Number,
+        kind: Expression::Local(BindingId(99)),
+    };
+    let error = portable::ir::lower(&hir).unwrap_err();
+    assert_eq!(error.span, 3..9);
+    assert!(error.message.contains("undefined binding"));
+}
+#[test]
+fn edge_parameter_replacements_are_parallel_in_executed_ir() {
+    use portable::{
+        hir::{Arithmetic, Literal, Type},
+        ir::{Block, Function, Instruction, Operation, Terminator, Value, ValueId},
+    };
+    let types = [
+        Type::Number,
+        Type::Number,
+        Type::Bool,
+        Type::Number,
+        Type::Number,
+        Type::Bool,
+        Type::Bool,
+        Type::Number,
+    ];
+    let literal = |result, value| Instruction {
+        result: ValueId(result),
+        operation: Operation::Literal(value),
+        span: 0..1,
+    };
+    let function = Function {
+        span: 0..1,
+        values: types
+            .into_iter()
+            .map(|ty| Value { ty, span: 0..1 })
+            .collect(),
+        blocks: vec![
+            Block {
+                parameters: vec![],
+                instructions: vec![
+                    literal(0, Literal::Number(10.0)),
+                    literal(1, Literal::Number(20.0)),
+                    literal(2, Literal::Bool(true)),
+                ],
+                terminator: Terminator::Jump {
+                    target: 1,
+                    arguments: vec![ValueId(0), ValueId(1), ValueId(2)],
+                },
+            },
+            Block {
+                parameters: vec![ValueId(3), ValueId(4), ValueId(5)],
+                instructions: vec![],
+                terminator: Terminator::Branch {
+                    condition: ValueId(5),
+                    consequent: 2,
+                    alternative: 3,
+                },
+            },
+            Block {
+                parameters: vec![],
+                instructions: vec![literal(6, Literal::Bool(false))],
+                terminator: Terminator::Jump {
+                    target: 1,
+                    arguments: vec![ValueId(4), ValueId(3), ValueId(6)],
+                },
+            },
+            Block {
+                parameters: vec![],
+                instructions: vec![Instruction {
+                    result: ValueId(7),
+                    operation: Operation::Arithmetic {
+                        operator: Arithmetic::Subtract,
+                        arguments: vec![ValueId(3), ValueId(4)],
+                    },
+                    span: 0..1,
+                }],
+                terminator: Terminator::Return(ValueId(7)),
+            },
+        ],
+    };
+    let (mut store, value) = execute_bytes(portable::compile_ir(&function).unwrap());
+    let result = value
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap()
+        .field(&mut store, 0)
+        .unwrap()
+        .unwrap_f64();
+    assert_eq!(result, 10.0); // sequential replacement would incorrectly produce zero
+}
+fn tagged(store: &mut Store<()>, value: &Val) -> serde_json::Value {
+    let reference = value
+        .unwrap_anyref()
+        .expect("unexpected Wasm null, not language nil");
+    if let Some(i31) = reference.as_i31(&*store).unwrap() {
+        return match i31.get_u32() {
+            0 => serde_json::json!({"tag":"nil"}),
+            2 => serde_json::json!({"tag":"bool","value":false}),
+            4 => serde_json::json!({"tag":"bool","value":true}),
+            _ => panic!("unknown i31 runtime value"),
+        };
+    }
+    if let Some(object) = reference.as_struct(&*store).unwrap() {
+        let fields = object.fields(&mut *store).unwrap().collect::<Vec<_>>();
+        let [Val::F64(bits)] = fields.as_slice() else {
+            panic!("unknown GC object layout")
+        };
+        return serde_json::json!({"tag":"f64","bits":format!("{bits:016x}")});
+    }
+    let array = reference
+        .as_array(&*store)
+        .unwrap()
+        .expect("unknown GC value");
+    assert!(matches!(
+        array.ty(&*store).unwrap().element_type(),
+        wasmtime::StorageType::I16
+    ));
+    let units = array
+        .elems(&mut *store)
+        .unwrap()
+        .map(|unit| unit.unwrap_i32() as u16)
+        .collect::<Vec<_>>();
+    serde_json::json!({"tag":"string","units":units})
+}
+#[test]
+fn compiled_source_cases_match_the_pinned_compiler_observations() {
+    let corpus: serde_json::Value =
+        serde_json::from_str(include_str!("../../../tests/oracle/portable-cases.json")).unwrap();
+    assert_eq!(corpus["schema"], 1);
+    assert_eq!(
+        corpus["upstream"],
+        "c4295f303100bbf5afac449242d30bca1126f1a1"
+    );
+    let mut ids = std::collections::HashSet::new();
+    for case in corpus["cases"].as_array().unwrap() {
+        assert!(ids.insert(case["id"].as_str().unwrap()));
+        let source = case["source"].as_str().unwrap();
+        let (mut store, value) = execute(source);
+        assert_eq!(tagged(&mut store, &value), case["expected"], "{source}");
+    }
+    assert_eq!(ids.len(), 20);
+}
+#[test]
+fn independently_compiled_fragment_values_remain_live_across_gc() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let mut linker = Linker::new(&engine);
+    linker
+        .instance(&mut store, "suss.runtime", runtime)
+        .unwrap();
+    let run = |store: &mut Store<()>, source: &str| {
+        let bytes = portable::compile(source).unwrap();
+        runtime_abi::verify_artifact(&bytes, &runtime_abi::Manifest::default()).unwrap();
+        let module = Module::new(&engine, bytes).unwrap();
+        let instance = linker.instantiate(&mut *store, &module).unwrap();
+        let mut result = [Val::null_any_ref()];
+        instance
+            .get_func(&mut *store, "eval")
+            .unwrap()
+            .call(&mut *store, &[], &mut result)
+            .unwrap();
+        result[0].clone()
+    };
+    let old = run(&mut store, r#""\uD800😀""#);
+    store.gc(None).unwrap();
+    let new = run(&mut store, "(let [x 9007199254740992] (+ x 1))");
+    store.gc(None).unwrap();
+    assert_eq!(
+        tagged(&mut store, &old),
+        serde_json::json!({"tag":"string","units":[0xd800,0xd83d,0xde00]})
+    );
+    assert_eq!(
+        tagged(&mut store, &new),
+        serde_json::json!({"tag":"f64","bits":"4340000000000000"})
+    );
+}
+
+#[test]
+fn lexical_bindings_hide_the_bootstrap_let_macro() {
+    let source = "(let [let 7] (let [] 1))";
+    let error = portable::compile(source).unwrap_err();
+    assert_eq!(&source[error.span], "let");
+    assert!(error.message.contains("closure lowering"));
+    // True special forms remain special even when their names are locals.
+    assert_eq!(number("(let [if 7 do 8] (if true (do 1 2) 3))"), 2.0);
+    // A nested local hiding let does not escape its lexical scope.
+    assert_eq!(number("(do (let [let 7] let) (let [x 3] x))"), 3.0);
+}
+
+#[test]
+fn public_hir_negation_executes_and_malformed_arithmetic_is_rejected() {
+    use portable::hir::{Arithmetic, Expression, Hir, Literal, Type};
+    let make = |operator, count| Hir {
+        span: 4..12,
+        metadata: Vec::new(),
+        ty: Type::Number,
+        kind: Expression::Arithmetic {
+            operator,
+            arguments: (0..count)
+                .map(|_| Hir {
+                    span: 7..8,
+                    metadata: Vec::new(),
+                    ty: Type::Number,
+                    kind: Expression::Literal(Literal::Number(0.0)),
+                })
+                .collect(),
+        },
+    };
+    let ir = portable::ir::lower(&make(Arithmetic::Negate, 1)).unwrap();
+    let (mut store, value) = execute_bytes(portable::compile_ir(&ir).unwrap());
+    assert_eq!(
+        tagged(&mut store, &value),
+        serde_json::json!({"tag":"f64","bits":"8000000000000000"})
+    );
+    for (operator, count) in [
+        (Arithmetic::Negate, 0),
+        (Arithmetic::Negate, 2),
+        (Arithmetic::Subtract, 0),
+        (Arithmetic::Divide, 0),
+    ] {
+        let error = portable::ir::lower(&make(operator, count)).unwrap_err();
+        assert_eq!(error.span, 4..12);
+        assert!(error.message.contains("arity"));
+    }
+}

@@ -91,3 +91,14 @@ parsed scalars into generated ABI runtime objects, inspecting them after GC.
 These are reader-boundary observations, not additional compiler compatibility
 passes; the shared full-source corpus remains 9 passing/7 exact failures/0 skips.
 The legacy compiler still uses its EDN reader. See [portable forms](../../docs/runtime/reader-forms.md).
+
+## Portable compiler bootstrap
+
+`scripts/test-portable-pipeline-oracle.sh` compiles and executes the separate
+original 20-case `portable-cases.json` corpus in pinned ClojureScript/Node, checks
+strict typed observations, then executes generated shared-ABI fragments in Rust.
+It uses an ignored generated `.cljc` fixture so reader conditionals are allowed.
+This source oracle covers the current scalar/let/do/if/numeric bootstrap only.
+The 16-case legacy source corpus and 14-case reader corpus retain their separate
+counts and purposes; known failures are unchanged. See the
+[compiler contract](../../docs/runtime/portable-pipeline.md) for remaining work.
