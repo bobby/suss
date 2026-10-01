@@ -2,6 +2,17 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:root-obj:1486"
+  {:source-sha256 "8a808825ab5fd049e3f1d28932a655074c2d1930a2b2175080edf16f78734951" :visibility :private
+   :arities {:fixed [0] :variadic-min nil}
+   :dependencies ["runtime:IHash:758" "runtime default Object prototype" "owner-held identity UID"]
+   :classification :adapted
+   :rationale "Retained private root-object dependency and complete standalone default IHash setup, with explicit storage adaptations. Preserves source live lookup, root-object zero special case and nominal/default dispatch. Execution and fresh primary certification are pending; no compatibility success is claimed. Public hash, collection composition, compiled macros and private-var metadata remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/root-object.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_default_hash.rs" "tests/oracle/default-hash-cases.json" "docs/runtime/default-identity-hash.md"]}
+
   "runtime:IFn:586"
   {:source-sha256 "229cbe05e42077c3010ce220532bce39cee20c8c7ac31328547e674001a7050c" :visibility :public
    :arities nil

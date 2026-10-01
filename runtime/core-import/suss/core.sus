@@ -1212,6 +1212,8 @@
   (when (and (not (nil? o))
              (satisfies? IMeta o))
     (-meta o))))
+
+(def root-obj (fn [] (suss.bootstrap/object-default-prototype)))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
@@ -1234,3 +1236,10 @@
 (extend-type default
   IEquiv
   (-equiv [x o] (identical? x o)))
+
+(extend-type default
+  IHash
+  (-hash [o]
+    (if (identical? o (root-obj))
+      0
+      (suss.bootstrap/identity-uid o))))

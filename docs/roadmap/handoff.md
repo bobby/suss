@@ -7535,3 +7535,30 @@ while root owns the heavy slot. Previous PR107 full90116 and exact-head CI
 new reviewed commit's successful complete CI before PR95 readiness; no merge or
 issue/milestone closure. Next continue retained collection/vector dependencies
 and remaining M2–M9 acceptance gates.
+
+## Default IHash source integration — 2026-10-01
+
+Prior goal turn made progress: PR107 implementation and full-baseline evidence
+committed/pushed at160ccdc; independent reviewer dispatched, no merges. Review
+now found an IFn receiver defect; fixing it reveals the original zero-argument
+MetaFn explicit invocation as a strict wrong-arity design boundary. Preserve its
+primary observation and assert native error separately; no JS argument-padding
+adapter is authorized. Reviewer retains heavy slot for fixes and certification.
+
+Root isolated portable/core-default-identity-hash from160ccdc prepares the next
+source dependency while review runs. Added zero-arity private adapter to existing
+canonical Object prototype, whole retained root-obj and default IHash setup,
+explicit source/patch hashes and stricter standalone patch provenance. Generated
+selection97/artifacts101/reviews190partial875unassessed. Static import/provenance
+and Python81 pass;18 new observations are PROVISIONAL, native tests unexecuted.
+No cargo/JVM/Node runs overlap reviewer. Rebase on final reviewed PR107 before
+executing fresh oracle/native/focused/full and opening its separately reviewed
+PR. Public hash retains its Date/case dependencies; do not remove branches to
+make a smaller function pass. No issue or milestone acceptance claimed.
+
+Review107 fresh29279 terminal0:34 primary observations/native4 pass, including
+33 matching+1 preserved exact zero-invoke strict boundary. Canonical IFn receiver
+fix keeps unrelated user IFn protocols ordinary. ABI45 focused46577 is live;
+reviewer retains heavy slot before mandatory full. Root default-IHash corpus now
+21 provisional cases, adding direct method priority/captured dispatcher/live root
+and root UID independence; native and oracle remain unexecuted.

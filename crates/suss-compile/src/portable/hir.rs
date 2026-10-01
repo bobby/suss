@@ -277,6 +277,7 @@ pub enum Nominal {
     NamedGet,
     NamedSet,
     NativeObjectFactory,
+    NativeObjectDefaultPrototype,
     NativeObjectGet,
     NativeObjectSet,
     NativeObjectStrictSet,
@@ -304,7 +305,7 @@ impl Nominal {
         count <= i32::MAX as usize
             && match self {
                 Self::Array => true,
-                Self::NativeObjectFactory => count == 0,
+                Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::LanguageError => count == 1,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
@@ -1077,6 +1078,7 @@ impl Analyzer {
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
             let operation = match symbol.name.as_str() {
                 "object-factory" => Some(Nominal::NativeObjectFactory),
+                "object-default-prototype" => Some(Nominal::NativeObjectDefaultPrototype),
                 "error" => Some(Nominal::LanguageError),
                 "object-get" => Some(Nominal::NativeObjectGet),
                 "object-set" => Some(Nominal::NativeObjectSet),
