@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "4081090780e8ca6ad14373f69ecafc6002c1113ea2de51254e3c0a14f8bec207",
+  "replacement": "(def swap!\n  (fn\n    ([a f] (if (instance? Atom a) (reset! a (f (.-state a)))\n             (throw (ex-info \"Bootstrap swap! requires an Atom\" nil))))\n    ([a f x] (if (instance? Atom a) (reset! a (f (.-state a) x))\n               (throw (ex-info \"Bootstrap swap! requires an Atom\" nil))))\n    ([a f x y] (if (instance? Atom a) (reset! a (f (.-state a) x y))\n                 (throw (ex-info \"Bootstrap swap! requires an Atom\" nil))))))",
+  "rationale": "Bounded M3 GC-owned atom storage foundation. Preserve shared descriptor identity and state/meta/validator/watches fields, direct dereference, identity equality/hash and fixed mutation call order. Full IWatchable, atom options, validators, protocol fallback and variadic swap remain unimplemented for M7; unsupported bootstrap validator/watch state raises an explicit error before mutation, never a no-op or compatibility success."
+}

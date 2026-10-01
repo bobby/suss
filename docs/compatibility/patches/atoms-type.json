@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "a915088d1555e30b568ed1cbb29d18f26f1a7ef57a728f7c6c8bc15dc282a48b",
+  "replacement": "(deftype Atom [^:mutable state ^:mutable meta ^:mutable validator ^:mutable watches]\n  Object\n  (equiv [this other] (-equiv this other))\n  IAtom\n  IEquiv\n  (-equiv [o other] (identical? o other))\n  IDeref\n  (-deref [_] state)\n  IMeta\n  (-meta [_] meta)\n  IHash\n  (-hash [this] (suss.bootstrap/identity-uid this)))",
+  "rationale": "Bounded M3 GC-owned atom storage foundation. Preserve shared descriptor identity and state/meta/validator/watches fields, direct dereference, identity equality/hash and fixed mutation call order. Full IWatchable, atom options, validators, protocol fallback and variadic swap remain unimplemented for M7; unsupported bootstrap validator/watch state raises an explicit error before mutation, never a no-op or compatibility success."
+}

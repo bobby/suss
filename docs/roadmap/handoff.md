@@ -8443,3 +8443,93 @@ frontend-only change. All root cargo/JVM/Node work is terminal; heavy slot is
 released for the mandatory new PR reviewer. Exact reviewed-head CI remains a
 gate. Next implementation task remains real atom persistence for #12; full M3
 scope is preserved and no #12/#13/#14/#15 closure is claimed.
+
+## M3 atom persistence regression started — 2026-10-01
+
+PR118 published from be9dd78d8a37c14c3c5a4793ab7c0928c4d07b20, Refs#12/#15.
+Independent review_pr118 approves this partial frontend slice with no significant
+findings. Reviewer focused85139 terminal0,7passed/0failed/0ignored,
+/private/tmp/suss-pr118-review-focus.log; extra command probes verify complete
+compile-error isolation, executing fuel-trap recovery, multiline strings and
+callable display. Reviewer corrected only an extra probe's constructor-result
+expectation (function rather than type); no source or tests changed. CI36917068741
+is live on the approved head. Reviewer now watches existing remote CI via17410,
+/private/tmp/suss-pr118-ci-watch.log, with no local heavy tools. It must inspect
+final logs/head/state before readiness; no merges or M3 closure.
+
+New isolated portable/m3-atom-storage worktree /private/tmp/suss-m3-atom-storage
+starts from approved118be9, with real detached upstreamc4295f30. One additional
+actual-command regression is intentionally failing, not yet committed/published:
+persistent_session_command_repl_keeps_atoms_and_their_captured_values. It covers
+atom mutation across inputs, captured old function contents, deref through a
+closure and defonce not replacing the existing atom. Before70458 terminal101,
+/private/tmp/suss-m3-atoms-before.log, proves located unresolved atom/deref/swap!/
+reset! diagnostics; no atom value was executed or claimed successful. Parent7
+frontend tests remain unchanged. No production atom code has been added yet.
+
+Root investigated pinned core.cljs Atom4613, atom4642, reset!4661, swap!4694,
+IAtom895/IReset898/ISwap903/IWatchable820 and existing retained IDeref/deref. Current
+core artifact has no Atom constructor and command Session has no automatic full
+core loading. Next implement real GC-owned storage/operations and canonical core
+provisioning without source replay, with source/hash/license provenance for any
+retained forms and independently decoded GC/order/arity/error evidence. Do not
+substitute fake constructor fixtures, no-op watch/validator stubs or unknown
+successes for state. Full watcher/validator/CAS compatibility remains separately
+tracked M7, but M3 atom persistence must use actual owned values. Preserve the
+accepted design; any intended semantic deviation needs a dated decision/evidence.
+All root local cargo/JVM/Node handles are terminal; root owns the available heavy
+slot. M3 remains active with full #12/#13/#14/#15 acceptance scope.
+
+## M3 compiled atom storage — 2026-10-01
+
+PR118 final approved be9dd78 CI36917068741 completed SUCCESS. Independent
+reviewer retrieved final log /private/tmp/suss-pr118-final-ci.log:850passed/0failed/
+17existing ignored, all7 command guards and final reader doctests. Readiness
+controller4577 and watcher17410 both terminal0. GitHub confirms OPEN/MERGEABLE/
+not draft/head unchanged. No merge; issues12–15 and M3 remain open.
+
+Atom child portable/m3-atom-storage is based on approved118be9. Five provenance-
+tracked forms now provide real descriptor-backed GC state; runtime ABI2 unchanged.
+Session::new_repl compiles the canonical retained core artifact once in its Store
+and restores the user namespace. Native REPL uses that profile; reset provisions
+a replacement before discarding prior state. Minimal Session::new remains available.
+This is a partial core profile, never a claim that pending core dependencies work.
+
+Actual command regression failed before implementation70458 terminal101 with
+located unresolved atom/deref/swap!/reset! diagnostics. After95286 terminal0:all8
+command tests pass. Native98376 terminal0:3 atom/GC/order/reset guards pass.
+Expanded80655 terminal0:8 command/4 native pass including28 independently decoded
+source observations. Fresh pinned oracle43883 terminal0 matches all28 exactly,
+/private/tmp/suss-m3-atoms-oracle.log. Pinned ordinary redefinition warning retained.
+No source constructor fixture, printer/equality success decoder or skip.
+
+Strengthened error decoder39354 terminal101 initially assumed all throws have
+ABI2 Error layout, but ex-info uses real nominal ExceptionInfo storage. First
+replacement24032 terminal101 did not change the formatted decoder. Corrected
+72248 terminal0:8 command/4 native pass, /private/tmp/suss-m3-atoms-final-focus2.log.
+Tests separately decode runtime arity Error and ExceptionInfo message/data/cause
+fields, assert exact UTF16 messages, unchanged atom state and next-input recovery.
+
+Python/import82602 terminal0:86 tests,1065 inventory declarations verified,211
+partial reviews/854 unassessed,120 licensed artifact files verified (116 selections).
+Full workspace20454 is running in /private/tmp/suss-m3-atoms-full.log; do not claim
+completion until terminal full evidence. Source/tests/runtime inputs frozen during
+this baseline. Root owns the only local heavy slot.
+
+Unsupported atom options, IWatchable, validators/watches, protocol fallback,
+variadic swap!, reset-vals!/swap-vals!/CAS remain explicit in docs/runtime/atoms.md.
+Non-nil validator/watch fields fail before reset mutation instead of silently being
+ignored. Complete atom semantics remain M7; M3 progress must still fulfill every
+criterion in issues12–15/design sections6–7/9. Next publish this atom branch with
+Refs12, mandatory independent review/fixes and exact final-head CI; then namespace
+command loading/reload/cache/privacy, isolated compiled macros/versioned bootstrap
+and removal of the tree evaluator, running/pending-I/O cancellation and live heap
+accounting. Do not merge PRs or claim full M3 from this slice.
+
+Atom full baseline20454 terminal0:855passed/0failed/17preexisting ignored across
+73 reported groups through final reader doctests, /private/tmp/suss-m3-atoms-full.log.
+Focused source/tests were frozen throughout; only documentation/evidence changed
+after focused gates. No RUSTFLAGS. Full command:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo
+test --workspace --locked -- --test-threads=2. Local heavy slot is released pending
+mandatory atom PR review. No issue closure/readiness from local success alone.

@@ -731,7 +731,7 @@ fn run_repl() {
     use std::io::{self, BufRead, IsTerminal};
     use suss_cli::{portable_repl, portable_session::Session};
 
-    let mut session = match Session::new() {
+    let mut session = match Session::new_repl() {
         Ok(session) => session,
         Err(error) => {
             eprintln!("Error: {error}");

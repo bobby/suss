@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "701c04c97059f656292eeb7ef36105e216e41127212328185090824a664a8cba",
+  "replacement": "(def atom (fn [x] (Atom. x nil nil nil)))",
+  "rationale": "Bounded M3 GC-owned atom storage foundation. Preserve shared descriptor identity and state/meta/validator/watches fields, direct dereference, identity equality/hash and fixed mutation call order. Full IWatchable, atom options, validators, protocol fallback and variadic swap remain unimplemented for M7; unsupported bootstrap validator/watch state raises an explicit error before mutation, never a no-op or compatibility success."
+}

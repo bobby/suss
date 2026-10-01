@@ -2,6 +2,61 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:IAtom:895"
+  {:source-sha256 "c02346e6ea4f47875fa0cdca709e77a0aa9accbaab297880904502ac8df0fd1f"
+   :visibility :public
+   :arities nil
+   :dependencies ["IDeref/IMeta/IEquiv/IHash" "shared object storage and identity-uid" "Atom/instance?/reset!/ex-info"]
+   :classification :portable
+   :rationale "Bounded M3 GC-owned atom storage foundation. Preserve shared descriptor identity and state/meta/validator/watches fields, direct dereference, identity equality/hash and fixed mutation call order. Full IWatchable, atom options, validators, protocol fallback and variadic swap remain unimplemented for M7; unsupported bootstrap validator/watch state raises an explicit error before mutation, never a no-op or compatibility success."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/persistent_repl.rs" "crates/suss-cli/tests/portable_atoms.rs" "tests/oracle/atom-cases.json" "docs/runtime/atoms.md"]}
+  "runtime:Atom:4613"
+  {:source-sha256 "a915088d1555e30b568ed1cbb29d18f26f1a7ef57a728f7c6c8bc15dc282a48b"
+   :visibility :public
+   :arities nil
+   :dependencies ["IDeref/IMeta/IEquiv/IHash" "shared object storage and identity-uid" "Atom/instance?/reset!/ex-info"]
+   :classification :adapted
+   :rationale "Bounded M3 GC-owned atom storage foundation. Preserve shared descriptor identity and state/meta/validator/watches fields, direct dereference, identity equality/hash and fixed mutation call order. Full IWatchable, atom options, validators, protocol fallback and variadic swap remain unimplemented for M7; unsupported bootstrap validator/watch state raises an explicit error before mutation, never a no-op or compatibility success."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/atoms-type.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/persistent_repl.rs" "crates/suss-cli/tests/portable_atoms.rs" "tests/oracle/atom-cases.json" "docs/runtime/atoms.md"]}
+  "runtime:atom:4642"
+  {:source-sha256 "701c04c97059f656292eeb7ef36105e216e41127212328185090824a664a8cba"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min 1}
+   :dependencies ["IDeref/IMeta/IEquiv/IHash" "shared object storage and identity-uid" "Atom/instance?/reset!/ex-info"]
+   :classification :adapted
+   :rationale "Bounded M3 GC-owned atom storage foundation. Preserve shared descriptor identity and state/meta/validator/watches fields, direct dereference, identity equality/hash and fixed mutation call order. Full IWatchable, atom options, validators, protocol fallback and variadic swap remain unimplemented for M7; unsupported bootstrap validator/watch state raises an explicit error before mutation, never a no-op or compatibility success."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/atoms-new.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/persistent_repl.rs" "crates/suss-cli/tests/portable_atoms.rs" "tests/oracle/atom-cases.json" "docs/runtime/atoms.md"]}
+  "runtime:reset!:4661"
+  {:source-sha256 "b13352f91b0996d80f117b28b9df67f9173d038ce015c0f94afa74a12b1f4289"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["IDeref/IMeta/IEquiv/IHash" "shared object storage and identity-uid" "Atom/instance?/reset!/ex-info"]
+   :classification :adapted
+   :rationale "Bounded M3 GC-owned atom storage foundation. Preserve shared descriptor identity and state/meta/validator/watches fields, direct dereference, identity equality/hash and fixed mutation call order. Full IWatchable, atom options, validators, protocol fallback and variadic swap remain unimplemented for M7; unsupported bootstrap validator/watch state raises an explicit error before mutation, never a no-op or compatibility success."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/atoms-reset.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/persistent_repl.rs" "crates/suss-cli/tests/portable_atoms.rs" "tests/oracle/atom-cases.json" "docs/runtime/atoms.md"]}
+  "runtime:swap!:4694"
+  {:source-sha256 "4081090780e8ca6ad14373f69ecafc6002c1113ea2de51254e3c0a14f8bec207"
+   :visibility :public
+   :arities {:fixed [2 3 4] :variadic-min 5}
+   :dependencies ["IDeref/IMeta/IEquiv/IHash" "shared object storage and identity-uid" "Atom/instance?/reset!/ex-info"]
+   :classification :adapted
+   :rationale "Bounded M3 GC-owned atom storage foundation. Preserve shared descriptor identity and state/meta/validator/watches fields, direct dereference, identity equality/hash and fixed mutation call order. Full IWatchable, atom options, validators, protocol fallback and variadic swap remain unimplemented for M7; unsupported bootstrap validator/watch state raises an explicit error before mutation, never a no-op or compatibility success."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/atoms-swap.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/persistent_repl.rs" "crates/suss-cli/tests/portable_atoms.rs" "tests/oracle/atom-cases.json" "docs/runtime/atoms.md"]}
   "runtime:VectorNode:5575"
   {:source-sha256 "2a8adf3c73a45552f9b9cf903b17a45d1565b5d0b792b5aa16aa0620bb8a3e33"
    :visibility :public

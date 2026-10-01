@@ -558,6 +558,31 @@
       "id": "runtime:pop-tail:5658",
       "source-sha256": "07376f027a1a74917ec41310b6874d9ede3177bd607721c2876de2a24e5874b1",
       "patch": "docs/compatibility/patches/vector-pop-tail.json"
+    },
+    {
+      "id": "runtime:IAtom:895",
+      "source-sha256": "c02346e6ea4f47875fa0cdca709e77a0aa9accbaab297880904502ac8df0fd1f",
+      "patch": null
+    },
+    {
+      "id": "runtime:Atom:4613",
+      "source-sha256": "a915088d1555e30b568ed1cbb29d18f26f1a7ef57a728f7c6c8bc15dc282a48b",
+      "patch": "docs/compatibility/patches/atoms-type.json"
+    },
+    {
+      "id": "runtime:atom:4642",
+      "source-sha256": "701c04c97059f656292eeb7ef36105e216e41127212328185090824a664a8cba",
+      "patch": "docs/compatibility/patches/atoms-new.json"
+    },
+    {
+      "id": "runtime:reset!:4661",
+      "source-sha256": "b13352f91b0996d80f117b28b9df67f9173d038ce015c0f94afa74a12b1f4289",
+      "patch": "docs/compatibility/patches/atoms-reset.json"
+    },
+    {
+      "id": "runtime:swap!:4694",
+      "source-sha256": "4081090780e8ca6ad14373f69ecafc6002c1113ea2de51254e3c0a14f8bec207",
+      "patch": "docs/compatibility/patches/atoms-swap.json"
     }
   ],
   "loader": {
