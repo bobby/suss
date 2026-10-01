@@ -5660,3 +5660,40 @@ Log /private/tmp/suss-pr94-review-provenance-nan-fixed.log. All Cargo/JVM/Node r
 graphs are terminal. Next root requires exact reviewed-head CI before readiness;
 then continue retained persistent collections and full hashing/macros. No merge
 or issue closure. The shared test slot is released after the review push finishes.
+
+
+## Object final CI gate and bitwise preparation — 2026-10-01
+
+PR93 reviewed final head e958472c3d1514eedda07f4c2966d4a1e4243001 passed
+CI36813244361. Root inspected /private/tmp/suss-pr93-final-ci.log: Python71,
+82 partial/983 unassessed reviews,32 artifacts, enabled Object2 and ABI20,
+and the required full workspace baseline. PR93 is marked ready; no merge.
+PR94 reviewed final head74120cb54a9abac458825658632f41fd9eb8d8ad is still
+awaiting CI36814856668; its local reviewed full baseline passed. Do not claim
+remote success or readiness until that exact run is inspected. Both remain Refs;
+complete issue acceptance is not fulfilled and no issue is closed by this slice.
+
+New unpublished worktree /private/tmp/suss-core-bitwise-hash starts at reviewed
+PR94. Original37-case corpus covers signed wrapping, shifts, imul, scalar coercion,
+computed/variadic calls and order. Fresh pinned primary observations match exactly;
+native session29394 ended101 at unresolved int. Aggregated session97954 ended101
+with36 unresolved observations and one matching local-shadow case. An unrelated
+unsupported defn in the new order probe was replaced with def/fn; fresh final
+session44068 ended101 with37 exact primary observations and36 unresolved native
+names, now including the intended bit-or failure. Logs:
+/private/tmp/suss-bitwise-hash-preparation.log,
+/private/tmp/suss-bitwise-hash-native-red.log,
+/private/tmp/suss-bitwise-hash-preparation-final-red.log.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-bitwise-hash-oracle.sh`.
+No failures are ignored or accepted into the passing baseline. This red test is
+local preparation, not a new published PR or implementation claim.
+
+Separate pinned arity graph11590 ended0 and Node ended0, producing24 diagnostic
+observations in /private/tmp/suss-bitwise-arity-observations.json. Captured wrappers
+may fill undefined/ignore extra args; direct macros are a separate surface.
+These diagnostic observations are not additional native matches. See
+ docs/runtime/bitwise-hashing.md. No source forms copied and no review count,
+source-selection, issue or milestone status changes. All local Cargo/JVM/Node
+processes are terminal. Next implement bounded original bitwise coercion and
+certify advertised arities with retained-source provenance before a new PR.
+Complete List/Cons/IndexedSeq and M2–M9 remain open; no merge or issue closure.
