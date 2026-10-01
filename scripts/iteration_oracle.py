@@ -15,11 +15,14 @@ def generate():
 
 
 if __name__ == '__main__':
-    oracle.CORPUS = oracle.ROOT / 'tests/oracle/iteration-cases.json'
-    oracle.OBSERVATIONS = oracle.ROOT / 'tests/oracle/out/iteration-observations.json'
-    if sys.argv[1:] == ['generate']:
+    boundary = sys.argv[1:] in (['generate', 'boundary'], ['compare', 'boundary'])
+    corpus = 'iteration-length-boundary.json' if boundary else 'iteration-cases.json'
+    oracle.CORPUS = oracle.ROOT / 'tests/oracle' / corpus
+    observation = 'iteration-length-boundary-observations.json' if boundary else 'iteration-observations.json'
+    oracle.OBSERVATIONS = oracle.ROOT / 'tests/oracle/out' / observation
+    if sys.argv[1:] in (['generate'], ['generate', 'boundary']):
         generate()
-    elif sys.argv[1:] == ['compare']:
+    elif sys.argv[1:] in (['compare'], ['compare', 'boundary']):
         oracle.compare()
     else:
-        raise SystemExit('usage: iteration_oracle.py generate|compare')
+        raise SystemExit('usage: iteration_oracle.py generate|compare [boundary]')

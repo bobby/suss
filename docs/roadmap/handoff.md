@@ -7088,3 +7088,51 @@ mandatory PR review/fixes/final-head CI before readiness. No merges/closures.
 No RUSTFLAGS; shared target/build2/test threads2. Hash/printing/index helpers,
 generic reverse, other persistent collections/lazy/chunked/transducers and full
 compiled macro/release acceptance remain unfinished.
+
+PR102 READY, still unmerged: revieweda9f19e8650c1c2079e2c5066ebde076f9ea284a8,
+exact-head CI36842775585 SUCCESS completed2026-10-01T09:42:17Z; root inspected
+/private/tmp/suss-pr102-final-ci.log, updated body and ran gh pr ready102.
+PR103 reviewere11771eb368a75b559a31a90a8737440a12a4a66 pushed, no significant
+production finding; fresh65reduction/81control, Python80/import86/setup4/
+reviews172+893/HIR1/full40341 terminal0. All reviewer handles terminal and slot
+released explicitly. Final-head CI36844766535 live; PR103 stays draft.
+
+Iteration preparationdf6dddf rebased onto reviewede11771eb; handoff append conflict
+resolved preserving both complete sections. Initial fresh47858 ended101: all53
+primary observations exact, native failed at named array .length write, an existing
+explicit unsupported named-property adapter. Source iterator/RSeq only read length;
+accepted contract has no general JS/Closure interoperability promise. Preserved
+that exact source/expected object in iteration-length-boundary.json, separately
+freshcertified and native required typed-error/storage/GC recovery. Other52 unchanged.
+No excluded core declaration, fake native match or skipped failure.
+
+Fresh8957 ended101:52shared+1boundary primary exact, native new provisional guard
+wrongly expected Object fixed-method extras to error. Prior pinned Object semantics
+ignore evaluated extras. Removed only that new error assertion, added a primary/
+native operand-effects case; final26590 ended0 with53shared matches,1separate
+primary boundary and2native tests. Log
+/private/tmp/suss-iteration-primary53-boundary1-final.log. Initial failed logs
+/private/tmp/suss-iteration-primary53.log and
+/private/tmp/suss-iteration-primary52-boundary1.log retained. Corpus test now prints
+case ID/source on eval errors and independently decodes each exactly-once result.
+New native saved iterator/reverse views survive GC, source errors leave underlying
+array intact, subsequent numeric growth/live reads and reverse fixed count execute.
+
+Python65494 terminal0,80 pass /private/tmp/suss-iteration-python.log;
+import90/setup4/reviews176partial+889unassessed/diff checks pass. Review rationale
+now records actual evidence; reproducible manifest regenerated. Full60603 live,
+/private/tmp/suss-iteration-full.log, root exclusively owns heavy slot. Shared
+Cargo target/build2, --locked/--test-threads=2, no RUSTFLAGS. Required terminal
+baseline before final commit/push/draft PR against103; mandatory independent
+review/fixes/full/exact final reviewed-head CI before readiness. No merge.
+Hash/printing/index helpers, generic reverse, other collections/lazy/chunked/
+transducers/compiled macros and M2–M9 acceptance remain incomplete.
+
+Full60603 terminal0; root inspected /private/tmp/suss-iteration-full.log through
+final reader doc tests. Required workspace baseline passes with iteration2,
+parent sequence6/137, reduction2/65, control3/81, HIR metadata1, closure14 and ABI41.
+Existing manual ignored and diagnostic9passing/7knownfailures remain explicit;
+no broad compatibility acceptance. All root handles47858/8957/26590/65494/60603
+terminal, two failures above preserved. Ready for final candidate commit/push/draft
+PR and independent reviewer with exclusive heavy-slot release. Exact final
+reviewed-head CI still gates readiness; no merge or issue/milestone closure.

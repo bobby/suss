@@ -7,7 +7,7 @@
    :arities nil
    :dependencies ["runtime:alength" "runtime:aget" "runtime:inc:1505" "literal Object methods and mutable fields"]
    :classification :portable
-   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Preparation only until actual execution; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
+   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding, GC and explicit named length-write boundary; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
    :status :in-progress
    :adaptation-path nil
    :alternative nil
@@ -17,7 +17,7 @@
    :arities nil
    :dependencies ["runtime:equiv-sequential:3151" "runtime:seq-reduce:2582" "runtime:cons:3451" "runtime:empty-ordered-hash:1417" "runtime:hash-ordered-coll:1406" "pending pr-str* -indexOf -lastIndexOf"]
    :classification :portable
-   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Preparation only until actual execution; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
+   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding, GC and explicit named length-write boundary; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
    :status :in-progress
    :adaptation-path nil
    :alternative nil
@@ -27,7 +27,7 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["runtime:IReversible:777" "macro:satisfies?"]
    :classification :adapted
-   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Preparation only until actual execution; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
+   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding, GC and explicit named length-write boundary; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-reversible-predicate.json"
    :alternative nil
@@ -37,7 +37,7 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["runtime:IReversible:777"]
    :classification :adapted
-   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Preparation only until actual execution; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
+   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding, GC and explicit named length-write boundary; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-rseq.json"
    :alternative nil

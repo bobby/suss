@@ -377,3 +377,14 @@ reduction and81 control observations match actual primary/native execution;
 [evidence](../runtime/sequence-reduction.md) retains initial setup failures and
 explicit destructuring/compiled macro/transducer/collection boundaries. No issue
 or milestone completion claim; full/review/final-head CI gate readiness.
+
+## Retained iteration and reverse views
+
+Complete IndexedSeqIterator/RSeq and reversible?/rseq retain all methods and
+source provenance:86 selections/90 licensed artifacts,176 partial/889 unassessed.
+Fresh53 primary/native observations and2 native tests cover storage, UTF-16,
+metadata, equality/reduction and GC. A separate exact primary1 length-write case
+requires a native typed adapter error, not matching value or skip;
+[evidence](../runtime/sequence-iteration.md) preserves that boundary and initial
+failures. Hash/printing/index helpers, generic reverse, other collections and
+compiled macros remain unfinished; no issue/milestone completion claim.

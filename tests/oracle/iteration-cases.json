@@ -59,14 +59,6 @@
       }
     },
     {
-      "id": "iterator-array-shrink",
-      "source": "(let [a (array 1 2) it (-iterator (seq a))] (set! (.-length a) 0) (.hasNext it))",
-      "expected": {
-        "tag": "bool",
-        "value": false
-      }
-    },
-    {
       "id": "iterator-utf16-first",
       "source": "(identical? \"\\ud83d\" (.next (-iterator (seq \"😀\"))))",
       "expected": {
@@ -424,6 +416,14 @@
       "expected": {
         "tag": "f64",
         "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "iterator-excess-operand-effects",
+      "source": "(do (def iterator-trace 0) (let [it (-iterator (seq (array 1)))] (.next it) (.hasNext it (do (set! iterator-trace 17) 99))) iterator-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
       }
     }
   ]

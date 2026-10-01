@@ -142,3 +142,9 @@ iterator helpers, with65 fresh primary/native observations and81 control cases
 including bounded if-let. Selection82/artifacts86 and172 partial/893 unassessed
 reviews remain prerequisites; complete collection/transducer/macro/release gates
 stay open. See [reduction evidence](docs/runtime/sequence-reduction.md).
+
+Retained IndexedSeqIterator/RSeq and reversible?/rseq now execute against53 shared
+fresh primary/native observations plus1 explicit named length-write boundary.
+Selection86/artifacts90/reviews176partial+889unassessed remain prerequisites;
+hash/printing/index helpers, generic reverse, other collections and compiled
+macro/release gates remain open. See [iteration evidence](docs/runtime/sequence-iteration.md).
