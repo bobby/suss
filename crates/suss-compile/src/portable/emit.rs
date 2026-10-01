@@ -99,6 +99,12 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::Nominal { operation, .. } => match operation {
                         Nominal::Array => {}
+                        Nominal::NamedGet => {
+                            names.insert("named-property-get");
+                        }
+                        Nominal::NamedSet => {
+                            names.insert("named-property-set");
+                        }
                         Nominal::LiveDispatcher => {
                             names.insert("protocol-live-dispatcher-new");
                         }
@@ -218,6 +224,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
+            "named-property-set" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
             "string-new" => (vec![ValType::I32], vec![VALUE]),
             "string-set-unit" => (vec![VALUE, ValType::I32, ValType::I32], vec![ValType::I32]),
             _ => (vec![VALUE, VALUE], vec![VALUE]),
@@ -769,6 +776,8 @@ fn emit_function(
                                 )));
                         }
                         Nominal::Class
+                        | Nominal::NamedGet
+                        | Nominal::NamedSet
                         | Nominal::Protocol
                         | Nominal::Dispatcher
                         | Nominal::Satisfies
@@ -778,6 +787,8 @@ fn emit_function(
                             }
                             function.instruction(&Call(index(match operation {
                                 Nominal::Class => "class-value-new",
+                                Nominal::NamedGet => "named-property-get",
+                                Nominal::NamedSet => "named-property-set",
                                 Nominal::Protocol => "protocol-value-new",
                                 Nominal::Dispatcher => "protocol-dispatcher-new",
                                 Nominal::NativeSatisfies => "protocol-native-satisfies",

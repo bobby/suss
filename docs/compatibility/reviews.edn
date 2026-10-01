@@ -247,11 +247,11 @@
    :arities {:fixed [2] :variadic-min nil}
    :dependencies ["macro:let:772" "macro:cond:159" "macro:nil?:923" "macro:unchecked-get:1070" "goog/typeOf adapted to shared ABI native kinds"]
    :classification :adapted
-   :rationale "Original shared-GC closure-owned property tables adapt primitive/default membership and current protocol value lookup. Public first-class/core aliases, arity/GC and live macro fallback execute against fresh primary observations. Arbitrary UserObject native property tables, source arrays/Symbol/bigint and full compiled macro/core import remain unfinished. No upstream source form is copied."
+   :rationale "Original shared-GC closure-owned property tables adapt primitive/default membership and current protocol value lookup. Public first-class/core aliases, arity/GC and live macro fallback execute against fresh primary observations. Arbitrary UserObject native property tables, source arrays/Symbol/bigint and full compiled macro/core import remain unfinished. Named UTF-16 keys coexist with native-kind keys in the same GC-owned wrapper, with the eight public native names aliasing their existing slots and unchecked-if membership truthiness kept separate from nil-based method dispatch;64 separate property observations include preserved native marker/dispatch after name writes and extensions. Native kind guards remain0-7 and every table key is validated before a match returns, rejecting malformed opaque tail keys. No upstream source form is copied."
    :status :in-progress
    :adaptation-path "docs/runtime/native-protocols.md"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_native_protocols.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/native-protocol-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_native_protocols.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/native-protocol-cases.json" "crates/suss-cli/tests/portable_named_properties.rs" "tests/oracle/named-property-cases.json"]}
   "runtime:some?:271"
   {:source-sha256 "28d482299025338e58268b5b0aebd0291e8db3ecc4bd5d05ab59981619d4356b" :visibility :public
    :arities {:fixed [1] :variadic-min nil}
@@ -407,11 +407,11 @@
    :arities {:fixed [] :variadic-min 2}
    :dependencies ["macro:extend-type:1668" "macro:defprotocol:2041" "shared ABI Descriptor/UserObject/Invoke"]
    :classification :adapted
-   :rationale "Original bounded HIR bootstrap constructs descriptor-backed class values, generated arrows and protocol methods. Same-layout identity, redefinition, receiver anchoring, fields, scoped mutable-field assignment and undefined constructor results execute; general field attributes, runtime metadata, builtin classes and complete compiled macro/core import remain unfinished. No upstream source form is copied."
+   :rationale "Original bounded HIR bootstrap constructs descriptor-backed class values, generated arrows and protocol methods. Same-layout identity, redefinition, receiver anchoring, fields, scoped mutable-field assignment and undefined constructor results execute; general field attributes, runtime metadata, builtin classes and complete compiled macro/core import remain unfinished. Literal identifier class/function properties and known instance fields now have64 fresh source observations with GC/order/capture and typed malformed storage checks; munged instance schemas and known callable/inherited host attributes raise explicit errors; prototypes, extra instance fields, computed names and full host properties remain partial. No upstream source form is copied."
    :status :in-progress
    :adaptation-path "docs/runtime/nominal.md"
    :alternative nil
-   :tests ["crates/suss-compile/tests/portable_nominal.rs" "crates/suss-cli/tests/persistent_session.rs" "crates/suss-cli/tests/portable_mutable_fields.rs" "tests/oracle/mutable-field-cases.json" "tests/oracle/portable-cases.json"]}
+   :tests ["crates/suss-compile/tests/portable_nominal.rs" "crates/suss-cli/tests/persistent_session.rs" "crates/suss-cli/tests/portable_mutable_fields.rs" "tests/oracle/mutable-field-cases.json" "tests/oracle/portable-cases.json" "crates/suss-cli/tests/portable_named_properties.rs" "tests/oracle/named-property-cases.json"]}
   "macro:defprotocol:2041"
   {:source-sha256 "8748b4d0fc143b90cdcdef7af2b26fc9343f67f6bd75ea520010cb7616dfe7f9" :visibility :public
    :arities {:fixed [] :variadic-min 1}
