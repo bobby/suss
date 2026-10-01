@@ -8213,3 +8213,13 @@ runtime metadata, reader duplicate forms and real persistent collection classes.
 Next unblocked M2 task: audit each #8/#9/#11 acceptance criterion against actual
 source and executed artifacts, keeping M3 macro/production and M4 collections
 requirements distinct; close no issue until all of its criteria have evidence.
+
+
+Root full28575 authoritative terminal0 through final suss_reader doctests:
+/private/tmp/suss-m2-literals-full.log. All enabled workspace tests pass, including
+native5/19 exact literal observations; existing manual ignores and the legacy
+diagnostic known-failure record remain explicit. Python86/import115/inventory/
+review checks passed. No production/native/oracle inputs changed during this full
+run. All root heavy handles terminal; release exclusive heavy slot to mandatory
+PR114 reviewer after this documentation-only result update is pushed. Final
+independently reviewed head and its CI remain readiness gates; no merge or closure.
