@@ -359,8 +359,16 @@ impl Analyzer {
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let binding = self.fresh_binding(form, class);
         let class_value = self.local(form, binding.id);
-        let mut effects =
-            self.protocol_extensions(form, &args[2..], class_value.clone(), fields, true)?;
+        // Pinned analyzer.cljc parse-type3614–3649 replaces enclosing locals;
+        // deftype* methods use namespace globals and their own fields/parameters.
+        // extend-type is a runtime expression and keeps its enclosing captures.
+        let outer_locals = std::mem::take(&mut self.locals);
+        let outer_fields = std::mem::take(&mut self.fields);
+        let extensions =
+            self.protocol_extensions(form, &args[2..], class_value.clone(), fields, true);
+        self.locals = outer_locals;
+        self.fields = outer_fields;
+        let mut effects = extensions?;
         effects.push(class_value);
         let body = self.do_hir(form, effects);
         let initialization = Hir {

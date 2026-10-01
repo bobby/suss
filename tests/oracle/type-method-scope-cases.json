@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "deftype-method-uses-global-over-enclosing-let",
+      "source": "(do (def scope-factor 11) (defprotocol ScopeProtocol (scope-result [this])) (let [scope-factor 7] (deftype ScopeLet [value] ScopeProtocol (scope-result [this] (* value scope-factor)))) (scope-result (ScopeLet. 5)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404b800000000000"
+      }
+    },
+    {
+      "id": "extend-type-method-captures-enclosing-let",
+      "source": "(do (deftype ScopeExtension [value]) (let [scope-factor 7] (extend-type ScopeExtension ScopeProtocol (scope-result [this] (* (.-value this) scope-factor)))) (scope-result (ScopeExtension. 5)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041800000000000"
+      }
+    },
+    {
+      "id": "deftype-fields-shadow-global",
+      "source": "(do (let [scope-factor 7] (deftype ScopeField [value scope-factor] ScopeProtocol (scope-result [this] (* value scope-factor)))) (scope-result (ScopeField. 5 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402e000000000000"
+      }
+    },
+    {
+      "id": "deftype-parameters-shadow-fields-and-global",
+      "source": "(do (defprotocol ScopeParameterProtocol (scope-parameter [this scope-factor])) (let [scope-factor 7] (deftype ScopeParameter [value scope-factor] ScopeParameterProtocol (scope-parameter [this scope-factor] (* value scope-factor)))) (scope-parameter (ScopeParameter. 5 19) 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402e000000000000"
+      }
+    },
+    {
+      "id": "deftype-inside-function-resolves-global",
+      "source": "(do (def scope-factory (fn [scope-factor] (deftype ScopeFactory [value] ScopeProtocol (scope-result [this] (* value scope-factor))))) (scope-factory 7) (scope-result (ScopeFactory. 5)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404b800000000000"
+      }
+    },
+    {
+      "id": "method-inner-function-still-captures-locals",
+      "source": "(do (deftype ScopeInnerFunction [value] ScopeProtocol (scope-result [this] (let [scale 3] ((fn [n] (* scale n)) value)))) (scope-result (ScopeInnerFunction. 5)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402e000000000000"
+      }
+    },
+    {
+      "id": "ordinary-function-still-captures-enclosing-let",
+      "source": "(do (def scope-normal (let [scope-factor 7] (fn [n] (* n scope-factor)))) (scope-normal 5))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041800000000000"
+      }
+    },
+    {
+      "id": "nested-type-does-not-capture-enclosing-field",
+      "source": "(do (deftype ScopeOuter [scope-factor] ScopeProtocol (scope-result [this] (do (deftype ScopeNested [value] ScopeProtocol (scope-result [this] (* value scope-factor))) (scope-result (ScopeNested. 5))))) (scope-result (ScopeOuter. 7)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404b800000000000"
+      }
+    },
+    {
+      "id": "enclosing-let-is-restored-after-type-analysis",
+      "source": "(let [scope-factor 7] (do (deftype ScopeRestore [value] ScopeProtocol (scope-result [this] (* value scope-factor))) (+ scope-factor (scope-result (ScopeRestore. 5)))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404f000000000000"
+      }
+    },
+    {
+      "id": "enclosing-field-is-restored-after-nested-type-analysis",
+      "source": "(do (deftype ScopeOuterRestore [scope-factor] ScopeProtocol (scope-result [this] (do (deftype ScopeNestedRestore [value] ScopeProtocol (scope-result [this] (* value scope-factor))) (+ scope-factor (scope-result (ScopeNestedRestore. 5)))))) (scope-result (ScopeOuterRestore. 7)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404f000000000000"
+      }
+    }
+  ]
+}
