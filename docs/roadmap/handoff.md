@@ -6346,3 +6346,41 @@ full baseline and exact final-head CI. Do not narrow this to an own-property map
 that changes pinned cache effects. Full public hashing/equality, persistent
 sequences, compiled macros and M2–M9 remain unfinished. Deferred algorithm
 question is issue98, outside existing milestone gates.
+
+
+## Raw prototype chains — 2026-10-01
+
+Continuation after14afd0e is concrete implementation progress. Added iterative raw
+prototype read/set/chain lookup above owned data storage in native_objects.rs.
+The previously reserved header prototype slot now holds nil or an owned object.
+Complete candidate chains are checked before setter mutation; owner-containing
+cycles are rejected atomically. Floyd cycle detection rejects host-forged cycles
+without recursion, side registries or arbitrary chain depth limits. Chain lookup
+uses present own slots, so an own Undefined shadows inherited values correctly.
+This is original low-level storage code; no copied upstream forms or new source
+provenance claim. No shared layout/ABI/core-cell change.
+
+New focused tests exercise inherited values, own Undefined shadowing, self/ancestor
+cycle rejection without changing the old chain, invalid prototype types, nil
+removal, physically forged cycles/null slots, forced GC and recovery. The third
+test executes a 130-object chain, rejects a tail-to-head cycle and recovers after
+restoring its tail. No fake prototype functions or native-success substitutions.
+
+First61843 ended101 on a test API typo (AnyRef::eq); changed to the existing
+Rooted::ref_eq API. Second63503 ended101 because the test requested a nonexistent
+undefined export; corrected the fixture to construct existing sentinel6 directly.
+Corrected70972 passed2. Final focused62694 passed3, and complete ABI11110 passed31.
+Logs /private/tmp/suss-native-prototype-final.log and
+/private/tmp/suss-native-prototype-abi.log. Commands use shared target/build workers2
+and cargo test -p suss-compile --test runtime_abi [runtime_abi_native_prototype]
+--locked -- --test-threads=2. All local processes terminal. No full workspace,
+independent review or final CI claim for this unpublished preparation branch.
+
+Next implement the actual shared default Object prototype and callable inherited
+methods, plus __proto__ accessor semantics and scalar key conversion. Raw prototype
+set deliberately rejects primitives; the source inherited accessor must ignore
+primitive writes and permit null removal/data shadows as certified by the pin.
+Then wire source adapters and retain licensed cached hashing forms, preserving all64
+certified observations. The full cache suite still has64 unresolved native failures;
+these ABI tests do not establish cache/public js-obj compatibility. PR99 remains
+ready at reviewed0fe9889/final CI36825310559 SUCCESS, no merge. M2–M9 remain active.

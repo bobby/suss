@@ -1,5 +1,5 @@
-//! Original owned property storage kernel. Prototype lookup/set is a separate
-//! adapter; these exports inspect/mutate OWN data properties only.
+//! Original owned property storage and raw prototype-chain kernel.
+//! Source accessors and default Object prototype methods are a separate adapter.
 use super::*;
 pub(super) const TAG_GLOBAL: u32 = string_methods::METHOD_ROOT + 1;
 fn guard(body: &mut Vec<Instruction<'static>>, local: u32, ty: u32) {
@@ -271,6 +271,177 @@ pub(super) fn functions(b: &mut Builder) {
         &[VALUE, VALUE, VALUE],
         &[VALUE],
         &[(1, ValType::I32), (3, VALUE)],
+        &body,
+    );
+    prototype_functions(b, fields, slot);
+}
+
+// These operations manipulate raw internal prototypes. Source __proto__ accessor
+// semantics and the default Object prototype are implemented above this layer.
+fn prototype_functions(b: &mut Builder, fields: u32, slot: u32) {
+    use Instruction::*;
+    let mut body = vec![
+        LocalGet(0),
+        Call(fields),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(1),
+        ArrayGet(ARGS),
+        LocalSet(1),
+        LocalGet(1),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        If(BlockType::Empty),
+        LocalGet(1),
+        Return,
+        End,
+        LocalGet(1),
+        Call(fields),
+        Drop,
+        LocalGet(1),
+    ];
+    let prototype = b.function_with_locals(
+        "native-object-prototype",
+        &[VALUE],
+        &[VALUE],
+        &[(1, VALUE)],
+        &body,
+    );
+    let step = b.function(
+        "native-object-prototype-step",
+        &[VALUE],
+        &[VALUE],
+        &[
+            LocalGet(0),
+            I32Const(0),
+            RefI31,
+            RefEq,
+            If(BlockType::Result(VALUE)),
+            LocalGet(0),
+            Else,
+            LocalGet(0),
+            Call(prototype),
+            End,
+        ],
+    );
+    // Floyd's algorithm rejects even host-forged cycles without an arbitrary
+    // semantic depth cap, recursion, or a process-side registry.
+    body = vec![
+        LocalGet(0),
+        LocalSet(1),
+        LocalGet(0),
+        LocalSet(2),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(2),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        BrIf(1),
+        LocalGet(1),
+        Call(step),
+        LocalSet(1),
+        LocalGet(2),
+        Call(step),
+        Call(step),
+        LocalSet(2),
+        LocalGet(2),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        BrIf(1),
+        LocalGet(1),
+        LocalGet(2),
+        RefEq,
+        If(BlockType::Empty),
+    ];
+    nominal::error(&mut body);
+    body.extend([End, Br(0), End, End]);
+    let check = b.function_with_locals(
+        "native-object-check-chain",
+        &[VALUE],
+        &[],
+        &[(2, VALUE)],
+        &body,
+    );
+    body = vec![
+        LocalGet(0),
+        Call(fields),
+        LocalSet(2),
+        LocalGet(1),
+        Call(check),
+        LocalGet(1),
+        LocalSet(3),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(3),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        BrIf(1),
+        LocalGet(3),
+        LocalGet(0),
+        RefEq,
+        If(BlockType::Empty),
+    ];
+    nominal::error(&mut body);
+    body.extend([
+        End,
+        LocalGet(3),
+        Call(prototype),
+        LocalSet(3),
+        Br(0),
+        End,
+        End,
+    ]);
+    array(&mut body, 2);
+    body.extend([I32Const(1), LocalGet(1), ArraySet(ARGS), LocalGet(1)]);
+    b.function_with_locals(
+        "native-object-prototype-set",
+        &[VALUE, VALUE],
+        &[VALUE],
+        &[(2, VALUE)],
+        &body,
+    );
+    body = vec![LocalGet(0), Call(fields), Drop];
+    guard(&mut body, 1, STRING);
+    body.extend([
+        LocalGet(0),
+        Call(check),
+        LocalGet(0),
+        LocalSet(2),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(2),
+        I32Const(0),
+        RefI31,
+        RefEq,
+        BrIf(1),
+        LocalGet(2),
+        LocalGet(1),
+        Call(slot),
+        I32Const(0),
+        I32GeS,
+        If(BlockType::Empty),
+        LocalGet(2),
+        LocalGet(1),
+        Call(b.names["native-object-own-get"]),
+        Return,
+        End,
+        LocalGet(2),
+        Call(prototype),
+        LocalSet(2),
+        Br(0),
+        End,
+        End,
+        I32Const(UNDEFINED),
+        RefI31,
+    ]);
+    b.function_with_locals(
+        "native-object-chain-get",
+        &[VALUE, VALUE],
+        &[VALUE],
+        &[(1, VALUE)],
         &body,
     );
 }
