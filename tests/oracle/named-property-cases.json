@@ -1,0 +1,182 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "fresh-class-static-is-undefined",
+      "source": "(do (deftype PropertyProbe [^:mutable value]) (undefined? (.-EMPTY PropertyProbe)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "publish-class-static",
+      "source": "(do (def property-object (PropertyProbe. 7)) (set! (.-EMPTY PropertyProbe) property-object) (identical? property-object (.-EMPTY PropertyProbe)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "read-instance-field",
+      "source": "(.-value (.-EMPTY PropertyProbe))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "aliased-class-owner",
+      "source": "(do (def property-class-alias PropertyProbe) (set! (.-EMPTY property-class-alias) (PropertyProbe. 9)) (.-value (.-EMPTY PropertyProbe)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "class-static-assignment-result",
+      "source": "(identical? property-object (set! (.-EMPTY PropertyProbe) property-object))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "instance-mutable-property-write",
+      "source": "(do (set! (.-value property-object) 11) (.-value property-object))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    },
+    {
+      "id": "instance-read-reflects-static-alias",
+      "source": "(.-value (.-EMPTY property-class-alias))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    },
+    {
+      "id": "instance-missing-property",
+      "source": "(undefined? (.-missing property-object))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "function-property-owner",
+      "source": "(do (def property-fn (fn [x] (+ x 1))) (set! (.-EMPTY property-fn) property-object) (identical? property-object (.-EMPTY property-fn)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "function-call-survives-property-publication",
+      "source": "(property-fn 6)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "captured-function-properties-live",
+      "source": "(do (def property-old-fn property-fn) (set! (.-count property-old-fn) 17) (.-count property-fn))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "different-function-owner-isolated",
+      "source": "(do (set! property-fn (fn [x] (+ x 2))) (undefined? (.-count property-fn)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "retained-function-property",
+      "source": "(.-count property-old-fn)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "retained-function-call",
+      "source": "(property-old-fn 6)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "string-utf16-property-length",
+      "source": "(.-length \"\\ud83d\\ude00\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "array-property-length-after-growth",
+      "source": "(do (def property-array (array 1)) (aset property-array 3 7) (.-length property-array))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "property-get-owner-once",
+      "source": "(do (def property-effects (array 0)) (def property-mark (fn [n x] (do (aset property-effects 0 (+ (* (aget property-effects 0) 10) n)) x))) (.-EMPTY (property-mark 1 PropertyProbe)) (aget property-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "property-set-owner-before-value",
+      "source": "(do (aset property-effects 0 0) (set! (.-EMPTY (property-mark 1 PropertyProbe)) (property-mark 2 property-object)) (aget property-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "nil-property-read-is-catchable",
+      "source": "(try ((fn [owner] (.-EMPTY owner)) nil) (catch :default e 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "property-assignment-throw-keeps-old-value",
+      "source": "(do (aset property-effects 0 0) (try (set! (.-EMPTY (property-mark 1 PropertyProbe)) (throw (property-mark 2 8))) (catch :default e nil)) (if (identical? property-object (.-EMPTY PropertyProbe)) (aget property-effects 0) 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "constructor-property-before-class-redefinition",
+      "source": "(do (def property-old-class PropertyProbe) (deftype PropertyProbe [value]) (undefined? (.-EMPTY PropertyProbe)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "retained-class-static-after-redefinition",
+      "source": "(.-value (.-EMPTY property-old-class))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    }
+  ]
+}

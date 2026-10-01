@@ -5177,3 +5177,41 @@ EmptyList/List/Cons/IndexedSeq, canonical empty-list/static-property storage,
 hashing/reduction and persistent rest/apply remain unfinished. No RUSTFLAGS
 override, unrelated deletion, issue closure or merge. Require final reviewed-head
 CI after significant findings/fixes before readiness.
+
+
+## Named-property prerequisite preparation — 2026-09-30
+
+PR89 independently reviewed09ae837:65 exact primary observations, nativeinterfaces5,
+core_import17/forwarddeclarations2, provenance80partial985unassessed/30artifacts
+and full17462 terminal0. Root inspected reviewer diff and synchronized the clean
+source-import worktree. Exact finalCI36795130080 is running; do not use obsolete
+candidateCI36794556208 (cancelled) as readiness evidence. No merge/closure.
+
+Created separate portable/core-named-properties worktree before reviewer slot
+release, then fast-forwarded it to09ae837. Prepared22 original scalar probes with
+strict independent f64/Boolean decoding. Ran reference/native only after reviewer
+confirmed all local Cargo/JVM/Node graphs terminal and released exclusive slot.
+First38134 ended1 during primary compilation: static literal nil dot form rejected
+by the pin, no observations/native success. Changed that runtime-error probe to
+an unknown function parameter receiving nil, and recorded rejected literal form
+separately; no unsupported result became a success. Fresh32149 terminal101:
+22 exact primary matches, native first case has located unresolved .-EMPTY at
+59..66. Intentional ->PropertyProbe replacement warning retained. Log
+/private/tmp/suss-named-property-primary-native-red-dynamic.log.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-named-property-oracle.sh`.
+
+No production Rust, ABI or compatibility classification changed in this prep.
+Do not publish the red native regression as green acceptance. Next implement
+named-property storage/lowering needed by real retained source and validate the
+actual artifact. Canonical empty list, Object method blocks, List/EmptyList/Cons/
+IndexedSeq and complete hashing/reduction/rest/apply remain unfinished; full
+ROADMAP M2–M9 objective stays active. See docs/runtime/named-properties.md.
+
+
+Root final PR89 gate: exact reviewed09ae837 CI36795130080 completed success.
+Root inspected enabled logs /private/tmp/suss-pr89-final-ci.log, including
+Python71,80partial985unassessed,30artifacts and allfive interface tests/shared65
+observations, plus full workspace results. PR89 was marked ready without merging;
+PR description records final run and independent review. The property preparation
+remains local and explicitly native-red; next execute its actual implementation,
+not claim the preparation as passing acceptance. All local graphs are terminal.
