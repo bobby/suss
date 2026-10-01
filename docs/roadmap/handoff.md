@@ -7796,3 +7796,15 @@ unchanged parent corpora/boundaries. Existing manual ignores and diagnostic
 9passes/7knownfailures unchanged. All reviewer handles81349/76696/41542/69411
 terminal. Reviewer releases heavy slot after evidence commit/push. Exact final
 reviewed-head CI still gates readiness; no merge/issue or milestone closure.
+
+### PR110 reviewed-stack rebase — 2026-10-01
+
+Static rebase of reviewed f7841ddcae14d5094499148438eca1decf50619e onto
+reviewed PR108 c6cc97b134555c42104310156198c3f0a1a2b2c5 preserves parent timeout
+and child scalar-case/full-review evidence. Scoped Git diff verifies all crates,
+runtime artifacts, scripts, tests/oracle corpora, Cargo files and CI workflow
+bytes identical to f7841dd. The only inherited differences are parent handoff
+and default-identity-hash documentation. Prior independent full69411 applies to
+identical tested code; no fresh baseline at this rebase is claimed. Root owns
+the heavy slot with publichash full61362; no cargo/JVM/Node process started.
+Exact new reviewed-head CI remains mandatory before readiness; no merge/closure.
