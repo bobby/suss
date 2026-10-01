@@ -8339,3 +8339,30 @@ No GitHub issue/milestone was closed manually and no PR merged. Heavy slot is
 released after terminal40695. Next unblocked task: require exact independently
 reviewed final-head CI for PR114/115, obtain user merge of the open stack, then
 reconcile default-branch M2 status; M3–M9 and deferred hashing#98 remain open.
+
+## M2 integration PR against main — 2026-10-01
+
+The independently reviewed stack ends at
+ff4e785c156539e506b69512f1e66c873e72dea3. Its required full workspace baseline
+passed (reviewer process40695,843 passed,0 failed,17 existing ignores).
+The root also executed `sh scripts/test-m2-foundation.sh` on that final head,
+using the shared target and two build workers: process95625 completed with exit0,
+529 passed,0 failed,12 existing ignores across18 result groups. Exact criterion
+and new emitter repair guards were checked directly in
+/private/tmp/suss-m2-acceptance-final-focus.log. Root18713 earlier focused runner
+also completed with exit0 before the three missing legacy regressions were added;
+that earlier green result alone was insufficient acceptance evidence.
+
+A separate portable/m2-foundation branch now carries the complete reviewed stack
+for one integration PR targeting main. Its implementation, runtime, oracle,
+provenance and test inputs are byte-identical to reviewed PR115. The new change
+only records this integration handoff. Current main remains an ancestor; no
+merge or issue closure has been performed. The PR will carry Closes #8/#9/#11
+and retain the accepted closing commit, allowing auto-close when this complete
+stack reaches main. All published M2 criteria have the independently reviewed
+acceptance matrix in docs/roadmap/acceptance-m2.md; future M3–M9 work remains open.
+
+Next gate: dispatch independent integration review, fix any significant findings,
+and require exact final reviewed-head CI before readiness. Component PR114/115
+also retain their own final-head CI gates. Only the user may merge. Default-branch
+M2 statuses remain in progress until the accepted stack is incorporated.
