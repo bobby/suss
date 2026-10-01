@@ -7940,3 +7940,17 @@ native5/47 exact observations, TimeClip compiler guards and unchanged parents.
 Existing explicit manual ignores remain. All reviewer handles87183/25619/42267/
 27630 terminal. Reviewer commits and pushes probes/evidence, then releases heavy
 slot. Exact final reviewed-head CI still gates readiness; no merge or closure.
+
+
+### PR111 parent retarget reconciliation — 2026-10-01
+
+Static rebase of independently reviewed9f3c19cad8f5f344f077a54a469532ca716352a8
+onto reviewed PR110c53cfe35fde0310a8ceacf174d399ce48fd1e646 preserves parent
+retarget audits and all public-hash child/review evidence. Append-only handoff
+conflict preserved both sides. Scoped Git diff verifies all crates, runtime,
+scripts, tests/oracle, workflow and Cargo bytes identical to reviewed9f3c19c;
+only inherited parent audit and reconciliation evidence change. Prior independent
+full27630 applies to identical tested code; no new baseline is claimed. Root
+owns heavy slot full collection6189; no cargo/JVM/Node process started here.
+Exact old-head force-with-lease protects the owned branch. New reviewed-head CI
+remains mandatory before readiness; no merge, issue or milestone closure.
