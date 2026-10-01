@@ -826,4 +826,16 @@
    :adaptation-path "docs/compatibility/patches/fn-predicate.json"
    :alternative nil
    :tests ["crates/suss-cli/tests/portable_object_methods.rs" "tests/oracle/object-method-cases.json"]}
+
+  "macro:caching-hash:1284"
+  {:source-sha256 "0d36bb2d025f31d5bc5d4dbf3730ec8715ab230f133310e0bc182481fb795197"
+   :visibility :public
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["macro:let:772" "macro:if-not:359" "macro:nil?:923" "scoped mutable field/global assignment"]
+   :classification :adapted
+   :rationale "Original bounded HIR expansion follows pinned core.cljc1284: one cache read, nil/undefined test, hit suppression, ordered hash function/collection evaluation, one call and assignment of its result. Thirty-eight fresh pinned observations match independently decoded validated Wasm with GC; protocol fields, nested captures, Object methods, false/zero/NaN hits, throws and nil recomputation execute. Dynamic binding/redefs restoration, qualified global/field shadowing and local macro-name calls execute; aliases/exclusions and both phases have focused checks. Canonical arithmetic NaN sign follows the accepted design while a separate regression checks exact cache storage for both signs; other payloads, zeros and values remain exact. Located malformed/immutable key guards recover without publication. Full List hashing and compiled macro bootstrap remain unfinished; no upstream macro source form is copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/caching-hash.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_caching_hash.rs" "tests/oracle/caching-hash-cases.json"]}
 }}

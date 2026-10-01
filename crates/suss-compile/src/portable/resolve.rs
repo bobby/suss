@@ -1,7 +1,7 @@
 //! Phase-specific namespace identities. No runtime values or source replay live here.
 use super::{
-    hir::{Arithmetic, ArrayOperation, Comparison},
     Diagnostic,
+    hir::{Arithmetic, ArrayOperation, Comparison},
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -61,6 +61,7 @@ pub enum ControlForm {
     Or,
     Cond,
     Declare,
+    CachingHash,
 }
 impl ControlForm {
     fn from_name(name: &str) -> Option<Self> {
@@ -72,6 +73,7 @@ impl ControlForm {
             "or" => Self::Or,
             "cond" => Self::Cond,
             "declare" => Self::Declare,
+            "caching-hash" => Self::CachingHash,
             _ => return None,
         })
     }
@@ -192,7 +194,7 @@ pub(crate) fn valid_namespace(namespace: &str) -> Result<(), Diagnostic> {
     Ok(())
 }
 fn valid_name(name: &str) -> Result<(), Diagnostic> {
-    use suss_reader::forms::{read_forms, Kind};
+    use suss_reader::forms::{Kind, read_forms};
     match read_forms(name).ok().as_deref() {
         Some([form])
             if form.metadata.is_empty()
@@ -293,7 +295,16 @@ impl Environment {
                 env.bindings
                     .insert(global.clone(), Binding::Nominal { global, form });
             }
-            for name in ["when", "when-not", "if-not", "and", "or", "cond", "declare"] {
+            for name in [
+                "when",
+                "when-not",
+                "if-not",
+                "and",
+                "or",
+                "cond",
+                "declare",
+                "caching-hash",
+            ] {
                 let global = Global {
                     phase,
                     namespace: "suss.core".into(),
@@ -583,6 +594,7 @@ impl Environment {
                         | "or"
                         | "cond"
                         | "declare"
+                        | "caching-hash"
                 ))
             .then_some(symbol.name.as_str())
         } else if let Some(global) = scope.refers.get(&symbol.name) {
@@ -618,6 +630,7 @@ impl Environment {
                         | "or"
                         | "cond"
                         | "declare"
+                        | "caching-hash"
                 )
             {
                 Some(global.name.as_str())
@@ -653,6 +666,7 @@ impl Environment {
                         | "or"
                         | "cond"
                         | "declare"
+                        | "caching-hash"
                 ) && !scope.excluded_core.contains(&symbol.name))
                 .then_some(symbol.name.as_str())
             }
@@ -688,6 +702,7 @@ impl Environment {
                     | "or"
                     | "cond"
                     | "declare"
+                    | "caching-hash"
             ) && !scope.excluded_core.contains(&symbol.name))
             .then_some(symbol.name.as_str())
         }?;
@@ -715,6 +730,7 @@ impl Environment {
                     | "or"
                     | "cond"
                     | "declare"
+                    | "caching-hash"
             )
             && self.bindings.contains_key(&Global {
                 phase,

@@ -1,0 +1,317 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "global-cache-miss",
+      "source": "(do (def hash-effects (array 0)) (def hash-mark (fn [n value] (do (aset hash-effects 0 (+ (* (aget hash-effects 0) 10) n)) value))) (def hash-cache nil) (cljs.core/caching-hash (hash-mark 2 7) (hash-mark 1 (fn [x] (* x 3))) hash-cache))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "miss-callee-before-collection",
+      "source": "(aget hash-effects 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "global-cache-hit-suppresses-operands",
+      "source": "(do (aset hash-effects 0 0) (cljs.core/caching-hash (throw 31) (throw 37) hash-cache))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "hit-operands-have-no-effects",
+      "source": "(aget hash-effects 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "false-is-cached",
+      "source": "(do (set! hash-cache false) (cljs.core/caching-hash (throw 31) (throw 37) hash-cache))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "zero-is-cached",
+      "source": "(do (set! hash-cache 0) (cljs.core/caching-hash (throw 31) (throw 37) hash-cache))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "negative-zero-bits-preserved",
+      "source": "(do (set! hash-cache -0.0) (cljs.core/caching-hash (throw 31) (throw 37) hash-cache))",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "nan-is-cached",
+      "source": "(do (set! hash-cache (/ 0 0)) (cljs.core/caching-hash (throw 31) (throw 37) hash-cache))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "cached-string-preserved",
+      "source": "(do (set! hash-cache \"cached\") (cljs.core/caching-hash (throw 31) (throw 37) hash-cache))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          99,
+          97,
+          99,
+          104,
+          101,
+          100
+        ]
+      }
+    },
+    {
+      "id": "undefined-is-cache-miss",
+      "source": "(do (declare hash-undefined) (cljs.core/caching-hash 7 (fn [x] (* x 5)) hash-undefined))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041800000000000"
+      }
+    },
+    {
+      "id": "nil-hash-result-recomputed",
+      "source": "(do (def hash-calls (array 0)) (def nil-hasher (fn [x] (do (aset hash-calls 0 (inc (aget hash-calls 0))) nil))) (set! hash-cache nil) (cljs.core/caching-hash 7 nil-hasher hash-cache) (cljs.core/caching-hash 7 nil-hasher hash-cache) (aget hash-calls 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "throwing-function-keeps-cache",
+      "source": "(do (aset hash-effects 0 0) (try (cljs.core/caching-hash (hash-mark 2 7) (hash-mark 1 (fn [x] (throw (hash-mark 3 91)))) hash-cache) (catch :default e nil)) (nil? hash-cache))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "throwing-function-effects",
+      "source": "(aget hash-effects 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "throwing-collection-keeps-cache",
+      "source": "(do (aset hash-effects 0 0) (try (cljs.core/caching-hash (throw (hash-mark 2 7)) (hash-mark 1 (fn [x] (hash-mark 3 91))) hash-cache) (catch :default e nil)) (nil? hash-cache))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "throwing-collection-effects",
+      "source": "(aget hash-effects 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "protocol-field-cache-miss",
+      "source": "(do (deftype HashProbe [^:mutable value ^:mutable cached] IHash (-hash [this] (cljs.core/caching-hash this (fn [x] (* (.-value x) 3)) cached))) (def hash-probe (HashProbe. 7 nil)) (-hash hash-probe))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "protocol-field-cache-hit",
+      "source": "(do (set! (.-value hash-probe) 11) (-hash hash-probe))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "protocol-cache-invalidation",
+      "source": "(do (set! (.-cached hash-probe) nil) (-hash hash-probe))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "nested-function-keeps-field-owner",
+      "source": "(do (deftype HashCapture [value ^:mutable cached] IHash (-hash [this] ((fn [] (cljs.core/caching-hash this (fn [x] (* (.-value x) 5)) cached))))) (def hash-capture (HashCapture. 7 nil)) (-hash hash-capture))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041800000000000"
+      }
+    },
+    {
+      "id": "object-method-cache",
+      "source": "(do (deftype HashObject [value ^:mutable cached] Object (hash [this] (cljs.core/caching-hash this (fn [x] (* (.-value x) 7)) cached))) (def hash-object (HashObject. 7 nil)) (.hash hash-object))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4048800000000000"
+      }
+    },
+    {
+      "id": "object-field-cache-published",
+      "source": "(.-cached hash-object)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4048800000000000"
+      }
+    },
+    {
+      "id": "hash-function-called-once",
+      "source": "(do (def hash-once (array 0)) (set! hash-cache nil) (cljs.core/caching-hash 7 (fn [x] (do (aset hash-once 0 (inc (aget hash-once 0))) (* x 3))) hash-cache) (aget hash-once 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "qualified-global-cache",
+      "source": "(cljs.core/caching-hash (throw 31) (throw 37) suss-oracle.caching-hash-cases/hash-cache)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "cache-assignment-expression-value",
+      "source": "hash-cache",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "callee-throw-suppresses-collection",
+      "source": "(do (set! hash-cache nil) (aset hash-effects 0 0) (try (cljs.core/caching-hash (hash-mark 2 7) (throw (hash-mark 1 91)) hash-cache) (catch :default e nil)) (aget hash-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "callee-throw-keeps-cache",
+      "source": "(nil? hash-cache)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "miss-overwrites-operand-cache-mutation",
+      "source": "(do (set! hash-cache nil) (cljs.core/caching-hash (do (set! hash-cache 53) 7) (do (set! hash-cache 41) (fn [x] (* x 3))) hash-cache) hash-cache)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "false-hash-is-stored-hit",
+      "source": "(do (def review-hash-count (array 0)) (set! hash-cache nil) (cljs.core/caching-hash 7 (fn [x] (do (aset review-hash-count 0 (inc (aget review-hash-count 0))) false)) hash-cache) (cljs.core/caching-hash (throw 31) (throw 37) hash-cache))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "false-hash-only-one-call",
+      "source": "(aget review-hash-count 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "undefined-hash-is-recomputed",
+      "source": "(do (declare review-undefined) (aset review-hash-count 0 0) (set! hash-cache nil) (def review-undefined-hash (fn [x] (do (aset review-hash-count 0 (inc (aget review-hash-count 0))) review-undefined))) (cljs.core/caching-hash 7 review-undefined-hash hash-cache) (cljs.core/caching-hash 7 review-undefined-hash hash-cache) (aget review-hash-count 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "dynamic-cache-miss-inside-binding",
+      "source": "(do (def ^:dynamic review-dynamic-cache 41) (binding [review-dynamic-cache nil] (cljs.core/caching-hash 7 (fn [x] (* x 3)) review-dynamic-cache)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "dynamic-cache-restores-outer-value",
+      "source": "review-dynamic-cache",
+      "expected": {
+        "tag": "f64",
+        "bits": "4044800000000000"
+      }
+    },
+    {
+      "id": "redefs-cache-restores-after-throw",
+      "source": "(do (try (with-redefs [review-dynamic-cache nil] (cljs.core/caching-hash 7 (fn [x] (* x 5)) review-dynamic-cache) (throw 91)) (catch :default e nil)) review-dynamic-cache)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4044800000000000"
+      }
+    },
+    {
+      "id": "cached-callable-identity",
+      "source": "(do (def review-cached-function (fn [x] x)) (set! hash-cache review-cached-function) (identical? review-cached-function (cljs.core/caching-hash (throw 31) (throw 37) hash-cache)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "local-macro-name-shadows-unqualified-call",
+      "source": "(let [caching-hash (fn [a b c] (+ a b c))] (caching-hash 3 5 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402e000000000000"
+      }
+    },
+    {
+      "id": "qualified-global-key-ignores-local-shadow",
+      "source": "(do (set! hash-cache nil) (let [hash-cache 91] (cljs.core/caching-hash 7 (fn [x] (* x 3)) suss-oracle.caching-hash-cases/hash-cache)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "method-global-key-ignores-field-shadow",
+      "source": "(do (def review_cache nil) (deftype ReviewHashShadow [review_cache] Object (hash [this] (cljs.core/caching-hash 7 (fn [x] (* x 5)) suss-oracle.caching-hash-cases/review_cache))) (.hash (ReviewHashShadow. 91)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041800000000000"
+      }
+    },
+    {
+      "id": "field-shadow-preserved-after-global-cache-write",
+      "source": "(.-review_cache (ReviewHashShadow. 91))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4056c00000000000"
+      }
+    }
+  ]
+}
