@@ -15,7 +15,7 @@
   counted? list? sequential? accumulating-seq-count empty-ordered-hash
   Reduced reduced reduced? ensure-reduced unreduced deref iterable? iter-reduce reduce
   pr-str* -indexOf -lastIndexOf equiv-sequential = hash-ordered-coll seq-reduce
-  array-reduce IndexedSeqIterator RSeq str_)
+  array-reduce IndexedSeqIterator RSeq indexed? neg? linear-traversal-nth nth str_ type type->str)
 
 (def identity (fn [x] x))
 
@@ -981,6 +981,140 @@
   can be a vector or sorted-map), in reverse order. If rev is empty returns nil"
   (fn [rev]
   (-rseq rev)))
+
+(def indexed?
+  "Returns true if coll implements nth in constant time"
+  (fn [x] (satisfies? IIndexed x)))
+
+(def ^boolean neg?
+  "Returns true if num is less than zero, else false"
+  (fn [x] (cljs.core/neg? x)))
+
+(def linear-traversal-nth
+  (fn ([coll n]
+     (cond
+       (nil? coll)     (throw (suss.bootstrap/error "Index out of bounds"))
+       (zero? n)       (if (seq coll)
+                         (first coll)
+                         (throw (suss.bootstrap/error "Index out of bounds")))
+       (indexed? coll) (-nth coll n)
+       (seq coll)      (recur (next coll) (dec n))
+       :else           (throw (suss.bootstrap/error "Index out of bounds"))))
+  ([coll n not-found]
+     (cond
+       (nil? coll)     not-found
+       (zero? n)       (if (seq coll)
+                         (first coll)
+                         not-found)
+       (indexed? coll) (-nth coll n not-found)
+       (seq coll)      (recur (next coll) (dec n) not-found)
+       :else           not-found))))
+
+(def nth
+  "Returns the value at the index. get returns nil if index out of
+  bounds, nth throws an exception unless not-found is supplied.  nth
+  also works for strings, arrays, regex Matchers and Lists, and,
+  in O(n) time, for sequences."
+  (fn ([coll n]
+    (cond
+      (not (number? n))
+      (throw (suss.bootstrap/error "Index argument to nth must be a number"))
+
+      (nil? coll)
+      coll
+
+      (implements? IIndexed coll)
+      (-nth coll n)
+
+      (array? coll)
+      (if (and (< -1 n (.-length coll)))
+        (aget coll (int n))
+        (throw (suss.bootstrap/error "Index out of bounds")))
+
+      (string? coll)
+      (if (and (< -1 n (.-length coll)))
+        (aget coll (int n))
+        (throw (suss.bootstrap/error "Index out of bounds")))
+
+      (or (implements? ISeq coll)
+          (implements? ISequential coll))
+      (if (neg? n)
+        (throw (suss.bootstrap/error "Index out of bounds"))
+        (linear-traversal-nth coll n))
+
+      (native-satisfies? IIndexed coll)
+      (-nth coll n)
+
+      :else
+      (throw (suss.bootstrap/error (str_ "nth not supported on this type "
+                          (type->str (type coll)))))))
+  ([coll n not-found]
+    (cond
+      (not (number? n))
+      (throw (suss.bootstrap/error "Index argument to nth must be a number."))
+
+      (nil? coll)
+      not-found
+
+      (implements? IIndexed coll)
+      (-nth coll n not-found)
+
+      (array? coll)
+      (if (and (< -1 n (.-length coll)))
+        (aget coll (int n))
+        not-found)
+
+      (string? coll)
+      (if (and (< -1 n (.-length coll)))
+        (aget coll (int n))
+        not-found)
+
+      (or (implements? ISeq coll)
+          (implements? ISequential coll))
+      (if (neg? n)
+        not-found
+        (linear-traversal-nth coll n not-found))
+
+      (native-satisfies? IIndexed coll)
+      (-nth coll n not-found)
+
+      :else
+      (throw (suss.bootstrap/error (str_ "nth not supported on this type "
+                          (type->str (type coll)))))))))
+
+(def -indexOf
+  (fn ([coll x]
+   (-indexOf coll x 0))
+  ([coll x start]
+   (let [len (count coll)]
+     (if (>= start len)
+       -1
+       (loop [idx (cond
+                    (pos? start) start
+                    (neg? start) (let [candidate (+ start len)] (if (> 0 candidate) 0 candidate))
+                    :else start)]
+         (if (< idx len)
+           (if (= (nth coll idx) x)
+             idx
+             (recur (inc idx)))
+           -1)))))))
+
+(def -lastIndexOf
+  (fn ([coll x]
+   (-lastIndexOf coll x (count coll)))
+  ([coll x start]
+   (let [len (count coll)]
+    (if (zero? len)
+      -1
+      (loop [idx (cond
+                   (pos? start) (let [bound (dec len)] (if (< bound start) bound start))
+                   (neg? start) (+ len start)
+                   :else start)]
+        (if (>= idx 0)
+          (if (= (nth coll idx) x)
+            idx
+            (recur (dec idx)))
+          -1)))))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

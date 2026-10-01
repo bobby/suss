@@ -501,16 +501,16 @@ fn imported_inc_dec_evaluate_arguments_before_typed_arity_failure_and_recover() 
         let before = session.eval("effects").unwrap();
         let before = f64::from_bits(number(&mut session, &before));
         assert!(matches!(
-            session.eval(&format!("({name} (tick) (tick))")),
+            session.eval(&format!("(let [f {name}] (f (tick) (tick)))")),
             Err(SessionError::Language(_))
         ));
         let after = session.eval("effects").unwrap();
         assert_eq!(number(&mut session, &after), (before + 2.0).to_bits());
         assert!(matches!(
-            session.eval(&format!("({name})")),
+            session.eval(&format!("(let [f {name}] (f))")),
             Err(SessionError::Language(_))
         ));
-        let value = session.eval(&format!("({name} 4)")).unwrap();
+        let value = session.eval(&format!("(let [f {name}] (f 4))")).unwrap();
         assert_eq!(
             number(&mut session, &value),
             (if name == "inc" { 5.0f64 } else { 3.0 }).to_bits()
@@ -526,12 +526,12 @@ fn imported_inc_dec_unsupported_object_coercion_is_typed_and_recovers() {
         for argument in ["(O.)", "(array 1)", "(fn [] 1)"] {
             assert!(
                 matches!(
-                    session.eval(&format!("({name} {argument})")),
+                    session.eval(&format!("(let [f {name}] (f {argument}))")),
                     Err(SessionError::Language(_))
                 ),
                 "{name}: {argument}"
             );
-            let value = session.eval(&format!("({name} 3)")).unwrap();
+            let value = session.eval(&format!("(let [f {name}] (f 3))")).unwrap();
             assert_eq!(
                 number(&mut session, &value),
                 (if name == "inc" { 4.0f64 } else { 2.0 }).to_bits()

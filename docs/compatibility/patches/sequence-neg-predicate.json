@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "45c16d3e90c79f1f80f05fecabc6faa13e1504e792d9136f417dcc2fd63d0b37",
+  "replacement": "(def ^boolean neg?\n  \"Returns true if num is less than zero, else false\"\n  (fn [x] (cljs.core/neg? x)))",
+  "rationale": "Explicit defn bootstrap preserves metadata/docstrings/arities and source algorithms. Host Error becomes checked existing language error; in-range charAt with int n uses UTF-16 numeric indexing; unchecked min/max bind operands once and preserve numeric comparisons. Unsupported-value formatting and full compiled macros remain unfinished."
+}

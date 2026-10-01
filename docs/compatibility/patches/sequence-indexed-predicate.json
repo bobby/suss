@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "091aced0efc645f21a0d52b3fd87e7c739aeb392404f61467ea9966db1bc4f4b",
+  "replacement": "(def indexed?\n  \"Returns true if coll implements nth in constant time\"\n  (fn [x] (satisfies? IIndexed x)))",
+  "rationale": "Explicit defn bootstrap preserves metadata/docstrings/arities and source algorithms. Host Error becomes checked existing language error; in-range charAt with int n uses UTF-16 numeric indexing; unchecked min/max bind operands once and preserve numeric comparisons. Unsupported-value formatting and full compiled macros remain unfinished."
+}

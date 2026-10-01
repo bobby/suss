@@ -67,6 +67,9 @@ pub enum ControlForm {
     AsThread,
     Zero,
     Positive,
+    Negative,
+    Increment,
+    Decrement,
     UncheckedGet,
     UncheckedSet,
 }
@@ -86,6 +89,9 @@ impl ControlForm {
             "as->" => Self::AsThread,
             "zero?" => Self::Zero,
             "pos?" => Self::Positive,
+            "neg?" => Self::Negative,
+            "inc" => Self::Increment,
+            "dec" => Self::Decrement,
             "unchecked-get" => Self::UncheckedGet,
             "unchecked-set" => Self::UncheckedSet,
             _ => return None,
@@ -643,6 +649,9 @@ impl Environment {
                         | "as->"
                         | "zero?"
                         | "pos?"
+                        | "neg?"
+                        | "inc"
+                        | "dec"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -698,6 +707,9 @@ impl Environment {
                         | "as->"
                         | "zero?"
                         | "pos?"
+                        | "neg?"
+                        | "inc"
+                        | "dec"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -753,6 +765,9 @@ impl Environment {
                         | "as->"
                         | "zero?"
                         | "pos?"
+                        | "neg?"
+                        | "inc"
+                        | "dec"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -808,6 +823,9 @@ impl Environment {
                     | "as->"
                     | "zero?"
                     | "pos?"
+                    | "neg?"
+                        | "inc"
+                        | "dec"
                     | "int"
                     | "bit-and"
                     | "bit-or"
@@ -855,6 +873,9 @@ impl Environment {
                     | "as->"
                     | "zero?"
                     | "pos?"
+                    | "neg?"
+                        | "inc"
+                        | "dec"
                     | "int"
                     | "bit-and"
                     | "bit-or"

@@ -7187,3 +7187,118 @@ remain unchanged. All reviewer handles61992/12322/30823 terminal; reviewer
 releases heavy slot after committing/pushing review tests and evidence. Root
 must verify successful exact reviewed-head CI before readiness. No merge or
 issue/milestone closure; M2–M9 acceptance remains incomplete.
+
+## Sequence indexing/search preparation — 2026-10-01
+
+Isolated portable/core-sequence-indexing from candidate1041d4cbf0 prepares
+indexed?1606/neg?3086/linear-traversal-nth1927/nth1947/-indexOf1610/-lastIndexOf1627
+and original bounded neg?1201 macro lowering. All upstream algorithms preserved;
+explicit fixed defn/UTF-16 in-range charAt/error/operand-once min/max adaptations,
+source hashes/EPL, no ABI/type/core-cell or fake implementation. Import92/
+artifacts96/reviews183partial+882unassessed and new53 candidates UNVERIFIED;
+no fresh/native/full acceptance claim. Formatter dependencies remain uninitialized.
+
+Preparation occurred while reviewer104 exclusively owned heavy slot. Reviewer
+now pushedf7e0fca6565e22c6febf2b33549cadeba19710d0; no significant finding,
+fresh59shared+1boundary/native2/Python80/import90/setup4/reviews176+889/full30823
+terminal0, all handles terminal and slot explicitly released. Root must rebase
+onto reviewed parent then execute fresh pin/native/focused/full. Final reviewed-
+head CI gates104 readiness; no merge/closure. Shared target/build2/testthreads2,
+no RUSTFLAGS. Next complete and verify indexing/search, then ordered/public hash,
+printing, remaining collections and compiled macros toward M2–M9 acceptance.
+
+## Indexing execution and macro fidelity — 2026-10-01
+
+Rebased portable/core-sequence-indexing onto reviewed104 f7e0fca; preparation
+commit61d2177. Fresh original53/native1 passed75758, error/GC focused native2
+passed99611 output. Generated pinned core.js demonstrates helper inc/dec macro
+inlining; corrected bounded original unary expansions with literal1 and existing
+checked arithmetic, preserving first-class runtime functions and operand order.
+Three core-cell redefinition observations added without altering original53.
+Fresh10401 terminal0 certifies56 primary/native2, /private/tmp/suss-indexing-macro56.log.
+Python80/import96/setup4/reviews185partial+880unassessed/diff-check pass.
+Full75515 running /private/tmp/suss-indexing-full.log; root owns heavy slot.
+Formatting dependencies remain uninitialized; no complete issue/milestone claim.
+Next inspect full then open and independently review the indexing PR, push
+significant findings and require exact reviewed-head CI. No merges.
+
+PR103 reviewed e11771eb368a75b559a31a90a8737440a12a4a66 exact CI36844766535
+success; inspected log through final doc tests, /private/tmp/suss-pr103-final-ci.log.
+Marked ready for user review. PR104 f7e0fca exact CI36846726372 still running.
+
+Full75515 ended101: two previous imported inc/dec function tests made direct
+calls now correctly resolved as macros, expecting runtime arity/coercion errors.
+Corrected function tests to explicit lexical function capture, retaining every
+effect/arity/typed-error/recovery assertion. Added distinct macro arity guards
+for inc/dec; no certified oracle observation changed or skipped. Focused rerun
+and full retry required. Initial failure /private/tmp/suss-indexing-full.log.
+
+Focused40549 terminal0: core_import17/indexing2,
+/private/tmp/suss-indexing-focused-fix.log. Full52953 retry running,
+/private/tmp/suss-indexing-full-retry.log. Original reviewed parent corpora and
+separate boundary bytes unchanged. Root retains heavy slot until terminal.
+
+Required full52953 ended0; inspected /private/tmp/suss-indexing-full-retry.log
+through final reader doc tests. Commands: CARGO_TARGET_DIR=/Users/bobby/code/
+github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2. All required enabled suites pass, including indexing2/56,
+core_import17 and reviewed parent corpora. Existing manual ignores and explicit
+diagnostic9passes/7knownfailures remain unchanged. PR105 draft candidate26a7443
+opened with independent reviewer review_pr105 dispatched; exact reviewed-head
+CI remains mandatory. All root heavy handles terminal; release slot to reviewer
+after evidence push. No merges or issue/milestone closures. Next verify reviewer
+findings/CI then retained hashing/printing and remaining M2–M9 acceptance.
+
+## Independent PR105 review — 2026-10-01
+
+Reviewed candidate26a7443 and evidence followup9b14f4b against reviewed104
+f7e0fca6565e22c6febf2b33549cadeba19710d0 in isolated /private/tmp/suss-review-pr105
+with actual detached upstreamc4295f30. Read AGENTS/accepted design/ROADMAP/
+inventory/handoff and inspected all complete retained indexing/search forms,
+source patches/EPL/hash provenance, overloads, dispatch order, literal min/max
+adaptations, UTF-16, bounded inc/dec/neg? HIR and resolver aliases/refers/exclusions/
+lexical/user shadowing/phases. No significant production defect found in this
+bounded port. Clarified private defn- runtime Var metadata/namespace privacy
+remain unfinished despite preserved extracted source and inventory visibility;
+corrected new dependency records to macro inc/dec/neg? and regenerated manifest.
+Formatter dependencies still uninitialized; no full nth/core/M2–M9 acceptance.
+
+Six appended probes preserve every original56 source/expectation object and
+parent sequence/reduction/control/iteration corpora and exact separate boundary.
+They prove IIndexed dispatch before sequence traversal, search count once and
+stop at first match, inc/dec/neg? lexical shadowing, once-only operand effects,
+throw prevents later index effects and core-neg? redefinition independence.
+Native namespace guard adds core aliases/refers, explicit refer conflict,
+user globals, exclusions, GC and both compiler phases/located arity rejection.
+
+Initial fresh42082 ended1 on new provisional grouped deftype overload syntax;
+pin requires repeated deftype methods, corrected only those new source candidates.
+Retry54796 certifies62 primary but ended101 on new native refer harness lacking
+retained runtime bindings. Loading actual core fixes harness;37532 focused native3
+ended0. Final fresh92436 ended0:62 exact primary/native3,
+/private/tmp/suss-pr105-review-oracle62-certified.log. Initial logs retained in
+/private/tmp/suss-pr105-review-oracle62.log and
+/private/tmp/suss-pr105-review-oracle62-final.log. No original expected result
+changed, no skips or false matches. Python62505 ended0:80 tests pass,
+/private/tmp/suss-pr105-review-python.log; import96/setup4/reviews185partial+
+880unassessed/diff-check pass. No RUSTFLAGS; shared target/build2/testthreads2.
+
+PR104 READY and still unmerged: reviewedf7e0fca exact CI36846726372 SUCCESS;
+root inspected /private/tmp/suss-pr104-final-ci.log through final doc tests and
+verified unchanged head before marking ready. PR105 final reviewed-head CI is
+still root readiness gate after review commit/push. Required independent full92345
+live, /private/tmp/suss-pr105-review-full.log. Reviewer exclusively owns heavy
+slot until authoritative terminal full output/all handles inspected. No merges,
+issue closures or milestone acceptance. Next retained hash/printing, remaining
+persistent collections, compiled macros and surrounding M2–M9 acceptance.
+
+Independent full92345 ended0; inspected /private/tmp/suss-pr105-review-full.log
+through all final reader doc tests. Required command CARGO_TARGET_DIR=/Users/
+bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace
+--locked -- --test-threads=2. All enabled required suites pass, including native
+indexing3/62, core_import17 and reviewed parent corpora. Existing manual ignores
+and diagnostic9passing/7knownfailures unchanged. Final Python18859 ended0 with80
+passes after provenance updates, /private/tmp/suss-pr105-review-python-final.log.
+All reviewer handles42082/54796/62505/37532/92436/18859/92345 terminal. Reviewer
+releases exclusive heavy slot after review commit/push; root must gate readiness
+on successful exact final reviewed-head CI. No merge or issue/milestone closure.

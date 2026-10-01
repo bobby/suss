@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "5bf829a7ded5d38c0872602924634241cd3920adb15a33ee9bf9d73b2146539c",
+  "replacement": "(def -lastIndexOf\n  (fn ([coll x]\n   (-lastIndexOf coll x (count coll)))\n  ([coll x start]\n   (let [len (count coll)]\n    (if (zero? len)\n      -1\n      (loop [idx (cond\n                   (pos? start) (let [bound (dec len)] (if (< bound start) bound start))\n                   (neg? start) (+ len start)\n                   :else start)]\n        (if (>= idx 0)\n          (if (= (nth coll idx) x)\n            idx\n            (recur (dec idx)))\n          -1)))))))",
+  "rationale": "Explicit defn bootstrap preserves metadata/docstrings/arities and source algorithms. Host Error becomes checked existing language error; in-range charAt with int n uses UTF-16 numeric indexing; unchecked min/max bind operands once and preserve numeric comparisons. Unsupported-value formatting and full compiled macros remain unfinished. defn- privacy is retained in the extracted source and inventory; runtime Var metadata and namespace privacy enforcement remain explicitly unfinished."
+}
