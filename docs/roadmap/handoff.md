@@ -7648,3 +7648,20 @@ full78254 remains applicable to the identical tested code, but it is not a fresh
 run at this followup commit. Root owns the heavy slot (publichash full61362);
 no cargo/JVM/Node process was started for this static workflow/evidence fix.
 Fresh exact final-head CI is mandatory; draft remains, no readiness/merge claim.
+
+
+### PR108 retargeted stack rebase — 2026-10-01
+
+User reported merging a large stack as#109. Root GitHub audit found no#109
+and found#96–107 merged into the stack branch while#93–95 remain open and main
+still ends at#91. Reviewer independently verified#107 MERGED at13:51:09Z and
+#108 OPEN with auto-retargeted base portable/core-bitwise-hash/CONFLICTING.
+Fetched base015767ae44b5e2739782fb979f6324c46a3db9eb has an exactly identical
+tree to reviewed1077b5307849aa641f0fabe26f5257335526f48fa3b. Rebased only the
+five PR108 commits with --onto015767ae 7b530784; no conflicts. Entire rebased
+tree was byte-identical to reviewedc6cc97b before this evidence append.
+Scoped diff proves all production/tests/oracles/runtime/workflow/lock bytes remain
+identical after this append, so prior local baseline applies to unchanged code,
+not a newly executed full at this commit. No heavy processes started; root keeps
+the exclusive slot. Push uses exact old-head force-with-lease. Fresh final-head
+CI remains required; no readiness/merge/issue or milestone closure claim.
