@@ -30,7 +30,7 @@ fn scalar_case_matches_independently_decoded_pinned_observations() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/case-cases.json")).unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 33);
+    assert_eq!(cases.len(), 40);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -131,5 +131,47 @@ fn case_errors_and_namespace_guards_keep_effects_and_recover_after_gc() {
         Err(SessionError::Compile(_))
     ));
     let value = session.eval("(cljs.core/case 1 1 17 19)").unwrap();
+    assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+}
+
+#[test]
+fn generic_case_throw_restores_equality_and_bounds_are_located() {
+    use suss_cli::portable_session::SessionError;
+    let mut session = Session::new().unwrap();
+    session
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .unwrap();
+    session.enter_namespace("user").unwrap();
+    session.eval("(def case-review-effects 0)").unwrap();
+    assert!(matches!(session.eval("(with-redefs [cljs.core/= (fn [a b] (throw 17))] (case true false (set! case-review-effects 1) true (set! case-review-effects 2) (set! case-review-effects 3)))"), Err(SessionError::Language(_))));
+    session.collect().unwrap();
+    let value = session.eval("case-review-effects").unwrap();
+    assert_eq!(number(&mut session, &value), 0.0f64.to_bits());
+    let value = session.eval("(case true false 19 true 17 23)").unwrap();
+    assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+    for (source, message) in [
+        ("(case 0 (0 -0.0) 17 19)", "Duplicate case test constant"),
+        (
+            "(case 8 (false nil 0 1 2 3 4 5 6) 17 19)",
+            "Case equality bootstrap supports at most eight constants",
+        ),
+    ] {
+        let Err(SessionError::Compile(error)) =
+            session.eval(&format!("(def case-review-ghost 7) {source}"))
+        else {
+            panic!("case boundary");
+        };
+        assert_eq!(error.message, message);
+        assert!(error.span.end > error.span.start);
+        assert!(matches!(
+            session.eval("case-review-ghost"),
+            Err(SessionError::Compile(_))
+        ));
+    }
+    let closure = session
+        .eval("(let [x 17] (case true false (fn [] 19) true (fn [] x) (fn [] 23)))")
+        .unwrap();
+    session.collect().unwrap();
+    let value = session.invoke(&closure, &[]).unwrap();
     assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
 }

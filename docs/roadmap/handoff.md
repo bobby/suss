@@ -7759,3 +7759,40 @@ known failures remain explicit. All root handles22322/90679/16020/40683/50092
 terminal; mistaken-target retries also terminal101. Release exclusive heavy slot
 to /root/review_pr110 after this evidence push. Independent oracle/full and exact
 reviewed-head CI still gate PR110 readiness; PR108 attempt2 pending. No merges.
+
+
+## Independent PR110 review — 2026-10-01
+
+Reviewed5ec1492 plus root CI/evidence commits throughd12f061 against reviewed
+PR108707b5b6 in isolated /private/tmp/suss-review-pr110, actual detached upstream
+c4295f30. Read accepted design/ROADMAP/inventory/handoff and pinned case/assoc-test.
+No significant production defect found. Mixed number/string private comparison,
+generic qualified constant-first equality, bounded insertion order, selector
+once, tail/source analysis, aliases and strict empty-group negative boundary
+inspected. CI timeout25→35 responds to actual cleanup cancellation, retaining
+all required suites, shared engines and two workers.
+
+Root full16020 terminal0/all handles terminal before explicit heavy-slot release.
+Seven additive observations preserve original33 source/reference objects and all
+parent corpora. Fresh81349 terminal0 certifies40 exact matches plus1 original
+exact parse boundary/native4, /private/tmp/suss-pr110-review-oracle40.log.
+Native76696 terminal0/5 adds thrown equality restoration, no unselected effects,
+GC retained closure, signed-zero duplicate and ninth generic constant/atomic
+publication guards: /private/tmp/suss-pr110-review-native5.log. Compiler41542
+terminal0/1 actual Runtime/Macro execution, /private/tmp/suss-pr110-review-phases.log.
+Python82 pass /private/tmp/suss-pr110-review-python82.log; import101/reviews192+873/
+setup5/diff pass. Mistaken nonexistent core_setup_provenance.py failed; actual
+sequence_provenance.py corrected/verifies5. No skips, altered expectations or
+claimed compiled-macro acceptance. Reviewer owns heavy slot for required full.
+No merges/issue closure/milestone acceptance. Public hash Date branch, ordered/
+unordered composition, complete collections/macros and M2–M9 release gates next.
+
+
+Independent full69411 authoritative terminal0; inspected
+/private/tmp/suss-pr110-review-full.log through final suss_reader doc tests.
+Required shared-target/build2 workspace --locked/--test-threads=2 baseline passes,
+including case5/40 plus exact negative boundary, both phase fragments, ABI45 and
+unchanged parent corpora/boundaries. Existing manual ignores and diagnostic
+9passes/7knownfailures unchanged. All reviewer handles81349/76696/41542/69411
+terminal. Reviewer releases heavy slot after evidence commit/push. Exact final
+reviewed-head CI still gates readiness; no merge/issue or milestone closure.

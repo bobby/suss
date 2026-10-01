@@ -406,7 +406,7 @@ gate PR readiness; no issue or milestone is complete from this work alone.
 
 Scalar `case` bootstrap now supports grouped binary64/UTF-16 literals and bounded
 boolean/nil equality tables with selector-once evaluation and live qualified
-core equality. There are 33 fresh pinned/native value matches and one separately
+core equality. There are 40 fresh pinned/native value matches and one separately
 asserted pinned empty-group parse failure; native rejects that input with a
 located compile diagnostic. Actual fragments execute in Runtime and Macro
 phases. Selection97/artifacts101 and192 partial/873 unassessed reviews remain

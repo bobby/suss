@@ -265,6 +265,62 @@
         "tag": "f64",
         "bits": "4031000000000000"
       }
+    },
+    {
+      "id": "mixed-primitives-ignore-equality",
+      "source": "(with-redefs [cljs.core/= (fn [a b] false)] (case \"a\" 1 23 \"a\" 17 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "mixed-group-primitives",
+      "source": "(case \"a\" (1 \"a\") 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "generic-test-effects-order",
+      "source": "(do (def case-review-trace 0) (with-redefs [cljs.core/= (fn [a b] (do (set! case-review-trace (+ (* case-review-trace 10) (if (identical? a false) 1 2))) (identical? a b)))] (case true false 23 true case-review-trace 19)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "generic-group-short-circuit",
+      "source": "(do (def case-review-count 0) (with-redefs [cljs.core/= (fn [a b] (do (set! case-review-count (+ case-review-count 1)) true))] (case true (false nil true) case-review-count 19)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "generic-live-between-tests",
+      "source": "(with-redefs [cljs.core/= (fn [a b] (do (set! cljs.core/= (fn [a b] true)) false))] (case true false 23 true 17 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "generic-eight-constants",
+      "source": "(case 5 (false nil 0 1 2 3 4 5) 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "generic-tail-recur",
+      "source": "(loop [n false] (case n false (recur true) true 17 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
     }
   ]
 }
