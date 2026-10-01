@@ -6869,3 +6869,45 @@ Next implement the explicit pending source helpers for printing/sequential
 hash/equality/reduction/iterators/reversal/general apply, then lazy/chunked/vector/
 HAMT/transient acceptance. Full lossless collection decoder and M2–M9 gates remain
 unfinished; no issue or milestone closure.
+
+## Retained sequential equality — 2026-10-01
+
+PR101 independent review pushed47170abf51e4b0ef927cd9af323e6919a4f822f7,
+no significant production finding. Fresh75/native5/Python80/full70659 terminal0;
+reviewer released heavy slot after all handles terminal. Root verified exact-head
+CI36840696723 live; draft remains until successful final reviewed-head CI.
+
+Separate branch portable/core-sequential-equality based on reviewed101 retains
+pinned =1342/equiv-sequential3151 and complete unmodified number/default IEquiv
+extensions1475/1866. Selection70/artifacts74/reviews159partial+906unassessed;
+source setup verifier4, forward declarations/hash-bound loader and EPL unchanged
+except reviewed new forms. No new runtime ABI/type/bootstrap-cell/algorithm.
+
+Initial native36319 terminal0, original75 match/native5 pass. Added56 candidates.
+Fresh84867 ended1: new provisional user-def equality expectation contradicted
+pin (user shadow leaves core helper intact). Corrected only that new expectedfalse
+and added qualified core-cell probe. Fresh21347 ended1 with pinned direct-arity2
+TypeError on fixed replacement; corrected new probe to multi-arity replacement.
+Final20778 terminal0 fresh131 match/native5, log
+/private/tmp/suss-equality-primary131-final.log. All original75 source/expectation
+objects preserved. Added wrongarity/effects/typed user throw/saved equality/GC
+recovery: native19043 terminal0 six tests, /private/tmp/suss-equality-native6.log.
+Python80 pass, /private/tmp/suss-equality-python.log; import/setup4/reviews checks
+and diff-check pass. No changed certified result, skip, broad acceptance claim.
+
+Required full2502 live, /private/tmp/suss-equality-full.log, root exclusively
+owns heavy slot. Command shared target/build2 cargo test --workspace --locked --
+--test-threads=2; no RUSTFLAGS. Read final output before commit/push/draft PR against
+101. Mandatory independent review/fixes/full/exact final-head CI gate readiness;
+no merge. Remaining retained hash/reduced/reduction/iterator/reversal/printing/
+index-search helpers, other persistent types and compiled macros are next;
+M2–M9 and issue IDs remain active, no closures.
+
+Full2502 terminal0; root inspected final doc-test completion in
+/private/tmp/suss-equality-full.log. Required workspace baseline passes with
+native sequence6/closure14/ABI41 and all enabled required suites. Existing manual
+ignored tests and diagnostic9passing/7knownfailures remain explicit; no broad
+compatibility acceptance. All root local handles36319/84867/21347/20778/19043/
+32175/2502 terminal, including the two preserved primary failures above. Ready
+for candidate commit/push/draft PR and mandatory independent review. Root must
+release heavy slot to that reviewer; exact reviewed-head CI still gates readiness.

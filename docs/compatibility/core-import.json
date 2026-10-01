@@ -343,16 +343,26 @@
       "id": "runtime:list:3374",
       "source-sha256": "d2bcd9e28da182f1a61f5c52ca185cf03d711acfd2a6da7a5bbbef6169d0def9",
       "patch": "docs/compatibility/patches/sequence-list.json"
+    },
+    {
+      "id": "runtime:=:1342",
+      "source-sha256": "58c0dcd0f61970715f5b1b2a8ac5bc46548ab081726ba1a4b64766a230292401",
+      "patch": "docs/compatibility/patches/sequence-equality.json"
+    },
+    {
+      "id": "runtime:equiv-sequential:3151",
+      "source-sha256": "968fe6ad1b99af14556c8dace3f7cf96dc5760acbe91f052148eb8dad087235d",
+      "patch": "docs/compatibility/patches/sequence-equiv-sequential.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "9e72763fe6f9dcf8f163f891ed5aebcd75f196c8de698bb37421b8aa070e8f9b"
+      "sha256": "bc7e3febf5ea452aad7df3a42d5f47db239538acbe60012eb65bc6d4cb2654f6"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "63ef1d751c0df72b5388054c9205326c9df7ce4627a9ea7e219b07ffa3e53308"
+      "sha256": "215edd9d2fc055fe07062ed4ae03938ee367e90dccb80c0a7a269fb120045e68"
     }
   }
 }

@@ -129,3 +129,10 @@ primary observations. All original51 are preserved. Imported68/72 artifacts and
 157 partial/908 unassessed reviews remain prerequisites, not M4 acceptance; full
 method dependencies and surrounding release gates remain incomplete. See
 [sequence evidence](docs/runtime/sequences.md).
+
+Retained sequential equality now closes the List/EmptyList/Cons/IndexedSeq helper
+boundary with source `=`/equiv-sequential and native number/default IEquiv setup.
+Fresh131 observations retain the prior75;159 partial reviews/906 unassessed and
+70 selections/74 licensed artifacts remain prerequisites. Hashing/reduction and
+remaining collection/macro/release gates stay open; see
+[sequential equality](docs/runtime/sequential-equality.md).

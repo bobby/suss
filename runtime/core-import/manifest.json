@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "47c62e1c9f26698438101a086d2061e08ec1257b3b10c170fe787b92c6d33fc9",
-  "reviews-sha256": "296a7496441ff04866f10b66e540326a47fe43974438d6adf29ea697ed3572f5",
+  "recipe-sha256": "599c788292852a1df1fc6819af784d568bd720056c32d4941d1de910eca83bdd",
+  "reviews-sha256": "3ea3d7acb0fb1abbb51569b952764538b6f7f83f41ba9627d87a1f678eb7e85d",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -2228,16 +2228,90 @@
         "crates/suss-cli/tests/portable_sequences.rs",
         "tests/oracle/sequence-cases.json"
       ]
+    },
+    {
+      "id": "runtime:=:1342",
+      "name": "=",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1342,
+      "end-line": 1358,
+      "byte-start": 39386,
+      "byte-end": 39891,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "58c0dcd0f61970715f5b1b2a8ac5bc46548ab081726ba1a4b64766a230292401",
+      "extracted": "extracted/0068.cljs",
+      "extracted-sha256": "fb9bbb0b991a329d7875287acbe6a90dae809e54c4eb83fd96d525a1eacf76f0",
+      "patch": "docs/compatibility/patches/sequence-equality.json",
+      "patch-sha256": "479218b318ef44ffa742df629a985141a7c3362b85a7657191a2d2bfc3788599",
+      "adapted-form-sha256": "f7da4808d2e3567d58b5038a1444ebd583d0b510bfe042574d243a222ba15a1c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:-equiv",
+        "runtime:identical?",
+        "runtime:nil?",
+        "runtime:first:1309",
+        "runtime:next:1333",
+        "macro:or:913",
+        "compiled upstream defn remains pending"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_sequences.rs",
+        "tests/oracle/sequence-cases.json",
+        "docs/runtime/sequential-equality.md"
+      ]
+    },
+    {
+      "id": "runtime:equiv-sequential:3151",
+      "name": "equiv-sequential",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3151,
+      "end-line": 3164,
+      "byte-start": 84433,
+      "byte-end": 84885,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "968fe6ad1b99af14556c8dace3f7cf96dc5760acbe91f052148eb8dad087235d",
+      "extracted": "extracted/0069.cljs",
+      "extracted-sha256": "65f2030458e24dd2390ba393b0d247b222747877324c0ea80773436b2c1f0a1b",
+      "patch": "docs/compatibility/patches/sequence-equiv-sequential.json",
+      "patch-sha256": "1a5220d204ff0e8c76ff1ebdde4fc8d1abc101100adc67851a44fd335795ab1f",
+      "adapted-form-sha256": "f4a6235fb6b353d5c117430c11c575a13c339bc1b617715918d98839bd18380f",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:=:1342",
+        "runtime:sequential?:2246",
+        "runtime:counted?:1602",
+        "runtime:count:1906",
+        "runtime:seq:1282",
+        "runtime:first:1309",
+        "runtime:next:1333",
+        "runtime:boolean:2357",
+        "runtime:==:3064"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_sequences.rs",
+        "tests/oracle/sequence-cases.json",
+        "docs/runtime/sequential-equality.md"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "9e72763fe6f9dcf8f163f891ed5aebcd75f196c8de698bb37421b8aa070e8f9b"
+      "sha256": "bc7e3febf5ea452aad7df3a42d5f47db239538acbe60012eb65bc6d4cb2654f6"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "63ef1d751c0df72b5388054c9205326c9df7ce4627a9ea7e219b07ffa3e53308"
+      "sha256": "215edd9d2fc055fe07062ed4ae03938ee367e90dccb80c0a7a269fb120045e68"
     }
   },
   "files": {
@@ -2311,6 +2385,8 @@
     "extracted/0065.cljs": "643066f972b6f94c60dea607b256a1a00f694c9b52e8a9a8f6e5b279c7eca6d7",
     "extracted/0066.cljs": "93c585b87eae0ee4912ac61bfdebdf237b4015cfdb9a5328d6a7d97e4b2e6292",
     "extracted/0067.cljs": "89c4683fa4d20455fb66a65e979bdc74ca09aad0b19a5c12e4bdff988ad0b44f",
-    "suss/core.sus": "db52be45b0efc2dcdb17398a449d16c6af51010ecba9fe55d7f3faf7cc474ef5"
+    "extracted/0068.cljs": "fb9bbb0b991a329d7875287acbe6a90dae809e54c4eb83fd96d525a1eacf76f0",
+    "extracted/0069.cljs": "65f2030458e24dd2390ba393b0d247b222747877324c0ea80773436b2c1f0a1b",
+    "suss/core.sus": "5c954adb3346a20128039228eea6b6ea816856aedd1791c9722b818742a2a869"
   }
 }

@@ -6,17 +6,17 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-;; Retained standalone upstream forms: canonical singleton and nil count extension.
-(set! (.-EMPTY List) (EmptyList. nil))
-
-(extend-type nil
-  ICounted
-  (-count [_] 0))
-
-(extend-type number
-  IEquiv
-  (-equiv [x o] (identical? x o)))
-
-(extend-type default
-  IEquiv
-  (-equiv [x o] (identical? x o)))
+(defn- equiv-sequential
+  "Assumes x is sequential. Returns true if x equals y, otherwise
+  returns false."
+  [x y]
+  (boolean
+    (when (sequential? y)
+      (if (and (counted? x) (counted? y)
+               (not (== (count x) (count y))))
+        false
+        (loop [xs (seq x) ys (seq y)]
+          (cond (nil? xs) (nil? ys)
+            (nil? ys) false
+            (= (first xs) (first ys)) (recur (next xs) (next ys))
+            :else false))))))

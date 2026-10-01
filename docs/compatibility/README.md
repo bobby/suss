@@ -358,3 +358,13 @@ remain uninitialized. Fresh75 primary/native observations preserve all69 pre-rev
 including canonical empty literals, real persistent rest, shared tails, live array
 views and UTF-16 units. No full method/equality/hash/reduction/iterator/core or
 milestone acceptance claim. Independent review/full/final-head CI remain required.
+
+## Retained sequential equality
+
+Pinned `=`/equiv-sequential and complete native number/default IEquiv setup now
+execute against131 fresh primary/native sequence observations (prior75 unchanged).
+The import selects70 forms/74 licensed artifacts and records159 partial reviews/
+906 unassessed. Six native tests cover arity/effect/typed throw/GC recovery;
+[evidence](../runtime/sequential-equality.md) records the initial new-probe failures
+and boundaries. Other persistent types, collection hashing/reduction and compiled
+macros remain unfinished. No issue/milestone completion claim.

@@ -2,6 +2,26 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:=:1342"
+  {:source-sha256 "58c0dcd0f61970715f5b1b2a8ac5bc46548ab081726ba1a4b64766a230292401" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["runtime:-equiv" "runtime:identical?" "runtime:nil?" "runtime:first:1309" "runtime:next:1333" "macro:or:913" "compiled upstream defn remains pending"]
+   :classification :adapted
+   :rationale "Retained pinned equality algorithm with explicit bounded defn adaptation. Source sequences and native number/default IEquiv extensions execute; other collection types, complete macros and metadata remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-equality.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequential-equality.md"]}
+  "runtime:equiv-sequential:3151"
+  {:source-sha256 "968fe6ad1b99af14556c8dace3f7cf96dc5760acbe91f052148eb8dad087235d" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:=:1342" "runtime:sequential?:2246" "runtime:counted?:1602" "runtime:count:1906" "runtime:seq:1282" "runtime:first:1309" "runtime:next:1333" "runtime:boolean:2357" "runtime:==:3064"]
+   :classification :adapted
+   :rationale "Retained pinned equality algorithm with explicit bounded defn adaptation. Source sequences and native number/default IEquiv extensions execute; other collection types, complete macros and metadata remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-equiv-sequential.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequential-equality.md"]}
   "runtime:<:2755"
   {:source-sha256 "8e6815b3743ce86c57184635707893f159446faaa3811979fb1fedee40576b53" :visibility :public
    :arities {:fixed [1 2] :variadic-min 2}
