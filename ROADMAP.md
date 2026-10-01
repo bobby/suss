@@ -136,3 +136,9 @@ Fresh131 observations retain the prior75;159 partial reviews/906 unassessed and
 70 selections/74 licensed artifacts remain prerequisites. Hashing/reduction and
 remaining collection/macro/release gates stay open; see
 [sequential equality](docs/runtime/sequential-equality.md).
+
+Retained reduction now supplies IDeref/Reduced and source sequence/array/string/
+iterator helpers, with59 fresh primary/native observations and77 control cases
+including bounded if-let. Selection82/artifacts86 and172 partial/893 unassessed
+reviews remain prerequisites; complete collection/transducer/macro/release gates
+stay open. See [reduction evidence](docs/runtime/sequence-reduction.md).

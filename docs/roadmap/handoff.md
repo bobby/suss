@@ -6975,3 +6975,47 @@ Exact102 reviewed-head CI required before readiness; no merges/issue closures.
 No RUSTFLAGS; shared target/build2 and test threads2. Next execute the prepared
 reduction artifact, correct actual failures with source/order/provenance aligned,
 then independent review/fixes and exact final-head CI for a coherent PR.
+
+Preparationa1f579a rebased onto reviewed102a9f19e8; only handoff append conflicted,
+resolved retaining both complete review and preparation sections. Source reduction
+and if-let architecture follows the pin; no ABI/type/core-cell change. Initial
+focus34984 terminal101: standalone control harness lacks source inc/dec, so new
+candidates use +/-, no expectation changes. Focus24330 terminal101: control3 pass,
+new native number IReduce case returns NaN. Fresh89149 terminal1 confirms pin
+also returns NaN and warns base-type arities must be grouped; no production bug.
+Corrected only new candidate extension shape. Fresh1985 terminal0 with59 exact
+primary/native, /private/tmp/suss-reduction-primary59-final.log. Control16870
+terminal0 with77 exact primary/native3, /private/tmp/suss-reduction-control-primary77.log.
+All original59 control and137 reviewed sequence cases preserved.
+
+Added saved reducer/Reduced/GC/arity-effects/arbitrary typed throw/recovery and
+if-let aliases/exclusions/compile atomicity guards. Native50993 terminal0 with
+reduction2/control3, /private/tmp/suss-reduction-native-final.log. Python32282
+terminal0 with80 passes, /private/tmp/suss-reduction-python.log; import86/setup4/
+reviews172partial+893unassessed/diff-check pass. Rustfmt only new if-let arm and
+changed/new native test files, no unrelated formatting. Primary failures preserved.
+
+PR101 READY, still unmerged: reviewed47170abf51e4b0ef927cd9af323e6919a4f822f7;
+exact-head CI36840696723 SUCCESS completed2026-10-01T09:31:05Z. Root inspected
+/private/tmp/suss-pr101-final-ci.log through final doc tests, updated body and
+ran gh pr ready101. PR102 revieweda9f19e8 remains draft while CI36842775585 live.
+No issue closure/milestone acceptance.
+
+Full46990 running, /private/tmp/suss-reduction-full.log. Root exclusively owns
+heavy slot; all prior root handles terminal. Required shared-target/build2 cargo
+test --workspace --locked -- --test-threads=2, no RUSTFLAGS. Inspect terminal
+baseline before final commit/push/draft PR against102, independent subagent
+review/fixes/full and exact reviewed-head CI before readiness. No merge. Next
+retained ordered/public hash, iterator/reversal/printing/index helpers plus remaining
+persistent types and compiled macros; lazy/chunked/transducer/metadata/transient
+and M2–M9 release acceptance remain incomplete.
+
+Full46990 ended0; inspected /private/tmp/suss-reduction-full.log through final
+reader doc tests. All required workspace suites pass, including reduction2/control3
+and prior sequence6/137, closure14 and ABI41. Existing manual ignores and
+explicit diagnostic9passing/7knownfailures remain unchanged. No scope-wide
+compatibility or milestone acceptance. All root local handles34984/24330/89149/
+1985/16870/32282/50993/46990 terminal; initial failures retained above. Ready to
+commit/push/open coherent reduction draft against102 and release heavy slot to
+mandatory independent reviewer. Final reviewed-head CI still gates readiness;
+no merges or closures.

@@ -50,3 +50,10 @@ field hides an automatic macro; closures retain source captures through nested
 control temporaries; arbitrary keyword conditions are truthy; selected if-not
 branches preserve loop tail recurrence; thrown cond tests preserve catch/finally
 source order. The original54 observations remain unchanged.
+
+Bounded symbol-binding if-let now preserves a fresh test temporary, binding scope
+only in the consequent, outer initializer/else scope, reader metadata and tail
+context. Eighteen added observations bring control77, original59 unchanged. Native
+alias/exclusion/both-phase and malformed located compile-atomic guards pass. Full
+destructuring and compiled upstream macros remain unfinished. See
+[reduction/if-let evidence](sequence-reduction.md).

@@ -460,7 +460,7 @@
     },
     {
       "id": "reduce-native-number-dispatch",
-      "source": "(do (extend-type number IReduce (-reduce [x f] x) (-reduce [x f init] (+ x init))) (reduce + 41))",
+      "source": "(do (extend-type number IReduce (-reduce ([x f] x) ([x f init] (+ x init)))) (reduce + 41))",
       "expected": {
         "tag": "f64",
         "bits": "4044800000000000"

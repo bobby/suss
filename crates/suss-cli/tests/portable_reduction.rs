@@ -63,3 +63,60 @@ fn reduction_contract_match_independently_encoded_primary_observations() {
         session.collect().unwrap();
     }
 }
+
+#[test]
+fn reduced_values_and_saved_reducers_survive_gc_and_language_errors() {
+    use suss_cli::portable_session::SessionError;
+    let mut session = Session::new().unwrap();
+    session
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .unwrap();
+    session.enter_namespace("user").unwrap();
+    session.eval("(def retained-reduced (reduced (list 17 19))) (def retained-reducer reduce) (def reduction-error-trace 0)").unwrap();
+    session.collect().unwrap();
+    assert_eq!(
+        eval_number(
+            &mut session,
+            "(retained-reducer + (deref retained-reduced))"
+        ),
+        36.0f64.to_bits()
+    );
+    for source in [
+        "(reduce)",
+        "(reduce +)",
+        "(array-reduce (array 1) + 0 0 (do (set! reduction-error-trace 17) nil))",
+        "(reduce (fn [a] a) 0 (list 1 2))",
+    ] {
+        assert!(
+            matches!(session.eval(source), Err(SessionError::Language(_))),
+            "{source}"
+        );
+        session.collect().unwrap();
+        assert_eq!(
+            eval_number(
+                &mut session,
+                "(retained-reducer + (deref retained-reduced))"
+            ),
+            36.0f64.to_bits()
+        );
+    }
+    assert_eq!(
+        eval_number(&mut session, "reduction-error-trace"),
+        17.0f64.to_bits()
+    );
+    let Err(SessionError::Language(value)) = session.eval("(reduce (fn [a b] (set! reduction-error-trace (+ (* reduction-error-trace 10) b)) (throw 73)) 0 (list 1 2 3))") else { panic!("typed reducer exception"); };
+    session.collect().unwrap();
+    assert_eq!(number(&mut session, &value), 73.0f64.to_bits());
+    assert_eq!(
+        eval_number(&mut session, "reduction-error-trace"),
+        171.0f64.to_bits()
+    );
+    assert!(eval_bool(&mut session, "(reduced? retained-reduced)"));
+    assert_eq!(
+        eval_number(
+            &mut session,
+            "(retained-reducer + (deref retained-reduced))"
+        ),
+        36.0f64.to_bits()
+    );
+}

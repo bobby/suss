@@ -102,6 +102,7 @@ fn malformed_control_macros_have_located_errors_and_do_not_publish_definitions()
         "(if-let [a/b 1] 1)",
         "(if-let [& 1] 1)",
         "(if-let [[x] 1] x)",
+        "(if-let [iflet-missing 1] iflet-missing iflet-missing)",
         "(if-let [x true] 1 2 3)",
         "(loop [n 0] (if-let [x (recur 1)] 7 9))",
         "(if-not true 1 2 3)",
@@ -131,6 +132,14 @@ fn malformed_control_macros_have_located_errors_and_do_not_publish_definitions()
     ));
     assert!(matches!(
         session.eval("control-ghost"),
+        Err(SessionError::Compile(_))
+    ));
+    assert!(matches!(
+        session.eval("(def iflet-ghost 7) (if-let [x] 1)"),
+        Err(SessionError::Compile(_))
+    ));
+    assert!(matches!(
+        session.eval("iflet-ghost"),
         Err(SessionError::Compile(_))
     ));
     let value = session.eval("(cond false 1 true 7)").unwrap();
@@ -166,6 +175,7 @@ fn control_macro_aliases_exclusions_and_macro_phase_are_resolved_explicitly() {
             Ok(())
         })
         .unwrap();
+    session.eval("(c/if-let [x 17] x 9)").unwrap();
     session
         .eval("(ns control.excluded (:refer-clojure :exclude [when if-let]))")
         .unwrap();

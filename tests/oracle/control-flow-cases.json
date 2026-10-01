@@ -536,7 +536,7 @@
     },
     {
       "id": "if-let-effects-once",
-      "source": "(do (def iflet-trace 0) (if-let [x (do (set! iflet-trace (inc iflet-trace)) 7)] (set! iflet-trace (+ iflet-trace x)) (set! iflet-trace 99)) iflet-trace)",
+      "source": "(do (def iflet-trace 0) (if-let [x (do (set! iflet-trace (+ iflet-trace 1)) 7)] (set! iflet-trace (+ iflet-trace x)) (set! iflet-trace 99)) iflet-trace)",
       "expected": {
         "tag": "f64",
         "bits": "4020000000000000"
@@ -544,7 +544,7 @@
     },
     {
       "id": "if-let-tail-then",
-      "source": "(loop [n 3] (if-let [x (if (> n 0) n nil)] (recur (dec x)) n))",
+      "source": "(loop [n 3] (if-let [x (if (> n 0) n nil)] (recur (- x 1)) n))",
       "expected": {
         "tag": "f64",
         "bits": "0000000000000000"
@@ -552,7 +552,7 @@
     },
     {
       "id": "if-let-tail-else",
-      "source": "(loop [n 3] (if-let [x (if (zero? n) 7 nil)] x (recur (dec n))))",
+      "source": "(loop [n 3] (if-let [x (if (zero? n) 7 nil)] x (recur (- n 1))))",
       "expected": {
         "tag": "f64",
         "bits": "401c000000000000"
