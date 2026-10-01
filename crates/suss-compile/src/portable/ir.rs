@@ -1,8 +1,8 @@
 //! Explicit values, blocks and edge parameters. Verification precedes emission.
 use super::{
     hir::{
-        arithmetic_type, Arithmetic, ArrayOperation, BindingId, Comparison, Expression, Hir,
-        Literal, LoopId, Nominal, Type,
+        arithmetic_type, Arithmetic, ArrayOperation, BindingId, Bitwise, Comparison, Expression,
+        Hir, Literal, LoopId, Nominal, Type,
     },
     resolve::Global,
     Diagnostic,
@@ -20,6 +20,10 @@ pub struct Value {
 }
 #[derive(Debug, Clone)]
 pub enum Operation {
+    Bitwise {
+        operation: Bitwise,
+        arguments: Vec<ValueId>,
+    },
     Comparison {
         operation: Comparison,
         arguments: Vec<ValueId>,
@@ -551,6 +555,29 @@ impl Lowerer {
                 let value = operand!(value);
                 self.emit(Operation::NilTest(value), Type::Bool, hir.span.clone())
             }
+            Expression::Bitwise {
+                operation,
+                arguments,
+            } => {
+                if arguments.len() != operation.arity() || hir.ty != operation.result() {
+                    return Err(Diagnostic {
+                        span: hir.span.clone(),
+                        message: "Invalid bitwise HIR shape".into(),
+                    });
+                }
+                let mut values = Vec::new();
+                for argument in arguments {
+                    values.push(operand!(argument));
+                }
+                self.emit(
+                    Operation::Bitwise {
+                        operation: *operation,
+                        arguments: values,
+                    },
+                    operation.result(),
+                    hir.span.clone(),
+                )
+            }
             Expression::Comparison {
                 operation,
                 arguments,
@@ -812,6 +839,7 @@ fn verify_recurrence(
         }
         Expression::NilTest(value) => verify_recurrence(value, targets, false)?,
         Expression::Arithmetic { arguments, .. }
+        | Expression::Bitwise { arguments, .. }
         | Expression::Comparison { arguments, .. }
         | Expression::Array { arguments, .. }
         | Expression::Nominal { arguments, .. } => {
@@ -843,6 +871,7 @@ fn operands(operation: &Operation) -> &[ValueId] {
             std::slice::from_ref(value)
         }
         Operation::Arithmetic { arguments, .. }
+        | Operation::Bitwise { arguments, .. }
         | Operation::Comparison { arguments, .. }
         | Operation::Array { arguments, .. }
         | Operation::Nominal { arguments, .. } => arguments,
@@ -1095,6 +1124,14 @@ fn verify_function(
                 Operation::NilTest(_) => {
                     if result_ty != Type::Bool {
                         return Err(fail("IR nil-test result must be Boolean"));
+                    }
+                }
+                Operation::Bitwise {
+                    operation,
+                    arguments,
+                } => {
+                    if arguments.len() != operation.arity() || result_ty != operation.result() {
+                        return Err(fail("Invalid bitwise IR shape"));
                     }
                 }
                 Operation::Comparison { arguments, .. } => {

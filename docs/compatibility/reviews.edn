@@ -838,4 +838,364 @@
    :adaptation-path "docs/runtime/caching-hash.md"
    :alternative nil
    :tests ["crates/suss-cli/tests/portable_caching_hash.rs" "tests/oracle/caching-hash-cases.json"]}
+
+  "runtime:int-rotate-left:947"
+  {:source-sha256 "e7fad06849e47ed8bc56d0f4c19b44761ff326412a02f3c9a4b5c8cc238166d1"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "retained arithmetic and bitwise macro algorithms"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/int-rotate-left.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:int:2942"
+  {:source-sha256 "db6a8ec6c14ab5eb43db4e5c9e494649dfe0b31ec69376d7c3186840bcf5e010"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:int:1239"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-xor:2993"
+  {:source-sha256 "f97fded02281176108b5d581fd531bf8ad55cdd6734881635f82209a2155edef"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-xor:1243" "runtime:reduce:2628"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-and:2999"
+  {:source-sha256 "133fe324f18acf87377bc1a60debe03d30c3efdff7a35a90593b8d6ee927a2de"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-and:1226" "runtime:reduce:2628"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-or:3005"
+  {:source-sha256 "38cc36b2c951f7afe2c1af2a0fcf310634d70472a3fb1580437ab47da652c78c"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-or:1235" "runtime:reduce:2628"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-and-not:3011"
+  {:source-sha256 "dfbd45c7ac5a8376b0e7ce9b1812212b0787d2ced0c00740a5c01c146b55a87f"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-and-not:1247" "runtime:reduce:2628"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-clear:3017"
+  {:source-sha256 "c125a9b457ea4e19c87c449634b103ca052a77e2b36ab1ad0bdc3406f2daa5e8"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-clear:1251"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-flip:3022"
+  {:source-sha256 "b47389a1eede5a6a54f37c5238fddc32904f29503f8c4879dbe7b415084ff0b0"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-flip:1254"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-not:3027"
+  {:source-sha256 "ce07887d090d50039925a5181806025448152158b01ea180535cd8d67b39e5bd"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-not:1223"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-set:3031"
+  {:source-sha256 "2cd3e17179eda57d616deff24c8bf9d720ab5b0e4c27bb63c894ee3c9d69514c"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-set:1272"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-test:3036"
+  {:source-sha256 "3a958f6b451dbe6561baad58204637bc58a1e98980e71f25bd1ece9a554b1af9"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-test:1257"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-shift-left:3041"
+  {:source-sha256 "133b51d602a74feffd334c7ce70fd0d59d33fa121f4486430a3d3b37bf71d829"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-shift-left:1260"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-shift-right:3045"
+  {:source-sha256 "518266e763f1a0c054804809b573915e0ff65195c7836159039b3f6bf1ece17f"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-shift-right:1263"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-shift-right-zero-fill:3049"
+  {:source-sha256 "7961499a98bccdb59acb62d614a87101d040b874d084370956d6b6607e65e8d4"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-shift-right-zero-fill:1266"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:unsigned-bit-shift-right:3053"
+  {:source-sha256 "9649c5e6de98dec924496974aae4870fa38f2d900c089a39bd7f838f441a1181"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:unsigned-bit-shift-right:1269"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-count:3057"
+  {:source-sha256 "5a63ed40c2b2e92aa6bfacdf5b6d53fb120f490d57a161448d3e627bf37edba7"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "retained arithmetic and bitwise macro algorithms"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/bit-count.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-not:1223"
+  {:source-sha256 "2ae65e46c8bf45caf4ecf28ec953300bf47d1c7f574a345fd6fd7c03cf265346"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-and:1226"
+  {:source-sha256 "231e6c82e6d56c4ca386777d2dd9bcb26276189316f332be2dc9b2935cbb48d8"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-or:1235"
+  {:source-sha256 "b5e22725681a81569531dc62827242eedbf726ee667b80f85044ef96b0d50139"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:int:1239"
+  {:source-sha256 "1955a7bf5b1997aad0f3b856217265cd2382241a5145388b7e22ea4ef37aa205"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-xor:1243"
+  {:source-sha256 "0228275187511b2e4c223bb961133126060cc4c6c21578088ee020de51e1eadb"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-and-not:1247"
+  {:source-sha256 "0e98af4d70aff8294a0866bf2baf7f319db1d62fb521b4e067acdd92c5fee265"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-clear:1251"
+  {:source-sha256 "251a79d9a353ade88cbd7b0c74ac721806ee2b20026bb95bad3b8b03b272a228"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-flip:1254"
+  {:source-sha256 "ed978946d06ef77a46aebd6ea14a6d617d5169d8da5d74a59bd746887e82f74a"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-test:1257"
+  {:source-sha256 "75278edbca67b9b1674252b9b7cbe3302e4abb586d4360e3efbc6017dedb88f1"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-shift-left:1260"
+  {:source-sha256 "86e0c138f5bb33adfc6abfd3fb00db7b608e80b254c5bcc80a5a8f078b0fbacc"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-shift-right:1263"
+  {:source-sha256 "58b8242e5ce79ee72c0aaf28c2d997111c9bfc46dba429b1d10f1ecbb65f7c89"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-shift-right-zero-fill:1266"
+  {:source-sha256 "dfe9461cb8137c120a731a2c99287bbc8d3ceeb734837cb1a891073cf2fbb93e"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:unsigned-bit-shift-right:1269"
+  {:source-sha256 "aca949eff562bb9927d76d54b56eb6d5883115c1bfe9152fc2a52fed8d2c2cb2"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-set:1272"
+  {:source-sha256 "5cac5756746e530ab281c850b5d5eb9a5f5ef0d70c24dea8275032f6155dd1ce"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
 }}

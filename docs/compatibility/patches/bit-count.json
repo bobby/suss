@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "5a63ed40c2b2e92aa6bfacdf5b6d53fb120f490d57a161448d3e627bf37edba7",
+  "replacement": "(def bit-count\n  \"Counts the number of bits set in n\"\n  (fn [v]\n  (let [v (- v (bit-and (bit-shift-right v 1) 0x55555555))\n        v (+ (bit-and v 0x33333333) (bit-and (bit-shift-right v 2) 0x33333333))]\n    (bit-shift-right (* (bit-and (+ v (bit-shift-right v 4)) 0xF0F0F0F) 0x1010101) 24))))",
+  "rationale": "Explicit fixed defn bootstrap adaptation retains the original algorithm, metadata and docstring. Bitwise macros lower to checked scalar primitives; complete compiled macros remain unfinished."
+}

@@ -143,3 +143,15 @@
   "Marker protocol")
 
 (def fn? "Return true if f is a JavaScript function or satisfies the Fn protocol." (fn [f] (or (js-fn? f) (satisfies? Fn f))))
+
+(def ^number int-rotate-left (fn [x n]
+  (bit-or
+    (bit-shift-left x n)
+    (unsigned-bit-shift-right x (- n)))))
+
+(def bit-count
+  "Counts the number of bits set in n"
+  (fn [v]
+  (let [v (- v (bit-and (bit-shift-right v 1) 0x55555555))
+        v (+ (bit-and v 0x33333333) (bit-and (bit-shift-right v 2) 0x33333333))]
+    (bit-shift-right (* (bit-and (+ v (bit-shift-right v 4)) 0xF0F0F0F) 0x1010101) 24))))

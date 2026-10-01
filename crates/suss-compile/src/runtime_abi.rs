@@ -617,6 +617,7 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(exception_info::functions(&mut b));
     arithmetic_functions.extend(predicates::functions(&mut b));
     arithmetic_functions.extend(comparisons::functions(&mut b));
+    arithmetic_functions.extend(bitwise::functions(&mut b));
     arithmetic_functions.extend(named_properties::functions(&mut b));
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));

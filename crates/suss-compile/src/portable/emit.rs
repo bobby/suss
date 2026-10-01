@@ -1,8 +1,8 @@
 //! Emit only verified IR. Operands are local value IDs, never source expressions.
 use super::{
-    Diagnostic,
     hir::{Arithmetic, Literal, Nominal, Type},
     ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, Operation, Terminator},
+    Diagnostic,
 };
 use crate::runtime_abi;
 use std::{borrow::Cow, collections::BTreeSet};
@@ -90,6 +90,9 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::Call { .. } => {
                         names.insert("invoke");
+                    }
+                    Operation::Bitwise { operation, .. } => {
+                        names.insert(operation.export());
                     }
                     Operation::Comparison { operation, .. } => {
                         names.insert(operation.export());
@@ -190,6 +193,19 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "object-instance" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
             }
+            "primitive-int" | "primitive-bit-not" => (vec![VALUE], vec![VALUE]),
+            "primitive-bit-and"
+            | "primitive-bit-or"
+            | "primitive-bit-xor"
+            | "primitive-bit-and-not"
+            | "primitive-bit-clear"
+            | "primitive-bit-flip"
+            | "primitive-bit-set"
+            | "primitive-bit-test"
+            | "primitive-bit-shift-left"
+            | "primitive-bit-shift-right"
+            | "primitive-unsigned-bit-shift-right"
+            | "primitive-imul" => (vec![VALUE, VALUE], vec![VALUE]),
             "comparison-less"
             | "comparison-less-equal"
             | "comparison-greater"
@@ -662,6 +678,17 @@ fn emit_function(
                         .instruction(&I32Const(2))
                         .instruction(&I32Add)
                         .instruction(&RefI31)
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
+                Operation::Bitwise {
+                    operation,
+                    arguments,
+                } => {
+                    for argument in arguments {
+                        function.instruction(&LocalGet(argument.0 as u32 + offset));
+                    }
+                    function
+                        .instruction(&Call(index(operation.export())))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Comparison {

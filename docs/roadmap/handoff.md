@@ -5742,3 +5742,46 @@ claim is added for the unpublished bitwise branch; its37-case native corpus
 remains red36 unresolved/one match. All local processes are terminal. Next
 integrate bounded bitwise/imul and retained-source provenance, then review and
 require final-head CI on any new PR. Complete persistent collections/M2–M9 open.
+
+
+## Bitwise hashing dependency executing candidate — 2026-10-01
+
+Original checked runtime helpers now provide int/bitwise/imul function values in
+canonical live cells, with bounded HIR/IR macro expansion for the pinned direct
+forms. Native bootstrap cells45 replace30; GC layouts/ABI version unchanged.
+Direct variadic folds preserve pair conversion before later syntax; computed
+calls evaluate every argument before folding. Off-arity captured JS wrappers
+remain explicit differences under the accepted diagnostic contract, not matches.
+Retained bit-count3057 and int-rotate-left947 preserve their original algorithms
+(including bit-count arithmetic), metadata/docstrings with explicit fixed defn
+patches/EPL artifacts.30 selected forms/34 files;113 partial reviews/952 unassessed.
+Conditional imul inside if is not emitted by the top-level scanner; explicit
+source-region/file hashes record provenance without fabricated declaration IDs.
+
+Initial73096 compile101 exposed an argument-pattern binding typo in capture
+traversal; fixed73868 ended101 with35 matches/two unresolved bit-count cases.
+The first artifact command incorrectly used unsupported --write; no generated
+source was updated and72714 stayed red on the two missing functions. Default
+core_import.py then regenerated34 files; fresh71588 ended0 with all original37
+primary/native observations. Expanded final63160 ended0 with54 exact observations,
+original37 unchanged, including retained algorithms/namespace/redefs/capture.
+Log /private/tmp/suss-bitwise-public-final54.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-bitwise-hash-oracle.sh`.
+
+Source guard55691 ended0: bitwise4 and persistent-session33, including located
+atomic arity errors, aliases/exclusions/both phases and unsupported conversion
+order with recovery. Compiler57537 ended0: public HIR/IR bitwise guard1,
+pipeline17/ABI21. Logs /private/tmp/suss-bitwise-source-guards.log and
+/private/tmp/suss-bitwise-compiler-guards.log. Commands select corresponding
+-p suss-cli --test portable_bitwise_hash --test persistent_session or
+-p suss-compile --test portable_bitwise --test runtime_abi --test portable_pipeline,
+using shared target/two build workers and --locked -- --test-threads=2.
+Python71, inventory1065/reviews113+952/import34/WIT15 files+6 packages/numeric
+manifest/offline roadmap10+39 pass. Log /private/tmp/suss-bitwise-python.log.
+An incorrect numeric_artifact.py command failed because that file does not exist;
+correct scripts/numeric_runtime.py --check passed. A dependency-overlay helper
+first matched a referenced ID instead of an entry; failed before writing and the
+corrected helper/generated manifest validated. No failures hidden or ignored.
+All local Cargo/JVM/Node graphs are terminal. Next independent PR review/fixes,
+required full workspace baseline and exact reviewed-head CI before readiness.
+No issue closure/merge; full List/Cons/Murmur hashing/macros/M2–M9 remain open.

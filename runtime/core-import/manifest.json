@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "fd6d23e64512beaf415437a2f119eefdb1a1b5b932939d662e67d661b62dbd66",
-  "reviews-sha256": "8e82918a3e3c6bf1db55e7599a2c1a2a19d6bbb5b893ba74ea86f9c9e0aa61c2",
+  "recipe-sha256": "83cc86a2d1cabdeb77ff27e777996aaf83631b5eef8920b5ca2b6b325a6ee165",
+  "reviews-sha256": "04b65f9c851756e0b7a6ad5c9d4473bd63ee7e44b023b802072e7c355ad19e14",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -857,6 +857,72 @@
         "crates/suss-cli/tests/portable_object_methods.rs",
         "tests/oracle/object-method-cases.json"
       ]
+    },
+    {
+      "id": "runtime:int-rotate-left:947",
+      "name": "int-rotate-left",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 947,
+      "end-line": 950,
+      "byte-start": 28843,
+      "byte-end": 28954,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "e7fad06849e47ed8bc56d0f4c19b44761ff326412a02f3c9a4b5c8cc238166d1",
+      "extracted": "extracted/0028.cljs",
+      "extracted-sha256": "b95aea347d073d5f77681d211b2be2994bd4978e7722bcd7275c19b55680cae5",
+      "patch": "docs/compatibility/patches/int-rotate-left.json",
+      "patch-sha256": "5dcfeab304c0e0b808b81e6c2b8521597272f093bb3bb6d91694d03653558a6f",
+      "adapted-form-sha256": "c552f75c90cf1097fdfe3aac991d60b7a33265725fcacd68dc584040745bb43a",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "checked scalar ToInt32 conversion",
+        "macro:defn:3364",
+        "shared GC universal Invoke",
+        "retained arithmetic and bitwise macro algorithms"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_bitwise_hash.rs",
+        "crates/suss-compile/tests/runtime_abi.rs",
+        "tests/oracle/bitwise-hash-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:bit-count:3057",
+      "name": "bit-count",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3057,
+      "end-line": 3062,
+      "byte-start": 81747,
+      "byte-end": 82036,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5a63ed40c2b2e92aa6bfacdf5b6d53fb120f490d57a161448d3e627bf37edba7",
+      "extracted": "extracted/0029.cljs",
+      "extracted-sha256": "38f07a298d067e816376d80682f184592339d6f01492353770281e24e454dd56",
+      "patch": "docs/compatibility/patches/bit-count.json",
+      "patch-sha256": "5295541f39ad0f772ad47638ee7755903d7bb8ffb46e5aabe5ea1543478257af",
+      "adapted-form-sha256": "453113d1bb04d3d3d8d7b91eed3a85d8d7c436b7f68ef215c68a89abcf1376c8",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "checked scalar ToInt32 conversion",
+        "macro:defn:3364",
+        "shared GC universal Invoke",
+        "retained arithmetic and bitwise macro algorithms"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_bitwise_hash.rs",
+        "crates/suss-compile/tests/runtime_abi.rs",
+        "tests/oracle/bitwise-hash-cases.json"
+      ]
     }
   ],
   "files": {
@@ -890,6 +956,8 @@
     "extracted/0025.cljs": "618fa48bf9008b2a67999a418d18b129be6795b99626dfd9bb50146df6a4ec6b",
     "extracted/0026.cljs": "4c59933a50b1837c9a3ded6adb26b633208a5072bbf478e4d2f4cefb7e553e9e",
     "extracted/0027.cljs": "784555ac3f8109c4f6f8e469c089771b3e6ace53f7b3704f02384c2f69752ecd",
-    "suss/core.sus": "e94c6f012e5e610d84f0beafdd90b2bffda867e83ccc42bcebf646b70b80ed18"
+    "extracted/0028.cljs": "b95aea347d073d5f77681d211b2be2994bd4978e7722bcd7275c19b55680cae5",
+    "extracted/0029.cljs": "38f07a298d067e816376d80682f184592339d6f01492353770281e24e454dd56",
+    "suss/core.sus": "410581453c65e1f31e1edbbde62e28c2349fffcc10199a581aeee010db2c63b2"
   }
 }

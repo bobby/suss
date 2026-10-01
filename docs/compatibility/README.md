@@ -314,3 +314,11 @@ observations and compile-atomic invalid/immutable key guards. One partial review
 brings the overlay to83/982;28 selections/32 licensed artifacts change only their
 review hash. Complete List/Cons hashing and compiled macros remain unfinished;
 see [hash caching](../runtime/caching-hash.md).
+
+
+Bitwise hashing prerequisites now have54 exact primary/native observations plus
+namespace, arity, ordered coercion and recovery guards. Thirty additional partial
+reviews bring the overlay to113/952. Retained bit-count and int-rotate-left add
+two licensed forms:30 selected forms/34 artifacts. Captured JavaScript off-arity
+behavior remains an explicit divergence under the accepted error contract; no full
+public/core/collection acceptance is claimed. See [bitwise hashing](../runtime/bitwise-hashing.md).

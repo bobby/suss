@@ -1,13 +1,14 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
+mod bitwise;
 mod comparisons;
 mod controls;
 mod dynamic;
 mod exceptions;
 mod nominal;
 use super::{
-    Diagnostic,
     resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
+    Diagnostic,
 };
 use std::{
     collections::{BTreeSet, HashMap},
@@ -167,6 +168,79 @@ impl Comparison {
         }
     }
 }
+/// Checked scalar bitwise primitive; direct macro folds retain nested evaluation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Bitwise {
+    Int,
+    And,
+    Or,
+    Xor,
+    AndNot,
+    Not,
+    Clear,
+    Flip,
+    Set,
+    Test,
+    Left,
+    Right,
+    Unsigned,
+    Imul,
+}
+impl Bitwise {
+    pub(crate) fn from_name(name: &str) -> Option<Self> {
+        Some(match name {
+            "int" => Self::Int,
+            "bit-and" => Self::And,
+            "bit-or" => Self::Or,
+            "bit-xor" => Self::Xor,
+            "bit-and-not" => Self::AndNot,
+            "bit-not" => Self::Not,
+            "bit-clear" => Self::Clear,
+            "bit-flip" => Self::Flip,
+            "bit-set" => Self::Set,
+            "bit-test" => Self::Test,
+            "bit-shift-left" => Self::Left,
+            "bit-shift-right" => Self::Right,
+            "unsigned-bit-shift-right" => Self::Unsigned,
+            "bit-shift-right-zero-fill" => Self::Unsigned,
+            _ => return None,
+        })
+    }
+    pub(crate) fn export(self) -> &'static str {
+        match self {
+            Self::Int => "primitive-int",
+            Self::And => "primitive-bit-and",
+            Self::Or => "primitive-bit-or",
+            Self::Xor => "primitive-bit-xor",
+            Self::AndNot => "primitive-bit-and-not",
+            Self::Not => "primitive-bit-not",
+            Self::Clear => "primitive-bit-clear",
+            Self::Flip => "primitive-bit-flip",
+            Self::Set => "primitive-bit-set",
+            Self::Test => "primitive-bit-test",
+            Self::Left => "primitive-bit-shift-left",
+            Self::Right => "primitive-bit-shift-right",
+            Self::Unsigned => "primitive-unsigned-bit-shift-right",
+            Self::Imul => "primitive-imul",
+        }
+    }
+    pub(crate) fn arity(self) -> usize {
+        match self {
+            Self::Int | Self::Not => 1,
+            _ => 2,
+        }
+    }
+    pub(crate) fn variadic(self) -> bool {
+        matches!(self, Self::And | Self::Or | Self::Xor | Self::AndNot)
+    }
+    pub(crate) fn result(self) -> Type {
+        if self == Self::Test {
+            Type::Bool
+        } else {
+            Type::Number
+        }
+    }
+}
 /// Original private nominal lowering operations. Arrays here are internal
 /// construction storage, never source-language persistent collections.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -257,6 +331,10 @@ pub struct Hir {
 }
 #[derive(Debug, Clone)]
 pub enum Expression {
+    Bitwise {
+        operation: Bitwise,
+        arguments: Vec<Hir>,
+    },
     Comparison {
         operation: Comparison,
         arguments: Vec<Hir>,
@@ -973,6 +1051,9 @@ impl Analyzer {
         if let Some(ResolvedBinding::BootstrapControl { operation, .. }) = &resolved {
             return self.control_form(form, args, *operation, statement, tail);
         }
+        if let Some(ResolvedBinding::BootstrapBitwise { operation, .. }) = &resolved {
+            return self.bitwise_form(form, args, *operation);
+        }
         if let Some(ResolvedBinding::BootstrapComparison { operation, .. }) = &resolved {
             return self.comparison_form(form, args, *operation);
         }
@@ -1325,6 +1406,9 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
         }
         | Expression::Do(items)
         | Expression::Arithmetic {
+            arguments: items, ..
+        }
+        | Expression::Bitwise {
             arguments: items, ..
         }
         | Expression::Comparison {

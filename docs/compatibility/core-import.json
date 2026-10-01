@@ -143,6 +143,16 @@
       "id": "runtime:fn?:2107",
       "source-sha256": "a038a3404e90030209c64b73a72648f757657898e22abea64a81e37a0621c2d6",
       "patch": "docs/compatibility/patches/fn-predicate.json"
+    },
+    {
+      "id": "runtime:int-rotate-left:947",
+      "source-sha256": "e7fad06849e47ed8bc56d0f4c19b44761ff326412a02f3c9a4b5c8cc238166d1",
+      "patch": "docs/compatibility/patches/int-rotate-left.json"
+    },
+    {
+      "id": "runtime:bit-count:3057",
+      "source-sha256": "5a63ed40c2b2e92aa6bfacdf5b6d53fb120f490d57a161448d3e627bf37edba7",
+      "patch": "docs/compatibility/patches/bit-count.json"
     }
   ]
 }

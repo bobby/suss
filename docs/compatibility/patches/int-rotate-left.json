@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "e7fad06849e47ed8bc56d0f4c19b44761ff326412a02f3c9a4b5c8cc238166d1",
+  "replacement": "(def ^number int-rotate-left (fn [x n]\n  (bit-or\n    (bit-shift-left x n)\n    (unsigned-bit-shift-right x (- n)))))",
+  "rationale": "Explicit fixed defn bootstrap adaptation retains the original algorithm, metadata and docstring. Bitwise macros lower to checked scalar primitives; complete compiled macros remain unfinished."
+}
