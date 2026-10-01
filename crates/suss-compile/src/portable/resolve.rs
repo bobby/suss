@@ -1,7 +1,7 @@
 //! Phase-specific namespace identities. No runtime values or source replay live here.
 use super::{
+    hir::{Arithmetic, ArrayOperation, Bitwise, Comparison},
     Diagnostic,
-    hir::{Arithmetic, ArrayOperation, Comparison},
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -57,11 +57,21 @@ pub enum ControlForm {
     When,
     WhenNot,
     IfNot,
+    IfLet,
     And,
     Or,
     Cond,
     Declare,
     CachingHash,
+    ThreadFirst,
+    AsThread,
+    Zero,
+    Positive,
+    Negative,
+    Increment,
+    Decrement,
+    UncheckedGet,
+    UncheckedSet,
 }
 impl ControlForm {
     fn from_name(name: &str) -> Option<Self> {
@@ -69,11 +79,21 @@ impl ControlForm {
             "when" => Self::When,
             "when-not" => Self::WhenNot,
             "if-not" => Self::IfNot,
+            "if-let" => Self::IfLet,
             "and" => Self::And,
             "or" => Self::Or,
             "cond" => Self::Cond,
             "declare" => Self::Declare,
             "caching-hash" => Self::CachingHash,
+            "->" => Self::ThreadFirst,
+            "as->" => Self::AsThread,
+            "zero?" => Self::Zero,
+            "pos?" => Self::Positive,
+            "neg?" => Self::Negative,
+            "inc" => Self::Increment,
+            "dec" => Self::Decrement,
+            "unchecked-get" => Self::UncheckedGet,
+            "unchecked-set" => Self::UncheckedSet,
             _ => return None,
         })
     }
@@ -85,6 +105,10 @@ pub(crate) struct ProtocolMethod {
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Binding {
+    BootstrapBitwise {
+        global: Global,
+        operation: Bitwise,
+    },
     BootstrapControl {
         global: Global,
         operation: ControlForm,
@@ -120,7 +144,8 @@ pub enum Binding {
 impl Binding {
     pub fn global(&self) -> &Global {
         match self {
-            Self::BootstrapControl { global: g, .. }
+            Self::BootstrapBitwise { global: g, .. }
+            | Self::BootstrapControl { global: g, .. }
             | Self::BootstrapComparison { global: g, .. }
             | Self::BootstrapArray { global: g, .. }
             | Self::Core { global: g, .. }
@@ -194,7 +219,7 @@ pub(crate) fn valid_namespace(namespace: &str) -> Result<(), Diagnostic> {
     Ok(())
 }
 fn valid_name(name: &str) -> Result<(), Diagnostic> {
-    use suss_reader::forms::{Kind, read_forms};
+    use suss_reader::forms::{read_forms, Kind};
     match read_forms(name).ok().as_deref() {
         Some([form])
             if form.metadata.is_empty()
@@ -244,6 +269,27 @@ impl Environment {
                     .insert(global.clone(), Binding::Arithmetic { global, operator });
             }
             for (name, export) in [
+                ("int", "primitive-int-function"),
+                ("bit-and", "primitive-bit-and-function"),
+                ("bit-or", "primitive-bit-or-function"),
+                ("bit-xor", "primitive-bit-xor-function"),
+                ("bit-and-not", "primitive-bit-and-not-function"),
+                ("bit-not", "primitive-bit-not-function"),
+                ("bit-clear", "primitive-bit-clear-function"),
+                ("bit-flip", "primitive-bit-flip-function"),
+                ("bit-set", "primitive-bit-set-function"),
+                ("bit-test", "primitive-bit-test-function"),
+                ("bit-shift-left", "primitive-bit-shift-left-function"),
+                ("bit-shift-right", "primitive-bit-shift-right-function"),
+                (
+                    "unsigned-bit-shift-right",
+                    "primitive-unsigned-bit-shift-right-function",
+                ),
+                ("imul", "primitive-imul-function"),
+                (
+                    "bit-shift-right-zero-fill",
+                    "primitive-unsigned-bit-shift-right-function",
+                ),
                 ("<", "comparison-less-function"),
                 ("<=", "comparison-less-equal-function"),
                 (">", "comparison-greater-function"),
@@ -299,11 +345,14 @@ impl Environment {
                 "when",
                 "when-not",
                 "if-not",
+                "if-let",
                 "and",
                 "or",
                 "cond",
                 "declare",
                 "caching-hash",
+                "unchecked-get",
+                "unchecked-set",
             ] {
                 let global = Global {
                     phase,
@@ -590,11 +639,33 @@ impl Environment {
                         | "when"
                         | "when-not"
                         | "if-not"
+                        | "if-let"
                         | "and"
                         | "or"
                         | "cond"
                         | "declare"
                         | "caching-hash"
+                        | "->"
+                        | "as->"
+                        | "zero?"
+                        | "pos?"
+                        | "neg?"
+                        | "inc"
+                        | "dec"
+                        | "int"
+                        | "bit-and"
+                        | "bit-or"
+                        | "bit-xor"
+                        | "bit-and-not"
+                        | "bit-not"
+                        | "bit-clear"
+                        | "bit-flip"
+                        | "bit-set"
+                        | "bit-test"
+                        | "bit-shift-left"
+                        | "bit-shift-right"
+                        | "unsigned-bit-shift-right"
+                        | "bit-shift-right-zero-fill"
                 ))
             .then_some(symbol.name.as_str())
         } else if let Some(global) = scope.refers.get(&symbol.name) {
@@ -626,11 +697,33 @@ impl Environment {
                         | "when"
                         | "when-not"
                         | "if-not"
+                        | "if-let"
                         | "and"
                         | "or"
                         | "cond"
                         | "declare"
                         | "caching-hash"
+                        | "->"
+                        | "as->"
+                        | "zero?"
+                        | "pos?"
+                        | "neg?"
+                        | "inc"
+                        | "dec"
+                        | "int"
+                        | "bit-and"
+                        | "bit-or"
+                        | "bit-xor"
+                        | "bit-and-not"
+                        | "bit-not"
+                        | "bit-clear"
+                        | "bit-flip"
+                        | "bit-set"
+                        | "bit-test"
+                        | "bit-shift-left"
+                        | "bit-shift-right"
+                        | "unsigned-bit-shift-right"
+                        | "bit-shift-right-zero-fill"
                 )
             {
                 Some(global.name.as_str())
@@ -662,11 +755,33 @@ impl Environment {
                         | "when"
                         | "when-not"
                         | "if-not"
+                        | "if-let"
                         | "and"
                         | "or"
                         | "cond"
                         | "declare"
                         | "caching-hash"
+                        | "->"
+                        | "as->"
+                        | "zero?"
+                        | "pos?"
+                        | "neg?"
+                        | "inc"
+                        | "dec"
+                        | "int"
+                        | "bit-and"
+                        | "bit-or"
+                        | "bit-xor"
+                        | "bit-and-not"
+                        | "bit-not"
+                        | "bit-clear"
+                        | "bit-flip"
+                        | "bit-set"
+                        | "bit-test"
+                        | "bit-shift-left"
+                        | "bit-shift-right"
+                        | "unsigned-bit-shift-right"
+                        | "bit-shift-right-zero-fill"
                 ) && !scope.excluded_core.contains(&symbol.name))
                 .then_some(symbol.name.as_str())
             }
@@ -698,11 +813,33 @@ impl Environment {
                     | "when"
                     | "when-not"
                     | "if-not"
+                    | "if-let"
                     | "and"
                     | "or"
                     | "cond"
                     | "declare"
                     | "caching-hash"
+                    | "->"
+                    | "as->"
+                    | "zero?"
+                    | "pos?"
+                    | "neg?"
+                        | "inc"
+                        | "dec"
+                    | "int"
+                    | "bit-and"
+                    | "bit-or"
+                    | "bit-xor"
+                    | "bit-and-not"
+                    | "bit-not"
+                    | "bit-clear"
+                    | "bit-flip"
+                    | "bit-set"
+                    | "bit-test"
+                    | "bit-shift-left"
+                    | "bit-shift-right"
+                    | "unsigned-bit-shift-right"
+                    | "bit-shift-right-zero-fill"
             ) && !scope.excluded_core.contains(&symbol.name))
             .then_some(symbol.name.as_str())
         }?;
@@ -726,11 +863,33 @@ impl Environment {
                     | "when"
                     | "when-not"
                     | "if-not"
+                    | "if-let"
                     | "and"
                     | "or"
                     | "cond"
                     | "declare"
                     | "caching-hash"
+                    | "->"
+                    | "as->"
+                    | "zero?"
+                    | "pos?"
+                    | "neg?"
+                        | "inc"
+                        | "dec"
+                    | "int"
+                    | "bit-and"
+                    | "bit-or"
+                    | "bit-xor"
+                    | "bit-and-not"
+                    | "bit-not"
+                    | "bit-clear"
+                    | "bit-flip"
+                    | "bit-set"
+                    | "bit-test"
+                    | "bit-shift-left"
+                    | "bit-shift-right"
+                    | "unsigned-bit-shift-right"
+                    | "bit-shift-right-zero-fill"
             )
             && self.bindings.contains_key(&Global {
                 phase,
@@ -747,6 +906,8 @@ impl Environment {
         };
         Some(if let Some(operation) = ControlForm::from_name(name) {
             Binding::BootstrapControl { global, operation }
+        } else if let Some(operation) = Bitwise::from_name(name) {
+            Binding::BootstrapBitwise { global, operation }
         } else if let Some(operation) = match name {
             "<" => Some(Comparison::Less),
             "<=" => Some(Comparison::LessEqual),

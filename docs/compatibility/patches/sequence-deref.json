@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "1a48edff54f4b80c350d42444d235926178b95cb9acc856225b42432930cb822",
+  "replacement": "(def deref\n  \"Also reader macro: @var/@atom/@delay. Returns the\n   most-recently-committed value of ref. When applied to a var\n   or atom, returns its current state. When applied to a delay, forces\n   it if not already forced. See also - realized?.\"\n  (fn [o]\n  (-deref o)))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains metadata, docstring, arities and reduction algorithm, including reduced termination and source order. Full upstream defn and private runtime Var metadata remain unfinished."
+}

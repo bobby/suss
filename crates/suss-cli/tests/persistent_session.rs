@@ -64,7 +64,7 @@ fn persistent_session_arithmetic_coerces_live_cells_and_evaluates_operands_once(
         .inspect(&payload, |mut store, value| {
             let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
             let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            assert_eq!(fields.len(), 4);
+            assert_eq!(fields.len(), 5);
             let descriptor = fields[0]
                 .unwrap_anyref()
                 .unwrap()
@@ -232,7 +232,7 @@ fn persistent_session_compile_failure_is_atomic_and_language_failure_recovers() 
         .inspect(&payload, |mut store, value| {
             let exception = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
             let fields = exception.fields(&mut store)?.collect::<Vec<_>>();
-            assert_eq!(fields.len(), 4);
+            assert_eq!(fields.len(), 5);
             let descriptor = fields[0]
                 .unwrap_anyref()
                 .unwrap()
@@ -252,8 +252,8 @@ fn session_lifecycle_reset_rejects_old_values_and_distinguishes_code_from_roots(
     let mut session = Session::new().unwrap();
     let bootstrap_cells = session.stats().binding_cells;
     assert_eq!(
-        bootstrap_cells, 30,
-        "canonical arithmetic, ExceptionInfo, predicate, array and comparison cells are resident"
+        bootstrap_cells, 45,
+        "canonical arithmetic, ExceptionInfo, predicate, array, comparison and bitwise cells are resident"
     );
     let value = session.eval("(def old 7) old").unwrap();
     let clone = value.clone();

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "58c0dcd0f61970715f5b1b2a8ac5bc46548ab081726ba1a4b64766a230292401",
+  "replacement": "(def ^boolean =\n  \"Equality. Returns true if x equals y, false if not. Compares\n  numbers and collections in a type-independent manner.  Clojure's immutable data\n  structures define -equiv (and thus =) as a value, not an identity,\n  comparison.\"\n  (fn ([x] true)\n  ([x y]\n    (if (nil? x)\n      (nil? y)\n      (or (identical? x y)\n        ^boolean (-equiv x y))))\n  ([x y & more]\n     (if (= x y)\n       (if (next more)\n         (recur y (first more) (next more))\n         (= y (first more)))\n       false))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains source name metadata, docstring, arities, evaluation order and algorithm. Upstream defn compilation and private Var metadata remain unfinished."
+}

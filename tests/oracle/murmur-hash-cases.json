@@ -1,0 +1,590 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "mix-k-0",
+      "source": "(m3-mix-K1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "mix-k-1",
+      "source": "(m3-mix-K1 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1ce5632d1800000"
+      }
+    },
+    {
+      "id": "mix-k-2",
+      "source": "(m3-mix-K1 -1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d10453fc000000"
+      }
+    },
+    {
+      "id": "mix-k-3",
+      "source": "(m3-mix-K1 2147483647)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1ddab23fc000000"
+      }
+    },
+    {
+      "id": "mix-k-4",
+      "source": "(m3-mix-K1 2147483648)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1c94da000000000"
+      }
+    },
+    {
+      "id": "mix-k-5",
+      "source": "(m3-mix-K1 4294967295)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d10453fc000000"
+      }
+    },
+    {
+      "id": "mix-k-6",
+      "source": "(m3-mix-K1 4294967296)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "mix-k-7",
+      "source": "(m3-mix-K1 3.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41b467cf17000000"
+      }
+    },
+    {
+      "id": "mix-k-8",
+      "source": "(m3-mix-K1 -3.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dab69ed5800000"
+      }
+    },
+    {
+      "id": "mix-k-9",
+      "source": "(m3-mix-K1 9007199254740991)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d10453fc000000"
+      }
+    },
+    {
+      "id": "mix-h-0",
+      "source": "(m3-mix-H1 0 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b9ab949c000000"
+      }
+    },
+    {
+      "id": "mix-h-1",
+      "source": "(m3-mix-H1 1 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b9ab949c000000"
+      }
+    },
+    {
+      "id": "mix-h-2",
+      "source": "(m3-mix-H1 -1 2147483648)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b9abe4a1000000"
+      }
+    },
+    {
+      "id": "mix-h-3",
+      "source": "(m3-mix-H1 2147483647 4294967295)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b9ab449c000000"
+      }
+    },
+    {
+      "id": "mix-h-4",
+      "source": "(m3-mix-H1 4294967296 -3.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b9acd4a1000000"
+      }
+    },
+    {
+      "id": "fmix-0",
+      "source": "(m3-fmix 0 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "fmix-1",
+      "source": "(m3-fmix 0 4)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c24e5942800000"
+      }
+    },
+    {
+      "id": "fmix-2",
+      "source": "(m3-fmix 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d4538a2dc00000"
+      }
+    },
+    {
+      "id": "fmix-3",
+      "source": "(m3-fmix -1 31)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c56574af800000"
+      }
+    },
+    {
+      "id": "fmix-4",
+      "source": "(m3-fmix 2147483648 4294967295)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c198cfc560000000"
+      }
+    },
+    {
+      "id": "fmix-5",
+      "source": "(m3-fmix 3.9 -1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d2a8112fc00000"
+      }
+    },
+    {
+      "id": "hash-int-0",
+      "source": "(m3-hash-int 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "hash-int-1",
+      "source": "(m3-hash-int 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1903aff58000000"
+      }
+    },
+    {
+      "id": "hash-int-2",
+      "source": "(m3-hash-int -1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dd8a4ed4000000"
+      }
+    },
+    {
+      "id": "hash-int-3",
+      "source": "(m3-hash-int 2147483648)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d99aca1b000000"
+      }
+    },
+    {
+      "id": "hash-int-4",
+      "source": "(m3-hash-int 4294967296)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c1b17cef000000"
+      }
+    },
+    {
+      "id": "hash-int-5",
+      "source": "(m3-hash-int 3.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c94284b8800000"
+      }
+    },
+    {
+      "id": "hash-int-6",
+      "source": "(m3-hash-int -3.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dc93822b000000"
+      }
+    },
+    {
+      "id": "negative-zero-hash",
+      "source": "(m3-hash-int -0.0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "collection-mix-0",
+      "source": "(mix-collection-hash 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1de106add800000"
+      }
+    },
+    {
+      "id": "collection-mix-1",
+      "source": "(mix-collection-hash 0 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c16cdb16c0000000"
+      }
+    },
+    {
+      "id": "collection-mix-2",
+      "source": "(mix-collection-hash 1 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dd79fa65c00000"
+      }
+    },
+    {
+      "id": "collection-mix-3",
+      "source": "(mix-collection-hash -1 31)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41b6f66952000000"
+      }
+    },
+    {
+      "id": "collection-mix-4",
+      "source": "(mix-collection-hash 4294967295 4294967297)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d8841b0f800000"
+      }
+    },
+    {
+      "id": "hash-long-wrap",
+      "source": "(hash-long 4294967295 2147483648)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dfffffffc00000"
+      }
+    },
+    {
+      "id": "thread-identity",
+      "source": "(-> 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "thread-symbol",
+      "source": "(-> 7 inc)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "thread-pairs",
+      "source": "(-> 3 (imul 5) (bit-or 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402e000000000000"
+      }
+    },
+    {
+      "id": "thread-local-call",
+      "source": "(let [f (fn [x y] (+ x y))] (-> 3 (f 7)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "thread-tail-recur",
+      "source": "(loop [n 100] (if (> n 0) (-> (- n 1) recur) n))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "as-identity",
+      "source": "(as-> 7 x)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "as-chain",
+      "source": "(as-> 3 x (imul x 5) (bit-or x 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402e000000000000"
+      }
+    },
+    {
+      "id": "as-captured-old-binding",
+      "source": "(as-> 7 x (fn [] x) (x))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "as-shadows-local",
+      "source": "(let [x 100] (+ (as-> 7 x (+ x 3)) x))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405b800000000000"
+      }
+    },
+    {
+      "id": "as-tail-recur",
+      "source": "(loop [n 100] (if (> n 0) (as-> n v (- v 1) (recur v)) n))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "zero-negative",
+      "source": "(zero? -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "zero-nil",
+      "source": "(zero? nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "zero-string",
+      "source": "(zero? \"0\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "zero-false",
+      "source": "(zero? false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "zero-nan",
+      "source": "(zero? (/ 0 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "first-class-zero",
+      "source": "(let [f zero?] (f -0.0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "shadow-zero",
+      "source": "(let [zero? (fn [x] 71)] (zero? 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4051c00000000000"
+      }
+    },
+    {
+      "id": "thread-callee-before-initial-expression",
+      "source": "(do (def thread_callee_trace 0) (def thread_callee (fn [x] x)) (-> (do (set! thread_callee_trace (+ (* thread_callee_trace 10) 1)) 7) ((do (set! thread_callee_trace (+ (* thread_callee_trace 10) 2)) thread_callee))) thread_callee_trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "captured-mix-original-body",
+      "source": "(let [f m3-mix-K1] (with-redefs [cljs.core/m3-mix-K1 (fn [x] 99)] (f 1)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1ce5632d1800000"
+      }
+    },
+    {
+      "id": "mix-live-constant",
+      "source": "(with-redefs [cljs.core/m3-C1 0] (m3-mix-K1 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "mix-live-imul",
+      "source": "(with-redefs [cljs.core/imul (fn [x y] 71)] (m3-mix-K1 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4051c00000000000"
+      }
+    },
+    {
+      "id": "mix-restored-after-redefs",
+      "source": "(m3-mix-K1 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1ce5632d1800000"
+      }
+    },
+    {
+      "id": "review-thread-if-syntax",
+      "source": "(-> false (if 31 47))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4047800000000000"
+      }
+    },
+    {
+      "id": "review-thread-let-syntax",
+      "source": "(-> [x 7] (let (+ x 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "review-thread-callee-outer-before-inner",
+      "source": "(do (def rt 0) (def rf (fn [x y] (+ x y))) (-> (do (set! rt (+ (* rt 10) 1)) 3) ((do (set! rt (+ (* rt 10) 2)) rf) (do (set! rt (+ (* rt 10) 3)) 4)) ((do (set! rt (+ (* rt 10) 4)) rf) (do (set! rt (+ (* rt 10) 5)) 6))) rt)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40e492e000000000"
+      }
+    },
+    {
+      "id": "review-as-init-sees-outer",
+      "source": "(let [v 7] (as-> (+ v 3) v (+ v 5)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402e000000000000"
+      }
+    },
+    {
+      "id": "review-as-capture-three-generations",
+      "source": "(as-> 7 v (fn [] v) (let [old v] (fn [] (+ (old) 3))) (v))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "review-as-nested-same-binding",
+      "source": "(as-> 3 v (+ v (as-> 7 v (+ v 2))) (+ v 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402a000000000000"
+      }
+    },
+    {
+      "id": "review-as-closure-shadow",
+      "source": "(as-> 7 v ((fn [v] (+ v 2)) 9) (+ v 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402c000000000000"
+      }
+    },
+    {
+      "id": "review-as-statement-def",
+      "source": "(do (as-> 7 v (def review_as_result v)) review_as_result)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "review-thread-throw-order",
+      "source": "(do (def rt 0) (try (-> (do (set! rt 1) 7) ((do (throw 42) (fn [x] x)))) (catch :default e nil)) rt)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-as-throw-stops-later",
+      "source": "(do (def rt 0) (try (as-> 7 v (throw v) (set! rt 99)) (catch :default e e)) rt)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-as-qualified-ref-macro",
+      "source": "(as-> 3 v (cljs.core/-> v (imul 5)) (cljs.core/as-> v w (+ w 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "review-murmur-smallest-subnormal",
+      "source": "(m3-mix-K1 5e-324)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-hash-int-false",
+      "source": "(m3-hash-int false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c1b17cef000000"
+      }
+    },
+    {
+      "id": "review-zero-undefined",
+      "source": "(do (declare review_undefined) (zero? review_undefined))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "review-firstclass-zero-string",
+      "source": "(let [f zero?] (f \"0\"))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "review-hash-long-high-bits",
+      "source": "(hash-long 9007199254740991 -2147483649)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1e0000000000000"
+      }
+    }
+  ]
+}

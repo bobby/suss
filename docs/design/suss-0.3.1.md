@@ -140,7 +140,7 @@ before code generation. Runtime tests use descriptor identity; Wasm structural
 `ref.test` alone is not a nominal type test. Reachability may remove unused host
 imports. Optimization must preserve effect ordering and exceptions.
 
-## 6. Shared GC runtime ABI (version 1)
+## 6. Shared GC runtime ABI (version 2)
 
 Use a small stable, versioned recursive type group imported by every compiled
 fragment. `Value` is an eqref, with nil/booleans as i31 sentinels, boxed f64,
@@ -336,6 +336,18 @@ sign difference while retaining raw bits; changed NaN payloads, finite bits and
 signed zero still fail. Storage and boundary round-trip tests check NaN bits
 exactly. This does not change language equality or make NaN equal to itself.
 See the [WebAssembly floating-point rules](https://www.w3.org/TR/wasm-core/).
+
+2026-10-01 identity-hashing ABI decision: advance the prototype shared runtime
+ABI from1 to2 before collection hashing integration. Append one mutable Value
+slot to closures, descriptors, ordinary objects and exceptions, initialized nil
+and assigned a numeric UID lazily. Existing data/metadata/cause offsets and the
+single ten-type recursive group remain intact. This supplies GC-owned identity
+for the pinned default IHash dependency without a global table retaining hashed
+objects. UID identity is not structural equality and does not replace Murmur3.
+Artifact manifests reject ABI1 before initialization; actual incompatible Wasm
+layouts also fail linking. Existing generated artifacts must be rebuilt. The
+universal invocation, source semantics and release gates do not change. Evidence
+and remaining limits belong in docs/runtime/identity-hashing.md and handoff.
 
 ## Primary references
 

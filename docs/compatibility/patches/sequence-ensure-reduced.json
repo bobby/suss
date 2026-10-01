@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "7c84cddf26ba297a6d915079aeae375722e7987cb2814272ece02abf3ff75e35",
+  "replacement": "(def ensure-reduced\n  \"If x is already reduced?, returns it, else returns (reduced x)\"\n  (fn [x]\n  (if (reduced? x) x (reduced x))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains metadata, docstring, arities and reduction algorithm, including reduced termination and source order. Full upstream defn and private runtime Var metadata remain unfinished."
+}

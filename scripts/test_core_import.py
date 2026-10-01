@@ -169,6 +169,28 @@ class CoreImportBuildTests(unittest.TestCase):
             with self.subTest(context=contextual), self.assertRaisesRegex(ValueError, 'unsupported declaration context'):
                 self.build()
 
+    def test_loader_inputs_are_ordered_hashed_and_cannot_escape_repository(self):
+        import hashlib, json
+        before = self.root / 'loader-before.sus'
+        after = self.root / 'loader-after.sus'
+        before.write_text('(declare identity)\n')
+        after.write_text('(identity 7)\n')
+        loader = {stage: {'path': path.name, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+                  for stage, path in [('before', before), ('after', after)]}
+        self.recipe_path.write_text(json.dumps(dict(self.recipe, loader=loader)))
+        built = self.build()
+        source = built['suss/core.sus'].decode()
+        self.assertLess(source.index('(declare identity)'), source.index('(defn identity'))
+        self.assertLess(source.index('(defn identity'), source.index('(identity 7)'))
+        self.assertEqual(json.loads(built['manifest.json'])['loader'], loader)
+        after.write_text('(identity 8)\n')
+        with self.assertRaisesRegex(ValueError, 'stale loader input hash'):
+            self.build()
+        loader['after']['path'] = '../outside'
+        self.recipe_path.write_text(json.dumps(dict(self.recipe, loader=loader)))
+        with self.assertRaisesRegex(ValueError, 'missing or escaping'):
+            self.build()
+
     def test_license_path_escaping_repository_is_rejected(self):
         with self.assertRaises(ValueError):
             self.importer.repository_file(self.root, '../outside')

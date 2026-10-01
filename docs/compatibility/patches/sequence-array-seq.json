@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "28f60b6fba1d923ac2c589a48d69783d489dd37a61be4ed163867356836b5a67",
+  "replacement": "(def array-seq\n  \"Create a seq from a JavaScript array.\"\n  (fn ([array]\n     (prim-seq array 0))\n  ([array i]\n     (prim-seq array i))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+}

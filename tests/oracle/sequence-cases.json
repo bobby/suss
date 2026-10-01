@@ -1,0 +1,1102 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "seq-nil",
+      "source": "(nil? (seq nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "first-nil",
+      "source": "(nil? (first nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "next-nil",
+      "source": "(nil? (next nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rest-nil-not-nil",
+      "source": "(nil? (rest nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "rest-nil-empty-seq",
+      "source": "(nil? (seq (rest nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-list-not-nil",
+      "source": "(nil? ())",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "empty-list-truthy",
+      "source": "(if () 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "empty-list-first",
+      "source": "(nil? (first ()))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-list-next",
+      "source": "(nil? (next ()))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-list-rest-identity",
+      "source": "(identical? () (rest ()))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-list-count",
+      "source": "(count ())",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "list-count",
+      "source": "(count (list 1 nil false 4))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "list-first",
+      "source": "(first (list 7 8 9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "list-next-first",
+      "source": "(first (next (list 7 8 9)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "singleton-list-next",
+      "source": "(nil? (next (list 7)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "singleton-list-rest",
+      "source": "(identical? () (rest (list 7)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "list-seq-identity",
+      "source": "(let [x (list 1 2)] (identical? x (seq x)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "list-false-first",
+      "source": "(false? (first (list false 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "list-nil-element-count",
+      "source": "(count (list nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "cons-nil-count",
+      "source": "(count (cons 1 nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "cons-list-tail-identity",
+      "source": "(let [x (list 2 3)] (identical? x (rest (cons 1 x))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "cons-empty-next",
+      "source": "(nil? (next (cons 1 ())))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "cons-empty-rest-identity",
+      "source": "(identical? () (rest (cons 1 ())))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-empty-seq",
+      "source": "(nil? (seq (array)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-first",
+      "source": "(first (array 7 8))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "array-next-first",
+      "source": "(first (next (array 7 8)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "array-singleton-next",
+      "source": "(nil? (next (array 7)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-rest-empty",
+      "source": "(identical? () (rest (array 7)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-seq-count",
+      "source": "(count (array-seq (array 7 8 9) 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "array-seq-offset-first",
+      "source": "(first (array-seq (array 7 8 9) 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "array-seq-past-end",
+      "source": "(nil? (array-seq (array 7) 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-seq-seq-identity",
+      "source": "(let [s (seq (array 1 2))] (identical? s (seq s)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-seq-sees-mutation",
+      "source": "(let [a (array 1 2) s (seq a)] (aset a 0 9) (first s))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "array-seq-sees-growth",
+      "source": "(let [a (array 1) s (seq a)] (aset a 1 9) (count s))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "array-seq-nil-element",
+      "source": "(nil? (first (seq (array nil))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-empty-seq",
+      "source": "(nil? (seq \"\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-unit-count",
+      "source": "(count \"A😀B\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "string-first-unit",
+      "source": "(identical? \"A\" (first \"AB\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-next-unit",
+      "source": "(identical? \"B\" (first (next \"AB\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-astral-first-high",
+      "source": "(identical? \"\\ud83d\" (first \"😀\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-astral-next-low",
+      "source": "(identical? \"\\ude00\" (first (next \"😀\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-lone-surrogate",
+      "source": "(identical? \"\\ud800\" (first \"\\ud800x\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-singleton-next",
+      "source": "(nil? (next \"A\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-singleton-rest",
+      "source": "(identical? () (rest \"A\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "seq-undefined",
+      "source": "(nil? (seq (aget (array) 0)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rest-undefined-empty",
+      "source": "(identical? () (rest (aget (array) 0)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "first-class-first",
+      "source": "(let [f first] (f (list 8 9)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "list-evaluation-order",
+      "source": "(do (def seq-trace 0) (let [x (list (do (set! seq-trace (+ (* seq-trace 10) 1)) 7) (do (set! seq-trace (+ (* seq-trace 10) 2)) 8))] (+ (* seq-trace 100) (first x))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4092dc0000000000"
+      }
+    },
+    {
+      "id": "empty-literal-lexical-list-shadow",
+      "source": "(let [List 99] (identical? () (.-EMPTY cljs.core/List)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-literal-live-static-property",
+      "source": "(let [original (.-EMPTY cljs.core/List)] (try (do (set! (.-EMPTY cljs.core/List) nil) (nil? ())) (finally (set! (.-EMPTY cljs.core/List) original))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-literal-captured-reader-live-property",
+      "source": "(let [original (.-EMPTY cljs.core/List) read-empty (fn [] ())] (try (do (set! (.-EMPTY cljs.core/List) nil) (nil? (read-empty))) (finally (set! (.-EMPTY cljs.core/List) original))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "variadic-empty-rest",
+      "source": "(nil? ((fn [& xs] xs)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "variadic-rest-real-indexed-seq",
+      "source": "(instance? cljs.core/IndexedSeq ((fn [& xs] xs) nil false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "variadic-rest-count",
+      "source": "((fn [& xs] (count xs)) nil false 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "variadic-fixed-floor",
+      "source": "(nil? ((fn [a b & xs] xs) 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "variadic-fixed-rest-count",
+      "source": "((fn [a b & xs] (+ (* a 100) (* b 10) (count xs))) 1 2 3 4)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405e800000000000"
+      }
+    },
+    {
+      "id": "variadic-overloaded-fixed",
+      "source": "((fn ([] 91) ([x] x) ([x & xs] (+ x (count xs)))) 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "variadic-overloaded-rest",
+      "source": "((fn ([] 91) ([x] x) ([x & xs] (+ x (count xs)))) 7 8 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "variadic-named-recur-rest",
+      "source": "((fn step [n & xs] (if (zero? n) (count xs) (recur (dec n) xs))) 3 7 8)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "variadic-named-self-call",
+      "source": "((fn step [n & xs] (if (zero? n) (first xs) (step (dec n) (first xs) (first (next xs))))) 3 7 8)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "variadic-captured-closure",
+      "source": "(let [f ((fn [base] (fn [& xs] (+ base (count xs)))) 17)] (f 1 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4034000000000000"
+      }
+    },
+    {
+      "id": "variadic-does-not-call-array-seq",
+      "source": "(let [original cljs.core/array-seq f (fn [& xs] (first xs))] (try (do (set! cljs.core/array-seq (fn [a i] (cons 21 nil))) (f 7)) (finally (set! cljs.core/array-seq original))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "variadic-empty-avoids-helper",
+      "source": "(let [original cljs.core/array-seq f (fn [& xs] xs)] (try (do (set! cljs.core/array-seq (fn [a i] (cons 21 nil))) (nil? (f))) (finally (set! cljs.core/array-seq original))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "list-ignores-array-seq-redefinition",
+      "source": "(let [original cljs.core/array-seq f list] (try (do (set! cljs.core/array-seq (fn [a i] (cons (aget a 0) (cons (aget a 1) nil)))) (+ (* 10 (first (f 7 8))) (first (next (f 7 8))))) (finally (set! cljs.core/array-seq original))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4053800000000000"
+      }
+    },
+    {
+      "id": "variadic-operand-order",
+      "source": "(do (def variadic-trace 0) ((fn [& xs] (+ (* variadic-trace 100) (count xs))) (do (set! variadic-trace (+ (* variadic-trace 10) 1)) 7) (do (set! variadic-trace (+ (* variadic-trace 10) 2)) 8)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4092c80000000000"
+      }
+    },
+    {
+      "id": "variadic-nil-element",
+      "source": "(nil? ((fn [& xs] (first xs)) nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "variadic-false-element",
+      "source": "(false? ((fn [& xs] (first xs)) false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "variadic-current-indexed-seq-class",
+      "source": "(do (deftype VariadicRestProbe [arr i meta] cljs.core/ISeq (-first [this] (aget arr i)) (-rest [this] nil)) (let [original cljs.core/IndexedSeq f (fn [& xs] (instance? VariadicRestProbe xs))] (try (do (set! cljs.core/IndexedSeq VariadicRestProbe) (f 7)) (finally (set! cljs.core/IndexedSeq original)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "variadic-empty-skips-class",
+      "source": "(let [original cljs.core/IndexedSeq f (fn [& xs] xs)] (try (do (set! cljs.core/IndexedSeq nil) (nil? (f))) (finally (set! cljs.core/IndexedSeq original))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-variadic-fixed-zero",
+      "source": "((fn ([] 91) ([& xs] (count xs))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4056c00000000000"
+      }
+    },
+    {
+      "id": "review-variadic-zero-floor-many",
+      "source": "((fn ([] 91) ([& xs] (count xs))) 1 2 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "review-variadic-recur-persistent-list",
+      "source": "((fn [n & xs] (if (zero? n) (first xs) (recur 0 (list 37 38)))) 1 7 8)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4042800000000000"
+      }
+    },
+    {
+      "id": "review-variadic-fresh-owned-rest",
+      "source": "(let [f (fn [& xs] xs) a (f 11 12) b (f 21 22)] (aset (.-arr a) 0 99) (+ (first a) (first b)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405e000000000000"
+      }
+    },
+    {
+      "id": "review-variadic-rest-array-growth",
+      "source": "(let [xs ((fn [& xs] xs) 1 2)] (aset (.-arr xs) 2 17) (+ (count xs) (first (next (next xs)))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4034000000000000"
+      }
+    },
+    {
+      "id": "review-variadic-captured-recur",
+      "source": "(let [factor 3] ((fn step [n & xs] (if (zero? n) (* factor (first xs)) (step (dec n) 17))) 2 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4049800000000000"
+      }
+    },
+    {
+      "id": "equal-unary-nil",
+      "source": "(= nil)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-unary-nan",
+      "source": "(= ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-nil",
+      "source": "(= nil nil)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-nil-false",
+      "source": "(= nil false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-false-nil",
+      "source": "(= false nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-signed-zero",
+      "source": "(= 0 -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-nan",
+      "source": "(= ##NaN ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-positive-infinity",
+      "source": "(= ##Inf ##Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-opposite-infinity",
+      "source": "(= ##Inf ##-Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-number-string",
+      "source": "(= 1 \"1\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-string-number",
+      "source": "(= \"1\" 1)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-boolean-number",
+      "source": "(= false 0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-false",
+      "source": "(= false false)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-string-value",
+      "source": "(= \"1\" (inc \"\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-utf16-units",
+      "source": "(= \"\\ud83d\\ude00\" \"😀\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-surrogate-distinction",
+      "source": "(= \"\\ud83d\" \"\\ude00\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-empty-lists",
+      "source": "(= () (EmptyList. 17))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-empty-nil",
+      "source": "(= () nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-nil-empty",
+      "source": "(= nil ())",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-lists",
+      "source": "(= (list 1 2 3) (list 1 2 3))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-list-values-differ",
+      "source": "(= (list 1 2) (list 1 3))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-list-counts-differ",
+      "source": "(= (list 1) (list 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-list-cons",
+      "source": "(= (list 1 2) (cons 1 (cons 2 nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-cons-list",
+      "source": "(= (cons 1 (cons 2 nil)) (list 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-list-indexed",
+      "source": "(= (list 1 nil false) (seq (array 1 nil false)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-indexed-list",
+      "source": "(= (seq (array 1 nil false)) (list 1 nil false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-indexed-offset",
+      "source": "(= (next (seq (array 9 1 2))) (list 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-list-array",
+      "source": "(= (list 1 2) (array 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-array-list",
+      "source": "(= (array 1 2) (list 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-utf16-sequence",
+      "source": "(= (seq \"😀\") (list \"\\ud83d\" \"\\ude00\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-sequence-string",
+      "source": "(= (seq \"AB\") \"AB\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-nested-sequences",
+      "source": "(= (list (list 1 2) (cons 3 nil)) (cons (seq (array 1 2)) (cons (list 3) nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-nested-nan",
+      "source": "(= (list ##NaN) (list ##NaN))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-metadata-independent",
+      "source": "(= (-with-meta (list 1 2) 17) (-with-meta (list 1 2) 19))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-cloned-list",
+      "source": "(let [xs (list 1 2)] (= xs (-clone xs)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-shared-nan-list",
+      "source": "(let [xs (list ##NaN)] (= xs xs))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-distinct-arrays",
+      "source": "(= (array 1) (array 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-same-array",
+      "source": "(let [xs (array 1)] (= xs xs))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-distinct-functions",
+      "source": "(= (fn [] 1) (fn [] 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-same-function",
+      "source": "(let [f (fn [] 1)] (= f f))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-variadic-scalars",
+      "source": "(= 7 7 7 7 7)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-variadic-last-differs",
+      "source": "(= 7 7 7 8)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-variadic-sequences",
+      "source": "(= (list 1 2) (cons 1 (list 2)) (seq (array 1 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-variadic-nil",
+      "source": "(= nil nil nil nil)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-native-number-protocol",
+      "source": "(-equiv 7 7)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-native-default-string",
+      "source": "(-equiv \"A\" \"A\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-native-default-boolean",
+      "source": "(-equiv false false)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-native-default-nil",
+      "source": "(-equiv nil nil)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-counted-fast-reject",
+      "source": "(do (def equality-trace 0) (deftype CountProbe [n] ISequential ICounted (-count [_] n) ISeqable (-seq [_] (do (set! equality-trace 9) nil))) (= (CountProbe. 1) (CountProbe. 2)) (zero? equality-trace))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-element-short-circuit",
+      "source": "(do (def equality-trace 0) (deftype EqualProbe [n] IEquiv (-equiv [_ other] (do (set! equality-trace (inc equality-trace)) (identical? n (.-n other))))) (= (list (EqualProbe. 1) (EqualProbe. 2)) (list (EqualProbe. 9) (EqualProbe. 2))) (identical? equality-trace 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-variadic-operands-once",
+      "source": "(do (def equality-trace 0) (= (do (set! equality-trace (+ (* equality-trace 10) 1)) 0) (do (set! equality-trace (+ (* equality-trace 10) 2)) 1) (do (set! equality-trace (+ (* equality-trace 10) 3)) 2)) (identical? equality-trace 123))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-protocol-nonboolean",
+      "source": "(do (deftype OddEquiv [] IEquiv (-equiv [_ other] 17)) (identical? (= (OddEquiv.) nil) 17))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-sequential-coerces-protocol-result",
+      "source": "(= (list (OddEquiv.)) (list nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-live-protocol",
+      "source": "(do (deftype LiveEquiv [] IEquiv (-equiv [_ other] false)) (def live-equality-item (LiveEquiv.)) (extend-type LiveEquiv IEquiv (-equiv [_ other] true)) (= live-equality-item nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "equal-user-shadow-core-independence",
+      "source": "(do (def saved-equality =) (def = (fn [a b] false)) (def current-equality-result (equiv-sequential (list 1) (list 1))) (def = saved-equality) (false? current-equality-result))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "equal-core-current-cell",
+      "source": "(do (def saved-core-equality cljs.core/=) (set! cljs.core/= (fn ([a] true) ([a b] false))) (def core-equality-result (equiv-sequential (list 1) (list 1))) (set! cljs.core/= saved-core-equality) (false? core-equality-result))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-equality-counted-helper-reject",
+      "source": "(do (set! equality-trace 0) (false? (equiv-sequential (CountProbe. 1) (CountProbe. 2))) (zero? equality-trace))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-equality-counted-dispatch-reject",
+      "source": "(do (deftype ReviewCountEquiv [n] ISequential ICounted (-count [_] (do (set! equality-trace (+ (* equality-trace 10) n)) n)) ISeqable (-seq [_] (do (set! equality-trace 999) nil)) IEquiv (-equiv [this other] (equiv-sequential this other))) (set! equality-trace 0) (def review-count-equality (= (ReviewCountEquiv. 1) (ReviewCountEquiv. 2))) (and (false? review-count-equality) (identical? equality-trace 12)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-equality-uncounted-length-mismatch",
+      "source": "(and (false? (= (cons 1 nil) (cons 1 (cons 2 nil)))) (false? (= (cons 1 (cons 2 nil)) (cons 1 nil))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-equality-nil-shortcut-direction",
+      "source": "(and (false? (= nil (OddEquiv.))) (identical? (= (OddEquiv.) nil) 17))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-equality-variadic-comparison-short-circuit",
+      "source": "(do (set! equality-trace 0) (= (EqualProbe. 1) (EqualProbe. 2) (EqualProbe. 3) (EqualProbe. 4)) (identical? equality-trace 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-equality-negative-zero-nan-rest",
+      "source": "(and (= 0 -0.0 0 -0.0) (false? (= 0 0 ##NaN)) (false? (= ##NaN ##NaN ##NaN)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

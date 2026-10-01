@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "iterator-array-shrink",
+      "source": "(let [a (array 1 2) it (-iterator (seq a))] (set! (.-length a) 0) (.hasNext it))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    }
+  ]
+}

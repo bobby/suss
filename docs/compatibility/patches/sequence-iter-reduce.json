@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "2ae02e9936ba2bcbea2ed90f632b53d240a6f38cf82862994cc210af434f313f",
+  "replacement": "(def iter-reduce\n  (fn ([coll f]\n   (let [iter (-iterator coll)]\n     (if (.hasNext iter)\n       (let [init (.next iter)]\n         (loop [acc init]\n           (if ^boolean (.hasNext iter)\n             (let [nacc (f acc (.next iter))]\n               (if (reduced? nacc)\n                 @nacc\n                 (recur nacc)))\n             acc)))\n       (f))))\n  ([coll f init]\n   (let [iter (-iterator coll)]\n     (loop [acc init]\n       (if ^boolean (.hasNext iter)\n         (let [nacc (f acc (.next iter))]\n           (if (reduced? nacc)\n             @nacc\n             (recur nacc)))\n         acc))))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains metadata, docstring, arities and reduction algorithm, including reduced termination and source order. Full upstream defn and private runtime Var metadata remain unfinished."
+}

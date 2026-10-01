@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "a5f7566fb9a39433f3d1a9a983d7fd56b43709dd8f8bab95395207ca5edbd0b4",
+  "replacement": "(def ^seq seq\n  \"Returns a seq on the collection. If the collection is\n  empty, returns nil.  (seq nil) returns nil. seq also works on\n  Strings.\"\n  (fn [coll]\n  (when-not (nil? coll)\n    (cond\n      (implements? ISeqable coll)\n      (-seq coll)\n\n      (array? coll)\n      (when-not (zero? (alength coll))\n        (IndexedSeq. coll 0 nil))\n\n      (string? coll)\n      (when-not (zero? (.-length coll))\n        (IndexedSeq. coll 0 nil))\n\n      (native-satisfies? ISeqable coll)\n      (-seq coll)\n\n      :else (throw (suss.bootstrap/error (str_ coll \" is not ISeqable\")))))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished. Host JavaScript Symbol.iterator objects are not portable interoperability; that branch is excluded from this adapter while direct/array/UTF-16/native-protocol paths remain. Typed bridge/portable iterators and str_ error formatting remain unfinished."
+}

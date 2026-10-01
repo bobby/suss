@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "a4f125c771a0710768362df19a35a0ebe6a9e1d0b3a439c670a152bb7d338fa8",
+  "replacement": "(def array-reduce\n  (fn ([arr f]\n     (let [cnt (alength arr)]\n       (if (zero? (alength arr))\n         (f)\n         (loop [val (aget arr 0), n 1]\n           (if (< n cnt)\n             (let [nval (f val (aget arr n))]\n               (if (reduced? nval)\n                 @nval\n                 (recur nval (inc n))))\n             val)))))\n  ([arr f val]\n     (let [cnt (alength arr)]\n       (loop [val val, n 0]\n         (if (< n cnt)\n           (let [nval (f val (aget arr n))]\n             (if (reduced? nval)\n               @nval\n               (recur nval (inc n))))\n           val))))\n  ([arr f val idx]\n     (let [cnt (alength arr)]\n       (loop [val val, n idx]\n         (if (< n cnt)\n           (let [nval (f val (aget arr n))]\n             (if (reduced? nval)\n               @nval\n               (recur nval (inc n))))\n           val))))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains metadata, docstring, arities and reduction algorithm, including reduced termination and source order. Full upstream defn and private runtime Var metadata remain unfinished."
+}

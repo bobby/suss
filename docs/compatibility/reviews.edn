@@ -1,7 +1,328 @@
-;; Human-reviewed overlay; these fifty-two entries are partial, not compatibility completions.
+;; Human-reviewed overlay; entries remain partial, not compatibility completions.
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:IFn:586"
+  {:source-sha256 "229cbe05e42077c3010ce220532bce39cee20c8c7ac31328547e674001a7050c" :visibility :public
+   :arities nil
+   :dependencies ["runtime:IMeta:728" "runtime:IWithMeta:733" "IFn and MetaFn complete source" "general IFn invocation and apply pending"]
+   :classification :portable
+   :rationale "Complete pinned source retained for metadata copies and GC-owned identity regression. All MetaFn methods and IFn signatures preserved; public with-meta/meta retain their original algorithms. General IFn invocation, highest apply arity, complete function metadata and compiled macros remain unfinished. Fresh identity34 primary observations comprise33 exact matching native relations and1 exact strict-arity contract boundary. Independent review corrected canonical IFn receiver/arity dispatch; unchanged zero-invoke pin observation is now separately asserted as a typed Wrong arity boundary, not a success. General IFn calls remain unfinished."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_identity_hash.rs" "tests/oracle/identity-hash-cases.json" "docs/runtime/identity-hashing.md"]}
+  "runtime:MetaFn:2112"
+  {:source-sha256 "7538b969f3cb56dbe9d96b730cc1364e9a08d02a12cadc9779502f8a5af006b6" :visibility :public
+   :arities nil
+   :dependencies ["runtime:IMeta:728" "runtime:IWithMeta:733" "IFn and MetaFn complete source" "general IFn invocation and apply pending"]
+   :classification :portable
+   :rationale "Complete pinned source retained for metadata copies and GC-owned identity regression. All MetaFn methods and IFn signatures preserved; public with-meta/meta retain their original algorithms. General IFn invocation, highest apply arity, complete function metadata and compiled macros remain unfinished. Fresh identity34 primary observations comprise33 exact matching native relations and1 exact strict-arity contract boundary. Independent review corrected canonical IFn receiver/arity dispatch; unchanged zero-invoke pin observation is now separately asserted as a typed Wrong arity boundary, not a success. General IFn calls remain unfinished."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_identity_hash.rs" "tests/oracle/identity-hash-cases.json" "docs/runtime/identity-hashing.md"]}
+  "runtime:with-meta:2165"
+  {:source-sha256 "f6275041a7d5daa0bf9e691b819ec1d829dfd215652c3024c35658e92d418785" :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:IMeta:728" "runtime:IWithMeta:733" "IFn and MetaFn complete source" "general IFn invocation and apply pending"]
+   :classification :adapted
+   :rationale "Complete pinned source retained for metadata copies and GC-owned identity regression. All MetaFn methods and IFn signatures preserved; public with-meta/meta retain their original algorithms. General IFn invocation, highest apply arity, complete function metadata and compiled macros remain unfinished. Fresh identity34 primary observations comprise33 exact matching native relations and1 exact strict-arity contract boundary. Independent review corrected canonical IFn receiver/arity dispatch; unchanged zero-invoke pin observation is now separately asserted as a typed Wrong arity boundary, not a success. General IFn calls remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/identity-with-meta.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_identity_hash.rs" "tests/oracle/identity-hash-cases.json" "docs/runtime/identity-hashing.md"]}
+  "runtime:meta:2174"
+  {:source-sha256 "bc2294557964033aee4eae7921ed463a5878fde4437b49c82f97be518913760c" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:IMeta:728" "runtime:IWithMeta:733" "IFn and MetaFn complete source" "general IFn invocation and apply pending"]
+   :classification :adapted
+   :rationale "Complete pinned source retained for metadata copies and GC-owned identity regression. All MetaFn methods and IFn signatures preserved; public with-meta/meta retain their original algorithms. General IFn invocation, highest apply arity, complete function metadata and compiled macros remain unfinished. Fresh identity34 primary observations comprise33 exact matching native relations and1 exact strict-arity contract boundary. Independent review corrected canonical IFn receiver/arity dispatch; unchanged zero-invoke pin observation is now separately asserted as a typed Wrong arity boundary, not a success. General IFn calls remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/identity-meta.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_identity_hash.rs" "tests/oracle/identity-hash-cases.json" "docs/runtime/identity-hashing.md"]}
+
+  "runtime:indexed?:1606"
+  {:source-sha256 "091aced0efc645f21a0d52b3fd87e7c739aeb392404f61467ea9966db1bc4f4b" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:IIndexed:641"]
+   :classification :adapted
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing62 and typed error/effect/GC checks pass; formatting, runtime Var metadata/privacy, other collection types and compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-indexed-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_indexing.rs" "tests/oracle/indexing-cases.json" "docs/runtime/sequence-indexing.md"]}
+  "runtime:neg?:3086"
+  {:source-sha256 "45c16d3e90c79f1f80f05fecabc6faa13e1504e792d9136f417dcc2fd63d0b37" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:neg?:1201"]
+   :classification :adapted
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing62 and typed error/effect/GC checks pass; formatting, runtime Var metadata/privacy, other collection types and compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-neg-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_indexing.rs" "tests/oracle/indexing-cases.json" "docs/runtime/sequence-indexing.md"]}
+  "runtime:linear-traversal-nth:1927"
+  {:source-sha256 "cff11e42ca5932cabd3f4e945332a5990c3736cfa353269c8bc2f1997e5c324d" :visibility :private
+   :arities {:fixed [2 3] :variadic-min nil}
+   :dependencies ["runtime:seq:1282" "runtime:first:1309" "runtime:next:1333" "runtime:indexed?:1606" "macro:dec:1189"]
+   :classification :adapted
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing62 and typed error/effect/GC checks pass; formatting, runtime Var metadata/privacy, other collection types and compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-linear-traversal-nth.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_indexing.rs" "tests/oracle/indexing-cases.json" "docs/runtime/sequence-indexing.md"]}
+  "runtime:nth:1947"
+  {:source-sha256 "b7513898cb0229e2358dfd30f38defd2826e5f2fef0faf2ed79f526f4f25a276" :visibility :public
+   :arities {:fixed [2 3] :variadic-min nil}
+   :dependencies ["runtime:linear-traversal-nth:1927" "macro:neg?:1201" "runtime:native-satisfies?:322" "runtime:IIndexed:641" "pending str_ type type->str formatting"]
+   :classification :adapted
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing62 and typed error/effect/GC checks pass; formatting, runtime Var metadata/privacy, other collection types and compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-nth.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_indexing.rs" "tests/oracle/indexing-cases.json" "docs/runtime/sequence-indexing.md"]}
+  "runtime:-indexOf:1610"
+  {:source-sha256 "bbdddf87dd34c96146d94e55b673fe25218f65fc62a54e142c6866f54b1408ae" :visibility :private
+   :arities {:fixed [2 3] :variadic-min nil}
+   :dependencies ["runtime:nth:1947" "runtime:=:1342" "runtime:count:1906" "macro:neg?:1201" "macro:inc:1192"]
+   :classification :adapted
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing62 and typed error/effect/GC checks pass; formatting, runtime Var metadata/privacy, other collection types and compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence--indexOf.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_indexing.rs" "tests/oracle/indexing-cases.json" "docs/runtime/sequence-indexing.md"]}
+  "runtime:-lastIndexOf:1627"
+  {:source-sha256 "5bf829a7ded5d38c0872602924634241cd3920adb15a33ee9bf9d73b2146539c" :visibility :private
+   :arities {:fixed [2 3] :variadic-min nil}
+   :dependencies ["runtime:nth:1947" "runtime:=:1342" "runtime:count:1906" "macro:neg?:1201" "macro:dec:1189"]
+   :classification :adapted
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing62 and typed error/effect/GC checks pass; formatting, runtime Var metadata/privacy, other collection types and compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence--lastIndexOf.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_indexing.rs" "tests/oracle/indexing-cases.json" "docs/runtime/sequence-indexing.md"]}
+  "macro:inc:1192"
+  {:source-sha256 "8633926b0fcf8fd2cdf879e952c04384cd5deaa23da51f6ed71524463d00b586" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["checked scalar arithmetic"]
+   :classification :adapted
+   :rationale "Original bounded bootstrap expansion follows pinned + with literal one and one evaluated operand. Retained helpers inline this macro independently of runtime function cells. Compiled upstream macros and object coercion remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/runtime/sequence-indexing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_indexing.rs" "tests/oracle/indexing-cases.json"]}
+  "macro:dec:1189"
+  {:source-sha256 "88a25a6f136577cf2204a1a227568f74c809ddcad49a255027cc889ede835dce" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["checked scalar arithmetic"]
+   :classification :adapted
+   :rationale "Original bounded bootstrap expansion follows pinned - with literal one and one evaluated operand. Retained helpers inline this macro independently of runtime function cells. Compiled upstream macros and object coercion remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/runtime/sequence-indexing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_indexing.rs" "tests/oracle/indexing-cases.json"]}
+  "macro:neg?:1201"
+  {:source-sha256 "9c270b2cf1ebae3d50bad7c57ec437904deb2eda550dc8dbf7627109798fc435" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:<:1164" "checked scalar comparison"]
+   :classification :adapted
+   :rationale "Original bounded bootstrap expansion follows pinned less-than-zero scalar comparison with one evaluated operand. Fresh pinned/native scalar observations execute; compiled upstream macro and object coercion remain unfinished. No upstream macro source copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/sequence-indexing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_indexing.rs" "tests/oracle/indexing-cases.json"]}
+  "runtime:IndexedSeqIterator:1644"
+  {:source-sha256 "b1552e35064f6a9a3b05998abe4180dab3afe2cc108c76f515088b977e516fba" :visibility :public
+   :arities nil
+   :dependencies ["runtime:alength" "runtime:aget" "runtime:inc:1505" "literal Object methods and mutable fields"]
+   :classification :portable
+   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding, GC and explicit named length-write boundary; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_iteration.rs" "tests/oracle/iteration-cases.json" "docs/runtime/sequence-iteration.md"]}
+  "runtime:RSeq:1768"
+  {:source-sha256 "5cb704c40b45cd89d29a01eed8d8e48b13836f287e99c9ae0d653cd43250b846" :visibility :public
+   :arities nil
+   :dependencies ["runtime:equiv-sequential:3151" "runtime:seq-reduce:2582" "runtime:cons:3451" "runtime:empty-ordered-hash:1417" "runtime:hash-ordered-coll:1406" "pending pr-str* -indexOf -lastIndexOf"]
+   :classification :portable
+   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding, GC and explicit named length-write boundary; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_iteration.rs" "tests/oracle/iteration-cases.json" "docs/runtime/sequence-iteration.md"]}
+  "runtime:reversible?:3356"
+  {:source-sha256 "bbe7e7f08fc8553d57eb4501dc00a2d2387d7982c34d0eed90a333648148c3da" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:IReversible:777" "macro:satisfies?"]
+   :classification :adapted
+   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding, GC and explicit named length-write boundary; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-reversible-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_iteration.rs" "tests/oracle/iteration-cases.json" "docs/runtime/sequence-iteration.md"]}
+  "runtime:rseq:3361"
+  {:source-sha256 "c7e4a71666b37740d55d183cbec08343d0946fa27f2b23c0c05606c4c7028174" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:IReversible:777"]
+   :classification :adapted
+   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding, GC and explicit named length-write boundary; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-rseq.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_iteration.rs" "tests/oracle/iteration-cases.json" "docs/runtime/sequence-iteration.md"]}
+  "runtime:IDeref:720"
+  {:source-sha256 "d3242dd4d16577be7c93e207212209f5f5b8b383f31ae7bf93fb274147438a34" :visibility :public
+   :arities nil
+   :dependencies ["protocol dispatch"]
+   :classification :portable
+   :rationale "Retained complete pinned reduction source and protocol/type declarations. Source list/array/string/iterator reduction and reduced termination execute; full persistent types, lazy/chunked/transducer/compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequence-reduction.md"]}
+  "runtime:Reduced:1511"
+  {:source-sha256 "22f0effef9bce10ddfc0908fe830839050d34db68d671e2c7bd6efb1d3018ccb" :visibility :public
+   :arities nil
+   :dependencies ["runtime:IDeref:720"]
+   :classification :portable
+   :rationale "Retained complete pinned reduction source and protocol/type declarations. Source list/array/string/iterator reduction and reduced termination execute; full persistent types, lazy/chunked/transducer/compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequence-reduction.md"]}
+  "runtime:reduced:1515"
+  {:source-sha256 "1b60d1eb6ed7cc7532e6eac52a9a94f97ef249f26e68c82716500c49323b8b01" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:Reduced:1511"]
+   :classification :adapted
+   :rationale "Retained complete pinned reduction source and protocol/type declarations. Source list/array/string/iterator reduction and reduced termination execute; full persistent types, lazy/chunked/transducer/compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-reduced.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequence-reduction.md"]}
+  "runtime:reduced?:1520"
+  {:source-sha256 "c52dd5e7548bdb9295e086f6c3dc3024ca8f8081edd32bb769f2a21cfe0093d1" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:Reduced:1511" "macro:instance?:1025"]
+   :classification :adapted
+   :rationale "Retained complete pinned reduction source and protocol/type declarations. Source list/array/string/iterator reduction and reduced termination execute; full persistent types, lazy/chunked/transducer/compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-reduced-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequence-reduction.md"]}
+  "runtime:ensure-reduced:1525"
+  {:source-sha256 "7c84cddf26ba297a6d915079aeae375722e7987cb2814272ece02abf3ff75e35" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:reduced:1515" "runtime:reduced?:1520"]
+   :classification :adapted
+   :rationale "Retained complete pinned reduction source and protocol/type declarations. Source list/array/string/iterator reduction and reduced termination execute; full persistent types, lazy/chunked/transducer/compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-ensure-reduced.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequence-reduction.md"]}
+  "runtime:unreduced:1530"
+  {:source-sha256 "8d706d4b1735870b1ae6745d7ca76caaba6ed848a4af3f1ec1bbbaf17196e6b0" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:reduced?:1520" "runtime:deref:1537"]
+   :classification :adapted
+   :rationale "Retained complete pinned reduction source and protocol/type declarations. Source list/array/string/iterator reduction and reduced termination execute; full persistent types, lazy/chunked/transducer/compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-unreduced.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequence-reduction.md"]}
+  "runtime:deref:1537"
+  {:source-sha256 "1a48edff54f4b80c350d42444d235926178b95cb9acc856225b42432930cb822" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:IDeref:720"]
+   :classification :adapted
+   :rationale "Retained complete pinned reduction source and protocol/type declarations. Source list/array/string/iterator reduction and reduced termination execute; full persistent types, lazy/chunked/transducer/compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-deref.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequence-reduction.md"]}
+  "runtime:array-reduce:1569"
+  {:source-sha256 "a4f125c771a0710768362df19a35a0ebe6a9e1d0b3a439c670a152bb7d338fa8" :visibility :private
+   :arities {:fixed [2 3 4] :variadic-min nil}
+   :dependencies ["runtime:reduced?:1520" "runtime:deref:1537" "runtime:alength" "runtime:aget"]
+   :classification :adapted
+   :rationale "Retained complete pinned reduction source and protocol/type declarations. Source list/array/string/iterator reduction and reduced termination execute; full persistent types, lazy/chunked/transducer/compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-array-reduce.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequence-reduction.md"]}
+  "runtime:iterable?:1259"
+  {:source-sha256 "97ff6754e66f0f434c171eca6685e3c0a9f56092289c1b31b65335ac5008a041" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:IIterable:914"]
+   :classification :adapted
+   :rationale "Retained complete pinned reduction source and protocol/type declarations. Source list/array/string/iterator reduction and reduced termination execute; full persistent types, lazy/chunked/transducer/compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-iterable-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequence-reduction.md"]}
+  "runtime:iter-reduce:2605"
+  {:source-sha256 "2ae02e9936ba2bcbea2ed90f632b53d240a6f38cf82862994cc210af434f313f" :visibility :private
+   :arities {:fixed [2 3] :variadic-min nil}
+   :dependencies ["runtime:IIterable:914" "runtime:reduced?:1520" "runtime:deref:1537"]
+   :classification :adapted
+   :rationale "Retained complete pinned reduction source and protocol/type declarations. Source list/array/string/iterator reduction and reduced termination execute; full persistent types, lazy/chunked/transducer/compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-iter-reduce.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequence-reduction.md"]}
+  "runtime:seq-reduce:2582"
+  {:source-sha256 "c8d84fa3b05a5f38edbe1a20625bce686ea8213e6277957ec95db98a4fdc037e" :visibility :private
+   :arities {:fixed [2 3] :variadic-min nil}
+   :dependencies ["macro:if-let:339" "runtime:reduce:2628" "runtime:reduced?:1520" "runtime:deref:1537" "runtime:seq:1282" "runtime:first:1309" "runtime:next:1333"]
+   :classification :adapted
+   :rationale "Retained complete pinned reduction source and protocol/type declarations. Source list/array/string/iterator reduction and reduced termination execute; full persistent types, lazy/chunked/transducer/compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-seq-reduce.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequence-reduction.md"]}
+  "runtime:reduce:2628"
+  {:source-sha256 "e5609fab295ff28b74750fad37f4194462dbbcbe6ba24fb74d26fe8a1e5c4bf1" :visibility :public
+   :arities {:fixed [2 3] :variadic-min nil}
+   :dependencies ["runtime:IReduce:738" "runtime:iterable?:1259" "runtime:iter-reduce:2605" "runtime:array-reduce:1569" "runtime:seq-reduce:2582" "runtime:native-satisfies?:322"]
+   :classification :adapted
+   :rationale "Retained complete pinned reduction source and protocol/type declarations. Source list/array/string/iterator reduction and reduced termination execute; full persistent types, lazy/chunked/transducer/compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-reduce.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequence-reduction.md"]}
+  "macro:if-let:339"
+  {:source-sha256 "257391e2f1d869d7da28fbf51d5cbea60745677fe3a6242037edb1bc36dd96ed" :visibility :public
+   :arities {:fixed [2] :variadic-min 3}
+   :dependencies ["macro:let:772" "macro:assert-args" "checked HIR if/let and fresh binding identities"]
+   :classification :adapted
+   :rationale "Original bounded bootstrap lowering follows pinned temporary test binding, consequent-only source binding scope and outer else scope. Symbol binding, source order, nil/false truthiness, captures and tail recur execute; destructuring and compiled upstream macros remain unfinished. No upstream macro source copied."
+   :status :in-progress
+   :adaptation-path "docs/runtime/sequence-reduction.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_control_flow.rs" "tests/oracle/control-flow-cases.json"]}
+  "runtime:=:1342"
+  {:source-sha256 "58c0dcd0f61970715f5b1b2a8ac5bc46548ab081726ba1a4b64766a230292401" :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["runtime:-equiv" "runtime:identical?" "runtime:nil?" "runtime:first:1309" "runtime:next:1333" "macro:or:913" "compiled upstream defn remains pending"]
+   :classification :adapted
+   :rationale "Retained pinned equality algorithm with explicit bounded defn adaptation. Source sequences and native number/default IEquiv extensions execute; other collection types, complete macros and metadata remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-equality.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequential-equality.md"]}
+  "runtime:equiv-sequential:3151"
+  {:source-sha256 "968fe6ad1b99af14556c8dace3f7cf96dc5760acbe91f052148eb8dad087235d" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:=:1342" "runtime:sequential?:2246" "runtime:counted?:1602" "runtime:count:1906" "runtime:seq:1282" "runtime:first:1309" "runtime:next:1333" "runtime:boolean:2357" "runtime:==:3064"]
+   :classification :adapted
+   :rationale "Retained pinned equality algorithm with explicit bounded defn adaptation. Source sequences and native number/default IEquiv extensions execute; other collection types, complete macros and metadata remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-equiv-sequential.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json" "docs/runtime/sequential-equality.md"]}
   "runtime:<:2755"
   {:source-sha256 "8e6815b3743ce86c57184635707893f159446faaa3811979fb1fedee40576b53" :visibility :public
    :arities {:fixed [1 2] :variadic-min 2}
@@ -838,4 +1159,856 @@
    :adaptation-path "docs/runtime/caching-hash.md"
    :alternative nil
    :tests ["crates/suss-cli/tests/portable_caching_hash.rs" "tests/oracle/caching-hash-cases.json"]}
+
+  "runtime:int-rotate-left:947"
+  {:source-sha256 "e7fad06849e47ed8bc56d0f4c19b44761ff326412a02f3c9a4b5c8cc238166d1"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "retained arithmetic and bitwise macro algorithms"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/int-rotate-left.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:int:2942"
+  {:source-sha256 "db6a8ec6c14ab5eb43db4e5c9e494649dfe0b31ec69376d7c3186840bcf5e010"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:int:1239"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-xor:2993"
+  {:source-sha256 "f97fded02281176108b5d581fd531bf8ad55cdd6734881635f82209a2155edef"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-xor:1243" "runtime:reduce:2628"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-and:2999"
+  {:source-sha256 "133fe324f18acf87377bc1a60debe03d30c3efdff7a35a90593b8d6ee927a2de"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-and:1226" "runtime:reduce:2628"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-or:3005"
+  {:source-sha256 "38cc36b2c951f7afe2c1af2a0fcf310634d70472a3fb1580437ab47da652c78c"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-or:1235" "runtime:reduce:2628"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-and-not:3011"
+  {:source-sha256 "dfbd45c7ac5a8376b0e7ce9b1812212b0787d2ced0c00740a5c01c146b55a87f"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-and-not:1247" "runtime:reduce:2628"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-clear:3017"
+  {:source-sha256 "c125a9b457ea4e19c87c449634b103ca052a77e2b36ab1ad0bdc3406f2daa5e8"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-clear:1251"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-flip:3022"
+  {:source-sha256 "b47389a1eede5a6a54f37c5238fddc32904f29503f8c4879dbe7b415084ff0b0"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-flip:1254"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-not:3027"
+  {:source-sha256 "ce07887d090d50039925a5181806025448152158b01ea180535cd8d67b39e5bd"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-not:1223"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-set:3031"
+  {:source-sha256 "2cd3e17179eda57d616deff24c8bf9d720ab5b0e4c27bb63c894ee3c9d69514c"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-set:1272"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-test:3036"
+  {:source-sha256 "3a958f6b451dbe6561baad58204637bc58a1e98980e71f25bd1ece9a554b1af9"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-test:1257"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-shift-left:3041"
+  {:source-sha256 "133b51d602a74feffd334c7ce70fd0d59d33fa121f4486430a3d3b37bf71d829"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-shift-left:1260"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-shift-right:3045"
+  {:source-sha256 "518266e763f1a0c054804809b573915e0ff65195c7836159039b3f6bf1ece17f"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-shift-right:1263"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-shift-right-zero-fill:3049"
+  {:source-sha256 "7961499a98bccdb59acb62d614a87101d040b874d084370956d6b6607e65e8d4"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:bit-shift-right-zero-fill:1266"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:unsigned-bit-shift-right:3053"
+  {:source-sha256 "9649c5e6de98dec924496974aae4870fa38f2d900c089a39bd7f838f441a1181"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "macro:unsigned-bit-shift-right:1269"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:bit-count:3057"
+  {:source-sha256 "5a63ed40c2b2e92aa6bfacdf5b6d53fb120f490d57a161448d3e627bf37edba7"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "macro:defn:3364" "shared GC universal Invoke" "retained arithmetic and bitwise macro algorithms"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/bit-count.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-not:1223"
+  {:source-sha256 "2ae65e46c8bf45caf4ecf28ec953300bf47d1c7f574a345fd6fd7c03cf265346"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-and:1226"
+  {:source-sha256 "231e6c82e6d56c4ca386777d2dd9bcb26276189316f332be2dc9b2935cbb48d8"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-or:1235"
+  {:source-sha256 "b5e22725681a81569531dc62827242eedbf726ee667b80f85044ef96b0d50139"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:int:1239"
+  {:source-sha256 "1955a7bf5b1997aad0f3b856217265cd2382241a5145388b7e22ea4ef37aa205"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-xor:1243"
+  {:source-sha256 "0228275187511b2e4c223bb961133126060cc4c6c21578088ee020de51e1eadb"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-and-not:1247"
+  {:source-sha256 "0e98af4d70aff8294a0866bf2baf7f319db1d62fb521b4e067acdd92c5fee265"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-clear:1251"
+  {:source-sha256 "251a79d9a353ade88cbd7b0c74ac721806ee2b20026bb95bad3b8b03b272a228"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-flip:1254"
+  {:source-sha256 "ed978946d06ef77a46aebd6ea14a6d617d5169d8da5d74a59bd746887e82f74a"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-test:1257"
+  {:source-sha256 "75278edbca67b9b1674252b9b7cbe3302e4abb586d4360e3efbc6017dedb88f1"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-shift-left:1260"
+  {:source-sha256 "86e0c138f5bb33adfc6abfd3fb00db7b608e80b254c5bcc80a5a8f078b0fbacc"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-shift-right:1263"
+  {:source-sha256 "58b8242e5ce79ee72c0aaf28c2d997111c9bfc46dba429b1d10f1ecbb65f7c89"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-shift-right-zero-fill:1266"
+  {:source-sha256 "dfe9461cb8137c120a731a2c99287bbc8d3ceeb734837cb1a891073cf2fbb93e"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:unsigned-bit-shift-right:1269"
+  {:source-sha256 "aca949eff562bb9927d76d54b56eb6d5883115c1bfe9152fc2a52fed8d2c2cb2"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "macro:bit-set:1272"
+  {:source-sha256 "5cac5756746e530ab281c850b5d5eb9a5f5ef0d70c24dea8275032f6155dd1ce"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar ToInt32 conversion" "bounded original expansion replacing js*" "phase and lexical resolution"]
+   :classification :adapted
+   :rationale "Original checked scalar bitwise helpers and bounded nested macro expansion establish retained hashing dependencies. Fixed bit-count and int-rotate-left retain their pinned algorithms with explicit defn patches; other runtime forms are original primitive adapters, not claimed retained source. Unsupported object coercion, JavaScript wrapper off-arity behavior, complete source rest/reduce and compiled macros remain explicit unfinished boundaries. No full public compatibility or collection acceptance claim."
+   :status :in-progress
+   :adaptation-path "docs/runtime/bitwise-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:zero?:3081"
+  {:source-sha256 "e2107ca970169a87350d72710ac9488f04ab3bfac80cfa608581b50ae813912e"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:==:1184"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/zero-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:m3-seed:967"
+  {:source-sha256 "5ca894a9fb1976c9671745b87ce91b04654c7f7eda2f42c17e5f5aa1f025bd34"
+   :visibility :public
+   :arities nil
+   :dependencies []
+   :classification :portable
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:m3-C1:968"
+  {:source-sha256 "d659e74b9df9169ef1df17c08ea819bc66bdea62d8e72b1ccda7cc1f19635fbd"
+   :visibility :public
+   :arities nil
+   :dependencies ["macro:int:1239"]
+   :classification :portable
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:m3-C2:969"
+  {:source-sha256 "ed00669e541a7c84e0efcd509588aef8e11a3024a0d8f304550b0877e4671787"
+   :visibility :public
+   :arities nil
+   :dependencies ["macro:int:1239"]
+   :classification :portable
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:m3-mix-K1:971"
+  {:source-sha256 "8e8ba6d401c897d25b0ba61deb4ca2e305ca4772991448b9936481dea7789342"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:->:104" "runtime:int-rotate-left:947" "imul checked wrapping primitive" "runtime:m3-C1:968" "runtime:m3-C2:969"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/m3-mix-K1.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:m3-mix-H1:974"
+  {:source-sha256 "6dd614803ee00a5f5006aebca86c3de4d1a3d5191bacc1b0dbdc9586a37cc44a"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:->:104" "runtime:int-rotate-left:947" "imul checked wrapping primitive" "macro:int:1239" "macro:bit-xor:1243"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/m3-mix-H1.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:m3-fmix:977"
+  {:source-sha256 "4eab182e144e2181569f1dd1d73997171682030d86759f000969ffa53653f6e9"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:as->:477" "macro:int:1239" "macro:bit-xor:1243" "macro:unsigned-bit-shift-right:1269" "imul checked wrapping primitive"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/m3-fmix.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:m3-hash-int:986"
+  {:source-sha256 "c51b7184ba4b84806736fe038259204ab50d70a23a4f0c3152fc6f5d8b716499"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:zero?:3081" "runtime:m3-mix-K1:971" "runtime:m3-mix-H1:974" "runtime:m3-fmix:977"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/m3-hash-int.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:hash-long:993"
+  {:source-sha256 "562a439a3e00393aaa0fdb09ba333ab8c65edc86d4e5794a507348208195726d"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:bit-xor:1243"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/hash-long.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:mix-collection-hash:1394"
+  {:source-sha256 "2ec20d82dfa0886a6675fcd1c9679dbc0d6f924e8bb3d06d02c61bee65b82822"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:m3-seed:967" "runtime:m3-mix-K1:971" "runtime:m3-mix-H1:974" "runtime:m3-fmix:977"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/mix-collection-hash.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "macro:->:104"
+  {:source-sha256 "1520b2c67fec285b52db7749ee67dee1c1b4eb76af1b0fd36f6233bceec96f49"
+   :visibility :public
+   :arities {:fixed [] :variadic-min 1}
+   :dependencies ["source form splicing and phase resolution"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/runtime/murmur-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "macro:as->:477"
+  {:source-sha256 "925e4065959db22756552c6f54672387e447983b5e5731e4ca584e48a0b55d64"
+   :visibility :public
+   :arities {:fixed [] :variadic-min 2}
+   :dependencies ["sequential immutable lexical bindings and phase resolution"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/runtime/murmur-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "macro:zero?:1195"
+  {:source-sha256 "42bf0f469dddc7c55263b5dd05fa30006df58a60ad95913415e2b8f122957829"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:==:1184"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/runtime/murmur-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:pos?:3077"
+  {:source-sha256 "71a1a0e2f9007476256b076f906d1e06b20426b52afbcf05ad710b64aba39dee"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:>:1174"]
+   :classification :adapted
+   :rationale "Retained pinned UTF-16 string hashing source uses explicit fixed defn bootstrap patches with original algorithms and EPL provenance. Original checked String member lookup supplies charCodeAt without reordering receiver lookup and index effects. Bounded positive predicate expansion and scalar String receiver/index domain are explicit partial work, not full host interoperability or hashing acceptance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/pos-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_hash.rs" "tests/oracle/string-hash-cases.json"]}
+
+  "runtime:m3-hash-unencoded-chars:1003"
+  {:source-sha256 "04a75e9c4ec9e1a87a149692cd1d92f9b0509a5912f93172f6e609e7794d5abe"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:m3-seed:967" "runtime:m3-mix-K1:971" "runtime:m3-mix-H1:974" "runtime:m3-fmix:977" "runtime:dec:2803" "checked UTF-16 charCodeAt member adapter"]
+   :classification :adapted
+   :rationale "Retained pinned UTF-16 string hashing source uses explicit fixed defn bootstrap patches with original algorithms and EPL provenance. Original checked String member lookup supplies charCodeAt without reordering receiver lookup and index effects. Bounded positive predicate expansion and scalar String receiver/index domain are explicit partial work, not full host interoperability or hashing acceptance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/m3-hash-unencoded-chars.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_hash.rs" "tests/oracle/string-hash-cases.json"]}
+
+  "runtime:hash-string*:1026"
+  {:source-sha256 "2b47893e9e7a081ccb89a6a0e574b23c1cf9ea8507725c69c21c9192fb7a8c9a"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:pos?:3077" "runtime:inc:1505" "checked UTF-16 charCodeAt member adapter" "imul checked wrapping primitive"]
+   :classification :adapted
+   :rationale "Retained pinned UTF-16 string hashing source uses explicit fixed defn bootstrap patches with original algorithms and EPL provenance. Original checked String member lookup supplies charCodeAt without reordering receiver lookup and index effects. Bounded positive predicate expansion and scalar String receiver/index domain are explicit partial work, not full host interoperability or hashing acceptance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/hash-string-uncached.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_hash.rs" "tests/oracle/string-hash-cases.json"]}
+
+  "macro:pos?:1198"
+  {:source-sha256 "3d43ef437fbbcf893499c1338d5d47f36124928d13bb89d04b53be8beee7f79b"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:>:1174"]
+   :classification :adapted
+   :rationale "Retained pinned UTF-16 string hashing source uses explicit fixed defn bootstrap patches with original algorithms and EPL provenance. Original checked String member lookup supplies charCodeAt without reordering receiver lookup and index effects. Bounded positive predicate expansion and scalar String receiver/index domain are explicit partial work, not full host interoperability or hashing acceptance."
+   :status :in-progress
+   :adaptation-path "docs/runtime/string-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_hash.rs" "tests/oracle/string-hash-cases.json"]}
+
+  "runtime:hash-double:996"
+  {:source-sha256 "783d46872fe343707525c9c5e6f87b4b22d5732c8e76e86d87ce2f54808d8646"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:hash-long:993" "private scalar f64 normalization and big-endian word reads"]
+   :classification :adapted
+   :rationale "Retained numeric hashing source uses fixed defn adaptation and original composition with EPL provenance. Nonescaping typed byte storage is adapted to original checked scalar binary64 primitives that preserve single ToNumber conversion and explicit Float64Array/DataView byte order; live hash-long lookup is retained. General typed buffers/object coercion/public numeric hashing remain incomplete."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/hash-double.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_numeric_hash.rs" "tests/oracle/numeric-hash-cases.json"]}
+
+  "runtime:hash-combine:1092"
+  {:source-sha256 "2ba652546dd2df6915b3c7d18660eb813666166aaab21d7de9512278e729e962"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:bit-xor:1243" "macro:bit-shift-left:1260" "macro:bit-shift-right:1263" "binary64 arithmetic"]
+   :classification :adapted
+   :rationale "Retained numeric hashing source uses fixed defn adaptation and original composition with EPL provenance. Nonescaping typed byte storage is adapted to original checked scalar binary64 primitives that preserve single ToNumber conversion and explicit Float64Array/DataView byte order; live hash-long lookup is retained. General typed buffers/object coercion/public numeric hashing remain incomplete."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/hash-combine.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_numeric_hash.rs" "tests/oracle/numeric-hash-cases.json"]}
+
+  "runtime:js-obj:2284"
+  {:source-sha256 "ac50f5ef05cbceeec7227d1284b2f9f7ddbce55b06cd374f9dd8a43458cff19e"
+   :visibility :public
+   :arities {:fixed [0] :variadic-min 0}
+   :dependencies ["owned GC Object prototype and descriptor-aware properties" "strict Closure gobject/create first-class variadic factory callback"]
+   :classification :adapted
+   :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/js-object-factory.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_cache.rs" "tests/oracle/string-cache-cases.json" "crates/suss-cli/tests/portable_native_objects.rs" "crates/suss-compile/tests/runtime_abi.rs"]}
+
+  "runtime:string-hash-cache:1022"
+  {:source-sha256 "f502ec246497077f91b0ff08201637b4777f9e1298657d1f96dfa7505bfec0d3"
+   :visibility :public
+   :arities nil
+   :dependencies ["runtime:js-obj:2284"]
+   :classification :portable
+   :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_cache.rs" "tests/oracle/string-cache-cases.json" "crates/suss-cli/tests/portable_native_objects.rs" "crates/suss-compile/tests/runtime_abi.rs"]}
+
+  "runtime:string-hash-cache-count:1023"
+  {:source-sha256 "e0f3d50788bdf85a2e7df1ae6a19ed4d0fbd2c37a660658cba3cde8cc0e46579"
+   :visibility :public
+   :arities nil
+   :dependencies []
+   :classification :portable
+   :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_cache.rs" "tests/oracle/string-cache-cases.json" "crates/suss-cli/tests/portable_native_objects.rs" "crates/suss-compile/tests/runtime_abi.rs"]}
+
+  "runtime:add-to-string-hash-cache:1037"
+  {:source-sha256 "7f3a6b72d88216e5d5d58b62fcb5805bb7bb79cf8879c0341d36238bfe93ce3e"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:hash-string*:1026" "runtime:string-hash-cache:1022" "runtime:string-hash-cache-count:1023" "runtime:inc:1505" "strict Closure gobject/set over checked scalar owned properties"]
+   :classification :adapted
+   :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/add-to-string-hash-cache.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_cache.rs" "tests/oracle/string-cache-cases.json" "crates/suss-cli/tests/portable_native_objects.rs" "crates/suss-compile/tests/runtime_abi.rs"]}
+
+  "runtime:hash-string:1043"
+  {:source-sha256 "3ca4d933c808bb44c7fc13a4c925b043930d735d9fd03b938e48a0ba796cba53"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:js-obj:2284" "runtime:add-to-string-hash-cache:1037" "macro:unchecked-get:1070" "runtime:number?:258" "live cache bindings and source-ordered reset"]
+   :classification :adapted
+   :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/hash-string-cached.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_cache.rs" "tests/oracle/string-cache-cases.json" "crates/suss-cli/tests/portable_native_objects.rs" "crates/suss-compile/tests/runtime_abi.rs"]}
+
+  "macro:unchecked-get:1070"
+  {:source-sha256 "6176bf6f7b6658c5a5e7428773b513a5ac02fac64d2d66967db73397e100bf59"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar object property get"]
+   :classification :adapted
+   :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
+   :status :in-progress
+   :adaptation-path "docs/runtime/native-object-storage.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_cache.rs" "tests/oracle/string-cache-cases.json" "crates/suss-cli/tests/portable_native_objects.rs" "crates/suss-compile/tests/runtime_abi.rs"]}
+
+  "macro:unchecked-set:1077"
+  {:source-sha256 "b7ab595af1fb952a1ca2677c6badf10f34c25c0401025f43364b3f101ff94b91"
+   :visibility :public
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["non-strict checked scalar object property set"]
+   :classification :adapted
+   :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
+   :status :in-progress
+   :adaptation-path "docs/runtime/native-object-storage.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_cache.rs" "tests/oracle/string-cache-cases.json" "crates/suss-cli/tests/portable_native_objects.rs" "crates/suss-compile/tests/runtime_abi.rs"]}
+  "runtime:List:3209"
+  {:source-sha256 "fe672cdb199ee851650e4805624585d3780aafeae1aa9be45ef34ec1cc95e465" :visibility :public
+   :arities nil
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :portable
+   :rationale "Retain all original protocol/Object methods and GC-owned nominal fields; pending printing, equality/hash, reduction and iterator dependencies remain explicitly declared and uninitialized, not implementation claims."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:EmptyList:3286"
+  {:source-sha256 "e594bcbfab3c7cf2923ea9cde7251a98985369d68f54365c98cf3d70763322ec" :visibility :public
+   :arities nil
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Retain all original protocol/Object methods and GC-owned nominal fields; pending printing, equality/hash, reduction and iterator dependencies remain explicitly declared and uninitialized, not implementation claims. Replace host Error allocation with the existing descriptor-backed language Error message adapter; full public Error/class/stack surfaces remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-EmptyList.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:Cons:3391"
+  {:source-sha256 "f8730a56baa13bf55dfa098a1060f18999320436e7115325a70d6bfbd5db01d1" :visibility :public
+   :arities nil
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :portable
+   :rationale "Retain all original protocol/Object methods and GC-owned nominal fields; pending printing, equality/hash, reduction and iterator dependencies remain explicitly declared and uninitialized, not implementation claims."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:IndexedSeq:1653"
+  {:source-sha256 "2d277f7e4f22b83c7aafc2112780d4e5ea2db2bb1240630aef7748392276c63f" :visibility :public
+   :arities nil
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Retain all original protocol/Object methods and GC-owned nominal fields; pending printing, equality/hash, reduction and iterator dependencies remain explicitly declared and uninitialized, not implementation claims. Replace host Error allocation with typed GC Error. Inline pinned unchecked-max binding/branch expansion for the numeric count expression, evaluating each operand once; retain every method, including pending iterator/reduction/reversal/equality/hash dependencies."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-IndexedSeq.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:seq:1282"
+  {:source-sha256 "a5f7566fb9a39433f3d1a9a983d7fd56b43709dd8f8bab95395207ca5edbd0b4" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished. Host JavaScript Symbol.iterator objects are not portable interoperability; that branch is excluded from this adapter while direct/array/UTF-16/native-protocol paths remain. Typed bridge/portable iterators and str_ error formatting remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-seq.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:first:1309"
+  {:source-sha256 "4726f2adea1be67a47e70037f3cd1b0af74751b8b25f4c2b1e9f92c447c8b7f7" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-first.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:rest:1320"
+  {:source-sha256 "5c4c485ef887f7c3ce4c77908685dc481f045910df23a4a180f0a8b8b7f67f76" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-rest.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:next:1333"
+  {:source-sha256 "bfbcaf41f9d3162ec35c6722e6852ea8e48741b0322500da3900e2bc48adb6c6" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-next.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:prim-seq:1751"
+  {:source-sha256 "004e70e09f368c0022d8d272bab4b9d5abdf43ad78ffaffa8bf18967f5bcd5cc" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-prim-seq.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:array-seq:1759"
+  {:source-sha256 "28f60b6fba1d923ac2c589a48d69783d489dd37a61be4ed163867356836b5a67" :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-array-seq.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:cons:3451"
+  {:source-sha256 "c11f8c6d2a8f83c92c17bd167bfda819e7a46f7c9077b61e0f9321bfb244e9e1" :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-cons.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:counted?:1602"
+  {:source-sha256 "fdc547dcc94d2fff3ceb940903897c523344b278870a817d01445ac6f57246ba" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-counted-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:list?:3279"
+  {:source-sha256 "d76e1997c753718abb253e474d9d5350358cc03a6a27ba52b9b30a9f28011043" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-list-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:sequential?:2246"
+  {:source-sha256 "3b7caa6617ed6e726f5e77696459ce02909f48ae78d81980b09d8223fc35d8c0" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-sequential-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:accumulating-seq-count:1900"
+  {:source-sha256 "4d0b5293a44b44be292191f841b087ac3cc5a86ecfe47feb7b39d50b23d4141b" :visibility :private
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-accumulating-seq-count.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:count:1906"
+  {:source-sha256 "4babc186d6c63a02400466b4f020f28d0dfc36da4c6c5e75aee02a5f76caae77" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-count.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:empty-ordered-hash:1417"
+  {:source-sha256 "87d00de6df295586f185d473351e38db9dd4af1337ccdc3ddc7c376e9e172007" :visibility :private
+   :arities nil
+   :dependencies ["runtime:ISeq:650" "runtime:ISeqable:763" "runtime:INext:660" "runtime:ICounted:619" "runtime:ICollection:630" "runtime:IMeta:728" "runtime:IWithMeta:733" "Canonical source nominal storage and List.EMPTY lookup" "Explicit pending source dependencies in loader prelude; complete methods/core not certified"]
+   :classification :adapted
+   :rationale "Retain the empty ordered hash initializer and original private metadata in licensed extraction. The executable bootstrap omits the unsupported private attribute; namespace visibility enforcement/runtime Var metadata remain explicitly unfinished, so this is a partial adapted review, not privacy acceptance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-empty-ordered-hash.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:list:3374"
+  {:source-sha256 "d2bcd9e28da182f1a61f5c52ca185cf03d711acfd2a6da7a5bbbef6169d0def9" :visibility :public
+   :arities {:fixed [] :variadic-min 0}
+   :dependencies ["runtime:IndexedSeq:1653" "runtime:array-seq:1759" "runtime:List:3209" "runtime:EmptyList:3286" "runtime:ICollection:630" "Persistent source variadic rest and private GC array storage"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap preserves original variadic list algorithm, metadata/docstring and array/sequence paths. Compiler variadic entry builds a fresh owned array and constructs the live retained IndexedSeq class to obtain an actual persistent IndexedSeq (nil for no rest), never raw invocation Args. Full compiled macros, method dependency closure remain unfinished. Replace the discarded host Array.push result in the fallback with checked numeric GC array append; preserve operand/element order and both original sequence traversal paths."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/sequence-list.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json"]}
 }}

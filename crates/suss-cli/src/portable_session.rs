@@ -318,7 +318,15 @@ impl Session {
             let mut scope = RootScope::new(&mut store);
             let mut value = [Val::null_any_ref()];
             let mut cell = [Val::null_any_ref()];
-            if export == "core-ex-info" {
+            let self_cell_initializer = export == "core-ex-info"
+                || matches!(
+                    export.as_str(),
+                    "primitive-bit-and-function"
+                        | "primitive-bit-or-function"
+                        | "primitive-bit-xor-function"
+                        | "primitive-bit-and-not-function"
+                );
+            if self_cell_initializer {
                 runtime
                     .get_func(&mut scope, "nil")
                     .unwrap()
@@ -338,14 +346,14 @@ impl Session {
                 } else {
                     vec![]
                 };
-            if export == "core-ex-info" {
+            if self_cell_initializer {
                 arguments.push(cell[0].clone());
             }
             runtime
                 .get_func(&mut scope, &export)
                 .unwrap()
                 .call(&mut scope, &arguments, &mut value)?;
-            if export == "core-ex-info" {
+            if self_cell_initializer {
                 runtime.get_func(&mut scope, "binding-set").unwrap().call(
                     &mut scope,
                     &[cell[0].clone(), value[0].clone()],

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "ac50f5ef05cbceeec7227d1284b2f9f7ddbce55b06cd374f9dd8a43458cff19e",
+  "replacement": "(def js-obj (suss.bootstrap/object-factory))",
+  "rationale": "Retain pinned cache algorithm and live binding/reset/storage order with original source metadata and EPL. Replace JS-only factory/property mechanisms with checked owned GC objects, descriptors and a first-class variadic factory. Full foreign-object interoperability, primitive boxing and compiled macro acceptance remain open. Closure gobject/create assigns pairs in strict mode: an earlier prototype pair can expose a getter-only/readonly property, and a later blocked pair must throw."
+}

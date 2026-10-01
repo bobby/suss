@@ -102,3 +102,24 @@ The adapter is not a source List, EmptyList, Cons or IndexedSeq implementation;
 its method bodies do not certify persistent collection behavior. The earlier
 117-case six-function corpus remains separate and must continue passing. See
 [core interfaces](../runtime/core-interfaces.md) for evidence and limitations.
+
+Sequential equality adds retained `=` and equiv-sequential with explicit defn
+patches, original algorithms/arities/docstrings/metadata and EPL packaging. The
+source setup verifier now checks four complete standalone statements, including
+number/default IEquiv. Selection70/artifacts74/reviews159+906 and fresh131 preserve
+all prior75 observations; see [equality evidence](../runtime/sequential-equality.md).
+Remaining collection types, public hashing/reduction, full macros and release
+acceptance stay open.
+
+Retained IDeref/Reduced and ten reduction helpers keep all algorithms/methods,
+source metadata/docstrings/arities and EPL packaging. The canonical artifact now
+selects82 declarations and86 generated files with172 partial/893 unassessed
+reviews. Source seq/array/string/iterator reduction and Reduced termination have65
+fresh primary/native observations; bounded if-let extends control evidence to81.
+See [reduction scope and limitations](../runtime/sequence-reduction.md).
+
+Retained complete IndexedSeqIterator/RSeq and patched reversible?/rseq bring
+selection86/artifacts90/reviews176+889. Every upstream type method remains intact;
+actual iteration/reverse views/equality/reduction have53 fresh primary/native
+observations and1 separate named-length-write boundary with typed native rejection.
+See [iteration evidence and limits](../runtime/sequence-iteration.md).

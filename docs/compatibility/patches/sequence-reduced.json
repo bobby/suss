@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "1b60d1eb6ed7cc7532e6eac52a9a94f97ef249f26e68c82716500c49323b8b01",
+  "replacement": "(def reduced\n  \"Wraps x in a way such that a reduce will terminate with the value x\"\n  (fn [x]\n  (Reduced. x)))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains metadata, docstring, arities and reduction algorithm, including reduced termination and source order. Full upstream defn and private runtime Var metadata remain unfinished."
+}

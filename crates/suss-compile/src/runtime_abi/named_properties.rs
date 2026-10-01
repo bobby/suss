@@ -132,7 +132,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &body,
     );
 
-    let callbacks = object_methods::functions(b, equal);
+    let mut callbacks = object_methods::functions(b, equal);
+    callbacks.extend(string_methods::functions(b));
 
     // Public JS native names and internal kind keys name the same owned entry.
     let mut body = vec![];
@@ -570,6 +571,15 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 Return,
                 End,
             ]);
+            body.push(LocalGet(1));
+            name(&mut body, "charCodeAt");
+            body.extend([
+                Call(equal),
+                If(BlockType::Empty),
+                Call(b.names["string-char-code-at-method"]),
+                Return,
+                End,
+            ]);
             reject_host_names(&mut body, equal, INHERITED_NAMES);
             undefined(&mut body);
             body.push(Return);
@@ -670,9 +680,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         nominal::error(&mut body);
         b.function_with_locals(
             if writing {
-                "named-property-set"
+                "fixed-named-property-set"
             } else {
-                "named-property-get"
+                "fixed-named-property-get"
             },
             if writing {
                 &[VALUE, VALUE, VALUE]

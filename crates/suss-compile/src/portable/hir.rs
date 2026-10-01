@@ -1,13 +1,14 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
+mod bitwise;
 mod comparisons;
 mod controls;
 mod dynamic;
 mod exceptions;
 mod nominal;
 use super::{
-    Diagnostic,
     resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
+    Diagnostic,
 };
 use std::{
     collections::{BTreeSet, HashMap},
@@ -167,11 +168,102 @@ impl Comparison {
         }
     }
 }
+/// Checked scalar bitwise primitive; direct macro folds retain nested evaluation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Bitwise {
+    Int,
+    And,
+    Or,
+    Xor,
+    AndNot,
+    Not,
+    Clear,
+    Flip,
+    Set,
+    Test,
+    Left,
+    Right,
+    Unsigned,
+    Imul,
+    /// Private scalar binary64 storage adapters; never public bitwise macros.
+    F64Coerce,
+    F64Word0,
+    F64Word4,
+    F64Floor,
+    F64Finite,
+    F64SafeInteger,
+    SafeIntegerRemainder,
+    IdentityUid,
+}
+impl Bitwise {
+    pub(crate) fn from_name(name: &str) -> Option<Self> {
+        Some(match name {
+            "int" => Self::Int,
+            "bit-and" => Self::And,
+            "bit-or" => Self::Or,
+            "bit-xor" => Self::Xor,
+            "bit-and-not" => Self::AndNot,
+            "bit-not" => Self::Not,
+            "bit-clear" => Self::Clear,
+            "bit-flip" => Self::Flip,
+            "bit-set" => Self::Set,
+            "bit-test" => Self::Test,
+            "bit-shift-left" => Self::Left,
+            "bit-shift-right" => Self::Right,
+            "unsigned-bit-shift-right" => Self::Unsigned,
+            "bit-shift-right-zero-fill" => Self::Unsigned,
+            _ => return None,
+        })
+    }
+    pub(crate) fn export(self) -> &'static str {
+        match self {
+            Self::Int => "primitive-int",
+            Self::And => "primitive-bit-and",
+            Self::Or => "primitive-bit-or",
+            Self::Xor => "primitive-bit-xor",
+            Self::AndNot => "primitive-bit-and-not",
+            Self::Not => "primitive-bit-not",
+            Self::Clear => "primitive-bit-clear",
+            Self::Flip => "primitive-bit-flip",
+            Self::Set => "primitive-bit-set",
+            Self::Test => "primitive-bit-test",
+            Self::Left => "primitive-bit-shift-left",
+            Self::Right => "primitive-bit-shift-right",
+            Self::Unsigned => "primitive-unsigned-bit-shift-right",
+            Self::Imul => "primitive-imul",
+            Self::F64Coerce => "primitive-f64-coerce",
+            Self::F64Word0 => "primitive-f64-word0",
+            Self::F64Word4 => "primitive-f64-word4",
+            Self::F64Floor => "primitive-f64-floor",
+            Self::F64Finite => "primitive-f64-finite",
+            Self::F64SafeInteger => "primitive-f64-safe-integer",
+            Self::SafeIntegerRemainder => "primitive-safe-integer-remainder",
+            Self::IdentityUid => "identity-uid",
+        }
+    }
+    pub(crate) fn arity(self) -> usize {
+        match self {
+            Self::Int | Self::Not | Self::F64Coerce | Self::F64Word0 | Self::F64Word4 | Self::F64Floor | Self::F64Finite | Self::F64SafeInteger | Self::IdentityUid => 1,
+            _ => 2,
+        }
+    }
+    pub(crate) fn variadic(self) -> bool {
+        matches!(self, Self::And | Self::Or | Self::Xor | Self::AndNot)
+    }
+    pub(crate) fn result(self) -> Type {
+        if matches!(self, Self::Test | Self::F64Finite | Self::F64SafeInteger) {
+            Type::Bool
+        } else {
+            Type::Number
+        }
+    }
+}
 /// Original private nominal lowering operations. Arrays here are internal
 /// construction storage, never source-language persistent collections.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Nominal {
     LiveDispatcher,
+    IFnLiveDispatcher,
     NativeMarker(NativeKind),
     NativeSet(NativeKind),
     Array,
@@ -184,6 +276,11 @@ pub enum Nominal {
     FieldSet(usize),
     NamedGet,
     NamedSet,
+    NativeObjectFactory,
+    NativeObjectGet,
+    NativeObjectSet,
+    NativeObjectStrictSet,
+    LanguageError,
     ObjectSet,
     ObjectInvoke,
     Key(usize),
@@ -207,10 +304,15 @@ impl Nominal {
         count <= i32::MAX as usize
             && match self {
                 Self::Array => true,
+                Self::NativeObjectFactory => count == 0,
+                Self::LanguageError => count == 1,
+                Self::NativeObjectGet => count == 2,
+                Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
                 Self::NamedGet => count == 2 && arguments[1] == Type::String,
                 Self::NamedSet | Self::ObjectSet => count == 3 && arguments[1] == Type::String,
                 Self::ObjectInvoke => count >= 2,
                 Self::LiveDispatcher | Self::NativeSet(_) => count == 2,
+                Self::IFnLiveDispatcher => count == 3,
                 Self::NativeMarker(_) => count == 1,
                 Self::Descriptor => arguments.iter().all(|ty| *ty == Type::String),
                 Self::Construct => count >= 1,
@@ -245,6 +347,7 @@ pub struct Parameter {
 }
 #[derive(Debug, Clone)]
 pub struct Method {
+    pub variadic: bool,
     pub parameters: Vec<Parameter>,
     pub body: Box<Hir>,
 }
@@ -257,6 +360,10 @@ pub struct Hir {
 }
 #[derive(Debug, Clone)]
 pub enum Expression {
+    Bitwise {
+        operation: Bitwise,
+        arguments: Vec<Hir>,
+    },
     Comparison {
         operation: Comparison,
         arguments: Vec<Hir>,
@@ -327,6 +434,7 @@ pub enum Expression {
         methods: Vec<Method>,
         captures: Vec<BindingId>,
         self_binding: Option<Parameter>,
+        rest_class: Option<Global>,
     },
     Call {
         callee: Box<Hir>,
@@ -351,6 +459,7 @@ struct Analyzer {
     fields: HashMap<String, (Hir, bool)>,
     next: usize,
     next_loop: usize,
+    analysis_depth: usize,
     target: Option<(LoopId, usize)>,
 }
 impl Analyzer {
@@ -386,11 +495,43 @@ impl Analyzer {
         self.form_in(form, false, false)
     }
     fn form_in(&mut self, form: &Form, statement: bool, tail: bool) -> Result<Hir, Diagnostic> {
+        // Bounded bootstrap expansion can create deeper syntax than the reader
+        // saw (notably nested threading). Check total analysis depth, including
+        // nested macros, before recursive analyzer frames exhaust the stack.
+        if self.analysis_depth >= 24 {
+            return Err(fail(
+                form.span.clone(),
+                "Bootstrap analysis expansion limit exceeded",
+            ));
+        }
+        self.analysis_depth += 1;
+        let result = self.form_inner(form, statement, tail);
+        self.analysis_depth -= 1;
+        result
+    }
+    fn form_inner(&mut self, form: &Form, statement: bool, tail: bool) -> Result<Hir, Diagnostic> {
         let kind = match &form.kind {
             Kind::Nil => Expression::Literal(Literal::Nil),
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
             Kind::String(value) => Expression::Literal(Literal::String(value.clone())),
+            Kind::List(items) if items.is_empty() => {
+                // The pinned emitter reads List.EMPTY for each empty-list literal.
+                // Resolve the canonical core binding, never a lexical/user List.
+                let symbol = suss_reader::Symbol {
+                    namespace: Some("suss.core".into()),
+                    name: "List".into(),
+                };
+                let (kind, ty) = self.global_value(&symbol, form.span.clone())?;
+                let owner = Hir {
+                    span: form.span.clone(),
+                    metadata: Vec::new(),
+                    ty,
+                    kind,
+                };
+                let key = self.literal_form(form, Literal::String("EMPTY".encode_utf16().collect()));
+                return Ok(self.nominal(form, Nominal::NamedGet, vec![owner, key]));
+            }
             Kind::Symbol(symbol) => {
                 let (kind, ty) = if symbol.namespace.is_none() {
                     if let Some((id, ty)) = self.locals.get(&symbol.name) {
@@ -559,7 +700,8 @@ impl Analyzer {
     ) -> Result<Hir, Diagnostic> {
         if args
             .first()
-            .is_some_and(|arg| matches!(arg.kind, Kind::Vector(_)))
+            .is_some_and(|arg| matches!(&arg.kind, Kind::Vector(names)
+                if !names.iter().any(|name| matches!(&name.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "&"))))
         {
             return self.fixed_function(form, args, bootstrap_macro);
         }
@@ -596,17 +738,9 @@ impl Analyzer {
             .first()
             .is_some_and(|arg| matches!(arg.kind, Kind::Vector(_)))
         {
-            let method = self.fixed_function(form, signatures, bootstrap_macro)?;
-            let Expression::Function {
-                parameters,
-                body,
-                captures: free,
-            } = method.kind
-            else {
-                unreachable!()
-            };
+            let (method, free) = self.general_method(form, signatures, bootstrap_macro)?;
             captures.extend(free);
-            methods.push(Method { parameters, body });
+            methods.push(method);
         } else {
             for signature in signatures {
                 let Kind::List(items) = &signature.kind else {
@@ -615,24 +749,46 @@ impl Analyzer {
                         "Function signature requires a parameter vector and body",
                     ));
                 };
-                let method = self.fixed_function(signature, items, bootstrap_macro)?;
-                let Expression::Function {
-                    parameters,
-                    body,
-                    captures: free,
-                } = method.kind
-                else {
-                    unreachable!()
-                };
+                let (method, free) = self.general_method(signature, items, bootstrap_macro)?;
                 captures.extend(free);
-                methods.push(Method { parameters, body });
+                methods.push(method);
             }
         }
         // The pinned compiler warns on duplicate fixed arities and executes the last body.
         methods.reverse();
         let mut arities = BTreeSet::new();
-        methods.retain(|method| arities.insert(method.parameters.len()));
+        methods.retain(|method| arities.insert((method.parameters.len(), method.variadic)));
         methods.reverse();
+        let variadic: Vec<_> = methods.iter().filter(|method| method.variadic).collect();
+        if variadic.len() > 1
+            || variadic.first().is_some_and(|method| {
+                methods.iter().any(|fixed| {
+                    !fixed.variadic && fixed.parameters.len() > method.parameters.len() - 1
+                })
+            })
+        {
+            return Err(fail(
+                form.span.clone(),
+                "Function requires one variadic signature with no larger fixed arity",
+            ));
+        }
+        let rest_class = if variadic.is_empty() {
+            None
+        } else {
+            Some(
+                self.environment
+                    .resolve(
+                        self.phase,
+                        &suss_reader::Symbol {
+                            namespace: Some("suss.core".into()),
+                            name: "IndexedSeq".into(),
+                        },
+                        form.span.clone(),
+                    )?
+                    .global()
+                    .clone(),
+            )
+        };
         captures.clear();
         for method in &methods {
             let mut bound: BTreeSet<_> = method
@@ -663,8 +819,56 @@ impl Analyzer {
                 methods,
                 captures: captures.into_iter().collect(),
                 self_binding,
+                rest_class,
             },
         })
+    }
+    fn general_method(
+        &mut self,
+        form: &Form,
+        args: &[Form],
+        bootstrap_macro: bool,
+    ) -> Result<(Method, Vec<BindingId>), Diagnostic> {
+        let mut args = args.to_vec();
+        let Some(Form {
+            kind: Kind::Vector(names),
+            ..
+        }) = args.first_mut()
+        else {
+            return Err(fail(
+                form.span.clone(),
+                "Function requires a parameter vector",
+            ));
+        };
+        let markers: Vec<_> = names.iter().enumerate().filter_map(|(index, name)|
+            matches!(&name.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "&").then_some(index)).collect();
+        let variadic = !markers.is_empty();
+        if let Some(&index) = markers.first() {
+            if markers.len() != 1 || index + 2 != names.len() {
+                return Err(fail(
+                    form.span.clone(),
+                    "Variadic signature requires exactly one trailing rest parameter",
+                ));
+            }
+            names.remove(index);
+        }
+        let method = self.fixed_function(form, &args, bootstrap_macro)?;
+        let Expression::Function {
+            parameters,
+            body,
+            captures,
+        } = method.kind
+        else {
+            unreachable!()
+        };
+        Ok((
+            Method {
+                parameters,
+                body,
+                variadic,
+            },
+            captures,
+        ))
     }
     fn fixed_function(
         &mut self,
@@ -870,6 +1074,39 @@ impl Analyzer {
         };
         let args = &items[1..];
         let bare = symbol.namespace.is_none();
+        if symbol.namespace.as_deref() == Some("suss.bootstrap") {
+            let operation = match symbol.name.as_str() {
+                "object-factory" => Some(Nominal::NativeObjectFactory),
+                "error" => Some(Nominal::LanguageError),
+                "object-get" => Some(Nominal::NativeObjectGet),
+                "object-set" => Some(Nominal::NativeObjectSet),
+                "object-set-strict" => Some(Nominal::NativeObjectStrictSet),
+                _ => None,
+            };
+            if let Some(operation) = operation {
+                if !operation.valid(&vec![Type::Value; args.len()]) {
+                    return Err(fail(form.span.clone(), "Invalid private native object adapter arity"));
+                }
+                let operands = args.iter().map(|argument| self.form(argument)).collect::<Result<Vec<_>, _>>()?;
+                return Ok(self.nominal(form, operation, operands));
+            }
+        }
+        if symbol.namespace.as_deref() == Some("suss.bootstrap") {
+            let operation = match symbol.name.as_str() {
+                "f64-coerce" => Some(Bitwise::F64Coerce),
+                "f64-word0" => Some(Bitwise::F64Word0),
+                "f64-word4" => Some(Bitwise::F64Word4),
+                "f64-floor" => Some(Bitwise::F64Floor),
+                "f64-finite" => Some(Bitwise::F64Finite),
+                "f64-safe-integer" => Some(Bitwise::F64SafeInteger),
+                "safe-integer-remainder" => Some(Bitwise::SafeIntegerRemainder),
+                "identity-uid" => Some(Bitwise::IdentityUid),
+                _ => None,
+            };
+            if let Some(operation) = operation {
+                return self.bitwise_form(form, args, operation);
+            }
+        }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") && symbol.name == "nil?" {
             if args.len() != 1 {
                 return Err(fail(
@@ -972,6 +1209,9 @@ impl Analyzer {
         };
         if let Some(ResolvedBinding::BootstrapControl { operation, .. }) = &resolved {
             return self.control_form(form, args, *operation, statement, tail);
+        }
+        if let Some(ResolvedBinding::BootstrapBitwise { operation, .. }) = &resolved {
+            return self.bitwise_form(form, args, *operation);
         }
         if let Some(ResolvedBinding::BootstrapComparison { operation, .. }) = &resolved {
             return self.comparison_form(form, args, *operation);
@@ -1327,6 +1567,9 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
         | Expression::Arithmetic {
             arguments: items, ..
         }
+        | Expression::Bitwise {
+            arguments: items, ..
+        }
         | Expression::Comparison {
             arguments: items, ..
         }
@@ -1375,6 +1618,7 @@ pub(crate) fn prepare(
         fields: HashMap::new(),
         next: 0,
         next_loop: 0,
+        analysis_depth: 0,
         target: None,
     };
     let hir = analyzer.body(forms, span, true, false)?;

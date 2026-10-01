@@ -1,8 +1,8 @@
 //! Explicit values, blocks and edge parameters. Verification precedes emission.
 use super::{
     hir::{
-        arithmetic_type, Arithmetic, ArrayOperation, BindingId, Comparison, Expression, Hir,
-        Literal, LoopId, Nominal, Type,
+        arithmetic_type, Arithmetic, ArrayOperation, BindingId, Bitwise, Comparison, Expression,
+        Hir, Literal, LoopId, Nominal, Type,
     },
     resolve::Global,
     Diagnostic,
@@ -20,6 +20,10 @@ pub struct Value {
 }
 #[derive(Debug, Clone)]
 pub enum Operation {
+    Bitwise {
+        operation: Bitwise,
+        arguments: Vec<ValueId>,
+    },
     Comparison {
         operation: Comparison,
         arguments: Vec<ValueId>,
@@ -103,6 +107,7 @@ pub struct Function {
 }
 #[derive(Debug, Clone)]
 pub struct ClosureBody {
+    pub variadic: bool,
     pub capture_types: Vec<Type>,
     pub arity: usize,
     pub function: Function,
@@ -112,6 +117,7 @@ pub struct GeneralClosureBody {
     pub capture_types: Vec<Type>,
     pub methods: Vec<ClosureBody>,
     pub self_capture: bool,
+    pub rest_class: Option<Global>,
 }
 struct Lowerer {
     function: Function,
@@ -364,6 +370,7 @@ impl Lowerer {
                 self.emit(
                     Operation::MakeClosure {
                         body: Box::new(ClosureBody {
+                            variadic: false,
                             capture_types,
                             arity: parameters.len(),
                             function,
@@ -378,6 +385,7 @@ impl Lowerer {
                 methods,
                 captures,
                 self_binding,
+                rest_class,
             } => {
                 let mut captured = Vec::new();
                 let mut capture_types = Vec::new();
@@ -404,6 +412,7 @@ impl Lowerer {
                         inner.parameter(parameter.id, Type::Value, parameter.span.clone())?;
                     }
                     lowered.push(ClosureBody {
+                        variadic: method.variadic,
                         capture_types: environment_types,
                         arity: method.parameters.len(),
                         function: inner.finish(&method.body)?,
@@ -415,6 +424,7 @@ impl Lowerer {
                             capture_types,
                             methods: lowered,
                             self_capture: self_binding.is_some(),
+                            rest_class: rest_class.clone(),
                         }),
                         captures: captured,
                     },
@@ -550,6 +560,29 @@ impl Lowerer {
                 }
                 let value = operand!(value);
                 self.emit(Operation::NilTest(value), Type::Bool, hir.span.clone())
+            }
+            Expression::Bitwise {
+                operation,
+                arguments,
+            } => {
+                if arguments.len() != operation.arity() || hir.ty != operation.result() {
+                    return Err(Diagnostic {
+                        span: hir.span.clone(),
+                        message: "Invalid bitwise HIR shape".into(),
+                    });
+                }
+                let mut values = Vec::new();
+                for argument in arguments {
+                    values.push(operand!(argument));
+                }
+                self.emit(
+                    Operation::Bitwise {
+                        operation: *operation,
+                        arguments: values,
+                    },
+                    operation.result(),
+                    hir.span.clone(),
+                )
             }
             Expression::Comparison {
                 operation,
@@ -812,6 +845,7 @@ fn verify_recurrence(
         }
         Expression::NilTest(value) => verify_recurrence(value, targets, false)?,
         Expression::Arithmetic { arguments, .. }
+        | Expression::Bitwise { arguments, .. }
         | Expression::Comparison { arguments, .. }
         | Expression::Array { arguments, .. }
         | Expression::Nominal { arguments, .. } => {
@@ -843,6 +877,7 @@ fn operands(operation: &Operation) -> &[ValueId] {
             std::slice::from_ref(value)
         }
         Operation::Arithmetic { arguments, .. }
+        | Operation::Bitwise { arguments, .. }
         | Operation::Comparison { arguments, .. }
         | Operation::Array { arguments, .. }
         | Operation::Nominal { arguments, .. } => arguments,
@@ -1013,6 +1048,7 @@ fn verify_function(
                     return Err(fail("IR global writes require dynamic Value result"));
                 }
                 Operation::MakeClosure { body, captures } => {
+                    if body.variadic { return Err(fail("IR fixed closure cannot have variadic entry")); }
                     if body.arity > i32::MAX as usize
                         || body.capture_types.len() != captures.len()
                         || result_ty != Type::Closure(body.arity)
@@ -1058,10 +1094,14 @@ fn verify_function(
                         environment.push(Type::Value);
                     }
                     let mut arities = HashSet::new();
+                    let variadic: Vec<_> = body.methods.iter().filter(|method| method.variadic).collect();
+                    if variadic.len() > 1 || body.rest_class.is_some() != (variadic.len() == 1) || variadic.first().is_some_and(|method| method.arity == 0 || body.methods.iter().any(|fixed| !fixed.variadic && fixed.arity > method.arity - 1)) {
+                        return Err(fail("IR variadic closure shape mismatch"));
+                    }
                     for method in &body.methods {
                         if method.arity > i32::MAX as usize
                             || method.capture_types != environment
-                            || !arities.insert(method.arity)
+                            || !arities.insert((method.arity, method.variadic))
                         {
                             return Err(fail("IR general closure method shape mismatch"));
                         }
@@ -1095,6 +1135,14 @@ fn verify_function(
                 Operation::NilTest(_) => {
                     if result_ty != Type::Bool {
                         return Err(fail("IR nil-test result must be Boolean"));
+                    }
+                }
+                Operation::Bitwise {
+                    operation,
+                    arguments,
+                } => {
+                    if arguments.len() != operation.arity() || result_ty != operation.result() {
+                        return Err(fail("Invalid bitwise IR shape"));
                     }
                 }
                 Operation::Comparison { arguments, .. } => {

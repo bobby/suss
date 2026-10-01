@@ -5660,3 +5660,1878 @@ Log /private/tmp/suss-pr94-review-provenance-nan-fixed.log. All Cargo/JVM/Node r
 graphs are terminal. Next root requires exact reviewed-head CI before readiness;
 then continue retained persistent collections and full hashing/macros. No merge
 or issue closure. The shared test slot is released after the review push finishes.
+
+
+## Object final CI gate and bitwise preparation — 2026-10-01
+
+PR93 reviewed final head e958472c3d1514eedda07f4c2966d4a1e4243001 passed
+CI36813244361. Root inspected /private/tmp/suss-pr93-final-ci.log: Python71,
+82 partial/983 unassessed reviews,32 artifacts, enabled Object2 and ABI20,
+and the required full workspace baseline. PR93 is marked ready; no merge.
+PR94 reviewed final head74120cb54a9abac458825658632f41fd9eb8d8ad is still
+awaiting CI36814856668; its local reviewed full baseline passed. Do not claim
+remote success or readiness until that exact run is inspected. Both remain Refs;
+complete issue acceptance is not fulfilled and no issue is closed by this slice.
+
+New unpublished worktree /private/tmp/suss-core-bitwise-hash starts at reviewed
+PR94. Original37-case corpus covers signed wrapping, shifts, imul, scalar coercion,
+computed/variadic calls and order. Fresh pinned primary observations match exactly;
+native session29394 ended101 at unresolved int. Aggregated session97954 ended101
+with36 unresolved observations and one matching local-shadow case. An unrelated
+unsupported defn in the new order probe was replaced with def/fn; fresh final
+session44068 ended101 with37 exact primary observations and36 unresolved native
+names, now including the intended bit-or failure. Logs:
+/private/tmp/suss-bitwise-hash-preparation.log,
+/private/tmp/suss-bitwise-hash-native-red.log,
+/private/tmp/suss-bitwise-hash-preparation-final-red.log.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-bitwise-hash-oracle.sh`.
+No failures are ignored or accepted into the passing baseline. This red test is
+local preparation, not a new published PR or implementation claim.
+
+Separate pinned arity graph11590 ended0 and Node ended0, producing24 diagnostic
+observations in /private/tmp/suss-bitwise-arity-observations.json. Captured wrappers
+may fill undefined/ignore extra args; direct macros are a separate surface.
+These diagnostic observations are not additional native matches. See
+ docs/runtime/bitwise-hashing.md. No source forms copied and no review count,
+source-selection, issue or milestone status changes. All local Cargo/JVM/Node
+processes are terminal. Next implement bounded original bitwise coercion and
+certify advertised arities with retained-source provenance before a new PR.
+Complete List/Cons/IndexedSeq and M2–M9 remain open; no merge or issue closure.
+
+
+## Private 32-bit coercion prerequisite — 2026-10-01
+
+A focused runtime regression first hit a missing RootScope import (21273 compile101);
+corrected fixture47448 ended101 at missing coerce-int32, the intended red stage.
+Original runtime helper now calls existing coerce-number, truncates once, guards
+nonfinite values before conversion and wraps modulo2^32 using exact binary scaling.
+No public form, GC layout, language cell, source selection or ABI version changes.
+Focused48691 ended0. Extended fixture initially called gc on RootScope (compile101);
+forced-GC cases now use Store's rooted default scope. Final83289 ended0 with all21
+ABI tests, including20 numeric boundaries/2048 varied encodings, nil/Boolean/string
+coercion, UTF-16 after GC and unsupported object language exception with recovery.
+Logs /private/tmp/suss-int32-abi-red.log, /private/tmp/suss-int32-abi-red2.log,
+/private/tmp/suss-int32-abi-candidate.log, /private/tmp/suss-int32-abi-all-candidate.log,
+/private/tmp/suss-int32-abi-all-candidate2.log.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-compile --test runtime_abi --locked -- --test-threads=2`.
+Public37-case native corpus remains red36 unresolved/one match. No full-baseline or
+public compatibility claim and no new PR opened. Next integrate bounded bitwise
+operations and retained public source, then repeat primary/native/provenance/full
+baseline, independent PR review and exact final-head CI before readiness. All
+local test processes are terminal; PR94 final remote CI remains pending.
+
+
+## Hash-cache final CI gate — 2026-10-01
+
+PR94 final reviewed head74120cb54a9abac458825658632f41fd9eb8d8ad passed
+CI36814856668, completed04:43:13Z. Root downloaded and inspected
+/private/tmp/suss-pr94-final-ci.log: Python71,1065 declarations,83 partial/982
+unassessed reviews,32 licensed artifacts, enabled caching4 (including exact NaN
+storage/GC and comparison guards), Object2, ABI20 and the required full workspace
+baseline/doc tests pass. PR94 body records independent review fixes and the exact
+CI link; it is marked ready. PR93 is also ready with its verified final-head CI.
+Root did not merge any PR or close any issue. Refs links remain partial.
+
+Private coercion follow-up guards17446 ended0 with pipeline17; source guard69649
+ended0 with caching4/Object2. Logs /private/tmp/suss-int32-pipeline-guards.log and
+/private/tmp/suss-int32-source-guards.log. Commands use the shared target/two build
+workers and --locked -- --test-threads=2; source guards select -p suss-cli
+--test portable_caching_hash --test portable_object_methods, compiler guards
+select -p suss-compile --test portable_pipeline. No broader public/full-baseline
+claim is added for the unpublished bitwise branch; its37-case native corpus
+remains red36 unresolved/one match. All local processes are terminal. Next
+integrate bounded bitwise/imul and retained-source provenance, then review and
+require final-head CI on any new PR. Complete persistent collections/M2–M9 open.
+
+
+## Bitwise hashing dependency executing candidate — 2026-10-01
+
+Original checked runtime helpers now provide int/bitwise/imul function values in
+canonical live cells, with bounded HIR/IR macro expansion for the pinned direct
+forms. Native bootstrap cells45 replace30; GC layouts/ABI version unchanged.
+Direct variadic folds preserve pair conversion before later syntax; computed
+calls evaluate every argument before folding. Off-arity captured JS wrappers
+remain explicit differences under the accepted diagnostic contract, not matches.
+Retained bit-count3057 and int-rotate-left947 preserve their original algorithms
+(including bit-count arithmetic), metadata/docstrings with explicit fixed defn
+patches/EPL artifacts.30 selected forms/34 files;113 partial reviews/952 unassessed.
+Conditional imul inside if is not emitted by the top-level scanner; explicit
+source-region/file hashes record provenance without fabricated declaration IDs.
+
+Initial73096 compile101 exposed an argument-pattern binding typo in capture
+traversal; fixed73868 ended101 with35 matches/two unresolved bit-count cases.
+The first artifact command incorrectly used unsupported --write; no generated
+source was updated and72714 stayed red on the two missing functions. Default
+core_import.py then regenerated34 files; fresh71588 ended0 with all original37
+primary/native observations. Expanded final63160 ended0 with54 exact observations,
+original37 unchanged, including retained algorithms/namespace/redefs/capture.
+Log /private/tmp/suss-bitwise-public-final54.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-bitwise-hash-oracle.sh`.
+
+Source guard55691 ended0: bitwise4 and persistent-session33, including located
+atomic arity errors, aliases/exclusions/both phases and unsupported conversion
+order with recovery. Compiler57537 ended0: public HIR/IR bitwise guard1,
+pipeline17/ABI21. Logs /private/tmp/suss-bitwise-source-guards.log and
+/private/tmp/suss-bitwise-compiler-guards.log. Commands select corresponding
+-p suss-cli --test portable_bitwise_hash --test persistent_session or
+-p suss-compile --test portable_bitwise --test runtime_abi --test portable_pipeline,
+using shared target/two build workers and --locked -- --test-threads=2.
+Python71, inventory1065/reviews113+952/import34/WIT15 files+6 packages/numeric
+manifest/offline roadmap10+39 pass. Log /private/tmp/suss-bitwise-python.log.
+An incorrect numeric_artifact.py command failed because that file does not exist;
+correct scripts/numeric_runtime.py --check passed. A dependency-overlay helper
+first matched a referenced ID instead of an entry; failed before writing and the
+corrected helper/generated manifest validated. No failures hidden or ignored.
+All local Cargo/JVM/Node graphs are terminal. Next independent PR review/fixes,
+required full workspace baseline and exact reviewed-head CI before readiness.
+No issue closure/merge; full List/Cons/Murmur hashing/macros/M2–M9 remain open.
+
+
+## Independent PR95 review — 2026-10-01
+
+Review worktree /private/tmp/suss-review-pr95 starts at candidate458b5df on
+portable/core-bitwise-hash, base reviewed PR94 head74120cb. Original54 source
+cases/expectations are unchanged; sixteen independent probes add extreme finite
+and subnormal conversion, low bits near2^53, negative/fraction/infinite shift
+counts, wrapping multiplication, scalar coercion, retained hashing algorithms and
+nested captured callbacks. Fresh first graph98551 ended0:70 exact primary/native
+observations and native4. Log /private/tmp/suss-pr95-review-primary70.log.
+The pre-fix required full baseline40057 ended0, but is superseded by the significant
+captured variadic-body fix below; do not treat it as the final review gate.
+
+Significant semantic finding: variadic callbacks used an immutable primitive for
+every tail operand, whereas the retained core definition passes its current var
+once to reduce after calculating the original primitive initial pair. Native red
+2922 ended101 with7 versus107. The original function body is now preserved while
+its tail reducer resolves through its canonical live cell, including dynamic
+frames; earlier reducer calls redefining the var do not replace the reducer already
+passed to reduce. Variadic initializer exports now accept their canonical self cell;
+the native session allocates that cell before constructing its closure and then
+publishes the resulting value into the same cell. Cell count45/shared GC layouts/
+ABI version unchanged. A checked callback environment rejects malformed nil/opaque
+cells as language exceptions rather than Wasm casts/traps.
+
+Fresh pinned public calls through saved generic JS wrappers throw four exact
+TypeErrors on the replacement global variadic property. They remain explicit
+observations outside the70 equal public cases. Five development-only js* probes
+independently inspect the retained implementation bodies:107/104/107/105 for the
+four current reducers and215 when the first tail call redefines its own var.
+The var is read once, not per iteration. These source adaptations are recorded in
+ tests/oracle/bitwise-capture-observations.json and certified separately by
+ scripts/bitwise_capture_oracle.py; host interop/public-wrapper equality is not
+advertised. The initial diagnostic fixture54395 ended1 at an unmatched delimiter;
+corrected21810 ended0. Native first fix8097 ended0 with bitwise5. Logs:
+/private/tmp/suss-pr95-review-capture-primary.log,
+/private/tmp/suss-pr95-review-capture-primary-fixed.log,
+/private/tmp/suss-pr95-review-capture-native-red.log,
+/private/tmp/suss-pr95-review-capture-native-fixed.log.
+
+Provenance finding: the candidate imul region953–966 included a following unrelated
+Murmur comment. Corrected953–964 hashes precisely the complete conditional form.
+New scripts/bitwise_provenance.py verifies the pin, file hash, region hash, complete
+form bounds and both conditional definitions; explicit CI and mutation gates reject
+stale hashes, truncated/extra source, invalid ranges and duplicate metadata. The
+candidate JSON is rejected by the new exact-form validator. No declaration IDs are
+invented for definitions absent from the top-level scanner. Retained source/license
+selection remains30 forms/34 artifacts,113 partial reviews/952 unassessed.
+
+Final focused source graph65015 ended0: bitwise6/persistent-session33, including
+GC, dynamic scope, noncallable/wrong-arity/throwing reducers and recovery. Compiler
+fixture48942 failed to compile on an I31 Option; corrected17971 ended101 because
+the fixture requested nonexistent args-set. Typed Wasmtime array writes now exercise
+the actual shared ABI. Final27147 ended0: bitwise1/pipeline17/ABI22 including all
+malformed-cell guards after GC. Logs /private/tmp/suss-pr95-review-source-final.log,
+/private/tmp/suss-pr95-review-compiler-final.log,
+/private/tmp/suss-pr95-review-compiler-final-fixed.log,
+/private/tmp/suss-pr95-review-compiler-final-fixed2.log. Commands select respective
+-p suss-cli --test portable_bitwise_hash --test persistent_session or
+-p suss-compile --test portable_bitwise --test portable_pipeline --test runtime_abi,
+with shared target/two workers, --locked -- --test-threads=2. An incidental workspace
+format command touched unrelated formatting; all34 unrelated files were restored
+before final checks. No unrelated change is included.
+
+Final fresh graph90990 ended0: all70 exact primary/native public observations,
+4 exact pinned wrapper errors,5 separate internal-body diagnostics and native6.
+Log /private/tmp/suss-pr95-review-primary-final70.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-bitwise-hash-oracle.sh`.
+Final provenance graph89710 ended0: Python76, inventory1065/reviews113+952/import34,
+conditional imul exact-region gate, WIT15 files/6 packages, numeric manifest and
+offline roadmap10 milestones/39 issues pass. Log
+/private/tmp/suss-pr95-review-provenance-final.log. Negative diagnostic-observation
+regressions reject malformed schema, missing/duplicate results and changed errors
+or bits. No failure, ignored test or divergence is relabeled as a success.
+
+Final required full workspace graph12800 ended0: every enabled workspace/doc test
+passes, including bitwise6/persistent-session33, compiler bitwise1/pipeline17/ABI22
+and the existing strict legacy/diagnostic suites. Manual/legacy ignored tests and
+9 passing/7 exact failing diagnostic observations remain explicit. Log:
+/private/tmp/suss-pr95-review-full-baseline-final.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Candidate CI36817667394 succeeded at458b5df and does not certify these review fixes.
+All local Cargo/JVM/Node processes are terminal; the shared slot is released once
+the review push finishes. Root requires exact reviewed-head CI before PR95 readiness. No merge,
+issue closure or milestone acceptance claim. Next retain actual Murmur/ordered
+hashing and persistent sequence/list source; complete core/macros/M2–M9 remain open.
+## Scalar Murmur hashing preparation — 2026-10-01
+
+New separate branch portable/core-murmur-hash/worktree /private/tmp/suss-core-murmur-hash
+starts at PR95 candidate458b5df.35 provisional scalar probes and native test runner
+are prepared; original bounded ->/as->/zero? expansion is drafted but NOT compiled
+or tested. No retained forms or review statuses are added. PR95 reviewer exclusively
+owns Cargo/JVM/Node slot, with review-expanded70 primary/native observations passing
+and full baseline40057 live. Reviewer found/corrected imul provenance bounds and is
+adding exact source-region/file/pin verification to CI with Python75 passing.
+Next rebase onto final reviewed PR95, then acquire the released slot and first
+certify fresh pinned observations/native red, retain the scalar Murmur forms with
+EPL/patch provenance, execute focused/full checks and dispatch a reviewer for any
+new PR. PR95 final reviewed-head CI is still required before readiness. Do not
+claim List/Cons/hash-ordered/hash-unordered/string/numeric hashing complete or
+substitute private argument buffers for persistent source collections. See
+ docs/runtime/murmur-hashing.md. No PR merge or issue closure.
+
+
+The unpublished Murmur preparation now has52 provisional probes (original35
+unchanged).17 new ->/as->/zero? cases cover lexical shadowing, captures, tail recur
+and strict zero testing. They have not run against the pin/native and are NOT
+success evidence. PR95 reviewer is investigating captured variadic tail dispatch;
+root still holds no local test slot and has launched no Cargo/JVM/Node processes.
+
+One additional unexecuted thread-callee ordering probe makes53 provisional cases.
+Nested threading syntax must preserve outer callee evaluation before the initial
+expression, rather than pre-evaluating that expression as an eager temporary.
+No primary/native success is claimed; shared test slot remains with PR95 reviewer.
+
+
+## Retained scalar Murmur executing candidate — 2026-10-01
+
+Rebased the preparation onto independently reviewed PR95 d49c5a7; one append-only
+handoff conflict preserved all reviewer and preparation evidence. PR95 reviewed
+full12800 passed and exact CI36819490858 is live; no ready/merge claim for that PR.
+Root acquired the released shared test slot. Initial fresh75181 ended101:53 exact
+pinned observations,36 unresolved native forms and17 executing control observations.
+Log /private/tmp/suss-murmur-hash-first-red.log. Seven explicit fixed defn patches
+and three exact constants now retain the scalar Murmur algorithms/zero? with EPL
+provenance. Import31363 ended0:53 exact primary/native and native1. Final fresh43112
+ended0:57 exact primary/native (original53 unchanged), all four native tests pass.
+Log /private/tmp/suss-murmur-hash-final57.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-murmur-hash-oracle.sh`.
+Pinned non-number zero? numeric warnings stay visible, not blanket-suppressed.
+
+Original bounded ->/as->/zero? expansions preserve splicing/evaluation order,
+sequential lexical identities, captures, metadata/spans, statement/tail contexts
+and strict numeric zero. General binder destructuring/callable collections and
+compiled macro bootstrap remain incomplete. Source guard65413 ended0: Murmur4,
+bitwise6/cache4; log /private/tmp/suss-murmur-source-guards.log. Commands select
+-p suss-cli --test portable_murmur_hash --test portable_bitwise_hash
+--test portable_caching_hash with shared target/two workers/--locked -- --test-threads=2.
+Python76 and source/review/import/bitwise provenance checks pass:126 partial/939
+unassessed,40 selections/44 licensed artifacts. Log /private/tmp/suss-murmur-python.log.
+No native bootstrap cell, shared GC layout or runtime ABI change in this slice.
+Compiler focused62882 is still live; final results follow. Required independent
+PR review/fixes/full baseline and exact reviewed-head CI remain before readiness.
+No closure/merge; hash-ordered/hash-unordered/string/numeric hashing, persistent
+List/Cons/IndexedSeq and M2–M9 remain unfinished.
+
+
+Compiler62882 ended0: bitwise guard1 and pipeline17 pass, log
+/private/tmp/suss-murmur-compiler-guards.log. A focused threading metadata
+regression61654 ended101: symbol metadata was incorrectly promoted to the generated
+call list. Pin core.cljc104 preserves list-step metadata only; the symbol itself
+still retains its metadata. Corrected6812 ended0 with the public HIR/validated
+artifact regression. Logs /private/tmp/suss-murmur-thread-metadata-red.log and
+/private/tmp/suss-murmur-thread-metadata-fixed.log. Command selects -p suss-compile
+--test portable_murmur with the required shared target/build workers/locked/two
+workers. All root local processes are terminal. Inventory126+939/40 selections44
+artifacts, WIT/numeric/offline roadmap and strict bitwise provenance gates pass.
+Next independent PR review/fixes, required full baseline and exact final-head CI.
+No readiness, milestone acceptance, issue closure or merge claim for this slice.
+
+## Independent PR96 review — 2026-10-01
+
+Review worktree /private/tmp/suss-review-pr96 starts at 74dac8a7114c72504b2acf03960fb326c3565491,
+base reviewed PR95 d49c5a72c2661712ddd539414025764ae0c06363. Original 57 source
+cases/expectations remain unchanged. Sixteen independent cases bring the fresh
+corpus to 73: special-form syntax splicing, nested outer/inner callee effects,
+initial-expression shadowing, three generations of captured bindings, nested
+as->, statement def, throwing operands, qualified macros, subnormal/Boolean/large
+coercion and Undefined/first-class string zero?. First 22099 ended1 on the reviewer's
+hand-calculated expected hash-long value; fresh pinned bits were -2147483648,
+not 2147483646. Only that new expectation changed. Fresh corrected 25391 ended0:
+73 exact pinned/native observations and native 4. Logs
+/private/tmp/suss-pr96-review-primary73.log and
+/private/tmp/suss-pr96-review-primary73-fixed.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-murmur-hash-oracle.sh`.
+
+Significant compiler finding: -> accepted 255 steps under its 256-argument limit
+but aborted with a Rust stack overflow. Initial limit regression 71518 ended101
+because its isolated session lacked retained inc; changed only the new limit probe
+to bootstrap +. Corrected 34083 reproduced SIGABRT, and trial per-chain 63-step
+cap 94790 also aborted. A per-chain cap also fails to bound nested macros, so that
+trial was removed. Analyzer now checks total recursive analysis depth 24 and emits
+a located diagnostic before nesting exhausts the stack. This explicit bootstrap
+limit applies to generated and original syntax; stack-safe general analysis remains
+future work. No runtime layout, ABI, cell, source selection or algorithm changes.
+Final 22465 ended0: native 5, including long single/nested chains rejected atomically,
+recovery, executing 16-step -> and 254-step sequential as->. Logs
+/private/tmp/suss-pr96-review-source-limits.log,
+/private/tmp/suss-pr96-review-source-limits-fixed.log,
+/private/tmp/suss-pr96-review-source-limits-checked.log,
+/private/tmp/suss-pr96-review-source-depth-guard.log. Focused command selects
+-p suss-cli --test portable_murmur_hash with shared target/two workers/locked
+and --test-threads=2. Failures are preserved, not relabeled as passes.
+
+Provenance 59155 ended0: Python 76, 1065 declarations, 126 partial/939 unassessed,
+40 selected forms/44 licensed files, exact conditional imul region, WIT 15 files/6
+packages, numeric artifact manifest and offline 10 milestones/39 issues. Log
+/private/tmp/suss-pr96-review-provenance.log. No merge/closure/milestone claim.
+
+PR95 independently reviewed final head d49c5a72c2661712ddd539414025764ae0c06363
+passed exact CI36819490858 and root marked that prerequisite ready. No merge.
+
+Required full workspace graph 68936 ended 0: all enabled workspace and doc tests
+pass, including Murmur 5, bitwise 6, caching 4, compiler metadata 1/pipeline 17/ABI 22.
+Manual ignored tests and the 9 passing/7 exact failing diagnostic observations
+remain explicit. Log /private/tmp/suss-pr96-review-full-baseline.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Follow-up final fresh graph 12923 ended 0: all 73 exact primary/native observations
+and native 5 pass, including an added ordinary 40-level source diagnostic with
+nonempty span, compile-atomic unpublished globals and recovery. The guard restores
+depth on every returned Result. Log /private/tmp/suss-pr96-review-primary-final73.log.
+Original 57 source/expected entries were checked byte-for-byte against the candidate.
+No blanket skips or production failures hidden. All local Cargo/JVM/Node processes
+are terminal. Root requires exact reviewed-head CI before PR96 readiness; no merge,
+issue closure or milestone acceptance. Next stack-safe general analysis, retained
+ordered hashing and real persistent sequence/list source; M2–M9 remain open.
+
+## Retained UTF-16 string hashing candidate — 2026-10-01
+
+Separate branch portable/core-string-hash/worktree /private/tmp/suss-core-string-hash
+starts at independently reviewed PR96 3d745f6. Exact CI36821371081 is running; PR96
+remains draft. PR95 is ready at reviewed d49c5a7 after CI36819490858 success. The
+hashing discussion did not change the accepted pinned ClojureScript contract.
+
+Initial reference fixture30083 ended1 because the pinned analyzer rejected a
+literal-nil dot receiver; changed that unexecuted probe to a local nil receiver.
+Fresh12342 ended101: 71 exact pinned observations, 66 native failures/five matches
+before implementation. Log /private/tmp/suss-string-hash-first-red.log. Three fixed
+defn patches retain pos?, m3-hash-unencoded-chars and hash-string* with original
+algorithms/metadata/docstrings and EPL packaging. Bounded original positive macro
+and native UTF-16 charCodeAt member lookup supply dependencies. Strict provenance
+requires a real pinned upstream checkout; an initial escaping symlink was rejected
+and replaced with a local shared clone, not a weakened verifier.
+
+Import89431/62673 ended101 from a misspelled runtime function index (number-new),
+corrected to existing number-box. Fixed62504 ended0: all original71 native matches.
+Final79 fixture76187 ended101 from incorrect new test API calls, corrected3638
+ended101 only on a new missing-index expectation. Diagnostic44470 confirmed native
+member invocation already fills Undefined and ignores evaluated surplus arguments;
+these are pinned interop semantics, not a core function wrong-arity exception.
+Added exact primary probes rather than claiming an error or skipping them.
+Final fresh32275 ended0: 82 exact primary/native observations (original71 unchanged)
+and all three native source guards pass. Logs /private/tmp/suss-string-hash-final82.log
+and /private/tmp/suss-string-member-arity-red.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-string-hash-oracle.sh`.
+
+Builtin lookup occurs before index evaluation, the shared unbound wrapper retains
+no owner, direct calls anchor this and detached ordinary calls throw language
+errors. Custom Object charCodeAt methods retain dispatch. Indices use scalar checked
+ToIntegerOrInfinity, bounds before integer conversion, UTF-16 units/NaN results.
+General JS ToString/prototype mutation/object-index coercion remain explicit open
+work. No runtime ABI version, shared GC layout or native core cell changes.
+Python76 passes (/private/tmp/suss-string-hash-python.log); inventory1065,
+reviews130+935, import43 selections47 artifacts, strict bitwise source, WIT15/6,
+numeric source/artifact and offline roadmap10/39 gates pass. Compiler47731 is live
+for pipeline/Murmur/ABI guards. Independent PR review/fixes, full baseline and exact
+final reviewed-head CI remain required; no ready/merge/closure claim for this slice.
+Next complete cached string/numeric/public hashing and actual persistent sequences
+for ordered/unordered collection hashing; M2–M9 remain incomplete.
+
+Compiler47731 ended0: pipeline17, Murmur metadata guard1 and ABI23 (new exact
+UTF-16 unit/bounds/null/unsupported index/typed recovery guard) pass. Log
+/private/tmp/suss-string-hash-compiler.log. Source38883 ended0: String3/Murmur5/
+Object2 pass at final candidate source, log /private/tmp/suss-string-hash-source-guards.log.
+Commands select those test binaries with shared target/build workers2/locked/
+--test-threads=2. All root Cargo/JVM/Node processes are terminal. Shared test slot
+will pass exclusively to the independent reviewer after draft publication.
+
+## Independent PR97 review — 2026-10-01
+
+Review worktree /private/tmp/suss-review-pr97 starts at candidate30a2ab7 on
+portable/core-string-hash, base independently reviewed PR96 3d745f6. A real local
+shared clone of the pinned upstream checkout supports strict provenance verification;
+no escaping symlink or verifier weakening. Original82 source/expected entries were
+checked byte-for-byte unchanged. Fourteen independent probes bring the fresh corpus
+to96, covering negative subnormals, binary/octal/fractional scalar index strings,
+large nonwrapping indices, receiver lookup before surplus argument effects, detached
+argument effects before failure, custom Object dispatch, live retained imul/mixing
+calls, lexical pos? captures, throwing surplus arguments and longer UTF-16 hashing.
+
+First fresh graph22152 ended1 only on the reviewer's provisional long-string hash
+expectation; pinned bits41bb6a7dad000000 are now recorded for that new case. Corrected
+45596 ended101:96 exact pinned observations but one native compile failure on the
+new consistency probe's public `=` call. `=` is an unimplemented public-core operation,
+not compatibility success; that limitation remains explicit. The intended numeric
+hash consistency probe now uses supported pinned `==`, changing only that new source.
+Final fresh17156 ended0:all96 exact pinned/native observations and nativeString3 pass.
+Logs /private/tmp/suss-pr97-review-primary96.log,
+/private/tmp/suss-pr97-review-primary96-fixed.log,
+/private/tmp/suss-pr97-review-primary96-final.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-string-hash-oracle.sh`.
+No original expectation changed, production failure hidden or blanket skip introduced.
+
+New independent ABI guard89143 ended0. An independently generated module copies
+actual anchored/detached typed callbacks into foreign closures with nil/opaque/null
+environments. Detached invocation remains a language error; the stateless anchored
+body safely ignores its environment when physical receiver/index arguments are valid
+and rejects invalid argument buffers without traps. Corrupt tagged payload rejection,
+GC and typed recovery are exercised. No significant production defect was found.
+Log /private/tmp/suss-pr97-review-callbacks.log. Command selects -p suss-compile
+--test runtime_abi runtime_abi_string_method with shared target/build workers2,
+--locked -- --test-threads=2. Shared runtime layouts/ABI/core cell counts unchanged.
+
+Provenance48205 ended0:Python76,inventory1065/reviews130+935/import47 licensed files,
+strict conditional imul source region, WIT15 files/6 packages, numeric manifest and
+offline roadmap10 milestones/39 issues pass. Log
+/private/tmp/suss-pr97-review-provenance.log. Required full workspace11226 is live;
+terminal results will follow. Exact final reviewed-head CI remains required before
+readiness. No merge, issue closure or milestone acceptance claim. Full cached string,
+numeric/public/collection hashing, general JS coercion/prototypes, actual persistent
+sequences and M2–M9 remain unfinished.
+
+Root inspected prerequisite PR96 exact reviewed3d745f6 CI36821371081 SUCCESS
+and marked PR96 ready. No merge. Deferred issue #98 tracks evaluation of alternative
+hashing algorithms after M4/M6/M7/M8 prerequisites; the accepted pinned algorithm
+contract is unchanged. Root numeric-hash preparation is isolated and launches no
+Cargo/JVM/Node while this review owns the shared target/cache slot.
+
+Required full workspace11226 ended0:every enabled workspace/doc test passes,
+including String3/Murmur5/Object2, compiler pipeline17/Murmur1/ABI24 with the
+independent copied-callback guard. Manual ignored tests and diagnostic9 passing/
+7 exact failing observations remain explicit. Log
+/private/tmp/suss-pr97-review-full-baseline.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+All local Cargo/JVM/Node processes are terminal. Shared slot is released after the
+review push finishes; root must require exact final reviewed-head CI before PR97
+readiness. No merge, closure or milestone acceptance. Next retained scalar numeric
+hashing, cached/public string hashing and actual persistent sequence/list algorithms.
+
+## Numeric hashing preparation — 2026-10-01
+
+PR96 is ready at reviewed3d745f6 after exact CI36821371081 success; root inspected
+/private/tmp/suss-pr96-final-ci.log including provenance/Python76/Murmur5/ABI22/full
+baseline. No merge. PR97 review has96 exact fresh primary/native observations,
+original82 unchanged, with added copied-callback/corrupt-environment ABI coverage;
+full11226 is confirmed live under that reviewer's exclusive shared test slot.
+
+User-requested deferred algorithm evaluation is filed as issue#98, including the
+Murmur3 correction, XXH3/Rapidhash/keyed-hash alternatives, public/internal/digest
+separation, compatibility and collision constraints, actual Wasmtime/browser
+benchmark criteria and M4/M6/M7/M8 prerequisite gates. It does not alter current
+hashing semantics or the existing milestone exit criteria.
+
+Separate unpublished portable/core-numeric-hash worktree starts at PR97 candidate
+30a2ab7.42 provisional numeric hash-double/hash-combine observations and reference/
+native runners are prepared but UNEXECUTED. No source selections, review statuses
+or production support are added. Expected hash-double values independently model
+little-endian Float64Array storage followed by default big-endian DataView words
+at offsets0/4 and pinned hash-long XOR; fresh pinned observations must verify these
+assumptions before a portable adaptation. The source algorithm's scalar ToNumber
+conversion must occur once, preserve binary64 signed zero/NaN handling and retain
+live hash-long dependency calls. Do not infer hash-double support from a simpler
+XOR of the un-swapped binary64 halves or substitute public hash semantics.
+
+Next rebase this preparation onto final reviewed PR97, acquire its released local
+test slot, certify primary/native red, then adapt typed byte access with explicit
+source/provenance and execute the artifact. General typed-buffer/host interop and
+public numeric/hash/cached string/collection hashing remain incomplete. Do not
+claim success from these unexecuted preparations or close M2–M9 issues.
+
+## Retained scalar numeric hashing candidate — 2026-10-01
+
+Rebased numeric preparation onto independently reviewed PR97 8947aaa; preserved
+both review and preparation handoff entries through an append-only conflict. PR97
+full11226 passed and final CI36823514952 is live; it remains draft. Root acquired
+its explicitly released shared Cargo/JVM/Node slot. First31865 ended1 from a copied
+reference-runner typo (JSON.numericify), corrected to JSON.stringify. Fresh48310
+ended101:42 exact primary matches, all42 native unresolved before implementation.
+Logs /private/tmp/suss-numeric-hash-first-red.log and
+/private/tmp/suss-numeric-hash-first-red-fixed.log. Native import24198 ended0:42
+exact primary-derived native matches.
+
+Two explicit fixed defn patches retain hash-double/hash-combine with original
+composition, metadata and EPL provenance. Nonescaping typed storage in hash-double
+is adapted to one checked scalar binary64 temporary plus exact big-endian words
+at offsets0/4 over specified little-endian bytes. Original live hash-long call
+remains after both reads. No general JS typed buffers/object coercion or public
+numeric hash acceptance is claimed. Three original private unary compiler/runtime
+adapters reuse checked bitwise HIR/IR result/arity verification; they are not public
+bitwise macro names or core cells. GC layouts/ABI version/cell count unchanged.
+
+Added10 probes preserve original42. Fresh91061 ended101:52 exact pinned/native
+value observations but a new guard incorrectly expected compile-time rejection
+for dynamically loaded core function wrong arity. Those calls instead use checked
+universal runtime arity, so the guard now verifies language error/recovery;
+compile-atomic assertions remain on statically known private primitives. Source4904
+ended0: numeric3/String3/bitwise6 pass. Logs
+/private/tmp/suss-numeric-hash-final52.log and
+/private/tmp/suss-numeric-hash-source-guards.log. Compiler69823 ended0: HIR/IR2,
+ABI25, including267 exact binary64 encodings, raw signed/signaling/quiet NaN payloads,
+byte order and malformed storage/typed recovery. Log /private/tmp/suss-numeric-hash-abi.log.
+Python76/inventory1065/reviews132+933/import45 selections49 licensed files,
+WIT15/6/numeric/bitwise/offline roadmap10/39 pass; log
+/private/tmp/suss-numeric-hash-python.log. Final fresh corrected fixture is running
+and terminal results follow. Commands use shared target/build workers2/locked/
+--test-threads=2, with sh scripts/test-numeric-hash-oracle.sh for fresh pin comparison.
+Independent PR review/fixes, full required baseline and exact final-head CI remain
+before readiness. No merge, closure or milestone acceptance. Cached/public numeric/
+string/collection hashing, persistent source sequences and M2–M9 remain unfinished.
+
+Final fresh52520 ended0:52 exact pinned/native observations and numeric3 guards
+pass. Log /private/tmp/suss-numeric-hash-final52-fixed.log. All root local
+Cargo/JVM/Node processes are terminal; the shared slot will pass exclusively to
+the independent reviewer after draft publication. Final reviewed-head CI remains
+required; no readiness or merge claim for this numeric candidate.
+
+
+## Independent PR99 review — 2026-10-01
+
+Review worktree /private/tmp/suss-review-pr99 starts at numeric candidate90f73d5
+on portable/core-numeric-hash, base independently reviewed PR97 8947aaa. A real
+local shared clone of pinned upstream supports strict provenance; no escaping
+symlink or verifier weakening. Original52 source/expected observations were checked
+unchanged. Twenty independent probes bring the fresh corpus to72: binary/octal/
+Unicode whitespace and negative-zero strings, binary64 normal/subnormal boundaries,
+separate high/low word reads, argument mutation of live hash-long, dependency throws,
+immutable shift expansion, argument throw ordering and mixed nil/Boolean/string
+hash-combine operands. No significant production defect was found.
+
+Fresh49556 ended0:68 exact pinned/native observations plus native numeric3.
+Final fresh14165 ended0:all72 exact pinned/native observations and numeric3.
+Logs /private/tmp/suss-pr99-review-primary68.log and
+/private/tmp/suss-pr99-review-primary72.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-numeric-hash-oracle.sh`.
+New independent ABI guard23405 ended0, rejecting foreign arrays, invalid i31
+sentinels and null references in all three adapters as language exceptions rather
+than traps, with recovery after forced GC. Existing267 raw binary64 encodings,
+including signed zero and signaling/quiet NaN payloads, remain unchanged.
+Log /private/tmp/suss-pr99-review-adapters.log. Command selects -p suss-compile
+--test runtime_abi runtime_abi_binary64 with shared target/build workers2/locked/
+--test-threads=2. Runtime layouts, ABI version and core cell count unchanged.
+
+Provenance74900 ended0:Python76,inventory1065/reviews132+933/import49 licensed
+files, strict conditional imul source region, WIT15/6,numeric manifest and offline
+roadmap10/39 pass. Log /private/tmp/suss-pr99-review-provenance.log. Full required
+workspace baseline is running; terminal results will follow. Exact final reviewed-
+head CI remains required. No merge, closure or milestone acceptance. Full public
+numeric/string/collection hashing, arbitrary object coercion, actual persistent
+sequences and compiled macro bootstrap remain incomplete.
+
+
+Required full workspace93986 ended0: every enabled workspace/doc test passes,
+including numeric3/String3/Murmur5/bitwise6 and compiler pipeline17/HIR-IR2/ABI26.
+Manual ignored tests and diagnostic9 passing/7 exact failing observations remain
+explicit. Log /private/tmp/suss-pr99-review-full-baseline.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+All local Cargo/JVM/Node processes are terminal. Shared test slot is released after
+the review push finishes; root must require exact final reviewed-head CI before
+PR99 readiness. No merge, closure or milestone acceptance. Next retained cached/
+public string hashing and actual persistent sequence/list algorithms, while full
+numeric/public/collection hashing and M2–M9 acceptance remain incomplete.
+
+## Cached string hashing preparation — 2026-10-01
+
+Separate unpublished portable/core-string-hash-cache worktree starts at PR99
+candidate90f73d5.48 provisional cache value/effect probes and primary/native runners
+are prepared but UNEXECUTED. They cover UTF-16 keys, nil/Undefined bypass, cache
+hits suppressing current hasher effects, non-number/zero/NaN cache values,
+throwing misses, threshold1024 versus1025, reset-before-nil behavior, replacement
+identity, captures/live dependencies and prototype-named keys. Expectations must
+be freshly certified; they are not success evidence. PR99 reviewer exclusively
+owns the local Cargo/JVM/Node slot, with72 fresh exact observations (original52
+unchanged), independent foreign/malformed-value ABI coverage and full93986
+confirmed live. No root heavy processes started.
+
+The pinned source creates a plain JS object for this internal cache, calls
+unchecked-get/gobject-set and increments the source counter after hashing/storage.
+A simple persistent map substitution would not preserve observable cache effects:
+for example the inherited __proto__ setter ignores numeric hashes, so repeated
+misses increment the counter repeatedly. The new provisional probes explicitly
+exercise this rather than silently treating every string as an own cache slot.
+Actual dynamic named-object storage/lookup/set semantics and scalar key handling
+are next dependencies. Do not claim them based on existing fixed-schema Object
+fields or substitute private invocation argument buffers for persistent collections.
+
+Next rebase onto final reviewed PR99, acquire the released test slot, certify the
+pin/native red, then adapt required object storage with source provenance and
+executing checks. General prototype mutation/host interop and full public hash,
+collection equality/hash, sequences and M2–M9 remain unfinished. PR97 exact
+reviewed-head CI36823514952 remains live; no readiness claim until success.
+
+## Cached string hashing verified red — 2026-10-01
+
+PR97 is ready at independently reviewed8947aaa after final CI36823514952 SUCCESS.
+Root inspected /private/tmp/suss-pr97-final-ci.log: Python76/reviews130+935/import47,
+String3, copied-callback guard/ABI24 and every enabled full suite pass. No merge.
+PR99 review pushed0fe9889 after72 exact fresh observations, independent malformed
+value ABI recovery, Python76/provenance and full93986 success. Final CI36825310559
+is live at that exact reviewed head; PR99 remains draft. No closure or milestone
+acceptance. Updated both remote PR bodies with final review/CI evidence.
+
+Rebased cache preparation onto PR99 final0fe9889, preserving both append-only
+handoff histories; real pinned upstream clone is present. Root acquired the
+explicitly released shared local slot. Fresh65884 ended101:all48 primary observations
+match exactly, including prototype-named keys, repeated __proto__ misses, reset
+thresholds, nil-before/after reset behavior, false/zero/NaN caches and live hasher
+suppression. Native reports48 located unresolved string-hash-cache failures before
+implementation; there are no native successes or skips. Log
+/private/tmp/suss-string-cache-first-red.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-string-cache-oracle.sh`.
+The original48 source/expected entries are now certified by the pin and should be
+preserved by future implementation/review. No cache forms were imported or falsely
+marked implemented. All root local Cargo/JVM/Node processes are terminal.
+
+Next implement owned dynamic named-object storage and the required native cache
+lookup/set/factory adapters with explicit inherited/prototype key behavior, then
+retain source cache declarations/add-to-string-hash-cache/hash-string with hashes,
+EPL and focused execution. Existing fixed-schema Object fields are insufficient;
+__proto__ numeric writes must not silently become ordinary own cache entries.
+Full public js-obj arities/key conversion/prototype APIs require their own evidence;
+do not infer them from a zero-argument cache factory. Persistent collections, full
+public hash/equality, compiled macros and M2–M9 remain unfinished.
+
+
+## Owned dynamic property kernel — 2026-10-01
+
+PR99 final reviewed-head CI36825310559 completed SUCCESS at
+0fe9889a0a05ba5ad44241cdbc293e2aeda93e1d. Root inspected the complete
+/private/tmp/suss-pr99-final-ci.log, including review132/933, numeric3, ABI26
+and all enabled workspace/doc suites. Updated its evidence body and marked
+PR99 ready; no merge, issue closure or milestone acceptance.
+
+Root continues in /private/tmp/suss-core-string-hash-cache on reviewed PR99.
+Sixteen additional source object/prototype/key-order probes preserve the original48.
+Fresh98282 ended101: all64 match the pin exactly, while native reports64 unresolved
+string-hash-cache errors. No skips/success substitution. Log
+/private/tmp/suss-string-cache-prototype-red.log; command uses the shared target,
+build workers2 and sh scripts/test-string-cache-oracle.sh. This remains an
+unpublished preparation branch; source cache/factory/prototypes are not implemented.
+
+Added original native_objects.rs own-data kernel and two executing runtime tests.
+Uses existing shared UserObject/header/GC array types, private appended descriptor
+identity, raw UTF-16 property comparison and owned growth/replacement. No ABI/type
+layout/core cell change, no registry and no persistent collection claim. Missing
+own properties return Undefined; malformed pair/key/null-value storage and foreign
+owners yield language exceptions. Prototype slot is reserved and unused here;
+__proto__ is literal own data only until the prototype adapter intercepts it.
+See docs/runtime/native-object-storage.md for exact scope and next dependencies.
+
+First kernel test21837 passed. Added guard test initially failed compilation in
+68500 and the immediately following full ABI attempt: an extra unwrap on a
+Wasmtime Val was removed. Corrected focused90523 passed2 and full64457 passed28.
+Null stored-value coverage21345 then failed because args-new supplies language nil,
+not physical null; the test was corrected to forge an explicit null. Corrected
+focused42885 passed2 and final ABI9964 passed28. Logs:
+/private/tmp/suss-owned-properties-null-storage-corrected.log and
+/private/tmp/suss-owned-properties-abi-final.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-compile --test runtime_abi --locked -- --test-threads=2`.
+No full workspace run or independent review is claimed for this unpublished kernel.
+All local processes are terminal; root retains the shared test slot for continuation.
+
+Next add genuine prototype-aware lookup/set and inherited function values,
+scalar key conversion, ignored primitive __proto__ writes, null prototype/data
+shadow behavior and cycle rejection. Then wire the source factory/property adapters,
+retain cache declarations/add-to-string-hash-cache/hash-string with pinned hashes
+and EPL provenance, and require fresh64 native agreement, independent PR review,
+full baseline and exact final-head CI. Do not narrow this to an own-property map
+that changes pinned cache effects. Full public hashing/equality, persistent
+sequences, compiled macros and M2–M9 remain unfinished. Deferred algorithm
+question is issue98, outside existing milestone gates.
+
+
+## Raw prototype chains — 2026-10-01
+
+Continuation after14afd0e is concrete implementation progress. Added iterative raw
+prototype read/set/chain lookup above owned data storage in native_objects.rs.
+The previously reserved header prototype slot now holds nil or an owned object.
+Complete candidate chains are checked before setter mutation; owner-containing
+cycles are rejected atomically. Floyd cycle detection rejects host-forged cycles
+without recursion, side registries or arbitrary chain depth limits. Chain lookup
+uses present own slots, so an own Undefined shadows inherited values correctly.
+This is original low-level storage code; no copied upstream forms or new source
+provenance claim. No shared layout/ABI/core-cell change.
+
+New focused tests exercise inherited values, own Undefined shadowing, self/ancestor
+cycle rejection without changing the old chain, invalid prototype types, nil
+removal, physically forged cycles/null slots, forced GC and recovery. The third
+test executes a 130-object chain, rejects a tail-to-head cycle and recovers after
+restoring its tail. No fake prototype functions or native-success substitutions.
+
+First61843 ended101 on a test API typo (AnyRef::eq); changed to the existing
+Rooted::ref_eq API. Second63503 ended101 because the test requested a nonexistent
+undefined export; corrected the fixture to construct existing sentinel6 directly.
+Corrected70972 passed2. Final focused62694 passed3, and complete ABI11110 passed31.
+Logs /private/tmp/suss-native-prototype-final.log and
+/private/tmp/suss-native-prototype-abi.log. Commands use shared target/build workers2
+and cargo test -p suss-compile --test runtime_abi [runtime_abi_native_prototype]
+--locked -- --test-threads=2. All local processes terminal. No full workspace,
+independent review or final CI claim for this unpublished preparation branch.
+
+Next implement the actual shared default Object prototype and callable inherited
+methods, plus __proto__ accessor semantics and scalar key conversion. Raw prototype
+set deliberately rejects primitives; the source inherited accessor must ignore
+primitive writes and permit null removal/data shadows as certified by the pin.
+Then wire source adapters and retain licensed cached hashing forms, preserving all64
+certified observations. The full cache suite still has64 unresolved native failures;
+these ABI tests do not establish cache/public js-obj compatibility. PR99 remains
+ready at reviewed0fe9889/final CI36825310559 SUCCESS, no merge. M2–M9 remain active.
+
+
+## Callable default Object prototype preparation — 2026-10-01
+
+Continuation afterb5e8e45 implements original native_object_methods.rs and one
+lazy shared GC root. Default-new objects share this root. Five actual closures
+are installed: constructor/toString/valueOf/hasOwnProperty/isPrototypeOf. Member
+methods use existing unbound Object wrapper invocation; no retained receiver or
+placeholder for unfinished methods. Constructor accepts missing/nil/Undefined
+or an existing owned object; primitive boxing remains explicitly unsupported.
+Other object domains and Symbol.toStringTag are not claimed. New private mutable
+root is appended; shared types/ABI version/core cells stay unchanged.
+
+Validation12365 passed the existing3 prototype regressions on the new artifact.
+New actual method invocation69798 passed1. A development Node check and the
+ECMAScript Object prototype operations exposed incorrect detached isPrototypeOf
+ordering: missing/primitive arguments return false before receiver validation;
+object arguments throw for detached undefined this. Corrected both callback
+paths and added regressions;92930 passed1. Final10496 passed1 with own nil presence,
+inherited/own distinction, constructor identity/allocation, prototype identity,
+member/detached semantics, forced GC and recovery. Complete ABI66488 passed32.
+Logs /private/tmp/suss-default-object-methods-final.log and
+/private/tmp/suss-default-object-methods-abi.log. Commands use shared target/build
+workers2 with cargo test -p suss-compile --test runtime_abi
+[runtime_abi_default_object] --locked -- --test-threads=2. Node evidence is
+builtin development evidence, not fresh pinned ClojureScript source comparison.
+All local processes terminal; root retains the test slot for continuation.
+
+This unpublished preparation has no full workspace/review/final CI claim. The
+source cache corpus remains64 unresolved native failures; no cache/native success
+or milestone closure. Default prototype remains incomplete: actual remaining
+methods, property attributes, inherited __proto__ getter/setter, immutable root
+prototype rules and scalar property adapters are next. Then retain licensed
+source cache forms, require fresh64 pinned/native agreement, independent PR review,
+full required baseline and exact final-head CI. Do not infer complete public
+js-obj/Object/hash behavior from these five bounded builtins. M2–M9 stay active.
+
+
+## Scalar property/prototype accessor preparation — 2026-10-01
+
+Continuation after4fd3f18 adds original native_object_properties.rs. Checked scalar
+keys use existing coerce-string. The adapter preserves inherited default __proto__
+getter/setter behavior, nearer own/inherited data shadows (including Undefined),
+ignored supported primitive writes, null prototype removal followed by own-data
+creation, cycle rejection and immutable default-root prototype changes. Same nil
+root prototype writes remain allowed. Foreign object domains/physical null stay
+language errors; no unknown-to-success path. No shared layout/ABI/core-cell change.
+The raw storage still has no general property attributes/accessor descriptors.
+
+78808 passed the existing default method test on the new validated artifact.
+Added2 actual ABI regressions: scalar nil/bool/Undefined/-0/NaN/fractional/empty/
+astral/lone-surrogate keys, __proto__ write/get/data shadows, inherited data, cycle/
+root error atomicity and forced GC/recovery.99970 passed2. Complete ABI89189 passed
+all34 existing tests, log /private/tmp/suss-native-property-abi.log. Focused log
+/private/tmp/suss-native-property-first.log. Shared target/build workers2, command
+cargo test -p suss-compile --test runtime_abi [runtime_abi_native_property] --locked
+-- --test-threads=2. Independent development Node assertions also passed, log
+/private/tmp/suss-proto-property-node.log. These are builtin runtime checks, not
+fresh pinned ClojureScript/native cache comparisons.
+
+Then added a meaningful desired-behavior regression for the discovered reflection
+hole: runtime_abi_default_proto_accessor_is_an_own_property.11879 ended101 with
+actualfalse(i31=2) versus expectedtrue(i31=4), while Node reports true. Log
+/private/tmp/suss-default-accessor-descriptor-red.log. This failing test remains
+active and unskipped. Therefore the current complete ABI suite is NOT green:
+34 existing tests passed before adding the new failing regression. Do not infer
+public Object compatibility or PR readiness from the prior34 result.
+
+Next replace implicit root-identity accessor recognition with real owned property
+descriptors/attributes and genuine accessor function values. Fix the new reflection
+regression without special-casing hasOwnProperty, then implement remaining Object
+methods and source adapters. Preserve the64 certified source corpus; native cache
+forms still unresolved. No PR/full workspace/independent review/final CI claim on
+this unpublished preparation branch. All local processes terminal. M2–M9 active;
+no merge, closure or milestone acceptance.
+
+
+## Owned data/accessor descriptors — 2026-10-01
+
+Continuation afterb4c7d16 replaces implicit root-identity __proto__ recognition
+with real owned descriptors [flags,payload], reusing existing GC arrays. Data
+flags writable1/enumerable2/configurable4; accessor8 requires a pair of callable
+getter/setter values or Undefined, with writable accessors rejected. All storage
+checks descriptors before mutation; lengths/flags/null/malformed/noncallable cases
+raise language exceptions. Integer flags are checked before i31 truncation.
+Raw own-store/define are private internal redefinition operations, not public
+Object.defineProperty semantics; configurable compatibility enforcement stays open.
+
+Default root owns an actual configurable/non-enumerable __proto__ descriptor with
+real unbound callable getter/setter wrappers. Generic property resolution/invocation
+replaces the lookup special case. Nearer descriptors shadow farther ones; receiver
+is preserved for arbitrary descriptor keys. Readonly data and setter-less accessors
+ignore writes in the bounded non-strict adapter; writable own data retains flags,
+and writable inherited data creates ordinary ownflags7. Builtin methods now have
+proper non-enumerable/writable/configurable flags5. Added real propertyIsEnumerable
+and toLocaleString (live property lookup/invocation). No placeholder methods.
+No shared type/layout/ABI/core-cell change. Root remains lazy GC-owned.
+
+Original desired reflection regression80735 passed1 unchanged. Existing property
+regressions passed2, log /private/tmp/suss-descriptor-property-regressions.log.
+9863 passed existing default method1. New descriptor20307 passed2: readonly own/
+inherited writes, ordinary new property flags, copied getter/setter receiver,
+invalid signed/truncated flags, malformed payloads, enumerability and live toString
+returning the actual receiver through valueOf. Complete ABI38225 passed37, log
+/private/tmp/suss-owned-descriptors-abi.log; focused log
+/private/tmp/suss-owned-descriptors-first.log. Commands use shared target/build
+workers2 and cargo test -p suss-compile --test runtime_abi [descriptor] --locked
+-- --test-threads=2. All active tests enabled; previous own-accessor failure fixed.
+Independent development Node assertions pass, log
+/private/tmp/suss-owned-descriptors-node.log. No fresh pinned source comparison
+or full workspace/review/final CI claim for this unpublished preparation.
+
+Next implement remaining real legacy define/lookup getter/setter methods with
+receiver/key/callability/descriptor compatibility checks, then wire source adapters
+and licensed cached hashing forms. Public define/delete, primitive boxing, foreign
+object domains and Symbol.toStringTag remain open. Preserve64 certified source
+observations; native cache forms still unresolved, not acceptance. All processes
+terminal. M2–M9 goal active, no merge/closure/milestone acceptance.
+
+
+## Real legacy accessor methods — 2026-10-01
+
+Continuation aftereae27c8 adds all four real default legacy define/lookup getter/
+setter methods. Eleven function values and one actual __proto__ accessor now
+populate the owned default prototype. Define checks receiver/callback callability
+before scalar key conversion, rejects non-configurable own properties, preserves
+an existing own accessor counterpart and defines flags14. Lookup resolves stored
+descriptors through the chain and returns actual getter/setter identity without
+invocation; nearer data shadows stop lookup. Internal selector bounds reject
+negative/out-of-range values before array access. No placeholder functions.
+No shared type/layout/ABI/core-cell change.
+
+First formatter/Cargo attempt ended101 on a mismatched closing delimiter in the
+new helper; fixed that syntax before execution. Corrected93893 passed2 existing
+descriptor tests. New66004 passed2 actual legacy regressions: member invocation,
+inherited getter/setter lookup, receiver identity, counterpart preservation,
+setter-only Undefined reads, flags14, data shadowing, detached throws, typed
+rejection/GC recovery and configurable data conversion versus non-configurable
+atomic rejection. Full ABI75670 passed39. Logs
+/private/tmp/suss-legacy-accessor-first.log and
+/private/tmp/suss-legacy-accessor-abi.log. Commands use shared target/build workers2
+and cargo test -p suss-compile --test runtime_abi [runtime_abi_legacy_accessor]
+--locked -- --test-threads=2. Independent development Node assertions also pass,
+/private/tmp/suss-legacy-accessor-node.log. Not a fresh source oracle comparison.
+
+Next wire private compiler object factory/get/set operations, retaining source
+js-obj/cache declarations/add-to-string-hash-cache/hash-string with source hashes
+and EPL. A function-valued adapted js-obj factory must preserve first-class/live
+binding behavior and variadic argument evaluation before odd-arity errors; do not
+silently advertise a zero-argument-only public factory. General public definition/
+deletion, primitive boxing/foreign objects and Symbol.toStringTag remain open.
+Preserve64 source observations, require fresh native agreement then independent
+PR review/full baseline/exact final-head CI. No PR readiness/merge/closure or
+milestone claim on this unpublished branch; all processes terminal. M2–M9 active.
+
+
+## Compiled private object adapters and variadic factory — 2026-10-01
+
+Continuation after99078a6 adds original native_object_factory.rs and checked
+Nominal HIR operations NativeObjectFactory/Get/Set. Direct private suss.bootstrap
+object-factory returns a real function; object-get/set lower evaluated operands
+in order with typed runtime imports. Private wrong arities fail during analysis,
+atomically. HIR and IR use existing Nominal validity checking, not the scalar
+bitwise enum. No public core names/source forms/ABI layout/core cells changed.
+
+Factory invocation accepts evaluated variadic arguments and rejects odd pairs
+at runtime, preserving effects before failure. Empty/even pairs create default
+owned objects through descriptor-aware property writes. Single native-array
+arguments flatten recursively using checked source-array storage. An iterative
+Floyd check rejects self/mutual array cycles without arbitrary depth limits or
+recursion. Factory is a function value, not a zero-argument-only public claim.
+No singleton factory registry retains owners; live vars/captures use normal cells.
+
+Initial96061 passed existing default method1 on the validated new artifact.
+New compiled source63175 passed2; final52318 passed2 with capture/rebinding probes.
+Source executes empty/pairs/nested arrays, effects12345, inherited properties,
+scalar keys, runtime odd-arity effects, private compile-atomic arities, malformed
+receivers/keys, self/mutual native-array cycles and post-GC recovery. Log
+/private/tmp/suss-native-object-source-final.log. Command uses shared target/build
+workers2, cargo test -p suss-cli --test portable_native_objects --locked --
+--test-threads=2. New ABI22872 passed1 for foreign/null next/flatten buffers and
+forged null keys, typed exceptions/recovery. Complete ABI48069 passed40, log
+/private/tmp/suss-object-factory-abi.log. No skips or unknown-success substitution.
+
+Next retain runtime js-obj/cache declarations/add-to-string-hash-cache/hash-string
+and macro unchecked-get/set with explicit patches/hashes/EPL. Respect function-
+valued public factory arities/live cells and original source counter/reset ordering;
+macro property operands must preserve evaluation order. Preserve64 certified source
+observations and certify fresh primary/native agreement. No full workspace/PR
+review/final CI claim for this unpublished branch. Source cache64 remains unresolved
+until forms are retained; full public foreign-object/boxing/descriptor definition/
+delete/Symbol behavior and M2–M9 remain open. All local processes terminal.
+
+
+## Retained cached string hashing first green — 2026-10-01
+
+Continuation after2a66db4 retains5 runtime forms with explicit patches/original
+metadata/EPL: js-obj/cache/cache-count/add-to-string-hash-cache/hash-string. Cache
+source order and live dependencies retained. Added bounded checked unchecked-get/
+set macro lowering. Macro literal js-obj and general foreign/array/string bracket
+interop remain explicitly incomplete. Original native named member wrapper routes
+owned objects to descriptors while preserving fixed nominal/String/Array fallback.
+No shared type/layout/ABI/core-cell change. Source cache uses Object descriptors,
+not persistent maps. Recipe50/import54 and reviews139/926 remain partial.
+
+Native first91365 passed64 observations. Fresh primary67283 passed64 exact pin
+observations and native1, log /private/tmp/suss-cache-fresh-primary.log, command
+shared target/build workers2 sh scripts/test-string-cache-oracle.sh. Original48
+and all64 certified expected/source entries unchanged. Final native98787 passed3
+with aliases, first-class variadic factories, native members, own accessor reflection,
+mutable named property, captured/live hasher dependencies, lexical shadowing,
+compile-atomic macro arities/runtime core arities/effect-before-error/recovery.
+Log /private/tmp/suss-cache-source-final.log. Python/provenance5116 ended0:
+Python76/inventory1065/reviews139+926/import54. Log /private/tmp/suss-cache-python.log.
+Final ABI36609 passed40, /private/tmp/suss-cache-abi-final.log. No skips or false
+milestone success. Commands cargo use --locked/--test-threads=2/shared target and
+build workers2.
+
+Required full workspace baseline29258 is running, confirmed live at launch; log
+/private/tmp/suss-cache-full-baseline.log. Root exclusively owns heavy local test
+slot until that handle is terminal. No independent PR review or final-head CI
+claim yet. Next inspect terminal full result, open the coherent cached hashing PR
+with Refs9/11/14/16/19, dispatch independent review/fixes and require exact reviewed-
+head CI. Do not merge. Public hashing/equality, actual persistent sequences/maps,
+compiled macros, complete host-property operations and M2–M9 remain unfinished.
+
+
+## PR100 independent review — 2026-10-01
+
+Root baseline29258 finished successfully before review in
+/private/tmp/suss-cache-full-baseline.log. Draft PR100 was opened from3fbabd1,
+base reviewed PR99/0fe9889; independent reviewer works in
+/private/tmp/suss-review-pr100. Root released the exclusive heavy test slot after
+29258 became terminal; reviewer runs no parallel Cargo/JVM/Node processes.
+
+Review found two significant strictness defects in the retained Closure operations.
+The pinned Closure object module is strict: gobject/set and gobject/create pair
+assignment throw for getter-only or non-writable resolved properties. The candidate
+used the same non-strict store as unchecked-set, silently ignoring blocked writes;
+cached hashing then incorrectly incremented the counter. Fresh primary68 attempt
+39032 ended1 on an uncaught getter-only write while the initial native probe had
+returned2. After splitting the store, first focused83360 ended101 because that
+new provisional native expectation still said2; actual0 correctly preserved the
+counter. Corrected this new expectation only, then fresh48006 certified68 exact
+pin observations/native4. Fresh59337 certified69 exact pin/native4, including
+non-strict unchecked-set ignoring a getter-only write. Original64 remain unchanged.
+
+Added strict private object-set-strict/typed runtime import and descriptor-aware
+strict store. Getter-only and readonly writes raise language exceptions before
+mutation; arbitrary setters retain actual receiver-aware invocation. Retained
+add-to-string-hash-cache uses the strict store; counter/reset order and live
+bindings stay unchanged. Runtime factory pair assignments also use strict store,
+matching gobject/create. Source patch rationales, hashes/manifest, manual dependency
+review and stale storage documentation were corrected. Shared GC layout, ABI
+version and core-cell count stay unchanged; public defineProperty remains open.
+
+Focused ABI11481 passed1: own/inherited readonly data throws typed exceptions,
+not traps, preserves data and recovers through GC; writable inherited data creates
+an own property. Pre-factory-fix full93776 passed, log
+/private/tmp/suss-pr100-review-full-baseline.log. An additional first-class factory
+probe avoids the separate unfinished literal macro. Fresh21556 certified70 exact
+pin observations then ended101 because native returned an Object instead of throwing
+and returning caught Number41; strict decoder rejected the wrong layout. After
+factory fix, fresh92625 passed all70 exact pin observations and native4, log
+/private/tmp/suss-pr100-review-primary70-final.log. New cases also certify inherited
+getter effects, inherited setter without own-data creation, throwing cache writes,
+getter-only counter atomicity and non-strict bracket behavior. All original64
+sources/expectations were checked against3fbabd1 and remain unchanged.
+
+Commands use shared target /Users/bobby/code/github/bobby/suss/target and build
+workers2: sh scripts/test-string-cache-oracle.sh; cargo test -p suss-compile
+--test runtime_abi runtime_abi_strict_owned_store --locked -- --test-threads=2;
+cargo test --workspace --locked -- --test-threads=2. Final independent Python76,
+inventory1065/reviews139+926/import54 pass, log
+/private/tmp/suss-pr100-review-provenance-final.log. No skipped success substitution.
+Final workspace79254 is live at launch, log
+/private/tmp/suss-pr100-review-full-final.log; terminal result will be recorded below.
+Exact reviewed-head CI remains root's next readiness gate after reviewer push.
+No merges or issue/milestone closures. Public hashing/equality, persistent sequences,
+collections, literal js-obj macro, full property domains and M2–M9 remain open.
+
+Final workspace79254 ended0: all required workspace suites and doc tests pass,
+including source cache4 (70 corpus observations), private source2 and ABI41.
+Log /private/tmp/suss-pr100-review-full-final.log. All reviewer local processes
+are terminal and the exclusive heavy slot is released to root. Independent review
+has no remaining significant findings in this bounded slice after the two strict
+Closure fixes. Reviewer pushes this reviewed source/evidence head to PR100; root
+must require exact reviewed-head CI before readiness. Next unblocked implementation
+is persistent sequence/list foundations, while literal macro/property domains and
+full hashing/equality remain tracked unfinished. No merge or milestone completion.
+
+## Sequence/list preparation and canonical literal — 2026-10-01
+
+New isolated branch portable/core-sequence-foundation at candidate PR100
+3fbabd1924ce4e39d29ad3e6dd949b11a40c78e1 preserves the six original preparation
+artifacts from7b60562 without replaying its stale parent stack or overwriting
+current roadmap/ABI evidence. All original48 sequence source/expectation JSON
+values are preserved. Three newly appended static-property candidates bring the
+corpus to51; they are not freshly certified yet. The native test explicitly
+loads the generated core artifact and remains expected red on unresolved seq.
+
+Pinned compiler.cljc577–580 emits cljs.core.List.EMPTY for (). Portable HIR now
+resolves canonical suss.core/List and performs the existing checked named read.
+No runtime type/layout/bootstrap change. Added one original adapter regression
+for GC, canonical alias/lexical/user List shadowing, captured reader and live
+static-property replacement. Preserved all five preexisting core interface tests;
+the older preparation worktree's short test file was not used to replace them.
+This is a compiler prerequisite, not concrete List/EmptyList acceptance.
+
+Python inventory_records validated the pin and recorded20 complete source
+ranges/hashes in docs/runtime/sequence-source-audit.json. git diff --check passes.
+Rustfmt was limited to the two sequence test files. No Cargo/JVM/Node execution
+on this branch yet: independent PR100 reviewer exclusively owns the shared heavy
+slot. No new PR/readiness/closure or milestone completion claim.
+
+PR100 review found strict Closure gobject/set and gobject/create writes were
+incorrectly using non-strict bracket stores. Reviewer is preserving bracket
+semantics and certifying separate strict stores, including cache counter effects
+and first-class factory behavior. Candidate100 CI36832808888 was confirmed live
+in_progress at3fb. Candidate CI cannot certify a changed reviewed head. Root
+must inspect reviewer terminal results/release, rebase this branch onto the pushed
+reviewed100 head, run focused core_sequence_interfaces and fresh sequence oracle
+(record native red transparently), then retain actual upstream list/sequence types
+with their full dependency closure. Require independent review/full/final-head CI
+for every eventual PR. Never merge. M2–M9 remain active and incomplete.
+
+
+## Sequence canonical lookup executed / fresh51 red — 2026-10-01
+
+Independent PR100 review finished and pushed3e5af026f5b2f0de09edace672ad0f45c084e93a.
+Root inspected final workspace log /private/tmp/suss-pr100-review-full-final.log
+and reviewer handoff; full79254 is terminal0, sourcecache70/private2/ABI41 and
+Python76/inventory1065/reviews139+926/import54 pass. Two significant strict Closure
+findings are fixed; no remaining significant finding. Updated PR100 body with
+actual review/fixes/results. Exact-head CI36834509263/job110278870352 is confirmed
+in_progress at3e5af02. Candidate36832808888 is cancelled and cannot gate readiness.
+PR100 stays draft; next require this exact CI success before marking ready.
+
+Rebased sequence preparation2d44d8b onto reviewed3e5af02; resolved only appended
+handoff conflict by preserving both histories, producing53281ca. Pinned source
+is a detached nested Git worktree atc4295f30, not a tracked symlink. No unrelated
+root files/stashes changed. All original48 source/expectation JSON values were
+checked against7b60562 and remain equal;3 candidates are now independently certified.
+
+Focused core_sequence_interfaces10925 ended0 with6 passing tests. Extended the
+canonical literal regression with compile-atomic premature definition failure
+and live nil EMPTY reads, then final19497 ended0 with6/6 passing. Log
+/private/tmp/suss-sequence-canonical-final.log. Command: shared target/build2
+cargo test -p suss-cli --test core_sequence_interfaces --locked -- --test-threads=2.
+
+Fresh sequence18929 ended101: primary51 all match exactly; native explicitly
+loads core then fails on unresolved Runtime name seq at7..10. Log
+/private/tmp/suss-sequence-primary51-native-red.log. Command: shared target/build2
+sh scripts/test-sequence-oracle.sh. Recorded failure is the actual next implementation
+boundary; no ignored test/expectation substitution/native sequence success claim.
+All root local processes terminal. Full workspace is not claimed green for this
+unfinished sequence branch, which contains the deliberate native red regression.
+
+Next retain actual upstream List/EmptyList/Cons/IndexedSeq and their audited
+source dependency closure, publish the real EmptyList on List.EMPTY, implement
+seq APIs and general persistent variadic rest. Preserve51 observations and certify
+native execution with equality/hash/metadata/reduction/iterator/lazy obligations
+still in scope. Do not replace concrete types with the original literal test adapter.
+No new PR yet; require independent review/fixes/full/final-head CI before readiness.
+M2–M9 stay active; no merges or issue/milestone completion claims.
+
+
+## Retained concrete sequences and persistent variadic rest — 2026-10-01
+
+PR100 is READY, still unmerged: head3e5af026f5b2f0de09edace672ad0f45c084e93a,
+independent review/fixes and full79254 passed. Exact reviewed-head CI36834509263
+completed SUCCESS; root inspected /private/tmp/suss-pr100-final-ci.log, updated
+PR body and ran gh pr ready100. No merge/closure/milestone acceptance.
+
+Sequence branch continues from0f60113. Retained all methods of List/EmptyList/Cons/
+IndexedSeq plus14 helper/API declarations:18 new selected forms bring import68/
+72 licensed artifacts, reviews157 partial/908 unassessed. Explicit patches retain
+algorithms/docstrings/metadata/EPL and replace host Error/numeric array append/
+bounded defn. Empty ordered hash's unsupported private attribute is omitted only
+in its explicit executable patch; privacy/Var metadata remain pending. No blanket
+method deletion or fake helpers. Original loader forward declarations explicitly
+name pending print/index-search/equality/hash/reduction/iterator/RSeq/str_ helpers;
+invoking an uninitialized dependency fails, not succeeds. Two complete licensed
+setup statements publish real List.EMPTY and nil ICounted. New hash-bound loader
+inputs/manifest and scripts/sequence_provenance.py plus3 regressions verify source
+bounds/hashes/notices/order and reject edits/extra forms. CI runs that check.
+
+Compiler canonical () lookup was retained. HIR/verified IR now carry variadic
+method/rest-class facts. Exact fixed dispatch precedes a variadic entry. Rest
+uses a fresh source array and live canonical IndexedSeq class construction with
+array/offset0/nil metadata. No raw Args masquerades as a persistent sequence.
+Empty rest is nil and skips class lookup/construction. Named self/recur, captures,
+source evaluation order, arity checks and malformed signature atomicity execute.
+Private language-error-new uses existing descriptor/Exception layout and checked
+UTF-16 coercion. No shared type/layout/ABI/bootstrap core-cell change.
+
+First type focus38038 ended101 on unsupported private metadata; explicit source-
+bound empty hash patch corrected loading and47239 passed6 interface tests. New
+fixture failed compilation on nonexistent StructRef.get; corrected strict fields
+before42637 passed2 actual type/error tests. Initial variadicbuild12819 passed2.
+Initial list15567 passed all51/native3. First fresh67/25453 ended1: one new candidate
+wrongly expected array-seq to supply rest. Pinned compiler.cljc987–1001/1058–1074
+constructs IndexedSeq directly. Corrected only that new expected7/renamed probes,
+added class/empty-rest probes and fixed compiler binding/construction accordingly.
+All original51 checked JSON-equal against0f60113 and untouched. Fresh9486 certified
+69 exact primary observations/native3. Final source98359 passed4 with persisted
+rest/GC/wrong-arity effects/malformed signatures/recovery; final72919 repeats69 exact
+primary/native4, /private/tmp/suss-sequence-primary69-final.log.
+
+Python loader13 initially passed; source setup provenance metadata initially listed
+source order while the explicit loader runs singleton then nil extension. Corrected
+metadata to actual retained statement order; all80 Python tests pass, plus inventory/
+reviews157+908/import72/setup2. Log /private/tmp/suss-sequence-python-final.log.
+Commands: python3 -m unittest discover -s scripts -p test_*.py; python3 scripts/
+sequence_provenance.py; python3 scripts/core_import.py --check; python3 scripts/
+cljs_reviews.py. Rustfmt only test/new modified function regions, not workspace.
+
+First full72012 ended101 on an old unsupported-variadic fixture expecting span&;
+without loaded source core, the new lowering correctly reports missing IndexedSeq
+at the function span. Updated that regression to assert exact dependency diagnostic,
+retaining destructuring/arity failures. Closure27762 passed13; added malformed
+variadic IR class/arity/entry rejection and final41525 passes14. Pinned unchecked-
+max binds operands once; corrected the count patch to explicit let/branch before
+final fresh72919. No unchanged oracle result retargeting or skipped success.
+
+Final full workspace6028 running, confirmed live through portable pipeline tests.
+Log /private/tmp/suss-sequence-full-final.log. Root exclusively owns heavy slot;
+all earlier local handles terminal. Cargo commands always shared target, build2,
+--locked/--test-threads=2, no RUSTFLAGS. Required baseline before opening coherent
+sequence/rest draft PR against100 with Refs9/14/16/17/19. Then dispatch independent
+subagent review/fixes, reviewer full baseline and exact reviewed-head CI. Do not
+merge. Complete helper dependencies, equality/hash/metadata/reduction/iterators,
+general apply and compiled macros remain next; lazy/chunked/vector/HAMT/transient
+and M2–M9 acceptance stay unfinished. Source seq JS Symbol.iterator branch is
+outside this portable adapter; typed bridge/iterators and str_ formatting remain
+explicit pending boundaries. No full core/collection or milestone completion.
+
+
+Final full6028 ended0; root inspected /private/tmp/suss-sequence-full-final.log
+through final doc-test completion. All required workspace suites pass, including
+native sequence4/fresh69 cases, interface6, closure14 and runtime ABI41. Existing
+manual ignored observations and diagnostic9 passing/7 known failures remain
+explicit. No scope-wide compatibility claim. Original51 JSON values checked
+against0f60113 remain identical. All local handles terminal; root may open the
+coherent sequence/rest draft and release the heavy slot to its mandatory independent
+reviewer. Exact final reviewed-head CI still gates readiness. No merges.
+
+
+## Independent PR101 review — 2026-10-01
+
+Reviewed candidate4d5ee493771768b2ac841b9384895f189fce757d independently in
+/private/tmp/suss-review-pr101 against reviewed PR100 base3e5af02. Read accepted
+design/ROADMAP/inventory/handoff and inspected complete source types, every
+adaptation, setup/EPL/provenance, canonical empty lookup, typed Error, and
+fixed/variadic HIR/IR/dispatch/captures/recur. No significant production defect
+identified in this bounded foundation. Wrong arity remains a typed diagnostic per
+accepted design; unchecked JS calls are not a substitute for that contract.
+
+Independent fresh51409 ended0 with all original69 exact pinned/native matches.
+Added six edge observations without changing any original source/expectation;
+fresh59125 ended0 with75 exact primary/native matches and all5 native sequence
+tests. Log /private/tmp/suss-pr101-review-oracle75.log. New probes cover fixed0 vs
+variadic0 dispatch, many arguments, recur with a List rest, separate owned rest
+arrays, array growth and captures/named self calls. Additional native test rebinds
+IndexedSeq to nil/false/number/function: empty rest bypasses the class; nonempty
+rest raises Language error after argument effects; GC plus restoration recovers.
+No trap, silent success, oracle retargeting or ignored failure.
+
+Command: CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target
+CARGO_BUILD_JOBS=2 sh scripts/test-sequence-oracle.sh. Python80 passed,
+/private/tmp/suss-pr101-review-python.log; both licensed setup forms, import72 and
+reviews157 partial/908 unassessed verified using python3 -m unittest discover -s
+scripts -p 'test_*.py', sequence_provenance.py, core_import.py --check and
+cljs_reviews.py. Original69 JSON values verified identical to candidate4d5ee49;
+original corpus text retains its escaping, with additions only.
+
+Independent full workspace session70659 ended0; inspected log through all
+final doc tests, /private/tmp/suss-pr101-review-full.log. All required suites pass;
+existing manual ignored and explicit diagnostic gaps remain unchanged. Command: shared target/build2
+cargo test --workspace --locked -- --test-threads=2. No RUSTFLAGS. Exact final
+reviewed-head CI required after review commit/push; PR101 remains draft, no merges.
+Next implement the explicit pending source helpers for printing/sequential
+hash/equality/reduction/iterators/reversal/general apply, then lazy/chunked/vector/
+HAMT/transient acceptance. Full lossless collection decoder and M2–M9 gates remain
+unfinished; no issue or milestone closure.
+
+## Retained sequential equality — 2026-10-01
+
+PR101 independent review pushed47170abf51e4b0ef927cd9af323e6919a4f822f7,
+no significant production finding. Fresh75/native5/Python80/full70659 terminal0;
+reviewer released heavy slot after all handles terminal. Root verified exact-head
+CI36840696723 live; draft remains until successful final reviewed-head CI.
+
+Separate branch portable/core-sequential-equality based on reviewed101 retains
+pinned =1342/equiv-sequential3151 and complete unmodified number/default IEquiv
+extensions1475/1866. Selection70/artifacts74/reviews159partial+906unassessed;
+source setup verifier4, forward declarations/hash-bound loader and EPL unchanged
+except reviewed new forms. No new runtime ABI/type/bootstrap-cell/algorithm.
+
+Initial native36319 terminal0, original75 match/native5 pass. Added56 candidates.
+Fresh84867 ended1: new provisional user-def equality expectation contradicted
+pin (user shadow leaves core helper intact). Corrected only that new expectedfalse
+and added qualified core-cell probe. Fresh21347 ended1 with pinned direct-arity2
+TypeError on fixed replacement; corrected new probe to multi-arity replacement.
+Final20778 terminal0 fresh131 match/native5, log
+/private/tmp/suss-equality-primary131-final.log. All original75 source/expectation
+objects preserved. Added wrongarity/effects/typed user throw/saved equality/GC
+recovery: native19043 terminal0 six tests, /private/tmp/suss-equality-native6.log.
+Python80 pass, /private/tmp/suss-equality-python.log; import/setup4/reviews checks
+and diff-check pass. No changed certified result, skip, broad acceptance claim.
+
+Required full2502 live, /private/tmp/suss-equality-full.log, root exclusively
+owns heavy slot. Command shared target/build2 cargo test --workspace --locked --
+--test-threads=2; no RUSTFLAGS. Read final output before commit/push/draft PR against
+101. Mandatory independent review/fixes/full/exact final-head CI gate readiness;
+no merge. Remaining retained hash/reduced/reduction/iterator/reversal/printing/
+index-search helpers, other persistent types and compiled macros are next;
+M2–M9 and issue IDs remain active, no closures.
+
+Full2502 terminal0; root inspected final doc-test completion in
+/private/tmp/suss-equality-full.log. Required workspace baseline passes with
+native sequence6/closure14/ABI41 and all enabled required suites. Existing manual
+ignored tests and diagnostic9passing/7knownfailures remain explicit; no broad
+compatibility acceptance. All root local handles36319/84867/21347/20778/19043/
+32175/2502 terminal, including the two preserved primary failures above. Ready
+for candidate commit/push/draft PR and mandatory independent review. Root must
+release heavy slot to that reviewer; exact reviewed-head CI still gates readiness.
+
+
+## Independent PR102 review — 2026-10-01
+
+Reviewed candidatee893b1db61f16d1ae89bc076c9f834016852ae38 against reviewed
+PR101 base47170ab in /private/tmp/suss-review-pr102 with actual detached pinned
+upstreamc4295f30. Read accepted design/ROADMAP/inventory/handoff; compared complete
+retained equality algorithms/arities/docstrings/metadata and source setup statements,
+defn patches/provenance/EPL and native/direct protocol dispatch. No significant
+production defect identified. Privacy/runtime Var metadata and compiled macros
+remain explicitly incomplete, as do remaining collection types and public hashing.
+
+Independent fresh16559 ended0: original131 exact primary/native6. Preserved every
+original131 source/expectation object and added six edge probes. The original
+CountProbe uses default identity and cannot alone establish counted rejection;
+new direct helper and actual IEquiv delegation prove count calls in order12 and
+no seq effects. New uncounted length/direction/variadic short circuit/zero/NaN cases
+also pass. Fresh18729 ended0 with137 exact pinned primary/native6, log
+/private/tmp/suss-pr102-review-oracle137.log. Native arity recovery now checks each
+intermediate effect, rather than only final29. Python9589 ended0,80 passed,
+/private/tmp/suss-pr102-review-python.log; import74/setup4/reviews159partial+906
+unassessed and diff-check pass. No certified expectation retargeting or skips.
+
+Commands use shared target/build2, no RUSTFLAGS: sh scripts/test-sequence-oracle.sh;
+python3 -m unittest discover -s scripts -p 'test_*.py'; core_import.py --check;
+sequence_provenance.py; cljs_reviews.py. Required full workspace63890 remains
+running. Reviewer owns heavy slot until all handles terminal and latest regression
+validation/full baseline inspected. Exact final reviewed-head CI still gates PR102
+readiness; do not merge or close milestones. Next retained reduced/reduction,
+ordered/public hashing, iterators/reversal/printing/index helpers and other
+persistent types remain unblocked M4/M7 work; M2–M9 acceptance incomplete.
+
+
+Independent first full63890 ended0 through final doc tests,
+/private/tmp/suss-pr102-review-full.log. After strengthening intermediate native
+arity effects, focused68289 ended0 with six tests/137 corpus cases,
+/private/tmp/suss-pr102-review-native-final.log. Final required latest-source full
+90258 ended0; inspected final doc-test completion in
+/private/tmp/suss-pr102-review-full-final.log. Command: CARGO_TARGET_DIR=/Users/
+bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace
+--locked -- --test-threads=2. All enabled required suites pass; existing manual
+ignores and diagnostic9passing/7knownfailures remain explicit. All reviewer local
+handles16559/18729/9589/63890/68289/90258 terminal. Reviewer releases heavy slot
+after committing/pushing this evidence and tests; root must verify successful
+exact reviewed-head CI before readiness. No merge or milestone closure.
+
+## Sequence reduction preparation — 2026-10-01
+
+Isolated branch portable/core-sequence-reduction from candidate102 prepares
+retained IDeref/Reduced/reduced helpers/deref/array-reduce/iterable?/iter-reduce/
+seq-reduce/reduce plus original bounded symbol-binding if-let lowering. All
+upstream reduction algorithms/methods are retained; selected82/generated86 and
+172 partial/893 unassessed are provenance/preparation counts only. New59 reduction
+and18 control candidates are UNVERIFIED, not certified matches. No native/full
+pass claim for this preparation. Reviewer102 owned heavy slot during preparation.
+
+Reviewer102 now pushed a9f19e8650c1c2079e2c5066ebde076f9ea284a8 with evidence
+fixes; fresh137/native6/Python80/full90258 terminal0, all handles terminal and
+heavy slot explicitly released to root. Root must rebase preparation onto that
+reviewed parent before focused loading/if-let/primary/native/full verification.
+Exact102 reviewed-head CI required before readiness; no merges/issue closures.
+No RUSTFLAGS; shared target/build2 and test threads2. Next execute the prepared
+reduction artifact, correct actual failures with source/order/provenance aligned,
+then independent review/fixes and exact final-head CI for a coherent PR.
+
+Preparationa1f579a rebased onto reviewed102a9f19e8; only handoff append conflicted,
+resolved retaining both complete review and preparation sections. Source reduction
+and if-let architecture follows the pin; no ABI/type/core-cell change. Initial
+focus34984 terminal101: standalone control harness lacks source inc/dec, so new
+candidates use +/-, no expectation changes. Focus24330 terminal101: control3 pass,
+new native number IReduce case returns NaN. Fresh89149 terminal1 confirms pin
+also returns NaN and warns base-type arities must be grouped; no production bug.
+Corrected only new candidate extension shape. Fresh1985 terminal0 with59 exact
+primary/native, /private/tmp/suss-reduction-primary59-final.log. Control16870
+terminal0 with77 exact primary/native3, /private/tmp/suss-reduction-control-primary77.log.
+All original59 control and137 reviewed sequence cases preserved.
+
+Added saved reducer/Reduced/GC/arity-effects/arbitrary typed throw/recovery and
+if-let aliases/exclusions/compile atomicity guards. Native50993 terminal0 with
+reduction2/control3, /private/tmp/suss-reduction-native-final.log. Python32282
+terminal0 with80 passes, /private/tmp/suss-reduction-python.log; import86/setup4/
+reviews172partial+893unassessed/diff-check pass. Rustfmt only new if-let arm and
+changed/new native test files, no unrelated formatting. Primary failures preserved.
+
+PR101 READY, still unmerged: reviewed47170abf51e4b0ef927cd9af323e6919a4f822f7;
+exact-head CI36840696723 SUCCESS completed2026-10-01T09:31:05Z. Root inspected
+/private/tmp/suss-pr101-final-ci.log through final doc tests, updated body and
+ran gh pr ready101. PR102 revieweda9f19e8 remains draft while CI36842775585 live.
+No issue closure/milestone acceptance.
+
+Full46990 running, /private/tmp/suss-reduction-full.log. Root exclusively owns
+heavy slot; all prior root handles terminal. Required shared-target/build2 cargo
+test --workspace --locked -- --test-threads=2, no RUSTFLAGS. Inspect terminal
+baseline before final commit/push/draft PR against102, independent subagent
+review/fixes/full and exact reviewed-head CI before readiness. No merge. Next
+retained ordered/public hash, iterator/reversal/printing/index helpers plus remaining
+persistent types and compiled macros; lazy/chunked/transducer/metadata/transient
+and M2–M9 release acceptance remain incomplete.
+
+Full46990 ended0; inspected /private/tmp/suss-reduction-full.log through final
+reader doc tests. All required workspace suites pass, including reduction2/control3
+and prior sequence6/137, closure14 and ABI41. Existing manual ignores and
+explicit diagnostic9passing/7knownfailures remain unchanged. No scope-wide
+compatibility or milestone acceptance. All root local handles34984/24330/89149/
+1985/16870/32282/50993/46990 terminal; initial failures retained above. Ready to
+commit/push/open coherent reduction draft against102 and release heavy slot to
+mandatory independent reviewer. Final reviewed-head CI still gates readiness;
+no merges or closures.
+
+## Independent PR103 review — 2026-10-01
+
+Reviewed draft PR103 candidate0d74c4e3448cb419e3927969330792d9a7af9c5c against
+reviewed PR102 basea9f19e8650c1c2079e2c5066ebde076f9ea284a8 in isolated
+/private/tmp/suss-review-pr103 with actual detached pinned upstreamc4295f30.
+Read accepted design/ROADMAP/inventory/handoff/AGENTS. Inspected complete retained
+IDeref/Reduced/helper/reduction forms, every defn adaptation, methods/arities/
+metadata/docstrings/EPL/provenance, dispatch ordering and Reduced stop semantics.
+Inspected original if-let bootstrap resolver/HIR, fresh binding identity, metadata,
+source spans, scope restoration, source evaluation order and caller tail context.
+No significant production defect identified in this bounded source dependency slice.
+Full compiled macros/destructuring/runtime Var metadata and surrounding M2–M9
+acceptance remain incomplete; no merge or issue/milestone closure.
+
+Independent original fresh reduction51369 ended0:59 exact pinned/native2;
+control24238 ended0:77 exact pinned/native3. Added six reduction and four control
+observations, preserving all original59/77 source/expectation objects and the
+parent137 sequence observations. Fresh63450 ended0 with65 exact reduction/native2,
+/private/tmp/suss-pr103-review-reduction65.log; fresh55771 ended0 with81 exact
+control/native3, /private/tmp/suss-pr103-review-control81.log. New cases establish
+iterator hasNext/next stopping order, direct IReduce before IIterable, Reduced
+identity for singleton/empty arrays, offset array captured length, nested Reduced
+iterator unwrapping, and nested/captured if-let scope/effect order. No expectation
+retargeting, failure skips or production changes. Original JSON text/escaping was
+preserved while appending cases. Compiler HIR regression97105 ended0 and verifies
+exact source spans, reader metadata and distinct scoped binding identities;
+/private/tmp/suss-pr103-review-iflet-hir.log.
+
+Python70561 ended0:80 tests pass, /private/tmp/suss-pr103-review-python.log;
+import86/setup4/reviews172 partial+893 unassessed verified. Diff-check passes.
+Commands: shared target/build2 sh scripts/test-reduction-oracle.sh and
+sh scripts/test-control-flow-oracle.sh; cargo test -p suss-compile --test
+portable_if_let --locked -- --test-threads=2; python3 -m unittest discover -s
+scripts -p 'test_*.py'; core_import.py --check; sequence_provenance.py;
+cljs_reviews.py. No RUSTFLAGS, no unrelated formatting/files.
+
+Required independent full40341 live, /private/tmp/suss-pr103-review-full.log.
+Reviewer owns exclusive heavy slot until all handles terminal and final full output
+inspected. Exact reviewed-head CI remains root's readiness gate after review
+commit/push. No merge. Next retained ordered/public hashing, iterator/reversal/
+printing/index helpers, remaining persistent types and compiled macro acceptance;
+lazy/chunked/transducer/metadata/transient and all release gates remain unfinished.
+
+Independent full40341 ended0; reviewer inspected all final doc-test completion in
+/private/tmp/suss-pr103-review-full.log. Command: CARGO_TARGET_DIR=/Users/bobby/
+code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2. All enabled required suites pass, including reduction2/65,
+control3/81, HIR if-let1, parent sequence6/137, closure14 and ABI41. Existing
+manual ignored tests and diagnostic9passing/7knownfailures remain explicit.
+All reviewer local handles51369/24238/63450/55771/70561/97105/40341 terminal.
+Reviewer releases heavy slot after committing/pushing this evidence and tests;
+root must verify successful exact reviewed-head CI before readiness. No merge,
+issue closure, milestone acceptance or broad portable compatibility claim.
+
+## Sequence iteration/reversal preparation — 2026-10-01
+
+Isolated branch portable/core-sequence-iteration from candidate1030d74c4e prepares
+complete pinned IndexedSeqIterator1644/RSeq1768 and reversible?3356/rseq3361.
+No source method removal, new runtime ABI/type/bootstrap-cell or fake dependency.
+Import86/artifacts90/reviews176partial+889unassessed and new53 candidates are
+UNVERIFIED preparation counts only. No native/fresh/full success claim yet.
+Root reads source and creates original fixtures while reviewer103 exclusively
+owns heavy slot. Must rebase onto final reviewed103 parent, validate and actually
+execute fresh pin/native, correct failures transparently, then full baseline and
+mandatory PR review/fixes/final-head CI before readiness. No merges/closures.
+No RUSTFLAGS; shared target/build2/test threads2. Hash/printing/index helpers,
+generic reverse, other persistent collections/lazy/chunked/transducers and full
+compiled macro/release acceptance remain unfinished.
+
+PR102 READY, still unmerged: revieweda9f19e8650c1c2079e2c5066ebde076f9ea284a8,
+exact-head CI36842775585 SUCCESS completed2026-10-01T09:42:17Z; root inspected
+/private/tmp/suss-pr102-final-ci.log, updated body and ran gh pr ready102.
+PR103 reviewere11771eb368a75b559a31a90a8737440a12a4a66 pushed, no significant
+production finding; fresh65reduction/81control, Python80/import86/setup4/
+reviews172+893/HIR1/full40341 terminal0. All reviewer handles terminal and slot
+released explicitly. Final-head CI36844766535 live; PR103 stays draft.
+
+Iteration preparationdf6dddf rebased onto reviewede11771eb; handoff append conflict
+resolved preserving both complete sections. Initial fresh47858 ended101: all53
+primary observations exact, native failed at named array .length write, an existing
+explicit unsupported named-property adapter. Source iterator/RSeq only read length;
+accepted contract has no general JS/Closure interoperability promise. Preserved
+that exact source/expected object in iteration-length-boundary.json, separately
+freshcertified and native required typed-error/storage/GC recovery. Other52 unchanged.
+No excluded core declaration, fake native match or skipped failure.
+
+Fresh8957 ended101:52shared+1boundary primary exact, native new provisional guard
+wrongly expected Object fixed-method extras to error. Prior pinned Object semantics
+ignore evaluated extras. Removed only that new error assertion, added a primary/
+native operand-effects case; final26590 ended0 with53shared matches,1separate
+primary boundary and2native tests. Log
+/private/tmp/suss-iteration-primary53-boundary1-final.log. Initial failed logs
+/private/tmp/suss-iteration-primary53.log and
+/private/tmp/suss-iteration-primary52-boundary1.log retained. Corpus test now prints
+case ID/source on eval errors and independently decodes each exactly-once result.
+New native saved iterator/reverse views survive GC, source errors leave underlying
+array intact, subsequent numeric growth/live reads and reverse fixed count execute.
+
+Python65494 terminal0,80 pass /private/tmp/suss-iteration-python.log;
+import90/setup4/reviews176partial+889unassessed/diff checks pass. Review rationale
+now records actual evidence; reproducible manifest regenerated. Full60603 live,
+/private/tmp/suss-iteration-full.log, root exclusively owns heavy slot. Shared
+Cargo target/build2, --locked/--test-threads=2, no RUSTFLAGS. Required terminal
+baseline before final commit/push/draft PR against103; mandatory independent
+review/fixes/full/exact final reviewed-head CI before readiness. No merge.
+Hash/printing/index helpers, generic reverse, other collections/lazy/chunked/
+transducers/compiled macros and M2–M9 acceptance remain incomplete.
+
+Full60603 terminal0; root inspected /private/tmp/suss-iteration-full.log through
+final reader doc tests. Required workspace baseline passes with iteration2,
+parent sequence6/137, reduction2/65, control3/81, HIR metadata1, closure14 and ABI41.
+Existing manual ignored and diagnostic9passing/7knownfailures remain explicit;
+no broad compatibility acceptance. All root handles47858/8957/26590/65494/60603
+terminal, two failures above preserved. Ready for final candidate commit/push/draft
+PR and independent reviewer with exclusive heavy-slot release. Exact final
+reviewed-head CI still gates readiness; no merge or issue/milestone closure.
+
+
+## Independent PR104 review — 2026-10-01
+
+Reviewed candidate1d4cbf0379510bd551ced43914d36ad2801edace against reviewed
+PR103 basee11771eb368a75b559a31a90a8737440a12a4a66 in isolated
+/private/tmp/suss-review-pr104 with actual detached pinned upstreamc4295f30.
+Read AGENTS/accepted design/ROADMAP/inventory/handoff. Inspected complete
+IndexedSeqIterator/RSeq methods, metadata/docstrings/arities of reversible?/rseq,
+hash-bound patches and EPL provenance. Mutable offsets, live storage/length,
+UTF-16, cloning/tails/metadata, public protocol/Object dispatch, source equality
+and Reduced stopping behavior align with the pin. No significant production
+defect found in this bounded port. Hash/printing/index helpers remain pending.
+
+Named .length writes are an explicitly unsupported host-property adapter, outside
+the general JS/Closure interoperability promise. Retained source only reads that
+property. The exact separate one-case boundary remains fresh certified false on
+the pin and requires native Language error/storage recovery. It is not a shared
+matching value, skip or reason to exclude a portable core definition. The retained
+global-array negative guard separately proves failed writes preserve owned storage.
+
+Independent original fresh61992 ended0:53 shared exact primary/native2 and the
+separate1 primary boundary. Six review probes preserve every original case and add
+exhausted offset advancement, UTF-16 starting offset, direct reversal dispatch,
+clone storage/metadata sharing, live reverse tails and Reduced stopping indexed
+reads. Fresh12322 ended0:59 shared exact primary/native2 plus unchanged1 boundary,
+/private/tmp/suss-pr104-review-oracle59.log. Original53 objects, exact boundary
+text and parent corpora verified unchanged. Python80 pass,
+/private/tmp/suss-pr104-review-python.log; import90/setup4/reviews176partial+889
+unassessed and diff-check pass. No failed provisional probes or retargeted results
+in this review. Commands use shared target/build2, no RUSTFLAGS: sh
+scripts/test-iteration-oracle.sh; python3 -m unittest discover -s scripts -p
+"test_*.py"; core_import.py --check; sequence_provenance.py; cljs_reviews.py.
+
+Required independent full30823 running, /private/tmp/suss-pr104-review-full.log.
+Reviewer owns heavy slot until all handles terminal and final full output
+inspected, then review tests/evidence commit/push. Root must require successful
+exact reviewed-head CI before readiness. No merge/issue or milestone closure.
+Next source hashing/printing/index helpers, generic reverse, other persistent
+types, compiled macros and M2–M9 release gates remain unfinished.
+
+Independent full30823 ended0; inspected /private/tmp/suss-pr104-review-full.log
+through final reader doc tests. Required command: CARGO_TARGET_DIR=/Users/bobby/
+code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2. All enabled required suites pass, including iteration2/59,
+parent sequence6/137, reduction2/65, control3/81, HIR if-let1, closure14 and ABI41.
+Existing manual ignored tests and explicit diagnostic9passing/7knownfailures
+remain unchanged. All reviewer handles61992/12322/30823 terminal; reviewer
+releases heavy slot after committing/pushing review tests and evidence. Root
+must verify successful exact reviewed-head CI before readiness. No merge or
+issue/milestone closure; M2–M9 acceptance remains incomplete.
+
+## Sequence indexing/search preparation — 2026-10-01
+
+Isolated portable/core-sequence-indexing from candidate1041d4cbf0 prepares
+indexed?1606/neg?3086/linear-traversal-nth1927/nth1947/-indexOf1610/-lastIndexOf1627
+and original bounded neg?1201 macro lowering. All upstream algorithms preserved;
+explicit fixed defn/UTF-16 in-range charAt/error/operand-once min/max adaptations,
+source hashes/EPL, no ABI/type/core-cell or fake implementation. Import92/
+artifacts96/reviews183partial+882unassessed and new53 candidates UNVERIFIED;
+no fresh/native/full acceptance claim. Formatter dependencies remain uninitialized.
+
+Preparation occurred while reviewer104 exclusively owned heavy slot. Reviewer
+now pushedf7e0fca6565e22c6febf2b33549cadeba19710d0; no significant finding,
+fresh59shared+1boundary/native2/Python80/import90/setup4/reviews176+889/full30823
+terminal0, all handles terminal and slot explicitly released. Root must rebase
+onto reviewed parent then execute fresh pin/native/focused/full. Final reviewed-
+head CI gates104 readiness; no merge/closure. Shared target/build2/testthreads2,
+no RUSTFLAGS. Next complete and verify indexing/search, then ordered/public hash,
+printing, remaining collections and compiled macros toward M2–M9 acceptance.
+
+## Indexing execution and macro fidelity — 2026-10-01
+
+Rebased portable/core-sequence-indexing onto reviewed104 f7e0fca; preparation
+commit61d2177. Fresh original53/native1 passed75758, error/GC focused native2
+passed99611 output. Generated pinned core.js demonstrates helper inc/dec macro
+inlining; corrected bounded original unary expansions with literal1 and existing
+checked arithmetic, preserving first-class runtime functions and operand order.
+Three core-cell redefinition observations added without altering original53.
+Fresh10401 terminal0 certifies56 primary/native2, /private/tmp/suss-indexing-macro56.log.
+Python80/import96/setup4/reviews185partial+880unassessed/diff-check pass.
+Full75515 running /private/tmp/suss-indexing-full.log; root owns heavy slot.
+Formatting dependencies remain uninitialized; no complete issue/milestone claim.
+Next inspect full then open and independently review the indexing PR, push
+significant findings and require exact reviewed-head CI. No merges.
+
+PR103 reviewed e11771eb368a75b559a31a90a8737440a12a4a66 exact CI36844766535
+success; inspected log through final doc tests, /private/tmp/suss-pr103-final-ci.log.
+Marked ready for user review. PR104 f7e0fca exact CI36846726372 still running.
+
+Full75515 ended101: two previous imported inc/dec function tests made direct
+calls now correctly resolved as macros, expecting runtime arity/coercion errors.
+Corrected function tests to explicit lexical function capture, retaining every
+effect/arity/typed-error/recovery assertion. Added distinct macro arity guards
+for inc/dec; no certified oracle observation changed or skipped. Focused rerun
+and full retry required. Initial failure /private/tmp/suss-indexing-full.log.
+
+Focused40549 terminal0: core_import17/indexing2,
+/private/tmp/suss-indexing-focused-fix.log. Full52953 retry running,
+/private/tmp/suss-indexing-full-retry.log. Original reviewed parent corpora and
+separate boundary bytes unchanged. Root retains heavy slot until terminal.
+
+Required full52953 ended0; inspected /private/tmp/suss-indexing-full-retry.log
+through final reader doc tests. Commands: CARGO_TARGET_DIR=/Users/bobby/code/
+github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2. All required enabled suites pass, including indexing2/56,
+core_import17 and reviewed parent corpora. Existing manual ignores and explicit
+diagnostic9passes/7knownfailures remain unchanged. PR105 draft candidate26a7443
+opened with independent reviewer review_pr105 dispatched; exact reviewed-head
+CI remains mandatory. All root heavy handles terminal; release slot to reviewer
+after evidence push. No merges or issue/milestone closures. Next verify reviewer
+findings/CI then retained hashing/printing and remaining M2–M9 acceptance.
+
+## Independent PR105 review — 2026-10-01
+
+Reviewed candidate26a7443 and evidence followup9b14f4b against reviewed104
+f7e0fca6565e22c6febf2b33549cadeba19710d0 in isolated /private/tmp/suss-review-pr105
+with actual detached upstreamc4295f30. Read AGENTS/accepted design/ROADMAP/
+inventory/handoff and inspected all complete retained indexing/search forms,
+source patches/EPL/hash provenance, overloads, dispatch order, literal min/max
+adaptations, UTF-16, bounded inc/dec/neg? HIR and resolver aliases/refers/exclusions/
+lexical/user shadowing/phases. No significant production defect found in this
+bounded port. Clarified private defn- runtime Var metadata/namespace privacy
+remain unfinished despite preserved extracted source and inventory visibility;
+corrected new dependency records to macro inc/dec/neg? and regenerated manifest.
+Formatter dependencies still uninitialized; no full nth/core/M2–M9 acceptance.
+
+Six appended probes preserve every original56 source/expectation object and
+parent sequence/reduction/control/iteration corpora and exact separate boundary.
+They prove IIndexed dispatch before sequence traversal, search count once and
+stop at first match, inc/dec/neg? lexical shadowing, once-only operand effects,
+throw prevents later index effects and core-neg? redefinition independence.
+Native namespace guard adds core aliases/refers, explicit refer conflict,
+user globals, exclusions, GC and both compiler phases/located arity rejection.
+
+Initial fresh42082 ended1 on new provisional grouped deftype overload syntax;
+pin requires repeated deftype methods, corrected only those new source candidates.
+Retry54796 certifies62 primary but ended101 on new native refer harness lacking
+retained runtime bindings. Loading actual core fixes harness;37532 focused native3
+ended0. Final fresh92436 ended0:62 exact primary/native3,
+/private/tmp/suss-pr105-review-oracle62-certified.log. Initial logs retained in
+/private/tmp/suss-pr105-review-oracle62.log and
+/private/tmp/suss-pr105-review-oracle62-final.log. No original expected result
+changed, no skips or false matches. Python62505 ended0:80 tests pass,
+/private/tmp/suss-pr105-review-python.log; import96/setup4/reviews185partial+
+880unassessed/diff-check pass. No RUSTFLAGS; shared target/build2/testthreads2.
+
+PR104 READY and still unmerged: reviewedf7e0fca exact CI36846726372 SUCCESS;
+root inspected /private/tmp/suss-pr104-final-ci.log through final doc tests and
+verified unchanged head before marking ready. PR105 final reviewed-head CI is
+still root readiness gate after review commit/push. Required independent full92345
+live, /private/tmp/suss-pr105-review-full.log. Reviewer exclusively owns heavy
+slot until authoritative terminal full output/all handles inspected. No merges,
+issue closures or milestone acceptance. Next retained hash/printing, remaining
+persistent collections, compiled macros and surrounding M2–M9 acceptance.
+
+Independent full92345 ended0; inspected /private/tmp/suss-pr105-review-full.log
+through all final reader doc tests. Required command CARGO_TARGET_DIR=/Users/
+bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace
+--locked -- --test-threads=2. All enabled required suites pass, including native
+indexing3/62, core_import17 and reviewed parent corpora. Existing manual ignores
+and diagnostic9passing/7knownfailures unchanged. Final Python18859 ended0 with80
+passes after provenance updates, /private/tmp/suss-pr105-review-python-final.log.
+All reviewer handles42082/54796/62505/37532/92436/18859/92345 terminal. Reviewer
+releases exclusive heavy slot after review commit/push; root must gate readiness
+on successful exact final reviewed-head CI. No merge or issue/milestone closure.
+
+## Numeric hash boundaries — 2026-10-01
+
+Previous goal turn made progress: PR105 opened/pushed; root56/native2/full52953
+pass; reviewed103/104 exact CI success and ready, no merges. Independent105 now
+pushed19d71da6670aae60d43910e97846076ed5270e4d, fresh62/native3/Python80/full92345
+terminal0, no significant production defect, all handles terminal and heavy slot
+released to root. Exact reviewed-head CI36849333687 live; draft stays until gate.
+
+New isolated portable/core-hash-numeric-boundaries rebased onto reviewed105.
+Original private finite/safe-integer/floor/safe-integer-remainder adapters serve
+pinned public hash's numeric branch; no new GC layout/ABI/core cell. Explicit
+range/nonzero guards prevent conversion/rem traps and retain numerator signed
+zero. No general js-mod/public hash claim; object conversion remains incomplete.
+See docs/runtime/hash-numeric-boundaries.md for provenance, scope and limitations.
+Fresh81729 ended1 on new provisional floor-negative-zero expected sign; actual
+pinned observation preserved, corrected only unverified expectation. Fresh24694
+ended0:68 exact primary/native1. Focused8853/native2 and compiler/ABI65505/1each
+terminal0. Python80/import96/setup4/reviews185+880/diff pass. New phase-test57845
+compile101 on test-only PreparedFragment Debug requirement; corrected explicit
+Err matching; focused84046 live. Full/review/exact-head CI pending; root heavy
+slot. Commands shared target/build2/--locked/--test-threads=2, no RUSTFLAGS.
+Next complete baseline, open/review numeric PR, then retain public and collection
+hashing, printing, remaining persistent types/macros and M2–M9 release gates.
+No issue/milestone closure or merge; alternative algorithms remain deferred #98.
+
+Focused84046 terminal0: native3, both-phase artifact/arity checks pass;
+/private/tmp/suss-hash-numeric-boundaries-focused-final-retry.log. Required
+full baseline now running /private/tmp/suss-hash-numeric-boundaries-full.log;
+root owns exclusive heavy slot. No full acceptance claim until terminal.
+
+Required full73818 terminal0; inspected /private/tmp/suss-hash-numeric-boundaries-full.log
+through final reader doc tests. All enabled required suites pass, including new
+native3/68, numeric HIR/IR1 and direct ABI1, plus reviewed parent indexing3/62
+and source corpora. Manual ignored suites and diagnostic9passes/7knownfailures
+remain explicit. Required command: CARGO_TARGET_DIR=/Users/bobby/code/github/
+bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked --
+--test-threads=2, no RUSTFLAGS. Draft PR106 candidatead73ca9 is open; independent
+reviewer106 prepared additional probes while root held heavy slot. Root now
+releases slot after evidence push; reviewer baseline and exact final-head CI
+remain mandatory. No merge, issue or milestone completion claim.
+
+
+## Independent PR106 review — 2026-10-01
+
+Reviewed candidatead73ca9 and evidence followupf083348 against reviewed105
+19d71da6670aae60d43910e97846076ed5270e4d in isolated /private/tmp/suss-review-pr106
+with actual detached upstreamc4295f30. Read AGENTS/accepted design/ROADMAP/
+inventory/handoff. Inspected original scalar adapters, noncoercing safe-integer
+predicate, HIR/IR Boolean/Number types, reserved private namespace/arity/phase
+behavior, additive imports and coercion/finite/range/zero guards. Exact safe i64
+remainder followed by numerator sign matches the bounded source domain. No
+significant production defect found. This is a public hash prerequisite, not
+public/default identity hashing or general js-mod; existing limitations remain.
+
+Seven review probes preserve all original68 source/expected objects and parent
+corpus bytes. Fresh85831 terminal0:75 exact primary/native4,
+/private/tmp/suss-pr106-review-oracle75.log. They add negative modulus zero signs,
+large safe divisors, scalar remainder coercion, negative safe endpoints and floor
+effects once. Fourth native guard proves denominator fractional/unsafe/nonfinite/
+opaque/zero rejection, both operands evaluated before numeric checks, thrown first
+operand prevents later effects and signed-zero GC recovery. No review provisional
+failures, original expected changes or skips. Python68129 terminal0:80 tests,
+/private/tmp/suss-pr106-review-python.log; import96/setup4/reviews185partial+880
+unassessed/diff checks pass. Commands shared target/build2, no RUSTFLAGS.
+
+Root full73818 ended0 before explicit release; reviewer exclusively owns heavy
+slot now. Required independent full68749 live,
+/private/tmp/suss-pr106-review-full.log, command CARGO_TARGET_DIR=/Users/bobby/
+code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2. Must inspect terminal final output, commit/push review evidence
+and release slot only when all handles terminal. Exact reviewed-head CI remains
+root's readiness gate. No merge/issue closure or milestone acceptance. Next
+retained public/collection hashing, printing, remaining persistent types/compiled
+macros and surrounding M2–M9 release gates.
+
+
+Independent full68749 ended0; inspected /private/tmp/suss-pr106-review-full.log
+through all final reader doc tests. Required shared-target/build2 workspace
+--locked/--test-threads=2 baseline passes, including numeric boundaries4/75,
+HIR/IR contracts, runtime ABI42 and unchanged reviewed parent corpora. Existing
+manual ignores and explicit diagnostic9passing/7knownfailures remain unchanged.
+All reviewer handles68129/85831/68749 terminal; slot released to root after
+review commit/push. Exact final reviewed-head CI still gates readiness. No merge,
+issue closure or milestone acceptance; public/collection hashing remains next.
+
+## GC-owned identity and ABI transition — 2026-10-01
+
+Previous goal turn made progress: PR106 opened/pushed, numeric75/native4/reviewer
+full68749 passed at reviewed8e0f3b51a11ea0e0173849b413e1b3a91257121d. Exact
+CI36851103140 success verified/head unchanged/log through final doc tests,
+/private/tmp/suss-pr106-final-ci.log; marked ready. PR10519d71da exactCI36849333687
+success/log finaldocs/head unchanged, /private/tmp/suss-pr105-final-ci.log; ready.
+No merges. All reviewer106 handles terminal and exclusive heavy slot released.
+
+New isolated portable/runtime-identity-hashing from reviewed1068e0f3b5 implements
+owner-held UID storage for default IHash dependency. Dated design decision moves
+ABI1 to2 before hash integration; same ten-type group, appended mutable UIDslots
+on closures/descriptors/ordinary objects/errors, all older offsets preserved.
+No global object registry, addresses, new algorithm or source compatibility
+exception. Counter-only root and typed malformed/range guards; see
+identity-hashing.md for source pin, fields, limits and commands.
+Initial82402 private UID regression failed101; new66255 native1 pass0. ABI63405
+failed101 on eight v1 fixtures; updated actual UID initialization/inspection,
+manifest mismatch now tests oldABI1. ABI64950 failed101 one stale error count;
+37353 all42pass0. Fresh26855 primary18exact/native101 with missing with-meta;
+retained fullIFn/MetaFn/with-meta/meta with EPL patches instead of retargeting
+certified source. Fresh40264 terminal0 primary18/native2. Source count96/artifacts100,
+reviews189partial+876unassessed. General IFn call syntax/highest apply/function
+metadata remain unfinished, apply declared uninitialized. ABI guard28207/new
+comparison correction compilefailed; corrected actual API,84913 pass0. RealABI1
+and falsely labeled layouts gate77421 pass0 including linking/no init effects.
+New primary26 handle8773 live; root exclusive heavy slot. Focused/final full and
+independent review/fixes/exact-head CI pending. No future acceptance marked.
+Next finish architecture validation, public/default and collection hashing,
+printing, remaining collections/macros and M2–M9 gates. Hash evaluation deferred98.
+
+Fresh8773 terminal0:26 exact primary/native2, /private/tmp/suss-identity-hash-primary26.log;
+original18 unchanged. Focused88306 terminal0: native identity3/indexing3/sequences6/
+persistent-session suites pass with forced GC, typed errors and both phases.
+Python80/import100/setup4/reviews189+876/diff pass. Required full baseline and
+independent review/final-head CI remain pending; root owns heavy slot.
+
+Full86115 ended101 on three closure regressions sharing a stale four-field Error
+decoder (11 passed). Decoder now requires ABI2's five fields and nil data/cause/UID;
+all prior message/effect/recovery checks remain. Focused34964 ended0:14 passed,
+/private/tmp/suss-identity-hash-closures-retry.log. Full retry4743 is running,
+/private/tmp/suss-identity-hash-full-retry.log. Root still owns the heavy slot.
+
+Full retry4743 ended101: definition suite12pass/1fail on another stale Error count.
+A broader search found the same decoder in portable_resolution; both now require
+five fields and inspect nil data/cause/UID without dropping previous assertions.
+Focused74630 ended0:13 definitions+11 resolution tests pass,
+/private/tmp/suss-identity-hash-definition-resolution-retry.log. Full65381 is running
+in /private/tmp/suss-identity-hash-full-final.log; root owns the heavy slot.
+Draft PR review may proceed statically while the baseline runs; execution must
+wait for root to release the slot. Readiness still requires reviewer baseline
+and exact final reviewed-head CI; no merge or acceptance closure.
+
+Full65381 terminal0 through final doc tests at implementation262b2d7, including
+all44 ABI tests and real old-layout/UID-corruption guards,
+/private/tmp/suss-identity-hash-full-final.log. Ignored/manual tests remain explicit.
+Draft PR107 https://github.com/bobby/suss/pull/107 opened with Refs links, base
+reviewed1068e0f3b5. Independent /root/review_pr107 created isolated actual-pin
+worktree and performed static review while root owned the heavy slot. Root's
+full/push/create handles are now terminal; heavy slot releases to reviewer after
+this evidence commit. Initial CI36856978539 is in progress at262b2d7; final reviewed
+head CI still gates readiness. No merge, issue closure or milestone acceptance.
+Next finish review/fixes and source public/default/ordered/unordered hashing,
+general IFn invocation/apply, printing and remaining M2–M9 acceptance gates.
+
+## Independent PR107 review — 2026-10-01
+
+Reviewed262b2d7/root evidence160ccdc against reviewed1068e0f3b5 in isolated
+/private/tmp/suss-review-pr107 with actual detached upstreamc4295f30. Read accepted
+design/ROADMAP/inventory/handoff. Owner-held UID slots, all constructors, scalar
+allocator, corruption guards, genuine ABI1 rejection and retained metadata source
+provenance inspected. Significant finding: canonical IFn nominal direct dispatch
+used ordinary protocol receiver arity, conflicting with pinned emitted IFn method
+formals. Fix carries a next-arity key and prepends the already evaluated target;
+ordinary protocols/native fallback/general strict invocation remain separate.
+Typed malformed next-key constructor guard added. See identity-hashing.md.
+
+Corrected dispatch exposes unchanged original metafn-explicit-invoke as an exact
+strict-arity design-contract divergence: pin true, native typed Error with raw
+message Wrong arity. Preserve its exact source/reference and assert it separately,
+never skip/count success. Original26 now25 matching+1 boundary; all original JSON
+objects and parent corpus bytes unchanged. Eight review probes bring fresh34
+primary observations to33 matching native relations+1 boundary across4 tests.
+Effect order, thrown receiver short-circuit, metadata/copies, GC/UID recovery and
+unrelated user IFn/-invoke protocol guard pass. Highest apply/general callable
+object/full metadata remain unfinished; no generic JS arity-normalizing intrinsic.
+
+Initial fresh68141 ended1 on new provisional receiver expectations; native95912
+confirmed mismatch101. New provisional callbacks corrected to accept actual pin
+arguments, originals unchanged. Fix51693 compile101 private accessor;26689
+validation101 missing ARGS cast; corrected both. Fresh31023/4452 primary certifies
+but native101 on unchanged zero-invoke strict boundary, now recorded explicitly.
+Native93996 pass4 and finalfresh29279 terminal0:34 exact primary/native4 with
+33matches+1 exact boundary, /private/tmp/suss-pr107-review-oracle34-final.log.
+UID exhaustion fixture92068 compile101 test-only u64 range indexing; retry61754
+pass0. ABI46577 terminal0 all45, /private/tmp/suss-pr107-review-abi45.log;
+final strengthened next-key fixture also runs in the full baseline. Python90053
+terminal0/80, /private/tmp/suss-pr107-review-python.log. Import100/setup4/
+reviews189partial+876unassessed/diff pass, no source methods removed.
+
+Required reviewer full90116 live, /private/tmp/suss-pr107-review-full.log:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2; no RUSTFLAGS. Reviewer retains
+exclusive heavy slot until authoritative terminal full/all handles inspected.
+Push significant fixes/evidence, then root must require successful exact final
+reviewed-head CI. No merges/issue closure/milestone acceptance. Next retained
+public/default/collection hashing, printing, remaining persistent types/compiled
+macros and complete M2–M9 acceptance gates.
+
+Independent full90116 ended0; inspected /private/tmp/suss-pr107-review-full.log
+through final reader doc tests. All enabled required suites pass, including
+identity4/33matches+1 exact boundary, ABI45 with final valid-old-key/invalid-next-key
+guard and UID exhaustion/cached-owner fixture, unchanged reviewed parent corpora.
+Existing manual ignores and diagnostic9passes/7knownfailures unchanged. Source
+receiver provenance: pinned core.cljc1509–1540/1587. Final Python40584 ended0/80,
+/private/tmp/suss-pr107-review-python-final.log. All reviewer handles92068/61754/
+68141/90053/95912/51693/26689/31023/4452/93996/29279/46577/40584/90116 terminal.
+Reviewer releases heavy slot after fixes/evidence push; exact final reviewed-head
+CI remains root's readiness gate. No merge/issue or milestone closure. Next
+retained public/default/collection hash, printing, remaining types/compiled macros
+and surrounding M2–M9 release acceptance remain unfinished.
+
+
+## Expanded PR95 independent CI review — 2026-10-01
+
+The user merged PR96–107 into PR95's branch, advancing its head to
+015767ae44b5e2739782fb979f6324c46a3db9eb. Its complete Git tree is identical to
+independently reviewed PR107 head7b5307849aa641f0fabe26f5257335526f48fa3b
+(`git diff 7b5307849aa641f0fabe26f5257335526f48fa3b HEAD --stat` is empty
+before this CI change). Prior PR95 evidence atd49c5a72 certifies only the
+old head, not this expanded branch.
+
+Independent /root/review_pr95_expanded inspected run36871799306 at015767ae
+and check-run110401145846 annotations. GitHub explicitly reports
+“The job has exceeded the maximum execution time of 25m0s”. Inventory/scanner
+verification passed. Workspace compilation and preceding enabled suites passed;
+conformance was still executing when the job was cancelled. This is not a passing
+full baseline. Authoritative log: /private/tmp/suss-pr95-expanded-ci.log.
+
+Change only the job timeout from25 to35 minutes, matching the separately reviewed
+PR108 CI allowance. Commands, enabled suites, worker count and concurrency are
+unchanged. No production or test source changes; no local cargo/JVM/Node runs
+while root owns the heavy slot. Previous PR107 full90116 and exact-head CI
+36859350775 remain prior evidence, not new-head CI certification. Require the
+new reviewed commit's successful complete CI before PR95 readiness; no merge or
+issue/milestone closure. Next continue retained collection/vector dependencies
+and remaining M2–M9 acceptance gates.

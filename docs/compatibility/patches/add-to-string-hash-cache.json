@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "7f3a6b72d88216e5d5d58b62fcb5805bb7bb79cf8879c0341d36238bfe93ce3e",
+  "replacement": "(def add-to-string-hash-cache (fn [k]\n  (let [h (hash-string* k)]\n    (suss.bootstrap/object-set-strict string-hash-cache k h)\n    (set! string-hash-cache-count (inc string-hash-cache-count))\n    h)))",
+  "rationale": "Retain pinned cache algorithm and live binding/reset/storage order with original source metadata and EPL. Replace JS-only factory/property mechanisms with checked owned GC objects, descriptors and a first-class variadic factory. Full foreign-object interoperability, primitive boxing and compiled macro acceptance remain open. The retained Closure gobject/set dependency is strict: getter-only and non-writable properties throw before the cache counter increments. The separate unchecked-set macro remains non-strict."
+}

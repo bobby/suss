@@ -314,3 +314,91 @@ observations and compile-atomic invalid/immutable key guards. One partial review
 brings the overlay to83/982;28 selections/32 licensed artifacts change only their
 review hash. Complete List/Cons hashing and compiled macros remain unfinished;
 see [hash caching](../runtime/caching-hash.md).
+
+
+Bitwise hashing prerequisites now have70 exact primary/native observations plus
+namespace, arity, ordered coercion and recovery guards. Thirty additional partial
+reviews bring the overlay to113/952. Retained bit-count and int-rotate-left add
+two licensed forms:30 selected forms/34 artifacts. Captured JavaScript off-arity
+behavior remains an explicit divergence under the accepted error contract; no full
+public/core/collection acceptance is claimed. The conditional imul provenance
+record is checked against the pin and exact complete form bounds in CI by
+`scripts/bitwise_provenance.py`. Four pinned public-wrapper errors and five separate
+internal-body diagnostics preserve the captured variadic/live reducer boundary;
+these are outside the70 equal public observations. See [bitwise hashing](../runtime/bitwise-hashing.md).
+
+
+Retained scalar Murmur algorithms/constants and zero? now have57 fresh primary/native
+observations and located namespace/arity/capture/GC recovery guards. Thirteen new
+partial reviews bring the overlay to126/939. Ten retained forms bring selection
+to40 forms/44 licensed artifacts, with explicit fixed defn patches preserving
+algorithms and metadata. Bounded threading/strict-zero expansions are prerequisites,
+not compiled macro acceptance; full collection/string/numeric hashing stays open.
+See [scalar Murmur hashing](../runtime/murmur-hashing.md).
+
+
+## Cached string hashing
+
+Retained runtime js-obj/cache declarations/add-to-string-hash-cache/hash-string
+bring the import to50 selections/54 licensed artifacts and the overlay to139
+partial/926 unassessed. All64 preserved source observations now match fresh pin
+and independently decoded native execution; source3/private adapters2/ABI40 and
+Python76 pass. [Evidence and boundaries](../runtime/cached-string-hashing.md)
+distinguish the first-class runtime factory from the unfinished literal js-obj
+macro and complete bracket/foreign-object/public hash acceptance. Full workspace,
+independent PR review and final-head CI remain required. No milestone closure.
+
+
+## Retained sequences and persistent rest
+
+The source-backed [sequence/list foundation](../runtime/sequences.md) selects68
+forms/72 licensed artifacts and records157 partial reviews/908 unassessed. All
+methods of List/EmptyList/Cons/IndexedSeq are retained; explicitly pending helpers
+remain uninitialized. Fresh75 primary/native observations preserve all69 pre-review cases (including the original51),
+including canonical empty literals, real persistent rest, shared tails, live array
+views and UTF-16 units. No full method/equality/hash/reduction/iterator/core or
+milestone acceptance claim. Independent review/full/final-head CI remain required.
+
+## Retained sequential equality
+
+Pinned `=`/equiv-sequential and complete native number/default IEquiv setup now
+execute against131 fresh primary/native sequence observations (prior75 unchanged).
+The import selects70 forms/74 licensed artifacts and records159 partial reviews/
+906 unassessed. Six native tests cover arity/effect/typed throw/GC recovery;
+[evidence](../runtime/sequential-equality.md) records the initial new-probe failures
+and boundaries. Other persistent types, collection hashing/reduction and compiled
+macros remain unfinished. No issue/milestone completion claim.
+
+## Retained reduction
+
+Complete source IDeref/Reduced and ten reduction/helper declarations now select82
+forms/86 licensed artifacts with172 partial/893 unassessed reviews. Fresh65
+reduction and81 control observations match actual primary/native execution;
+[evidence](../runtime/sequence-reduction.md) retains initial setup failures and
+explicit destructuring/compiled macro/transducer/collection boundaries. No issue
+or milestone completion claim; full/review/final-head CI gate readiness.
+
+## Retained iteration and reverse views
+
+Complete IndexedSeqIterator/RSeq and reversible?/rseq retain all methods and
+source provenance:86 selections/90 licensed artifacts,176 partial/889 unassessed.
+Fresh59 primary/native observations and2 native tests cover storage, UTF-16,
+metadata, equality/reduction and GC. A separate exact primary1 length-write case
+requires a native typed adapter error, not matching value or skip;
+[evidence](../runtime/sequence-iteration.md) preserves that boundary and initial
+failures. Hash/printing/index helpers, generic reverse, other collections and
+compiled macros remain unfinished; no issue/milestone completion claim.
+
+## Identity hashing and metadata dependencies
+
+The private owner-held identity adapter supplies stable runtime-local UIDs for
+closures, descriptors, objects and errors. ABI2 appends UID storage and rejects
+old artifacts before initialization. Complete pinned IFn/MetaFn/with-meta/meta
+forms bring selection to96 forms/100 licensed artifacts and the overlay to189
+partial reviews/876 unassessed. Fresh34 primary observations,33 matching native relations and1 exact strict-arity
+contract boundary across4 native tests cover identity, metadata, GC, errors and
+phase guards. Independent review corrected IFn receiver/arity dispatch; see
+[identity hashing evidence](../runtime/identity-hashing.md). Public/default and
+collection hashing, general IFn call syntax, apply and full metadata acceptance
+remain unfinished. Full baseline, independent review and final-head CI still
+gate PR readiness; no issue or milestone is complete from this work alone.

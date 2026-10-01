@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c52dd5e7548bdb9295e086f6c3dc3024ca8f8081edd32bb769f2a21cfe0093d1",
+  "replacement": "(def reduced?\n  \"Returns true if x is the result of a call to reduced\"\n  (fn [r]\n  (instance? Reduced r)))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains metadata, docstring, arities and reduction algorithm, including reduced termination and source order. Full upstream defn and private runtime Var metadata remain unfinished."
+}

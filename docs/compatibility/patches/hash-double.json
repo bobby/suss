@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "783d46872fe343707525c9c5e6f87b4b22d5732c8e76e86d87ce2f54808d8646",
+  "replacement": "(def hash-double (fn [f]\n  (let [arr  (suss.bootstrap/f64-coerce f)\n        buf  arr\n        high (suss.bootstrap/f64-word0 buf)\n        low  (suss.bootstrap/f64-word4 buf)]\n    (hash-long high low))))",
+  "rationale": "Explicit fixed defn bootstrap adaptation retains original numeric hashing composition. For hash-double, private scalar binary64 storage replaces the nonescaping typed buffer: one checked scalar ToNumber conversion and two exact signed big-endian DataView reads over little-endian Float64Array bytes. Live hash-long lookup remains after both words. General typed buffers/JavaScript object conversion and public hashing remain unfinished."
+}

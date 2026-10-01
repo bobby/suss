@@ -9,6 +9,14 @@
 ;; Generated reviewed core import; see ../manifest.json.
 (ns suss.core)
 
+;; Original loader declarations for retained source's mutual references.
+;; Pending helpers remain uninitialized and fail if invoked; no fake implementations.
+(declare List EmptyList Cons IndexedSeq seq first rest next prim-seq array-seq cons count
+  counted? list? sequential? accumulating-seq-count empty-ordered-hash
+  Reduced reduced reduced? ensure-reduced unreduced deref iterable? iter-reduce reduce
+  pr-str* -indexOf -lastIndexOf equiv-sequential = hash-ordered-coll seq-reduce
+  array-reduce IndexedSeqIterator RSeq indexed? neg? linear-traversal-nth nth str_ type type->str MetaFn apply with-meta meta)
+
 (def identity (fn [x] x))
 
 (def not (fn [x] (if x false true)))
@@ -143,3 +151,1086 @@
   "Marker protocol")
 
 (def fn? "Return true if f is a JavaScript function or satisfies the Fn protocol." (fn [f] (or (js-fn? f) (satisfies? Fn f))))
+
+(def ^number int-rotate-left (fn [x n]
+  (bit-or
+    (bit-shift-left x n)
+    (unsigned-bit-shift-right x (- n)))))
+
+(def bit-count
+  "Counts the number of bits set in n"
+  (fn [v]
+  (let [v (- v (bit-and (bit-shift-right v 1) 0x55555555))
+        v (+ (bit-and v 0x33333333) (bit-and (bit-shift-right v 2) 0x33333333))]
+    (bit-shift-right (* (bit-and (+ v (bit-shift-right v 4)) 0xF0F0F0F) 0x1010101) 24))))
+
+(def ^boolean zero?
+  "Returns true if num is zero, else false"
+  (fn [x]
+  (cljs.core/zero? x)))
+
+(def m3-seed 0)
+
+(def m3-C1 (int 0xcc9e2d51))
+
+(def m3-C2 (int 0x1b873593))
+
+(def ^number m3-mix-K1 (fn [k1]
+  (-> (int k1) (imul m3-C1) (int-rotate-left 15) (imul m3-C2))))
+
+(def ^number m3-mix-H1 (fn [h1 k1]
+  (int (-> (int h1) (bit-xor (int k1)) (int-rotate-left 13) (imul 5) (+ (int 0xe6546b64))))))
+
+(def ^number m3-fmix (fn [h1 len]
+  (as-> (int h1) h1
+    (bit-xor h1 len)
+    (bit-xor h1 (unsigned-bit-shift-right h1 16))
+    (imul h1 (int 0x85ebca6b))
+    (bit-xor h1 (unsigned-bit-shift-right h1 13))
+    (imul h1 (int 0xc2b2ae35))
+    (bit-xor h1 (unsigned-bit-shift-right h1 16)))))
+
+(def ^number m3-hash-int (fn [in]
+  (if (zero? in)
+    in
+    (let [k1 (m3-mix-K1 in)
+          h1 (m3-mix-H1 m3-seed k1)]
+      (m3-fmix h1 4)))))
+
+(def hash-long (fn [high low]
+  (bit-xor high low)))
+
+(def ^number mix-collection-hash
+  "Mix final collection hash for ordered or unordered collections.
+   hash-basis is the combined collection hash, count is the number
+   of elements included in the basis. Note this is the hash code
+   consistent with =, different from .hashCode.
+   See http://clojure.org/data_structures#hash for full algorithms."
+  (fn [hash-basis count]
+  (let [h1 m3-seed
+        k1 (m3-mix-K1 hash-basis)
+        h1 (m3-mix-H1 h1 k1)]
+    (m3-fmix h1 count))))
+
+(def ^boolean pos?
+  "Returns true if num is greater than zero, else false"
+  (fn [x] (cljs.core/pos? x)))
+
+(def ^number m3-hash-unencoded-chars (fn [in]
+  (let [h1 (loop [i 1 h1 m3-seed]
+             (if (< i (.-length in))
+               (recur (+ i 2)
+                 (m3-mix-H1 h1
+                   (m3-mix-K1
+                     (bit-or (.charCodeAt in (dec i))
+                       (bit-shift-left (.charCodeAt in i) 16)))))
+               h1))
+        h1 (if (== (bit-and (.-length in) 1) 1)
+             (bit-xor h1 (m3-mix-K1 (.charCodeAt in (dec (.-length in)))))
+             h1)]
+    (m3-fmix h1 (imul 2 (.-length in))))))
+
+(def hash-string* (fn [s]
+  (if-not (nil? s)
+    (let [len (.-length s)]
+      (if (pos? len)
+        (loop [i 0 hash 0]
+          (if (< i len)
+            (recur (inc i) (+ (imul 31 hash) (.charCodeAt s i)))
+            hash))
+        0))
+    0)))
+
+(def hash-double (fn [f]
+  (let [arr  (suss.bootstrap/f64-coerce f)
+        buf  arr
+        high (suss.bootstrap/f64-word0 buf)
+        low  (suss.bootstrap/f64-word4 buf)]
+    (hash-long high low))))
+
+(def hash-combine (fn [seed hash]
+  ; a la boost
+  (bit-xor seed
+    (+ hash 0x9e3779b9
+      (bit-shift-left seed 6)
+      (bit-shift-right seed 2)))))
+
+(def js-obj (suss.bootstrap/object-factory))
+
+(def string-hash-cache (js-obj))
+
+(def string-hash-cache-count 0)
+
+(def add-to-string-hash-cache (fn [k]
+  (let [h (hash-string* k)]
+    (suss.bootstrap/object-set-strict string-hash-cache k h)
+    (set! string-hash-cache-count (inc string-hash-cache-count))
+    h)))
+
+(def hash-string (fn [k]
+  (when (> string-hash-cache-count 1024)
+    (set! string-hash-cache (js-obj))
+    (set! string-hash-cache-count 0))
+  (if (nil? k)
+    0
+    (let [h (unchecked-get string-hash-cache k)]
+      (if (number? h)
+        h
+        (add-to-string-hash-cache k))))))
+
+(deftype List [meta first rest count ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x count))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  IList
+
+  ICloneable
+  (-clone [_] (List. meta first rest count __hash))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (List. new-meta first rest count __hash)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ASeq
+  ISeq
+  (-first [coll] first)
+  (-rest [coll]
+    (if (== count 1)
+      ()
+      rest))
+
+  INext
+  (-next [coll]
+    (if (== count 1)
+      nil
+      rest))
+
+  IStack
+  (-peek [coll] first)
+  (-pop [coll] (-rest coll))
+
+  ICollection
+  (-conj [coll o] (List. meta o coll (inc count) nil))
+
+  IEmptyableCollection
+  (-empty [coll] (-with-meta (.-EMPTY List) meta))
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
+
+  ISeqable
+  (-seq [coll] coll)
+
+  ICounted
+  (-count [coll] count)
+
+  IReduce
+  (-reduce [coll f] (seq-reduce f coll))
+  (-reduce [coll f start] (seq-reduce f start coll)))
+
+(deftype EmptyList [meta]
+  Object
+  (toString [coll] "()")
+  (equiv [this other]
+    (-equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  IList
+
+  ICloneable
+  (-clone [_] (EmptyList. meta))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (EmptyList. new-meta)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ISeq
+  (-first [coll] nil)
+  (-rest [coll] ())
+
+  INext
+  (-next [coll] nil)
+
+  IStack
+  (-peek [coll] nil)
+  (-pop [coll] (throw (suss.bootstrap/error "Can't pop empty list")))
+
+  ICollection
+  (-conj [coll o] (List. meta o nil 1 nil))
+
+  IEmptyableCollection
+  (-empty [coll] coll)
+
+  ISequential
+  IEquiv
+  (-equiv [coll other]
+    (if (or (list? other)
+            (sequential? other))
+      (nil? (seq other))
+      false))
+
+  IHash
+  (-hash [coll] empty-ordered-hash)
+
+  ISeqable
+  (-seq [coll] nil)
+
+  ICounted
+  (-count [coll] 0)
+
+  IReduce
+  (-reduce [coll f] (seq-reduce f coll))
+  (-reduce [coll f start] (seq-reduce f start coll)))
+
+(deftype Cons [meta first rest ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  IList
+
+  ICloneable
+  (-clone [_] (Cons. meta first rest __hash))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (Cons. new-meta first rest __hash)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ASeq
+  ISeq
+  (-first [coll] first)
+  (-rest [coll] (if (nil? rest) () rest))
+
+  INext
+  (-next [coll]
+    (if (nil? rest) nil (seq rest)))
+
+  ICollection
+  (-conj [coll o] (Cons. nil o coll nil))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
+
+  ISeqable
+  (-seq [coll] coll)
+
+  IReduce
+  (-reduce [coll f] (seq-reduce f coll))
+  (-reduce [coll f start] (seq-reduce f start coll)))
+
+(deftype IndexedSeq [arr i meta]
+  Object
+  (toString [coll]
+   (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  ICloneable
+  (-clone [_] (IndexedSeq. arr i meta))
+
+  ISeqable
+  (-seq [this]
+    (when (< i (alength arr))
+      this))
+
+  IMeta
+  (-meta [coll] meta)
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (IndexedSeq. arr i new-meta)))
+
+  ASeq
+  ISeq
+  (-first [_] (aget arr i))
+  (-rest [_] (if (< (inc i) (alength arr))
+               (IndexedSeq. arr (inc i) nil)
+               ()))
+
+  INext
+  (-next [_] (if (< (inc i) (alength arr))
+               (IndexedSeq. arr (inc i) nil)
+               nil))
+
+  IDrop
+  (-drop [coll n]
+    (if (pos? n)
+      (if (< (+ i n) (alength arr))
+        (IndexedSeq. arr (+ i n) nil)
+        nil)
+      coll))
+
+  ICounted
+  (-count [_]
+    (let [remaining (- (alength arr) i)] (if (> 0 remaining) 0 remaining)))
+
+  IIndexed
+  (-nth [coll n]
+    (let [i (+ n i)]
+      (if (and (<= 0 i) (< i (alength arr)))
+        (aget arr i)
+        (throw (suss.bootstrap/error "Index out of bounds")))))
+  (-nth [coll n not-found]
+    (let [i (+ n i)]
+      (if (and (<= 0 i) (< i (alength arr)))
+        (aget arr i)
+        not-found)))
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  IIterable
+  (-iterator [coll]
+    (IndexedSeqIterator. arr i))
+
+  ICollection
+  (-conj [coll o] (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
+
+  IReduce
+  (-reduce [coll f]
+    (array-reduce arr f (aget arr i) (inc i)))
+  (-reduce [coll f start]
+    (array-reduce arr f start i))
+
+  IHash
+  (-hash [coll] (hash-ordered-coll coll))
+
+  IReversible
+  (-rseq [coll]
+    (let [c (-count coll)]
+      (if (pos? c)
+        (RSeq. coll (dec c) nil)))))
+
+(def ^seq seq
+  "Returns a seq on the collection. If the collection is
+  empty, returns nil.  (seq nil) returns nil. seq also works on
+  Strings."
+  (fn [coll]
+  (when-not (nil? coll)
+    (cond
+      (implements? ISeqable coll)
+      (-seq coll)
+
+      (array? coll)
+      (when-not (zero? (alength coll))
+        (IndexedSeq. coll 0 nil))
+
+      (string? coll)
+      (when-not (zero? (.-length coll))
+        (IndexedSeq. coll 0 nil))
+
+      (native-satisfies? ISeqable coll)
+      (-seq coll)
+
+      :else (throw (suss.bootstrap/error (str_ coll " is not ISeqable")))))))
+
+(def first
+  "Returns the first item in the collection. Calls seq on its
+  argument. If coll is nil, returns nil."
+  (fn [coll]
+  (when-not (nil? coll)
+    (if (implements? ISeq coll)
+      (-first coll)
+      (let [s (seq coll)]
+        (when-not (nil? s)
+          (-first s)))))))
+
+(def ^seq rest
+  "Returns a possibly empty seq of the items after the first. Calls seq on its
+  argument."
+  (fn [coll]
+  (if-not (nil? coll)
+    (if (implements? ISeq coll)
+      (-rest coll)
+      (let [s (seq coll)]
+        (if s
+          (-rest ^not-native s)
+          ())))
+    ())))
+
+(def ^seq next
+  "Returns a seq of the items after the first. Calls seq on its
+  argument.  If there are no more items, returns nil"
+  (fn [coll]
+  (when-not (nil? coll)
+    (if (implements? INext coll)
+      (-next coll)
+      (seq (rest coll))))))
+
+(def prim-seq
+  "Create seq from a primitive JavaScript Array-like."
+  (fn ([prim]
+     (prim-seq prim 0))
+  ([prim i]
+     (when (< i (alength prim))
+       (IndexedSeq. prim i nil)))))
+
+(def array-seq
+  "Create a seq from a JavaScript array."
+  (fn ([array]
+     (prim-seq array 0))
+  ([array i]
+     (prim-seq array i))))
+
+(def cons
+  "Returns a new seq where x is the first element and coll is the rest."
+  (fn [x coll]
+  (cond
+    (nil? coll)             (List. nil x nil 1 nil)
+    (implements? ISeq coll) (Cons. nil x coll nil)
+    :default                (Cons. nil x (seq coll) nil))))
+
+(def counted?
+  "Returns true if coll implements count in constant time"
+  (fn [x] (satisfies? ICounted x)))
+
+(def list?
+  "Returns true if x implements IList"
+  (fn [x]
+  (satisfies? IList x)))
+
+(def sequential?
+  "Returns true if coll satisfies ISequential"
+  (fn [x] (satisfies? ISequential x)))
+
+(def accumulating-seq-count (fn [coll]
+  (loop [s (seq coll) acc 0]
+    (if (counted? s) ; assumes nil is counted, which it currently is
+      (+ acc (-count s))
+      (recur (next s) (inc acc))))))
+
+(def count
+  "Returns the number of items in the collection. (count nil) returns
+  0.  Also works on strings, arrays, and Maps"
+  (fn [coll]
+  (if-not (nil? coll)
+    (cond
+      (implements? ICounted coll)
+      (-count coll)
+
+      (array? coll)
+      (alength coll)
+
+      (string? coll)
+      ^number (.-length coll)
+
+      (implements? ISeqable coll)
+      (accumulating-seq-count coll)
+
+      :else (-count coll))
+    0)))
+
+(def empty-ordered-hash
+  (mix-collection-hash 1 0))
+
+(def list
+  "Creates a new list containing the items."
+  (fn [& xs]
+  (let [arr (if (and (instance? IndexedSeq xs) (zero? (.-i xs)))
+              (.-arr xs)
+              (let [arr (array)]
+                (loop [^not-native xs xs]
+                  (if-not (nil? xs)
+                    (do
+                      (aset arr (alength arr) (-first xs))
+                      (recur (-next xs)))
+                    arr))))]
+    (loop [i (alength arr) r ()]
+      (if (> i 0)
+        (recur (dec i) (-conj r (aget arr (dec i))))
+        r)))))
+
+(def ^boolean =
+  "Equality. Returns true if x equals y, false if not. Compares
+  numbers and collections in a type-independent manner.  Clojure's immutable data
+  structures define -equiv (and thus =) as a value, not an identity,
+  comparison."
+  (fn ([x] true)
+  ([x y]
+    (if (nil? x)
+      (nil? y)
+      (or (identical? x y)
+        ^boolean (-equiv x y))))
+  ([x y & more]
+     (if (= x y)
+       (if (next more)
+         (recur y (first more) (next more))
+         (= y (first more)))
+       false))))
+
+(def equiv-sequential
+  "Assumes x is sequential. Returns true if x equals y, otherwise
+  returns false."
+  (fn [x y]
+  (boolean
+    (when (sequential? y)
+      (if (and (counted? x) (counted? y)
+               (not (== (count x) (count y))))
+        false
+        (loop [xs (seq x) ys (seq y)]
+          (cond (nil? xs) (nil? ys)
+            (nil? ys) false
+            (= (first xs) (first ys)) (recur (next xs) (next ys))
+            :else false)))))))
+
+(defprotocol IDeref
+  "Protocol for adding dereference functionality to a reference."
+  (-deref [o]
+    "Returns the value of the reference o."))
+
+(deftype Reduced [val]
+  IDeref
+  (-deref [o] val))
+
+(def reduced
+  "Wraps x in a way such that a reduce will terminate with the value x"
+  (fn [x]
+  (Reduced. x)))
+
+(def reduced?
+  "Returns true if x is the result of a call to reduced"
+  (fn [r]
+  (instance? Reduced r)))
+
+(def ensure-reduced
+  "If x is already reduced?, returns it, else returns (reduced x)"
+  (fn [x]
+  (if (reduced? x) x (reduced x))))
+
+(def unreduced
+  "If x is reduced?, returns (deref x), else returns x"
+  (fn [x]
+  (if (reduced? x) (deref x) x)))
+
+(def deref
+  "Also reader macro: @var/@atom/@delay. Returns the
+   most-recently-committed value of ref. When applied to a var
+   or atom, returns its current state. When applied to a delay, forces
+   it if not already forced. See also - realized?."
+  (fn [o]
+  (-deref o)))
+
+(def array-reduce
+  (fn ([arr f]
+     (let [cnt (alength arr)]
+       (if (zero? (alength arr))
+         (f)
+         (loop [val (aget arr 0), n 1]
+           (if (< n cnt)
+             (let [nval (f val (aget arr n))]
+               (if (reduced? nval)
+                 @nval
+                 (recur nval (inc n))))
+             val)))))
+  ([arr f val]
+     (let [cnt (alength arr)]
+       (loop [val val, n 0]
+         (if (< n cnt)
+           (let [nval (f val (aget arr n))]
+             (if (reduced? nval)
+               @nval
+               (recur nval (inc n))))
+           val))))
+  ([arr f val idx]
+     (let [cnt (alength arr)]
+       (loop [val val, n idx]
+         (if (< n cnt)
+           (let [nval (f val (aget arr n))]
+             (if (reduced? nval)
+               @nval
+               (recur nval (inc n))))
+           val))))))
+
+(def iterable?
+  "Return true if x implements IIterable protocol."
+  (fn [x]
+  (satisfies? IIterable x)))
+
+(def iter-reduce
+  (fn ([coll f]
+   (let [iter (-iterator coll)]
+     (if (.hasNext iter)
+       (let [init (.next iter)]
+         (loop [acc init]
+           (if ^boolean (.hasNext iter)
+             (let [nacc (f acc (.next iter))]
+               (if (reduced? nacc)
+                 @nacc
+                 (recur nacc)))
+             acc)))
+       (f))))
+  ([coll f init]
+   (let [iter (-iterator coll)]
+     (loop [acc init]
+       (if ^boolean (.hasNext iter)
+         (let [nacc (f acc (.next iter))]
+           (if (reduced? nacc)
+             @nacc
+             (recur nacc)))
+         acc))))))
+
+(def seq-reduce
+  (fn ([f coll]
+    (if-let [s (seq coll)]
+      (reduce f (first s) (next s))
+      (f)))
+  ([f val coll]
+    (loop [val val, coll (seq coll)]
+      (if coll
+        (let [nval (f val (first coll))]
+          (if (reduced? nval)
+            @nval
+            (recur nval (next coll))))
+        val)))))
+
+(def reduce
+  "f should be a function of 2 arguments. If val is not supplied,
+  returns the result of applying f to the first 2 items in coll, then
+  applying f to that result and the 3rd item, etc. If coll contains no
+  items, f must accept no arguments as well, and reduce returns the
+  result of calling f with no arguments.  If coll has only 1 item, it
+  is returned and f is not called.  If val is supplied, returns the
+  result of applying f to val and the first item in coll, then
+  applying f to that result and the 2nd item, etc. If coll contains no
+  items, returns val and f is not called."
+  (fn ([f coll]
+     (cond
+       (implements? IReduce coll)
+       (-reduce coll f)
+
+       (array? coll)
+       (array-reduce coll f)
+
+       (string? coll)
+       (array-reduce coll f)
+
+       (native-satisfies? IReduce coll)
+       (-reduce coll f)
+
+       (iterable? coll)
+       (iter-reduce coll f)
+
+       :else
+       (seq-reduce f coll)))
+  ([f val coll]
+     (cond
+       (implements? IReduce coll)
+       (-reduce coll f val)
+
+       (array? coll)
+       (array-reduce coll f val)
+
+       (string? coll)
+       (array-reduce coll f val)
+
+       (native-satisfies? IReduce coll)
+       (-reduce coll f val)
+
+       (iterable? coll)
+       (iter-reduce coll f val)
+
+       :else
+       (seq-reduce f val coll)))))
+
+(deftype IndexedSeqIterator [arr ^:mutable i]
+  Object
+  (hasNext [_]
+    (< i (alength arr)))
+  (next [_]
+    (let [ret (aget arr i)]
+      (set! i (inc i))
+      ret)))
+
+(deftype RSeq [ci i meta]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (-count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  ICloneable
+  (-clone [_] (RSeq. ci i meta))
+
+  IMeta
+  (-meta [coll] meta)
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (RSeq. ci i new-meta)))
+
+  ISeqable
+  (-seq [coll] coll)
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  ISeq
+  (-first [coll]
+    (-nth ci i))
+  (-rest [coll]
+    (if (pos? i)
+      (RSeq. ci (dec i) nil)
+      ()))
+
+  INext
+  (-next [coll]
+    (when (pos? i)
+      (RSeq. ci (dec i) nil)))
+
+  ICounted
+  (-count [coll] (inc i))
+
+  ICollection
+  (-conj [coll o]
+    (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
+
+  IHash
+  (-hash [coll] (hash-ordered-coll coll))
+
+  IReduce
+  (-reduce [col f] (seq-reduce f col))
+  (-reduce [col f start] (seq-reduce f start col)))
+
+(def reversible?
+  "Returns true if coll satisfies? IReversible."
+  (fn [coll]
+  (satisfies? IReversible coll)))
+
+(def ^seq rseq
+  "Returns, in constant time, a seq of the items in rev (which
+  can be a vector or sorted-map), in reverse order. If rev is empty returns nil"
+  (fn [rev]
+  (-rseq rev)))
+
+(def indexed?
+  "Returns true if coll implements nth in constant time"
+  (fn [x] (satisfies? IIndexed x)))
+
+(def ^boolean neg?
+  "Returns true if num is less than zero, else false"
+  (fn [x] (cljs.core/neg? x)))
+
+(def linear-traversal-nth
+  (fn ([coll n]
+     (cond
+       (nil? coll)     (throw (suss.bootstrap/error "Index out of bounds"))
+       (zero? n)       (if (seq coll)
+                         (first coll)
+                         (throw (suss.bootstrap/error "Index out of bounds")))
+       (indexed? coll) (-nth coll n)
+       (seq coll)      (recur (next coll) (dec n))
+       :else           (throw (suss.bootstrap/error "Index out of bounds"))))
+  ([coll n not-found]
+     (cond
+       (nil? coll)     not-found
+       (zero? n)       (if (seq coll)
+                         (first coll)
+                         not-found)
+       (indexed? coll) (-nth coll n not-found)
+       (seq coll)      (recur (next coll) (dec n) not-found)
+       :else           not-found))))
+
+(def nth
+  "Returns the value at the index. get returns nil if index out of
+  bounds, nth throws an exception unless not-found is supplied.  nth
+  also works for strings, arrays, regex Matchers and Lists, and,
+  in O(n) time, for sequences."
+  (fn ([coll n]
+    (cond
+      (not (number? n))
+      (throw (suss.bootstrap/error "Index argument to nth must be a number"))
+
+      (nil? coll)
+      coll
+
+      (implements? IIndexed coll)
+      (-nth coll n)
+
+      (array? coll)
+      (if (and (< -1 n (.-length coll)))
+        (aget coll (int n))
+        (throw (suss.bootstrap/error "Index out of bounds")))
+
+      (string? coll)
+      (if (and (< -1 n (.-length coll)))
+        (aget coll (int n))
+        (throw (suss.bootstrap/error "Index out of bounds")))
+
+      (or (implements? ISeq coll)
+          (implements? ISequential coll))
+      (if (neg? n)
+        (throw (suss.bootstrap/error "Index out of bounds"))
+        (linear-traversal-nth coll n))
+
+      (native-satisfies? IIndexed coll)
+      (-nth coll n)
+
+      :else
+      (throw (suss.bootstrap/error (str_ "nth not supported on this type "
+                          (type->str (type coll)))))))
+  ([coll n not-found]
+    (cond
+      (not (number? n))
+      (throw (suss.bootstrap/error "Index argument to nth must be a number."))
+
+      (nil? coll)
+      not-found
+
+      (implements? IIndexed coll)
+      (-nth coll n not-found)
+
+      (array? coll)
+      (if (and (< -1 n (.-length coll)))
+        (aget coll (int n))
+        not-found)
+
+      (string? coll)
+      (if (and (< -1 n (.-length coll)))
+        (aget coll (int n))
+        not-found)
+
+      (or (implements? ISeq coll)
+          (implements? ISequential coll))
+      (if (neg? n)
+        not-found
+        (linear-traversal-nth coll n not-found))
+
+      (native-satisfies? IIndexed coll)
+      (-nth coll n not-found)
+
+      :else
+      (throw (suss.bootstrap/error (str_ "nth not supported on this type "
+                          (type->str (type coll)))))))))
+
+(def -indexOf
+  (fn ([coll x]
+   (-indexOf coll x 0))
+  ([coll x start]
+   (let [len (count coll)]
+     (if (>= start len)
+       -1
+       (loop [idx (cond
+                    (pos? start) start
+                    (neg? start) (let [candidate (+ start len)] (if (> 0 candidate) 0 candidate))
+                    :else start)]
+         (if (< idx len)
+           (if (= (nth coll idx) x)
+             idx
+             (recur (inc idx)))
+           -1)))))))
+
+(def -lastIndexOf
+  (fn ([coll x]
+   (-lastIndexOf coll x (count coll)))
+  ([coll x start]
+   (let [len (count coll)]
+    (if (zero? len)
+      -1
+      (loop [idx (cond
+                   (pos? start) (let [bound (dec len)] (if (< bound start) bound start))
+                   (neg? start) (+ len start)
+                   :else start)]
+        (if (>= idx 0)
+          (if (= (nth coll idx) x)
+            idx
+            (recur (dec idx)))
+          -1)))))))
+
+(defprotocol IFn
+  "Protocol for adding the ability to invoke an object as a function.
+  For example, a vector can also be used to look up a value:
+  ([1 2 3 4] 1) => 2"
+  (-invoke
+    [this]
+    [this a]
+    [this a b]
+    [this a b c]
+    [this a b c d]
+    [this a b c d e]
+    [this a b c d e f]
+    [this a b c d e f g]
+    [this a b c d e f g h]
+    [this a b c d e f g h i]
+    [this a b c d e f g h i j]
+    [this a b c d e f g h i j k]
+    [this a b c d e f g h i j k l]
+    [this a b c d e f g h i j k l m]
+    [this a b c d e f g h i j k l m n]
+    [this a b c d e f g h i j k l m n o]
+    [this a b c d e f g h i j k l m n o p]
+    [this a b c d e f g h i j k l m n o p q]
+    [this a b c d e f g h i j k l m n o p q r]
+    [this a b c d e f g h i j k l m n o p q r s]
+    [this a b c d e f g h i j k l m n o p q r s t]
+    [this a b c d e f g h i j k l m n o p q r s t rest]))
+
+(deftype MetaFn [afn meta]
+  IMeta
+  (-meta [_] meta)
+  IWithMeta
+  (-with-meta [_ new-meta]
+    (MetaFn. afn new-meta))
+  Fn
+  IFn
+  (-invoke [_]
+    (afn))
+  (-invoke [_ a]
+    (afn a))
+  (-invoke [_ a b]
+    (afn a b))
+  (-invoke [_ a b c]
+    (afn a b c))
+  (-invoke [_ a b c d]
+    (afn a b c d))
+  (-invoke [_ a b c d e]
+    (afn a b c d e))
+  (-invoke [_ a b c d e f]
+    (afn a b c d e f))
+  (-invoke [_ a b c d e f g]
+    (afn a b c d e f g))
+  (-invoke [_ a b c d e f g h]
+    (afn a b c d e f g h))
+  (-invoke [_ a b c d e f g h i]
+    (afn a b c d e f g h i))
+  (-invoke [_ a b c d e f g h i j]
+    (afn a b c d e f g h i j))
+  (-invoke [_ a b c d e f g h i j k]
+    (afn a b c d e f g h i j k))
+  (-invoke [_ a b c d e f g h i j k l]
+    (afn a b c d e f g h i j k l))
+  (-invoke [_ a b c d e f g h i j k l m]
+    (afn a b c d e f g h i j k l m))
+  (-invoke [_ a b c d e f g h i j k l m n]
+    (afn a b c d e f g h i j k l m n))
+  (-invoke [_ a b c d e f g h i j k l m n o]
+    (afn a b c d e f g h i j k l m n o))
+  (-invoke [_ a b c d e f g h i j k l m n o p]
+    (afn a b c d e f g h i j k l m n o p))
+  (-invoke [_ a b c d e f g h i j k l m n o p q]
+    (afn a b c d e f g h i j k l m n o p q))
+  (-invoke [_ a b c d e f g h i j k l m n o p q r]
+    (afn a b c d e f g h i j k l m n o p q r))
+  (-invoke [_ a b c d e f g h i j k l m n o p q r s]
+    (afn a b c d e f g h i j k l m n o p q r s))
+  (-invoke [_ a b c d e f g h i j k l m n o p q r s t]
+    (afn a b c d e f g h i j k l m n o p q r s t))
+  (-invoke [_ a b c d e f g h i j k l m n o p q r s t rest]
+    (apply afn a b c d e f g h i j k l m n o p q r s t rest)))
+
+(def with-meta
+  "Returns an object of the same type and value as obj, with
+  map m as its metadata."
+  (fn [o meta]
+  (if (js-fn? o)
+    (MetaFn. o meta)
+    (when-not (nil? o)
+      (-with-meta o meta)))))
+
+(def meta
+  "Returns the metadata of obj, returns nil if there is no metadata."
+  (fn [o]
+  (when (and (not (nil? o))
+             (satisfies? IMeta o))
+    (-meta o))))
+;   Copyright (c) Rich Hickey. All rights reserved.
+;   The use and distribution terms for this software are covered by the
+;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+;   which can be found in the file epl-v10.html at the root of this distribution.
+;   By using this software in any fashion, you are agreeing to be bound by
+;   the terms of this license.
+;   You must not remove this notice, or any other, from this software.
+
+;; Retained standalone upstream forms: canonical singleton and nil count extension.
+(set! (.-EMPTY List) (EmptyList. nil))
+
+(extend-type nil
+  ICounted
+  (-count [_] 0))
+
+(extend-type number
+  IEquiv
+  (-equiv [x o] (identical? x o)))
+
+(extend-type default
+  IEquiv
+  (-equiv [x o] (identical? x o)))

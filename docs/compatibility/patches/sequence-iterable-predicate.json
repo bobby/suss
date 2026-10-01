@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "97ff6754e66f0f434c171eca6685e3c0a9f56092289c1b31b65335ac5008a041",
+  "replacement": "(def iterable?\n  \"Return true if x implements IIterable protocol.\"\n  (fn [x]\n  (satisfies? IIterable x)))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains metadata, docstring, arities and reduction algorithm, including reduced termination and source order. Full upstream defn and private runtime Var metadata remain unfinished."
+}

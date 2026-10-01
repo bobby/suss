@@ -45,6 +45,141 @@ impl Analyzer {
         }
         let nil = self.literal_form(form, Literal::Nil);
         match operation {
+            ControlForm::UncheckedGet | ControlForm::UncheckedSet => {
+                let operation = if operation == ControlForm::UncheckedGet { Nominal::NativeObjectGet } else { Nominal::NativeObjectSet };
+                if !operation.valid(&vec![Type::Value; args.len()]) {
+                    return Err(fail(form.span.clone(), "Invalid unchecked property macro arity"));
+                }
+                let operands = args.iter().map(|argument| self.form(argument)).collect::<Result<Vec<_>, _>>()?;
+                Ok(self.nominal(form, operation, operands))
+            }
+            ControlForm::Increment | ControlForm::Decrement => {
+                if args.len() != 1 {
+                    return Err(fail(form.span.clone(), if operation == ControlForm::Increment {
+                        "inc requires one operand"
+                    } else { "dec requires one operand" }));
+                }
+                let value = self.form(&args[0])?;
+                let operator = if operation == ControlForm::Increment {
+                    Arithmetic::Add
+                } else { Arithmetic::Subtract };
+                let arguments = vec![value, self.literal_form(form, Literal::Number(1.0))];
+                let ty = arithmetic_type(operator, &arguments.iter().map(|arg| arg.ty).collect::<Vec<_>>())
+                    .ok_or_else(|| fail(args[0].span.clone(), "Arithmetic object coercions are not lowered yet"))?;
+                Ok(Hir {
+                    span: form.span.clone(),
+                    metadata: form.metadata.clone(),
+                    ty,
+                    kind: Expression::Arithmetic { operator, arguments },
+                })
+            }
+            ControlForm::Zero | ControlForm::Positive | ControlForm::Negative => {
+                if args.len() != 1 {
+                    return Err(fail(
+                        form.span.clone(),
+                        match operation { ControlForm::Zero => "zero? requires one operand", ControlForm::Negative => "neg? requires one operand", _ => "pos? requires one operand" },
+                    ));
+                }
+                let value = self.form(&args[0])?;
+                Ok(Hir {
+                    span: form.span.clone(),
+                    metadata: form.metadata.clone(),
+                    ty: Type::Bool,
+                    kind: Expression::Comparison {
+                        operation: if operation == ControlForm::Zero {
+                            Comparison::StrictEqual
+                        } else if operation == ControlForm::Negative {
+                            Comparison::Less
+                        } else {
+                            Comparison::Greater
+                        },
+                        arguments: vec![value, self.literal_form(form, Literal::Number(0.0))],
+                    },
+                })
+            }
+            ControlForm::ThreadFirst => {
+                let Some(first) = args.first() else {
+                    return Err(fail(form.span.clone(), "-> requires an initial expression"));
+                };
+                let mut threaded = first.clone();
+                for step in &args[1..] {
+                    let items = match &step.kind {
+                        Kind::List(items) if !items.is_empty() => {
+                            let mut next = vec![items[0].clone(), threaded];
+                            next.extend_from_slice(&items[1..]);
+                            next
+                        }
+                        Kind::List(_) => {
+                            return Err(fail(step.span.clone(), "Threading step has no callee"))
+                        }
+                        _ => vec![step.clone(), threaded],
+                    };
+                    threaded = Form {
+                        kind: Kind::List(items),
+                        span: step.span.clone(),
+                        metadata: if matches!(step.kind, Kind::List(_)) {
+                            step.metadata.clone()
+                        } else {
+                            Vec::new()
+                        },
+                    };
+                }
+                self.form_in(&threaded, statement, tail)
+            }
+            ControlForm::AsThread => {
+                if args.len() < 2 {
+                    return Err(fail(
+                        form.span.clone(),
+                        "as-> requires expression and binding name",
+                    ));
+                }
+                let Kind::Symbol(name) = &args[1].kind else {
+                    return Err(fail(args[1].span.clone(), "as-> binding must be a symbol"));
+                };
+                if name.namespace.is_some() || name.name == "&" {
+                    return Err(fail(
+                        args[1].span.clone(),
+                        "as-> binding must be unqualified",
+                    ));
+                }
+                let name = name.name.clone();
+                let outer = self.locals.clone();
+                let result = (|| {
+                    let mut bindings = Vec::new();
+                    let value = self.form(&args[0])?;
+                    let mut binding = self.fresh_binding(&args[1], value);
+                    binding.name = name.clone();
+                    binding.metadata = args[1].metadata.clone();
+                    self.locals
+                        .insert(name.clone(), (binding.id, binding.value.ty));
+                    bindings.push(binding);
+                    for step in args[2..].iter().take(args.len().saturating_sub(3)) {
+                        let value = self.form(step)?;
+                        let mut binding = self.fresh_binding(&args[1], value);
+                        binding.name = name.clone();
+                        binding.metadata = args[1].metadata.clone();
+                        self.locals
+                            .insert(name.clone(), (binding.id, binding.value.ty));
+                        bindings.push(binding);
+                    }
+                    let body = if args.len() == 2 {
+                        self.form_in(&args[1], statement, tail)?
+                    } else {
+                        self.form_in(args.last().unwrap(), statement, tail)?
+                    };
+                    Ok(Hir {
+                        span: form.span.clone(),
+                        metadata: form.metadata.clone(),
+                        ty: body.ty,
+                        kind: Expression::Let {
+                            bindings,
+                            body: Box::new(body),
+                        },
+                    })
+                })();
+                self.locals = outer;
+                result
+            }
             ControlForm::CachingHash => {
                 if args.len() != 3 || !matches!(args[2].kind, Kind::Symbol(_)) {
                     return Err(fail(
@@ -190,6 +325,75 @@ impl Analyzer {
                     self.control_if(form, test, body, nil)
                 } else {
                     self.control_if(form, test, nil, body)
+                })
+            }
+            ControlForm::IfLet => {
+                if !(2..=3).contains(&args.len()) {
+                    return Err(fail(
+                        form.span.clone(),
+                        "if-let requires two or three operands",
+                    ));
+                }
+                let Kind::Vector(entries) = &args[0].kind else {
+                    return Err(fail(
+                        args[0].span.clone(),
+                        "if-let bindings must be a vector",
+                    ));
+                };
+                if entries.len() != 2 {
+                    return Err(fail(
+                        args[0].span.clone(),
+                        "if-let requires exactly one binding pair",
+                    ));
+                }
+                let Kind::Symbol(name) = &entries[0].kind else {
+                    return Err(fail(
+                        entries[0].span.clone(),
+                        "Binding destructuring is not lowered yet",
+                    ));
+                };
+                if name.namespace.is_some() || name.name == "&" {
+                    return Err(fail(
+                        entries[0].span.clone(),
+                        "Binding name must be unqualified",
+                    ));
+                }
+                // The test runs once outside the source binding's scope.
+                let test = self.form(&entries[1])?;
+                let temporary = self.fresh_binding(&entries[1], test);
+                let condition = self.local(form, temporary.id);
+                let mut binding = self.fresh_binding(&entries[0], condition.clone());
+                binding.name = name.name.clone();
+                binding.metadata = entries[0].metadata.clone();
+                let outer = self.locals.clone();
+                self.locals
+                    .insert(name.name.clone(), (binding.id, binding.value.ty));
+                let consequent = self.form_in(&args[1], statement, tail);
+                self.locals = outer;
+                let consequent = consequent?;
+                let consequent = Hir {
+                    span: args[1].span.clone(),
+                    metadata: args[1].metadata.clone(),
+                    ty: consequent.ty,
+                    kind: Expression::Let {
+                        bindings: vec![binding],
+                        body: Box::new(consequent),
+                    },
+                };
+                let alternative = if args.len() == 3 {
+                    self.form_in(&args[2], statement, tail)?
+                } else {
+                    nil
+                };
+                let body = self.control_if(form, condition, consequent, alternative);
+                Ok(Hir {
+                    span: form.span.clone(),
+                    metadata: form.metadata.clone(),
+                    ty: body.ty,
+                    kind: Expression::Let {
+                        bindings: vec![temporary],
+                        body: Box::new(body),
+                    },
                 })
             }
             ControlForm::IfNot => {

@@ -1,0 +1,8 @@
+;; Original loader declarations for retained source's mutual references.
+;; Pending helpers remain uninitialized and fail if invoked; no fake implementations.
+(declare List EmptyList Cons IndexedSeq seq first rest next prim-seq array-seq cons count
+  counted? list? sequential? accumulating-seq-count empty-ordered-hash
+  Reduced reduced reduced? ensure-reduced unreduced deref iterable? iter-reduce reduce
+  pr-str* -indexOf -lastIndexOf equiv-sequential = hash-ordered-coll seq-reduce
+  array-reduce IndexedSeqIterator RSeq indexed? neg? linear-traversal-nth nth str_ type type->str MetaFn apply with-meta meta)
+

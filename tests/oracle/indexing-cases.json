@@ -1,0 +1,502 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "nth-list",
+      "source": "(nth (list 1 2 3) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "nth-cons",
+      "source": "(nth (cons 1 (cons 2 nil)) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "nth-rseq",
+      "source": "(nth (rseq (seq (array 1 2 3))) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "nth-array",
+      "source": "(nth (array 1 2 3) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "nth-array-fraction",
+      "source": "(nth (array 1 2) 0.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "nth-array-negative-fraction",
+      "source": "(nth (array 1 2) -0.5)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "nth-array-outside-default",
+      "source": "(nth (array 1 2) 9 17)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "nth-list-negative-default",
+      "source": "(nth (list 1 2) -1 17)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "nth-list-fraction-default",
+      "source": "(nth (list 1 2) 0.5 17)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "nth-list-past-end-default",
+      "source": "(nth (list 1 2) 9 17)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "nth-empty-default",
+      "source": "(nth () 0 17)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "nth-nil-default",
+      "source": "(nth nil 0 17)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "nth-indexed-offset",
+      "source": "(nth (next (seq (array 99 1 2))) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "linear-nth-direct",
+      "source": "(linear-traversal-nth (list 1 2 3) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "index-of-list",
+      "source": "(.indexOf (list 1 2 1) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "index-of-list-start",
+      "source": "(.indexOf (list 1 2 1) 1 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "index-of-negative-start",
+      "source": "(.indexOf (list 1 2 1) 1 -1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "index-of-negative-clamp",
+      "source": "(.indexOf (list 1 2 1) 1 -99)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "index-of-missing",
+      "source": "(.indexOf (list 1 2) 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "index-of-empty",
+      "source": "(.indexOf () 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "index-of-past-start",
+      "source": "(.indexOf (list 1 2) 1 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "last-index-of-list",
+      "source": "(.lastIndexOf (list 1 2 1) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "last-index-of-start",
+      "source": "(.lastIndexOf (list 1 2 1) 1 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "last-index-of-negative",
+      "source": "(.lastIndexOf (list 1 2 1) 1 -1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "last-index-of-negative-past",
+      "source": "(.lastIndexOf (list 1 2 1) 1 -99)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "last-index-of-large-start",
+      "source": "(.lastIndexOf (list 1 2 1) 1 99)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "last-index-of-empty",
+      "source": "(.lastIndexOf () 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "index-of-rseq",
+      "source": "(.indexOf (rseq (seq (array 1 2 3))) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "index-of-indexed-offset",
+      "source": "(.indexOf (next (seq (array 99 1 2))) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "index-of-nested-equality",
+      "source": "(.indexOf (list (list 1 2) (list 3)) (cons 1 (list 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "last-index-of-nil",
+      "source": "(.lastIndexOf (list nil false nil) nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "index-of-false",
+      "source": "(.indexOf (list nil false nil) false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "index-of-string-unit",
+      "source": "(.indexOf (seq \"\ud83d\ude00A\") \"\\ude00\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "index-of-effects-once",
+      "source": "(do (def indexing-trace 0) (.indexOf (do (set! indexing-trace 1) (list 1 2)) (do (set! indexing-trace (+ (* indexing-trace 10) 2)) 2) (do (set! indexing-trace (+ (* indexing-trace 10) 3)) 0)) indexing-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "nth-native-number",
+      "source": "(do (extend-type number IIndexed (-nth ([x n] (+ x n)) ([x n nf] (+ x n)))) (nth 41 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "nth-nil",
+      "source": "(nil? (nth nil 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nth-list-nil-element",
+      "source": "(nil? (nth (list nil false) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nth-list-false-element",
+      "source": "(false? (nth (list nil false) 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nth-string-utf16",
+      "source": "(identical? (nth \"\ud83d\ude00\" 0) \"\\ud83d\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nth-string-fraction",
+      "source": "(identical? (nth \"AB\" -0.5) \"A\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nth-indexed-fraction",
+      "source": "(nil? (nth (seq (array 1 2)) 0.5))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "indexed-list",
+      "source": "(indexed? (list 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "indexed-array",
+      "source": "(indexed? (array 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "indexed-indexed-seq",
+      "source": "(indexed? (seq (array 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "negative-number",
+      "source": "(neg? -0.5)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "negative-zero",
+      "source": "(neg? -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "negative-nan",
+      "source": "(neg? ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "negative-string",
+      "source": "((identity neg?) \"-1\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "negative-nil",
+      "source": "((identity neg?) nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "nth-error-before-nil",
+      "source": "(try (nth nil \"0\") false (catch :default e true))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nth-error-out-of-bounds",
+      "source": "(try (nth (list 1) 9) false (catch :default e true))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nth-error-negative",
+      "source": "(try (nth (list 1) -1) false (catch :default e true))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nth-error-string-type",
+      "source": "(try (nth \"A\" nil 17) false (catch :default e true))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "core-dec-redefinition-search",
+      "source": "(let [saved cljs.core/dec] (set! cljs.core/dec (fn [x] 99)) (let [result (cljs.core/-lastIndexOf (list 1 2) 1)] (set! cljs.core/dec saved) result))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "core-inc-redefinition-search",
+      "source": "(let [saved cljs.core/inc] (set! cljs.core/inc (fn [x] 99)) (let [result (cljs.core/-indexOf (list 1 2) 2)] (set! cljs.core/inc saved) result))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "core-dec-redefinition-nth",
+      "source": "(let [saved cljs.core/dec] (set! cljs.core/dec (fn [x] 99)) (let [result (nth (list 1 2) 1)] (set! cljs.core/dec saved) result))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "macro-lexical-shadowing",
+      "source": "(let [inc (fn [x] (+ x 10)) dec (fn [x] (+ x 20)) neg? (fn [x] (+ x 30))] (+ (inc 1) (dec 2) (neg? 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050800000000000"
+      }
+    },
+    {
+      "id": "macro-operand-effects-once",
+      "source": "(do (def indexing-macro-trace 0) (+ (inc (do (set! indexing-macro-trace (+ (* indexing-macro-trace 10) 1)) 4)) (dec (do (set! indexing-macro-trace (+ (* indexing-macro-trace 10) 2)) 4))) indexing-macro-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "nth-direct-indexed-over-seq",
+      "source": "(do (def indexing-dispatch-trace 0) (deftype IndexingBoth [] IIndexed (-nth [x n] (set! indexing-dispatch-trace (+ (* indexing-dispatch-trace 10) 1)) 17) (-nth [x n nf] (set! indexing-dispatch-trace (+ (* indexing-dispatch-trace 10) 2)) 19) ISeqable (-seq [x] (set! indexing-dispatch-trace 99) (list 3))) (+ (nth (IndexingBoth.) 100) (nth (IndexingBoth.) -1 7) indexing-dispatch-trace))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4048000000000000"
+      }
+    },
+    {
+      "id": "index-search-count-once-stops-at-match",
+      "source": "(do (def indexing-search-trace 0) (deftype IndexingSearch [] ICounted (-count [x] (set! indexing-search-trace 1) 3) IIndexed (-nth [x n] (set! indexing-search-trace (+ (* indexing-search-trace 10) (+ n 2))) (+ n 10)) (-nth [x n nf] (+ n 10))) (cljs.core/-indexOf (IndexingSearch.) 11) indexing-search-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "core-neg-redefinition-negative-nth",
+      "source": "(let [saved cljs.core/neg?] (set! cljs.core/neg? (fn [x] false)) (let [result (nth (list 1 2) -1 17)] (set! cljs.core/neg? saved) result))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "nth-throw-prevents-index-effect",
+      "source": "(do (def indexing-throw-trace 0) (try (nth (do (set! indexing-throw-trace 1) (throw 7)) (do (set! indexing-throw-trace 2) 0)) (catch :default error nil)) indexing-throw-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    }
+  ]
+}

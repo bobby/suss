@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c11f8c6d2a8f83c92c17bd167bfda819e7a46f7c9077b61e0f9321bfb244e9e1",
+  "replacement": "(def cons\n  \"Returns a new seq where x is the first element and coll is the rest.\"\n  (fn [x coll]\n  (cond\n    (nil? coll)             (List. nil x nil 1 nil)\n    (implements? ISeq coll) (Cons. nil x coll nil)\n    :default                (Cons. nil x (seq coll) nil))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+}

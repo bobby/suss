@@ -38,7 +38,7 @@ pub(super) fn functions(b: &mut Builder, primitives: [u32; 5]) -> Vec<u32> {
                 RefI31,
                 I32Const(0),
                 RefI31,
-                StructNew(8),
+                I32Const(0), RefI31, StructNew(8),
                 Throw(0),
             ]);
         }

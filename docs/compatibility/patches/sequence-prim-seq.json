@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "004e70e09f368c0022d8d272bab4b9d5abdf43ad78ffaffa8bf18967f5bcd5cc",
+  "replacement": "(def prim-seq\n  \"Create seq from a primitive JavaScript Array-like.\"\n  (fn ([prim]\n     (prim-seq prim 0))\n  ([prim i]\n     (when (< i (alength prim))\n       (IndexedSeq. prim i nil)))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+}

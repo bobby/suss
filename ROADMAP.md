@@ -38,7 +38,7 @@ preserves existing issue bodies.
 
 ### M0: Contract and feasibility
 
-- **M0-01 — Contract and upstream inventory** (completed). Deterministic pinned inventory, source hashes/reader branches, strict review schema and provenance policy pass. Eighty arithmetic/nominal/dynamic/exception/bootstrap/predicate/array/comparison/direct-implementation/collection-protocol/control-macro declarations now have in-progress manual reviews; 985 remain unassessed for M4/M7 implementation.
+- **M0-01 — Contract and upstream inventory** (completed). Deterministic pinned inventory, source hashes/reader branches, strict review schema and provenance policy pass. 139 arithmetic/nominal/dynamic/exception/bootstrap/predicate/array/comparison/direct-implementation/collection-protocol/control/bitwise/Murmur/string-cache declarations now have in-progress manual reviews; 926 remain unassessed for M4/M7 implementation.
 - **M0-02 — Lock toolchain and official WIT packages** (completed). Locked official package hashes and executing GC/tail-call/EH/map/implements/external-id/async/future/stream probes pass. Generated Suss adapters remain M5/M6 work.
 - **M0-03 — Prove shared GC fragments** (completed). Shared roots/closures/nominal descriptors survive forced GC; incompatible ABI fails before initialization. Production persistent sessions remain M2/M3 work.
 - **M0-04 — Prove browser loading and suspension** (completed). Chrome executes typed core/Promise/cancellation/feature-error fixtures and optional Jco GC packaging. Teardown timeout is recorded separately; cross-browser/product delivery remains M8 work.
@@ -68,9 +68,13 @@ closed after their exit gates were rechecked. M2–M9 remain open.
 - **M3-03 — Compiled macro bootstrap** (planned). Run macros in a separate compiled phase session and remove the temporary evaluator. Six bounded checked control-macro expansions now establish retained-source prerequisites; this is not compiled macro acceptance. See [control macros](docs/runtime/control-flow.md). Forward declarations now preserve source undefined reads and defonce initialization; see [declarations](docs/runtime/forward-declarations.md). The bounded caching-hash dependency now has38 fresh scalar observations and located recovery guards; full compiled macros and List hashing remain open; see [hash caching](docs/runtime/caching-hash.md).
 - **M3-04 — Session lifecycle and interruption** (planned). Define reset, roots, code residency and cancellation while interactive I/O is pending. Native session reset/owned handles/fuel recovery/residency counters now have executing evidence; interactive cancellation and live heap accounting remain.
 
+Retained cached string hashing now matches64 fresh pinned observations over owned GC
+objects, with aliases/live dependencies and40 ABI checks. Public hash/equality and
+persistent collections remain unfinished; see [cached hashing](docs/runtime/cached-string-hashing.md).
+
 ### M4: Portable persistent collections
 
-- **M4-01 — Upstream extraction and adaptation provenance** (in-progress). Reviewed ID selection now reproduces exact source forms, explicit hash-bound patches, EPL packaging and a generated canonical core artifact. Seven bootstrap identity/not/boolean/some?/inc/dec/fn? forms and twenty-one retained Fn/sequence/collection protocol declarations execute with GC/redefinition/order regressions and separate 117-case function /65-case interface primary corpora. Full core dependencies/macros/loading acceptance remains; see [core import](docs/compatibility/CORE-IMPORT.md).
+- **M4-01 — Upstream extraction and adaptation provenance** (in-progress). Reviewed ID selection now reproduces exact source forms, explicit hash-bound patches, EPL packaging and a generated canonical core artifact. Seven bootstrap identity/not/boolean/some?/inc/dec/fn? forms and twenty-one retained Fn/sequence/collection protocol declarations execute with GC/redefinition/order regressions and separate 117-case function /65-case interface primary corpora. Retained bit-count and int-rotate-left add two source algorithms with explicit bootstrap patches; scalar bitwise/imul and bounded macros have70 fresh primary/native observations. Retained scalar Murmur algorithms/constants and zero? now have57 exact observations and ten additional source forms, supported by bounded threading/zero expansion. Full core dependencies/macros/loading acceptance remains; see [core import](docs/compatibility/CORE-IMPORT.md).
 - **M4-02 — Sequences, lists and vectors** (in-progress). Direct-only protocol implements? now has33 fresh primary/native observations and phase/GC/namespace guards; see [implementation predicate](docs/runtime/implements.md). GC-owned mutable array storage, scoped nominal field mutation and bounded source macro/runtime adaptations now establish prerequisites for IndexedSeq, list and variadic rest; see [array foundations](docs/runtime/arrays.md). UTF-16 alength/aget now provide string storage access required by retained IndexedSeq; see [indexed strings](docs/runtime/indexed-strings.md). Persistent sequence/list/vector/subvector/map-entry and lazy/chunked acceptance remain unfinished.
 - **M4-03 — Maps, sets, queues, records and sorted types** (planned). Port HAMTs, sorted collections, queues and record behavior.
 - **M4-04 — Hashing, metadata, transients and reduction** (planned). Complete shared collection protocols and all reduction paths.
@@ -117,3 +121,38 @@ change, executes its relevant checks, and updates evidence/handoff. A package
 is complete only when its acceptance criteria pass. A known-failure baseline
 does not certify compatibility. Toolchain limitations remain explicit blockers,
 not reasons to silently weaken the contract.
+
+
+Sequence/list foundation progress: retained source List/EmptyList/Cons/IndexedSeq,
+canonical empty literals and persistent variadic rest now execute against75 fresh
+primary observations. All original51 are preserved. Imported68/72 artifacts and
+157 partial/908 unassessed reviews remain prerequisites, not M4 acceptance; full
+method dependencies and surrounding release gates remain incomplete. See
+[sequence evidence](docs/runtime/sequences.md).
+
+Retained sequential equality now closes the List/EmptyList/Cons/IndexedSeq helper
+boundary with source `=`/equiv-sequential and native number/default IEquiv setup.
+Fresh131 observations retain the prior75;159 partial reviews/906 unassessed and
+70 selections/74 licensed artifacts remain prerequisites. Hashing/reduction and
+remaining collection/macro/release gates stay open; see
+[sequential equality](docs/runtime/sequential-equality.md).
+
+Retained reduction now supplies IDeref/Reduced and source sequence/array/string/
+iterator helpers, with65 fresh primary/native observations and81 control cases
+including bounded if-let. Selection82/artifacts86 and172 partial/893 unassessed
+reviews remain prerequisites; complete collection/transducer/macro/release gates
+stay open. See [reduction evidence](docs/runtime/sequence-reduction.md).
+
+Retained IndexedSeqIterator/RSeq and reversible?/rseq now execute against59 shared
+fresh primary/native observations plus1 explicit named length-write boundary.
+Selection86/artifacts90/reviews176partial+889unassessed remain prerequisites;
+hash/printing/index helpers, generic reverse, other collections and compiled
+macro/release gates remain open. See [iteration evidence](docs/runtime/sequence-iteration.md).
+
+Identity hashing prerequisites now have34 fresh primary observations,33 matching
+native relations and1 exact strict-arity contract boundary across4 native tests. Owner-held UID storage advances the shared layout to ABI2 with explicit
+old-artifact rejection; complete retained IFn/MetaFn/with-meta/meta dependencies
+bring selection to96 forms/100 licensed artifacts and189 partial reviews/876
+unassessed. Public/default and collection hashing, general IFn invocation, apply,
+full metadata and milestone gates remain open. See
+[identity evidence](docs/runtime/identity-hashing.md).

@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+  "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+  "conditional-imul": {
+    "line": 953,
+    "end-line": 964,
+    "source-region-sha256": "476669ea5c50cacb88f7f21098828cc40fc4b18944e1f88dbbd470aabe78681d",
+    "adaptation": "crates/suss-compile/src/runtime_abi/bitwise.rs",
+    "rationale": "Original scalar I32Mul adapter implements wrapping Math.imul behavior. Conditional definitions inside if are not emitted as top-level inventory declarations; this records the explicit source region without inventing declaration IDs. Complete object conversion and off-arity wrapper compatibility remain unimplemented."
+  }
+}
