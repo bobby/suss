@@ -5085,3 +5085,95 @@ unrelated deletion, issue closure or merge. All local reference/Cargo graphs are
 terminal; next gate is exact reviewed-head CI. Next implementation task remains
 actual source EmptyList/List/Cons/IndexedSeq with canonical empty list,
 hashing/reduction and persistent rest/apply.
+
+
+## Retained sequence operation protocols — 2026-09-30
+
+Previous goal turn made authoritative progress: PR88 is independently reviewed
+atb037290 and ready without merging; exact CI36792256238 passed. Root inspected
+enabled provenance/workspace logs /private/tmp/suss-pr88-final-ci.log. Live PR85–88
+remain open. Root isolated portable/core-sequence-operations on that reviewed head;
+all prior local graphs were terminal. Accepted design remains unchanged.
+
+Pinned List/EmptyList use IStack and IReduce; IndexedSeq also needs IReversible,
+IIterable and IDrop. Added25 independent scalar dispatch probes to the existing
+35-case interface corpus. First fresh38652 ended101:60 exact primary matches,
+then unresolvedIStack/IReduce in two native tests. Upstream warned that extend-type
+reduction arities should be grouped; corrected the fixture to its supported grouped
+syntax without changing expectations. Fresh41522 ended101:60 exact matches without
+that warning, then same two located unresolved declarations; logs
+/private/tmp/suss-sequence-operation-primary-red[-grouped].log.
+
+Imported all five whole pinned protocol forms with patch:null, annotations,
+docstrings and EPL provenance retained. Source order of all20 protocol declarations
+is preserved. The existing defprotocol adapter handles them; no production Rust,
+helper/index/global/layout or ABI version changes. Native9847 ended101 only on
+the new invalid-arity assertion expecting a message in SessionError Display;
+Display deliberately says Uncaught language exception. Require typed Language
+exception instead, preserving compile/trap distinction. Fresh67745 terminal0:
+60 exact primary observations (original35 unchanged), allfour native interface
+tests; /private/tmp/suss-sequence-operation-final-primary.log.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-core-interface-oracle.sh`.
+
+Five hash-bound partial reviews: overlay80/985;26 selected forms produce30 licensed
+artifacts. Adapter methods do not establish concrete persistent collections,
+reduction traversal, early stopping or actual iterator behavior. Next validate
+six-function source/core guards, provenance and required full workspace baseline,
+then independent PR review/fixes and exact final-head CI. Actual retained source
+EmptyList/List/Cons/IndexedSeq with canonical empty list, hashing/reduction and
+persistent rest/apply remains unfinished. No issue closure or PR merge.
+
+Guarded command first ended101 before execution: nonexistent test target
+core_source_import; corrected to the actual core_import target.
+
+Guarded54540 terminal0: core_import17/interface4/forward declarations2. Provenance
+fresh terminal0: Python71/inventory1065/80 partial985 unassessed/artifacts30/WIT15
+files6 packages/numeric/offline10milestones39issues. Original35 JSON observations
+are byte-data identical to the parent corpus. Prior21 selected manifest forms
+retain every source/form/patch/notice hash and review/dependency field; only seven
+extracted filenames shift to preserve source ordering. Full workspace54175 completed
+terminal0, all enabled tests and doc-tests passing; /private/tmp/suss-sequence-operation-baseline.log. Require terminal
+baseline, independent review and exact final-head CI before readiness.
+
+Root validation is complete for this slice; next gate is independent review,
+pushed significant fixes if needed and exact final-head CI. Keep full M2–M9 goal
+active; no issue or milestone acceptance is complete from these declarations.
+
+## Independent PR89 review — 2026-09-30
+
+Reviewed candidatebb4db62 against PR88 baseb037290 in isolated
+/private/tmp/suss-review-pr89. No significant production defect found within the
+partial declaration scope. Independently verified all20 protocol forms are whole,
+byte-exact pinned source ranges in source order, with patch:null and EPL notices.
+All21 parent manifest entries retain source/form/patch/notice/review/dependency
+fields except shifted extracted filenames. No compiler/runtime production change.
+
+Added five shared scalar probes: false initial reduction state, callee capture
+before argument rebinding, live extension during argument evaluation, ordered
+throw/catch/finally effects and nil-returning drop dispatch. The original60
+observations remain unchanged; current65 are independently decoded, with forced
+GC between native cases. Focus57012 completed terminal0, four native tests. Fresh
+reference/native86823 completed terminal0:65 exact primary matches/native4;
+/private/tmp/suss-pr89-review-primary.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-core-interface-oracle.sh`.
+
+A fifth native test rejects malformed duplicate/empty/variadic signatures and an
+undeclared extension arity, verifies compile atomicity and retained loaded methods
+after GC, then valid declaration recovery. Guarded43137 completed terminal0:
+core_import17/interfaces5/forward declarations2;
+/private/tmp/suss-pr89-review-guarded.log. Python71/inventory1065/80 partial reviews
+and985 unassessed/30 source artifacts/WIT15 files6 packages/numeric/offline10
+milestones39 issues pass. Five review rationales and current corpus counts align;
+regeneration changes only the manifest review hash. Required full reviewer graph17462 completed terminal0, all enabled tests and
+doc-tests passing; /private/tmp/suss-pr89-review-baseline.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Existing diagnostic differential9 pass/7 fail and legacy/manual ignores remain
+explicit. All local reviewer Cargo/JVM/Node graphs are terminal; shared target
+slot released to root.
+
+These original nominal adapters do not establish actual persistent collections,
+reduction traversal, reduced-value stopping or iterator implementations. Source
+EmptyList/List/Cons/IndexedSeq, canonical empty-list/static-property storage,
+hashing/reduction and persistent rest/apply remain unfinished. No RUSTFLAGS
+override, unrelated deletion, issue closure or merge. Require final reviewed-head
+CI after significant findings/fixes before readiness.

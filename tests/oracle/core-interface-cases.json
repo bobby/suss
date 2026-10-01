@@ -281,6 +281,246 @@
         "tag": "f64",
         "bits": "404f800000000000"
       }
+    },
+    {
+      "id": "operations-source-declarations",
+      "source": "(do (deftype OperationProbe [value] cljs.core/IStack (-peek [this] value) (-pop [this] (OperationProbe. (- value 1))) cljs.core/IReduce (-reduce [this f] (f value value)) (-reduce [this f start] (f start value)) cljs.core/IReversible (-rseq [this] this) cljs.core/IIterable (-iterator [this] this) cljs.core/IDrop (-drop [this n] (if (> n 0) (OperationProbe. (+ value n)) this))) (def operation-probe (OperationProbe. 17)) (implements? cljs.core/IStack operation-probe))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "operations-direct-IStack",
+      "source": "(implements? cljs.core/IStack operation-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "operations-direct-IReduce",
+      "source": "(implements? cljs.core/IReduce operation-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "operations-direct-IReversible",
+      "source": "(implements? cljs.core/IReversible operation-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "operations-direct-IIterable",
+      "source": "(implements? cljs.core/IIterable operation-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "operations-direct-IDrop",
+      "source": "(implements? cljs.core/IDrop operation-probe)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "operations-peek",
+      "source": "(cljs.core/-peek operation-probe)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "operations-pop",
+      "source": "(cljs.core/-peek (cljs.core/-pop operation-probe))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4030000000000000"
+      }
+    },
+    {
+      "id": "operations-reduce-two",
+      "source": "(cljs.core/-reduce operation-probe (fn [a b] (+ a b)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "operations-reduce-three",
+      "source": "(cljs.core/-reduce operation-probe (fn [a b] (- a b)) 50)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "operations-reduce-nil-initial",
+      "source": "(cljs.core/-reduce operation-probe (fn [a b] (if (nil? a) b 0)) nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "operations-reverse-owner",
+      "source": "(identical? operation-probe (cljs.core/-rseq operation-probe))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "operations-iterator-owner",
+      "source": "(identical? operation-probe (cljs.core/-iterator operation-probe))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "operations-drop-positive",
+      "source": "(cljs.core/-peek (cljs.core/-drop operation-probe 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4034000000000000"
+      }
+    },
+    {
+      "id": "operations-drop-zero",
+      "source": "(identical? operation-probe (cljs.core/-drop operation-probe 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "operations-drop-negative",
+      "source": "(identical? operation-probe (cljs.core/-drop operation-probe -1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "operations-reduce-captured",
+      "source": "(do (def retained-reduce cljs.core/-reduce) (retained-reduce operation-probe (fn [a b] (* a b)) 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4049800000000000"
+      }
+    },
+    {
+      "id": "operations-reduce-operand-order",
+      "source": "(do (def operation-effects (array 0)) (def operation-mark (fn [n x] (do (aset operation-effects 0 (+ (* (aget operation-effects 0) 10) n)) x))) (cljs.core/-reduce (operation-mark 1 operation-probe) (operation-mark 2 (fn [a b] (+ a b))) (operation-mark 3 40)) (aget operation-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "operations-drop-operand-order",
+      "source": "(do (aset operation-effects 0 0) (cljs.core/-drop (operation-mark 1 operation-probe) (operation-mark 2 2)) (aget operation-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "operations-reduce-exception-effects",
+      "source": "(do (aset operation-effects 0 0) (try (cljs.core/-reduce (operation-mark 1 operation-probe) (operation-mark 2 (fn [a b] (throw (operation-mark 4 b)))) (operation-mark 3 8)) (catch :default e (aget operation-effects 0))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4093480000000000"
+      }
+    },
+    {
+      "id": "operations-drop-does-not-change-owner",
+      "source": "(cljs.core/-peek operation-probe)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "operations-extends-reduce-signatures",
+      "source": "(do (extend-type OperationProbe cljs.core/IReduce (-reduce ([this f] (f 10 3)) ([this f start] (f start 4)))) (retained-reduce operation-probe (fn [a b] (+ a b))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402a000000000000"
+      }
+    },
+    {
+      "id": "operations-captured-reduce-sees-extension",
+      "source": "(retained-reduce operation-probe (fn [a b] (+ a b)) 30)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "operations-nil-not-direct-stack",
+      "source": "(implements? cljs.core/IStack nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "operations-number-not-direct-drop",
+      "source": "(implements? cljs.core/IDrop 17)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "review-reduce-false-initial",
+      "source": "(cljs.core/-reduce operation-probe (fn [a b] (if (identical? a false) b 0)) false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "review-reduce-callee-capture",
+      "source": "(do (def review-reduce retained-reduce) (review-reduce operation-probe (do (set! review-reduce (fn [a b c] 999)) (fn [a b] (+ a b))) 30))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "review-reduce-live-extension-during-argument",
+      "source": "(do (deftype ReviewReduce [value] cljs.core/IReduce (-reduce [this f] (f value 2)) (-reduce [this f start] (f start value))) (def review-object (ReviewReduce. 7)) (def review-dispatch cljs.core/-reduce) (review-dispatch review-object (do (extend-type ReviewReduce cljs.core/IReduce (-reduce ([this f] (f 80 2)) ([this f start] (f start 90)))) (fn [a b] (+ a b))) 10))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4059000000000000"
+      }
+    },
+    {
+      "id": "review-reduce-throw-finally-order",
+      "source": "(do (aset operation-effects 0 0) (try (cljs.core/-reduce (operation-mark 1 operation-probe) (operation-mark 2 (fn [a b] (throw (operation-mark 4 b)))) (operation-mark 3 8)) (catch :default e (operation-mark 5 e)) (finally (operation-mark 6 nil))) (aget operation-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "40fe240000000000"
+      }
+    },
+    {
+      "id": "review-drop-nil-result",
+      "source": "(do (deftype ReviewDrop [] cljs.core/IDrop (-drop [this n] nil)) (nil? (cljs.core/-drop (ReviewDrop.) 20)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
     }
   ]
 }

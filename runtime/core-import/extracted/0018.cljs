@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ISeqable
-  "Protocol for adding the ability to a type to be transformed into a sequence."
-  (^clj-or-nil -seq [o]
-    "Returns a seq of o, or nil if o is empty."))
+(defprotocol IEquiv
+  "Protocol for adding value comparison functionality to a type."
+  (^boolean -equiv [o other]
+    "Returns true if o and other are equal, false otherwise."))

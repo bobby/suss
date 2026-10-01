@@ -6,7 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IMeta
-  "Protocol for accessing the metadata of an object."
-  (^clj-or-nil -meta [o]
-    "Returns the metadata of object o."))
+(defprotocol IStack
+  "Protocol for collections to provide access to their items as stacks. The top
+  of the stack should be accessed in the most efficient way for the different
+  data structures."
+  (-peek [coll]
+    "Returns the item from the top of the stack. Is used by cljs.core/peek.")
+  (^clj -pop [coll]
+    "Returns a new stack without the item on top of the stack. Is used
+     by cljs.core/pop."))

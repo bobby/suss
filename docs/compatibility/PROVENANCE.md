@@ -30,9 +30,9 @@ reader branches. The scanner's source declarations are the starting inventory;
 manual review must account for macro-generated public APIs.
 
 The M0 policy/schema gate remains complete. The review overlay now records
-seventy-five in-progress declarations; 990 remain unassessed. Original runtime
+eighty in-progress declarations; 985 remain unassessed. Original runtime
 intrinsics do not establish upstream form ports. The first reproducible bootstrap
-source import selects identity/not/boolean/some?/inc/dec and fifteen sequence/collection protocols, retaining original forms/notices and
+source import selects identity/not/boolean/some?/inc/dec and twenty sequence/collection protocols, retaining original forms/notices and
 applying explicit reviewed defn/cond/primitive-test adaptations. Its generated directory packages the
 byte-preserved EPL files. See [core import](CORE-IMPORT.md) for commands, hashes,
 executing scope and remaining M4 acceptance work. No complete core-port claim follows.

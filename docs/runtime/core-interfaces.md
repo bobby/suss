@@ -1,16 +1,16 @@
 # Retained core sequence and collection interfaces
 
-The canonical generated core source imports fifteen unmodified defprotocol forms
+The canonical generated core source imports twenty unmodified defprotocol forms
 from pinned ClojureScript c4295f303100bbf5afac449242d30bca1126f1a1: ICloneable,
 ICounted, IEmptyableCollection, ICollection, IIndexed, ASeq, ISeq, INext, IMeta,
-IWithMeta, IEquiv, IHash, ISeqable, ISequential and IList. Recipe declaration IDs,
+IWithMeta, IEquiv, IHash, ISeqable, ISequential, IList, IStack, IReduce, IReversible, IIterable and IDrop. Recipe declaration IDs,
 exact source ranges and hashes, review dependencies and method signatures are
 recorded in the [import recipe](../compatibility/core-import.json), review overlay
 and generated manifest. Source forms and upstream EPL notices/licenses are
 retained. No source text is removed or patched for these declarations.
 
 Before import, the executing regression failed on unresolved cljs.core/ISeqable
-while loading the existing six-function core artifact. After import, three native
+while loading the existing six-function core artifact. After import, five native
 tests load the actual generated artifact and exercise every direct marker and
 method through a nominal test adapter. Number results are independently decoded
 from binary64 fields; Booleans require exact sentinel values. GC runs between
@@ -19,7 +19,7 @@ suss.core/cljs.core aliases, captured method values, invalid arities and recover
 Both -nth signatures execute with distinct results, along with clone/conj/metadata adapters,
 seq identity, same/different object equivalence and nil-returning methods.
 
-The development-only pinned ClojureScript runner certifies a separate 35-case
+The development-only pinned ClojureScript runner certifies a separate 65-case
 source corpus using strict scalar transport. Native execution checks those same
 observations independently. JVM/Node are development dependencies only.
 
@@ -37,3 +37,29 @@ collection. Source List/EmptyList/Cons/IndexedSeq, sequence APIs, equality/hash
 algorithms, lazy/chunked effects, vector trie boundaries and structural sharing
 have no acceptance claim here. Next implement the retained source sequence types
 and their storage, UTF-16 indexing and variadic rest/apply dependencies.
+
+
+The added IStack/IReduce/IReversible/IIterable/IDrop declarations are used by
+retained List/EmptyList/IndexedSeq. Their entire source forms remain unmodified,
+including annotations and documentation. The original35 scalar observations are
+unchanged;25 additions execute both -reduce signatures, nil initial state,
+peek/pop, direct markers, reversal/iterator identity, drop dispatch, ordered
+arguments, thrown reducer effects and captured method values after extension.
+These are dispatch probes through original nominal adapters. They do not certify
+reduction traversal, reduced-value early stopping, actual iterators or persistence.
+A fourth native test reloads core, forces GC, checks both canonical aliases and
+retained reduction dispatch, and requires language exceptions for invalid method
+arities followed by successful recovery.
+
+The overlay now has80 partial reviews/985 unassessed declarations;26 selected
+forms reproduce30 artifacts. There is no new compiler/runtime helper or ABI layout.
+Source canonical empty-list/static-property support and complete concrete
+List/EmptyList/Cons/IndexedSeq dependencies remain the next implementation task.
+
+Independent review adds five shared probes without changing the original60:
+false initial reduction state, callee capture before argument rebinding, live
+extension during argument evaluation, throw/catch/finally effect order and a
+nil-returning drop adapter. A fifth native test rejects malformed duplicate,
+empty and variadic protocol signatures and an undeclared extension arity, then
+checks loaded core methods remain callable after GC and valid recovery. These
+remain adapter dispatch observations, with no concrete collection acceptance.

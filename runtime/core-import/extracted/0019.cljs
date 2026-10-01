@@ -6,5 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ISequential
-  "Marker interface indicating a persistent collection of sequential items")
+(defprotocol IHash
+  "Protocol for adding hashing functionality to a type."
+  (-hash [o]
+    "Returns the hash code of o."))

@@ -72,6 +72,16 @@
      (next []) => nil
      (next nil) => nil"))
 
+(defprotocol IStack
+  "Protocol for collections to provide access to their items as stacks. The top
+  of the stack should be accessed in the most efficient way for the different
+  data structures."
+  (-peek [coll]
+    "Returns the item from the top of the stack. Is used by cljs.core/peek.")
+  (^clj -pop [coll]
+    "Returns a new stack without the item on top of the stack. Is used
+     by cljs.core/pop."))
+
 (defprotocol IMeta
   "Protocol for accessing the metadata of an object."
   (^clj-or-nil -meta [o]
@@ -81,6 +91,14 @@
   "Protocol for adding metadata to an object."
   (^clj -with-meta [o meta]
     "Returns a new object with value of o and metadata meta added to it."))
+
+(defprotocol IReduce
+  "Protocol for seq types that can reduce themselves.
+  Called by cljs.core/reduce."
+  (-reduce [coll f] [coll f start]
+    "f should be a function of 2 arguments. If start is not supplied,
+     returns the result of applying f to the first 2 items in coll, then
+     applying f to that result and the 3rd item, etc."))
 
 (defprotocol IEquiv
   "Protocol for adding value comparison functionality to a type."
@@ -102,3 +120,21 @@
 
 (defprotocol IList
   "Marker interface indicating a persistent list")
+
+(defprotocol IReversible
+  "Protocol for reversing a seq."
+  (^clj -rseq [coll]
+    "Returns a seq of the items in coll in reversed order."))
+
+(defprotocol IIterable
+  "Protocol for iterating over a collection."
+  (-iterator [coll]
+    "Returns an iterator for coll."))
+
+(defprotocol IDrop
+  "Protocol for persistent or algorithmically defined collections to provide a
+  means of dropping N items that is more efficient than sequential walking."
+  (^clj-or-nil -drop [coll n]
+    "Returns a collection that is ISequential, ISeq, and IReduce, or nil if past
+     the end. The number of items to drop n must be > 0. It is also useful if the
+     returned coll implements IDrop for subsequent use in a partition-like scenario."))
