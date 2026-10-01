@@ -69,3 +69,10 @@ run did not pass. The followup extends only the job budget to35 minutes; all
 checks/worker limits remain. Tested production/test/corpus bytes are identical
 to707b5b6, so prior local full78254 applies to the unchanged code; no fresh local
 full is claimed for this workflow-only fix. Fresh exact-head CI remains required.
+
+The subsequent exact23fe252 run36872972201 also cancelled at its35-minute
+job budget, during cache cleanup after the required workspace step succeeded
+in34m38s. Its timeout annotation and full log were independently inspected.
+The job budget is now60 minutes to allow runner/cache variance while preserving
+all checks and workers. Production/test bytes and prior local evidence remain
+unchanged; fresh exact-head CI is still required, and cancellation is not success.

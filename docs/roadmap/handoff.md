@@ -7665,3 +7665,23 @@ identical after this append, so prior local baseline applies to unchanged code,
 not a newly executed full at this commit. No heavy processes started; root keeps
 the exclusive slot. Push uses exact old-head force-with-lease. Fresh final-head
 CI remains required; no readiness/merge/issue or milestone closure claim.
+
+
+### PR108 full-test success cancelled during cache cleanup — 2026-10-01
+
+Exact23fe2528782d28e60901621fe7dd1e805ae91a78 CI36872972201 completed CANCELLED.
+Independent annotation inspection confirms: "The job has exceeded the maximum
+execution time of 35m0s". Setup/provenance succeeded in29s; required workspace
+step succeeded14:01:55–14:36:33 (34m38s), including final reader doc tests.
+Post rust-cache14:36:33–14:36:39 was cancelled while tar/zstd cleanup remained;
+job elapsed35m17s. Full log /private/tmp/suss-pr108-ci35-cancelled.log preserved.
+This is a job-budget failure, not a passing final-head run or a hidden test error.
+
+Independent correction increases only job timeout35→60 minutes, allowing
+substantial runner/cache variance after two observed full-step durations24m29s
+and34m38s. Retains every enabled check, locked command, two build workers and
+two test threads; no production/test/runtime/oracle/lock bytes changed relative
+reviewed23fe252. Prior local full78254 still covers identical tested code, not a
+fresh local execution for this static fix. No cargo/JVM/Node process started;
+root retains exclusive heavy slot/full22313. Descendants are not rebased here.
+Fresh exact-head CI mandatory before readiness; no merge or milestone claim.
