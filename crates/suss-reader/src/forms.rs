@@ -277,6 +277,13 @@ impl Reader<'_> {
     fn fail(&self, start: usize, message: impl Into<String>) -> ParseError {
         error(start..self.offset, message)
     }
+    // The REPL uses this recovery hint rather than maintaining another lexer or
+    // matching diagnostic prose. Ordinary malformed input has no such hint.
+    fn incomplete(&self, start: usize, message: impl Into<String>) -> ParseError {
+        let mut error = self.fail(start, message);
+        error.expected.push("more input".into());
+        error
+    }
     fn token(&mut self) -> &str {
         let start = self.offset;
         while self.peek().is_some_and(|c| !delimiter(c)) {
@@ -288,7 +295,7 @@ impl Reader<'_> {
         loop {
             self.padding();
             if self.peek().is_none() {
-                return Err(self.fail(self.offset, "Expected a form before end of input"));
+                return Err(self.incomplete(self.offset, "Expected a form before end of input"));
             }
             if let Some(form) = self.form()? {
                 return Ok(form);
@@ -492,7 +499,7 @@ impl Reader<'_> {
                     return Ok(items);
                 }
                 None => {
-                    return Err(self.fail(start, format!("Unclosed collection; expected {end}")));
+                    return Err(self.incomplete(start, format!("Unclosed collection; expected {end}")));
                 }
                 _ => {
                     if let Some(form) = self.form()? {
@@ -507,7 +514,7 @@ impl Reader<'_> {
         loop {
             let escape_start = self.offset;
             match self.take() {
-                None => return Err(self.fail(start, "Unclosed string")),
+                None => return Err(self.incomplete(start, "Unclosed string")),
                 Some('"') => return Ok(units),
                 Some('\\') => {
                     let unit = match self.take() {

@@ -8366,3 +8366,80 @@ Next gate: dispatch independent integration review, fix any significant findings
 and require exact final reviewed-head CI before readiness. Component PR114/115
 also retain their own final-head CI gates. Only the user may merge. Default-branch
 M2 statuses remain in progress until the accepted stack is incorporated.
+
+## M3 native compiled command REPL slice — 2026-10-01
+
+Active goal is now full M3, preserving all #12/#13/#14/#15 criteria and design
+sections3/6/7/9. Isolated branch portable/m3-persistent-repl in
+/private/tmp/suss-m3-persistent-repl starts from current main7a9010b, with real
+upstream checkoutc4295f303100bbf5afac449242d30bca1126f1a1. Original repository's
+unrelated reference files remain untouched. #115/#116 were merged by the user;
+root merged nothing. Rebased #116 head07ff0e6 received independent approval and
+CI36912150217 success,843/0/17existing ignores; merged main has identical entire
+tree. GitHub issues8/9/11 and M2 milestone are actually closed. ROADMAP/issues.json
+and acceptance-m2 now reconcile that foundation evidence; future gates stay open.
+
+Root implemented a bounded native command frontend against portable Session,
+with one Store/runtime and independent compiled fragments. No accumulated source,
+replayed definitions, fresh runtime per input or recompiled pr-str wrapper.
+Printing reads the rooted value; finite numbers use the same runtime formatter,
+UTF-16 retains lone surrogates as escapes. Function/type labels are display only,
+not compatibility decoding. Unsupported objects produce explicit display errors.
+Reader recovery hints accumulate multiline collections/strings/prefixes without a
+second lexer. Malformed input reports immediately; incomplete EOF never partially
+evaluates. Comment-only input is ignored, :reset replaces session state, and
+readline Ctrl-C discards unfinished source. Executing code/pending I/O cancellation
+is not implemented. Unreachable replay namespace/printing handlers were removed;
+prototype modules are now cfg(test) fixtures, not shipped native frontend code.
+
+Before10094 authoritative terminal101 /private/tmp/suss-m3-repl-before.log:
+legacy command rejects global set! in the persistence probe. First after65737
+terminal101 found an incorrect test expectation for skipped defonce output;
+pinned cljs.core/defonce expands through when-not, so nil is correct. Only that
+output expectation changed; bindings/effects stayed independently asserted.
+Expanded26340 terminal0 four tests. Multiline6115 terminal101 emittednil/0/0/42
+instead of complete-input0/42/1/42/42; reader hints repaired it,16894 terminal0.
+An array display probe52013 terminal101 was a too-specific diagnostic assertion:
+(array) returns an unsupported native object, not a directly observed empty
+reference-array misdecode. Corrected that claim and guarded actual I16 array
+storage before string decoding; no fabricated success is recorded.
+
+Final focused70182 terminal0: shared-target/build2
+cargo test -p suss-cli --locked --test persistent_repl -- --test-threads=2,
+/private/tmp/suss-m3-repl-final-focus.log,7 passed/0 failed/0 ignored. Tests execute
+the actual suss binary with stdin/stdout and cover persistence, captured old/new
+functions, defonce, failed compile/initializer with preceding effects, exact
+binary64/UTF-16 display, multiline source, malformed/EOF recovery, unsupported
+object errors and reset/new-input usability. No new upstream implementation was
+copied; no shipped JVM/Node dependency or hash algorithm changed.
+
+Required full84639 LIVE: shared-target/build2
+cargo test --workspace --locked -- --test-threads=2,
+/private/tmp/suss-m3-repl-full.log. Root exclusively owns local cargo/JVM/Node
+slot until terminal. No RUSTFLAGS. Native code/test inputs stay frozen during full
+baseline; a trailing blank-line diff warning will be fixed after terminal.
+Independent PR review, significant fixes and exact final-head CI remain required.
+Refs#12/#15 only; do not close from this partial slice.
+
+Next unblocked tasks: supply real GC-owned atom persistence through this frontend
+for #12 (full watch/validator/CAS compatibility remains separately tracked M7),
+connect namespace commands/reload/cache/private policy for #13, implement isolated
+compiled bootstrap/macros and remove the temporary evaluator for #14, then verify
+pending-I/O cancellation/reset/retained code vs live heap acceptance for #15.
+Tab completion, complete value printing, non-native component and other command/AOT
+frontends are explicit boundaries. No M3 issue or milestone completion claimed.
+
+Required full84639 authoritative terminal0 through final reader doctests:
+850 passed/0 failed/17 preexisting ignores across72 result groups,
+/private/tmp/suss-m3-repl-full.log. All seven new command regressions executed
+successfully within that full baseline. Source/test behavior remained frozen;
+a trailing extra blank line at main.rs EOF was removed after terminal, with no
+semantic code change. Python86 passed, inventory1065 and overlay206reviewed/
+859unassessed verified. First combined script11014 ended2 because the final
+import-script filename was mistaken, not because those earlier checks failed;
+correct python3 scripts/core_import.py --check verified115 files with exit0.
+Diff checks now pass. No declaration review was relabeled implemented by this
+frontend-only change. All root cargo/JVM/Node work is terminal; heavy slot is
+released for the mandatory new PR reviewer. Exact reviewed-head CI remains a
+gate. Next implementation task remains real atom persistence for #12; full M3
+scope is preserved and no #12/#13/#14/#15 closure is claimed.

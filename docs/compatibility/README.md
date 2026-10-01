@@ -1,5 +1,13 @@
 # ClojureScript compatibility evidence
 
+The native command REPL now uses one persistent portable Session and displays
+already-rooted scalar results without source reexecution. Seven process-level
+regressions establish bounded frontend persistence/recovery/reset/reader evidence;
+they do not add public core compatibility counts or certify atoms, compiled macros,
+namespace reload, cancellation or full printing. See
+[compiled REPL evidence](../runtime/compiled-repl.md). The M2 foundation acceptance
+is now incorporated on main; future inventory and M3–M9 gates remain explicit.
+
 The [development oracle](../../tests/oracle/README.md) executes the pinned
 ClojureScript source in Node and records lossless tagged reference observations.
 Its 16-case corpus is shared with independently decoded Suss execution:

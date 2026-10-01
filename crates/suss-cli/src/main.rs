@@ -3,8 +3,12 @@
 //! Uses WASM compilation + wasmtime for all expression evaluation.
 
 mod args;
+// Retained prototype regression fixtures; the shipped native REPL uses Session.
+#[cfg(test)]
 mod completer;
+#[cfg(test)]
 mod repl;
+#[cfg(test)]
 mod session;
 
 #[cfg(all(feature = "component", target_family = "wasm"))]
@@ -721,249 +725,112 @@ fn run_component_impl(path: &str, invoke: &str, args: &[String]) -> Result<(), S
     Ok(())
 }
 
-/// Start the REPL with stateful evaluation
-///
-/// The REPL maintains state across expressions:
-/// - Accumulated definitions (defn, def, deftype, etc.)
-/// - Current namespace context
-/// - Loaded namespaces from require
-/// - Cached compilations for performance
-/// - Tab completion for symbols
+/// Run each input in the same Store using independently compiled fragments.
 #[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn run_repl() {
-    use std::sync::{Arc, RwLock};
-    use rustyline::config::Configurer;
+    use std::io::{self, BufRead, IsTerminal};
+    use suss_cli::{portable_repl, portable_session::Session};
 
-    println!("Suss v{} - A Clojure dialect for WASM", env!("CARGO_PKG_VERSION"));
-    println!("Type (help) for help, Ctrl-C to exit");
-
-    // Initialize session with caching
-    let mut state = session::SessionState::new();
-
-    // Preload core.sus during startup (shows loading message)
-    print!("Loading core.sus... ");
-    use std::io::Write;
-    std::io::stdout().flush().ok();
-    match state.preload_core() {
-        Ok(()) => println!("done."),
-        Err(e) => {
-            eprintln!("\nWarning: {}", e);
-        }
-    }
-    println!();
-
-    // Set up shared symbol table for tab completion
-    let symbols = Arc::new(RwLock::new(state.symbols.clone()));
-    let completer_helper = completer::SussCompleter::new(symbols.clone());
-
-    // Configure rustyline with completion
-    let config = rustyline::Config::builder()
-        .auto_add_history(true)
-        .completion_type(rustyline::config::CompletionType::List)
-        .build();
-
-    let mut rl = match rustyline::Editor::with_config(config) {
-        Ok(editor) => editor,
-        Err(e) => {
-            eprintln!("Failed to initialize readline: {}", e);
+    let mut session = match Session::new() {
+        Ok(session) => session,
+        Err(error) => {
+            eprintln!("Error: {error}");
             return;
         }
     };
-    rl.set_helper(Some(completer_helper));
-
+    let interactive = io::stdin().is_terminal();
+    let mut editor = if interactive {
+        println!("Suss v{} - compiled REPL", env!("CARGO_PKG_VERSION"));
+        println!("Type :quit to exit, :reset to reset the session.");
+        match DefaultEditor::new() {
+            Ok(editor) => Some(editor),
+            Err(error) => {
+                eprintln!("Error: {error}");
+                return;
+            }
+        }
+    } else {
+        None
+    };
+    let stdin = io::stdin();
+    let mut lines = stdin.lock().lines();
+    let mut input = String::new();
     loop {
-        // Check for hot-reloaded namespace files
-        let reloaded = state.check_for_reloads();
-        for ns in &reloaded {
-            eprintln!("(reloading {})", ns);
-        }
-        if !reloaded.is_empty() {
-            if let Ok(mut syms) = symbols.write() {
-                *syms = state.symbols.clone();
-            }
-        }
-
-        // Dynamic prompt with current namespace
-        let prompt = format!("{}=> ", state.current_ns);
-
-        match rl.readline(&prompt) {
-            Ok(line) => {
-                let trimmed = line.trim();
-                if trimmed.is_empty() {
+        let line = if let Some(editor) = editor.as_mut() {
+            let prompt = if input.is_empty() {
+                format!("{}=> ", session.current_namespace())
+            } else {
+                "...=> ".into()
+            };
+            match editor.readline(&prompt) {
+                Ok(line) => {
+                    let _ = editor.add_history_entry(&line);
+                    line
+                }
+                Err(ReadlineError::Interrupted) => {
+                    input.clear();
+                    println!("^C");
                     continue;
                 }
-
-                // Handle special forms
-                if trimmed.starts_with("(in-ns ") {
-                    match handle_in_ns_session(&mut state, trimmed) {
-                        Ok(_ns) => println!("nil"),
-                        Err(e) => eprintln!("Error: {}", e),
-                    }
-                    continue;
-                }
-
-                if trimmed.starts_with("(require ") {
-                    match handle_require_session(&mut state, trimmed) {
-                        Ok(_msg) => println!("nil"),
-                        Err(e) => eprintln!("Error: {}", e),
-                    }
-                    continue;
-                }
-
-                // Check if this is a definition to accumulate
-                if repl::is_definition(trimmed) {
-                    if let Some(redefined_name) = state.accumulate_definition(trimmed) {
-                        eprintln!("(redefining {})", redefined_name);
-                    }
-                    // Update shared symbol table
-                    if let Ok(mut syms) = symbols.write() {
-                        *syms = state.symbols.clone();
-                    }
-                }
-
-                // Compile and evaluate with caching
-                match state.compile_cached(trimmed) {
-                    Ok((wasm, is_component, _was_cached)) => {
-                        let result = if is_component {
-                            run_eval_component(&wasm)
-                        } else {
-                            run_eval_with_prstr(trimmed, &wasm)
-                        };
-                        if let Err(e) = result {
-                            eprintln!("Error: {}", e);
-                        }
-                    }
-                    Err(e) => {
-                        eprintln!("Error: {}", e);
-                    }
+                Err(ReadlineError::Eof) => break,
+                Err(error) => {
+                    eprintln!("Error: {error}");
+                    break;
                 }
             }
-            Err(ReadlineError::Interrupted) => {
-                println!("^C");
-            }
-            Err(ReadlineError::Eof) => {
-                println!("\nGoodbye!");
-                // Print cache statistics
-                println!("{}", state.cache_stats());
-                break;
-            }
-            Err(e) => {
-                eprintln!("Error: {}", e);
-                break;
-            }
-        }
-    }
-}
-
-/// Run evaluation with pr-str wrapping for better output
-fn run_eval_with_prstr(expr: &str, fallback_wasm: &[u8]) -> Result<(), String> {
-    // Try to wrap in pr-str for pretty printing
-    let wrapped_expr = format!("(pr-str {})", expr);
-    let mut compiler = suss_compile::Compiler::new();
-    match compiler.compile_expr_with_info(&wrapped_expr) {
-        Ok(compiled) if !compiled.is_component => {
-            // pr-str compilation succeeded - print as string
-            run_eval_core_module_string(&compiled.wasm)
-        }
-        _ => {
-            // pr-str failed or is component - run directly
-            run_eval_core_module(fallback_wasm)
-        }
-    }
-}
-
-/// Handle (in-ns 'namespace-name) for SessionState
-fn handle_in_ns_session(state: &mut session::SessionState, input: &str) -> Result<String, String> {
-    // Find 'symbol in input
-    let quote_pos = input.find('\'')
-        .ok_or_else(|| "(in-ns ...) requires a quoted symbol".to_string())?;
-    let rest = &input[quote_pos + 1..];
-
-    // Find end of symbol
-    let end = rest.find(|c: char| c.is_whitespace() || c == ')')
-        .unwrap_or(rest.len());
-    let name = rest[..end].trim();
-
-    if name.is_empty() {
-        return Err("(in-ns ...) requires a namespace name".to_string());
-    }
-
-    // Switch context
-    state.current_ns = name.to_string();
-
-    // Initialize namespace definitions if needed (now a HashMap of definitions)
-    state.ns_definitions.entry(name.to_string()).or_default();
-
-    // Clear WASM cache since namespace context changed (forces recompilation with new *ns*)
-    state.clear_cache();
-
-    Ok(name.to_string())
-}
-
-/// Handle (require '[namespace :as alias]) for SessionState
-fn handle_require_session(state: &mut session::SessionState, input: &str) -> Result<String, String> {
-    // Parse require spec
-    let start = input.find('[').ok_or("require needs a vector spec")?;
-    let end = input.rfind(']').ok_or("require needs a closing ]")?;
-    let content = &input[start + 1..end];
-
-    let parts: Vec<&str> = content.split_whitespace().collect();
-    if parts.is_empty() {
-        return Err("Empty require spec".into());
-    }
-
-    let namespace = parts[0].to_string();
-    let mut alias = None;
-
-    let mut i = 1;
-    while i < parts.len() {
-        if parts[i] == ":as" && i + 1 < parts.len() {
-            alias = Some(parts[i + 1].to_string());
-            i += 2;
         } else {
-            i += 1;
+            match lines.next() {
+                Some(Ok(line)) => line,
+                Some(Err(error)) => {
+                    eprintln!("Error: {error}");
+                    break;
+                }
+                None => break,
+            }
+        };
+        if input.is_empty() {
+            match line.trim() {
+                "" => continue,
+                ":quit" => break,
+                ":reset" => {
+                    match session.reset() {
+                        Ok(()) => println!("nil"),
+                        Err(error) => eprintln!("Error: {error}"),
+                    };
+                    continue;
+                }
+                _ => {}
+            }
+        }
+        input.push_str(&line);
+        input.push('\n');
+        match suss_reader::forms::read_forms(&input) {
+            Ok(forms) if forms.is_empty() => {
+                input.clear();
+                continue;
+            }
+            Err(error) if error.expected.iter().any(|hint| hint == "more input") => continue,
+            _ => {}
+        }
+        match session.eval(&input) {
+            Ok(value) => match portable_repl::display(&mut session, &value) {
+                Ok(text) => println!("{text}"),
+                Err(error) => eprintln!("Display error: {error}"),
+            },
+            Err(error) => eprintln!(
+                "Error: {}",
+                portable_repl::error_display(&mut session, &error)
+            ),
+        }
+        input.clear();
+    }
+    if !input.is_empty() {
+        // Incomplete EOF is a located compilation failure, never a partial eval.
+        if let Err(error) = session.eval(&input) {
+            eprintln!(
+                "Error: {}",
+                portable_repl::error_display(&mut session, &error)
+            );
         }
     }
-
-    // Check if this is WASI (contains ':')
-    if namespace.contains(':') {
-        if let Some(a) = alias {
-            state.ns_aliases.insert(a, namespace.clone());
-        }
-        return Ok(format!("WASI import: {}", namespace));
-    }
-
-    // Already loaded?
-    if state.loaded_namespaces.contains_key(&namespace) {
-        if let Some(a) = alias {
-            state.ns_aliases.insert(a, namespace.clone());
-        }
-        return Ok(format!("Already loaded: {}", namespace));
-    }
-
-    // Find file
-    let path = suss_compile::Compiler::ns_to_path(&namespace, &state.src_paths)
-        .ok_or_else(|| format!("Namespace '{}' not found in {:?}", namespace, state.src_paths))?;
-
-    // Read file
-    let source = std::fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
-
-    // Store loaded namespace with mtime for hot reload
-    let mtime = std::fs::metadata(&path)
-        .and_then(|m| m.modified())
-        .unwrap_or_else(|_| std::time::SystemTime::now());
-    state.loaded_namespaces.insert(namespace.clone(), session::LoadedNamespace {
-        path: path.clone(), mtime, source,
-    });
-
-    // Record alias
-    if let Some(a) = alias {
-        state.ns_aliases.insert(a, namespace.clone());
-    }
-
-    // Clear WASM cache since we loaded new code
-    state.clear_cache();
-
-    Ok(format!("Loaded: {}", namespace))
 }
