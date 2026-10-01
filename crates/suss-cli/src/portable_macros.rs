@@ -27,6 +27,29 @@ fn failure(form: &Form, message: &str) -> SessionError {
         message: message.into(),
     })
 }
+fn add_implicit_arguments(parts: &[Form], form: &Form) -> Result<Vec<Form>, SessionError> {
+    let Some(parameters) = parts.first() else {
+        return Err(failure(
+            form,
+            "Macro signature requires parameters and body",
+        ));
+    };
+    let Kind::Vector(names) = &parameters.kind else {
+        return Err(failure(parameters, "Macro parameters must be a vector"));
+    };
+    if parts.len() < 2 {
+        return Err(failure(form, "Macro signature requires a body"));
+    }
+    let mut names = names.clone();
+    names.insert(0, symbol("&form", form.span.clone()));
+    let mut result = vec![Form {
+        span: parameters.span.clone(),
+        metadata: parameters.metadata.clone(),
+        kind: Kind::Vector(names),
+    }];
+    result.extend_from_slice(&parts[1..]);
+    Ok(result)
+}
 impl CompiledMacros {
     pub fn new() -> Result<Self, SessionError> {
         let mut session = Session::new_macro()?;
@@ -36,6 +59,12 @@ impl CompiledMacros {
             bridge,
             definitions: BTreeMap::new(),
         })
+    }
+    pub fn current_namespace(&self) -> &str {
+        self.session.current_namespace()
+    }
+    pub fn enter_namespace(&mut self, namespace: &str) -> Result<(), SessionError> {
+        self.session.enter_namespace(namespace)
     }
     pub fn define(&mut self, source: &str) -> Result<(), SessionError> {
         let forms = read_forms(source).map_err(|error| {
@@ -54,7 +83,7 @@ impl CompiledMacros {
         let Kind::List(items) = &form.kind else {
             return Err(failure(form, "Expected source defmacro"));
         };
-        if items.len() < 4
+        if items.len() < 3
             || !matches!(&items[0].kind, Kind::Symbol(s) if s.namespace.is_none() && s.name == "defmacro")
         {
             return Err(failure(form, "Expected defmacro name parameters and body"));
@@ -68,34 +97,65 @@ impl CompiledMacros {
                 "Macro definition name must be unqualified",
             ));
         }
-        let Kind::Vector(parameters) = &items[2].kind else {
-            return Err(failure(&items[2], "Macro parameters must be a vector"));
+        let mut name_form = items[1].clone();
+        let mut docstring = None;
+        let mut start = 2;
+        // Pinned defmacro/defn retain leading docs/attributes before signatures.
+        while let Some(item) = items.get(start) {
+            match &item.kind {
+                Kind::String(_) => docstring = Some(item.clone()),
+                Kind::Map(_) => name_form.metadata.push(item.clone()),
+                _ => break,
+            }
+            start += 1;
+        }
+        let declarations = &items[start..];
+        let Some(first) = declarations.first() else {
+            return Err(failure(form, "Macro requires at least one signature"));
         };
-        let mut parameters = parameters.clone();
-        parameters.insert(0, symbol("&form", form.span.clone()));
-        let mut function = vec![
-            symbol("fn", form.span.clone()),
-            Form {
-                span: items[2].span.clone(),
-                metadata: items[2].metadata.clone(),
-                kind: Kind::Vector(parameters),
-            },
-        ];
-        function.extend_from_slice(&items[3..]);
+        let mut function = vec![symbol("fn", form.span.clone())];
+        if matches!(first.kind, Kind::Vector(_)) {
+            function.extend(add_implicit_arguments(declarations, form)?);
+        } else {
+            let mut signatures = declarations;
+            if let Some(attributes) = signatures
+                .last()
+                .filter(|item| matches!(item.kind, Kind::Map(_)))
+            {
+                name_form.metadata.push(attributes.clone());
+                signatures = &signatures[..signatures.len() - 1];
+            }
+            if signatures.is_empty() {
+                return Err(failure(form, "Macro requires at least one signature"));
+            }
+            for signature in signatures {
+                let Kind::List(parts) = &signature.kind else {
+                    return Err(failure(signature, "Macro signature must be a list"));
+                };
+                function.push(Form {
+                    span: signature.span.clone(),
+                    metadata: signature.metadata.clone(),
+                    kind: Kind::List(add_implicit_arguments(parts, signature)?),
+                });
+            }
+        }
+        let mut definition = vec![symbol("def", form.span.clone()), name_form];
+        if let Some(docstring) = docstring {
+            definition.push(docstring);
+        }
+        definition.push(Form {
+            span: form.span.clone(),
+            metadata: vec![],
+            kind: Kind::List(function),
+        });
         let definition = Form {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
-            kind: Kind::List(vec![
-                symbol("def", form.span.clone()),
-                items[1].clone(),
-                Form {
-                    span: form.span.clone(),
-                    metadata: vec![],
-                    kind: Kind::List(function),
-                },
-            ]),
+            kind: Kind::List(definition),
         };
-        let value = self.session.eval_forms(vec![definition], 0..source.len())?;
+        let snapshot = self.session.compilation_snapshot();
+        let prepared = snapshot.prepare(vec![definition], 0..source.len(), self)?;
+        let value = self.session.eval_prepared(prepared)?;
         self.definitions.insert(
             (self.session.current_namespace().into(), name.name.clone()),
             value,
