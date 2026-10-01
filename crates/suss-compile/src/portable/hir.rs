@@ -1,6 +1,7 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
 mod comparisons;
+mod controls;
 mod dynamic;
 mod exceptions;
 mod nominal;
@@ -888,6 +889,9 @@ impl Analyzer {
                 },
             )
         };
+        if let Some(ResolvedBinding::BootstrapControl { operation, .. }) = &resolved {
+            return self.control_form(form, args, *operation, statement, tail);
+        }
         if let Some(ResolvedBinding::BootstrapComparison { operation, .. }) = &resolved {
             return self.comparison_form(form, args, *operation);
         }

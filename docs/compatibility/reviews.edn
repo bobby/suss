@@ -682,4 +682,64 @@
    :adaptation-path nil
    :alternative nil
    :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "macro:cond:159"
+  {:source-sha256 "3476eeae2090a2520a009ff0056b4aaa45abad1749fde510dcf3c86b8772b58f" :visibility :public
+   :arities {:fixed [] :variadic-min 0}
+   :dependencies ["special if/do" "checked HIR/IR lexical binding identity"]
+   :classification :adapted
+   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh59 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
+   :status :in-progress
+   :adaptation-path "docs/runtime/control-flow.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_control_flow.rs" "tests/oracle/control-flow-cases.json"]}
+  "macro:if-not:359"
+  {:source-sha256 "a3f9616143f42980c3510e8216faac0d309800f31747ab005277b553cf871fa9" :visibility :public
+   :arities {:fixed [2 3] :variadic-min nil}
+   :dependencies ["special if/do" "checked HIR/IR lexical binding identity"]
+   :classification :adapted
+   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh59 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
+   :status :in-progress
+   :adaptation-path "docs/runtime/control-flow.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_control_flow.rs" "tests/oracle/control-flow-cases.json"]}
+  "macro:when:392"
+  {:source-sha256 "34afad95ce95b84b86ff95680cb5904ae79f34764700e14de15f72492d95a1ee" :visibility :public
+   :arities {:fixed [] :variadic-min 1}
+   :dependencies ["special if/do" "checked HIR/IR lexical binding identity"]
+   :classification :adapted
+   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh59 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
+   :status :in-progress
+   :adaptation-path "docs/runtime/control-flow.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_control_flow.rs" "tests/oracle/control-flow-cases.json"]}
+  "macro:when-not:427"
+  {:source-sha256 "bb89d657897cbf99d8f0073c8d740f07d2ee61f2344ad6444f48e9ee4def7993" :visibility :public
+   :arities {:fixed [] :variadic-min 1}
+   :dependencies ["special if/do" "checked HIR/IR lexical binding identity"]
+   :classification :adapted
+   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh59 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
+   :status :in-progress
+   :adaptation-path "docs/runtime/control-flow.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_control_flow.rs" "tests/oracle/control-flow-cases.json"]}
+  "macro:and:901"
+  {:source-sha256 "47294062e14f9f3c1a423172b781387e1318d2a27356765141bbd43ebe161b68" :visibility :public
+   :arities {:fixed [0 1] :variadic-min 1}
+   :dependencies ["special if/do" "checked HIR/IR lexical binding identity"]
+   :classification :adapted
+   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh59 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
+   :status :in-progress
+   :adaptation-path "docs/runtime/control-flow.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_control_flow.rs" "tests/oracle/control-flow-cases.json"]}
+  "macro:or:912"
+  {:source-sha256 "4bc31939598ab425dd1fa28c0abe246ceba6d4abd3e598db29253a951432f566" :visibility :public
+   :arities {:fixed [0 1] :variadic-min 1}
+   :dependencies ["special if/do" "checked HIR/IR lexical binding identity"]
+   :classification :adapted
+   :rationale "Original bounded bootstrap lowering follows the pinned macro source and preserves ordered once-only tests, short circuit return values, hygienic and/or temporaries and tail contexts. Fresh59 separately encoded primary/native scalar observations include effects, throws/finally, nominal identity, runtime shadowing and qualified calls. Literal keyword tests are statically truthy without claiming materialized keyword values. Macro source context is retained in the inventory; no upstream form is extracted or copied. Complete compiled macro runtime, metadata/&form/&env, syntax quote/gensym, binding/destructuring macros and general keyword values remain unfinished. Expansion above256 operands is a located bootstrap resource diagnostic."
+   :status :in-progress
+   :adaptation-path "docs/runtime/control-flow.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_control_flow.rs" "tests/oracle/control-flow-cases.json"]}
  }}

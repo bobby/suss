@@ -1,7 +1,7 @@
 //! Phase-specific namespace identities. No runtime values or source replay live here.
 use super::{
-    Diagnostic,
     hir::{Arithmetic, ArrayOperation, Comparison},
+    Diagnostic,
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -52,6 +52,28 @@ pub enum NominalForm {
     Satisfies,
     Implements,
 }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ControlForm {
+    When,
+    WhenNot,
+    IfNot,
+    And,
+    Or,
+    Cond,
+}
+impl ControlForm {
+    fn from_name(name: &str) -> Option<Self> {
+        Some(match name {
+            "when" => Self::When,
+            "when-not" => Self::WhenNot,
+            "if-not" => Self::IfNot,
+            "and" => Self::And,
+            "or" => Self::Or,
+            "cond" => Self::Cond,
+            _ => return None,
+        })
+    }
+}
 #[derive(Debug, Clone)]
 pub(crate) struct ProtocolMethod {
     pub name: String,
@@ -59,6 +81,10 @@ pub(crate) struct ProtocolMethod {
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Binding {
+    BootstrapControl {
+        global: Global,
+        operation: ControlForm,
+    },
     BootstrapComparison {
         global: Global,
         operation: Comparison,
@@ -90,7 +116,8 @@ pub enum Binding {
 impl Binding {
     pub fn global(&self) -> &Global {
         match self {
-            Self::BootstrapComparison { global: g, .. }
+            Self::BootstrapControl { global: g, .. }
+            | Self::BootstrapComparison { global: g, .. }
             | Self::BootstrapArray { global: g, .. }
             | Self::Core { global: g, .. }
             | Self::Cell(g)
@@ -163,7 +190,7 @@ pub(crate) fn valid_namespace(namespace: &str) -> Result<(), Diagnostic> {
     Ok(())
 }
 fn valid_name(name: &str) -> Result<(), Diagnostic> {
-    use suss_reader::forms::{Kind, read_forms};
+    use suss_reader::forms::{read_forms, Kind};
     match read_forms(name).ok().as_deref() {
         Some([form])
             if form.metadata.is_empty()
@@ -262,6 +289,20 @@ impl Environment {
                 };
                 env.bindings
                     .insert(global.clone(), Binding::Nominal { global, form });
+            }
+            for name in ["when", "when-not", "if-not", "and", "or", "cond"] {
+                let global = Global {
+                    phase,
+                    namespace: "suss.core".into(),
+                    name: name.into(),
+                };
+                env.bindings.insert(
+                    global.clone(),
+                    Binding::BootstrapControl {
+                        global,
+                        operation: ControlForm::from_name(name).unwrap(),
+                    },
+                );
             }
             for name in ["let", "loop", "fn", "defonce", "binding", "with-redefs"] {
                 let global = Global {
@@ -498,7 +539,7 @@ impl Environment {
     }
     /// The bounded bootstrap macro lookup is separate from ordinary var lookup:
     /// lexical locals (handled by HIR) hide macros. User runtime definitions also
-    /// hide auto-referred array/comparison/implements? macros, as observed in the pinned compiler.
+    /// hide automatic core bootstrap macros, as observed in the pinned compiler.
     /// General compiled macro imports/expansion remain a later integration.
     pub fn resolve_bootstrap_macro(&self, phase: Phase, symbol: &Symbol) -> Option<Binding> {
         let scope = self.scope(phase);
@@ -532,6 +573,12 @@ impl Environment {
                         | ">"
                         | ">="
                         | "=="
+                        | "when"
+                        | "when-not"
+                        | "if-not"
+                        | "and"
+                        | "or"
+                        | "cond"
                 ))
             .then_some(symbol.name.as_str())
         } else if let Some(global) = scope.refers.get(&symbol.name) {
@@ -560,6 +607,12 @@ impl Environment {
                         | ">"
                         | ">="
                         | "=="
+                        | "when"
+                        | "when-not"
+                        | "if-not"
+                        | "and"
+                        | "or"
+                        | "cond"
                 )
             {
                 Some(global.name.as_str())
@@ -588,6 +641,12 @@ impl Environment {
                         | ">"
                         | ">="
                         | "=="
+                        | "when"
+                        | "when-not"
+                        | "if-not"
+                        | "and"
+                        | "or"
+                        | "cond"
                 ) && !scope.excluded_core.contains(&symbol.name))
                 .then_some(symbol.name.as_str())
             }
@@ -616,10 +675,16 @@ impl Environment {
                     | ">"
                     | ">="
                     | "=="
+                    | "when"
+                    | "when-not"
+                    | "if-not"
+                    | "and"
+                    | "or"
+                    | "cond"
             ) && !scope.excluded_core.contains(&symbol.name))
             .then_some(symbol.name.as_str())
         }?;
-        // A new runtime definition hides the auto-referred array/comparison macro;
+        // A new runtime definition hides these automatic core bootstrap macros;
         // explicit core qualification remains independent of that user var.
         if symbol.namespace.is_none()
             && scope.namespace != "suss.core"
@@ -636,6 +701,12 @@ impl Environment {
                     | ">"
                     | ">="
                     | "=="
+                    | "when"
+                    | "when-not"
+                    | "if-not"
+                    | "and"
+                    | "or"
+                    | "cond"
             )
             && self.bindings.contains_key(&Global {
                 phase,
@@ -650,49 +721,49 @@ impl Environment {
             namespace: "suss.core".into(),
             name: name.into(),
         };
-        Some(
-            if let Some(operation) = match name {
-                "<" => Some(Comparison::Less),
-                "<=" => Some(Comparison::LessEqual),
-                ">" => Some(Comparison::Greater),
-                ">=" => Some(Comparison::GreaterEqual),
-                "==" => Some(Comparison::StrictEqual),
-                _ => None,
-            } {
-                Binding::BootstrapComparison { global, operation }
-            } else if let Some(operation) = match name {
-                "array" => Some(ArrayOperation::Literal),
-                "make-array" => Some(ArrayOperation::Make),
-                "alength" => Some(ArrayOperation::Length),
-                "aget" => Some(ArrayOperation::Get),
-                "aset" => Some(ArrayOperation::Set),
-                _ => None,
-            } {
-                Binding::BootstrapArray { global, operation }
-            } else if name == "let" {
-                Binding::BootstrapLet(global)
-            } else if name == "loop" {
-                Binding::BootstrapLoop(global.clone())
-            } else if name == "fn" {
-                Binding::BootstrapFn(global)
-            } else if name == "defonce" {
-                Binding::BootstrapDefonce(global)
-            } else if name == "binding" || name == "with-redefs" {
-                Binding::BootstrapBinding(global)
-            } else {
-                Binding::Nominal {
-                    global,
-                    form: match name {
-                        "deftype" => NominalForm::Deftype,
-                        "defprotocol" => NominalForm::Defprotocol,
-                        "instance?" => NominalForm::Instance,
-                        "satisfies?" => NominalForm::Satisfies,
-                        "implements?" => NominalForm::Implements,
-                        _ => NominalForm::ExtendType,
-                    },
-                }
-            },
-        )
+        Some(if let Some(operation) = ControlForm::from_name(name) {
+            Binding::BootstrapControl { global, operation }
+        } else if let Some(operation) = match name {
+            "<" => Some(Comparison::Less),
+            "<=" => Some(Comparison::LessEqual),
+            ">" => Some(Comparison::Greater),
+            ">=" => Some(Comparison::GreaterEqual),
+            "==" => Some(Comparison::StrictEqual),
+            _ => None,
+        } {
+            Binding::BootstrapComparison { global, operation }
+        } else if let Some(operation) = match name {
+            "array" => Some(ArrayOperation::Literal),
+            "make-array" => Some(ArrayOperation::Make),
+            "alength" => Some(ArrayOperation::Length),
+            "aget" => Some(ArrayOperation::Get),
+            "aset" => Some(ArrayOperation::Set),
+            _ => None,
+        } {
+            Binding::BootstrapArray { global, operation }
+        } else if name == "let" {
+            Binding::BootstrapLet(global)
+        } else if name == "loop" {
+            Binding::BootstrapLoop(global.clone())
+        } else if name == "fn" {
+            Binding::BootstrapFn(global)
+        } else if name == "defonce" {
+            Binding::BootstrapDefonce(global)
+        } else if name == "binding" || name == "with-redefs" {
+            Binding::BootstrapBinding(global)
+        } else {
+            Binding::Nominal {
+                global,
+                form: match name {
+                    "deftype" => NominalForm::Deftype,
+                    "defprotocol" => NominalForm::Defprotocol,
+                    "instance?" => NominalForm::Instance,
+                    "satisfies?" => NominalForm::Satisfies,
+                    "implements?" => NominalForm::Implements,
+                    _ => NominalForm::ExtendType,
+                },
+            }
+        })
     }
     pub fn resolve(
         &self,
