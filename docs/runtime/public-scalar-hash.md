@@ -47,7 +47,7 @@ throw recovery and forced GC. No full public compatibility acceptance is claimed
 
 Core selection98/artifacts102;193 partial reviews/872 unassessed. Source extraction,
 patch provenance, sequence setup5 and diff checks pass. Parent47829 terminal0: case5/default3/identity4; Python82 pass. Full61362
-is running /private/tmp/suss-public-hash-full.log; independent review and exact reviewed-head CI gate any PR readiness.
+ended0 through final reader doc tests, /private/tmp/suss-public-hash-full.log; independent review and exact reviewed-head CI gate any PR readiness.
 
 Commands (shared target/build2; no RUSTFLAGS):
 

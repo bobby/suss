@@ -7880,3 +7880,21 @@ prove bytes unchanged, push and require new final-head CI; cannot run heavy jobs
 while root61362 live. PR108 stays draft. No issue/milestone completion from this
 slice. Next finish full/review/CI, then ordered/unordered hashing and full remaining
 Date/collection/core/macro and M2–M9 acceptance. Issue98 still defers algorithms.
+
+
+Root publichash full61362 authoritative terminal0; inspected
+/private/tmp/suss-public-hash-full.log through final reader doc tests. Required
+shared target/build2 --workspace --locked -- --test-threads=2 passes newnative4,
+ABI45 and unchanged parentcorpora/strict-arity/referenceparse boundaries. Existing
+manual ignores and diagnostic known failures remain explicit. All root handles
+19903/30006/75868/43270/90709/32208/59391/49538/83231/47829/61362/69372 terminal.
+PR111 draft2d94d7b opened, mandatory reviewer111 staticreview dispatched.
+
+Reviewer108 timeoutfix c6cc97b134555c42104310156198c3f0a1a2b2c5 has CI36869717334
+live; production/test bytes identical707 baseline. Attempt1 fullstep reported
+success24m29, attempt2 fullstep cancelled24m39; neither overallcancelled run is
+CIpass. Reviewer110 staticrebase of reviewedf784 onto108c6 is underway toresolve
+stackdoc conflicts; root111 will rebase afterward preserving code and evidence.
+No heavy processes remain at root; reviewer111 receives exclusive slot after
+this evidence push and finalroot rebasing. Exactreviewedhead CI still gates all
+readiness. No merges, issue closures or milestone acceptance.
