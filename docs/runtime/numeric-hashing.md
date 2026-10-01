@@ -19,14 +19,20 @@ numbers/nil/booleans/UTF-16 string domain; arbitrary object ToPrimitive remains
 unsupported with typed errors. HIR/IR check unary arity and numeric result types;
 these primitives are not public core cells or bitwise macro names.
 
-52 fresh primary/native observations match, preserving the original42. Three
-source guards cover scalar coercion, captures/live dependencies, effect order,
+72 fresh primary/native observations match, preserving the original 52 review
+candidate and its initial 42. Twenty independent review probes cover scalar
+string/Boolean/nil
+coercions, binary64 boundaries, explicit word order, live dependency mutation and
+throw/evaluation order. Three source guards cover scalar coercion, captures/live dependencies, effect order,
 checked runtime arity/errors/GC recovery and located compile-atomic private
-primitive arities with both-phase validation. Compiler HIR/IR2 and ABI25 pass;
+primitive arities with both-phase validation. Compiler HIR/IR2 and ABI26 pass;
 the new ABI guard checks267 binary64 encodings including signed zero, infinities,
-signaling/quiet NaN payloads and malformed storage with typed recovery. Python76
+signaling/quiet NaN payloads and malformed storage with typed recovery. An additional independent guard rejects foreign arrays,
+unknown i31 sentinels and
+null references in each adapter, with typed exception recovery after GC. Python76
 and inventory/import/WIT/numeric/bitwise/offline roadmap gates pass. Independent
-review, full workspace baseline and exact final-head CI remain pending.
+review found no significant production defect; the full workspace baseline passes.
+Exact final reviewed-head CI remains required before readiness.
 Source recipe selects45 forms/49 licensed files; overlay132 partial/933 unassessed.
 Shared GC layouts, runtime ABI version and native core cell count are unchanged.
 Cached/public/string/numeric/collection hashing, public equality, persistent

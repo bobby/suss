@@ -417,6 +417,166 @@
         "tag": "f64",
         "bits": "3ff0000000000000"
       }
+    },
+    {
+      "id": "double-binary-scalar",
+      "source": "(hash-double \"0b10101\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "40caa00000000000"
+      }
+    },
+    {
+      "id": "double-octal-scalar",
+      "source": "(hash-double \"0o777\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "416e0fe800000000"
+      }
+    },
+    {
+      "id": "double-unicode-space",
+      "source": "(hash-double \"\\u00a0-1.25\\ufeff\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ee97e000000000"
+      }
+    },
+    {
+      "id": "double-negative-zero-string",
+      "source": "(hash-double \"-0\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4060000000000000"
+      }
+    },
+    {
+      "id": "double-fractional-exponent",
+      "source": "(hash-double \"-2.125e-25\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c231265c000000"
+      }
+    },
+    {
+      "id": "double-negative-normal-boundary",
+      "source": "(hash-double -2.2250738585072014e-308)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40b0800000000000"
+      }
+    },
+    {
+      "id": "double-lowest-normal-successor",
+      "source": "(hash-double 2.225073858507202e-308)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4170010000000000"
+      }
+    },
+    {
+      "id": "double-high-word-order",
+      "source": "(with-redefs [hash-long (fn [high low] high)] (hash-double 1.5))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "double-low-word-order",
+      "source": "(with-redefs [hash-long (fn [high low] low)] (hash-double 1.5))",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ef07e000000000"
+      }
+    },
+    {
+      "id": "double-word-order-negative-zero",
+      "source": "(with-redefs [hash-long (fn [high low] low)] (hash-double -0.0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4060000000000000"
+      }
+    },
+    {
+      "id": "double-dependency-argument-mutation",
+      "source": "(do (def numeric_review_trace 0) (with-redefs [hash-long (fn [high low] 7)] (hash-double (do (set! hash-long (fn [high low] (do (set! numeric_review_trace (+ numeric_review_trace 1)) 83))) 1.5))) numeric_review_trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "double-live-throwing-dependency",
+      "source": "(let [saved hash-double] (with-redefs [hash-long (fn [high low] (throw 29))] (try (saved 1.5) (catch :default e e))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403d000000000000"
+      }
+    },
+    {
+      "id": "combine-immutable-shift-left",
+      "source": "(let [saved hash-combine] (with-redefs [bit-shift-left (fn [a b] 9)] (saved 0 0)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d8722191c00000"
+      }
+    },
+    {
+      "id": "combine-throw-first-argument",
+      "source": "(do (def numeric_review_trace 0) (try (hash-combine (do (set! numeric_review_trace 1) (throw 9)) (do (set! numeric_review_trace 2) 3)) (catch :default e nil)) numeric_review_trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "combine-throw-second-argument",
+      "source": "(do (def numeric_review_trace 0) (try (hash-combine (do (set! numeric_review_trace 1) 7) (do (set! numeric_review_trace (+ (* numeric_review_trace 10) 2)) (throw 9))) (catch :default e nil)) numeric_review_trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "double-restored-after-review-mutation",
+      "source": "(hash-double 1.5)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ef07e000000000"
+      }
+    },
+    {
+      "id": "combine-nil",
+      "source": "(hash-combine nil nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d8722191c00000"
+      }
+    },
+    {
+      "id": "combine-bool",
+      "source": "(hash-combine true true)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d8722181400000"
+      }
+    },
+    {
+      "id": "combine-string-seed",
+      "source": "(hash-combine \"7\" 13)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d8722120000000"
+      }
+    },
+    {
+      "id": "combine-string-hash",
+      "source": "(hash-combine 7 \"13\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c69c0e0b000000"
+      }
     }
   ]
 }

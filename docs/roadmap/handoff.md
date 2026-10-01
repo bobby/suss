@@ -6191,3 +6191,49 @@ pass. Log /private/tmp/suss-numeric-hash-final52-fixed.log. All root local
 Cargo/JVM/Node processes are terminal; the shared slot will pass exclusively to
 the independent reviewer after draft publication. Final reviewed-head CI remains
 required; no readiness or merge claim for this numeric candidate.
+
+
+## Independent PR99 review — 2026-10-01
+
+Review worktree /private/tmp/suss-review-pr99 starts at numeric candidate90f73d5
+on portable/core-numeric-hash, base independently reviewed PR97 8947aaa. A real
+local shared clone of pinned upstream supports strict provenance; no escaping
+symlink or verifier weakening. Original52 source/expected observations were checked
+unchanged. Twenty independent probes bring the fresh corpus to72: binary/octal/
+Unicode whitespace and negative-zero strings, binary64 normal/subnormal boundaries,
+separate high/low word reads, argument mutation of live hash-long, dependency throws,
+immutable shift expansion, argument throw ordering and mixed nil/Boolean/string
+hash-combine operands. No significant production defect was found.
+
+Fresh49556 ended0:68 exact pinned/native observations plus native numeric3.
+Final fresh14165 ended0:all72 exact pinned/native observations and numeric3.
+Logs /private/tmp/suss-pr99-review-primary68.log and
+/private/tmp/suss-pr99-review-primary72.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-numeric-hash-oracle.sh`.
+New independent ABI guard23405 ended0, rejecting foreign arrays, invalid i31
+sentinels and null references in all three adapters as language exceptions rather
+than traps, with recovery after forced GC. Existing267 raw binary64 encodings,
+including signed zero and signaling/quiet NaN payloads, remain unchanged.
+Log /private/tmp/suss-pr99-review-adapters.log. Command selects -p suss-compile
+--test runtime_abi runtime_abi_binary64 with shared target/build workers2/locked/
+--test-threads=2. Runtime layouts, ABI version and core cell count unchanged.
+
+Provenance74900 ended0:Python76,inventory1065/reviews132+933/import49 licensed
+files, strict conditional imul source region, WIT15/6,numeric manifest and offline
+roadmap10/39 pass. Log /private/tmp/suss-pr99-review-provenance.log. Full required
+workspace baseline is running; terminal results will follow. Exact final reviewed-
+head CI remains required. No merge, closure or milestone acceptance. Full public
+numeric/string/collection hashing, arbitrary object coercion, actual persistent
+sequences and compiled macro bootstrap remain incomplete.
+
+
+Required full workspace93986 ended0: every enabled workspace/doc test passes,
+including numeric3/String3/Murmur5/bitwise6 and compiler pipeline17/HIR-IR2/ABI26.
+Manual ignored tests and diagnostic9 passing/7 exact failing observations remain
+explicit. Log /private/tmp/suss-pr99-review-full-baseline.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+All local Cargo/JVM/Node processes are terminal. Shared test slot is released after
+the review push finishes; root must require exact final reviewed-head CI before
+PR99 readiness. No merge, closure or milestone acceptance. Next retained cached/
+public string hashing and actual persistent sequence/list algorithms, while full
+numeric/public/collection hashing and M2–M9 acceptance remain incomplete.

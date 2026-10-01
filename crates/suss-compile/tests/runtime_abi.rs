@@ -2942,3 +2942,35 @@ fn runtime_abi_binary64_words_preserve_payloads_byte_order_and_typed_errors() {
     let object = output.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
     assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64(), 0.0);
 }
+
+#[test]
+fn runtime_abi_binary64_scalar_adapters_reject_foreign_values_and_recover_after_gc() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    ).unwrap();
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let opaque = nominal_value(&mut store, runtime, "args-new", &[Val::I32(2)]);
+    let invalid_sentinel = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(
+        &mut store, wasmtime::I31::new_u32(99).unwrap(),
+    )));
+    for input in [opaque, invalid_sentinel, Val::null_any_ref()] {
+        store.gc(None).unwrap();
+        for name in ["primitive-f64-coerce", "primitive-f64-word0", "primitive-f64-word4"] {
+            let error = runtime.get_func(&mut store, name).unwrap()
+                .call(&mut store, &[input.clone()], &mut [Val::null_any_ref()]).unwrap_err();
+            assert!(error.is::<wasmtime::ThrownException>(), "{name}: {error:#}");
+            assert!(!error.is::<wasmtime::Trap>());
+            assert!(store.take_pending_exception().is_some());
+        }
+        let normalized = nominal_value(&mut store, runtime, "primitive-f64-coerce", &[nil.clone()]);
+        for name in ["primitive-f64-word0", "primitive-f64-word4"] {
+            let output = nominal_value(&mut store, runtime, name, &[normalized.clone()]);
+            assert_eq!(output.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap()
+                .field(&mut store, 0).unwrap().unwrap_f64(), 0.0);
+        }
+    }
+}
