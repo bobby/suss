@@ -417,6 +417,14 @@
         "tag": "f64",
         "bits": "4051c00000000000"
       }
+    },
+    {
+      "id": "thread-callee-before-initial-expression",
+      "source": "(do (def thread_callee_trace 0) (def thread_callee (fn [x] x)) (-> (do (set! thread_callee_trace (+ (* thread_callee_trace 10) 1)) 7) ((do (set! thread_callee_trace (+ (* thread_callee_trace 10) 2)) thread_callee))) thread_callee_trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
     }
   ]
 }

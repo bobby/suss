@@ -5895,3 +5895,8 @@ unchanged).17 new ->/as->/zero? cases cover lexical shadowing, captures, tail re
 and strict zero testing. They have not run against the pin/native and are NOT
 success evidence. PR95 reviewer is investigating captured variadic tail dispatch;
 root still holds no local test slot and has launched no Cargo/JVM/Node processes.
+
+One additional unexecuted thread-callee ordering probe makes53 provisional cases.
+Nested threading syntax must preserve outer callee evaluation before the initial
+expression, rather than pre-evaluating that expression as an eager temporary.
+No primary/native success is claimed; shared test slot remains with PR95 reviewer.
