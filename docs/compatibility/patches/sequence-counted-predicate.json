@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "fdc547dcc94d2fff3ceb940903897c523344b278870a817d01445ac6f57246ba",
+  "replacement": "(def counted?\n  \"Returns true if coll implements count in constant time\"\n  (fn [x] (satisfies? ICounted x)))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+}

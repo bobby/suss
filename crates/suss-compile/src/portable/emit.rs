@@ -81,9 +81,13 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         globals.insert(global.clone());
                         names.insert("binding-set");
                     }
-                    Operation::MakeGeneralClosure { .. } => {
+                    Operation::MakeGeneralClosure { body, .. } => {
                         names.insert("closure-new");
                         names.insert("arity-error");
+                        if let Some(factory) = &body.rest_class {
+                            globals.insert(factory.clone());
+                            names.extend(["binding-get", "invoke", "source-array-new", "number-box", "constructor-descriptor", "source-constructor-new"]);
+                        }
                     }
                     Operation::MakeClosure { .. } => {
                         names.insert("closure-new");
@@ -102,6 +106,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::Nominal { operation, .. } => match operation {
                         Nominal::Array => {}
+                        Nominal::LanguageError => { names.insert("language-error-new"); }
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
                         Nominal::NativeObjectGet => { names.insert("native-object-property-get"); }
                         Nominal::NativeObjectSet => { names.insert("native-object-property-set"); }
@@ -247,7 +252,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 vec![VALUE],
             ),
             "binding-get" | "binding-bound" | "number-negate" | "value-negate"
-            | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4" => {
+            | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4" | "language-error-new" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
@@ -315,7 +320,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     }
     for dispatcher in &dispatchers {
         functions.function(runtime_abi::INVOKE);
-        code.function(&emit_dispatcher(dispatcher, &names, &bodies));
+        code.function(&emit_dispatcher(dispatcher, &names, &globals, &bodies));
     }
     let mut elements = ElementSection::new();
     if !bodies.is_empty() || !dispatchers.is_empty() {
@@ -375,14 +380,19 @@ fn collect_bodies<'a>(
         }
     }
 }
-fn emit_dispatcher(body: &GeneralClosureBody, names: &[&str], bodies: &[&ClosureBody]) -> Function {
+fn emit_dispatcher(
+    body: &GeneralClosureBody,
+    names: &[&str],
+    globals: &[super::resolve::Global],
+    bodies: &[&ClosureBody],
+) -> Function {
     use Instruction::*;
-    let mut function = Function::new([(1, ValType::I32)]);
+    let mut function = Function::new([(1, ValType::I32), (2, VALUE)]);
     function
         .instruction(&LocalGet(1))
         .instruction(&ArrayLen)
         .instruction(&LocalSet(2));
-    for method in &body.methods {
+    for method in body.methods.iter().filter(|method| !method.variadic) {
         let index = bodies
             .iter()
             .position(|candidate| std::ptr::eq(*candidate, method))
@@ -395,6 +405,99 @@ fn emit_dispatcher(body: &GeneralClosureBody, names: &[&str], bodies: &[&Closure
             .instruction(&LocalGet(0))
             .instruction(&LocalGet(1))
             .instruction(&Call((names.len() + 1 + index) as u32))
+            .instruction(&Return)
+            .instruction(&End);
+    }
+    if let Some(method) = body.methods.iter().find(|method| method.variadic) {
+        let minimum = method.arity - 1;
+        let body_index = bodies
+            .iter()
+            .position(|candidate| std::ptr::eq(*candidate, method))
+            .expect("collected method");
+        let factory_index = globals
+            .binary_search(body.rest_class.as_ref().expect("verified rest class"))
+            .expect("collected rest class") as u32;
+        let import = |name: &str| {
+            names
+                .iter()
+                .position(|candidate| *candidate == name)
+                .expect("collected import") as u32
+        };
+        function
+            .instruction(&LocalGet(2))
+            .instruction(&I32Const(minimum as i32))
+            .instruction(&I32GeU)
+            .instruction(&If(BlockType::Empty));
+        // Fixed arguments and the persistent rest value form the compiled entry.
+        function
+            .instruction(&I32Const(method.arity as i32))
+            .instruction(&ArrayNewDefault(runtime_abi::ARGS))
+            .instruction(&LocalSet(3));
+        function
+            .instruction(&LocalGet(3))
+            .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
+            .instruction(&I32Const(0))
+            .instruction(&LocalGet(1))
+            .instruction(&I32Const(0))
+            .instruction(&I32Const(minimum as i32))
+            .instruction(&ArrayCopy {
+                array_type_index_dst: runtime_abi::ARGS,
+                array_type_index_src: runtime_abi::ARGS,
+            });
+        function
+            .instruction(&LocalGet(2))
+            .instruction(&I32Const(minimum as i32))
+            .instruction(&I32Sub)
+            .instruction(&ArrayNewDefault(runtime_abi::ARGS))
+            .instruction(&LocalSet(4));
+        function
+            .instruction(&LocalGet(4))
+            .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
+            .instruction(&I32Const(0))
+            .instruction(&LocalGet(1))
+            .instruction(&I32Const(minimum as i32))
+            .instruction(&LocalGet(2))
+            .instruction(&I32Const(minimum as i32))
+            .instruction(&I32Sub)
+            .instruction(&ArrayCopy {
+                array_type_index_dst: runtime_abi::ARGS,
+                array_type_index_src: runtime_abi::ARGS,
+            });
+        // The pinned wrapper constructs the live IndexedSeq class over a fresh source array.
+        // Internal Args never becomes the language rest sequence.
+        function
+            .instruction(&LocalGet(3))
+            .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
+            .instruction(&I32Const(minimum as i32))
+            .instruction(&LocalGet(2))
+            .instruction(&I32Const(minimum as i32))
+            .instruction(&I32GtU)
+            .instruction(&If(BlockType::Result(VALUE)))
+            .instruction(&GlobalGet(factory_index))
+            .instruction(&Call(import("binding-get")))
+            .instruction(&Call(import("constructor-descriptor")))
+            .instruction(&Call(import("source-constructor-new")))
+            .instruction(&LocalGet(4))
+            .instruction(&Call(import("source-array-new")))
+            .instruction(&F64Const(0.0.into()))
+            .instruction(&Call(import("number-box")))
+            .instruction(&I32Const(0))
+            .instruction(&RefI31)
+            .instruction(&ArrayNewFixed {
+                array_type_index: runtime_abi::ARGS,
+                array_size: 3,
+            })
+            .instruction(&Call(import("invoke")))
+            .instruction(&Else)
+            .instruction(&I32Const(0))
+            .instruction(&RefI31)
+            .instruction(&End)
+            .instruction(&ArraySet(runtime_abi::ARGS));
+        function
+            .instruction(&LocalGet(0))
+            .instruction(&LocalGet(3))
+            .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
+            .instruction(&Call((names.len() + 1 + body_index) as u32))
             .instruction(&Return)
             .instruction(&End);
     }
@@ -638,15 +741,10 @@ fn emit_function(
                     let minimum = body
                         .methods
                         .iter()
-                        .map(|method| method.arity)
+                        .map(|method| method.arity - usize::from(method.variadic))
                         .min()
                         .expect("verified methods");
-                    let maximum = body
-                        .methods
-                        .iter()
-                        .map(|method| method.arity)
-                        .max()
-                        .expect("verified methods");
+                    let maximum = if body.rest_class.is_some() { -1 } else { body.methods.iter().map(|method| method.arity as i32).max().expect("verified methods") };
                     function
                         .instruction(&ArrayNewFixed {
                             array_type_index: runtime_abi::ARGS,
@@ -655,7 +753,7 @@ fn emit_function(
                         .instruction(&LocalTee(scratch))
                         .instruction(&RefFunc(dispatcher_function))
                         .instruction(&I32Const(minimum as i32))
-                        .instruction(&I32Const(maximum as i32))
+                        .instruction(&I32Const(maximum))
                         .instruction(&Call(index("closure-new")))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                     if body.self_capture {
@@ -830,6 +928,7 @@ fn emit_function(
                                 .instruction(&Call(index("object-method-invoke")));
                         }
                         Nominal::Class
+                        | Nominal::LanguageError
                         | Nominal::NativeObjectFactory
                         | Nominal::NativeObjectGet
                         | Nominal::NativeObjectSet
@@ -846,6 +945,7 @@ fn emit_function(
                             }
                             function.instruction(&Call(index(match operation {
                                 Nominal::Class => "class-value-new",
+                                Nominal::LanguageError => "language-error-new",
                                 Nominal::NativeObjectFactory => "native-object-factory-function",
                                 Nominal::NativeObjectGet => "native-object-property-get",
                                 Nominal::NativeObjectSet => "native-object-property-set",

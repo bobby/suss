@@ -27,6 +27,7 @@ jobs:
           python3 scripts/cljs_inventory.py --check
           python3 scripts/cljs_reviews.py
           python3 scripts/core_import.py --check
+          python3 scripts/sequence_provenance.py
           python3 scripts/bitwise_provenance.py
           python3 scripts/wasi_lock.py
           python3 scripts/numeric_runtime.py --check

@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "upstream-commit": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+  "loader": "docs/compatibility/bootstrap/sequence-initializers.sus",
+  "statements": [
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3352,
+      "end-line": 3352,
+      "sha256": "1e31c698d231376e7db0d19a0252cbf0a4c5352a81b121be88d6bba878113496"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1438,
+      "end-line": 1440,
+      "sha256": "5d31704d069f2cd3716b6209baa42654a97f5252bfbc2cc19ef74562945ec734"
+    }
+  ]
+}

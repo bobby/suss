@@ -107,6 +107,7 @@ pub struct Function {
 }
 #[derive(Debug, Clone)]
 pub struct ClosureBody {
+    pub variadic: bool,
     pub capture_types: Vec<Type>,
     pub arity: usize,
     pub function: Function,
@@ -116,6 +117,7 @@ pub struct GeneralClosureBody {
     pub capture_types: Vec<Type>,
     pub methods: Vec<ClosureBody>,
     pub self_capture: bool,
+    pub rest_class: Option<Global>,
 }
 struct Lowerer {
     function: Function,
@@ -368,6 +370,7 @@ impl Lowerer {
                 self.emit(
                     Operation::MakeClosure {
                         body: Box::new(ClosureBody {
+                            variadic: false,
                             capture_types,
                             arity: parameters.len(),
                             function,
@@ -382,6 +385,7 @@ impl Lowerer {
                 methods,
                 captures,
                 self_binding,
+                rest_class,
             } => {
                 let mut captured = Vec::new();
                 let mut capture_types = Vec::new();
@@ -408,6 +412,7 @@ impl Lowerer {
                         inner.parameter(parameter.id, Type::Value, parameter.span.clone())?;
                     }
                     lowered.push(ClosureBody {
+                        variadic: method.variadic,
                         capture_types: environment_types,
                         arity: method.parameters.len(),
                         function: inner.finish(&method.body)?,
@@ -419,6 +424,7 @@ impl Lowerer {
                             capture_types,
                             methods: lowered,
                             self_capture: self_binding.is_some(),
+                            rest_class: rest_class.clone(),
                         }),
                         captures: captured,
                     },
@@ -1042,6 +1048,7 @@ fn verify_function(
                     return Err(fail("IR global writes require dynamic Value result"));
                 }
                 Operation::MakeClosure { body, captures } => {
+                    if body.variadic { return Err(fail("IR fixed closure cannot have variadic entry")); }
                     if body.arity > i32::MAX as usize
                         || body.capture_types.len() != captures.len()
                         || result_ty != Type::Closure(body.arity)
@@ -1087,10 +1094,14 @@ fn verify_function(
                         environment.push(Type::Value);
                     }
                     let mut arities = HashSet::new();
+                    let variadic: Vec<_> = body.methods.iter().filter(|method| method.variadic).collect();
+                    if variadic.len() > 1 || body.rest_class.is_some() != (variadic.len() == 1) || variadic.first().is_some_and(|method| method.arity == 0 || body.methods.iter().any(|fixed| !fixed.variadic && fixed.arity > method.arity - 1)) {
+                        return Err(fail("IR variadic closure shape mismatch"));
+                    }
                     for method in &body.methods {
                         if method.arity > i32::MAX as usize
                             || method.capture_types != environment
-                            || !arities.insert(method.arity)
+                            || !arities.insert((method.arity, method.variadic))
                         {
                             return Err(fail("IR general closure method shape mismatch"));
                         }

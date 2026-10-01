@@ -6749,3 +6749,84 @@ native execution with equality/hash/metadata/reduction/iterator/lazy obligations
 still in scope. Do not replace concrete types with the original literal test adapter.
 No new PR yet; require independent review/fixes/full/final-head CI before readiness.
 M2–M9 stay active; no merges or issue/milestone completion claims.
+
+
+## Retained concrete sequences and persistent variadic rest — 2026-10-01
+
+PR100 is READY, still unmerged: head3e5af026f5b2f0de09edace672ad0f45c084e93a,
+independent review/fixes and full79254 passed. Exact reviewed-head CI36834509263
+completed SUCCESS; root inspected /private/tmp/suss-pr100-final-ci.log, updated
+PR body and ran gh pr ready100. No merge/closure/milestone acceptance.
+
+Sequence branch continues from0f60113. Retained all methods of List/EmptyList/Cons/
+IndexedSeq plus14 helper/API declarations:18 new selected forms bring import68/
+72 licensed artifacts, reviews157 partial/908 unassessed. Explicit patches retain
+algorithms/docstrings/metadata/EPL and replace host Error/numeric array append/
+bounded defn. Empty ordered hash's unsupported private attribute is omitted only
+in its explicit executable patch; privacy/Var metadata remain pending. No blanket
+method deletion or fake helpers. Original loader forward declarations explicitly
+name pending print/index-search/equality/hash/reduction/iterator/RSeq/str_ helpers;
+invoking an uninitialized dependency fails, not succeeds. Two complete licensed
+setup statements publish real List.EMPTY and nil ICounted. New hash-bound loader
+inputs/manifest and scripts/sequence_provenance.py plus3 regressions verify source
+bounds/hashes/notices/order and reject edits/extra forms. CI runs that check.
+
+Compiler canonical () lookup was retained. HIR/verified IR now carry variadic
+method/rest-class facts. Exact fixed dispatch precedes a variadic entry. Rest
+uses a fresh source array and live canonical IndexedSeq class construction with
+array/offset0/nil metadata. No raw Args masquerades as a persistent sequence.
+Empty rest is nil and skips class lookup/construction. Named self/recur, captures,
+source evaluation order, arity checks and malformed signature atomicity execute.
+Private language-error-new uses existing descriptor/Exception layout and checked
+UTF-16 coercion. No shared type/layout/ABI/bootstrap core-cell change.
+
+First type focus38038 ended101 on unsupported private metadata; explicit source-
+bound empty hash patch corrected loading and47239 passed6 interface tests. New
+fixture failed compilation on nonexistent StructRef.get; corrected strict fields
+before42637 passed2 actual type/error tests. Initial variadicbuild12819 passed2.
+Initial list15567 passed all51/native3. First fresh67/25453 ended1: one new candidate
+wrongly expected array-seq to supply rest. Pinned compiler.cljc987–1001/1058–1074
+constructs IndexedSeq directly. Corrected only that new expected7/renamed probes,
+added class/empty-rest probes and fixed compiler binding/construction accordingly.
+All original51 checked JSON-equal against0f60113 and untouched. Fresh9486 certified
+69 exact primary observations/native3. Final source98359 passed4 with persisted
+rest/GC/wrong-arity effects/malformed signatures/recovery; final72919 repeats69 exact
+primary/native4, /private/tmp/suss-sequence-primary69-final.log.
+
+Python loader13 initially passed; source setup provenance metadata initially listed
+source order while the explicit loader runs singleton then nil extension. Corrected
+metadata to actual retained statement order; all80 Python tests pass, plus inventory/
+reviews157+908/import72/setup2. Log /private/tmp/suss-sequence-python-final.log.
+Commands: python3 -m unittest discover -s scripts -p test_*.py; python3 scripts/
+sequence_provenance.py; python3 scripts/core_import.py --check; python3 scripts/
+cljs_reviews.py. Rustfmt only test/new modified function regions, not workspace.
+
+First full72012 ended101 on an old unsupported-variadic fixture expecting span&;
+without loaded source core, the new lowering correctly reports missing IndexedSeq
+at the function span. Updated that regression to assert exact dependency diagnostic,
+retaining destructuring/arity failures. Closure27762 passed13; added malformed
+variadic IR class/arity/entry rejection and final41525 passes14. Pinned unchecked-
+max binds operands once; corrected the count patch to explicit let/branch before
+final fresh72919. No unchanged oracle result retargeting or skipped success.
+
+Final full workspace6028 running, confirmed live through portable pipeline tests.
+Log /private/tmp/suss-sequence-full-final.log. Root exclusively owns heavy slot;
+all earlier local handles terminal. Cargo commands always shared target, build2,
+--locked/--test-threads=2, no RUSTFLAGS. Required baseline before opening coherent
+sequence/rest draft PR against100 with Refs9/14/16/17/19. Then dispatch independent
+subagent review/fixes, reviewer full baseline and exact reviewed-head CI. Do not
+merge. Complete helper dependencies, equality/hash/metadata/reduction/iterators,
+general apply and compiled macros remain next; lazy/chunked/vector/HAMT/transient
+and M2–M9 acceptance stay unfinished. Source seq JS Symbol.iterator branch is
+outside this portable adapter; typed bridge/iterators and str_ formatting remain
+explicit pending boundaries. No full core/collection or milestone completion.
+
+
+Final full6028 ended0; root inspected /private/tmp/suss-sequence-full-final.log
+through final doc-test completion. All required workspace suites pass, including
+native sequence4/fresh69 cases, interface6, closure14 and runtime ABI41. Existing
+manual ignored observations and diagnostic9 passing/7 known failures remain
+explicit. No scope-wide compatibility claim. Original51 JSON values checked
+against0f60113 remain identical. All local handles terminal; root may open the
+coherent sequence/rest draft and release the heavy slot to its mandatory independent
+reviewer. Exact final reviewed-head CI still gates readiness. No merges.

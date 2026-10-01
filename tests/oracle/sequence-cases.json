@@ -409,6 +409,150 @@
         "tag": "bool",
         "value": true
       }
+    },
+    {
+      "id": "variadic-empty-rest",
+      "source": "(nil? ((fn [& xs] xs)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "variadic-rest-real-indexed-seq",
+      "source": "(instance? cljs.core/IndexedSeq ((fn [& xs] xs) nil false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "variadic-rest-count",
+      "source": "((fn [& xs] (count xs)) nil false 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "variadic-fixed-floor",
+      "source": "(nil? ((fn [a b & xs] xs) 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "variadic-fixed-rest-count",
+      "source": "((fn [a b & xs] (+ (* a 100) (* b 10) (count xs))) 1 2 3 4)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405e800000000000"
+      }
+    },
+    {
+      "id": "variadic-overloaded-fixed",
+      "source": "((fn ([] 91) ([x] x) ([x & xs] (+ x (count xs)))) 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "variadic-overloaded-rest",
+      "source": "((fn ([] 91) ([x] x) ([x & xs] (+ x (count xs)))) 7 8 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "variadic-named-recur-rest",
+      "source": "((fn step [n & xs] (if (zero? n) (count xs) (recur (dec n) xs))) 3 7 8)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "variadic-named-self-call",
+      "source": "((fn step [n & xs] (if (zero? n) (first xs) (step (dec n) (first xs) (first (next xs))))) 3 7 8)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "variadic-captured-closure",
+      "source": "(let [f ((fn [base] (fn [& xs] (+ base (count xs)))) 17)] (f 1 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4034000000000000"
+      }
+    },
+    {
+      "id": "variadic-does-not-call-array-seq",
+      "source": "(let [original cljs.core/array-seq f (fn [& xs] (first xs))] (try (do (set! cljs.core/array-seq (fn [a i] (cons 21 nil))) (f 7)) (finally (set! cljs.core/array-seq original))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "variadic-empty-avoids-helper",
+      "source": "(let [original cljs.core/array-seq f (fn [& xs] xs)] (try (do (set! cljs.core/array-seq (fn [a i] (cons 21 nil))) (nil? (f))) (finally (set! cljs.core/array-seq original))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "list-ignores-array-seq-redefinition",
+      "source": "(let [original cljs.core/array-seq f list] (try (do (set! cljs.core/array-seq (fn [a i] (cons (aget a 0) (cons (aget a 1) nil)))) (+ (* 10 (first (f 7 8))) (first (next (f 7 8))))) (finally (set! cljs.core/array-seq original))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4053800000000000"
+      }
+    },
+    {
+      "id": "variadic-operand-order",
+      "source": "(do (def variadic-trace 0) ((fn [& xs] (+ (* variadic-trace 100) (count xs))) (do (set! variadic-trace (+ (* variadic-trace 10) 1)) 7) (do (set! variadic-trace (+ (* variadic-trace 10) 2)) 8)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4092c80000000000"
+      }
+    },
+    {
+      "id": "variadic-nil-element",
+      "source": "(nil? ((fn [& xs] (first xs)) nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "variadic-false-element",
+      "source": "(false? ((fn [& xs] (first xs)) false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "variadic-current-indexed-seq-class",
+      "source": "(do (deftype VariadicRestProbe [arr i meta] cljs.core/ISeq (-first [this] (aget arr i)) (-rest [this] nil)) (let [original cljs.core/IndexedSeq f (fn [& xs] (instance? VariadicRestProbe xs))] (try (do (set! cljs.core/IndexedSeq VariadicRestProbe) (f 7)) (finally (set! cljs.core/IndexedSeq original)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "variadic-empty-skips-class",
+      "source": "(let [original cljs.core/IndexedSeq f (fn [& xs] xs)] (try (do (set! cljs.core/IndexedSeq nil) (nil? (f))) (finally (set! cljs.core/IndexedSeq original))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
     }
   ]
 }

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "4babc186d6c63a02400466b4f020f28d0dfc36da4c6c5e75aee02a5f76caae77",
+  "replacement": "(def count\n  \"Returns the number of items in the collection. (count nil) returns\n  0.  Also works on strings, arrays, and Maps\"\n  (fn [coll]\n  (if-not (nil? coll)\n    (cond\n      (implements? ICounted coll)\n      (-count coll)\n\n      (array? coll)\n      (alength coll)\n\n      (string? coll)\n      ^number (.-length coll)\n\n      (implements? ISeqable coll)\n      (accumulating-seq-count coll)\n\n      :else (-count coll))\n    0)))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+}
