@@ -7685,3 +7685,16 @@ reviewed23fe252. Prior local full78254 still covers identical tested code, not a
 fresh local execution for this static fix. No cargo/JVM/Node process started;
 root retains exclusive heavy slot/full22313. Descendants are not rebased here.
 Fresh exact-head CI mandatory before readiness; no merge or milestone claim.
+
+
+### PR108 rebase onto reviewed PR95 CI fix — 2026-10-01
+
+Rebased only PR108 commits from oldbase015767ae onto independently reviewed
+PR95head447bed49003938ea69fd5ff752b69a92330c9ba2. Preserved its complete
+26-line expanded-baseline review evidence and every PR108 evidence section.
+Resolved workflow conflict to exact reviewed7ffad606 bytes: final budget60;
+PR95ancestor retains its own35-minute change. Scoped diff proves crates/scripts/
+runtime/tests/oracles/workflow/Cargo/lock bytes identical to7ffad606 after rebase.
+Only handoff gains PR95 evidence and this record; no fresh local full claimed.
+No heavy runs or descendant changes. Push uses exact7ffad606 force-with-lease;
+fresh reviewed-head CI remains required before readiness, no merge claim.
