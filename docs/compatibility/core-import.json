@@ -203,6 +203,21 @@
       "id": "runtime:mix-collection-hash:1394",
       "source-sha256": "2ec20d82dfa0886a6675fcd1c9679dbc0d6f924e8bb3d06d02c61bee65b82822",
       "patch": "docs/compatibility/patches/mix-collection-hash.json"
+    },
+    {
+      "id": "runtime:pos?:3077",
+      "source-sha256": "71a1a0e2f9007476256b076f906d1e06b20426b52afbcf05ad710b64aba39dee",
+      "patch": "docs/compatibility/patches/pos-predicate.json"
+    },
+    {
+      "id": "runtime:m3-hash-unencoded-chars:1003",
+      "source-sha256": "04a75e9c4ec9e1a87a149692cd1d92f9b0509a5912f93172f6e609e7794d5abe",
+      "patch": "docs/compatibility/patches/m3-hash-unencoded-chars.json"
+    },
+    {
+      "id": "runtime:hash-string*:1026",
+      "source-sha256": "2b47893e9e7a081ccb89a6a0e574b23c1cf9ea8507725c69c21c9192fb7a8c9a",
+      "patch": "docs/compatibility/patches/hash-string-uncached.json"
     }
   ]
 }

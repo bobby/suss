@@ -17,6 +17,7 @@ mod nominal;
 mod numeric;
 mod object_methods;
 mod predicates;
+mod string_methods;
 
 pub const VERSION: u32 = 1;
 // Internal constructor/ordinary-type-call undefined, distinct from source nil.
@@ -846,6 +847,15 @@ fn build_module() -> Vec<u8> {
             RefI31,
             StructNew(7),
         ]),
+    );
+    // Private singleton builtin method root; no owners or per-string registry.
+    globals.global(
+        GlobalType {
+            val_type: VALUE,
+            mutable: true,
+            shared: false,
+        },
+        &ConstExpr::extended([I32Const(0), RefI31]),
     );
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

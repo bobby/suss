@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "71a1a0e2f9007476256b076f906d1e06b20426b52afbcf05ad710b64aba39dee",
+  "replacement": "(def ^boolean pos?\n  \"Returns true if num is greater than zero, else false\"\n  (fn [x] (cljs.core/pos? x)))",
+  "rationale": "Explicit fixed defn bootstrap adaptation retains original UTF-16 string hashing algorithm, metadata and docstring. Original checked named String charCodeAt adapter and bounded numeric predicate expansion supply dependencies; full JavaScript interoperability and compiled macro bootstrap remain separate work."
+}

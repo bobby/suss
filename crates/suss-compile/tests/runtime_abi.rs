@@ -2800,3 +2800,103 @@ fn runtime_abi_variadic_bitwise_callback_rejects_bad_cells_without_trapping() {
         }
     }
 }
+
+#[test]
+fn runtime_abi_utf16_char_code_bounds_and_errors_never_trap() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let text = nominal_value(&mut store, runtime, "string-new", &[Val::I32(2)]);
+    for (i, unit) in [0xd800, 0xffff].into_iter().enumerate() {
+        runtime.get_func(&mut store, "string-set-unit").unwrap().call(&mut store,
+            &[text.clone(), Val::I32(i as i32), Val::I32(unit)], &mut [Val::I32(0)]).unwrap();
+    }
+    store.gc(None).unwrap();
+    let get = runtime.get_func(&mut store, "string-char-code-at").unwrap();
+    for (index, expected) in [(0.0, 55296.0), (-0.9, 55296.0), (f64::NAN, 55296.0), (1.9, 65535.0), (-1.0, f64::NAN), (2.0, f64::NAN), (4294967296.0, f64::NAN), (f64::MAX, f64::NAN), (f64::INFINITY, f64::NAN), (f64::NEG_INFINITY, f64::NAN)] {
+        let input = nominal_value(&mut store, runtime, "number-box", &[Val::F64(index.to_bits())]);
+        let mut output = [Val::null_any_ref()];
+        get.call(&mut store, &[text.clone(), input], &mut output).unwrap();
+        let object = output[0].unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+        let actual = object.field(&mut store, 0).unwrap().unwrap_f64();
+        assert_eq!(actual.to_bits(), expected.to_bits(), "{index:?}");
+    }
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let opaque = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    for args in [[nil.clone(), nil.clone()], [text.clone(), opaque], [Val::null_any_ref(), nil.clone()]] {
+        let error = get.call(&mut store, &args, &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        assert!(store.take_pending_exception().is_some());
+    }
+    let value = nominal_value(&mut store, runtime, "string-char-code-at", &[text, nil]);
+    let object = value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+    assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64(), 55296.0);
+}
+
+#[test]
+fn runtime_abi_string_method_copied_callbacks_and_corrupt_environments_do_not_trap() {
+    use wasm_encoder::{HeapType, Instruction};
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let method = nominal_value(&mut store, runtime, "string-char-code-at-method", &[]);
+    let env = nominal_value(&mut store, runtime, "closure-environment", &[method.clone()]);
+    let payload = env.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 1).unwrap();
+    let array = payload.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    let anchored = array.get(&mut store, 0).unwrap();
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let empty = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    let text = nominal_value(&mut store, runtime, "string-new", &[Val::I32(1)]);
+    text.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().set(&mut store, 0, Val::I32(0xdfff)).unwrap();
+    let pair = nominal_value(&mut store, runtime, "args-new", &[Val::I32(2)]);
+    let args = pair.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    args.set(&mut store, 0, text.clone()).unwrap();
+    args.set(&mut store, 1, nil.clone()).unwrap();
+    // Copy the actual typed callbacks into independently generated closures.
+    let mut types = runtime_abi::prelude();
+    let value = wasm_encoder::ValType::Ref(wasm_encoder::RefType::EQREF);
+    types.ty().function([value, value], [value]);
+    let mut functions = wasm_encoder::FunctionSection::new();
+    functions.function(10);
+    let mut exports = wasm_encoder::ExportSection::new();
+    exports.export("copy-callback", wasm_encoder::ExportKind::Func, 0);
+    let mut code = wasm_encoder::CodeSection::new();
+    let mut forge = wasm_encoder::Function::new([]);
+    forge.instruction(&Instruction::LocalGet(1))
+        .instruction(&Instruction::LocalGet(0))
+        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(4)))
+        .instruction(&Instruction::StructGet { struct_type_index: 4, field_index: 1 })
+        .instruction(&Instruction::I32Const(0))
+        .instruction(&Instruction::I32Const(-1))
+        .instruction(&Instruction::StructNew(4))
+        .instruction(&Instruction::End);
+    code.function(&forge);
+    let mut module = wasm_encoder::Module::new();
+    module.section(&types).section(&functions).section(&exports).section(&code);
+    let foreign = Instance::new(&mut store, &Module::new(&engine, module.finish()).unwrap(), &[]).unwrap();
+    fn language_error(store: &mut Store<()>, runtime: Instance, export: &str, args: &[Val]) {
+        let error = runtime.get_func(&mut *store, export).unwrap().call(&mut *store, args, &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        let exception = store.take_pending_exception().unwrap();
+        assert!(wasmtime::Tag::eq(&exception.tag(&mut *store).unwrap(), &runtime.get_tag(&mut *store, "language-exception").unwrap(), &*store));
+    }
+    for malformed in [nil.clone(), empty.clone(), Val::null_any_ref()] {
+        let copied_detached = nominal_value(&mut store, foreign, "copy-callback", &[method.clone(), malformed.clone()]);
+        let copied_anchored = nominal_value(&mut store, foreign, "copy-callback", &[anchored.clone(), malformed]);
+        store.gc(None).unwrap();
+        language_error(&mut store, runtime, "invoke", &[copied_detached, empty.clone()]);
+        language_error(&mut store, runtime, "invoke", &[copied_anchored.clone(), empty.clone()]);
+        // The anchored body is deliberately stateless. Its environment is not
+        // interpreted, and valid physical receiver/index arguments still work.
+        let value = nominal_value(&mut store, runtime, "invoke", &[copied_anchored, pair.clone()]);
+        assert_eq!(value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 0).unwrap().unwrap_f64(), 57343.0);
+    }
+    // A malformed tagged payload must fail before dereference or callback.
+    array.set(&mut store, 0, nil.clone()).unwrap();
+    store.gc(None).unwrap();
+    language_error(&mut store, runtime, "object-method-invoke", &[method, text.clone(), empty.clone()]);
+    let recovered = nominal_value(&mut store, runtime, "string-char-code-at", &[text, nil]);
+    assert_eq!(recovered.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 0).unwrap().unwrap_f64(), 57343.0);
+}

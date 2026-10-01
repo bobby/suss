@@ -45,9 +45,12 @@ impl Analyzer {
         }
         let nil = self.literal_form(form, Literal::Nil);
         match operation {
-            ControlForm::Zero => {
+            ControlForm::Zero | ControlForm::Positive => {
                 if args.len() != 1 {
-                    return Err(fail(form.span.clone(), "zero? requires one operand"));
+                    return Err(fail(
+                        form.span.clone(),
+                        if operation == ControlForm::Zero { "zero? requires one operand" } else { "pos? requires one operand" },
+                    ));
                 }
                 let value = self.form(&args[0])?;
                 Ok(Hir {
@@ -55,7 +58,11 @@ impl Analyzer {
                     metadata: form.metadata.clone(),
                     ty: Type::Bool,
                     kind: Expression::Comparison {
-                        operation: Comparison::StrictEqual,
+                        operation: if operation == ControlForm::Zero {
+                            Comparison::StrictEqual
+                        } else {
+                            Comparison::Greater
+                        },
                         arguments: vec![value, self.literal_form(form, Literal::Number(0.0))],
                     },
                 })

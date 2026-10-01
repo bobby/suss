@@ -65,6 +65,7 @@ pub enum ControlForm {
     ThreadFirst,
     AsThread,
     Zero,
+    Positive,
 }
 impl ControlForm {
     fn from_name(name: &str) -> Option<Self> {
@@ -80,6 +81,7 @@ impl ControlForm {
             "->" => Self::ThreadFirst,
             "as->" => Self::AsThread,
             "zero?" => Self::Zero,
+            "pos?" => Self::Positive,
             _ => return None,
         })
     }
@@ -630,6 +632,7 @@ impl Environment {
                         | "->"
                         | "as->"
                         | "zero?"
+                        | "pos?"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -683,6 +686,7 @@ impl Environment {
                         | "->"
                         | "as->"
                         | "zero?"
+                        | "pos?"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -736,6 +740,7 @@ impl Environment {
                         | "->"
                         | "as->"
                         | "zero?"
+                        | "pos?"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -789,6 +794,7 @@ impl Environment {
                     | "->"
                     | "as->"
                     | "zero?"
+                    | "pos?"
                     | "int"
                     | "bit-and"
                     | "bit-or"
@@ -834,6 +840,7 @@ impl Environment {
                     | "->"
                     | "as->"
                     | "zero?"
+                    | "pos?"
                     | "int"
                     | "bit-and"
                     | "bit-or"
