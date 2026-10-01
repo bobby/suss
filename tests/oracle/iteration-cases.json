@@ -1,0 +1,478 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "iterator-type",
+      "source": "(instance? IndexedSeqIterator (-iterator (seq (array 1 2))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "iterator-has-next",
+      "source": "(.hasNext (-iterator (seq (array 1 2))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "iterator-empty",
+      "source": "(.hasNext (IndexedSeqIterator. (array) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "iterator-past-end",
+      "source": "(.hasNext (IndexedSeqIterator. (array 1) 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "iterator-exhaustion",
+      "source": "(let [it (-iterator (seq (array 1)))] (.next it) (.hasNext it))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "iterator-exhausted-next-nil",
+      "source": "(let [it (-iterator (seq (array 1)))] (.next it) (nil? (.next it)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "iterator-array-growth",
+      "source": "(let [a (array 1) it (-iterator (seq a))] (.next it) (aset a 1 9) (.hasNext it))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "iterator-utf16-first",
+      "source": "(identical? \"\\ud83d\" (.next (-iterator (seq \"😀\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "iterator-utf16-second",
+      "source": "(let [it (-iterator (seq \"😀\"))] (.next it) (identical? \"\\ude00\" (.next it)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "iterator-nil-value",
+      "source": "(nil? (.next (-iterator (seq (array nil)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "iterator-false-value",
+      "source": "(false? (.next (-iterator (seq (array false)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "iterator-separate-state",
+      "source": "(let [s (seq (array 1 2)) a (-iterator s) b (-iterator s)] (.next a) (identical? 1 (.next b)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "iterator-reduce-early",
+      "source": "(let [it (-iterator (seq (array 1 2 3)))] (.next it) (.hasNext it))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reversible-indexed",
+      "source": "(reversible? (seq (array 1 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reversible-list",
+      "source": "(reversible? (list 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "reversible-nil",
+      "source": "(reversible? nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "reversible-array",
+      "source": "(reversible? (array 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "rseq-type",
+      "source": "(instance? RSeq (rseq (seq (array 1 2))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-empty-indexed",
+      "source": "(nil? (rseq (IndexedSeq. (array) 0 nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-seq-identity",
+      "source": "(let [r (rseq (seq (array 1 2)))] (identical? r (seq r)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-not-reversible",
+      "source": "(reversible? (rseq (seq (array 1 2))))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "rseq-equality-list",
+      "source": "(= (rseq (seq (array 1 2 3))) (list 3 2 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-list-equality",
+      "source": "(= (list 3 2 1) (rseq (seq (array 1 2 3))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-rest-empty-single",
+      "source": "(identical? () (rest (rseq (seq (array 1)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-next-nil-single",
+      "source": "(nil? (next (rseq (seq (array 1)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-metadata-tail-nil",
+      "source": "(nil? (-meta (next (-with-meta (rseq (seq (array 1 2))) 17))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-empty-singleton",
+      "source": "(identical? () (-empty (-with-meta (rseq (seq (array 1 2))) 17)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-same-metadata-identity",
+      "source": "(let [r (rseq (seq (array 1 2)))] (identical? r (-with-meta r nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-clone-distinct",
+      "source": "(let [r (rseq (seq (array 1 2)))] (identical? r (-clone r)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "rseq-clone-equal",
+      "source": "(let [r (rseq (seq (array 1 2)))] (= r (-clone r)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-utf16-order",
+      "source": "(= (rseq (seq \"😀\")) (list \"\\ude00\" \"\\ud83d\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-nested-equality",
+      "source": "(= (rseq (seq (array (list 1 2) (list 3)))) (list (list 3) (list 1 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-cons-front",
+      "source": "(= (-conj (rseq (seq (array 1 2))) 9) (list 9 2 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "iterator-next",
+      "source": "(.next (-iterator (seq (array 1 2))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "iterator-offset",
+      "source": "(.next (-iterator (next (seq (array 99 1 2)))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "iterator-successive",
+      "source": "(let [it (-iterator (seq (array 1 2)))] (+ (* 10 (.next it)) (.next it)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "iterator-live-element",
+      "source": "(let [a (array 1 2) it (-iterator (seq a))] (aset a 0 9) (.next it))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "iterator-position-field",
+      "source": "(let [it (-iterator (seq (array 1 2)))] (.next it) (.-i it))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "iterator-direct-reduce",
+      "source": "(iter-reduce (seq (array 1 2 3)) +)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "iterator-direct-reduce-start",
+      "source": "(iter-reduce (seq (array 1 2 3)) + 17)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "rseq-first",
+      "source": "(first (rseq (seq (array 1 2 3))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "rseq-second",
+      "source": "(first (next (rseq (seq (array 1 2 3)))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "rseq-count",
+      "source": "(count (rseq (seq (array 1 2 3))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "rseq-offset-count",
+      "source": "(count (rseq (next (seq (array 99 1 2)))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "rseq-offset-first",
+      "source": "(first (rseq (next (seq (array 99 1 2)))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "rseq-meta",
+      "source": "(-meta (-with-meta (rseq (seq (array 1 2))) 17))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "rseq-reduce",
+      "source": "(reduce (fn [a b] (+ (* a 10) b)) (rseq (seq (array 1 2 3))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4074100000000000"
+      }
+    },
+    {
+      "id": "rseq-reduce-start",
+      "source": "(reduce (fn [a b] (+ (* a 10) b)) 9 (rseq (seq (array 1 2))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "408cc80000000000"
+      }
+    },
+    {
+      "id": "rseq-reduce-early",
+      "source": "(reduce (fn [a b] (reduced b)) 0 (rseq (seq (array 1 2 3))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "rseq-live-underlying",
+      "source": "(let [a (array 1 2) r (rseq (seq a))] (aset a 1 9) (first r))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "rseq-fixed-count-after-growth",
+      "source": "(let [a (array 1 2) r (rseq (seq a))] (aset a 2 9) (count r))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "iterator-recur-state",
+      "source": "(let [it (-iterator (seq (array 1 2 3)))] (loop [v 0] (if (.hasNext it) (recur (+ v (.next it))) v)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "iterator-excess-operand-effects",
+      "source": "(do (def iterator-trace 0) (let [it (-iterator (seq (array 1)))] (.next it) (.hasNext it (do (set! iterator-trace 17) 99))) iterator-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "iterator-exhaustion-advances-offset",
+      "source": "(let [it (IndexedSeqIterator. (array 1) 0)] (.next it) (.next it) (.-i it))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "iterator-string-offset",
+      "source": "(identical? \"\\ude00\" (.next (IndexedSeqIterator. \"😀\" 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-direct-reversible-dispatch",
+      "source": "(do (deftype IterationReverseProbe [] IReversible (-rseq [_] 17)) (rseq (IterationReverseProbe.)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "rseq-clone-shares-live-storage-and-meta",
+      "source": "(let [a (array 1 2) r (-with-meta (rseq (seq a)) 17) c (-clone r)] (aset a 1 9) (+ (* 10 (-meta c)) (first c)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4066600000000000"
+      }
+    },
+    {
+      "id": "rseq-rest-live-storage",
+      "source": "(let [a (array 1 2 3) r (rseq (seq a)) t (rest r)] (aset a 1 9) (first t))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "rseq-reduced-does-not-read-next-index",
+      "source": "(do (def iteration-index-trace 0) (deftype IterationIndexProbe [] IIndexed (-nth [_ i] (set! iteration-index-trace (+ (* 10 iteration-index-trace) (inc i))) (inc i)) (-nth [_ i not-found] (set! iteration-index-trace (+ (* 10 iteration-index-trace) (inc i))) (inc i))) (reduce (fn [a b] (reduced b)) 0 (RSeq. (IterationIndexProbe.) 2 nil)) iteration-index-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    }
+  ]
+}

@@ -7073,3 +7073,117 @@ All reviewer local handles51369/24238/63450/55771/70561/97105/40341 terminal.
 Reviewer releases heavy slot after committing/pushing this evidence and tests;
 root must verify successful exact reviewed-head CI before readiness. No merge,
 issue closure, milestone acceptance or broad portable compatibility claim.
+
+## Sequence iteration/reversal preparation — 2026-10-01
+
+Isolated branch portable/core-sequence-iteration from candidate1030d74c4e prepares
+complete pinned IndexedSeqIterator1644/RSeq1768 and reversible?3356/rseq3361.
+No source method removal, new runtime ABI/type/bootstrap-cell or fake dependency.
+Import86/artifacts90/reviews176partial+889unassessed and new53 candidates are
+UNVERIFIED preparation counts only. No native/fresh/full success claim yet.
+Root reads source and creates original fixtures while reviewer103 exclusively
+owns heavy slot. Must rebase onto final reviewed103 parent, validate and actually
+execute fresh pin/native, correct failures transparently, then full baseline and
+mandatory PR review/fixes/final-head CI before readiness. No merges/closures.
+No RUSTFLAGS; shared target/build2/test threads2. Hash/printing/index helpers,
+generic reverse, other persistent collections/lazy/chunked/transducers and full
+compiled macro/release acceptance remain unfinished.
+
+PR102 READY, still unmerged: revieweda9f19e8650c1c2079e2c5066ebde076f9ea284a8,
+exact-head CI36842775585 SUCCESS completed2026-10-01T09:42:17Z; root inspected
+/private/tmp/suss-pr102-final-ci.log, updated body and ran gh pr ready102.
+PR103 reviewere11771eb368a75b559a31a90a8737440a12a4a66 pushed, no significant
+production finding; fresh65reduction/81control, Python80/import86/setup4/
+reviews172+893/HIR1/full40341 terminal0. All reviewer handles terminal and slot
+released explicitly. Final-head CI36844766535 live; PR103 stays draft.
+
+Iteration preparationdf6dddf rebased onto reviewede11771eb; handoff append conflict
+resolved preserving both complete sections. Initial fresh47858 ended101: all53
+primary observations exact, native failed at named array .length write, an existing
+explicit unsupported named-property adapter. Source iterator/RSeq only read length;
+accepted contract has no general JS/Closure interoperability promise. Preserved
+that exact source/expected object in iteration-length-boundary.json, separately
+freshcertified and native required typed-error/storage/GC recovery. Other52 unchanged.
+No excluded core declaration, fake native match or skipped failure.
+
+Fresh8957 ended101:52shared+1boundary primary exact, native new provisional guard
+wrongly expected Object fixed-method extras to error. Prior pinned Object semantics
+ignore evaluated extras. Removed only that new error assertion, added a primary/
+native operand-effects case; final26590 ended0 with53shared matches,1separate
+primary boundary and2native tests. Log
+/private/tmp/suss-iteration-primary53-boundary1-final.log. Initial failed logs
+/private/tmp/suss-iteration-primary53.log and
+/private/tmp/suss-iteration-primary52-boundary1.log retained. Corpus test now prints
+case ID/source on eval errors and independently decodes each exactly-once result.
+New native saved iterator/reverse views survive GC, source errors leave underlying
+array intact, subsequent numeric growth/live reads and reverse fixed count execute.
+
+Python65494 terminal0,80 pass /private/tmp/suss-iteration-python.log;
+import90/setup4/reviews176partial+889unassessed/diff checks pass. Review rationale
+now records actual evidence; reproducible manifest regenerated. Full60603 live,
+/private/tmp/suss-iteration-full.log, root exclusively owns heavy slot. Shared
+Cargo target/build2, --locked/--test-threads=2, no RUSTFLAGS. Required terminal
+baseline before final commit/push/draft PR against103; mandatory independent
+review/fixes/full/exact final reviewed-head CI before readiness. No merge.
+Hash/printing/index helpers, generic reverse, other collections/lazy/chunked/
+transducers/compiled macros and M2–M9 acceptance remain incomplete.
+
+Full60603 terminal0; root inspected /private/tmp/suss-iteration-full.log through
+final reader doc tests. Required workspace baseline passes with iteration2,
+parent sequence6/137, reduction2/65, control3/81, HIR metadata1, closure14 and ABI41.
+Existing manual ignored and diagnostic9passing/7knownfailures remain explicit;
+no broad compatibility acceptance. All root handles47858/8957/26590/65494/60603
+terminal, two failures above preserved. Ready for final candidate commit/push/draft
+PR and independent reviewer with exclusive heavy-slot release. Exact final
+reviewed-head CI still gates readiness; no merge or issue/milestone closure.
+
+
+## Independent PR104 review — 2026-10-01
+
+Reviewed candidate1d4cbf0379510bd551ced43914d36ad2801edace against reviewed
+PR103 basee11771eb368a75b559a31a90a8737440a12a4a66 in isolated
+/private/tmp/suss-review-pr104 with actual detached pinned upstreamc4295f30.
+Read AGENTS/accepted design/ROADMAP/inventory/handoff. Inspected complete
+IndexedSeqIterator/RSeq methods, metadata/docstrings/arities of reversible?/rseq,
+hash-bound patches and EPL provenance. Mutable offsets, live storage/length,
+UTF-16, cloning/tails/metadata, public protocol/Object dispatch, source equality
+and Reduced stopping behavior align with the pin. No significant production
+defect found in this bounded port. Hash/printing/index helpers remain pending.
+
+Named .length writes are an explicitly unsupported host-property adapter, outside
+the general JS/Closure interoperability promise. Retained source only reads that
+property. The exact separate one-case boundary remains fresh certified false on
+the pin and requires native Language error/storage recovery. It is not a shared
+matching value, skip or reason to exclude a portable core definition. The retained
+global-array negative guard separately proves failed writes preserve owned storage.
+
+Independent original fresh61992 ended0:53 shared exact primary/native2 and the
+separate1 primary boundary. Six review probes preserve every original case and add
+exhausted offset advancement, UTF-16 starting offset, direct reversal dispatch,
+clone storage/metadata sharing, live reverse tails and Reduced stopping indexed
+reads. Fresh12322 ended0:59 shared exact primary/native2 plus unchanged1 boundary,
+/private/tmp/suss-pr104-review-oracle59.log. Original53 objects, exact boundary
+text and parent corpora verified unchanged. Python80 pass,
+/private/tmp/suss-pr104-review-python.log; import90/setup4/reviews176partial+889
+unassessed and diff-check pass. No failed provisional probes or retargeted results
+in this review. Commands use shared target/build2, no RUSTFLAGS: sh
+scripts/test-iteration-oracle.sh; python3 -m unittest discover -s scripts -p
+"test_*.py"; core_import.py --check; sequence_provenance.py; cljs_reviews.py.
+
+Required independent full30823 running, /private/tmp/suss-pr104-review-full.log.
+Reviewer owns heavy slot until all handles terminal and final full output
+inspected, then review tests/evidence commit/push. Root must require successful
+exact reviewed-head CI before readiness. No merge/issue or milestone closure.
+Next source hashing/printing/index helpers, generic reverse, other persistent
+types, compiled macros and M2–M9 release gates remain unfinished.
+
+Independent full30823 ended0; inspected /private/tmp/suss-pr104-review-full.log
+through final reader doc tests. Required command: CARGO_TARGET_DIR=/Users/bobby/
+code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2. All enabled required suites pass, including iteration2/59,
+parent sequence6/137, reduction2/65, control3/81, HIR if-let1, closure14 and ABI41.
+Existing manual ignored tests and explicit diagnostic9passing/7knownfailures
+remain unchanged. All reviewer handles61992/12322/30823 terminal; reviewer
+releases heavy slot after committing/pushing review tests and evidence. Root
+must verify successful exact reviewed-head CI before readiness. No merge or
+issue/milestone closure; M2–M9 acceptance remains incomplete.

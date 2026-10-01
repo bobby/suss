@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "4f06cf362f3dfc351a53042341d6317318348df7e541860191639e792aa90795",
-  "reviews-sha256": "59641158a397f89e31e7398be5f5acdcb9ce116eb7f97f53dd69c3d7f4e9ab85",
+  "recipe-sha256": "e519f6303b38730d3aa65149f1851e3b70e96d43fc09f0ee95c503bcd847ee09",
+  "reviews-sha256": "d2463dac3053936cd1a1e615b48bfbef66ce43d68ed9d9da4f2ad34d37a918de",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -2681,6 +2681,135 @@
         "tests/oracle/sequence-cases.json",
         "docs/runtime/sequence-reduction.md"
       ]
+    },
+    {
+      "id": "runtime:IndexedSeqIterator:1644",
+      "name": "IndexedSeqIterator",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1644,
+      "end-line": 1651,
+      "byte-start": 47302,
+      "byte-end": 47472,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b1552e35064f6a9a3b05998abe4180dab3afe2cc108c76f515088b977e516fba",
+      "extracted": "extracted/0082.cljs",
+      "extracted-sha256": "980baad1a75f2fdb2d014d7214e31a057638271953357474171158ad625fde7f",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "b1552e35064f6a9a3b05998abe4180dab3afe2cc108c76f515088b977e516fba",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:alength",
+        "runtime:aget",
+        "runtime:inc:1505",
+        "literal Object methods and mutable fields"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_iteration.rs",
+        "tests/oracle/iteration-cases.json",
+        "docs/runtime/sequence-iteration.md"
+      ]
+    },
+    {
+      "id": "runtime:RSeq:1768",
+      "name": "RSeq",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1768,
+      "end-line": 1829,
+      "byte-start": 49824,
+      "byte-end": 50969,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5cb704c40b45cd89d29a01eed8d8e48b13836f287e99c9ae0d653cd43250b846",
+      "extracted": "extracted/0083.cljs",
+      "extracted-sha256": "2ac4629734b75578d75da313a8048834caccc5e53ff7bb85098bd63ea47499c5",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "5cb704c40b45cd89d29a01eed8d8e48b13836f287e99c9ae0d653cd43250b846",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:equiv-sequential:3151",
+        "runtime:seq-reduce:2582",
+        "runtime:cons:3451",
+        "runtime:empty-ordered-hash:1417",
+        "runtime:hash-ordered-coll:1406",
+        "pending pr-str* -indexOf -lastIndexOf"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_iteration.rs",
+        "tests/oracle/iteration-cases.json",
+        "docs/runtime/sequence-iteration.md"
+      ]
+    },
+    {
+      "id": "runtime:reversible?:3356",
+      "name": "reversible?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3356,
+      "end-line": 3359,
+      "byte-start": 88711,
+      "byte-end": 88819,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "bbe7e7f08fc8553d57eb4501dc00a2d2387d7982c34d0eed90a333648148c3da",
+      "extracted": "extracted/0084.cljs",
+      "extracted-sha256": "a0f2d7fe3cfb3437421c87726364c41b316480ee72cf2a41c4467c96ccc467a7",
+      "patch": "docs/compatibility/patches/sequence-reversible-predicate.json",
+      "patch-sha256": "bf7fe1e7e5307fb858362e232064a8bca3178cb1451f48d008a2ba65459dcfd8",
+      "adapted-form-sha256": "a0ea9c85d7f334dcb74d6f6755ed65468434fe2d471e6e119a6013d5a9ee58a4",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IReversible:777",
+        "macro:satisfies?"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_iteration.rs",
+        "tests/oracle/iteration-cases.json",
+        "docs/runtime/sequence-iteration.md"
+      ]
+    },
+    {
+      "id": "runtime:rseq:3361",
+      "name": "rseq",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3361,
+      "end-line": 3365,
+      "byte-start": 88821,
+      "byte-end": 89003,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c7e4a71666b37740d55d183cbec08343d0946fa27f2b23c0c05606c4c7028174",
+      "extracted": "extracted/0085.cljs",
+      "extracted-sha256": "8a77080d8afec3cf2c3044c4bb9f2ddff61f1a8e11060c0c5c7bc70802489875",
+      "patch": "docs/compatibility/patches/sequence-rseq.json",
+      "patch-sha256": "9a646cc44bb667ced7011c940f19121f5d93db9b43fc4a39c3a0d5f5dfa8f488",
+      "adapted-form-sha256": "0774daa607634e2a3c7572e82b0f271ef6a8ea150ac3c1995efb67b1f5623b9c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IReversible:777"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_iteration.rs",
+        "tests/oracle/iteration-cases.json",
+        "docs/runtime/sequence-iteration.md"
+      ]
     }
   ],
   "loader": {
@@ -2778,6 +2907,10 @@
     "extracted/0079.cljs": "8e6a8d32857900e81a0c443a1dc8644994f7d005b11a52aff11831f880f8dd4f",
     "extracted/0080.cljs": "f4428e8a87eb52cac5b41c36451a899e55ae6b721d9a5bc9b4820441b43c4177",
     "extracted/0081.cljs": "61e39cf60ffc4a048286b746e9af1c75155d0353fd88c11f826d4fb34917cc0d",
-    "suss/core.sus": "f379fa7d7b321ce592a456f215534d8a3f315f4476a50e6fe2769f759db855e1"
+    "extracted/0082.cljs": "980baad1a75f2fdb2d014d7214e31a057638271953357474171158ad625fde7f",
+    "extracted/0083.cljs": "2ac4629734b75578d75da313a8048834caccc5e53ff7bb85098bd63ea47499c5",
+    "extracted/0084.cljs": "a0f2d7fe3cfb3437421c87726364c41b316480ee72cf2a41c4467c96ccc467a7",
+    "extracted/0085.cljs": "8a77080d8afec3cf2c3044c4bb9f2ddff61f1a8e11060c0c5c7bc70802489875",
+    "suss/core.sus": "6875ed41fa6f372128ad64a355cacb62f066aa9cc550a68a0e9139ec1e02f126"
   }
 }

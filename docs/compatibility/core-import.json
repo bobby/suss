@@ -413,6 +413,26 @@
       "id": "runtime:reduce:2628",
       "source-sha256": "e5609fab295ff28b74750fad37f4194462dbbcbe6ba24fb74d26fe8a1e5c4bf1",
       "patch": "docs/compatibility/patches/sequence-reduce.json"
+    },
+    {
+      "id": "runtime:IndexedSeqIterator:1644",
+      "source-sha256": "b1552e35064f6a9a3b05998abe4180dab3afe2cc108c76f515088b977e516fba",
+      "patch": null
+    },
+    {
+      "id": "runtime:RSeq:1768",
+      "source-sha256": "5cb704c40b45cd89d29a01eed8d8e48b13836f287e99c9ae0d653cd43250b846",
+      "patch": null
+    },
+    {
+      "id": "runtime:reversible?:3356",
+      "source-sha256": "bbe7e7f08fc8553d57eb4501dc00a2d2387d7982c34d0eed90a333648148c3da",
+      "patch": "docs/compatibility/patches/sequence-reversible-predicate.json"
+    },
+    {
+      "id": "runtime:rseq:3361",
+      "source-sha256": "c7e4a71666b37740d55d183cbec08343d0946fa27f2b23c0c05606c4c7028174",
+      "patch": "docs/compatibility/patches/sequence-rseq.json"
     }
   ],
   "loader": {

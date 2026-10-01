@@ -117,3 +117,9 @@ selects82 declarations and86 generated files with172 partial/893 unassessed
 reviews. Source seq/array/string/iterator reduction and Reduced termination have65
 fresh primary/native observations; bounded if-let extends control evidence to81.
 See [reduction scope and limitations](../runtime/sequence-reduction.md).
+
+Retained complete IndexedSeqIterator/RSeq and patched reversible?/rseq bring
+selection86/artifacts90/reviews176+889. Every upstream type method remains intact;
+actual iteration/reverse views/equality/reduction have53 fresh primary/native
+observations and1 separate named-length-write boundary with typed native rejection.
+See [iteration evidence and limits](../runtime/sequence-iteration.md).
