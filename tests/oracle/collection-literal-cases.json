@@ -1,0 +1,253 @@
+{
+  "schema": 2,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "empty-vector",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (identical? [] (.-EMPTY LiteralVector)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "empty-map",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (identical? {} (.-EMPTY LiteralMap)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "empty-set",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (identical? #{} (.-EMPTY LiteralSet)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "vector-1",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [v [0]] (and (= (.-cnt v) 1) (= (.-root v) 17) (= (aget (.-tail v) 0) 0))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "vector-31",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [v [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30]] (and (= (.-cnt v) 31) (= (.-root v) 17) (= (aget (.-tail v) 30) 30))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "vector-32",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [v [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31]] (and (= (.-cnt v) 32) (true? (.-root v)) (= (aget (.-tail v) 31) 31))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "vector-33",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [v [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32]] (and (= (.-cnt v) 33) (true? (.-root v)) (= (aget (.-tail v) 32) 32))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "vector-entries",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [effects (array 0) v [(do (aset effects 0 (+ (* (aget effects 0) 10) 1)) 17) (do (aset effects 0 (+ (* (aget effects 0) 10) 2)) 19)]] (and (= (aget effects 0) 12) (= (aget (.-tail v) 0) 17) (= (aget (.-tail v) 1) 19))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "constant-small-map",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [m {1 17 2 19}] (and (nil? (.-meta m)) (= (.-cnt m) 2) (= (aget (.-arr m) 3) 19))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "dynamic-small-map",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [k 1 m {k 17 2 19}] (and (= (.-meta m) 1) (= (.-cnt m) 2) (= (aget (.-arr m) 0) 1))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "small-map-order",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [e (array 0) m {(do (aset e 0 (+ (* (aget e 0) 10) 1)) 10) (do (aset e 0 (+ (* (aget e 0) 10) 2)) 11) (do (aset e 0 (+ (* (aget e 0) 10) 3)) 12) (do (aset e 0 (+ (* (aget e 0) 10) 4)) 13)}] (= (aget e 0) 1234)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "constant-set",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [s #{1 2}] (and (nil? (.-meta s)) (= (.-cnt (.-hash_map s)) 2) (nil? (aget (.-arr (.-hash_map s)) 1)) (= (aget (.-arr (.-hash_map s)) 2) 2))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "dynamic-set",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [x 1 s #{x 2}] (and (= (.-meta s) 1) (= (aget (.-hash_map s) 0) 1) (= (aget (.-hash_map s) 1) 2))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "set-entry-order",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [e (array 0) s #{(do (aset e 0 (+ (* (aget e 0) 10) 1)) 17) (do (aset e 0 (+ (* (aget e 0) 10) 2)) 19)}] (= (aget e 0) 12)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": false
+      },
+      "variance": "2026-10-01: Suss preserves textual set entry order; the pinned reader reorders these forms."
+    },
+    {
+      "id": "map-8",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [m {0 10 1 11 2 12 3 13 4 14 5 15 6 16 7 17}] (and (= (.-cnt m) 8) (= (aget (.-arr m) 15) 17))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "map-9",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [m {0 10 1 11 2 12 3 13 4 14 5 15 6 16 7 17 8 18}] (and (= (alength (.-keys m)) 9) (= (aget (.-keys m) 8) 8) (= (aget (.-vals m) 8) 18))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": null
+    },
+    {
+      "id": "large-map-keys-before-values",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [e (array 0) m {(do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 0 0))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 1 1))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 2 2))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 3 3))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 4 4))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 5 5))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 6 6))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 7 7))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 8 8))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0))}] (and (= (aget e 0) 18) (= (aget (.-keys m) 8) 9) (= (aget (.-vals m) 0) 10))))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      },
+      "reference": {
+        "tag": "bool",
+        "value": true
+      },
+      "variance": "2026-10-01: Suss interleaves map keys and values in textual order; the pinned large-map emitter evaluates all keys first."
+    },
+    {
+      "id": "large-map-textual-order",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [e (array 0) m {(do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 0 0))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 1 1))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 2 2))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 3 3))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 4 4))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 5 5))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 6 6))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 7 7))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0)) (do (aset e 0 (+ (aget e 0) 1)) (+ (aget e 0) (- 8 8))) (do (aset e 0 (+ (aget e 0) 1)) (aget e 0))}] (+ (* (aget (.-keys m) 8) 100) (aget (.-vals m) 0))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "409a980000000000"
+      },
+      "reference": {
+        "tag": "f64",
+        "bits": "408c700000000000"
+      },
+      "variance": "2026-10-01: Suss interleaves map keys and values in textual order; the pinned large-map emitter evaluates all keys first."
+    },
+    {
+      "id": "set-textual-order",
+      "source": "(with-redefs [suss.core/PersistentVector LiteralVector suss.core/PersistentArrayMap LiteralMap suss.core/PersistentHashMap LiteralHashMap suss.core/PersistentHashSet LiteralSet] (let [e (array 0) s #{(do (aset e 0 (+ (* (aget e 0) 10) 1)) 17) (do (aset e 0 (+ (* (aget e 0) 10) 2)) 19)}] (aget e 0)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      },
+      "reference": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      },
+      "variance": "2026-10-01: Suss preserves textual set entry order; the pinned reader reorders these forms."
+    }
+  ]
+}

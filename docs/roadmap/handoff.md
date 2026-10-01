@@ -8167,3 +8167,49 @@ no command, suite, concurrency or lock changes. Prior full69149 evidence applies
 unchanged inputs; no new heavy baseline claimed for static ancestry/docs change.
 All reviewer heavy handles terminal, exclusive heavy slot released to root.
 Exact reviewed-head CI remains pending; no readiness/merge/milestone closure.
+
+
+## M2 collection literal order decision and lowering — 2026-10-01
+
+Active scope remains finishM2; validated M4 traversal work stays local on
+portable/core-vector-traversal at64bef0c, with no PR opened for it. Existing
+PR95/108/110/111/112/113 exact reviewed-head CI succeeded and drafts were made
+ready; none merged by the agent. New work is on portable/m2-collection-literals
+from independently reviewed113head5b2164e1, with real pinned upstream checkout.
+
+User explicitly accepted textual order for unordered literals. The dated design
+decision now specifies map key/value interleaving at every size and textual set
+entry order, preserving exact pinned differences rather than calling them passes.
+Original17 probe sources retained;2 additive raw-order probes bring19 observations
+to15 shared values and4 exact deliberate variances,0 skips. Constructor-interface
+fixtures are original development-only types, not persistent collection acceptance.
+No upstream collection algorithm or inventory item is claimed implemented.
+
+Initial native vector literal failed at HIR lowering after correcting probe-only
+EMPTY_NODE/core setup errors. Initial fresh reference duplicate-key setup failure
+and subsequent exact set-order mismatch are preserved in
+/private/tmp/suss-m2-collection-literal-oracle.log and
+/private/tmp/suss-m2-collection-literal-oracle17.log. After the user decision,
+35897 authoritative terminal101 proves old keys-first native lowering failed
+textual-order expectations, /private/tmp/suss-m2-literals-textual-order-before.log.
+Ordered HIR bindings now normalize each large-map key then value before splitting
+storage arrays; factories capture owner/method before entries.
+
+22314 terminal0: shared-target/build2 sh scripts/test-collection-literal-oracle.sh
+fresh pinned19 exact reference observations and all19 independently decoded Suss
+values across4 native tests, /private/tmp/suss-m2-literals-order-oracle19.log.
+52552 terminal0: focused portable_collection_literals native5 adds typed language
+throws stopping later map/set entries and factory invocation, with GC recovery,
+/private/tmp/suss-m2-literals-native5.log. Python86/inventory1065/import115/
+reviews206+859/diff checks pass. Reader and namespace audits39472 terminal0:
+/private/tmp/suss-m2-reader-audit.log and /private/tmp/suss-m2-namespace-audit.log.
+
+Required full shared-target/build2 workspace --locked -- --test-threads=2 baseline
+28575 LIVE, /private/tmp/suss-m2-literals-full.log. No RUSTFLAGS. Root owns exclusive
+heavy slot until authoritative terminal result. Independent review and exact-head
+CI remain required; no readiness, merge, issue or milestone completion claim.
+Refs#9 only partial progress. Remaining literal boundaries: keyword/symbol/quote,
+runtime metadata, reader duplicate forms and real persistent collection classes.
+Next unblocked M2 task: audit each #8/#9/#11 acceptance criterion against actual
+source and executed artifacts, keeping M3 macro/production and M4 collections
+requirements distinct; close no issue until all of its criteria have evidence.

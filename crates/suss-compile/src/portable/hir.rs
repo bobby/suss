@@ -1,5 +1,6 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
+mod collections;
 mod bitwise;
 mod comparisons;
 mod controls;
@@ -519,6 +520,9 @@ impl Analyzer {
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
             Kind::String(value) => Expression::Literal(Literal::String(value.clone())),
+            Kind::Vector(items) => return self.vector_literal(form, items),
+            Kind::Map(items) => return self.map_literal(form, items),
+            Kind::Set(items) => return self.set_literal(form, items),
             Kind::List(items) if items.is_empty() => {
                 // The pinned emitter reads List.EMPTY for each empty-list literal.
                 // Resolve the canonical core binding, never a lexical/user List.
