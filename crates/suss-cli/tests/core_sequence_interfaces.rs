@@ -128,7 +128,7 @@ fn imported_interfaces_match_independently_encoded_primary_adapter_observations(
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 60);
+    assert_eq!(cases.len(), 65);
     let mut session = Session::new().unwrap();
     session.eval(CORE).unwrap();
     session.enter_namespace("user").unwrap();
@@ -237,5 +237,57 @@ fn imported_operation_methods_survive_reload_gc_and_invalid_arity_recovery() {
             "(saved-reduce reload-operation (fn [a b] (+ a b)))"
         ),
         14.0f64.to_bits()
+    );
+}
+
+#[test]
+fn malformed_operation_declarations_and_extensions_preserve_loaded_core() {
+    let mut session = Session::new().unwrap();
+    session.eval(CORE).unwrap();
+    session.enter_namespace("user").unwrap();
+    session.eval("(deftype ReviewStable [value] cljs.core/IReduce (-reduce [this f] (f value 2)) (-reduce [this f start] (f start value)) cljs.core/IStack (-peek [this] value) (-pop [this] this)) (def review-stable (ReviewStable. 9)) (def review-saved-reduce cljs.core/-reduce)").unwrap();
+    for source in [
+        "(defprotocol ReviewBad (bad-reduce [this f] [this start]))",
+        "(defprotocol ReviewBad (bad-reduce []))",
+        "(defprotocol ReviewBad (bad-reduce [this & xs]))",
+        "(extend-type ReviewStable cljs.core/IReduce (-reduce [this f start extra] 99))",
+    ] {
+        assert!(
+            matches!(session.eval(source), Err(SessionError::Compile(_))),
+            "{source}"
+        );
+        session.collect().unwrap();
+        assert_eq!(
+            eval_number(
+                &mut session,
+                "(review-saved-reduce review-stable (fn [a b] (+ a b)))"
+            ),
+            11.0f64.to_bits()
+        );
+        assert_eq!(
+            eval_number(
+                &mut session,
+                "(review-saved-reduce review-stable (fn [a b] (+ a b)) 40)"
+            ),
+            49.0f64.to_bits()
+        );
+        assert_eq!(
+            eval_number(&mut session, "(cljs.core/-peek review-stable)"),
+            9.0f64.to_bits()
+        );
+    }
+    assert!(matches!(
+        session.eval("ReviewBad"),
+        Err(SessionError::Compile(_))
+    ));
+    assert!(matches!(
+        session.eval("bad-reduce"),
+        Err(SessionError::Compile(_))
+    ));
+    session.eval("(defprotocol ReviewBad (bad-reduce [this])) (extend-type ReviewStable ReviewBad (bad-reduce [this] 19))").unwrap();
+    session.collect().unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(bad-reduce review-stable)"),
+        19.0f64.to_bits()
     );
 }

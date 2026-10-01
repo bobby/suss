@@ -93,8 +93,8 @@ to these declarations; marker interfaces have no methods. The compiler's existin
 bounded defprotocol adapter executes them; this does not establish compiled
 upstream defprotocol macro or full protocol reflection compatibility.
 
-`scripts/test-core-interface-oracle.sh` executes 60 separate pinned observations
-against an original development fixture, then all four native interface tests. The
+`scripts/test-core-interface-oracle.sh` executes 65 separate pinned observations
+against an original development fixture, then all five native interface tests. The
 fixture implements all twenty imported protocols across original nominal adapters and checks
 direct markers, method calls, both -nth arities, identity, and scalar results.
 Native execution loads the generated core artifact and forces GC between calls.

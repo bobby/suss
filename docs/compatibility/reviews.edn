@@ -757,7 +757,7 @@
    :arities nil
    :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
    :classification :portable
-   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with ordered effects, extension, captured methods, source reload and GC. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
+   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with 65 exact shared scalar observations, ordered effects, live extension during argument evaluation, callee capture, source reload, GC and malformed-declaration recovery. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
    :status :in-progress
    :adaptation-path nil
    :alternative nil
@@ -767,7 +767,7 @@
    :arities nil
    :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
    :classification :portable
-   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with ordered effects, extension, captured methods, source reload and GC. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
+   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with 65 exact shared scalar observations, ordered effects, live extension during argument evaluation, callee capture, source reload, GC and malformed-declaration recovery. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
    :status :in-progress
    :adaptation-path nil
    :alternative nil
@@ -777,7 +777,7 @@
    :arities nil
    :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
    :classification :portable
-   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with ordered effects, extension, captured methods, source reload and GC. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
+   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with 65 exact shared scalar observations, ordered effects, live extension during argument evaluation, callee capture, source reload, GC and malformed-declaration recovery. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
    :status :in-progress
    :adaptation-path nil
    :alternative nil
@@ -787,7 +787,7 @@
    :arities nil
    :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
    :classification :portable
-   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with ordered effects, extension, captured methods, source reload and GC. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
+   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with 65 exact shared scalar observations, ordered effects, live extension during argument evaluation, callee capture, source reload, GC and malformed-declaration recovery. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
    :status :in-progress
    :adaptation-path nil
    :alternative nil
@@ -797,7 +797,7 @@
    :arities nil
    :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
    :classification :portable
-   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with ordered effects, extension, captured methods, source reload and GC. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
+   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with 65 exact shared scalar observations, ordered effects, live extension during argument evaluation, callee capture, source reload, GC and malformed-declaration recovery. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
    :status :in-progress
    :adaptation-path nil
    :alternative nil

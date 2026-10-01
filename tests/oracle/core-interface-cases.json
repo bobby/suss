@@ -481,6 +481,46 @@
         "tag": "bool",
         "value": false
       }
+    },
+    {
+      "id": "review-reduce-false-initial",
+      "source": "(cljs.core/-reduce operation-probe (fn [a b] (if (identical? a false) b 0)) false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "review-reduce-callee-capture",
+      "source": "(do (def review-reduce retained-reduce) (review-reduce operation-probe (do (set! review-reduce (fn [a b c] 999)) (fn [a b] (+ a b))) 30))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "review-reduce-live-extension-during-argument",
+      "source": "(do (deftype ReviewReduce [value] cljs.core/IReduce (-reduce [this f] (f value 2)) (-reduce [this f start] (f start value))) (def review-object (ReviewReduce. 7)) (def review-dispatch cljs.core/-reduce) (review-dispatch review-object (do (extend-type ReviewReduce cljs.core/IReduce (-reduce ([this f] (f 80 2)) ([this f start] (f start 90)))) (fn [a b] (+ a b))) 10))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4059000000000000"
+      }
+    },
+    {
+      "id": "review-reduce-throw-finally-order",
+      "source": "(do (aset operation-effects 0 0) (try (cljs.core/-reduce (operation-mark 1 operation-probe) (operation-mark 2 (fn [a b] (throw (operation-mark 4 b)))) (operation-mark 3 8)) (catch :default e (operation-mark 5 e)) (finally (operation-mark 6 nil))) (aget operation-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "40fe240000000000"
+      }
+    },
+    {
+      "id": "review-drop-nil-result",
+      "source": "(do (deftype ReviewDrop [] cljs.core/IDrop (-drop [this n] nil)) (nil? (cljs.core/-drop (ReviewDrop.) 20)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
     }
   ]
 }

@@ -5138,3 +5138,42 @@ baseline, independent review and exact final-head CI before readiness.
 Root validation is complete for this slice; next gate is independent review,
 pushed significant fixes if needed and exact final-head CI. Keep full M2–M9 goal
 active; no issue or milestone acceptance is complete from these declarations.
+
+## Independent PR89 review — 2026-09-30
+
+Reviewed candidatebb4db62 against PR88 baseb037290 in isolated
+/private/tmp/suss-review-pr89. No significant production defect found within the
+partial declaration scope. Independently verified all20 protocol forms are whole,
+byte-exact pinned source ranges in source order, with patch:null and EPL notices.
+All21 parent manifest entries retain source/form/patch/notice/review/dependency
+fields except shifted extracted filenames. No compiler/runtime production change.
+
+Added five shared scalar probes: false initial reduction state, callee capture
+before argument rebinding, live extension during argument evaluation, ordered
+throw/catch/finally effects and nil-returning drop dispatch. The original60
+observations remain unchanged; current65 are independently decoded, with forced
+GC between native cases. Focus57012 completed terminal0, four native tests. Fresh
+reference/native86823 completed terminal0:65 exact primary matches/native4;
+/private/tmp/suss-pr89-review-primary.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-core-interface-oracle.sh`.
+
+A fifth native test rejects malformed duplicate/empty/variadic signatures and an
+undeclared extension arity, verifies compile atomicity and retained loaded methods
+after GC, then valid declaration recovery. Guarded43137 completed terminal0:
+core_import17/interfaces5/forward declarations2;
+/private/tmp/suss-pr89-review-guarded.log. Python71/inventory1065/80 partial reviews
+and985 unassessed/30 source artifacts/WIT15 files6 packages/numeric/offline10
+milestones39 issues pass. Five review rationales and current corpus counts align;
+regeneration changes only the manifest review hash. Required full reviewer graph17462 completed terminal0, all enabled tests and
+doc-tests passing; /private/tmp/suss-pr89-review-baseline.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Existing diagnostic differential9 pass/7 fail and legacy/manual ignores remain
+explicit. All local reviewer Cargo/JVM/Node graphs are terminal; shared target
+slot released to root.
+
+These original nominal adapters do not establish actual persistent collections,
+reduction traversal, reduced-value stopping or iterator implementations. Source
+EmptyList/List/Cons/IndexedSeq, canonical empty-list/static-property storage,
+hashing/reduction and persistent rest/apply remain unfinished. No RUSTFLAGS
+override, unrelated deletion, issue closure or merge. Require final reviewed-head
+CI after significant findings/fixes before readiness.

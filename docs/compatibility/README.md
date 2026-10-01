@@ -272,8 +272,8 @@ unfinished; see [forward declarations](../runtime/forward-declarations.md).
 Five additional retained protocols (IStack/IReduce/IReversible/IIterable/IDrop)
 bring the current overlay to80 partial reviews/985 unassessed. The canonical
 artifact selects26 forms and retains30 generated licensed files. The interface
-corpus has60 exact primary/native observations, preserving its original35;
-four native tests cover all20 imported protocols, both reduction signatures,
+corpus has65 exact primary/native observations, preserving its original35;
+five native tests cover all20 imported protocols, both reduction signatures,
 ordered effects, extensions, aliases and captured dispatch after reload/GC.
 Actual persistent list/sequence, reduction and iterator implementations remain
 unfinished; see [core interfaces](../runtime/core-interfaces.md).
