@@ -5553,3 +5553,18 @@ nine passing/seven exact failing observations remain explicit. Log
 `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
 All review Cargo/JVM/Node graphs are terminal. Shared test slot is released;
 root must require exact final reviewed-head CI before readiness. No merge/closure.
+
+
+## Retained caching-hash preparation — 2026-10-01
+
+Separate portable/core-caching-hash worktree starts on Object candidate2f1ceb4.
+Original bounded HIR expansion follows pinned core.cljc1284, preserving one cache
+read, nil/undefined test, hit suppression and ordered miss/assignment. Twenty-four
+provisional shared scalar probes and compile-atomic negative guards are prepared.
+They have NOT run against JVM/Node or native Wasm yet; no compatibility success,
+review count, source selection or issue status is changed. The shared test slot
+belongs to independent PR93 reviewer; root has run only pure generation/diff checks.
+Next rebase onto reviewed PR93, acquire the released test slot, certify fresh
+primary expectations and execute the native regressions, then align provenance
+and dispatch independent review/final CI if a PR is opened. List/Cons hashing and
+complete collections/M2–M9 remain open. See docs/runtime/caching-hash.md.

@@ -45,9 +45,110 @@ impl Analyzer {
         }
         let nil = self.literal_form(form, Literal::Nil);
         match operation {
+            ControlForm::CachingHash => {
+                if args.len() != 3 || !matches!(args[2].kind, Kind::Symbol(_)) {
+                    return Err(fail(
+                        form.span.clone(),
+                        "caching-hash requires collection, hash function and a symbol cache key",
+                    ));
+                }
+                // Pinned core.cljc1284 caches the first key read and tests nil,
+                // including internal undefined. The hit branch evaluates neither
+                // hash function nor collection syntax; false and zero are hits.
+                let cached = self.form(&args[2])?;
+                let cached_binding = self.fresh_binding(&args[2], cached);
+                let cached = self.local(&args[2], cached_binding.id);
+                let test = Hir {
+                    span: args[2].span.clone(),
+                    metadata: Vec::new(),
+                    ty: Type::Bool,
+                    kind: Expression::NilTest(Box::new(cached.clone())),
+                };
+                let callee = self.form(&args[1])?;
+                let collection = self.form(&args[0])?;
+                let hash = Hir {
+                    span: form.span.clone(),
+                    metadata: Vec::new(),
+                    ty: Type::Value,
+                    kind: Expression::Call {
+                        callee: Box::new(callee),
+                        arguments: vec![collection],
+                    },
+                };
+                let hash_binding = self.fresh_binding(form, hash);
+                let hash = self.local(form, hash_binding.id);
+                let Kind::Symbol(key) = &args[2].kind else {
+                    unreachable!()
+                };
+                let assignment = if key.namespace.is_none()
+                    && !self.locals.contains_key(&key.name)
+                    && self.fields.contains_key(&key.name)
+                {
+                    let (field, mutable) = self.fields[&key.name].clone();
+                    if !mutable {
+                        return Err(fail(
+                            args[2].span.clone(),
+                            "Cannot assign a local or immutable field",
+                        ));
+                    }
+                    let Expression::Nominal {
+                        operation,
+                        mut arguments,
+                    } = field.kind
+                    else {
+                        unreachable!()
+                    };
+                    arguments.push(hash.clone());
+                    let setter = match operation {
+                        Nominal::Field(index) => Nominal::FieldSet(index),
+                        Nominal::NamedGet => Nominal::NamedSet,
+                        _ => unreachable!(),
+                    };
+                    self.nominal(form, setter, arguments)
+                } else {
+                    let global = self.assignment_target(&args[2])?;
+                    Hir {
+                        span: form.span.clone(),
+                        metadata: Vec::new(),
+                        ty: Type::Value,
+                        kind: Expression::Assign {
+                            global,
+                            value: Box::new(hash.clone()),
+                        },
+                    }
+                };
+                let miss_body = Hir {
+                    span: form.span.clone(),
+                    metadata: Vec::new(),
+                    ty: Type::Value,
+                    kind: Expression::Do(vec![assignment, hash]),
+                };
+                let miss = Hir {
+                    span: form.span.clone(),
+                    metadata: Vec::new(),
+                    ty: Type::Value,
+                    kind: Expression::Let {
+                        bindings: vec![hash_binding],
+                        body: Box::new(miss_body),
+                    },
+                };
+                let body = self.control_if(form, test, miss, cached);
+                Ok(Hir {
+                    span: form.span.clone(),
+                    metadata: form.metadata.clone(),
+                    ty: body.ty,
+                    kind: Expression::Let {
+                        bindings: vec![cached_binding],
+                        body: Box::new(body),
+                    },
+                })
+            }
             ControlForm::Declare => {
                 if !statement {
-                    return Err(fail(form.span.clone(), "Declaration expression results are not certified yet; use a declaration statement"));
+                    return Err(fail(
+                        form.span.clone(),
+                        "Declaration expression results are not certified yet; use a declaration statement",
+                    ));
                 }
                 let mut definitions = Vec::new();
                 for name in args {
