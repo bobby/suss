@@ -257,13 +257,11 @@ fn source_definitions_rebind_live_globals_without_changing_old_captures() {
     assert_eq!(session.bits(&value), 7.0f64.to_bits());
     let old_code = session.compile("(function)", Phase::Runtime).unwrap();
     let old_function = session.eval("(def original function)");
-    assert!(
-        old_function
-            .unwrap_anyref()
-            .unwrap()
-            .is_struct(&session.store)
-            .unwrap()
-    );
+    assert!(old_function
+        .unwrap_anyref()
+        .unwrap()
+        .is_struct(&session.store)
+        .unwrap());
     session.eval("(def value 9) (def function (fn [] 11))");
     for (source, expected) in [
         ("(function)", 11.0f64),
@@ -288,9 +286,12 @@ fn source_defonce_checks_bound_state_and_skips_initializer_effects() {
         assert_eq!(session.sentinel(&value), 0);
         let value = session.eval(name);
         assert_eq!(session.sentinel(&value), sentinel);
-        let fragment = session.compile("forbidden", Phase::Runtime).unwrap();
-        session.catch(fragment, 2, "Unbound binding");
+        let value = session.eval("forbidden");
+        assert_eq!(session.sentinel(&value), 6);
+        // Reading undefined must not mark the cell initialized.
     }
+    let value = session.eval("(defonce forbidden 17) forbidden");
+    assert_eq!(session.bits(&value), 17.0f64.to_bits());
     let value = session.eval("(def declaration) (defonce declaration 5) declaration");
     assert_eq!(session.bits(&value), 5.0f64.to_bits());
     let value = session.eval("(defonce declaration 8)");
@@ -600,4 +601,56 @@ fn source_require_reload_metadata_is_explicitly_unsupported() {
     let mut session = Session::new();
     let value = session.eval("(ns app (:require ^:retained [cljs.core :as core])) (core/+ 1 2)");
     assert_eq!(session.bits(&value), 3.0f64.to_bits());
+}
+
+#[test]
+fn reviewed_declaration_preserves_source_metadata_and_phase_identity() {
+    use suss_reader::forms::Kind;
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let environment = Environment::new("review.declaration").unwrap();
+        let source = "(declare ^:retained first second first)";
+        let hir = portable::analyze_in(source, &environment, phase).unwrap();
+        let portable::hir::Expression::Do(body) = hir.kind else {
+            panic!()
+        };
+        let portable::hir::Expression::Do(definitions) = &body[0].kind else {
+            panic!()
+        };
+        assert_eq!(definitions.len(), 3);
+        for (index, expected_name) in ["first", "second", "first"].into_iter().enumerate() {
+            let portable::hir::Expression::Definition {
+                global,
+                name_metadata,
+                name_span,
+                initializer,
+                ..
+            } = &definitions[index].kind
+            else {
+                panic!()
+            };
+            assert_eq!(global.phase(), phase);
+            assert_eq!(global.namespace(), "review.declaration");
+            assert_eq!(global.name(), expected_name);
+            assert!(initializer.is_none());
+            assert!(source[name_span.clone()].ends_with(expected_name));
+            assert_eq!(name_metadata.len(), if index == 0 { 2 } else { 1 });
+            if index == 0 {
+                assert!(
+                    matches!(&name_metadata[0].kind, Kind::Keyword(key) if key.name == "retained")
+                );
+            }
+            let Kind::Map(entries) = &name_metadata.last().unwrap().kind else {
+                panic!()
+            };
+            assert_eq!(entries.len(), 2);
+            assert!(
+                matches!(&entries[0].kind, Kind::Keyword(key) if key.name == "declared" && key.namespace.is_none())
+            );
+            assert!(matches!(entries[1].kind, Kind::Bool(true)));
+        }
+        // Analysis uses a snapshot even on successful declaration expansion.
+        assert!(environment
+            .resolve(phase, &suss_reader::Symbol::new("first"), 0..1)
+            .is_err());
+    }
 }

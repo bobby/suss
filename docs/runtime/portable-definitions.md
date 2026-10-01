@@ -30,7 +30,11 @@ GlobalWrite publishes its value. The write returns that same value through the
 universal Value boundary. A failed initializer preserves the old cell value;
 arbitrary preceding effects, including other completed definitions, are not
 rolled back. An initializerless declaration preserves an existing binding and
-leaves a new cell unbound; a top-level declaration fragment returns nil.
+leaves a new cell uninitialized; a top-level declaration fragment returns nil.
+Source reads of such a known variable now return internal undefined, as freshly
+verified against the pin, without changing its initialization state. Defonce can
+still initialize it later. Internal ABI binding-get retains its unbound error;
+see [source forward declarations](forward-declarations.md).
 Initializerless def in expression context is a located unsupported-feature error:
 the pinned compiler produced invalid JavaScript when such a declaration was
 supplied directly as a println argument. Statement context propagates through

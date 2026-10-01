@@ -336,12 +336,10 @@ fn namespace_cell_imports_reject_missing_or_incompatible_objects_before_eval() {
     let hir = portable::analyze_in("value", &env, Phase::Runtime).unwrap();
     let mut ir = portable::ir::lower(&hir).unwrap();
     ir.values[0].ty = portable::hir::Type::Number;
-    assert!(
-        portable::compile_ir(&ir)
-            .unwrap_err()
-            .message
-            .contains("dynamic Value")
-    );
+    assert!(portable::compile_ir(&ir)
+        .unwrap_err()
+        .message
+        .contains("dynamic Value"));
     // Mutable bindings carry no stale scalar facts into unchecked arithmetic.
     let fragment = portable::compile_in("(+ value 1)", &env, Phase::Runtime).unwrap();
     let mut arithmetic_imports = Vec::new();
@@ -430,12 +428,58 @@ fn namespace_sources_reject_extension_and_root_ambiguity() {
             .contains("Ambiguous source")
     );
     assert!(locate_source("../escape", &[first.path()], 0..1).is_err());
-    assert!(
-        locate_source("app.missing", &[first.path()], 0..1)
-            .unwrap_err()
-            .message
-            .contains("No source")
+    assert!(locate_source("app.missing", &[first.path()], 0..1)
+        .unwrap_err()
+        .message
+        .contains("No source"));
+}
+
+// Read the runtime cell directly so source undefined semantics cannot hide ABI errors.
+fn direct_binding_read(id: &Identity) -> Vec<u8> {
+    use wasm_encoder::*;
+    let mut types = runtime_abi::prelude();
+    types.ty().function(
+        [wasm_encoder::ValType::Ref(wasm_encoder::RefType::EQREF)],
+        [wasm_encoder::ValType::Ref(wasm_encoder::RefType::EQREF)],
     );
+    types.ty().function(
+        [],
+        [wasm_encoder::ValType::Ref(wasm_encoder::RefType::EQREF)],
+    );
+    let mut imports = ImportSection::new();
+    imports.import("suss.runtime", "binding-get", EntityType::Function(10));
+    imports.import(
+        &id.import_module(),
+        &id.import_name(),
+        EntityType::Global(GlobalType {
+            val_type: wasm_encoder::ValType::Ref(wasm_encoder::RefType {
+                nullable: false,
+                heap_type: wasm_encoder::HeapType::Concrete(5),
+            }),
+            mutable: false,
+            shared: false,
+        }),
+    );
+    let mut functions = FunctionSection::new();
+    functions.function(11);
+    let mut exports = ExportSection::new();
+    exports.export("eval", ExportKind::Func, 1);
+    let mut function = Function::new([]);
+    function
+        .instruction(&Instruction::GlobalGet(0))
+        .instruction(&Instruction::Call(0))
+        .instruction(&Instruction::End);
+    let mut code = CodeSection::new();
+    code.function(&function);
+    let mut module = wasm_encoder::Module::new();
+    module
+        .section(&runtime_abi::Manifest::default().section())
+        .section(&types)
+        .section(&imports)
+        .section(&functions)
+        .section(&exports)
+        .section(&code);
+    module.finish()
 }
 
 fn catch_eval() -> Vec<u8> {
@@ -483,7 +527,7 @@ fn catch_eval() -> Vec<u8> {
     module.finish()
 }
 #[test]
-fn namespace_unbound_cells_raise_language_errors_and_nil_is_a_binding() {
+fn namespace_uninitialized_reads_are_undefined_and_internal_cells_still_raise() {
     let engine = support::engine();
     let mut store = Store::new(&engine, ());
     let runtime = runtime(&mut store);
@@ -514,7 +558,29 @@ fn namespace_unbound_cells_raise_language_errors_and_nil_is_a_binding() {
         &linker,
         portable::compile_in("not-yet-defined", &env, Phase::Runtime).unwrap(),
     );
-    linker.instance(&mut store, "fragment", instance).unwrap();
+    let undefined = eval(&mut store, instance);
+    assert_eq!(
+        undefined
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&store)
+            .unwrap()
+            .unwrap()
+            .get_i32(),
+        6
+    );
+    let fields = cell
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap()
+        .fields(&mut store)
+        .unwrap()
+        .collect::<Vec<_>>();
+    assert_eq!(fields[1].i32(), Some(0));
+    let internal = fragment(&mut store, &linker, direct_binding_read(&id));
+    linker.instance(&mut store, "fragment", internal).unwrap();
     let catcher = fragment(&mut store, &linker, catch_eval());
     let error = eval(&mut store, catcher);
     store.gc(None).unwrap();
@@ -592,10 +658,9 @@ fn namespace_scopes_persist_independently_when_reentered() {
         .unwrap();
     env.exclude_core(Phase::Runtime, "+").unwrap();
     env.enter_namespace(Phase::Runtime, "other").unwrap();
-    assert!(
-        env.resolve(Phase::Runtime, &Symbol::new("x"), 0..1)
-            .is_err()
-    );
+    assert!(env
+        .resolve(Phase::Runtime, &Symbol::new("x"), 0..1)
+        .is_err());
     assert!(portable::compile_in("(+ 1 2)", &env, Phase::Runtime).is_ok());
     env.enter_namespace(Phase::Runtime, "app").unwrap();
     assert_eq!(

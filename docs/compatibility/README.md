@@ -259,3 +259,11 @@ tail recur and shadowing. Six new partial reviews bring the overlay to74/991.
 No source form is copied, and the25-file source artifact only updates its review
 hash. Full compiled macros/core and persistent collections remain unfinished;
 see [control macros](../runtime/control-flow.md).
+
+
+Source forward declarations add one partial macro review (75 in progress/990
+unassessed). Seventeen freshly executed primary observations distinguish known
+uninitialized variables from unresolved names and preserve defonce/redefinition.
+No upstream source is copied; the25-file artifact only updates its review hash.
+Complete compiled macros, runtime Var metadata and source core loading remain
+unfinished; see [forward declarations](../runtime/forward-declarations.md).

@@ -45,6 +45,40 @@ impl Analyzer {
         }
         let nil = self.literal_form(form, Literal::Nil);
         match operation {
+            ControlForm::Declare => {
+                if !statement {
+                    return Err(fail(form.span.clone(), "Declaration expression results are not certified yet; use a declaration statement"));
+                }
+                let mut definitions = Vec::new();
+                for name in args {
+                    let Kind::Symbol(symbol) = &name.kind else {
+                        return Err(fail(name.span.clone(), "declare requires symbol names"));
+                    };
+                    if symbol.name == "&" {
+                        return Err(fail(
+                            name.span.clone(),
+                            "declare requires ordinary symbol names",
+                        ));
+                    }
+                    let mut declared = name.clone();
+                    let syntax = |kind| Form {
+                        span: name.span.clone(),
+                        metadata: Vec::new(),
+                        kind,
+                    };
+                    declared.metadata.push(syntax(Kind::Map(vec![
+                        syntax(Kind::Keyword(suss_reader::Keyword::new("declared"))),
+                        syntax(Kind::Bool(true)),
+                    ])));
+                    definitions.push(self.definition(form, &[declared], false)?);
+                }
+                Ok(Hir {
+                    span: form.span.clone(),
+                    metadata: form.metadata.clone(),
+                    ty: Type::Nil,
+                    kind: Expression::Do(definitions),
+                })
+            }
             ControlForm::When | ControlForm::WhenNot => {
                 if args.is_empty() {
                     return Err(fail(form.span.clone(), "when/when-not require a test"));

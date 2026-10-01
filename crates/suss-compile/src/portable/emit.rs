@@ -70,6 +70,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::GlobalRead(global) => {
                         globals.insert(global.clone());
+                        names.insert("binding-bound");
                         names.insert("binding-get");
                     }
                     Operation::GlobalBound(global) => {
@@ -512,7 +513,18 @@ fn emit_function(
                         globals.binary_search(global).expect("collected global") as u32;
                     function
                         .instruction(&GlobalGet(index_global))
+                        .instruction(&Call(index("binding-bound")))
+                        .instruction(&RefCastNonNull(HeapType::I31))
+                        .instruction(&I31GetU)
+                        .instruction(&I32Const(4))
+                        .instruction(&I32Eq)
+                        .instruction(&If(BlockType::Result(VALUE)))
+                        .instruction(&GlobalGet(index_global))
                         .instruction(&Call(index("binding-get")))
+                        .instruction(&Else)
+                        .instruction(&I32Const(runtime_abi::UNDEFINED))
+                        .instruction(&RefI31)
+                        .instruction(&End)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::GlobalBound(global) => {
