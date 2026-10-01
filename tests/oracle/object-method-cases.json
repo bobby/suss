@@ -198,6 +198,173 @@
         "tag": "f64",
         "bits": "404b800000000000"
       }
+    },
+    {
+      "id": "object-method-missing-argument",
+      "source": "(.score object-probe)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "object-method-extra-argument-effects",
+      "source": "(do (aset object-effects 0 0) (.score object-probe 3 (object-mark 4 99)) (aget object-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "object-method-recur-anchors-this",
+      "source": "(do (deftype ObjectRecur [value] Object (sum [this n acc] (if (<= n 0) (+ value acc) (recur (dec n) (+ acc n))))) (.sum (ObjectRecur. 7) 3 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402a000000000000"
+      }
+    },
+    {
+      "id": "object-method-overloads-zero",
+      "source": "(do (deftype ObjectOverload [value] Object (score [this] value) (score [this n] (+ value n))) (def object-overload (ObjectOverload. 17)) (.score object-overload))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "object-method-overloads-one",
+      "source": "(.score object-overload 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "object-method-overload-gap",
+      "source": "(try (.score object-overload 2 3) (catch :default e 97))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4058400000000000"
+      }
+    },
+    {
+      "id": "object-extension-overloads-zero",
+      "source": "(do (extend-type ObjectOverload Object (score ([this] 31) ([this n] (+ 31 n)))) (.score object-overload))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "object-extension-overloads-one",
+      "source": "(.score object-overload 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "object-method-toString",
+      "source": "(do (deftype ObjectString [] Object (toString [this] \"object\")) (.toString (ObjectString.)))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          111,
+          98,
+          106,
+          101,
+          99,
+          116
+        ]
+      }
+    },
+    {
+      "id": "fn-predicate-closure",
+      "source": "(fn? (fn [] 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "fn-predicate-type",
+      "source": "(fn? ObjectString)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "fn-predicate-nil",
+      "source": "(fn? nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "fn-predicate-number",
+      "source": "(fn? 3)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "fn-predicate-marker",
+      "source": "(do (deftype ObjectFn [] Fn) (fn? (ObjectFn.)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "fn-predicate-native-marker",
+      "source": "(do (extend-type number Fn) (fn? 3))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "object-extension-keeps-lexical-capture",
+      "source": "(do (let [factor 7] (extend-type ObjectSelf Object (scaled [this] (* (.-value this) factor)))) (.scaled object-self))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4060a00000000000"
+      }
+    },
+    {
+      "id": "method-own-field-shadows-method",
+      "source": "(do (deftype ObjectShadow [score] Object (score [this n] 99)) (.score (ObjectShadow. (fn [n] (+ n 2))) 5))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "method-callee-before-argument-extension",
+      "source": "(do (def object-before (.-read object-self)) (.read object-self (do (extend-type ObjectSelf Object (read [this] 99)) 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "method-replacement-is-live",
+      "source": "(.read object-self)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4058c00000000000"
+      }
+    },
+    {
+      "id": "method-replacement-changes-function-identity",
+      "source": "(identical? object-before (.-read object-self))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
     }
   ]
 }

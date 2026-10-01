@@ -8,7 +8,7 @@ fn object_methods_match_independently_decoded_primary_observations_after_gc() {
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 24);
+    assert_eq!(cases.len(), 44);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -89,5 +89,41 @@ fn object_methods_match_independently_decoded_primary_observations_after_gc() {
         };
         assert_eq!(actual, case["expected"], "{id}: {source}");
         session.collect().unwrap();
+    }
+}
+
+#[test]
+fn malformed_object_methods_fail_atomically_and_session_recovers() {
+    let mut session = Session::new().unwrap();
+    for source in [
+        "(do (def object-unpublished 3) (deftype ObjectInvalid [] Object (missing [] 1)))",
+        "(deftype ObjectInvalid [] Object (missing [this] object-private-name))",
+        "(deftype ObjectInvalid [] Object (bad-name [this] 1))",
+        "(deftype ObjectInvalid [] Object (missing [this & rest] 1))",
+        "(deftype ObjectInvalid [] Object (missing [this n] (recur this n)))",
+    ] {
+        let error = session.eval(source).unwrap_err();
+        assert!(
+            matches!(error, suss_cli::portable_session::SessionError::Compile(_)),
+            "{source}: {error:?}"
+        );
+        for name in ["object-unpublished", "ObjectInvalid", "->ObjectInvalid"] {
+            assert!(
+                session.eval(name).is_err(),
+                "published {name} after {source}"
+            );
+        }
+        session.collect().unwrap();
+        let value = session.eval("79").unwrap();
+        session
+            .inspect(&value, |mut store, value| {
+                let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                assert_eq!(
+                    object.fields(&mut store)?.next().unwrap().unwrap_f64(),
+                    79.0
+                );
+                Ok(())
+            })
+            .unwrap();
     }
 }

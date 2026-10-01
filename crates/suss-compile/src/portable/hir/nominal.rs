@@ -30,7 +30,7 @@ impl Analyzer {
             kind: Expression::Literal(literal),
         }
     }
-    fn fresh_binding(&mut self, form: &Form, value: Hir) -> Binding {
+    pub(super) fn fresh_binding(&mut self, form: &Form, value: Hir) -> Binding {
         let id = BindingId(self.next);
         self.next += 1;
         Binding {
@@ -794,6 +794,132 @@ impl Analyzer {
         while index < args.len() {
             let protocol_name = &args[index];
             index += 1;
+            if matches!(&protocol_name.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "Object")
+            {
+                let mut groups: Vec<(Form, String, Vec<Method>)> = Vec::new();
+                while index < args.len() && matches!(args[index].kind, Kind::List(_)) {
+                    let method_form = &args[index];
+                    index += 1;
+                    let Kind::List(items) = &method_form.kind else {
+                        unreachable!()
+                    };
+                    let Some(method_name) = items.first() else {
+                        return Err(fail(method_form.span.clone(), "Empty Object method"));
+                    };
+                    let Kind::Symbol(symbol) = &method_name.kind else {
+                        return Err(fail(
+                            method_name.span.clone(),
+                            "Object method requires a name",
+                        ));
+                    };
+                    if symbol.namespace.is_some() {
+                        return Err(fail(
+                            method_name.span.clone(),
+                            "Object method requires an unqualified name",
+                        ));
+                    }
+                    let name = Self::property_name(method_name, &format!(".-{}", symbol.name))?;
+                    let group =
+                        if let Some(group) = groups.iter().position(|(_, key, _)| key == &name) {
+                            group
+                        } else {
+                            groups.push((method_name.clone(), name, Vec::new()));
+                            groups.len() - 1
+                        };
+                    let signatures = if items
+                        .get(1)
+                        .is_some_and(|item| matches!(item.kind, Kind::Vector(_)))
+                    {
+                        vec![&items[1..]]
+                    } else {
+                        if in_deftype {
+                            return Err(fail(
+                                method_form.span.clone(),
+                                "deftype overloads require separate method forms with parameter vectors",
+                            ));
+                        }
+                        let mut signatures = Vec::new();
+                        for signature in &items[1..] {
+                            let Kind::List(items) = &signature.kind else {
+                                return Err(fail(
+                                    signature.span.clone(),
+                                    "Object extension signature requires a list",
+                                ));
+                            };
+                            signatures.push(items.as_slice());
+                        }
+                        if signatures.is_empty() {
+                            return Err(fail(
+                                method_form.span.clone(),
+                                "Object method requires a signature",
+                            ));
+                        }
+                        signatures
+                    };
+                    for signature in signatures {
+                        // Pinned core.cljc adapt-obj-params anchors this-as outside
+                        // the loop, with only user parameters replaced by recur.
+                        let implementation = self.fixed_function_fields(
+                            method_form,
+                            signature,
+                            true,
+                            fields,
+                            true,
+                            true,
+                        )?;
+                        let Expression::Function {
+                            parameters, body, ..
+                        } = implementation.kind
+                        else {
+                            unreachable!()
+                        };
+                        groups[group].2.push(Method { parameters, body });
+                    }
+                }
+                for (method_name, name, mut methods) in groups {
+                    methods.reverse();
+                    let mut arities = BTreeSet::new();
+                    methods.retain(|method| arities.insert(method.parameters.len()));
+                    methods.reverse();
+                    let mut captures = BTreeSet::new();
+                    for method in &methods {
+                        let bound = method
+                            .parameters
+                            .iter()
+                            .map(|parameter| parameter.id)
+                            .collect();
+                        free_bindings(&method.body, &bound, &mut captures);
+                    }
+                    let kind = if methods.len() == 1 {
+                        let method = methods.remove(0);
+                        Expression::Function {
+                            parameters: method.parameters,
+                            body: method.body,
+                            captures: captures.into_iter().collect(),
+                        }
+                    } else {
+                        Expression::GeneralFunction {
+                            methods,
+                            captures: captures.into_iter().collect(),
+                            self_binding: None,
+                        }
+                    };
+                    let implementation = Hir {
+                        span: method_name.span.clone(),
+                        metadata: method_name.metadata.clone(),
+                        ty: Type::Value,
+                        kind,
+                    };
+                    let key = self
+                        .literal_form(&method_name, Literal::String(name.encode_utf16().collect()));
+                    effects.push(self.nominal(
+                        &method_name,
+                        Nominal::ObjectSet,
+                        vec![class.clone(), key, implementation],
+                    ));
+                }
+                continue;
+            }
             let global = self.named_global(protocol_name)?;
             let methods = self
                 .environment
@@ -888,8 +1014,14 @@ impl Analyzer {
                                 "Extension arity is not declared by this protocol",
                             )
                         })?;
-                    let implementation =
-                        self.fixed_function_fields(method_form, signature, true, fields, true)?;
+                    let implementation = self.fixed_function_fields(
+                        method_form,
+                        signature,
+                        true,
+                        fields,
+                        true,
+                        false,
+                    )?;
                     let key =
                         self.nominal(method_name, Nominal::Key(key_index), vec![protocol.clone()]);
                     effects.push(self.nominal(

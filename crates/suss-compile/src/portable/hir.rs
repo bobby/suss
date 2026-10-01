@@ -6,8 +6,8 @@ mod dynamic;
 mod exceptions;
 mod nominal;
 use super::{
-    resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
     Diagnostic,
+    resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
 };
 use std::{
     collections::{BTreeSet, HashMap},
@@ -184,6 +184,8 @@ pub enum Nominal {
     FieldSet(usize),
     NamedGet,
     NamedSet,
+    ObjectSet,
+    ObjectInvoke,
     Key(usize),
     Dispatcher,
     Set,
@@ -206,7 +208,8 @@ impl Nominal {
             && match self {
                 Self::Array => true,
                 Self::NamedGet => count == 2 && arguments[1] == Type::String,
-                Self::NamedSet => count == 3 && arguments[1] == Type::String,
+                Self::NamedSet | Self::ObjectSet => count == 3 && arguments[1] == Type::String,
+                Self::ObjectInvoke => count >= 2,
                 Self::LiveDispatcher | Self::NativeSet(_) => count == 2,
                 Self::NativeMarker(_) => count == 1,
                 Self::Descriptor => arguments.iter().all(|ty| *ty == Type::String),
@@ -669,7 +672,7 @@ impl Analyzer {
         args: &[Form],
         bootstrap_macro: bool,
     ) -> Result<Hir, Diagnostic> {
-        self.fixed_function_fields(form, args, bootstrap_macro, &[], false)
+        self.fixed_function_fields(form, args, bootstrap_macro, &[], false, false)
     }
     fn fixed_function_fields(
         &mut self,
@@ -678,6 +681,7 @@ impl Analyzer {
         bootstrap_macro: bool,
         fields: &[Form],
         method_receiver: bool,
+        object_method: bool,
     ) -> Result<Hir, Diagnostic> {
         let Some(params) = args.first() else {
             return Err(fail(form.span.clone(), "fn requires a parameter vector"));
@@ -688,6 +692,12 @@ impl Analyzer {
                 "Named/multiple-arity functions are not lowered yet; expected parameter vector",
             ));
         };
+        if object_method && names.is_empty() {
+            return Err(fail(
+                params.span.clone(),
+                "Object method requires a receiver",
+            ));
+        }
         // Pinned cljs.core/fn reads conditions from signature metadata as well
         // as a leading body map. fn* receives already-expanded syntax instead.
         if bootstrap_macro {
@@ -735,9 +745,11 @@ impl Analyzer {
         }
         let target = LoopId(self.next_loop);
         self.next_loop += 1;
-        let outer_target = self.target.replace((target, parameters.len()));
+        let outer_target = self
+            .target
+            .replace((target, parameters.len() - usize::from(object_method)));
         let mut bindings = Vec::new();
-        for parameter in &parameters {
+        for parameter in parameters.iter().skip(usize::from(object_method)) {
             let id = BindingId(self.next);
             self.next += 1;
             bindings.push(Binding {
@@ -780,11 +792,21 @@ impl Analyzer {
                     continue;
                 }
                 self.locals.remove(&symbol.name);
-                let value = self.nominal(
-                    field,
-                    Nominal::Field(index),
-                    vec![self.local(field, receiver)],
-                );
+                let value = if object_method {
+                    let key = self
+                        .literal_form(field, Literal::String(symbol.name.encode_utf16().collect()));
+                    self.nominal(
+                        field,
+                        Nominal::NamedGet,
+                        vec![self.local(field, receiver), key],
+                    )
+                } else {
+                    self.nominal(
+                        field,
+                        Nominal::Field(index),
+                        vec![self.local(field, receiver)],
+                    )
+                };
                 self.fields
                     .insert(symbol.name.clone(), (value, Self::field_mutable(field)?));
             }
@@ -873,6 +895,32 @@ impl Analyzer {
             let owner = self.form(&args[0])?;
             let key = self.literal_form(form, Literal::String(key.encode_utf16().collect()));
             return Ok(self.nominal(form, Nominal::NamedGet, vec![owner, key]));
+        }
+        if bare && symbol.name.starts_with('.') && !symbol.name.starts_with(".-") {
+            let Some(owner) = args.first() else {
+                return Err(fail(form.span.clone(), "Method call requires a receiver"));
+            };
+            let key = Self::property_name(form, &format!(".-{}", &symbol.name[1..]))?;
+            let owner_value = self.form(owner)?;
+            let owner_binding = self.fresh_binding(owner, owner_value);
+            let owner_read = self.local(owner, owner_binding.id);
+            let key = self.literal_form(form, Literal::String(key.encode_utf16().collect()));
+            let lookup = self.nominal(form, Nominal::NamedGet, vec![owner_read.clone(), key]);
+            let method_binding = self.fresh_binding(form, lookup);
+            let mut arguments = vec![self.local(form, method_binding.id), owner_read];
+            for arg in &args[1..] {
+                arguments.push(self.form(arg)?);
+            }
+            let body = self.nominal(form, Nominal::ObjectInvoke, arguments);
+            return Ok(Hir {
+                span: form.span.clone(),
+                metadata: form.metadata.clone(),
+                ty: Type::Value,
+                kind: Expression::Let {
+                    bindings: vec![owner_binding, method_binding],
+                    body: Box::new(body),
+                },
+            });
         }
         if symbol.name.ends_with('.') && symbol.name.len() > 1 {
             let mut constructor = items[0].clone();
@@ -973,14 +1021,19 @@ impl Analyzer {
                             ));
                         }
                         let Expression::Nominal {
-                            operation: Nominal::Field(index),
+                            operation,
                             mut arguments,
                         } = field.kind
                         else {
                             unreachable!()
                         };
                         arguments.push(self.form(&args[1])?);
-                        return Ok(self.nominal(form, Nominal::FieldSet(index), arguments));
+                        let setter = match operation {
+                            Nominal::Field(index) => Nominal::FieldSet(index),
+                            Nominal::NamedGet => Nominal::NamedSet,
+                            _ => unreachable!(),
+                        };
+                        return Ok(self.nominal(form, setter, arguments));
                     }
                 }
             }

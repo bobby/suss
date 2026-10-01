@@ -298,3 +298,12 @@ captures. The existing partial deftype review is extended without changing
 80/985 statuses or30 imported artifacts; see
 [type method scopes](../runtime/type-method-scopes.md). Object methods and complete
 compiled macro/core acceptance remain unfinished.
+
+
+Object methods now have44 fresh pinned/native observations, preserving their
+original24, and compile-atomic malformed declaration guards. Fn and fn? add two
+partial source reviews (82/983);28 selected forms retain32 licensed artifacts.
+The Fn marker branch remains part of the imported predicate. Direct calls preserve
+lookup-before-argument order, unbound shared function identity and anchored recur.
+Public prototypes, munged properties and complete macros/core remain unfinished;
+see [Object methods](../runtime/object-methods.md).

@@ -14,6 +14,7 @@ mod named_properties;
 mod native_protocols;
 mod nominal;
 mod numeric;
+mod object_methods;
 mod predicates;
 
 pub const VERSION: u32 = 1;
@@ -614,7 +615,7 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(exception_info::functions(&mut b));
     arithmetic_functions.extend(predicates::functions(&mut b));
     arithmetic_functions.extend(comparisons::functions(&mut b));
-    named_properties::functions(&mut b);
+    arithmetic_functions.extend(named_properties::functions(&mut b));
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
     let mut tags = TagSection::new();
@@ -801,6 +802,46 @@ fn build_module() -> Vec<u8> {
             I32Const(0),
             RefI31,
             StructNew(DESCRIPTOR),
+        ]),
+    );
+    // Appended private Object method tag and portable implicit-this realm.
+    globals.global(
+        GlobalType {
+            val_type: reference(DESCRIPTOR),
+            mutable: false,
+            shared: false,
+        },
+        &ConstExpr::extended([
+            I64Const(0),
+            I32Const(0),
+            ArrayNewDefault(ARGS),
+            I32Const(0),
+            ArrayNewDefault(ARGS),
+            I32Const(0),
+            RefI31,
+            StructNew(DESCRIPTOR),
+        ]),
+    );
+    globals.global(
+        GlobalType {
+            val_type: reference(7),
+            mutable: false,
+            shared: false,
+        },
+        &ConstExpr::extended([
+            I64Const(0),
+            I32Const(0),
+            ArrayNewDefault(ARGS),
+            I32Const(0),
+            ArrayNewDefault(ARGS),
+            I32Const(0),
+            RefI31,
+            StructNew(DESCRIPTOR),
+            I32Const(0),
+            ArrayNewDefault(ARGS),
+            I32Const(0),
+            RefI31,
+            StructNew(7),
         ]),
     );
     b.exports

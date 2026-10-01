@@ -5446,3 +5446,43 @@ graphs terminal. Next inspect existing type-method lexical scope with a separate
 executing protocol regression, then adapt Object methods without deleting retained
 source method blocks. Canonical empty lists and concrete collections remain open;
 full M2–M9 objective remains active.
+
+## Root PR91 final gate and Object continuation — 2026-10-01
+
+Independent review final6e5d9ed passes exact-head CI36808444957. Root downloaded
+/private/tmp/suss-pr91-final-ci.log and inspected enabled scope tests, Python71,
+80 partial reviews/985 unassessed and the full workspace results. PR91 is ready
+for user merge; no merge or issue closure. Retained Object preparation5080a6c
+rebased onto this reviewed parent. Focused graph28388 ended101 at unresolved
+Runtime name Object43..49; all24 fresh primary observations remain certified.
+Next implement Object methods and execute the strict native corpus.
+
+## Object methods implementation candidate — 2026-10-01
+
+Original HIR/runtime adapters preserve pinned Object receiver/recur, named shared
+unbound functions, descriptor-owned extension/redefinition and lookup-before-args.
+The existing ten shared GC prelude types/version/old globals remain unchanged;
+private method tag/default-this realm append globals. Public prototypes, computed
+or munged names, extra/default-realm fields and full JS interop remain unsupported.
+No dead-owner registry or fabricated persistent collection.
+
+Original24 primary probes now pass native execution (graph35565, terminal0).
+Expanded44 fresh primary graph88291 matched all reference values then native failed
+at new recur probe's unsupported general =. Replaced that probe with <= without
+changing original24. Fresh88197 terminal0: all44 primary/native values exact after
+GC; log /private/tmp/suss-object-method-final44-primary-second.log. Pin warnings
+remain visible; generated JS confirms recur replaces user args while retaining this.
+Native malformed receiver/signature/name/recur/unknown-var forms fail compile
+atomically and recover. CLI graph2156 terminal0: Object2/property4/native11/type-scope2/
+interfaces5. Compiler graph9692 terminal0: nominal5/pipeline17/ABI19. Logs
+/private/tmp/suss-object-method-cli-guards.log and
+/private/tmp/suss-object-method-compiler-guards.log.
+
+Fn and fn? retain two additional pinned forms; fn? has an explicit defn-bootstrap
+patch preserving marker branch/short circuit/docstring. Original js-fn? primitive
+recognizes shared closures. Python71/inventory1065/reviews82 partial+983 unassessed/
+core import32 files pass graph54165 terminal0. Source selection28 forms; no full
+macro/core/collection acceptance claim. Log /private/tmp/suss-object-method-provenance.log.
+All local Cargo/JVM/Node graphs terminal. Next independent PR review/fixes and
+required full baseline/final reviewed-head CI; then retained persistent collections.
+No issue closure or merge. M2–M9 goal remains active.

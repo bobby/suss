@@ -407,11 +407,11 @@
    :arities {:fixed [] :variadic-min 2}
    :dependencies ["macro:extend-type:1668" "macro:defprotocol:2041" "shared ABI Descriptor/UserObject/Invoke"]
    :classification :adapted
-   :rationale "Original bounded HIR bootstrap constructs descriptor-backed class values, generated arrows and protocol methods. Same-layout identity, redefinition, receiver anchoring, fields, scoped mutable-field assignment and undefined constructor results execute; general field attributes, runtime metadata, builtin classes and complete compiled macro/core import remain unfinished. Literal identifier class/function properties and known instance fields now have64 fresh source observations with GC/order/capture and typed malformed storage checks; munged instance schemas and known callable/inherited host attributes raise explicit errors; prototypes, extra instance fields, computed names and full host properties remain partial. Type methods now isolate surrounding locals/fields while runtime extend-type and ordinary functions preserve lexical captures;14 separate fresh observations and compile-atomic recovery guards establish the distinction. No upstream source form is copied."
+   :rationale "Original bounded HIR bootstrap constructs descriptor-backed class values, generated arrows and protocol methods. Same-layout identity, redefinition, receiver anchoring, fields, scoped mutable-field assignment and undefined constructor results execute; general field attributes, runtime metadata, builtin classes and complete compiled macro/core import remain unfinished. Literal identifier class/function properties and known instance fields now have64 fresh source observations with GC/order/capture and typed malformed storage checks; munged instance schemas and known callable/inherited host attributes raise explicit errors; prototypes, extra instance fields, computed names and full host properties remain partial. Type methods now isolate surrounding locals/fields while runtime extend-type and ordinary functions preserve lexical captures;14 separate fresh observations and compile-atomic recovery guards establish the distinction. Object blocks now have44 pinned observations for shared unbound method values, direct lookup order, anchored recur, fixed overloads, extension and Fn predicates. Public prototype/munged-property/full-core acceptance remains open. No upstream source form is copied."
    :status :in-progress
    :adaptation-path "docs/runtime/nominal.md"
    :alternative nil
-   :tests ["crates/suss-compile/tests/portable_nominal.rs" "crates/suss-cli/tests/persistent_session.rs" "crates/suss-cli/tests/portable_mutable_fields.rs" "tests/oracle/mutable-field-cases.json" "tests/oracle/portable-cases.json" "crates/suss-cli/tests/portable_named_properties.rs" "tests/oracle/named-property-cases.json" "crates/suss-cli/tests/portable_type_method_scopes.rs" "tests/oracle/type-method-scope-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_object_methods.rs" "tests/oracle/object-method-cases.json" "crates/suss-compile/tests/portable_nominal.rs" "crates/suss-cli/tests/persistent_session.rs" "crates/suss-cli/tests/portable_mutable_fields.rs" "tests/oracle/mutable-field-cases.json" "tests/oracle/portable-cases.json" "crates/suss-cli/tests/portable_named_properties.rs" "tests/oracle/named-property-cases.json" "crates/suss-cli/tests/portable_type_method_scopes.rs" "tests/oracle/type-method-scope-cases.json"]}
   "macro:defprotocol:2041"
   {:source-sha256 "8748b4d0fc143b90cdcdef7af2b26fc9343f67f6bd75ea520010cb7616dfe7f9" :visibility :public
    :arities {:fixed [] :variadic-min 1}
@@ -427,11 +427,11 @@
    :arities {:fixed [] :variadic-min 1}
    :dependencies ["macro:defprotocol:2041" "macro:deftype:1778" "shared ABI Descriptor/protocol table"]
    :classification :adapted
-   :rationale "Original bounded HIR bootstrap updates descriptor tables for declared user types and returns a shared marker or final method. Existing objects and old captured dispatchers observe updates; selected nil/primitive/object/default native targets use closure-owned tables and current method cells. Native plain fixed implementations fill missing parameters with undefined and ignore already evaluated surplus operands. Arbitrary host targets and complete compiled macro/core import remain unfinished. No upstream source form is copied."
+   :rationale "Original bounded HIR bootstrap updates descriptor tables for declared user types and returns a shared marker or final method. Existing objects and old captured dispatchers observe updates; selected nil/primitive/object/default native targets use closure-owned tables and current method cells. Native plain fixed implementations fill missing parameters with undefined and ignore already evaluated surplus operands. Arbitrary host targets and complete compiled macro/core import remain unfinished. Object blocks now have44 pinned observations for shared unbound method values, direct lookup order, anchored recur, fixed overloads, extension and Fn predicates. Public prototype/munged-property/full-core acceptance remains open. No upstream source form is copied."
    :status :in-progress
    :adaptation-path "docs/runtime/nominal.md"
    :alternative nil
-   :tests ["crates/suss-compile/tests/portable_nominal.rs" "crates/suss-cli/tests/persistent_session.rs" "tests/oracle/portable-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_object_methods.rs" "tests/oracle/object-method-cases.json" "crates/suss-compile/tests/portable_nominal.rs" "crates/suss-cli/tests/persistent_session.rs" "tests/oracle/portable-cases.json"]}
   "macro:instance?:1025"
   {:source-sha256 "e0051e45b26efab4a466ed227ace1013999f57a80826061177c305fbf74d4f81" :visibility :public
    :arities {:fixed [2] :variadic-min nil}
@@ -802,4 +802,28 @@
    :adaptation-path nil
    :alternative nil
    :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
- }}
+
+  "runtime:Fn:583"
+  {:source-sha256 "f0c1b261ce1ebec680b9764dd8a9bd29317c6b9f5543981cae55b392d9da6dea"
+   :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041"]
+   :classification :portable
+   :rationale "Retained pinned callable predicate and marker; closure values and explicit Fn membership execute through the shared runtime. Full callable collection and metadata acceptance remains open."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_object_methods.rs" "tests/oracle/object-method-cases.json"]}
+
+  "runtime:fn?:2107"
+  {:source-sha256 "a038a3404e90030209c64b73a72648f757657898e22abea64a81e37a0621c2d6"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:Fn:583" "js-fn? primitive closure predicate" "macro:or:912" "macro:satisfies?:2253"]
+   :classification :adapted
+   :rationale "Retained pinned callable predicate and marker; closure values and explicit Fn membership execute through the shared runtime. Full callable collection and metadata acceptance remains open."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/fn-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_object_methods.rs" "tests/oracle/object-method-cases.json"]}
+}}

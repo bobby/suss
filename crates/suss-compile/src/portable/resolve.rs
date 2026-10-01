@@ -261,6 +261,7 @@ impl Environment {
                 ("undefined?", "predicate-undefined"),
                 ("number?", "predicate-number"),
                 ("string?", "predicate-string"),
+                ("js-fn?", "predicate-function"),
                 ("identical?", "predicate-identical"),
                 ("ExceptionInfo", "core-exception-info-class"),
                 ("ex-info", "core-ex-info"),

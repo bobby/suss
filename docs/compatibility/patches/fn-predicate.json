@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "a038a3404e90030209c64b73a72648f757657898e22abea64a81e37a0621c2d6",
+  "replacement": "(def fn? \"Return true if f is a JavaScript function or satisfies the Fn protocol.\" (fn [f] (or (js-fn? f) (satisfies? Fn f))))",
+  "rationale": "Explicit fixed defn bootstrap adaptation preserves the pinned Fn marker branch, short circuit and docstring. The original js-fn? primitive tests shared closure values; no shipped JS dependency. Full compiled macro and callable collection acceptance remain unfinished."
+}

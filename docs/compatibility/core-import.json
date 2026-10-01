@@ -133,6 +133,16 @@
       "id": "runtime:IDrop:919",
       "source-sha256": "3042b2f3709feb84eff6b243b8ff67238f6fed190589428686c036161670b811",
       "patch": null
+    },
+    {
+      "id": "runtime:Fn:583",
+      "source-sha256": "f0c1b261ce1ebec680b9764dd8a9bd29317c6b9f5543981cae55b392d9da6dea",
+      "patch": null
+    },
+    {
+      "id": "runtime:fn?:2107",
+      "source-sha256": "a038a3404e90030209c64b73a72648f757657898e22abea64a81e37a0621c2d6",
+      "patch": "docs/compatibility/patches/fn-predicate.json"
     }
   ]
 }
