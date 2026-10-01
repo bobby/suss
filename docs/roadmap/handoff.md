@@ -5424,3 +5424,25 @@ All review Cargo/JVM/Node graphs are terminal; shared test slot is released.
 Next require exact reviewed-head CI before readiness, without merging. Then
 continue retained Object methods and real persistent sequence/list foundations.
 No issue/milestone closure or full-core acceptance claim.
+
+
+## Root PR90 final gate and Object prerequisite — 2026-09-30
+
+Previous goal turn made authoritative progress: PR90 independently reviewed
+fixesd155059, fresh64 primary/native4 and full reviewer baseline passed. Root
+inspected exact-head CI36801132345 success, including enabled property4, ABI19,
+Python71/reviews80+985/artifacts30 and full workspace. Log
+/private/tmp/suss-pr90-final-ci.log. Marked PR90 ready, no merge or issue closure.
+
+Separate portable/core-object-methods worktree now records24 fresh source probes.
+Initial96832 ended1 at strict comparison: detached method returned canonicalNaN,
+and unbound outer factor produced a primary undeclared-var warning andNaN. Recorded
+those failed provisional expectations honestly. Revised known-global11/local7
+probe returns55 rather than captured35. Fresh95816 terminal101: all24 exact primary
+matches, then native unresolved Runtime name Object at43..49; see
+/private/tmp/suss-object-method-primary-native-red.log and docs/runtime/object-methods.md.
+No native Object acceptance claim or review/source count change. All root local
+graphs terminal. Next inspect existing type-method lexical scope with a separately
+executing protocol regression, then adapt Object methods without deleting retained
+source method blocks. Canonical empty lists and concrete collections remain open;
+full M2–M9 objective remains active.
