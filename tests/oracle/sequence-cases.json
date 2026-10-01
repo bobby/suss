@@ -1049,6 +1049,54 @@
         "tag": "bool",
         "value": true
       }
+    },
+    {
+      "id": "review-equality-counted-helper-reject",
+      "source": "(do (set! equality-trace 0) (false? (equiv-sequential (CountProbe. 1) (CountProbe. 2))) (zero? equality-trace))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-equality-counted-dispatch-reject",
+      "source": "(do (deftype ReviewCountEquiv [n] ISequential ICounted (-count [_] (do (set! equality-trace (+ (* equality-trace 10) n)) n)) ISeqable (-seq [_] (do (set! equality-trace 999) nil)) IEquiv (-equiv [this other] (equiv-sequential this other))) (set! equality-trace 0) (def review-count-equality (= (ReviewCountEquiv. 1) (ReviewCountEquiv. 2))) (and (false? review-count-equality) (identical? equality-trace 12)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-equality-uncounted-length-mismatch",
+      "source": "(and (false? (= (cons 1 nil) (cons 1 (cons 2 nil)))) (false? (= (cons 1 (cons 2 nil)) (cons 1 nil))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-equality-nil-shortcut-direction",
+      "source": "(and (false? (= nil (OddEquiv.))) (identical? (= (OddEquiv.) nil) 17))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-equality-variadic-comparison-short-circuit",
+      "source": "(do (set! equality-trace 0) (= (EqualProbe. 1) (EqualProbe. 2) (EqualProbe. 3) (EqualProbe. 4)) (identical? equality-trace 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-equality-negative-zero-nan-rest",
+      "source": "(and (= 0 -0.0 0 -0.0) (false? (= 0 0 ##NaN)) (false? (= ##NaN ##NaN ##NaN)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
     }
   ]
 }

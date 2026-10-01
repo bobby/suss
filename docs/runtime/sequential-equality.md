@@ -60,3 +60,21 @@ cargo test --workspace --locked -- --test-threads=2
 Next close retained sequence method dependencies: ordered/public hashing,
 reduced/reduction, iterator/reversal and printing/index search, while implementing
 the remaining persistent types and compiled macro path toward full acceptance.
+
+
+Independent PR102 review preserved all original131 corpus objects and added six
+edge observations: direct and dispatched counted length rejection, ordered count
+effects, uncounted length mismatch, nil/protocol direction, variadic comparison
+short circuiting, and signed-zero/NaN rest values. Fresh137 primary observations
+match independently decoded native values. The original CountProbe observation
+uses default identity and does not itself exercise the counted shortcut; the new
+IEquiv delegation reaches that branch and proves both count effects occur in order
+without calling seq. Native wrong-arity tests now assert the effect trace after
+each failure, including the intermediate17, before GC recovery. No production
+defect was found in the retained algorithms or complete setup statements.
+
+Independent review Python80/import74/setup4/reviews159+906 checks pass. Final
+latest-source full workspace baseline passes after tightened native effect tests,
+with all required enabled suites passing and existing manual ignored/diagnostic
+gaps unchanged. Review logs and commands are in the handoff. Exact reviewed-head
+CI remains a separate readiness gate; PR102 review makes no M4/M7 completion claim.

@@ -41,7 +41,7 @@ fn sequence_foundations_match_independently_encoded_primary_observations() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/sequence-cases.json")).unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 131);
+    assert_eq!(cases.len(), 137);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -286,16 +286,21 @@ fn retained_equality_survives_gc_and_wrong_arity_keeps_operand_effects() {
         &mut session,
         "(retained-equality equality-left equality-right)"
     ));
-    for source in [
-        "(retained-equality)",
-        "(equiv-sequential (do (set! equality-arity-trace 17) equality-left))",
-        "(equiv-sequential equality-left equality-right (do (set! equality-arity-trace 29) nil))",
+    for (source, trace) in [
+        ("(retained-equality)", 0.0f64),
+        ("(equiv-sequential (do (set! equality-arity-trace 17) equality-left))", 17.0),
+        ("(equiv-sequential equality-left equality-right (do (set! equality-arity-trace 29) nil))", 29.0),
     ] {
         assert!(
             matches!(session.eval(source), Err(SessionError::Language(_))),
             "{source}"
         );
         session.collect().unwrap();
+        assert_eq!(
+            eval_number(&mut session, "equality-arity-trace"),
+            trace.to_bits(),
+            "{source}"
+        );
         assert!(eval_bool(
             &mut session,
             "(retained-equality equality-left equality-right)"
