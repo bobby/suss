@@ -26,8 +26,9 @@ The two `runtime_abi_owned_dynamic_properties_*` tests validate and instantiate
 actual Wasm and exercise table growth, replacement, separate owners, literal
 reserved keys, UTF-16, forced GC, corrupt storage and typed recovery. Three additional prototype tests exercise inherited lookup, Undefined shadowing,
 atomic cycle rejection, forged cycles and a 130-object chain after forced GC.
-The complete runtime ABI suite passes 32 tests, including the bounded default
-prototype method checks below. This does not establish source factory,
+The existing 34 runtime ABI tests pass, including the bounded default
+prototype method checks below. A new own-accessor reflection regression fails
+until actual descriptor storage is implemented. This does not establish source factory,
 property-key conversion, prototype accessors, inherited methods or cache behavior.
 
 `native-object-prototype` reads and validates the immediate raw prototype;
@@ -79,3 +80,31 @@ inherited versus own keys, argument-sensitive detached isPrototypeOf behavior,
 and forced GC/error recovery. A development Node check confirmed the detached
 call distinctions; it is not a fresh pinned ClojureScript corpus comparison.
 Specification reference: [ECMAScript Object prototype operations](https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-properties-of-the-object-prototype-object).
+
+
+## Scalar properties and legacy prototype accessor preparation
+
+`native-object-property-get` and `native-object-property-set` convert supported
+scalar keys through the existing checked UTF-16 string coercion. They layer the
+legacy `__proto__` operation above raw storage: a nearer own/inherited data slot
+shadows the default accessor, primitive setter values are ignored, nil removes
+the chain, and subsequent writes on a null-prototype object become own data.
+Accessor reads return the original receiver's prototype. Cycle errors preserve
+the former chain, and changing the shared default root's prototype fails; setting
+its existing nil prototype remains allowed. Foreign object domains and physical
+null references remain language errors instead of successful unknown coercions.
+
+Two executing tests cover these operations and scalar keys (negative zero, NaN,
+nil, booleans, Undefined, fractional numbers, empty/astral/lone-surrogate strings),
+forced GC and typed recovery. Development Node assertions independently confirm
+the write/shadow/root rules. This is not a pinned source cache comparison.
+
+The default accessor is currently recognized by root identity, not a stored
+property descriptor. An executing regression confirms this unfinished behavior: `hasOwnProperty` on the root with key
+`__proto__` currently returns false, whereas Node returns true. Property attributes,
+reflection, custom accessors and deletion require actual owned descriptors;
+do not claim these operations based on the adapter. Replace the implicit default
+accessor with that descriptor representation, implement remaining methods, and
+then wire source cache forms. The source corpus still has 64 unresolved native
+failures, and no public factory/property compatibility gate is complete.
+Specification reference: [ECMAScript legacy prototype accessor](https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-object.prototype.__proto__).

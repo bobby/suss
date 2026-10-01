@@ -6420,3 +6420,42 @@ prototype rules and scalar property adapters are next. Then retain licensed
 source cache forms, require fresh64 pinned/native agreement, independent PR review,
 full required baseline and exact final-head CI. Do not infer complete public
 js-obj/Object/hash behavior from these five bounded builtins. M2–M9 stay active.
+
+
+## Scalar property/prototype accessor preparation — 2026-10-01
+
+Continuation after4fd3f18 adds original native_object_properties.rs. Checked scalar
+keys use existing coerce-string. The adapter preserves inherited default __proto__
+getter/setter behavior, nearer own/inherited data shadows (including Undefined),
+ignored supported primitive writes, null prototype removal followed by own-data
+creation, cycle rejection and immutable default-root prototype changes. Same nil
+root prototype writes remain allowed. Foreign object domains/physical null stay
+language errors; no unknown-to-success path. No shared layout/ABI/core-cell change.
+The raw storage still has no general property attributes/accessor descriptors.
+
+78808 passed the existing default method test on the new validated artifact.
+Added2 actual ABI regressions: scalar nil/bool/Undefined/-0/NaN/fractional/empty/
+astral/lone-surrogate keys, __proto__ write/get/data shadows, inherited data, cycle/
+root error atomicity and forced GC/recovery.99970 passed2. Complete ABI89189 passed
+all34 existing tests, log /private/tmp/suss-native-property-abi.log. Focused log
+/private/tmp/suss-native-property-first.log. Shared target/build workers2, command
+cargo test -p suss-compile --test runtime_abi [runtime_abi_native_property] --locked
+-- --test-threads=2. Independent development Node assertions also passed, log
+/private/tmp/suss-proto-property-node.log. These are builtin runtime checks, not
+fresh pinned ClojureScript/native cache comparisons.
+
+Then added a meaningful desired-behavior regression for the discovered reflection
+hole: runtime_abi_default_proto_accessor_is_an_own_property.11879 ended101 with
+actualfalse(i31=2) versus expectedtrue(i31=4), while Node reports true. Log
+/private/tmp/suss-default-accessor-descriptor-red.log. This failing test remains
+active and unskipped. Therefore the current complete ABI suite is NOT green:
+34 existing tests passed before adding the new failing regression. Do not infer
+public Object compatibility or PR readiness from the prior34 result.
+
+Next replace implicit root-identity accessor recognition with real owned property
+descriptors/attributes and genuine accessor function values. Fix the new reflection
+regression without special-casing hasOwnProperty, then implement remaining Object
+methods and source adapters. Preserve the64 certified source corpus; native cache
+forms still unresolved. No PR/full workspace/independent review/final CI claim on
+this unpublished preparation branch. All local processes terminal. M2–M9 active;
+no merge, closure or milestone acceptance.

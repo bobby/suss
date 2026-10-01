@@ -3247,3 +3247,118 @@ fn runtime_abi_default_object_methods_are_callable_shared_and_survive_gc() {
     store.gc(None).unwrap();
     nominal_value(&mut store, runtime, "object-method-invoke", &[methods[1].clone(), other, args]);
 }
+
+fn native_property_key(store: &mut Store<()>, runtime: Instance, units: &[u16]) -> Val {
+    let key = nominal_value(store, runtime, "string-new", &[Val::I32(units.len() as i32)]);
+    for (i, unit) in units.iter().enumerate() {
+        runtime.get_func(&mut *store, "string-set-unit").unwrap().call(&mut *store, &[key.clone(), Val::I32(i as i32), Val::I32(i32::from(*unit))], &mut [Val::I32(0)]).unwrap();
+    }
+    key
+}
+
+#[test]
+fn runtime_abi_native_property_accessor_preserves_proto_writes_shadows_and_gc() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let owner = nominal_value(&mut store, runtime, "native-object-default-new", &[]);
+    let parent = nominal_value(&mut store, runtime, "native-object-default-new", &[]);
+    let root = nominal_value(&mut store, runtime, "native-object-default-prototype", &[]);
+    let key = native_property_key(&mut store, runtime, &"__proto__".encode_utf16().collect::<Vec<_>>());
+    let answer = native_property_key(&mut store, runtime, &"answer".encode_utf16().collect::<Vec<_>>());
+    let seven = nominal_value(&mut store, runtime, "number-box", &[Val::F64(7.0f64.to_bits())]);
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let old = nominal_value(&mut store, runtime, "native-object-property-get", &[owner.clone(), key.clone()]);
+    assert!(wasmtime::Rooted::ref_eq(&store, old.unwrap_anyref().unwrap(), root.unwrap_anyref().unwrap()).unwrap());
+    for value in [seven.clone(), Val::AnyRef(Some(wasmtime::AnyRef::from_i31(&mut store, wasmtime::I31::new_u32(4).unwrap())))] {
+        nominal_value(&mut store, runtime, "native-object-property-set", &[owner.clone(), key.clone(), value]);
+        let unchanged = nominal_value(&mut store, runtime, "native-object-property-get", &[owner.clone(), key.clone()]);
+        assert!(wasmtime::Rooted::ref_eq(&store, unchanged.unwrap_anyref().unwrap(), root.unwrap_anyref().unwrap()).unwrap());
+    }
+    nominal_value(&mut store, runtime, "native-object-property-set", &[parent.clone(), answer.clone(), seven.clone()]);
+    nominal_value(&mut store, runtime, "native-object-property-set", &[owner.clone(), key.clone(), parent.clone()]);
+    store.gc(None).unwrap();
+    let value = nominal_value(&mut store, runtime, "native-object-property-get", &[owner.clone(), answer]);
+    assert_eq!(value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 0).unwrap().unwrap_f64(), 7.0);
+    for (receiver, value) in [(parent.clone(), owner.clone()), (root.clone(), parent.clone())] {
+        let error = runtime.get_func(&mut store, "native-object-property-set").unwrap().call(&mut store, &[receiver, key.clone(), value], &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        assert!(store.take_pending_exception().is_some());
+    }
+    nominal_value(&mut store, runtime, "native-object-property-set", &[root, key.clone(), nil.clone()]);
+    // Removing the chain removes the accessor; the next write becomes own data.
+    nominal_value(&mut store, runtime, "native-object-property-set", &[owner.clone(), key.clone(), nil]);
+    nominal_value(&mut store, runtime, "native-object-property-set", &[owner.clone(), key.clone(), seven.clone()]);
+    store.gc(None).unwrap();
+    let value = nominal_value(&mut store, runtime, "native-object-property-get", &[owner.clone(), key.clone()]);
+    assert_eq!(value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 0).unwrap().unwrap_f64(), 7.0);
+    // A nearer inherited data __proto__ suppresses the farther default accessor.
+    nominal_value(&mut store, runtime, "native-object-own-set", &[parent.clone(), key.clone(), seven]);
+    let child = nominal_value(&mut store, runtime, "native-object-default-new", &[]);
+    nominal_value(&mut store, runtime, "native-object-property-set", &[child.clone(), key.clone(), parent.clone()]);
+    nominal_value(&mut store, runtime, "native-object-property-set", &[child.clone(), key.clone(), owner.clone()]);
+    let actual_parent = nominal_value(&mut store, runtime, "native-object-prototype", &[child.clone()]);
+    assert!(wasmtime::Rooted::ref_eq(&store, actual_parent.unwrap_anyref().unwrap(), parent.unwrap_anyref().unwrap()).unwrap());
+    let own = nominal_value(&mut store, runtime, "native-object-property-get", &[child, key]);
+    assert!(wasmtime::Rooted::ref_eq(&store, own.unwrap_anyref().unwrap(), owner.unwrap_anyref().unwrap()).unwrap());
+}
+
+#[test]
+fn runtime_abi_native_property_scalar_keys_and_malformed_values_recover() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let owner = nominal_value(&mut store, runtime, "native-object-default-new", &[]);
+    let mut cases = vec![];
+    for (sentinel, spelling) in [(0, "null"), (2, "false"), (4, "true"), (6, "undefined")] {
+        cases.push((Val::AnyRef(Some(wasmtime::AnyRef::from_i31(&mut store, wasmtime::I31::new_u32(sentinel).unwrap()))), spelling.encode_utf16().collect::<Vec<_>>()));
+    }
+    for (number, spelling) in [(-0.0f64, "0"), (f64::NAN, "NaN"), (1.5, "1.5")] {
+        cases.push((nominal_value(&mut store, runtime, "number-box", &[Val::F64(number.to_bits())]), spelling.encode_utf16().collect()));
+    }
+    for units in [vec![0xd800], vec![0xd83d, 0xde00], vec![]] {
+        cases.push((native_property_key(&mut store, runtime, &units), units));
+    }
+    for (index, (key, units)) in cases.into_iter().enumerate() {
+        let number = nominal_value(&mut store, runtime, "number-box", &[Val::F64((index as f64).to_bits())]);
+        nominal_value(&mut store, runtime, "native-object-property-set", &[owner.clone(), key, number]);
+        store.gc(None).unwrap();
+        let expected_key = native_property_key(&mut store, runtime, &units);
+        let value = nominal_value(&mut store, runtime, "native-object-property-get", &[owner.clone(), expected_key]);
+        assert_eq!(value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 0).unwrap().unwrap_f64(), index as f64);
+    }
+    let proto = native_property_key(&mut store, runtime, &"__proto__".encode_utf16().collect::<Vec<_>>());
+    let foreign = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    for value in [foreign.clone(), Val::null_any_ref()] {
+        for (name, arguments) in [
+            ("native-object-property-get", vec![owner.clone(), value.clone()]),
+            ("native-object-proto-accessor", vec![owner.clone(), value.clone()]),
+            ("native-object-property-set", vec![owner.clone(), proto.clone(), value]),
+        ] {
+            let error = runtime.get_func(&mut store, name).unwrap().call(&mut store, &arguments, &mut [if name.ends_with("accessor") { Val::I32(0) } else { Val::null_any_ref() }]).unwrap_err();
+            assert!(error.is::<wasmtime::ThrownException>(), "{name}: {error:#}");
+            assert!(!error.is::<wasmtime::Trap>());
+            assert!(store.take_pending_exception().is_some());
+        }
+    }
+    store.gc(None).unwrap();
+    nominal_value(&mut store, runtime, "native-object-property-get", &[owner, proto]);
+}
+
+#[test]
+fn runtime_abi_default_proto_accessor_is_an_own_property() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let root = nominal_value(&mut store, runtime, "native-object-default-prototype", &[]);
+    let name = native_property_key(&mut store, runtime, &"hasOwnProperty".encode_utf16().collect::<Vec<_>>());
+    let method = nominal_value(&mut store, runtime, "native-object-property-get", &[root.clone(), name]);
+    let args = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    let key = native_property_key(&mut store, runtime, &"__proto__".encode_utf16().collect::<Vec<_>>());
+    args.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().set(&mut store, 0, key).unwrap();
+    store.gc(None).unwrap();
+    let result = nominal_value(&mut store, runtime, "object-method-invoke", &[method, root, args]);
+    assert_eq!(result.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 4,
+        "the default accessor must be a real own property, not only a lookup special case");
+}
