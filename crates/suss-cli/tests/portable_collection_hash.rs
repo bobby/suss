@@ -59,7 +59,7 @@ fn collection_hash_matches_independently_decoded_primary_values() {
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 49);
+    assert_eq!(cases.len(), 55);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -158,4 +158,48 @@ fn cached_hash_suppresses_effects_and_recovers_after_a_throw() {
         &mut session,
         "(= (hash guarded-list) guarded-hash)"
     ));
+}
+
+#[test]
+fn element_throw_stops_next_and_cons_cache_survives_gc() {
+    use suss_cli::portable_session::SessionError;
+    use wasmtime::Val;
+    let mut session = Session::new().unwrap();
+    session
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .unwrap();
+    session.enter_namespace("user").unwrap();
+    session
+        .eval("(def element-trace 0) (def next-trace 0) (def original-next next)")
+        .unwrap();
+    for helper in ["hash-ordered-coll", "hash-unordered-coll"] {
+        session
+            .eval("(set! element-trace 0) (set! next-trace 0)")
+            .unwrap();
+        let source = format!("(with-redefs [hash (fn [x] (do (set! element-trace (+ (* element-trace 10) x)) (if (= x 2) (throw 17) x))) next (fn [x] (do (set! next-trace (+ next-trace 1)) (original-next x)))] ({helper} (list 1 2 3)))");
+        let Err(SessionError::Language(thrown)) = session.eval(&source) else {
+            panic!("exact element exception")
+        };
+        session
+            .inspect(&thrown, |mut store, value| {
+                let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                let fields = object.fields(&mut store)?.collect::<Vec<_>>();
+                let [Val::F64(bits)] = fields.as_slice() else {
+                    panic!("Number exception layout")
+                };
+                assert_eq!(*bits, 17.0f64.to_bits());
+                Ok(())
+            })
+            .unwrap();
+        session.collect().unwrap();
+        assert!(boolean(&mut session, "(= element-trace 12)"));
+        assert!(boolean(&mut session, "(= next-trace 1)"));
+        assert!(boolean(
+            &mut session,
+            "(= (hash (list 1 2)) (hash-ordered-coll (list 1 2)))"
+        ));
+    }
+    session.eval("(def cached-cons (cons 1 (list 2))) (def cached-cons-hash (hash cached-cons)) (def cached-cons-meta (with-meta cached-cons nil))").unwrap();
+    session.collect().unwrap();
+    assert!(boolean(&mut session, "(with-redefs [hash-ordered-coll (fn [_] (throw 17))] (= (hash cached-cons) (hash cached-cons-meta) cached-cons-hash))"));
 }

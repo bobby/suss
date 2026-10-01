@@ -8036,3 +8036,37 @@ inputs; no fresh baseline is claimed for ancestry/doc changes. Roadmap current
 inventory count corrected to196/869; original25-minute M1 budget labeled initial,
 with current35-minute followup evidence retained. Root remains heavy-idle pending
 PR creation/reviewer release; required local full6189 applies unchanged bytes.
+
+
+## Independent PR112 review — 2026-10-01
+
+Isolated detached /private/tmp/suss-review-pr112 atb4df02d with actual pinned
+upstreamc4295f30, no symlinks. Read AGENTS, design, roadmap, inventory and handoff;
+checked complete source1406/1420/1432, explicit source hashes/metadata/patches/EPL,
+dependency initialization and raw f64/Boolean/Number17/Error Wrong arity decoding.
+No production defect found. Root6189 and all root handles terminal before slot
+release; reviewer exclusively owns cargo/JVM/Node until terminal full result.
+
+All original49 corpus objects and parent corpora preserved. Six additive probes
+cover live count/mixing, signed32 overflow, captured helper/live element hash and
+Cons cache metadata. Initial30098 terminal1 was an incorrect provisional ordered
+overflow assertion(-32); pin false and independent arithmetic identified929.
+Corrected new probe source, fresh43535 terminal0:55 exact values/native4,
+/private/tmp/suss-pr112-review-oracle55-final.log. Added native test afterward,
+focused10323 terminal0/5 /private/tmp/suss-pr112-review-native5.log verifies raw
+Number17, second-element throw prevents next/third effects, recovery and Cons
+cache/metadata acrossGC. Python82/import105/setup5/reviews196+869/diff pass.
+Required full27387 LIVE /private/tmp/suss-pr112-review-full.log, shared target/
+build2 cargo test --workspace --locked -- --test-threads=2, noRUSTFLAGS.
+No merges/readiness/issue or milestone closure. Exact reviewed-head CI required;
+persistent vectors/maps/sets/map entries and remaining M2–M9 gates stay open.
+
+
+Reviewer full27387 authoritative terminal0; inspected final suss_reader doc tests
+and no failed-test/error entries in /private/tmp/suss-pr112-review-full.log.
+Required shared-target/build2 --workspace --locked -- --test-threads=2 passes
+collection5/55 exact values, unchanged parent corpora/explicit boundaries and ABI45.
+Existing manual ignores remain explicit. All reviewer heavy handles30098/43535/
+10323/27387 terminal. Reviewer commits/pushes additive probes and evidence, then
+releases exclusive heavy slot. Exact final reviewed-head CI gates readiness;
+no merge, issue or milestone closure.

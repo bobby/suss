@@ -65,3 +65,20 @@ Next finish review/CI, then actual persistent vectors/maps/sets and map entries,
 remaining sequence/collection semantics and compiled core/macro release acceptance.
 Date/Inst and other outstanding portable core work remain required. Issue98 still
 defers hashing algorithm evaluation; this work preserves the pinned algorithm.
+
+
+Independent PR112 review preserved all49 original source/reference objects and
+all parent corpora. Six additive probes verify count and live final mixing,
+signed32 overflow bases, a captured helper observing current element hashing,
+and cached Cons metadata. Initial provisional ordered overflow probe asserted
+-32 and fresh pin returned false; direct arithmetic inspection established929,
+source was corrected and fresh43535 terminal0 certifies55 exact matches:
+/private/tmp/suss-pr112-review-oracle55-final.log. Original49 were never altered.
+Native10323 terminal0/5 additionally decodes thrown Number17, verifies that a
+second element throw prevents its next call and all third-element effects,
+restores live helpers and retains Cons cache/metadata across forced GC.
+Python82, import105, setup5 and reviews196+869 pass. No production finding.
+Independent full27387 terminal0 through final reader doc tests,
+/private/tmp/suss-pr112-review-full.log. Required workspace --locked baseline
+passes with existing explicit manual ignores retained. Exact reviewed-head CI
+still required.

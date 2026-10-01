@@ -179,8 +179,8 @@ gates remain open; see [public scalar hash evidence](docs/runtime/public-scalar-
 
 
 Retained ordered/unordered collection hash helpers and the empty unordered hash
-initializer now execute through the retained source pipeline. Fresh49 pinned/
-native observations and4 native tests cover sequential hash agreement, nested
+initializer now execute through the retained source pipeline. Fresh55 pinned/
+native observations and5 native tests cover sequential hash agreement, nested
 values, UTF16, duplicates/count, caches/metadata, effects and GC recovery. Core
 selection101/artifacts105 and196 partial/869 unassessed reviews remain
 prerequisites. Persistent vectors/maps/sets/map entries, collision nodes and

@@ -393,6 +393,54 @@
         "tag": "bool",
         "value": true
       }
+    },
+    {
+      "id": "ordered-count-live-mix",
+      "source": "(with-redefs [hash (fn [_] -1) mix-collection-hash (fn [h n] (+ (* n 100) h))] (= (hash-ordered-coll (list 1 2)) 1129))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "unordered-count-live-mix",
+      "source": "(with-redefs [hash (fn [_] -1) mix-collection-hash (fn [h n] (+ (* n 100) h))] (= (hash-unordered-coll (list 1 2)) 198))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ordered-overflow-basis",
+      "source": "(with-redefs [hash (fn [_] 2147483647) mix-collection-hash (fn [h n] (= h 929))] (hash-ordered-coll (list 1 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "unordered-overflow-basis",
+      "source": "(with-redefs [hash (fn [_] 2147483647) mix-collection-hash (fn [h n] (= h -2))] (hash-unordered-coll (list 1 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "captured-unordered-live-elements",
+      "source": "(let [f hash-unordered-coll] (with-redefs [hash-unordered-coll (fn [_] 17) hash (fn [_] 1)] (= (f (list 9 8)) (mix-collection-hash 2 2))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "cons-metadata-cache",
+      "source": "(let [c (cons 1 (list 2)) h (hash c) m (with-meta c nil)] (with-redefs [hash-ordered-coll (fn [_] 99)] (= (hash c) (hash m) h)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
     }
   ]
 }
