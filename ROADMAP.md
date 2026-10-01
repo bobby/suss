@@ -176,3 +176,13 @@ protocol priority, default identity and Date normalization/GC. Selection98/
 artifacts102 and193 partial/872 unassessed reviews remain prerequisites. Full
 Date/Inst/reader/printing, collection composition, compiled macros and release
 gates remain open; see [public scalar hash evidence](docs/runtime/public-scalar-hash.md).
+
+
+Retained ordered/unordered collection hash helpers and the empty unordered hash
+initializer now execute through the retained source pipeline. Fresh49 pinned/
+native observations and4 native tests cover sequential hash agreement, nested
+values, UTF16, duplicates/count, caches/metadata, effects and GC recovery. Core
+selection101/artifacts105 and196 partial/869 unassessed reviews remain
+prerequisites. Persistent vectors/maps/sets/map entries, collision nodes and
+compiled macro/release gates remain required; see
+[collection hashing evidence](docs/runtime/collection-hashing.md).

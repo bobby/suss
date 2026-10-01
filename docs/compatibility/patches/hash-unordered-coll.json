@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "19e47a78a83fb2229edcb32725a2885a19ed854c64281ea81f128f4a80ecdeda",
+  "replacement": "(def ^number hash-unordered-coll\n  \"Returns the hash code, consistent with =, for an external unordered\n   collection implementing Iterable. For maps, the iterator should\n   return map entries whose hash is computed as\n     (hash-ordered-coll [k v]).\n   See http://clojure.org/data_structures#hash for full algorithms.\"\n  (fn [coll]\n  (loop [n 0 hash-code 0 coll (seq coll)]\n    (if-not (nil? coll)\n      (recur (inc n) (bit-or (+ hash-code (hash (first coll))) 0) (next coll))\n      (mix-collection-hash hash-code n)))))",
+  "rationale": "Explicit fixed defn bootstrap retains complete source algorithm, metadata and docstring. Retained seq/first/next/hash/Murmur calls and source loop preserve element order and count. No native hash shortcut, copied JVM algorithm, collection-order normalization or general map/set acceptance is introduced. Compiled upstream macros remain unfinished."
+}

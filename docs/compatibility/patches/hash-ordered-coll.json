@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c8bff96cbba1ee32f0b972445437e993fd4b752c36c1096c9b1549d638e7cc2b",
+  "replacement": "(def ^number hash-ordered-coll\n  \"Returns the hash code, consistent with =, for an external ordered\n   collection implementing Iterable.\n   See http://clojure.org/data_structures#hash for full algorithms.\"\n  (fn [coll]\n  (loop [n 0 hash-code 1 coll (seq coll)]\n    (if-not (nil? coll)\n      (recur (inc n) (bit-or (+ (imul 31 hash-code) (hash (first coll))) 0)\n        (next coll))\n      (mix-collection-hash hash-code n)))))",
+  "rationale": "Explicit fixed defn bootstrap retains complete source algorithm, metadata and docstring. Retained seq/first/next/hash/Murmur calls and source loop preserve element order and count. No native hash shortcut, copied JVM algorithm, collection-order normalization or general map/set acceptance is introduced. Compiled upstream macros remain unfinished."
+}
