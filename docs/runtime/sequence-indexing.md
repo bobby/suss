@@ -10,8 +10,8 @@ lowering follows pinned core.cljc1201 less-than-zero comparison. No new runtime
 ABI/type/bootstrap-cell or fake indexing implementation.
 
 Import92/artifacts96/reviews185 partial+880 unassessed. Fresh pinned primary
-execution certifies56 observations, all independently decoded native Wasm matches;
-native2 and Python80 pass. Required full workspace baseline is running. Unsupported-value str_/type/type->str formatting remains explicitly
+execution certifies62 observations, all independently decoded native Wasm matches;
+native3 and Python80 pass. Independent review full baseline remains pending. Unsupported-value str_/type/type->str formatting remains explicitly
 uninitialized; other persistent types, full compiled macros and surrounding
 collection/release gates remain unfinished. No completed issue/milestone claim.
 
@@ -58,3 +58,16 @@ opened with independent reviewer review_pr105 dispatched; exact reviewed-head
 CI remains mandatory. All root heavy handles terminal; release slot to reviewer
 after evidence push. No merges or issue/milestone closures. Next verify reviewer
 findings/CI then retained hashing/printing and remaining M2–M9 acceptance.
+
+Independent review preserves complete extracted private defn- source and inventory
+visibility; bootstrap runtime Var metadata/privacy enforcement remain unfinished.
+The first-class inc/dec functions and new bounded macros remain distinct.
+
+Independent PR105 review found no significant production defect; six additional
+fresh-certified observations preserve every original56 and all reviewed parent
+corpora. Fresh92436 ended0 with62 exact primary/native3; namespace/phase guards
+and typed-error/GC tests pass. Required independent full92345 ended0 through final
+doc tests, /private/tmp/suss-pr105-review-full.log; Python80/import96/setup4/
+reviews185partial+880unassessed verified. Provisional review fixture failures and
+corrections are recorded in handoff. Exact final reviewed-head CI remains root's
+readiness gate; no merges or acceptance claim for unfinished collection/macros.

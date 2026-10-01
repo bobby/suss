@@ -163,6 +163,9 @@ fn indexing_macros_resolve_aliases_exclusions_shadowing_and_both_phases() {
     };
     let mut session = Session::new().unwrap();
     session
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .unwrap();
+    session
         .eval("(ns indexing.alias (:require [cljs.core :as c :refer [inc dec neg?]]))")
         .unwrap();
     assert_eq!(

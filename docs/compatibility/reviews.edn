@@ -7,7 +7,7 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["runtime:IIndexed:641"]
    :classification :adapted
-   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing56 and typed error/effect/GC checks pass; formatting, other collection types and compiled macro acceptance remain unfinished."
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing62 and typed error/effect/GC checks pass; formatting, runtime Var metadata/privacy, other collection types and compiled macro acceptance remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-indexed-predicate.json"
    :alternative nil
@@ -17,7 +17,7 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["macro:neg?:1201"]
    :classification :adapted
-   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing56 and typed error/effect/GC checks pass; formatting, other collection types and compiled macro acceptance remain unfinished."
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing62 and typed error/effect/GC checks pass; formatting, runtime Var metadata/privacy, other collection types and compiled macro acceptance remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-neg-predicate.json"
    :alternative nil
@@ -25,9 +25,9 @@
   "runtime:linear-traversal-nth:1927"
   {:source-sha256 "cff11e42ca5932cabd3f4e945332a5990c3736cfa353269c8bc2f1997e5c324d" :visibility :private
    :arities {:fixed [2 3] :variadic-min nil}
-   :dependencies ["runtime:seq:1282" "runtime:first:1309" "runtime:next:1333" "runtime:indexed?:1606" "runtime:dec:2803"]
+   :dependencies ["runtime:seq:1282" "runtime:first:1309" "runtime:next:1333" "runtime:indexed?:1606" "macro:dec:1189"]
    :classification :adapted
-   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing56 and typed error/effect/GC checks pass; formatting, other collection types and compiled macro acceptance remain unfinished."
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing62 and typed error/effect/GC checks pass; formatting, runtime Var metadata/privacy, other collection types and compiled macro acceptance remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-linear-traversal-nth.json"
    :alternative nil
@@ -35,9 +35,9 @@
   "runtime:nth:1947"
   {:source-sha256 "b7513898cb0229e2358dfd30f38defd2826e5f2fef0faf2ed79f526f4f25a276" :visibility :public
    :arities {:fixed [2 3] :variadic-min nil}
-   :dependencies ["runtime:linear-traversal-nth:1927" "runtime:neg?:3086" "runtime:native-satisfies?:322" "runtime:IIndexed:641" "pending str_ type type->str formatting"]
+   :dependencies ["runtime:linear-traversal-nth:1927" "macro:neg?:1201" "runtime:native-satisfies?:322" "runtime:IIndexed:641" "pending str_ type type->str formatting"]
    :classification :adapted
-   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing56 and typed error/effect/GC checks pass; formatting, other collection types and compiled macro acceptance remain unfinished."
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing62 and typed error/effect/GC checks pass; formatting, runtime Var metadata/privacy, other collection types and compiled macro acceptance remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-nth.json"
    :alternative nil
@@ -45,9 +45,9 @@
   "runtime:-indexOf:1610"
   {:source-sha256 "bbdddf87dd34c96146d94e55b673fe25218f65fc62a54e142c6866f54b1408ae" :visibility :private
    :arities {:fixed [2 3] :variadic-min nil}
-   :dependencies ["runtime:nth:1947" "runtime:=:1342" "runtime:count:1906" "runtime:neg?:3086" "runtime:inc:1505"]
+   :dependencies ["runtime:nth:1947" "runtime:=:1342" "runtime:count:1906" "macro:neg?:1201" "macro:inc:1192"]
    :classification :adapted
-   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing56 and typed error/effect/GC checks pass; formatting, other collection types and compiled macro acceptance remain unfinished."
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing62 and typed error/effect/GC checks pass; formatting, runtime Var metadata/privacy, other collection types and compiled macro acceptance remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence--indexOf.json"
    :alternative nil
@@ -55,9 +55,9 @@
   "runtime:-lastIndexOf:1627"
   {:source-sha256 "5bf829a7ded5d38c0872602924634241cd3920adb15a33ee9bf9d73b2146539c" :visibility :private
    :arities {:fixed [2 3] :variadic-min nil}
-   :dependencies ["runtime:nth:1947" "runtime:=:1342" "runtime:count:1906" "runtime:neg?:3086" "runtime:dec:2803"]
+   :dependencies ["runtime:nth:1947" "runtime:=:1342" "runtime:count:1906" "macro:neg?:1201" "macro:dec:1189"]
    :classification :adapted
-   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing56 and typed error/effect/GC checks pass; formatting, other collection types and compiled macro acceptance remain unfinished."
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing62 and typed error/effect/GC checks pass; formatting, runtime Var metadata/privacy, other collection types and compiled macro acceptance remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence--lastIndexOf.json"
    :alternative nil

@@ -7248,3 +7248,57 @@ opened with independent reviewer review_pr105 dispatched; exact reviewed-head
 CI remains mandatory. All root heavy handles terminal; release slot to reviewer
 after evidence push. No merges or issue/milestone closures. Next verify reviewer
 findings/CI then retained hashing/printing and remaining M2–M9 acceptance.
+
+## Independent PR105 review — 2026-10-01
+
+Reviewed candidate26a7443 and evidence followup9b14f4b against reviewed104
+f7e0fca6565e22c6febf2b33549cadeba19710d0 in isolated /private/tmp/suss-review-pr105
+with actual detached upstreamc4295f30. Read AGENTS/accepted design/ROADMAP/
+inventory/handoff and inspected all complete retained indexing/search forms,
+source patches/EPL/hash provenance, overloads, dispatch order, literal min/max
+adaptations, UTF-16, bounded inc/dec/neg? HIR and resolver aliases/refers/exclusions/
+lexical/user shadowing/phases. No significant production defect found in this
+bounded port. Clarified private defn- runtime Var metadata/namespace privacy
+remain unfinished despite preserved extracted source and inventory visibility;
+corrected new dependency records to macro inc/dec/neg? and regenerated manifest.
+Formatter dependencies still uninitialized; no full nth/core/M2–M9 acceptance.
+
+Six appended probes preserve every original56 source/expectation object and
+parent sequence/reduction/control/iteration corpora and exact separate boundary.
+They prove IIndexed dispatch before sequence traversal, search count once and
+stop at first match, inc/dec/neg? lexical shadowing, once-only operand effects,
+throw prevents later index effects and core-neg? redefinition independence.
+Native namespace guard adds core aliases/refers, explicit refer conflict,
+user globals, exclusions, GC and both compiler phases/located arity rejection.
+
+Initial fresh42082 ended1 on new provisional grouped deftype overload syntax;
+pin requires repeated deftype methods, corrected only those new source candidates.
+Retry54796 certifies62 primary but ended101 on new native refer harness lacking
+retained runtime bindings. Loading actual core fixes harness;37532 focused native3
+ended0. Final fresh92436 ended0:62 exact primary/native3,
+/private/tmp/suss-pr105-review-oracle62-certified.log. Initial logs retained in
+/private/tmp/suss-pr105-review-oracle62.log and
+/private/tmp/suss-pr105-review-oracle62-final.log. No original expected result
+changed, no skips or false matches. Python62505 ended0:80 tests pass,
+/private/tmp/suss-pr105-review-python.log; import96/setup4/reviews185partial+
+880unassessed/diff-check pass. No RUSTFLAGS; shared target/build2/testthreads2.
+
+PR104 READY and still unmerged: reviewedf7e0fca exact CI36846726372 SUCCESS;
+root inspected /private/tmp/suss-pr104-final-ci.log through final doc tests and
+verified unchanged head before marking ready. PR105 final reviewed-head CI is
+still root readiness gate after review commit/push. Required independent full92345
+live, /private/tmp/suss-pr105-review-full.log. Reviewer exclusively owns heavy
+slot until authoritative terminal full output/all handles inspected. No merges,
+issue closures or milestone acceptance. Next retained hash/printing, remaining
+persistent collections, compiled macros and surrounding M2–M9 acceptance.
+
+Independent full92345 ended0; inspected /private/tmp/suss-pr105-review-full.log
+through all final reader doc tests. Required command CARGO_TARGET_DIR=/Users/
+bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace
+--locked -- --test-threads=2. All enabled required suites pass, including native
+indexing3/62, core_import17 and reviewed parent corpora. Existing manual ignores
+and diagnostic9passing/7knownfailures unchanged. Final Python18859 ended0 with80
+passes after provenance updates, /private/tmp/suss-pr105-review-python-final.log.
+All reviewer handles42082/54796/62505/37532/92436/18859/92345 terminal. Reviewer
+releases exclusive heavy slot after review commit/push; root must gate readiness
+on successful exact final reviewed-head CI. No merge or issue/milestone closure.
