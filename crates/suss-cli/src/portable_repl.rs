@@ -95,3 +95,60 @@ pub fn error_display(session: &mut Session, error: &SessionError) -> String {
         _ => error.to_string(),
     }
 }
+
+/// Evaluate actual parsed forms once, retaining a separate compiled macro Store.
+/// A standalone source definition returns its actual compile-time function value.
+pub fn evaluate_compiled(
+    runtime: &mut Session,
+    macros: &mut crate::portable_macros::CompiledMacros,
+    source: &str,
+) -> Result<String, SessionError> {
+    let mut forms = suss_reader::forms::read_forms(source)
+        .and_then(suss_reader::forms::resolve_conditionals)
+        .map_err(|error| {
+            SessionError::Compile(suss_compile::portable::Diagnostic {
+                span: error.span,
+                message: error.message,
+            })
+        })?;
+    if forms.len() == 1 {
+        if let suss_reader::forms::Kind::List(items) = &forms[0].kind {
+            if let Some(suss_reader::forms::Form {
+                kind: suss_reader::forms::Kind::Symbol(symbol),
+                ..
+            }) = items.first()
+            {
+                if runtime.resolves_macro_definition(symbol) {
+                    // Resolve aliases/refers through the actual Runtime scope;
+                    // only the structural bootstrap head is canonicalized.
+                    let suss_reader::forms::Kind::List(items) = &mut forms[0].kind else {
+                        unreachable!()
+                    };
+                    items[0].kind = suss_reader::forms::Kind::Symbol(suss_reader::Symbol {
+                        namespace: Some("suss.core".into()),
+                        name: "defmacro".into(),
+                    });
+                    macros.enter_namespace(runtime.current_namespace())?;
+                    return macros
+                        .define_form_display(forms.into_iter().next().unwrap(), 0..source.len());
+                }
+            }
+        }
+    }
+    let prepared = runtime
+        .compilation_snapshot()
+        .prepare(forms, 0..source.len(), macros)?;
+    let value = runtime.eval_prepared(prepared)?;
+    display(runtime, &value)
+}
+/// Provision both replacement Stores before discarding either previous phase.
+pub fn reset_compiled(
+    runtime: &mut Session,
+    macros: &mut crate::portable_macros::CompiledMacros,
+) -> Result<(), SessionError> {
+    let replacement_runtime = runtime.replacement()?;
+    let replacement_macros = macros.replacement()?;
+    *runtime = replacement_runtime;
+    *macros = replacement_macros;
+    Ok(())
+}

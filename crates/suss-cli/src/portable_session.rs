@@ -532,13 +532,20 @@ impl Session {
     /// Create the replacement before discarding the old Store. No replay or retained
     /// fragment state crosses reset, and old/foreign handles are checked before use.
     pub fn reset(&mut self) -> Result<(), SessionError> {
+        *self = self.replacement()?;
+        Ok(())
+    }
+    pub(crate) fn replacement(&self) -> Result<Self, SessionError> {
         let mut replacement =
             Self::with_engine_in(self.engine.clone(), self.options.clone(), self.phase)?;
         if self.bootstrap_core {
             replacement.provision_core()?;
         }
-        *self = replacement;
-        Ok(())
+        Ok(replacement)
+    }
+    pub(crate) fn resolves_macro_definition(&self, symbol: &suss_reader::Symbol) -> bool {
+        self.environment
+            .resolves_bootstrap_name(self.phase, symbol, "defmacro")
     }
     fn check(&self, value: &SessionValue) -> Result<(), SessionError> {
         if value.identity == self.identity {
@@ -742,7 +749,14 @@ impl Session {
         &mut self,
         namespace: &str,
     ) -> Result<Option<SessionValue>, SessionError> {
-        self.load_namespace_with_provided(namespace, self.provided.clone(), false)
+        self.load_namespace_with_provided(namespace, self.provided.clone(), false, None)
+    }
+    pub fn load_namespace_with_macros(
+        &mut self,
+        namespace: &str,
+        expander: &mut dyn portable::ExpansionHost,
+    ) -> Result<Option<SessionValue>, SessionError> {
+        self.load_namespace_with_provided(namespace, self.provided.clone(), false, Some(expander))
     }
     /// Recompile and initialize a namespace using its existing live cells. When
     /// dependencies is true, reload its reachable dependencies in require order.
@@ -751,6 +765,22 @@ impl Session {
         &mut self,
         namespace: &str,
         dependencies: bool,
+    ) -> Result<Option<SessionValue>, SessionError> {
+        self.reload_namespace_using(namespace, dependencies, None)
+    }
+    pub fn reload_namespace_with_macros(
+        &mut self,
+        namespace: &str,
+        dependencies: bool,
+        expander: &mut dyn portable::ExpansionHost,
+    ) -> Result<Option<SessionValue>, SessionError> {
+        self.reload_namespace_using(namespace, dependencies, Some(expander))
+    }
+    fn reload_namespace_using(
+        &mut self,
+        namespace: &str,
+        dependencies: bool,
+        expander: Option<&mut dyn portable::ExpansionHost>,
     ) -> Result<Option<SessionValue>, SessionError> {
         let identity = ModuleIdentity::new(self.phase, namespace).map_err(SessionError::Compile)?;
         if identity.namespace() == "suss.core" {
@@ -771,21 +801,33 @@ impl Session {
             })
             .cloned()
             .collect();
-        self.load_namespace_with_provided(namespace, provided, true)
+        self.load_namespace_with_provided(namespace, provided, true, expander)
     }
     fn load_namespace_with_provided(
         &mut self,
         namespace: &str,
         provided: BTreeSet<ModuleIdentity>,
         reloading: bool,
+        expander: Option<&mut dyn portable::ExpansionHost>,
     ) -> Result<Option<SessionValue>, SessionError> {
-        let mut plan = portable::modules::prepare_modules(
-            namespace,
-            &self.options.source_paths,
-            &self.environment,
-            self.phase,
-            &provided,
-        )
+        let mut plan = if let Some(expander) = expander {
+            portable::modules::prepare_modules_with_expander(
+                namespace,
+                &self.options.source_paths,
+                &self.environment,
+                self.phase,
+                &provided,
+                expander,
+            )
+        } else {
+            portable::modules::prepare_modules(
+                namespace,
+                &self.options.source_paths,
+                &self.environment,
+                self.phase,
+                &provided,
+            )
+        }
         .map_err(SessionError::Module)?;
         plan.environment
             .enter_namespace(self.phase, self.current_namespace())

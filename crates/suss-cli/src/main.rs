@@ -729,10 +729,17 @@ fn run_component_impl(path: &str, invoke: &str, args: &[String]) -> Result<(), S
 #[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn run_repl() {
     use std::io::{self, BufRead, IsTerminal};
-    use suss_cli::{portable_repl, portable_session::Session};
+    use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
 
     let mut session = match Session::new_repl() {
         Ok(session) => session,
+        Err(error) => {
+            eprintln!("Error: {error}");
+            return;
+        }
+    };
+    let mut macros = match CompiledMacros::new() {
+        Ok(macros) => macros,
         Err(error) => {
             eprintln!("Error: {error}");
             return;
@@ -793,7 +800,7 @@ fn run_repl() {
                 "" => continue,
                 ":quit" => break,
                 ":reset" => {
-                    match session.reset() {
+                    match portable_repl::reset_compiled(&mut session, &mut macros) {
                         Ok(()) => println!("nil"),
                         Err(error) => eprintln!("Error: {error}"),
                     };
@@ -811,9 +818,15 @@ fn run_repl() {
                     continue;
                 };
                 let result = match command {
-                    ":load" => session.load_namespace(namespace).map(|_| ()),
-                    ":reload" => session.reload_namespace(namespace, false).map(|_| ()),
-                    ":reload-all" => session.reload_namespace(namespace, true).map(|_| ()),
+                    ":load" => session
+                        .load_namespace_with_macros(namespace, &mut macros)
+                        .map(|_| ()),
+                    ":reload" => session
+                        .reload_namespace_with_macros(namespace, false, &mut macros)
+                        .map(|_| ()),
+                    ":reload-all" => session
+                        .reload_namespace_with_macros(namespace, true, &mut macros)
+                        .map(|_| ()),
                     ":in-ns" => session.enter_namespace(namespace),
                     _ => unreachable!(),
                 };
@@ -837,11 +850,8 @@ fn run_repl() {
             Err(error) if error.expected.iter().any(|hint| hint == "more input") => continue,
             _ => {}
         }
-        match session.eval(&input) {
-            Ok(value) => match portable_repl::display(&mut session, &value) {
-                Ok(text) => println!("{text}"),
-                Err(error) => eprintln!("Display error: {error}"),
-            },
+        match portable_repl::evaluate_compiled(&mut session, &mut macros, &input) {
+            Ok(text) => println!("{text}"),
             Err(error) => eprintln!(
                 "Error: {}",
                 portable_repl::error_display(&mut session, &error)
@@ -851,7 +861,7 @@ fn run_repl() {
     }
     if !input.is_empty() {
         // Incomplete EOF is a located compilation failure, never a partial eval.
-        if let Err(error) = session.eval(&input) {
+        if let Err(error) = portable_repl::evaluate_compiled(&mut session, &mut macros, &input) {
             eprintln!(
                 "Error: {}",
                 portable_repl::error_display(&mut session, &error)
