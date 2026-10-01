@@ -7954,3 +7954,17 @@ full27630 applies to identical tested code; no new baseline is claimed. Root
 owns heavy slot full collection6189; no cargo/JVM/Node process started here.
 Exact old-head force-with-lease protects the owned branch. New reviewed-head CI
 remains mandatory before readiness; no merge, issue or milestone closure.
+
+
+### PR111 inherited timeout reconciliation — 2026-10-01
+
+Prior exact-head CI36873588930 completed SUCCESS at revieweddec9e684; downloaded
+/private/tmp/suss-pr111-dec9-ci.log and inspected through final suss_reader doc
+tests. This is historical success, not new-head certification. Statically rebased
+onto independently reviewed PR11007f0a97b20d918cb2b4589831f3ebdf6298e958c,
+preserving all parent timeout audits and child review evidence. Scoped Git diff
+proves crates/runtime/scripts/tests/oracle/Cargo bytes identical to revieweddec.
+Inherited workflow35→60 and explanatory comment match the reviewed parent; no
+suite, worker, lock or fuel gate changed. Prior full27630 remains identical-code
+evidence; no fresh cargo/JVM/Node started while reviewer113 owns heavy slot.
+Exact new reviewed-head CI remains mandatory; no readiness/merge/closure.
