@@ -39,6 +39,31 @@ fn name(body: &mut Vec<Instruction<'static>>, value: &str) {
     });
 }
 
+const INHERITED_NAMES: &[&str] = &[
+    "constructor",
+    "__proto__",
+    "toString",
+    "toLocaleString",
+    "valueOf",
+    "hasOwnProperty",
+    "isPrototypeOf",
+    "propertyIsEnumerable",
+    "__defineGetter__",
+    "__defineSetter__",
+    "__lookupGetter__",
+    "__lookupSetter__",
+];
+fn reject_host_names(body: &mut Vec<Instruction<'static>>, equal: u32, names: &[&str]) {
+    use Instruction::*;
+    for spelling in names {
+        body.push(LocalGet(1));
+        name(body, spelling);
+        body.extend([Call(equal), If(BlockType::Empty)]);
+        nominal::error(body);
+        body.push(End);
+    }
+}
+
 pub(super) fn functions(b: &mut Builder) {
     use Instruction::*;
     // UTF-16 equality stays separate from the explicit native-name normalization.
@@ -130,6 +155,142 @@ pub(super) fn functions(b: &mut Builder) {
     body.push(LocalGet(0));
     let normalize = b.function("property-native-name", &[VALUE], &[VALUE], &body);
 
+    // Named instance access must not mistake raw source names for munged fields.
+    // Boundary spellings checked against cljs/analyzer.cljc js-reserved (line190)
+    // and cljs/compiler.cljc munge at the pinned c4295f303100bbf5afac449242d30bca1126f1a1.
+    // This original guard rejects the unsupported adaptation instead of porting it.
+    let mut body = vec![];
+    guard(&mut body, 0, STRING);
+    body.extend([
+        I32Const(0),
+        LocalSet(1),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(1),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(STRING)),
+        ArrayLen,
+        I32GeU,
+        BrIf(1),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(STRING)),
+        LocalGet(1),
+        ArrayGetU(STRING),
+        LocalSet(2),
+    ]);
+    for (low, high) in [(b'a', b'z'), (b'A', b'Z'), (b'0', b'9')] {
+        body.extend([
+            LocalGet(2),
+            I32Const(low as i32),
+            I32GeU,
+            LocalGet(2),
+            I32Const(high as i32),
+            I32LeU,
+            I32And,
+        ]);
+    }
+    body.extend([
+        I32Or,
+        I32Or,
+        LocalGet(2),
+        I32Const(b'_' as i32),
+        I32Eq,
+        I32Or,
+        LocalGet(2),
+        I32Const(b'$' as i32),
+        I32Eq,
+        I32Or,
+        I32Eqz,
+        If(BlockType::Empty),
+        I32Const(0),
+        Return,
+        End,
+        LocalGet(1),
+        I32Const(1),
+        I32Add,
+        LocalSet(1),
+        Br(0),
+        End,
+        End,
+    ]);
+    for reserved in [
+        "arguments",
+        "abstract",
+        "await",
+        "boolean",
+        "break",
+        "byte",
+        "case",
+        "catch",
+        "char",
+        "class",
+        "const",
+        "continue",
+        "debugger",
+        "default",
+        "delete",
+        "do",
+        "double",
+        "else",
+        "enum",
+        "export",
+        "extends",
+        "final",
+        "finally",
+        "float",
+        "for",
+        "function",
+        "goto",
+        "if",
+        "implements",
+        "import",
+        "in",
+        "instanceof",
+        "int",
+        "interface",
+        "let",
+        "long",
+        "native",
+        "new",
+        "package",
+        "private",
+        "protected",
+        "public",
+        "return",
+        "short",
+        "static",
+        "super",
+        "switch",
+        "synchronized",
+        "this",
+        "throw",
+        "throws",
+        "transient",
+        "try",
+        "typeof",
+        "var",
+        "void",
+        "volatile",
+        "while",
+        "with",
+        "yield",
+        "methods",
+        "null",
+        "constructor",
+    ] {
+        body.push(LocalGet(0));
+        name(&mut body, reserved);
+        body.extend([Call(equal), If(BlockType::Empty), I32Const(0), Return, End]);
+    }
+    body.push(I32Const(1));
+    let field_supported = b.function_with_locals(
+        "property-field-name-supported",
+        &[VALUE],
+        &[ValType::I32],
+        &[(2, ValType::I32)],
+        &body,
+    );
+
     // Stride one is a field schema, stride two a mixed native/name table.
     let mut body = vec![];
     guard(&mut body, 0, ARGS);
@@ -176,6 +337,8 @@ pub(super) fn functions(b: &mut Builder) {
     nominal::error(&mut body);
     body.extend([
         End,
+        I32Const(-1),
+        LocalSet(5),
         I32Const(0),
         LocalSet(3),
         Block(BlockType::Empty),
@@ -195,6 +358,14 @@ pub(super) fn functions(b: &mut Builder) {
         If(BlockType::Empty),
     ]);
     guard(&mut body, 4, STRING);
+    body.extend([
+        LocalGet(4),
+        Call(field_supported),
+        I32Eqz,
+        If(BlockType::Empty),
+    ]);
+    nominal::error(&mut body);
+    body.push(End);
     body.extend([
         Else,
         LocalGet(4),
@@ -234,8 +405,13 @@ pub(super) fn functions(b: &mut Builder) {
         End,
         I32Or,
         If(BlockType::Empty),
+        LocalGet(5),
+        I32Const(0),
+        I32LtS,
+        If(BlockType::Empty),
         LocalGet(3),
-        Return,
+        LocalSet(5),
+        End,
         End,
         LocalGet(3),
         LocalGet(2),
@@ -244,13 +420,13 @@ pub(super) fn functions(b: &mut Builder) {
         Br(0),
         End,
         End,
-        I32Const(-1),
+        LocalGet(5),
     ]);
     let find = b.function_with_locals(
         "property-find",
         &[VALUE, VALUE, ValType::I32],
         &[ValType::I32],
-        &[(1, ValType::I32), (1, VALUE)],
+        &[(1, ValType::I32), (1, VALUE), (1, ValType::I32)],
         &body,
     );
 
@@ -272,6 +448,21 @@ pub(super) fn functions(b: &mut Builder) {
             Call(b.names["closure-property-fields"]),
             LocalSet(payload),
         ]);
+        reject_host_names(&mut body, equal, INHERITED_NAMES);
+        reject_host_names(
+            &mut body,
+            equal,
+            &[
+                "prototype",
+                "length",
+                "name",
+                "caller",
+                "arguments",
+                "call",
+                "apply",
+                "bind",
+            ],
+        );
         guard(&mut body, payload, ARGS);
         array(&mut body, payload);
         body.extend([ArrayLen, I32Const(2), I32Ne, If(BlockType::Empty)]);
@@ -376,6 +567,7 @@ pub(super) fn functions(b: &mut Builder) {
                 Return,
                 End,
             ]);
+            reject_host_names(&mut body, equal, INHERITED_NAMES);
             undefined(&mut body);
             body.push(Return);
         }
@@ -447,6 +639,7 @@ pub(super) fn functions(b: &mut Builder) {
         if writing {
             nominal::error(&mut body); // Dynamic extra instance fields are not implemented.
         } else {
+            reject_host_names(&mut body, equal, INHERITED_NAMES);
             undefined(&mut body);
             body.push(Return);
         }

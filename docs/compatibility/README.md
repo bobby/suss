@@ -279,11 +279,13 @@ Actual persistent list/sequence, reduction and iterator implementations remain
 unfinished; see [core interfaces](../runtime/core-interfaces.md).
 
 
-Literal named-property access needed by retained source now has49 independently
+Literal named-property access needed by retained source now has64 independently
 decoded fresh primary/native observations plus malformed-storage/recovery guards.
 Class/function attributes stay GC-owned and coexist with native protocol keys;
 known instance fields and actual string/array lengths preserve their storage.
 Two existing partial reviews are extended:80 in progress/985 unassessed. The30
 source artifacts only update the review manifest hash. Prototypes, computed/munged
-names, extra instance fields and complete source types/core remain unfinished;
+names, extra instance fields and complete source types/core remain unfinished.
+Munged instance schemas and known unfinished callable/inherited attributes now
+raise explicit errors; full table validation rejects malformed trailing keys;
 see [named properties](../runtime/named-properties.md).

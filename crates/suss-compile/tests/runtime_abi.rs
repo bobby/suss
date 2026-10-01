@@ -2379,5 +2379,55 @@ fn runtime_abi_named_storage_preserves_native_keys_and_rejects_malformed_tables(
         .unwrap()
         .set(&mut store, 0, value)
         .unwrap();
-    language_error(&mut store, runtime, "named-property-get", &[owner, name]);
+    language_error(
+        &mut store,
+        runtime,
+        "named-property-get",
+        &[owner.clone(), name.clone()],
+    );
+    // A matching first key must not hide malformed later storage.
+    let matching_then_opaque = nominal_value(&mut store, runtime, "args-new", &[Val::I32(4)]);
+    let keys = matching_then_opaque
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap();
+    for (index, entry) in [name.clone(), nil.clone(), owner.clone(), nil.clone()]
+        .into_iter()
+        .enumerate()
+    {
+        keys.set(&mut store, index as u32, entry).unwrap();
+    }
+    language_error(
+        &mut store,
+        runtime,
+        "property-find",
+        &[matching_then_opaque.clone(), name.clone(), Val::I32(2)],
+    );
+    language_error(
+        &mut store,
+        runtime,
+        "property-find",
+        &[matching_then_opaque.clone(), name.clone(), Val::I32(1)],
+    );
+    let fields = payload
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap();
+    fields.set(&mut store, 1, matching_then_opaque).unwrap();
+    language_error(
+        &mut store,
+        runtime,
+        "named-property-get",
+        &[owner.clone(), name.clone()],
+    );
+    language_error(
+        &mut store,
+        runtime,
+        "named-property-set",
+        &[owner, name, nil],
+    );
 }

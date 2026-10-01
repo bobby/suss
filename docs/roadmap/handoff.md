@@ -5293,3 +5293,58 @@ and legacy/manual ignores remain explicit. Log
 All root local Cargo/JVM/Node graphs terminal; mandatory independent review may
 own the shared test slot next. No issue closure or merge. Next review/fix and
 require final-head CI, then continue retained Object methods and actual sequences.
+
+
+### Independent PR #90 review
+
+Reviewed candidate38a8a36 against parent09ae837 in isolated
+/private/tmp/suss-review-pr90. Three significant findings were fixed:
+
+- Raw instance schemas exposed source names that need munging as wrong property
+  values. The pin stores field null as null$: .-null is undefined, .-null$ reads3.
+  Initial review corpus35120 ended1 because its provisional combined field
+  expectation15 was actuallyNaN. This is not counted as a successful source probe.
+  Direct fresh compiled-primary boundary inspection also confirms class prototype,
+  function length1 and instance constructor are present; log
+  /private/tmp/suss-pr90-review-host-boundaries-primary.log. The positive field
+  probe now uses unmunged number/_. Unsupported schema regression64967 ended101
+  before the fix. A schema guard rejects reserved/punctuation/non-ASCII names for
+  named access while preserving lexical field slots, until munging is adapted.
+- A matching valid table prefix hid forged opaque tail keys. ABI regression7924
+  ended101 before the fix,40732 ended0 after it. Lookup remembers the first match
+  but validates every schema/table key before returning or modifying storage.
+  Both stride1 schemas and stride2 tables have matching-prefix negative probes.
+- Known unfinished callable/prototype and inherited attributes appeared to be
+  absent. Focus12775 ended101 before explicit guards. Callable prototype/name/
+  length/caller/arguments/call/apply/bind and inherited Object names now raise
+  language errors. Declared unmunged own instance fields still take precedence.
+  Literal source identifiers also reject a leading digit with a located error.
+
+Added15 independent primary probes, leaving original49 unchanged. All remaining
+native public slots, null/undefined aliasing, native-looking instance fields,
+assignment error effects, stored nil and object-marker truthiness execute. New
+noncallable probes distinguish default83 from catch89, correcting a coverage gap
+where the previous default and catch both returned53. Fresh48191 terminal0:
+64 exact primary observations/native4, actual Wasm validation plus forced GC;
+/private/tmp/suss-pr90-review-final-primary.log. Intentional constructor replacement
+warning retained. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-named-property-oracle.sh`.
+
+CLI79523 terminal0: properties4/nativeprotocols11/interfaces5/mutablefields2/
+indexedstrings2. Compiler98381 terminal0: ABI19/pipeline17/nominal5. Logs
+/private/tmp/suss-pr90-review-{cli,compiler}-guards.log. Python71 tests and pinned
+inventory1065/reviews80+985/core-import30 pass. WIT15files/6packages, numeric
+manifest and offline roadmap10milestones/39issues verified by wasi_lock.py,
+numeric_runtime.py --check and publish_roadmap.py. Initial guessed verifier command
+names and --offline flag did not exist; corrected commands pass. Shared ten types,
+globals, ABI version and source forms remain unchanged; manifest review hash only.
+
+Required full workspace baseline32212 terminal0: all enabled workspace/doc tests
+pass; diagnostic differential9 pass/7 exact failures and existing manual/legacy
+ignores remain explicit. Log /private/tmp/suss-pr90-review-full-baseline.log.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+All reviewer Cargo/JVM/Node graphs are terminal; shared test slot is released.
+Prototype/Object methods, host attributes, munged names and complete collections
+remain explicit unfinished scope. No issue/milestone closure or merge. Next final
+review-head CI, then retained Object methods/canonical empty lists and actual
+List/EmptyList/Cons/IndexedSeq, hashing/reduction/rest/apply toward M2–M9.

@@ -393,6 +393,126 @@
         "tag": "f64",
         "bits": "404a800000000000"
       }
+    },
+    {
+      "id": "review-public-null-slot",
+      "source": "(do (defprotocol PropertyReviewNative (property-review-native [value])) (set! (.-null PropertyReviewNative) true) (set! (.-null property-review-native) (fn [value] 61)) (if (native-satisfies? PropertyReviewNative nil) (property-review-native nil) 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404e800000000000"
+      }
+    },
+    {
+      "id": "review-public-boolean-slot",
+      "source": "(do (set! (.-boolean PropertyReviewNative) true) (set! (.-boolean property-review-native) (fn [value] 62)) (if (native-satisfies? PropertyReviewNative false) (property-review-native false) 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404f000000000000"
+      }
+    },
+    {
+      "id": "review-public-string-slot",
+      "source": "(do (set! (.-string PropertyReviewNative) true) (set! (.-string property-review-native) (fn [value] 63)) (if (native-satisfies? PropertyReviewNative \"\") (property-review-native \"\") 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404f800000000000"
+      }
+    },
+    {
+      "id": "review-public-function-slot",
+      "source": "(do (set! (.-function PropertyReviewNative) true) (set! (.-function property-review-native) (fn [value] 64)) (if (native-satisfies? PropertyReviewNative (fn [] 0)) (property-review-native (fn [] 0)) 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050000000000000"
+      }
+    },
+    {
+      "id": "review-public-object-slot",
+      "source": "(do (set! (.-object PropertyReviewNative) true) (set! (.-object property-review-native) (fn [value] 65)) (if (native-satisfies? PropertyReviewNative property-object) (property-review-native property-object) 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "review-public-array-slot",
+      "source": "(do (set! (.-array PropertyReviewNative) true) (set! (.-array property-review-native) (fn [value] 66)) (if (native-satisfies? PropertyReviewNative (array 1)) (property-review-native (array 1)) 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050800000000000"
+      }
+    },
+    {
+      "id": "review-public-null-slot-includes-undefined",
+      "source": "(property-review-native property-uninitialized)",
+      "expected": {
+        "tag": "f64",
+        "bits": "404e800000000000"
+      }
+    },
+    {
+      "id": "review-instance-native-names-are-fields",
+      "source": "(do (deftype PropertyReviewFields [number _]) (def property-review-fields (PropertyReviewFields. 2 5)) (set! (.-number property-review-fields) 7) (+ (.-number property-review-fields) (.-_ property-review-fields)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "review-nil-owner-assignment-evaluates-value",
+      "source": "(do (aset property-effects 0 0) (try (set! (.-cache (property-mark 1 nil)) (property-mark 2 1)) (catch :default e nil)) (aget property-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "review-throwing-owner-skips-assignment-value",
+      "source": "(do (aset property-effects 0 0) (try (set! (.-cache (throw (property-mark 1 nil))) (property-mark 2 1)) (catch :default e nil)) (aget property-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "review-stored-nil-is-not-missing",
+      "source": "(do (set! (.-nilValue property-captured) nil) (and (nil? (.-nilValue property-captured)) (not (undefined? (.-nilValue property-captured)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-object-marker-is-js-truthy",
+      "source": "(do (set! (.-number PropertyNative) (array)) (native-satisfies? PropertyNative 7))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-noncallable-false-does-not-use-default",
+      "source": "(do (set! (.-_ property-native) (fn [value] 83)) (set! (.-number property-native) false) (try (property-native 7) (catch :default e 89)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4056400000000000"
+      }
+    },
+    {
+      "id": "review-noncallable-zero-does-not-use-default",
+      "source": "(do (set! (.-_ property-native) (fn [value] 83)) (set! (.-number property-native) 0) (try (property-native 7) (catch :default e 89)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4056400000000000"
+      }
+    },
+    {
+      "id": "review-noncallable-empty-string-does-not-use-default",
+      "source": "(do (set! (.-_ property-native) (fn [value] 83)) (set! (.-number property-native) \"\") (try (property-native 7) (catch :default e 89)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4056400000000000"
+      }
     }
   ]
 }

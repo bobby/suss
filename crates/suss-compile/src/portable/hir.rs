@@ -821,7 +821,10 @@ impl Analyzer {
     }
     fn property_name(form: &Form, operator: &str) -> Result<String, Diagnostic> {
         let name = &operator[2..];
-        if name.is_empty()
+        if !name
+            .bytes()
+            .next()
+            .is_some_and(|c| c.is_ascii_alphabetic() || c == b'_' || c == b'$')
             || !name
                 .bytes()
                 .all(|c| c.is_ascii_alphanumeric() || c == b'_' || c == b'$')
