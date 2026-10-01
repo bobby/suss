@@ -3,6 +3,19 @@
 use super::*;
 pub(super) fn intrinsics(b: &mut Builder) {
     use Instruction::*;
+    // Original numeric milliseconds adapter for portable Date storage.
+    // ECMAScript TimeClip: reject nonfinite/out-of-range, truncate, normalize zero.
+    let mut time_clip = vec![LocalGet(0), RefTestNonNull(HeapType::Concrete(NUMBER)),
+        I32Eqz, If(BlockType::Empty)];
+    nominal::error(&mut time_clip);
+    time_clip.extend([End, LocalGet(0), RefCastNonNull(HeapType::Concrete(NUMBER)),
+        StructGet { struct_type_index: NUMBER, field_index: 0 }, LocalSet(1),
+        LocalGet(1), F64Abs, F64Const(8640000000000000.0.into()), F64Le,
+        If(BlockType::Result(ValType::F64)),
+        LocalGet(1), F64Trunc, F64Const(0.0.into()), F64Add,
+        Else, F64Const(f64::NAN.into()), End, Call(b.names["number-box"])]);
+    b.function_with_locals("primitive-f64-time-clip", &[VALUE], &[VALUE],
+        &[(1, ValType::F64)], &time_clip);
     b.function(
         "primitive-f64-coerce",
         &[VALUE],

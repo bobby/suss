@@ -1,0 +1,342 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "nil",
+      "source": "(hash nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "true",
+      "source": "(hash true)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40933c0000000000"
+      }
+    },
+    {
+      "id": "false",
+      "source": "(hash false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4093540000000000"
+      }
+    },
+    {
+      "id": "zero",
+      "source": "(hash 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "negative-zero",
+      "source": "(hash -0.0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "one",
+      "source": "(hash 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "minus-one",
+      "source": "(hash -1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "modulus",
+      "source": "(hash 2147483647)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "modulus-plus-one",
+      "source": "(hash 2147483648)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "negative-modulus",
+      "source": "(hash -2147483647)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "negative-modulus-minus-one",
+      "source": "(hash -2147483648)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "infinity",
+      "source": "(hash ##Inf)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dffc0000000000"
+      }
+    },
+    {
+      "id": "negative-infinity",
+      "source": "(hash ##-Inf)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c130000000000000"
+      }
+    },
+    {
+      "id": "nan",
+      "source": "(hash ##NaN)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dffe0000000000"
+      }
+    },
+    {
+      "id": "empty-string",
+      "source": "(hash \"\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "fraction",
+      "source": "(hash 1.5)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ef07e000000000"
+      }
+    },
+    {
+      "id": "negative-fraction",
+      "source": "(hash -1.5)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ef17e000000000"
+      }
+    },
+    {
+      "id": "subnormal",
+      "source": "(hash 5e-324)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4170000000000000"
+      }
+    },
+    {
+      "id": "large-nonsafe",
+      "source": "(hash 9007199254740992)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40d010c000000000"
+      }
+    },
+    {
+      "id": "date-zero",
+      "source": "(hash (date-ms 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "date-negative-zero",
+      "source": "(hash (date-ms -0.0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "date-fraction",
+      "source": "(hash (date-ms 17.9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "date-negative-fraction",
+      "source": "(hash (date-ms -17.9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c031000000000000"
+      }
+    },
+    {
+      "id": "date-to-int32",
+      "source": "(hash (date-ms 2147483648.9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1e0000000000000"
+      }
+    },
+    {
+      "id": "date-wrap",
+      "source": "(hash (date-ms 4294967297))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "date-max",
+      "source": "(hash (date-ms 8640000000000000))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1ce920000000000"
+      }
+    },
+    {
+      "id": "date-min",
+      "source": "(hash (date-ms -8640000000000000))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41ce920000000000"
+      }
+    },
+    {
+      "id": "date-over-max",
+      "source": "(hash (date-ms 8640000000000001))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "date-under-min",
+      "source": "(hash (date-ms -8640000000000001))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "date-infinity",
+      "source": "(hash (date-ms ##Inf))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "date-nan",
+      "source": "(hash (date-ms ##NaN))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "captured",
+      "source": "(let [f hash] (f ##Inf))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dffc0000000000"
+      }
+    },
+    {
+      "id": "qualified",
+      "source": "(cljs.core/hash false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4093540000000000"
+      }
+    },
+    {
+      "id": "direct-method",
+      "source": "(do (deftype PublicHashDirect [v] IHash (-hash [_] v)) (hash (PublicHashDirect. 4294967297)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "direct-nil",
+      "source": "(do (deftype PublicHashNil [] IHash (-hash [_] nil)) (hash (PublicHashNil.)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "function-stable",
+      "source": "(let [f (fn [] 17)] (= (hash f) (hash f)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "object-stable",
+      "source": "(let [o (js-obj)] (= (hash o) (hash o)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "object-distinct",
+      "source": "(not (= (hash (js-obj)) (hash (js-obj))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "root-zero",
+      "source": "(hash (rootobj))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "selector-once",
+      "source": "(do (def hash-effect 0) (hash (do (set! hash-effect (+ hash-effect 1)) ##Inf)) hash-effect)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "string-composition",
+      "source": "(= (hash \"a\ud83d\ude00\") (m3-hash-int (hash-string \"a\ud83d\ude00\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "lone-surrogate-composition",
+      "source": "(= (hash \"\\uD800\") (m3-hash-int (hash-string \"\\uD800\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

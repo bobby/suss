@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "3450b94f5de8e590a4abb2f976ef633a48eb19de280973dc951712690d0be875",
-  "reviews-sha256": "f3a5a7e37c859d1d20563a87c9d919b3c64d11a0689a81871308b0601db10d8f",
+  "recipe-sha256": "a87bb441459d0aa5732057ff2db443bb7c7add7b7d2fc263280847d581558e3f",
+  "reviews-sha256": "7484b2f27b0dd348728b5f6bf15238ea6d16396d3ba83f9bbfccfad473c165a1",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -3170,12 +3170,46 @@
         "tests/oracle/default-hash-cases.json",
         "docs/runtime/default-identity-hash.md"
       ]
+    },
+    {
+      "id": "runtime:hash:1054",
+      "name": "hash",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1054,
+      "end-line": 1090,
+      "byte-start": 32112,
+      "byte-end": 32935,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "25eb7ecd8344d689c933a6ed692df37fb91678c843bcd29cbc8cb12225ac31ef",
+      "extracted": "extracted/0097.cljs",
+      "extracted-sha256": "6c770cde666c72a52657bb581e89e64e0f188c0fb978b5b882dbeb19f5526d11",
+      "patch": "docs/compatibility/patches/public-hash.json",
+      "patch-sha256": "51cef9fe863677267c700e26ad9f4642b5d303e47a00370abb34cd2b6b1b4c66",
+      "adapted-form-sha256": "20efe90680ca0ae6b3918984f63a7752e89928143aa7e4754d0a244b99f8cbc2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IHash:758",
+        "runtime:hash-double:996",
+        "runtime:hash-string:1043",
+        "runtime:m3-hash-int:986",
+        "macro:case:2405",
+        "private numeric guards and descriptor-backed Date"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_public_hash.rs",
+        "tests/oracle/public-hash-cases.json"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "2f2b5598337400c085d9d4c1d057f9981e982fb1177e768feeb895ebb72aff87"
+      "sha256": "55c1ebe9d2d477a52a473eebe7c558ae1497816a238c64309b852ac0aae5c8fb"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -3282,6 +3316,7 @@
     "extracted/0094.cljs": "00cdcccf5f2dca594dd13fe47d07b49676cd4b9da348d7d7a67f4cb90045765f",
     "extracted/0095.cljs": "ec07e0acb998f8414197a008e65e4b8848afc341644a90844ea040400377f084",
     "extracted/0096.cljs": "6fc46a4cd358ec5a6c48ccb017dcc3ad7dbedeee2bb32a6ba29a37959da882ea",
-    "suss/core.sus": "84b113c80195c666b67e52aced8e37a0ebd21739595b79dd690e4804dabf172e"
+    "extracted/0097.cljs": "6c770cde666c72a52657bb581e89e64e0f188c0fb978b5b882dbeb19f5526d11",
+    "suss/core.sus": "9ee61a76e49973fa4fcc41c21f5e96eb14ffa9eba36530a4428fb6987980f81d"
   }
 }

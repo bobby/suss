@@ -193,6 +193,7 @@ pub enum Bitwise {
     F64Floor,
     F64Finite,
     F64SafeInteger,
+    F64TimeClip,
     SafeIntegerRemainder,
     IdentityUid,
 }
@@ -238,13 +239,14 @@ impl Bitwise {
             Self::F64Floor => "primitive-f64-floor",
             Self::F64Finite => "primitive-f64-finite",
             Self::F64SafeInteger => "primitive-f64-safe-integer",
+            Self::F64TimeClip => "primitive-f64-time-clip",
             Self::SafeIntegerRemainder => "primitive-safe-integer-remainder",
             Self::IdentityUid => "identity-uid",
         }
     }
     pub(crate) fn arity(self) -> usize {
         match self {
-            Self::Int | Self::Not | Self::F64Coerce | Self::F64Word0 | Self::F64Word4 | Self::F64Floor | Self::F64Finite | Self::F64SafeInteger | Self::IdentityUid => 1,
+            Self::Int | Self::Not | Self::F64Coerce | Self::F64Word0 | Self::F64Word4 | Self::F64Floor | Self::F64Finite | Self::F64SafeInteger | Self::F64TimeClip | Self::IdentityUid => 1,
             _ => 2,
         }
     }
@@ -1102,6 +1104,7 @@ impl Analyzer {
                 "f64-floor" => Some(Bitwise::F64Floor),
                 "f64-finite" => Some(Bitwise::F64Finite),
                 "f64-safe-integer" => Some(Bitwise::F64SafeInteger),
+                "f64-time-clip" => Some(Bitwise::F64TimeClip),
                 "safe-integer-remainder" => Some(Bitwise::SafeIntegerRemainder),
                 "identity-uid" => Some(Bitwise::IdentityUid),
                 _ => None,

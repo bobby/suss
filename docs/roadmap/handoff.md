@@ -7835,3 +7835,48 @@ This inherits the independently audited35-minute cleanup cancellation correction
 Prior independent full69411 covers unchanged tested bytes, not a fresh baseline.
 Reviewer113 owns the heavy slot; no cargo/JVM/Node started. Historical successful
 CI does not satisfy the new exact-head gate. No readiness/merge/closure claim.
+
+## Retained public scalar hash — 2026-10-01
+
+Isolated /private/tmp/suss-core-public-scalar-hash branch
+portable/core-public-scalar-hash, based on independently reviewed PR110f7841dd.
+Actual detached upstream c4295f30, checkout19903 terminal0. Root regained heavy
+slot after reviewer110 full69411 terminal0 and terminal review pushf7841dd.
+PR11040 fresh matches/native5/compiler1/Python82/full all pass; exact reviewed
+head CI36867771937 remains live; no readiness/merge/closure yet.
+
+Public hash regression30006 terminal101 failed unresolved Runtime hash. Complete
+source extraction1054–1090 and EPL notice now retain all branches, numeric guards,
+case, strings, direct IHash priority, nil/default and Date. Explicit patch uses
+existing private numeric guards and original BootstrapDate nominal storage;
+checked numeric TimeClip, ordinary Object valueOf method and existing shared
+ABI2. No global registry, ABI layout change or shipped Java/Node. General Date
+parsing/mutation, reader instants, Inst/equality/comparison/printing and bootstrap
+privacy/Var metadata remain unfinished. Internal helper private flags initially
+failed compile75868; removed unsupported attributes with limitation recorded.
+43270 and localized90709/32208 failed validation due missing unary emitter import
+signature for new TimeClip. Corrected import;59391 terminal0/native3. Date49538
+terminal0/native3. Temporary redundant core-split test removed after localization;
+standalone numeric Date regression retained. No ignored/masked validation error.
+
+Fresh83231 terminal0:42 exact pinned/native observations/native4,
+/private/tmp/suss-public-hash-primary42.log. Provisional expectations were only
+certified after fresh pinned output and independent raw f64/i31 decoding matched.
+Date fixture uses explicit reader-conditional native/host adapter; expected pin
+root-obj private-var warning is recorded. New corpus includes signed zeros,
+modulus/fraction/subnormal/non-safe/Inf/NaN, UTF16, protocol/direct/default/root,
+captured/qualified calls, effects and clipped/invalid numeric Date branches.
+Native Date probes also validate GC, valueOf redefinition, IHash priority and
+typed unsupported-input recovery. Python82, import102/reviews193+872/setup5/diff
+pass. Parent47829 terminal0: case5/default3/identity4,
+/private/tmp/suss-public-hash-parent-focused.log. Full61362 LIVE,
+/private/tmp/suss-public-hash-full.log, CARGO_TARGET_DIR shared target,
+CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2, noRUSTFLAGS.
+Root owns heavy slot until authoritative terminal; all other root handles terminal.
+
+PR108 CI36861360401 attempt2 also CANCELLED near25m (not a pass). Reviewer108
+has a static follow-up to apply25→35 timeout without production/test changes,
+prove bytes unchanged, push and require new final-head CI; cannot run heavy jobs
+while root61362 live. PR108 stays draft. No issue/milestone completion from this
+slice. Next finish full/review/CI, then ordered/unordered hashing and full remaining
+Date/collection/core/macro and M2–M9 acceptance. Issue98 still defers algorithms.

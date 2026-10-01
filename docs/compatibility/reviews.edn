@@ -2043,4 +2043,15 @@
    :adaptation-path "docs/compatibility/patches/sequence-list.json"
    :alternative nil
    :tests ["crates/suss-cli/tests/portable_sequences.rs" "tests/oracle/sequence-cases.json"]}
+  "runtime:hash:1054"
+  {:source-sha256 "25eb7ecd8344d689c933a6ed692df37fb91678c843bcd29cbc8cb12225ac31ef"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:IHash:758" "runtime:hash-double:996" "runtime:hash-string:1043" "runtime:m3-hash-int:986" "macro:case:2405" "private numeric guards and descriptor-backed Date"]
+   :classification :adapted
+   :rationale "Complete source branches retained with explicit host-storage adaptation. Binary64/UTF16, boolean/nil, direct protocol and default identity paths require fresh differential evidence. Numeric-only Date storage uses an original descriptor-backed class and TimeClip guard; complete Inst, Date equality/comparison, parsing and printing remain pending. Full persistent collection and compiled macro acceptance remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/public-hash.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_public_hash.rs" "tests/oracle/public-hash-cases.json"]}
 }}
