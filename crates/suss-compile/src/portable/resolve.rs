@@ -66,6 +66,8 @@ pub enum ControlForm {
     AsThread,
     Zero,
     Positive,
+    UncheckedGet,
+    UncheckedSet,
 }
 impl ControlForm {
     fn from_name(name: &str) -> Option<Self> {
@@ -82,6 +84,8 @@ impl ControlForm {
             "as->" => Self::AsThread,
             "zero?" => Self::Zero,
             "pos?" => Self::Positive,
+            "unchecked-get" => Self::UncheckedGet,
+            "unchecked-set" => Self::UncheckedSet,
             _ => return None,
         })
     }
@@ -338,6 +342,8 @@ impl Environment {
                 "cond",
                 "declare",
                 "caching-hash",
+                "unchecked-get",
+                "unchecked-set",
             ] {
                 let global = Global {
                     phase,

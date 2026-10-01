@@ -1,0 +1,566 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "value-0",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "repeated-count-0",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"\") (hash-string \"\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-1",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"A\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "repeated-count-1",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"A\") (hash-string \"A\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-2",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"AB\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "40a0420000000000"
+      }
+    },
+    {
+      "id": "repeated-count-2",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"AB\") (hash-string \"AB\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-3",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"hello\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4197a46348000000"
+      }
+    },
+    {
+      "id": "repeated-count-3",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"hello\") (hash-string \"hello\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-4",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"\\ud83d\\ude00\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "413b0d6300000000"
+      }
+    },
+    {
+      "id": "repeated-count-4",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"\\ud83d\\ude00\") (hash-string \"\\ud83d\\ude00\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-5",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"\\ud800\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "40eb000000000000"
+      }
+    },
+    {
+      "id": "repeated-count-5",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"\\ud800\") (hash-string \"\\ud800\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-6",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"\\udfff\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ebffe000000000"
+      }
+    },
+    {
+      "id": "repeated-count-6",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"\\udfff\") (hash-string \"\\udfff\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-7",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"\\u0000\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "repeated-count-7",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"\\u0000\") (hash-string \"\\u0000\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-8",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"__proto__\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dfe274fa000000"
+      }
+    },
+    {
+      "id": "repeated-count-8",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"__proto__\") (hash-string \"__proto__\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "value-9",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"constructor\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d7ab4a01800000"
+      }
+    },
+    {
+      "id": "repeated-count-9",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"constructor\") (hash-string \"constructor\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-10",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"toString\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1da7a6b65000000"
+      }
+    },
+    {
+      "id": "repeated-count-10",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"toString\") (hash-string \"toString\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-11",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"hasOwnProperty\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1daab28dfc00000"
+      }
+    },
+    {
+      "id": "repeated-count-11",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"hasOwnProperty\") (hash-string \"hasOwnProperty\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-12",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"__defineGetter__\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dd74bd39800000"
+      }
+    },
+    {
+      "id": "repeated-count-12",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"__defineGetter__\") (hash-string \"__defineGetter__\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-13",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"length\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d07c7146800000"
+      }
+    },
+    {
+      "id": "repeated-count-13",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"length\") (hash-string \"length\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-14",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"0\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4048000000000000"
+      }
+    },
+    {
+      "id": "repeated-count-14",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"0\") (hash-string \"0\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-15",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"-0\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "40968c0000000000"
+      }
+    },
+    {
+      "id": "repeated-count-15",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"-0\") (hash-string \"-0\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "value-16",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string \"\\uffff\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "40efffe000000000"
+      }
+    },
+    {
+      "id": "repeated-count-16",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"\\uffff\") (hash-string \"\\uffff\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "nil-bypasses-cache",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string nil) (hash-string nil) string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "nil-result",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (hash-string nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "undefined-bypasses-cache",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string (.-missing \"x\")) string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "reset-on-next-call",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"A\") (set! string-hash-cache-count 1025) (hash-string \"A\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "at-threshold-no-reset",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"A\") (set! string-hash-cache-count 1024) (hash-string \"A\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4090000000000000"
+      }
+    },
+    {
+      "id": "nil-still-resets-over-threshold",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"A\") (set! string-hash-cache-count 1025) (hash-string nil) string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "reset-replaces-object",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (let [old string-hash-cache] (set! string-hash-cache-count 1025) (hash-string nil) (identical? old string-hash-cache)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "cache-hit-suppresses-current-hasher",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"A\") (with-redefs [hash-string* (fn [x] (throw 9))] (hash-string \"A\"))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "false-result-not-cached-number",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (with-redefs [hash-string* (fn [x] false)] (hash-string \"A\") (hash-string \"A\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "zero-result-is-cached",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (with-redefs [hash-string* (fn [x] 0)] (hash-string \"A\") (hash-string \"A\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "nan-result-is-cached",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (with-redefs [hash-string* (fn [x] ##NaN)] (hash-string \"A\") (hash-string \"A\") string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "throwing-miss-does-not-increment",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (with-redefs [hash-string* (fn [x] (throw 9))] (try (hash-string \"A\") (catch :default e nil))) string-hash-cache-count))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "captured-body-live-hasher",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (let [saved hash-string] (with-redefs [hash-string* (fn [x] 7)] (saved \"A\"))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "prototype-setter-ignores-numeric-cache",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0] (do (hash-string \"__proto__\") (with-redefs [hash-string* (fn [x] 7)] (hash-string \"__proto__\"))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "inherited-constructor-is-function",
+      "source": "(let [o (js-obj)] (js-fn? (unchecked-get o \"constructor\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "inherited-tostring-is-function",
+      "source": "(let [o (js-obj)] (js-fn? (unchecked-get o \"toString\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "new-objects-share-prototype",
+      "source": "(identical? (unchecked-get (js-obj) \"__proto__\") (unchecked-get (js-obj) \"__proto__\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "own-value-shadows-prototype",
+      "source": "(let [o (js-obj)] (unchecked-set o \"constructor\" 7) (unchecked-get o \"constructor\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "numeric-proto-write-ignored",
+      "source": "(let [o (js-obj) old (unchecked-get o \"__proto__\")] (unchecked-set o \"__proto__\" 7) (identical? old (unchecked-get o \"__proto__\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-prototype-removes-inherited-function",
+      "source": "(let [o (js-obj)] (unchecked-set o \"__proto__\" nil) (js-fn? (unchecked-get o \"constructor\")))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "nil-prototype-allows-own-proto-data",
+      "source": "(let [o (js-obj)] (unchecked-set o \"__proto__\" nil) (unchecked-set o \"__proto__\" 7) (unchecked-get o \"__proto__\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "prototype-object-inherited-data",
+      "source": "(let [o (js-obj) proto (js-obj)] (unchecked-set proto \"answer\" 7) (unchecked-set o \"__proto__\" proto) (unchecked-get o \"answer\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "own-data-wins-over-prototype",
+      "source": "(let [o (js-obj) proto (js-obj)] (unchecked-set proto \"answer\" 7) (unchecked-set o \"__proto__\" proto) (unchecked-set o \"answer\" 9) (unchecked-get o \"answer\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "prototype-cycle-is-error",
+      "source": "(let [o (js-obj) proto (js-obj)] (unchecked-set o \"__proto__\" proto) (try (unchecked-set proto \"__proto__\" o) false (catch :default e true)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "scalar-key-zero-sign",
+      "source": "(let [o (js-obj)] (unchecked-set o -0.0 7) (unchecked-get o 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "scalar-key-nil",
+      "source": "(let [o (js-obj)] (unchecked-set o nil 7) (unchecked-get o \"null\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "scalar-key-bool",
+      "source": "(let [o (js-obj)] (unchecked-set o true 7) (unchecked-get o \"true\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "scalar-key-nan",
+      "source": "(let [o (js-obj)] (unchecked-set o ##NaN 7) (unchecked-get o \"NaN\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "scalar-key-undefined",
+      "source": "(let [o (js-obj)] (unchecked-set o (.-missing \"x\") 7) (unchecked-get o \"undefined\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "object-key-and-value-evaluation-order",
+      "source": "(do (def object_order 0) (let [o (js-obj)] (unchecked-set (do (set! object_order 1) o) (do (set! object_order (+ (* object_order 10) 2)) \"x\") (do (set! object_order (+ (* object_order 10) 3)) 7))) object_order)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "review-inherited-getter-effects",
+      "source": "(do (def review_effects 0) (let [p (js-obj) o (js-obj)] (.__defineGetter__ p \"answer\" (fn [] (set! review_effects (+ review_effects 1)) 23)) (unchecked-set o \"__proto__\" p) (+ (unchecked-get o \"answer\") (unchecked-get o \"answer\") review_effects)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4048000000000000"
+      }
+    },
+    {
+      "id": "review-inherited-setter-no-own-data",
+      "source": "(do (def review_effects 0) (let [p (js-obj) o (js-obj)] (.__defineSetter__ p \"answer\" (fn [v] (set! review_effects v))) (unchecked-set o \"__proto__\" p) (unchecked-set o \"answer\" 31) (+ review_effects (if (.hasOwnProperty o \"answer\") 100 0))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "review-throwing-cache-setter-counter",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 17 hash-string* (fn [k] 7)] (.__defineSetter__ string-hash-cache \"new\" (fn [v] (throw v))) (try (hash-string \"new\") (catch :default e string-hash-cache-count)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "review-getter-only-cache-throws-before-count",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0 hash-string* (fn [k] 19)] (.__defineGetter__ string-hash-cache \"readonly\" (fn [] false)) (try (hash-string \"readonly\") (catch :default e string-hash-cache-count)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-getter-only-unchecked-set-ignores-write",
+      "source": "(let [o (js-obj)] (.__defineGetter__ o \"readonly\" (fn [] 29)) (unchecked-set o \"readonly\" 7) (unchecked-get o \"readonly\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403d000000000000"
+      }
+    },
+    {
+      "id": "review-runtime-factory-strict-prototype-write",
+      "source": "(let [f js-obj p (js-obj)] (.__defineGetter__ p \"readonly\" (fn [] 29)) (try (f \"__proto__\" p \"readonly\" 7) (catch :default e 41)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4044800000000000"
+      }
+    }
+  ]
+}

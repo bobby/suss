@@ -265,6 +265,10 @@ pub enum Nominal {
     FieldSet(usize),
     NamedGet,
     NamedSet,
+    NativeObjectFactory,
+    NativeObjectGet,
+    NativeObjectSet,
+    NativeObjectStrictSet,
     ObjectSet,
     ObjectInvoke,
     Key(usize),
@@ -288,6 +292,9 @@ impl Nominal {
         count <= i32::MAX as usize
             && match self {
                 Self::Array => true,
+                Self::NativeObjectFactory => count == 0,
+                Self::NativeObjectGet => count == 2,
+                Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
                 Self::NamedGet => count == 2 && arguments[1] == Type::String,
                 Self::NamedSet | Self::ObjectSet => count == 3 && arguments[1] == Type::String,
                 Self::ObjectInvoke => count >= 2,
@@ -971,6 +978,22 @@ impl Analyzer {
         };
         let args = &items[1..];
         let bare = symbol.namespace.is_none();
+        if symbol.namespace.as_deref() == Some("suss.bootstrap") {
+            let operation = match symbol.name.as_str() {
+                "object-factory" => Some(Nominal::NativeObjectFactory),
+                "object-get" => Some(Nominal::NativeObjectGet),
+                "object-set" => Some(Nominal::NativeObjectSet),
+                "object-set-strict" => Some(Nominal::NativeObjectStrictSet),
+                _ => None,
+            };
+            if let Some(operation) = operation {
+                if !operation.valid(&vec![Type::Value; args.len()]) {
+                    return Err(fail(form.span.clone(), "Invalid private native object adapter arity"));
+                }
+                let operands = args.iter().map(|argument| self.form(argument)).collect::<Result<Vec<_>, _>>()?;
+                return Ok(self.nominal(form, operation, operands));
+            }
+        }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
             let operation = match symbol.name.as_str() {
                 "f64-coerce" => Some(Bitwise::F64Coerce),

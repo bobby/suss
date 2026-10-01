@@ -228,6 +228,31 @@
       "id": "runtime:hash-combine:1092",
       "source-sha256": "2ba652546dd2df6915b3c7d18660eb813666166aaab21d7de9512278e729e962",
       "patch": "docs/compatibility/patches/hash-combine.json"
+    },
+    {
+      "id": "runtime:js-obj:2284",
+      "source-sha256": "ac50f5ef05cbceeec7227d1284b2f9f7ddbce55b06cd374f9dd8a43458cff19e",
+      "patch": "docs/compatibility/patches/js-object-factory.json"
+    },
+    {
+      "id": "runtime:string-hash-cache:1022",
+      "source-sha256": "f502ec246497077f91b0ff08201637b4777f9e1298657d1f96dfa7505bfec0d3",
+      "patch": null
+    },
+    {
+      "id": "runtime:string-hash-cache-count:1023",
+      "source-sha256": "e0f3d50788bdf85a2e7df1ae6a19ed4d0fbd2c37a660658cba3cde8cc0e46579",
+      "patch": null
+    },
+    {
+      "id": "runtime:add-to-string-hash-cache:1037",
+      "source-sha256": "7f3a6b72d88216e5d5d58b62fcb5805bb7bb79cf8879c0341d36238bfe93ce3e",
+      "patch": "docs/compatibility/patches/add-to-string-hash-cache.json"
+    },
+    {
+      "id": "runtime:hash-string:1043",
+      "source-sha256": "3ca4d933c808bb44c7fc13a4c925b043930d735d9fd03b938e48a0ba796cba53",
+      "patch": "docs/compatibility/patches/hash-string-cached.json"
     }
   ]
 }

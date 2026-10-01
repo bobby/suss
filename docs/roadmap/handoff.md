@@ -6237,3 +6237,440 @@ the review push finishes; root must require exact final reviewed-head CI before
 PR99 readiness. No merge, closure or milestone acceptance. Next retained cached/
 public string hashing and actual persistent sequence/list algorithms, while full
 numeric/public/collection hashing and M2–M9 acceptance remain incomplete.
+
+## Cached string hashing preparation — 2026-10-01
+
+Separate unpublished portable/core-string-hash-cache worktree starts at PR99
+candidate90f73d5.48 provisional cache value/effect probes and primary/native runners
+are prepared but UNEXECUTED. They cover UTF-16 keys, nil/Undefined bypass, cache
+hits suppressing current hasher effects, non-number/zero/NaN cache values,
+throwing misses, threshold1024 versus1025, reset-before-nil behavior, replacement
+identity, captures/live dependencies and prototype-named keys. Expectations must
+be freshly certified; they are not success evidence. PR99 reviewer exclusively
+owns the local Cargo/JVM/Node slot, with72 fresh exact observations (original52
+unchanged), independent foreign/malformed-value ABI coverage and full93986
+confirmed live. No root heavy processes started.
+
+The pinned source creates a plain JS object for this internal cache, calls
+unchecked-get/gobject-set and increments the source counter after hashing/storage.
+A simple persistent map substitution would not preserve observable cache effects:
+for example the inherited __proto__ setter ignores numeric hashes, so repeated
+misses increment the counter repeatedly. The new provisional probes explicitly
+exercise this rather than silently treating every string as an own cache slot.
+Actual dynamic named-object storage/lookup/set semantics and scalar key handling
+are next dependencies. Do not claim them based on existing fixed-schema Object
+fields or substitute private invocation argument buffers for persistent collections.
+
+Next rebase onto final reviewed PR99, acquire the released test slot, certify the
+pin/native red, then adapt required object storage with source provenance and
+executing checks. General prototype mutation/host interop and full public hash,
+collection equality/hash, sequences and M2–M9 remain unfinished. PR97 exact
+reviewed-head CI36823514952 remains live; no readiness claim until success.
+
+## Cached string hashing verified red — 2026-10-01
+
+PR97 is ready at independently reviewed8947aaa after final CI36823514952 SUCCESS.
+Root inspected /private/tmp/suss-pr97-final-ci.log: Python76/reviews130+935/import47,
+String3, copied-callback guard/ABI24 and every enabled full suite pass. No merge.
+PR99 review pushed0fe9889 after72 exact fresh observations, independent malformed
+value ABI recovery, Python76/provenance and full93986 success. Final CI36825310559
+is live at that exact reviewed head; PR99 remains draft. No closure or milestone
+acceptance. Updated both remote PR bodies with final review/CI evidence.
+
+Rebased cache preparation onto PR99 final0fe9889, preserving both append-only
+handoff histories; real pinned upstream clone is present. Root acquired the
+explicitly released shared local slot. Fresh65884 ended101:all48 primary observations
+match exactly, including prototype-named keys, repeated __proto__ misses, reset
+thresholds, nil-before/after reset behavior, false/zero/NaN caches and live hasher
+suppression. Native reports48 located unresolved string-hash-cache failures before
+implementation; there are no native successes or skips. Log
+/private/tmp/suss-string-cache-first-red.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-string-cache-oracle.sh`.
+The original48 source/expected entries are now certified by the pin and should be
+preserved by future implementation/review. No cache forms were imported or falsely
+marked implemented. All root local Cargo/JVM/Node processes are terminal.
+
+Next implement owned dynamic named-object storage and the required native cache
+lookup/set/factory adapters with explicit inherited/prototype key behavior, then
+retain source cache declarations/add-to-string-hash-cache/hash-string with hashes,
+EPL and focused execution. Existing fixed-schema Object fields are insufficient;
+__proto__ numeric writes must not silently become ordinary own cache entries.
+Full public js-obj arities/key conversion/prototype APIs require their own evidence;
+do not infer them from a zero-argument cache factory. Persistent collections, full
+public hash/equality, compiled macros and M2–M9 remain unfinished.
+
+
+## Owned dynamic property kernel — 2026-10-01
+
+PR99 final reviewed-head CI36825310559 completed SUCCESS at
+0fe9889a0a05ba5ad44241cdbc293e2aeda93e1d. Root inspected the complete
+/private/tmp/suss-pr99-final-ci.log, including review132/933, numeric3, ABI26
+and all enabled workspace/doc suites. Updated its evidence body and marked
+PR99 ready; no merge, issue closure or milestone acceptance.
+
+Root continues in /private/tmp/suss-core-string-hash-cache on reviewed PR99.
+Sixteen additional source object/prototype/key-order probes preserve the original48.
+Fresh98282 ended101: all64 match the pin exactly, while native reports64 unresolved
+string-hash-cache errors. No skips/success substitution. Log
+/private/tmp/suss-string-cache-prototype-red.log; command uses the shared target,
+build workers2 and sh scripts/test-string-cache-oracle.sh. This remains an
+unpublished preparation branch; source cache/factory/prototypes are not implemented.
+
+Added original native_objects.rs own-data kernel and two executing runtime tests.
+Uses existing shared UserObject/header/GC array types, private appended descriptor
+identity, raw UTF-16 property comparison and owned growth/replacement. No ABI/type
+layout/core cell change, no registry and no persistent collection claim. Missing
+own properties return Undefined; malformed pair/key/null-value storage and foreign
+owners yield language exceptions. Prototype slot is reserved and unused here;
+__proto__ is literal own data only until the prototype adapter intercepts it.
+See docs/runtime/native-object-storage.md for exact scope and next dependencies.
+
+First kernel test21837 passed. Added guard test initially failed compilation in
+68500 and the immediately following full ABI attempt: an extra unwrap on a
+Wasmtime Val was removed. Corrected focused90523 passed2 and full64457 passed28.
+Null stored-value coverage21345 then failed because args-new supplies language nil,
+not physical null; the test was corrected to forge an explicit null. Corrected
+focused42885 passed2 and final ABI9964 passed28. Logs:
+/private/tmp/suss-owned-properties-null-storage-corrected.log and
+/private/tmp/suss-owned-properties-abi-final.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-compile --test runtime_abi --locked -- --test-threads=2`.
+No full workspace run or independent review is claimed for this unpublished kernel.
+All local processes are terminal; root retains the shared test slot for continuation.
+
+Next add genuine prototype-aware lookup/set and inherited function values,
+scalar key conversion, ignored primitive __proto__ writes, null prototype/data
+shadow behavior and cycle rejection. Then wire the source factory/property adapters,
+retain cache declarations/add-to-string-hash-cache/hash-string with pinned hashes
+and EPL provenance, and require fresh64 native agreement, independent PR review,
+full baseline and exact final-head CI. Do not narrow this to an own-property map
+that changes pinned cache effects. Full public hashing/equality, persistent
+sequences, compiled macros and M2–M9 remain unfinished. Deferred algorithm
+question is issue98, outside existing milestone gates.
+
+
+## Raw prototype chains — 2026-10-01
+
+Continuation after14afd0e is concrete implementation progress. Added iterative raw
+prototype read/set/chain lookup above owned data storage in native_objects.rs.
+The previously reserved header prototype slot now holds nil or an owned object.
+Complete candidate chains are checked before setter mutation; owner-containing
+cycles are rejected atomically. Floyd cycle detection rejects host-forged cycles
+without recursion, side registries or arbitrary chain depth limits. Chain lookup
+uses present own slots, so an own Undefined shadows inherited values correctly.
+This is original low-level storage code; no copied upstream forms or new source
+provenance claim. No shared layout/ABI/core-cell change.
+
+New focused tests exercise inherited values, own Undefined shadowing, self/ancestor
+cycle rejection without changing the old chain, invalid prototype types, nil
+removal, physically forged cycles/null slots, forced GC and recovery. The third
+test executes a 130-object chain, rejects a tail-to-head cycle and recovers after
+restoring its tail. No fake prototype functions or native-success substitutions.
+
+First61843 ended101 on a test API typo (AnyRef::eq); changed to the existing
+Rooted::ref_eq API. Second63503 ended101 because the test requested a nonexistent
+undefined export; corrected the fixture to construct existing sentinel6 directly.
+Corrected70972 passed2. Final focused62694 passed3, and complete ABI11110 passed31.
+Logs /private/tmp/suss-native-prototype-final.log and
+/private/tmp/suss-native-prototype-abi.log. Commands use shared target/build workers2
+and cargo test -p suss-compile --test runtime_abi [runtime_abi_native_prototype]
+--locked -- --test-threads=2. All local processes terminal. No full workspace,
+independent review or final CI claim for this unpublished preparation branch.
+
+Next implement the actual shared default Object prototype and callable inherited
+methods, plus __proto__ accessor semantics and scalar key conversion. Raw prototype
+set deliberately rejects primitives; the source inherited accessor must ignore
+primitive writes and permit null removal/data shadows as certified by the pin.
+Then wire source adapters and retain licensed cached hashing forms, preserving all64
+certified observations. The full cache suite still has64 unresolved native failures;
+these ABI tests do not establish cache/public js-obj compatibility. PR99 remains
+ready at reviewed0fe9889/final CI36825310559 SUCCESS, no merge. M2–M9 remain active.
+
+
+## Callable default Object prototype preparation — 2026-10-01
+
+Continuation afterb5e8e45 implements original native_object_methods.rs and one
+lazy shared GC root. Default-new objects share this root. Five actual closures
+are installed: constructor/toString/valueOf/hasOwnProperty/isPrototypeOf. Member
+methods use existing unbound Object wrapper invocation; no retained receiver or
+placeholder for unfinished methods. Constructor accepts missing/nil/Undefined
+or an existing owned object; primitive boxing remains explicitly unsupported.
+Other object domains and Symbol.toStringTag are not claimed. New private mutable
+root is appended; shared types/ABI version/core cells stay unchanged.
+
+Validation12365 passed the existing3 prototype regressions on the new artifact.
+New actual method invocation69798 passed1. A development Node check and the
+ECMAScript Object prototype operations exposed incorrect detached isPrototypeOf
+ordering: missing/primitive arguments return false before receiver validation;
+object arguments throw for detached undefined this. Corrected both callback
+paths and added regressions;92930 passed1. Final10496 passed1 with own nil presence,
+inherited/own distinction, constructor identity/allocation, prototype identity,
+member/detached semantics, forced GC and recovery. Complete ABI66488 passed32.
+Logs /private/tmp/suss-default-object-methods-final.log and
+/private/tmp/suss-default-object-methods-abi.log. Commands use shared target/build
+workers2 with cargo test -p suss-compile --test runtime_abi
+[runtime_abi_default_object] --locked -- --test-threads=2. Node evidence is
+builtin development evidence, not fresh pinned ClojureScript source comparison.
+All local processes terminal; root retains the test slot for continuation.
+
+This unpublished preparation has no full workspace/review/final CI claim. The
+source cache corpus remains64 unresolved native failures; no cache/native success
+or milestone closure. Default prototype remains incomplete: actual remaining
+methods, property attributes, inherited __proto__ getter/setter, immutable root
+prototype rules and scalar property adapters are next. Then retain licensed
+source cache forms, require fresh64 pinned/native agreement, independent PR review,
+full required baseline and exact final-head CI. Do not infer complete public
+js-obj/Object/hash behavior from these five bounded builtins. M2–M9 stay active.
+
+
+## Scalar property/prototype accessor preparation — 2026-10-01
+
+Continuation after4fd3f18 adds original native_object_properties.rs. Checked scalar
+keys use existing coerce-string. The adapter preserves inherited default __proto__
+getter/setter behavior, nearer own/inherited data shadows (including Undefined),
+ignored supported primitive writes, null prototype removal followed by own-data
+creation, cycle rejection and immutable default-root prototype changes. Same nil
+root prototype writes remain allowed. Foreign object domains/physical null stay
+language errors; no unknown-to-success path. No shared layout/ABI/core-cell change.
+The raw storage still has no general property attributes/accessor descriptors.
+
+78808 passed the existing default method test on the new validated artifact.
+Added2 actual ABI regressions: scalar nil/bool/Undefined/-0/NaN/fractional/empty/
+astral/lone-surrogate keys, __proto__ write/get/data shadows, inherited data, cycle/
+root error atomicity and forced GC/recovery.99970 passed2. Complete ABI89189 passed
+all34 existing tests, log /private/tmp/suss-native-property-abi.log. Focused log
+/private/tmp/suss-native-property-first.log. Shared target/build workers2, command
+cargo test -p suss-compile --test runtime_abi [runtime_abi_native_property] --locked
+-- --test-threads=2. Independent development Node assertions also passed, log
+/private/tmp/suss-proto-property-node.log. These are builtin runtime checks, not
+fresh pinned ClojureScript/native cache comparisons.
+
+Then added a meaningful desired-behavior regression for the discovered reflection
+hole: runtime_abi_default_proto_accessor_is_an_own_property.11879 ended101 with
+actualfalse(i31=2) versus expectedtrue(i31=4), while Node reports true. Log
+/private/tmp/suss-default-accessor-descriptor-red.log. This failing test remains
+active and unskipped. Therefore the current complete ABI suite is NOT green:
+34 existing tests passed before adding the new failing regression. Do not infer
+public Object compatibility or PR readiness from the prior34 result.
+
+Next replace implicit root-identity accessor recognition with real owned property
+descriptors/attributes and genuine accessor function values. Fix the new reflection
+regression without special-casing hasOwnProperty, then implement remaining Object
+methods and source adapters. Preserve the64 certified source corpus; native cache
+forms still unresolved. No PR/full workspace/independent review/final CI claim on
+this unpublished preparation branch. All local processes terminal. M2–M9 active;
+no merge, closure or milestone acceptance.
+
+
+## Owned data/accessor descriptors — 2026-10-01
+
+Continuation afterb4c7d16 replaces implicit root-identity __proto__ recognition
+with real owned descriptors [flags,payload], reusing existing GC arrays. Data
+flags writable1/enumerable2/configurable4; accessor8 requires a pair of callable
+getter/setter values or Undefined, with writable accessors rejected. All storage
+checks descriptors before mutation; lengths/flags/null/malformed/noncallable cases
+raise language exceptions. Integer flags are checked before i31 truncation.
+Raw own-store/define are private internal redefinition operations, not public
+Object.defineProperty semantics; configurable compatibility enforcement stays open.
+
+Default root owns an actual configurable/non-enumerable __proto__ descriptor with
+real unbound callable getter/setter wrappers. Generic property resolution/invocation
+replaces the lookup special case. Nearer descriptors shadow farther ones; receiver
+is preserved for arbitrary descriptor keys. Readonly data and setter-less accessors
+ignore writes in the bounded non-strict adapter; writable own data retains flags,
+and writable inherited data creates ordinary ownflags7. Builtin methods now have
+proper non-enumerable/writable/configurable flags5. Added real propertyIsEnumerable
+and toLocaleString (live property lookup/invocation). No placeholder methods.
+No shared type/layout/ABI/core-cell change. Root remains lazy GC-owned.
+
+Original desired reflection regression80735 passed1 unchanged. Existing property
+regressions passed2, log /private/tmp/suss-descriptor-property-regressions.log.
+9863 passed existing default method1. New descriptor20307 passed2: readonly own/
+inherited writes, ordinary new property flags, copied getter/setter receiver,
+invalid signed/truncated flags, malformed payloads, enumerability and live toString
+returning the actual receiver through valueOf. Complete ABI38225 passed37, log
+/private/tmp/suss-owned-descriptors-abi.log; focused log
+/private/tmp/suss-owned-descriptors-first.log. Commands use shared target/build
+workers2 and cargo test -p suss-compile --test runtime_abi [descriptor] --locked
+-- --test-threads=2. All active tests enabled; previous own-accessor failure fixed.
+Independent development Node assertions pass, log
+/private/tmp/suss-owned-descriptors-node.log. No fresh pinned source comparison
+or full workspace/review/final CI claim for this unpublished preparation.
+
+Next implement remaining real legacy define/lookup getter/setter methods with
+receiver/key/callability/descriptor compatibility checks, then wire source adapters
+and licensed cached hashing forms. Public define/delete, primitive boxing, foreign
+object domains and Symbol.toStringTag remain open. Preserve64 certified source
+observations; native cache forms still unresolved, not acceptance. All processes
+terminal. M2–M9 goal active, no merge/closure/milestone acceptance.
+
+
+## Real legacy accessor methods — 2026-10-01
+
+Continuation aftereae27c8 adds all four real default legacy define/lookup getter/
+setter methods. Eleven function values and one actual __proto__ accessor now
+populate the owned default prototype. Define checks receiver/callback callability
+before scalar key conversion, rejects non-configurable own properties, preserves
+an existing own accessor counterpart and defines flags14. Lookup resolves stored
+descriptors through the chain and returns actual getter/setter identity without
+invocation; nearer data shadows stop lookup. Internal selector bounds reject
+negative/out-of-range values before array access. No placeholder functions.
+No shared type/layout/ABI/core-cell change.
+
+First formatter/Cargo attempt ended101 on a mismatched closing delimiter in the
+new helper; fixed that syntax before execution. Corrected93893 passed2 existing
+descriptor tests. New66004 passed2 actual legacy regressions: member invocation,
+inherited getter/setter lookup, receiver identity, counterpart preservation,
+setter-only Undefined reads, flags14, data shadowing, detached throws, typed
+rejection/GC recovery and configurable data conversion versus non-configurable
+atomic rejection. Full ABI75670 passed39. Logs
+/private/tmp/suss-legacy-accessor-first.log and
+/private/tmp/suss-legacy-accessor-abi.log. Commands use shared target/build workers2
+and cargo test -p suss-compile --test runtime_abi [runtime_abi_legacy_accessor]
+--locked -- --test-threads=2. Independent development Node assertions also pass,
+/private/tmp/suss-legacy-accessor-node.log. Not a fresh source oracle comparison.
+
+Next wire private compiler object factory/get/set operations, retaining source
+js-obj/cache declarations/add-to-string-hash-cache/hash-string with source hashes
+and EPL. A function-valued adapted js-obj factory must preserve first-class/live
+binding behavior and variadic argument evaluation before odd-arity errors; do not
+silently advertise a zero-argument-only public factory. General public definition/
+deletion, primitive boxing/foreign objects and Symbol.toStringTag remain open.
+Preserve64 source observations, require fresh native agreement then independent
+PR review/full baseline/exact final-head CI. No PR readiness/merge/closure or
+milestone claim on this unpublished branch; all processes terminal. M2–M9 active.
+
+
+## Compiled private object adapters and variadic factory — 2026-10-01
+
+Continuation after99078a6 adds original native_object_factory.rs and checked
+Nominal HIR operations NativeObjectFactory/Get/Set. Direct private suss.bootstrap
+object-factory returns a real function; object-get/set lower evaluated operands
+in order with typed runtime imports. Private wrong arities fail during analysis,
+atomically. HIR and IR use existing Nominal validity checking, not the scalar
+bitwise enum. No public core names/source forms/ABI layout/core cells changed.
+
+Factory invocation accepts evaluated variadic arguments and rejects odd pairs
+at runtime, preserving effects before failure. Empty/even pairs create default
+owned objects through descriptor-aware property writes. Single native-array
+arguments flatten recursively using checked source-array storage. An iterative
+Floyd check rejects self/mutual array cycles without arbitrary depth limits or
+recursion. Factory is a function value, not a zero-argument-only public claim.
+No singleton factory registry retains owners; live vars/captures use normal cells.
+
+Initial96061 passed existing default method1 on the validated new artifact.
+New compiled source63175 passed2; final52318 passed2 with capture/rebinding probes.
+Source executes empty/pairs/nested arrays, effects12345, inherited properties,
+scalar keys, runtime odd-arity effects, private compile-atomic arities, malformed
+receivers/keys, self/mutual native-array cycles and post-GC recovery. Log
+/private/tmp/suss-native-object-source-final.log. Command uses shared target/build
+workers2, cargo test -p suss-cli --test portable_native_objects --locked --
+--test-threads=2. New ABI22872 passed1 for foreign/null next/flatten buffers and
+forged null keys, typed exceptions/recovery. Complete ABI48069 passed40, log
+/private/tmp/suss-object-factory-abi.log. No skips or unknown-success substitution.
+
+Next retain runtime js-obj/cache declarations/add-to-string-hash-cache/hash-string
+and macro unchecked-get/set with explicit patches/hashes/EPL. Respect function-
+valued public factory arities/live cells and original source counter/reset ordering;
+macro property operands must preserve evaluation order. Preserve64 certified source
+observations and certify fresh primary/native agreement. No full workspace/PR
+review/final CI claim for this unpublished branch. Source cache64 remains unresolved
+until forms are retained; full public foreign-object/boxing/descriptor definition/
+delete/Symbol behavior and M2–M9 remain open. All local processes terminal.
+
+
+## Retained cached string hashing first green — 2026-10-01
+
+Continuation after2a66db4 retains5 runtime forms with explicit patches/original
+metadata/EPL: js-obj/cache/cache-count/add-to-string-hash-cache/hash-string. Cache
+source order and live dependencies retained. Added bounded checked unchecked-get/
+set macro lowering. Macro literal js-obj and general foreign/array/string bracket
+interop remain explicitly incomplete. Original native named member wrapper routes
+owned objects to descriptors while preserving fixed nominal/String/Array fallback.
+No shared type/layout/ABI/core-cell change. Source cache uses Object descriptors,
+not persistent maps. Recipe50/import54 and reviews139/926 remain partial.
+
+Native first91365 passed64 observations. Fresh primary67283 passed64 exact pin
+observations and native1, log /private/tmp/suss-cache-fresh-primary.log, command
+shared target/build workers2 sh scripts/test-string-cache-oracle.sh. Original48
+and all64 certified expected/source entries unchanged. Final native98787 passed3
+with aliases, first-class variadic factories, native members, own accessor reflection,
+mutable named property, captured/live hasher dependencies, lexical shadowing,
+compile-atomic macro arities/runtime core arities/effect-before-error/recovery.
+Log /private/tmp/suss-cache-source-final.log. Python/provenance5116 ended0:
+Python76/inventory1065/reviews139+926/import54. Log /private/tmp/suss-cache-python.log.
+Final ABI36609 passed40, /private/tmp/suss-cache-abi-final.log. No skips or false
+milestone success. Commands cargo use --locked/--test-threads=2/shared target and
+build workers2.
+
+Required full workspace baseline29258 is running, confirmed live at launch; log
+/private/tmp/suss-cache-full-baseline.log. Root exclusively owns heavy local test
+slot until that handle is terminal. No independent PR review or final-head CI
+claim yet. Next inspect terminal full result, open the coherent cached hashing PR
+with Refs9/11/14/16/19, dispatch independent review/fixes and require exact reviewed-
+head CI. Do not merge. Public hashing/equality, actual persistent sequences/maps,
+compiled macros, complete host-property operations and M2–M9 remain unfinished.
+
+
+## PR100 independent review — 2026-10-01
+
+Root baseline29258 finished successfully before review in
+/private/tmp/suss-cache-full-baseline.log. Draft PR100 was opened from3fbabd1,
+base reviewed PR99/0fe9889; independent reviewer works in
+/private/tmp/suss-review-pr100. Root released the exclusive heavy test slot after
+29258 became terminal; reviewer runs no parallel Cargo/JVM/Node processes.
+
+Review found two significant strictness defects in the retained Closure operations.
+The pinned Closure object module is strict: gobject/set and gobject/create pair
+assignment throw for getter-only or non-writable resolved properties. The candidate
+used the same non-strict store as unchecked-set, silently ignoring blocked writes;
+cached hashing then incorrectly incremented the counter. Fresh primary68 attempt
+39032 ended1 on an uncaught getter-only write while the initial native probe had
+returned2. After splitting the store, first focused83360 ended101 because that
+new provisional native expectation still said2; actual0 correctly preserved the
+counter. Corrected this new expectation only, then fresh48006 certified68 exact
+pin observations/native4. Fresh59337 certified69 exact pin/native4, including
+non-strict unchecked-set ignoring a getter-only write. Original64 remain unchanged.
+
+Added strict private object-set-strict/typed runtime import and descriptor-aware
+strict store. Getter-only and readonly writes raise language exceptions before
+mutation; arbitrary setters retain actual receiver-aware invocation. Retained
+add-to-string-hash-cache uses the strict store; counter/reset order and live
+bindings stay unchanged. Runtime factory pair assignments also use strict store,
+matching gobject/create. Source patch rationales, hashes/manifest, manual dependency
+review and stale storage documentation were corrected. Shared GC layout, ABI
+version and core-cell count stay unchanged; public defineProperty remains open.
+
+Focused ABI11481 passed1: own/inherited readonly data throws typed exceptions,
+not traps, preserves data and recovers through GC; writable inherited data creates
+an own property. Pre-factory-fix full93776 passed, log
+/private/tmp/suss-pr100-review-full-baseline.log. An additional first-class factory
+probe avoids the separate unfinished literal macro. Fresh21556 certified70 exact
+pin observations then ended101 because native returned an Object instead of throwing
+and returning caught Number41; strict decoder rejected the wrong layout. After
+factory fix, fresh92625 passed all70 exact pin observations and native4, log
+/private/tmp/suss-pr100-review-primary70-final.log. New cases also certify inherited
+getter effects, inherited setter without own-data creation, throwing cache writes,
+getter-only counter atomicity and non-strict bracket behavior. All original64
+sources/expectations were checked against3fbabd1 and remain unchanged.
+
+Commands use shared target /Users/bobby/code/github/bobby/suss/target and build
+workers2: sh scripts/test-string-cache-oracle.sh; cargo test -p suss-compile
+--test runtime_abi runtime_abi_strict_owned_store --locked -- --test-threads=2;
+cargo test --workspace --locked -- --test-threads=2. Final independent Python76,
+inventory1065/reviews139+926/import54 pass, log
+/private/tmp/suss-pr100-review-provenance-final.log. No skipped success substitution.
+Final workspace79254 is live at launch, log
+/private/tmp/suss-pr100-review-full-final.log; terminal result will be recorded below.
+Exact reviewed-head CI remains root's next readiness gate after reviewer push.
+No merges or issue/milestone closures. Public hashing/equality, persistent sequences,
+collections, literal js-obj macro, full property domains and M2–M9 remain open.
+
+Final workspace79254 ended0: all required workspace suites and doc tests pass,
+including source cache4 (70 corpus observations), private source2 and ABI41.
+Log /private/tmp/suss-pr100-review-full-final.log. All reviewer local processes
+are terminal and the exclusive heavy slot is released to root. Independent review
+has no remaining significant findings in this bounded slice after the two strict
+Closure fixes. Reviewer pushes this reviewed source/evidence head to PR100; root
+must require exact reviewed-head CI before readiness. Next unblocked implementation
+is persistent sequence/list foundations, while literal macro/property domains and
+full hashing/equality remain tracked unfinished. No merge or milestone completion.

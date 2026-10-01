@@ -335,3 +335,15 @@ to40 forms/44 licensed artifacts, with explicit fixed defn patches preserving
 algorithms and metadata. Bounded threading/strict-zero expansions are prerequisites,
 not compiled macro acceptance; full collection/string/numeric hashing stays open.
 See [scalar Murmur hashing](../runtime/murmur-hashing.md).
+
+
+## Cached string hashing
+
+Retained runtime js-obj/cache declarations/add-to-string-hash-cache/hash-string
+bring the import to50 selections/54 licensed artifacts and the overlay to139
+partial/926 unassessed. All64 preserved source observations now match fresh pin
+and independently decoded native execution; source3/private adapters2/ABI40 and
+Python76 pass. [Evidence and boundaries](../runtime/cached-string-hashing.md)
+distinguish the first-class runtime factory from the unfinished literal js-obj
+macro and complete bracket/foreign-object/public hash acceptance. Full workspace,
+independent PR review and final-head CI remain required. No milestone closure.

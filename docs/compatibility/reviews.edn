@@ -1426,4 +1426,88 @@
    :adaptation-path "docs/compatibility/patches/hash-combine.json"
    :alternative nil
    :tests ["crates/suss-cli/tests/portable_numeric_hash.rs" "tests/oracle/numeric-hash-cases.json"]}
+
+  "runtime:js-obj:2284"
+  {:source-sha256 "ac50f5ef05cbceeec7227d1284b2f9f7ddbce55b06cd374f9dd8a43458cff19e"
+   :visibility :public
+   :arities {:fixed [0] :variadic-min 0}
+   :dependencies ["owned GC Object prototype and descriptor-aware properties" "strict Closure gobject/create first-class variadic factory callback"]
+   :classification :adapted
+   :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/js-object-factory.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_cache.rs" "tests/oracle/string-cache-cases.json" "crates/suss-cli/tests/portable_native_objects.rs" "crates/suss-compile/tests/runtime_abi.rs"]}
+
+  "runtime:string-hash-cache:1022"
+  {:source-sha256 "f502ec246497077f91b0ff08201637b4777f9e1298657d1f96dfa7505bfec0d3"
+   :visibility :public
+   :arities nil
+   :dependencies ["runtime:js-obj:2284"]
+   :classification :portable
+   :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_cache.rs" "tests/oracle/string-cache-cases.json" "crates/suss-cli/tests/portable_native_objects.rs" "crates/suss-compile/tests/runtime_abi.rs"]}
+
+  "runtime:string-hash-cache-count:1023"
+  {:source-sha256 "e0f3d50788bdf85a2e7df1ae6a19ed4d0fbd2c37a660658cba3cde8cc0e46579"
+   :visibility :public
+   :arities nil
+   :dependencies []
+   :classification :portable
+   :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_cache.rs" "tests/oracle/string-cache-cases.json" "crates/suss-cli/tests/portable_native_objects.rs" "crates/suss-compile/tests/runtime_abi.rs"]}
+
+  "runtime:add-to-string-hash-cache:1037"
+  {:source-sha256 "7f3a6b72d88216e5d5d58b62fcb5805bb7bb79cf8879c0341d36238bfe93ce3e"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:hash-string*:1026" "runtime:string-hash-cache:1022" "runtime:string-hash-cache-count:1023" "runtime:inc:1505" "strict Closure gobject/set over checked scalar owned properties"]
+   :classification :adapted
+   :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/add-to-string-hash-cache.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_cache.rs" "tests/oracle/string-cache-cases.json" "crates/suss-cli/tests/portable_native_objects.rs" "crates/suss-compile/tests/runtime_abi.rs"]}
+
+  "runtime:hash-string:1043"
+  {:source-sha256 "3ca4d933c808bb44c7fc13a4c925b043930d735d9fd03b938e48a0ba796cba53"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:js-obj:2284" "runtime:add-to-string-hash-cache:1037" "macro:unchecked-get:1070" "runtime:number?:258" "live cache bindings and source-ordered reset"]
+   :classification :adapted
+   :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/hash-string-cached.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_cache.rs" "tests/oracle/string-cache-cases.json" "crates/suss-cli/tests/portable_native_objects.rs" "crates/suss-compile/tests/runtime_abi.rs"]}
+
+  "macro:unchecked-get:1070"
+  {:source-sha256 "6176bf6f7b6658c5a5e7428773b513a5ac02fac64d2d66967db73397e100bf59"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["checked scalar object property get"]
+   :classification :adapted
+   :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
+   :status :in-progress
+   :adaptation-path "docs/runtime/native-object-storage.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_cache.rs" "tests/oracle/string-cache-cases.json" "crates/suss-cli/tests/portable_native_objects.rs" "crates/suss-compile/tests/runtime_abi.rs"]}
+
+  "macro:unchecked-set:1077"
+  {:source-sha256 "b7ab595af1fb952a1ca2677c6badf10f34c25c0401025f43364b3f101ff94b91"
+   :visibility :public
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["non-strict checked scalar object property set"]
+   :classification :adapted
+   :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
+   :status :in-progress
+   :adaptation-path "docs/runtime/native-object-storage.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_cache.rs" "tests/oracle/string-cache-cases.json" "crates/suss-cli/tests/portable_native_objects.rs" "crates/suss-compile/tests/runtime_abi.rs"]}
 }}

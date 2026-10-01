@@ -680,9 +680,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         nominal::error(&mut body);
         b.function_with_locals(
             if writing {
-                "named-property-set"
+                "fixed-named-property-set"
             } else {
-                "named-property-get"
+                "fixed-named-property-get"
             },
             if writing {
                 &[VALUE, VALUE, VALUE]

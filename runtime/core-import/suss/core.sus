@@ -246,3 +246,26 @@
     (+ hash 0x9e3779b9
       (bit-shift-left seed 6)
       (bit-shift-right seed 2)))))
+
+(def js-obj (suss.bootstrap/object-factory))
+
+(def string-hash-cache (js-obj))
+
+(def string-hash-cache-count 0)
+
+(def add-to-string-hash-cache (fn [k]
+  (let [h (hash-string* k)]
+    (suss.bootstrap/object-set-strict string-hash-cache k h)
+    (set! string-hash-cache-count (inc string-hash-cache-count))
+    h)))
+
+(def hash-string (fn [k]
+  (when (> string-hash-cache-count 1024)
+    (set! string-hash-cache (js-obj))
+    (set! string-hash-cache-count 0))
+  (if (nil? k)
+    0
+    (let [h (unchecked-get string-hash-cache k)]
+      (if (number? h)
+        h
+        (add-to-string-hash-cache k))))))
