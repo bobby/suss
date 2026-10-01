@@ -7206,3 +7206,34 @@ onto reviewed parent then execute fresh pin/native/focused/full. Final reviewed-
 head CI gates104 readiness; no merge/closure. Shared target/build2/testthreads2,
 no RUSTFLAGS. Next complete and verify indexing/search, then ordered/public hash,
 printing, remaining collections and compiled macros toward M2–M9 acceptance.
+
+## Indexing execution and macro fidelity — 2026-10-01
+
+Rebased portable/core-sequence-indexing onto reviewed104 f7e0fca; preparation
+commit61d2177. Fresh original53/native1 passed75758, error/GC focused native2
+passed99611 output. Generated pinned core.js demonstrates helper inc/dec macro
+inlining; corrected bounded original unary expansions with literal1 and existing
+checked arithmetic, preserving first-class runtime functions and operand order.
+Three core-cell redefinition observations added without altering original53.
+Fresh10401 terminal0 certifies56 primary/native2, /private/tmp/suss-indexing-macro56.log.
+Python80/import96/setup4/reviews185partial+880unassessed/diff-check pass.
+Full75515 running /private/tmp/suss-indexing-full.log; root owns heavy slot.
+Formatting dependencies remain uninitialized; no complete issue/milestone claim.
+Next inspect full then open and independently review the indexing PR, push
+significant findings and require exact reviewed-head CI. No merges.
+
+PR103 reviewed e11771eb368a75b559a31a90a8737440a12a4a66 exact CI36844766535
+success; inspected log through final doc tests, /private/tmp/suss-pr103-final-ci.log.
+Marked ready for user review. PR104 f7e0fca exact CI36846726372 still running.
+
+Full75515 ended101: two previous imported inc/dec function tests made direct
+calls now correctly resolved as macros, expecting runtime arity/coercion errors.
+Corrected function tests to explicit lexical function capture, retaining every
+effect/arity/typed-error/recovery assertion. Added distinct macro arity guards
+for inc/dec; no certified oracle observation changed or skipped. Focused rerun
+and full retry required. Initial failure /private/tmp/suss-indexing-full.log.
+
+Focused40549 terminal0: core_import17/indexing2,
+/private/tmp/suss-indexing-focused-fix.log. Full52953 retry running,
+/private/tmp/suss-indexing-full-retry.log. Original reviewed parent corpora and
+separate boundary bytes unchanged. Root retains heavy slot until terminal.

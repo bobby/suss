@@ -7,7 +7,7 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["runtime:IIndexed:641"]
    :classification :adapted
-   :rationale "Complete pinned indexing/search algorithms prepared with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Execution is unverified preparation; formatting, other collection types and compiled macro acceptance remain unfinished."
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing56 and typed error/effect/GC checks pass; formatting, other collection types and compiled macro acceptance remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-indexed-predicate.json"
    :alternative nil
@@ -17,7 +17,7 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["macro:neg?:1201"]
    :classification :adapted
-   :rationale "Complete pinned indexing/search algorithms prepared with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Execution is unverified preparation; formatting, other collection types and compiled macro acceptance remain unfinished."
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing56 and typed error/effect/GC checks pass; formatting, other collection types and compiled macro acceptance remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-neg-predicate.json"
    :alternative nil
@@ -27,7 +27,7 @@
    :arities {:fixed [2 3] :variadic-min nil}
    :dependencies ["runtime:seq:1282" "runtime:first:1309" "runtime:next:1333" "runtime:indexed?:1606" "runtime:dec:2803"]
    :classification :adapted
-   :rationale "Complete pinned indexing/search algorithms prepared with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Execution is unverified preparation; formatting, other collection types and compiled macro acceptance remain unfinished."
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing56 and typed error/effect/GC checks pass; formatting, other collection types and compiled macro acceptance remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-linear-traversal-nth.json"
    :alternative nil
@@ -37,7 +37,7 @@
    :arities {:fixed [2 3] :variadic-min nil}
    :dependencies ["runtime:linear-traversal-nth:1927" "runtime:neg?:3086" "runtime:native-satisfies?:322" "runtime:IIndexed:641" "pending str_ type type->str formatting"]
    :classification :adapted
-   :rationale "Complete pinned indexing/search algorithms prepared with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Execution is unverified preparation; formatting, other collection types and compiled macro acceptance remain unfinished."
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing56 and typed error/effect/GC checks pass; formatting, other collection types and compiled macro acceptance remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-nth.json"
    :alternative nil
@@ -47,7 +47,7 @@
    :arities {:fixed [2 3] :variadic-min nil}
    :dependencies ["runtime:nth:1947" "runtime:=:1342" "runtime:count:1906" "runtime:neg?:3086" "runtime:inc:1505"]
    :classification :adapted
-   :rationale "Complete pinned indexing/search algorithms prepared with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Execution is unverified preparation; formatting, other collection types and compiled macro acceptance remain unfinished."
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing56 and typed error/effect/GC checks pass; formatting, other collection types and compiled macro acceptance remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence--indexOf.json"
    :alternative nil
@@ -57,17 +57,37 @@
    :arities {:fixed [2 3] :variadic-min nil}
    :dependencies ["runtime:nth:1947" "runtime:=:1342" "runtime:count:1906" "runtime:neg?:3086" "runtime:dec:2803"]
    :classification :adapted
-   :rationale "Complete pinned indexing/search algorithms prepared with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Execution is unverified preparation; formatting, other collection types and compiled macro acceptance remain unfinished."
+   :rationale "Complete pinned indexing/search algorithms retained with explicit source-bound bootstrap/UTF-16/error/numeric min-max adaptations. Fresh pinned/native indexing56 and typed error/effect/GC checks pass; formatting, other collection types and compiled macro acceptance remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence--lastIndexOf.json"
    :alternative nil
    :tests ["crates/suss-cli/tests/portable_indexing.rs" "tests/oracle/indexing-cases.json" "docs/runtime/sequence-indexing.md"]}
+  "macro:inc:1192"
+  {:source-sha256 "8633926b0fcf8fd2cdf879e952c04384cd5deaa23da51f6ed71524463d00b586" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["checked scalar arithmetic"]
+   :classification :adapted
+   :rationale "Original bounded bootstrap expansion follows pinned + with literal one and one evaluated operand. Retained helpers inline this macro independently of runtime function cells. Compiled upstream macros and object coercion remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/runtime/sequence-indexing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_indexing.rs" "tests/oracle/indexing-cases.json"]}
+  "macro:dec:1189"
+  {:source-sha256 "88a25a6f136577cf2204a1a227568f74c809ddcad49a255027cc889ede835dce" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["checked scalar arithmetic"]
+   :classification :adapted
+   :rationale "Original bounded bootstrap expansion follows pinned - with literal one and one evaluated operand. Retained helpers inline this macro independently of runtime function cells. Compiled upstream macros and object coercion remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/runtime/sequence-indexing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_indexing.rs" "tests/oracle/indexing-cases.json"]}
   "macro:neg?:1201"
   {:source-sha256 "9c270b2cf1ebae3d50bad7c57ec437904deb2eda550dc8dbf7627109798fc435" :visibility :public
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["macro:<:1164" "checked scalar comparison"]
    :classification :adapted
-   :rationale "Original bounded bootstrap expansion follows pinned less-than-zero scalar comparison with one evaluated operand. Preparation only; compiled upstream macro and object coercion remain unfinished. No upstream macro source copied."
+   :rationale "Original bounded bootstrap expansion follows pinned less-than-zero scalar comparison with one evaluated operand. Fresh pinned/native scalar observations execute; compiled upstream macro and object coercion remain unfinished. No upstream macro source copied."
    :status :in-progress
    :adaptation-path "docs/runtime/sequence-indexing.md"
    :alternative nil

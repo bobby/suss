@@ -260,7 +260,7 @@
     },
     {
       "id": "index-of-string-unit",
-      "source": "(.indexOf (seq \"😀A\") \"\\ude00\")",
+      "source": "(.indexOf (seq \"\ud83d\ude00A\") \"\\ude00\")",
       "expected": {
         "tag": "f64",
         "bits": "3ff0000000000000"
@@ -308,7 +308,7 @@
     },
     {
       "id": "nth-string-utf16",
-      "source": "(identical? (nth \"😀\" 0) \"\\ud83d\")",
+      "source": "(identical? (nth \"\ud83d\ude00\" 0) \"\\ud83d\")",
       "expected": {
         "tag": "bool",
         "value": true
@@ -424,6 +424,30 @@
       "expected": {
         "tag": "bool",
         "value": true
+      }
+    },
+    {
+      "id": "core-dec-redefinition-search",
+      "source": "(let [saved cljs.core/dec] (set! cljs.core/dec (fn [x] 99)) (let [result (cljs.core/-lastIndexOf (list 1 2) 1)] (set! cljs.core/dec saved) result))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "core-inc-redefinition-search",
+      "source": "(let [saved cljs.core/inc] (set! cljs.core/inc (fn [x] 99)) (let [result (cljs.core/-indexOf (list 1 2) 2)] (set! cljs.core/inc saved) result))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "core-dec-redefinition-nth",
+      "source": "(let [saved cljs.core/dec] (set! cljs.core/dec (fn [x] 99)) (let [result (nth (list 1 2) 1)] (set! cljs.core/dec saved) result))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
       }
     }
   ]

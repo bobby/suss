@@ -53,6 +53,26 @@ impl Analyzer {
                 let operands = args.iter().map(|argument| self.form(argument)).collect::<Result<Vec<_>, _>>()?;
                 Ok(self.nominal(form, operation, operands))
             }
+            ControlForm::Increment | ControlForm::Decrement => {
+                if args.len() != 1 {
+                    return Err(fail(form.span.clone(), if operation == ControlForm::Increment {
+                        "inc requires one operand"
+                    } else { "dec requires one operand" }));
+                }
+                let value = self.form(&args[0])?;
+                let operator = if operation == ControlForm::Increment {
+                    Arithmetic::Add
+                } else { Arithmetic::Subtract };
+                let arguments = vec![value, self.literal_form(form, Literal::Number(1.0))];
+                let ty = arithmetic_type(operator, &arguments.iter().map(|arg| arg.ty).collect::<Vec<_>>())
+                    .ok_or_else(|| fail(args[0].span.clone(), "Arithmetic object coercions are not lowered yet"))?;
+                Ok(Hir {
+                    span: form.span.clone(),
+                    metadata: form.metadata.clone(),
+                    ty,
+                    kind: Expression::Arithmetic { operator, arguments },
+                })
+            }
             ControlForm::Zero | ControlForm::Positive | ControlForm::Negative => {
                 if args.len() != 1 {
                     return Err(fail(

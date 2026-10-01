@@ -1,4 +1,4 @@
-# Sequence indexing and index-search preparation
+# Sequence indexing and index-search execution
 
 The isolated preparation retains pinned indexed?1606, neg?3086,
 linear-traversal-nth1927, nth1947, -indexOf1610 and -lastIndexOf1627.
@@ -9,9 +9,9 @@ numeric min/max expansions bind their operands once. Bounded original neg? macro
 lowering follows pinned core.cljc1201 less-than-zero comparison. No new runtime
 ABI/type/bootstrap-cell or fake indexing implementation.
 
-Import92/artifacts96/reviews183 partial+882 unassessed and new53 candidates are
-UNVERIFIED preparation. Fresh primary/native execution and focused/full validation
-remain pending. Unsupported-value str_/type/type->str formatting remains explicitly
+Import92/artifacts96/reviews185 partial+880 unassessed. Fresh pinned primary
+execution certifies56 observations, all independently decoded native Wasm matches;
+native2 and Python80 pass. Required full workspace baseline is running. Unsupported-value str_/type/type->str formatting remains explicitly
 uninitialized; other persistent types, full compiled macros and surrounding
 collection/release gates remain unfinished. No completed issue/milestone claim.
 
@@ -26,6 +26,24 @@ python3 scripts/cljs_reviews.py
 cargo test --workspace --locked -- --test-threads=2
 ```
 
-Next rebase onto reviewed104, execute the retained artifact and correct actual
-failures with source/order/provenance aligned. Independent PR review/fixes and
+Rebased onto reviewed104 f7e0fca. Next inspect the full baseline and dispatch
+independent PR review after opening the indexing PR. Independent PR review/fixes and
 exact final reviewed-head CI remain mandatory before readiness; no merges.
+
+Pinned generated core.js confirms indexing helpers inline inc/dec rather than
+reading runtime function cells. Original bounded unary arithmetic expansions
+follow core.cljc1189/1192, evaluate the operand once and use existing checked
+arithmetic. First-class runtime functions remain retained. Three fresh oracle
+probes redefine core inc/dec and certify search/nth independence; the original53
+certified observations remain unchanged. No upstream macro implementation copied.
+
+Fresh10401 terminal0, /private/tmp/suss-indexing-macro56.log: primary56/native2.
+Native99611 terminal output shows2 pass, /private/tmp/suss-indexing-native-final.log.
+Python80/import96/setup4/reviews185+880 and diff-check pass. Full75515 running,
+/private/tmp/suss-indexing-full.log; no full acceptance claim until terminal.
+
+Full75515 ended101 on two old tests using direct inc/dec calls while asserting
+retained function errors. Tests now explicitly capture function values, retaining
+all prior effect/error/recovery checks; separate macro arity guards cover inc/dec.
+Focused40549 ended0: core_import17/indexing2. Full52953 retry running,
+/private/tmp/suss-indexing-full-retry.log. No certified oracle result retargeted.

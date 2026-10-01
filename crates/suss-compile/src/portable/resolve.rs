@@ -68,6 +68,8 @@ pub enum ControlForm {
     Zero,
     Positive,
     Negative,
+    Increment,
+    Decrement,
     UncheckedGet,
     UncheckedSet,
 }
@@ -88,6 +90,8 @@ impl ControlForm {
             "zero?" => Self::Zero,
             "pos?" => Self::Positive,
             "neg?" => Self::Negative,
+            "inc" => Self::Increment,
+            "dec" => Self::Decrement,
             "unchecked-get" => Self::UncheckedGet,
             "unchecked-set" => Self::UncheckedSet,
             _ => return None,
@@ -646,6 +650,8 @@ impl Environment {
                         | "zero?"
                         | "pos?"
                         | "neg?"
+                        | "inc"
+                        | "dec"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -702,6 +708,8 @@ impl Environment {
                         | "zero?"
                         | "pos?"
                         | "neg?"
+                        | "inc"
+                        | "dec"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -758,6 +766,8 @@ impl Environment {
                         | "zero?"
                         | "pos?"
                         | "neg?"
+                        | "inc"
+                        | "dec"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -814,6 +824,8 @@ impl Environment {
                     | "zero?"
                     | "pos?"
                     | "neg?"
+                        | "inc"
+                        | "dec"
                     | "int"
                     | "bit-and"
                     | "bit-or"
@@ -862,6 +874,8 @@ impl Environment {
                     | "zero?"
                     | "pos?"
                     | "neg?"
+                        | "inc"
+                        | "dec"
                     | "int"
                     | "bit-and"
                     | "bit-or"
