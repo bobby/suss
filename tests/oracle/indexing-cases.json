@@ -449,6 +449,54 @@
         "tag": "f64",
         "bits": "4000000000000000"
       }
+    },
+    {
+      "id": "macro-lexical-shadowing",
+      "source": "(let [inc (fn [x] (+ x 10)) dec (fn [x] (+ x 20)) neg? (fn [x] (+ x 30))] (+ (inc 1) (dec 2) (neg? 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050800000000000"
+      }
+    },
+    {
+      "id": "macro-operand-effects-once",
+      "source": "(do (def indexing-macro-trace 0) (+ (inc (do (set! indexing-macro-trace (+ (* indexing-macro-trace 10) 1)) 4)) (dec (do (set! indexing-macro-trace (+ (* indexing-macro-trace 10) 2)) 4))) indexing-macro-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "nth-direct-indexed-over-seq",
+      "source": "(do (def indexing-dispatch-trace 0) (deftype IndexingBoth [] IIndexed (-nth ([x n] (set! indexing-dispatch-trace (+ (* indexing-dispatch-trace 10) 1)) 17) ([x n nf] (set! indexing-dispatch-trace (+ (* indexing-dispatch-trace 10) 2)) 19)) ISeqable (-seq [x] (set! indexing-dispatch-trace 99) (list 3))) (+ (nth (IndexingBoth.) 100) (nth (IndexingBoth.) -1 7) indexing-dispatch-trace))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4048000000000000"
+      }
+    },
+    {
+      "id": "index-search-count-once-stops-at-match",
+      "source": "(do (def indexing-search-trace 0) (deftype IndexingSearch [] ICounted (-count [x] (set! indexing-search-trace 1) 3) IIndexed (-nth ([x n] (set! indexing-search-trace (+ (* indexing-search-trace 10) (+ n 2))) (+ n 10)) ([x n nf] (+ n 10)))) (cljs.core/-indexOf (IndexingSearch.) 11) indexing-search-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "core-neg-redefinition-negative-nth",
+      "source": "(let [saved cljs.core/neg?] (set! cljs.core/neg? (fn [x] false)) (let [result (nth (list 1 2) -1 17)] (set! cljs.core/neg? saved) result))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "nth-throw-prevents-index-effect",
+      "source": "(do (def indexing-throw-trace 0) (try (nth (do (set! indexing-throw-trace 1) (throw 7)) (do (set! indexing-throw-trace 2) 0)) (catch :default error nil)) indexing-throw-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
     }
   ]
 }

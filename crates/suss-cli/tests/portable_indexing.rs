@@ -41,7 +41,7 @@ fn indexing_contract_match_independently_encoded_primary_observations() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/indexing-cases.json")).unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 56);
+    assert_eq!(cases.len(), 62);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -152,4 +152,60 @@ fn indexing_errors_preserve_messages_effects_and_gc_recovery() {
         eval_number(&mut session, "(saved-nth indexing-values 0)"),
         17.0f64.to_bits()
     );
+}
+
+#[test]
+fn indexing_macros_resolve_aliases_exclusions_shadowing_and_both_phases() {
+    use suss_cli::portable_session::SessionError;
+    use suss_compile::portable::{
+        prepare_fragment,
+        resolve::{Environment, Phase},
+    };
+    let mut session = Session::new().unwrap();
+    session
+        .eval("(ns indexing.alias (:require [cljs.core :as c :refer [inc dec neg?]]))")
+        .unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(c/inc (dec 9))"),
+        9.0f64.to_bits()
+    );
+    assert!(eval_bool(&mut session, "(c/neg? (c/dec 0))"));
+    session.eval("(def inc (fn [x] (+ x 100)))").unwrap_err(); // Explicit refer conflicts with a local declaration.
+    session.eval("(ns indexing.shadow) (def inc (fn [x] (+ x 100))) (def dec (fn [x] (+ x 200))) (def neg? (fn [x] (+ x 300)))").unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(+ (inc 1) (dec 2) (neg? 3))"),
+        606.0f64.to_bits()
+    );
+    assert_eq!(
+        eval_number(&mut session, "(cljs.core/inc (cljs.core/dec 7))"),
+        7.0f64.to_bits()
+    );
+    assert!(eval_bool(&mut session, "(cljs.core/neg? -1)"));
+    session
+        .eval("(ns indexing.excluded (:refer-clojure :exclude [inc dec neg?]))")
+        .unwrap();
+    for source in ["(inc 1)", "(dec 1)", "(neg? -1)"] {
+        assert!(
+            matches!(session.eval(source), Err(SessionError::Compile(_))),
+            "{source}"
+        );
+    }
+    session.collect().unwrap();
+    assert_eq!(
+        eval_number(&mut session, "(cljs.core/inc 7)"),
+        8.0f64.to_bits()
+    );
+    for phase in [Phase::Runtime, Phase::Macro] {
+        for source in ["(inc 7)", "(dec 7)", "(neg? -1)"] {
+            let fragment = prepare_fragment(source, &Environment::default(), phase).unwrap();
+            suss_compile::runtime_abi::verify_artifact(
+                &fragment.wasm,
+                &suss_compile::runtime_abi::Manifest::default(),
+            )
+            .unwrap();
+        }
+        for source in ["(inc)", "(dec 1 2)", "(neg?)"] {
+            assert!(prepare_fragment(source, &Environment::default(), phase).is_err());
+        }
+    }
 }
