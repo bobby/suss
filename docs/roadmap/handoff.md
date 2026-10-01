@@ -7237,3 +7237,14 @@ Focused40549 terminal0: core_import17/indexing2,
 /private/tmp/suss-indexing-focused-fix.log. Full52953 retry running,
 /private/tmp/suss-indexing-full-retry.log. Original reviewed parent corpora and
 separate boundary bytes unchanged. Root retains heavy slot until terminal.
+
+Required full52953 ended0; inspected /private/tmp/suss-indexing-full-retry.log
+through final reader doc tests. Commands: CARGO_TARGET_DIR=/Users/bobby/code/
+github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2. All required enabled suites pass, including indexing2/56,
+core_import17 and reviewed parent corpora. Existing manual ignores and explicit
+diagnostic9passes/7knownfailures remain unchanged. PR105 draft candidate26a7443
+opened with independent reviewer review_pr105 dispatched; exact reviewed-head
+CI remains mandatory. All root heavy handles terminal; release slot to reviewer
+after evidence push. No merges or issue/milestone closures. Next verify reviewer
+findings/CI then retained hashing/printing and remaining M2–M9 acceptance.
