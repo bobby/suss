@@ -209,6 +209,70 @@
         "tag": "bool",
         "value": true
       }
+    },
+    {
+      "id": "review-mixed-owner-allocation",
+      "source": "(let [f (fn [] 1) a (array 2) e (error \"m\") x (uid f) y (uid a) z (uid e)] (and (= (- y x) 1) (= (- z y) 1) (= (uid f) x)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-array-mutation-keeps-identity",
+      "source": "(let [a (array 1) x (uid a)] (aset a 0 17) (and (= (uid a) x) (= (aget a 0) 17)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-caught-error-keeps-identity",
+      "source": "(let [e (error \"m\") x (uid e)] (try (throw e) (catch :default caught (= (uid caught) x))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-metafn-two-arguments",
+      "source": "(let [w (with-meta (fn [a b c] b) false) x (uid w)] (and (= (-invoke w 19 2) 17) (= (uid w) x) (= (meta w) false)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "review-metafn-copy-keeps-function",
+      "source": "(let [f (fn [a b] a) w (with-meta f false) x (with-meta w true)] (and (= (uid (.-afn x)) (uid f)) (= (-invoke x 17) 17) (= (meta x) true) (= (meta w) false)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "review-list-metadata-payload-identity",
+      "source": "(let [m (array 17) x (with-meta (list 1 2) m) a (uid m)] (uid x) (and (= (uid (meta x)) a) (= (first x) 1) (= (count x) 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-metafn-static-target-argument",
+      "source": "(let [w (with-meta (fn [target a] a) false) id (uid w)] (and (= (-invoke w 17) 17) (= (uid w) id) (= (meta w) false)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-metafn-static-two-operands",
+      "source": "(let [w (with-meta (fn [target a b] (- a b)) true) id (uid w)] (and (= (-invoke w 19 2) 17) (= (uid w) id) (= (meta w) true)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
     }
   ]
 }

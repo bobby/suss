@@ -7452,3 +7452,60 @@ this evidence commit. Initial CI36856978539 is in progress at262b2d7; final revi
 head CI still gates readiness. No merge, issue closure or milestone acceptance.
 Next finish review/fixes and source public/default/ordered/unordered hashing,
 general IFn invocation/apply, printing and remaining M2–M9 acceptance gates.
+
+## Independent PR107 review — 2026-10-01
+
+Reviewed262b2d7/root evidence160ccdc against reviewed1068e0f3b5 in isolated
+/private/tmp/suss-review-pr107 with actual detached upstreamc4295f30. Read accepted
+design/ROADMAP/inventory/handoff. Owner-held UID slots, all constructors, scalar
+allocator, corruption guards, genuine ABI1 rejection and retained metadata source
+provenance inspected. Significant finding: canonical IFn nominal direct dispatch
+used ordinary protocol receiver arity, conflicting with pinned emitted IFn method
+formals. Fix carries a next-arity key and prepends the already evaluated target;
+ordinary protocols/native fallback/general strict invocation remain separate.
+Typed malformed next-key constructor guard added. See identity-hashing.md.
+
+Corrected dispatch exposes unchanged original metafn-explicit-invoke as an exact
+strict-arity design-contract divergence: pin true, native typed Error with raw
+message Wrong arity. Preserve its exact source/reference and assert it separately,
+never skip/count success. Original26 now25 matching+1 boundary; all original JSON
+objects and parent corpus bytes unchanged. Eight review probes bring fresh34
+primary observations to33 matching native relations+1 boundary across4 tests.
+Effect order, thrown receiver short-circuit, metadata/copies, GC/UID recovery and
+unrelated user IFn/-invoke protocol guard pass. Highest apply/general callable
+object/full metadata remain unfinished; no generic JS arity-normalizing intrinsic.
+
+Initial fresh68141 ended1 on new provisional receiver expectations; native95912
+confirmed mismatch101. New provisional callbacks corrected to accept actual pin
+arguments, originals unchanged. Fix51693 compile101 private accessor;26689
+validation101 missing ARGS cast; corrected both. Fresh31023/4452 primary certifies
+but native101 on unchanged zero-invoke strict boundary, now recorded explicitly.
+Native93996 pass4 and finalfresh29279 terminal0:34 exact primary/native4 with
+33matches+1 exact boundary, /private/tmp/suss-pr107-review-oracle34-final.log.
+UID exhaustion fixture92068 compile101 test-only u64 range indexing; retry61754
+pass0. ABI46577 terminal0 all45, /private/tmp/suss-pr107-review-abi45.log;
+final strengthened next-key fixture also runs in the full baseline. Python90053
+terminal0/80, /private/tmp/suss-pr107-review-python.log. Import100/setup4/
+reviews189partial+876unassessed/diff pass, no source methods removed.
+
+Required reviewer full90116 live, /private/tmp/suss-pr107-review-full.log:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2; no RUSTFLAGS. Reviewer retains
+exclusive heavy slot until authoritative terminal full/all handles inspected.
+Push significant fixes/evidence, then root must require successful exact final
+reviewed-head CI. No merges/issue closure/milestone acceptance. Next retained
+public/default/collection hashing, printing, remaining persistent types/compiled
+macros and complete M2–M9 acceptance gates.
+
+Independent full90116 ended0; inspected /private/tmp/suss-pr107-review-full.log
+through final reader doc tests. All enabled required suites pass, including
+identity4/33matches+1 exact boundary, ABI45 with final valid-old-key/invalid-next-key
+guard and UID exhaustion/cached-owner fixture, unchanged reviewed parent corpora.
+Existing manual ignores and diagnostic9passes/7knownfailures unchanged. Source
+receiver provenance: pinned core.cljc1509–1540/1587. Final Python40584 ended0/80,
+/private/tmp/suss-pr107-review-python-final.log. All reviewer handles92068/61754/
+68141/90053/95912/51693/26689/31023/4452/93996/29279/46577/40584/90116 terminal.
+Reviewer releases heavy slot after fixes/evidence push; exact final reviewed-head
+CI remains root's readiness gate. No merge/issue or milestone closure. Next
+retained public/default/collection hash, printing, remaining types/compiled macros
+and surrounding M2–M9 release acceptance remain unfinished.

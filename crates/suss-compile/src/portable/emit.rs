@@ -126,6 +126,9 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::LiveDispatcher => {
                             names.insert("protocol-live-dispatcher-new");
                         }
+                        Nominal::IFnLiveDispatcher => {
+                            names.insert("ifn-live-dispatcher-new");
+                        }
                         Nominal::NativeMarker(_) => {
                             names.insert("protocol-native-marker-set");
                         }
@@ -196,6 +199,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     for (i, name) in names.iter().enumerate() {
         let (params, results) = match *name {
             "protocol-live-dispatcher-new" => (vec![VALUE, VALUE], vec![VALUE]),
+            "ifn-live-dispatcher-new" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
             "protocol-native-marker-set" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
@@ -826,11 +830,11 @@ fn emit_function(
                     arguments,
                 } => {
                     match operation {
-                        Nominal::LiveDispatcher => {
+                        Nominal::LiveDispatcher | Nominal::IFnLiveDispatcher => {
                             for argument in arguments {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
-                            function.instruction(&Call(index("protocol-live-dispatcher-new")));
+                            function.instruction(&Call(index(if matches!(operation, Nominal::IFnLiveDispatcher) { "ifn-live-dispatcher-new" } else { "protocol-live-dispatcher-new" })));
                         }
                         Nominal::NativeMarker(kind) | Nominal::NativeSet(kind) => {
                             function

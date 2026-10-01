@@ -93,3 +93,85 @@ resolution tests passed. Full65381 ended0 through final doc tests, including all
 /private/tmp/suss-identity-hash-full-final.log. Existing ignored/manual tests remain
 explicit. Independent review, reviewer baseline and final reviewed-head CI remain
 pending; this is not public hash or milestone acceptance.
+
+## Independent PR107 review — 2026-10-01
+
+Reviewed262b2d7 and root evidence160ccdc against reviewed1068e0f3b5 in isolated
+/private/tmp/suss-review-pr107 with actual detached upstreamc4295f30. Read accepted
+design/ROADMAP/inventory/handoff. All production constructors initialize appended
+UID storage; scalar-only allocator retains no owner references. Reviewed cached
+malformed guards, manifest/prelude gates, frozen ABI1 linking, private HIR/IR
+arity and complete licensed metadata source forms.
+
+Review found a significant canonical IFn receiver/arity dispatch defect. The pin's
+emitted nominal IFn methods omit the physical receiver formal, whereas explicit
+-invoke passes its target in the JS operand list. Generic protocol dispatch had
+therefore selected the wrong source arity. Canonical suss.core/IFn now has a
+private dispatcher carrying the next source-arity key; nominal dispatch prepends
+the already evaluated target value. Ordinary protocols, including unrelated user
+protocols named IFn/-invoke, retain their receiver-inclusive convention. Native
+fallback still uses the current method cell. No operand is evaluated again and
+no generic fixed-function arity rule changed. The extra runtime constructor
+checks its next key before use and rejects malformed storage with language errors.
+
+This correction exposed a false positive in original metafn-explicit-invoke.
+Its unchanged source is `(let [w (with-meta (fn [] 17) false)] (uid w)
+(= (-invoke w) 17))`; its unchanged exact pin observation is true. Correct pin
+receiver dispatch calls the underlying zero-arity fixed function with the target.
+Emitted JS ignores the excess argument; Suss's accepted strict invocation contract
+requires a typed Error whose independently decoded message is exactly Wrong arity.
+That case is now asserted as a separate exact contract divergence. It is never
+skipped, rewritten or counted as a matching value. Original26 now comprise25
+matching relations and1 typed contract boundary. Their JSON source/expectation
+objects and all parent corpus bytes remain unchanged. General callable-object
+syntax, highest apply arity and full function metadata remain unfinished.
+
+Eight appended review probes cover mixed owner allocation, array mutation,
+caught Error identity, static IFn target operands/metadata, wrapper copies and
+metadata payload identity. Final fresh29279 ended0:34 exact primary observations,
+33 matching native relations plus1 exact boundary across4 native tests,
+/private/tmp/suss-pr107-review-oracle34-final.log. The fourth native test checks
+operand order once, thrown target prevents later effects, strict arity error,
+GC/UID recovery and unrelated IFn protocol dispatch. Existing source dependencies
+are retained intact; no arity-normalizing intrinsic or source method deletion.
+
+Failure history remains explicit. Initial fresh68141 ended1 on two provisional
+true expectations; generated pin JS revealed receiver semantics. Native95912
+ended101 on confirmed mismatch after preserving their actual false observations.
+Those new provisional source candidates also relied on JS excess argument/object
+coercion behavior outside this slice; corrected only those new candidates to
+callbacks accepting the actual argument list, preserving the original26.
+Fix51693 ended101 on private Global.name access; corrected accessor. Fix26689
+ended101 on a new callback's missing eqref-to-ARGS cast. Corrected cast;
+fresh31023/4452 primary certification succeeded but native ended101 on the
+unchanged zero-invoke strict-arity divergence. Recording that exact boundary
+instead of altering strict semantics made native93996 pass4; final29279 freshly
+certifies all34 and native4. Logs preserve every initial failed run.
+
+New ABI review fixture exports only the final scalar global in development bytes
+without replacing runtime instructions. It exercises MAX_SAFE_INTEGER allocation,
+first exhausted allocation's typed error, unmodified nil owner slot/counter and
+cached-owner GC recovery. Initial92068 ended101 on test-only wasmparser u64 range
+indexing; corrected explicit usize bounds,61754 ended0. Focused46577 ended0 all45
+ABI tests including new constructor corruption guard; full baseline also checks
+the final strengthened valid-old-key/invalid-next-key fixture.
+Python90053 ended0:80 tests, /private/tmp/suss-pr107-review-python.log;
+import100/setup4/reviews189partial+876unassessed/diff checks pass. Commands use
+shared target/build2/--locked/testthreads2 and no RUSTFLAGS.
+
+Required independent full90116 is running in /private/tmp/suss-pr107-review-full.log.
+Reviewer retains heavy slot until authoritative terminal output and all handles
+are inspected. Exact final reviewed-head CI remains required before readiness.
+No merge, issue closure or milestone acceptance; public/default/collection hashing,
+printing, remaining collections/compiled macros and M2–M9 gates remain unfinished.
+
+Independent full90116 ended0; inspected /private/tmp/suss-pr107-review-full.log
+through final reader doc tests. All enabled required suites pass, including
+identity4/33matches+1 exact boundary, ABI45 with strengthened invalid-next-key
+and allocator exhaustion fixture, and unchanged parent corpora. Source receiver
+reference is pinned core.cljc1509–1540 (adapt-ifn-invoke-params and
+ifn-invoke-methods), with canonical IFn selection at1587. Final Python40584
+ended0/80, /private/tmp/suss-pr107-review-python-final.log. All reviewer handles
+92068/61754/68141/90053/95912/51693/26689/31023/4452/93996/29279/46577/40584/90116
+are terminal. After review fixes/evidence commit/push, heavy slot is released.
+Exact final reviewed-head CI remains root readiness gate; no merge/closure.

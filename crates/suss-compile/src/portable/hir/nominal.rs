@@ -551,8 +551,28 @@ impl Analyzer {
                     ty: Type::Value,
                     kind: Expression::GlobalCell(method_global),
                 };
-                let dispatcher =
-                    self.nominal(params, Nominal::LiveDispatcher, vec![key_value, cell]);
+                // IFn's emitted JS methods omit the physical receiver formal.
+                // Explicit -invoke still passes the target in its argument list,
+                // so nominal dispatch selects the next source method arity.
+                let dispatcher = if protocol.namespace() == "suss.core"
+                    && protocol.name() == "IFn"
+                    && symbol.name == "-invoke"
+                {
+                    let schema = (0..=parameters.len())
+                        .map(|_| self.literal_form(params, Literal::String(vec![])))
+                        .collect();
+                    let next = self.stable_key(params, protocol, &symbol.name, parameters.len() + 1, schema);
+                    let next = self.fresh_binding(params, next);
+                    let next_value = self.local(params, next.id);
+                    bindings.push(next);
+                    self.nominal(
+                        params,
+                        Nominal::IFnLiveDispatcher,
+                        vec![key_value, cell, next_value],
+                    )
+                } else {
+                    self.nominal(params, Nominal::LiveDispatcher, vec![key_value, cell])
+                };
                 let dispatcher = self.fresh_binding(params, dispatcher);
                 captures.push(dispatcher.id);
                 let callee = self.local(params, dispatcher.id);

@@ -3726,3 +3726,130 @@ fn runtime_abi2_rejects_real_abi1_layouts_and_manifests_before_initializers() {
         assert_eq!(*store.data(), 0);
     }
 }
+
+#[test]
+fn runtime_abi_uid_safe_integer_exhaustion_preserves_cached_owners() {
+    // Development fixture adds access to the final scalar allocator global;
+    // the production runtime deliberately exports no allocator mutation API.
+    use wasm_encoder::{ExportKind, ExportSection, Module as EncodedModule, RawSection};
+    let original = runtime_abi::module();
+    let mut encoded = EncodedModule::new();
+    let mut counter = None;
+    for payload in wasmparser::Parser::new(0).parse_all(&original) {
+        let payload = payload.unwrap();
+        if let wasmparser::Payload::GlobalSection(ref globals) = payload {
+            counter = Some(globals.count() - 1);
+        }
+        if let wasmparser::Payload::ExportSection(ref exports) = payload {
+            let mut section = ExportSection::new();
+            for export in exports.clone() {
+                let export = export.unwrap();
+                let kind = match export.kind {
+                    wasmparser::ExternalKind::Func => ExportKind::Func,
+                    wasmparser::ExternalKind::Table => ExportKind::Table,
+                    wasmparser::ExternalKind::Memory => ExportKind::Memory,
+                    wasmparser::ExternalKind::Global => ExportKind::Global,
+                    wasmparser::ExternalKind::Tag => ExportKind::Tag,
+                    wasmparser::ExternalKind::FuncExact => {
+                        panic!("unexpected exact function export")
+                    }
+                };
+                section.export(export.name, kind, export.index);
+            }
+            section.export("review-uid-counter", ExportKind::Global, counter.unwrap());
+            encoded.section(&section);
+        } else if let Some((id, range)) = payload.as_section() {
+            encoded.section(&RawSection {
+                id,
+                data: &original[range.start as usize..range.end as usize],
+            });
+        }
+    }
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, encoded.finish()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let counter = runtime
+        .get_global(&mut store, "review-uid-counter")
+        .unwrap();
+    let empty = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    let first = nominal_value(&mut store, runtime, "descriptor-new", &[empty.clone()]);
+    let second = nominal_value(&mut store, runtime, "descriptor-new", &[empty]);
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let cell = nominal_value(&mut store, runtime, "binding-new", &[nil.clone()]);
+    let schema = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    let key = nominal_value(&mut store, runtime, "descriptor-new", &[schema]);
+    let malformed = runtime
+        .get_func(&mut store, "ifn-live-dispatcher-new")
+        .unwrap()
+        .call(
+            &mut store,
+            &[key, cell, nil],
+            &mut [Val::null_any_ref()],
+        )
+        .unwrap_err();
+    assert!(malformed.is::<wasmtime::ThrownException>(), "{malformed:#}");
+    assert!(!malformed.is::<wasmtime::Trap>());
+    assert!(store.take_pending_exception().is_some());
+    const LIMIT: i64 = 9_007_199_254_740_991;
+    counter.set(&mut store, Val::I64(LIMIT)).unwrap();
+    let cached = nominal_value(&mut store, runtime, "identity-uid", &[first.clone()]);
+    let boxed = cached
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        boxed.field(&mut store, 0).unwrap().unwrap_f64(),
+        LIMIT as f64
+    );
+    assert_eq!(counter.get(&mut store).unwrap_i64(), LIMIT + 1);
+    store.gc(None).unwrap();
+    let repeat = nominal_value(&mut store, runtime, "identity-uid", &[first.clone()]);
+    assert!(wasmtime::Rooted::ref_eq(
+        &store,
+        cached.unwrap_anyref().unwrap(),
+        repeat.unwrap_anyref().unwrap()
+    )
+    .unwrap());
+    let error = runtime
+        .get_func(&mut store, "identity-uid")
+        .unwrap()
+        .call(&mut store, &[second.clone()], &mut [Val::null_any_ref()])
+        .unwrap_err();
+    assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+    assert!(!error.is::<wasmtime::Trap>());
+    assert!(store.take_pending_exception().is_some());
+    assert_eq!(counter.get(&mut store).unwrap_i64(), LIMIT + 1);
+    let fresh = second
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        fresh
+            .field(&mut store, 4)
+            .unwrap()
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&store)
+            .unwrap()
+            .unwrap()
+            .get_u32(),
+        0
+    );
+    // Exhaustion and its language error leave existing owner storage usable.
+    let restored = nominal_value(&mut store, runtime, "identity-uid", &[first]);
+    assert!(wasmtime::Rooted::ref_eq(
+        &store,
+        cached.unwrap_anyref().unwrap(),
+        restored.unwrap_anyref().unwrap()
+    )
+    .unwrap());
+}

@@ -263,6 +263,7 @@ impl Bitwise {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Nominal {
     LiveDispatcher,
+    IFnLiveDispatcher,
     NativeMarker(NativeKind),
     NativeSet(NativeKind),
     Array,
@@ -311,6 +312,7 @@ impl Nominal {
                 Self::NamedSet | Self::ObjectSet => count == 3 && arguments[1] == Type::String,
                 Self::ObjectInvoke => count >= 2,
                 Self::LiveDispatcher | Self::NativeSet(_) => count == 2,
+                Self::IFnLiveDispatcher => count == 3,
                 Self::NativeMarker(_) => count == 1,
                 Self::Descriptor => arguments.iter().all(|ty| *ty == Type::String),
                 Self::Construct => count >= 1,

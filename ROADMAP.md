@@ -149,8 +149,8 @@ Selection86/artifacts90/reviews176partial+889unassessed remain prerequisites;
 hash/printing/index helpers, generic reverse, other collections and compiled
 macro/release gates remain open. See [iteration evidence](docs/runtime/sequence-iteration.md).
 
-Identity hashing prerequisites now have26 fresh primary observations and3 native
-tests. Owner-held UID storage advances the shared layout to ABI2 with explicit
+Identity hashing prerequisites now have34 fresh primary observations,33 matching
+native relations and1 exact strict-arity contract boundary across4 native tests. Owner-held UID storage advances the shared layout to ABI2 with explicit
 old-artifact rejection; complete retained IFn/MetaFn/with-meta/meta dependencies
 bring selection to96 forms/100 licensed artifacts and189 partial reviews/876
 unassessed. Public/default and collection hashing, general IFn invocation, apply,
