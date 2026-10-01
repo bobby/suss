@@ -7741,3 +7741,11 @@ workspace step reporting success. It does not satisfy the overall CI gate;
 rerun dispatched at unchanged head, PR108 remains draft. No merge or closure.
 Next: complete this full/review/CI gate, then public hash Date branch and ordered/
 unordered composition, remaining macro/collection/core and M2–M9 acceptance.
+
+
+PR110 opened draft at5ec1492; mandatory /root/review_pr110 dispatched for static
+review while root full16020 owns heavy slot. PR108 CI attempt2 is live at the
+same707b5b6. PR108's preceding required workspace step took24m29s, leaving no
+reliable cleanup margin under the25-minute job timeout. PR110 raises the job
+limit to35 minutes without changing the full command, enabled tests or build
+concurrency; independent review and exact-head CI must validate this change too.
