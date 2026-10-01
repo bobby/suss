@@ -18,6 +18,9 @@ The native command now uses `Session::new_repl()`, loading the provenance-tracke
 core artifact once per Store generation. [Atom storage](atoms.md) persists across
 inputs; complete core compatibility remains unfinished.
 
+Namespace commands `:load`, `:reload`, `:reload-all` and `:in-ns` accept one
+namespace name; see [loading/reload policy](namespace-session.md).
+
 `:quit` exits. `:reset` replaces the Store/runtime using the existing Session reset
 contract. Language exceptions and source failures leave the REPL usable. A failed
 initializer preserves its previous binding, while preceding arbitrary effects

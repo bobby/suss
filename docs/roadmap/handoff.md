@@ -8533,3 +8533,58 @@ after focused gates. No RUSTFLAGS. Full command:
 CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo
 test --workspace --locked -- --test-threads=2. Local heavy slot is released pending
 mandatory atom PR review. No issue closure/readiness from local success alone.
+
+## M3 namespace command/reload implementation — 2026-10-01
+
+PR119 published draft at0d8f086d63dfb96601b9a93e51d5b75d2e5c7476, base118be9,
+https://github.com/bobby/suss/pull/119. Independent review_pr119 approves exact
+head with no significant findings/edits. Reviewer88909 terminal0:12focused;
+fresh oracle20271 terminal0:28exact observations/4native, import120 verified; extra
+real command probes cover nested mutation/self-cycle/UTF16/old contents/hash/reset.
+Reviewer corrected only its extra probe reset-nil/surrogate-case expectations.
+CI36921984358 live; watcher35617/controller75563 verify final exacthead/all jobs/
+855passed/0failed/17ignored/finalreader/OPEN/MERGEABLE before readiness. No merge.
+Issue12 comment5939967631 and15comment5939968009 record partial progress.
+
+Root isolated child portable/m3-namespace-reload worktree at1190d8f086 with actual
+pinned submodule. Before40796 terminal101, /private/tmp/suss-m3-namespace-before.log:
+new command regression fails with located unsupported load/reload/unresolved
+namespace diagnostics. After38250 terminal0 actualcommand1 passes. Added native
+reload proof3766 terminal0:namespace3/command8/session33 pass. Strengthened18208
+terminal0:namespace4/command8/session33 pass, /private/tmp/suss-m3-namespace-final-focus.log.
+No ignored tests or discarded failures. Removed unrelated rustfmt changes before
+the final focused gate; only native main command dispatch/session API/tests change.
+
+Session::reload_namespace reuses cells and fresh source snapshots, reloads either
+only target or its reachable dependency graph, preserves caller scope and unrelated
+loaded modules, invalidates selected loaded identities only after successful
+preparation/linking, and marks each initialized module loaded independently.
+Compile failure preserves prior state; initializer failure preserves old binding
+and earlier arbitrary effects; retry keeps successful dependencies. New command
+load/reload/reload-all/in-ns returns nil without displaying initializer values.
+The supplied core profile reload is explicitly rejected in favor of reset.
+Source libspec reload metadata, macro phase imports, full private Var policy,
+complete source/artifact/macro caches remain unfinished. No ABI/dependency change
+or copied implementation. docs/runtime/namespace-session.md records exact policy.
+
+Next run full frozen workspace baseline and Python/provenance checks, publish
+Refs13/Refs12 stacked draft, independent review/fixes/exact CI. Then implement
+compiled macro session/bootstrap/&form/&env/syntaxquote/gensyms/phase graph/cache
+and remove old evaluator, plus running/pending-I/O cancellation/live-memory
+accounting. Full M3 goal remains active; no issue closure or milestone completion.
+
+Namespace checks58841:Python86/inventory1065/overlay211+854/import120/offline
+roadmap preview all pass. Same handle58841 now runs full workspace with frozen
+source/tests; /private/tmp/suss-m3-namespace-full.log. Re-poll this handle until
+terminal; do not restart solely for an observation timeout. Atom review has
+released local heavy slot; root owns it for this baseline. PR119 exact CI watcher
+35617/controller75563 remain live at roughly9minutes with full workspace running.
+Current namespace child is uncommitted/unpublished pending full verification;
+next publish and dispatch independent review before readiness. No M3 closure.
+
+Namespace full58841 terminal0:859passed/0failed/17existing ignored across74
+reported groups through finalreader docs, /private/tmp/suss-m3-namespace-full.log.
+Source/tests were frozen throughout the full command:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo
+test --workspace --locked -- --test-threads=2. No RUSTFLAGS; no new ignored guards.
+Root heavy slot is released pending independent namespace PR review.
