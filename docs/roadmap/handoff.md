@@ -7808,3 +7808,16 @@ and default-identity-hash documentation. Prior independent full69411 applies to
 identical tested code; no fresh baseline at this rebase is claimed. Root owns
 the heavy slot with publichash full61362; no cargo/JVM/Node process started.
 Exact new reviewed-head CI remains mandatory before readiness; no merge/closure.
+
+### PR110 parent retarget reconciliation — 2026-10-01
+
+Statically rebased reviewed d507c5ecb2afa5c9319fcbdef3112c99fd699d4e onto
+reviewed PR10823fe2528782d28e60901621fe7dd1e805ae91a78 after user stack merges.
+Preserved parent retarget audit and all child case/review/full evidence in the
+append conflict. Scoped Git diff verifies production crates, runtime artifacts,
+scripts, tests/oracle corpora, workflow and Cargo bytes identical to d507c5e.
+Only parent audit and this reconciliation evidence change. Prior full69411
+applies to identical tested code; this is not a fresh baseline. Root owns the
+heavy slot for collection oracle1484; no cargo/JVM/Node process started here.
+Exact old-head force-with-lease protects the owned branch; successful exact new
+reviewed-head CI remains required, with no readiness/merge/closure claim.
