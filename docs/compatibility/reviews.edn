@@ -1402,4 +1402,28 @@
    :adaptation-path "docs/runtime/string-hashing.md"
    :alternative nil
    :tests ["crates/suss-cli/tests/portable_string_hash.rs" "tests/oracle/string-hash-cases.json"]}
+
+  "runtime:hash-double:996"
+  {:source-sha256 "783d46872fe343707525c9c5e6f87b4b22d5732c8e76e86d87ce2f54808d8646"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:hash-long:993" "private scalar f64 normalization and big-endian word reads"]
+   :classification :adapted
+   :rationale "Retained numeric hashing source uses fixed defn adaptation and original composition with EPL provenance. Nonescaping typed byte storage is adapted to original checked scalar binary64 primitives that preserve single ToNumber conversion and explicit Float64Array/DataView byte order; live hash-long lookup is retained. General typed buffers/object coercion/public numeric hashing remain incomplete."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/hash-double.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_numeric_hash.rs" "tests/oracle/numeric-hash-cases.json"]}
+
+  "runtime:hash-combine:1092"
+  {:source-sha256 "2ba652546dd2df6915b3c7d18660eb813666166aaab21d7de9512278e729e962"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:bit-xor:1243" "macro:bit-shift-left:1260" "macro:bit-shift-right:1263" "binary64 arithmetic"]
+   :classification :adapted
+   :rationale "Retained numeric hashing source uses fixed defn adaptation and original composition with EPL provenance. Nonescaping typed byte storage is adapted to original checked scalar binary64 primitives that preserve single ToNumber conversion and explicit Float64Array/DataView byte order; live hash-long lookup is retained. General typed buffers/object coercion/public numeric hashing remain incomplete."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/hash-combine.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_numeric_hash.rs" "tests/oracle/numeric-hash-cases.json"]}
 }}

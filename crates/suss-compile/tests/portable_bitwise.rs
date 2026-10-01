@@ -51,3 +51,30 @@ fn public_bitwise_hir_and_ir_reject_bad_arity_and_result_before_emission() {
         .message
         .contains("bitwise"));
 }
+
+#[test]
+fn private_binary64_storage_hir_and_ir_check_unary_result_contract() {
+    for operation in [Bitwise::F64Coerce, Bitwise::F64Word0, Bitwise::F64Word4] {
+        let make = |count, ty| Hir {
+            span: 3..21, metadata: vec![], ty,
+            kind: Expression::Bitwise { operation, arguments: (0..count).map(|_| Hir {
+                span: 5..6, metadata: vec![], ty: Type::Number,
+                kind: Expression::Literal(Literal::Number(-0.0)),
+            }).collect() },
+        };
+        for (count, ty) in [(0, Type::Number), (2, Type::Number), (1, Type::Bool)] {
+            assert_eq!(portable::ir::lower(&make(count, ty)).unwrap_err().span, 3..21);
+        }
+        let valid = portable::ir::lower(&make(1, Type::Number)).unwrap();
+        portable::compile_ir(&valid).unwrap();
+        let mut bad = valid.clone();
+        let inst = bad.blocks[0].instructions.last_mut().unwrap();
+        let Operation::Bitwise { arguments, .. } = &mut inst.operation else { panic!("primitive"); };
+        arguments.clear();
+        assert!(portable::compile_ir(&bad).is_err());
+        let mut bad = valid;
+        let result = bad.blocks[0].instructions.last().unwrap().result;
+        bad.values[result.0].ty = Type::Bool;
+        assert!(portable::compile_ir(&bad).is_err());
+    }
+}

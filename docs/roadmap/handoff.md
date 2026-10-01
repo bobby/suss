@@ -6114,3 +6114,126 @@ All local Cargo/JVM/Node processes are terminal. Shared slot is released after t
 review push finishes; root must require exact final reviewed-head CI before PR97
 readiness. No merge, closure or milestone acceptance. Next retained scalar numeric
 hashing, cached/public string hashing and actual persistent sequence/list algorithms.
+
+## Numeric hashing preparation — 2026-10-01
+
+PR96 is ready at reviewed3d745f6 after exact CI36821371081 success; root inspected
+/private/tmp/suss-pr96-final-ci.log including provenance/Python76/Murmur5/ABI22/full
+baseline. No merge. PR97 review has96 exact fresh primary/native observations,
+original82 unchanged, with added copied-callback/corrupt-environment ABI coverage;
+full11226 is confirmed live under that reviewer's exclusive shared test slot.
+
+User-requested deferred algorithm evaluation is filed as issue#98, including the
+Murmur3 correction, XXH3/Rapidhash/keyed-hash alternatives, public/internal/digest
+separation, compatibility and collision constraints, actual Wasmtime/browser
+benchmark criteria and M4/M6/M7/M8 prerequisite gates. It does not alter current
+hashing semantics or the existing milestone exit criteria.
+
+Separate unpublished portable/core-numeric-hash worktree starts at PR97 candidate
+30a2ab7.42 provisional numeric hash-double/hash-combine observations and reference/
+native runners are prepared but UNEXECUTED. No source selections, review statuses
+or production support are added. Expected hash-double values independently model
+little-endian Float64Array storage followed by default big-endian DataView words
+at offsets0/4 and pinned hash-long XOR; fresh pinned observations must verify these
+assumptions before a portable adaptation. The source algorithm's scalar ToNumber
+conversion must occur once, preserve binary64 signed zero/NaN handling and retain
+live hash-long dependency calls. Do not infer hash-double support from a simpler
+XOR of the un-swapped binary64 halves or substitute public hash semantics.
+
+Next rebase this preparation onto final reviewed PR97, acquire its released local
+test slot, certify primary/native red, then adapt typed byte access with explicit
+source/provenance and execute the artifact. General typed-buffer/host interop and
+public numeric/hash/cached string/collection hashing remain incomplete. Do not
+claim success from these unexecuted preparations or close M2–M9 issues.
+
+## Retained scalar numeric hashing candidate — 2026-10-01
+
+Rebased numeric preparation onto independently reviewed PR97 8947aaa; preserved
+both review and preparation handoff entries through an append-only conflict. PR97
+full11226 passed and final CI36823514952 is live; it remains draft. Root acquired
+its explicitly released shared Cargo/JVM/Node slot. First31865 ended1 from a copied
+reference-runner typo (JSON.numericify), corrected to JSON.stringify. Fresh48310
+ended101:42 exact primary matches, all42 native unresolved before implementation.
+Logs /private/tmp/suss-numeric-hash-first-red.log and
+/private/tmp/suss-numeric-hash-first-red-fixed.log. Native import24198 ended0:42
+exact primary-derived native matches.
+
+Two explicit fixed defn patches retain hash-double/hash-combine with original
+composition, metadata and EPL provenance. Nonescaping typed storage in hash-double
+is adapted to one checked scalar binary64 temporary plus exact big-endian words
+at offsets0/4 over specified little-endian bytes. Original live hash-long call
+remains after both reads. No general JS typed buffers/object coercion or public
+numeric hash acceptance is claimed. Three original private unary compiler/runtime
+adapters reuse checked bitwise HIR/IR result/arity verification; they are not public
+bitwise macro names or core cells. GC layouts/ABI version/cell count unchanged.
+
+Added10 probes preserve original42. Fresh91061 ended101:52 exact pinned/native
+value observations but a new guard incorrectly expected compile-time rejection
+for dynamically loaded core function wrong arity. Those calls instead use checked
+universal runtime arity, so the guard now verifies language error/recovery;
+compile-atomic assertions remain on statically known private primitives. Source4904
+ended0: numeric3/String3/bitwise6 pass. Logs
+/private/tmp/suss-numeric-hash-final52.log and
+/private/tmp/suss-numeric-hash-source-guards.log. Compiler69823 ended0: HIR/IR2,
+ABI25, including267 exact binary64 encodings, raw signed/signaling/quiet NaN payloads,
+byte order and malformed storage/typed recovery. Log /private/tmp/suss-numeric-hash-abi.log.
+Python76/inventory1065/reviews132+933/import45 selections49 licensed files,
+WIT15/6/numeric/bitwise/offline roadmap10/39 pass; log
+/private/tmp/suss-numeric-hash-python.log. Final fresh corrected fixture is running
+and terminal results follow. Commands use shared target/build workers2/locked/
+--test-threads=2, with sh scripts/test-numeric-hash-oracle.sh for fresh pin comparison.
+Independent PR review/fixes, full required baseline and exact final-head CI remain
+before readiness. No merge, closure or milestone acceptance. Cached/public numeric/
+string/collection hashing, persistent source sequences and M2–M9 remain unfinished.
+
+Final fresh52520 ended0:52 exact pinned/native observations and numeric3 guards
+pass. Log /private/tmp/suss-numeric-hash-final52-fixed.log. All root local
+Cargo/JVM/Node processes are terminal; the shared slot will pass exclusively to
+the independent reviewer after draft publication. Final reviewed-head CI remains
+required; no readiness or merge claim for this numeric candidate.
+
+
+## Independent PR99 review — 2026-10-01
+
+Review worktree /private/tmp/suss-review-pr99 starts at numeric candidate90f73d5
+on portable/core-numeric-hash, base independently reviewed PR97 8947aaa. A real
+local shared clone of pinned upstream supports strict provenance; no escaping
+symlink or verifier weakening. Original52 source/expected observations were checked
+unchanged. Twenty independent probes bring the fresh corpus to72: binary/octal/
+Unicode whitespace and negative-zero strings, binary64 normal/subnormal boundaries,
+separate high/low word reads, argument mutation of live hash-long, dependency throws,
+immutable shift expansion, argument throw ordering and mixed nil/Boolean/string
+hash-combine operands. No significant production defect was found.
+
+Fresh49556 ended0:68 exact pinned/native observations plus native numeric3.
+Final fresh14165 ended0:all72 exact pinned/native observations and numeric3.
+Logs /private/tmp/suss-pr99-review-primary68.log and
+/private/tmp/suss-pr99-review-primary72.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-numeric-hash-oracle.sh`.
+New independent ABI guard23405 ended0, rejecting foreign arrays, invalid i31
+sentinels and null references in all three adapters as language exceptions rather
+than traps, with recovery after forced GC. Existing267 raw binary64 encodings,
+including signed zero and signaling/quiet NaN payloads, remain unchanged.
+Log /private/tmp/suss-pr99-review-adapters.log. Command selects -p suss-compile
+--test runtime_abi runtime_abi_binary64 with shared target/build workers2/locked/
+--test-threads=2. Runtime layouts, ABI version and core cell count unchanged.
+
+Provenance74900 ended0:Python76,inventory1065/reviews132+933/import49 licensed
+files, strict conditional imul source region, WIT15/6,numeric manifest and offline
+roadmap10/39 pass. Log /private/tmp/suss-pr99-review-provenance.log. Full required
+workspace baseline is running; terminal results will follow. Exact final reviewed-
+head CI remains required. No merge, closure or milestone acceptance. Full public
+numeric/string/collection hashing, arbitrary object coercion, actual persistent
+sequences and compiled macro bootstrap remain incomplete.
+
+
+Required full workspace93986 ended0: every enabled workspace/doc test passes,
+including numeric3/String3/Murmur5/bitwise6 and compiler pipeline17/HIR-IR2/ABI26.
+Manual ignored tests and diagnostic9 passing/7 exact failing observations remain
+explicit. Log /private/tmp/suss-pr99-review-full-baseline.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+All local Cargo/JVM/Node processes are terminal. Shared test slot is released after
+the review push finishes; root must require exact final reviewed-head CI before
+PR99 readiness. No merge, closure or milestone acceptance. Next retained cached/
+public string hashing and actual persistent sequence/list algorithms, while full
+numeric/public/collection hashing and M2–M9 acceptance remain incomplete.
