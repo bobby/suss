@@ -7821,3 +7821,17 @@ applies to identical tested code; this is not a fresh baseline. Root owns the
 heavy slot for collection oracle1484; no cargo/JVM/Node process started here.
 Exact old-head force-with-lease protects the owned branch; successful exact new
 reviewed-head CI remains required, with no readiness/merge/closure claim.
+
+### PR110 historical CI success and updated parent budget — 2026-10-01
+
+Independent verification confirms exact c53cfe35fde0310a8ceacf174d399ce48fd1e646
+CI36873277022 completed SUCCESS. Downloaded log
+/private/tmp/suss-pr110-c53-final-ci.log inspected through final reader doc tests.
+Rebased only reviewed case commits onto reviewed PR108e2d8b6123b7948a0210e5330c5881894d47ce480,
+preserving parent CI/audit evidence and every child review/test/evidence section.
+Scoped Git diff proves crates/runtime/scripts/tests/oracle/Cargo bytes identical
+to c53cfe3. Workflow exactly matches parent: budget60, every test/worker unchanged.
+This inherits the independently audited35-minute cleanup cancellation correction.
+Prior independent full69411 covers unchanged tested bytes, not a fresh baseline.
+Reviewer113 owns the heavy slot; no cargo/JVM/Node started. Historical successful
+CI does not satisfy the new exact-head gate. No readiness/merge/closure claim.
