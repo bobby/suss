@@ -7909,3 +7909,34 @@ and ancestry changes. Root full61362 applies to these same bytes. Release exclus
 heavy slot to reviewer111 after this evidence push; all root test/push handles
 terminal. Independent review/probes/final full and exact reviewed-head CI remain
 required. PR108c6 and PR110d507 CI pending; no merges or milestone/issue closures.
+
+
+## Independent PR111 review
+
+Reviewer /private/tmp/suss-review-pr111 has actual detached upstreamc4295f30,
+no symlinks, and moved probes onto rebased head1c99e741. Initial git move failed
+sandbox index permission; authorized escalation succeeded. Oracle87183 started
+during that move; rebased production/scripts/source bytes were identical and
+checkout completed before native compilation. No source probe was altered.
+Original42 corpus objects preserved exactly; five new cases were provisional
+until fresh pinned observations matched. Oracle87183 terminal0:47 exact/native5,
+/private/tmp/suss-pr111-review-oracle47.log. Added safe integer endpoints,
+captured hash/live string helpers, direct protocol throw effects and negative
+submillisecond Date. Added raw native TimeClip type guards for nil/bool/string/
+closure, effects surviving language errors, zero normalization, throw recovery,
+invalid unary/first-class compile isolation. Compiler25619 terminal0/3 includes
+TimeClip malformed HIR/IR arity/result checks. Python42267 terminal0:82 pass,
+import102/setup5/reviews193partial+872unassessed/diff pass. No production finding.
+Required independent full27630 LIVE /private/tmp/suss-pr111-review-full.log,
+shared target/build2 --workspace --locked -- --test-threads=2; noRUSTFLAGS.
+Reviewer retains exclusive heavy slot until authoritative terminal and release.
+No merge/readiness/issue or milestone closure. Exact reviewed-head CI required.
+
+
+Reviewer full27630 authoritative terminal0; inspected final suss_reader doc tests
+and no failed-test/error entries in /private/tmp/suss-pr111-review-full.log.
+Shared-target/build2 required workspace --locked/--test-threads=2 passes including
+native5/47 exact observations, TimeClip compiler guards and unchanged parents.
+Existing explicit manual ignores remain. All reviewer handles87183/25619/42267/
+27630 terminal. Reviewer commits and pushes probes/evidence, then releases heavy
+slot. Exact final reviewed-head CI still gates readiness; no merge or closure.

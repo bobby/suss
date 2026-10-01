@@ -85,6 +85,7 @@ fn numeric_hash_boundary_hir_ir_preserve_boolean_and_number_contracts() {
         (Bitwise::F64Floor, 1, Type::Number),
         (Bitwise::F64Finite, 1, Type::Bool),
         (Bitwise::F64SafeInteger, 1, Type::Bool),
+        (Bitwise::F64TimeClip, 1, Type::Number),
         (Bitwise::SafeIntegerRemainder, 2, Type::Number),
     ] {
         let make = |count, ty| Hir {

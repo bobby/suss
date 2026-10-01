@@ -63,3 +63,17 @@ cargo test --workspace --locked -- --test-threads=2
 Next finish validation/review, then retained ordered/unordered collection hash
 composition and complete remaining Date/core/collection/macro acceptance. Deferred
 algorithm evaluation remains issue98; no roadmap issue closes from this slice.
+
+Independent PR111 review preserves the original42 corpus objects and adds five
+freshly certified observations: safe integer endpoints, captured hash with live
+string helpers, direct IHash exception effects and negative submillisecond Date.
+Reviewer oracle87183 ended0 with47 exact observations/native5;
+/private/tmp/suss-pr111-review-oracle47.log. Compiler25619 ended0/3, including
+TimeClip malformed HIR/IR arity and result type guards. Native probes independently
+decode ordered effects, positive zero normalization, reject nil/booleans/string/
+closure storage, preserve throw recovery and reject invalid unary/first-class
+adapter use before publication. Python82/import102/setup5/reviews193+872/diff
+passed42267. No significant production defect found. Required independent full
+27630 ended0 through final suss_reader doc tests,
+/private/tmp/suss-pr111-review-full.log. All reviewer handles are terminal;
+exact final reviewed-head CI still gates readiness.

@@ -121,7 +121,7 @@ fn public_hash_matches_independently_decoded_primary_observations() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/public-hash-cases.json")).unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 42);
+    assert_eq!(cases.len(), 47);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -160,5 +160,40 @@ fn public_hash_matches_independently_decoded_primary_observations() {
         };
         assert_eq!(observed, case["expected"], "{}", case["id"]);
         session.collect().unwrap();
+    }
+}
+
+#[test]
+fn time_clip_rejects_wrong_storage_and_preserves_effects_and_compile_atomicity() {
+    use suss_cli::portable_session::SessionError;
+    let mut session = Session::new().unwrap();
+    session.eval("(def clip-effects 0)").unwrap();
+    for source in ["nil", "false", "true", "\"17\"", "(fn [] 17)"] {
+        assert!(matches!(session.eval(&format!("(suss.bootstrap/f64-time-clip (do (set! clip-effects (+ clip-effects 1)) {source}))")), Err(SessionError::Language(_))), "{source}");
+        session.collect().unwrap();
+    }
+    let value = session.eval("clip-effects").unwrap();
+    assert_eq!(number(&mut session, &value), 5.0f64.to_bits());
+    let value = session.eval("(suss.bootstrap/f64-time-clip -0.9)").unwrap();
+    assert_eq!(number(&mut session, &value), 0.0f64.to_bits());
+    assert!(matches!(
+        session.eval("(suss.bootstrap/f64-time-clip (throw 17))"),
+        Err(SessionError::Language(_))
+    ));
+    for source in [
+        "(suss.bootstrap/f64-time-clip)",
+        "(suss.bootstrap/f64-time-clip 1 2)",
+        "suss.bootstrap/f64-time-clip",
+    ] {
+        let Err(SessionError::Compile(error)) =
+            session.eval(&format!("(def clip-ghost 7) {source}"))
+        else {
+            panic!("private unary adapter must reject {source}");
+        };
+        assert!(error.span.end > error.span.start);
+        assert!(matches!(
+            session.eval("clip-ghost"),
+            Err(SessionError::Compile(_))
+        ));
     }
 }

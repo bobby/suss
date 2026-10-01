@@ -337,6 +337,46 @@
         "tag": "bool",
         "value": true
       }
+    },
+    {
+      "id": "review-safe-max",
+      "source": "(hash 9007199254740991)",
+      "expected": {
+        "tag": "f64",
+        "bits": "414fffff80000000"
+      }
+    },
+    {
+      "id": "review-negative-safe-max",
+      "source": "(hash -9007199254740991)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c14fffff80000000"
+      }
+    },
+    {
+      "id": "review-captured-live-string-helpers",
+      "source": "(let [f hash] (with-redefs [hash-string (fn [_] 17) m3-hash-int (fn [x] (+ x 2))] (f \"review\")))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "review-direct-throw-effects",
+      "source": "(do (def review-hash-effects 0) (deftype ReviewThrowHash [] IHash (-hash [_] (do (set! review-hash-effects (+ review-hash-effects 1)) (throw 17)))) (try (hash (ReviewThrowHash.)) (catch :default e (+ e review-hash-effects))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4032000000000000"
+      }
+    },
+    {
+      "id": "review-negative-date-submillisecond",
+      "source": "(hash (date-ms -0.9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
     }
   ]
 }
