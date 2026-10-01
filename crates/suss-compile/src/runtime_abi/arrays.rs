@@ -18,7 +18,7 @@ fn error(body: &mut Vec<Instruction<'static>>) {
         RefI31,
         I32Const(0),
         RefI31,
-        StructNew(8),
+        I32Const(0), RefI31, StructNew(8),
         Throw(0),
     ]);
 }
@@ -179,7 +179,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         },
         I32Const(0),
         RefI31,
-        StructNew(7),
+        I32Const(0), RefI31, StructNew(7),
     ]);
     let create = b.function_with_locals(
         "source-array-new",

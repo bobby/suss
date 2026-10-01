@@ -2,6 +2,47 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:IFn:586"
+  {:source-sha256 "229cbe05e42077c3010ce220532bce39cee20c8c7ac31328547e674001a7050c" :visibility :public
+   :arities nil
+   :dependencies ["runtime:IMeta:728" "runtime:IWithMeta:733" "IFn and MetaFn complete source" "general IFn invocation and apply pending"]
+   :classification :portable
+   :rationale "Complete pinned source retained for metadata copies and GC-owned identity regression. All MetaFn methods and IFn signatures preserved; public with-meta/meta retain their original algorithms. General IFn invocation, highest apply arity, complete function metadata and compiled macros remain unfinished. Fresh identity34 primary observations comprise33 exact matching native relations and1 exact strict-arity contract boundary. Independent review corrected canonical IFn receiver/arity dispatch; unchanged zero-invoke pin observation is now separately asserted as a typed Wrong arity boundary, not a success. General IFn calls remain unfinished."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_identity_hash.rs" "tests/oracle/identity-hash-cases.json" "docs/runtime/identity-hashing.md"]}
+  "runtime:MetaFn:2112"
+  {:source-sha256 "7538b969f3cb56dbe9d96b730cc1364e9a08d02a12cadc9779502f8a5af006b6" :visibility :public
+   :arities nil
+   :dependencies ["runtime:IMeta:728" "runtime:IWithMeta:733" "IFn and MetaFn complete source" "general IFn invocation and apply pending"]
+   :classification :portable
+   :rationale "Complete pinned source retained for metadata copies and GC-owned identity regression. All MetaFn methods and IFn signatures preserved; public with-meta/meta retain their original algorithms. General IFn invocation, highest apply arity, complete function metadata and compiled macros remain unfinished. Fresh identity34 primary observations comprise33 exact matching native relations and1 exact strict-arity contract boundary. Independent review corrected canonical IFn receiver/arity dispatch; unchanged zero-invoke pin observation is now separately asserted as a typed Wrong arity boundary, not a success. General IFn calls remain unfinished."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_identity_hash.rs" "tests/oracle/identity-hash-cases.json" "docs/runtime/identity-hashing.md"]}
+  "runtime:with-meta:2165"
+  {:source-sha256 "f6275041a7d5daa0bf9e691b819ec1d829dfd215652c3024c35658e92d418785" :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:IMeta:728" "runtime:IWithMeta:733" "IFn and MetaFn complete source" "general IFn invocation and apply pending"]
+   :classification :adapted
+   :rationale "Complete pinned source retained for metadata copies and GC-owned identity regression. All MetaFn methods and IFn signatures preserved; public with-meta/meta retain their original algorithms. General IFn invocation, highest apply arity, complete function metadata and compiled macros remain unfinished. Fresh identity34 primary observations comprise33 exact matching native relations and1 exact strict-arity contract boundary. Independent review corrected canonical IFn receiver/arity dispatch; unchanged zero-invoke pin observation is now separately asserted as a typed Wrong arity boundary, not a success. General IFn calls remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/identity-with-meta.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_identity_hash.rs" "tests/oracle/identity-hash-cases.json" "docs/runtime/identity-hashing.md"]}
+  "runtime:meta:2174"
+  {:source-sha256 "bc2294557964033aee4eae7921ed463a5878fde4437b49c82f97be518913760c" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:IMeta:728" "runtime:IWithMeta:733" "IFn and MetaFn complete source" "general IFn invocation and apply pending"]
+   :classification :adapted
+   :rationale "Complete pinned source retained for metadata copies and GC-owned identity regression. All MetaFn methods and IFn signatures preserved; public with-meta/meta retain their original algorithms. General IFn invocation, highest apply arity, complete function metadata and compiled macros remain unfinished. Fresh identity34 primary observations comprise33 exact matching native relations and1 exact strict-arity contract boundary. Independent review corrected canonical IFn receiver/arity dispatch; unchanged zero-invoke pin observation is now separately asserted as a typed Wrong arity boundary, not a success. General IFn calls remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/identity-meta.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_identity_hash.rs" "tests/oracle/identity-hash-cases.json" "docs/runtime/identity-hashing.md"]}
+
   "runtime:indexed?:1606"
   {:source-sha256 "091aced0efc645f21a0d52b3fd87e7c739aeb392404f61467ea9966db1bc4f4b" :visibility :public
    :arities {:fixed [1] :variadic-min nil}

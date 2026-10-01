@@ -1,0 +1,278 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "function-stable",
+      "source": "(let [x (fn [] 1)] (= (uid x) (uid x)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "function-distinct",
+      "source": "(not (= (uid (fn [] 1)) (uid (fn [] 1))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "same-alias",
+      "source": "(let [x (fn [] 1) y x] (= (uid x) (uid y)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-stable",
+      "source": "(let [x (array 1)] (= (uid x) (uid x)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-distinct",
+      "source": "(not (= (uid (array 1)) (uid (array 1))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-clone",
+      "source": "(let [x (array 1)] (not (= (uid x) (uid (aclone x)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "list-stable",
+      "source": "(let [x (list 1 2)] (= (uid x) (uid x)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "list-metadata-copy",
+      "source": "(let [x (list 1)] (not (= (uid x) (uid (with-meta x false)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "protocol-stable",
+      "source": "(= (uid IHash) (uid IHash))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "protocol-distinct",
+      "source": "(not (= (uid IHash) (uid ISeq)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "class-stable",
+      "source": "(= (uid List) (uid List))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "native-object-distinct",
+      "source": "(let [f js-obj x (f) y (f)] (not (= (uid x) (uid y))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "error-stable",
+      "source": "(let [x (error \"m\")] (= (uid x) (uid x)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "error-distinct",
+      "source": "(not (= (uid (error \"m\")) (uid (error \"m\"))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "exception-info-stable",
+      "source": "(let [x (new ExceptionInfo \"m\" nil)] (= (uid x) (uid x)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "uid-allocation-order",
+      "source": "(let [x (fn [] 1) y (array 1) a (uid x) b (uid y)] (= (- b a) 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "repeated-does-not-allocate",
+      "source": "(let [x (array 1) y (array 2) a (uid x)] (uid x) (= (- (uid y) a) 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "call-remains-intact",
+      "source": "(let [x (fn [] 17)] (uid x) (= (x) 17))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "metafn-distinct-underlying",
+      "source": "(let [f (fn [] 17) w (with-meta f false)] (not (= (uid f) (uid w))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "metafn-keeps-underlying",
+      "source": "(let [f (fn [] 17) w (with-meta f false)] (= (uid f) (uid (.-afn w))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "metafn-metadata-preserved",
+      "source": "(let [w (with-meta (fn [] 17) false)] (uid w) (= (meta w) false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "metafn-copy-distinct",
+      "source": "(let [w (with-meta (fn [] 17) false)] (not (= (uid w) (uid (with-meta w true)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "metafn-explicit-invoke",
+      "source": "(let [w (with-meta (fn [] 17) false)] (uid w) (= (-invoke w) 17))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "list-metadata-kept",
+      "source": "(let [x (with-meta (list 17) false)] (uid x) (= (meta x) false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-metadata",
+      "source": "(nil? (meta nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-with-meta",
+      "source": "(nil? (with-meta nil false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-mixed-owner-allocation",
+      "source": "(let [f (fn [] 1) a (array 2) e (error \"m\") x (uid f) y (uid a) z (uid e)] (and (= (- y x) 1) (= (- z y) 1) (= (uid f) x)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-array-mutation-keeps-identity",
+      "source": "(let [a (array 1) x (uid a)] (aset a 0 17) (and (= (uid a) x) (= (aget a 0) 17)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-caught-error-keeps-identity",
+      "source": "(let [e (error \"m\") x (uid e)] (try (throw e) (catch :default caught (= (uid caught) x))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-metafn-two-arguments",
+      "source": "(let [w (with-meta (fn [a b c] b) false) x (uid w)] (and (= (-invoke w 19 2) 17) (= (uid w) x) (= (meta w) false)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "review-metafn-copy-keeps-function",
+      "source": "(let [f (fn [a b] a) w (with-meta f false) x (with-meta w true)] (and (= (uid (.-afn x)) (uid f)) (= (-invoke x 17) 17) (= (meta x) true) (= (meta w) false)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "review-list-metadata-payload-identity",
+      "source": "(let [m (array 17) x (with-meta (list 1 2) m) a (uid m)] (uid x) (and (= (uid (meta x)) a) (= (first x) 1) (= (count x) 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-metafn-static-target-argument",
+      "source": "(let [w (with-meta (fn [target a] a) false) id (uid w)] (and (= (-invoke w 17) 17) (= (uid w) id) (= (meta w) false)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-metafn-static-two-operands",
+      "source": "(let [w (with-meta (fn [target a b] (- a b)) true) id (uid w)] (and (= (-invoke w 19 2) 17) (= (uid w) id) (= (meta w) true)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

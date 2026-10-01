@@ -64,7 +64,7 @@ fn persistent_session_arithmetic_coerces_live_cells_and_evaluates_operands_once(
         .inspect(&payload, |mut store, value| {
             let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
             let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            assert_eq!(fields.len(), 4);
+            assert_eq!(fields.len(), 5);
             let descriptor = fields[0]
                 .unwrap_anyref()
                 .unwrap()
@@ -232,7 +232,7 @@ fn persistent_session_compile_failure_is_atomic_and_language_failure_recovers() 
         .inspect(&payload, |mut store, value| {
             let exception = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
             let fields = exception.fields(&mut store)?.collect::<Vec<_>>();
-            assert_eq!(fields.len(), 4);
+            assert_eq!(fields.len(), 5);
             let descriptor = fields[0]
                 .unwrap_anyref()
                 .unwrap()

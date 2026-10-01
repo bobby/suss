@@ -593,7 +593,7 @@ fn namespace_uninitialized_reads_are_undefined_and_internal_cells_still_raise() 
         .fields(&mut store)
         .unwrap()
         .collect::<Vec<_>>();
-    assert_eq!(fields.len(), 4);
+    assert_eq!(fields.len(), 5);
     let descriptor = fields[0]
         .unwrap_anyref()
         .unwrap()
@@ -601,6 +601,7 @@ fn namespace_uninitialized_reads_are_undefined_and_internal_cells_still_raise() 
         .unwrap()
         .unwrap();
     assert_eq!(descriptor.field(&mut store, 0).unwrap().i64(), Some(2));
+    // Fresh errors have nil data, cause and ABI2 identity UID.
     for field in &fields[2..] {
         assert_eq!(
             field

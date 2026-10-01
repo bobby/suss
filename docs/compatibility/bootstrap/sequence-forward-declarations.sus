@@ -4,5 +4,5 @@
   counted? list? sequential? accumulating-seq-count empty-ordered-hash
   Reduced reduced reduced? ensure-reduced unreduced deref iterable? iter-reduce reduce
   pr-str* -indexOf -lastIndexOf equiv-sequential = hash-ordered-coll seq-reduce
-  array-reduce IndexedSeqIterator RSeq indexed? neg? linear-traversal-nth nth str_ type type->str)
+  array-reduce IndexedSeqIterator RSeq indexed? neg? linear-traversal-nth nth str_ type type->str MetaFn apply with-meta meta)
 

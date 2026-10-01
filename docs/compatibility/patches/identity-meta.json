@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "bc2294557964033aee4eae7921ed463a5878fde4437b49c82f97be518913760c",
+  "replacement": "(def meta\n  \"Returns the metadata of obj, returns nil if there is no metadata.\"\n  (fn [o]\n  (when (and (not (nil? o))\n             (satisfies? IMeta o))\n    (-meta o))))",
+  "rationale": "Explicit fixed defn bootstrap preserves original docstring, arity and body. Complete MetaFn/IFn forms are retained as dependencies. General IFn invocation, highest apply arity, complete function metadata and compiled macros remain unfinished."
+}

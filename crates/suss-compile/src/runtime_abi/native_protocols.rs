@@ -275,7 +275,14 @@ pub(super) fn functions(
         LocalGet(2),
         Call(descriptor),
     ];
+    // Canonical IFn dispatchers carry an extra next-arity key. Other
+    // protocols retain the ordinary receiver-inclusive source signature.
+    cast_array(&mut body, 0);
+    body.extend([ArrayLen, I32Const(3), I32Eq, If(BlockType::Result(VALUE))]);
+    key(&mut body, 2);
+    body.push(Else);
     key(&mut body, 0);
+    body.push(End);
     body.extend([
         Call(method_get),
         LocalSet(3),
@@ -283,7 +290,36 @@ pub(super) fn functions(
         RefTestNonNull(HeapType::Concrete(4)),
         If(BlockType::Empty),
         LocalGet(3),
+    ]);
+    cast_array(&mut body, 0);
+    body.extend([
+        ArrayLen,
+        I32Const(3),
+        I32Eq,
+        If(BlockType::Result(reference(ARGS))),
+        LocalGet(2),
         LocalGet(1),
+        ArrayLen,
+        I32Const(1),
+        I32Add,
+        ArrayNew(ARGS),
+        LocalSet(5),
+        LocalGet(5),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(1),
+        LocalGet(1),
+        I32Const(0),
+        LocalGet(1),
+        ArrayLen,
+        ArrayCopy {
+            array_type_index_dst: ARGS,
+            array_type_index_src: ARGS,
+        },
+        LocalGet(5),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        Else,
+        LocalGet(1),
+        End,
         Call(invoke),
         Return,
         End,
@@ -320,69 +356,96 @@ pub(super) fn functions(
     ]);
     error(&mut body);
     body.extend([End, LocalGet(3), LocalGet(1), Call(native_invoke)]);
-    let dispatch = callback(b, &body);
-    body = vec![
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(DESCRIPTOR)),
-        I32Eqz,
-        If(BlockType::Empty),
-    ];
-    error(&mut body);
-    body.push(End);
-    body.extend([
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
-        StructGet {
-            struct_type_index: DESCRIPTOR,
-            field_index: 1,
-        },
-        LocalSet(3),
-        LocalGet(3),
-        RefTestNonNull(HeapType::Concrete(ARGS)),
-        I32Eqz,
-        If(BlockType::Empty),
-    ]);
-    error(&mut body);
-    body.extend([
-        End,
-        LocalGet(1),
-        RefTestNonNull(HeapType::Concrete(5)),
-        I32Eqz,
-        If(BlockType::Empty),
-    ]);
-    error(&mut body);
-    body.extend([
-        End,
-        LocalGet(3),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        ArrayLen,
-        LocalSet(2),
-        LocalGet(2),
-        I32Eqz,
-        If(BlockType::Empty),
-    ]);
-    error(&mut body);
-    body.push(End);
-    body.extend([
-        LocalGet(0),
-        LocalGet(1),
-        ArrayNewFixed {
-            array_type_index: ARGS,
-            array_size: 2,
-        },
-        RefFunc(dispatch),
-        LocalGet(2),
-        LocalGet(2),
-        Call(b.names["closure-new"]),
-    ]);
-    b.function_with_locals(
-        "protocol-live-dispatcher-new",
-        &[VALUE, VALUE],
-        &[VALUE],
-        &[(1, ValType::I32), (1, VALUE)],
-        &body,
-    );
-
+    let dispatch = b.count;
+    b.functions.function(INVOKE);
+    let mut function = Function::new([(4, VALUE)]);
+    for instruction in &body {
+        function.instruction(instruction);
+    }
+    function.instruction(&End);
+    b.code.function(&function);
+    b.count += 1;
+    for (name, count) in [
+        ("protocol-live-dispatcher-new", 2u32),
+        ("ifn-live-dispatcher-new", 3u32),
+    ] {
+        let arity_local = count;
+        let schema_local = count + 1;
+        body = vec![];
+        if count == 3 {
+            body.extend([
+                LocalGet(2),
+                RefTestNonNull(HeapType::Concrete(DESCRIPTOR)),
+                I32Eqz,
+                If(BlockType::Empty),
+            ]);
+            error(&mut body);
+            body.push(End);
+        }
+        body.extend([
+            LocalGet(0),
+            RefTestNonNull(HeapType::Concrete(DESCRIPTOR)),
+            I32Eqz,
+            If(BlockType::Empty),
+        ]);
+        error(&mut body);
+        body.push(End);
+        body.extend([
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+            StructGet {
+                struct_type_index: DESCRIPTOR,
+                field_index: 1,
+            },
+            LocalSet(schema_local),
+            LocalGet(schema_local),
+            RefTestNonNull(HeapType::Concrete(ARGS)),
+            I32Eqz,
+            If(BlockType::Empty),
+        ]);
+        error(&mut body);
+        body.extend([
+            End,
+            LocalGet(1),
+            RefTestNonNull(HeapType::Concrete(5)),
+            I32Eqz,
+            If(BlockType::Empty),
+        ]);
+        error(&mut body);
+        body.extend([
+            End,
+            LocalGet(schema_local),
+            RefCastNonNull(HeapType::Concrete(ARGS)),
+            ArrayLen,
+            LocalSet(arity_local),
+            LocalGet(arity_local),
+            I32Eqz,
+            If(BlockType::Empty),
+        ]);
+        error(&mut body);
+        body.push(End);
+        body.extend([LocalGet(0), LocalGet(1)]);
+        if count == 3 {
+            body.push(LocalGet(2));
+        }
+        body.extend([
+            ArrayNewFixed {
+                array_type_index: ARGS,
+                array_size: count,
+            },
+            RefFunc(dispatch),
+            LocalGet(arity_local),
+            LocalGet(arity_local),
+            Call(b.names["closure-new"]),
+        ]);
+        b.function_with_locals(
+            name,
+            &vec![VALUE; count as usize],
+            &[VALUE],
+            &[(1, ValType::I32), (1, VALUE)],
+            &body,
+        );
+    }
     // The macro's object marker fast path remains separate. Native fallback
     // examines the current protocol value, not the stable syntactic marker.
     body = vec![LocalGet(0), RefIsNull, If(BlockType::Empty)];
