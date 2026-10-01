@@ -6114,3 +6114,34 @@ All local Cargo/JVM/Node processes are terminal. Shared slot is released after t
 review push finishes; root must require exact final reviewed-head CI before PR97
 readiness. No merge, closure or milestone acceptance. Next retained scalar numeric
 hashing, cached/public string hashing and actual persistent sequence/list algorithms.
+
+## Numeric hashing preparation — 2026-10-01
+
+PR96 is ready at reviewed3d745f6 after exact CI36821371081 success; root inspected
+/private/tmp/suss-pr96-final-ci.log including provenance/Python76/Murmur5/ABI22/full
+baseline. No merge. PR97 review has96 exact fresh primary/native observations,
+original82 unchanged, with added copied-callback/corrupt-environment ABI coverage;
+full11226 is confirmed live under that reviewer's exclusive shared test slot.
+
+User-requested deferred algorithm evaluation is filed as issue#98, including the
+Murmur3 correction, XXH3/Rapidhash/keyed-hash alternatives, public/internal/digest
+separation, compatibility and collision constraints, actual Wasmtime/browser
+benchmark criteria and M4/M6/M7/M8 prerequisite gates. It does not alter current
+hashing semantics or the existing milestone exit criteria.
+
+Separate unpublished portable/core-numeric-hash worktree starts at PR97 candidate
+30a2ab7.42 provisional numeric hash-double/hash-combine observations and reference/
+native runners are prepared but UNEXECUTED. No source selections, review statuses
+or production support are added. Expected hash-double values independently model
+little-endian Float64Array storage followed by default big-endian DataView words
+at offsets0/4 and pinned hash-long XOR; fresh pinned observations must verify these
+assumptions before a portable adaptation. The source algorithm's scalar ToNumber
+conversion must occur once, preserve binary64 signed zero/NaN handling and retain
+live hash-long dependency calls. Do not infer hash-double support from a simpler
+XOR of the un-swapped binary64 halves or substitute public hash semantics.
+
+Next rebase this preparation onto final reviewed PR97, acquire its released local
+test slot, certify primary/native red, then adapt typed byte access with explicit
+source/provenance and execute the artifact. General typed-buffer/host interop and
+public numeric/hash/cached string/collection hashing remain incomplete. Do not
+claim success from these unexecuted preparations or close M2–M9 issues.

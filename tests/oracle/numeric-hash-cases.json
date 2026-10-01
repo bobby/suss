@@ -1,0 +1,342 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "double-0",
+      "source": "(hash-double 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "double-1",
+      "source": "(hash-double -0.0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4060000000000000"
+      }
+    },
+    {
+      "id": "double-2",
+      "source": "(hash-double 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ee07e000000000"
+      }
+    },
+    {
+      "id": "double-3",
+      "source": "(hash-double -1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ee17e000000000"
+      }
+    },
+    {
+      "id": "double-4",
+      "source": "(hash-double 1.5)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ef07e000000000"
+      }
+    },
+    {
+      "id": "double-5",
+      "source": "(hash-double -1.5)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ef17e000000000"
+      }
+    },
+    {
+      "id": "double-6",
+      "source": "(hash-double 3.141592653589793)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1bcf3b2ec000000"
+      }
+    },
+    {
+      "id": "double-7",
+      "source": "(hash-double 2147483647)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c0ec084000000000"
+      }
+    },
+    {
+      "id": "double-8",
+      "source": "(hash-double 2147483648)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ec082000000000"
+      }
+    },
+    {
+      "id": "double-9",
+      "source": "(hash-double 4294967295)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c0ee084000000000"
+      }
+    },
+    {
+      "id": "double-10",
+      "source": "(hash-double 4294967296)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ee082000000000"
+      }
+    },
+    {
+      "id": "double-11",
+      "source": "(hash-double 9007199254740991)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40e8178000000000"
+      }
+    },
+    {
+      "id": "double-12",
+      "source": "(hash-double 9007199254740992)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40d010c000000000"
+      }
+    },
+    {
+      "id": "double-13",
+      "source": "(hash-double 5e-324)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4170000000000000"
+      }
+    },
+    {
+      "id": "double-14",
+      "source": "(hash-double 2.2250738585072014e-308)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40b0000000000000"
+      }
+    },
+    {
+      "id": "double-15",
+      "source": "(hash-double 1.7976931348623157e308)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40b0800000000000"
+      }
+    },
+    {
+      "id": "double-16",
+      "source": "(hash-double ##Inf)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ee0fe000000000"
+      }
+    },
+    {
+      "id": "double-17",
+      "source": "(hash-double ##-Inf)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ee1fe000000000"
+      }
+    },
+    {
+      "id": "double-18",
+      "source": "(hash-double ##NaN)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ef0fe000000000"
+      }
+    },
+    {
+      "id": "double-19",
+      "source": "(hash-double nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "double-20",
+      "source": "(hash-double false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "double-21",
+      "source": "(hash-double true)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ee07e000000000"
+      }
+    },
+    {
+      "id": "double-22",
+      "source": "(hash-double \"1.5\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ef07e000000000"
+      }
+    },
+    {
+      "id": "double-23",
+      "source": "(hash-double \"bad\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ef0fe000000000"
+      }
+    },
+    {
+      "id": "double-24",
+      "source": "(hash-double \"\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "double-25",
+      "source": "(hash-double \"Infinity\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ee0fe000000000"
+      }
+    },
+    {
+      "id": "combine-0",
+      "source": "(hash-combine 0 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d8722191c00000"
+      }
+    },
+    {
+      "id": "combine-1",
+      "source": "(hash-combine 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d8722182000000"
+      }
+    },
+    {
+      "id": "combine-2",
+      "source": "(hash-combine 0 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d8722191800000"
+      }
+    },
+    {
+      "id": "combine-3",
+      "source": "(hash-combine -1 -1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d87221a2000000"
+      }
+    },
+    {
+      "id": "combine-4",
+      "source": "(hash-combine 7 13)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d8722120000000"
+      }
+    },
+    {
+      "id": "combine-5",
+      "source": "(hash-combine 2147483647 2147483647)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d07221a2000000"
+      }
+    },
+    {
+      "id": "combine-6",
+      "source": "(hash-combine -2147483648 2147483647)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41df8dde6e000000"
+      }
+    },
+    {
+      "id": "combine-7",
+      "source": "(hash-combine 4294967296 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d8722191800000"
+      }
+    },
+    {
+      "id": "combine-8",
+      "source": "(hash-combine 1 -2147483648)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41be3779f8000000"
+      }
+    },
+    {
+      "id": "combine-9",
+      "source": "(hash-combine 1.5 -3.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d8722183000000"
+      }
+    },
+    {
+      "id": "combine-10",
+      "source": "(hash-combine 12345 67890)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d86ed4c0000000"
+      }
+    },
+    {
+      "id": "combine-11",
+      "source": "(hash-combine -98765 43210)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d88a4c3f000000"
+      }
+    },
+    {
+      "id": "double-live-hash-long",
+      "source": "(let [saved hash-double] (with-redefs [hash-long (fn [high low] 77)] (saved 1.5)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4053400000000000"
+      }
+    },
+    {
+      "id": "double-restored",
+      "source": "(hash-double 1.5)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ef07e000000000"
+      }
+    },
+    {
+      "id": "double-argument-once",
+      "source": "(do (def double_trace 0) (hash-double (do (set! double_trace (+ double_trace 1)) 1.5)) double_trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "combine-argument-order",
+      "source": "(do (def combine_trace 0) (hash-combine (do (set! combine_trace 1) 7) (do (set! combine_trace (+ (* combine_trace 10) 2)) 13)) combine_trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    }
+  ]
+}
