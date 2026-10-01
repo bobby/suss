@@ -3,8 +3,11 @@
 The native `suss_cli::portable_session::Session` embedding API owns one Wasmtime
 Store, shared production runtime, compiler Environment, binding cells, initialized
 module identities and resident fragment instances. It uses the portable pipeline;
-it does not rebuild state by replaying source. The legacy command/REPL frontend
-has not migrated, and this increment does not complete M3 acceptance.
+it does not rebuild state by replaying source. The native command REPL now uses
+this host for bounded compiled input and scalar display; see
+[frontend evidence and limits](compiled-repl.md). Other command/AOT frontends,
+atoms, macros and complete M3 acceptance remain unfinished. Older progress notes
+below retain the API's development history.
 
 ## Execution and recovery
 

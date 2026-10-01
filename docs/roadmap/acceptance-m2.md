@@ -1,9 +1,12 @@
 # M2 compiler and runtime foundation acceptance audit
 
-Status: independently reviewed implementation acceptance, 2026-10-01. All
-published M2 foundation criteria are proven on this stack. Default-branch M2
-status remains in progress until exact final-head CI and the user’s merge;
-complete production language/core/frontends are not claimed.
+Status: independently reviewed foundation acceptance incorporated on main,
+2026-10-01, through user-merged #115/#116. All published M2 foundation criteria
+are proven. Final #116 reviewed-head CI36912150217 passed; merged main7a9010b
+has the identical entire file tree. Issues #8–#11 and milestone M2 are closed.
+Complete production language/core/frontends are not claimed. Candidate/review
+gates below preserve the original audit history rather than asserting current
+pending work.
 Independent review found and repaired three real legacy emitter defects: receiver
 order, all six bitwise operand orders, and repeated hash operand emission. The
 original focused runner was green without covering those defects; that result

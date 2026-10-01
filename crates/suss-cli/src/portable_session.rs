@@ -418,6 +418,30 @@ impl Session {
     pub fn current_namespace(&self) -> &str {
         self.environment.current_namespace(Phase::Runtime)
     }
+    // Use the same binary64 formatter as compiled arithmetic. The REPL never
+    // recompiles or re-evaluates the input to print its already-rooted result.
+    pub(crate) fn number_text(&mut self, value: &SessionValue) -> Result<String, SessionError> {
+        self.check(value)?;
+        self.store.set_fuel(self.options.fuel_per_operation)?;
+        let runtime = self.runtime;
+        self.inspect(value, |mut store, value| {
+            let function = runtime
+                .get_func(&mut store, "coerce-string")
+                .ok_or_else(|| wasmtime::Error::msg("Missing numeric formatter"))?;
+            let mut result = [Val::null_any_ref()];
+            function.call(&mut store, &[value], &mut result)?;
+            let array = result[0]
+                .unwrap_anyref()
+                .unwrap()
+                .as_array(&store)?
+                .unwrap();
+            let units = array
+                .elems(&mut store)?
+                .map(|unit| unit.unwrap_i32() as u16)
+                .collect::<Vec<_>>();
+            String::from_utf16(&units).map_err(wasmtime::Error::from)
+        })
+    }
     pub fn enter_namespace(&mut self, namespace: &str) -> Result<(), SessionError> {
         self.environment
             .enter_namespace(Phase::Runtime, namespace)
