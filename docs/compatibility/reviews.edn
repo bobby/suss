@@ -752,4 +752,54 @@
    :adaptation-path "docs/runtime/forward-declarations.md"
    :alternative nil
    :tests ["crates/suss-cli/tests/portable_forward_declarations.rs" "crates/suss-compile/tests/portable_definitions.rs" "tests/oracle/forward-declaration-cases.json"]}
+  "runtime:IStack:705"
+  {:source-sha256 "6e15b47b8228c88c91c4dc857bb95d56984663a9011fcc29940cd4209229ee2f" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with ordered effects, extension, captured methods, source reload and GC. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:IReduce:738"
+  {:source-sha256 "34ebd535cd77954f9e52867a81e45d73d689ed69a23ff7c5acff253783ee94c3" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with ordered effects, extension, captured methods, source reload and GC. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:IReversible:777"
+  {:source-sha256 "66a501ee1c396921fa51782064c2e6f9e979b1416299ec29d225255fd7098d91" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with ordered effects, extension, captured methods, source reload and GC. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:IIterable:914"
+  {:source-sha256 "bbdc3d32eda16461317de57b6cfc12767a345e3dca2e3dbe55e20b064d68fa31" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with ordered effects, extension, captured methods, source reload and GC. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
+  "runtime:IDrop:919"
+  {:source-sha256 "3042b2f3709feb84eff6b243b8ff67238f6fed190589428686c036161670b811" :visibility :public
+   :arities nil
+   :dependencies ["macro:defprotocol:2041" "shared ABI nominal protocol dispatch"]
+   :classification :portable
+   :rationale "Retained unmodified pinned protocol declaration, including source docstrings and method annotations. Both IReduce signatures and stack/reversal/iterator/drop dispatch execute through an original nominal adapter, with ordered effects, extension, captured methods, source reload and GC. Complete compiled defprotocol, runtime reflection/metadata, builtin extensions and actual persistent collection/reduction/iterator algorithms remain unfinished. Importing the declaration does not claim those implementations."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/core-interface-cases.json"]}
  }}

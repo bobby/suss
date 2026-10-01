@@ -75,6 +75,11 @@
       "patch": null
     },
     {
+      "id": "runtime:IStack:705",
+      "source-sha256": "6e15b47b8228c88c91c4dc857bb95d56984663a9011fcc29940cd4209229ee2f",
+      "patch": null
+    },
+    {
       "id": "runtime:IMeta:728",
       "source-sha256": "dc2222645eff6191e94621e8e3b97e15fd4af440299bb45317549fbbfa34db0d",
       "patch": null
@@ -82,6 +87,11 @@
     {
       "id": "runtime:IWithMeta:733",
       "source-sha256": "aaaf6cd1facd291dfd67daca3ce832d3eb1ab208afa3dbade730183aff936cc2",
+      "patch": null
+    },
+    {
+      "id": "runtime:IReduce:738",
+      "source-sha256": "34ebd535cd77954f9e52867a81e45d73d689ed69a23ff7c5acff253783ee94c3",
       "patch": null
     },
     {
@@ -107,6 +117,21 @@
     {
       "id": "runtime:IList:771",
       "source-sha256": "c4c0de3d872bfddda90f45551a683d6afe4ba99deafdc478ea7235faf89245f9",
+      "patch": null
+    },
+    {
+      "id": "runtime:IReversible:777",
+      "source-sha256": "66a501ee1c396921fa51782064c2e6f9e979b1416299ec29d225255fd7098d91",
+      "patch": null
+    },
+    {
+      "id": "runtime:IIterable:914",
+      "source-sha256": "bbdc3d32eda16461317de57b6cfc12767a345e3dca2e3dbe55e20b064d68fa31",
+      "patch": null
+    },
+    {
+      "id": "runtime:IDrop:919",
+      "source-sha256": "3042b2f3709feb84eff6b243b8ff67238f6fed190589428686c036161670b811",
       "patch": null
     }
   ]

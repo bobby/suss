@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IWithMeta
-  "Protocol for adding metadata to an object."
-  (^clj -with-meta [o meta]
-    "Returns a new object with value of o and metadata meta added to it."))
+(defprotocol IMeta
+  "Protocol for accessing the metadata of an object."
+  (^clj-or-nil -meta [o]
+    "Returns the metadata of object o."))

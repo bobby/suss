@@ -6,5 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IList
-  "Marker interface indicating a persistent list")
+(defprotocol ISeqable
+  "Protocol for adding the ability to a type to be transformed into a sequence."
+  (^clj-or-nil -seq [o]
+    "Returns a seq of o, or nil if o is empty."))

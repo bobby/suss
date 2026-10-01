@@ -1,4 +1,4 @@
-use suss_cli::portable_session::{Session, SessionValue};
+use suss_cli::portable_session::{Session, SessionError, SessionValue};
 use wasmtime::Val;
 
 fn number(session: &mut Session, value: &SessionValue) -> u64 {
@@ -128,7 +128,7 @@ fn imported_interfaces_match_independently_encoded_primary_adapter_observations(
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 35);
+    assert_eq!(cases.len(), 60);
     let mut session = Session::new().unwrap();
     session.eval(CORE).unwrap();
     session.enter_namespace("user").unwrap();
@@ -191,5 +191,51 @@ fn canonical_core_aliases_and_retained_methods_survive_source_reload() {
     assert_eq!(
         eval_number(&mut session, "(retained-nth retained-indexed 3)"),
         13.0f64.to_bits()
+    );
+}
+
+#[test]
+fn imported_operation_methods_survive_reload_gc_and_invalid_arity_recovery() {
+    let mut session = Session::new().unwrap();
+    session.eval(CORE).unwrap();
+    session.enter_namespace("user").unwrap();
+    session.eval("(deftype ReloadOperations [value] cljs.core/IReduce (-reduce [this f] (f value value)) (-reduce [this f start] (f start value)) cljs.core/IStack (-peek [this] value) (-pop [this] this) cljs.core/IDrop (-drop [this n] this) cljs.core/IIterable (-iterator [this] this) cljs.core/IReversible (-rseq [this] this)) (def reload-operation (ReloadOperations. 7)) (def saved-reduce cljs.core/-reduce)").unwrap();
+    session.collect().unwrap();
+    session.eval(CORE).unwrap();
+    session.enter_namespace("user").unwrap();
+    session.collect().unwrap();
+    for source in [
+        "(saved-reduce reload-operation (fn [a b] (+ a b)) 3)",
+        "(cljs.core/-reduce reload-operation (fn [a b] (+ a b)) 3)",
+        "(suss.core/-reduce reload-operation (fn [a b] (+ a b)) 3)",
+    ] {
+        assert_eq!(
+            eval_number(&mut session, source),
+            10.0f64.to_bits(),
+            "{source}"
+        );
+    }
+    for source in [
+        "(cljs.core/-reduce)",
+        "(cljs.core/-reduce reload-operation)",
+        "(cljs.core/-reduce reload-operation (fn [a b] a) 1 2)",
+        "(cljs.core/-peek)",
+        "(cljs.core/-peek reload-operation 1)",
+        "(cljs.core/-drop reload-operation)",
+        "(cljs.core/-rseq reload-operation 1)",
+        "(cljs.core/-iterator)",
+    ] {
+        let error = session.eval(source).unwrap_err();
+        assert!(
+            matches!(error, SessionError::Language(_)),
+            "{source}: {error}"
+        );
+    }
+    assert_eq!(
+        eval_number(
+            &mut session,
+            "(saved-reduce reload-operation (fn [a b] (+ a b)))"
+        ),
+        14.0f64.to_bits()
     );
 }

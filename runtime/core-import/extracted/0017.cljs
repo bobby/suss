@@ -6,7 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IHash
-  "Protocol for adding hashing functionality to a type."
-  (-hash [o]
-    "Returns the hash code of o."))
+(defprotocol IReduce
+  "Protocol for seq types that can reduce themselves.
+  Called by cljs.core/reduce."
+  (-reduce [coll f] [coll f start]
+    "f should be a function of 2 arguments. If start is not supplied,
+     returns the result of applying f to the first 2 items in coll, then
+     applying f to that result and the 3rd item, etc."))

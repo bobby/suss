@@ -6,7 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IWithMeta
-  "Protocol for adding metadata to an object."
-  (^clj -with-meta [o meta]
-    "Returns a new object with value of o and metadata meta added to it."))
+(defprotocol IDrop
+  "Protocol for persistent or algorithmically defined collections to provide a
+  means of dropping N items that is more efficient than sequential walking."
+  (^clj-or-nil -drop [coll n]
+    "Returns a collection that is ISequential, ISeq, and IReduce, or nil if past
+     the end. The number of items to drop n must be > 0. It is also useful if the
+     returned coll implements IDrop for subsequent use in a partition-like scenario."))
