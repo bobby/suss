@@ -102,3 +102,11 @@ The adapter is not a source List, EmptyList, Cons or IndexedSeq implementation;
 its method bodies do not certify persistent collection behavior. The earlier
 117-case six-function corpus remains separate and must continue passing. See
 [core interfaces](../runtime/core-interfaces.md) for evidence and limitations.
+
+Sequential equality adds retained `=` and equiv-sequential with explicit defn
+patches, original algorithms/arities/docstrings/metadata and EPL packaging. The
+source setup verifier now checks four complete standalone statements, including
+number/default IEquiv. Selection70/artifacts74/reviews159+906 and fresh131 preserve
+all prior75 observations; see [equality evidence](../runtime/sequential-equality.md).
+Remaining collection types, public hashing/reduction, full macros and release
+acceptance stay open.

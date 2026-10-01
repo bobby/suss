@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "968fe6ad1b99af14556c8dace3f7cf96dc5760acbe91f052148eb8dad087235d",
+  "replacement": "(def equiv-sequential\n  \"Assumes x is sequential. Returns true if x equals y, otherwise\n  returns false.\"\n  (fn [x y]\n  (boolean\n    (when (sequential? y)\n      (if (and (counted? x) (counted? y)\n               (not (== (count x) (count y))))\n        false\n        (loop [xs (seq x) ys (seq y)]\n          (cond (nil? xs) (nil? ys)\n            (nil? ys) false\n            (= (first xs) (first ys)) (recur (next xs) (next ys))\n            :else false)))))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains source name metadata, docstring, arities, evaluation order and algorithm. Upstream defn compilation and private Var metadata remain unfinished."
+}

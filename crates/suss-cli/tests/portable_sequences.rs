@@ -41,7 +41,7 @@ fn sequence_foundations_match_independently_encoded_primary_observations() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/sequence-cases.json")).unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 75);
+    assert_eq!(cases.len(), 137);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -270,4 +270,59 @@ fn variadic_live_class_failures_are_typed_and_recover_after_gc() {
             29.0f64.to_bits()
         );
     }
+}
+
+#[test]
+fn retained_equality_survives_gc_and_wrong_arity_keeps_operand_effects() {
+    use suss_cli::portable_session::SessionError;
+    let mut session = Session::new().unwrap();
+    session
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .unwrap();
+    session.enter_namespace("user").unwrap();
+    session.eval("(def retained-equality =) (def equality-left (list (list 1 2) nil false)) (def equality-right (cons (seq (array 1 2)) (list nil false))) (def equality-arity-trace 0)").unwrap();
+    session.collect().unwrap();
+    assert!(eval_bool(
+        &mut session,
+        "(retained-equality equality-left equality-right)"
+    ));
+    for (source, trace) in [
+        ("(retained-equality)", 0.0f64),
+        ("(equiv-sequential (do (set! equality-arity-trace 17) equality-left))", 17.0),
+        ("(equiv-sequential equality-left equality-right (do (set! equality-arity-trace 29) nil))", 29.0),
+    ] {
+        assert!(
+            matches!(session.eval(source), Err(SessionError::Language(_))),
+            "{source}"
+        );
+        session.collect().unwrap();
+        assert_eq!(
+            eval_number(&mut session, "equality-arity-trace"),
+            trace.to_bits(),
+            "{source}"
+        );
+        assert!(eval_bool(
+            &mut session,
+            "(retained-equality equality-left equality-right)"
+        ));
+    }
+    assert_eq!(
+        eval_number(&mut session, "equality-arity-trace"),
+        29.0f64.to_bits()
+    );
+    session.eval("(deftype ThrowEquiv [] IEquiv (-equiv [_ other] (do (set! equality-arity-trace 41) (throw 73))))").unwrap();
+    let Err(SessionError::Language(value)) = session.eval("(= (list (ThrowEquiv.)) (list nil))")
+    else {
+        panic!("typed equality throw");
+    };
+    session.collect().unwrap();
+    assert_eq!(number(&mut session, &value), 73.0f64.to_bits());
+    assert_eq!(
+        eval_number(&mut session, "equality-arity-trace"),
+        41.0f64.to_bits()
+    );
+    assert!(eval_bool(
+        &mut session,
+        "(retained-equality equality-left equality-right)"
+    ));
 }
