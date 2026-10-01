@@ -14,6 +14,10 @@ malformed inputs are reported immediately; incomplete EOF never executes a parti
 input. Comment/discard-only input produces no result. Ctrl-C at readline discards
 an unfinished input; it does not yet interrupt executing code or pending I/O.
 
+The native command now uses `Session::new_repl()`, loading the provenance-tracked
+core artifact once per Store generation. [Atom storage](atoms.md) persists across
+inputs; complete core compatibility remains unfinished.
+
 `:quit` exits. `:reset` replaces the Store/runtime using the existing Session reset
 contract. Language exceptions and source failures leave the REPL usable. A failed
 initializer preserves its previous binding, while preceding arbitrary effects
@@ -28,7 +32,8 @@ an independent compatibility decoder. Tests assert actual process outputs and
 use the separate existing native artifact tests for runtime ownership/layout.
 
 Evidence: `cargo test -p suss-cli --locked --test persistent_repl -- --test-threads=2`
-passes seven executing command tests. The original persistence regression failed
+passes eight executing command tests, including persistent atom state and old
+captured contents. The original persistence regression failed
 against the legacy frontend with its explicit unsupported global `set!` diagnostic.
 The first multiline probe failed with only `nil/0/0/42` outputs instead of the
 ordered complete-input results; reader continuation then fixed that behavior.

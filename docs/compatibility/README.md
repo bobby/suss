@@ -1,9 +1,11 @@
 # ClojureScript compatibility evidence
 
 The native command REPL now uses one persistent portable Session and displays
-already-rooted scalar results without source reexecution. Seven process-level
-regressions establish bounded frontend persistence/recovery/reset/reader evidence;
-they do not add public core compatibility counts or certify atoms, compiled macros,
+already-rooted scalar results without source reexecution. Eight process-level
+regressions establish bounded frontend persistence/recovery/reset/reader evidence.
+[Atom storage](../runtime/atoms.md) adds five partial reviews with real compiled
+state and 28 fresh pinned/native observations; neither slice certifies complete
+atom compatibility, compiled macros,
 namespace reload, cancellation or full printing. See
 [compiled REPL evidence](../runtime/compiled-repl.md). The M2 foundation acceptance
 is now incorporated on main; future inventory and M3–M9 gates remain explicit.

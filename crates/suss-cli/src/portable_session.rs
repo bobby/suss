@@ -132,6 +132,7 @@ pub struct Session {
     provided: BTreeSet<ModuleIdentity>,
     resident: Vec<Instance>,
     artifact_bytes: usize,
+    bootstrap_core: bool,
 }
 fn engine() -> Result<Engine, SessionError> {
     static ENGINE: OnceLock<Result<Engine, String>> = OnceLock::new();
@@ -277,6 +278,20 @@ impl Session {
     pub fn new() -> Result<Self, SessionError> {
         Self::with_options(SessionOptions::default())
     }
+    /// Compiled core for the native REPL. This is the bounded, provenance-tracked
+    /// bootstrap artifact, not complete portable core compatibility.
+    pub fn new_repl() -> Result<Self, SessionError> {
+        let mut session = Self::new()?;
+        session.provision_core()?;
+        Ok(session)
+    }
+    fn provision_core(&mut self) -> Result<(), SessionError> {
+        let namespace = self.current_namespace().to_owned();
+        self.eval(include_str!("../../../runtime/core-import/suss/core.sus"))?;
+        self.enter_namespace(&namespace)?;
+        self.bootstrap_core = true;
+        Ok(())
+    }
     pub fn with_options(options: SessionOptions) -> Result<Self, SessionError> {
         Self::with_engine(engine()?, options)
     }
@@ -407,6 +422,7 @@ impl Session {
             provided,
             resident: Vec::new(),
             artifact_bytes: 0,
+            bootstrap_core: false,
         })
     }
     pub fn options(&self) -> &SessionOptions {
@@ -464,7 +480,10 @@ impl Session {
     /// Create the replacement before discarding the old Store. No replay or retained
     /// fragment state crosses reset, and old/foreign handles are checked before use.
     pub fn reset(&mut self) -> Result<(), SessionError> {
-        let replacement = Self::with_engine(self.engine.clone(), self.options.clone())?;
+        let mut replacement = Self::with_engine(self.engine.clone(), self.options.clone())?;
+        if self.bootstrap_core {
+            replacement.provision_core()?;
+        }
         *self = replacement;
         Ok(())
     }

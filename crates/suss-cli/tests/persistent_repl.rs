@@ -132,3 +132,25 @@ fn persistent_session_command_repl_reports_unsupported_objects_without_fabricati
         "{errors}"
     );
 }
+
+#[test]
+fn persistent_session_command_repl_keeps_atoms_and_their_captured_values() {
+    let output = repl(concat!(
+        "(do (def state (atom 17)) 0)\n",
+        "(do (def read-state (fn [] @state)) 0)\n",
+        "(swap! state (fn [x] (+ x 1)))\n",
+        "(read-state)\n",
+        "(do (def holder (atom (fn [] 23))) (def old @holder) 0)\n",
+        "(do (reset! holder (fn [] 31)) 0)\n",
+        "(old)\n",
+        "(@holder)\n",
+        "(defonce state (atom 99))\n",
+        "@state\n",
+    ));
+    assert!(output.status.success(), "{output:?}");
+    assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
+    assert_eq!(
+        String::from_utf8(output.stdout).unwrap(),
+        "0\n0\n18\n18\n0\n0\n23\n31\nnil\n18\n"
+    );
+}

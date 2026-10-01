@@ -1,0 +1,230 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "atom-initial",
+      "source": "(do (def a (atom 17)) @a)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "reset-return",
+      "source": "(reset! a 21)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "reset-visible",
+      "source": "@a",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "swap-two",
+      "source": "(swap! a (fn [x] (+ x 1)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4036000000000000"
+      }
+    },
+    {
+      "id": "swap-three",
+      "source": "(swap! a (fn [x y] (+ x y)) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4039000000000000"
+      }
+    },
+    {
+      "id": "swap-four",
+      "source": "(swap! a (fn [x y z] (+ x y z)) 3 4)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "alias-mutation",
+      "source": "(let [alias a] (reset! alias 41) @a)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4044800000000000"
+      }
+    },
+    {
+      "id": "capture-reader",
+      "source": "(do (def reader (let [old a] (fn [] @old))) (reader))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4044800000000000"
+      }
+    },
+    {
+      "id": "captured-reader-live",
+      "source": "(do (reset! a 43) (reader))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045800000000000"
+      }
+    },
+    {
+      "id": "global-rebind",
+      "source": "(do (def a (atom 53)) @a)",
+      "expected": {
+        "tag": "f64",
+        "bits": "404a800000000000"
+      }
+    },
+    {
+      "id": "old-reader-rebind",
+      "source": "(reader)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045800000000000"
+      }
+    },
+    {
+      "id": "nil-state",
+      "source": "(nil? (reset! a nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-read",
+      "source": "(nil? @a)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "false-state",
+      "source": "(false? (reset! a false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "false-read",
+      "source": "(false? @a)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "closure-store",
+      "source": "(do (reset! a (fn [x] (+ x 61))) (@a 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404f800000000000"
+      }
+    },
+    {
+      "id": "closure-captured",
+      "source": "(do (def previous @a) (reset! a (fn [x] (+ x 71))) (previous 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404f800000000000"
+      }
+    },
+    {
+      "id": "closure-current",
+      "source": "(@a 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4052400000000000"
+      }
+    },
+    {
+      "id": "identity-self",
+      "source": "(= a a)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "identity-distinct",
+      "source": "(= (atom 1) (atom 1))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "stable-hash",
+      "source": "(let [before (hash a)] (reset! a 81) (= before (hash a)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "atom-meta",
+      "source": "(nil? (meta a))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "operand-order",
+      "source": "(do (def trace 0) (swap! (do (set! trace (+ (* trace 10) 1)) a) (do (set! trace (+ (* trace 10) 2)) (fn [v x y] (+ v x y))) (do (set! trace (+ (* trace 10) 3)) 2) (do (set! trace (+ (* trace 10) 4)) 3)) trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4093480000000000"
+      }
+    },
+    {
+      "id": "callback-throw",
+      "source": "(try (swap! a (fn [x] (do (set! trace 9) (throw 31)))) (catch :default e e))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "throw-preserves-state",
+      "source": "@a",
+      "expected": {
+        "tag": "f64",
+        "bits": "4055800000000000"
+      }
+    },
+    {
+      "id": "throw-keeps-prior-effects",
+      "source": "trace",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "reset-throw-before-write",
+      "source": "(do (try (reset! a (throw 99)) (catch :default e nil)) @a)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4055800000000000"
+      }
+    },
+    {
+      "id": "array-state",
+      "source": "(do (reset! a (array 7 8)) (aget @a 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    }
+  ]
+}

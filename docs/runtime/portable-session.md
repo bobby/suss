@@ -5,8 +5,8 @@ Store, shared production runtime, compiler Environment, binding cells, initializ
 module identities and resident fragment instances. It uses the portable pipeline;
 it does not rebuild state by replaying source. The native command REPL now uses
 this host for bounded compiled input and scalar display; see
-[frontend evidence and limits](compiled-repl.md). Other command/AOT frontends,
-atoms, macros and complete M3 acceptance remain unfinished. Older progress notes
+[frontend evidence and limits](compiled-repl.md). The REPL core profile now supports [persistent atom storage](atoms.md). Other
+command/AOT frontends, complete atoms/macros and M3 acceptance remain unfinished. Older progress notes
 below retain the API's development history.
 
 ## Execution and recovery
@@ -75,8 +75,10 @@ sentinel values and exception descriptors independently of Suss equality/printin
 `reset` constructs a replacement before dropping the old Store. It preserves
 options/engine, discards bindings, namespace scopes, loaded identities and resident
 instances, and invalidates old handles. Old external handles may outlive reset,
-but cannot access the new Store. Core provisioning is the explicit bounded
-bootstrap intrinsics, not the complete portable core library.
+but cannot access the new Store. Minimal sessions provision bounded bootstrap intrinsics. `Session::new_repl()`
+also compiles the provenance-tracked core artifact once and reprovisions it on
+reset. The artifact and its dependencies do not establish complete portable core
+compatibility.
 
 `SessionStats` exposes resident instance count, the sum of their input artifact
 sizes, binding cell count, successfully loaded module count, current-generation

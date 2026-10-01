@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "d8949fa31b163496377da6343571bdedfd041d8fd2187835dd338e2b401263a3",
-  "reviews-sha256": "9b5033eca1bf1ac1125335098dfd7b53c12a363e3db28f8363a8928fbb0e62c2",
+  "recipe-sha256": "feaf851e0ea70af96c10b054d851f3b0d3cc3fc20f06fd742943f18a32c9527f",
+  "reviews-sha256": "24f4b6a5e071e6c2f4b1d02553b755783a05a674b377641dc27fc7309146317e",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -3610,6 +3610,171 @@
         "crates/suss-cli/tests/portable_vector_trie.rs",
         "tests/oracle/vector-trie-cases.json"
       ]
+    },
+    {
+      "id": "runtime:IAtom:895",
+      "name": "IAtom",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 895,
+      "end-line": 896,
+      "byte-start": 27117,
+      "byte-end": 27176,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c02346e6ea4f47875fa0cdca709e77a0aa9accbaab297880904502ac8df0fd1f",
+      "extracted": "extracted/0111.cljs",
+      "extracted-sha256": "aa413b532dc35117a77dfc2d1c54ce708ae8856ae1783fae95ee0634dffa1ef7",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "c02346e6ea4f47875fa0cdca709e77a0aa9accbaab297880904502ac8df0fd1f",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "IDeref/IMeta/IEquiv/IHash",
+        "shared object storage and identity-uid",
+        "Atom/instance?/reset!/ex-info"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/persistent_repl.rs",
+        "crates/suss-cli/tests/portable_atoms.rs",
+        "tests/oracle/atom-cases.json",
+        "docs/runtime/atoms.md"
+      ]
+    },
+    {
+      "id": "runtime:Atom:4613",
+      "name": "Atom",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4613,
+      "end-line": 4640,
+      "byte-start": 123129,
+      "byte-end": 123678,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "a915088d1555e30b568ed1cbb29d18f26f1a7ef57a728f7c6c8bc15dc282a48b",
+      "extracted": "extracted/0112.cljs",
+      "extracted-sha256": "a2df461fd34130696d85467204d996c1c0864e95359fe7c04040aeca8df6b0d3",
+      "patch": "docs/compatibility/patches/atoms-type.json",
+      "patch-sha256": "c7f62ba56c2d48ae2db9fbd0dd5e00875b1a36ee46b5c4e8ca5ec140ea3fe073",
+      "adapted-form-sha256": "38eca3029311e5b49567b2c4b60ddeb2d3a764c90939be0723588e35b7f5ac1d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "IDeref/IMeta/IEquiv/IHash",
+        "shared object storage and identity-uid",
+        "Atom/instance?/reset!/ex-info"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/persistent_repl.rs",
+        "crates/suss-cli/tests/portable_atoms.rs",
+        "tests/oracle/atom-cases.json",
+        "docs/runtime/atoms.md"
+      ]
+    },
+    {
+      "id": "runtime:atom:4642",
+      "name": "atom",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4642,
+      "end-line": 4657,
+      "byte-start": 123680,
+      "byte-end": 124326,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "701c04c97059f656292eeb7ef36105e216e41127212328185090824a664a8cba",
+      "extracted": "extracted/0113.cljs",
+      "extracted-sha256": "06e7b6c4995d06f4f8331cd8faabb2b1a09f9bdbf6fe0970e723348a545eeca4",
+      "patch": "docs/compatibility/patches/atoms-new.json",
+      "patch-sha256": "f74c0a2dcdb12752788fc1c7e02e772529073ed1a32a9e8b1af213205fc68ded",
+      "adapted-form-sha256": "72169cc3e1608d2d6782959bec26950fbd9f7d7410f0ba4d378a8cab5766e9db",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "IDeref/IMeta/IEquiv/IHash",
+        "shared object storage and identity-uid",
+        "Atom/instance?/reset!/ex-info"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/persistent_repl.rs",
+        "crates/suss-cli/tests/portable_atoms.rs",
+        "tests/oracle/atom-cases.json",
+        "docs/runtime/atoms.md"
+      ]
+    },
+    {
+      "id": "runtime:reset!:4661",
+      "name": "reset!",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4661,
+      "end-line": 4675,
+      "byte-start": 124346,
+      "byte-end": 124881,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b13352f91b0996d80f117b28b9df67f9173d038ce015c0f94afa74a12b1f4289",
+      "extracted": "extracted/0114.cljs",
+      "extracted-sha256": "eacb64b56645cd5f2b88ead2fa924cb5dcedb5ee73e1cabeb77656a98d4c10c2",
+      "patch": "docs/compatibility/patches/atoms-reset.json",
+      "patch-sha256": "0d2ed6de01d3e5385f20cc399932d5fdff6409c96acae10078ed5eb0c6860085",
+      "adapted-form-sha256": "98e7c72e8acb8e69500d977ee8dd00ac691bdec0a8a42f685f78f7540400cb35",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "IDeref/IMeta/IEquiv/IHash",
+        "shared object storage and identity-uid",
+        "Atom/instance?/reset!/ex-info"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/persistent_repl.rs",
+        "crates/suss-cli/tests/portable_atoms.rs",
+        "tests/oracle/atom-cases.json",
+        "docs/runtime/atoms.md"
+      ]
+    },
+    {
+      "id": "runtime:swap!:4694",
+      "name": "swap!",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4694,
+      "end-line": 4714,
+      "byte-start": 125481,
+      "byte-end": 126107,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "4081090780e8ca6ad14373f69ecafc6002c1113ea2de51254e3c0a14f8bec207",
+      "extracted": "extracted/0115.cljs",
+      "extracted-sha256": "a9840a3d22cc1dd1a217de519fc334a2f03240f0a0fb5cb7c55e6353aea24cf1",
+      "patch": "docs/compatibility/patches/atoms-swap.json",
+      "patch-sha256": "8f1f91264b959a2206bf843884ea49a98127d87acb8847f23720f7d63082a4dd",
+      "adapted-form-sha256": "d2399b6e7cdc1ea999c710f7bc9671fa40c650a344d6378aaa98ae7651a71458",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "IDeref/IMeta/IEquiv/IHash",
+        "shared object storage and identity-uid",
+        "Atom/instance?/reset!/ex-info"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/persistent_repl.rs",
+        "crates/suss-cli/tests/portable_atoms.rs",
+        "tests/oracle/atom-cases.json",
+        "docs/runtime/atoms.md"
+      ]
     }
   ],
   "loader": {
@@ -3736,6 +3901,11 @@
     "extracted/0108.cljs": "abe85d12d3854949c578c8eff86284e2937e95ec427658482fbee071c2444b7a",
     "extracted/0109.cljs": "ed80d41f34e1dfa3a89cf192ff4ec20450189bc20585efae86cbab44c55e3f3e",
     "extracted/0110.cljs": "cd6d83d1cbc7b19ead3ba92dd887b7728924bf17e0f428eeb1c37334e68afd78",
-    "suss/core.sus": "336cedf50a3e28dd5e4aff5fb8b653638342bb28ed22d9ad9d91fe6377651494"
+    "extracted/0111.cljs": "aa413b532dc35117a77dfc2d1c54ce708ae8856ae1783fae95ee0634dffa1ef7",
+    "extracted/0112.cljs": "a2df461fd34130696d85467204d996c1c0864e95359fe7c04040aeca8df6b0d3",
+    "extracted/0113.cljs": "06e7b6c4995d06f4f8331cd8faabb2b1a09f9bdbf6fe0970e723348a545eeca4",
+    "extracted/0114.cljs": "eacb64b56645cd5f2b88ead2fa924cb5dcedb5ee73e1cabeb77656a98d4c10c2",
+    "extracted/0115.cljs": "a9840a3d22cc1dd1a217de519fc334a2f03240f0a0fb5cb7c55e6353aea24cf1",
+    "suss/core.sus": "f6a3431a35b12abdb9d462fd9d38000cac7162df917fd94a1834071a7135200c"
   }
 }

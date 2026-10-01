@@ -1364,6 +1364,42 @@
      :else (let [ret (pv-clone-node node)]
              (pv-aset ret subidx nil)
              ret)))))
+
+(defprotocol IAtom
+  "Marker protocol indicating an atom.")
+
+(deftype Atom [^:mutable state ^:mutable meta ^:mutable validator ^:mutable watches]
+  Object
+  (equiv [this other] (-equiv this other))
+  IAtom
+  IEquiv
+  (-equiv [o other] (identical? o other))
+  IDeref
+  (-deref [_] state)
+  IMeta
+  (-meta [_] meta)
+  IHash
+  (-hash [this] (suss.bootstrap/identity-uid this)))
+
+(def atom (fn [x] (Atom. x nil nil nil)))
+
+(def reset!
+  (fn [a new-value]
+    (if (instance? Atom a)
+      (if (and (suss.bootstrap/nil? (.-validator a))
+               (suss.bootstrap/nil? (.-watches a)))
+        (do (set! (.-state a) new-value) new-value)
+        (throw (ex-info "Bootstrap atom validators/watches are not implemented" nil)))
+      (throw (ex-info "Bootstrap reset! requires an Atom" nil)))))
+
+(def swap!
+  (fn
+    ([a f] (if (instance? Atom a) (reset! a (f (.-state a)))
+             (throw (ex-info "Bootstrap swap! requires an Atom" nil))))
+    ([a f x] (if (instance? Atom a) (reset! a (f (.-state a) x))
+               (throw (ex-info "Bootstrap swap! requires an Atom" nil))))
+    ([a f x y] (if (instance? Atom a) (reset! a (f (.-state a) x y))
+                 (throw (ex-info "Bootstrap swap! requires an Atom" nil))))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
