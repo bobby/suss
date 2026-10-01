@@ -200,6 +200,118 @@
         "tag": "f64",
         "bits": "4035000000000000"
       }
+    },
+    {
+      "id": "callee-throw-suppresses-collection",
+      "source": "(do (set! hash-cache nil) (aset hash-effects 0 0) (try (cljs.core/caching-hash (hash-mark 2 7) (throw (hash-mark 1 91)) hash-cache) (catch :default e nil)) (aget hash-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "callee-throw-keeps-cache",
+      "source": "(nil? hash-cache)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "miss-overwrites-operand-cache-mutation",
+      "source": "(do (set! hash-cache nil) (cljs.core/caching-hash (do (set! hash-cache 53) 7) (do (set! hash-cache 41) (fn [x] (* x 3))) hash-cache) hash-cache)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "false-hash-is-stored-hit",
+      "source": "(do (def review-hash-count (array 0)) (set! hash-cache nil) (cljs.core/caching-hash 7 (fn [x] (do (aset review-hash-count 0 (inc (aget review-hash-count 0))) false)) hash-cache) (cljs.core/caching-hash (throw 31) (throw 37) hash-cache))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "false-hash-only-one-call",
+      "source": "(aget review-hash-count 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "undefined-hash-is-recomputed",
+      "source": "(do (declare review-undefined) (aset review-hash-count 0 0) (set! hash-cache nil) (def review-undefined-hash (fn [x] (do (aset review-hash-count 0 (inc (aget review-hash-count 0))) review-undefined))) (cljs.core/caching-hash 7 review-undefined-hash hash-cache) (cljs.core/caching-hash 7 review-undefined-hash hash-cache) (aget review-hash-count 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "dynamic-cache-miss-inside-binding",
+      "source": "(do (def ^:dynamic review-dynamic-cache 41) (binding [review-dynamic-cache nil] (cljs.core/caching-hash 7 (fn [x] (* x 3)) review-dynamic-cache)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "dynamic-cache-restores-outer-value",
+      "source": "review-dynamic-cache",
+      "expected": {
+        "tag": "f64",
+        "bits": "4044800000000000"
+      }
+    },
+    {
+      "id": "redefs-cache-restores-after-throw",
+      "source": "(do (try (with-redefs [review-dynamic-cache nil] (cljs.core/caching-hash 7 (fn [x] (* x 5)) review-dynamic-cache) (throw 91)) (catch :default e nil)) review-dynamic-cache)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4044800000000000"
+      }
+    },
+    {
+      "id": "cached-callable-identity",
+      "source": "(do (def review-cached-function (fn [x] x)) (set! hash-cache review-cached-function) (identical? review-cached-function (cljs.core/caching-hash (throw 31) (throw 37) hash-cache)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "local-macro-name-shadows-unqualified-call",
+      "source": "(let [caching-hash (fn [a b c] (+ a b c))] (caching-hash 3 5 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402e000000000000"
+      }
+    },
+    {
+      "id": "qualified-global-key-ignores-local-shadow",
+      "source": "(do (set! hash-cache nil) (let [hash-cache 91] (cljs.core/caching-hash 7 (fn [x] (* x 3)) suss-oracle.caching-hash-cases/hash-cache)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "method-global-key-ignores-field-shadow",
+      "source": "(do (def review_cache nil) (deftype ReviewHashShadow [review_cache] Object (hash [this] (cljs.core/caching-hash 7 (fn [x] (* x 5)) suss-oracle.caching-hash-cases/review_cache))) (.hash (ReviewHashShadow. 91)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041800000000000"
+      }
+    },
+    {
+      "id": "field-shadow-preserved-after-global-cache-write",
+      "source": "(.-review_cache (ReviewHashShadow. 91))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4056c00000000000"
+      }
     }
   ]
 }

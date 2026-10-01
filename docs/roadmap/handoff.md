@@ -5596,3 +5596,67 @@ All root Cargo/JVM/Node graphs terminal. Next independent PR review/fixes, requi
 full baseline and exact final-head CI before readiness, then continue complete
 persistent List/Cons/IndexedSeq dependencies. Macro bootstrap/full hashing and
 M2–M9 acceptance remain open. No issue closure/merge.
+
+## Independent PR #94 hash-cache review — 2026-10-01
+
+Reviewed candidate cd86c58 against independently reviewed Object base e958472.
+No significant production defect was found. The bounded HIR expansion mirrors
+pinned core.cljc 1284: a fresh binding captures the single cache read; nil/internal
+undefined branch to callee-before-collection invocation; assignment uses the
+resolved original global or mutable receiver field; other cached values suppress
+both operands. Receiver captures and lexical/global resolution remain explicit.
+No runtime, ABI, source selection or compiled macro claim changes.
+
+Fourteen independent probes preserve the original 24 source/expectations exactly.
+They cover callee throws, operand cache mutation, false and undefined results,
+dynamic binding/redefs restoration, callable hit identity, local macro-name calls,
+and qualified global keys beneath local and method-field shadows. Initial graph
+85454 ended 101: all 38 pinned observations matched, but a new hyphenated Object
+field correctly hit the documented unmunged-schema runtime boundary. The revised
+probe uses an underscore field; fresh graph 86874 ended 0 with all 38 primary/native
+observations and both then-existing native tests passing. Logs:
+/private/tmp/suss-pr94-review-primary.log and
+/private/tmp/suss-pr94-review-primary-field-fixed.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-caching-hash-oracle.sh`.
+
+A third native test executes core aliases/exclusions and checks expansion in both
+runtime and macro phases. Malformed/immutable-key guards now assert nonempty
+source spans as well as atomic recovery. Focused graph 37593 ended 0: all three
+native tests pass. Log /private/tmp/suss-pr94-review-macro-scopes.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-cli --test portable_caching_hash --locked -- --test-threads=2`.
+
+Python graph 96556 ended 0: 71 tests, inventory 1065, overlay 83 partial reviews /
+982 unassessed, 32 import artifacts, 15 WIT files / 6 packages, numeric manifest,
+and offline 10 milestones / 39 issues all verified. Only the generated import
+review hash changes; 28 selections and all license/source bytes stay unchanged.
+Log /private/tmp/suss-pr94-review-provenance.log. Next require final workspace
+baseline and exact reviewed-head CI; complete List/Cons hashing and compiled
+macro bootstrap remain unblocked future work. No issue closure or merge.
+
+Pre-fix full graph 98285 ended 0 on ARM, but candidate Linux CI run 36813807935
+failed nan-is-cached: division produced negative canonical NaN instead of positive.
+The accepted design already permits that arithmetic sign difference (2026-09-29
+clarification); scripts/oracle_compare.py retains raw bits and permits only the
+canonical payload's sign. Review now applies this rule solely to nan-is-cached,
+preserving all original 24 source/expectations and raw decoded observations.
+All other cases remain exact. New guards reject payload differences, infinity,
+finite/zero changes, signed-zero differences and NaN sign differences in other
+storage cases. A separate native test produces both canonical signs and checks
+exact cache read/hit/post-GC bits while throwing operands certify suppression.
+No production arithmetic or ABI changes. Initial NaN regression graph 67407
+ended 101 due to an inferred closure borrow lifetime; the helper now has explicit
+SessionValue lifetimes. Final fresh reference and full-baseline results follow.
+
+Final fresh reference graph 67526 ended 0: all 38 pinned observations and all four
+native tests pass, including both canonical NaN signs and exact cache storage.
+Log /private/tmp/suss-pr94-review-primary-nan-fixed2.log. Required full workspace
+graph 19936 ended 0: every enabled workspace/doc test passed, including cache4,
+Object2, scope2, nominal5, pipeline17 and ABI20. Existing manual/legacy ignores
+and diagnostic 9 passing / 7 exact failing observations remain explicit. Log
+/private/tmp/suss-pr94-review-full-baseline-nan-fixed.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Final provenance graph 93228 ended 0; Python 71 and all manifest checks pass.
+Log /private/tmp/suss-pr94-review-provenance-nan-fixed.log. All Cargo/JVM/Node review
+graphs are terminal. Next root requires exact reviewed-head CI before readiness;
+then continue retained persistent collections and full hashing/macros. No merge
+or issue closure. The shared test slot is released after the review push finishes.
