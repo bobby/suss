@@ -1,0 +1,550 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "floor-zero",
+      "source": "#?(:suss (suss.bootstrap/f64-floor 0) :cljs (js/Math.floor 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "finite-zero",
+      "source": "#?(:suss (suss.bootstrap/f64-finite 0) :cljs (js/isFinite 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-zero",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer 0) :cljs (js/Number.isSafeInteger 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "floor-negative-zero",
+      "source": "#?(:suss (suss.bootstrap/f64-floor -0.0) :cljs (js/Math.floor -0.0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "finite-negative-zero",
+      "source": "#?(:suss (suss.bootstrap/f64-finite -0.0) :cljs (js/isFinite -0.0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-negative-zero",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer -0.0) :cljs (js/Number.isSafeInteger -0.0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "floor-fraction",
+      "source": "#?(:suss (suss.bootstrap/f64-floor 1.75) :cljs (js/Math.floor 1.75))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "finite-fraction",
+      "source": "#?(:suss (suss.bootstrap/f64-finite 1.75) :cljs (js/isFinite 1.75))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-fraction",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer 1.75) :cljs (js/Number.isSafeInteger 1.75))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "floor-negative-fraction",
+      "source": "#?(:suss (suss.bootstrap/f64-floor -1.75) :cljs (js/Math.floor -1.75))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c000000000000000"
+      }
+    },
+    {
+      "id": "finite-negative-fraction",
+      "source": "#?(:suss (suss.bootstrap/f64-finite -1.75) :cljs (js/isFinite -1.75))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-negative-fraction",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer -1.75) :cljs (js/Number.isSafeInteger -1.75))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "floor-tiny",
+      "source": "#?(:suss (suss.bootstrap/f64-floor 5e-324) :cljs (js/Math.floor 5e-324))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "finite-tiny",
+      "source": "#?(:suss (suss.bootstrap/f64-finite 5e-324) :cljs (js/isFinite 5e-324))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-tiny",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer 5e-324) :cljs (js/Number.isSafeInteger 5e-324))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "floor-negative-tiny",
+      "source": "#?(:suss (suss.bootstrap/f64-floor -5e-324) :cljs (js/Math.floor -5e-324))",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "finite-negative-tiny",
+      "source": "#?(:suss (suss.bootstrap/f64-finite -5e-324) :cljs (js/isFinite -5e-324))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-negative-tiny",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer -5e-324) :cljs (js/Number.isSafeInteger -5e-324))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "floor-max-safe",
+      "source": "#?(:suss (suss.bootstrap/f64-floor 9007199254740991) :cljs (js/Math.floor 9007199254740991))",
+      "expected": {
+        "tag": "f64",
+        "bits": "433fffffffffffff"
+      }
+    },
+    {
+      "id": "finite-max-safe",
+      "source": "#?(:suss (suss.bootstrap/f64-finite 9007199254740991) :cljs (js/isFinite 9007199254740991))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-max-safe",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer 9007199254740991) :cljs (js/Number.isSafeInteger 9007199254740991))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "floor-unsafe",
+      "source": "#?(:suss (suss.bootstrap/f64-floor 9007199254740992) :cljs (js/Math.floor 9007199254740992))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4340000000000000"
+      }
+    },
+    {
+      "id": "finite-unsafe",
+      "source": "#?(:suss (suss.bootstrap/f64-finite 9007199254740992) :cljs (js/isFinite 9007199254740992))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-unsafe",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer 9007199254740992) :cljs (js/Number.isSafeInteger 9007199254740992))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "floor-huge",
+      "source": "#?(:suss (suss.bootstrap/f64-floor 1e308) :cljs (js/Math.floor 1e308))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7fe1ccf385ebc8a0"
+      }
+    },
+    {
+      "id": "finite-huge",
+      "source": "#?(:suss (suss.bootstrap/f64-finite 1e308) :cljs (js/isFinite 1e308))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-huge",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer 1e308) :cljs (js/Number.isSafeInteger 1e308))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "floor-inf",
+      "source": "#?(:suss (suss.bootstrap/f64-floor ##Inf) :cljs (js/Math.floor ##Inf))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff0000000000000"
+      }
+    },
+    {
+      "id": "finite-inf",
+      "source": "#?(:suss (suss.bootstrap/f64-finite ##Inf) :cljs (js/isFinite ##Inf))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "safe-inf",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer ##Inf) :cljs (js/Number.isSafeInteger ##Inf))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "floor-negative-inf",
+      "source": "#?(:suss (suss.bootstrap/f64-floor ##-Inf) :cljs (js/Math.floor ##-Inf))",
+      "expected": {
+        "tag": "f64",
+        "bits": "fff0000000000000"
+      }
+    },
+    {
+      "id": "finite-negative-inf",
+      "source": "#?(:suss (suss.bootstrap/f64-finite ##-Inf) :cljs (js/isFinite ##-Inf))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "safe-negative-inf",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer ##-Inf) :cljs (js/Number.isSafeInteger ##-Inf))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "floor-nan",
+      "source": "#?(:suss (suss.bootstrap/f64-floor ##NaN) :cljs (js/Math.floor ##NaN))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "finite-nan",
+      "source": "#?(:suss (suss.bootstrap/f64-finite ##NaN) :cljs (js/isFinite ##NaN))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "safe-nan",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer ##NaN) :cljs (js/Number.isSafeInteger ##NaN))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "floor-nil",
+      "source": "#?(:suss (suss.bootstrap/f64-floor nil) :cljs (js/Math.floor nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "finite-nil",
+      "source": "#?(:suss (suss.bootstrap/f64-finite nil) :cljs (js/isFinite nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-nil",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer nil) :cljs (js/Number.isSafeInteger nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "floor-true",
+      "source": "#?(:suss (suss.bootstrap/f64-floor true) :cljs (js/Math.floor true))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "finite-true",
+      "source": "#?(:suss (suss.bootstrap/f64-finite true) :cljs (js/isFinite true))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-true",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer true) :cljs (js/Number.isSafeInteger true))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "floor-false",
+      "source": "#?(:suss (suss.bootstrap/f64-floor false) :cljs (js/Math.floor false))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "finite-false",
+      "source": "#?(:suss (suss.bootstrap/f64-finite false) :cljs (js/isFinite false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-false",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer false) :cljs (js/Number.isSafeInteger false))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "floor-string",
+      "source": "#?(:suss (suss.bootstrap/f64-floor \"1.75\") :cljs (js/Math.floor \"1.75\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "finite-string",
+      "source": "#?(:suss (suss.bootstrap/f64-finite \"1.75\") :cljs (js/isFinite \"1.75\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-string",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer \"1.75\") :cljs (js/Number.isSafeInteger \"1.75\"))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "floor-negative-string",
+      "source": "#?(:suss (suss.bootstrap/f64-floor \"-1.75\") :cljs (js/Math.floor \"-1.75\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c000000000000000"
+      }
+    },
+    {
+      "id": "finite-negative-string",
+      "source": "#?(:suss (suss.bootstrap/f64-finite \"-1.75\") :cljs (js/isFinite \"-1.75\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-negative-string",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer \"-1.75\") :cljs (js/Number.isSafeInteger \"-1.75\"))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "floor-empty-string",
+      "source": "#?(:suss (suss.bootstrap/f64-floor \"\") :cljs (js/Math.floor \"\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "finite-empty-string",
+      "source": "#?(:suss (suss.bootstrap/f64-finite \"\") :cljs (js/isFinite \"\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "safe-empty-string",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer \"\") :cljs (js/Number.isSafeInteger \"\"))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "safe-array",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer (array 1)) :cljs (js/Number.isSafeInteger (array 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "safe-function",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer (fn [] 1)) :cljs (js/Number.isSafeInteger (fn [] 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "rem-56",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder 0 2147483647) :cljs (cljs.core/js-mod 0 2147483647))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "rem-57",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder -0.0 2147483647) :cljs (cljs.core/js-mod -0.0 2147483647))",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "rem-58",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder 2147483647 2147483647) :cljs (cljs.core/js-mod 2147483647 2147483647))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "rem-59",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder -2147483647 2147483647) :cljs (cljs.core/js-mod -2147483647 2147483647))",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "rem-60",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder 2147483648 2147483647) :cljs (cljs.core/js-mod 2147483648 2147483647))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "rem-61",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder -2147483648 2147483647) :cljs (cljs.core/js-mod -2147483648 2147483647))",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "rem-62",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder 9007199254740991 2147483647) :cljs (cljs.core/js-mod 9007199254740991 2147483647))",
+      "expected": {
+        "tag": "f64",
+        "bits": "414fffff80000000"
+      }
+    },
+    {
+      "id": "rem-63",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder -9007199254740991 2147483647) :cljs (cljs.core/js-mod -9007199254740991 2147483647))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c14fffff80000000"
+      }
+    },
+    {
+      "id": "rem-64",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder 9007199254740991 -2147483647) :cljs (cljs.core/js-mod 9007199254740991 -2147483647))",
+      "expected": {
+        "tag": "f64",
+        "bits": "414fffff80000000"
+      }
+    },
+    {
+      "id": "rem-65",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder 9007199254740991 9007199254740990) :cljs (cljs.core/js-mod 9007199254740991 9007199254740990))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "rem-66",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder -9007199254740991 -9007199254740990) :cljs (cljs.core/js-mod -9007199254740991 -9007199254740990))",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "rem-67",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder 17 -3) :cljs (cljs.core/js-mod 17 -3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    }
+  ]
+}

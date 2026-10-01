@@ -78,3 +78,35 @@ fn private_binary64_storage_hir_and_ir_check_unary_result_contract() {
         assert!(portable::compile_ir(&bad).is_err());
     }
 }
+
+#[test]
+fn numeric_hash_boundary_hir_ir_preserve_boolean_and_number_contracts() {
+    for (operation, arity, ty) in [
+        (Bitwise::F64Floor, 1, Type::Number),
+        (Bitwise::F64Finite, 1, Type::Bool),
+        (Bitwise::F64SafeInteger, 1, Type::Bool),
+        (Bitwise::SafeIntegerRemainder, 2, Type::Number),
+    ] {
+        let make = |count, ty| Hir {
+            span: 3..21, metadata: vec![], ty,
+            kind: Expression::Bitwise { operation, arguments: (0..count).map(|_| Hir {
+                span: 5..6, metadata: vec![], ty: Type::Number,
+                kind: Expression::Literal(Literal::Number(3.0)),
+            }).collect() },
+        };
+        let wrong = if ty == Type::Bool { Type::Number } else { Type::Bool };
+        for (count, result) in [(0, ty), (arity + 1, ty), (arity, wrong)] {
+            assert_eq!(portable::ir::lower(&make(count, result)).unwrap_err().span, 3..21);
+        }
+        let valid = portable::ir::lower(&make(arity, ty)).unwrap();
+        portable::compile_ir(&valid).unwrap();
+        let mut bad = valid.clone();
+        let Operation::Bitwise { arguments, .. } = &mut bad.blocks[0].instructions.last_mut().unwrap().operation else { panic!("primitive"); };
+        arguments.clear();
+        assert!(portable::compile_ir(&bad).is_err());
+        let mut bad = valid;
+        let result = bad.blocks[0].instructions.last().unwrap().result;
+        bad.values[result.0].ty = wrong;
+        assert!(portable::compile_ir(&bad).is_err());
+    }
+}

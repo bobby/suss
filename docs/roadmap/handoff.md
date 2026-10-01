@@ -7302,3 +7302,33 @@ passes after provenance updates, /private/tmp/suss-pr105-review-python-final.log
 All reviewer handles42082/54796/62505/37532/92436/18859/92345 terminal. Reviewer
 releases exclusive heavy slot after review commit/push; root must gate readiness
 on successful exact final reviewed-head CI. No merge or issue/milestone closure.
+
+## Numeric hash boundaries — 2026-10-01
+
+Previous goal turn made progress: PR105 opened/pushed; root56/native2/full52953
+pass; reviewed103/104 exact CI success and ready, no merges. Independent105 now
+pushed19d71da6670aae60d43910e97846076ed5270e4d, fresh62/native3/Python80/full92345
+terminal0, no significant production defect, all handles terminal and heavy slot
+released to root. Exact reviewed-head CI36849333687 live; draft stays until gate.
+
+New isolated portable/core-hash-numeric-boundaries rebased onto reviewed105.
+Original private finite/safe-integer/floor/safe-integer-remainder adapters serve
+pinned public hash's numeric branch; no new GC layout/ABI/core cell. Explicit
+range/nonzero guards prevent conversion/rem traps and retain numerator signed
+zero. No general js-mod/public hash claim; object conversion remains incomplete.
+See docs/runtime/hash-numeric-boundaries.md for provenance, scope and limitations.
+Fresh81729 ended1 on new provisional floor-negative-zero expected sign; actual
+pinned observation preserved, corrected only unverified expectation. Fresh24694
+ended0:68 exact primary/native1. Focused8853/native2 and compiler/ABI65505/1each
+terminal0. Python80/import96/setup4/reviews185+880/diff pass. New phase-test57845
+compile101 on test-only PreparedFragment Debug requirement; corrected explicit
+Err matching; focused84046 live. Full/review/exact-head CI pending; root heavy
+slot. Commands shared target/build2/--locked/--test-threads=2, no RUSTFLAGS.
+Next complete baseline, open/review numeric PR, then retain public and collection
+hashing, printing, remaining persistent types/macros and M2–M9 release gates.
+No issue/milestone closure or merge; alternative algorithms remain deferred #98.
+
+Focused84046 terminal0: native3, both-phase artifact/arity checks pass;
+/private/tmp/suss-hash-numeric-boundaries-focused-final-retry.log. Required
+full baseline now running /private/tmp/suss-hash-numeric-boundaries-full.log;
+root owns exclusive heavy slot. No full acceptance claim until terminal.
