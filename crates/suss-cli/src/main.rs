@@ -802,6 +802,31 @@ fn run_repl() {
                 _ => {}
             }
         }
+        if input.is_empty() {
+            let mut words = line.split_whitespace();
+            let command = words.next().unwrap_or("");
+            if matches!(command, ":load" | ":reload" | ":reload-all" | ":in-ns") {
+                let Some(namespace) = words.next().filter(|_| words.next().is_none()) else {
+                    eprintln!("Error: {command} expects one namespace name");
+                    continue;
+                };
+                let result = match command {
+                    ":load" => session.load_namespace(namespace).map(|_| ()),
+                    ":reload" => session.reload_namespace(namespace, false).map(|_| ()),
+                    ":reload-all" => session.reload_namespace(namespace, true).map(|_| ()),
+                    ":in-ns" => session.enter_namespace(namespace),
+                    _ => unreachable!(),
+                };
+                match result {
+                    Ok(()) => println!("nil"),
+                    Err(error) => eprintln!(
+                        "Error: {}",
+                        portable_repl::error_display(&mut session, &error)
+                    ),
+                }
+                continue;
+            }
+        }
         input.push_str(&line);
         input.push('\n');
         match suss_reader::forms::read_forms(&input) {

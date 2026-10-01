@@ -1,19 +1,20 @@
 //! Persistent native execution of portable fragments and source module plans.
-//! No source history is replayed. The legacy command frontend is not migrated yet.
+//! No source history is replayed. The native command REPL uses this host.
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt,
     path::PathBuf,
     sync::{
-        Arc, OnceLock,
         atomic::{AtomicU64, AtomicUsize, Ordering},
+        Arc, OnceLock,
     },
 };
 use suss_compile::{
     portable::{
-        self, Diagnostic, PreparedFragment,
+        self,
         modules::{ModuleDiagnostic, ModuleIdentity, PreparedModule},
         resolve::{Environment, Global as CellIdentity, Phase},
+        Diagnostic, PreparedFragment,
     },
     runtime_abi,
 };
@@ -353,11 +354,9 @@ impl Session {
             }
             let mut arguments =
                 if export.starts_with("core-") && export != "core-exception-info-class" {
-                    vec![
-                        exception_class_cell
-                            .expect("class initialized first")
-                            .get(&mut scope),
-                    ]
+                    vec![exception_class_cell
+                        .expect("class initialized first")
+                        .get(&mut scope)]
                 } else {
                     vec![]
                 };
@@ -638,12 +637,50 @@ impl Session {
         &mut self,
         namespace: &str,
     ) -> Result<Option<SessionValue>, SessionError> {
+        self.load_namespace_with_provided(namespace, self.provided.clone(), false)
+    }
+    /// Recompile and initialize a namespace using its existing live cells. When
+    /// dependencies is true, reload its reachable dependencies in require order.
+    /// The supplied core profile is reprovisioned only by reset, never file reload.
+    pub fn reload_namespace(
+        &mut self,
+        namespace: &str,
+        dependencies: bool,
+    ) -> Result<Option<SessionValue>, SessionError> {
+        let identity =
+            ModuleIdentity::new(Phase::Runtime, namespace).map_err(SessionError::Compile)?;
+        if identity.namespace() == "suss.core" {
+            return Err(SessionError::Compile(Diagnostic {
+                span: 0..0,
+                message: "The supplied core profile is reprovisioned by session reset".into(),
+            }));
+        }
+        let provided = self
+            .provided
+            .iter()
+            .filter(|module| {
+                if dependencies {
+                    module.namespace() == "suss.core" || module.phase() != Phase::Runtime
+                } else {
+                    **module != identity
+                }
+            })
+            .cloned()
+            .collect();
+        self.load_namespace_with_provided(namespace, provided, true)
+    }
+    fn load_namespace_with_provided(
+        &mut self,
+        namespace: &str,
+        provided: BTreeSet<ModuleIdentity>,
+        reloading: bool,
+    ) -> Result<Option<SessionValue>, SessionError> {
         let mut plan = portable::modules::prepare_modules(
             namespace,
             &self.options.source_paths,
             &self.environment,
             Phase::Runtime,
-            &self.provided,
+            &provided,
         )
         .map_err(SessionError::Module)?;
         plan.environment
@@ -656,6 +693,14 @@ impl Session {
             .map(|module| module.wasm.as_slice())
             .collect();
         let instances = self.install(&bytes, plan.environment, &plan.cells)?;
+        if reloading {
+            // Preparation/linking failed without changing loaded identities. Once
+            // execution starts, every selected unit must complete initialization
+            // before it can be considered loaded again. Earlier effects remain.
+            for module in &plan.modules {
+                self.provided.remove(&module.identity);
+            }
+        }
         self.initialize_modules(plan.modules, instances)
     }
     fn initialize_modules(
