@@ -8883,3 +8883,52 @@ through finalreader doctests, /private/tmp/suss-m3-macro-definitions-full.log.
 Focused53 and Python86/provenance pass. Source/tests stayed frozen; no added
 skips/ABI/dependency/source-selection changes. Ready to publish draft and dispatch
 independent review/significant fixes/exact reviewed-head CI. All M3 gaps remain.
+
+
+## M3 IndexedSeq macro data transport in progress
+
+Root /private/tmp/suss-m3-indexed-macro-data portable/m3-indexed-macro-data bases
+on126825b32f (fast-forward after initial focus on81bfbadd). PR126 independent
+review approves825b32f, no significant findings; first56598 terminal101 saw stale
+shared-target library, mtimes forced correct rebuild;20993 terminal0:17 focused/
+independent probe cases, clean tree, heavy slot released. CI36937011198 watcher16832
+still live. PR125 exact81bfbadd also approved/full875/0/17; CI36935692730/watch27273
+still live. Neither ready until final-head CI; no merges. Issue14comment5942254370.
+
+Indexed before97652 terminal101:all3 regressions reject actual IndexedSeq data.
+After/after2 terminal101:wrong Wasmtime StorageType::Val variant; correctedValType.
+After3 handle45714 terminal101:2pass, GC/root test used forbidden cross-namespace
+qualified def; corrected probe to ns/enter_namespace, no production policy change.
+Focus21327 terminal0:16pass data3/forms6/phase3/source4. Real pinned submodule17640
+terminal0. Root then added exact4094/4095 node boundary and structural impostor
+regressions, inherited126, forced cli source mtimes to avoid shared-target stale
+library. Finalfocus69472 terminal0:52pass across indexed3/definitions3/forms6/phase3/
+source4/persistent33, nofail/ignore, /private/tmp/suss-m3-indexed-data-final-focus.log.
+
+Actual source IndexedSeq class root plus private array sample identity are captured
+once (seven bridge roots). Decoding validates nominal/storage/layout/finite integral
+index/metadata and reads only suffix with shared node/unit budgets. Strings preserve
+one UTF16 unit per sequence string including surrogate halves. Cons can terminate
+in IndexedSeq. Actual variadic macro returns arguments as code and executes42.
+Raw arrays/impostors/malformed indices/storage/metadata/cycles/oversized outputs
+reject at supplied callsite. All persistent vectors/maps/sets/metadata/lazy sequences/
+&env and remaining macro bootstrap/cache/phase loading acceptance stay required.
+
+Source/tests now frozen. Run required full workspace baseline before publishing.
+Only docs/evidence may change during it. Python/provenance:inventory1065/reviews224841/
+import132 verified, selection unchanged. Next complete full/Python then draft PR,
+mandatory independent review/significant fixes/exact final-head CI. Original M3
+requirements including #15 cancellation/pending I/O/live accounting stay open.
+
+Frozen Indexed full42871 now live, /private/tmp/suss-m3-indexed-data-full.log.
+Root owns exclusive heavy slot; re-poll42871 to terminal rather than restarting.
+
+Indexed Python32115 terminal0:86tests pass; finaldiffcheck clean. Full42871
+authoritatively live, progressed into portable_collection_hash; no observed failure.
+PR126 watcher16832 and PR125 watcher27273 confirmed live on their exact reviewed
+heads; remote CI is the remaining readiness gate. No merges or issue closures.
+
+Indexed full42871 terminal0:881passed/0failed/17existing ignores/80groups
+through finalreader doctests, /private/tmp/suss-m3-indexed-data-full.log. Frozen
+source/tests preserved;52focused/Python86/inventory1065/reviews224841/import132
+pass. Publish draft then independent review/fixes/exact reviewed-head CI.

@@ -15,11 +15,12 @@ bodies run in Wasm, rather than in a native tree walker. Captured canonical clas
 roots establish nominal identity independently of Wasm structural matching; they
 survive redefinitions and collection. A bridge or value from another Store or a
 previous reset is rejected. Construct one bridge for the compile-time session,
-then discard/recreate it on reset. Its five class roots are ordinary external
-owned roots; capture compiles five cell reads once, not macro body replay.
+then discard/recreate it on reset. Its six class roots and one private source-array sample are ordinary external
+owned roots; capture compiles six cell reads and one empty-array allocation once,
+not macro body replay.
 
 The current transported types are nil, booleans, boxed binary64, exact UTF16
-strings, source-backed Symbol/Keyword and List/EmptyList/Cons sequences. Actual
+strings, source-backed Symbol/Keyword and List/EmptyList/Cons/IndexedSeq sequences. Actual
 class descriptor identities, object/field layouts, identifier encoding, metadata
 and list counts are checked. Flat sequence tails are traversed iteratively; nested
 forms use a depth limit of64. A4096-visit budget also rejects cycles, and a shared
@@ -29,8 +30,15 @@ produce located compile diagnostics rather than successful placeholder forms.
 New result forms inherit the explicitly supplied macro call-site span; no source
 bytes or original result locations are invented.
 
+IndexedSeq transport validates the captured private source-array descriptor or
+exact I16 string storage, boxed finite integral index, field layout and metadata.
+It reads only the suffix, preserves UTF16 one-unit string elements (including lone
+surrogates), and bounds remaining entries before reading them. Cons tails can end
+in an IndexedSeq. Raw arrays and structurally similar nominal types remain errors.
+Empty valid suffixes become empty lists, without inventing missing data.
+
 This is transport and compilation integration, not completed source macro
-expansion. Persistent vectors/maps/sets, IndexedSeq and lazy sequence results,
+expansion. Persistent vectors/maps/sets and lazy sequence results,
 runtime metadata maps and full &form/&env representation remain to be integrated.
 Source defmacro/require-macros, syntax quote/unquote/splicing, deterministic gensyms,
 phase dependency integration, versioned reproducible Java-free bootstrap, full
@@ -44,3 +52,7 @@ nominal identities, malformed data, reset/foreign roots, cycles, wide/deep data 
 total UTF16 allocation bounds. Existing phase/session/quote suites remain enabled.
 Implementation is original Rust using existing retained source types and the ABI;
 no new source selection, ABI, dependency or shipped JVM/Node requirement is added.
+
+`compiled_macro_indexed_data` adds actual variadic macro output and array/string/
+Cons-tail/GC/storage/identity/index/metadata/cycle/budget regressions. Complete
+portable IndexedSeq protocol dependency acceptance remains its own M4 work.
