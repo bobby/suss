@@ -6298,3 +6298,51 @@ __proto__ numeric writes must not silently become ordinary own cache entries.
 Full public js-obj arities/key conversion/prototype APIs require their own evidence;
 do not infer them from a zero-argument cache factory. Persistent collections, full
 public hash/equality, compiled macros and M2–M9 remain unfinished.
+
+
+## Owned dynamic property kernel — 2026-10-01
+
+PR99 final reviewed-head CI36825310559 completed SUCCESS at
+0fe9889a0a05ba5ad44241cdbc293e2aeda93e1d. Root inspected the complete
+/private/tmp/suss-pr99-final-ci.log, including review132/933, numeric3, ABI26
+and all enabled workspace/doc suites. Updated its evidence body and marked
+PR99 ready; no merge, issue closure or milestone acceptance.
+
+Root continues in /private/tmp/suss-core-string-hash-cache on reviewed PR99.
+Sixteen additional source object/prototype/key-order probes preserve the original48.
+Fresh98282 ended101: all64 match the pin exactly, while native reports64 unresolved
+string-hash-cache errors. No skips/success substitution. Log
+/private/tmp/suss-string-cache-prototype-red.log; command uses the shared target,
+build workers2 and sh scripts/test-string-cache-oracle.sh. This remains an
+unpublished preparation branch; source cache/factory/prototypes are not implemented.
+
+Added original native_objects.rs own-data kernel and two executing runtime tests.
+Uses existing shared UserObject/header/GC array types, private appended descriptor
+identity, raw UTF-16 property comparison and owned growth/replacement. No ABI/type
+layout/core cell change, no registry and no persistent collection claim. Missing
+own properties return Undefined; malformed pair/key/null-value storage and foreign
+owners yield language exceptions. Prototype slot is reserved and unused here;
+__proto__ is literal own data only until the prototype adapter intercepts it.
+See docs/runtime/native-object-storage.md for exact scope and next dependencies.
+
+First kernel test21837 passed. Added guard test initially failed compilation in
+68500 and the immediately following full ABI attempt: an extra unwrap on a
+Wasmtime Val was removed. Corrected focused90523 passed2 and full64457 passed28.
+Null stored-value coverage21345 then failed because args-new supplies language nil,
+not physical null; the test was corrected to forge an explicit null. Corrected
+focused42885 passed2 and final ABI9964 passed28. Logs:
+/private/tmp/suss-owned-properties-null-storage-corrected.log and
+/private/tmp/suss-owned-properties-abi-final.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-compile --test runtime_abi --locked -- --test-threads=2`.
+No full workspace run or independent review is claimed for this unpublished kernel.
+All local processes are terminal; root retains the shared test slot for continuation.
+
+Next add genuine prototype-aware lookup/set and inherited function values,
+scalar key conversion, ignored primitive __proto__ writes, null prototype/data
+shadow behavior and cycle rejection. Then wire the source factory/property adapters,
+retain cache declarations/add-to-string-hash-cache/hash-string with pinned hashes
+and EPL provenance, and require fresh64 native agreement, independent PR review,
+full baseline and exact final-head CI. Do not narrow this to an own-property map
+that changes pinned cache effects. Full public hashing/equality, persistent
+sequences, compiled macros and M2–M9 remain unfinished. Deferred algorithm
+question is issue98, outside existing milestone gates.

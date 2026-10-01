@@ -385,6 +385,134 @@
         "tag": "f64",
         "bits": "401c000000000000"
       }
+    },
+    {
+      "id": "inherited-constructor-is-function",
+      "source": "(let [o (js-obj)] (js-fn? (unchecked-get o \"constructor\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "inherited-tostring-is-function",
+      "source": "(let [o (js-obj)] (js-fn? (unchecked-get o \"toString\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "new-objects-share-prototype",
+      "source": "(identical? (unchecked-get (js-obj) \"__proto__\") (unchecked-get (js-obj) \"__proto__\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "own-value-shadows-prototype",
+      "source": "(let [o (js-obj)] (unchecked-set o \"constructor\" 7) (unchecked-get o \"constructor\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "numeric-proto-write-ignored",
+      "source": "(let [o (js-obj) old (unchecked-get o \"__proto__\")] (unchecked-set o \"__proto__\" 7) (identical? old (unchecked-get o \"__proto__\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-prototype-removes-inherited-function",
+      "source": "(let [o (js-obj)] (unchecked-set o \"__proto__\" nil) (js-fn? (unchecked-get o \"constructor\")))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "nil-prototype-allows-own-proto-data",
+      "source": "(let [o (js-obj)] (unchecked-set o \"__proto__\" nil) (unchecked-set o \"__proto__\" 7) (unchecked-get o \"__proto__\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "prototype-object-inherited-data",
+      "source": "(let [o (js-obj) proto (js-obj)] (unchecked-set proto \"answer\" 7) (unchecked-set o \"__proto__\" proto) (unchecked-get o \"answer\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "own-data-wins-over-prototype",
+      "source": "(let [o (js-obj) proto (js-obj)] (unchecked-set proto \"answer\" 7) (unchecked-set o \"__proto__\" proto) (unchecked-set o \"answer\" 9) (unchecked-get o \"answer\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "prototype-cycle-is-error",
+      "source": "(let [o (js-obj) proto (js-obj)] (unchecked-set o \"__proto__\" proto) (try (unchecked-set proto \"__proto__\" o) false (catch :default e true)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "scalar-key-zero-sign",
+      "source": "(let [o (js-obj)] (unchecked-set o -0.0 7) (unchecked-get o 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "scalar-key-nil",
+      "source": "(let [o (js-obj)] (unchecked-set o nil 7) (unchecked-get o \"null\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "scalar-key-bool",
+      "source": "(let [o (js-obj)] (unchecked-set o true 7) (unchecked-get o \"true\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "scalar-key-nan",
+      "source": "(let [o (js-obj)] (unchecked-set o ##NaN 7) (unchecked-get o \"NaN\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "scalar-key-undefined",
+      "source": "(let [o (js-obj)] (unchecked-set o (.-missing \"x\") 7) (unchecked-get o \"undefined\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "object-key-and-value-evaluation-order",
+      "source": "(do (def object_order 0) (let [o (js-obj)] (unchecked-set (do (set! object_order 1) o) (do (set! object_order (+ (* object_order 10) 2)) \"x\") (do (set! object_order (+ (* object_order 10) 3)) 7))) object_order)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
     }
   ]
 }

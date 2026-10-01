@@ -2974,3 +2974,87 @@ fn runtime_abi_binary64_scalar_adapters_reject_foreign_values_and_recover_after_
         }
     }
 }
+
+#[test]
+fn runtime_abi_owned_dynamic_properties_preserve_keys_values_and_gc() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let owner = nominal_value(&mut store, runtime, "native-object-new", &[]);
+    let other = nominal_value(&mut store, runtime, "native-object-new", &[]);
+    let spellings = ["x", "object", "array", "constructor", "__proto__", "", "😀"];
+    let mut keys = vec![];
+    for (i, spelling) in spellings.into_iter().enumerate() {
+        let units = spelling.encode_utf16().collect::<Vec<_>>();
+        let key = nominal_value(&mut store, runtime, "string-new", &[Val::I32(units.len() as i32)]);
+        for (j, unit) in units.into_iter().enumerate() {
+            runtime.get_func(&mut store, "string-set-unit").unwrap().call(&mut store, &[key.clone(), Val::I32(j as i32), Val::I32(unit as i32)], &mut [Val::I32(0)]).unwrap();
+        }
+        let value = nominal_value(&mut store, runtime, "number-box", &[Val::F64((i as f64).to_bits())]);
+        nominal_value(&mut store, runtime, "native-object-own-set", &[owner.clone(), key.clone(), value]);
+        keys.push(key);
+    }
+    store.gc(None).unwrap();
+    for (i, key) in keys.iter().enumerate() {
+        let value = nominal_value(&mut store, runtime, "native-object-own-get", &[owner.clone(), key.clone()]);
+        let object = value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+        assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64(), i as f64);
+        let missing = nominal_value(&mut store, runtime, "native-object-own-get", &[other.clone(), key.clone()]);
+        assert_eq!(missing.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 6);
+    }
+    let replacement = nominal_value(&mut store, runtime, "number-box", &[Val::F64(77.0f64.to_bits())]);
+    nominal_value(&mut store, runtime, "native-object-own-set", &[owner.clone(), keys[0].clone(), replacement]);
+    store.gc(None).unwrap();
+    let value = nominal_value(&mut store, runtime, "native-object-own-get", &[owner.clone(), keys[0].clone()]);
+    let object = value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+    assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64(), 77.0);
+    for args in [[Val::null_any_ref(), keys[0].clone()], [owner, Val::null_any_ref()]] {
+        let error = runtime.get_func(&mut store, "native-object-own-get").unwrap().call(&mut store, &args, &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        assert!(store.take_pending_exception().is_some());
+    }
+}
+
+#[test]
+fn runtime_abi_owned_dynamic_properties_reject_corrupt_storage_and_null_values() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let owner = nominal_value(&mut store, runtime, "native-object-new", &[]);
+    let key = nominal_value(&mut store, runtime, "string-new", &[Val::I32(1)]);
+    runtime.get_func(&mut store, "string-set-unit").unwrap().call(&mut store, &[key.clone(), Val::I32(0), Val::I32(0xd800)], &mut [Val::I32(0)]).unwrap();
+    let fields = nominal_value(&mut store, runtime, "native-object-fields", &[owner.clone()]);
+    let array = fields.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    let original = array.get(&mut store, 0).unwrap();
+    for count in [1, 2] {
+        let bad = nominal_value(&mut store, runtime, "args-new", &[Val::I32(count)]);
+        array.set(&mut store, 0, bad).unwrap();
+        store.gc(None).unwrap();
+        let error = runtime.get_func(&mut store, "native-object-own-get").unwrap().call(&mut store, &[owner.clone(), key.clone()], &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        assert!(store.take_pending_exception().is_some());
+    }
+    let bad = nominal_value(&mut store, runtime, "args-new", &[Val::I32(2)]);
+    let bad_array = bad.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    bad_array.set(&mut store, 0, key.clone()).unwrap();
+    bad_array.set(&mut store, 1, Val::null_any_ref()).unwrap();
+    array.set(&mut store, 0, bad).unwrap();
+    let error = runtime.get_func(&mut store, "native-object-own-get").unwrap().call(&mut store, &[owner.clone(), key.clone()], &mut [Val::null_any_ref()]).unwrap_err();
+    assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+    assert!(!error.is::<wasmtime::Trap>());
+    assert!(store.take_pending_exception().is_some());
+    array.set(&mut store, 0, original).unwrap();
+    let error = runtime.get_func(&mut store, "native-object-own-set").unwrap().call(&mut store,
+        &[owner.clone(), key.clone(), Val::null_any_ref()], &mut [Val::null_any_ref()]).unwrap_err();
+    assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+    assert!(!error.is::<wasmtime::Trap>());
+    assert!(store.take_pending_exception().is_some());
+    let value = nominal_value(&mut store, runtime, "number-box", &[Val::F64(7.0f64.to_bits())]);
+    nominal_value(&mut store, runtime, "native-object-own-set", &[owner.clone(), key.clone(), value]);
+    store.gc(None).unwrap();
+    let value = nominal_value(&mut store, runtime, "native-object-own-get", &[owner, key]);
+    let object = value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+    assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64(), 7.0);
+}
