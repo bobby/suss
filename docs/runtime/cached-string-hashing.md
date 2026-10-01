@@ -12,8 +12,10 @@ first-class/captured/live binding behavior and evaluated variadic argument handl
 The two cache globals retain upstream source. Fixed defn patches preserve the
 add/hash algorithms, including live hash-string* lookup, write-before-counter order,
 threshold greater than1024, object replacement/reset before nil handling, and the
-number? hit test. The gobject/set host operation is replaced by the original checked
-property adapter. The adapted hash-string retains unchecked-get; bounded lowering
+number? hit test. The strict Closure gobject/set operation uses a separate
+checked strict property adapter. Getter-only and readonly writes throw before incrementing
+the cache counter; unchecked-set retains non-strict ignored-write behavior.
+The adapted hash-string retains unchecked-get; bounded lowering
 of unchecked-get/set evaluates each operand once in source order. This is not
 compiled macro bootstrap acceptance.
 
@@ -27,18 +29,22 @@ String and Array path for other owners.
 
 ## Executing evidence
 
-All64 original certified source observations match fresh pinned Node observations
+All70 certified source observations match fresh pinned Node observations
 and independently decoded native validated Wasm after forced GC. The original48
 were preserved and16 object/key/prototype probes were added before implementation.
-They include UTF-16/lone-surrogate and prototype-named keys, inherited function
+Six independent review probes additionally cover inherited getter effects,
+inherited setters, throwing writes, getter-only cache failures and non-strict
+bracket writes, plus strict first-class factory pair assignment after a prototype
+pair. The original corpus includes UTF-16/lone-surrogate and
+prototype-named keys, inherited function
 values, __proto__ repeated misses, own/inherited data, null prototypes, cycles,
 scalar property keys, effects, cache reset boundaries, false/zero/NaN caches,
 throwing misses, cached-hit suppression and live hasher captures.
 
-Two additional source guards establish aliases, first-class factories/arrays,
+Three additional source guards establish aliases, first-class factories/arrays,
 member invocation, own accessor reflection, mutable properties, live dependencies,
 lexical macro shadowing, compile-atomic property arity errors, runtime core arities
-and recovery. Original private adapter tests pass2; the ABI suite passes40 with
+and recovery. Original private adapter tests pass2; the ABI suite passes41 with
 malformed storage/descriptor/buffer, copied callback, prototype and GC coverage.
 Python76 and strict inventory/reviews/import checks pass. Full workspace results,
 independent review and exact final-head CI must be recorded before PR readiness.

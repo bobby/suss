@@ -126,7 +126,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         I32Const(1),
         I32Add,
         ArrayGet(ARGS),
-        Call(b.names["native-object-property-set"]),
+        Call(b.names["native-object-property-set-strict"]),
         Drop,
         LocalGet(5),
         I32Const(2),

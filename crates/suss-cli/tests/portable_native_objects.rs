@@ -36,6 +36,7 @@ fn private_object_errors_are_atomic_or_runtime_and_recover() {
     for source in [
         "(do (def unpublished_object 1) (suss.bootstrap/object-factory 7))",
         "(do (def unpublished_object 1) (suss.bootstrap/object-get nil))",
+        "(do (def unpublished_object 1) (suss.bootstrap/object-set-strict nil))",
         "(do (def unpublished_object 1) (suss.bootstrap/object-set nil \"x\"))",
     ] {
         let error = session.eval(source).unwrap_err();

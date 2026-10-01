@@ -268,6 +268,7 @@ pub enum Nominal {
     NativeObjectFactory,
     NativeObjectGet,
     NativeObjectSet,
+    NativeObjectStrictSet,
     ObjectSet,
     ObjectInvoke,
     Key(usize),
@@ -293,7 +294,7 @@ impl Nominal {
                 Self::Array => true,
                 Self::NativeObjectFactory => count == 0,
                 Self::NativeObjectGet => count == 2,
-                Self::NativeObjectSet => count == 3,
+                Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
                 Self::NamedGet => count == 2 && arguments[1] == Type::String,
                 Self::NamedSet | Self::ObjectSet => count == 3 && arguments[1] == Type::String,
                 Self::ObjectInvoke => count >= 2,
@@ -982,6 +983,7 @@ impl Analyzer {
                 "object-factory" => Some(Nominal::NativeObjectFactory),
                 "object-get" => Some(Nominal::NativeObjectGet),
                 "object-set" => Some(Nominal::NativeObjectSet),
+                "object-set-strict" => Some(Nominal::NativeObjectStrictSet),
                 _ => None,
             };
             if let Some(operation) = operation {

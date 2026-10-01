@@ -3586,3 +3586,30 @@ fn runtime_abi_native_factory_guards_foreign_buffers_and_recovers_after_gc() {
     let value = nominal_value(&mut store, runtime, "native-object-property-get", &[object, key]);
     assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 0);
 }
+
+#[test]
+fn runtime_abi_strict_owned_store_rejects_readonly_data_before_mutation() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let parent = nominal_value(&mut store, runtime, "native-object-default-new", &[]);
+    let owner = nominal_value(&mut store, runtime, "native-object-default-new", &[]);
+    nominal_value(&mut store, runtime, "native-object-prototype-set", &[owner.clone(), parent.clone()]);
+    let key = native_property_key(&mut store, runtime, &[120]);
+    let seven = nominal_value(&mut store, runtime, "number-box", &[Val::F64(7.0f64.to_bits())]);
+    let nine = nominal_value(&mut store, runtime, "number-box", &[Val::F64(9.0f64.to_bits())]);
+    nominal_value(&mut store, runtime, "native-object-own-define", &[parent.clone(), key.clone(), seven.clone(), Val::I32(0)]);
+    for target in [parent.clone(), owner.clone()] {
+        let error = runtime.get_func(&mut store, "native-object-property-set-strict").unwrap().call(&mut store, &[target.clone(), key.clone(), nine.clone()], &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        assert!(store.take_pending_exception().is_some());
+        store.gc(None).unwrap();
+        let value = nominal_value(&mut store, runtime, "native-object-property-get", &[target, key.clone()]);
+        assert_eq!(value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 0).unwrap().unwrap_f64(), 7.0);
+    }
+    nominal_value(&mut store, runtime, "native-object-own-define", &[parent, key.clone(), seven, Val::I32(1)]);
+    nominal_value(&mut store, runtime, "native-object-property-set-strict", &[owner.clone(), key.clone(), nine]);
+    let value = nominal_value(&mut store, runtime, "native-object-property-get", &[owner, key]);
+    assert_eq!(value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 0).unwrap().unwrap_f64(), 9.0);
+}

@@ -105,6 +105,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
                         Nominal::NativeObjectGet => { names.insert("native-object-property-get"); }
                         Nominal::NativeObjectSet => { names.insert("native-object-property-set"); }
+                        Nominal::NativeObjectStrictSet => { names.insert("native-object-property-set-strict"); }
                         Nominal::ObjectSet => {
                             names.insert("object-method-set");
                         }
@@ -250,7 +251,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
-            "named-property-set" | "object-method-set" | "object-method-invoke" | "native-object-property-set" => {
+            "named-property-set" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
             "string-new" => (vec![ValType::I32], vec![VALUE]),
@@ -832,6 +833,7 @@ fn emit_function(
                         | Nominal::NativeObjectFactory
                         | Nominal::NativeObjectGet
                         | Nominal::NativeObjectSet
+                        | Nominal::NativeObjectStrictSet
                         | Nominal::ObjectSet
                         | Nominal::NamedGet
                         | Nominal::NamedSet
@@ -847,6 +849,7 @@ fn emit_function(
                                 Nominal::NativeObjectFactory => "native-object-factory-function",
                                 Nominal::NativeObjectGet => "native-object-property-get",
                                 Nominal::NativeObjectSet => "native-object-property-set",
+                                Nominal::NativeObjectStrictSet => "native-object-property-set-strict",
                                 Nominal::ObjectSet => "object-method-set",
                                 Nominal::NamedGet => "named-property-get",
                                 Nominal::NamedSet => "named-property-set",

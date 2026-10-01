@@ -1431,7 +1431,7 @@
   {:source-sha256 "ac50f5ef05cbceeec7227d1284b2f9f7ddbce55b06cd374f9dd8a43458cff19e"
    :visibility :public
    :arities {:fixed [0] :variadic-min 0}
-   :dependencies ["owned GC Object prototype and descriptor-aware properties" "first-class variadic factory callback"]
+   :dependencies ["owned GC Object prototype and descriptor-aware properties" "strict Closure gobject/create first-class variadic factory callback"]
    :classification :adapted
    :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
    :status :in-progress
@@ -1467,7 +1467,7 @@
   {:source-sha256 "7f3a6b72d88216e5d5d58b62fcb5805bb7bb79cf8879c0341d36238bfe93ce3e"
    :visibility :public
    :arities {:fixed [1] :variadic-min nil}
-   :dependencies ["runtime:hash-string*:1026" "runtime:string-hash-cache:1022" "runtime:string-hash-cache-count:1023" "runtime:inc:1505" "checked scalar object property set"]
+   :dependencies ["runtime:hash-string*:1026" "runtime:string-hash-cache:1022" "runtime:string-hash-cache-count:1023" "runtime:inc:1505" "strict Closure gobject/set over checked scalar owned properties"]
    :classification :adapted
    :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
    :status :in-progress
@@ -1503,7 +1503,7 @@
   {:source-sha256 "b7ab595af1fb952a1ca2677c6badf10f34c25c0401025f43364b3f101ff94b91"
    :visibility :public
    :arities {:fixed [3] :variadic-min nil}
-   :dependencies ["checked scalar object property set"]
+   :dependencies ["non-strict checked scalar object property set"]
    :classification :adapted
    :rationale "Retained pinned cached hashing forms preserve live dependencies, threshold/reset order and counter effects. Original owned GC property descriptors and callable prototypes replace host storage; bounded macro lowering preserves operands once in source order. Runtime js-obj factory is first-class and variadic; the separate literal js-obj macro, arbitrary foreign objects/ToPrimitive, boxing and full public hashing remain unfinished. Fresh oracle evidence is required separately from provenance."
    :status :in-progress

@@ -6609,3 +6609,68 @@ claim yet. Next inspect terminal full result, open the coherent cached hashing P
 with Refs9/11/14/16/19, dispatch independent review/fixes and require exact reviewed-
 head CI. Do not merge. Public hashing/equality, actual persistent sequences/maps,
 compiled macros, complete host-property operations and M2–M9 remain unfinished.
+
+
+## PR100 independent review — 2026-10-01
+
+Root baseline29258 finished successfully before review in
+/private/tmp/suss-cache-full-baseline.log. Draft PR100 was opened from3fbabd1,
+base reviewed PR99/0fe9889; independent reviewer works in
+/private/tmp/suss-review-pr100. Root released the exclusive heavy test slot after
+29258 became terminal; reviewer runs no parallel Cargo/JVM/Node processes.
+
+Review found two significant strictness defects in the retained Closure operations.
+The pinned Closure object module is strict: gobject/set and gobject/create pair
+assignment throw for getter-only or non-writable resolved properties. The candidate
+used the same non-strict store as unchecked-set, silently ignoring blocked writes;
+cached hashing then incorrectly incremented the counter. Fresh primary68 attempt
+39032 ended1 on an uncaught getter-only write while the initial native probe had
+returned2. After splitting the store, first focused83360 ended101 because that
+new provisional native expectation still said2; actual0 correctly preserved the
+counter. Corrected this new expectation only, then fresh48006 certified68 exact
+pin observations/native4. Fresh59337 certified69 exact pin/native4, including
+non-strict unchecked-set ignoring a getter-only write. Original64 remain unchanged.
+
+Added strict private object-set-strict/typed runtime import and descriptor-aware
+strict store. Getter-only and readonly writes raise language exceptions before
+mutation; arbitrary setters retain actual receiver-aware invocation. Retained
+add-to-string-hash-cache uses the strict store; counter/reset order and live
+bindings stay unchanged. Runtime factory pair assignments also use strict store,
+matching gobject/create. Source patch rationales, hashes/manifest, manual dependency
+review and stale storage documentation were corrected. Shared GC layout, ABI
+version and core-cell count stay unchanged; public defineProperty remains open.
+
+Focused ABI11481 passed1: own/inherited readonly data throws typed exceptions,
+not traps, preserves data and recovers through GC; writable inherited data creates
+an own property. Pre-factory-fix full93776 passed, log
+/private/tmp/suss-pr100-review-full-baseline.log. An additional first-class factory
+probe avoids the separate unfinished literal macro. Fresh21556 certified70 exact
+pin observations then ended101 because native returned an Object instead of throwing
+and returning caught Number41; strict decoder rejected the wrong layout. After
+factory fix, fresh92625 passed all70 exact pin observations and native4, log
+/private/tmp/suss-pr100-review-primary70-final.log. New cases also certify inherited
+getter effects, inherited setter without own-data creation, throwing cache writes,
+getter-only counter atomicity and non-strict bracket behavior. All original64
+sources/expectations were checked against3fbabd1 and remain unchanged.
+
+Commands use shared target /Users/bobby/code/github/bobby/suss/target and build
+workers2: sh scripts/test-string-cache-oracle.sh; cargo test -p suss-compile
+--test runtime_abi runtime_abi_strict_owned_store --locked -- --test-threads=2;
+cargo test --workspace --locked -- --test-threads=2. Final independent Python76,
+inventory1065/reviews139+926/import54 pass, log
+/private/tmp/suss-pr100-review-provenance-final.log. No skipped success substitution.
+Final workspace79254 is live at launch, log
+/private/tmp/suss-pr100-review-full-final.log; terminal result will be recorded below.
+Exact reviewed-head CI remains root's next readiness gate after reviewer push.
+No merges or issue/milestone closures. Public hashing/equality, persistent sequences,
+collections, literal js-obj macro, full property domains and M2–M9 remain open.
+
+Final workspace79254 ended0: all required workspace suites and doc tests pass,
+including source cache4 (70 corpus observations), private source2 and ABI41.
+Log /private/tmp/suss-pr100-review-full-final.log. All reviewer local processes
+are terminal and the exclusive heavy slot is released to root. Independent review
+has no remaining significant findings in this bounded slice after the two strict
+Closure fixes. Reviewer pushes this reviewed source/evidence head to PR100; root
+must require exact reviewed-head CI before readiness. Next unblocked implementation
+is persistent sequence/list foundations, while literal macro/property domains and
+full hashing/equality remain tracked unfinished. No merge or milestone completion.

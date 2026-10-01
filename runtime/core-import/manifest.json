@@ -9,7 +9,7 @@
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
   "recipe-sha256": "bb3b586fab9732d7ff0b75588b6607747900d6ba4738450657c36bdf9aadf130",
-  "reviews-sha256": "c04c6f536c163a51275557844b239a449da546425b4ae53849e5a5964c68147c",
+  "reviews-sha256": "dce7afcdb0710f8e4f5c10052ba57dd191b68ead4a95db75804ae2de777f903e",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -1403,14 +1403,14 @@
       "extracted": "extracted/0045.cljs",
       "extracted-sha256": "4dea21ea9fca69edf5e7139a910fa1af62459450fbdeeeb7487c0221c3e9d655",
       "patch": "docs/compatibility/patches/js-object-factory.json",
-      "patch-sha256": "39e426d6ac9ddd7be01ef93a330470d0357ac42a3e0eff3a80764acd39042bab",
+      "patch-sha256": "076d48ae4589d7a5fdd982bb3c823377e2815b55462cbbb2a80f0da81eb4e530",
       "adapted-form-sha256": "f2ff6152282039302fe8794ce3adac52ce9f1d1afb45d42816f0381367af1957",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
       "dependencies": [
         "owned GC Object prototype and descriptor-aware properties",
-        "first-class variadic factory callback"
+        "strict Closure gobject/create first-class variadic factory callback"
       ],
       "semantic-tests": [
         "crates/suss-cli/tests/portable_string_cache.rs",
@@ -1495,8 +1495,8 @@
       "extracted": "extracted/0048.cljs",
       "extracted-sha256": "926a25f6b43a15c64250d66f829b021b7f1baebbaa358cf9c8e1d4db8d5f82cf",
       "patch": "docs/compatibility/patches/add-to-string-hash-cache.json",
-      "patch-sha256": "6af77b343d748ac4bcd6dc82178587be29430d74bde6102a64b359530c86cff8",
-      "adapted-form-sha256": "03c7485f16af252549469a09db9a0f8740ba40c0b6dd38be8dd6d12403ffd564",
+      "patch-sha256": "54088865f50347fa9bbb525e7916a85b6cd2cfb31be489d6042355033e96406f",
+      "adapted-form-sha256": "5a0ef08840193ce1f66929df69a7c82d2d1f7384f5e6182d93f11eb1686755fe",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -1505,7 +1505,7 @@
         "runtime:string-hash-cache:1022",
         "runtime:string-hash-cache-count:1023",
         "runtime:inc:1505",
-        "checked scalar object property set"
+        "strict Closure gobject/set over checked scalar owned properties"
       ],
       "semantic-tests": [
         "crates/suss-cli/tests/portable_string_cache.rs",
@@ -1603,6 +1603,6 @@
     "extracted/0047.cljs": "2087e470510cb5de463fca4f29e409243d36b6d834b24df41eae8dfc3108abc4",
     "extracted/0048.cljs": "926a25f6b43a15c64250d66f829b021b7f1baebbaa358cf9c8e1d4db8d5f82cf",
     "extracted/0049.cljs": "64305fb66936fad35809478202121a70c573ecfedb1d10a78f1f90adf8265b1e",
-    "suss/core.sus": "1de9fa82ec7ea389b4f680870e92a7a8b27727f03f787eaa3d38aa6b26584921"
+    "suss/core.sus": "1f938bd9a66f1cb26447479f339514ae80b53f68caefef3479f81ec6e1e6c9fb"
   }
 }

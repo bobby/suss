@@ -1,8 +1,10 @@
 # Owned native objects and descriptors
 
 This original runtime code is a prerequisite for adapted string hash caching.
-The source cache corpus still has 64 unresolved native failures. Executing ABI
-tests below do not establish source `js-obj`, public properties or cache acceptance.
+The retained cache forms now pass all 70 certified pinned/native observations.
+The ABI tests establish the owned storage and bounded property domain; they do
+not establish complete public Object or foreign host interoperability. See
+[cached string hashing](cached-string-hashing.md) for source evidence.
 
 ## Owned storage
 
@@ -76,14 +78,12 @@ create enumerable/configurable accessors. Lookup follows the actual prototype
 chain and stops at a nearer data descriptor without invoking getters.
 
 Primitive boxing, other
-object kinds, Symbol.toStringTag, public descriptor definition/deletion and source
-factory/property adapters remain unfinished. No placeholder functions stand in
-for those operations. Complete these boundaries before claiming public Object or
-cached hashing compatibility.
+object kinds, Symbol.toStringTag, public descriptor definition/deletion remain unfinished. No placeholder functions stand in
+for those operations. Complete these boundaries before claiming full public Object compatibility.
 
 ## Executing evidence
 
-The complete runtime ABI suite passes 40 tests. Owned-object tests validate and
+The complete runtime ABI suite passes 41 tests. Owned-object tests validate and
 instantiate actual Wasm, covering storage growth/replacement, separate owners,
 UTF-16, malformed tables/descriptors, typed recovery, inherited values, Undefined
 shadowing, atomic cycle rejection, a 130-object chain and forced GC. Method tests
@@ -92,13 +92,13 @@ presence, descriptor attributes, readonly writes, copied getter/setter receiver
 behavior, root reflection and live toString lookup. The former failing own-accessor
 reflection regression now passes unchanged. Independent development Node assertions
 confirm bounded descriptor/accessor behavior; they are not a fresh pinned
-ClojureScript corpus comparison. No full workspace/review/final CI claim on this
-unpublished preparation branch.
+ClojureScript corpus comparison. Full workspace, independent review and final-head CI evidence is recorded
+separately in the handoff.
 
-Next wire source factory/property
-adapters and retain cache forms with EPL/source provenance. Preserve all 64
-certified source observations, including the original 48; require fresh native
-agreement, independent PR review, full workspace tests and exact final-head CI.
+Source factory/property adapters and licensed cache forms are retained in this
+slice. All 64 certified source observations, including the original 48, remain
+unchanged. Further public property domains and compiled macro acceptance remain
+separate work.
 
 Specification references: [Object prototype operations](https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-properties-of-the-object-prototype-object),
 [legacy prototype accessor](https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-object.prototype.__proto__).
@@ -114,7 +114,9 @@ a zero-argument-only public factory.
 
 The original factory callback accepts evaluated variadic arguments, then rejects
 odd pairs with a language error. It creates a default owned object and assigns
-pairs through the descriptor-aware scalar property adapter. A single source-native
+pairs through the strict descriptor-aware scalar property adapter, matching
+Closure gobject/create. A prototype pair exposing a getter-only/readonly property
+causes a later blocked pair to throw. A single source-native
 array is flattened recursively; iterative cycle detection rejects self and mutual
 array cycles without stack recursion or depth limits. Checked array storage remains
 an interoperability argument source, not a persistent collection substitution.
@@ -128,6 +130,17 @@ self/mutual cycles, capture/rebinding and forced GC recovery. A separate ABI gua
 tests physically foreign/null flatten buffers and recovery after a forged key.
 No pinned source oracle match is claimed for these original private adapters.
 
-Next retain the licensed public js-obj/cache forms and compile their bracket
-property macro dependencies. Preserve the64 certified source observations and
-require fresh primary/native agreement before opening the coherent PR slice.
+The licensed runtime js-obj/cache forms and bounded bracket-property macro
+dependencies are now retained; the separate literal js-obj macro remains open.
+Fresh primary/native comparison covers all 64 original certified observations.
+
+## Strict Closure stores
+
+`native-object-property-set-strict` shares descriptor resolution and receiver-aware
+setter invocation with the bracket store. It throws a language exception when
+resolved data is non-writable or an accessor has no setter. The retained Closure
+`gobject/set` dependency uses this strict operation, preserving write-before-counter
+ordering in `add-to-string-hash-cache`. `unchecked-set` and ordinary bounded member
+assignment continue using the non-strict operation and ignore those blocked writes.
+Private `suss.bootstrap/object-set-strict` has three checked operands. No shared
+GC layout or public defineProperty API was added.

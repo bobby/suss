@@ -513,6 +513,54 @@
         "tag": "f64",
         "bits": "405ec00000000000"
       }
+    },
+    {
+      "id": "review-inherited-getter-effects",
+      "source": "(do (def review_effects 0) (let [p (js-obj) o (js-obj)] (.__defineGetter__ p \"answer\" (fn [] (set! review_effects (+ review_effects 1)) 23)) (unchecked-set o \"__proto__\" p) (+ (unchecked-get o \"answer\") (unchecked-get o \"answer\") review_effects)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4048000000000000"
+      }
+    },
+    {
+      "id": "review-inherited-setter-no-own-data",
+      "source": "(do (def review_effects 0) (let [p (js-obj) o (js-obj)] (.__defineSetter__ p \"answer\" (fn [v] (set! review_effects v))) (unchecked-set o \"__proto__\" p) (unchecked-set o \"answer\" 31) (+ review_effects (if (.hasOwnProperty o \"answer\") 100 0))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "review-throwing-cache-setter-counter",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 17 hash-string* (fn [k] 7)] (.__defineSetter__ string-hash-cache \"new\" (fn [v] (throw v))) (try (hash-string \"new\") (catch :default e string-hash-cache-count)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "review-getter-only-cache-throws-before-count",
+      "source": "(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0 hash-string* (fn [k] 19)] (.__defineGetter__ string-hash-cache \"readonly\" (fn [] false)) (try (hash-string \"readonly\") (catch :default e string-hash-cache-count)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-getter-only-unchecked-set-ignores-write",
+      "source": "(let [o (js-obj)] (.__defineGetter__ o \"readonly\" (fn [] 29)) (unchecked-set o \"readonly\" 7) (unchecked-get o \"readonly\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403d000000000000"
+      }
+    },
+    {
+      "id": "review-runtime-factory-strict-prototype-write",
+      "source": "(let [f js-obj p (js-obj)] (.__defineGetter__ p \"readonly\" (fn [] 29)) (try (f \"__proto__\" p \"readonly\" 7) (catch :default e 41)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4044800000000000"
+      }
     }
   ]
 }

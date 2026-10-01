@@ -8,7 +8,7 @@ fn string_cache_match_independently_decoded_primary_observations_after_gc() {
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 64);
+    assert_eq!(cases.len(), 70);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -208,4 +208,20 @@ fn string_cache_errors_and_macro_arity_preserve_effects_and_recover() {
         );
     }
     assert_eq!(cache_number(&mut session, "(hash-string \"AB\")"), 2081.0);
+}
+
+#[test]
+fn reviewed_cache_accessors_preserve_live_effects_and_failed_write_order() {
+    use suss_cli::portable_session::SessionError;
+    let mut session = Session::new().unwrap();
+    session.eval(include_str!("../../../runtime/core-import/suss/core.sus")).unwrap();
+    assert_eq!(cache_number(&mut session, r#"(do (def review_effects 0) (let [p (js-obj) o (js-obj)] (.__defineGetter__ p "answer" (fn [] (set! review_effects (+ review_effects 1)) 23)) (unchecked-set o "__proto__" p) (+ (unchecked-get o "answer") (unchecked-get o "answer") review_effects)))"#), 48.0);
+    assert_eq!(cache_number(&mut session, r#"(let [p (js-obj) o (js-obj)] (.__defineSetter__ p "answer" (fn [v] (set! review_effects v))) (unchecked-set o "__proto__" p) (unchecked-set o "answer" 31) (+ review_effects (if (.hasOwnProperty o "answer") 100 0)))"#), 31.0);
+    session.eval(r#"(def review_cache (js-obj)) (.__defineSetter__ review_cache "new" (fn [v] (throw v)))"#).unwrap();
+    let error = session.eval(r#"(with-redefs [string-hash-cache review_cache string-hash-cache-count 17 hash-string* (fn [k] 7)] (hash-string "new"))"#).unwrap_err();
+    assert!(matches!(error, SessionError::Language(_)), "{error:?}");
+    assert_eq!(cache_number(&mut session, r#"(with-redefs [string-hash-cache review_cache string-hash-cache-count 17 hash-string* (fn [k] 7)] (try (hash-string "new") (catch :default e string-hash-cache-count)))"#), 17.0);
+    assert_eq!(cache_number(&mut session, r#"(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0 hash-string* (fn [k] 19)] (.__defineGetter__ string-hash-cache "readonly" (fn [] false)) (try (hash-string "readonly") (catch :default e string-hash-cache-count)))"#), 0.0);
+    assert_eq!(cache_number(&mut session, r#"(let [o (js-obj)] (.__defineGetter__ o "readonly" (fn [] 29)) (unchecked-set o "readonly" 7) (unchecked-get o "readonly"))"#), 29.0);
+    assert_eq!(cache_number(&mut session, "(hash-string \"A\")"), 65.0);
 }

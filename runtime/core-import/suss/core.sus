@@ -255,7 +255,7 @@
 
 (def add-to-string-hash-cache (fn [k]
   (let [h (hash-string* k)]
-    (suss.bootstrap/object-set string-hash-cache k h)
+    (suss.bootstrap/object-set-strict string-hash-cache k h)
     (set! string-hash-cache-count (inc string-hash-cache-count))
     h)))
 
