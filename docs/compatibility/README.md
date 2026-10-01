@@ -289,3 +289,12 @@ names, extra instance fields and complete source types/core remain unfinished.
 Munged instance schemas and known unfinished callable/inherited attributes now
 raise explicit errors; full table validation rejects malformed trailing keys;
 see [named properties](../runtime/named-properties.md).
+
+
+Type-method scope now has14 fresh pinned observations and located compile-atomic
+recovery evidence. deftype ignores enclosing lexical values while parameters and
+physical fields remain available; runtime extend-type and ordinary closures keep
+captures. The existing partial deftype review is extended without changing
+80/985 statuses or30 imported artifacts; see
+[type method scopes](../runtime/type-method-scopes.md). Object methods and complete
+compiled macro/core acceptance remain unfinished.

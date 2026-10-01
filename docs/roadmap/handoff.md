@@ -5348,3 +5348,79 @@ Prototype/Object methods, host attributes, munged names and complete collections
 remain explicit unfinished scope. No issue/milestone closure or merge. Next final
 review-head CI, then retained Object methods/canonical empty lists and actual
 List/EmptyList/Cons/IndexedSeq, hashing/reduction/rest/apply toward M2–M9.
+
+
+## Type-method scope correction — 2026-09-30
+
+Previous goal turn made authoritative progress: PR90 reviewed d155059,64 exact
+primary/native4 and full baseline passed. Root inspected exact-headCI36801132345
+success (/private/tmp/suss-pr90-final-ci.log) and marked PR90 ready without merging.
+PR85–90 remain stacked/open at the last checks. Full M2–M9 goal stays active.
+Separate Object preparation55f5704 in /private/tmp/suss-core-object-methods is
+local,24 fresh primary matches/native unresolved Object; no acceptance claim.
+
+The Object source audit exposed an existing type-method scope discrepancy.
+Isolated portable/core-type-method-scope starts from reviewedPR90. Fresh47266
+terminal101: all8 primary expectations match, then actual native35 versus55 for
+global11/local7. Corrected original HIR analysis to remove enclosing locals and
+field aliases for deftype methods only, restoring them after analysis. Runtime
+extend-type retains enclosing captures; parameters/own fields/inner functions
+keep their proper scope. Pinned source is analyzer.cljc parse-type3614–3649 and
+core.cljc deftype1778; no source form copied or ABI/runtime layout changed.
+
+Fresh11681 terminal0 for original8. Added two restoration probes and a located
+compile-atomic/unpublished constructor/arrow/recovery regression. Fresh94267
+terminal0:10 exact primary matches and native2 after actual validation/GC.
+Logs /private/tmp/suss-type-method-scope-{primary-native-red,primary-fix,final-primary}.log.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-type-method-scope-oracle.sh`.
+One existing review extended,80 partial/985 unassessed and30 artifacts unchanged.
+Next guarded tests/provenance/full baseline, independent PR review/significant
+fixes, exact final-head CI. No issue/milestone closure or merge. Then actual retained
+Object methods/canonical empty list/concrete sequence types/hash/reduction/rest/apply.
+
+
+Root guarded78181 terminal0: interfaces5/session33/mutablefields2/properties4/
+nativeprotocols11/scopes2. Compiler14454 terminal0: nominal5/pipeline17. Provenance
+39598 terminal0: Python71/inventory1065/reviews80+985/artifacts30/WIT15/6/numeric/
+offline10milestones39issues. Required full baseline73028 terminal0: all enabled
+workspace/doc tests pass, with diagnostic9 differential passes/7 exact failures
+and existing legacy/manual ignores still explicit. Log
+/private/tmp/suss-type-method-scope-root-baseline.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+All root local graphs terminal. Next independent review/fixes and final-head CI;
+then restore the retained Object-method implementation path. No issue closure/merge.
+
+
+## Independent review of PR #91 — 2026-10-01
+
+Review worktree /private/tmp/suss-review-pr91 starts at candidate 061412d,
+with parent reviewed PR #90 d155059. The production change follows pinned
+analyzer.cljc parse-type: enclosing locals are replaced by the new type fields;
+restoring locals/fields before propagating a method-analysis error preserves the
+surrounding environment. Runtime extend-type remains on its normal capture path.
+No significant production finding remains.
+
+Four independent source probes cover namespace-qualified global access against
+an own field, self type and arrow constructor references despite enclosing local
+shadows, and sibling-method parameter isolation. Original ten cases and their
+expectations are unchanged. Fresh oracle/native session 8599 ended 0: all fourteen
+pinned observations match independently decoded validated Wasm after forced GC,
+and both native tests pass. Log /private/tmp/suss-pr91-review-primary.log.
+The pin emits an undeclared generated-arrow warning for the self-reference probe;
+the warning remains visible and its executed value matches. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-type-method-scope-oracle.sh`.
+
+Python 71 tests, inventory 1,065, reviews 80 partial/985 unassessed, imported
+artifacts 30, official WIT 15 files/6 packages, numeric manifest and offline
+roadmap 10 milestones/39 issues pass. The manifest changes only the review hash.
+Source forms, shared runtime ABI and production code are unchanged by review.
+
+Required full workspace baseline session 99149 ended 0: all enabled workspace
+and doc tests pass. Existing manual/legacy ignores and the diagnostic differential
+baseline of nine passing/seven exact failing observations remain explicit.
+Log /private/tmp/suss-pr91-review-full-baseline.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+All review Cargo/JVM/Node graphs are terminal; shared test slot is released.
+Next require exact reviewed-head CI before readiness, without merging. Then
+continue retained Object methods and real persistent sequence/list foundations.
+No issue/milestone closure or full-core acceptance claim.
