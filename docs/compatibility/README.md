@@ -354,7 +354,7 @@ independent PR review and final-head CI remain required. No milestone closure.
 The source-backed [sequence/list foundation](../runtime/sequences.md) selects68
 forms/72 licensed artifacts and records157 partial reviews/908 unassessed. All
 methods of List/EmptyList/Cons/IndexedSeq are retained; explicitly pending helpers
-remain uninitialized. Fresh69 primary/native observations preserve the original51,
+remain uninitialized. Fresh75 primary/native observations preserve all69 pre-review cases (including the original51),
 including canonical empty literals, real persistent rest, shared tails, live array
 views and UTF-16 units. No full method/equality/hash/reduction/iterator/core or
 milestone acceptance claim. Independent review/full/final-head CI remain required.

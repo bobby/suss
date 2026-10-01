@@ -103,3 +103,24 @@ reduction/reduced/early termination, printing/index search, iterators/reversal,
 source general apply and metadata/private/bootstrap loading. Lazy/chunked effects,
 vector/HAMT/sorted collections and transients remain acceptance work. No issue or
 milestone closure follows from this foundation.
+
+## Independent PR101 review
+
+Independent review preserved all69 certified cases and added six fresh primary
+observations, yielding75 exact pinned/native matches (session59125,
+/private/tmp/suss-pr101-review-oracle75.log). These cover fixed zero arity before
+zero-minimum variadic dispatch, multiple rest arguments, recur with a List rest,
+fresh independently owned rest arrays, retained array growth, and captured named
+self calls. Five native tests pass, including invalid live IndexedSeq bindings:
+nil/boolean/number/function produce typed language errors for nonempty rest after
+operand effects; empty rest skips class lookup, and restoring the class plus GC
+recovers normal execution. Python80 and both licensed setup statements pass. Independent full workspace
+70659 ended0 with all required suites/doc tests passing
+(/private/tmp/suss-pr101-review-full.log).
+
+The review checked complete retained methods, explicit pending dependencies,
+source/patch/loader provenance, canonical empty literals, descriptor-backed Error,
+HIR/IR shape guards, dispatch/captures/recur, evaluated argument order and GC.
+No significant production defect was found in this bounded slice. General apply,
+printing/equality/hashing/reduction/iteration and the remaining collection gates
+stay unfinished. Exact final reviewed-head CI still gates PR readiness.

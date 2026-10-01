@@ -41,7 +41,7 @@ fn sequence_foundations_match_independently_encoded_primary_observations() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/sequence-cases.json")).unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 69);
+    assert_eq!(cases.len(), 75);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -234,4 +234,40 @@ fn variadic_rest_values_survive_gc_and_arity_failures_preserve_effects() {
         eval_number(&mut session, "(variadic-floor 1 2 3 4)"),
         2.0f64.to_bits()
     );
+}
+
+#[test]
+fn variadic_live_class_failures_are_typed_and_recover_after_gc() {
+    use suss_cli::portable_session::SessionError;
+    let mut session = Session::new().unwrap();
+    session
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .unwrap();
+    session.enter_namespace("user").unwrap();
+    session.eval("(def saved-class cljs.core/IndexedSeq) (def receiver (fn [& xs] xs)) (def argument-effect 0)").unwrap();
+    for value in ["nil", "false", "7", "(fn [& xs] xs)"] {
+        session
+            .eval(&format!("(set! cljs.core/IndexedSeq {value})"))
+            .unwrap();
+        assert!(eval_bool(&mut session, "(nil? (receiver))"));
+        assert!(
+            matches!(
+                session.eval("(receiver (do (set! argument-effect 17) 9))"),
+                Err(SessionError::Language(_))
+            ),
+            "{value}"
+        );
+        session.collect().unwrap();
+        assert_eq!(
+            eval_number(&mut session, "argument-effect"),
+            17.0f64.to_bits()
+        );
+        session
+            .eval("(set! cljs.core/IndexedSeq saved-class)")
+            .unwrap();
+        assert_eq!(
+            eval_number(&mut session, "(first (receiver 29))"),
+            29.0f64.to_bits()
+        );
+    }
 }

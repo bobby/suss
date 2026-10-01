@@ -6830,3 +6830,42 @@ explicit. No scope-wide compatibility claim. Original51 JSON values checked
 against0f60113 remain identical. All local handles terminal; root may open the
 coherent sequence/rest draft and release the heavy slot to its mandatory independent
 reviewer. Exact final reviewed-head CI still gates readiness. No merges.
+
+
+## Independent PR101 review — 2026-10-01
+
+Reviewed candidate4d5ee493771768b2ac841b9384895f189fce757d independently in
+/private/tmp/suss-review-pr101 against reviewed PR100 base3e5af02. Read accepted
+design/ROADMAP/inventory/handoff and inspected complete source types, every
+adaptation, setup/EPL/provenance, canonical empty lookup, typed Error, and
+fixed/variadic HIR/IR/dispatch/captures/recur. No significant production defect
+identified in this bounded foundation. Wrong arity remains a typed diagnostic per
+accepted design; unchecked JS calls are not a substitute for that contract.
+
+Independent fresh51409 ended0 with all original69 exact pinned/native matches.
+Added six edge observations without changing any original source/expectation;
+fresh59125 ended0 with75 exact primary/native matches and all5 native sequence
+tests. Log /private/tmp/suss-pr101-review-oracle75.log. New probes cover fixed0 vs
+variadic0 dispatch, many arguments, recur with a List rest, separate owned rest
+arrays, array growth and captures/named self calls. Additional native test rebinds
+IndexedSeq to nil/false/number/function: empty rest bypasses the class; nonempty
+rest raises Language error after argument effects; GC plus restoration recovers.
+No trap, silent success, oracle retargeting or ignored failure.
+
+Command: CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target
+CARGO_BUILD_JOBS=2 sh scripts/test-sequence-oracle.sh. Python80 passed,
+/private/tmp/suss-pr101-review-python.log; both licensed setup forms, import72 and
+reviews157 partial/908 unassessed verified using python3 -m unittest discover -s
+scripts -p 'test_*.py', sequence_provenance.py, core_import.py --check and
+cljs_reviews.py. Original69 JSON values verified identical to candidate4d5ee49;
+original corpus text retains its escaping, with additions only.
+
+Independent full workspace session70659 ended0; inspected log through all
+final doc tests, /private/tmp/suss-pr101-review-full.log. All required suites pass;
+existing manual ignored and explicit diagnostic gaps remain unchanged. Command: shared target/build2
+cargo test --workspace --locked -- --test-threads=2. No RUSTFLAGS. Exact final
+reviewed-head CI required after review commit/push; PR101 remains draft, no merges.
+Next implement the explicit pending source helpers for printing/sequential
+hash/equality/reduction/iterators/reversal/general apply, then lazy/chunked/vector/
+HAMT/transient acceptance. Full lossless collection decoder and M2–M9 gates remain
+unfinished; no issue or milestone closure.

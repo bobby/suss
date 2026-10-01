@@ -553,6 +553,54 @@
         "tag": "bool",
         "value": true
       }
+    },
+    {
+      "id": "review-variadic-fixed-zero",
+      "source": "((fn ([] 91) ([& xs] (count xs))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4056c00000000000"
+      }
+    },
+    {
+      "id": "review-variadic-zero-floor-many",
+      "source": "((fn ([] 91) ([& xs] (count xs))) 1 2 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "review-variadic-recur-persistent-list",
+      "source": "((fn [n & xs] (if (zero? n) (first xs) (recur 0 (list 37 38)))) 1 7 8)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4042800000000000"
+      }
+    },
+    {
+      "id": "review-variadic-fresh-owned-rest",
+      "source": "(let [f (fn [& xs] xs) a (f 11 12) b (f 21 22)] (aset (.-arr a) 0 99) (+ (first a) (first b)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405e000000000000"
+      }
+    },
+    {
+      "id": "review-variadic-rest-array-growth",
+      "source": "(let [xs ((fn [& xs] xs) 1 2)] (aset (.-arr xs) 2 17) (+ (count xs) (first (next (next xs)))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4034000000000000"
+      }
+    },
+    {
+      "id": "review-variadic-captured-recur",
+      "source": "(let [factor 3] ((fn step [n & xs] (if (zero? n) (* factor (first xs)) (step (dec n) 17))) 2 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4049800000000000"
+      }
     }
   ]
 }

@@ -124,7 +124,7 @@ not reasons to silently weaken the contract.
 
 
 Sequence/list foundation progress: retained source List/EmptyList/Cons/IndexedSeq,
-canonical empty literals and persistent variadic rest now execute against69 fresh
+canonical empty literals and persistent variadic rest now execute against75 fresh
 primary observations. All original51 are preserved. Imported68/72 artifacts and
 157 partial/908 unassessed reviews remain prerequisites, not M4 acceptance; full
 method dependencies and surrounding release gates remain incomplete. See
