@@ -7749,3 +7749,13 @@ same707b5b6. PR108's preceding required workspace step took24m29s, leaving no
 reliable cleanup margin under the25-minute job timeout. PR110 raises the job
 limit to35 minutes without changing the full command, enabled tests or build
 concurrency; independent review and exact-head CI must validate this change too.
+
+
+Root full16020 terminal0; /private/tmp/suss-case-full.log inspected through final
+reader doc tests. Required workspace --locked/--test-threads=2 shared target/
+build2 baseline passes with new native4/compiler1, existing ABI45 and unchanged
+parent corpora/strict-arity boundary. Existing manual ignores and diagnostic
+known failures remain explicit. All root handles22322/90679/16020/40683/50092
+terminal; mistaken-target retries also terminal101. Release exclusive heavy slot
+to /root/review_pr110 after this evidence push. Independent oracle/full and exact
+reviewed-head CI still gate PR110 readiness; PR108 attempt2 pending. No merges.

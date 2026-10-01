@@ -38,7 +38,8 @@ Fresh63374 ended0:31 value matches/1 boundary/native3. Fresh17662 ended0:33 valu
 matches/1 boundary/native4, /private/tmp/suss-case-primary33-boundary1.log.
 Compiler95117 ended0: validated fragments execute and survive GC in Runtime and
 Macro phases, /private/tmp/suss-case-both-phases.log. This does not run compiled
-upstream macros or complete macro bootstrap. Full/review/final-head CI pending.
+upstream macros or complete macro bootstrap. Root full16020 ended0 through final reader doc tests,
+/private/tmp/suss-case-full.log. Independent review/final-head CI pending.
 
 Commands use shared target/build2/--locked/--test-threads=2 without RUSTFLAGS:
 
