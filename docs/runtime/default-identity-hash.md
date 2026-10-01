@@ -13,13 +13,19 @@ notice. Core extraction now selects97 forms/101 licensed artifacts; review
 statuses remain partial (190 reviewed/875 unassessed). No public hash, collection
 composition, complete metadata or milestone acceptance is claimed.
 
-Twenty-one new source observations are provisional until fresh pinned compiler
-execution and independent native decoding certify them. They cover root-object
-zero, default identity, aliases, mutation, errors, class/protocol owners,
-metadata, direct-method priority and live root lookup. Cargo/JVM/Node validation is deliberately pending
-while the PR107 reviewer owns the shared heavy test slot. Static extraction,
-manifest, setup provenance and review-schema checks pass. This branch must first
-incorporate the final independently reviewed PR107 head.
+Twenty-one observations now match fresh pinned ClojureScript and independent
+native decoding, preserving the original eighteen. The corpus covers root-object
+zero, default identity, mutation, errors, class/protocol owners, metadata, direct
+method priority and live root lookup. Native2 and compiler1 focused tests pass,
+including typed scalar-owner errors, effects, GC recovery, compile atomicity and
+HIR/IR rejection. The fresh oracle emits expected private root-obj access warnings
+for development-only probes; no shipped Java dependency is introduced.
+
+This branch is rebased onto independently reviewed PR107 commit7b530784. Focused
+parent protocol/identity/sequence tests pass, including its unchanged exact IFn
+strict-arity boundary. Python81/import101/setup5/reviews190+875/diff checks pass.
+The required full workspace baseline, independent PR review/fixes and exact
+reviewed-head CI remain pending. No milestone is complete from these tests.
 
 Required validation:
 

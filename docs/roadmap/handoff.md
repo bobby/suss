@@ -7562,3 +7562,18 @@ fix keeps unrelated user IFn protocols ordinary. ABI45 focused46577 is live;
 reviewer retains heavy slot before mandatory full. Root default-IHash corpus now
 21 provisional cases, adding direct method priority/captured dispatcher/live root
 and root UID independence; native and oracle remain unexecuted.
+
+Review107 authoritative full90116 terminal0/all handles terminal; significant
+IFn fix pushed7b5307849aa641f0fabe26f5257335526f48fa3b, slot released to root.
+Exact CI36859350775 running at reviewedhead; draft/readiness still gated. Root
+updated PR107 description/title to final receiver fix and34primary/33matches+1
+strict boundary, no merge. Default branch rebased onto7b530784, preserving both
+handoff sections and regenerating conflicting manifest (source unchanged).
+Initial native57181 terminal0/2; fresh24294 terminal0/21exact+native2, expected
+development private-var warnings preserved: /private/tmp/suss-default-hash-primary21.log.
+Compiler13236 terminal0/1, /private/tmp/suss-default-hash-hir-ir.log. Parent focused
+15708 terminal0 (core interfaces, identity4/strict boundary, sequences6),
+/private/tmp/suss-default-hash-parent-focused.log. Python81/import101/setup5/
+reviews190partial875unassessed/diff pass. Full/review/final-head CI still required.
+Root owns the heavy slot for the next full baseline. Public hash's complete
+Date/case branches, ordered/unordered composition and remaining gates are next.

@@ -7,7 +7,7 @@
    :arities {:fixed [0] :variadic-min nil}
    :dependencies ["runtime:IHash:758" "runtime default Object prototype" "owner-held identity UID"]
    :classification :adapted
-   :rationale "Retained private root-object dependency and complete standalone default IHash setup, with explicit storage adaptations. Preserves source live lookup, root-object zero special case and nominal/default dispatch. Execution and fresh primary certification are pending; no compatibility success is claimed. Public hash, collection composition, compiled macros and private-var metadata remain unfinished."
+   :rationale "Retained private root-object dependency and complete standalone default IHash setup, with explicit storage adaptations. Preserves source live lookup, root-object zero special case and nominal/default dispatch. Fresh21 primary observations match independently decoded native values; native2 and compiler1 guards cover GC, effects, errors, direct method priority and live root lookup. Full baseline, independent PR review and exact final-head CI remain required. Public hash, collection composition, compiled macros and private-var metadata remain unfinished."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/root-object.json"
    :alternative nil
