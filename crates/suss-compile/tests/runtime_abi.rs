@@ -2280,6 +2280,15 @@ fn runtime_abi_named_storage_preserves_native_keys_and_rejects_malformed_tables(
         &[],
     )
     .unwrap();
+    // Host-created raw __proto__ schemas must not bypass prototype boundaries.
+    let proto_name = key(&mut store, runtime, "__proto__");
+    let proto_schema = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    proto_schema.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap()
+        .set(&mut store, 0, proto_name.clone()).unwrap();
+    let proto_descriptor = nominal_value(&mut store, runtime, "descriptor-new", &[proto_schema.clone()]);
+    let proto_object = nominal_value(&mut store, runtime, "object-new", &[proto_descriptor, proto_schema]);
+    language_error(&mut store, runtime, "named-property-get", &[proto_object.clone(), proto_name.clone()]);
+    language_error(&mut store, runtime, "named-property-set", &[proto_object, proto_name.clone(), proto_name]);
     let owner = nominal_value(&mut store, runtime, "predicate-nil", &[]);
     let nil = nominal_value(&mut store, runtime, "nil", &[]);
     let value = nominal_value(
@@ -2429,5 +2438,172 @@ fn runtime_abi_named_storage_preserves_native_keys_and_rejects_malformed_tables(
         runtime,
         "named-property-set",
         &[owner, name, nil],
+    );
+}
+
+#[test]
+fn runtime_abi_object_method_tables_and_wrappers_reject_corruption_without_trapping() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let name = nominal_value(&mut store, runtime, "string-new", &[Val::I32(1)]);
+    name.unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap()
+        .set(&mut store, 0, Val::I32('m' as i32))
+        .unwrap();
+    let empty = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    let descriptor = nominal_value(&mut store, runtime, "descriptor-new", &[empty.clone()]);
+    let class = nominal_value(
+        &mut store,
+        runtime,
+        "constructor-new",
+        &[descriptor.clone()],
+    );
+    let implementation = nominal_value(&mut store, runtime, "predicate-nil", &[]);
+    let method = nominal_value(
+        &mut store,
+        runtime,
+        "object-method-set",
+        &[class.clone(), name.clone(), implementation],
+    );
+    store.gc(None).unwrap();
+    let key = nominal_value(
+        &mut store,
+        runtime,
+        "object-method-key",
+        &[descriptor.clone(), name.clone()],
+    );
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let other_name = nominal_value(&mut store, runtime, "string-new", &[Val::I32(1)]);
+    other_name.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap()
+        .set(&mut store, 0, Val::I32('n' as i32)).unwrap();
+    nominal_value(&mut store, runtime, "object-method-set", &[class.clone(), other_name, method.clone()]);
+    let table = descriptor.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap()
+        .field(&mut store, 2).unwrap();
+    let table_ref = table.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    assert_eq!(table_ref.len(&store).unwrap(), 4);
+    table_ref.set(&mut store, 2, nil.clone()).unwrap();
+    fn error(store: &mut Store<()>, runtime: Instance, function: &str, args: &[Val]) {
+        let error = runtime
+            .get_func(&mut *store, function)
+            .unwrap()
+            .call(&mut *store, args, &mut [Val::null_any_ref()])
+            .unwrap_err();
+        assert!(
+            error.is::<wasmtime::ThrownException>(),
+            "{function}: {error:#}"
+        );
+        assert!(!error.is::<wasmtime::Trap>());
+        let exception = store.take_pending_exception().unwrap();
+        let tag = exception.tag(&mut *store).unwrap();
+        assert!(wasmtime::Tag::eq(
+            &tag,
+            &runtime.get_tag(&mut *store, "language-exception").unwrap(),
+            &*store
+        ));
+    }
+    // Copy the private callback's typed function reference into a foreign
+    // closure with a different environment. A private detached callback must
+    // reject the forgery rather than fall back into invoking itself recursively.
+    let mut types = runtime_abi::prelude();
+    let value = wasm_encoder::ValType::Ref(wasm_encoder::RefType::EQREF);
+    types.ty().function([value, value], [value]);
+    let mut functions = wasm_encoder::FunctionSection::new();
+    functions.function(10);
+    let mut exports = wasm_encoder::ExportSection::new();
+    exports.export("copy-callback", wasm_encoder::ExportKind::Func, 0);
+    let mut code = wasm_encoder::CodeSection::new();
+    let mut forge = wasm_encoder::Function::new([]);
+    use wasm_encoder::{Instruction, HeapType};
+    forge.instruction(&Instruction::LocalGet(1))
+        .instruction(&Instruction::LocalGet(0))
+        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(4)))
+        .instruction(&Instruction::StructGet { struct_type_index: 4, field_index: 1 })
+        .instruction(&Instruction::I32Const(0))
+        .instruction(&Instruction::I32Const(-1))
+        .instruction(&Instruction::StructNew(4))
+        .instruction(&Instruction::End);
+    code.function(&forge);
+    let mut module = wasm_encoder::Module::new();
+    module.section(&types).section(&functions).section(&exports).section(&code);
+    let foreign = Instance::new(&mut store, &Module::new(&engine, module.finish()).unwrap(), &[]).unwrap();
+    let wrong_tag = nominal_value(&mut store, runtime, "object-new", &[descriptor.clone(), empty.clone()]);
+    for environment in [nil.clone(), wrong_tag] {
+        let forged = nominal_value(&mut store, foreign, "copy-callback", &[method.clone(), environment]);
+        error(&mut store, runtime, "invoke", &[forged, empty.clone()]);
+    }
+    // A matching prefix must not conceal an opaque later key on lookup or update.
+    error(
+        &mut store,
+        runtime,
+        "object-method-key",
+        &[descriptor.clone(), name.clone()],
+    );
+    error(
+        &mut store,
+        runtime,
+        "object-method-set",
+        &[class, name.clone(), method.clone()],
+    );
+    // A tagged method key must hold exactly one UTF-16 name.
+    table_ref.set(&mut store, 2, key.clone()).unwrap();
+    let schema = key
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap()
+        .field(&mut store, 1)
+        .unwrap();
+    schema
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap()
+        .set(&mut store, 0, nil.clone())
+        .unwrap();
+    error(
+        &mut store,
+        runtime,
+        "object-method-key",
+        &[descriptor, name],
+    );
+    // Invocation validates the tagged wrapper payload before calling it.
+    let environment = nominal_value(
+        &mut store,
+        runtime,
+        "closure-environment",
+        &[method.clone()],
+    );
+    let payload = environment
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap()
+        .field(&mut store, 1)
+        .unwrap();
+    payload
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap()
+        .set(&mut store, 0, nil.clone())
+        .unwrap();
+    error(
+        &mut store,
+        runtime,
+        "object-method-invoke",
+        &[method, nil, empty],
     );
 }

@@ -81,3 +81,9 @@ Noncallable method probes use different default and catch values, distinguishing
 fallback from rejection. Fresh64 primary observations and all four native tests
 pass after malformed-tail, munged-schema and known host-attribute guards. Full
 review evidence is recorded in the handoff.
+
+PR #93 review extends the explicit unsupported-schema guard to raw __proto__.
+Pinned constructors assign this.__proto__, invoking its inherited setter rather
+than creating an own field. Source type declarations reject this spelling before
+physical protocol slots can fabricate a field; host-created schemas reject named
+get/set through checked language exceptions. The existing64-case corpus is unchanged.

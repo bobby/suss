@@ -64,7 +64,7 @@ fn reject_host_names(body: &mut Vec<Instruction<'static>>, equal: u32, names: &[
     }
 }
 
-pub(super) fn functions(b: &mut Builder) {
+pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     use Instruction::*;
     // UTF-16 equality stays separate from the explicit native-name normalization.
     let mut body = vec![
@@ -131,6 +131,8 @@ pub(super) fn functions(b: &mut Builder) {
         &[(1, ValType::I32)],
         &body,
     );
+
+    let callbacks = object_methods::functions(b, equal);
 
     // Public JS native names and internal kind keys name the same owned entry.
     let mut body = vec![];
@@ -277,6 +279,7 @@ pub(super) fn functions(b: &mut Builder) {
         "methods",
         "null",
         "constructor",
+        "__proto__",
     ] {
         body.push(LocalGet(0));
         name(&mut body, reserved);
@@ -639,6 +642,25 @@ pub(super) fn functions(b: &mut Builder) {
         if writing {
             nominal::error(&mut body); // Dynamic extra instance fields are not implemented.
         } else {
+            structure(&mut body, 0, 7, 0);
+            body.extend([
+                LocalGet(1),
+                Call(b.names["object-method-key"]),
+                LocalSet(fresh),
+                LocalGet(fresh),
+                I32Const(0),
+                RefI31,
+                RefEq,
+                I32Eqz,
+                If(BlockType::Empty),
+            ]);
+            structure(&mut body, 0, 7, 0);
+            body.extend([
+                LocalGet(fresh),
+                Call(b.names["protocol-method-get"]),
+                Return,
+                End,
+            ]);
             reject_host_names(&mut body, equal, INHERITED_NAMES);
             undefined(&mut body);
             body.push(Return);
@@ -662,4 +684,5 @@ pub(super) fn functions(b: &mut Builder) {
             &body,
         );
     }
+    callbacks
 }

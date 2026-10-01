@@ -138,3 +138,8 @@
     "Returns a collection that is ISequential, ISeq, and IReduce, or nil if past
      the end. The number of items to drop n must be > 0. It is also useful if the
      returned coll implements IDrop for subsequent use in a partition-like scenario."))
+
+(defprotocol Fn
+  "Marker protocol")
+
+(def fn? "Return true if f is a JavaScript function or satisfies the Fn protocol." (fn [f] (or (js-fn? f) (satisfies? Fn f))))

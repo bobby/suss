@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "2233b0c2e89d01e1ea36cce63244b7ce488bf6debe3b0abb830027d79e959646",
-  "reviews-sha256": "7d5ff092eca414bfaa5bfb40a3cfb8343f1995f966ad1f2b673facf0e8afbf4a",
+  "recipe-sha256": "fd6d23e64512beaf415437a2f119eefdb1a1b5b932939d662e67d661b62dbd66",
+  "reviews-sha256": "f6ecda3c48086336d7b22a87d4412a0e5c12590d228dae6ec69f1bea45809d1c",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -796,6 +796,67 @@
         "crates/suss-cli/tests/core_sequence_interfaces.rs",
         "tests/oracle/core-interface-cases.json"
       ]
+    },
+    {
+      "id": "runtime:Fn:583",
+      "name": "Fn",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 583,
+      "end-line": 584,
+      "byte-start": 15896,
+      "byte-end": 15932,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "f0c1b261ce1ebec680b9764dd8a9bd29317c6b9f5543981cae55b392d9da6dea",
+      "extracted": "extracted/0026.cljs",
+      "extracted-sha256": "4c59933a50b1837c9a3ded6adb26b633208a5072bbf478e4d2f4cefb7e553e9e",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "f0c1b261ce1ebec680b9764dd8a9bd29317c6b9f5543981cae55b392d9da6dea",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:defprotocol:2041"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_object_methods.rs",
+        "tests/oracle/object-method-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:fn?:2107",
+      "name": "fn?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2107,
+      "end-line": 2110,
+      "byte-start": 57871,
+      "byte-end": 57999,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "a038a3404e90030209c64b73a72648f757657898e22abea64a81e37a0621c2d6",
+      "extracted": "extracted/0027.cljs",
+      "extracted-sha256": "784555ac3f8109c4f6f8e469c089771b3e6ace53f7b3704f02384c2f69752ecd",
+      "patch": "docs/compatibility/patches/fn-predicate.json",
+      "patch-sha256": "8afe502d801a548f5352c9249675a97bb0ffcbbe613737ea86059b0835ae3288",
+      "adapted-form-sha256": "36346d02107958ec54eb91e47c226559a779a16d3fbb881261efd35e117f74fd",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:Fn:583",
+        "js-fn? primitive closure predicate",
+        "macro:or:912",
+        "macro:satisfies?:2253"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_object_methods.rs",
+        "tests/oracle/object-method-cases.json"
+      ]
     }
   ],
   "files": {
@@ -827,6 +888,8 @@
     "extracted/0023.cljs": "76973874ebed030260bb35456b5d50e05c55514bc8a6d239c60621e81a40da37",
     "extracted/0024.cljs": "464eb5a728bb1d1865bbf1b1cbcf22ac88d196a33292b17906a94ae7dc82eecd",
     "extracted/0025.cljs": "618fa48bf9008b2a67999a418d18b129be6795b99626dfd9bb50146df6a4ec6b",
-    "suss/core.sus": "c0288a419114e67bc7d90e95df5530e709e7218a974ac9b84101ad3d6f15bdb9"
+    "extracted/0026.cljs": "4c59933a50b1837c9a3ded6adb26b633208a5072bbf478e4d2f4cefb7e553e9e",
+    "extracted/0027.cljs": "784555ac3f8109c4f6f8e469c089771b3e6ace53f7b3704f02384c2f69752ecd",
+    "suss/core.sus": "e94c6f012e5e610d84f0beafdd90b2bffda867e83ccc42bcebf646b70b80ed18"
   }
 }

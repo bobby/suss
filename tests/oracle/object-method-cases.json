@@ -1,0 +1,434 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "source-object-method-call",
+      "source": "(do (deftype ObjectProbe [^:mutable value] Object (score [this delta] (+ value delta)) (label [this] \"probe\")) (def object-probe (ObjectProbe. 7)) (.score object-probe 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "object-method-zero-arguments",
+      "source": "(.label object-probe)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          112,
+          114,
+          111,
+          98,
+          101
+        ]
+      }
+    },
+    {
+      "id": "object-method-is-function",
+      "source": "(fn? (.-score object-probe))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "object-method-identity-on-one-owner",
+      "source": "(identical? (.-score object-probe) (.-score object-probe))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "object-method-prototype-shares-function",
+      "source": "(do (def object-other (ObjectProbe. 11)) (identical? (.-score object-probe) (.-score object-other)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "object-method-other-owner",
+      "source": "(.score object-other 5)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4030000000000000"
+      }
+    },
+    {
+      "id": "object-method-reads-current-field",
+      "source": "(do (set! (.-value object-probe) 13) (.score object-probe 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4030000000000000"
+      }
+    },
+    {
+      "id": "object-method-detached-loses-receiver",
+      "source": "(try ((.-score object-probe) 3) (catch :default e 17))",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "object-method-return-this-identity",
+      "source": "(do (deftype ObjectSelf [value] Object (self [this] this) (read [this] value)) (def object-self (ObjectSelf. 19)) (identical? object-self (.self object-self)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "object-method-explicit-argument-identity",
+      "source": "(do (deftype ObjectArgument [] Object (same [this value] (identical? this value))) (.same (ObjectArgument.) object-self))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "object-method-owner-before-arguments",
+      "source": "(do (def object-effects (array 0)) (def object-mark (fn [n value] (do (aset object-effects 0 (+ (* (aget object-effects 0) 10) n)) value))) (.score (object-mark 1 object-probe) (object-mark 2 3)) (aget object-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "object-method-throwing-argument-keeps-order",
+      "source": "(do (aset object-effects 0 0) (try (.score (object-mark 1 object-probe) (throw (object-mark 2 3))) (catch :default e nil)) (aget object-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "missing-method-arguments-before-error",
+      "source": "(do (aset object-effects 0 0) (try (.missing (object-mark 1 object-probe) (object-mark 2 3)) (catch :default e nil)) (aget object-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "object-method-value-rebinding-preserves-old-instance",
+      "source": "(do (def object-old-class ObjectProbe) (deftype ObjectProbe [value] Object (score [this delta] (+ value delta 100))) (.score object-probe 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4030000000000000"
+      }
+    },
+    {
+      "id": "object-method-new-class-after-redefinition",
+      "source": "(.score (ObjectProbe. 7) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405b800000000000"
+      }
+    },
+    {
+      "id": "object-method-old-class-after-redefinition",
+      "source": "(.score (object-old-class. 7) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "object-method-protocol-coexistence",
+      "source": "(do (defprotocol ObjectProtocol (object-protocol [this])) (deftype ObjectMixed [value] Object (score [this delta] (+ value delta)) ObjectProtocol (object-protocol [this] value)) (def object-mixed (ObjectMixed. 23)) (+ (.score object-mixed 3) (object-protocol object-mixed)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4048800000000000"
+      }
+    },
+    {
+      "id": "object-method-extends-existing-type",
+      "source": "(do (extend-type ObjectSelf Object (twice [this] (* (.-value this) 2))) (.twice object-self))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4043000000000000"
+      }
+    },
+    {
+      "id": "object-method-mutation",
+      "source": "(do (deftype ObjectMutable [^:mutable value] Object (bump [this n] (set! value (+ value n)))) (def object-mutable (ObjectMutable. 29)) (.bump object-mutable 2) (.-value object-mutable))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "object-method-captures-outside-lexical",
+      "source": "(do (def object-factor 3) (deftype ObjectGlobal [value] Object (scaled [this] (* value object-factor))) (def object-global (ObjectGlobal. 7)) (.scaled object-global))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4035000000000000"
+      }
+    },
+    {
+      "id": "object-method-live-global-read",
+      "source": "(do (set! object-factor 5) (.scaled object-global))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041800000000000"
+      }
+    },
+    {
+      "id": "object-method-nil-result",
+      "source": "(do (deftype ObjectNil [] Object (nothing [this] nil)) (.nothing (ObjectNil.)))",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "null-method-owner-errors-before-argument-evaluation",
+      "source": "(do (aset object-effects 0 0) (try (.score (object-mark 1 nil) (object-mark 2 3)) (catch :default e nil)) (aget object-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "object-method-global-wins-over-outer-lexical",
+      "source": "(do (def object-lexical-factor 11) (let [object-lexical-factor 7] (deftype ObjectCaptured [value] Object (scaled [this] (* value object-lexical-factor)))) (def object-captured (ObjectCaptured. 5)) (.scaled object-captured))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404b800000000000"
+      }
+    },
+    {
+      "id": "object-method-missing-argument",
+      "source": "(.score object-probe)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "object-method-extra-argument-effects",
+      "source": "(do (aset object-effects 0 0) (.score object-probe 3 (object-mark 4 99)) (aget object-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "object-method-recur-anchors-this",
+      "source": "(do (deftype ObjectRecur [value] Object (sum [this n acc] (if (<= n 0) (+ value acc) (recur (dec n) (+ acc n))))) (.sum (ObjectRecur. 7) 3 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402a000000000000"
+      }
+    },
+    {
+      "id": "object-method-overloads-zero",
+      "source": "(do (deftype ObjectOverload [value] Object (score [this] value) (score [this n] (+ value n))) (def object-overload (ObjectOverload. 17)) (.score object-overload))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "object-method-overloads-one",
+      "source": "(.score object-overload 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "object-method-overload-gap",
+      "source": "(try (.score object-overload 2 3) (catch :default e 97))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4058400000000000"
+      }
+    },
+    {
+      "id": "object-extension-overloads-zero",
+      "source": "(do (extend-type ObjectOverload Object (score ([this] 31) ([this n] (+ 31 n)))) (.score object-overload))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "object-extension-overloads-one",
+      "source": "(.score object-overload 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "object-method-toString",
+      "source": "(do (deftype ObjectString [] Object (toString [this] \"object\")) (.toString (ObjectString.)))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          111,
+          98,
+          106,
+          101,
+          99,
+          116
+        ]
+      }
+    },
+    {
+      "id": "fn-predicate-closure",
+      "source": "(fn? (fn [] 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "fn-predicate-type",
+      "source": "(fn? ObjectString)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "fn-predicate-nil",
+      "source": "(fn? nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "fn-predicate-number",
+      "source": "(fn? 3)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "fn-predicate-marker",
+      "source": "(do (deftype ObjectFn [] Fn) (fn? (ObjectFn.)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "fn-predicate-native-marker",
+      "source": "(do (extend-type number Fn) (fn? 3))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "object-extension-keeps-lexical-capture",
+      "source": "(do (let [factor 7] (extend-type ObjectSelf Object (scaled [this] (* (.-value this) factor)))) (.scaled object-self))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4060a00000000000"
+      }
+    },
+    {
+      "id": "method-own-field-shadows-method",
+      "source": "(do (deftype ObjectShadow [score] Object (score [this n] 99)) (.score (ObjectShadow. (fn [n] (+ n 2))) 5))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "method-callee-before-argument-extension",
+      "source": "(do (def object-before (.-read object-self)) (.read object-self (do (extend-type ObjectSelf Object (read [this] 99)) 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "method-replacement-is-live",
+      "source": "(.read object-self)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4058c00000000000"
+      }
+    },
+    {
+      "id": "method-replacement-changes-function-identity",
+      "source": "(identical? object-before (.-read object-self))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "review-object-duplicate-arity-last-wins",
+      "source": "(do (deftype ReviewDuplicate [] Object (read [this] 11) (read [this] 37)) (.read (ReviewDuplicate.)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4042800000000000"
+      }
+    },
+    {
+      "id": "review-detached-methods-share-implicit-realm",
+      "source": "(do (deftype ReviewThis [] Object (self [this] this)) (identical? ((.-self (ReviewThis.))) ((.-self (ObjectSelf. 1)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-nested-function-retains-physical-this",
+      "source": "(do (deftype ReviewCapture [value] Object (capture [this] (fn [] (+ value (.-value this))))) (def review-capture (.capture (ReviewCapture. 17))) (review-capture))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "review-method-wrapper-properties-preserve-environment",
+      "source": "(do (set! (.-cache (.-score object-probe)) 9) (+ (.score object-probe 2) (.-cache (.-score object-probe))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4038000000000000"
+      }
+    },
+    {
+      "id": "review-noncallable-own-field-evaluates-arguments",
+      "source": "(do (aset object-effects 0 0) (try (.score (object-mark 1 (ObjectShadow. 7)) (object-mark 2 3) (object-mark 3 4)) (catch :default e nil)) (aget object-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "review-object-recur-parallel-binding",
+      "source": "(do (deftype ReviewSwap [value] Object (swap [this n a b] (if (<= n 0) (+ value (* a 10) b) (recur (dec n) b a)))) (.swap (ReviewSwap. 7) 1 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4043800000000000"
+      }
+    },
+    {
+      "id": "review-method-parameter-shadows-field",
+      "source": "(do (deftype ReviewParam [value] Object (read [this value] value)) (.read (ReviewParam. 11) 43))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045800000000000"
+      }
+    },
+    {
+      "id": "review-object-call-method-is-not-Fn-marker",
+      "source": "(do (deftype ReviewCallable [] Object (call [this] 1)) (fn? (ReviewCallable.)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    }
+  ]
+}

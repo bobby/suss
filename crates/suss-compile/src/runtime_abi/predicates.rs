@@ -77,7 +77,11 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     body.extend([RefEq, I32Or]);
     boolean(&mut body);
     declared.push(factory(b, "predicate-nil", 1, &[], &body));
-    for (name, ty) in [("predicate-number", NUMBER), ("predicate-string", STRING)] {
+    for (name, ty) in [
+        ("predicate-number", NUMBER),
+        ("predicate-string", STRING),
+        ("predicate-function", 4),
+    ] {
         let mut body = vec![];
         argument(&mut body, 0);
         body.push(RefTestNonNull(HeapType::Concrete(ty)));

@@ -1,8 +1,8 @@
 //! Emit only verified IR. Operands are local value IDs, never source expressions.
 use super::{
+    Diagnostic,
     hir::{Arithmetic, Literal, Nominal, Type},
     ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, Operation, Terminator},
-    Diagnostic,
 };
 use crate::runtime_abi;
 use std::{borrow::Cow, collections::BTreeSet};
@@ -99,6 +99,12 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::Nominal { operation, .. } => match operation {
                         Nominal::Array => {}
+                        Nominal::ObjectSet => {
+                            names.insert("object-method-set");
+                        }
+                        Nominal::ObjectInvoke => {
+                            names.insert("object-method-invoke");
+                        }
                         Nominal::NamedGet => {
                             names.insert("named-property-get");
                         }
@@ -224,7 +230,9 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
-            "named-property-set" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
+            "named-property-set" | "object-method-set" | "object-method-invoke" => {
+                (vec![VALUE, VALUE, VALUE], vec![VALUE])
+            }
             "string-new" => (vec![ValType::I32], vec![VALUE]),
             "string-set-unit" => (vec![VALUE, ValType::I32, ValType::I32], vec![ValType::I32]),
             _ => (vec![VALUE, VALUE], vec![VALUE]),
@@ -775,7 +783,22 @@ fn emit_function(
                                     },
                                 )));
                         }
+                        Nominal::ObjectInvoke => {
+                            for argument in &arguments[..2] {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            for argument in &arguments[2..] {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function
+                                .instruction(&ArrayNewFixed {
+                                    array_type_index: runtime_abi::ARGS,
+                                    array_size: arguments.len() as u32 - 2,
+                                })
+                                .instruction(&Call(index("object-method-invoke")));
+                        }
                         Nominal::Class
+                        | Nominal::ObjectSet
                         | Nominal::NamedGet
                         | Nominal::NamedSet
                         | Nominal::Protocol
@@ -787,6 +810,7 @@ fn emit_function(
                             }
                             function.instruction(&Call(index(match operation {
                                 Nominal::Class => "class-value-new",
+                                Nominal::ObjectSet => "object-method-set",
                                 Nominal::NamedGet => "named-property-get",
                                 Nominal::NamedSet => "named-property-set",
                                 Nominal::Protocol => "protocol-value-new",
