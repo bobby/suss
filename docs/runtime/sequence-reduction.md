@@ -32,15 +32,15 @@ non-vector or non-pair bindings, qualified/& bindings and non-tail recur produce
 located compile-atomic diagnostics. Destructuring is an explicit pending boundary,
 matching existing let lowering; full upstream compiled if-let is still required.
 
-A separate59-case corpus matches fresh pinned ClojureScript/Node and independently
+A separate65-case corpus matches fresh pinned ClojureScript/Node and independently
 decoded native Wasm. It covers empty/singleton/start/no-start cases; lists/Cons/
 IndexedSeq/arrays/strings; UTF-16 units, live array values/captured length; direct/
 native/iterator dispatch; reducer and call operand order; Reduced identity and
 single-layer unwrapping; early termination before later effects, including a
 sequence whose next throws. Native tests additionally check saved reducers and
 Reduced values across GC, wrong-arity argument effects, arbitrary typed reducer
-throws and recovery. The control corpus has77 exact primary/native observations,
-preserving its original59 and adding18 if-let cases for scope/order/falseyness/
+throws and recovery. The control corpus has81 exact primary/native observations,
+preserving its original59 and adding22 if-let cases for scope/order/falseyness/
 captures/tail recur/qualification/lexical shadowing/exception cleanup. Three native
 control tests check aliases/exclusions/both phases and located compile atomicity.
 
@@ -78,3 +78,13 @@ cargo test --workspace --locked -- --test-threads=2
 
 Next close retained ordered/public hashing and iterator/reversal/printing/index
 helpers while progressing remaining persistent types and compiled macro acceptance.
+
+Independent PR103 review added six reduction observations and four control
+observations, preserving every original59/77 source and expected value. Fresh
+primary/native runs certify65 reduction and81 control cases. New cases establish
+iterator hasNext/next stop order, direct IReduce precedence over IIterable,
+Reduced identity for singleton/empty arrays, indexed array length capture, nested
+Reduced iterator unwrapping, and nested/captured if-let scope. A focused compiler
+regression checks exact source spans, reader metadata and distinct scoped binding
+identities. No significant production defect was identified in this bounded slice;
+full compiled macros and surrounding acceptance obligations remain unfinished.

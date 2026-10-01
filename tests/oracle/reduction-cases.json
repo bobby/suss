@@ -473,6 +473,54 @@
         "tag": "f64",
         "bits": "404d000000000000"
       }
+    },
+    {
+      "id": "reduce-iterator-hasnext-stops",
+      "source": "(do (def review-iter-trace 0) (deftype ReviewIterator [^:mutable n] Object (hasNext [_] (set! review-iter-trace (+ (* review-iter-trace 10) 1)) (< n 3)) (next [_] (set! review-iter-trace (+ (* review-iter-trace 10) 2)) (let [v n] (set! n (inc n)) v))) (deftype ReviewIterable [] IIterable (-iterator [_] (ReviewIterator. 0))) (reduce (fn [a b] (reduced b)) 0 (ReviewIterable.)) review-iter-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "reduce-direct-before-iterable",
+      "source": "(do (deftype ReviewBoth [] IReduce (-reduce [_ f] 71) (-reduce [_ f init] (+ init 71)) IIterable (-iterator [_] (throw 99))) (reduce + 2 (ReviewBoth.)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4052400000000000"
+      }
+    },
+    {
+      "id": "reduce-single-array-reduced-identity",
+      "source": "(let [r (reduced 17)] (identical? r (reduce (fn [a b] 99) (array r))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reduce-empty-array-reduced-identity",
+      "source": "(let [r (reduced 17)] (identical? r (reduce (fn [a b] 99) r (array))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-reduce-index-captured-length",
+      "source": "(let [a (array 99 1 2)] (array-reduce a (fn [v x] (aset a 3 7) (+ v x)) 17 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4034000000000000"
+      }
+    },
+    {
+      "id": "reduce-iterator-nested-reduced-one-layer",
+      "source": "(reduced? (reduce (fn [a b] (reduced (reduced 17))) 0 (IterableProbe. 4)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
     }
   ]
 }

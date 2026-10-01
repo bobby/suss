@@ -605,6 +605,38 @@
         "tag": "f64",
         "bits": "4054000000000000"
       }
+    },
+    {
+      "id": "if-let-consequent-let-capture",
+      "source": "(let [x 17] ((if-let [x 29] (let [x (+ x 1)] (fn [] x)) (fn [] x))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403e000000000000"
+      }
+    },
+    {
+      "id": "if-let-else-capture-outer",
+      "source": "(let [x 17] ((if-let [x false] (fn [] x) (fn [] x))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "if-let-nested-init-scope",
+      "source": "(let [x 17] (if-let [x (if-let [x 29] (+ x 1) x)] x 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403e000000000000"
+      }
+    },
+    {
+      "id": "if-let-test-and-branch-order",
+      "source": "(do (def review-iflet-order 0) (if-let [x (do (set! review-iflet-order 1) 7)] (do (set! review-iflet-order (+ (* review-iflet-order 10) 2)) x) (set! review-iflet-order 99)) review-iflet-order)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
     }
   ]
 }

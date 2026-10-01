@@ -114,6 +114,6 @@ acceptance stay open.
 Retained IDeref/Reduced and ten reduction helpers keep all algorithms/methods,
 source metadata/docstrings/arities and EPL packaging. The canonical artifact now
 selects82 declarations and86 generated files with172 partial/893 unassessed
-reviews. Source seq/array/string/iterator reduction and Reduced termination have59
-fresh primary/native observations; bounded if-let extends control evidence to77.
+reviews. Source seq/array/string/iterator reduction and Reduced termination have65
+fresh primary/native observations; bounded if-let extends control evidence to81.
 See [reduction scope and limitations](../runtime/sequence-reduction.md).

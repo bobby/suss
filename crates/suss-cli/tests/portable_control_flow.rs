@@ -8,7 +8,7 @@ fn control_macros_match_independently_decoded_primary_observations_after_gc() {
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 77);
+    assert_eq!(cases.len(), 81);
     let mut session = Session::new().unwrap();
     let mut ids = std::collections::BTreeSet::new();
     for case in cases {

@@ -57,3 +57,10 @@ context. Eighteen added observations bring control77, original59 unchanged. Nati
 alias/exclusion/both-phase and malformed located compile-atomic guards pass. Full
 destructuring and compiled upstream macros remain unfinished. See
 [reduction/if-let evidence](sequence-reduction.md).
+
+Independent PR103 review preserves all77 certified observations and adds four
+fresh pinned/native observations for nested initializer scope, consequent and
+else captures, and effect order:81 total. A compiler HIR regression verifies
+reader metadata, exact source spans and distinct binding identities. These checks
+certify the bounded symbol-binding adapter; compiled upstream macros and
+destructuring remain unfinished.

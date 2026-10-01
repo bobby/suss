@@ -7019,3 +7019,57 @@ compatibility or milestone acceptance. All root local handles34984/24330/89149/
 commit/push/open coherent reduction draft against102 and release heavy slot to
 mandatory independent reviewer. Final reviewed-head CI still gates readiness;
 no merges or closures.
+
+## Independent PR103 review — 2026-10-01
+
+Reviewed draft PR103 candidate0d74c4e3448cb419e3927969330792d9a7af9c5c against
+reviewed PR102 basea9f19e8650c1c2079e2c5066ebde076f9ea284a8 in isolated
+/private/tmp/suss-review-pr103 with actual detached pinned upstreamc4295f30.
+Read accepted design/ROADMAP/inventory/handoff/AGENTS. Inspected complete retained
+IDeref/Reduced/helper/reduction forms, every defn adaptation, methods/arities/
+metadata/docstrings/EPL/provenance, dispatch ordering and Reduced stop semantics.
+Inspected original if-let bootstrap resolver/HIR, fresh binding identity, metadata,
+source spans, scope restoration, source evaluation order and caller tail context.
+No significant production defect identified in this bounded source dependency slice.
+Full compiled macros/destructuring/runtime Var metadata and surrounding M2–M9
+acceptance remain incomplete; no merge or issue/milestone closure.
+
+Independent original fresh reduction51369 ended0:59 exact pinned/native2;
+control24238 ended0:77 exact pinned/native3. Added six reduction and four control
+observations, preserving all original59/77 source/expectation objects and the
+parent137 sequence observations. Fresh63450 ended0 with65 exact reduction/native2,
+/private/tmp/suss-pr103-review-reduction65.log; fresh55771 ended0 with81 exact
+control/native3, /private/tmp/suss-pr103-review-control81.log. New cases establish
+iterator hasNext/next stopping order, direct IReduce before IIterable, Reduced
+identity for singleton/empty arrays, offset array captured length, nested Reduced
+iterator unwrapping, and nested/captured if-let scope/effect order. No expectation
+retargeting, failure skips or production changes. Original JSON text/escaping was
+preserved while appending cases. Compiler HIR regression97105 ended0 and verifies
+exact source spans, reader metadata and distinct scoped binding identities;
+/private/tmp/suss-pr103-review-iflet-hir.log.
+
+Python70561 ended0:80 tests pass, /private/tmp/suss-pr103-review-python.log;
+import86/setup4/reviews172 partial+893 unassessed verified. Diff-check passes.
+Commands: shared target/build2 sh scripts/test-reduction-oracle.sh and
+sh scripts/test-control-flow-oracle.sh; cargo test -p suss-compile --test
+portable_if_let --locked -- --test-threads=2; python3 -m unittest discover -s
+scripts -p 'test_*.py'; core_import.py --check; sequence_provenance.py;
+cljs_reviews.py. No RUSTFLAGS, no unrelated formatting/files.
+
+Required independent full40341 live, /private/tmp/suss-pr103-review-full.log.
+Reviewer owns exclusive heavy slot until all handles terminal and final full output
+inspected. Exact reviewed-head CI remains root's readiness gate after review
+commit/push. No merge. Next retained ordered/public hashing, iterator/reversal/
+printing/index helpers, remaining persistent types and compiled macro acceptance;
+lazy/chunked/transducer/metadata/transient and all release gates remain unfinished.
+
+Independent full40341 ended0; reviewer inspected all final doc-test completion in
+/private/tmp/suss-pr103-review-full.log. Command: CARGO_TARGET_DIR=/Users/bobby/
+code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2. All enabled required suites pass, including reduction2/65,
+control3/81, HIR if-let1, parent sequence6/137, closure14 and ABI41. Existing
+manual ignored tests and diagnostic9passing/7knownfailures remain explicit.
+All reviewer local handles51369/24238/63450/55771/70561/97105/40341 terminal.
+Reviewer releases heavy slot after committing/pushing this evidence and tests;
+root must verify successful exact reviewed-head CI before readiness. No merge,
+issue closure, milestone acceptance or broad portable compatibility claim.
