@@ -2386,4 +2386,14 @@
    :adaptation-path "docs/compatibility/patches/public-hash.json"
    :alternative nil
    :tests ["crates/suss-cli/tests/portable_public_hash.rs" "tests/oracle/public-hash-cases.json"]}
+  "macro:defmacro:3440"
+  {:source-sha256 "80f2964a97e3cf5bb7adde5eb9fabcb5fe014040ab8c29217c19e8b13679f171" :visibility :public
+   :arities {:fixed [] :variadic-min 1}
+   :dependencies ["macro:defn:3364" "isolated compiled Macro Store" "actual Symbol/Keyword/List/Cons data" "persistent metadata/collections and &env pending"]
+   :classification :adapted
+   :rationale "Original Rust single-vector structural bootstrap follows pinned defmacro implicit form argument/compiled function registration. Bodies execute through the shared pipeline in a separate phase Store. Full implicit environment maps, docstrings/attrs/multiple signatures, macro marker/Var metadata, macro-body/source imports, syntaxquote/bootstrap/cache remain unfinished. Missing &env is a located compile error, not nil. No upstream source copied; original macro is EPL1.0."
+   :status :in-progress
+   :adaptation-path "docs/runtime/compiled-source-macros.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_source_macros.rs"]}
 }}

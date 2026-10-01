@@ -1,6 +1,6 @@
 //! Original bounded binding/with-redefs bootstrap, informed by the pinned macros.
 use super::*;
-impl Analyzer {
+impl Analyzer<'_> {
     pub(super) fn assignment_target(&mut self, form: &Form) -> Result<Global, Diagnostic> {
         let Kind::Symbol(name) = &form.kind else {
             return Err(fail(

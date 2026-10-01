@@ -14,7 +14,7 @@
 //! This is original Rust lowering; the source-backed core owns the actual types.
 use super::*;
 
-impl Analyzer {
+impl Analyzer<'_> {
     pub(super) fn identifier_literal(
         &mut self,
         form: &Form,

@@ -1,7 +1,7 @@
 //! Original source handler regions, informed by pinned analyzer.cljc, not copied.
 use super::*;
 
-impl Analyzer {
+impl Analyzer<'_> {
     pub(super) fn exception_region(&self, form: &Form, parameters: Vec<Parameter>, body: Hir) -> Hir {
         let bound = parameters.iter().map(|parameter| parameter.id).collect();
         let mut free = BTreeSet::new();

@@ -1,6 +1,6 @@
 //! Original bounded expansion following the pinned nested bitwise macros.
 use super::*;
-impl Analyzer {
+impl Analyzer<'_> {
     pub(super) fn bitwise_form(
         &mut self,
         form: &Form,

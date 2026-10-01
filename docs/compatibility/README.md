@@ -473,3 +473,8 @@ UTF16, signed hash caches, equality/names and runtime-computed hash agreement.
 Selection128/artifacts132 and223 partial reviews/842 unassessed remain prerequisites;
 compiled macros, complete collections/metadata/printing are not certified.
 [Quoted data evidence and provenance](../runtime/quoted-identifiers.md).
+
+Source defmacro execution now has a partial pinned review (224 reviewed/841
+unassessed). Explicitly registered macro functions execute in the isolated Store
+and expand inside real lexical analysis; this is not complete macro bootstrap.
+[Source macro evidence and limitations](../runtime/compiled-source-macros.md).

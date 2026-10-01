@@ -33,7 +33,7 @@ fn constant(form: &Form) -> Result<(Literal, (u8, Vec<u8>)), Diagnostic> {
     })
 }
 
-impl Analyzer {
+impl Analyzer<'_> {
     pub(super) fn case_form(
         &mut self,
         form: &Form,

@@ -1,14 +1,14 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
-mod collections;
-mod quotes;
 mod bitwise;
+mod cases;
+mod collections;
 mod comparisons;
 mod controls;
-mod cases;
 mod dynamic;
 mod exceptions;
 mod nominal;
+mod quotes;
 use super::{
     resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
     Diagnostic,
@@ -248,7 +248,16 @@ impl Bitwise {
     }
     pub(crate) fn arity(self) -> usize {
         match self {
-            Self::Int | Self::Not | Self::F64Coerce | Self::F64Word0 | Self::F64Word4 | Self::F64Floor | Self::F64Finite | Self::F64SafeInteger | Self::F64TimeClip | Self::IdentityUid => 1,
+            Self::Int
+            | Self::Not
+            | Self::F64Coerce
+            | Self::F64Word0
+            | Self::F64Word4
+            | Self::F64Floor
+            | Self::F64Finite
+            | Self::F64SafeInteger
+            | Self::F64TimeClip
+            | Self::IdentityUid => 1,
             _ => 2,
         }
     }
@@ -458,7 +467,8 @@ fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
         message: message.into(),
     }
 }
-struct Analyzer {
+struct Analyzer<'a> {
+    expander: &'a mut dyn super::ExpansionHost,
     environment: Environment,
     phase: Phase,
     locals: HashMap<String, (BindingId, Type)>,
@@ -468,7 +478,7 @@ struct Analyzer {
     analysis_depth: usize,
     target: Option<(LoopId, usize)>,
 }
-impl Analyzer {
+impl Analyzer<'_> {
     fn body(
         &mut self,
         forms: &[Form],
@@ -511,9 +521,38 @@ impl Analyzer {
             ));
         }
         self.analysis_depth += 1;
-        let result = self.form_inner(form, statement, tail);
+        let result = self.expand_or_analyze(form, statement, tail);
         self.analysis_depth -= 1;
         result
+    }
+    fn expand_or_analyze(
+        &mut self,
+        form: &Form,
+        statement: bool,
+        tail: bool,
+    ) -> Result<Hir, Diagnostic> {
+        if let Kind::List(items) = &form.kind {
+            if let Some(Form {
+                kind: Kind::Symbol(symbol),
+                ..
+            }) = items.first()
+            {
+                let shadowed = symbol.namespace.is_none()
+                    && (self.locals.contains_key(&symbol.name)
+                        || self.fields.contains_key(&symbol.name));
+                if !shadowed {
+                    let context = super::ExpansionContext {
+                        environment: &self.environment,
+                        phase: self.phase,
+                        locals: &self.locals,
+                    };
+                    if let Some(expanded) = self.expander.expand(form, context)? {
+                        return self.form_in(&expanded, statement, tail);
+                    }
+                }
+            }
+        }
+        self.form_inner(form, statement, tail)
     }
     fn form_inner(&mut self, form: &Form, statement: bool, tail: bool) -> Result<Hir, Diagnostic> {
         let kind = match &form.kind {
@@ -521,7 +560,9 @@ impl Analyzer {
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
             Kind::String(value) => Expression::Literal(Literal::String(value.clone())),
-            Kind::Keyword(value) => return self.identifier_literal(form, value.namespace.as_deref(), &value.name, true),
+            Kind::Keyword(value) => {
+                return self.identifier_literal(form, value.namespace.as_deref(), &value.name, true)
+            }
             Kind::Vector(items) => return self.vector_literal(form, items),
             Kind::Map(items) => return self.map_literal(form, items),
             Kind::Set(items) => return self.set_literal(form, items),
@@ -539,7 +580,8 @@ impl Analyzer {
                     ty,
                     kind,
                 };
-                let key = self.literal_form(form, Literal::String("EMPTY".encode_utf16().collect()));
+                let key =
+                    self.literal_form(form, Literal::String("EMPTY".encode_utf16().collect()));
                 return Ok(self.nominal(form, Nominal::NamedGet, vec![owner, key]));
             }
             Kind::Symbol(symbol) => {
@@ -1096,9 +1138,15 @@ impl Analyzer {
             };
             if let Some(operation) = operation {
                 if !operation.valid(&vec![Type::Value; args.len()]) {
-                    return Err(fail(form.span.clone(), "Invalid private native object adapter arity"));
+                    return Err(fail(
+                        form.span.clone(),
+                        "Invalid private native object adapter arity",
+                    ));
                 }
-                let operands = args.iter().map(|argument| self.form(argument)).collect::<Result<Vec<_>, _>>()?;
+                let operands = args
+                    .iter()
+                    .map(|argument| self.form(argument))
+                    .collect::<Result<Vec<_>, _>>()?;
                 return Ok(self.nominal(form, operation, operands));
             }
         }
@@ -1197,7 +1245,10 @@ impl Analyzer {
         }
         if bare && symbol.name == "quote" {
             if args.len() != 1 {
-                return Err(fail(form.span.clone(), "quote requires exactly one operand"));
+                return Err(fail(
+                    form.span.clone(),
+                    "quote requires exactly one operand",
+                ));
             }
             return self.quote_data(&args[0], 0);
         }
@@ -1629,7 +1680,17 @@ pub(crate) fn prepare(
     environment: &Environment,
     phase: Phase,
 ) -> Result<(Hir, Environment), Diagnostic> {
+    prepare_with_expander(forms, span, environment, phase, &mut super::NoExpansion)
+}
+pub(crate) fn prepare_with_expander(
+    forms: &[Form],
+    span: Range<usize>,
+    environment: &Environment,
+    phase: Phase,
+    expander: &mut dyn super::ExpansionHost,
+) -> Result<(Hir, Environment), Diagnostic> {
     let mut analyzer = Analyzer {
+        expander,
         environment: environment.clone(),
         phase,
         locals: HashMap::new(),

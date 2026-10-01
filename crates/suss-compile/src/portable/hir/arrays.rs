@@ -1,6 +1,6 @@
 //! Bounded adaptations of the pin's array macro expansions.
 use super::*;
-impl Analyzer {
+impl Analyzer<'_> {
     pub(super) fn array_form(
         &mut self,
         form: &Form,
