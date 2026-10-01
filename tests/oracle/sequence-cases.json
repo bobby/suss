@@ -1,0 +1,414 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "seq-nil",
+      "source": "(nil? (seq nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "first-nil",
+      "source": "(nil? (first nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "next-nil",
+      "source": "(nil? (next nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rest-nil-not-nil",
+      "source": "(nil? (rest nil))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "rest-nil-empty-seq",
+      "source": "(nil? (seq (rest nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-list-not-nil",
+      "source": "(nil? ())",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "empty-list-truthy",
+      "source": "(if () 1 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "empty-list-first",
+      "source": "(nil? (first ()))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-list-next",
+      "source": "(nil? (next ()))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-list-rest-identity",
+      "source": "(identical? () (rest ()))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-list-count",
+      "source": "(count ())",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "list-count",
+      "source": "(count (list 1 nil false 4))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "list-first",
+      "source": "(first (list 7 8 9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "list-next-first",
+      "source": "(first (next (list 7 8 9)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "singleton-list-next",
+      "source": "(nil? (next (list 7)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "singleton-list-rest",
+      "source": "(identical? () (rest (list 7)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "list-seq-identity",
+      "source": "(let [x (list 1 2)] (identical? x (seq x)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "list-false-first",
+      "source": "(false? (first (list false 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "list-nil-element-count",
+      "source": "(count (list nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "cons-nil-count",
+      "source": "(count (cons 1 nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "cons-list-tail-identity",
+      "source": "(let [x (list 2 3)] (identical? x (rest (cons 1 x))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "cons-empty-next",
+      "source": "(nil? (next (cons 1 ())))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "cons-empty-rest-identity",
+      "source": "(identical? () (rest (cons 1 ())))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-empty-seq",
+      "source": "(nil? (seq (array)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-first",
+      "source": "(first (array 7 8))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "array-next-first",
+      "source": "(first (next (array 7 8)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "array-singleton-next",
+      "source": "(nil? (next (array 7)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-rest-empty",
+      "source": "(identical? () (rest (array 7)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-seq-count",
+      "source": "(count (array-seq (array 7 8 9) 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "array-seq-offset-first",
+      "source": "(first (array-seq (array 7 8 9) 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "array-seq-past-end",
+      "source": "(nil? (array-seq (array 7) 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-seq-seq-identity",
+      "source": "(let [s (seq (array 1 2))] (identical? s (seq s)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-seq-sees-mutation",
+      "source": "(let [a (array 1 2) s (seq a)] (aset a 0 9) (first s))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "array-seq-sees-growth",
+      "source": "(let [a (array 1) s (seq a)] (aset a 1 9) (count s))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "array-seq-nil-element",
+      "source": "(nil? (first (seq (array nil))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-empty-seq",
+      "source": "(nil? (seq \"\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-unit-count",
+      "source": "(count \"A\ud83d\ude00B\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "string-first-unit",
+      "source": "(identical? \"A\" (first \"AB\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-next-unit",
+      "source": "(identical? \"B\" (first (next \"AB\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-astral-first-high",
+      "source": "(identical? \"\\ud83d\" (first \"\ud83d\ude00\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-astral-next-low",
+      "source": "(identical? \"\\ude00\" (first (next \"\ud83d\ude00\")))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-lone-surrogate",
+      "source": "(identical? \"\\ud800\" (first \"\\ud800x\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-singleton-next",
+      "source": "(nil? (next \"A\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-singleton-rest",
+      "source": "(identical? () (rest \"A\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "seq-undefined",
+      "source": "(nil? (seq (aget (array) 0)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rest-undefined-empty",
+      "source": "(identical? () (rest (aget (array) 0)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "first-class-first",
+      "source": "(let [f first] (f (list 8 9)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "list-evaluation-order",
+      "source": "(do (def seq-trace 0) (let [x (list (do (set! seq-trace (+ (* seq-trace 10) 1)) 7) (do (set! seq-trace (+ (* seq-trace 10) 2)) 8))] (+ (* seq-trace 100) (first x))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4092dc0000000000"
+      }
+    },
+    {
+      "id": "empty-literal-lexical-list-shadow",
+      "source": "(let [List 99] (identical? () (.-EMPTY cljs.core/List)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-literal-live-static-property",
+      "source": "(let [original (.-EMPTY cljs.core/List)] (try (do (set! (.-EMPTY cljs.core/List) nil) (nil? ())) (finally (set! (.-EMPTY cljs.core/List) original))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-literal-captured-reader-live-property",
+      "source": "(let [original (.-EMPTY cljs.core/List) read-empty (fn [] ())] (try (do (set! (.-EMPTY cljs.core/List) nil) (nil? (read-empty))) (finally (set! (.-EMPTY cljs.core/List) original))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

@@ -499,6 +499,23 @@ impl Analyzer {
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
             Kind::String(value) => Expression::Literal(Literal::String(value.clone())),
+            Kind::List(items) if items.is_empty() => {
+                // The pinned emitter reads List.EMPTY for each empty-list literal.
+                // Resolve the canonical core binding, never a lexical/user List.
+                let symbol = suss_reader::Symbol {
+                    namespace: Some("suss.core".into()),
+                    name: "List".into(),
+                };
+                let (kind, ty) = self.global_value(&symbol, form.span.clone())?;
+                let owner = Hir {
+                    span: form.span.clone(),
+                    metadata: Vec::new(),
+                    ty,
+                    kind,
+                };
+                let key = self.literal_form(form, Literal::String("EMPTY".encode_utf16().collect()));
+                return Ok(self.nominal(form, Nominal::NamedGet, vec![owner, key]));
+            }
             Kind::Symbol(symbol) => {
                 let (kind, ty) = if symbol.namespace.is_none() {
                     if let Some((id, ty)) = self.locals.get(&symbol.name) {

@@ -6674,3 +6674,38 @@ Closure fixes. Reviewer pushes this reviewed source/evidence head to PR100; root
 must require exact reviewed-head CI before readiness. Next unblocked implementation
 is persistent sequence/list foundations, while literal macro/property domains and
 full hashing/equality remain tracked unfinished. No merge or milestone completion.
+
+## Sequence/list preparation and canonical literal — 2026-10-01
+
+New isolated branch portable/core-sequence-foundation at candidate PR100
+3fbabd1924ce4e39d29ad3e6dd949b11a40c78e1 preserves the six original preparation
+artifacts from7b60562 without replaying its stale parent stack or overwriting
+current roadmap/ABI evidence. All original48 sequence source/expectation JSON
+values are preserved. Three newly appended static-property candidates bring the
+corpus to51; they are not freshly certified yet. The native test explicitly
+loads the generated core artifact and remains expected red on unresolved seq.
+
+Pinned compiler.cljc577–580 emits cljs.core.List.EMPTY for (). Portable HIR now
+resolves canonical suss.core/List and performs the existing checked named read.
+No runtime type/layout/bootstrap change. Added one original adapter regression
+for GC, canonical alias/lexical/user List shadowing, captured reader and live
+static-property replacement. Preserved all five preexisting core interface tests;
+the older preparation worktree's short test file was not used to replace them.
+This is a compiler prerequisite, not concrete List/EmptyList acceptance.
+
+Python inventory_records validated the pin and recorded20 complete source
+ranges/hashes in docs/runtime/sequence-source-audit.json. git diff --check passes.
+Rustfmt was limited to the two sequence test files. No Cargo/JVM/Node execution
+on this branch yet: independent PR100 reviewer exclusively owns the shared heavy
+slot. No new PR/readiness/closure or milestone completion claim.
+
+PR100 review found strict Closure gobject/set and gobject/create writes were
+incorrectly using non-strict bracket stores. Reviewer is preserving bracket
+semantics and certifying separate strict stores, including cache counter effects
+and first-class factory behavior. Candidate100 CI36832808888 was confirmed live
+in_progress at3fb. Candidate CI cannot certify a changed reviewed head. Root
+must inspect reviewer terminal results/release, rebase this branch onto the pushed
+reviewed100 head, run focused core_sequence_interfaces and fresh sequence oracle
+(record native red transparently), then retain actual upstream list/sequence types
+with their full dependency closure. Require independent review/full/final-head CI
+for every eventual PR. Never merge. M2–M9 remain active and incomplete.
