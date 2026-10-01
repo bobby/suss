@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "87d00de6df295586f185d473351e38db9dd4af1337ccdc3ddc7c376e9e172007",
+  "replacement": "(def empty-ordered-hash\n  (mix-collection-hash 1 0))",
+  "rationale": "Retain the empty ordered hash initializer and original private metadata in licensed extraction. The executable bootstrap omits the unsupported private attribute; namespace visibility enforcement/runtime Var metadata remain explicitly unfinished, so this is a partial adapted review, not privacy acceptance."
+}

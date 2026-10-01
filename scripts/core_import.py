@@ -110,7 +110,9 @@ def build(root=ROOT):
     overlay = fields(data(Scanner(overlay_path.read_text()).all()[0]),
                      'schema upstream-commit reviews', 'overlay')['reviews']
     recipe_path = root / RECIPE
-    recipe = exact(json_data(recipe_path.read_bytes()),
+    recipe_data = json_data(recipe_path.read_bytes())
+    loader_recipe = recipe_data.pop('loader', None)
+    recipe = exact(recipe_data,
                    'schema upstream-commit namespace phase forms', 'recipe')
     if type(recipe['schema']) is not int or recipe['schema'] != VERSION or recipe['upstream-commit'] != PIN:
         raise ValueError('unsupported recipe schema or source pin')
@@ -187,10 +189,27 @@ def build(root=ROOT):
             'dependencies': review[keyword('dependencies')],
             'semantic-tests': review[keyword('tests')],
         })
+    loader_sources = {}
+    loader_records = {}
+    if loader_recipe is not None:
+        exact(loader_recipe, 'before after', 'loader')
+        for stage, selection in loader_recipe.items():
+            exact(selection, 'path sha256', 'loader input')
+            raw = repository_file(root, selection['path']).read_bytes()
+            if selection['sha256'] != digest(raw):
+                raise ValueError(f'stale loader input hash: {stage}')
+            source = raw.decode('utf-8')
+            # Loader syntax is parsed, never silently discarded or evaluated here.
+            if not Scanner(source).all():
+                raise ValueError(f'empty loader input: {stage}')
+            loader_sources[stage] = source
+            loader_records[stage] = selection
     extension = 'sus' if recipe['phase'] == 'runtime' else 'cljc'
     artifact = f'suss/core.{extension}'
     output = '\n'.join(selected_notices) + '\n;; Generated reviewed core import; see ../manifest.json.\n'
-    output += f'(ns {recipe["namespace"]})\n\n' + '\n\n'.join(adapted_forms) + '\n'
+    output += f'(ns {recipe["namespace"]})\n\n'
+    output += loader_sources.get('before', '') + '\n\n'.join(adapted_forms) + '\n'
+    output += loader_sources.get('after', '')
     outputs[artifact] = output.encode()
     for name in ('LICENSE', 'epl-v10.html'):
         outputs[name] = pinned_file(root, name)
@@ -203,6 +222,7 @@ def build(root=ROOT):
         'recipe': RECIPE, 'recipe-sha256': digest(recipe_path.read_bytes()),
         'reviews-sha256': digest(overlay_path.read_bytes()),
         'inventory-sha256': digest(inventory_path.read_bytes()), 'forms': entries,
+        'loader': loader_records,
         'files': {path: digest(value) for path, value in sorted(outputs.items())},
     }
     outputs['manifest.json'] = (json.dumps(manifest, indent=2, ensure_ascii=False) + '\n').encode()

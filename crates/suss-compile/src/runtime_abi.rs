@@ -626,6 +626,13 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(comparisons::functions(&mut b));
     arithmetic_functions.extend(bitwise::functions(&mut b));
     arithmetic_functions.extend(named_properties::functions(&mut b));
+    // Original source error adapter: retain the ABI Error descriptor/message
+    // rather than substituting nil, an opaque object or a Wasm trap.
+    b.function("language-error-new", &[VALUE], &[VALUE], &[
+        GlobalGet(nominal::ERROR_GLOBAL), LocalGet(0), Call(b.names["coerce-string"]),
+        RefCastNonNull(HeapType::Concrete(STRING)), I32Const(0), RefI31,
+        I32Const(0), RefI31, StructNew(8),
+    ]);
     native_objects::functions(&mut b);
     native_object_properties::primitives(&mut b);
     native_object_properties::functions(&mut b);

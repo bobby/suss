@@ -6674,3 +6674,198 @@ Closure fixes. Reviewer pushes this reviewed source/evidence head to PR100; root
 must require exact reviewed-head CI before readiness. Next unblocked implementation
 is persistent sequence/list foundations, while literal macro/property domains and
 full hashing/equality remain tracked unfinished. No merge or milestone completion.
+
+## Sequence/list preparation and canonical literal — 2026-10-01
+
+New isolated branch portable/core-sequence-foundation at candidate PR100
+3fbabd1924ce4e39d29ad3e6dd949b11a40c78e1 preserves the six original preparation
+artifacts from7b60562 without replaying its stale parent stack or overwriting
+current roadmap/ABI evidence. All original48 sequence source/expectation JSON
+values are preserved. Three newly appended static-property candidates bring the
+corpus to51; they are not freshly certified yet. The native test explicitly
+loads the generated core artifact and remains expected red on unresolved seq.
+
+Pinned compiler.cljc577–580 emits cljs.core.List.EMPTY for (). Portable HIR now
+resolves canonical suss.core/List and performs the existing checked named read.
+No runtime type/layout/bootstrap change. Added one original adapter regression
+for GC, canonical alias/lexical/user List shadowing, captured reader and live
+static-property replacement. Preserved all five preexisting core interface tests;
+the older preparation worktree's short test file was not used to replace them.
+This is a compiler prerequisite, not concrete List/EmptyList acceptance.
+
+Python inventory_records validated the pin and recorded20 complete source
+ranges/hashes in docs/runtime/sequence-source-audit.json. git diff --check passes.
+Rustfmt was limited to the two sequence test files. No Cargo/JVM/Node execution
+on this branch yet: independent PR100 reviewer exclusively owns the shared heavy
+slot. No new PR/readiness/closure or milestone completion claim.
+
+PR100 review found strict Closure gobject/set and gobject/create writes were
+incorrectly using non-strict bracket stores. Reviewer is preserving bracket
+semantics and certifying separate strict stores, including cache counter effects
+and first-class factory behavior. Candidate100 CI36832808888 was confirmed live
+in_progress at3fb. Candidate CI cannot certify a changed reviewed head. Root
+must inspect reviewer terminal results/release, rebase this branch onto the pushed
+reviewed100 head, run focused core_sequence_interfaces and fresh sequence oracle
+(record native red transparently), then retain actual upstream list/sequence types
+with their full dependency closure. Require independent review/full/final-head CI
+for every eventual PR. Never merge. M2–M9 remain active and incomplete.
+
+
+## Sequence canonical lookup executed / fresh51 red — 2026-10-01
+
+Independent PR100 review finished and pushed3e5af026f5b2f0de09edace672ad0f45c084e93a.
+Root inspected final workspace log /private/tmp/suss-pr100-review-full-final.log
+and reviewer handoff; full79254 is terminal0, sourcecache70/private2/ABI41 and
+Python76/inventory1065/reviews139+926/import54 pass. Two significant strict Closure
+findings are fixed; no remaining significant finding. Updated PR100 body with
+actual review/fixes/results. Exact-head CI36834509263/job110278870352 is confirmed
+in_progress at3e5af02. Candidate36832808888 is cancelled and cannot gate readiness.
+PR100 stays draft; next require this exact CI success before marking ready.
+
+Rebased sequence preparation2d44d8b onto reviewed3e5af02; resolved only appended
+handoff conflict by preserving both histories, producing53281ca. Pinned source
+is a detached nested Git worktree atc4295f30, not a tracked symlink. No unrelated
+root files/stashes changed. All original48 source/expectation JSON values were
+checked against7b60562 and remain equal;3 candidates are now independently certified.
+
+Focused core_sequence_interfaces10925 ended0 with6 passing tests. Extended the
+canonical literal regression with compile-atomic premature definition failure
+and live nil EMPTY reads, then final19497 ended0 with6/6 passing. Log
+/private/tmp/suss-sequence-canonical-final.log. Command: shared target/build2
+cargo test -p suss-cli --test core_sequence_interfaces --locked -- --test-threads=2.
+
+Fresh sequence18929 ended101: primary51 all match exactly; native explicitly
+loads core then fails on unresolved Runtime name seq at7..10. Log
+/private/tmp/suss-sequence-primary51-native-red.log. Command: shared target/build2
+sh scripts/test-sequence-oracle.sh. Recorded failure is the actual next implementation
+boundary; no ignored test/expectation substitution/native sequence success claim.
+All root local processes terminal. Full workspace is not claimed green for this
+unfinished sequence branch, which contains the deliberate native red regression.
+
+Next retain actual upstream List/EmptyList/Cons/IndexedSeq and their audited
+source dependency closure, publish the real EmptyList on List.EMPTY, implement
+seq APIs and general persistent variadic rest. Preserve51 observations and certify
+native execution with equality/hash/metadata/reduction/iterator/lazy obligations
+still in scope. Do not replace concrete types with the original literal test adapter.
+No new PR yet; require independent review/fixes/full/final-head CI before readiness.
+M2–M9 stay active; no merges or issue/milestone completion claims.
+
+
+## Retained concrete sequences and persistent variadic rest — 2026-10-01
+
+PR100 is READY, still unmerged: head3e5af026f5b2f0de09edace672ad0f45c084e93a,
+independent review/fixes and full79254 passed. Exact reviewed-head CI36834509263
+completed SUCCESS; root inspected /private/tmp/suss-pr100-final-ci.log, updated
+PR body and ran gh pr ready100. No merge/closure/milestone acceptance.
+
+Sequence branch continues from0f60113. Retained all methods of List/EmptyList/Cons/
+IndexedSeq plus14 helper/API declarations:18 new selected forms bring import68/
+72 licensed artifacts, reviews157 partial/908 unassessed. Explicit patches retain
+algorithms/docstrings/metadata/EPL and replace host Error/numeric array append/
+bounded defn. Empty ordered hash's unsupported private attribute is omitted only
+in its explicit executable patch; privacy/Var metadata remain pending. No blanket
+method deletion or fake helpers. Original loader forward declarations explicitly
+name pending print/index-search/equality/hash/reduction/iterator/RSeq/str_ helpers;
+invoking an uninitialized dependency fails, not succeeds. Two complete licensed
+setup statements publish real List.EMPTY and nil ICounted. New hash-bound loader
+inputs/manifest and scripts/sequence_provenance.py plus3 regressions verify source
+bounds/hashes/notices/order and reject edits/extra forms. CI runs that check.
+
+Compiler canonical () lookup was retained. HIR/verified IR now carry variadic
+method/rest-class facts. Exact fixed dispatch precedes a variadic entry. Rest
+uses a fresh source array and live canonical IndexedSeq class construction with
+array/offset0/nil metadata. No raw Args masquerades as a persistent sequence.
+Empty rest is nil and skips class lookup/construction. Named self/recur, captures,
+source evaluation order, arity checks and malformed signature atomicity execute.
+Private language-error-new uses existing descriptor/Exception layout and checked
+UTF-16 coercion. No shared type/layout/ABI/bootstrap core-cell change.
+
+First type focus38038 ended101 on unsupported private metadata; explicit source-
+bound empty hash patch corrected loading and47239 passed6 interface tests. New
+fixture failed compilation on nonexistent StructRef.get; corrected strict fields
+before42637 passed2 actual type/error tests. Initial variadicbuild12819 passed2.
+Initial list15567 passed all51/native3. First fresh67/25453 ended1: one new candidate
+wrongly expected array-seq to supply rest. Pinned compiler.cljc987–1001/1058–1074
+constructs IndexedSeq directly. Corrected only that new expected7/renamed probes,
+added class/empty-rest probes and fixed compiler binding/construction accordingly.
+All original51 checked JSON-equal against0f60113 and untouched. Fresh9486 certified
+69 exact primary observations/native3. Final source98359 passed4 with persisted
+rest/GC/wrong-arity effects/malformed signatures/recovery; final72919 repeats69 exact
+primary/native4, /private/tmp/suss-sequence-primary69-final.log.
+
+Python loader13 initially passed; source setup provenance metadata initially listed
+source order while the explicit loader runs singleton then nil extension. Corrected
+metadata to actual retained statement order; all80 Python tests pass, plus inventory/
+reviews157+908/import72/setup2. Log /private/tmp/suss-sequence-python-final.log.
+Commands: python3 -m unittest discover -s scripts -p test_*.py; python3 scripts/
+sequence_provenance.py; python3 scripts/core_import.py --check; python3 scripts/
+cljs_reviews.py. Rustfmt only test/new modified function regions, not workspace.
+
+First full72012 ended101 on an old unsupported-variadic fixture expecting span&;
+without loaded source core, the new lowering correctly reports missing IndexedSeq
+at the function span. Updated that regression to assert exact dependency diagnostic,
+retaining destructuring/arity failures. Closure27762 passed13; added malformed
+variadic IR class/arity/entry rejection and final41525 passes14. Pinned unchecked-
+max binds operands once; corrected the count patch to explicit let/branch before
+final fresh72919. No unchanged oracle result retargeting or skipped success.
+
+Final full workspace6028 running, confirmed live through portable pipeline tests.
+Log /private/tmp/suss-sequence-full-final.log. Root exclusively owns heavy slot;
+all earlier local handles terminal. Cargo commands always shared target, build2,
+--locked/--test-threads=2, no RUSTFLAGS. Required baseline before opening coherent
+sequence/rest draft PR against100 with Refs9/14/16/17/19. Then dispatch independent
+subagent review/fixes, reviewer full baseline and exact reviewed-head CI. Do not
+merge. Complete helper dependencies, equality/hash/metadata/reduction/iterators,
+general apply and compiled macros remain next; lazy/chunked/vector/HAMT/transient
+and M2–M9 acceptance stay unfinished. Source seq JS Symbol.iterator branch is
+outside this portable adapter; typed bridge/iterators and str_ formatting remain
+explicit pending boundaries. No full core/collection or milestone completion.
+
+
+Final full6028 ended0; root inspected /private/tmp/suss-sequence-full-final.log
+through final doc-test completion. All required workspace suites pass, including
+native sequence4/fresh69 cases, interface6, closure14 and runtime ABI41. Existing
+manual ignored observations and diagnostic9 passing/7 known failures remain
+explicit. No scope-wide compatibility claim. Original51 JSON values checked
+against0f60113 remain identical. All local handles terminal; root may open the
+coherent sequence/rest draft and release the heavy slot to its mandatory independent
+reviewer. Exact final reviewed-head CI still gates readiness. No merges.
+
+
+## Independent PR101 review — 2026-10-01
+
+Reviewed candidate4d5ee493771768b2ac841b9384895f189fce757d independently in
+/private/tmp/suss-review-pr101 against reviewed PR100 base3e5af02. Read accepted
+design/ROADMAP/inventory/handoff and inspected complete source types, every
+adaptation, setup/EPL/provenance, canonical empty lookup, typed Error, and
+fixed/variadic HIR/IR/dispatch/captures/recur. No significant production defect
+identified in this bounded foundation. Wrong arity remains a typed diagnostic per
+accepted design; unchecked JS calls are not a substitute for that contract.
+
+Independent fresh51409 ended0 with all original69 exact pinned/native matches.
+Added six edge observations without changing any original source/expectation;
+fresh59125 ended0 with75 exact primary/native matches and all5 native sequence
+tests. Log /private/tmp/suss-pr101-review-oracle75.log. New probes cover fixed0 vs
+variadic0 dispatch, many arguments, recur with a List rest, separate owned rest
+arrays, array growth and captures/named self calls. Additional native test rebinds
+IndexedSeq to nil/false/number/function: empty rest bypasses the class; nonempty
+rest raises Language error after argument effects; GC plus restoration recovers.
+No trap, silent success, oracle retargeting or ignored failure.
+
+Command: CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target
+CARGO_BUILD_JOBS=2 sh scripts/test-sequence-oracle.sh. Python80 passed,
+/private/tmp/suss-pr101-review-python.log; both licensed setup forms, import72 and
+reviews157 partial/908 unassessed verified using python3 -m unittest discover -s
+scripts -p 'test_*.py', sequence_provenance.py, core_import.py --check and
+cljs_reviews.py. Original69 JSON values verified identical to candidate4d5ee49;
+original corpus text retains its escaping, with additions only.
+
+Independent full workspace session70659 ended0; inspected log through all
+final doc tests, /private/tmp/suss-pr101-review-full.log. All required suites pass;
+existing manual ignored and explicit diagnostic gaps remain unchanged. Command: shared target/build2
+cargo test --workspace --locked -- --test-threads=2. No RUSTFLAGS. Exact final
+reviewed-head CI required after review commit/push; PR101 remains draft, no merges.
+Next implement the explicit pending source helpers for printing/sequential
+hash/equality/reduction/iterators/reversal/general apply, then lazy/chunked/vector/
+HAMT/transient acceptance. Full lossless collection decoder and M2–M9 gates remain
+unfinished; no issue or milestone closure.

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "4d0b5293a44b44be292191f841b087ac3cc5a86ecfe47feb7b39d50b23d4141b",
+  "replacement": "(def accumulating-seq-count (fn [coll]\n  (loop [s (seq coll) acc 0]\n    (if (counted? s) ; assumes nil is counted, which it currently is\n      (+ acc (-count s))\n      (recur (next s) (inc acc))))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+}

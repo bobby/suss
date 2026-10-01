@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "3b7caa6617ed6e726f5e77696459ce02909f48ae78d81980b09d8223fc35d8c0",
+  "replacement": "(def sequential?\n  \"Returns true if coll satisfies ISequential\"\n  (fn [x] (satisfies? ISequential x)))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+}

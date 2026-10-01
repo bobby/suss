@@ -269,6 +269,7 @@ pub enum Nominal {
     NativeObjectGet,
     NativeObjectSet,
     NativeObjectStrictSet,
+    LanguageError,
     ObjectSet,
     ObjectInvoke,
     Key(usize),
@@ -293,6 +294,7 @@ impl Nominal {
             && match self {
                 Self::Array => true,
                 Self::NativeObjectFactory => count == 0,
+                Self::LanguageError => count == 1,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
                 Self::NamedGet => count == 2 && arguments[1] == Type::String,
@@ -333,6 +335,7 @@ pub struct Parameter {
 }
 #[derive(Debug, Clone)]
 pub struct Method {
+    pub variadic: bool,
     pub parameters: Vec<Parameter>,
     pub body: Box<Hir>,
 }
@@ -419,6 +422,7 @@ pub enum Expression {
         methods: Vec<Method>,
         captures: Vec<BindingId>,
         self_binding: Option<Parameter>,
+        rest_class: Option<Global>,
     },
     Call {
         callee: Box<Hir>,
@@ -499,6 +503,23 @@ impl Analyzer {
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
             Kind::String(value) => Expression::Literal(Literal::String(value.clone())),
+            Kind::List(items) if items.is_empty() => {
+                // The pinned emitter reads List.EMPTY for each empty-list literal.
+                // Resolve the canonical core binding, never a lexical/user List.
+                let symbol = suss_reader::Symbol {
+                    namespace: Some("suss.core".into()),
+                    name: "List".into(),
+                };
+                let (kind, ty) = self.global_value(&symbol, form.span.clone())?;
+                let owner = Hir {
+                    span: form.span.clone(),
+                    metadata: Vec::new(),
+                    ty,
+                    kind,
+                };
+                let key = self.literal_form(form, Literal::String("EMPTY".encode_utf16().collect()));
+                return Ok(self.nominal(form, Nominal::NamedGet, vec![owner, key]));
+            }
             Kind::Symbol(symbol) => {
                 let (kind, ty) = if symbol.namespace.is_none() {
                     if let Some((id, ty)) = self.locals.get(&symbol.name) {
@@ -667,7 +688,8 @@ impl Analyzer {
     ) -> Result<Hir, Diagnostic> {
         if args
             .first()
-            .is_some_and(|arg| matches!(arg.kind, Kind::Vector(_)))
+            .is_some_and(|arg| matches!(&arg.kind, Kind::Vector(names)
+                if !names.iter().any(|name| matches!(&name.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "&"))))
         {
             return self.fixed_function(form, args, bootstrap_macro);
         }
@@ -704,17 +726,9 @@ impl Analyzer {
             .first()
             .is_some_and(|arg| matches!(arg.kind, Kind::Vector(_)))
         {
-            let method = self.fixed_function(form, signatures, bootstrap_macro)?;
-            let Expression::Function {
-                parameters,
-                body,
-                captures: free,
-            } = method.kind
-            else {
-                unreachable!()
-            };
+            let (method, free) = self.general_method(form, signatures, bootstrap_macro)?;
             captures.extend(free);
-            methods.push(Method { parameters, body });
+            methods.push(method);
         } else {
             for signature in signatures {
                 let Kind::List(items) = &signature.kind else {
@@ -723,24 +737,46 @@ impl Analyzer {
                         "Function signature requires a parameter vector and body",
                     ));
                 };
-                let method = self.fixed_function(signature, items, bootstrap_macro)?;
-                let Expression::Function {
-                    parameters,
-                    body,
-                    captures: free,
-                } = method.kind
-                else {
-                    unreachable!()
-                };
+                let (method, free) = self.general_method(signature, items, bootstrap_macro)?;
                 captures.extend(free);
-                methods.push(Method { parameters, body });
+                methods.push(method);
             }
         }
         // The pinned compiler warns on duplicate fixed arities and executes the last body.
         methods.reverse();
         let mut arities = BTreeSet::new();
-        methods.retain(|method| arities.insert(method.parameters.len()));
+        methods.retain(|method| arities.insert((method.parameters.len(), method.variadic)));
         methods.reverse();
+        let variadic: Vec<_> = methods.iter().filter(|method| method.variadic).collect();
+        if variadic.len() > 1
+            || variadic.first().is_some_and(|method| {
+                methods.iter().any(|fixed| {
+                    !fixed.variadic && fixed.parameters.len() > method.parameters.len() - 1
+                })
+            })
+        {
+            return Err(fail(
+                form.span.clone(),
+                "Function requires one variadic signature with no larger fixed arity",
+            ));
+        }
+        let rest_class = if variadic.is_empty() {
+            None
+        } else {
+            Some(
+                self.environment
+                    .resolve(
+                        self.phase,
+                        &suss_reader::Symbol {
+                            namespace: Some("suss.core".into()),
+                            name: "IndexedSeq".into(),
+                        },
+                        form.span.clone(),
+                    )?
+                    .global()
+                    .clone(),
+            )
+        };
         captures.clear();
         for method in &methods {
             let mut bound: BTreeSet<_> = method
@@ -771,8 +807,56 @@ impl Analyzer {
                 methods,
                 captures: captures.into_iter().collect(),
                 self_binding,
+                rest_class,
             },
         })
+    }
+    fn general_method(
+        &mut self,
+        form: &Form,
+        args: &[Form],
+        bootstrap_macro: bool,
+    ) -> Result<(Method, Vec<BindingId>), Diagnostic> {
+        let mut args = args.to_vec();
+        let Some(Form {
+            kind: Kind::Vector(names),
+            ..
+        }) = args.first_mut()
+        else {
+            return Err(fail(
+                form.span.clone(),
+                "Function requires a parameter vector",
+            ));
+        };
+        let markers: Vec<_> = names.iter().enumerate().filter_map(|(index, name)|
+            matches!(&name.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "&").then_some(index)).collect();
+        let variadic = !markers.is_empty();
+        if let Some(&index) = markers.first() {
+            if markers.len() != 1 || index + 2 != names.len() {
+                return Err(fail(
+                    form.span.clone(),
+                    "Variadic signature requires exactly one trailing rest parameter",
+                ));
+            }
+            names.remove(index);
+        }
+        let method = self.fixed_function(form, &args, bootstrap_macro)?;
+        let Expression::Function {
+            parameters,
+            body,
+            captures,
+        } = method.kind
+        else {
+            unreachable!()
+        };
+        Ok((
+            Method {
+                parameters,
+                body,
+                variadic,
+            },
+            captures,
+        ))
     }
     fn fixed_function(
         &mut self,
@@ -981,6 +1065,7 @@ impl Analyzer {
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
             let operation = match symbol.name.as_str() {
                 "object-factory" => Some(Nominal::NativeObjectFactory),
+                "error" => Some(Nominal::LanguageError),
                 "object-get" => Some(Nominal::NativeObjectGet),
                 "object-set" => Some(Nominal::NativeObjectSet),
                 "object-set-strict" => Some(Nominal::NativeObjectStrictSet),

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "d76e1997c753718abb253e474d9d5350358cc03a6a27ba52b9b30a9f28011043",
+  "replacement": "(def list?\n  \"Returns true if x implements IList\"\n  (fn [x]\n  (satisfies? IList x)))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+}

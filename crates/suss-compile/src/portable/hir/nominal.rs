@@ -574,6 +574,7 @@ impl Analyzer {
                     arguments.push(self.local(parameter, id));
                 }
                 wrappers.push(Method {
+                    variadic: false,
                     parameters: wrapper_params,
                     body: Box::new(Hir {
                         span: declaration.span.clone(),
@@ -602,6 +603,7 @@ impl Analyzer {
                     methods: wrappers,
                     captures,
                     self_binding: None,
+                rest_class: None,
                 },
             };
             methods.push(ProtocolMethod {
@@ -891,7 +893,7 @@ impl Analyzer {
                         else {
                             unreachable!()
                         };
-                        groups[group].2.push(Method { parameters, body });
+                        groups[group].2.push(Method { parameters, body, variadic: false });
                     }
                 }
                 for (method_name, name, mut methods) in groups {
@@ -920,6 +922,7 @@ impl Analyzer {
                             methods,
                             captures: captures.into_iter().collect(),
                             self_binding: None,
+                rest_class: None,
                         }
                     };
                     let implementation = Hir {

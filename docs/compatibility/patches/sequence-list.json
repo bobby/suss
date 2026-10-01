@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "d2bcd9e28da182f1a61f5c52ca185cf03d711acfd2a6da7a5bbbef6169d0def9",
+  "replacement": "(def list\n  \"Creates a new list containing the items.\"\n  (fn [& xs]\n  (let [arr (if (and (instance? IndexedSeq xs) (zero? (.-i xs)))\n              (.-arr xs)\n              (let [arr (array)]\n                (loop [^not-native xs xs]\n                  (if-not (nil? xs)\n                    (do\n                      (aset arr (alength arr) (-first xs))\n                      (recur (-next xs)))\n                    arr))))]\n    (loop [i (alength arr) r ()]\n      (if (> i 0)\n        (recur (dec i) (-conj r (aget arr (dec i))))\n        r)))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap preserves original variadic list algorithm, metadata/docstring and array/sequence paths. Compiler variadic entry builds a fresh owned array and constructs the live retained IndexedSeq class to obtain an actual persistent IndexedSeq (nil for no rest), never raw invocation Args. Full compiled macros, method dependency closure remain unfinished. Replace the discarded host Array.push result in the fallback with checked numeric GC array append; preserve operand/element order and both original sequence traversal paths."
+}

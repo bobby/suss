@@ -277,9 +277,14 @@ fn source_wrong_arity_and_unimplemented_signatures_are_located_diagnostics() {
         assert!(error.message.contains("Wrong arity"));
         assert!(source[error.span].starts_with('('));
     }
-    for (source, needle) in [("(fn [& xs] xs)", "&"), ("(fn [[x]] x)", "[x]")] {
+    for (source, needle) in [("(fn [& xs] xs)", "(fn [& xs] xs)"), ("(fn [[x]] x)", "[x]")] {
         let error = portable::compile(source).unwrap_err();
         assert_eq!(&source[error.span], needle);
+        if source == "(fn [& xs] xs)" {
+            // Variadic lowering now requires the actual source-backed core class.
+            // This standalone compiler fixture has not loaded that core artifact.
+            assert!(error.message.contains("IndexedSeq"));
+        }
     }
 }
 
@@ -626,5 +631,27 @@ fn multiple_signatures_verify_exact_methods_captures_and_isolated_recur_targets(
     ] {
         let error = portable::compile(source).unwrap_err();
         assert!(source[error.span].starts_with("(recur"), "{source}");
+    }
+}
+
+#[test]
+fn verified_variadic_entries_require_class_and_valid_persistent_rest_shape() {
+    use portable::ir;
+    let hir = portable::analyze("(ns suss.core) (declare IndexedSeq) (fn [& xs] xs)").unwrap();
+    let original = ir::lower(&hir).unwrap();
+    portable::compile_ir(&original).unwrap();
+    for damage in 0..3 {
+        let mut broken = original.clone();
+        let body = broken.blocks.iter_mut().flat_map(|block| &mut block.instructions)
+            .find_map(|instruction| match &mut instruction.operation {
+                ir::Operation::MakeGeneralClosure { body, .. } => Some(body),
+                _ => None,
+            }).unwrap();
+        match damage {
+            0 => body.rest_class = None,
+            1 => body.methods[0].arity = 0,
+            _ => body.methods[0].variadic = false,
+        }
+        assert!(portable::compile_ir(&broken).is_err());
     }
 }

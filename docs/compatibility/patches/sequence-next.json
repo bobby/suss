@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "bfbcaf41f9d3162ec35c6722e6852ea8e48741b0322500da3900e2bc48adb6c6",
+  "replacement": "(def ^seq next\n  \"Returns a seq of the items after the first. Calls seq on its\n  argument.  If there are no more items, returns nil\"\n  (fn [coll]\n  (when-not (nil? coll)\n    (if (implements? INext coll)\n      (-next coll)\n      (seq (rest coll))))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains original metadata/docstring, fixed/multiple arities and algorithm; compiled upstream defn remains unfinished."
+}

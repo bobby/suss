@@ -253,6 +253,106 @@
       "id": "runtime:hash-string:1043",
       "source-sha256": "3ca4d933c808bb44c7fc13a4c925b043930d735d9fd03b938e48a0ba796cba53",
       "patch": "docs/compatibility/patches/hash-string-cached.json"
+    },
+    {
+      "id": "runtime:List:3209",
+      "source-sha256": "fe672cdb199ee851650e4805624585d3780aafeae1aa9be45ef34ec1cc95e465",
+      "patch": null
+    },
+    {
+      "id": "runtime:EmptyList:3286",
+      "source-sha256": "e594bcbfab3c7cf2923ea9cde7251a98985369d68f54365c98cf3d70763322ec",
+      "patch": "docs/compatibility/patches/sequence-EmptyList.json"
+    },
+    {
+      "id": "runtime:Cons:3391",
+      "source-sha256": "f8730a56baa13bf55dfa098a1060f18999320436e7115325a70d6bfbd5db01d1",
+      "patch": null
+    },
+    {
+      "id": "runtime:IndexedSeq:1653",
+      "source-sha256": "2d277f7e4f22b83c7aafc2112780d4e5ea2db2bb1240630aef7748392276c63f",
+      "patch": "docs/compatibility/patches/sequence-IndexedSeq.json"
+    },
+    {
+      "id": "runtime:seq:1282",
+      "source-sha256": "a5f7566fb9a39433f3d1a9a983d7fd56b43709dd8f8bab95395207ca5edbd0b4",
+      "patch": "docs/compatibility/patches/sequence-seq.json"
+    },
+    {
+      "id": "runtime:first:1309",
+      "source-sha256": "4726f2adea1be67a47e70037f3cd1b0af74751b8b25f4c2b1e9f92c447c8b7f7",
+      "patch": "docs/compatibility/patches/sequence-first.json"
+    },
+    {
+      "id": "runtime:rest:1320",
+      "source-sha256": "5c4c485ef887f7c3ce4c77908685dc481f045910df23a4a180f0a8b8b7f67f76",
+      "patch": "docs/compatibility/patches/sequence-rest.json"
+    },
+    {
+      "id": "runtime:next:1333",
+      "source-sha256": "bfbcaf41f9d3162ec35c6722e6852ea8e48741b0322500da3900e2bc48adb6c6",
+      "patch": "docs/compatibility/patches/sequence-next.json"
+    },
+    {
+      "id": "runtime:prim-seq:1751",
+      "source-sha256": "004e70e09f368c0022d8d272bab4b9d5abdf43ad78ffaffa8bf18967f5bcd5cc",
+      "patch": "docs/compatibility/patches/sequence-prim-seq.json"
+    },
+    {
+      "id": "runtime:array-seq:1759",
+      "source-sha256": "28f60b6fba1d923ac2c589a48d69783d489dd37a61be4ed163867356836b5a67",
+      "patch": "docs/compatibility/patches/sequence-array-seq.json"
+    },
+    {
+      "id": "runtime:cons:3451",
+      "source-sha256": "c11f8c6d2a8f83c92c17bd167bfda819e7a46f7c9077b61e0f9321bfb244e9e1",
+      "patch": "docs/compatibility/patches/sequence-cons.json"
+    },
+    {
+      "id": "runtime:counted?:1602",
+      "source-sha256": "fdc547dcc94d2fff3ceb940903897c523344b278870a817d01445ac6f57246ba",
+      "patch": "docs/compatibility/patches/sequence-counted-predicate.json"
+    },
+    {
+      "id": "runtime:list?:3279",
+      "source-sha256": "d76e1997c753718abb253e474d9d5350358cc03a6a27ba52b9b30a9f28011043",
+      "patch": "docs/compatibility/patches/sequence-list-predicate.json"
+    },
+    {
+      "id": "runtime:sequential?:2246",
+      "source-sha256": "3b7caa6617ed6e726f5e77696459ce02909f48ae78d81980b09d8223fc35d8c0",
+      "patch": "docs/compatibility/patches/sequence-sequential-predicate.json"
+    },
+    {
+      "id": "runtime:accumulating-seq-count:1900",
+      "source-sha256": "4d0b5293a44b44be292191f841b087ac3cc5a86ecfe47feb7b39d50b23d4141b",
+      "patch": "docs/compatibility/patches/sequence-accumulating-seq-count.json"
+    },
+    {
+      "id": "runtime:count:1906",
+      "source-sha256": "4babc186d6c63a02400466b4f020f28d0dfc36da4c6c5e75aee02a5f76caae77",
+      "patch": "docs/compatibility/patches/sequence-count.json"
+    },
+    {
+      "id": "runtime:empty-ordered-hash:1417",
+      "source-sha256": "87d00de6df295586f185d473351e38db9dd4af1337ccdc3ddc7c376e9e172007",
+      "patch": "docs/compatibility/patches/sequence-empty-ordered-hash.json"
+    },
+    {
+      "id": "runtime:list:3374",
+      "source-sha256": "d2bcd9e28da182f1a61f5c52ca185cf03d711acfd2a6da7a5bbbef6169d0def9",
+      "patch": "docs/compatibility/patches/sequence-list.json"
     }
-  ]
+  ],
+  "loader": {
+    "before": {
+      "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
+      "sha256": "9e72763fe6f9dcf8f163f891ed5aebcd75f196c8de698bb37421b8aa070e8f9b"
+    },
+    "after": {
+      "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
+      "sha256": "63ef1d751c0df72b5388054c9205326c9df7ce4627a9ea7e219b07ffa3e53308"
+    }
+  }
 }
