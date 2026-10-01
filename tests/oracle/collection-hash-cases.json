@@ -1,0 +1,446 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "ordered-empty",
+      "source": "(hash-ordered-coll (list))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1de106add800000"
+      }
+    },
+    {
+      "id": "public-empty",
+      "source": "(hash (list))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1de106add800000"
+      }
+    },
+    {
+      "id": "unordered-empty",
+      "source": "(hash-unordered-coll (list))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c16cdb16c0000000"
+      }
+    },
+    {
+      "id": "ordered-one",
+      "source": "(hash-ordered-coll (list 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1dce58f3ac00000"
+      }
+    },
+    {
+      "id": "public-one",
+      "source": "(hash (list 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1dce58f3ac00000"
+      }
+    },
+    {
+      "id": "unordered-one",
+      "source": "(hash-unordered-coll (list 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dd79fa65c00000"
+      }
+    },
+    {
+      "id": "ordered-two",
+      "source": "(hash-ordered-coll (list 1 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d1ab1f48800000"
+      }
+    },
+    {
+      "id": "public-two",
+      "source": "(hash (list 1 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d1ab1f48800000"
+      }
+    },
+    {
+      "id": "unordered-two",
+      "source": "(hash-unordered-coll (list 1 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1da1916b5400000"
+      }
+    },
+    {
+      "id": "ordered-reverse",
+      "source": "(hash-ordered-coll (list 2 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1c0447854000000"
+      }
+    },
+    {
+      "id": "public-reverse",
+      "source": "(hash (list 2 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1c0447854000000"
+      }
+    },
+    {
+      "id": "unordered-reverse",
+      "source": "(hash-unordered-coll (list 2 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1da1916b5400000"
+      }
+    },
+    {
+      "id": "ordered-zeros",
+      "source": "(hash-ordered-coll (list 0 -0.0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d8ca8e5f800000"
+      }
+    },
+    {
+      "id": "public-zeros",
+      "source": "(hash (list 0 -0.0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d8ca8e5f800000"
+      }
+    },
+    {
+      "id": "unordered-zeros",
+      "source": "(hash-unordered-coll (list 0 -0.0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c178e65980000000"
+      }
+    },
+    {
+      "id": "ordered-mixed",
+      "source": "(hash-ordered-coll (list nil true false -1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d676a5b1400000"
+      }
+    },
+    {
+      "id": "public-mixed",
+      "source": "(hash (list nil true false -1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d676a5b1400000"
+      }
+    },
+    {
+      "id": "unordered-mixed",
+      "source": "(hash-unordered-coll (list nil true false -1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d5f65268400000"
+      }
+    },
+    {
+      "id": "ordered-ascii",
+      "source": "(hash-ordered-coll (list \"a\" \"b\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1c69178e3000000"
+      }
+    },
+    {
+      "id": "public-ascii",
+      "source": "(hash (list \"a\" \"b\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1c69178e3000000"
+      }
+    },
+    {
+      "id": "unordered-ascii",
+      "source": "(hash-unordered-coll (list \"a\" \"b\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b95b8e69000000"
+      }
+    },
+    {
+      "id": "ordered-utf16",
+      "source": "(hash-ordered-coll (list \"\ud83d\ude00\" \"\\uD800\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41ce8db43e800000"
+      }
+    },
+    {
+      "id": "public-utf16",
+      "source": "(hash (list \"\ud83d\ude00\" \"\\uD800\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41ce8db43e800000"
+      }
+    },
+    {
+      "id": "unordered-utf16",
+      "source": "(hash-unordered-coll (list \"\ud83d\ude00\" \"\\uD800\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41aed47e20000000"
+      }
+    },
+    {
+      "id": "ordered-nested",
+      "source": "(hash-ordered-coll (list (list 1 2) (list 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c0a2548e800000"
+      }
+    },
+    {
+      "id": "public-nested",
+      "source": "(hash (list (list 1 2) (list 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c0a2548e800000"
+      }
+    },
+    {
+      "id": "unordered-nested",
+      "source": "(hash-unordered-coll (list (list 1 2) (list 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d5711d6e400000"
+      }
+    },
+    {
+      "id": "ordered-nested-empty",
+      "source": "(hash-ordered-coll (list (list) nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1dc414110800000"
+      }
+    },
+    {
+      "id": "public-nested-empty",
+      "source": "(hash (list (list) nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1dc414110800000"
+      }
+    },
+    {
+      "id": "unordered-nested-empty",
+      "source": "(hash-unordered-coll (list (list) nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d4e279ef000000"
+      }
+    },
+    {
+      "id": "helper-nil",
+      "source": "(hash-ordered-coll nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1de106add800000"
+      }
+    },
+    {
+      "id": "helper-cons",
+      "source": "(hash-ordered-coll (cons 1 (list 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d1ab1f48800000"
+      }
+    },
+    {
+      "id": "hash-cons",
+      "source": "(hash (cons 1 (list 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d1ab1f48800000"
+      }
+    },
+    {
+      "id": "helper-indexed",
+      "source": "(hash-ordered-coll (array-seq (array 1 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d1ab1f48800000"
+      }
+    },
+    {
+      "id": "hash-indexed",
+      "source": "(hash (array-seq (array 1 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d1ab1f48800000"
+      }
+    },
+    {
+      "id": "helper-reverse-seq",
+      "source": "(hash-ordered-coll (rseq (array-seq (array 2 1))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d1ab1f48800000"
+      }
+    },
+    {
+      "id": "hash-reverse-seq",
+      "source": "(hash (rseq (array-seq (array 2 1))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d1ab1f48800000"
+      }
+    },
+    {
+      "id": "helper-string-seq",
+      "source": "(hash-ordered-coll (seq \"ab\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1c69178e3000000"
+      }
+    },
+    {
+      "id": "hash-string-seq",
+      "source": "(hash (seq \"ab\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1c69178e3000000"
+      }
+    },
+    {
+      "id": "same-sequential",
+      "source": "(= (hash (list 1 2)) (hash (cons 1 (list 2))) (hash (array-seq (array 1 2))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "unordered-order",
+      "source": "(= (hash-unordered-coll (list 1 2)) (hash-unordered-coll (list 2 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "captured-helper",
+      "source": "(let [f hash-ordered-coll] (= (f (list 1 2)) (hash (list 1 2))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "list-cache",
+      "source": "(let [l (list 1 2) h (hash l)] (with-redefs [hash (fn [_] 99)] (= (-hash l) h)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "metadata-cache",
+      "source": "(let [l (list 1 2) h (hash l)] (= (hash (with-meta l nil)) h))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ordered-hash-effects",
+      "source": "(do (def collection-hash-effects 0) (deftype OrderedHashTrace [id] IHash (-hash [_] (do (set! collection-hash-effects (+ (* collection-hash-effects 10) id)) id))) (hash-ordered-coll (list (OrderedHashTrace. 1) (OrderedHashTrace. 2))) collection-hash-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "unordered-hash-effects",
+      "source": "(do (def collection-hash-effects 0) (deftype UnorderedHashTrace [id] IHash (-hash [_] (do (set! collection-hash-effects (+ (* collection-hash-effects 10) id)) id))) (hash-unordered-coll (list (UnorderedHashTrace. 1) (UnorderedHashTrace. 2))) collection-hash-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "ordered-duplicates",
+      "source": "(hash-ordered-coll (list 1 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41defd3ce3400000"
+      }
+    },
+    {
+      "id": "unordered-duplicates",
+      "source": "(hash-unordered-coll (list 1 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b810169a000000"
+      }
+    },
+    {
+      "id": "empty-unordered-initializer",
+      "source": "(= cljs.core/empty-unordered-hash (hash-unordered-coll nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ordered-count-live-mix",
+      "source": "(with-redefs [hash (fn [_] -1) mix-collection-hash (fn [h n] (+ (* n 100) h))] (= (hash-ordered-coll (list 1 2)) 1129))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "unordered-count-live-mix",
+      "source": "(with-redefs [hash (fn [_] -1) mix-collection-hash (fn [h n] (+ (* n 100) h))] (= (hash-unordered-coll (list 1 2)) 198))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ordered-overflow-basis",
+      "source": "(with-redefs [hash (fn [_] 2147483647) mix-collection-hash (fn [h n] (= h 929))] (hash-ordered-coll (list 1 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "unordered-overflow-basis",
+      "source": "(with-redefs [hash (fn [_] 2147483647) mix-collection-hash (fn [h n] (= h -2))] (hash-unordered-coll (list 1 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "captured-unordered-live-elements",
+      "source": "(let [f hash-unordered-coll] (with-redefs [hash-unordered-coll (fn [_] 17) hash (fn [_] 1)] (= (f (list 9 8)) (mix-collection-hash 2 2))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "cons-metadata-cache",
+      "source": "(let [c (cons 1 (list 2)) h (hash c) m (with-meta c nil)] (with-redefs [hash-ordered-coll (fn [_] 99)] (= (hash c) (hash m) h)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

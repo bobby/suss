@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b073882d1c68b8ad2df8edd26d3f2be46bca2b67474628089d2e50439bfed9da",
+  "replacement": "(def empty-unordered-hash\n  (mix-collection-hash 0 0))",
+  "rationale": "Retain complete pinned empty unordered hash initializer with source provenance and EPL notice. Bootstrap runtime Var privacy is unfinished, so omit the unsupported private attribute explicitly; no private visibility acceptance is claimed."
+}

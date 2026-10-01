@@ -493,6 +493,21 @@
       "id": "runtime:hash:1054",
       "source-sha256": "25eb7ecd8344d689c933a6ed692df37fb91678c843bcd29cbc8cb12225ac31ef",
       "patch": "docs/compatibility/patches/public-hash.json"
+    },
+    {
+      "id": "runtime:hash-ordered-coll:1406",
+      "source-sha256": "c8bff96cbba1ee32f0b972445437e993fd4b752c36c1096c9b1549d638e7cc2b",
+      "patch": "docs/compatibility/patches/hash-ordered-coll.json"
+    },
+    {
+      "id": "runtime:hash-unordered-coll:1420",
+      "source-sha256": "19e47a78a83fb2229edcb32725a2885a19ed854c64281ea81f128f4a80ecdeda",
+      "patch": "docs/compatibility/patches/hash-unordered-coll.json"
+    },
+    {
+      "id": "runtime:empty-unordered-hash:1432",
+      "source-sha256": "b073882d1c68b8ad2df8edd26d3f2be46bca2b67474628089d2e50439bfed9da",
+      "patch": "docs/compatibility/patches/empty-unordered-hash.json"
     }
   ],
   "loader": {

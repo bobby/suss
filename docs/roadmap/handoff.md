@@ -7968,3 +7968,118 @@ Inherited workflow35→60 and explanatory comment match the reviewed parent; no
 suite, worker, lock or fuel gate changed. Prior full27630 remains identical-code
 evidence; no fresh cargo/JVM/Node started while reviewer113 owns heavy slot.
 Exact new reviewed-head CI remains mandatory; no readiness/merge/closure.
+## Retained collection hashing — 2026-10-01
+
+Isolated /private/tmp/suss-core-collection-hashing branch
+portable/core-collection-hashing based on independently reviewed1119f3c19c;
+actual detached upstreamc4295f30, checkout31030 terminal0. Reviewer111 fresh87183
+terminal0/47/native5, compiler25619/3, Python/provenance42267, full27630 and
+push29074 allterminal0. No significant defect; root regainedexclusiveheavy slot.
+
+Initial33112 terminal101: unordered unresolved compile diagnostic, sequential
+hash Language exception before declared ordered helper initialization. Complete
+pinned helpers1406/1420 and empty unordered initializer1432 now have explicit
+fixed-defn/private-metadata bootstrap patches retaining source algorithms,
+metadata/docstrings and EPL provenance. No new native primitive or shared ABI
+change. Runtime Var privacy remains unfinished. Import101 selections/105 artifacts;
+196 partialreviews/869 unassessed. First89014 terminal0/native2.
+Fresh8437 terminal0/44/native4 /private/tmp/suss-collection-hash-primary44.log.
+Strengthened71740 terminal0: raw thrown Number17/exact Error Wrong arity guards,
+collection4/public5/default3/identity4 parents, Python82. Additional five cases
+preserve first44 objects; fresh1484 terminal0/49/native4,
+/private/tmp/suss-collection-hash-primary49.log. Effects encode exact source order;
+unordered output ignores order while traversal effects retain it. Duplicate count,
+UTF16, nested/metadata/cached/reverse sequence and empty initializer values match
+fresh pin and independently decoded raw f64/i31 storage. Provisional numbers
+were not called certified until both actual executions passed. Expected pin
+private-var/trace-redefinition warnings recorded. Import/reviews/setup5/diffpass.
+
+Required full6189 LIVE /private/tmp/suss-collection-hash-full.log,
+CARGO_TARGET_DIR shared target/CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2, no RUSTFLAGS. All other root heavy handles terminal; root
+retains exclusive slot until authoritative full completion. Independent PRreview
+and exact reviewedheadCI will gate readiness. No issue/milestone closure.
+
+User reports merged stack #109. GitHub cannot resolve109 as issue/PR. Verified
+#96–107 merged2026-10-01T13:50–13:51 into stack branch95; #93–95 OPEN, main at
+merged91 89e5dce. origin/portable/core-bitwise-hash now015767ae (merge107), entire
+Git tree identicalreviewed1077b530784. GitHub auto-retarget108base to95 andmarked
+CONFLICTING. Reviewer108 staticrebase reviewedc6 onto0157 yielded23fe252; all
+production/tests/workflow bytes unchanged, nowMERGEABLE. Reviewer110 staticrebase
+d507 onto23fe yieldedc53cfe35, bytesunchanged; reviewer111 staticrebase9f3 onto
+c53 underway. No cargo/JVM/Node from those followups; rootowns6189 slot.
+Current stale CI heads are not readiness evidence; require each exactnew reviewed
+head CI. Rootcollection willrebase on111newhead once available, preserving source
+and evidence. No rootmerge authorized/performed. Next full/review/CI, then actual
+persistent vectors/maps/sets/map entries and remaining core/macro/release gates.
+
+
+Root collection full6189 authoritative terminal0 through final reader doc tests,
+/private/tmp/suss-collection-hash-full.log. Required shared-target/build2 workspace
+--locked/--test-threads=2 passes collection4, parentpublic5/47, identity4/exact
+strict-arity boundary, case5/40/exactparseboundary, ABI45 and unchanged enabled
+parent suites. Existing manual ignores and diagnostic9passes/7knownfailures remain
+explicit. All root handles31030/33112/89014/8437/71740/1484/6189/59060 terminal.
+Reviewer111 staticrebase nowdec9e684 onto110c53/10823fe; production/test/workflow
+bytes identical9f3. Remaining108/110/111 MERGEABLE; exactcurrentCI pending.
+PR95mergedstackhead015767ae has CI36871799306 pending; do not use oldd49 readiness
+checks for this expanded head. Root will rebase collection changes on111dec9e684,
+prove production/test inputs unchanged, then dispatch mandatory independent review
+with exclusive heavy slot. No rootmerge, issue or milestone closure.
+
+
+Collection branch rebase onto independently reviewed111dec9e684 complete.
+Append-only handoff conflict preserved parent retarget audit and child hashing
+source/test/full evidence. git diff --exit-code 8bd6e18 -- crates runtime scripts
+tests Cargo.toml Cargo.lock .github/workflows/ci.yml proves byte-identical tested
+inputs; no fresh baseline is claimed for ancestry/doc changes. Roadmap current
+inventory count corrected to196/869; original25-minute M1 budget labeled initial,
+with current35-minute followup evidence retained. Root remains heavy-idle pending
+PR creation/reviewer release; required local full6189 applies unchanged bytes.
+
+
+## Independent PR112 review — 2026-10-01
+
+Isolated detached /private/tmp/suss-review-pr112 atb4df02d with actual pinned
+upstreamc4295f30, no symlinks. Read AGENTS, design, roadmap, inventory and handoff;
+checked complete source1406/1420/1432, explicit source hashes/metadata/patches/EPL,
+dependency initialization and raw f64/Boolean/Number17/Error Wrong arity decoding.
+No production defect found. Root6189 and all root handles terminal before slot
+release; reviewer exclusively owns cargo/JVM/Node until terminal full result.
+
+All original49 corpus objects and parent corpora preserved. Six additive probes
+cover live count/mixing, signed32 overflow, captured helper/live element hash and
+Cons cache metadata. Initial30098 terminal1 was an incorrect provisional ordered
+overflow assertion(-32); pin false and independent arithmetic identified929.
+Corrected new probe source, fresh43535 terminal0:55 exact values/native4,
+/private/tmp/suss-pr112-review-oracle55-final.log. Added native test afterward,
+focused10323 terminal0/5 /private/tmp/suss-pr112-review-native5.log verifies raw
+Number17, second-element throw prevents next/third effects, recovery and Cons
+cache/metadata acrossGC. Python82/import105/setup5/reviews196+869/diff pass.
+Required full27387 LIVE /private/tmp/suss-pr112-review-full.log, shared target/
+build2 cargo test --workspace --locked -- --test-threads=2, noRUSTFLAGS.
+No merges/readiness/issue or milestone closure. Exact reviewed-head CI required;
+persistent vectors/maps/sets/map entries and remaining M2–M9 gates stay open.
+
+
+Reviewer full27387 authoritative terminal0; inspected final suss_reader doc tests
+and no failed-test/error entries in /private/tmp/suss-pr112-review-full.log.
+Required shared-target/build2 --workspace --locked -- --test-threads=2 passes
+collection5/55 exact values, unchanged parent corpora/explicit boundaries and ABI45.
+Existing manual ignores remain explicit. All reviewer heavy handles30098/43535/
+10323/27387 terminal. Reviewer commits/pushes additive probes and evidence, then
+releases exclusive heavy slot. Exact final reviewed-head CI gates readiness;
+no merge, issue or milestone closure.
+
+### PR112 inherited timeout reconciliation — 2026-10-01
+
+Static rebase of independently revieweddf5e42ba onto independently reviewed
+PR111835fe7c4 preserves both parent timeout audits and all collection review
+and full-baseline evidence. Scoped git diff verifies crates/runtime/scripts/tests/
+oracle/Cargo bytes identicaldf5e42ba. Workflow matches reviewed parent exactly,
+inheriting35→60 minutes and rationale; no suite, concurrency or lock gate changes.
+Prior full27387 remains identical-code evidence; no fresh baseline is claimed.
+Historical exact-head CI36875609291 atdf5e42ba was still in_progress when checked;
+it is not a success or new-head certification. New exact reviewed-head CI remains
+mandatory. Reviewer113 owns heavy slot full69149; no cargo/JVM/Node started here.
+Exact old-head lease protects push. No readiness/merge/issue/milestone closure.
