@@ -1,8 +1,8 @@
 //! Immutable dependency graph preparation. Runtime initialization belongs to the host.
 use super::{
-    Diagnostic, PreparedFragment, prepare_fragment,
+    prepare_fragment, prepare_selected_fragment,
     resolve::{self, Environment, Phase},
-    source,
+    source, Diagnostic, PreparedFragment,
 };
 use std::{
     collections::BTreeSet,
@@ -279,14 +279,37 @@ pub fn prepare_input<P: AsRef<Path>>(
     phase: Phase,
     provided: &BTreeSet<ModuleIdentity>,
 ) -> Result<PreparedInput, InputDiagnostic> {
-    let forms = read_forms(source_text)
-        .and_then(resolve_conditionals)
-        .map_err(|error| {
-            InputDiagnostic::Compile(Diagnostic {
-                span: error.span,
-                message: error.message,
-            })
-        })?;
+    let forms = read_forms(source_text).map_err(|error| {
+        InputDiagnostic::Compile(Diagnostic {
+            span: error.span,
+            message: error.message,
+        })
+    })?;
+    prepare_input_forms(
+        forms,
+        0..source_text.len(),
+        roots,
+        environment,
+        phase,
+        provided,
+    )
+}
+/// Prepare source or macro-expanded reader forms through the same staged module
+/// graph and fragment pipeline, preserving metadata and caller source locations.
+pub fn prepare_input_forms<P: AsRef<Path>>(
+    forms: Vec<suss_reader::forms::Form>,
+    span: Range<usize>,
+    roots: &[P],
+    environment: &Environment,
+    phase: Phase,
+    provided: &BTreeSet<ModuleIdentity>,
+) -> Result<PreparedInput, InputDiagnostic> {
+    let forms = resolve_conditionals(forms).map_err(|error| {
+        InputDiagnostic::Compile(Diagnostic {
+            span: error.span,
+            message: error.message,
+        })
+    })?;
     let header = source::input_header(&forms).map_err(InputDiagnostic::Compile)?;
     let mut discovery = Discovery {
         roots,
@@ -310,7 +333,7 @@ pub fn prepare_input<P: AsRef<Path>>(
     snapshot
         .enter_namespace(phase, environment.current_namespace(phase))
         .map_err(InputDiagnostic::Compile)?;
-    let fragment =
-        prepare_fragment(source_text, &snapshot, phase).map_err(InputDiagnostic::Compile)?;
+    let fragment = prepare_selected_fragment(forms, span, &snapshot, phase)
+        .map_err(InputDiagnostic::Compile)?;
     Ok(PreparedInput { modules, fragment })
 }
