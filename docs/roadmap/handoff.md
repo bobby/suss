@@ -6237,3 +6237,32 @@ the review push finishes; root must require exact final reviewed-head CI before
 PR99 readiness. No merge, closure or milestone acceptance. Next retained cached/
 public string hashing and actual persistent sequence/list algorithms, while full
 numeric/public/collection hashing and M2–M9 acceptance remain incomplete.
+
+## Cached string hashing preparation — 2026-10-01
+
+Separate unpublished portable/core-string-hash-cache worktree starts at PR99
+candidate90f73d5.48 provisional cache value/effect probes and primary/native runners
+are prepared but UNEXECUTED. They cover UTF-16 keys, nil/Undefined bypass, cache
+hits suppressing current hasher effects, non-number/zero/NaN cache values,
+throwing misses, threshold1024 versus1025, reset-before-nil behavior, replacement
+identity, captures/live dependencies and prototype-named keys. Expectations must
+be freshly certified; they are not success evidence. PR99 reviewer exclusively
+owns the local Cargo/JVM/Node slot, with72 fresh exact observations (original52
+unchanged), independent foreign/malformed-value ABI coverage and full93986
+confirmed live. No root heavy processes started.
+
+The pinned source creates a plain JS object for this internal cache, calls
+unchecked-get/gobject-set and increments the source counter after hashing/storage.
+A simple persistent map substitution would not preserve observable cache effects:
+for example the inherited __proto__ setter ignores numeric hashes, so repeated
+misses increment the counter repeatedly. The new provisional probes explicitly
+exercise this rather than silently treating every string as an own cache slot.
+Actual dynamic named-object storage/lookup/set semantics and scalar key handling
+are next dependencies. Do not claim them based on existing fixed-schema Object
+fields or substitute private invocation argument buffers for persistent collections.
+
+Next rebase onto final reviewed PR99, acquire the released test slot, certify the
+pin/native red, then adapt required object storage with source provenance and
+executing checks. General prototype mutation/host interop and full public hash,
+collection equality/hash, sequences and M2–M9 remain unfinished. PR97 exact
+reviewed-head CI36823514952 remains live; no readiness claim until success.
