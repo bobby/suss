@@ -3556,3 +3556,33 @@ fn runtime_abi_legacy_accessor_rejections_are_atomic_and_recover_after_gc() {
     let value = nominal_value(&mut store, runtime, "native-object-property-get", &[owner.clone(), key]);
     assert!(wasmtime::Rooted::ref_eq(&store, value.unwrap_anyref().unwrap(), owner.unwrap_anyref().unwrap()).unwrap());
 }
+
+#[test]
+fn runtime_abi_native_factory_guards_foreign_buffers_and_recovers_after_gc() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    for name in ["native-object-factory-next", "native-object-factory-flatten"] {
+        for input in [nil.clone(), Val::null_any_ref()] {
+            let error = runtime.get_func(&mut store, name).unwrap().call(&mut store, &[input], &mut [Val::null_any_ref()]).unwrap_err();
+            assert!(error.is::<wasmtime::ThrownException>(), "{name}: {error:#}");
+            assert!(!error.is::<wasmtime::Trap>());
+            assert!(store.take_pending_exception().is_some());
+        }
+    }
+    let function = nominal_value(&mut store, runtime, "native-object-factory-function", &[]);
+    let args = nominal_value(&mut store, runtime, "args-new", &[Val::I32(2)]);
+    let array = args.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    array.set(&mut store, 0, Val::null_any_ref()).unwrap();
+    let error = runtime.get_func(&mut store, "protocol-native-invoke").unwrap().call(&mut store, &[function.clone(), args.clone()], &mut [Val::null_any_ref()]).unwrap_err();
+    assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+    assert!(!error.is::<wasmtime::Trap>());
+    assert!(store.take_pending_exception().is_some());
+    let key = native_property_key(&mut store, runtime, &[120]);
+    array.set(&mut store, 0, key.clone()).unwrap();
+    store.gc(None).unwrap();
+    let object = nominal_value(&mut store, runtime, "protocol-native-invoke", &[function, args]);
+    let value = nominal_value(&mut store, runtime, "native-object-property-get", &[object, key]);
+    assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 0);
+}

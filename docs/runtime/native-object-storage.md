@@ -83,7 +83,7 @@ cached hashing compatibility.
 
 ## Executing evidence
 
-The complete runtime ABI suite passes 39 tests. Owned-object tests validate and
+The complete runtime ABI suite passes 40 tests. Owned-object tests validate and
 instantiate actual Wasm, covering storage growth/replacement, separate owners,
 UTF-16, malformed tables/descriptors, typed recovery, inherited values, Undefined
 shadowing, atomic cycle rejection, a 130-object chain and forced GC. Method tests
@@ -102,3 +102,32 @@ agreement, independent PR review, full workspace tests and exact final-head CI.
 
 Specification references: [Object prototype operations](https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-properties-of-the-object-prototype-object),
 [legacy prototype accessor](https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-object.prototype.__proto__).
+
+
+## Private compiled source adapters
+
+Three private `suss.bootstrap` operations are checked by HIR and IR and emitted
+with typed shared-runtime imports: `object-factory` (zero operands, returns a
+function), `object-get` (two operands) and `object-set` (three operands). Ordinary
+operand lowering preserves source order. These are not public core bindings or
+a zero-argument-only public factory.
+
+The original factory callback accepts evaluated variadic arguments, then rejects
+odd pairs with a language error. It creates a default owned object and assigns
+pairs through the descriptor-aware scalar property adapter. A single source-native
+array is flattened recursively; iterative cycle detection rejects self and mutual
+array cycles without stack recursion or depth limits. Checked array storage remains
+an interoperability argument source, not a persistent collection substitution.
+The returned function can be captured, invoked across fragments and retained after
+rebinding a live var. No new bootstrap core cells or singleton factory registry.
+
+Two executing compiled-source tests cover empty/pair/nested-array factory calls,
+property effects in order12345, scalar keys, prototypes, argument effects before
+odd-arity errors, compile-atomic private arity errors, malformed runtime inputs,
+self/mutual cycles, capture/rebinding and forced GC recovery. A separate ABI guard
+tests physically foreign/null flatten buffers and recovery after a forged key.
+No pinned source oracle match is claimed for these original private adapters.
+
+Next retain the licensed public js-obj/cache forms and compile their bracket
+property macro dependencies. Preserve the64 certified source observations and
+require fresh primary/native agreement before opening the coherent PR slice.

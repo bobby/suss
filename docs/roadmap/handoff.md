@@ -6538,3 +6538,41 @@ deletion, primitive boxing/foreign objects and Symbol.toStringTag remain open.
 Preserve64 source observations, require fresh native agreement then independent
 PR review/full baseline/exact final-head CI. No PR readiness/merge/closure or
 milestone claim on this unpublished branch; all processes terminal. M2–M9 active.
+
+
+## Compiled private object adapters and variadic factory — 2026-10-01
+
+Continuation after99078a6 adds original native_object_factory.rs and checked
+Nominal HIR operations NativeObjectFactory/Get/Set. Direct private suss.bootstrap
+object-factory returns a real function; object-get/set lower evaluated operands
+in order with typed runtime imports. Private wrong arities fail during analysis,
+atomically. HIR and IR use existing Nominal validity checking, not the scalar
+bitwise enum. No public core names/source forms/ABI layout/core cells changed.
+
+Factory invocation accepts evaluated variadic arguments and rejects odd pairs
+at runtime, preserving effects before failure. Empty/even pairs create default
+owned objects through descriptor-aware property writes. Single native-array
+arguments flatten recursively using checked source-array storage. An iterative
+Floyd check rejects self/mutual array cycles without arbitrary depth limits or
+recursion. Factory is a function value, not a zero-argument-only public claim.
+No singleton factory registry retains owners; live vars/captures use normal cells.
+
+Initial96061 passed existing default method1 on the validated new artifact.
+New compiled source63175 passed2; final52318 passed2 with capture/rebinding probes.
+Source executes empty/pairs/nested arrays, effects12345, inherited properties,
+scalar keys, runtime odd-arity effects, private compile-atomic arities, malformed
+receivers/keys, self/mutual native-array cycles and post-GC recovery. Log
+/private/tmp/suss-native-object-source-final.log. Command uses shared target/build
+workers2, cargo test -p suss-cli --test portable_native_objects --locked --
+--test-threads=2. New ABI22872 passed1 for foreign/null next/flatten buffers and
+forged null keys, typed exceptions/recovery. Complete ABI48069 passed40, log
+/private/tmp/suss-object-factory-abi.log. No skips or unknown-success substitution.
+
+Next retain runtime js-obj/cache declarations/add-to-string-hash-cache/hash-string
+and macro unchecked-get/set with explicit patches/hashes/EPL. Respect function-
+valued public factory arities/live cells and original source counter/reset ordering;
+macro property operands must preserve evaluation order. Preserve64 certified source
+observations and certify fresh primary/native agreement. No full workspace/PR
+review/final CI claim for this unpublished branch. Source cache64 remains unresolved
+until forms are retained; full public foreign-object/boxing/descriptor definition/
+delete/Symbol behavior and M2–M9 remain open. All local processes terminal.

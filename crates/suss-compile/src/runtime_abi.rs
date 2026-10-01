@@ -15,6 +15,7 @@ mod named_properties;
 mod native_protocols;
 mod native_objects;
 mod native_object_methods;
+mod native_object_factory;
 mod native_object_properties;
 mod nominal;
 mod numeric;
@@ -629,6 +630,7 @@ fn build_module() -> Vec<u8> {
     native_object_properties::primitives(&mut b);
     native_object_properties::functions(&mut b);
     arithmetic_functions.extend(native_object_methods::functions(&mut b));
+    arithmetic_functions.extend(native_object_factory::functions(&mut b));
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
     let mut tags = TagSection::new();
