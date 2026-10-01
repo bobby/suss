@@ -488,12 +488,17 @@
       "id": "runtime:root-obj:1486",
       "source-sha256": "8a808825ab5fd049e3f1d28932a655074c2d1930a2b2175080edf16f78734951",
       "patch": "docs/compatibility/patches/root-object.json"
+    },
+    {
+      "id": "runtime:hash:1054",
+      "source-sha256": "25eb7ecd8344d689c933a6ed692df37fb91678c843bcd29cbc8cb12225ac31ef",
+      "patch": "docs/compatibility/patches/public-hash.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "2f2b5598337400c085d9d4c1d057f9981e982fb1177e768feeb895ebb72aff87"
+      "sha256": "55c1ebe9d2d477a52a473eebe7c558ae1497816a238c64309b852ac0aae5c8fb"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",

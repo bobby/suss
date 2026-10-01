@@ -7835,3 +7835,136 @@ This inherits the independently audited35-minute cleanup cancellation correction
 Prior independent full69411 covers unchanged tested bytes, not a fresh baseline.
 Reviewer113 owns the heavy slot; no cargo/JVM/Node started. Historical successful
 CI does not satisfy the new exact-head gate. No readiness/merge/closure claim.
+
+## Retained public scalar hash — 2026-10-01
+
+Isolated /private/tmp/suss-core-public-scalar-hash branch
+portable/core-public-scalar-hash, based on independently reviewed PR110f7841dd.
+Actual detached upstream c4295f30, checkout19903 terminal0. Root regained heavy
+slot after reviewer110 full69411 terminal0 and terminal review pushf7841dd.
+PR11040 fresh matches/native5/compiler1/Python82/full all pass; exact reviewed
+head CI36867771937 remains live; no readiness/merge/closure yet.
+
+Public hash regression30006 terminal101 failed unresolved Runtime hash. Complete
+source extraction1054–1090 and EPL notice now retain all branches, numeric guards,
+case, strings, direct IHash priority, nil/default and Date. Explicit patch uses
+existing private numeric guards and original BootstrapDate nominal storage;
+checked numeric TimeClip, ordinary Object valueOf method and existing shared
+ABI2. No global registry, ABI layout change or shipped Java/Node. General Date
+parsing/mutation, reader instants, Inst/equality/comparison/printing and bootstrap
+privacy/Var metadata remain unfinished. Internal helper private flags initially
+failed compile75868; removed unsupported attributes with limitation recorded.
+43270 and localized90709/32208 failed validation due missing unary emitter import
+signature for new TimeClip. Corrected import;59391 terminal0/native3. Date49538
+terminal0/native3. Temporary redundant core-split test removed after localization;
+standalone numeric Date regression retained. No ignored/masked validation error.
+
+Fresh83231 terminal0:42 exact pinned/native observations/native4,
+/private/tmp/suss-public-hash-primary42.log. Provisional expectations were only
+certified after fresh pinned output and independent raw f64/i31 decoding matched.
+Date fixture uses explicit reader-conditional native/host adapter; expected pin
+root-obj private-var warning is recorded. New corpus includes signed zeros,
+modulus/fraction/subnormal/non-safe/Inf/NaN, UTF16, protocol/direct/default/root,
+captured/qualified calls, effects and clipped/invalid numeric Date branches.
+Native Date probes also validate GC, valueOf redefinition, IHash priority and
+typed unsupported-input recovery. Python82, import102/reviews193+872/setup5/diff
+pass. Parent47829 terminal0: case5/default3/identity4,
+/private/tmp/suss-public-hash-parent-focused.log. Full61362 LIVE,
+/private/tmp/suss-public-hash-full.log, CARGO_TARGET_DIR shared target,
+CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2, noRUSTFLAGS.
+Root owns heavy slot until authoritative terminal; all other root handles terminal.
+
+PR108 CI36861360401 attempt2 also CANCELLED near25m (not a pass). Reviewer108
+has a static follow-up to apply25→35 timeout without production/test changes,
+prove bytes unchanged, push and require new final-head CI; cannot run heavy jobs
+while root61362 live. PR108 stays draft. No issue/milestone completion from this
+slice. Next finish full/review/CI, then ordered/unordered hashing and full remaining
+Date/collection/core/macro and M2–M9 acceptance. Issue98 still defers algorithms.
+
+
+Root publichash full61362 authoritative terminal0; inspected
+/private/tmp/suss-public-hash-full.log through final reader doc tests. Required
+shared target/build2 --workspace --locked -- --test-threads=2 passes newnative4,
+ABI45 and unchanged parentcorpora/strict-arity/referenceparse boundaries. Existing
+manual ignores and diagnostic known failures remain explicit. All root handles
+19903/30006/75868/43270/90709/32208/59391/49538/83231/47829/61362/69372 terminal.
+PR111 draft2d94d7b opened, mandatory reviewer111 staticreview dispatched.
+
+Reviewer108 timeoutfix c6cc97b134555c42104310156198c3f0a1a2b2c5 has CI36869717334
+live; production/test bytes identical707 baseline. Attempt1 fullstep reported
+success24m29, attempt2 fullstep cancelled24m39; neither overallcancelled run is
+CIpass. Reviewer110 staticrebase of reviewedf784 onto108c6 is underway toresolve
+stackdoc conflicts; root111 will rebase afterward preserving code and evidence.
+No heavy processes remain at root; reviewer111 receives exclusive slot after
+this evidence push and finalroot rebasing. Exactreviewedhead CI still gates all
+readiness. No merges, issue closures or milestone acceptance.
+
+
+PR111 stack rebase onto independently reviewed PR110d507c5e complete. Handoff
+append conflict resolved by retaining parent PR110 rebase evidence and the entire
+child publichash evidence. git diff --exit-code 7eca624 -- crates runtime scripts
+tests Cargo.toml Cargo.lock .github/workflows/ci.yml proves byte-identical tested
+production/tests/oracles/workflow; no fresh baseline is claimed for documentation
+and ancestry changes. Root full61362 applies to these same bytes. Release exclusive
+heavy slot to reviewer111 after this evidence push; all root test/push handles
+terminal. Independent review/probes/final full and exact reviewed-head CI remain
+required. PR108c6 and PR110d507 CI pending; no merges or milestone/issue closures.
+
+
+## Independent PR111 review
+
+Reviewer /private/tmp/suss-review-pr111 has actual detached upstreamc4295f30,
+no symlinks, and moved probes onto rebased head1c99e741. Initial git move failed
+sandbox index permission; authorized escalation succeeded. Oracle87183 started
+during that move; rebased production/scripts/source bytes were identical and
+checkout completed before native compilation. No source probe was altered.
+Original42 corpus objects preserved exactly; five new cases were provisional
+until fresh pinned observations matched. Oracle87183 terminal0:47 exact/native5,
+/private/tmp/suss-pr111-review-oracle47.log. Added safe integer endpoints,
+captured hash/live string helpers, direct protocol throw effects and negative
+submillisecond Date. Added raw native TimeClip type guards for nil/bool/string/
+closure, effects surviving language errors, zero normalization, throw recovery,
+invalid unary/first-class compile isolation. Compiler25619 terminal0/3 includes
+TimeClip malformed HIR/IR arity/result checks. Python42267 terminal0:82 pass,
+import102/setup5/reviews193partial+872unassessed/diff pass. No production finding.
+Required independent full27630 LIVE /private/tmp/suss-pr111-review-full.log,
+shared target/build2 --workspace --locked -- --test-threads=2; noRUSTFLAGS.
+Reviewer retains exclusive heavy slot until authoritative terminal and release.
+No merge/readiness/issue or milestone closure. Exact reviewed-head CI required.
+
+
+Reviewer full27630 authoritative terminal0; inspected final suss_reader doc tests
+and no failed-test/error entries in /private/tmp/suss-pr111-review-full.log.
+Shared-target/build2 required workspace --locked/--test-threads=2 passes including
+native5/47 exact observations, TimeClip compiler guards and unchanged parents.
+Existing explicit manual ignores remain. All reviewer handles87183/25619/42267/
+27630 terminal. Reviewer commits and pushes probes/evidence, then releases heavy
+slot. Exact final reviewed-head CI still gates readiness; no merge or closure.
+
+
+### PR111 parent retarget reconciliation — 2026-10-01
+
+Static rebase of independently reviewed9f3c19cad8f5f344f077a54a469532ca716352a8
+onto reviewed PR110c53cfe35fde0310a8ceacf174d399ce48fd1e646 preserves parent
+retarget audits and all public-hash child/review evidence. Append-only handoff
+conflict preserved both sides. Scoped Git diff verifies all crates, runtime,
+scripts, tests/oracle, workflow and Cargo bytes identical to reviewed9f3c19c;
+only inherited parent audit and reconciliation evidence change. Prior independent
+full27630 applies to identical tested code; no new baseline is claimed. Root
+owns heavy slot full collection6189; no cargo/JVM/Node process started here.
+Exact old-head force-with-lease protects the owned branch. New reviewed-head CI
+remains mandatory before readiness; no merge, issue or milestone closure.
+
+
+### PR111 inherited timeout reconciliation — 2026-10-01
+
+Prior exact-head CI36873588930 completed SUCCESS at revieweddec9e684; downloaded
+/private/tmp/suss-pr111-dec9-ci.log and inspected through final suss_reader doc
+tests. This is historical success, not new-head certification. Statically rebased
+onto independently reviewed PR11007f0a97b20d918cb2b4589831f3ebdf6298e958c,
+preserving all parent timeout audits and child review evidence. Scoped Git diff
+proves crates/runtime/scripts/tests/oracle/Cargo bytes identical to revieweddec.
+Inherited workflow35→60 and explanatory comment match the reviewed parent; no
+suite, worker, lock or fuel gate changed. Prior full27630 remains identical-code
+evidence; no fresh cargo/JVM/Node started while reviewer113 owns heavy slot.
+Exact new reviewed-head CI remains mandatory; no readiness/merge/closure.

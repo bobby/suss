@@ -6,3 +6,13 @@
   pr-str* -indexOf -lastIndexOf equiv-sequential = hash-ordered-coll seq-reduce
   array-reduce IndexedSeqIterator RSeq indexed? neg? linear-traversal-nth nth str_ type type->str MetaFn apply with-meta meta)
 
+
+;; Original portable numeric-Date storage, not copied upstream source.
+;; Internal bootstrap construction accepts numeric milliseconds only; calendar,
+;; timezone/string parsing, reader instants and full Inst semantics remain pending.
+(deftype BootstrapDate [milliseconds]
+  Object
+  (valueOf [_] milliseconds))
+(def date-from-ms
+  (fn [milliseconds]
+    (BootstrapDate. (suss.bootstrap/f64-time-clip milliseconds))))

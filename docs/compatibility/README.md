@@ -413,3 +413,12 @@ phases. Selection97/artifacts101 and192 partial/873 unassessed reviews remain
 prerequisites. Full compiled macros, complete case/case*, public hash Date
 handling, collections and release gates remain unfinished. See
 [scalar case evidence](../runtime/scalar-case.md).
+
+
+Retained public scalar hash now preserves all pinned source branches, including
+an explicit descriptor-backed numeric Date storage adaptation. Fresh42 pinned/
+native observations and4 native tests cover scalar bits, UTF16 composition,
+protocol priority, default identity and Date normalization/GC. Selection98/
+artifacts102 and193 partial/872 unassessed reviews remain prerequisites. Full
+Date/Inst/reader/printing, collection composition, compiled macros and release
+gates remain open; see [public scalar hash evidence](../runtime/public-scalar-hash.md).
