@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "0a87f5ff1ea15cc836354b399c4e91f4cf57847f7894a02f3ef223406c06acd5",
+  "replacement": "(def tail-off\n  (fn [pv]\n  (let [cnt (.-cnt pv)]\n    (if (< cnt 32)\n      0\n      (bit-shift-left (bit-shift-right-zero-fill (dec cnt) 5) 5)))))",
+  "rationale": "Retain complete pinned vector trie declaration and source field layout. Executing clone and structural-sharing tests cover source node algorithms; full PersistentVector integration and complete collection acceptance remain pending. Explicit defn- to def/fn bootstrap preserves every algorithm branch and evaluation order; runtime private Var visibility and compiled upstream macros remain unsupported."
+}

@@ -38,7 +38,7 @@ preserves existing issue bodies.
 
 ### M0: Contract and feasibility
 
-- **M0-01 — Contract and upstream inventory** (completed). Deterministic pinned inventory, source hashes/reader branches, strict review schema and provenance policy pass. 196 source declarations now have in-progress manual reviews; 869 remain unassessed for M4/M7 implementation.
+- **M0-01 — Contract and upstream inventory** (completed). Deterministic pinned inventory, source hashes/reader branches, strict review schema and provenance policy pass. 206 source declarations now have in-progress manual reviews; 859 remain unassessed for M4/M7 implementation.
 - **M0-02 — Lock toolchain and official WIT packages** (completed). Locked official package hashes and executing GC/tail-call/EH/map/implements/external-id/async/future/stream probes pass. Generated Suss adapters remain M5/M6 work.
 - **M0-03 — Prove shared GC fragments** (completed). Shared roots/closures/nominal descriptors survive forced GC; incompatible ABI fails before initialization. Production persistent sessions remain M2/M3 work.
 - **M0-04 — Prove browser loading and suspension** (completed). Chrome executes typed core/Promise/cancellation/feature-error fixtures and optional Jco GC packaging. Teardown timeout is recorded separately; cross-browser/product delivery remains M8 work.
@@ -186,3 +186,11 @@ selection101/artifacts105 and196 partial/869 unassessed reviews remain
 prerequisites. Persistent vectors/maps/sets/map entries, collision nodes and
 compiled macro/release gates remain required; see
 [collection hashing evidence](docs/runtime/collection-hashing.md).
+
+
+Vector trie prerequisites retain the complete pinned VectorNode and nine private
+node/path/update helpers. Selection111/artifacts115 and206 partial/859 unassessed
+reviews do not establish full PersistentVector or M4 acceptance. Fresh23 exact
+oracle values and four native tests cover shallow ownership, structural sharing,
+GC, tail boundaries, recursive association/removal and exception recovery.
+See [vector trie evidence](docs/runtime/vector-trie.md).

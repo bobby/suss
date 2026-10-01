@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "2ff9171783365baee0f7d78b49f62a72b1a64b61ab3aab5aa0e3d214b08e0861",
+  "replacement": "(def push-tail\n  (fn [pv level parent tailnode]\n  (let [ret (pv-clone-node parent)\n        subidx (bit-and (bit-shift-right-zero-fill (dec (.-cnt pv)) level) 0x01f)]\n    (if (== 5 level)\n      (do\n        (pv-aset ret subidx tailnode)\n        ret)\n      (let [child (pv-aget parent subidx)]\n        (if-not (nil? child)\n          (let [node-to-insert (push-tail pv (- level 5) child tailnode)]\n            (pv-aset ret subidx node-to-insert)\n            ret)\n          (let [node-to-insert (new-path nil (- level 5) tailnode)]\n            (pv-aset ret subidx node-to-insert)\n            ret)))))))",
+  "rationale": "Retain complete pinned vector trie declaration and source field layout. Executing clone and structural-sharing tests cover source node algorithms; full PersistentVector integration and complete collection acceptance remain pending. Explicit defn- to def/fn bootstrap preserves every algorithm branch and evaluation order; runtime private Var visibility and compiled upstream macros remain unsupported."
+}

@@ -8083,3 +8083,42 @@ Historical exact-head CI36875609291 atdf5e42ba was still in_progress when checke
 it is not a success or new-head certification. New exact reviewed-head CI remains
 mandatory. Reviewer113 owns heavy slot full69149; no cargo/JVM/Node started here.
 Exact old-head lease protects push. No readiness/merge/issue/milestone closure.
+
+## Vector trie prerequisites — 2026-10-01
+
+Root isolated /private/tmp/suss-core-vector-trie, branch portable/core-vector-trie,
+base independently reviewed112df5e42ba, actual detached upstreamc4295f30.
+Initial11514 terminal101: missing suss.core/pv-fresh-node located compile failure,
+/private/tmp/suss-vector-trie-initial.log. Retained complete VectorNode plusnine
+private helper algorithms; explicit fixed defn bootstrap patches/source hashes/EPL
+preserve original branches. No native vector replacement or ABI change.
+Focused33628 terminal0 clone ownership; fresh73307 terminal0:23 exact pinned
+observations/native2, /private/tmp/suss-vector-trie-oracle.log. Added cross-fragment
+association/GC and live clone exception19 recovery tests, focused68047 terminal0/4,
+/private/tmp/suss-vector-trie-native4.log. Python82/import115/reviews206+859 pass.
+All root handles terminal; root exclusively owns local heavy slot for required
+workspace baseline next. Full PersistentVector and remaining M2–M9 gates remain
+open; no issue/milestone closure. Independent review and final-head CI required.
+
+Expanded95 CI36871799306 cancelled at25m; independent reviewer proved source-tree
+identity to reviewed107 and pushed timeout-only35-minute fix447bed49 plus evidence.
+Exact CI36877052183 running;95 nowdraft. No test removal or concurrency change.
+108/110/111/112 retain their reviewed heads and require exact-head CI before ready.
+No root merges performed. User109 cannot resolve in this repository; authoritative
+merged96–107 are in the stack branch,93–95 remain open, main remains at91.
+
+
+Root vector required full22313 authoritative terminal0, inspected final reader
+doc tests and no FAILED/error entries in /private/tmp/suss-vector-trie-full.log.
+Shared target/build2 cargo test --workspace --locked -- --test-threads=2 passes
+vector4/23 exact oracle values, unchanged parent corpora and ABI45. Existing
+manual ignores and diagnostic9passes/7knownfailures remain explicit. All root
+heavy handles11514/33628/73307/68047/22313 terminal; heavy slot can transfer to
+independent reviewer after PR creation. Selection111/artifacts115/reviews206+859.
+Next retain actual vector indexing/error and iterator/reduction prerequisites,
+then complete PersistentVector. No issue/milestone acceptance or merge claimed.
+
+PR108 CI35-minute run finished enabled workspace tests in34m38 then timed out
+compressing post-job cache. Independent reviewer pushed timeout-only60-minute
+fix7ffad606 and is rebasing onto95reviewed447bed49; all production/tests unchanged.
+Propagate via static reviewer rebases before exact final-head readiness checks.

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "2aaaf1055911975d7fd2cded32e542c7d7f15543915bd3af77fff2e531b09d64",
+  "replacement": "(def do-assoc\n  (fn [pv level node i val]\n  (let [ret (pv-clone-node node)]\n    (if (zero? level)\n      (do\n        (pv-aset ret (bit-and i 0x01f) val)\n        ret)\n      (let [subidx (bit-and (bit-shift-right-zero-fill i level) 0x01f)]\n        (pv-aset ret subidx (do-assoc pv (- level 5) (pv-aget node subidx) i val))\n        ret)))))",
+  "rationale": "Retain complete pinned vector trie declaration and source field layout. Executing clone and structural-sharing tests cover source node algorithms; full PersistentVector integration and complete collection acceptance remain pending. Explicit defn- to def/fn bootstrap preserves every algorithm branch and evaluation order; runtime private Var visibility and compiled upstream macros remain unsupported."
+}

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "ebd156065a3b962e086677c417e7aebf1fa49bdb57f38fe7cac8e4a1b6d1d7c6",
+  "replacement": "(def pv-fresh-node\n  (fn [edit]\n  (VectorNode. edit (make-array 32))))",
+  "rationale": "Retain complete pinned vector trie declaration and source field layout. Executing clone and structural-sharing tests cover source node algorithms; full PersistentVector integration and complete collection acceptance remain pending. Explicit defn- to def/fn bootstrap preserves every algorithm branch and evaluation order; runtime private Var visibility and compiled upstream macros remain unsupported."
+}
