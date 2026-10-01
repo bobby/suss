@@ -2,6 +2,27 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "macro:case:2405"
+  {:source-sha256 "5c1ab75133484dc097983f8e30dd306f2d7ae2b4c0d8308b5273d3686798f8d1" :visibility :public
+   :arities {:fixed [] :variadic-min 1}
+   :dependencies ["macro:assoc-test:2383" "macro:let:772" "runtime:=:1342" "private primitive identity comparison" "source constant order and fresh HIR binding"]
+   :classification :adapted
+   :rationale "Original bounded scalar bootstrap follows pinned selector-once and grouped clauses. Number/string-only tables use primitive comparison; boolean/nil/mixed tables use live qualified core = with constant first, limited to eight constants before collection-backed macro expansion. Fresh33 primary/native observations and one separately tracked exact reference empty-group parse failure execute; empty groups produce located native diagnostics. Explicit default, scalar constants and bounded expansion are prerequisites, not complete compiled case/case* macro acceptance. No upstream macro source copied; original upstream macro is EPL1.0."
+   :status :in-progress
+   :adaptation-path "docs/runtime/scalar-case.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_case.rs" "crates/suss-compile/tests/portable_case.rs" "tests/oracle/case-cases.json" "tests/oracle/case-reference-boundaries.json"]}
+  "macro:assoc-test:2383"
+  {:source-sha256 "5a05fb8cc0525a9bd2162afc395f35f0831fac349fc8b4680e39ae44bd7685d0" :visibility :private
+   :arities {:fixed [4] :variadic-min nil}
+   :dependencies ["macro:case:2405" "binary64/UTF16 scalar constants" "compiled macro maps and env pending"]
+   :classification :adapted
+   :rationale "Original scalar bootstrap duplicate guard uses binary64/UTF16 literal keys and located diagnostics. Full macro maps, composites, const var resolution, env-dependent error formatting and compiled upstream helper remain unfinished. Source provenance retained by pin/hash; no upstream helper source copied. EPL1.0 upstream."
+   :status :in-progress
+   :adaptation-path "docs/runtime/scalar-case.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_case.rs" "tests/oracle/case-cases.json" "tests/oracle/case-reference-boundaries.json"]}
+
   "runtime:root-obj:1486"
   {:source-sha256 "8a808825ab5fd049e3f1d28932a655074c2d1930a2b2175080edf16f78734951" :visibility :private
    :arities {:fixed [0] :variadic-min nil}

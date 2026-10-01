@@ -7698,3 +7698,46 @@ runtime/tests/oracles/workflow/Cargo/lock bytes identical to7ffad606 after rebas
 Only handoff gains PR95 evidence and this record; no fresh local full claimed.
 No heavy runs or descendant changes. Push uses exact7ffad606 force-with-lease;
 fresh reviewed-head CI remains required before readiness, no merge claim.
+
+
+## Scalar case bootstrap — 2026-10-01
+
+Branch portable/core-scalar-case, isolated /private/tmp/suss-core-scalar-case,
+based on independently reviewed PR108707b5b609fa139ee033f62f4424ca8b78c6b49c4.
+Actual detached upstream c4295f30. Original Rust bootstrap follows pinned
+case/assoc-test provenance and EPL1 notice; selector once, source-order analysis,
+private number/string comparison, live qualified constant-first core equality,
+explicit defaults, bounded scalar groups and phase namespace resolution.
+No full compiled macro acceptance or issue/milestone completion claim.
+
+Initial regression41004 failed101 on unresolved Runtime case; implementation
+3264 passed1. Fresh88591 failed1 on pinned empty-group invalid generated JS.
+The unchanged source now has a separate strict reference failure/native located
+compile-error boundary, not a successful value or skip. Fresh63374 terminal0:
+31 matches/1 boundary/native3. Fresh17662 terminal0:33 matches/1 boundary/native4,
+/private/tmp/suss-case-primary33-boundary1.log. Compiler95117 terminal0/1 actual
+validated Runtime/Macro execution and forced GC,
+/private/tmp/suss-case-both-phases.log. Full compiled upstream macros remain open.
+
+A strengthened direct boundary invocation initially failed because Node resolved
+Closure output relative to the repository root. Captured MODULE_NOT_FOUND did
+not count as the expected failure. Explicit oracle cwd fixes the harness;
+root invocation now verifies exit1, empty stdout, exact SyntaxError and source
+caret from the original generated input. Python82 pass in
+/private/tmp/suss-case-python82-final.log. Import101/reviews192+873/setup5/diff
+checks pass. Parent focused22322 and its first retry failed101 on mistaken test
+target names before running tests; corrected90679 terminal0 passes control3,
+default3 and identity4, /private/tmp/suss-case-parent-focused.log.
+
+Required full16020 running /private/tmp/suss-case-full.log, shared target/build2,
+cargo test --workspace --locked -- --test-threads=2, no RUSTFLAGS. Root retains
+exclusive heavy slot until authoritative terminal result. Independent PR review
+and exact reviewed-head CI remain required before readiness.
+
+PR1077b530784 exact CI36859350775 succeeded; final reader doc tests inspected.
+PR107 is ready, no merge. PR108707b5b6 independent reviewer full78254 terminal0;
+exact CI36861360401 completed cancelled near its25-minute job limit despite the
+workspace step reporting success. It does not satisfy the overall CI gate;
+rerun dispatched at unchanged head, PR108 remains draft. No merge or closure.
+Next: complete this full/review/CI gate, then public hash Date branch and ordered/
+unordered composition, remaining macro/collection/core and M2–M9 acceptance.

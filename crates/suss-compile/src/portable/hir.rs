@@ -3,6 +3,7 @@ mod arrays;
 mod bitwise;
 mod comparisons;
 mod controls;
+mod cases;
 mod dynamic;
 mod exceptions;
 mod nominal;
