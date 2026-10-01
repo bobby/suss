@@ -3451,3 +3451,108 @@ fn runtime_abi_descriptor_methods_observe_enumerability_and_live_tostring() {
     let result = nominal_value(&mut store, runtime, "object-method-invoke", &[locale, owner.clone(), empty]);
     assert!(wasmtime::Rooted::ref_eq(&store, result.unwrap_anyref().unwrap(), owner.unwrap_anyref().unwrap()).unwrap());
 }
+
+fn native_object_method(store: &mut Store<()>, runtime: Instance, owner: &Val, name: &str) -> Val {
+    let key = native_property_key(store, runtime, &name.encode_utf16().collect::<Vec<_>>());
+    nominal_value(store, runtime, "native-object-property-get", &[owner.clone(), key])
+}
+
+#[test]
+fn runtime_abi_legacy_accessors_are_real_methods_and_preserve_counterparts() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let parent = nominal_value(&mut store, runtime, "native-object-default-new", &[]);
+    let child = nominal_value(&mut store, runtime, "native-object-default-new", &[]);
+    nominal_value(&mut store, runtime, "native-object-prototype-set", &[child.clone(), parent.clone()]);
+    let define_get = native_object_method(&mut store, runtime, &parent, "__defineGetter__");
+    let define_set = native_object_method(&mut store, runtime, &parent, "__defineSetter__");
+    let lookup_get = native_object_method(&mut store, runtime, &parent, "__lookupGetter__");
+    let lookup_set = native_object_method(&mut store, runtime, &parent, "__lookupSetter__");
+    let value_of = native_object_method(&mut store, runtime, &parent, "valueOf");
+    let root = nominal_value(&mut store, runtime, "native-object-default-prototype", &[]);
+    let proto = native_property_key(&mut store, runtime, &"__proto__".encode_utf16().collect::<Vec<_>>());
+    let pair = nominal_value(&mut store, runtime, "native-object-own-get", &[root, proto]);
+    let setter = pair.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().get(&mut store, 1).unwrap();
+    let key = native_property_key(&mut store, runtime, &[120]);
+    let args = nominal_value(&mut store, runtime, "args-new", &[Val::I32(2)]);
+    let array = args.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    array.set(&mut store, 0, key.clone()).unwrap();
+    array.set(&mut store, 1, value_of.clone()).unwrap();
+    let result = nominal_value(&mut store, runtime, "object-method-invoke", &[define_get.clone(), parent.clone(), args.clone()]);
+    assert_eq!(result.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 6);
+    array.set(&mut store, 1, setter.clone()).unwrap();
+    nominal_value(&mut store, runtime, "object-method-invoke", &[define_set.clone(), parent.clone(), args.clone()]);
+    store.gc(None).unwrap();
+    let found = nominal_value(&mut store, runtime, "object-method-invoke", &[lookup_get.clone(), child.clone(), args.clone()]);
+    assert!(wasmtime::Rooted::ref_eq(&store, found.unwrap_anyref().unwrap(), value_of.unwrap_anyref().unwrap()).unwrap());
+    let found = nominal_value(&mut store, runtime, "object-method-invoke", &[lookup_set.clone(), child.clone(), args.clone()]);
+    assert!(wasmtime::Rooted::ref_eq(&store, found.unwrap_anyref().unwrap(), setter.unwrap_anyref().unwrap()).unwrap());
+    let value = nominal_value(&mut store, runtime, "native-object-property-get", &[child.clone(), key.clone()]);
+    assert!(wasmtime::Rooted::ref_eq(&store, value.unwrap_anyref().unwrap(), child.unwrap_anyref().unwrap()).unwrap());
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    nominal_value(&mut store, runtime, "native-object-property-set", &[child.clone(), key.clone(), nil.clone()]);
+    let detached = nominal_value(&mut store, runtime, "native-object-prototype", &[child.clone()]);
+    assert_eq!(detached.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 0);
+    // Defining only a setter creates no getter; the later getter keeps that setter.
+    nominal_value(&mut store, runtime, "object-method-invoke", &[define_set.clone(), child.clone(), args.clone()]);
+    let no_getter = nominal_value(&mut store, runtime, "native-object-property-get", &[child.clone(), key.clone()]);
+    assert_eq!(no_getter.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 6);
+    array.set(&mut store, 1, value_of.clone()).unwrap();
+    nominal_value(&mut store, runtime, "object-method-invoke", &[define_get.clone(), child.clone(), args.clone()]);
+    let found = nominal_value(&mut store, runtime, "object-method-invoke", &[lookup_set, child.clone(), args.clone()]);
+    assert!(wasmtime::Rooted::ref_eq(&store, found.unwrap_anyref().unwrap(), setter.unwrap_anyref().unwrap()).unwrap());
+    let descriptor = nominal_value(&mut store, runtime, "native-object-own-descriptor", &[child.clone(), key.clone()]);
+    let flags = descriptor.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().get(&mut store, 0).unwrap();
+    assert_eq!(flags.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 14);
+    nominal_value(&mut store, runtime, "native-object-own-set", &[child.clone(), key.clone(), nil]);
+    let shadow = nominal_value(&mut store, runtime, "object-method-invoke", &[lookup_get.clone(), child.clone(), args.clone()]);
+    assert_eq!(shadow.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 6);
+    let empty = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    for method in [define_get, define_set, lookup_get] {
+        let error = runtime.get_func(&mut store, "protocol-native-invoke").unwrap().call(&mut store, &[method, empty.clone()], &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        assert!(store.take_pending_exception().is_some());
+    }
+}
+
+#[test]
+fn runtime_abi_legacy_accessor_rejections_are_atomic_and_recover_after_gc() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let owner = nominal_value(&mut store, runtime, "native-object-default-new", &[]);
+    let key = native_property_key(&mut store, runtime, &[120]);
+    let callback = native_object_method(&mut store, runtime, &owner, "valueOf");
+    let number = nominal_value(&mut store, runtime, "number-box", &[Val::F64(7.0f64.to_bits())]);
+    nominal_value(&mut store, runtime, "native-object-own-define", &[owner.clone(), key.clone(), number.clone(), Val::I32(0)]);
+    for arguments in [
+        vec![owner.clone(), key.clone(), callback.clone(), Val::I32(0)],
+        vec![owner.clone(), key.clone(), number, Val::I32(0)],
+        vec![owner.clone(), key.clone(), callback.clone(), Val::I32(-1)],
+        vec![owner.clone(), key.clone(), callback.clone(), Val::I32(2)],
+        vec![Val::null_any_ref(), key.clone(), callback.clone(), Val::I32(0)],
+    ] {
+        let error = runtime.get_func(&mut store, "native-object-legacy-define").unwrap().call(&mut store, &arguments, &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        assert!(store.take_pending_exception().is_some());
+        store.gc(None).unwrap();
+        let still = nominal_value(&mut store, runtime, "native-object-property-get", &[owner.clone(), key.clone()]);
+        assert_eq!(still.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 0).unwrap().unwrap_f64(), 7.0);
+    }
+    for selector in [-1, 2] {
+        let error = runtime.get_func(&mut store, "native-object-legacy-lookup").unwrap().call(&mut store, &[owner.clone(), key.clone(), Val::I32(selector)], &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        assert!(store.take_pending_exception().is_some());
+    }
+    // A configurable data property can become an accessor with normal flags14.
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    nominal_value(&mut store, runtime, "native-object-own-define", &[owner.clone(), key.clone(), nil, Val::I32(4)]);
+    nominal_value(&mut store, runtime, "native-object-legacy-define", &[owner.clone(), key.clone(), callback, Val::I32(0)]);
+    store.gc(None).unwrap();
+    let value = nominal_value(&mut store, runtime, "native-object-property-get", &[owner.clone(), key]);
+    assert!(wasmtime::Rooted::ref_eq(&store, value.unwrap_anyref().unwrap(), owner.unwrap_anyref().unwrap()).unwrap());
+}

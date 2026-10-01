@@ -6502,3 +6502,39 @@ and licensed cached hashing forms. Public define/delete, primitive boxing, forei
 object domains and Symbol.toStringTag remain open. Preserve64 certified source
 observations; native cache forms still unresolved, not acceptance. All processes
 terminal. M2–M9 goal active, no merge/closure/milestone acceptance.
+
+
+## Real legacy accessor methods — 2026-10-01
+
+Continuation aftereae27c8 adds all four real default legacy define/lookup getter/
+setter methods. Eleven function values and one actual __proto__ accessor now
+populate the owned default prototype. Define checks receiver/callback callability
+before scalar key conversion, rejects non-configurable own properties, preserves
+an existing own accessor counterpart and defines flags14. Lookup resolves stored
+descriptors through the chain and returns actual getter/setter identity without
+invocation; nearer data shadows stop lookup. Internal selector bounds reject
+negative/out-of-range values before array access. No placeholder functions.
+No shared type/layout/ABI/core-cell change.
+
+First formatter/Cargo attempt ended101 on a mismatched closing delimiter in the
+new helper; fixed that syntax before execution. Corrected93893 passed2 existing
+descriptor tests. New66004 passed2 actual legacy regressions: member invocation,
+inherited getter/setter lookup, receiver identity, counterpart preservation,
+setter-only Undefined reads, flags14, data shadowing, detached throws, typed
+rejection/GC recovery and configurable data conversion versus non-configurable
+atomic rejection. Full ABI75670 passed39. Logs
+/private/tmp/suss-legacy-accessor-first.log and
+/private/tmp/suss-legacy-accessor-abi.log. Commands use shared target/build workers2
+and cargo test -p suss-compile --test runtime_abi [runtime_abi_legacy_accessor]
+--locked -- --test-threads=2. Independent development Node assertions also pass,
+/private/tmp/suss-legacy-accessor-node.log. Not a fresh source oracle comparison.
+
+Next wire private compiler object factory/get/set operations, retaining source
+js-obj/cache declarations/add-to-string-hash-cache/hash-string with source hashes
+and EPL. A function-valued adapted js-obj factory must preserve first-class/live
+binding behavior and variadic argument evaluation before odd-arity errors; do not
+silently advertise a zero-argument-only public factory. General public definition/
+deletion, primitive boxing/foreign objects and Symbol.toStringTag remain open.
+Preserve64 source observations, require fresh native agreement then independent
+PR review/full baseline/exact final-head CI. No PR readiness/merge/closure or
+milestone claim on this unpublished branch; all processes terminal. M2–M9 active.

@@ -45,6 +45,10 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         "isPrototypeOf",
         "propertyIsEnumerable",
         "toLocaleString",
+        "__defineGetter__",
+        "__defineSetter__",
+        "__lookupGetter__",
+        "__lookupSetter__",
     ] {
         let mut code = vec![LocalGet(1), ArrayLen, I32Eqz, If(BlockType::Empty)];
         nominal::error(&mut code);
@@ -139,6 +143,56 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         I32Const(0),
                         ArrayNewDefault(ARGS),
                         Call(b.names["object-method-invoke"]),
+                    ]);
+                }
+                "__defineGetter__" | "__defineSetter__" => {
+                    code.extend([
+                        LocalGet(2),
+                        LocalGet(1),
+                        ArrayLen,
+                        I32Const(1),
+                        I32GtU,
+                        If(BlockType::Result(VALUE)),
+                        LocalGet(1),
+                        I32Const(1),
+                        ArrayGet(ARGS),
+                        Else,
+                        I32Const(UNDEFINED),
+                        RefI31,
+                        End,
+                        LocalGet(1),
+                        ArrayLen,
+                        I32Const(2),
+                        I32GtU,
+                        If(BlockType::Result(VALUE)),
+                        LocalGet(1),
+                        I32Const(2),
+                        ArrayGet(ARGS),
+                        Else,
+                        I32Const(UNDEFINED),
+                        RefI31,
+                        End,
+                        I32Const(i32::from(name == "__defineSetter__")),
+                        Call(b.names["native-object-legacy-define"]),
+                    ]);
+                }
+                "__lookupGetter__" | "__lookupSetter__" => {
+                    code.extend([
+                        LocalGet(2),
+                        LocalGet(1),
+                        ArrayLen,
+                        I32Const(1),
+                        I32GtU,
+                        If(BlockType::Result(VALUE)),
+                        LocalGet(1),
+                        I32Const(1),
+                        ArrayGet(ARGS),
+                        Else,
+                        I32Const(UNDEFINED),
+                        RefI31,
+                        End,
+                        I32Const(i32::from(name == "__lookupSetter__")),
+                        Call(b.names["native-object-legacy-lookup"]),
                     ]);
                 }
                 "isPrototypeOf" => {

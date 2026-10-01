@@ -54,9 +54,10 @@ special-casing has been removed; hasOwnProperty correctly observes the descripto
 
 ## Default builtin preparation
 
-`native-object-default-new` attaches one lazy GC-rooted shared prototype. Seven
+`native-object-default-new` attaches one lazy GC-rooted shared prototype. Eleven
 real functions currently live there: constructor, toString, valueOf, hasOwnProperty,
-isPrototypeOf, propertyIsEnumerable and toLocaleString. Builtin data descriptors
+isPrototypeOf, propertyIsEnumerable, toLocaleString, __defineGetter__,
+__defineSetter__, __lookupGetter__ and __lookupSetter__. Builtin data descriptors
 are writable/configurable and non-enumerable (flags5). Methods are unbound values;
 member calls supply a receiver, and detached calls retain no owner.
 
@@ -69,7 +70,12 @@ missing/supported primitive arguments before receiver validation; object argumen
 throw for undefined this. Constructor creates a default object for missing/nil/
 Undefined arguments and preserves an existing owned object's identity.
 
-Remaining legacy define/lookup getter/setter methods, primitive boxing, other
+Legacy definitions check callback callability before scalar key conversion, reject
+non-configurable own properties, preserve the other half of an own accessor, and
+create enumerable/configurable accessors. Lookup follows the actual prototype
+chain and stops at a nearer data descriptor without invoking getters.
+
+Primitive boxing, other
 object kinds, Symbol.toStringTag, public descriptor definition/deletion and source
 factory/property adapters remain unfinished. No placeholder functions stand in
 for those operations. Complete these boundaries before claiming public Object or
@@ -77,7 +83,7 @@ cached hashing compatibility.
 
 ## Executing evidence
 
-The complete runtime ABI suite passes 37 tests. Owned-object tests validate and
+The complete runtime ABI suite passes 39 tests. Owned-object tests validate and
 instantiate actual Wasm, covering storage growth/replacement, separate owners,
 UTF-16, malformed tables/descriptors, typed recovery, inherited values, Undefined
 shadowing, atomic cycle rejection, a 130-object chain and forced GC. Method tests
@@ -89,7 +95,7 @@ confirm bounded descriptor/accessor behavior; they are not a fresh pinned
 ClojureScript corpus comparison. No full workspace/review/final CI claim on this
 unpublished preparation branch.
 
-Next implement real remaining legacy methods, then wire source factory/property
+Next wire source factory/property
 adapters and retain cache forms with EPL/source provenance. Preserve all 64
 certified source observations, including the original 48; require fresh native
 agreement, independent PR review, full workspace tests and exact final-head CI.
