@@ -7440,3 +7440,15 @@ in /private/tmp/suss-identity-hash-full-final.log; root owns the heavy slot.
 Draft PR review may proceed statically while the baseline runs; execution must
 wait for root to release the slot. Readiness still requires reviewer baseline
 and exact final reviewed-head CI; no merge or acceptance closure.
+
+Full65381 terminal0 through final doc tests at implementation262b2d7, including
+all44 ABI tests and real old-layout/UID-corruption guards,
+/private/tmp/suss-identity-hash-full-final.log. Ignored/manual tests remain explicit.
+Draft PR107 https://github.com/bobby/suss/pull/107 opened with Refs links, base
+reviewed1068e0f3b5. Independent /root/review_pr107 created isolated actual-pin
+worktree and performed static review while root owned the heavy slot. Root's
+full/push/create handles are now terminal; heavy slot releases to reviewer after
+this evidence commit. Initial CI36856978539 is in progress at262b2d7; final reviewed
+head CI still gates readiness. No merge, issue closure or milestone acceptance.
+Next finish review/fixes and source public/default/ordered/unordered hashing,
+general IFn invocation/apply, printing and remaining M2–M9 acceptance gates.

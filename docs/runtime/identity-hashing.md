@@ -89,5 +89,7 @@ passed. Full retry4743 ended101 on another stale Error decoder in the definition
 suite (12 passed,1 failed). A broader decoder search found the same old count in
 namespace resolution. Both now require five fields and inspect nil data/cause/UID
 while retaining all previous assertions. Focused74630 ended0:13 definition and11
-resolution tests passed. The next full baseline is running in
-/private/tmp/suss-identity-hash-full-final.log; no full pass is claimed yet.
+resolution tests passed. Full65381 ended0 through final doc tests, including all44 ABI regressions,
+/private/tmp/suss-identity-hash-full-final.log. Existing ignored/manual tests remain
+explicit. Independent review, reviewer baseline and final reviewed-head CI remain
+pending; this is not public hash or milestone acceptance.
