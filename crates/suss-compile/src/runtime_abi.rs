@@ -5,6 +5,7 @@ use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
 mod arrays;
+mod bitwise;
 mod closure_properties;
 mod comparisons;
 mod dynamic;
@@ -607,6 +608,7 @@ fn build_module() -> Vec<u8> {
     dynamic::binding_get(&mut b, dynamic_lookup, binding_get);
     let binding_set = dynamic::binding_set(&mut b, dynamic_lookup);
     let primitives = numeric::intrinsics(&mut b, numeric_info);
+    bitwise::intrinsics(&mut b);
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
     arithmetic_functions.extend(arrays::functions(&mut b));
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));

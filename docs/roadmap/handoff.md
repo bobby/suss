@@ -5697,3 +5697,25 @@ source-selection, issue or milestone status changes. All local Cargo/JVM/Node
 processes are terminal. Next implement bounded original bitwise coercion and
 certify advertised arities with retained-source provenance before a new PR.
 Complete List/Cons/IndexedSeq and M2–M9 remain open; no merge or issue closure.
+
+
+## Private 32-bit coercion prerequisite — 2026-10-01
+
+A focused runtime regression first hit a missing RootScope import (21273 compile101);
+corrected fixture47448 ended101 at missing coerce-int32, the intended red stage.
+Original runtime helper now calls existing coerce-number, truncates once, guards
+nonfinite values before conversion and wraps modulo2^32 using exact binary scaling.
+No public form, GC layout, language cell, source selection or ABI version changes.
+Focused48691 ended0. Extended fixture initially called gc on RootScope (compile101);
+forced-GC cases now use Store's rooted default scope. Final83289 ended0 with all21
+ABI tests, including20 numeric boundaries/2048 varied encodings, nil/Boolean/string
+coercion, UTF-16 after GC and unsupported object language exception with recovery.
+Logs /private/tmp/suss-int32-abi-red.log, /private/tmp/suss-int32-abi-red2.log,
+/private/tmp/suss-int32-abi-candidate.log, /private/tmp/suss-int32-abi-all-candidate.log,
+/private/tmp/suss-int32-abi-all-candidate2.log.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-compile --test runtime_abi --locked -- --test-threads=2`.
+Public37-case native corpus remains red36 unresolved/one match. No full-baseline or
+public compatibility claim and no new PR opened. Next integrate bounded bitwise
+operations and retained public source, then repeat primary/native/provenance/full
+baseline, independent PR review and exact final-head CI before readiness. All
+local test processes are terminal; PR94 final remote CI remains pending.

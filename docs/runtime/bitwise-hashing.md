@@ -1,6 +1,7 @@
 # Bitwise dependencies for retained collection hashing
 
-This is preparation, not an implementation or compatibility claim. The pinned
+This contains a tested private coercion prerequisite; public bitwise forms and
+collection hashing are not implemented. The pinned
 List/Cons hash path requires ordered hashing and Murmur operations before the
 complete source types can execute. Preserve their Object blocks and persistent
 representations; do not substitute the internal argument array for a list.
@@ -34,7 +35,15 @@ Direct calls have separate macro expansion behavior. Resolve this distinction
 against the accepted wrong-arity diagnostic contract before certifying public
 arity compatibility; do not infer minimum arity behavior from declarations alone.
 
-Next implement a bounded original ToInt32 primitive and bitwise/imul lowering,
+An original private `coerce-int32` runtime intrinsic now reuses scalar coercion.
+It rejects unsupported objects as language exceptions, returns zero for nonfinite
+values, truncates fractions and computes an exact power-of-two remainder before
+Wasm unsigned conversion. It changes no shared GC layouts, language cells or ABI
+version. All 21 runtime ABI tests pass; the added regression covers 20 boundaries,
+2,048 varied float encodings, scalar sentinels, UTF-16 parsing after forced GC and
+typed opaque-object rejection followed by successful conversion.
+
+Next implement bitwise/imul lowering and public source integration,
 then retain portable runtime forms with explicit source/license/patch provenance.
 Certify advertised direct, computed and variadic calls, namespace/rebinding,
 ordered coercion, typed rejection and compile-atomic recovery. Full List/Cons,

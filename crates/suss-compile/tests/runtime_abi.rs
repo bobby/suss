@@ -2607,3 +2607,132 @@ fn runtime_abi_object_method_tables_and_wrappers_reject_corruption_without_trapp
         &[method, nil, empty],
     );
 }
+
+#[test]
+fn runtime_abi_int32_coercion_wraps_finite_values_and_zeroes_nonfinite() {
+    let engine = support::engine();
+    let module = Module::new(&engine, runtime_abi::module()).unwrap();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &module, &[]).unwrap();
+    let boxed = runtime.get_func(&mut store, "number-box").unwrap();
+    let convert = runtime
+        .get_func(&mut store, "coerce-int32")
+        .expect("bitwise coercion export");
+    let cases = [
+        (0.0f64, 0),
+        (-0.0, 0),
+        (-3.9, -3),
+        (3.9, 3),
+        (4294967295.0, -1),
+        (4294967296.0, 0),
+        (4294967297.0, 1),
+        (-4294967297.0, -1),
+        (2147483648.0, i32::MIN),
+        (9007199254740991.0, -1),
+        (9007199254740992.0, 0),
+        (1e100, 0),
+        (-1e100, 0),
+        (f64::MAX, 0),
+        (f64::INFINITY, 0),
+        (f64::NEG_INFINITY, 0),
+        (f64::from_bits(0x7ff8_0000_0000_0123), 0),
+        (f64::from_bits(0xfff8_0000_0000_0123), 0),
+        (f64::from_bits(1), 0),
+        (-f64::from_bits(1), 0),
+    ];
+    for (number, expected) in cases {
+        let mut scope = wasmtime::RootScope::new(&mut store);
+        let mut value = [Val::null_any_ref()];
+        boxed
+            .call(&mut scope, &[Val::F64(number.to_bits())], &mut value)
+            .unwrap();
+        let mut result = [Val::I32(0)];
+        convert.call(&mut scope, &value, &mut result).unwrap();
+        assert_eq!(
+            result[0].unwrap_i32(),
+            expected,
+            "{:016x}",
+            number.to_bits()
+        );
+    }
+    for (name, expected) in [("nil", 0), ("false", 0), ("true", 1)] {
+        let mut scope = wasmtime::RootScope::new(&mut store);
+        let mut value = [Val::null_any_ref()];
+        runtime
+            .get_func(&mut scope, name)
+            .unwrap()
+            .call(&mut scope, &[], &mut value)
+            .unwrap();
+        let mut result = [Val::I32(0)];
+        convert.call(&mut scope, &value, &mut result).unwrap();
+        assert_eq!(result[0].unwrap_i32(), expected);
+    }
+    let new = runtime.get_func(&mut store, "string-new").unwrap();
+    let set = runtime.get_func(&mut store, "string-set-unit").unwrap();
+    for (units, expected) in [
+        ("4294967297".encode_utf16().collect::<Vec<_>>(), 1),
+        (" -3.9 ".encode_utf16().collect(), -3),
+        ("Infinity".encode_utf16().collect(), 0),
+        (vec![0xd800], 0),
+        (vec![], 0),
+    ] {
+        let mut scope = &mut store;
+        let mut value = [Val::null_any_ref()];
+        new.call(&mut scope, &[Val::I32(units.len() as i32)], &mut value)
+            .unwrap();
+        for (index, unit) in units.iter().enumerate() {
+            let mut accepted = [Val::I32(0)];
+            set.call(
+                &mut scope,
+                &[
+                    value[0].clone(),
+                    Val::I32(index as i32),
+                    Val::I32(*unit as i32),
+                ],
+                &mut accepted,
+            )
+            .unwrap();
+            assert_eq!(accepted[0].unwrap_i32(), 1);
+        }
+        scope.gc(None).unwrap();
+        let mut result = [Val::I32(0)];
+        convert.call(&mut scope, &value, &mut result).unwrap();
+        assert_eq!(result[0].unwrap_i32(), expected);
+    }
+    let mut opaque = [Val::null_any_ref()];
+    runtime
+        .get_func(&mut store, "args-new")
+        .unwrap()
+        .call(&mut store, &[Val::I32(0)], &mut opaque)
+        .unwrap();
+    let error = convert
+        .call(&mut store, &opaque, &mut [Val::I32(0)])
+        .unwrap_err();
+    assert!(error.is::<wasmtime::ThrownException>());
+    let exception = store.take_pending_exception().unwrap();
+    assert!(wasmtime::Tag::eq(
+        &exception.tag(&mut store).unwrap(),
+        &runtime.get_tag(&mut store, "language-exception").unwrap(),
+        &store
+    ));
+    let mut state = 0xd734_68ef_1279_4321u64;
+    for _ in 0..2048 {
+        state ^= state << 13;
+        state ^= state >> 7;
+        state ^= state << 17;
+        let number = f64::from_bits(state);
+        let expected = if number.is_finite() {
+            number.trunc().rem_euclid(4294967296.0) as u32 as i32
+        } else {
+            0
+        };
+        let mut scope = wasmtime::RootScope::new(&mut store);
+        let mut value = [Val::null_any_ref()];
+        boxed
+            .call(&mut scope, &[Val::F64(state)], &mut value)
+            .unwrap();
+        let mut result = [Val::I32(0)];
+        convert.call(&mut scope, &value, &mut result).unwrap();
+        assert_eq!(result[0].unwrap_i32(), expected, "{state:016x}");
+    }
+}
