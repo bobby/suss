@@ -8287,3 +8287,33 @@ full8004 is authoritative terminal0 atddf00b2; this audit adds only documentatio
 and the focused runner, with no Rust/runtime/oracle input changes. Mandatory
 new independent reviewer must validate the criterion claims and runner scope;
 no Closes links or completion status yet. Root holds heavy slot until18713 terminal.
+
+
+## PR #115 independent findings and repairs — 2026-10-01
+
+Independent reviewer in /private/tmp/suss-review-pr115 found three significant
+legacy backend violations while auditing #9; the initial focused acceptance18713
+terminal0 did not cover them. Before-fix79935 terminal101 records actual receiver
+result19 rather than23 and bit-and trace21 rather than12; the hash effect probe
+failed Wasm validation (expectedi64, foundreference), not an observed repeat count.
+Expanded18014 terminal101 records all six bitwise traces21 versus12. No failures
+were skipped or relabeled. The real upstream checkout is detached atc4295f3031.
+
+Receiver-first dispatch now saves the receiver before ordered arguments; bitwise
+emission keeps the left operand on the Wasm stack while evaluating right; hash
+emission captures the input once before every type/sentinel inspection. Existing
+hash algorithms are unchanged. Expanded78511 terminal0 executes three regression
+functions covering receiver result23, nested/three-operand trace123, all six
+bitwise traces12 and asymmetric3/1 results, plus eight hash operand cases.
+Large vector emitter loops use disjoint first32/rest slices and do not re-emit an
+entry. No portable runtime/oracle inputs or upstream core source changed.
+
+Independent published-criterion review records candidate foundation verdicts in
+docs/roadmap/acceptance-m2.md. Source :require-macros/isolated compiled macros are
+M3; constructor-interface fixtures prove normalization but not M4 collection
+algorithms; reader metadata is distinct from unfinished runtime metadata. Legacy
+production frontend/release compatibility is not certified by M2 foundation.
+Required full workspace40695 is LIVE at /private/tmp/suss-pr115-review-full.log,
+sharedtarget/build2/testthreads2; no other heavy producer. Next: obtain its
+terminal result, push significant fixes, then require exact final-head CI and
+user merge before closing issues or reconciling default-branch status.
