@@ -583,12 +583,72 @@
       "id": "runtime:swap!:4694",
       "source-sha256": "4081090780e8ca6ad14373f69ecafc6002c1113ea2de51254e3c0a14f8bec207",
       "patch": "docs/compatibility/patches/atoms-swap.json"
+    },
+    {
+      "id": "runtime:INamed:888",
+      "source-sha256": "ea6bcd1574cbbf54bace6090418e2100ed319543fb2a35d5ffac92999bb42256",
+      "patch": null
+    },
+    {
+      "id": "runtime:IPrintWithWriter:806",
+      "source-sha256": "0e200947029ff81edafacb508d8c170c933e90678ae7dd1f95b5f8299972ff8c",
+      "patch": null
+    },
+    {
+      "id": "runtime:hash-symbol:1110",
+      "source-sha256": "71c9b10ea20f946ec9666067a4d56c256a84a1e6dbef0c87a3db6e89d1158b02",
+      "patch": "docs/compatibility/patches/identifier-hash-symbol.json"
+    },
+    {
+      "id": "runtime:hash-keyword:3459",
+      "source-sha256": "5e19ad5fa2fb73e843315ad558788ca8e1c5805cd8bdfe9662df8a05a9840f4d",
+      "patch": "docs/compatibility/patches/identifier-hash-keyword.json"
+    },
+    {
+      "id": "runtime:Symbol:1129",
+      "source-sha256": "570d7b5554f6967031ba9945385d210acd0f023eb267e386ab5d1179283a19a0",
+      "patch": null
+    },
+    {
+      "id": "runtime:Keyword:3474",
+      "source-sha256": "913f043e0ef32980493963b62ddbac05abfbec891de173946c2c543110e1fa8c",
+      "patch": null
+    },
+    {
+      "id": "runtime:symbol?:1105",
+      "source-sha256": "f7197c7cdb7ab810a9a05a7b0f1b8c35d5181687b267393bea498d5167ef3b50",
+      "patch": "docs/compatibility/patches/identifier-symbol-predicate.json"
+    },
+    {
+      "id": "runtime:keyword?:3502",
+      "source-sha256": "96dfd679f3577a3a72e7f6c1896cb46b93f34b70a68ce071265f76158d80b2bd",
+      "patch": "docs/compatibility/patches/identifier-keyword-predicate.json"
+    },
+    {
+      "id": "runtime:name:9681",
+      "source-sha256": "8e4b7a3343fcbbacb34c88c560a8aecb2d2d2eba378de0c7b6d246390085a013",
+      "patch": "docs/compatibility/patches/identifier-name.json"
+    },
+    {
+      "id": "runtime:namespace:3525",
+      "source-sha256": "8e257bd8a93f50afb0f91f0eee45c2a532994abe8cd1351b221b55371e9140bf",
+      "patch": "docs/compatibility/patches/identifier-namespace.json"
+    },
+    {
+      "id": "runtime:keyword-identical?:3507",
+      "source-sha256": "173ce3082770618ce31cb50f3e03ae303070b00fb73c120815aecbbf2478e9f2",
+      "patch": "docs/compatibility/patches/identifier-keyword-identical-predicate.json"
+    },
+    {
+      "id": "runtime:symbol-identical?:3516",
+      "source-sha256": "93be16b685f7ceedef4aee7cae418547c4d4da7c4685df9aa18b28ed62a71b5a",
+      "patch": "docs/compatibility/patches/identifier-symbol-identical-predicate.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "55c1ebe9d2d477a52a473eebe7c558ae1497816a238c64309b852ac0aae5c8fb"
+      "sha256": "b21c596ba1be43ff7140b8630756ce87f9a32d18cf28eb70cbe18774dafb84d4"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",

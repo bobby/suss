@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "71c9b10ea20f946ec9666067a4d56c256a84a1e6dbef0c87a3db6e89d1158b02",
+  "replacement": "(def hash-symbol (fn [sym]\n  (hash-combine\n    (m3-hash-unencoded-chars (.-name sym))\n    (hash-string (.-ns sym)))))",
+  "rationale": "Retain complete pinned identifier types and named/equality/hash protocols as real GC-owned values needed by compiled macro forms. Fixed defn bootstrap adaptation preserves every source branch; general constructor conversions, IFn lookup/get, writer printing, runtime collection metadata, private Var policy and compiled macro bootstrap remain unfinished. All declarations remain in-progress; quoted literals use source-compatible constant hashes and canonical core classes, never string substitutes or constructor fixtures."
+}

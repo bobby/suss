@@ -280,7 +280,7 @@
       "id": "M3-03",
       "milestone": "M3",
       "title": "Compiled macro bootstrap",
-      "status": "planned",
+      "status": "in-progress",
       "dependencies": [
         "M2",
         "M3-02"
@@ -290,7 +290,9 @@
       "spec_sections": "7",
       "validation": "scripts/verify-bootstrap.sh",
       "scope": "Only this work package and prerequisite repairs; no unrelated runtime/API changes.",
-      "evidence": []
+      "evidence": [
+        "Portable quoted identifiers/list data prerequisites execute as actual source-backed GC values, with48 fresh pinned observations and independent native decoding. Twelve partial source selections retain hashes/EPL, constant hashes preserve pinned semantics. Defmacro execution, isolated macro Store/phase dependencies, syntaxquote/&form/&env/gensyms, bootstrap/cache and removal of the tree evaluator remain unfinished; docs/runtime/quoted-identifiers.md records boundaries."
+      ]
     },
     {
       "id": "M3-04",

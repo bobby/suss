@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "feaf851e0ea70af96c10b054d851f3b0d3cc3fc20f06fd742943f18a32c9527f",
-  "reviews-sha256": "24f4b6a5e071e6c2f4b1d02553b755783a05a674b377641dc27fc7309146317e",
+  "recipe-sha256": "ffce6d4eca504ba4b6ed169ad00dd8dd0f885516d98e3f929ba2772a7b35b09d",
+  "reviews-sha256": "ad444f1d62ed681ea5b3799c745c35429c8ed6645fa6d8bc616429256e841fcd",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -3775,12 +3775,396 @@
         "tests/oracle/atom-cases.json",
         "docs/runtime/atoms.md"
       ]
+    },
+    {
+      "id": "runtime:INamed:888",
+      "name": "INamed",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 888,
+      "end-line": 893,
+      "byte-start": 26919,
+      "byte-end": 27115,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "ea6bcd1574cbbf54bace6090418e2100ed319543fb2a35d5ffac92999bb42256",
+      "extracted": "extracted/0116.cljs",
+      "extracted-sha256": "9c51bc4ad64b4ff7e682d417d2c53bb602ff56f9bff41cdd1875c84c17af7ba4",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "ea6bcd1574cbbf54bace6090418e2100ed319543fb2a35d5ffac92999bb42256",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:INamed:888",
+        "IEquiv/IFn/IHash/IMeta/IWithMeta/IPrintWithWriter",
+        "retained hash-combine/m3/string helpers",
+        "pending get/str_/writer functions"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_quoted_identifiers.rs",
+        "docs/runtime/quoted-identifiers.md"
+      ]
+    },
+    {
+      "id": "runtime:IPrintWithWriter:806",
+      "name": "IPrintWithWriter",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 806,
+      "end-line": 812,
+      "byte-start": 23621,
+      "byte-end": 24060,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "0e200947029ff81edafacb508d8c170c933e90678ae7dd1f95b5f8299972ff8c",
+      "extracted": "extracted/0117.cljs",
+      "extracted-sha256": "c512d154433126e639f850a5d03179aaf51b86bb5c073dd1e3ef0c51c295bd79",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "0e200947029ff81edafacb508d8c170c933e90678ae7dd1f95b5f8299972ff8c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:INamed:888",
+        "IEquiv/IFn/IHash/IMeta/IWithMeta/IPrintWithWriter",
+        "retained hash-combine/m3/string helpers",
+        "pending get/str_/writer functions"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_quoted_identifiers.rs",
+        "docs/runtime/quoted-identifiers.md"
+      ]
+    },
+    {
+      "id": "runtime:hash-symbol:1110",
+      "name": "hash-symbol",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1110,
+      "end-line": 1113,
+      "byte-start": 33323,
+      "byte-end": 33437,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "71c9b10ea20f946ec9666067a4d56c256a84a1e6dbef0c87a3db6e89d1158b02",
+      "extracted": "extracted/0118.cljs",
+      "extracted-sha256": "85148decd53060e3f57658d250d377543c3194d783886d7586d66ef8d66d390a",
+      "patch": "docs/compatibility/patches/identifier-hash-symbol.json",
+      "patch-sha256": "6227937bb87a36ec56604e9f8c15e758a5026d2421a7a79422e174229e9aa9a5",
+      "adapted-form-sha256": "7c0be0b0c9eda97986773f5be34a38952729856d8450b1cae75bf38ed9c29261",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:INamed:888",
+        "IEquiv/IFn/IHash/IMeta/IWithMeta/IPrintWithWriter",
+        "retained hash-combine/m3/string helpers",
+        "pending get/str_/writer functions"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_quoted_identifiers.rs",
+        "docs/runtime/quoted-identifiers.md"
+      ]
+    },
+    {
+      "id": "runtime:hash-keyword:3459",
+      "name": "hash-keyword",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3459,
+      "end-line": 3460,
+      "byte-start": 91135,
+      "byte-end": 91197,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5e19ad5fa2fb73e843315ad558788ca8e1c5805cd8bdfe9662df8a05a9840f4d",
+      "extracted": "extracted/0119.cljs",
+      "extracted-sha256": "106536fa16a22eaab2084c858597561b649b2eceee629f4d673d4d9aba8ac410",
+      "patch": "docs/compatibility/patches/identifier-hash-keyword.json",
+      "patch-sha256": "1291f65148ae1e7b85b1e6228fa3bd2c099d2359deb7b62aa39de5019469eec5",
+      "adapted-form-sha256": "2f4c7f2a5d1abc5c2584351c913cd74056bb569b3c28f96bb8738d877ed60bb4",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:INamed:888",
+        "IEquiv/IFn/IHash/IMeta/IWithMeta/IPrintWithWriter",
+        "retained hash-combine/m3/string helpers",
+        "pending get/str_/writer functions"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_quoted_identifiers.rs",
+        "docs/runtime/quoted-identifiers.md"
+      ]
+    },
+    {
+      "id": "runtime:Symbol:1129",
+      "name": "Symbol",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1129,
+      "end-line": 1161,
+      "byte-start": 33858,
+      "byte-end": 34500,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "570d7b5554f6967031ba9945385d210acd0f023eb267e386ab5d1179283a19a0",
+      "extracted": "extracted/0120.cljs",
+      "extracted-sha256": "20ae7f4dfb2088dfffd6ed47663d434562991aa4aca63b03eeaf064dd424c66e",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "570d7b5554f6967031ba9945385d210acd0f023eb267e386ab5d1179283a19a0",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:INamed:888",
+        "IEquiv/IFn/IHash/IMeta/IWithMeta/IPrintWithWriter",
+        "retained hash-combine/m3/string helpers",
+        "pending get/str_/writer functions"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_quoted_identifiers.rs",
+        "docs/runtime/quoted-identifiers.md"
+      ]
+    },
+    {
+      "id": "runtime:Keyword:3474",
+      "name": "Keyword",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3474,
+      "end-line": 3500,
+      "byte-start": 91604,
+      "byte-end": 92159,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "913f043e0ef32980493963b62ddbac05abfbec891de173946c2c543110e1fa8c",
+      "extracted": "extracted/0121.cljs",
+      "extracted-sha256": "e56185e01c100f7c782427e0dc253c6b5bfa9b9ceef7c9922fb4551c28f685ce",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "913f043e0ef32980493963b62ddbac05abfbec891de173946c2c543110e1fa8c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:INamed:888",
+        "IEquiv/IFn/IHash/IMeta/IWithMeta/IPrintWithWriter",
+        "retained hash-combine/m3/string helpers",
+        "pending get/str_/writer functions"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_quoted_identifiers.rs",
+        "docs/runtime/quoted-identifiers.md"
+      ]
+    },
+    {
+      "id": "runtime:symbol?:1105",
+      "name": "symbol?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1105,
+      "end-line": 1108,
+      "byte-start": 33236,
+      "byte-end": 33321,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "f7197c7cdb7ab810a9a05a7b0f1b8c35d5181687b267393bea498d5167ef3b50",
+      "extracted": "extracted/0122.cljs",
+      "extracted-sha256": "9035d78a2d1a32eb0fe70c597736df93453ae60a181ffc5953cc4de25fcdf6b6",
+      "patch": "docs/compatibility/patches/identifier-symbol-predicate.json",
+      "patch-sha256": "65ae7a2fa48a6667b13f4c02dd22b8abdf9949410d8c49f88c9a05fee9593a80",
+      "adapted-form-sha256": "5e13e212288ed28e71a514f043744bb1b9b90e8e45db8ba291f30150ea70492e",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:INamed:888",
+        "IEquiv/IFn/IHash/IMeta/IWithMeta/IPrintWithWriter",
+        "retained hash-combine/m3/string helpers",
+        "pending get/str_/writer functions"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_quoted_identifiers.rs",
+        "docs/runtime/quoted-identifiers.md"
+      ]
+    },
+    {
+      "id": "runtime:keyword?:3502",
+      "name": "keyword?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3502,
+      "end-line": 3505,
+      "byte-start": 92161,
+      "byte-end": 92240,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "96dfd679f3577a3a72e7f6c1896cb46b93f34b70a68ce071265f76158d80b2bd",
+      "extracted": "extracted/0123.cljs",
+      "extracted-sha256": "8f58254ae7e62c5d2edfe7638947f99df8c1dda3cf88f2733daeff9e8036b9af",
+      "patch": "docs/compatibility/patches/identifier-keyword-predicate.json",
+      "patch-sha256": "d14f0b481f715e72fe08b4ebcac5346a56411d022794492dfe13034e4024fa2f",
+      "adapted-form-sha256": "1f6b771fa078254ff1ae1b5f643872526d8976d5c808c5fc33aa88c1e2814255",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:INamed:888",
+        "IEquiv/IFn/IHash/IMeta/IWithMeta/IPrintWithWriter",
+        "retained hash-combine/m3/string helpers",
+        "pending get/str_/writer functions"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_quoted_identifiers.rs",
+        "docs/runtime/quoted-identifiers.md"
+      ]
+    },
+    {
+      "id": "runtime:name:9681",
+      "name": "name",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9681,
+      "end-line": 9688,
+      "byte-start": 269258,
+      "byte-end": 269468,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8e4b7a3343fcbbacb34c88c560a8aecb2d2d2eba378de0c7b6d246390085a013",
+      "extracted": "extracted/0124.cljs",
+      "extracted-sha256": "dba50b2eff2f97c668ee8f4caa0cc875c020d6b2c7a775995fa7b493a8db26b5",
+      "patch": "docs/compatibility/patches/identifier-name.json",
+      "patch-sha256": "ae4ce60febc97441461c111eaf660bf5c5916f8dff2837735c35ddd3680634d6",
+      "adapted-form-sha256": "0888d2e51df8d73bff9b49f634a4cffd71af64dadeb3d1bd1652e71a5e9b58a3",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:INamed:888",
+        "IEquiv/IFn/IHash/IMeta/IWithMeta/IPrintWithWriter",
+        "retained hash-combine/m3/string helpers",
+        "pending get/str_/writer functions"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_quoted_identifiers.rs",
+        "docs/runtime/quoted-identifiers.md"
+      ]
+    },
+    {
+      "id": "runtime:namespace:3525",
+      "name": "namespace",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3525,
+      "end-line": 3530,
+      "byte-start": 92688,
+      "byte-end": 92902,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8e257bd8a93f50afb0f91f0eee45c2a532994abe8cd1351b221b55371e9140bf",
+      "extracted": "extracted/0125.cljs",
+      "extracted-sha256": "6f4100230d825fdf945260b801bb0efe52143b2832688771933a74cc3ac4cb04",
+      "patch": "docs/compatibility/patches/identifier-namespace.json",
+      "patch-sha256": "904199254996d54c25909095f8ff747152dd7a4a25901cc9047063972b0e26e4",
+      "adapted-form-sha256": "2a0651909953c1a996f8e3e2744cac193eedfde3d32dcf0481671817dbf73dec",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:INamed:888",
+        "IEquiv/IFn/IHash/IMeta/IWithMeta/IPrintWithWriter",
+        "retained hash-combine/m3/string helpers",
+        "pending get/str_/writer functions"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_quoted_identifiers.rs",
+        "docs/runtime/quoted-identifiers.md"
+      ]
+    },
+    {
+      "id": "runtime:keyword-identical?:3507",
+      "name": "keyword-identical?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3507,
+      "end-line": 3514,
+      "byte-start": 92242,
+      "byte-end": 92465,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "173ce3082770618ce31cb50f3e03ae303070b00fb73c120815aecbbf2478e9f2",
+      "extracted": "extracted/0126.cljs",
+      "extracted-sha256": "f40f297285cfba16d5b8bbfa2e2a42bfc48f9a94d21a99c1729d6718c362f91e",
+      "patch": "docs/compatibility/patches/identifier-keyword-identical-predicate.json",
+      "patch-sha256": "daadeaeaa340b8b859cd54cabd698c6f6e64f6005d98d3a70e28c91e659ea30a",
+      "adapted-form-sha256": "7917e02245883f326d27c3b2d33906c1af2465b3296742f3e64721340478aab4",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:INamed:888",
+        "IEquiv/IFn/IHash/IMeta/IWithMeta/IPrintWithWriter",
+        "retained hash-combine/m3/string helpers",
+        "pending get/str_/writer functions"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_quoted_identifiers.rs",
+        "docs/runtime/quoted-identifiers.md"
+      ]
+    },
+    {
+      "id": "runtime:symbol-identical?:3516",
+      "name": "symbol-identical?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3516,
+      "end-line": 3523,
+      "byte-start": 92467,
+      "byte-end": 92686,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "93be16b685f7ceedef4aee7cae418547c4d4da7c4685df9aa18b28ed62a71b5a",
+      "extracted": "extracted/0127.cljs",
+      "extracted-sha256": "577b46518c0dde714bca023a11ac69e06fd95cde37854838778650c3e449236e",
+      "patch": "docs/compatibility/patches/identifier-symbol-identical-predicate.json",
+      "patch-sha256": "c592c1022a75ccb5944bded7c937b0e7a1ef49e9cee09d5117c47ab67be25c47",
+      "adapted-form-sha256": "985862b2215a071abdb79e6f1cae3d6da72f16c3a679d0d6e9c36dbaa05677fb",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:INamed:888",
+        "IEquiv/IFn/IHash/IMeta/IWithMeta/IPrintWithWriter",
+        "retained hash-combine/m3/string helpers",
+        "pending get/str_/writer functions"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_quoted_identifiers.rs",
+        "docs/runtime/quoted-identifiers.md"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "55c1ebe9d2d477a52a473eebe7c558ae1497816a238c64309b852ac0aae5c8fb"
+      "sha256": "b21c596ba1be43ff7140b8630756ce87f9a32d18cf28eb70cbe18774dafb84d4"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -3906,6 +4290,18 @@
     "extracted/0113.cljs": "06e7b6c4995d06f4f8331cd8faabb2b1a09f9bdbf6fe0970e723348a545eeca4",
     "extracted/0114.cljs": "eacb64b56645cd5f2b88ead2fa924cb5dcedb5ee73e1cabeb77656a98d4c10c2",
     "extracted/0115.cljs": "a9840a3d22cc1dd1a217de519fc334a2f03240f0a0fb5cb7c55e6353aea24cf1",
-    "suss/core.sus": "f6a3431a35b12abdb9d462fd9d38000cac7162df917fd94a1834071a7135200c"
+    "extracted/0116.cljs": "9c51bc4ad64b4ff7e682d417d2c53bb602ff56f9bff41cdd1875c84c17af7ba4",
+    "extracted/0117.cljs": "c512d154433126e639f850a5d03179aaf51b86bb5c073dd1e3ef0c51c295bd79",
+    "extracted/0118.cljs": "85148decd53060e3f57658d250d377543c3194d783886d7586d66ef8d66d390a",
+    "extracted/0119.cljs": "106536fa16a22eaab2084c858597561b649b2eceee629f4d673d4d9aba8ac410",
+    "extracted/0120.cljs": "20ae7f4dfb2088dfffd6ed47663d434562991aa4aca63b03eeaf064dd424c66e",
+    "extracted/0121.cljs": "e56185e01c100f7c782427e0dc253c6b5bfa9b9ceef7c9922fb4551c28f685ce",
+    "extracted/0122.cljs": "9035d78a2d1a32eb0fe70c597736df93453ae60a181ffc5953cc4de25fcdf6b6",
+    "extracted/0123.cljs": "8f58254ae7e62c5d2edfe7638947f99df8c1dda3cf88f2733daeff9e8036b9af",
+    "extracted/0124.cljs": "dba50b2eff2f97c668ee8f4caa0cc875c020d6b2c7a775995fa7b493a8db26b5",
+    "extracted/0125.cljs": "6f4100230d825fdf945260b801bb0efe52143b2832688771933a74cc3ac4cb04",
+    "extracted/0126.cljs": "f40f297285cfba16d5b8bbfa2e2a42bfc48f9a94d21a99c1729d6718c362f91e",
+    "extracted/0127.cljs": "577b46518c0dde714bca023a11ac69e06fd95cde37854838778650c3e449236e",
+    "suss/core.sus": "44a9aa98eee294142d1bf95be5084feb0a01b1e0d2108ce8ada1ed167121efcc"
   }
 }

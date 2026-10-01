@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "93be16b685f7ceedef4aee7cae418547c4d4da7c4685df9aa18b28ed62a71b5a",
+  "replacement": "(def symbol-identical?\n  \"Efficient test to determine that two symbols are identical.\"\n  (fn [x y]\n  (if (identical? x y)\n    true\n    (if (and (symbol? x) (symbol? y))\n      (identical? (.-str x) (.-str y))\n      false))))",
+  "rationale": "Retain complete pinned identifier types and named/equality/hash protocols as real GC-owned values needed by compiled macro forms. Fixed defn bootstrap adaptation preserves every source branch; general constructor conversions, IFn lookup/get, writer printing, runtime collection metadata, private Var policy and compiled macro bootstrap remain unfinished. All declarations remain in-progress; quoted literals use source-compatible constant hashes and canonical core classes, never string substitutes or constructor fixtures."
+}

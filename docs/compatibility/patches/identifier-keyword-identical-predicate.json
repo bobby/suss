@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "173ce3082770618ce31cb50f3e03ae303070b00fb73c120815aecbbf2478e9f2",
+  "replacement": "(def keyword-identical?\n  \"Efficient test to determine that two keywords are identical.\"\n  (fn [x y]\n  (if (identical? x y)\n    true\n    (if (and (keyword? x) (keyword? y))\n      (identical? (.-fqn x) (.-fqn y))\n      false))))",
+  "rationale": "Retain complete pinned identifier types and named/equality/hash protocols as real GC-owned values needed by compiled macro forms. Fixed defn bootstrap adaptation preserves every source branch; general constructor conversions, IFn lookup/get, writer printing, runtime collection metadata, private Var policy and compiled macro bootstrap remain unfinished. All declarations remain in-progress; quoted literals use source-compatible constant hashes and canonical core classes, never string substitutes or constructor fixtures."
+}

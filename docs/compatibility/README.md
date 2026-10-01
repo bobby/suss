@@ -463,3 +463,13 @@ These use development-only constructor fixtures; persistent collection types,
 keyword/symbol literals, quoted collections, runtime metadata and complete M2/M4
 acceptance remain unfinished. No inventory status changed. See
 [collection literal evidence](../runtime/collection-literals.md).
+
+
+## Quoted identifiers for compiled macro data
+
+Real source-backed Symbol/Keyword and nested list literals now execute through the
+portable pipeline. Fresh48 pinned/native observations include exact type fields,
+UTF16, signed hash caches, equality/names and runtime-computed hash agreement.
+Selection128/artifacts132 and223 partial reviews/842 unassessed remain prerequisites;
+compiled macros, complete collections/metadata/printing are not certified.
+[Quoted data evidence and provenance](../runtime/quoted-identifiers.md).

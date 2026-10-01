@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "96dfd679f3577a3a72e7f6c1896cb46b93f34b70a68ce071265f76158d80b2bd",
+  "replacement": "(def keyword?\n  \"Return true if x is a Keyword\"\n  (fn [x]\n  (instance? Keyword x)))",
+  "rationale": "Retain complete pinned identifier types and named/equality/hash protocols as real GC-owned values needed by compiled macro forms. Fixed defn bootstrap adaptation preserves every source branch; general constructor conversions, IFn lookup/get, writer printing, runtime collection metadata, private Var policy and compiled macro bootstrap remain unfinished. All declarations remain in-progress; quoted literals use source-compatible constant hashes and canonical core classes, never string substitutes or constructor fixtures."
+}

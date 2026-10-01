@@ -1,6 +1,7 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
 mod collections;
+mod quotes;
 mod bitwise;
 mod comparisons;
 mod controls;
@@ -520,6 +521,7 @@ impl Analyzer {
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
             Kind::String(value) => Expression::Literal(Literal::String(value.clone())),
+            Kind::Keyword(value) => return self.identifier_literal(form, value.namespace.as_deref(), &value.name, true),
             Kind::Vector(items) => return self.vector_literal(form, items),
             Kind::Map(items) => return self.map_literal(form, items),
             Kind::Set(items) => return self.set_literal(form, items),
@@ -1192,6 +1194,12 @@ impl Analyzer {
                 .map(|argument| self.form(argument))
                 .collect::<Result<Vec<_>, _>>()?;
             return Ok(self.nominal(form, Nominal::Construct, arguments));
+        }
+        if bare && symbol.name == "quote" {
+            if args.len() != 1 {
+                return Err(fail(form.span.clone(), "quote requires exactly one operand"));
+            }
+            return self.quote_data(&args[0], 0);
         }
         // Only true special forms bypass lexical and namespace resolution.
         let resolved = if bare

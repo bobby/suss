@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8e257bd8a93f50afb0f91f0eee45c2a532994abe8cd1351b221b55371e9140bf",
+  "replacement": "(def namespace\n  \"Returns the namespace String of a symbol or keyword, or nil if not present.\"\n  (fn [x]\n  (if (implements? INamed x)\n    (-namespace x)\n    (throw (suss.bootstrap/error (str_ \"Doesn't support namespace: \" x))))))",
+  "rationale": "Retain complete pinned identifier types and named/equality/hash protocols as real GC-owned values needed by compiled macro forms. Fixed defn bootstrap adaptation preserves every source branch; general constructor conversions, IFn lookup/get, writer printing, runtime collection metadata, private Var policy and compiled macro bootstrap remain unfinished. All declarations remain in-progress; quoted literals use source-compatible constant hashes and canonical core classes, never string substitutes or constructor fixtures. Source js/Error construction uses the existing typed runtime error adapter; pending str_ coercion in unsupported receiver error branches remains explicit."
+}
