@@ -62,3 +62,10 @@ Independent full78254 ended0 through final reader doc tests:
 including the original parent corpora and exact strict-arity boundary; existing
 manual ignores and diagnostic known failures remain explicit. All reviewer
 handles19855/48498/67088/35764/78254 are terminal.
+
+Exact reviewed-head CI36861360401 attempts1/2 ended cancelled at the25-minute
+job boundary. Attempt1's required test step reported success, but the overall
+run did not pass. The followup extends only the job budget to35 minutes; all
+checks/worker limits remain. Tested production/test/corpus bytes are identical
+to707b5b6, so prior local full78254 applies to the unchanged code; no fresh local
+full is claimed for this workflow-only fix. Fresh exact-head CI remains required.

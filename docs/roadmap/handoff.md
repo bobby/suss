@@ -7629,3 +7629,22 @@ ignores and diagnostic9passes/7knownfailures remain unchanged. All reviewer
 handles19855/48498/67088/35764/78254 terminal. Reviewer releases heavy slot after
 review evidence push; root must gate readiness on successful exact reviewed-head
 CI. No merge, issue closure or milestone acceptance.
+
+
+### PR108 final-head CI timeout correction — 2026-10-01
+
+Exact reviewed707b5b609fa139ee033f62f4424ca8b78c6b49c4 run36861360401
+attempts1 and2 are authoritative completed CANCELLED, not passing CI.
+Attempt1 required workspace step reported success after24m29s, but the overall
+job elapsed25m03s and was cancelled. Attempt2 job elapsed25m15s and cancelled
+the required step after24m39s. The25-minute job budget leaves insufficient
+room for checkout/toolchain/provenance and cleanup. Independent followup raises
+only timeout-minutes25→35 with the same explanatory comment already reviewed
+in PR110f7841dd. No checks, worker limits or test commands removed or reduced.
+
+Production, runtime artifacts, compiler/native/Python tests and oracle corpus
+bytes are unchanged from707b5b6, verified by scoped Git diff. Thus prior reviewer
+full78254 remains applicable to the identical tested code, but it is not a fresh
+run at this followup commit. Root owns the heavy slot (publichash full61362);
+no cargo/JVM/Node process was started for this static workflow/evidence fix.
+Fresh exact final-head CI is mandatory; draft remains, no readiness/merge claim.
