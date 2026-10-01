@@ -6266,3 +6266,35 @@ pin/native red, then adapt required object storage with source provenance and
 executing checks. General prototype mutation/host interop and full public hash,
 collection equality/hash, sequences and M2–M9 remain unfinished. PR97 exact
 reviewed-head CI36823514952 remains live; no readiness claim until success.
+
+## Cached string hashing verified red — 2026-10-01
+
+PR97 is ready at independently reviewed8947aaa after final CI36823514952 SUCCESS.
+Root inspected /private/tmp/suss-pr97-final-ci.log: Python76/reviews130+935/import47,
+String3, copied-callback guard/ABI24 and every enabled full suite pass. No merge.
+PR99 review pushed0fe9889 after72 exact fresh observations, independent malformed
+value ABI recovery, Python76/provenance and full93986 success. Final CI36825310559
+is live at that exact reviewed head; PR99 remains draft. No closure or milestone
+acceptance. Updated both remote PR bodies with final review/CI evidence.
+
+Rebased cache preparation onto PR99 final0fe9889, preserving both append-only
+handoff histories; real pinned upstream clone is present. Root acquired the
+explicitly released shared local slot. Fresh65884 ended101:all48 primary observations
+match exactly, including prototype-named keys, repeated __proto__ misses, reset
+thresholds, nil-before/after reset behavior, false/zero/NaN caches and live hasher
+suppression. Native reports48 located unresolved string-hash-cache failures before
+implementation; there are no native successes or skips. Log
+/private/tmp/suss-string-cache-first-red.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-string-cache-oracle.sh`.
+The original48 source/expected entries are now certified by the pin and should be
+preserved by future implementation/review. No cache forms were imported or falsely
+marked implemented. All root local Cargo/JVM/Node processes are terminal.
+
+Next implement owned dynamic named-object storage and the required native cache
+lookup/set/factory adapters with explicit inherited/prototype key behavior, then
+retain source cache declarations/add-to-string-hash-cache/hash-string with hashes,
+EPL and focused execution. Existing fixed-schema Object fields are insufficient;
+__proto__ numeric writes must not silently become ordinary own cache entries.
+Full public js-obj arities/key conversion/prototype APIs require their own evidence;
+do not infer them from a zero-argument cache factory. Persistent collections, full
+public hash/equality, compiled macros and M2–M9 remain unfinished.
