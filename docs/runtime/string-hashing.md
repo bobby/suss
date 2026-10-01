@@ -23,8 +23,8 @@ remain unchanged.
 The bounded `pos?` macro compares one operand with zero; the retained function
 value uses its own canonical cell. Full compiled macro execution remains open.
 
-82 fresh pinned observations match independently decoded validated native Wasm
-following forced GC, preserving the original 71 probes. Three native guards cover
+96 fresh pinned observations match independently decoded validated native Wasm
+following forced GC, preserving the original 82 probes. Three native guards cover
 located compile-atomic predicate diagnostics, both phases/aliases/exclusions,
 member domain failures, detached calls and recovery after GC. Missing/extra index
 observations are separate from core function arity behavior. Source-level warnings
@@ -34,6 +34,11 @@ Four additional partial reviews bring the overlay to 130 reviewed/935 unassessed
 The source recipe selects 43 forms and retains 47 licensed files. No shared GC
 layout, ABI version or native bootstrap cell change is introduced. The original
 checked builtin scalar and singleton root are internal runtime adapters.
-Independent PR review, full workspace baseline and exact final-head CI remain
-required before readiness. Full cached string/public/numeric/collection hashing,
-persistent sequences and compiled macro bootstrap remain unfinished.
+Independent review adds fourteen fresh probes and a copied-callback/malformed
+environment ABI regression. The detached callback always throws; its anchored
+body is stateless and safely ignores copied environments with valid physical
+receiver/index arguments. Malformed tagged payloads produce language exceptions
+without traps, followed by successful recovery. Required full workspace baseline
+passes; exact final-head CI remains required before readiness. Full cached string/public/
+numeric/collection hashing,
+persistent sequences, public `=` and compiled macro bootstrap remain unfinished.

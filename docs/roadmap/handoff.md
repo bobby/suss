@@ -6053,3 +6053,64 @@ Object2 pass at final candidate source, log /private/tmp/suss-string-hash-source
 Commands select those test binaries with shared target/build workers2/locked/
 --test-threads=2. All root Cargo/JVM/Node processes are terminal. Shared test slot
 will pass exclusively to the independent reviewer after draft publication.
+
+## Independent PR97 review — 2026-10-01
+
+Review worktree /private/tmp/suss-review-pr97 starts at candidate30a2ab7 on
+portable/core-string-hash, base independently reviewed PR96 3d745f6. A real local
+shared clone of the pinned upstream checkout supports strict provenance verification;
+no escaping symlink or verifier weakening. Original82 source/expected entries were
+checked byte-for-byte unchanged. Fourteen independent probes bring the fresh corpus
+to96, covering negative subnormals, binary/octal/fractional scalar index strings,
+large nonwrapping indices, receiver lookup before surplus argument effects, detached
+argument effects before failure, custom Object dispatch, live retained imul/mixing
+calls, lexical pos? captures, throwing surplus arguments and longer UTF-16 hashing.
+
+First fresh graph22152 ended1 only on the reviewer's provisional long-string hash
+expectation; pinned bits41bb6a7dad000000 are now recorded for that new case. Corrected
+45596 ended101:96 exact pinned observations but one native compile failure on the
+new consistency probe's public `=` call. `=` is an unimplemented public-core operation,
+not compatibility success; that limitation remains explicit. The intended numeric
+hash consistency probe now uses supported pinned `==`, changing only that new source.
+Final fresh17156 ended0:all96 exact pinned/native observations and nativeString3 pass.
+Logs /private/tmp/suss-pr97-review-primary96.log,
+/private/tmp/suss-pr97-review-primary96-fixed.log,
+/private/tmp/suss-pr97-review-primary96-final.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-string-hash-oracle.sh`.
+No original expectation changed, production failure hidden or blanket skip introduced.
+
+New independent ABI guard89143 ended0. An independently generated module copies
+actual anchored/detached typed callbacks into foreign closures with nil/opaque/null
+environments. Detached invocation remains a language error; the stateless anchored
+body safely ignores its environment when physical receiver/index arguments are valid
+and rejects invalid argument buffers without traps. Corrupt tagged payload rejection,
+GC and typed recovery are exercised. No significant production defect was found.
+Log /private/tmp/suss-pr97-review-callbacks.log. Command selects -p suss-compile
+--test runtime_abi runtime_abi_string_method with shared target/build workers2,
+--locked -- --test-threads=2. Shared runtime layouts/ABI/core cell counts unchanged.
+
+Provenance48205 ended0:Python76,inventory1065/reviews130+935/import47 licensed files,
+strict conditional imul source region, WIT15 files/6 packages, numeric manifest and
+offline roadmap10 milestones/39 issues pass. Log
+/private/tmp/suss-pr97-review-provenance.log. Required full workspace11226 is live;
+terminal results will follow. Exact final reviewed-head CI remains required before
+readiness. No merge, issue closure or milestone acceptance claim. Full cached string,
+numeric/public/collection hashing, general JS coercion/prototypes, actual persistent
+sequences and M2–M9 remain unfinished.
+
+Root inspected prerequisite PR96 exact reviewed3d745f6 CI36821371081 SUCCESS
+and marked PR96 ready. No merge. Deferred issue #98 tracks evaluation of alternative
+hashing algorithms after M4/M6/M7/M8 prerequisites; the accepted pinned algorithm
+contract is unchanged. Root numeric-hash preparation is isolated and launches no
+Cargo/JVM/Node while this review owns the shared target/cache slot.
+
+Required full workspace11226 ended0:every enabled workspace/doc test passes,
+including String3/Murmur5/Object2, compiler pipeline17/Murmur1/ABI24 with the
+independent copied-callback guard. Manual ignored tests and diagnostic9 passing/
+7 exact failing observations remain explicit. Log
+/private/tmp/suss-pr97-review-full-baseline.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+All local Cargo/JVM/Node processes are terminal. Shared slot is released after the
+review push finishes; root must require exact final reviewed-head CI before PR97
+readiness. No merge, closure or milestone acceptance. Next retained scalar numeric
+hashing, cached/public string hashing and actual persistent sequence/list algorithms.

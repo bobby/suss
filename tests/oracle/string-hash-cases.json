@@ -657,6 +657,118 @@
         "tag": "f64",
         "bits": "3ff0000000000000"
       }
+    },
+    {
+      "id": "review-negative-subnormal",
+      "source": "(.charCodeAt \"AB\" -5e-324)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "review-binary-index",
+      "source": "(.charCodeAt \"AB\" \"0b1\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050800000000000"
+      }
+    },
+    {
+      "id": "review-octal-index",
+      "source": "(.charCodeAt \"AB\" \"0o1\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050800000000000"
+      }
+    },
+    {
+      "id": "review-fraction-string",
+      "source": "(.charCodeAt \"AB\" \"1.999\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050800000000000"
+      }
+    },
+    {
+      "id": "review-negative-fraction-string",
+      "source": "(.charCodeAt \"AB\" \"-0.999\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "review-large-index-below-wrap",
+      "source": "(.charCodeAt \"AB\" 4294967295)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "review-receiver-before-extra",
+      "source": "(do (def review_char_trace 0) (let [owner nil] (try (.charCodeAt owner 0 (set! review_char_trace 1)) (catch :default e nil))) review_char_trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-detached-args-before-error",
+      "source": "(do (def review_char_trace 0) (try (let [f (.-charCodeAt \"A\")] (f (do (set! review_char_trace 1) 0))) (catch :default e nil)) review_char_trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "review-custom-callee-held",
+      "source": "(do (deftype ReviewCharOwner [x] Object (charCodeAt [this i] (+ x i))) (let [owner (ReviewCharOwner. 10)] (.charCodeAt owner 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402a000000000000"
+      }
+    },
+    {
+      "id": "review-old-hash-source-live-call",
+      "source": "(let [saved hash-string*] (with-redefs [hash-string* (fn [s] 9) imul (fn [a b] 0)] (saved \"ABC\")))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050c00000000000"
+      }
+    },
+    {
+      "id": "review-live-mix-K1",
+      "source": "(with-redefs [m3-mix-K1 (fn [k] 0)] (== (m3-hash-unencoded-chars \"ABC\") (m3-fmix (m3-mix-H1 m3-seed 0) 6)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-positive-lexical-capture",
+      "source": "(let [saved pos? pos? (fn [x] false)] (saved 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-surplus-throw",
+      "source": "(try (.charCodeAt \"AB\" 0 (throw 17)) (catch :default e e))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "review-long-utf16-string",
+      "source": "(hash-string* \"abcdefghijklmnopqrstuvwxyzzzzzzzzzzzzzzzzzzz\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "41bb6a7dad000000"
+      }
     }
   ]
 }
