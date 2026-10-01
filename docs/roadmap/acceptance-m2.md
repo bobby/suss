@@ -1,14 +1,17 @@
 # M2 compiler and runtime foundation acceptance audit
 
-Status: candidate audit, 2026-10-01. The roadmap remains in progress until
-independent review verifies every criterion and exact reviewed-head CI passes.
+Status: independently reviewed implementation acceptance, 2026-10-01. All
+published M2 foundation criteria are proven on this stack. Default-branch M2
+status remains in progress until exact final-head CI and the user’s merge;
+complete production language/core/frontends are not claimed.
 Independent review found and repaired three real legacy emitter defects: receiver
 order, all six bitwise operand orders, and repeated hash operand emission. The
 original focused runner was green without covering those defects; that result
 alone was not sufficient acceptance evidence.
 This evaluates the foundation work packages against their published criteria;
 it does not claim M3 compiled macros/REPL, M4 complete collections, or any release
-gate. Closing links must be added only after this audit is independently accepted.
+gate. Closing links apply only to fulfilled #8/#9/#11 criteria; #10 remains closed.
+No issue is closed manually or before the accepted closing commit reaches main.
 
 ## M2-01 / issue #8: reader, metadata and namespace phases
 
@@ -34,7 +37,7 @@ this audit must not describe those source directives as supported.
 | Calls evaluate once in order | Proven on candidate | `portable_closures::calls_evaluate_computed_callee_then_each_argument_exactly_once` validates and executes independently generated fragments with observed callee/argument traces. Non-callable and dynamic arity checks preserve argument effects and language recovery. |
 | Conditions evaluate once in order | Proven on candidate | `portable_pipeline::arithmetic_import_trace_observes_once_only_source_order_and_short_circuit` executes typed shared-ABI imports and asserts trace/short-circuit behavior; HIR lowers control through explicit values/blocks. |
 | Collection entries evaluate once in order | Proven on candidate | PR#114 introduces vector/map/set HIR paths using captured factory calls and ordered large-map entry temporaries. Six native guards and19 independently decoded observations cover both threshold paths, entry effects, throw stopping later entries/construction, lookup capture, GC and diagnostics. Native constructor-interface fixtures establish compiler evaluation behavior, not persistent collection algorithms. |
-| Dispatch evaluates once in order | Proven on candidate | `persistent_session::nominal_method_receiver_fields_and_callable_fields_preserve_recur_and_evaluation_order`, native missing-method/receiver tests and `portable_object_methods` guards exercise captured method lookup, argument effects and live protocol cells across fragments. |
+| Dispatch evaluates once in order | Proven on candidate | `legacy_dispatch_receiver_precedes_arguments_once` executes receiver-first native legacy nth/assoc paths with nested dispatch and exact123 traces; `persistent_session::nominal_method_receiver_fields_and_callable_fields_preserve_recur_and_evaluation_order`, native missing-method/receiver tests and `portable_object_methods` guards exercise captured method lookup, argument effects and live protocol cells across fragments. |
 | Recur evaluates once in order | Proven on candidate | Verified explicit block edges replace parameters in parallel; `portable_pipeline::edge_parameter_replacements_are_parallel_in_executed_ir`, source loop/function regressions and native protocol receiver-changing recur exercise actual artifacts. Lexical/tail/arity/cross-function negative tests reject malformed targets with spans. |
 | Wrong arity and unresolved types are diagnostics | Proven on candidate | `portable_closures::source_wrong_arity_and_unimplemented_signatures_are_located_diagnostics`, malformed HIR/IR tests and `persistent_session::nominal_unknown_types_preserve_order_and_failed_analysis_does_not_publish_bindings` assert located compile errors. Dynamic wrong arity returns a typed language exception instead of a Wasm trap. |
 | Old emitter reevaluation is removed | Proven on candidate | `codegen::generate_condition_inner` emits the operand once then inspects a scratch local. Independent review repaired `generate_hash` to capture its operand once before every type/sentinel inspection, and repaired receiver-first dispatch and left-first bitwise emission. New executing `legacy_hash_inspects_each_evaluated_operand_once`, `legacy_dispatch_receiver_precedes_arguments_once` and `legacy_bitwise_operands_preserve_source_order_once` assert actual artifacts. Legacy executing `condition_evaluates_effect_once`, `condition_preserves_falsey_and_truthy_effects`, `nested_conditions_preserve_effect_order`, `comparison_arguments_evaluate_once_even_when_false` and `arithmetic_and_equality_preserve_argument_effect_order` guard the earlier repairs. Reviewer must check the emitter itself, not infer this criterion from a green count. |
@@ -62,6 +65,13 @@ regressions still reject incompatible fragments before initialization; owned
 roots, cross-fragment closures and foreign-runtime diagnostics execute in the
 full workspace. ABI2 artifacts must be rebuilt; ABI1 is not claimed compatible.
 
+| Published criterion | Independent verdict | Current executing evidence |
+| --- | --- | --- |
+| Cross-fragment values survive GC | Proven on candidate | `runtime_abi_generated_fragments_share_scalar_types_and_gc_roots` and `runtime_abi_closures_check_arity_and_keep_old_captures_after_rebinding` inspect independently generated modules and retained exact values after GC. Native Session guards retain source closures and owned handles across fragments. |
+| Generic invocation checks arity | Proven on candidate | Shared invoke validates callable/argument-array and minimum/maximum arities. Runtime and source closure guards execute fixed/variadic bounds and typed arity failures before body effects. |
+| Float/UTF-16 corpus passes | Proven on candidate | Runtime ABI guards independently inspect boxed binary64 bits and UTF-16 units after GC; `runtime_abi_numeric_samples_match_pinned_formatting_and_parsing` executes all1024 pin samples. Fresh inherited source observations retain exact tagged values. |
+| ABI mismatch fails before execution | Proven on candidate | Manifest and changed actual recursive prelude tests reject before a host-marking initializer; Session artifact/import failures preserve bindings and effects. ABI1 is intentionally rejected under the accepted ABI2 decision. |
+
 ## M2-04 / issue #11: nominal identity, protocols and exceptions
 
 | Published criterion | Independent verdict | Implementation and executed evidence |
@@ -87,7 +97,8 @@ with exit0 through final reader doctests. Its reviewed final head is
 `ddf00b21372982fca7b79c216d988de67da033b4`; fresh19 reference/native observations
 and six native tests pass. Exact independently reviewed head CI is still required.
 
-This candidate audit changes no implementation and closes no issue. Reviewers
+This candidate includes the independent review’s legacy operand repairs and
+closes no issue. Reviewers
 must identify any criterion lacking actual acceptance evidence and keep that
 issue open; remaining unsupported features must not be silently relabeled as
 acceptance successes. GitHub merge and automatic issue closure remain under the
@@ -122,8 +133,10 @@ operand evaluation repair, not the deferred algorithm replacement in issue#98.
 Static inspection found that large vector construction's two element loops use
 disjoint first32/rest slices, so each entry is emitted once in textual order.
 
-The current source fix requires a fresh full baseline and exact final-head CI;
-those gates remain pending until their authoritative completion is recorded.
+The independently reviewed source fix at `a4bee19` passes required full workspace
+process40695 with exit0 through final reader doctests. The source, runtime and test
+inputs remain byte-identical in this evidence-only final commit. Exact final-head
+CI remains a readiness gate; this is not proof of default-branch incorporation.
 Default-branch merge/issue closure remain the user's responsibility. This audit
 provides no authority to merge or mark future milestone work complete.
 
