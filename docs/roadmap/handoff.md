@@ -7509,3 +7509,29 @@ Reviewer releases heavy slot after fixes/evidence push; exact final reviewed-hea
 CI remains root's readiness gate. No merge/issue or milestone closure. Next
 retained public/default/collection hash, printing, remaining types/compiled macros
 and surrounding M2–M9 release acceptance remain unfinished.
+
+
+## Expanded PR95 independent CI review — 2026-10-01
+
+The user merged PR96–107 into PR95's branch, advancing its head to
+015767ae44b5e2739782fb979f6324c46a3db9eb. Its complete Git tree is identical to
+independently reviewed PR107 head7b5307849aa641f0fabe26f5257335526f48fa3b
+(`git diff 7b5307849aa641f0fabe26f5257335526f48fa3b HEAD --stat` is empty
+before this CI change). Prior PR95 evidence atd49c5a72 certifies only the
+old head, not this expanded branch.
+
+Independent /root/review_pr95_expanded inspected run36871799306 at015767ae
+and check-run110401145846 annotations. GitHub explicitly reports
+“The job has exceeded the maximum execution time of 25m0s”. Inventory/scanner
+verification passed. Workspace compilation and preceding enabled suites passed;
+conformance was still executing when the job was cancelled. This is not a passing
+full baseline. Authoritative log: /private/tmp/suss-pr95-expanded-ci.log.
+
+Change only the job timeout from25 to35 minutes, matching the separately reviewed
+PR108 CI allowance. Commands, enabled suites, worker count and concurrency are
+unchanged. No production or test source changes; no local cargo/JVM/Node runs
+while root owns the heavy slot. Previous PR107 full90116 and exact-head CI
+36859350775 remain prior evidence, not new-head CI certification. Require the
+new reviewed commit's successful complete CI before PR95 readiness; no merge or
+issue/milestone closure. Next continue retained collection/vector dependencies
+and remaining M2–M9 acceptance gates.
