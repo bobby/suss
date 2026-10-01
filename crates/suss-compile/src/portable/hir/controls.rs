@@ -46,49 +46,102 @@ impl Analyzer {
         let nil = self.literal_form(form, Literal::Nil);
         match operation {
             ControlForm::Zero => {
-                if args.len() != 1 { return Err(fail(form.span.clone(), "zero? requires one operand")); }
+                if args.len() != 1 {
+                    return Err(fail(form.span.clone(), "zero? requires one operand"));
+                }
                 let value = self.form(&args[0])?;
-                Ok(Hir { span: form.span.clone(), metadata: form.metadata.clone(), ty: Type::Bool,
-                    kind: Expression::Comparison { operation: Comparison::StrictEqual,
-                        arguments: vec![value, self.literal_form(form, Literal::Number(0.0))] } })
+                Ok(Hir {
+                    span: form.span.clone(),
+                    metadata: form.metadata.clone(),
+                    ty: Type::Bool,
+                    kind: Expression::Comparison {
+                        operation: Comparison::StrictEqual,
+                        arguments: vec![value, self.literal_form(form, Literal::Number(0.0))],
+                    },
+                })
             }
             ControlForm::ThreadFirst => {
-                let Some(first) = args.first() else { return Err(fail(form.span.clone(), "-> requires an initial expression")); };
+                let Some(first) = args.first() else {
+                    return Err(fail(form.span.clone(), "-> requires an initial expression"));
+                };
                 let mut threaded = first.clone();
                 for step in &args[1..] {
                     let items = match &step.kind {
                         Kind::List(items) if !items.is_empty() => {
                             let mut next = vec![items[0].clone(), threaded];
-                            next.extend_from_slice(&items[1..]); next
+                            next.extend_from_slice(&items[1..]);
+                            next
                         }
-                        Kind::List(_) => return Err(fail(step.span.clone(), "Threading step has no callee")),
+                        Kind::List(_) => {
+                            return Err(fail(step.span.clone(), "Threading step has no callee"))
+                        }
                         _ => vec![step.clone(), threaded],
                     };
-                    threaded = Form { kind: Kind::List(items), span: step.span.clone(), metadata: step.metadata.clone() };
+                    threaded = Form {
+                        kind: Kind::List(items),
+                        span: step.span.clone(),
+                        metadata: if matches!(step.kind, Kind::List(_)) {
+                            step.metadata.clone()
+                        } else {
+                            Vec::new()
+                        },
+                    };
                 }
                 self.form_in(&threaded, statement, tail)
             }
             ControlForm::AsThread => {
-                if args.len() < 2 { return Err(fail(form.span.clone(), "as-> requires expression and binding name")); }
-                let Kind::Symbol(name) = &args[1].kind else { return Err(fail(args[1].span.clone(), "as-> binding must be a symbol")); };
-                if name.namespace.is_some() || name.name == "&" { return Err(fail(args[1].span.clone(), "as-> binding must be unqualified")); }
+                if args.len() < 2 {
+                    return Err(fail(
+                        form.span.clone(),
+                        "as-> requires expression and binding name",
+                    ));
+                }
+                let Kind::Symbol(name) = &args[1].kind else {
+                    return Err(fail(args[1].span.clone(), "as-> binding must be a symbol"));
+                };
+                if name.namespace.is_some() || name.name == "&" {
+                    return Err(fail(
+                        args[1].span.clone(),
+                        "as-> binding must be unqualified",
+                    ));
+                }
                 let name = name.name.clone();
                 let outer = self.locals.clone();
                 let result = (|| {
                     let mut bindings = Vec::new();
                     let value = self.form(&args[0])?;
                     let mut binding = self.fresh_binding(&args[1], value);
-                    binding.name = name.clone(); binding.metadata = args[1].metadata.clone();
-                    self.locals.insert(name.clone(), (binding.id, binding.value.ty)); bindings.push(binding);
+                    binding.name = name.clone();
+                    binding.metadata = args[1].metadata.clone();
+                    self.locals
+                        .insert(name.clone(), (binding.id, binding.value.ty));
+                    bindings.push(binding);
                     for step in args[2..].iter().take(args.len().saturating_sub(3)) {
                         let value = self.form(step)?;
-                        let mut binding = self.fresh_binding(&args[1], value); binding.name = name.clone(); binding.metadata = args[1].metadata.clone();
-                        self.locals.insert(name.clone(), (binding.id, binding.value.ty)); bindings.push(binding);
+                        let mut binding = self.fresh_binding(&args[1], value);
+                        binding.name = name.clone();
+                        binding.metadata = args[1].metadata.clone();
+                        self.locals
+                            .insert(name.clone(), (binding.id, binding.value.ty));
+                        bindings.push(binding);
                     }
-                    let body = if args.len() == 2 { self.form_in(&args[1], statement, tail)? } else { self.form_in(args.last().unwrap(), statement, tail)? };
-                    Ok(Hir { span: form.span.clone(), metadata: form.metadata.clone(), ty: body.ty, kind: Expression::Let { bindings, body: Box::new(body) } })
+                    let body = if args.len() == 2 {
+                        self.form_in(&args[1], statement, tail)?
+                    } else {
+                        self.form_in(args.last().unwrap(), statement, tail)?
+                    };
+                    Ok(Hir {
+                        span: form.span.clone(),
+                        metadata: form.metadata.clone(),
+                        ty: body.ty,
+                        kind: Expression::Let {
+                            bindings,
+                            body: Box::new(body),
+                        },
+                    })
                 })();
-                self.locals = outer; result
+                self.locals = outer;
+                result
             }
             ControlForm::CachingHash => {
                 if args.len() != 3 || !matches!(args[2].kind, Kind::Symbol(_)) {

@@ -5900,3 +5900,48 @@ One additional unexecuted thread-callee ordering probe makes53 provisional cases
 Nested threading syntax must preserve outer callee evaluation before the initial
 expression, rather than pre-evaluating that expression as an eager temporary.
 No primary/native success is claimed; shared test slot remains with PR95 reviewer.
+
+
+## Retained scalar Murmur executing candidate — 2026-10-01
+
+Rebased the preparation onto independently reviewed PR95 d49c5a7; one append-only
+handoff conflict preserved all reviewer and preparation evidence. PR95 reviewed
+full12800 passed and exact CI36819490858 is live; no ready/merge claim for that PR.
+Root acquired the released shared test slot. Initial fresh75181 ended101:53 exact
+pinned observations,36 unresolved native forms and17 executing control observations.
+Log /private/tmp/suss-murmur-hash-first-red.log. Seven explicit fixed defn patches
+and three exact constants now retain the scalar Murmur algorithms/zero? with EPL
+provenance. Import31363 ended0:53 exact primary/native and native1. Final fresh43112
+ended0:57 exact primary/native (original53 unchanged), all four native tests pass.
+Log /private/tmp/suss-murmur-hash-final57.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-murmur-hash-oracle.sh`.
+Pinned non-number zero? numeric warnings stay visible, not blanket-suppressed.
+
+Original bounded ->/as->/zero? expansions preserve splicing/evaluation order,
+sequential lexical identities, captures, metadata/spans, statement/tail contexts
+and strict numeric zero. General binder destructuring/callable collections and
+compiled macro bootstrap remain incomplete. Source guard65413 ended0: Murmur4,
+bitwise6/cache4; log /private/tmp/suss-murmur-source-guards.log. Commands select
+-p suss-cli --test portable_murmur_hash --test portable_bitwise_hash
+--test portable_caching_hash with shared target/two workers/--locked -- --test-threads=2.
+Python76 and source/review/import/bitwise provenance checks pass:126 partial/939
+unassessed,40 selections/44 licensed artifacts. Log /private/tmp/suss-murmur-python.log.
+No native bootstrap cell, shared GC layout or runtime ABI change in this slice.
+Compiler focused62882 is still live; final results follow. Required independent
+PR review/fixes/full baseline and exact reviewed-head CI remain before readiness.
+No closure/merge; hash-ordered/hash-unordered/string/numeric hashing, persistent
+List/Cons/IndexedSeq and M2–M9 remain unfinished.
+
+
+Compiler62882 ended0: bitwise guard1 and pipeline17 pass, log
+/private/tmp/suss-murmur-compiler-guards.log. A focused threading metadata
+regression61654 ended101: symbol metadata was incorrectly promoted to the generated
+call list. Pin core.cljc104 preserves list-step metadata only; the symbol itself
+still retains its metadata. Corrected6812 ended0 with the public HIR/validated
+artifact regression. Logs /private/tmp/suss-murmur-thread-metadata-red.log and
+/private/tmp/suss-murmur-thread-metadata-fixed.log. Command selects -p suss-compile
+--test portable_murmur with the required shared target/build workers/locked/two
+workers. All root local processes are terminal. Inventory126+939/40 selections44
+artifacts, WIT/numeric/offline roadmap and strict bitwise provenance gates pass.
+Next independent PR review/fixes, required full baseline and exact final-head CI.
+No readiness, milestone acceptance, issue closure or merge claim for this slice.

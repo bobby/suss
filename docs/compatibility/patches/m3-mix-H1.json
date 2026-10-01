@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "6dd614803ee00a5f5006aebca86c3de4d1a3d5191bacc1b0dbdc9586a37cc44a",
+  "replacement": "(def ^number m3-mix-H1 (fn [h1 k1]\n  (int (-> (int h1) (bit-xor (int k1)) (int-rotate-left 13) (imul 5) (+ (int 0xe6546b64))))))",
+  "rationale": "Explicit fixed defn bootstrap adaptation retains original algorithm, metadata and docstring. Bounded threading and strict-zero macros replace source macro expansion until the full compiled bootstrap exists."
+}

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "562a439a3e00393aaa0fdb09ba333ab8c65edc86d4e5794a507348208195726d",
+  "replacement": "(def hash-long (fn [high low]\n  (bit-xor high low)))",
+  "rationale": "Explicit fixed defn bootstrap adaptation retains original algorithm, metadata and docstring. Bounded threading and strict-zero macros replace source macro expansion until the full compiled bootstrap exists."
+}

@@ -1198,4 +1198,160 @@
    :adaptation-path "docs/runtime/bitwise-hashing.md"
    :alternative nil
    :tests ["crates/suss-cli/tests/portable_bitwise_hash.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/bitwise-hash-cases.json"]}
+
+  "runtime:zero?:3081"
+  {:source-sha256 "e2107ca970169a87350d72710ac9488f04ab3bfac80cfa608581b50ae813912e"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:==:1184"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/zero-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:m3-seed:967"
+  {:source-sha256 "5ca894a9fb1976c9671745b87ce91b04654c7f7eda2f42c17e5f5aa1f025bd34"
+   :visibility :public
+   :arities nil
+   :dependencies []
+   :classification :portable
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:m3-C1:968"
+  {:source-sha256 "d659e74b9df9169ef1df17c08ea819bc66bdea62d8e72b1ccda7cc1f19635fbd"
+   :visibility :public
+   :arities nil
+   :dependencies ["macro:int:1239"]
+   :classification :portable
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:m3-C2:969"
+  {:source-sha256 "ed00669e541a7c84e0efcd509588aef8e11a3024a0d8f304550b0877e4671787"
+   :visibility :public
+   :arities nil
+   :dependencies ["macro:int:1239"]
+   :classification :portable
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:m3-mix-K1:971"
+  {:source-sha256 "8e8ba6d401c897d25b0ba61deb4ca2e305ca4772991448b9936481dea7789342"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:->:104" "runtime:int-rotate-left:947" "imul checked wrapping primitive" "runtime:m3-C1:968" "runtime:m3-C2:969"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/m3-mix-K1.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:m3-mix-H1:974"
+  {:source-sha256 "6dd614803ee00a5f5006aebca86c3de4d1a3d5191bacc1b0dbdc9586a37cc44a"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:->:104" "runtime:int-rotate-left:947" "imul checked wrapping primitive" "macro:int:1239" "macro:bit-xor:1243"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/m3-mix-H1.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:m3-fmix:977"
+  {:source-sha256 "4eab182e144e2181569f1dd1d73997171682030d86759f000969ffa53653f6e9"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:as->:477" "macro:int:1239" "macro:bit-xor:1243" "macro:unsigned-bit-shift-right:1269" "imul checked wrapping primitive"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/m3-fmix.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:m3-hash-int:986"
+  {:source-sha256 "c51b7184ba4b84806736fe038259204ab50d70a23a4f0c3152fc6f5d8b716499"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:zero?:3081" "runtime:m3-mix-K1:971" "runtime:m3-mix-H1:974" "runtime:m3-fmix:977"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/m3-hash-int.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:hash-long:993"
+  {:source-sha256 "562a439a3e00393aaa0fdb09ba333ab8c65edc86d4e5794a507348208195726d"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["macro:bit-xor:1243"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/hash-long.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:mix-collection-hash:1394"
+  {:source-sha256 "2ec20d82dfa0886a6675fcd1c9679dbc0d6f924e8bb3d06d02c61bee65b82822"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:m3-seed:967" "runtime:m3-mix-K1:971" "runtime:m3-mix-H1:974" "runtime:m3-fmix:977"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/mix-collection-hash.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "macro:->:104"
+  {:source-sha256 "1520b2c67fec285b52db7749ee67dee1c1b4eb76af1b0fd36f6233bceec96f49"
+   :visibility :public
+   :arities {:fixed [] :variadic-min 1}
+   :dependencies ["source form splicing and phase resolution"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/runtime/murmur-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "macro:as->:477"
+  {:source-sha256 "925e4065959db22756552c6f54672387e447983b5e5731e4ca584e48a0b55d64"
+   :visibility :public
+   :arities {:fixed [] :variadic-min 2}
+   :dependencies ["sequential immutable lexical bindings and phase resolution"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/runtime/murmur-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "macro:zero?:1195"
+  {:source-sha256 "42bf0f469dddc7c55263b5dd05fa30006df58a60ad95913415e2b8f122957829"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:==:1184"]
+   :classification :adapted
+   :rationale "Retained pinned scalar Murmur algorithms and constants use explicit fixed defn patches with original algorithms and EPL provenance. Bounded original threading/strict-zero expansion is a dependency, not full compiled macro acceptance. Shared scalar and control probes must be freshly certified against the pin and independently decoded native artifacts; complete collection/string/numeric hashing remains unfinished."
+   :status :in-progress
+   :adaptation-path "docs/runtime/murmur-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
 }}

@@ -425,6 +425,38 @@
         "tag": "f64",
         "bits": "4035000000000000"
       }
+    },
+    {
+      "id": "captured-mix-original-body",
+      "source": "(let [f m3-mix-K1] (with-redefs [cljs.core/m3-mix-K1 (fn [x] 99)] (f 1)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1ce5632d1800000"
+      }
+    },
+    {
+      "id": "mix-live-constant",
+      "source": "(with-redefs [cljs.core/m3-C1 0] (m3-mix-K1 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "mix-live-imul",
+      "source": "(with-redefs [cljs.core/imul (fn [x y] 71)] (m3-mix-K1 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4051c00000000000"
+      }
+    },
+    {
+      "id": "mix-restored-after-redefs",
+      "source": "(m3-mix-K1 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1ce5632d1800000"
+      }
     }
   ]
 }
