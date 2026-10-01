@@ -54,7 +54,7 @@ fn public_bitwise_hir_and_ir_reject_bad_arity_and_result_before_emission() {
 
 #[test]
 fn private_binary64_storage_hir_and_ir_check_unary_result_contract() {
-    for operation in [Bitwise::F64Coerce, Bitwise::F64Word0, Bitwise::F64Word4] {
+    for operation in [Bitwise::F64Coerce, Bitwise::F64Word0, Bitwise::F64Word4, Bitwise::IdentityUid] {
         let make = |count, ty| Hir {
             span: 3..21, metadata: vec![], ty,
             kind: Expression::Bitwise { operation, arguments: (0..count).map(|_| Hir {

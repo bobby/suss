@@ -463,12 +463,32 @@
       "id": "runtime:-lastIndexOf:1627",
       "source-sha256": "5bf829a7ded5d38c0872602924634241cd3920adb15a33ee9bf9d73b2146539c",
       "patch": "docs/compatibility/patches/sequence--lastIndexOf.json"
+    },
+    {
+      "id": "runtime:IFn:586",
+      "source-sha256": "229cbe05e42077c3010ce220532bce39cee20c8c7ac31328547e674001a7050c",
+      "patch": null
+    },
+    {
+      "id": "runtime:MetaFn:2112",
+      "source-sha256": "7538b969f3cb56dbe9d96b730cc1364e9a08d02a12cadc9779502f8a5af006b6",
+      "patch": null
+    },
+    {
+      "id": "runtime:with-meta:2165",
+      "source-sha256": "f6275041a7d5daa0bf9e691b819ec1d829dfd215652c3024c35658e92d418785",
+      "patch": "docs/compatibility/patches/identity-with-meta.json"
+    },
+    {
+      "id": "runtime:meta:2174",
+      "source-sha256": "bc2294557964033aee4eae7921ed463a5878fde4437b49c82f97be518913760c",
+      "patch": "docs/compatibility/patches/identity-meta.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "add6df5a1e3fd54e72c5458198d9d6cf59eae41370eca5ad7c5a82be22b21ecc"
+      "sha256": "2f2b5598337400c085d9d4c1d057f9981e982fb1177e768feeb895ebb72aff87"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",

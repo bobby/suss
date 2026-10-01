@@ -7387,3 +7387,56 @@ manual ignores and explicit diagnostic9passing/7knownfailures remain unchanged.
 All reviewer handles68129/85831/68749 terminal; slot released to root after
 review commit/push. Exact final reviewed-head CI still gates readiness. No merge,
 issue closure or milestone acceptance; public/collection hashing remains next.
+
+## GC-owned identity and ABI transition — 2026-10-01
+
+Previous goal turn made progress: PR106 opened/pushed, numeric75/native4/reviewer
+full68749 passed at reviewed8e0f3b51a11ea0e0173849b413e1b3a91257121d. Exact
+CI36851103140 success verified/head unchanged/log through final doc tests,
+/private/tmp/suss-pr106-final-ci.log; marked ready. PR10519d71da exactCI36849333687
+success/log finaldocs/head unchanged, /private/tmp/suss-pr105-final-ci.log; ready.
+No merges. All reviewer106 handles terminal and exclusive heavy slot released.
+
+New isolated portable/runtime-identity-hashing from reviewed1068e0f3b5 implements
+owner-held UID storage for default IHash dependency. Dated design decision moves
+ABI1 to2 before hash integration; same ten-type group, appended mutable UIDslots
+on closures/descriptors/ordinary objects/errors, all older offsets preserved.
+No global object registry, addresses, new algorithm or source compatibility
+exception. Counter-only root and typed malformed/range guards; see
+identity-hashing.md for source pin, fields, limits and commands.
+Initial82402 private UID regression failed101; new66255 native1 pass0. ABI63405
+failed101 on eight v1 fixtures; updated actual UID initialization/inspection,
+manifest mismatch now tests oldABI1. ABI64950 failed101 one stale error count;
+37353 all42pass0. Fresh26855 primary18exact/native101 with missing with-meta;
+retained fullIFn/MetaFn/with-meta/meta with EPL patches instead of retargeting
+certified source. Fresh40264 terminal0 primary18/native2. Source count96/artifacts100,
+reviews189partial+876unassessed. General IFn call syntax/highest apply/function
+metadata remain unfinished, apply declared uninitialized. ABI guard28207/new
+comparison correction compilefailed; corrected actual API,84913 pass0. RealABI1
+and falsely labeled layouts gate77421 pass0 including linking/no init effects.
+New primary26 handle8773 live; root exclusive heavy slot. Focused/final full and
+independent review/fixes/exact-head CI pending. No future acceptance marked.
+Next finish architecture validation, public/default and collection hashing,
+printing, remaining collections/macros and M2–M9 gates. Hash evaluation deferred98.
+
+Fresh8773 terminal0:26 exact primary/native2, /private/tmp/suss-identity-hash-primary26.log;
+original18 unchanged. Focused88306 terminal0: native identity3/indexing3/sequences6/
+persistent-session suites pass with forced GC, typed errors and both phases.
+Python80/import100/setup4/reviews189+876/diff pass. Required full baseline and
+independent review/final-head CI remain pending; root owns heavy slot.
+
+Full86115 ended101 on three closure regressions sharing a stale four-field Error
+decoder (11 passed). Decoder now requires ABI2's five fields and nil data/cause/UID;
+all prior message/effect/recovery checks remain. Focused34964 ended0:14 passed,
+/private/tmp/suss-identity-hash-closures-retry.log. Full retry4743 is running,
+/private/tmp/suss-identity-hash-full-retry.log. Root still owns the heavy slot.
+
+Full retry4743 ended101: definition suite12pass/1fail on another stale Error count.
+A broader search found the same decoder in portable_resolution; both now require
+five fields and inspect nil data/cause/UID without dropping previous assertions.
+Focused74630 ended0:13 definitions+11 resolution tests pass,
+/private/tmp/suss-identity-hash-definition-resolution-retry.log. Full65381 is running
+in /private/tmp/suss-identity-hash-full-final.log; root owns the heavy slot.
+Draft PR review may proceed statically while the baseline runs; execution must
+wait for root to release the slot. Readiness still requires reviewer baseline
+and exact final reviewed-head CI; no merge or acceptance closure.

@@ -52,7 +52,7 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
             },
             I32Const(0),
             RefI31,
-            StructNew(7),
+            I32Const(0), RefI31, StructNew(7),
         ],
     );
     let mut body = vec![];

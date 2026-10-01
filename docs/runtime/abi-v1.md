@@ -1,6 +1,10 @@
-# Shared GC runtime ABI v1
+# Shared GC runtime ABI v1 history
 
-`suss_compile::runtime_abi` emits the new core runtime with wasm-encoder 0.258.0.
+The current [ABI2 identity extension](identity-hashing.md) appends owner-held UID
+slots and rejects ABI1 artifacts before initialization. This document records the
+original layout and evidence; current shared-runtime validation executes ABI2.
+
+`suss_compile::runtime_abi` originally emitted the new core runtime with wasm-encoder 0.258.0.
 This is production runtime implementation, not a second source compiler or the
 M0 hand-written feasibility fixture. The legacy compiler has **not** migrated;
 the source differential corpus still reports 9 passing and 7 known failures.

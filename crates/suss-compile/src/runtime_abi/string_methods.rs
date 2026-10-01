@@ -122,7 +122,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             },
             I32Const(0),
             RefI31,
-            StructNew(7),
+            I32Const(0), RefI31, StructNew(7),
             RefFunc(detached),
             I32Const(0),
             I32Const(-1),

@@ -148,3 +148,11 @@ fresh primary/native observations plus1 explicit named length-write boundary.
 Selection86/artifacts90/reviews176partial+889unassessed remain prerequisites;
 hash/printing/index helpers, generic reverse, other collections and compiled
 macro/release gates remain open. See [iteration evidence](docs/runtime/sequence-iteration.md).
+
+Identity hashing prerequisites now have26 fresh primary observations and3 native
+tests. Owner-held UID storage advances the shared layout to ABI2 with explicit
+old-artifact rejection; complete retained IFn/MetaFn/with-meta/meta dependencies
+bring selection to96 forms/100 licensed artifacts and189 partial reviews/876
+unassessed. Public/default and collection hashing, general IFn invocation, apply,
+full metadata and milestone gates remain open. See
+[identity evidence](docs/runtime/identity-hashing.md).

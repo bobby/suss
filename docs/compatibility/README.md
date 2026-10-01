@@ -388,3 +388,16 @@ requires a native typed adapter error, not matching value or skip;
 [evidence](../runtime/sequence-iteration.md) preserves that boundary and initial
 failures. Hash/printing/index helpers, generic reverse, other collections and
 compiled macros remain unfinished; no issue/milestone completion claim.
+
+## Identity hashing and metadata dependencies
+
+The private owner-held identity adapter supplies stable runtime-local UIDs for
+closures, descriptors, objects and errors. ABI2 appends UID storage and rejects
+old artifacts before initialization. Complete pinned IFn/MetaFn/with-meta/meta
+forms bring selection to96 forms/100 licensed artifacts and the overlay to189
+partial reviews/876 unassessed. Fresh26 primary observations and3 native tests
+cover identity relations, retained metadata, GC, errors and phase guards; see
+[identity hashing evidence](../runtime/identity-hashing.md). Public/default and
+collection hashing, general IFn call syntax, apply and full metadata acceptance
+remain unfinished. Full baseline, independent review and final-head CI still
+gate PR readiness; no issue or milestone is complete from this work alone.

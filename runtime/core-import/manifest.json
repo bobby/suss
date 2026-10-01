@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "6fd4b0fd79f20010516625eb236fe6d15b7701bfaf096aa9a26c414faa9a6e20",
-  "reviews-sha256": "8a9748e0ae4108987b2d0050936dbf822cae33bf986e42eb4c2dea5d5fe44341",
+  "recipe-sha256": "c69862712c4a7e7fe5552366d1a71af498398d46b38cfedc3637a9e73fcb3d84",
+  "reviews-sha256": "d64b63f9593eb917986114b25ba8261f93bf002b354167e8d1a6c27df3dff6f7",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -3006,12 +3006,144 @@
         "tests/oracle/indexing-cases.json",
         "docs/runtime/sequence-indexing.md"
       ]
+    },
+    {
+      "id": "runtime:IFn:586",
+      "name": "IFn",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 586,
+      "end-line": 612,
+      "byte-start": 15934,
+      "byte-end": 16823,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "229cbe05e42077c3010ce220532bce39cee20c8c7ac31328547e674001a7050c",
+      "extracted": "extracted/0092.cljs",
+      "extracted-sha256": "4d3a3c0f497111246de411110dc1b19ba498fe8c09fc65937055de7c1dbff893",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "229cbe05e42077c3010ce220532bce39cee20c8c7ac31328547e674001a7050c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IMeta:728",
+        "runtime:IWithMeta:733",
+        "IFn and MetaFn complete source",
+        "general IFn invocation and apply pending"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_identity_hash.rs",
+        "tests/oracle/identity-hash-cases.json",
+        "docs/runtime/identity-hashing.md"
+      ]
+    },
+    {
+      "id": "runtime:MetaFn:2112",
+      "name": "MetaFn",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2112,
+      "end-line": 2163,
+      "byte-start": 58001,
+      "byte-end": 59641,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "7538b969f3cb56dbe9d96b730cc1364e9a08d02a12cadc9779502f8a5af006b6",
+      "extracted": "extracted/0093.cljs",
+      "extracted-sha256": "2e781172cfffc1b74b9144802f83290db9ecf60ac2f2fcfecd786d4e0eb56dbf",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "7538b969f3cb56dbe9d96b730cc1364e9a08d02a12cadc9779502f8a5af006b6",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IMeta:728",
+        "runtime:IWithMeta:733",
+        "IFn and MetaFn complete source",
+        "general IFn invocation and apply pending"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_identity_hash.rs",
+        "tests/oracle/identity-hash-cases.json",
+        "docs/runtime/identity-hashing.md"
+      ]
+    },
+    {
+      "id": "runtime:with-meta:2165",
+      "name": "with-meta",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2165,
+      "end-line": 2172,
+      "byte-start": 59643,
+      "byte-end": 59846,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "f6275041a7d5daa0bf9e691b819ec1d829dfd215652c3024c35658e92d418785",
+      "extracted": "extracted/0094.cljs",
+      "extracted-sha256": "00cdcccf5f2dca594dd13fe47d07b49676cd4b9da348d7d7a67f4cb90045765f",
+      "patch": "docs/compatibility/patches/identity-with-meta.json",
+      "patch-sha256": "a0f16abc872421b9d47b969d63b7ce54ffcbef3e9ce1de011ba7ff13a41293cc",
+      "adapted-form-sha256": "b05d11a4cab0583b60aa73ed66880eaf5200f1d96e52f6baf90616aa2ae4396c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IMeta:728",
+        "runtime:IWithMeta:733",
+        "IFn and MetaFn complete source",
+        "general IFn invocation and apply pending"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_identity_hash.rs",
+        "tests/oracle/identity-hash-cases.json",
+        "docs/runtime/identity-hashing.md"
+      ]
+    },
+    {
+      "id": "runtime:meta:2174",
+      "name": "meta",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2174,
+      "end-line": 2179,
+      "byte-start": 59848,
+      "byte-end": 60013,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "bc2294557964033aee4eae7921ed463a5878fde4437b49c82f97be518913760c",
+      "extracted": "extracted/0095.cljs",
+      "extracted-sha256": "ec07e0acb998f8414197a008e65e4b8848afc341644a90844ea040400377f084",
+      "patch": "docs/compatibility/patches/identity-meta.json",
+      "patch-sha256": "c595a9e95e86215f03cf32ba44af84299e95bc455ec08388753aba6893dcd084",
+      "adapted-form-sha256": "fe2666ce186b2cfabca728af3018e793f752971158569341744bb2a25173eee8",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IMeta:728",
+        "runtime:IWithMeta:733",
+        "IFn and MetaFn complete source",
+        "general IFn invocation and apply pending"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_identity_hash.rs",
+        "tests/oracle/identity-hash-cases.json",
+        "docs/runtime/identity-hashing.md"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "add6df5a1e3fd54e72c5458198d9d6cf59eae41370eca5ad7c5a82be22b21ecc"
+      "sha256": "2f2b5598337400c085d9d4c1d057f9981e982fb1177e768feeb895ebb72aff87"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -3113,6 +3245,10 @@
     "extracted/0089.cljs": "6f9872a8ef9f571881dc643d865c4814bdb873dddeb7773888524a71f36ec130",
     "extracted/0090.cljs": "12046e1cd581e1edf7f872717f50141f713c1dcf344d35c6d0f286d6fc4e2946",
     "extracted/0091.cljs": "c9cb797008536c10898fc38e8026b49b8d046a3c55fe54b0855c8de088686745",
-    "suss/core.sus": "8e92277ea08cb47c6451f03148792f709af1667fadc0830772daa58daa0e4199"
+    "extracted/0092.cljs": "4d3a3c0f497111246de411110dc1b19ba498fe8c09fc65937055de7c1dbff893",
+    "extracted/0093.cljs": "2e781172cfffc1b74b9144802f83290db9ecf60ac2f2fcfecd786d4e0eb56dbf",
+    "extracted/0094.cljs": "00cdcccf5f2dca594dd13fe47d07b49676cd4b9da348d7d7a67f4cb90045765f",
+    "extracted/0095.cljs": "ec07e0acb998f8414197a008e65e4b8848afc341644a90844ea040400377f084",
+    "suss/core.sus": "e0139fb1b24502633e388c652a73ad56ea387f3f94fd0be3b711125b0a10536e"
   }
 }

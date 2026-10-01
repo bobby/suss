@@ -157,7 +157,7 @@ fn exception<T>(store: &mut Store<T>, value: &Val, descriptor: i64, expected: &s
         .fields(&mut *store)
         .unwrap()
         .collect::<Vec<_>>();
-    assert_eq!(fields.len(), 4);
+    assert_eq!(fields.len(), 5);
     let kind = fields[0]
         .unwrap_anyref()
         .unwrap()
@@ -181,6 +181,7 @@ fn exception<T>(store: &mut Store<T>, value: &Val, descriptor: i64, expected: &s
         .map(|unit| unit.unwrap_i32() as u16)
         .collect::<Vec<_>>();
     assert_eq!(String::from_utf16(&units).unwrap(), expected);
+    // Data, cause and the newly allocated ABI2 identity slot are nil.
     for nil in &fields[2..] {
         assert_eq!(
             nil.unwrap_anyref()

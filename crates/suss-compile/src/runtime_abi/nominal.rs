@@ -21,7 +21,7 @@ pub(super) fn error(body: &mut Vec<Instruction<'static>>) {
         RefI31,
         I32Const(0),
         RefI31,
-        StructNew(8),
+        I32Const(0), RefI31, StructNew(8),
         Throw(0),
     ]);
 }
@@ -91,7 +91,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         ArrayNewDefault(ARGS),
         I32Const(0),
         RefI31,
-        StructNew(DESCRIPTOR),
+        I32Const(0), RefI31, StructNew(DESCRIPTOR),
         GlobalGet(ID_GLOBAL),
         I64Const(1),
         I64Add,
@@ -119,7 +119,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         RefCastNonNull(HeapType::Concrete(ARGS)),
         I32Const(0),
         RefI31,
-        StructNew(OBJECT),
+        I32Const(0), RefI31, StructNew(OBJECT),
     ]);
     let object_new = b.function_with_locals(
         "object-new",

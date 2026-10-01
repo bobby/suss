@@ -95,7 +95,7 @@ fn indexing_errors_preserve_messages_effects_and_gc_recovery() {
             .inspect(&value, |mut store, value| {
                 let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
                 let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                assert_eq!(fields.len(), 4, "ABI Error");
+                assert_eq!(fields.len(), 5, "ABI Error");
                 let array = fields[1]
                     .unwrap_anyref()
                     .unwrap()

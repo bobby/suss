@@ -191,7 +191,7 @@ impl Session {
             .fields(&mut self.store)
             .unwrap()
             .collect::<Vec<_>>();
-        assert_eq!(fields.len(), 4);
+        assert_eq!(fields.len(), 5);
         let kind = fields[0]
             .unwrap_anyref()
             .unwrap()
@@ -218,6 +218,7 @@ impl Session {
             .map(|value| value.unwrap_i32() as u16)
             .collect::<Vec<_>>();
         assert_eq!(String::from_utf16(&units).unwrap(), message);
+        // Fresh errors have nil data, cause and ABI2 identity UID.
         for nil in &fields[2..] {
             assert_eq!(self.sentinel(nil), 0);
         }

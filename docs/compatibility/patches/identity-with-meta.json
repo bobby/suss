@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "f6275041a7d5daa0bf9e691b819ec1d829dfd215652c3024c35658e92d418785",
+  "replacement": "(def with-meta\n  \"Returns an object of the same type and value as obj, with\n  map m as its metadata.\"\n  (fn [o meta]\n  (if (js-fn? o)\n    (MetaFn. o meta)\n    (when-not (nil? o)\n      (-with-meta o meta)))))",
+  "rationale": "Explicit fixed defn bootstrap preserves original docstring, arity and body. Complete MetaFn/IFn forms are retained as dependencies. General IFn invocation, highest apply arity, complete function metadata and compiled macros remain unfinished."
+}

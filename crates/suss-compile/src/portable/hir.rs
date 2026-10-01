@@ -193,6 +193,7 @@ pub enum Bitwise {
     F64Finite,
     F64SafeInteger,
     SafeIntegerRemainder,
+    IdentityUid,
 }
 impl Bitwise {
     pub(crate) fn from_name(name: &str) -> Option<Self> {
@@ -237,11 +238,12 @@ impl Bitwise {
             Self::F64Finite => "primitive-f64-finite",
             Self::F64SafeInteger => "primitive-f64-safe-integer",
             Self::SafeIntegerRemainder => "primitive-safe-integer-remainder",
+            Self::IdentityUid => "identity-uid",
         }
     }
     pub(crate) fn arity(self) -> usize {
         match self {
-            Self::Int | Self::Not | Self::F64Coerce | Self::F64Word0 | Self::F64Word4 | Self::F64Floor | Self::F64Finite | Self::F64SafeInteger => 1,
+            Self::Int | Self::Not | Self::F64Coerce | Self::F64Word0 | Self::F64Word4 | Self::F64Floor | Self::F64Finite | Self::F64SafeInteger | Self::IdentityUid => 1,
             _ => 2,
         }
     }
@@ -1096,6 +1098,7 @@ impl Analyzer {
                 "f64-finite" => Some(Bitwise::F64Finite),
                 "f64-safe-integer" => Some(Bitwise::F64SafeInteger),
                 "safe-integer-remainder" => Some(Bitwise::SafeIntegerRemainder),
+                "identity-uid" => Some(Bitwise::IdentityUid),
                 _ => None,
             };
             if let Some(operation) = operation {

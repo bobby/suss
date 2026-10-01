@@ -155,7 +155,7 @@ fn retained_source_errors_are_typed_and_recover_after_gc() {
             .inspect(&value, |mut store, value| {
                 let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
                 let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                assert_eq!(fields.len(), 4, "ABI Error layout");
+                assert_eq!(fields.len(), 5, "ABI Error layout");
                 let field = fields[1];
                 let units = field.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
                 Ok(units

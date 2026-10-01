@@ -1,4 +1,4 @@
-//! Execute production ABI v1 runtime bytes, independently of Suss printing/equality.
+//! Execute production ABI v2 runtime bytes, independently of Suss printing/equality.
 mod support;
 use suss_compile::runtime_abi;
 use wasmtime::{Instance, Module, Store, Val};
@@ -125,7 +125,8 @@ fn runtime_abi_numeric_allocation_failure_is_typed_and_not_nan_or_a_trap() {
         .unwrap()
         .unwrap();
     let fields = value.fields(&mut store).unwrap().collect::<Vec<_>>();
-    assert_eq!(fields.len(), 4);
+    assert_eq!(fields.len(), 5);
+    assert_eq!(fields[4].unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 0, "fresh UID slot");
     let descriptor = fields[0]
         .unwrap_anyref()
         .unwrap()
@@ -441,7 +442,7 @@ fn runtime_abi_manifest_gate_precedes_initializer_effects() {
     };
     for changed in [
         runtime_abi::Manifest {
-            runtime_abi: 2,
+            runtime_abi: 1, // ABI1 must fail before initializer effects.
             ..expected.clone()
         },
         runtime_abi::Manifest {
@@ -710,7 +711,8 @@ fn runtime_abi_closures_check_arity_and_keep_old_captures_after_rebinding() {
         .fields(&mut store)
         .unwrap()
         .collect();
-    assert_eq!(fields.len(), 4);
+    assert_eq!(fields.len(), 5);
+    assert_eq!(fields[4].unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 0, "fresh UID slot");
     let Val::AnyRef(Some(message)) = &fields[1] else {
         panic!("expected diagnostic")
     };
@@ -748,7 +750,7 @@ fn runtime_abi_closures_check_arity_and_keep_old_captures_after_rebinding() {
             .fields(&mut store)
             .unwrap()
             .count(),
-        4
+        5
     );
     let mut environment = [Val::null_any_ref()];
     boxed
@@ -1058,6 +1060,8 @@ fn nominal_fragment() -> Vec<u8> {
         .instruction(&Instruction::LocalGet(2))
         .instruction(&Instruction::LocalGet(0))
         .instruction(&Instruction::LocalGet(1))
+        .instruction(&Instruction::I32Const(0))
+        .instruction(&Instruction::RefI31)
         .instruction(&Instruction::I32Const(0))
         .instruction(&Instruction::RefI31)
         .instruction(&Instruction::StructNew(6))
@@ -1921,6 +1925,8 @@ fn runtime_abi_accepts_foreign_raw_closure_environments_without_properties() {
         .instruction(&Instruction::RefFunc(0))
         .instruction(&Instruction::I32Const(0))
         .instruction(&Instruction::I32Const(0))
+        .instruction(&Instruction::I32Const(0))
+        .instruction(&Instruction::RefI31)
         .instruction(&Instruction::StructNew(4))
         .instruction(&Instruction::End);
     code.function(&make);
@@ -2529,6 +2535,8 @@ fn runtime_abi_object_method_tables_and_wrappers_reject_corruption_without_trapp
         .instruction(&Instruction::StructGet { struct_type_index: 4, field_index: 1 })
         .instruction(&Instruction::I32Const(0))
         .instruction(&Instruction::I32Const(-1))
+        .instruction(&Instruction::I32Const(0))
+        .instruction(&Instruction::RefI31)
         .instruction(&Instruction::StructNew(4))
         .instruction(&Instruction::End);
     code.function(&forge);
@@ -2869,6 +2877,8 @@ fn runtime_abi_string_method_copied_callbacks_and_corrupt_environments_do_not_tr
         .instruction(&Instruction::StructGet { struct_type_index: 4, field_index: 1 })
         .instruction(&Instruction::I32Const(0))
         .instruction(&Instruction::I32Const(-1))
+        .instruction(&Instruction::I32Const(0))
+        .instruction(&Instruction::RefI31)
         .instruction(&Instruction::StructNew(4))
         .instruction(&Instruction::End);
     code.function(&forge);
@@ -3635,5 +3645,84 @@ fn runtime_abi_numeric_hash_boundaries_reject_bad_values_without_traps() {
         }
         let output = nominal_value(&mut store, runtime, "primitive-f64-safe-integer", &[input]);
         assert_eq!(output.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 2);
+    }
+}
+
+#[test]
+fn runtime_abi_identity_slots_keep_metadata_and_reject_corruption_without_traps() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let empty = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    let descriptor = nominal_value(&mut store, runtime, "descriptor-new", &[empty.clone()]);
+    let object = nominal_value(&mut store, runtime, "object-new", &[descriptor.clone(), empty]);
+    let closure = nominal_value(&mut store, runtime, "arithmetic-add", &[]);
+    let text = nominal_value(&mut store, runtime, "string-new", &[Val::I32(0)]);
+    let error = nominal_value(&mut store, runtime, "language-error-new", &[text]);
+    let mut seen = std::collections::BTreeSet::new();
+    for (owner, slot) in [(descriptor, 4), (object, 3), (closure, 4), (error, 4)] {
+        let reference = owner.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+        assert_eq!(reference.field(&mut store, slot).unwrap().unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 0);
+        let cached = nominal_value(&mut store, runtime, "identity-uid", &[owner.clone()]);
+        let id = cached.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 0).unwrap().unwrap_f64().to_bits();
+        assert!(seen.insert(id));
+        store.gc(None).unwrap();
+        let repeated = nominal_value(&mut store, runtime, "identity-uid", &[owner.clone()]);
+        assert!(wasmtime::Rooted::ref_eq(&store, cached.unwrap_anyref().unwrap(), repeated.unwrap_anyref().unwrap()).unwrap());
+        for invalid in [Val::null_any_ref(), nominal_value(&mut store, runtime, "false", &[]),
+            nominal_value(&mut store, runtime, "number-box", &[Val::F64(0.0f64.to_bits())]),
+            nominal_value(&mut store, runtime, "number-box", &[Val::F64((-1.0f64).to_bits())]),
+            nominal_value(&mut store, runtime, "number-box", &[Val::F64(1.5f64.to_bits())]),
+            nominal_value(&mut store, runtime, "number-box", &[Val::F64(f64::NAN.to_bits())]),
+            nominal_value(&mut store, runtime, "number-box", &[Val::F64(f64::INFINITY.to_bits())]),
+            nominal_value(&mut store, runtime, "number-box", &[Val::F64(9007199254740992.0f64.to_bits())])]
+        {
+            reference.set_field(&mut store, slot, invalid).unwrap();
+            store.gc(None).unwrap();
+            let error = runtime.get_func(&mut store, "identity-uid").unwrap().call(&mut store, &[owner.clone()], &mut [Val::null_any_ref()]).unwrap_err();
+            assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+            assert!(!error.is::<wasmtime::Trap>());
+            assert!(store.take_pending_exception().is_some());
+            reference.set_field(&mut store, slot, cached.clone()).unwrap();
+            let restored = nominal_value(&mut store, runtime, "identity-uid", &[owner.clone()]);
+            assert!(wasmtime::Rooted::ref_eq(&store, cached.unwrap_anyref().unwrap(), restored.unwrap_anyref().unwrap()).unwrap());
+        }
+    }
+}
+
+#[test]
+fn runtime_abi2_rejects_real_abi1_layouts_and_manifests_before_initializers() {
+    #[path = "support/abi1_types.rs"]
+    mod abi1;
+    use wasm_encoder::{CodeSection, Function, FunctionSection, ImportSection, Instruction, Module as EncodedModule, StartSection, ValType, RefType, HeapType};
+    let engine = support::engine();
+    let mut store = Store::new(&engine, 0u32);
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let mut linker = wasmtime::Linker::new(&engine);
+    linker.instance(&mut store, "runtime", runtime).unwrap();
+    linker.func_wrap("fixture", "bump", |mut caller: wasmtime::Caller<'_, u32>| { *caller.data_mut() += 1; }).unwrap();
+    for version in [1, runtime_abi::VERSION] {
+        let mut types = abi1::prelude();
+        types.ty().function([ValType::Ref(RefType::EQREF), ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(2) })], [ValType::Ref(RefType::EQREF)]);
+        types.ty().function([], []);
+        let mut imports = ImportSection::new();
+        imports.import("runtime", "invoke", wasm_encoder::EntityType::Function(10));
+        imports.import("fixture", "bump", wasm_encoder::EntityType::Function(11));
+        let mut functions = FunctionSection::new(); functions.function(11);
+        let mut code = CodeSection::new();
+        let mut function = Function::new([]);
+        function.instruction(&Instruction::Call(1)).instruction(&Instruction::End);
+        code.function(&function);
+        let manifest = runtime_abi::Manifest { runtime_abi: version, ..runtime_abi::Manifest::default() };
+        let mut encoded = EncodedModule::new();
+        encoded.section(&manifest.section()).section(&types).section(&imports).section(&functions).section(&StartSection { function_index: 2 }).section(&code);
+        let bytes = encoded.finish();
+        let error = runtime_abi::verify_artifact(&bytes, &runtime_abi::Manifest::default()).unwrap_err();
+        assert!(error.contains(if version == 1 { "version mismatch" } else { "prelude" }), "{error}");
+        // Independent engine linking also rejects the old recursive group even
+        // if a caller falsely labels it ABI2 or bypasses the manifest gate.
+        let module = Module::new(&engine, bytes).unwrap();
+        assert!(linker.instantiate(&mut store, &module).is_err());
+        assert_eq!(*store.data(), 0);
     }
 }
