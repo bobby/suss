@@ -57,6 +57,7 @@ pub enum ControlForm {
     When,
     WhenNot,
     IfNot,
+    IfLet,
     And,
     Or,
     Cond,
@@ -75,6 +76,7 @@ impl ControlForm {
             "when" => Self::When,
             "when-not" => Self::WhenNot,
             "if-not" => Self::IfNot,
+            "if-let" => Self::IfLet,
             "and" => Self::And,
             "or" => Self::Or,
             "cond" => Self::Cond,
@@ -337,6 +339,7 @@ impl Environment {
                 "when",
                 "when-not",
                 "if-not",
+                "if-let",
                 "and",
                 "or",
                 "cond",
@@ -630,6 +633,7 @@ impl Environment {
                         | "when"
                         | "when-not"
                         | "if-not"
+                        | "if-let"
                         | "and"
                         | "or"
                         | "cond"
@@ -684,6 +688,7 @@ impl Environment {
                         | "when"
                         | "when-not"
                         | "if-not"
+                        | "if-let"
                         | "and"
                         | "or"
                         | "cond"
@@ -738,6 +743,7 @@ impl Environment {
                         | "when"
                         | "when-not"
                         | "if-not"
+                        | "if-let"
                         | "and"
                         | "or"
                         | "cond"
@@ -792,6 +798,7 @@ impl Environment {
                     | "when"
                     | "when-not"
                     | "if-not"
+                    | "if-let"
                     | "and"
                     | "or"
                     | "cond"
@@ -838,6 +845,7 @@ impl Environment {
                     | "when"
                     | "when-not"
                     | "if-not"
+                    | "if-let"
                     | "and"
                     | "or"
                     | "cond"

@@ -6956,3 +6956,120 @@ ignores and diagnostic9passing/7knownfailures remain explicit. All reviewer loca
 handles16559/18729/9589/63890/68289/90258 terminal. Reviewer releases heavy slot
 after committing/pushing this evidence and tests; root must verify successful
 exact reviewed-head CI before readiness. No merge or milestone closure.
+
+## Sequence reduction preparation — 2026-10-01
+
+Isolated branch portable/core-sequence-reduction from candidate102 prepares
+retained IDeref/Reduced/reduced helpers/deref/array-reduce/iterable?/iter-reduce/
+seq-reduce/reduce plus original bounded symbol-binding if-let lowering. All
+upstream reduction algorithms/methods are retained; selected82/generated86 and
+172 partial/893 unassessed are provenance/preparation counts only. New59 reduction
+and18 control candidates are UNVERIFIED, not certified matches. No native/full
+pass claim for this preparation. Reviewer102 owned heavy slot during preparation.
+
+Reviewer102 now pushed a9f19e8650c1c2079e2c5066ebde076f9ea284a8 with evidence
+fixes; fresh137/native6/Python80/full90258 terminal0, all handles terminal and
+heavy slot explicitly released to root. Root must rebase preparation onto that
+reviewed parent before focused loading/if-let/primary/native/full verification.
+Exact102 reviewed-head CI required before readiness; no merges/issue closures.
+No RUSTFLAGS; shared target/build2 and test threads2. Next execute the prepared
+reduction artifact, correct actual failures with source/order/provenance aligned,
+then independent review/fixes and exact final-head CI for a coherent PR.
+
+Preparationa1f579a rebased onto reviewed102a9f19e8; only handoff append conflicted,
+resolved retaining both complete review and preparation sections. Source reduction
+and if-let architecture follows the pin; no ABI/type/core-cell change. Initial
+focus34984 terminal101: standalone control harness lacks source inc/dec, so new
+candidates use +/-, no expectation changes. Focus24330 terminal101: control3 pass,
+new native number IReduce case returns NaN. Fresh89149 terminal1 confirms pin
+also returns NaN and warns base-type arities must be grouped; no production bug.
+Corrected only new candidate extension shape. Fresh1985 terminal0 with59 exact
+primary/native, /private/tmp/suss-reduction-primary59-final.log. Control16870
+terminal0 with77 exact primary/native3, /private/tmp/suss-reduction-control-primary77.log.
+All original59 control and137 reviewed sequence cases preserved.
+
+Added saved reducer/Reduced/GC/arity-effects/arbitrary typed throw/recovery and
+if-let aliases/exclusions/compile atomicity guards. Native50993 terminal0 with
+reduction2/control3, /private/tmp/suss-reduction-native-final.log. Python32282
+terminal0 with80 passes, /private/tmp/suss-reduction-python.log; import86/setup4/
+reviews172partial+893unassessed/diff-check pass. Rustfmt only new if-let arm and
+changed/new native test files, no unrelated formatting. Primary failures preserved.
+
+PR101 READY, still unmerged: reviewed47170abf51e4b0ef927cd9af323e6919a4f822f7;
+exact-head CI36840696723 SUCCESS completed2026-10-01T09:31:05Z. Root inspected
+/private/tmp/suss-pr101-final-ci.log through final doc tests, updated body and
+ran gh pr ready101. PR102 revieweda9f19e8 remains draft while CI36842775585 live.
+No issue closure/milestone acceptance.
+
+Full46990 running, /private/tmp/suss-reduction-full.log. Root exclusively owns
+heavy slot; all prior root handles terminal. Required shared-target/build2 cargo
+test --workspace --locked -- --test-threads=2, no RUSTFLAGS. Inspect terminal
+baseline before final commit/push/draft PR against102, independent subagent
+review/fixes/full and exact reviewed-head CI before readiness. No merge. Next
+retained ordered/public hash, iterator/reversal/printing/index helpers plus remaining
+persistent types and compiled macros; lazy/chunked/transducer/metadata/transient
+and M2–M9 release acceptance remain incomplete.
+
+Full46990 ended0; inspected /private/tmp/suss-reduction-full.log through final
+reader doc tests. All required workspace suites pass, including reduction2/control3
+and prior sequence6/137, closure14 and ABI41. Existing manual ignores and
+explicit diagnostic9passing/7knownfailures remain unchanged. No scope-wide
+compatibility or milestone acceptance. All root local handles34984/24330/89149/
+1985/16870/32282/50993/46990 terminal; initial failures retained above. Ready to
+commit/push/open coherent reduction draft against102 and release heavy slot to
+mandatory independent reviewer. Final reviewed-head CI still gates readiness;
+no merges or closures.
+
+## Independent PR103 review — 2026-10-01
+
+Reviewed draft PR103 candidate0d74c4e3448cb419e3927969330792d9a7af9c5c against
+reviewed PR102 basea9f19e8650c1c2079e2c5066ebde076f9ea284a8 in isolated
+/private/tmp/suss-review-pr103 with actual detached pinned upstreamc4295f30.
+Read accepted design/ROADMAP/inventory/handoff/AGENTS. Inspected complete retained
+IDeref/Reduced/helper/reduction forms, every defn adaptation, methods/arities/
+metadata/docstrings/EPL/provenance, dispatch ordering and Reduced stop semantics.
+Inspected original if-let bootstrap resolver/HIR, fresh binding identity, metadata,
+source spans, scope restoration, source evaluation order and caller tail context.
+No significant production defect identified in this bounded source dependency slice.
+Full compiled macros/destructuring/runtime Var metadata and surrounding M2–M9
+acceptance remain incomplete; no merge or issue/milestone closure.
+
+Independent original fresh reduction51369 ended0:59 exact pinned/native2;
+control24238 ended0:77 exact pinned/native3. Added six reduction and four control
+observations, preserving all original59/77 source/expectation objects and the
+parent137 sequence observations. Fresh63450 ended0 with65 exact reduction/native2,
+/private/tmp/suss-pr103-review-reduction65.log; fresh55771 ended0 with81 exact
+control/native3, /private/tmp/suss-pr103-review-control81.log. New cases establish
+iterator hasNext/next stopping order, direct IReduce before IIterable, Reduced
+identity for singleton/empty arrays, offset array captured length, nested Reduced
+iterator unwrapping, and nested/captured if-let scope/effect order. No expectation
+retargeting, failure skips or production changes. Original JSON text/escaping was
+preserved while appending cases. Compiler HIR regression97105 ended0 and verifies
+exact source spans, reader metadata and distinct scoped binding identities;
+/private/tmp/suss-pr103-review-iflet-hir.log.
+
+Python70561 ended0:80 tests pass, /private/tmp/suss-pr103-review-python.log;
+import86/setup4/reviews172 partial+893 unassessed verified. Diff-check passes.
+Commands: shared target/build2 sh scripts/test-reduction-oracle.sh and
+sh scripts/test-control-flow-oracle.sh; cargo test -p suss-compile --test
+portable_if_let --locked -- --test-threads=2; python3 -m unittest discover -s
+scripts -p 'test_*.py'; core_import.py --check; sequence_provenance.py;
+cljs_reviews.py. No RUSTFLAGS, no unrelated formatting/files.
+
+Required independent full40341 live, /private/tmp/suss-pr103-review-full.log.
+Reviewer owns exclusive heavy slot until all handles terminal and final full output
+inspected. Exact reviewed-head CI remains root's readiness gate after review
+commit/push. No merge. Next retained ordered/public hashing, iterator/reversal/
+printing/index helpers, remaining persistent types and compiled macro acceptance;
+lazy/chunked/transducer/metadata/transient and all release gates remain unfinished.
+
+Independent full40341 ended0; reviewer inspected all final doc-test completion in
+/private/tmp/suss-pr103-review-full.log. Command: CARGO_TARGET_DIR=/Users/bobby/
+code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2. All enabled required suites pass, including reduction2/65,
+control3/81, HIR if-let1, parent sequence6/137, closure14 and ABI41. Existing
+manual ignored tests and diagnostic9passing/7knownfailures remain explicit.
+All reviewer local handles51369/24238/63450/55771/70561/97105/40341 terminal.
+Reviewer releases heavy slot after committing/pushing this evidence and tests;
+root must verify successful exact reviewed-head CI before readiness. No merge,
+issue closure, milestone acceptance or broad portable compatibility claim.

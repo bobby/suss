@@ -110,3 +110,10 @@ number/default IEquiv. Selection70/artifacts74/reviews159+906 and fresh131 prese
 all prior75 observations; see [equality evidence](../runtime/sequential-equality.md).
 Remaining collection types, public hashing/reduction, full macros and release
 acceptance stay open.
+
+Retained IDeref/Reduced and ten reduction helpers keep all algorithms/methods,
+source metadata/docstrings/arities and EPL packaging. The canonical artifact now
+selects82 declarations and86 generated files with172 partial/893 unassessed
+reviews. Source seq/array/string/iterator reduction and Reduced termination have65
+fresh primary/native observations; bounded if-let extends control evidence to81.
+See [reduction scope and limitations](../runtime/sequence-reduction.md).

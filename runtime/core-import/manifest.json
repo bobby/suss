@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "599c788292852a1df1fc6819af784d568bd720056c32d4941d1de910eca83bdd",
-  "reviews-sha256": "3ea3d7acb0fb1abbb51569b952764538b6f7f83f41ba9627d87a1f678eb7e85d",
+  "recipe-sha256": "4f06cf362f3dfc351a53042341d6317318348df7e541860191639e792aa90795",
+  "reviews-sha256": "59641158a397f89e31e7398be5f5acdcb9ce116eb7f97f53dd69c3d7f4e9ab85",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -2302,12 +2302,391 @@
         "tests/oracle/sequence-cases.json",
         "docs/runtime/sequential-equality.md"
       ]
+    },
+    {
+      "id": "runtime:IDeref:720",
+      "name": "IDeref",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 720,
+      "end-line": 723,
+      "byte-start": 20562,
+      "byte-end": 20707,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "d3242dd4d16577be7c93e207212209f5f5b8b383f31ae7bf93fb274147438a34",
+      "extracted": "extracted/0070.cljs",
+      "extracted-sha256": "5ae95eb31e82bfdd759083fb01898236b992622b66dcc8481cbe5a963dd95579",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "d3242dd4d16577be7c93e207212209f5f5b8b383f31ae7bf93fb274147438a34",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_sequences.rs",
+        "tests/oracle/sequence-cases.json",
+        "docs/runtime/sequence-reduction.md"
+      ]
+    },
+    {
+      "id": "runtime:Reduced:1511",
+      "name": "Reduced",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1511,
+      "end-line": 1513,
+      "byte-start": 43741,
+      "byte-end": 43792,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "22f0effef9bce10ddfc0908fe830839050d34db68d671e2c7bd6efb1d3018ccb",
+      "extracted": "extracted/0071.cljs",
+      "extracted-sha256": "0ff42eca644a14fa1db958c6c9cab1a306ea4bbaba9bc7418d8d74ac631fe974",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "22f0effef9bce10ddfc0908fe830839050d34db68d671e2c7bd6efb1d3018ccb",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IDeref:720"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_sequences.rs",
+        "tests/oracle/sequence-cases.json",
+        "docs/runtime/sequence-reduction.md"
+      ]
+    },
+    {
+      "id": "runtime:reduced:1515",
+      "name": "reduced",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1515,
+      "end-line": 1518,
+      "byte-start": 43794,
+      "byte-end": 43901,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "1b60d1eb6ed7cc7532e6eac52a9a94f97ef249f26e68c82716500c49323b8b01",
+      "extracted": "extracted/0072.cljs",
+      "extracted-sha256": "21e322bd9aae1e6af33895553485ed92bfe21b8ee1f2ca42f1aee9760ebe0b8d",
+      "patch": "docs/compatibility/patches/sequence-reduced.json",
+      "patch-sha256": "fc587b16db5d55c38d12b890a32842c39822c1d176280eebf10e654e67432998",
+      "adapted-form-sha256": "896a221b0200b907812243d64dabe838b1897fbe75dc85a94c44010a7745800f",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:Reduced:1511"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_sequences.rs",
+        "tests/oracle/sequence-cases.json",
+        "docs/runtime/sequence-reduction.md"
+      ]
+    },
+    {
+      "id": "runtime:reduced?:1520",
+      "name": "reduced?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1520,
+      "end-line": 1523,
+      "byte-start": 43903,
+      "byte-end": 44005,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c52dd5e7548bdb9295e086f6c3dc3024ca8f8081edd32bb769f2a21cfe0093d1",
+      "extracted": "extracted/0073.cljs",
+      "extracted-sha256": "9ca52f6dfaa810c31ce0a1dd72edbb6708e9c70c2dc92df6b45a9bc029c74581",
+      "patch": "docs/compatibility/patches/sequence-reduced-predicate.json",
+      "patch-sha256": "ea12908358e9163659b55570ea8b6072ea9e30a74e0bd360a30c2f6b47aa4319",
+      "adapted-form-sha256": "0392e01c2b53686c49ebd557a66a7ad3952a4fc17a27367a5aba4eb626a7cb0e",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:Reduced:1511",
+        "macro:instance?:1025"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_sequences.rs",
+        "tests/oracle/sequence-cases.json",
+        "docs/runtime/sequence-reduction.md"
+      ]
+    },
+    {
+      "id": "runtime:ensure-reduced:1525",
+      "name": "ensure-reduced",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1525,
+      "end-line": 1528,
+      "byte-start": 44007,
+      "byte-end": 44135,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "7c84cddf26ba297a6d915079aeae375722e7987cb2814272ece02abf3ff75e35",
+      "extracted": "extracted/0074.cljs",
+      "extracted-sha256": "9b29093df625c71955c5623766dc85ed4543676d9ef8be702fc3851cb1a73187",
+      "patch": "docs/compatibility/patches/sequence-ensure-reduced.json",
+      "patch-sha256": "bd818739e5f9444258d1bfe244543fc89890032a22a6e1409025195427ae49c7",
+      "adapted-form-sha256": "1c9ffee9d24504536ee9f44c3afc9bc0f09d8ad52cf092790072ce7a2325834b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:reduced:1515",
+        "runtime:reduced?:1520"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_sequences.rs",
+        "tests/oracle/sequence-cases.json",
+        "docs/runtime/sequence-reduction.md"
+      ]
+    },
+    {
+      "id": "runtime:unreduced:1530",
+      "name": "unreduced",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1530,
+      "end-line": 1533,
+      "byte-start": 44137,
+      "byte-end": 44247,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8d706d4b1735870b1ae6745d7ca76caaba6ed848a4af3f1ec1bbbaf17196e6b0",
+      "extracted": "extracted/0075.cljs",
+      "extracted-sha256": "f8e8cfb4fedd7a4012c14fad30cde32b6aedacf07df48deaba64c74ff9c67d9f",
+      "patch": "docs/compatibility/patches/sequence-unreduced.json",
+      "patch-sha256": "c4ea639a5fa66243ab283f63424841baabc8bc8a5ca18201d075fd3cbe0566c3",
+      "adapted-form-sha256": "c9741033b661003c23c81b39fe60e61904279f43e7b873bfc33fa04e7eb9077c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:reduced?:1520",
+        "runtime:deref:1537"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_sequences.rs",
+        "tests/oracle/sequence-cases.json",
+        "docs/runtime/sequence-reduction.md"
+      ]
+    },
+    {
+      "id": "runtime:deref:1537",
+      "name": "deref",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1537,
+      "end-line": 1543,
+      "byte-start": 44311,
+      "byte-end": 44581,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "1a48edff54f4b80c350d42444d235926178b95cb9acc856225b42432930cb822",
+      "extracted": "extracted/0076.cljs",
+      "extracted-sha256": "6b89e35b8ccaaac922a7f0710b6519cbe79fd50ddbb7b0e19d0e114b7126636f",
+      "patch": "docs/compatibility/patches/sequence-deref.json",
+      "patch-sha256": "ff7bd8ab8b5240222854c0740995c05fa3c8eecee2d25548e0eaeaa35c6bb1ad",
+      "adapted-form-sha256": "3b8b59e8471e73edcabf41ecb581d891dc0f299a8a66ceec73deaf34b9111584",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IDeref:720"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_sequences.rs",
+        "tests/oracle/sequence-cases.json",
+        "docs/runtime/sequence-reduction.md"
+      ]
+    },
+    {
+      "id": "runtime:array-reduce:1569",
+      "name": "array-reduce",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1569,
+      "end-line": 1598,
+      "byte-start": 45334,
+      "byte-end": 46179,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "a4f125c771a0710768362df19a35a0ebe6a9e1d0b3a439c670a152bb7d338fa8",
+      "extracted": "extracted/0077.cljs",
+      "extracted-sha256": "b8ee80200bac6b7e8320b43cb5cec7368e557066abe260f8914f301705d3000d",
+      "patch": "docs/compatibility/patches/sequence-array-reduce.json",
+      "patch-sha256": "e23be8fddc3e07c18fc8ffdcae437bc25adf63384e711c792559ea943f7deb72",
+      "adapted-form-sha256": "4ba64fb2d4448d24c91a00775140caabfab0c7e2505e0247281640f919ac863d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:reduced?:1520",
+        "runtime:deref:1537",
+        "runtime:alength",
+        "runtime:aget"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_sequences.rs",
+        "tests/oracle/sequence-cases.json",
+        "docs/runtime/sequence-reduction.md"
+      ]
+    },
+    {
+      "id": "runtime:iterable?:1259",
+      "name": "iterable?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1259,
+      "end-line": 1262,
+      "byte-start": 37401,
+      "byte-end": 37502,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "97ff6754e66f0f434c171eca6685e3c0a9f56092289c1b31b65335ac5008a041",
+      "extracted": "extracted/0078.cljs",
+      "extracted-sha256": "f95d383a0e92aaf7e8169af0ae48026dafe95487f8f1f02ec602eb341e97e823",
+      "patch": "docs/compatibility/patches/sequence-iterable-predicate.json",
+      "patch-sha256": "bcdbb29f7987cf33903e45305d938856113041a3c7f9b1d3c9d76c11860f9bac",
+      "adapted-form-sha256": "1bbf217cb51febae8c296071eb2d779ab344bb3f8134d70e57448004a2d822e1",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IIterable:914"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_sequences.rs",
+        "tests/oracle/sequence-cases.json",
+        "docs/runtime/sequence-reduction.md"
+      ]
+    },
+    {
+      "id": "runtime:iter-reduce:2605",
+      "name": "iter-reduce",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2605,
+      "end-line": 2626,
+      "byte-start": 70052,
+      "byte-end": 70652,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "2ae02e9936ba2bcbea2ed90f632b53d240a6f38cf82862994cc210af434f313f",
+      "extracted": "extracted/0079.cljs",
+      "extracted-sha256": "8e6a8d32857900e81a0c443a1dc8644994f7d005b11a52aff11831f880f8dd4f",
+      "patch": "docs/compatibility/patches/sequence-iter-reduce.json",
+      "patch-sha256": "a9504abf38369a3d314b4680355a6b900d60dd33ddb7e2c888de129e453b7bcd",
+      "adapted-form-sha256": "91d372cccf367886ac23d803582ef74f5b417ed907dda5c38ef1c3cb4be5b29e",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IIterable:914",
+        "runtime:reduced?:1520",
+        "runtime:deref:1537"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_sequences.rs",
+        "tests/oracle/sequence-cases.json",
+        "docs/runtime/sequence-reduction.md"
+      ]
+    },
+    {
+      "id": "runtime:seq-reduce:2582",
+      "name": "seq-reduce",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2582,
+      "end-line": 2594,
+      "byte-start": 69591,
+      "byte-end": 69907,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c8d84fa3b05a5f38edbe1a20625bce686ea8213e6277957ec95db98a4fdc037e",
+      "extracted": "extracted/0080.cljs",
+      "extracted-sha256": "f4428e8a87eb52cac5b41c36451a899e55ae6b721d9a5bc9b4820441b43c4177",
+      "patch": "docs/compatibility/patches/sequence-seq-reduce.json",
+      "patch-sha256": "65bc44eda8839937f93fa60b21e4abe04605f43a419c2a4bf0fa923f31403bff",
+      "adapted-form-sha256": "5706917447bf14d96df2b52fe5c1341743c854d17e7259b88e6e3b9dfcc6ea49",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:if-let:339",
+        "runtime:reduce:2628",
+        "runtime:reduced?:1520",
+        "runtime:deref:1537",
+        "runtime:seq:1282",
+        "runtime:first:1309",
+        "runtime:next:1333"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_sequences.rs",
+        "tests/oracle/sequence-cases.json",
+        "docs/runtime/sequence-reduction.md"
+      ]
+    },
+    {
+      "id": "runtime:reduce:2628",
+      "name": "reduce",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2628,
+      "end-line": 2675,
+      "byte-start": 70654,
+      "byte-end": 71975,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "e5609fab295ff28b74750fad37f4194462dbbcbe6ba24fb74d26fe8a1e5c4bf1",
+      "extracted": "extracted/0081.cljs",
+      "extracted-sha256": "61e39cf60ffc4a048286b746e9af1c75155d0353fd88c11f826d4fb34917cc0d",
+      "patch": "docs/compatibility/patches/sequence-reduce.json",
+      "patch-sha256": "6ff0a54d1038563eb639d3f409b58521f466920aaffa213c40241587d69867ec",
+      "adapted-form-sha256": "f70f189ba1b3001abd6d205be8153cc4bd587baf12b4fd15b6947554b6180cbb",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IReduce:738",
+        "runtime:iterable?:1259",
+        "runtime:iter-reduce:2605",
+        "runtime:array-reduce:1569",
+        "runtime:seq-reduce:2582",
+        "runtime:native-satisfies?:322"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_sequences.rs",
+        "tests/oracle/sequence-cases.json",
+        "docs/runtime/sequence-reduction.md"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "bc7e3febf5ea452aad7df3a42d5f47db239538acbe60012eb65bc6d4cb2654f6"
+      "sha256": "9e5b516edb8f79a42a2abbf0bdfeb1252ac9eab64807baac6fcaeb46ff3ecdd9"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -2387,6 +2766,18 @@
     "extracted/0067.cljs": "89c4683fa4d20455fb66a65e979bdc74ca09aad0b19a5c12e4bdff988ad0b44f",
     "extracted/0068.cljs": "fb9bbb0b991a329d7875287acbe6a90dae809e54c4eb83fd96d525a1eacf76f0",
     "extracted/0069.cljs": "65f2030458e24dd2390ba393b0d247b222747877324c0ea80773436b2c1f0a1b",
-    "suss/core.sus": "5c954adb3346a20128039228eea6b6ea816856aedd1791c9722b818742a2a869"
+    "extracted/0070.cljs": "5ae95eb31e82bfdd759083fb01898236b992622b66dcc8481cbe5a963dd95579",
+    "extracted/0071.cljs": "0ff42eca644a14fa1db958c6c9cab1a306ea4bbaba9bc7418d8d74ac631fe974",
+    "extracted/0072.cljs": "21e322bd9aae1e6af33895553485ed92bfe21b8ee1f2ca42f1aee9760ebe0b8d",
+    "extracted/0073.cljs": "9ca52f6dfaa810c31ce0a1dd72edbb6708e9c70c2dc92df6b45a9bc029c74581",
+    "extracted/0074.cljs": "9b29093df625c71955c5623766dc85ed4543676d9ef8be702fc3851cb1a73187",
+    "extracted/0075.cljs": "f8e8cfb4fedd7a4012c14fad30cde32b6aedacf07df48deaba64c74ff9c67d9f",
+    "extracted/0076.cljs": "6b89e35b8ccaaac922a7f0710b6519cbe79fd50ddbb7b0e19d0e114b7126636f",
+    "extracted/0077.cljs": "b8ee80200bac6b7e8320b43cb5cec7368e557066abe260f8914f301705d3000d",
+    "extracted/0078.cljs": "f95d383a0e92aaf7e8169af0ae48026dafe95487f8f1f02ec602eb341e97e823",
+    "extracted/0079.cljs": "8e6a8d32857900e81a0c443a1dc8644994f7d005b11a52aff11831f880f8dd4f",
+    "extracted/0080.cljs": "f4428e8a87eb52cac5b41c36451a899e55ae6b721d9a5bc9b4820441b43c4177",
+    "extracted/0081.cljs": "61e39cf60ffc4a048286b746e9af1c75155d0353fd88c11f826d4fb34917cc0d",
+    "suss/core.sus": "f379fa7d7b321ce592a456f215534d8a3f315f4476a50e6fe2769f759db855e1"
   }
 }

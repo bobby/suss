@@ -1,0 +1,526 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "reduce-empty-list-zero-arity",
+      "source": "(reduce (fn [] 17) ())",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "reduce-empty-nil-zero-arity",
+      "source": "(reduce (fn [] 19) nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "reduce-empty-array-zero-arity",
+      "source": "(reduce (fn [] 23) (array))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "reduce-empty-string-zero-arity",
+      "source": "(reduce (fn [] 29) \"\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "403d000000000000"
+      }
+    },
+    {
+      "id": "reduce-empty-start",
+      "source": "(reduce (fn [a b] 99) 31 ())",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "reduce-empty-nil-start",
+      "source": "(reduce (fn [a b] 99) 37 nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4042800000000000"
+      }
+    },
+    {
+      "id": "reduce-single-no-call",
+      "source": "(reduce (fn [a b] 99) (list 41))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4044800000000000"
+      }
+    },
+    {
+      "id": "reduce-list",
+      "source": "(reduce + (list 1 2 3 4))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "reduce-cons",
+      "source": "(reduce + (cons 1 (cons 2 (cons 3 nil))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "reduce-indexed",
+      "source": "(reduce + (seq (array 1 2 3 4)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "reduce-indexed-offset",
+      "source": "(reduce + (next (seq (array 99 1 2 3))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "reduce-indexed-start",
+      "source": "(reduce + 17 (seq (array 1 2 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "reduce-array",
+      "source": "(reduce + (array 1 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "reduce-array-start",
+      "source": "(reduce + 17 (array 1 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "reduce-source-order",
+      "source": "(reduce (fn [a b] (+ (* a 10) b)) 0 (list 1 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "reduce-array-order",
+      "source": "(reduce (fn [a b] (+ (* a 10) b)) (array 1 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "reduce-fraction",
+      "source": "(reduce + (list 0.5 1.25))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ffc000000000000"
+      }
+    },
+    {
+      "id": "reduce-string-count",
+      "source": "(reduce (fn [n unit] (inc n)) 0 \"😀A\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "array-reduce-offset",
+      "source": "(array-reduce (array 99 1 2 3) + 17 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "array-reduce-past-end",
+      "source": "(array-reduce (array 1 2) + 29 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "403d000000000000"
+      }
+    },
+    {
+      "id": "seq-reduce-direct",
+      "source": "(seq-reduce + 17 (list 1 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "reduce-early-list",
+      "source": "(reduce (fn [a b] (if (== b 2) (reduced a) (+ a b))) 0 (list 1 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "reduce-early-array",
+      "source": "(reduce (fn [a b] (if (== b 2) (reduced a) (+ a b))) 0 (array 1 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "reduce-early-indexed",
+      "source": "(reduce (fn [a b] (reduced (+ a b))) (seq (array 1 2 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "reduce-early-effects",
+      "source": "(do (def reduction-trace 0) (reduce (fn [a b] (set! reduction-trace (+ (* reduction-trace 10) b)) (if (== b 2) (reduced a) (+ a b))) 0 (list 1 2 3)) reduction-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "reduce-operand-effects",
+      "source": "(do (def reduction-trace 0) (reduce (do (set! reduction-trace 1) +) (do (set! reduction-trace (+ (* reduction-trace 10) 2)) 0) (do (set! reduction-trace (+ (* reduction-trace 10) 3)) (list 1 2))) reduction-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "reduced-deref",
+      "source": "(deref (reduced 17))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "reduced-reader-deref",
+      "source": "@(reduced 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "unreduced-scalar",
+      "source": "(unreduced 23)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "unreduced-value",
+      "source": "(unreduced (reduced 29))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403d000000000000"
+      }
+    },
+    {
+      "id": "reduce-direct-ireduce",
+      "source": "(do (deftype ReductionProbe [] IReduce (-reduce [_ f] 31) (-reduce [_ f init] (+ init 37))) (reduce + (ReductionProbe.)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "reduce-direct-ireduce-start",
+      "source": "(reduce + 17 (ReductionProbe.))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404b000000000000"
+      }
+    },
+    {
+      "id": "reduce-empty-string-start",
+      "source": "(reduce (fn [a b] 99) 41 \"\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4044800000000000"
+      }
+    },
+    {
+      "id": "reduce-empty-array-start",
+      "source": "(reduce (fn [a b] 99) 43 (array))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045800000000000"
+      }
+    },
+    {
+      "id": "reduce-array-captured-length",
+      "source": "(let [a (array 1 2)] (reduce (fn [v x] (aset a 2 99) (+ v x)) 0 a))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "reduce-array-live-elements",
+      "source": "(let [a (array 1 2)] (reduce (fn [v x] (aset a 1 9) (+ v x)) 0 a))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "reduce-list-captured-closure",
+      "source": "(let [n 17] (reduce (fn [v x] (+ v x n)) 0 (list 1 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4042800000000000"
+      }
+    },
+    {
+      "id": "reduced-nominal",
+      "source": "(reduced? (reduced nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "not-reduced-scalar",
+      "source": "(reduced? nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "ensure-reduced-identity",
+      "source": "(let [r (reduced 17)] (identical? r (ensure-reduced r)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "ensure-reduced-wraps",
+      "source": "(reduced? (ensure-reduced 17))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "unreduced-one-layer",
+      "source": "(reduced? (unreduced (reduced (reduced 17))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reduce-single-nil",
+      "source": "(nil? (reduce (fn [a b] 99) (list nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reduce-single-false",
+      "source": "(false? (reduce (fn [a b] 99) (list false)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reduce-single-reduced-unchanged",
+      "source": "(let [r (reduced 17)] (identical? r (reduce (fn [a b] 99) (list r))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reduce-empty-f-return-reduced",
+      "source": "(reduced? (reduce (fn [] (reduced 17)) ()))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reduce-reduced-nil",
+      "source": "(nil? (reduce (fn [a b] (reduced nil)) 0 (list 1 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reduce-reduced-false",
+      "source": "(false? (reduce (fn [a b] (reduced false)) 0 (array 1 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reduce-string-units",
+      "source": "(identical? (reduce (fn [a b] (+ a b)) \"\" \"😀\") \"😀\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reduce-empty-init-reduced-preserved",
+      "source": "(let [r (reduced 17)] (identical? r (reduce (fn [a b] 99) r nil)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reduce-nested-reduced-one-layer",
+      "source": "(reduced? (reduce (fn [a b] (reduced (reduced 17))) 0 (list 1 2)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reduce-iterator",
+      "source": "(do (deftype CountingIterator [^:mutable n limit] Object (hasNext [_] (< n limit)) (next [_] (let [v n] (set! n (inc n)) v))) (deftype IterableProbe [limit] IIterable (-iterator [_] (CountingIterator. 0 limit))) (reduce + (IterableProbe. 4)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "reduce-iterator-start",
+      "source": "(reduce + 17 (IterableProbe. 4))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "reduce-iterator-empty",
+      "source": "(reduce (fn [] 29) (IterableProbe. 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403d000000000000"
+      }
+    },
+    {
+      "id": "reduce-iterator-empty-start",
+      "source": "(reduce + 31 (IterableProbe. 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "reduce-iterator-early",
+      "source": "(do (def reduction-trace 0) (reduce (fn [a b] (set! reduction-trace (inc reduction-trace)) (reduced (+ a b))) 17 (IterableProbe. 4)) reduction-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "reduce-sequence-does-not-force-next",
+      "source": "(do (deftype HaltSeq [value] ISeqable (-seq [this] this) ISeq (-first [_] value) (-rest [_] (throw 99)) INext (-next [_] (throw 99))) (reduce (fn [a b] (reduced (+ a b))) 17 (HaltSeq. 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "reduce-native-number-dispatch",
+      "source": "(do (extend-type number IReduce (-reduce ([x f] x) ([x f init] (+ x init)))) (reduce + 41))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4044800000000000"
+      }
+    },
+    {
+      "id": "reduce-native-number-start",
+      "source": "(reduce + 17 41)",
+      "expected": {
+        "tag": "f64",
+        "bits": "404d000000000000"
+      }
+    },
+    {
+      "id": "reduce-iterator-hasnext-stops",
+      "source": "(do (def review-iter-trace 0) (deftype ReviewIterator [^:mutable n] Object (hasNext [_] (set! review-iter-trace (+ (* review-iter-trace 10) 1)) (< n 3)) (next [_] (set! review-iter-trace (+ (* review-iter-trace 10) 2)) (let [v n] (set! n (inc n)) v))) (deftype ReviewIterable [] IIterable (-iterator [_] (ReviewIterator. 0))) (reduce (fn [a b] (reduced b)) 0 (ReviewIterable.)) review-iter-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "reduce-direct-before-iterable",
+      "source": "(do (deftype ReviewBoth [] IReduce (-reduce [_ f] 71) (-reduce [_ f init] (+ init 71)) IIterable (-iterator [_] (throw 99))) (reduce + 2 (ReviewBoth.)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4052400000000000"
+      }
+    },
+    {
+      "id": "reduce-single-array-reduced-identity",
+      "source": "(let [r (reduced 17)] (identical? r (reduce (fn [a b] 99) (array r))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "reduce-empty-array-reduced-identity",
+      "source": "(let [r (reduced 17)] (identical? r (reduce (fn [a b] 99) r (array))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-reduce-index-captured-length",
+      "source": "(let [a (array 99 1 2)] (array-reduce a (fn [v x] (aset a 3 7) (+ v x)) 17 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4034000000000000"
+      }
+    },
+    {
+      "id": "reduce-iterator-nested-reduced-one-layer",
+      "source": "(reduced? (reduce (fn [a b] (reduced (reduced 17))) 0 (IterableProbe. 4)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

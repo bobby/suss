@@ -368,3 +368,12 @@ The import selects70 forms/74 licensed artifacts and records159 partial reviews/
 [evidence](../runtime/sequential-equality.md) records the initial new-probe failures
 and boundaries. Other persistent types, collection hashing/reduction and compiled
 macros remain unfinished. No issue/milestone completion claim.
+
+## Retained reduction
+
+Complete source IDeref/Reduced and ten reduction/helper declarations now select82
+forms/86 licensed artifacts with172 partial/893 unassessed reviews. Fresh65
+reduction and81 control observations match actual primary/native execution;
+[evidence](../runtime/sequence-reduction.md) retains initial setup failures and
+explicit destructuring/compiled macro/transducer/collection boundaries. No issue
+or milestone completion claim; full/review/final-head CI gate readiness.

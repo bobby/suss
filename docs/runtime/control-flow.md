@@ -50,3 +50,17 @@ field hides an automatic macro; closures retain source captures through nested
 control temporaries; arbitrary keyword conditions are truthy; selected if-not
 branches preserve loop tail recurrence; thrown cond tests preserve catch/finally
 source order. The original54 observations remain unchanged.
+
+Bounded symbol-binding if-let now preserves a fresh test temporary, binding scope
+only in the consequent, outer initializer/else scope, reader metadata and tail
+context. Eighteen added observations bring control77, original59 unchanged. Native
+alias/exclusion/both-phase and malformed located compile-atomic guards pass. Full
+destructuring and compiled upstream macros remain unfinished. See
+[reduction/if-let evidence](sequence-reduction.md).
+
+Independent PR103 review preserves all77 certified observations and adds four
+fresh pinned/native observations for nested initializer scope, consequent and
+else captures, and effect order:81 total. A compiler HIR regression verifies
+reader metadata, exact source spans and distinct binding identities. These checks
+certify the bounded symbol-binding adapter; compiled upstream macros and
+destructuring remain unfinished.

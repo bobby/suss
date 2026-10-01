@@ -8,7 +8,7 @@ fn control_macros_match_independently_decoded_primary_observations_after_gc() {
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 59);
+    assert_eq!(cases.len(), 81);
     let mut session = Session::new().unwrap();
     let mut ids = std::collections::BTreeSet::new();
     for case in cases {
@@ -94,6 +94,17 @@ fn malformed_control_macros_have_located_errors_and_do_not_publish_definitions()
         "(when)",
         "(when-not)",
         "(if-not true)",
+        "(if-let)",
+        "(if-let true 1)",
+        "(if-let [] 1)",
+        "(if-let [x] 1)",
+        "(if-let [x 1 y 2] 1)",
+        "(if-let [a/b 1] 1)",
+        "(if-let [& 1] 1)",
+        "(if-let [[x] 1] x)",
+        "(if-let [iflet-missing 1] iflet-missing iflet-missing)",
+        "(if-let [x true] 1 2 3)",
+        "(loop [n 0] (if-let [x (recur 1)] 7 9))",
         "(if-not true 1 2 3)",
         "(cond true)",
         "(and (recur 1) 7)",
@@ -121,6 +132,14 @@ fn malformed_control_macros_have_located_errors_and_do_not_publish_definitions()
     ));
     assert!(matches!(
         session.eval("control-ghost"),
+        Err(SessionError::Compile(_))
+    ));
+    assert!(matches!(
+        session.eval("(def iflet-ghost 7) (if-let [x] 1)"),
+        Err(SessionError::Compile(_))
+    ));
+    assert!(matches!(
+        session.eval("iflet-ghost"),
         Err(SessionError::Compile(_))
     ));
     let value = session.eval("(cond false 1 true 7)").unwrap();
@@ -156,18 +175,24 @@ fn control_macro_aliases_exclusions_and_macro_phase_are_resolved_explicitly() {
             Ok(())
         })
         .unwrap();
+    session.eval("(c/if-let [x 17] x 9)").unwrap();
     session
-        .eval("(ns control.excluded (:refer-clojure :exclude [when]))")
+        .eval("(ns control.excluded (:refer-clojure :exclude [when if-let]))")
         .unwrap();
     assert!(matches!(
         session.eval("(when true 7)"),
         Err(SessionError::Compile(_))
     ));
     session.eval("(cljs.core/when true 7)").unwrap();
+    assert!(matches!(
+        session.eval("(if-let [x 17] x 9)"),
+        Err(SessionError::Compile(_))
+    ));
+    session.eval("(cljs.core/if-let [x 17] x 9)").unwrap();
     for phase in [Phase::Runtime, Phase::Macro] {
         let environment = Environment::default();
         prepare_fragment(
-            "(cljs.core/when-not false (cljs.core/and true (cljs.core/or false 7)))",
+            "(cljs.core/when-not false (cljs.core/if-let [x 7] (cljs.core/and true (cljs.core/or false x))))",
             &environment,
             phase,
         )

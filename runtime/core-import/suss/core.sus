@@ -13,6 +13,7 @@
 ;; Pending helpers remain uninitialized and fail if invoked; no fake implementations.
 (declare List EmptyList Cons IndexedSeq seq first rest next prim-seq array-seq cons count
   counted? list? sequential? accumulating-seq-count empty-ordered-hash
+  Reduced reduced reduced? ensure-reduced unreduced deref iterable? iter-reduce reduce
   pr-str* -indexOf -lastIndexOf equiv-sequential = hash-ordered-coll seq-reduce
   array-reduce IndexedSeqIterator RSeq str_)
 
@@ -738,6 +739,165 @@
             (nil? ys) false
             (= (first xs) (first ys)) (recur (next xs) (next ys))
             :else false)))))))
+
+(defprotocol IDeref
+  "Protocol for adding dereference functionality to a reference."
+  (-deref [o]
+    "Returns the value of the reference o."))
+
+(deftype Reduced [val]
+  IDeref
+  (-deref [o] val))
+
+(def reduced
+  "Wraps x in a way such that a reduce will terminate with the value x"
+  (fn [x]
+  (Reduced. x)))
+
+(def reduced?
+  "Returns true if x is the result of a call to reduced"
+  (fn [r]
+  (instance? Reduced r)))
+
+(def ensure-reduced
+  "If x is already reduced?, returns it, else returns (reduced x)"
+  (fn [x]
+  (if (reduced? x) x (reduced x))))
+
+(def unreduced
+  "If x is reduced?, returns (deref x), else returns x"
+  (fn [x]
+  (if (reduced? x) (deref x) x)))
+
+(def deref
+  "Also reader macro: @var/@atom/@delay. Returns the
+   most-recently-committed value of ref. When applied to a var
+   or atom, returns its current state. When applied to a delay, forces
+   it if not already forced. See also - realized?."
+  (fn [o]
+  (-deref o)))
+
+(def array-reduce
+  (fn ([arr f]
+     (let [cnt (alength arr)]
+       (if (zero? (alength arr))
+         (f)
+         (loop [val (aget arr 0), n 1]
+           (if (< n cnt)
+             (let [nval (f val (aget arr n))]
+               (if (reduced? nval)
+                 @nval
+                 (recur nval (inc n))))
+             val)))))
+  ([arr f val]
+     (let [cnt (alength arr)]
+       (loop [val val, n 0]
+         (if (< n cnt)
+           (let [nval (f val (aget arr n))]
+             (if (reduced? nval)
+               @nval
+               (recur nval (inc n))))
+           val))))
+  ([arr f val idx]
+     (let [cnt (alength arr)]
+       (loop [val val, n idx]
+         (if (< n cnt)
+           (let [nval (f val (aget arr n))]
+             (if (reduced? nval)
+               @nval
+               (recur nval (inc n))))
+           val))))))
+
+(def iterable?
+  "Return true if x implements IIterable protocol."
+  (fn [x]
+  (satisfies? IIterable x)))
+
+(def iter-reduce
+  (fn ([coll f]
+   (let [iter (-iterator coll)]
+     (if (.hasNext iter)
+       (let [init (.next iter)]
+         (loop [acc init]
+           (if ^boolean (.hasNext iter)
+             (let [nacc (f acc (.next iter))]
+               (if (reduced? nacc)
+                 @nacc
+                 (recur nacc)))
+             acc)))
+       (f))))
+  ([coll f init]
+   (let [iter (-iterator coll)]
+     (loop [acc init]
+       (if ^boolean (.hasNext iter)
+         (let [nacc (f acc (.next iter))]
+           (if (reduced? nacc)
+             @nacc
+             (recur nacc)))
+         acc))))))
+
+(def seq-reduce
+  (fn ([f coll]
+    (if-let [s (seq coll)]
+      (reduce f (first s) (next s))
+      (f)))
+  ([f val coll]
+    (loop [val val, coll (seq coll)]
+      (if coll
+        (let [nval (f val (first coll))]
+          (if (reduced? nval)
+            @nval
+            (recur nval (next coll))))
+        val)))))
+
+(def reduce
+  "f should be a function of 2 arguments. If val is not supplied,
+  returns the result of applying f to the first 2 items in coll, then
+  applying f to that result and the 3rd item, etc. If coll contains no
+  items, f must accept no arguments as well, and reduce returns the
+  result of calling f with no arguments.  If coll has only 1 item, it
+  is returned and f is not called.  If val is supplied, returns the
+  result of applying f to val and the first item in coll, then
+  applying f to that result and the 2nd item, etc. If coll contains no
+  items, returns val and f is not called."
+  (fn ([f coll]
+     (cond
+       (implements? IReduce coll)
+       (-reduce coll f)
+
+       (array? coll)
+       (array-reduce coll f)
+
+       (string? coll)
+       (array-reduce coll f)
+
+       (native-satisfies? IReduce coll)
+       (-reduce coll f)
+
+       (iterable? coll)
+       (iter-reduce coll f)
+
+       :else
+       (seq-reduce f coll)))
+  ([f val coll]
+     (cond
+       (implements? IReduce coll)
+       (-reduce coll f val)
+
+       (array? coll)
+       (array-reduce coll f val)
+
+       (string? coll)
+       (array-reduce coll f val)
+
+       (native-satisfies? IReduce coll)
+       (-reduce coll f val)
+
+       (iterable? coll)
+       (iter-reduce coll f val)
+
+       :else
+       (seq-reduce f val coll)))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
