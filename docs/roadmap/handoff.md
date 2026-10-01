@@ -8255,3 +8255,35 @@ independently reviewed-head CI remains a readiness gate. No merge, issue closure
 or M2/M4 completion claimed. Literal keyword/symbol/quote, runtime metadata,
 duplicate-reader forms and real persistent collection types remain documented
 boundaries. Next M2 task remains the criterion-by-criterion #8/#9/#11 audit.
+
+
+## M2 acceptance candidate — 2026-10-01
+
+Previous goal turn made progress: implemented textual vector/map/set literal
+lowering, recorded the user's explicit ordering decision, executed fresh19
+reference/native observations and full28575 terminal0, opened PR114 and obtained
+independent review/full8004 terminal0. Reviewed final114head isddf00b21372982fca7b79c216d988de67da033b4, native6 plus19 exact values and Python86;
+exact-head remote CI still gates readiness. No root merge or issue closure.
+
+New isolated portable/m2-acceptance-audit worktree
+/private/tmp/suss-m2-acceptance-audit starts at reviewed114ddf00b2 with real
+pinned checkout. docs/roadmap/acceptance-m2.md is explicitly a candidate, mapping
+all #8/#9/#10/#11 criteria to current source/actual executing tests. No M2 status
+or issue closing link is changed before independent criterion review. The
+runnable scripts/test-m2-foundation.sh replaces the ineffective proposed
+evaluation_order filter with explicit suites, including old emitter guards and
+current ABI/namespace/nominal/session/collection interfaces. Full collection
+classes, keyword/symbol/quoted expressions, runtime metadata, source
+:require-macros and production frontend migration stay explicit boundaries; the
+review must decide whether any boundary leaves an actual M2 criterion unfulfilled.
+Root has exclusive heavy slot after reviewer114 release; focused acceptance
+command will be recorded with its authoritative terminal result. Next task:
+dispatch mandatory independent audit of the new PR, implement significant
+criterion gaps if found, then require final reviewed-head CI before readiness.
+
+Root focused acceptance18713 LIVE /private/tmp/suss-m2-acceptance-focus.log,
+shared-target/build2 sh scripts/test-m2-foundation.sh. Existing reviewed-parent
+full8004 is authoritative terminal0 atddf00b2; this audit adds only documentation
+and the focused runner, with no Rust/runtime/oracle input changes. Mandatory
+new independent reviewer must validate the criterion claims and runner scope;
+no Closes links or completion status yet. Root holds heavy slot until18713 terminal.
