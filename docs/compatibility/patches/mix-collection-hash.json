@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "2ec20d82dfa0886a6675fcd1c9679dbc0d6f924e8bb3d06d02c61bee65b82822",
+  "replacement": "(def ^number mix-collection-hash\n  \"Mix final collection hash for ordered or unordered collections.\n   hash-basis is the combined collection hash, count is the number\n   of elements included in the basis. Note this is the hash code\n   consistent with =, different from .hashCode.\n   See http://clojure.org/data_structures#hash for full algorithms.\"\n  (fn [hash-basis count]\n  (let [h1 m3-seed\n        k1 (m3-mix-K1 hash-basis)\n        h1 (m3-mix-H1 h1 k1)]\n    (m3-fmix h1 count))))",
+  "rationale": "Explicit fixed defn bootstrap adaptation retains original algorithm, metadata and docstring. Bounded threading and strict-zero macros replace source macro expansion until the full compiled bootstrap exists."
+}

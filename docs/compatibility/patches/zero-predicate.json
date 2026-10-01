@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "e2107ca970169a87350d72710ac9488f04ab3bfac80cfa608581b50ae813912e",
+  "replacement": "(def ^boolean zero?\n  \"Returns true if num is zero, else false\"\n  (fn [x]\n  (cljs.core/zero? x)))",
+  "rationale": "Explicit fixed defn bootstrap adaptation retains original algorithm, metadata and docstring. Bounded threading and strict-zero macros replace source macro expansion until the full compiled bootstrap exists."
+}

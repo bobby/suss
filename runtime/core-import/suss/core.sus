@@ -155,3 +155,51 @@
   (let [v (- v (bit-and (bit-shift-right v 1) 0x55555555))
         v (+ (bit-and v 0x33333333) (bit-and (bit-shift-right v 2) 0x33333333))]
     (bit-shift-right (* (bit-and (+ v (bit-shift-right v 4)) 0xF0F0F0F) 0x1010101) 24))))
+
+(def ^boolean zero?
+  "Returns true if num is zero, else false"
+  (fn [x]
+  (cljs.core/zero? x)))
+
+(def m3-seed 0)
+
+(def m3-C1 (int 0xcc9e2d51))
+
+(def m3-C2 (int 0x1b873593))
+
+(def ^number m3-mix-K1 (fn [k1]
+  (-> (int k1) (imul m3-C1) (int-rotate-left 15) (imul m3-C2))))
+
+(def ^number m3-mix-H1 (fn [h1 k1]
+  (int (-> (int h1) (bit-xor (int k1)) (int-rotate-left 13) (imul 5) (+ (int 0xe6546b64))))))
+
+(def ^number m3-fmix (fn [h1 len]
+  (as-> (int h1) h1
+    (bit-xor h1 len)
+    (bit-xor h1 (unsigned-bit-shift-right h1 16))
+    (imul h1 (int 0x85ebca6b))
+    (bit-xor h1 (unsigned-bit-shift-right h1 13))
+    (imul h1 (int 0xc2b2ae35))
+    (bit-xor h1 (unsigned-bit-shift-right h1 16)))))
+
+(def ^number m3-hash-int (fn [in]
+  (if (zero? in)
+    in
+    (let [k1 (m3-mix-K1 in)
+          h1 (m3-mix-H1 m3-seed k1)]
+      (m3-fmix h1 4)))))
+
+(def hash-long (fn [high low]
+  (bit-xor high low)))
+
+(def ^number mix-collection-hash
+  "Mix final collection hash for ordered or unordered collections.
+   hash-basis is the combined collection hash, count is the number
+   of elements included in the basis. Note this is the hash code
+   consistent with =, different from .hashCode.
+   See http://clojure.org/data_structures#hash for full algorithms."
+  (fn [hash-basis count]
+  (let [h1 m3-seed
+        k1 (m3-mix-K1 hash-basis)
+        h1 (m3-mix-H1 h1 k1)]
+    (m3-fmix h1 count))))

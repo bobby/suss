@@ -326,3 +326,12 @@ record is checked against the pin and exact complete form bounds in CI by
 `scripts/bitwise_provenance.py`. Four pinned public-wrapper errors and five separate
 internal-body diagnostics preserve the captured variadic/live reducer boundary;
 these are outside the70 equal public observations. See [bitwise hashing](../runtime/bitwise-hashing.md).
+
+
+Retained scalar Murmur algorithms/constants and zero? now have57 fresh primary/native
+observations and located namespace/arity/capture/GC recovery guards. Thirteen new
+partial reviews bring the overlay to126/939. Ten retained forms bring selection
+to40 forms/44 licensed artifacts, with explicit fixed defn patches preserving
+algorithms and metadata. Bounded threading/strict-zero expansions are prerequisites,
+not compiled macro acceptance; full collection/string/numeric hashing stays open.
+See [scalar Murmur hashing](../runtime/murmur-hashing.md).

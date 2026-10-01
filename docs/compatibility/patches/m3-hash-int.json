@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c51b7184ba4b84806736fe038259204ab50d70a23a4f0c3152fc6f5d8b716499",
+  "replacement": "(def ^number m3-hash-int (fn [in]\n  (if (zero? in)\n    in\n    (let [k1 (m3-mix-K1 in)\n          h1 (m3-mix-H1 m3-seed k1)]\n      (m3-fmix h1 4)))))",
+  "rationale": "Explicit fixed defn bootstrap adaptation retains original algorithm, metadata and docstring. Bounded threading and strict-zero macros replace source macro expansion until the full compiled bootstrap exists."
+}

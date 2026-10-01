@@ -5872,3 +5872,133 @@ All local Cargo/JVM/Node processes are terminal; the shared slot is released onc
 the review push finishes. Root requires exact reviewed-head CI before PR95 readiness. No merge,
 issue closure or milestone acceptance claim. Next retain actual Murmur/ordered
 hashing and persistent sequence/list source; complete core/macros/M2–M9 remain open.
+## Scalar Murmur hashing preparation — 2026-10-01
+
+New separate branch portable/core-murmur-hash/worktree /private/tmp/suss-core-murmur-hash
+starts at PR95 candidate458b5df.35 provisional scalar probes and native test runner
+are prepared; original bounded ->/as->/zero? expansion is drafted but NOT compiled
+or tested. No retained forms or review statuses are added. PR95 reviewer exclusively
+owns Cargo/JVM/Node slot, with review-expanded70 primary/native observations passing
+and full baseline40057 live. Reviewer found/corrected imul provenance bounds and is
+adding exact source-region/file/pin verification to CI with Python75 passing.
+Next rebase onto final reviewed PR95, then acquire the released slot and first
+certify fresh pinned observations/native red, retain the scalar Murmur forms with
+EPL/patch provenance, execute focused/full checks and dispatch a reviewer for any
+new PR. PR95 final reviewed-head CI is still required before readiness. Do not
+claim List/Cons/hash-ordered/hash-unordered/string/numeric hashing complete or
+substitute private argument buffers for persistent source collections. See
+ docs/runtime/murmur-hashing.md. No PR merge or issue closure.
+
+
+The unpublished Murmur preparation now has52 provisional probes (original35
+unchanged).17 new ->/as->/zero? cases cover lexical shadowing, captures, tail recur
+and strict zero testing. They have not run against the pin/native and are NOT
+success evidence. PR95 reviewer is investigating captured variadic tail dispatch;
+root still holds no local test slot and has launched no Cargo/JVM/Node processes.
+
+One additional unexecuted thread-callee ordering probe makes53 provisional cases.
+Nested threading syntax must preserve outer callee evaluation before the initial
+expression, rather than pre-evaluating that expression as an eager temporary.
+No primary/native success is claimed; shared test slot remains with PR95 reviewer.
+
+
+## Retained scalar Murmur executing candidate — 2026-10-01
+
+Rebased the preparation onto independently reviewed PR95 d49c5a7; one append-only
+handoff conflict preserved all reviewer and preparation evidence. PR95 reviewed
+full12800 passed and exact CI36819490858 is live; no ready/merge claim for that PR.
+Root acquired the released shared test slot. Initial fresh75181 ended101:53 exact
+pinned observations,36 unresolved native forms and17 executing control observations.
+Log /private/tmp/suss-murmur-hash-first-red.log. Seven explicit fixed defn patches
+and three exact constants now retain the scalar Murmur algorithms/zero? with EPL
+provenance. Import31363 ended0:53 exact primary/native and native1. Final fresh43112
+ended0:57 exact primary/native (original53 unchanged), all four native tests pass.
+Log /private/tmp/suss-murmur-hash-final57.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-murmur-hash-oracle.sh`.
+Pinned non-number zero? numeric warnings stay visible, not blanket-suppressed.
+
+Original bounded ->/as->/zero? expansions preserve splicing/evaluation order,
+sequential lexical identities, captures, metadata/spans, statement/tail contexts
+and strict numeric zero. General binder destructuring/callable collections and
+compiled macro bootstrap remain incomplete. Source guard65413 ended0: Murmur4,
+bitwise6/cache4; log /private/tmp/suss-murmur-source-guards.log. Commands select
+-p suss-cli --test portable_murmur_hash --test portable_bitwise_hash
+--test portable_caching_hash with shared target/two workers/--locked -- --test-threads=2.
+Python76 and source/review/import/bitwise provenance checks pass:126 partial/939
+unassessed,40 selections/44 licensed artifacts. Log /private/tmp/suss-murmur-python.log.
+No native bootstrap cell, shared GC layout or runtime ABI change in this slice.
+Compiler focused62882 is still live; final results follow. Required independent
+PR review/fixes/full baseline and exact reviewed-head CI remain before readiness.
+No closure/merge; hash-ordered/hash-unordered/string/numeric hashing, persistent
+List/Cons/IndexedSeq and M2–M9 remain unfinished.
+
+
+Compiler62882 ended0: bitwise guard1 and pipeline17 pass, log
+/private/tmp/suss-murmur-compiler-guards.log. A focused threading metadata
+regression61654 ended101: symbol metadata was incorrectly promoted to the generated
+call list. Pin core.cljc104 preserves list-step metadata only; the symbol itself
+still retains its metadata. Corrected6812 ended0 with the public HIR/validated
+artifact regression. Logs /private/tmp/suss-murmur-thread-metadata-red.log and
+/private/tmp/suss-murmur-thread-metadata-fixed.log. Command selects -p suss-compile
+--test portable_murmur with the required shared target/build workers/locked/two
+workers. All root local processes are terminal. Inventory126+939/40 selections44
+artifacts, WIT/numeric/offline roadmap and strict bitwise provenance gates pass.
+Next independent PR review/fixes, required full baseline and exact final-head CI.
+No readiness, milestone acceptance, issue closure or merge claim for this slice.
+
+## Independent PR96 review — 2026-10-01
+
+Review worktree /private/tmp/suss-review-pr96 starts at 74dac8a7114c72504b2acf03960fb326c3565491,
+base reviewed PR95 d49c5a72c2661712ddd539414025764ae0c06363. Original 57 source
+cases/expectations remain unchanged. Sixteen independent cases bring the fresh
+corpus to 73: special-form syntax splicing, nested outer/inner callee effects,
+initial-expression shadowing, three generations of captured bindings, nested
+as->, statement def, throwing operands, qualified macros, subnormal/Boolean/large
+coercion and Undefined/first-class string zero?. First 22099 ended1 on the reviewer's
+hand-calculated expected hash-long value; fresh pinned bits were -2147483648,
+not 2147483646. Only that new expectation changed. Fresh corrected 25391 ended0:
+73 exact pinned/native observations and native 4. Logs
+/private/tmp/suss-pr96-review-primary73.log and
+/private/tmp/suss-pr96-review-primary73-fixed.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-murmur-hash-oracle.sh`.
+
+Significant compiler finding: -> accepted 255 steps under its 256-argument limit
+but aborted with a Rust stack overflow. Initial limit regression 71518 ended101
+because its isolated session lacked retained inc; changed only the new limit probe
+to bootstrap +. Corrected 34083 reproduced SIGABRT, and trial per-chain 63-step
+cap 94790 also aborted. A per-chain cap also fails to bound nested macros, so that
+trial was removed. Analyzer now checks total recursive analysis depth 24 and emits
+a located diagnostic before nesting exhausts the stack. This explicit bootstrap
+limit applies to generated and original syntax; stack-safe general analysis remains
+future work. No runtime layout, ABI, cell, source selection or algorithm changes.
+Final 22465 ended0: native 5, including long single/nested chains rejected atomically,
+recovery, executing 16-step -> and 254-step sequential as->. Logs
+/private/tmp/suss-pr96-review-source-limits.log,
+/private/tmp/suss-pr96-review-source-limits-fixed.log,
+/private/tmp/suss-pr96-review-source-limits-checked.log,
+/private/tmp/suss-pr96-review-source-depth-guard.log. Focused command selects
+-p suss-cli --test portable_murmur_hash with shared target/two workers/locked
+and --test-threads=2. Failures are preserved, not relabeled as passes.
+
+Provenance 59155 ended0: Python 76, 1065 declarations, 126 partial/939 unassessed,
+40 selected forms/44 licensed files, exact conditional imul region, WIT 15 files/6
+packages, numeric artifact manifest and offline 10 milestones/39 issues. Log
+/private/tmp/suss-pr96-review-provenance.log. No merge/closure/milestone claim.
+
+PR95 independently reviewed final head d49c5a72c2661712ddd539414025764ae0c06363
+passed exact CI36819490858 and root marked that prerequisite ready. No merge.
+
+Required full workspace graph 68936 ended 0: all enabled workspace and doc tests
+pass, including Murmur 5, bitwise 6, caching 4, compiler metadata 1/pipeline 17/ABI 22.
+Manual ignored tests and the 9 passing/7 exact failing diagnostic observations
+remain explicit. Log /private/tmp/suss-pr96-review-full-baseline.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Follow-up final fresh graph 12923 ended 0: all 73 exact primary/native observations
+and native 5 pass, including an added ordinary 40-level source diagnostic with
+nonempty span, compile-atomic unpublished globals and recovery. The guard restores
+depth on every returned Result. Log /private/tmp/suss-pr96-review-primary-final73.log.
+Original 57 source/expected entries were checked byte-for-byte against the candidate.
+No blanket skips or production failures hidden. All local Cargo/JVM/Node processes
+are terminal. Root requires exact reviewed-head CI before PR96 readiness; no merge,
+issue closure or milestone acceptance. Next stack-safe general analysis, retained
+ordered hashing and real persistent sequence/list source; M2–M9 remain open.

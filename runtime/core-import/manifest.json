@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "83cc86a2d1cabdeb77ff27e777996aaf83631b5eef8920b5ca2b6b325a6ee165",
-  "reviews-sha256": "04b65f9c851756e0b7a6ad5c9d4473bd63ee7e44b023b802072e7c355ad19e14",
+  "recipe-sha256": "8ff4bc3e9865c99d2b87823f27e0af4ae23aab9b0323a2c2a8b35b7e636adb99",
+  "reviews-sha256": "d5bffc9d46efc0e5e81613898f7f7b177557917309df96b0bdab7fb64b00c079",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -923,6 +923,312 @@
         "crates/suss-compile/tests/runtime_abi.rs",
         "tests/oracle/bitwise-hash-cases.json"
       ]
+    },
+    {
+      "id": "runtime:zero?:3081",
+      "name": "zero?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3081,
+      "end-line": 3084,
+      "byte-start": 82449,
+      "byte-end": 82542,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "e2107ca970169a87350d72710ac9488f04ab3bfac80cfa608581b50ae813912e",
+      "extracted": "extracted/0030.cljs",
+      "extracted-sha256": "b3eff71d30c28cab1020c4831ae5f5b09e6bd842b9047629f194c6e49803bebc",
+      "patch": "docs/compatibility/patches/zero-predicate.json",
+      "patch-sha256": "f38e0a06a25c2e80d4e577a4ef62ec8fb3b86b2acfefb3acb1b124f1e2dbd920",
+      "adapted-form-sha256": "216ec9618008ac12a7736057f401582df8a18559a1cbc926f26a295c25050e2a",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:==:1184"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_murmur_hash.rs",
+        "tests/oracle/murmur-hash-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:m3-seed:967",
+      "name": "m3-seed",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 967,
+      "end-line": 967,
+      "byte-start": 29587,
+      "byte-end": 29602,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5ca894a9fb1976c9671745b87ce91b04654c7f7eda2f42c17e5f5aa1f025bd34",
+      "extracted": "extracted/0031.cljs",
+      "extracted-sha256": "b797d36e5d38c57767692f396aae2bf9498349edc40a3ee74574fee6a424e48f",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "5ca894a9fb1976c9671745b87ce91b04654c7f7eda2f42c17e5f5aa1f025bd34",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_murmur_hash.rs",
+        "tests/oracle/murmur-hash-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:m3-C1:968",
+      "name": "m3-C1",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 968,
+      "end-line": 968,
+      "byte-start": 29603,
+      "byte-end": 29631,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "d659e74b9df9169ef1df17c08ea819bc66bdea62d8e72b1ccda7cc1f19635fbd",
+      "extracted": "extracted/0032.cljs",
+      "extracted-sha256": "7477a1b93498e4a46ecf0cfae75347a4004eb1940c43cce955951f903aa0f3fd",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "d659e74b9df9169ef1df17c08ea819bc66bdea62d8e72b1ccda7cc1f19635fbd",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:int:1239"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_murmur_hash.rs",
+        "tests/oracle/murmur-hash-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:m3-C2:969",
+      "name": "m3-C2",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 969,
+      "end-line": 969,
+      "byte-start": 29632,
+      "byte-end": 29660,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "ed00669e541a7c84e0efcd509588aef8e11a3024a0d8f304550b0877e4671787",
+      "extracted": "extracted/0033.cljs",
+      "extracted-sha256": "e9d99f589ce02b4e13ea44593959af9a9997d76a331e2223459331bebafbb530",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "ed00669e541a7c84e0efcd509588aef8e11a3024a0d8f304550b0877e4671787",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:int:1239"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_murmur_hash.rs",
+        "tests/oracle/murmur-hash-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:m3-mix-K1:971",
+      "name": "m3-mix-K1",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 971,
+      "end-line": 972,
+      "byte-start": 29662,
+      "byte-end": 29754,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8e8ba6d401c897d25b0ba61deb4ca2e305ca4772991448b9936481dea7789342",
+      "extracted": "extracted/0034.cljs",
+      "extracted-sha256": "52a59bf1bfee3f29533672f6e26e965bb51259e95e39c048ad0130682cba01ef",
+      "patch": "docs/compatibility/patches/m3-mix-K1.json",
+      "patch-sha256": "486d125ddd07465899965eeb68181c51f86f7b756156d428e3f9481b75045cc6",
+      "adapted-form-sha256": "25df2f33db2b06f226b7460645eda5483f4bfa3466ddca3346244e9d22289d44",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:->:104",
+        "runtime:int-rotate-left:947",
+        "imul checked wrapping primitive",
+        "runtime:m3-C1:968",
+        "runtime:m3-C2:969"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_murmur_hash.rs",
+        "tests/oracle/murmur-hash-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:m3-mix-H1:974",
+      "name": "m3-mix-H1",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 974,
+      "end-line": 975,
+      "byte-start": 29756,
+      "byte-end": 29880,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "6dd614803ee00a5f5006aebca86c3de4d1a3d5191bacc1b0dbdc9586a37cc44a",
+      "extracted": "extracted/0035.cljs",
+      "extracted-sha256": "6393c69e5e16febc8fd948143f2fd5d97d1ebc7694e1b258d0cadae4588466bb",
+      "patch": "docs/compatibility/patches/m3-mix-H1.json",
+      "patch-sha256": "b625c1a400ae3025b49c070e17069fe92fe86ed47dc168a12b1c8df61ae23640",
+      "adapted-form-sha256": "1f65e7d275b71fed4715254a7bf80baa2a8a899ab610d1c669f2afb8055f2f94",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:->:104",
+        "runtime:int-rotate-left:947",
+        "imul checked wrapping primitive",
+        "macro:int:1239",
+        "macro:bit-xor:1243"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_murmur_hash.rs",
+        "tests/oracle/murmur-hash-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:m3-fmix:977",
+      "name": "m3-fmix",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 977,
+      "end-line": 984,
+      "byte-start": 29882,
+      "byte-end": 30167,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "4eab182e144e2181569f1dd1d73997171682030d86759f000969ffa53653f6e9",
+      "extracted": "extracted/0036.cljs",
+      "extracted-sha256": "a17eee88e5b150805778f039ab12d36e8ec071db2b5cd8183ffb5b5a241073db",
+      "patch": "docs/compatibility/patches/m3-fmix.json",
+      "patch-sha256": "f507a7914013c736ebab0a3f61250e84b2e9d54c0ff683d8bad42e94f68d6e48",
+      "adapted-form-sha256": "5fbd2985ffc5233ff25391980dc3b20339a4640558aa90ddd882f09aae5017fd",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:as->:477",
+        "macro:int:1239",
+        "macro:bit-xor:1243",
+        "macro:unsigned-bit-shift-right:1269",
+        "imul checked wrapping primitive"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_murmur_hash.rs",
+        "tests/oracle/murmur-hash-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:m3-hash-int:986",
+      "name": "m3-hash-int",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 986,
+      "end-line": 991,
+      "byte-start": 30169,
+      "byte-end": 30312,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c51b7184ba4b84806736fe038259204ab50d70a23a4f0c3152fc6f5d8b716499",
+      "extracted": "extracted/0037.cljs",
+      "extracted-sha256": "372773ee429760f9a01ffe14d59a0befdabb4985a986a90d399e748ea270a544",
+      "patch": "docs/compatibility/patches/m3-hash-int.json",
+      "patch-sha256": "866334bed066839d74f82dd2d7d99252ba64d5478c3ff659c9e09b9a24526b72",
+      "adapted-form-sha256": "9a84c8d6bd4b2cad0f7cb23614fb93271e0ede55da27343ceb3b959edbfdd0ca",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:zero?:3081",
+        "runtime:m3-mix-K1:971",
+        "runtime:m3-mix-H1:974",
+        "runtime:m3-fmix:977"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_murmur_hash.rs",
+        "tests/oracle/murmur-hash-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:hash-long:993",
+      "name": "hash-long",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 993,
+      "end-line": 994,
+      "byte-start": 30314,
+      "byte-end": 30362,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "562a439a3e00393aaa0fdb09ba333ab8c65edc86d4e5794a507348208195726d",
+      "extracted": "extracted/0038.cljs",
+      "extracted-sha256": "ea5a1890a844900fb2a9060bc5bd03b3068b913991c7bc84dba435e64d7161ee",
+      "patch": "docs/compatibility/patches/hash-long.json",
+      "patch-sha256": "7e423871b266b506a9fbe7abfe40ac546bf833996278c040c8d77236dfcc2c9c",
+      "adapted-form-sha256": "40f360e4194099aff671da53554555ed9da9a04e29bd985eb5ad6daf8233eecc",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:bit-xor:1243"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_murmur_hash.rs",
+        "tests/oracle/murmur-hash-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:mix-collection-hash:1394",
+      "name": "mix-collection-hash",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1394,
+      "end-line": 1404,
+      "byte-start": 40653,
+      "byte-end": 41131,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "2ec20d82dfa0886a6675fcd1c9679dbc0d6f924e8bb3d06d02c61bee65b82822",
+      "extracted": "extracted/0039.cljs",
+      "extracted-sha256": "b7c3047411733e4ea4d456d7e40fc0b36e256a895bb467427ca186ae8fa6b802",
+      "patch": "docs/compatibility/patches/mix-collection-hash.json",
+      "patch-sha256": "659db375e0942860a82ea36f8a651cc39d9760070254b276e82747020dce9f73",
+      "adapted-form-sha256": "0fc45e3055c25caa6ef6189c2ec536528f8ac107637357d562daed6a68f2b454",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:m3-seed:967",
+        "runtime:m3-mix-K1:971",
+        "runtime:m3-mix-H1:974",
+        "runtime:m3-fmix:977"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_murmur_hash.rs",
+        "tests/oracle/murmur-hash-cases.json"
+      ]
     }
   ],
   "files": {
@@ -958,6 +1264,16 @@
     "extracted/0027.cljs": "784555ac3f8109c4f6f8e469c089771b3e6ace53f7b3704f02384c2f69752ecd",
     "extracted/0028.cljs": "b95aea347d073d5f77681d211b2be2994bd4978e7722bcd7275c19b55680cae5",
     "extracted/0029.cljs": "38f07a298d067e816376d80682f184592339d6f01492353770281e24e454dd56",
-    "suss/core.sus": "410581453c65e1f31e1edbbde62e28c2349fffcc10199a581aeee010db2c63b2"
+    "extracted/0030.cljs": "b3eff71d30c28cab1020c4831ae5f5b09e6bd842b9047629f194c6e49803bebc",
+    "extracted/0031.cljs": "b797d36e5d38c57767692f396aae2bf9498349edc40a3ee74574fee6a424e48f",
+    "extracted/0032.cljs": "7477a1b93498e4a46ecf0cfae75347a4004eb1940c43cce955951f903aa0f3fd",
+    "extracted/0033.cljs": "e9d99f589ce02b4e13ea44593959af9a9997d76a331e2223459331bebafbb530",
+    "extracted/0034.cljs": "52a59bf1bfee3f29533672f6e26e965bb51259e95e39c048ad0130682cba01ef",
+    "extracted/0035.cljs": "6393c69e5e16febc8fd948143f2fd5d97d1ebc7694e1b258d0cadae4588466bb",
+    "extracted/0036.cljs": "a17eee88e5b150805778f039ab12d36e8ec071db2b5cd8183ffb5b5a241073db",
+    "extracted/0037.cljs": "372773ee429760f9a01ffe14d59a0befdabb4985a986a90d399e748ea270a544",
+    "extracted/0038.cljs": "ea5a1890a844900fb2a9060bc5bd03b3068b913991c7bc84dba435e64d7161ee",
+    "extracted/0039.cljs": "b7c3047411733e4ea4d456d7e40fc0b36e256a895bb467427ca186ae8fa6b802",
+    "suss/core.sus": "a06c171631520a64d3c1db8dd8f17735296ebe79f3b3a66c742bd52bd8e95947"
   }
 }
