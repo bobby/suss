@@ -5568,3 +5568,31 @@ Next rebase onto reviewed PR93, acquire the released test slot, certify fresh
 primary expectations and execute the native regressions, then align provenance
 and dispatch independent review/final CI if a PR is opened. List/Cons hashing and
 complete collections/M2–M9 remain open. See docs/runtime/caching-hash.md.
+
+## Caching-hash executing candidate — 2026-10-01
+
+Rebased preparationeeacae0 onto independently reviewed Object head e958472.
+PR93 final-head CI36813244361 is still live; it is not yet ready for merge.
+Its source52/native2/ABI20/Python71 and required reviewer baseline passed, including
+significant prototype/callback fixes. Root has not merged or closed any issue.
+
+Fresh caching-hash graph46126 ended0:24 exact pinned observations and native2
+pass with independently decoded validated Wasm/GC. Log
+/private/tmp/suss-caching-hash-primary-candidate.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-caching-hash-oracle.sh`.
+Cached false/zero/negative-zero/NaN/string return unchanged; hits suppress both
+operands, misses evaluate callee then collection and assign exactly one result,
+throws preserve nil cache, nil results recompute. Protocol fields/nested captures/
+Object methods and qualified globals execute. Negative immutable/local/shadowed/
+unknown/non-symbol/wrong-arity keys recover without definition/type publication.
+
+CLI graph18075 terminal0: caching2/control3/mutable2/Object2/scope2. Compiler
+92720 terminal0: nominal5/pipeline17. Logs /private/tmp/suss-caching-hash-cli-guards.log
+and /private/tmp/suss-caching-hash-compiler-guards.log. Python graph91870 terminal0:
+71 tests/inventory1065/reviews83 partial+982 unassessed/import32 verified. One
+partial macro review is added; no macro source copied,28 selected forms/32 artifacts
+change only their review hash. Log /private/tmp/suss-caching-hash-provenance.log.
+All root Cargo/JVM/Node graphs terminal. Next independent PR review/fixes, required
+full baseline and exact final-head CI before readiness, then continue complete
+persistent List/Cons/IndexedSeq dependencies. Macro bootstrap/full hashing and
+M2–M9 acceptance remain open. No issue closure/merge.

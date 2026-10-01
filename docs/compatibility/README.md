@@ -307,3 +307,10 @@ The Fn marker branch remains part of the imported predicate. Direct calls preser
 lookup-before-argument order, unbound shared function identity and anchored recur.
 Public prototypes, munged properties and complete macros/core remain unfinished;
 see [Object methods](../runtime/object-methods.md).
+
+
+The internal caching-hash macro dependency now has24 fresh pinned/native scalar
+observations and compile-atomic invalid/immutable key guards. One partial review
+brings the overlay to83/982;28 selections/32 licensed artifacts change only their
+review hash. Complete List/Cons hashing and compiled macros remain unfinished;
+see [hash caching](../runtime/caching-hash.md).
