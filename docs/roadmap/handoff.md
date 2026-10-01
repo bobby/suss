@@ -8026,3 +8026,13 @@ PR95mergedstackhead015767ae has CI36871799306 pending; do not use oldd49 readine
 checks for this expanded head. Root will rebase collection changes on111dec9e684,
 prove production/test inputs unchanged, then dispatch mandatory independent review
 with exclusive heavy slot. No rootmerge, issue or milestone closure.
+
+
+Collection branch rebase onto independently reviewed111dec9e684 complete.
+Append-only handoff conflict preserved parent retarget audit and child hashing
+source/test/full evidence. git diff --exit-code 8bd6e18 -- crates runtime scripts
+tests Cargo.toml Cargo.lock .github/workflows/ci.yml proves byte-identical tested
+inputs; no fresh baseline is claimed for ancestry/doc changes. Roadmap current
+inventory count corrected to196/869; original25-minute M1 budget labeled initial,
+with current35-minute followup evidence retained. Root remains heavy-idle pending
+PR creation/reviewer release; required local full6189 applies unchanged bytes.

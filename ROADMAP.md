@@ -38,7 +38,7 @@ preserves existing issue bodies.
 
 ### M0: Contract and feasibility
 
-- **M0-01 — Contract and upstream inventory** (completed). Deterministic pinned inventory, source hashes/reader branches, strict review schema and provenance policy pass. 139 arithmetic/nominal/dynamic/exception/bootstrap/predicate/array/comparison/direct-implementation/collection-protocol/control/bitwise/Murmur/string-cache declarations now have in-progress manual reviews; 926 remain unassessed for M4/M7 implementation.
+- **M0-01 — Contract and upstream inventory** (completed). Deterministic pinned inventory, source hashes/reader branches, strict review schema and provenance policy pass. 196 source declarations now have in-progress manual reviews; 869 remain unassessed for M4/M7 implementation.
 - **M0-02 — Lock toolchain and official WIT packages** (completed). Locked official package hashes and executing GC/tail-call/EH/map/implements/external-id/async/future/stream probes pass. Generated Suss adapters remain M5/M6 work.
 - **M0-03 — Prove shared GC fragments** (completed). Shared roots/closures/nominal descriptors survive forced GC; incompatible ABI fails before initialization. Production persistent sessions remain M2/M3 work.
 - **M0-04 — Prove browser loading and suspension** (completed). Chrome executes typed core/Promise/cancellation/feature-error fixtures and optional Jco GC packaging. Teardown timeout is recorded separately; cross-browser/product delivery remains M8 work.
@@ -47,7 +47,7 @@ preserves existing issue bodies.
 
 - **M1-01 — Strict conformance decoding and baseline** (completed). Executing negative regressions reject wrong/malformed/unknown results, missing cases, changed failures and unexpected passes; 201 reviewed legacy cases pass.
 - **M1-02 — ClojureScript oracle and semantic regressions** (completed). Fresh pinned Node and independently decoded Suss artifacts compare one corpus covering ordered effects, binary64 bits, UTF-16, arities and exceptions: 9 differential passes, 7 exact failures, 0 skips. This completes the evidence harness; repairing semantic failures and broader compatibility remain M2/M4/M7 work.
-- **M1-03 — Bounded CI and reproducible baseline** (completed). Lockfiles, shared engines, bounded fuel/traversal, two workers and a 25-minute CI budget are exercised by successful reviewed-head and merged-main full baselines. Ignored/manual tests remain explicit.
+- **M1-03 — Bounded CI and reproducible baseline** (completed). Lockfiles, shared engines, bounded fuel/traversal, two workers and an initial 25-minute CI budget are exercised by successful reviewed-head and merged-main full baselines. Ignored/manual tests remain explicit.
 
 The [acceptance audit](docs/roadmap/acceptance-m0-m1.md) maps every M0/M1 criterion
 to merged implementation, executing evidence and its scope. Reconciliation PR #43
