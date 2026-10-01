@@ -141,3 +141,23 @@ fn compiled_source_macros_expand_dependency_artifacts_before_publication() {
         42f64.to_bits()
     );
 }
+
+#[test]
+fn compiled_source_macros_preserve_true_loop_special_form_priority() {
+    let mut macros = CompiledMacros::new().unwrap();
+    macros.define("(defmacro loop* [& xs] 99)").unwrap();
+    let mut runtime = Session::new_repl().unwrap();
+    assert_eq!(
+        number(
+            &mut runtime,
+            "(loop* [n 0] (if (< n 42) (recur (+ n 1)) n))",
+            &mut macros
+        ),
+        42f64.to_bits()
+    );
+    assert_eq!(
+        number(&mut runtime, "(user/loop*)", &mut macros),
+        99f64.to_bits(),
+        "Qualified macro name remains an ordinary macro lookup"
+    );
+}

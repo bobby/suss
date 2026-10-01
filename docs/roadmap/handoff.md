@@ -8801,3 +8801,22 @@ terminal0:Python86, inventory1065, reviews224/841, licensed import132 and offlin
 roadmap preview pass. No added skips, ABI/dependency changes or RUSTFLAGS. Root
 heavy slot released. Publish draft and require independent review plus exact-head
 CI; full M3 acceptance, automatic macro loading and bootstrap remain unfinished.
+
+## PR125 independent review fix — source macro special forms
+
+Independent review of515457ae found that registered loop* macros intercepted the
+compiler's true unqualified loop* special form. The failing regression36892
+terminal101 reached macro argument transport and rejected its bindings vector;
+ordinary loop*/recur behavior must retain special-form priority. CompiledMacros
+now protects loop* alongside the existing special forms. The regression also
+executes qualified user/loop* as a normal macro lookup. Focused83427 terminal0:
+4 compiled_source_macros tests pass. Original focused61573 terminal0:16pass
+(forms6/phase3/source3/namespace4). Temporary independent probes3898 terminal0:
+tail recur through macro expansion/non-tail rejection, qualified lookup despite
+local shadowing, macro exception compile atomicity/recovery, real lexical callback
+context, textual analysis order and quoted-data bypass. Probe source retained at
+/private/tmp/suss-pr125-independent-probe.rs; temporary test removed.
+
+Review fix requires a replacement-head full workspace baseline and exact final-head
+CI before readiness. No merge or M3 completion; all full macro/bootstrap/lifecycle
+acceptance remains open.

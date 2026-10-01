@@ -128,6 +128,7 @@ impl ExpansionHost for CompiledMacros {
                     | "let"
                     | "let*"
                     | "loop"
+                    | "loop*"
                     | "recur"
                     | "fn"
                     | "fn*"
