@@ -54,3 +54,14 @@ Focused84046 terminal0: native3, both-phase artifact/arity checks pass;
 /private/tmp/suss-hash-numeric-boundaries-focused-final-retry.log. Required
 full baseline now running /private/tmp/suss-hash-numeric-boundaries-full.log;
 root owns exclusive heavy slot. No full acceptance claim until terminal.
+
+Required full73818 terminal0; inspected /private/tmp/suss-hash-numeric-boundaries-full.log
+through final reader doc tests. All enabled required suites pass, including new
+native3/68, numeric HIR/IR1 and direct ABI1, plus reviewed parent indexing3/62
+and source corpora. Manual ignored suites and diagnostic9passes/7knownfailures
+remain explicit. Required command: CARGO_TARGET_DIR=/Users/bobby/code/github/
+bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked --
+--test-threads=2, no RUSTFLAGS. Draft PR106 candidatead73ca9 is open; independent
+reviewer106 prepared additional probes while root held heavy slot. Root now
+releases slot after evidence push; reviewer baseline and exact final-head CI
+remain mandatory. No merge, issue or milestone completion claim.
