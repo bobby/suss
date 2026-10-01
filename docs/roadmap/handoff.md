@@ -5719,3 +5719,26 @@ public compatibility claim and no new PR opened. Next integrate bounded bitwise
 operations and retained public source, then repeat primary/native/provenance/full
 baseline, independent PR review and exact final-head CI before readiness. All
 local test processes are terminal; PR94 final remote CI remains pending.
+
+
+## Hash-cache final CI gate — 2026-10-01
+
+PR94 final reviewed head74120cb54a9abac458825658632f41fd9eb8d8ad passed
+CI36814856668, completed04:43:13Z. Root downloaded and inspected
+/private/tmp/suss-pr94-final-ci.log: Python71,1065 declarations,83 partial/982
+unassessed reviews,32 licensed artifacts, enabled caching4 (including exact NaN
+storage/GC and comparison guards), Object2, ABI20 and the required full workspace
+baseline/doc tests pass. PR94 body records independent review fixes and the exact
+CI link; it is marked ready. PR93 is also ready with its verified final-head CI.
+Root did not merge any PR or close any issue. Refs links remain partial.
+
+Private coercion follow-up guards17446 ended0 with pipeline17; source guard69649
+ended0 with caching4/Object2. Logs /private/tmp/suss-int32-pipeline-guards.log and
+/private/tmp/suss-int32-source-guards.log. Commands use the shared target/two build
+workers and --locked -- --test-threads=2; source guards select -p suss-cli
+--test portable_caching_hash --test portable_object_methods, compiler guards
+select -p suss-compile --test portable_pipeline. No broader public/full-baseline
+claim is added for the unpublished bitwise branch; its37-case native corpus
+remains red36 unresolved/one match. All local processes are terminal. Next
+integrate bounded bitwise/imul and retained-source provenance, then review and
+require final-head CI on any new PR. Complete persistent collections/M2–M9 open.
