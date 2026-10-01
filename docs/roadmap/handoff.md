@@ -5945,3 +5945,60 @@ workers. All root local processes are terminal. Inventory126+939/40 selections44
 artifacts, WIT/numeric/offline roadmap and strict bitwise provenance gates pass.
 Next independent PR review/fixes, required full baseline and exact final-head CI.
 No readiness, milestone acceptance, issue closure or merge claim for this slice.
+
+## Independent PR96 review — 2026-10-01
+
+Review worktree /private/tmp/suss-review-pr96 starts at 74dac8a7114c72504b2acf03960fb326c3565491,
+base reviewed PR95 d49c5a72c2661712ddd539414025764ae0c06363. Original 57 source
+cases/expectations remain unchanged. Sixteen independent cases bring the fresh
+corpus to 73: special-form syntax splicing, nested outer/inner callee effects,
+initial-expression shadowing, three generations of captured bindings, nested
+as->, statement def, throwing operands, qualified macros, subnormal/Boolean/large
+coercion and Undefined/first-class string zero?. First 22099 ended1 on the reviewer's
+hand-calculated expected hash-long value; fresh pinned bits were -2147483648,
+not 2147483646. Only that new expectation changed. Fresh corrected 25391 ended0:
+73 exact pinned/native observations and native 4. Logs
+/private/tmp/suss-pr96-review-primary73.log and
+/private/tmp/suss-pr96-review-primary73-fixed.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-murmur-hash-oracle.sh`.
+
+Significant compiler finding: -> accepted 255 steps under its 256-argument limit
+but aborted with a Rust stack overflow. Initial limit regression 71518 ended101
+because its isolated session lacked retained inc; changed only the new limit probe
+to bootstrap +. Corrected 34083 reproduced SIGABRT, and trial per-chain 63-step
+cap 94790 also aborted. A per-chain cap also fails to bound nested macros, so that
+trial was removed. Analyzer now checks total recursive analysis depth 24 and emits
+a located diagnostic before nesting exhausts the stack. This explicit bootstrap
+limit applies to generated and original syntax; stack-safe general analysis remains
+future work. No runtime layout, ABI, cell, source selection or algorithm changes.
+Final 22465 ended0: native 5, including long single/nested chains rejected atomically,
+recovery, executing 16-step -> and 254-step sequential as->. Logs
+/private/tmp/suss-pr96-review-source-limits.log,
+/private/tmp/suss-pr96-review-source-limits-fixed.log,
+/private/tmp/suss-pr96-review-source-limits-checked.log,
+/private/tmp/suss-pr96-review-source-depth-guard.log. Focused command selects
+-p suss-cli --test portable_murmur_hash with shared target/two workers/locked
+and --test-threads=2. Failures are preserved, not relabeled as passes.
+
+Provenance 59155 ended0: Python 76, 1065 declarations, 126 partial/939 unassessed,
+40 selected forms/44 licensed files, exact conditional imul region, WIT 15 files/6
+packages, numeric artifact manifest and offline 10 milestones/39 issues. Log
+/private/tmp/suss-pr96-review-provenance.log. No merge/closure/milestone claim.
+
+PR95 independently reviewed final head d49c5a72c2661712ddd539414025764ae0c06363
+passed exact CI36819490858 and root marked that prerequisite ready. No merge.
+
+Required full workspace graph 68936 ended 0: all enabled workspace and doc tests
+pass, including Murmur 5, bitwise 6, caching 4, compiler metadata 1/pipeline 17/ABI 22.
+Manual ignored tests and the 9 passing/7 exact failing diagnostic observations
+remain explicit. Log /private/tmp/suss-pr96-review-full-baseline.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Follow-up final fresh graph 12923 ended 0: all 73 exact primary/native observations
+and native 5 pass, including an added ordinary 40-level source diagnostic with
+nonempty span, compile-atomic unpublished globals and recovery. The guard restores
+depth on every returned Result. Log /private/tmp/suss-pr96-review-primary-final73.log.
+Original 57 source/expected entries were checked byte-for-byte against the candidate.
+No blanket skips or production failures hidden. All local Cargo/JVM/Node processes
+are terminal. Root requires exact reviewed-head CI before PR96 readiness; no merge,
+issue closure or milestone acceptance. Next stack-safe general analysis, retained
+ordered hashing and real persistent sequence/list source; M2–M9 remain open.

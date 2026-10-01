@@ -6,7 +6,7 @@ fn murmur_hash_match_independently_decoded_primary_observations_after_gc() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/murmur-hash-cases.json")).unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 57);
+    assert_eq!(cases.len(), 73);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -205,4 +205,34 @@ fn retained_murmur_functions_observe_live_globals_and_old_values_survive_gc() {
     assert_eq!(murmur_number(&mut session, "(m3-mix-K1 7)"), 99.0);
     assert!(session.eval("(saved_murmur)").is_err());
     assert_eq!(murmur_number(&mut session, "(as-> 3 n (+ n 7))"), 10.0);
+}
+
+#[test]
+fn threading_expansion_limits_are_located_atomic_and_recover() {
+    use suss_cli::portable_session::SessionError;
+    let mut session = Session::new().unwrap();
+    for body in [
+        format!("(-> 1 {})", "(+ 1) ".repeat(256)),
+        format!("(as-> 1 n {})", "(+ n 1) ".repeat(255)),
+        format!("(-> (-> 1 {}) {})", "(+ 1) ".repeat(16), "(+ 1) ".repeat(16)),
+        format!("{}1{}", "(+ 1 ".repeat(40), ")".repeat(40)),
+    ] {
+        let source = format!("(do (def threading_limit_unpublished 7) {body})");
+        let SessionError::Compile(error) = session.eval(&source).unwrap_err() else {
+            panic!("expected located expansion limit");
+        };
+        assert!(error.message.contains("expansion limit"), "{error:?}");
+        assert!(error.span.start < error.span.end && error.span.end <= source.len());
+        assert!(session.eval("threading_limit_unpublished").is_err());
+        assert_eq!(murmur_number(&mut session, "(as-> 7 n (+ n 3))"), 10.0);
+    }
+    // Sequential as-> keeps its argument boundary; modest threading executes.
+    assert_eq!(
+        murmur_number(&mut session, &format!("(-> 1 {})", "(+ 1) ".repeat(16))),
+        17.0
+    );
+    assert_eq!(
+        murmur_number(&mut session, &format!("(as-> 1 n {})", "(+ n 1) ".repeat(254))),
+        255.0
+    );
 }

@@ -13,21 +13,27 @@ ordering, source spans/metadata and tail context. as-> uses separate immutable
 lexical bindings for successive results; closures keep old bindings and the last
 form preserves statement/tail context. zero? expands to strict primitive equality
 with numeric zero. Local calls, aliases, exclusions and both phases are explicit.
+The recursive bootstrap analyzer currently checks a total depth of 24; longer
+source syntax or generated expansions report located compile errors atomically,
+including single and nested threading chains.
+The 256-argument macro bound alone was insufficient to prevent a Rust stack
+overflow. Sequential as-> still executes 254 steps within that argument boundary.
+Stack-safe general analysis/expansion remains follow-up work.
 Binding destructuring, full callable collections, general metadata/privacy and
 complete compiled macro bootstrap remain unfinished; this is not full macro API
 acceptance.
 
-57 fresh pinned source observations match independently decoded validated native
-Wasm after forced GC, preserving the original53. They cover wrapping Murmur values,
+73 fresh pinned source observations match independently decoded validated native
+Wasm after forced GC, preserving the original 57 (and original 53). They cover wrapping Murmur values,
 signed-zero input identity, constant mixing, threading effects/captures/shadows/tail
 recur, live globals/redefs and old captured functions. Two pinned numeric warnings
 for non-number zero? probes remain visible; those observed values are not a broad
-non-number numeric-contract claim. Four native tests additionally check located
+non-number numeric-contract claim. Five native tests additionally check located
 malformed binders/arities, compile-atomic recovery, aliases/exclusions, both phases,
-redefinitions and GC. Public M2/M3/M4 acceptance remains incomplete.
+redefinitions, GC and bounded expansion recovery. Public M2/M3/M4 acceptance remains incomplete.
 
-Thirteen additional partial reviews bring the overlay to126 reviewed/939 unassessed.
-The canonical artifact now selects40 forms and retains44 licensed files. All source,
+Thirteen additional partial reviews bring the overlay to 126 reviewed/939 unassessed.
+The canonical artifact now selects 40 forms and retains 44 licensed files. All source,
 patch, review and recipe hashes are reproduced by scripts/core_import.py. The
 reviewed bitwise prerequisite has significant captured-reducer/provenance fixes;
 require final-head CI for that PR and this slice before readiness.

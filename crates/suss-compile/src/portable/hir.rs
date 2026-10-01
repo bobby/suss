@@ -429,6 +429,7 @@ struct Analyzer {
     fields: HashMap<String, (Hir, bool)>,
     next: usize,
     next_loop: usize,
+    analysis_depth: usize,
     target: Option<(LoopId, usize)>,
 }
 impl Analyzer {
@@ -464,6 +465,21 @@ impl Analyzer {
         self.form_in(form, false, false)
     }
     fn form_in(&mut self, form: &Form, statement: bool, tail: bool) -> Result<Hir, Diagnostic> {
+        // Bounded bootstrap expansion can create deeper syntax than the reader
+        // saw (notably nested threading). Check total analysis depth, including
+        // nested macros, before recursive analyzer frames exhaust the stack.
+        if self.analysis_depth >= 24 {
+            return Err(fail(
+                form.span.clone(),
+                "Bootstrap analysis expansion limit exceeded",
+            ));
+        }
+        self.analysis_depth += 1;
+        let result = self.form_inner(form, statement, tail);
+        self.analysis_depth -= 1;
+        result
+    }
+    fn form_inner(&mut self, form: &Form, statement: bool, tail: bool) -> Result<Hir, Diagnostic> {
         let kind = match &form.kind {
             Kind::Nil => Expression::Literal(Literal::Nil),
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
@@ -1459,6 +1475,7 @@ pub(crate) fn prepare(
         fields: HashMap::new(),
         next: 0,
         next_loop: 0,
+        analysis_depth: 0,
         target: None,
     };
     let hir = analyzer.body(forms, span, true, false)?;

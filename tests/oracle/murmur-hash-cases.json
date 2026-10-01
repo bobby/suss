@@ -457,6 +457,134 @@
         "tag": "f64",
         "bits": "c1ce5632d1800000"
       }
+    },
+    {
+      "id": "review-thread-if-syntax",
+      "source": "(-> false (if 31 47))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4047800000000000"
+      }
+    },
+    {
+      "id": "review-thread-let-syntax",
+      "source": "(-> [x 7] (let (+ x 3)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "review-thread-callee-outer-before-inner",
+      "source": "(do (def rt 0) (def rf (fn [x y] (+ x y))) (-> (do (set! rt (+ (* rt 10) 1)) 3) ((do (set! rt (+ (* rt 10) 2)) rf) (do (set! rt (+ (* rt 10) 3)) 4)) ((do (set! rt (+ (* rt 10) 4)) rf) (do (set! rt (+ (* rt 10) 5)) 6))) rt)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40e492e000000000"
+      }
+    },
+    {
+      "id": "review-as-init-sees-outer",
+      "source": "(let [v 7] (as-> (+ v 3) v (+ v 5)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402e000000000000"
+      }
+    },
+    {
+      "id": "review-as-capture-three-generations",
+      "source": "(as-> 7 v (fn [] v) (let [old v] (fn [] (+ (old) 3))) (v))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "review-as-nested-same-binding",
+      "source": "(as-> 3 v (+ v (as-> 7 v (+ v 2))) (+ v 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402a000000000000"
+      }
+    },
+    {
+      "id": "review-as-closure-shadow",
+      "source": "(as-> 7 v ((fn [v] (+ v 2)) 9) (+ v 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402c000000000000"
+      }
+    },
+    {
+      "id": "review-as-statement-def",
+      "source": "(do (as-> 7 v (def review_as_result v)) review_as_result)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "review-thread-throw-order",
+      "source": "(do (def rt 0) (try (-> (do (set! rt 1) 7) ((do (throw 42) (fn [x] x)))) (catch :default e nil)) rt)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-as-throw-stops-later",
+      "source": "(do (def rt 0) (try (as-> 7 v (throw v) (set! rt 99)) (catch :default e e)) rt)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-as-qualified-ref-macro",
+      "source": "(as-> 3 v (cljs.core/-> v (imul 5)) (cljs.core/as-> v w (+ w 2)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "review-murmur-smallest-subnormal",
+      "source": "(m3-mix-K1 5e-324)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-hash-int-false",
+      "source": "(m3-hash-int false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c1b17cef000000"
+      }
+    },
+    {
+      "id": "review-zero-undefined",
+      "source": "(do (declare review_undefined) (zero? review_undefined))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "review-firstclass-zero-string",
+      "source": "(let [f zero?] (f \"0\"))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "review-hash-long-high-bits",
+      "source": "(hash-long 9007199254740991 -2147483649)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1e0000000000000"
+      }
     }
   ]
 }
