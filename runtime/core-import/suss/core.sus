@@ -203,3 +203,32 @@
         k1 (m3-mix-K1 hash-basis)
         h1 (m3-mix-H1 h1 k1)]
     (m3-fmix h1 count))))
+
+(def ^boolean pos?
+  "Returns true if num is greater than zero, else false"
+  (fn [x] (cljs.core/pos? x)))
+
+(def ^number m3-hash-unencoded-chars (fn [in]
+  (let [h1 (loop [i 1 h1 m3-seed]
+             (if (< i (.-length in))
+               (recur (+ i 2)
+                 (m3-mix-H1 h1
+                   (m3-mix-K1
+                     (bit-or (.charCodeAt in (dec i))
+                       (bit-shift-left (.charCodeAt in i) 16)))))
+               h1))
+        h1 (if (== (bit-and (.-length in) 1) 1)
+             (bit-xor h1 (m3-mix-K1 (.charCodeAt in (dec (.-length in)))))
+             h1)]
+    (m3-fmix h1 (imul 2 (.-length in))))))
+
+(def hash-string* (fn [s]
+  (if-not (nil? s)
+    (let [len (.-length s)]
+      (if (pos? len)
+        (loop [i 0 hash 0]
+          (if (< i len)
+            (recur (inc i) (+ (imul 31 hash) (.charCodeAt s i)))
+            hash))
+        0))
+    0)))

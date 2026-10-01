@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "2b47893e9e7a081ccb89a6a0e574b23c1cf9ea8507725c69c21c9192fb7a8c9a",
+  "replacement": "(def hash-string* (fn [s]\n  (if-not (nil? s)\n    (let [len (.-length s)]\n      (if (pos? len)\n        (loop [i 0 hash 0]\n          (if (< i len)\n            (recur (inc i) (+ (imul 31 hash) (.charCodeAt s i)))\n            hash))\n        0))\n    0)))",
+  "rationale": "Explicit fixed defn bootstrap adaptation retains original UTF-16 string hashing algorithm, metadata and docstring. Original checked named String charCodeAt adapter and bounded numeric predicate expansion supply dependencies; full JavaScript interoperability and compiled macro bootstrap remain separate work."
+}

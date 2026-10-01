@@ -1,0 +1,662 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "index-0",
+      "source": "(.charCodeAt \"AB\" 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "index-1",
+      "source": "(.charCodeAt \"AB\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050800000000000"
+      }
+    },
+    {
+      "id": "index-2",
+      "source": "(.charCodeAt \"AB\" 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "index-3",
+      "source": "(.charCodeAt \"AB\" -1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "index-4",
+      "source": "(.charCodeAt \"AB\" 0.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "index-5",
+      "source": "(.charCodeAt \"AB\" -0.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "index-6",
+      "source": "(.charCodeAt \"AB\" 1.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050800000000000"
+      }
+    },
+    {
+      "id": "index-7",
+      "source": "(.charCodeAt \"AB\" ##NaN)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "index-8",
+      "source": "(.charCodeAt \"AB\" ##Inf)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "index-9",
+      "source": "(.charCodeAt \"AB\" ##-Inf)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "index-10",
+      "source": "(.charCodeAt \"AB\" nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "index-11",
+      "source": "(.charCodeAt \"AB\" false)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "index-12",
+      "source": "(.charCodeAt \"AB\" true)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050800000000000"
+      }
+    },
+    {
+      "id": "index-13",
+      "source": "(.charCodeAt \"AB\" \"1\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050800000000000"
+      }
+    },
+    {
+      "id": "index-14",
+      "source": "(.charCodeAt \"AB\" \"bad\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "index-15",
+      "source": "(.charCodeAt \"AB\" \"\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "index-16",
+      "source": "(.charCodeAt \"AB\" 4294967296)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "index-17",
+      "source": "(.charCodeAt \"AB\" 1.7976931348623157e308)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "index-18",
+      "source": "(.charCodeAt \"AB\" 5e-324)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "index-19",
+      "source": "(.charCodeAt \"AB\" -0.0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "unit-0",
+      "source": "(.charCodeAt \"\" 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "unit-1",
+      "source": "(.charCodeAt \"\\ud83d\\ude00\" 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40eb07a000000000"
+      }
+    },
+    {
+      "id": "unit-2",
+      "source": "(.charCodeAt \"\\ud83d\\ude00\" 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ebc00000000000"
+      }
+    },
+    {
+      "id": "unit-3",
+      "source": "(.charCodeAt \"\\ud800\" 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40eb000000000000"
+      }
+    },
+    {
+      "id": "unit-4",
+      "source": "(.charCodeAt \"\\udfff\" 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ebffe000000000"
+      }
+    },
+    {
+      "id": "unit-5",
+      "source": "(.charCodeAt \"\\u0000\" 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "unit-6",
+      "source": "(.charCodeAt \"\\uffff\" 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40efffe000000000"
+      }
+    },
+    {
+      "id": "method-identity",
+      "source": "(identical? (.-charCodeAt \"A\") (.-charCodeAt \"B\"))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "lookup-before-args",
+      "source": "(do (def char_trace 0) (let [owner nil] (try (.charCodeAt owner (do (set! char_trace 1) 0)) (catch :default e nil))) char_trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "callee-before-args",
+      "source": "(do (def char_trace 0) (.charCodeAt (do (set! char_trace 1) \"AB\") (do (set! char_trace (+ (* char_trace 10) 2)) 0)) char_trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "detached-error",
+      "source": "(try (let [f (.-charCodeAt \"A\")] (f 0)) (catch :default e true))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "custom-method",
+      "source": "(do (deftype CharOwner [x] Object (charCodeAt [this i] (+ x i))) (.charCodeAt (CharOwner. 10) 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "throwing-index",
+      "source": "(do (def char_trace 0) (try (.charCodeAt \"A\" (do (set! char_trace 1) (throw 9))) (catch :default e nil)) char_trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "string-hash-0",
+      "source": "(hash-string* \"\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "murmur-chars-0",
+      "source": "(m3-hash-unencoded-chars \"\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "string-hash-1",
+      "source": "(hash-string* \"A\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "murmur-chars-1",
+      "source": "(m3-hash-unencoded-chars \"A\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c8466dc8000000"
+      }
+    },
+    {
+      "id": "string-hash-2",
+      "source": "(hash-string* \"AB\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "40a0420000000000"
+      }
+    },
+    {
+      "id": "murmur-chars-2",
+      "source": "(m3-hash-unencoded-chars \"AB\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "41da2d7f20800000"
+      }
+    },
+    {
+      "id": "string-hash-3",
+      "source": "(hash-string* \"ABC\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ef884000000000"
+      }
+    },
+    {
+      "id": "murmur-chars-3",
+      "source": "(m3-hash-unencoded-chars \"ABC\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "41be7ff6af000000"
+      }
+    },
+    {
+      "id": "string-hash-4",
+      "source": "(hash-string* \"hello\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4197a46348000000"
+      }
+    },
+    {
+      "id": "murmur-chars-4",
+      "source": "(m3-hash-unencoded-chars \"hello\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1c41e733b800000"
+      }
+    },
+    {
+      "id": "string-hash-5",
+      "source": "(hash-string* \"abcdefghijklmno\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "41bd019c68000000"
+      }
+    },
+    {
+      "id": "murmur-chars-5",
+      "source": "(m3-hash-unencoded-chars \"abcdefghijklmno\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c2f4e464000000"
+      }
+    },
+    {
+      "id": "string-hash-6",
+      "source": "(hash-string* \"\\u0000\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "murmur-chars-6",
+      "source": "(m3-hash-unencoded-chars \"\\u0000\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c87a6183000000"
+      }
+    },
+    {
+      "id": "string-hash-7",
+      "source": "(hash-string* \"\\uffff\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "40efffe000000000"
+      }
+    },
+    {
+      "id": "murmur-chars-7",
+      "source": "(m3-hash-unencoded-chars \"\\uffff\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1de79a778400000"
+      }
+    },
+    {
+      "id": "string-hash-8",
+      "source": "(hash-string* \"\\ud800\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "40eb000000000000"
+      }
+    },
+    {
+      "id": "murmur-chars-8",
+      "source": "(m3-hash-unencoded-chars \"\\ud800\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4176555610000000"
+      }
+    },
+    {
+      "id": "string-hash-9",
+      "source": "(hash-string* \"\\udfff\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ebffe000000000"
+      }
+    },
+    {
+      "id": "murmur-chars-9",
+      "source": "(m3-hash-unencoded-chars \"\\udfff\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "418caecb18000000"
+      }
+    },
+    {
+      "id": "string-hash-10",
+      "source": "(hash-string* \"\\ud83d\\ude00\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "413b0d6300000000"
+      }
+    },
+    {
+      "id": "murmur-chars-10",
+      "source": "(m3-hash-unencoded-chars \"\\ud83d\\ude00\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d581978e400000"
+      }
+    },
+    {
+      "id": "string-hash-11",
+      "source": "(hash-string* \"x\\ud83d\\ude00y\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "418be95ff0000000"
+      }
+    },
+    {
+      "id": "murmur-chars-11",
+      "source": "(m3-hash-unencoded-chars \"x\\ud83d\\ude00y\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "41cdac142a000000"
+      }
+    },
+    {
+      "id": "string-hash-12",
+      "source": "(hash-string* \"e\\u0301\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ae780000000000"
+      }
+    },
+    {
+      "id": "murmur-chars-12",
+      "source": "(m3-hash-unencoded-chars \"e\\u0301\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d3a6c106800000"
+      }
+    },
+    {
+      "id": "string-hash-13",
+      "source": "(hash-string* \"\\u00e9\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "406d200000000000"
+      }
+    },
+    {
+      "id": "murmur-chars-13",
+      "source": "(m3-hash-unencoded-chars \"\\u00e9\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d07a457fc00000"
+      }
+    },
+    {
+      "id": "string-hash-14",
+      "source": "(hash-string* \"\\u0000\\uffff\\ud800\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "413fd7e100000000"
+      }
+    },
+    {
+      "id": "murmur-chars-14",
+      "source": "(m3-hash-unencoded-chars \"\\u0000\\uffff\\ud800\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d7caec4bc00000"
+      }
+    },
+    {
+      "id": "hash-string-nil",
+      "source": "(hash-string* nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "positive-0",
+      "source": "(pos? -1)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "positive-1",
+      "source": "(pos? 0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "positive-2",
+      "source": "(pos? -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "positive-3",
+      "source": "(pos? 1)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "positive-4",
+      "source": "(pos? ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "positive-5",
+      "source": "(pos? ##Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "positive-6",
+      "source": "(pos? ##-Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "undefined-index",
+      "source": "(.charCodeAt \"AB\" (.-missing \"x\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "hex-index",
+      "source": "(.charCodeAt \"AB\" \"0x1\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050800000000000"
+      }
+    },
+    {
+      "id": "spaced-index",
+      "source": "(.charCodeAt \"AB\" \" 1 \")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050800000000000"
+      }
+    },
+    {
+      "id": "captured-string-hash",
+      "source": "(let [saved hash-string*] (with-redefs [imul (fn [a b] 0)] (saved \"AB\")))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050800000000000"
+      }
+    },
+    {
+      "id": "restored-string-hash",
+      "source": "(hash-string* \"AB\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "40a0420000000000"
+      }
+    },
+    {
+      "id": "positive-once",
+      "source": "(do (def positive_trace 0) (pos? (do (set! positive_trace (+ positive_trace 1)) 1)) positive_trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "captured-positive",
+      "source": "(let [saved pos?] (with-redefs [pos? (fn [x] false)] (saved 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "positive-current",
+      "source": "(let [saved pos?] (with-redefs [pos? (fn [x] false)] (let [current pos?] (current 1))))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "missing-index",
+      "source": "(.charCodeAt \"AB\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "extra-index",
+      "source": "(.charCodeAt \"AB\" 1 99)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050800000000000"
+      }
+    },
+    {
+      "id": "extra-index-effects",
+      "source": "(do (def char_extra 0) (.charCodeAt \"AB\" 0 (do (set! char_extra 1) 9)) char_extra)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    }
+  ]
+}

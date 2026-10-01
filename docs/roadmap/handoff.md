@@ -6002,3 +6002,54 @@ No blanket skips or production failures hidden. All local Cargo/JVM/Node process
 are terminal. Root requires exact reviewed-head CI before PR96 readiness; no merge,
 issue closure or milestone acceptance. Next stack-safe general analysis, retained
 ordered hashing and real persistent sequence/list source; M2–M9 remain open.
+
+## Retained UTF-16 string hashing candidate — 2026-10-01
+
+Separate branch portable/core-string-hash/worktree /private/tmp/suss-core-string-hash
+starts at independently reviewed PR96 3d745f6. Exact CI36821371081 is running; PR96
+remains draft. PR95 is ready at reviewed d49c5a7 after CI36819490858 success. The
+hashing discussion did not change the accepted pinned ClojureScript contract.
+
+Initial reference fixture30083 ended1 because the pinned analyzer rejected a
+literal-nil dot receiver; changed that unexecuted probe to a local nil receiver.
+Fresh12342 ended101: 71 exact pinned observations, 66 native failures/five matches
+before implementation. Log /private/tmp/suss-string-hash-first-red.log. Three fixed
+defn patches retain pos?, m3-hash-unencoded-chars and hash-string* with original
+algorithms/metadata/docstrings and EPL packaging. Bounded original positive macro
+and native UTF-16 charCodeAt member lookup supply dependencies. Strict provenance
+requires a real pinned upstream checkout; an initial escaping symlink was rejected
+and replaced with a local shared clone, not a weakened verifier.
+
+Import89431/62673 ended101 from a misspelled runtime function index (number-new),
+corrected to existing number-box. Fixed62504 ended0: all original71 native matches.
+Final79 fixture76187 ended101 from incorrect new test API calls, corrected3638
+ended101 only on a new missing-index expectation. Diagnostic44470 confirmed native
+member invocation already fills Undefined and ignores evaluated surplus arguments;
+these are pinned interop semantics, not a core function wrong-arity exception.
+Added exact primary probes rather than claiming an error or skipping them.
+Final fresh32275 ended0: 82 exact primary/native observations (original71 unchanged)
+and all three native source guards pass. Logs /private/tmp/suss-string-hash-final82.log
+and /private/tmp/suss-string-member-arity-red.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-string-hash-oracle.sh`.
+
+Builtin lookup occurs before index evaluation, the shared unbound wrapper retains
+no owner, direct calls anchor this and detached ordinary calls throw language
+errors. Custom Object charCodeAt methods retain dispatch. Indices use scalar checked
+ToIntegerOrInfinity, bounds before integer conversion, UTF-16 units/NaN results.
+General JS ToString/prototype mutation/object-index coercion remain explicit open
+work. No runtime ABI version, shared GC layout or native core cell changes.
+Python76 passes (/private/tmp/suss-string-hash-python.log); inventory1065,
+reviews130+935, import43 selections47 artifacts, strict bitwise source, WIT15/6,
+numeric source/artifact and offline roadmap10/39 gates pass. Compiler47731 is live
+for pipeline/Murmur/ABI guards. Independent PR review/fixes, full baseline and exact
+final reviewed-head CI remain required; no ready/merge/closure claim for this slice.
+Next complete cached string/numeric/public hashing and actual persistent sequences
+for ordered/unordered collection hashing; M2–M9 remain incomplete.
+
+Compiler47731 ended0: pipeline17, Murmur metadata guard1 and ABI23 (new exact
+UTF-16 unit/bounds/null/unsupported index/typed recovery guard) pass. Log
+/private/tmp/suss-string-hash-compiler.log. Source38883 ended0: String3/Murmur5/
+Object2 pass at final candidate source, log /private/tmp/suss-string-hash-source-guards.log.
+Commands select those test binaries with shared target/build workers2/locked/
+--test-threads=2. All root Cargo/JVM/Node processes are terminal. Shared test slot
+will pass exclusively to the independent reviewer after draft publication.

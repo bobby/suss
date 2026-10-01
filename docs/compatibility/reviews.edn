@@ -1354,4 +1354,52 @@
    :adaptation-path "docs/runtime/murmur-hashing.md"
    :alternative nil
    :tests ["crates/suss-cli/tests/portable_murmur_hash.rs" "tests/oracle/murmur-hash-cases.json"]}
+
+  "runtime:pos?:3077"
+  {:source-sha256 "71a1a0e2f9007476256b076f906d1e06b20426b52afbcf05ad710b64aba39dee"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:>:1174"]
+   :classification :adapted
+   :rationale "Retained pinned UTF-16 string hashing source uses explicit fixed defn bootstrap patches with original algorithms and EPL provenance. Original checked String member lookup supplies charCodeAt without reordering receiver lookup and index effects. Bounded positive predicate expansion and scalar String receiver/index domain are explicit partial work, not full host interoperability or hashing acceptance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/pos-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_hash.rs" "tests/oracle/string-hash-cases.json"]}
+
+  "runtime:m3-hash-unencoded-chars:1003"
+  {:source-sha256 "04a75e9c4ec9e1a87a149692cd1d92f9b0509a5912f93172f6e609e7794d5abe"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:m3-seed:967" "runtime:m3-mix-K1:971" "runtime:m3-mix-H1:974" "runtime:m3-fmix:977" "runtime:dec:2803" "checked UTF-16 charCodeAt member adapter"]
+   :classification :adapted
+   :rationale "Retained pinned UTF-16 string hashing source uses explicit fixed defn bootstrap patches with original algorithms and EPL provenance. Original checked String member lookup supplies charCodeAt without reordering receiver lookup and index effects. Bounded positive predicate expansion and scalar String receiver/index domain are explicit partial work, not full host interoperability or hashing acceptance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/m3-hash-unencoded-chars.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_hash.rs" "tests/oracle/string-hash-cases.json"]}
+
+  "runtime:hash-string*:1026"
+  {:source-sha256 "2b47893e9e7a081ccb89a6a0e574b23c1cf9ea8507725c69c21c9192fb7a8c9a"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:pos?:3077" "runtime:inc:1505" "checked UTF-16 charCodeAt member adapter" "imul checked wrapping primitive"]
+   :classification :adapted
+   :rationale "Retained pinned UTF-16 string hashing source uses explicit fixed defn bootstrap patches with original algorithms and EPL provenance. Original checked String member lookup supplies charCodeAt without reordering receiver lookup and index effects. Bounded positive predicate expansion and scalar String receiver/index domain are explicit partial work, not full host interoperability or hashing acceptance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/hash-string-uncached.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_hash.rs" "tests/oracle/string-hash-cases.json"]}
+
+  "macro:pos?:1198"
+  {:source-sha256 "3d43ef437fbbcf893499c1338d5d47f36124928d13bb89d04b53be8beee7f79b"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:>:1174"]
+   :classification :adapted
+   :rationale "Retained pinned UTF-16 string hashing source uses explicit fixed defn bootstrap patches with original algorithms and EPL provenance. Original checked String member lookup supplies charCodeAt without reordering receiver lookup and index effects. Bounded positive predicate expansion and scalar String receiver/index domain are explicit partial work, not full host interoperability or hashing acceptance."
+   :status :in-progress
+   :adaptation-path "docs/runtime/string-hashing.md"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_string_hash.rs" "tests/oracle/string-hash-cases.json"]}
 }}

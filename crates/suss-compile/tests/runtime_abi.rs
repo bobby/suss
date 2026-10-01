@@ -2800,3 +2800,36 @@ fn runtime_abi_variadic_bitwise_callback_rejects_bad_cells_without_trapping() {
         }
     }
 }
+
+#[test]
+fn runtime_abi_utf16_char_code_bounds_and_errors_never_trap() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let text = nominal_value(&mut store, runtime, "string-new", &[Val::I32(2)]);
+    for (i, unit) in [0xd800, 0xffff].into_iter().enumerate() {
+        runtime.get_func(&mut store, "string-set-unit").unwrap().call(&mut store,
+            &[text.clone(), Val::I32(i as i32), Val::I32(unit)], &mut [Val::I32(0)]).unwrap();
+    }
+    store.gc(None).unwrap();
+    let get = runtime.get_func(&mut store, "string-char-code-at").unwrap();
+    for (index, expected) in [(0.0, 55296.0), (-0.9, 55296.0), (f64::NAN, 55296.0), (1.9, 65535.0), (-1.0, f64::NAN), (2.0, f64::NAN), (4294967296.0, f64::NAN), (f64::MAX, f64::NAN), (f64::INFINITY, f64::NAN), (f64::NEG_INFINITY, f64::NAN)] {
+        let input = nominal_value(&mut store, runtime, "number-box", &[Val::F64(index.to_bits())]);
+        let mut output = [Val::null_any_ref()];
+        get.call(&mut store, &[text.clone(), input], &mut output).unwrap();
+        let object = output[0].unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+        let actual = object.field(&mut store, 0).unwrap().unwrap_f64();
+        assert_eq!(actual.to_bits(), expected.to_bits(), "{index:?}");
+    }
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let opaque = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    for args in [[nil.clone(), nil.clone()], [text.clone(), opaque], [Val::null_any_ref(), nil.clone()]] {
+        let error = get.call(&mut store, &args, &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        assert!(store.take_pending_exception().is_some());
+    }
+    let value = nominal_value(&mut store, runtime, "string-char-code-at", &[text, nil]);
+    let object = value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+    assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64(), 55296.0);
+}
