@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c8d84fa3b05a5f38edbe1a20625bce686ea8213e6277957ec95db98a4fdc037e",
+  "replacement": "(def seq-reduce\n  (fn ([f coll]\n    (if-let [s (seq coll)]\n      (reduce f (first s) (next s))\n      (f)))\n  ([f val coll]\n    (loop [val val, coll (seq coll)]\n      (if coll\n        (let [nval (f val (first coll))]\n          (if (reduced? nval)\n            @nval\n            (recur nval (next coll))))\n        val)))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains metadata, docstring, arities and reduction algorithm, including reduced termination and source order. Full upstream defn and private runtime Var metadata remain unfinished."
+}

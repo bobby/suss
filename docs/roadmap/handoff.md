@@ -6956,3 +6956,22 @@ ignores and diagnostic9passing/7knownfailures remain explicit. All reviewer loca
 handles16559/18729/9589/63890/68289/90258 terminal. Reviewer releases heavy slot
 after committing/pushing this evidence and tests; root must verify successful
 exact reviewed-head CI before readiness. No merge or milestone closure.
+
+## Sequence reduction preparation — 2026-10-01
+
+Isolated branch portable/core-sequence-reduction from candidate102 prepares
+retained IDeref/Reduced/reduced helpers/deref/array-reduce/iterable?/iter-reduce/
+seq-reduce/reduce plus original bounded symbol-binding if-let lowering. All
+upstream reduction algorithms/methods are retained; selected82/generated86 and
+172 partial/893 unassessed are provenance/preparation counts only. New59 reduction
+and18 control candidates are UNVERIFIED, not certified matches. No native/full
+pass claim for this preparation. Reviewer102 owned heavy slot during preparation.
+
+Reviewer102 now pushed a9f19e8650c1c2079e2c5066ebde076f9ea284a8 with evidence
+fixes; fresh137/native6/Python80/full90258 terminal0, all handles terminal and
+heavy slot explicitly released to root. Root must rebase preparation onto that
+reviewed parent before focused loading/if-let/primary/native/full verification.
+Exact102 reviewed-head CI required before readiness; no merges/issue closures.
+No RUSTFLAGS; shared target/build2 and test threads2. Next execute the prepared
+reduction artifact, correct actual failures with source/order/provenance aligned,
+then independent review/fixes and exact final-head CI for a coherent PR.

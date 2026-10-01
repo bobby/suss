@@ -305,6 +305,43 @@ impl Analyzer {
                     self.control_if(form, test, nil, body)
                 })
             }
+            ControlForm::IfLet => {
+                if !(2..=3).contains(&args.len()) {
+                    return Err(fail(form.span.clone(), "if-let requires two or three operands"));
+                }
+                let Kind::Vector(entries) = &args[0].kind else {
+                    return Err(fail(args[0].span.clone(), "if-let bindings must be a vector"));
+                };
+                if entries.len() != 2 {
+                    return Err(fail(args[0].span.clone(), "if-let requires exactly one binding pair"));
+                }
+                let Kind::Symbol(name) = &entries[0].kind else {
+                    return Err(fail(entries[0].span.clone(), "Binding destructuring is not lowered yet"));
+                };
+                if name.namespace.is_some() || name.name == "&" {
+                    return Err(fail(entries[0].span.clone(), "Binding name must be unqualified"));
+                }
+                // The test runs once outside the source binding's scope.
+                let test = self.form(&entries[1])?;
+                let temporary = self.fresh_binding(&entries[1], test);
+                let condition = self.local(form, temporary.id);
+                let mut binding = self.fresh_binding(&entries[0], condition.clone());
+                binding.name = name.name.clone();
+                binding.metadata = entries[0].metadata.clone();
+                let outer = self.locals.clone();
+                self.locals.insert(name.name.clone(), (binding.id, binding.value.ty));
+                let consequent = self.form_in(&args[1], statement, tail);
+                self.locals = outer;
+                let consequent = consequent?;
+                let consequent = Hir {
+                    span: args[1].span.clone(), metadata: args[1].metadata.clone(), ty: consequent.ty,
+                    kind: Expression::Let { bindings: vec![binding], body: Box::new(consequent) },
+                };
+                let alternative = if args.len() == 3 { self.form_in(&args[2], statement, tail)? } else { nil };
+                let body = self.control_if(form, condition, consequent, alternative);
+                Ok(Hir { span: form.span.clone(), metadata: form.metadata.clone(), ty: body.ty,
+                    kind: Expression::Let { bindings: vec![temporary], body: Box::new(body) } })
+            }
             ControlForm::IfNot => {
                 if !(2..=3).contains(&args.len()) {
                     return Err(fail(

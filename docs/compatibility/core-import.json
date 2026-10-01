@@ -353,12 +353,72 @@
       "id": "runtime:equiv-sequential:3151",
       "source-sha256": "968fe6ad1b99af14556c8dace3f7cf96dc5760acbe91f052148eb8dad087235d",
       "patch": "docs/compatibility/patches/sequence-equiv-sequential.json"
+    },
+    {
+      "id": "runtime:IDeref:720",
+      "source-sha256": "d3242dd4d16577be7c93e207212209f5f5b8b383f31ae7bf93fb274147438a34",
+      "patch": null
+    },
+    {
+      "id": "runtime:Reduced:1511",
+      "source-sha256": "22f0effef9bce10ddfc0908fe830839050d34db68d671e2c7bd6efb1d3018ccb",
+      "patch": null
+    },
+    {
+      "id": "runtime:reduced:1515",
+      "source-sha256": "1b60d1eb6ed7cc7532e6eac52a9a94f97ef249f26e68c82716500c49323b8b01",
+      "patch": "docs/compatibility/patches/sequence-reduced.json"
+    },
+    {
+      "id": "runtime:reduced?:1520",
+      "source-sha256": "c52dd5e7548bdb9295e086f6c3dc3024ca8f8081edd32bb769f2a21cfe0093d1",
+      "patch": "docs/compatibility/patches/sequence-reduced-predicate.json"
+    },
+    {
+      "id": "runtime:ensure-reduced:1525",
+      "source-sha256": "7c84cddf26ba297a6d915079aeae375722e7987cb2814272ece02abf3ff75e35",
+      "patch": "docs/compatibility/patches/sequence-ensure-reduced.json"
+    },
+    {
+      "id": "runtime:unreduced:1530",
+      "source-sha256": "8d706d4b1735870b1ae6745d7ca76caaba6ed848a4af3f1ec1bbbaf17196e6b0",
+      "patch": "docs/compatibility/patches/sequence-unreduced.json"
+    },
+    {
+      "id": "runtime:deref:1537",
+      "source-sha256": "1a48edff54f4b80c350d42444d235926178b95cb9acc856225b42432930cb822",
+      "patch": "docs/compatibility/patches/sequence-deref.json"
+    },
+    {
+      "id": "runtime:array-reduce:1569",
+      "source-sha256": "a4f125c771a0710768362df19a35a0ebe6a9e1d0b3a439c670a152bb7d338fa8",
+      "patch": "docs/compatibility/patches/sequence-array-reduce.json"
+    },
+    {
+      "id": "runtime:iterable?:1259",
+      "source-sha256": "97ff6754e66f0f434c171eca6685e3c0a9f56092289c1b31b65335ac5008a041",
+      "patch": "docs/compatibility/patches/sequence-iterable-predicate.json"
+    },
+    {
+      "id": "runtime:iter-reduce:2605",
+      "source-sha256": "2ae02e9936ba2bcbea2ed90f632b53d240a6f38cf82862994cc210af434f313f",
+      "patch": "docs/compatibility/patches/sequence-iter-reduce.json"
+    },
+    {
+      "id": "runtime:seq-reduce:2582",
+      "source-sha256": "c8d84fa3b05a5f38edbe1a20625bce686ea8213e6277957ec95db98a4fdc037e",
+      "patch": "docs/compatibility/patches/sequence-seq-reduce.json"
+    },
+    {
+      "id": "runtime:reduce:2628",
+      "source-sha256": "e5609fab295ff28b74750fad37f4194462dbbcbe6ba24fb74d26fe8a1e5c4bf1",
+      "patch": "docs/compatibility/patches/sequence-reduce.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "bc7e3febf5ea452aad7df3a42d5f47db239538acbe60012eb65bc6d4cb2654f6"
+      "sha256": "9e5b516edb8f79a42a2abbf0bdfeb1252ac9eab64807baac6fcaeb46ff3ecdd9"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",

@@ -462,6 +462,149 @@
         "tag": "f64",
         "bits": "4077300000000000"
       }
+    },
+    {
+      "id": "if-let-then-value",
+      "source": "(if-let [x 7] x 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "if-let-nil-else",
+      "source": "(if-let [x nil] 7 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "if-let-false-else",
+      "source": "(if-let [x false] 7 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "if-let-zero-truthy",
+      "source": "(if-let [x 0] (if x 1 2) 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "if-let-empty-string-truthy",
+      "source": "(if-let [x \"\"] 7 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "if-let-no-else",
+      "source": "(if-let [x false] 7)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "if-let-scope-initializer",
+      "source": "(let [x 17] (if-let [x x] x 9))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "if-let-scope-else",
+      "source": "(let [x 17] (if-let [x false] 7 x))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "if-let-no-leak",
+      "source": "(let [x 17] (do (if-let [x 29] x 9) x))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "if-let-effects-once",
+      "source": "(do (def iflet-trace 0) (if-let [x (do (set! iflet-trace (inc iflet-trace)) 7)] (set! iflet-trace (+ iflet-trace x)) (set! iflet-trace 99)) iflet-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "if-let-tail-then",
+      "source": "(loop [n 3] (if-let [x (if (> n 0) n nil)] (recur (dec x)) n))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "if-let-tail-else",
+      "source": "(loop [n 3] (if-let [x (if (zero? n) 7 nil)] x (recur (dec n))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "if-let-nested-shadow",
+      "source": "(let [x 1] (if-let [x 2] (if-let [x 3] x x) x))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "if-let-captured-binding",
+      "source": "((if-let [x 17] (fn [] x) (fn [] 9)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "if-let-fresh-temp",
+      "source": "(let [temp 17] (if-let [x 29] (+ temp x) 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4047000000000000"
+      }
+    },
+    {
+      "id": "if-let-lexical-shadow",
+      "source": "(let [if-let (fn [a b] (+ a b))] (if-let 17 29))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4047000000000000"
+      }
+    },
+    {
+      "id": "if-let-qualified",
+      "source": "(cljs.core/if-let [x 17] x 9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "if-let-finally-order",
+      "source": "(do (def iflet-trace 0) (try (if-let [x (do (set! iflet-trace 1) (throw 7))] (set! iflet-trace 2) (set! iflet-trace 3)) (catch :default e (set! iflet-trace (+ iflet-trace e))) (finally (set! iflet-trace (* iflet-trace 10)))) iflet-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4054000000000000"
+      }
     }
   ]
 }
