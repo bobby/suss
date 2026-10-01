@@ -4782,3 +4782,85 @@ separate diagnostic differential9pass7fail remain explicit. All review local
 Cargo/JVM/Node graphs are terminal and released. Push the independent coverage
 commit and require its exact final-head CI before readiness. No merge or issue
 closure; retained source sequence/collection implementations remain next work.
+
+## UTF-16 indexed storage prerequisite — 2026-09-30
+
+Isolated /private/tmp/suss-indexed-string-storage, portable/indexed-string-storage,
+now based on independently reviewed PR85 847fca7. Root prepared fixtures while
+reviewer owned local graphs, then waited for explicit release. Initial fresh
+75334 completed terminal101:21 primary matches followed by native language error
+on astral string length; /private/tmp/suss-indexed-string-primary-and-red.log.
+Original Rust adaptation extends the existing length/get helpers to UTF-16 owners
+with guarded numeric access, one-unit strings and internal undefined for missing
+keys. No helper/global/type index or ABI version/layout change.
+
+First focus63221 terminal101 exposed an unrelated test-only inc lookup after all
+preceding string cases; replaced that probe with primitive addition and freshly
+recertified21 in graph75712 terminal0. Expanded graph67199 terminal0 certifies25
+observations/native1, adding retained owner/functions across public rebinding/GC
+and qualified macro behavior; /private/tmp/suss-indexed-string-expanded-primary.log.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-indexed-string-oracle.sh`.
+Original four aget/alength reviews are extended; status/counts remain68 in-progress,
+997 unassessed. Regenerated25 artifacts differ only in review manifest hash.
+Focus22025 terminal0: native strings1/arrays10/interfaces3, compiler arrays1/ABI18;
+/private/tmp/suss-indexed-string-focus.log. Fresh array graph44231 terminal0:
+56 original primary observations unchanged/native10,
+/private/tmp/suss-indexed-string-array-primary.log. Provenance60098 terminal0:
+Python71/inventory1065/reviews68+997/artifacts25/WIT/numeric/offline preview.
+Required full baseline65743 is live; record terminal result before publishing.
+No RUSTFLAGS override or overlapping reference/Cargo graph. String writes, host
+named/coerced property keys, checked-array modes, compiled upstream macros and
+full source sequence/core remain unfinished. Next source-backed EmptyList/List/
+Cons/IndexedSeq with canonical empty-list publication and rest/apply semantics;
+M2–M9 acceptance remains open.
+
+Tracking reconciliation preserves issue IDs: issue10 automatically closed through
+merged acceptance PR64 (9ede0d2, Closes #10), while issue9 was manually closed.
+Updated stale acceptance/ROADMAP text does not certify remaining compiler gaps.
+Source-preparation branch's future48-case unresolved-seq red remains unpublished
+and is not reported as a passing implementation. User files/stashes untouched.
+
+Required full baseline65743 completed terminal0 using
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-indexed-string-baseline.log. Existing diagnostic differential
+9pass7fail and manual/legacy ignores remain explicit. All root Cargo/JVM/Node
+graphs terminal and released. Publish a stacked draft based on reviewed PR85,
+Refs #11/#16/#17, then independent review and exact final-head CI. No merge.
+
+
+## Independent PR #86 review — 2026-09-30
+
+Reviewed candidate88d5b70 against reviewed PR85 847fca7 in isolated
+/private/tmp/suss-review-pr86. Existing STRING guards and unsigned bounds preserve
+exact UTF-16 units and keep malformed input on language exceptions. No significant
+production defect found. Added six independent scalar probes for large unsigned
+index boundaries and nested read/owner-throw/finally effects; original25 case
+dictionaries unchanged. Fresh graph44907 completed terminal0:31 exact pinned
+observations and native corpus1, /private/tmp/suss-pr86-review-oracle.log, using
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-indexed-string-oracle.sh`.
+
+Added separate native typed-recovery guards for unsupported host properties,
+string writes/clones and wrong runtime arities, followed by lone-surrogate reads
+after GC. These are explicit unsupported boundaries, not compatibility claims.
+Focus78674 terminal0: strings2/arrays10/interfaces3/compiler arrays1/ABI18,
+/private/tmp/suss-pr86-review-focus.log. Existing array graph80274 terminal0:
+original56 exact primary observations/native10 unchanged,
+/private/tmp/suss-pr86-review-array-oracle.log. Provenance48345 terminal0:
+Python71/inventory1065/reviews68+997/artifacts25/WIT/numeric/offline10/39,
+/private/tmp/suss-pr86-review-provenance.log. GitHub event/PR audit independently
+confirms issue10 automatically closed by acceptance PR64 commit9ede0d2 at
+12:48:43Z; issue9 manual closure has no commit at14:19:40Z.
+
+Required full baseline88748 is running; record its authoritative terminal outcome
+before publication. No RUSTFLAGS override or overlapping local reference/Cargo
+graphs. Full source sequences/core, compiled macros, host property domains and
+M2–M9 acceptance remain incomplete. Next push review coverage and require exact
+final-head CI, then retained EmptyList/List/Cons/IndexedSeq and rest/apply
+semantics. Do not merge or close partial issues.
+
+Required independent full baseline88748 completed terminal0 using
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-pr86-review-baseline.log. Existing manual/legacy ignores and
+separate differential9pass7fail remain explicit. All review local Cargo/JVM/Node
+graphs are terminal and released. Push independent review coverage and require
+exact final-head CI before readiness; no merge or issue closure claimed.

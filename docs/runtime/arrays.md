@@ -34,7 +34,8 @@ Nested indexing, shallow cloning, array?/length, first-class runtime functions a
 native protocol array-kind dispatch execute through checked storage intrinsics.
 Named/coerced host property keys and negative/fractional property writes remain an
 explicit typed unsupported boundary, not a completed JS property contract. String
-indexed/length access through array macros also remains a separate string foundation.
+indexed/length access now executes through these intrinsics using UTF-16 units;
+see [indexed strings](indexed-strings.md). String writes remain unsupported.
 
 Array creation/growth is bounded to 1,000,000 elements in this bootstrap; a
 multidimensional allocation also bounds its total element cells to that limit.

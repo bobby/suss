@@ -1,0 +1,272 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "astral-length",
+      "source": "(alength \"\\uD83D\\uDE00x\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "empty-length",
+      "source": "(alength \"\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "astral-unit-0",
+      "source": "(aget \"\\uD83D\\uDE00x\" 0)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          55357
+        ]
+      }
+    },
+    {
+      "id": "astral-unit-1",
+      "source": "(aget \"\\uD83D\\uDE00x\" 1)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          56832
+        ]
+      }
+    },
+    {
+      "id": "astral-unit-2",
+      "source": "(aget \"\\uD83D\\uDE00x\" 2)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          120
+        ]
+      }
+    },
+    {
+      "id": "lone-surrogate",
+      "source": "(aget \"\\uD800\" 0)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          55296
+        ]
+      }
+    },
+    {
+      "id": "nul-unit",
+      "source": "(aget \"\\u0000\" 0)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "missing-index-0",
+      "source": "(undefined? (aget \"\\uD83D\\uDE00x\" 3))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "missing-index-1",
+      "source": "(undefined? (aget \"\\uD83D\\uDE00x\" -1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "missing-index-2",
+      "source": "(undefined? (aget \"\\uD83D\\uDE00x\" 0.5))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "missing-index-3",
+      "source": "(undefined? (aget \"\\uD83D\\uDE00x\" ##NaN))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "missing-index-4",
+      "source": "(undefined? (aget \"\\uD83D\\uDE00x\" ##Inf))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "missing-index-5",
+      "source": "(undefined? (aget \"\\uD83D\\uDE00x\" ##-Inf))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-index",
+      "source": "(undefined? (aget \"\" 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "signed-zero-index",
+      "source": "(aget \"xy\" (- 0))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          120
+        ]
+      }
+    },
+    {
+      "id": "first-class-length",
+      "source": "(let [f alength] (f \"\\uD83D\\uDE00x\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "first-class-get",
+      "source": "(let [f aget] (f \"\\uD83D\\uDE00x\" 1))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          56832
+        ]
+      }
+    },
+    {
+      "id": "nested-string-get",
+      "source": "(aget \"xy\" 0 0)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          120
+        ]
+      }
+    },
+    {
+      "id": "nested-missing-recovery",
+      "source": "(try (aget \"xy\" 9 0) (catch :default e true))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "once-ordered-operands",
+      "source": "(do (def string-events 0) (aget (do (set! string-events (+ (* string-events 10) 1)) \"xy\") (do (set! string-events (+ (* string-events 10) 2)) 1)) string-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "length-argument-once",
+      "source": "(do (def string-events 0) (alength (do (set! string-events (+ string-events 1)) \"xy\")) string-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "retained-string-read-after-redefinition",
+      "source": "(do (def retained-string-get aget) (def retained-string-length alength) (def retained-string-owner \"\\uD83D\\uDE00x\") (def aget (fn [owner index] 99)) (def alength (fn [owner] 88)) (retained-string-get retained-string-owner 1))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          56832
+        ]
+      }
+    },
+    {
+      "id": "retained-string-length-after-gc",
+      "source": "(retained-string-length retained-string-owner)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "current-string-length-function",
+      "source": "(let [f alength] (f retained-string-owner))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4056000000000000"
+      }
+    },
+    {
+      "id": "qualified-string-length-macro",
+      "source": "(cljs.core/alength retained-string-owner)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "review-large-index-2147483648",
+      "source": "(undefined? (cljs.core/aget \"xy\" 2147483648))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-large-index-4294967294",
+      "source": "(undefined? (cljs.core/aget \"xy\" 4294967294))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-large-index-4294967295",
+      "source": "(undefined? (cljs.core/aget \"xy\" 4294967295))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-large-index-4294967296",
+      "source": "(undefined? (cljs.core/aget \"xy\" 4294967296))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-nested-read-short-circuit",
+      "source": "(do (def review-string-events 0) (try (cljs.core/aget (do (set! review-string-events (+ (* review-string-events 10) 1)) \"xy\") (do (set! review-string-events (+ (* review-string-events 10) 2)) 9) (do (set! review-string-events (+ (* review-string-events 10) 3)) 0) (do (set! review-string-events (+ (* review-string-events 10) 4)) 0)) (catch :default e nil)) review-string-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "review-owner-throw-finally",
+      "source": "(do (def review-string-events 0) (try (cljs.core/aget (do (set! review-string-events 1) (throw 7)) (do (set! review-string-events 2) 0)) (catch :default e nil) (finally (set! review-string-events (+ (* review-string-events 10) 3)))) review-string-events)",
+      "expected": {
+        "tag": "f64",
+        "bits": "402a000000000000"
+      }
+    }
+  ]
+}
