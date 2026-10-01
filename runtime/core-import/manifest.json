@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "e519f6303b38730d3aa65149f1851e3b70e96d43fc09f0ee95c503bcd847ee09",
-  "reviews-sha256": "d2463dac3053936cd1a1e615b48bfbef66ce43d68ed9d9da4f2ad34d37a918de",
+  "recipe-sha256": "6fd4b0fd79f20010516625eb236fe6d15b7701bfaf096aa9a26c414faa9a6e20",
+  "reviews-sha256": "0715e422af3a3ba6a18a938e227fb6912ce152d69c5b0c84e1ec4d954248d1cf",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -2810,12 +2810,208 @@
         "tests/oracle/iteration-cases.json",
         "docs/runtime/sequence-iteration.md"
       ]
+    },
+    {
+      "id": "runtime:indexed?:1606",
+      "name": "indexed?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1606,
+      "end-line": 1608,
+      "byte-start": 46338,
+      "byte-end": 46440,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "091aced0efc645f21a0d52b3fd87e7c739aeb392404f61467ea9966db1bc4f4b",
+      "extracted": "extracted/0086.cljs",
+      "extracted-sha256": "e046da8d8719aed625cb8ec5e9b21b5a51040bb607bc1f07278f80467c09faca",
+      "patch": "docs/compatibility/patches/sequence-indexed-predicate.json",
+      "patch-sha256": "59fcb2e36be7020babe0925ce88456266e65c384f4eec995f7a6670503eafa07",
+      "adapted-form-sha256": "faecd06a7a56a2cea7c64ec078db38272057597b3508fb1c3cb83aa044feb08b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IIndexed:641"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_indexing.rs",
+        "tests/oracle/indexing-cases.json",
+        "docs/runtime/sequence-indexing.md"
+      ]
+    },
+    {
+      "id": "runtime:neg?:3086",
+      "name": "neg?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3086,
+      "end-line": 3088,
+      "byte-start": 82544,
+      "byte-end": 82643,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "45c16d3e90c79f1f80f05fecabc6faa13e1504e792d9136f417dcc2fd63d0b37",
+      "extracted": "extracted/0087.cljs",
+      "extracted-sha256": "1ecc55a5b67752f825766d0fe6c85a97ca244b6e9e4f830e8465d8153f0607f6",
+      "patch": "docs/compatibility/patches/sequence-neg-predicate.json",
+      "patch-sha256": "de167f570f91e36fc4f2e60dcfc55823a7a361bcbbba28f9a4f92aeb56748e01",
+      "adapted-form-sha256": "3746f90c5a7792738d5806d4d1f9df0400768bef25492066eb6c247daede54d8",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:neg?:1201"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_indexing.rs",
+        "tests/oracle/indexing-cases.json",
+        "docs/runtime/sequence-indexing.md"
+      ]
+    },
+    {
+      "id": "runtime:linear-traversal-nth:1927",
+      "name": "linear-traversal-nth",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1927,
+      "end-line": 1945,
+      "byte-start": 52915,
+      "byte-end": 53651,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "cff11e42ca5932cabd3f4e945332a5990c3736cfa353269c8bc2f1997e5c324d",
+      "extracted": "extracted/0088.cljs",
+      "extracted-sha256": "cb5b1ade410ff16725c81512c9b3d24d5c80c3b8c83e46258c7e3395abe10476",
+      "patch": "docs/compatibility/patches/sequence-linear-traversal-nth.json",
+      "patch-sha256": "c937aedc69ed18f903c97fd1638b5a44b3ae161826bd9ee92c328eaf4538c879",
+      "adapted-form-sha256": "0bb63b9e9b8edb946d9e4ae821cf4deb46efda7945332557f349fc7445ce9a41",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:seq:1282",
+        "runtime:first:1309",
+        "runtime:next:1333",
+        "runtime:indexed?:1606",
+        "runtime:dec:2803"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_indexing.rs",
+        "tests/oracle/indexing-cases.json",
+        "docs/runtime/sequence-indexing.md"
+      ]
+    },
+    {
+      "id": "runtime:nth:1947",
+      "name": "nth",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1947,
+      "end-line": 2017,
+      "byte-start": 53653,
+      "byte-end": 55570,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b7513898cb0229e2358dfd30f38defd2826e5f2fef0faf2ed79f526f4f25a276",
+      "extracted": "extracted/0089.cljs",
+      "extracted-sha256": "6f9872a8ef9f571881dc643d865c4814bdb873dddeb7773888524a71f36ec130",
+      "patch": "docs/compatibility/patches/sequence-nth.json",
+      "patch-sha256": "d8555a7fc84a20f5df25660aa7e4d7b1a802ef8549b7a8685d8315488cc3de68",
+      "adapted-form-sha256": "afdfcbecb645f2583f898d6e315742a220bdd54ab8cc0ffad7dfc846845111b6",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:linear-traversal-nth:1927",
+        "runtime:neg?:3086",
+        "runtime:native-satisfies?:322",
+        "runtime:IIndexed:641",
+        "pending str_ type type->str formatting"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_indexing.rs",
+        "tests/oracle/indexing-cases.json",
+        "docs/runtime/sequence-indexing.md"
+      ]
+    },
+    {
+      "id": "runtime:-indexOf:1610",
+      "name": "-indexOf",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1610,
+      "end-line": 1625,
+      "byte-start": 46442,
+      "byte-end": 46864,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "bbdddf87dd34c96146d94e55b673fe25218f65fc62a54e142c6866f54b1408ae",
+      "extracted": "extracted/0090.cljs",
+      "extracted-sha256": "12046e1cd581e1edf7f872717f50141f713c1dcf344d35c6d0f286d6fc4e2946",
+      "patch": "docs/compatibility/patches/sequence--indexOf.json",
+      "patch-sha256": "84c27714b5c48e7d14fd20ee3fe5691074756705fe309afd09e426c43241e5d6",
+      "adapted-form-sha256": "a9d601a394be7c9ce431eedfc33d7d1891fce5dfc29406ecf4807fd649b6dee2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:nth:1947",
+        "runtime:=:1342",
+        "runtime:count:1906",
+        "runtime:neg?:3086",
+        "runtime:inc:1505"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_indexing.rs",
+        "tests/oracle/indexing-cases.json",
+        "docs/runtime/sequence-indexing.md"
+      ]
+    },
+    {
+      "id": "runtime:-lastIndexOf:1627",
+      "name": "-lastIndexOf",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1627,
+      "end-line": 1642,
+      "byte-start": 46866,
+      "byte-end": 47300,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5bf829a7ded5d38c0872602924634241cd3920adb15a33ee9bf9d73b2146539c",
+      "extracted": "extracted/0091.cljs",
+      "extracted-sha256": "c9cb797008536c10898fc38e8026b49b8d046a3c55fe54b0855c8de088686745",
+      "patch": "docs/compatibility/patches/sequence--lastIndexOf.json",
+      "patch-sha256": "6640022431556f30bac37c946299d4208c26d328e6ebda1a09f7750416be74c2",
+      "adapted-form-sha256": "7aa11895f9394b7618512a0865d028dfe740ed600eee46e7e7ede3035070590d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:nth:1947",
+        "runtime:=:1342",
+        "runtime:count:1906",
+        "runtime:neg?:3086",
+        "runtime:dec:2803"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_indexing.rs",
+        "tests/oracle/indexing-cases.json",
+        "docs/runtime/sequence-indexing.md"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "9e5b516edb8f79a42a2abbf0bdfeb1252ac9eab64807baac6fcaeb46ff3ecdd9"
+      "sha256": "add6df5a1e3fd54e72c5458198d9d6cf59eae41370eca5ad7c5a82be22b21ecc"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -2911,6 +3107,12 @@
     "extracted/0083.cljs": "2ac4629734b75578d75da313a8048834caccc5e53ff7bb85098bd63ea47499c5",
     "extracted/0084.cljs": "a0f2d7fe3cfb3437421c87726364c41b316480ee72cf2a41c4467c96ccc467a7",
     "extracted/0085.cljs": "8a77080d8afec3cf2c3044c4bb9f2ddff61f1a8e11060c0c5c7bc70802489875",
-    "suss/core.sus": "6875ed41fa6f372128ad64a355cacb62f066aa9cc550a68a0e9139ec1e02f126"
+    "extracted/0086.cljs": "e046da8d8719aed625cb8ec5e9b21b5a51040bb607bc1f07278f80467c09faca",
+    "extracted/0087.cljs": "1ecc55a5b67752f825766d0fe6c85a97ca244b6e9e4f830e8465d8153f0607f6",
+    "extracted/0088.cljs": "cb5b1ade410ff16725c81512c9b3d24d5c80c3b8c83e46258c7e3395abe10476",
+    "extracted/0089.cljs": "6f9872a8ef9f571881dc643d865c4814bdb873dddeb7773888524a71f36ec130",
+    "extracted/0090.cljs": "12046e1cd581e1edf7f872717f50141f713c1dcf344d35c6d0f286d6fc4e2946",
+    "extracted/0091.cljs": "c9cb797008536c10898fc38e8026b49b8d046a3c55fe54b0855c8de088686745",
+    "suss/core.sus": "8e92277ea08cb47c6451f03148792f709af1667fadc0830772daa58daa0e4199"
   }
 }

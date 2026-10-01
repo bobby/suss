@@ -67,6 +67,7 @@ pub enum ControlForm {
     AsThread,
     Zero,
     Positive,
+    Negative,
     UncheckedGet,
     UncheckedSet,
 }
@@ -86,6 +87,7 @@ impl ControlForm {
             "as->" => Self::AsThread,
             "zero?" => Self::Zero,
             "pos?" => Self::Positive,
+            "neg?" => Self::Negative,
             "unchecked-get" => Self::UncheckedGet,
             "unchecked-set" => Self::UncheckedSet,
             _ => return None,
@@ -643,6 +645,7 @@ impl Environment {
                         | "as->"
                         | "zero?"
                         | "pos?"
+                        | "neg?"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -698,6 +701,7 @@ impl Environment {
                         | "as->"
                         | "zero?"
                         | "pos?"
+                        | "neg?"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -753,6 +757,7 @@ impl Environment {
                         | "as->"
                         | "zero?"
                         | "pos?"
+                        | "neg?"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -808,6 +813,7 @@ impl Environment {
                     | "as->"
                     | "zero?"
                     | "pos?"
+                    | "neg?"
                     | "int"
                     | "bit-and"
                     | "bit-or"
@@ -855,6 +861,7 @@ impl Environment {
                     | "as->"
                     | "zero?"
                     | "pos?"
+                    | "neg?"
                     | "int"
                     | "bit-and"
                     | "bit-or"

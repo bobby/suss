@@ -7187,3 +7187,22 @@ remain unchanged. All reviewer handles61992/12322/30823 terminal; reviewer
 releases heavy slot after committing/pushing review tests and evidence. Root
 must verify successful exact reviewed-head CI before readiness. No merge or
 issue/milestone closure; M2–M9 acceptance remains incomplete.
+
+## Sequence indexing/search preparation — 2026-10-01
+
+Isolated portable/core-sequence-indexing from candidate1041d4cbf0 prepares
+indexed?1606/neg?3086/linear-traversal-nth1927/nth1947/-indexOf1610/-lastIndexOf1627
+and original bounded neg?1201 macro lowering. All upstream algorithms preserved;
+explicit fixed defn/UTF-16 in-range charAt/error/operand-once min/max adaptations,
+source hashes/EPL, no ABI/type/core-cell or fake implementation. Import92/
+artifacts96/reviews183partial+882unassessed and new53 candidates UNVERIFIED;
+no fresh/native/full acceptance claim. Formatter dependencies remain uninitialized.
+
+Preparation occurred while reviewer104 exclusively owned heavy slot. Reviewer
+now pushedf7e0fca6565e22c6febf2b33549cadeba19710d0; no significant finding,
+fresh59shared+1boundary/native2/Python80/import90/setup4/reviews176+889/full30823
+terminal0, all handles terminal and slot explicitly released. Root must rebase
+onto reviewed parent then execute fresh pin/native/focused/full. Final reviewed-
+head CI gates104 readiness; no merge/closure. Shared target/build2/testthreads2,
+no RUSTFLAGS. Next complete and verify indexing/search, then ordered/public hash,
+printing, remaining collections and compiled macros toward M2–M9 acceptance.

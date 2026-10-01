@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "cff11e42ca5932cabd3f4e945332a5990c3736cfa353269c8bc2f1997e5c324d",
+  "replacement": "(def linear-traversal-nth\n  (fn ([coll n]\n     (cond\n       (nil? coll)     (throw (suss.bootstrap/error \"Index out of bounds\"))\n       (zero? n)       (if (seq coll)\n                         (first coll)\n                         (throw (suss.bootstrap/error \"Index out of bounds\")))\n       (indexed? coll) (-nth coll n)\n       (seq coll)      (recur (next coll) (dec n))\n       :else           (throw (suss.bootstrap/error \"Index out of bounds\"))))\n  ([coll n not-found]\n     (cond\n       (nil? coll)     not-found\n       (zero? n)       (if (seq coll)\n                         (first coll)\n                         not-found)\n       (indexed? coll) (-nth coll n not-found)\n       (seq coll)      (recur (next coll) (dec n) not-found)\n       :else           not-found))))",
+  "rationale": "Explicit defn bootstrap preserves metadata/docstrings/arities and source algorithms. Host Error becomes checked existing language error; in-range charAt with int n uses UTF-16 numeric indexing; unchecked min/max bind operands once and preserve numeric comparisons. Unsupported-value formatting and full compiled macros remain unfinished."
+}

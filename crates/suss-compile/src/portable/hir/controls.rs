@@ -53,11 +53,11 @@ impl Analyzer {
                 let operands = args.iter().map(|argument| self.form(argument)).collect::<Result<Vec<_>, _>>()?;
                 Ok(self.nominal(form, operation, operands))
             }
-            ControlForm::Zero | ControlForm::Positive => {
+            ControlForm::Zero | ControlForm::Positive | ControlForm::Negative => {
                 if args.len() != 1 {
                     return Err(fail(
                         form.span.clone(),
-                        if operation == ControlForm::Zero { "zero? requires one operand" } else { "pos? requires one operand" },
+                        match operation { ControlForm::Zero => "zero? requires one operand", ControlForm::Negative => "neg? requires one operand", _ => "pos? requires one operand" },
                     ));
                 }
                 let value = self.form(&args[0])?;
@@ -68,6 +68,8 @@ impl Analyzer {
                     kind: Expression::Comparison {
                         operation: if operation == ControlForm::Zero {
                             Comparison::StrictEqual
+                        } else if operation == ControlForm::Negative {
+                            Comparison::Less
                         } else {
                             Comparison::Greater
                         },
