@@ -2949,3 +2949,41 @@ fn lexical_callees_shadow_global_and_intrinsic_names() {
     );
     assert_eq!(run_expr_i32("(let [inc (fn [x] (+ x 10))] (inc 2))"), 12);
 }
+
+#[test]
+fn legacy_dispatch_receiver_precedes_arguments_once() {
+    assert_eq!(
+        run_expr_i32("(let [a (atom 0)] (nth (do (swap! a inc) [17 19 23]) (swap! a inc)))"),
+        23
+    );
+    // A nested dispatcher cannot overwrite the saved outer receiver/arguments.
+    assert_eq!(run_expr_i32("(let [a (atom 0)] (nth (do (swap! a (fn [n] (+ (* n 10) 1))) [17 19]) (do (swap! a (fn [n] (+ (* n 10) 2))) (nth (do (swap! a (fn [n] (+ (* n 10) 3))) [1]) 0))) (deref a))"), 123);
+    assert_eq!(run_expr_i32("(let [a (atom 0)] (assoc (do (swap! a (fn [n] (+ (* n 10) 1))) {}) (do (swap! a (fn [n] (+ (* n 10) 2))) 17) (do (swap! a (fn [n] (+ (* n 10) 3))) 19)) (deref a))"), 123);
+}
+
+#[test]
+fn legacy_bitwise_operands_preserve_source_order_once() {
+    let mut observations = Vec::new();
+    for (operation, expected) in [
+        ("bit-and", 1), ("bit-or", 3), ("bit-xor", 2),
+        ("bit-shift-left", 6), ("bit-shift-right", 1),
+        ("unsigned-bit-shift-right", 1),
+    ] {
+        let source = format!("(let [a (atom 0)] ({operation} (do (swap! a (fn [n] (+ (* n 10) 1))) 3) (do (swap! a (fn [n] (+ (* n 10) 2))) 1)) (deref a))");
+        observations.push((operation, run_expr_i32(&source)));
+        assert_eq!(run_expr_i32(&format!("({operation} 3 1)")), expected, "{operation} result");
+    }
+    assert_eq!(observations, vec![
+        ("bit-and", 12), ("bit-or", 12), ("bit-xor", 12),
+        ("bit-shift-left", 12), ("bit-shift-right", 12),
+        ("unsigned-bit-shift-right", 12),
+    ]);
+}
+
+#[test]
+fn legacy_hash_inspects_each_evaluated_operand_once() {
+    for value in ["7", "nil", "false", "true", "1.5", "\"text\"", ":key", "(do (hash 8) 7)"] {
+        let source = format!("(let [a (atom 0)] (hash (do (swap! a inc) {value})) (deref a))");
+        assert_eq!(run_expr_i32(&source), 1, "{value}");
+    }
+}

@@ -8255,3 +8255,87 @@ independently reviewed-head CI remains a readiness gate. No merge, issue closure
 or M2/M4 completion claimed. Literal keyword/symbol/quote, runtime metadata,
 duplicate-reader forms and real persistent collection types remain documented
 boundaries. Next M2 task remains the criterion-by-criterion #8/#9/#11 audit.
+
+
+## M2 acceptance candidate — 2026-10-01
+
+Previous goal turn made progress: implemented textual vector/map/set literal
+lowering, recorded the user's explicit ordering decision, executed fresh19
+reference/native observations and full28575 terminal0, opened PR114 and obtained
+independent review/full8004 terminal0. Reviewed final114head isddf00b21372982fca7b79c216d988de67da033b4, native6 plus19 exact values and Python86;
+exact-head remote CI still gates readiness. No root merge or issue closure.
+
+New isolated portable/m2-acceptance-audit worktree
+/private/tmp/suss-m2-acceptance-audit starts at reviewed114ddf00b2 with real
+pinned checkout. docs/roadmap/acceptance-m2.md is explicitly a candidate, mapping
+all #8/#9/#10/#11 criteria to current source/actual executing tests. No M2 status
+or issue closing link is changed before independent criterion review. The
+runnable scripts/test-m2-foundation.sh replaces the ineffective proposed
+evaluation_order filter with explicit suites, including old emitter guards and
+current ABI/namespace/nominal/session/collection interfaces. Full collection
+classes, keyword/symbol/quoted expressions, runtime metadata, source
+:require-macros and production frontend migration stay explicit boundaries; the
+review must decide whether any boundary leaves an actual M2 criterion unfulfilled.
+Root has exclusive heavy slot after reviewer114 release; focused acceptance
+command will be recorded with its authoritative terminal result. Next task:
+dispatch mandatory independent audit of the new PR, implement significant
+criterion gaps if found, then require final reviewed-head CI before readiness.
+
+Root focused acceptance18713 LIVE /private/tmp/suss-m2-acceptance-focus.log,
+shared-target/build2 sh scripts/test-m2-foundation.sh. Existing reviewed-parent
+full8004 is authoritative terminal0 atddf00b2; this audit adds only documentation
+and the focused runner, with no Rust/runtime/oracle input changes. Mandatory
+new independent reviewer must validate the criterion claims and runner scope;
+no Closes links or completion status yet. Root holds heavy slot until18713 terminal.
+
+
+## PR #115 independent findings and repairs — 2026-10-01
+
+Independent reviewer in /private/tmp/suss-review-pr115 found three significant
+legacy backend violations while auditing #9; the initial focused acceptance18713
+terminal0 did not cover them. Before-fix79935 terminal101 records actual receiver
+result19 rather than23 and bit-and trace21 rather than12; the hash effect probe
+failed Wasm validation (expectedi64, foundreference), not an observed repeat count.
+Expanded18014 terminal101 records all six bitwise traces21 versus12. No failures
+were skipped or relabeled. The real upstream checkout is detached atc4295f3031.
+
+Receiver-first dispatch now saves the receiver before ordered arguments; bitwise
+emission keeps the left operand on the Wasm stack while evaluating right; hash
+emission captures the input once before every type/sentinel inspection. Existing
+hash algorithms are unchanged. Expanded78511 terminal0 executes three regression
+functions covering receiver result23, nested/three-operand trace123, all six
+bitwise traces12 and asymmetric3/1 results, plus eight hash operand cases.
+Large vector emitter loops use disjoint first32/rest slices and do not re-emit an
+entry. No portable runtime/oracle inputs or upstream core source changed.
+
+Independent published-criterion review records candidate foundation verdicts in
+docs/roadmap/acceptance-m2.md. Source :require-macros/isolated compiled macros are
+M3; constructor-interface fixtures prove normalization but not M4 collection
+algorithms; reader metadata is distinct from unfinished runtime metadata. Legacy
+production frontend/release compatibility is not certified by M2 foundation.
+Required full workspace40695 is LIVE at /private/tmp/suss-pr115-review-full.log,
+sharedtarget/build2/testthreads2; no other heavy producer. Next: obtain its
+terminal result, push significant fixes, then require exact final-head CI and
+user merge before closing issues or reconciling default-branch status.
+
+
+PR #115 independent required full40695 completed authoritatively with exit0
+through final reader doctests on source/test heada4bee19. Log:
+/private/tmp/suss-pr115-review-full.log. Command:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2. Three focused repaired
+regression functions78511 also completed terminal0; exact before-fix failures
+remain recorded above. No RUSTFLAGS, skips, oracle inputs or algorithm changes.
+
+Independent requirement-by-requirement review proves all published #8/#9/#10/#11
+foundation criteria on this reviewed implementation stack. The acceptance audit
+explicitly records each verdict and scope; unsupported compiled macro bootstrap,
+real collection algorithms, runtime metadata and production migration remain
+later gates. This evidence-only commit changes no executed Rust/runtime/test
+inputs and carries closing links for #8/#9/#11 so the accepted commit can close
+those issues when incorporated into main. #10 remains already closed. Current
+ROADMAP/issue statuses remain in progress while stack/CI/user merge are pending.
+No GitHub issue/milestone was closed manually and no PR merged. Heavy slot is
+released after terminal40695. Next unblocked task: require exact independently
+reviewed final-head CI for PR114/115, obtain user merge of the open stack, then
+reconcile default-branch M2 status; M3–M9 and deferred hashing#98 remain open.

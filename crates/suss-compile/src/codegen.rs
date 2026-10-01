@@ -5416,25 +5416,12 @@ impl<'a> CodeGen<'a> {
                         let scratch_base = self.scratch_local.get();
                         self.scratch_local.set(scratch_base + 5);
 
-                        let right_i32_local = scratch_base + 1; // i32 slot
-
-                        // WASM stack order: for (op left right), we need [left, right]
-                        // with right on top. So we generate right first, store it,
-                        // then generate left (stays on stack), then get right.
-
-                        // Step 1: Generate and unwrap right operand, store it
-                        self.generate_expr(right, f)?;
+                        // Keep evaluated left on the Wasm operand stack while
+                        // evaluating right, preserving source order exactly once.
+                        self.generate_expr_inner(left, f, loop_depth, param_offset)?;
                         self.generate_polymorphic_unwrap_i32(f);
-                        f.instruction(&Instruction::LocalSet(right_i32_local));
-
-                        // Step 2: Generate and unwrap left operand (stays on stack)
-                        self.generate_expr(left, f)?;
+                        self.generate_expr_inner(right, f, loop_depth, param_offset)?;
                         self.generate_polymorphic_unwrap_i32(f);
-                        // Stack: [left_i32]
-
-                        // Step 3: Get right operand from local
-                        f.instruction(&Instruction::LocalGet(right_i32_local));
-                        // Stack: [left_i32, right_i32] - correct order!
 
                         // Step 4: Perform the operation
                         let instr = match op {
@@ -8092,8 +8079,14 @@ impl<'a> CodeGen<'a> {
             return Ok(());
         }
 
-        // Generate the value
+        // Evaluate once before inspecting type or sentinel tags. Reserve a full
+        // scratch set while emitting the operand so nested effects cannot reuse
+        // the captured-value slot.
+        let scratch = self.scratch_local.get();
+        self.scratch_local.set(scratch + 5);
         self.generate_expr(value, f)?;
+        f.instruction(&Instruction::LocalSet(scratch));
+        f.instruction(&Instruction::LocalGet(scratch));
 
         // Type dispatch using nested if/else
         // First, test if it's an i31ref (nil, bool, small int)
@@ -8101,8 +8094,8 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
 
         // === i31ref path ===
-        // Re-generate value and extract the i31 content
-        self.generate_expr(value, f)?;
+        // Extract the captured i31 content
+        f.instruction(&Instruction::LocalGet(scratch));
         f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
         f.instruction(&Instruction::I31GetS);
 
@@ -8114,7 +8107,7 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::Else);
 
         // Re-get the value for further checks
-        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::LocalGet(scratch));
         f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
         f.instruction(&Instruction::I31GetS);
 
@@ -8126,7 +8119,7 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::Else);
 
         // Re-get the value for further checks
-        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::LocalGet(scratch));
         f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
         f.instruction(&Instruction::I31GetS);
 
@@ -8139,7 +8132,7 @@ impl<'a> CodeGen<'a> {
 
         // Must be a small integer - decode and use as hash
         // Get the raw i31 value and decode: >> 1
-        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::LocalGet(scratch));
         f.instruction(&Instruction::RefCastNonNull(HeapType::I31));
         f.instruction(&Instruction::I31GetS);
         f.instruction(&Instruction::I32Const(1));
@@ -8153,12 +8146,12 @@ impl<'a> CodeGen<'a> {
         // === Not i31ref - check struct types ===
 
         // Test INT64
-        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::LocalGet(scratch));
         f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::INT64)));
         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
 
         // Extract i64 and hash it
-        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::LocalGet(scratch));
         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::INT64)));
         f.instruction(&Instruction::StructGet {
             struct_type_index: gc_types::INT64,
@@ -8169,12 +8162,12 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::Else);
 
         // Test FLOAT
-        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::LocalGet(scratch));
         f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::FLOAT64)));
         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
 
         // Extract f64, reinterpret as i64, and hash
-        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::LocalGet(scratch));
         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::FLOAT64)));
         f.instruction(&Instruction::StructGet {
             struct_type_index: gc_types::FLOAT64,
@@ -8186,12 +8179,12 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::Else);
 
         // Test KEYWORD
-        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::LocalGet(scratch));
         f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::KEYWORD)));
         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
 
         // Extract pre-computed hash from KEYWORD struct
-        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::LocalGet(scratch));
         f.instruction(&Instruction::RefCastNonNull(HeapType::Concrete(gc_types::KEYWORD)));
         f.instruction(&Instruction::StructGet {
             struct_type_index: gc_types::KEYWORD,
@@ -8201,10 +8194,10 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::Else);
 
         // Test STRING (array<i8>)
-        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::LocalGet(scratch));
         f.instruction(&Instruction::RefTestNonNull(HeapType::Concrete(gc_types::STRING)));
         f.instruction(&Instruction::If(wasm_encoder::BlockType::Result(ValType::I32)));
-        self.generate_expr(value, f)?;
+        f.instruction(&Instruction::LocalGet(scratch));
         f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::HASH_STRING)));
         f.instruction(&Instruction::Else);
 
@@ -8225,6 +8218,7 @@ impl<'a> CodeGen<'a> {
         f.instruction(&Instruction::I32Or);
         f.instruction(&Instruction::RefI31);
 
+        self.scratch_local.set(scratch);
         Ok(())
     }
 
@@ -8471,8 +8465,8 @@ impl<'a> CodeGen<'a> {
     /// The table is indexed by: type_id * methods_per_type + method_id
     ///
     /// Algorithm:
-    /// 1. Evaluate and save args to scratch locals
-    /// 2. Evaluate obj and save to scratch local
+    /// 1. Evaluate obj and save to scratch local
+    /// 2. Evaluate and save args to scratch locals
     /// 3. Call $get_type_id to get runtime type ID
     /// 4. Calculate table index: type_id * methods_per_type + method_id
     /// 5. Push obj and args back on stack
@@ -8507,15 +8501,15 @@ impl<'a> CodeGen<'a> {
         let type_id_local = scratch + 1; // i32 at +1
         let args_base = scratch + 2;     // eqref locals at +2, +3, +4
 
-        // 1. Evaluate and save args to scratch locals
+        // Evaluate the receiver before its arguments. Keep it in our reserved
+        // scratch set so nested dispatch cannot overwrite the captured value.
+        self.generate_expr_inner(obj, f, 0, param_offset)?;
+        f.instruction(&Instruction::LocalSet(obj_local));
         for (i, arg) in args.iter().enumerate() {
             self.generate_expr_inner(arg, f, 0, param_offset)?;
             f.instruction(&Instruction::LocalSet(args_base + i as u32));
         }
-
-        // 2. Evaluate obj and save to scratch local
-        self.generate_expr_inner(obj, f, 0, param_offset)?;
-        f.instruction(&Instruction::LocalTee(obj_local));
+        f.instruction(&Instruction::LocalGet(obj_local));
 
         // 3. Call $get_type_id to get runtime type ID
         f.instruction(&Instruction::Call(self.helper_func_idx(helper_funcs::GET_TYPE_ID)));

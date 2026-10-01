@@ -203,3 +203,10 @@ interfaces, method capture, thrown-entry order, GC and located missing-class
 diagnostics. This is a compiler prerequisite using development-only fixtures;
 full collection/core and M2 acceptance remain open. See
 [collection literals](docs/runtime/collection-literals.md).
+
+
+[M2 acceptance candidate](docs/roadmap/acceptance-m2.md) maps every published
+foundation criterion to actual source and executing guards. The runnable focused
+command is `sh scripts/test-m2-foundation.sh`; future compiled macros, complete
+collections and production frontend migration remain separate gates. M2 statuses
+stay in progress pending independent criterion review and final-head CI.
