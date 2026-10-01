@@ -230,7 +230,15 @@ aliases (user functions execute). These are separate from the123 shared cases
 and five retained-capture divergences; the earlier review inference was withdrawn.
 
 The direct protocol `implements?` bootstrap adds one partial hash-bound macro
-review:53 in progress /1012 unassessed. Its29 fresh pinned observations remain
+review:53 in progress /1012 unassessed. Its33 fresh pinned observations remain
 separate from earlier corpora. Direct markers differ from native/default fallback;
 full compiled macros/core/metadata implementations remain unfinished. See
 [implementation predicate](../runtime/implements.md).
+
+
+Fifteen retained runtime protocol declarations now enter the generated canonical
+core artifact without patches. The overlay is68 in progress/997 unassessed;
+21 selected forms produce25 licensed, hash-verified artifacts. Separate31 primary
+observations and two executing native tests exercise imported interfaces through
+an original nominal adapter. These are prerequisites for issue #16/#17, not
+collection acceptance. See [core interfaces](../runtime/core-interfaces.md).

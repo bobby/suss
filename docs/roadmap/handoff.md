@@ -4696,3 +4696,89 @@ Review required full baseline 10991 completed terminal 0:
 diagnostic differential outcomes remain explicit and unchanged. All review
 Cargo/JVM/Node graphs are terminal and released. Push the review observations
 and require exact final-head CI before readiness; do not merge.
+
+## Retained core sequence/collection interfaces — 2026-09-30
+
+Worktree /private/tmp/suss-core-sequence-interfaces, branch
+portable/core-sequence-interfaces, based on reviewed PR83 e083d8b. The previous
+turn verified neutral open PR titles/descriptions but did not change implementation;
+this continuation takes the next executable source import step.
+
+Before importing declarations, native graph81606 failed terminal101 on unresolved
+cljs.core/ISeqable while loading the existing six-function artifact;
+/private/tmp/suss-core-interfaces-native-red.log. Selected fifteen exact retained
+runtime defprotocol forms with patch:null, in original source order. Each has an
+individual source-hash review and generated-method signature rationale. Original
+forms/notices and byte-preserved EPL license files remain packaged. Twenty-one
+selected forms now generate25 files; reviews68 in-progress/997 unassessed, not
+complete protocol or collection acceptance.
+
+Focus46534 passed core_import17/interface1. Fresh graph25533 completed terminal0:
+31 exact pinned scalar observations and native interface2,
+/private/tmp/suss-core-interfaces-primary.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-core-interface-oracle.sh`.
+The original nominal adapter exercises every imported marker/method, both -nth
+arities, raw scalar results and identity after GC. It is not a persistent list or
+sequence implementation. Fresh existing graph54833 completed terminal0: original
+117 observations unchanged/core_import17, /private/tmp/suss-core-interfaces-existing-primary.log,
+using the same environment and scripts/test-core-import-oracle.sh.
+
+Provenance99916 completed terminal0: Python71, inventory1065, reviews68+997,
+artifacts25, WIT15 files/6 packages, numeric locks and offline roadmap10/39.
+Required workspace baseline35101 is running; record terminal result before
+publication. No RUSTFLAGS override or concurrent local Cargo/reference graphs.
+Next independent PR review and exact final-head CI; then retained sequence/list
+source types, UTF-16 indexing and variadic rest/apply dependencies. M2–M9 remain
+unfinished; partial PR references only. No PR merge or issue closure claimed.
+
+PR83 exact final-head CI36781755677 succeeded at e083d8b. Root inspected actual
+provenance/workspace logs /private/tmp/suss-pr83-final-ci.log and marked PR83 ready
+without merging. Existing branch names remain stable; new branches/PRs/commits
+use neutral wording. The earlier recovery stash0205f6d remains retained; no stash
+or unrelated file deletion is part of this import.
+
+Required full baseline35101 completed terminal0 with the exact locked workspace
+command and two test threads, /private/tmp/suss-core-interfaces-baseline.log.
+Existing manual/legacy ignores and diagnostic differential9pass7fail remain
+unchanged. All root Cargo/JVM/Node graphs terminal and slots released. Publish
+this isolated import as a stacked draft, Refs #11/#16/#17; independent review and
+exact final-head CI remain required before readiness. Future sequence48-case red
+preparation is not included in this passing source import branch.
+
+
+## Independent PR #85 review — 2026-09-30
+
+Reviewed candidate e1f9e93 against main6364495 in isolated
+/private/tmp/suss-review-pr85. Fifteen selected whole protocol forms are exact
+pinned source with patch:null; source hashes/notices/EPL packaging and generated
+25-file manifest verify. Twenty-one forms and68 partial reviews/997 unassessed
+remain prerequisites, not persistent collection or compiled macro acceptance.
+No significant production defect found. The earlier same-result -nth fixture
+did not distinguish arity dispatch, so added four independent observations for
+distinct arity results, left-to-right operand effects and a captured method value.
+Original31 case dictionaries are unchanged; fresh graph9522 completed terminal0:
+35 exact pinned scalar observations/native2,
+/private/tmp/suss-pr85-review-interface-oracle.log.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-core-interface-oracle.sh`.
+
+Added a third native lifecycle test: after source reload/forced GC, both canonical
+core aliases and captured method values operate on retained instances; invalid
+method arities fail and subsequent calls recover. Focus70530 completed terminal0:
+core_import17/interfaces3, /private/tmp/suss-pr85-review-focus.log. Existing fresh
+graph89239 completed terminal0: original117 exact observations/core_import17,
+/private/tmp/suss-pr85-review-existing-oracle.log, using
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-core-import-oracle.sh`.
+Provenance6747 completed terminal0: Python71/inventory1065/reviews68+997/25artifacts,
+WIT15files6packages/numeric locks/offline10milestones39issues,
+/private/tmp/suss-pr85-review-provenance.log. Required full baseline follows its
+authoritative completion. No RUSTFLAGS, unrelated deletions, acceptance or merge
+claim. Next push review coverage, require exact final-head CI, then implement
+retained sequence types and UTF-16 indexing/variadic rest/apply dependencies.
+
+Required review full baseline79552 completed terminal0:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`,
+/private/tmp/suss-pr85-review-baseline.log. Existing manual/legacy ignores and
+separate diagnostic differential9pass7fail remain explicit. All review local
+Cargo/JVM/Node graphs are terminal and released. Push the independent coverage
+commit and require its exact final-head CI before readiness. No merge or issue
+closure; retained source sequence/collection implementations remain next work.
