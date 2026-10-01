@@ -5872,3 +5872,19 @@ All local Cargo/JVM/Node processes are terminal; the shared slot is released onc
 the review push finishes. Root requires exact reviewed-head CI before PR95 readiness. No merge,
 issue closure or milestone acceptance claim. Next retain actual Murmur/ordered
 hashing and persistent sequence/list source; complete core/macros/M2–M9 remain open.
+## Scalar Murmur hashing preparation — 2026-10-01
+
+New separate branch portable/core-murmur-hash/worktree /private/tmp/suss-core-murmur-hash
+starts at PR95 candidate458b5df.35 provisional scalar probes and native test runner
+are prepared; original bounded ->/as->/zero? expansion is drafted but NOT compiled
+or tested. No retained forms or review statuses are added. PR95 reviewer exclusively
+owns Cargo/JVM/Node slot, with review-expanded70 primary/native observations passing
+and full baseline40057 live. Reviewer found/corrected imul provenance bounds and is
+adding exact source-region/file/pin verification to CI with Python75 passing.
+Next rebase onto final reviewed PR95, then acquire the released slot and first
+certify fresh pinned observations/native red, retain the scalar Murmur forms with
+EPL/patch provenance, execute focused/full checks and dispatch a reviewer for any
+new PR. PR95 final reviewed-head CI is still required before readiness. Do not
+claim List/Cons/hash-ordered/hash-unordered/string/numeric hashing complete or
+substitute private argument buffers for persistent source collections. See
+ docs/runtime/murmur-hashing.md. No PR merge or issue closure.

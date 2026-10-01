@@ -62,6 +62,9 @@ pub enum ControlForm {
     Cond,
     Declare,
     CachingHash,
+    ThreadFirst,
+    AsThread,
+    Zero,
 }
 impl ControlForm {
     fn from_name(name: &str) -> Option<Self> {
@@ -74,6 +77,9 @@ impl ControlForm {
             "cond" => Self::Cond,
             "declare" => Self::Declare,
             "caching-hash" => Self::CachingHash,
+            "->" => Self::ThreadFirst,
+            "as->" => Self::AsThread,
+            "zero?" => Self::Zero,
             _ => return None,
         })
     }
@@ -621,6 +627,9 @@ impl Environment {
                         | "cond"
                         | "declare"
                         | "caching-hash"
+                        | "->"
+                        | "as->"
+                        | "zero?"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -671,6 +680,9 @@ impl Environment {
                         | "cond"
                         | "declare"
                         | "caching-hash"
+                        | "->"
+                        | "as->"
+                        | "zero?"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -721,6 +733,9 @@ impl Environment {
                         | "cond"
                         | "declare"
                         | "caching-hash"
+                        | "->"
+                        | "as->"
+                        | "zero?"
                         | "int"
                         | "bit-and"
                         | "bit-or"
@@ -771,6 +786,9 @@ impl Environment {
                     | "cond"
                     | "declare"
                     | "caching-hash"
+                        | "->"
+                        | "as->"
+                        | "zero?"
                     | "int"
                     | "bit-and"
                     | "bit-or"
@@ -813,6 +831,9 @@ impl Environment {
                     | "cond"
                     | "declare"
                     | "caching-hash"
+                        | "->"
+                        | "as->"
+                        | "zero?"
                     | "int"
                     | "bit-and"
                     | "bit-or"

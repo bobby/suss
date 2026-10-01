@@ -1,0 +1,286 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "mix-k-0",
+      "source": "(m3-mix-K1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "mix-k-1",
+      "source": "(m3-mix-K1 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1ce5632d1800000"
+      }
+    },
+    {
+      "id": "mix-k-2",
+      "source": "(m3-mix-K1 -1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d10453fc000000"
+      }
+    },
+    {
+      "id": "mix-k-3",
+      "source": "(m3-mix-K1 2147483647)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1ddab23fc000000"
+      }
+    },
+    {
+      "id": "mix-k-4",
+      "source": "(m3-mix-K1 2147483648)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1c94da000000000"
+      }
+    },
+    {
+      "id": "mix-k-5",
+      "source": "(m3-mix-K1 4294967295)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d10453fc000000"
+      }
+    },
+    {
+      "id": "mix-k-6",
+      "source": "(m3-mix-K1 4294967296)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "mix-k-7",
+      "source": "(m3-mix-K1 3.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41b467cf17000000"
+      }
+    },
+    {
+      "id": "mix-k-8",
+      "source": "(m3-mix-K1 -3.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dab69ed5800000"
+      }
+    },
+    {
+      "id": "mix-k-9",
+      "source": "(m3-mix-K1 9007199254740991)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d10453fc000000"
+      }
+    },
+    {
+      "id": "mix-h-0",
+      "source": "(m3-mix-H1 0 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b9ab949c000000"
+      }
+    },
+    {
+      "id": "mix-h-1",
+      "source": "(m3-mix-H1 1 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b9ab949c000000"
+      }
+    },
+    {
+      "id": "mix-h-2",
+      "source": "(m3-mix-H1 -1 2147483648)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b9abe4a1000000"
+      }
+    },
+    {
+      "id": "mix-h-3",
+      "source": "(m3-mix-H1 2147483647 4294967295)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b9ab449c000000"
+      }
+    },
+    {
+      "id": "mix-h-4",
+      "source": "(m3-mix-H1 4294967296 -3.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b9acd4a1000000"
+      }
+    },
+    {
+      "id": "fmix-0",
+      "source": "(m3-fmix 0 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "fmix-1",
+      "source": "(m3-fmix 0 4)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c24e5942800000"
+      }
+    },
+    {
+      "id": "fmix-2",
+      "source": "(m3-fmix 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d4538a2dc00000"
+      }
+    },
+    {
+      "id": "fmix-3",
+      "source": "(m3-fmix -1 31)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c56574af800000"
+      }
+    },
+    {
+      "id": "fmix-4",
+      "source": "(m3-fmix 2147483648 4294967295)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c198cfc560000000"
+      }
+    },
+    {
+      "id": "fmix-5",
+      "source": "(m3-fmix 3.9 -1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d2a8112fc00000"
+      }
+    },
+    {
+      "id": "hash-int-0",
+      "source": "(m3-hash-int 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "hash-int-1",
+      "source": "(m3-hash-int 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1903aff58000000"
+      }
+    },
+    {
+      "id": "hash-int-2",
+      "source": "(m3-hash-int -1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dd8a4ed4000000"
+      }
+    },
+    {
+      "id": "hash-int-3",
+      "source": "(m3-hash-int 2147483648)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d99aca1b000000"
+      }
+    },
+    {
+      "id": "hash-int-4",
+      "source": "(m3-hash-int 4294967296)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c1b17cef000000"
+      }
+    },
+    {
+      "id": "hash-int-5",
+      "source": "(m3-hash-int 3.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41c94284b8800000"
+      }
+    },
+    {
+      "id": "hash-int-6",
+      "source": "(m3-hash-int -3.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dc93822b000000"
+      }
+    },
+    {
+      "id": "negative-zero-hash",
+      "source": "(m3-hash-int -0.0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "collection-mix-0",
+      "source": "(mix-collection-hash 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1de106add800000"
+      }
+    },
+    {
+      "id": "collection-mix-1",
+      "source": "(mix-collection-hash 0 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c16cdb16c0000000"
+      }
+    },
+    {
+      "id": "collection-mix-2",
+      "source": "(mix-collection-hash 1 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dd79fa65c00000"
+      }
+    },
+    {
+      "id": "collection-mix-3",
+      "source": "(mix-collection-hash -1 31)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41b6f66952000000"
+      }
+    },
+    {
+      "id": "collection-mix-4",
+      "source": "(mix-collection-hash 4294967295 4294967297)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d8841b0f800000"
+      }
+    },
+    {
+      "id": "hash-long-wrap",
+      "source": "(hash-long 4294967295 2147483648)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41dfffffffc00000"
+      }
+    }
+  ]
+}
