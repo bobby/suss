@@ -483,6 +483,11 @@
       "id": "runtime:meta:2174",
       "source-sha256": "bc2294557964033aee4eae7921ed463a5878fde4437b49c82f97be518913760c",
       "patch": "docs/compatibility/patches/identity-meta.json"
+    },
+    {
+      "id": "runtime:root-obj:1486",
+      "source-sha256": "8a808825ab5fd049e3f1d28932a655074c2d1930a2b2175080edf16f78734951",
+      "patch": "docs/compatibility/patches/root-object.json"
     }
   ],
   "loader": {
@@ -492,7 +497,7 @@
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "215edd9d2fc055fe07062ed4ae03938ee367e90dccb80c0a7a269fb120045e68"
+      "sha256": "ce6cf05e1a2aa758586908111c34f5580e86c8c1bd51c0aa83e6bb30e451f281"
     }
   }
 }

@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "c69862712c4a7e7fe5552366d1a71af498398d46b38cfedc3637a9e73fcb3d84",
-  "reviews-sha256": "03aa90f7b898ad7271e514555dd08016b4c8e4af3e52dd47e40b796e77b1648f",
+  "recipe-sha256": "3450b94f5de8e590a4abb2f976ef633a48eb19de280973dc951712690d0be875",
+  "reviews-sha256": "fd467f2a5af93a2e4c832d3904f9af68f96abfff6ddb608e863bc12416909814",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -3138,6 +3138,38 @@
         "tests/oracle/identity-hash-cases.json",
         "docs/runtime/identity-hashing.md"
       ]
+    },
+    {
+      "id": "runtime:root-obj:1486",
+      "name": "root-obj",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1486,
+      "end-line": 1490,
+      "byte-start": 43305,
+      "byte-end": 43410,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8a808825ab5fd049e3f1d28932a655074c2d1930a2b2175080edf16f78734951",
+      "extracted": "extracted/0096.cljs",
+      "extracted-sha256": "6fc46a4cd358ec5a6c48ccb017dcc3ad7dbedeee2bb32a6ba29a37959da882ea",
+      "patch": "docs/compatibility/patches/root-object.json",
+      "patch-sha256": "2df1014d47dcc798fc252f37520af9216b04c14eddeadc6c5e80b3af6b97ecb5",
+      "adapted-form-sha256": "064904e2805e557bc44b7151ed5c421603b4e1ce4c28f9ea243c2a82cf20fe9a",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:IHash:758",
+        "runtime default Object prototype",
+        "owner-held identity UID"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_default_hash.rs",
+        "tests/oracle/default-hash-cases.json",
+        "docs/runtime/default-identity-hash.md"
+      ]
     }
   ],
   "loader": {
@@ -3147,7 +3179,7 @@
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "215edd9d2fc055fe07062ed4ae03938ee367e90dccb80c0a7a269fb120045e68"
+      "sha256": "ce6cf05e1a2aa758586908111c34f5580e86c8c1bd51c0aa83e6bb30e451f281"
     }
   },
   "files": {
@@ -3249,6 +3281,7 @@
     "extracted/0093.cljs": "2e781172cfffc1b74b9144802f83290db9ecf60ac2f2fcfecd786d4e0eb56dbf",
     "extracted/0094.cljs": "00cdcccf5f2dca594dd13fe47d07b49676cd4b9da348d7d7a67f4cb90045765f",
     "extracted/0095.cljs": "ec07e0acb998f8414197a008e65e4b8848afc341644a90844ea040400377f084",
-    "suss/core.sus": "e0139fb1b24502633e388c652a73ad56ea387f3f94fd0be3b711125b0a10536e"
+    "extracted/0096.cljs": "6fc46a4cd358ec5a6c48ccb017dcc3ad7dbedeee2bb32a6ba29a37959da882ea",
+    "suss/core.sus": "84b113c80195c666b67e52aced8e37a0ebd21739595b79dd690e4804dabf172e"
   }
 }

@@ -7535,3 +7535,166 @@ while root owns the heavy slot. Previous PR107 full90116 and exact-head CI
 new reviewed commit's successful complete CI before PR95 readiness; no merge or
 issue/milestone closure. Next continue retained collection/vector dependencies
 and remaining M2–M9 acceptance gates.
+
+## Default IHash source integration — 2026-10-01
+
+Prior goal turn made progress: PR107 implementation and full-baseline evidence
+committed/pushed at160ccdc; independent reviewer dispatched, no merges. Review
+now found an IFn receiver defect; fixing it reveals the original zero-argument
+MetaFn explicit invocation as a strict wrong-arity design boundary. Preserve its
+primary observation and assert native error separately; no JS argument-padding
+adapter is authorized. Reviewer retains heavy slot for fixes and certification.
+
+Root isolated portable/core-default-identity-hash from160ccdc prepares the next
+source dependency while review runs. Added zero-arity private adapter to existing
+canonical Object prototype, whole retained root-obj and default IHash setup,
+explicit source/patch hashes and stricter standalone patch provenance. Generated
+selection97/artifacts101/reviews190partial875unassessed. Static import/provenance
+and Python81 pass;18 new observations are PROVISIONAL, native tests unexecuted.
+No cargo/JVM/Node runs overlap reviewer. Rebase on final reviewed PR107 before
+executing fresh oracle/native/focused/full and opening its separately reviewed
+PR. Public hash retains its Date/case dependencies; do not remove branches to
+make a smaller function pass. No issue or milestone acceptance claimed.
+
+Review107 fresh29279 terminal0:34 primary observations/native4 pass, including
+33 matching+1 preserved exact zero-invoke strict boundary. Canonical IFn receiver
+fix keeps unrelated user IFn protocols ordinary. ABI45 focused46577 is live;
+reviewer retains heavy slot before mandatory full. Root default-IHash corpus now
+21 provisional cases, adding direct method priority/captured dispatcher/live root
+and root UID independence; native and oracle remain unexecuted.
+
+Review107 authoritative full90116 terminal0/all handles terminal; significant
+IFn fix pushed7b5307849aa641f0fabe26f5257335526f48fa3b, slot released to root.
+Exact CI36859350775 running at reviewedhead; draft/readiness still gated. Root
+updated PR107 description/title to final receiver fix and34primary/33matches+1
+strict boundary, no merge. Default branch rebased onto7b530784, preserving both
+handoff sections and regenerating conflicting manifest (source unchanged).
+Initial native57181 terminal0/2; fresh24294 terminal0/21exact+native2, expected
+development private-var warnings preserved: /private/tmp/suss-default-hash-primary21.log.
+Compiler13236 terminal0/1, /private/tmp/suss-default-hash-hir-ir.log. Parent focused
+15708 terminal0 (core interfaces, identity4/strict boundary, sequences6),
+/private/tmp/suss-default-hash-parent-focused.log. Python81/import101/setup5/
+reviews190partial875unassessed/diff pass. Full/review/final-head CI still required.
+Root owns the heavy slot for the next full baseline. Public hash's complete
+Date/case branches, ordered/unordered composition and remaining gates are next.
+
+Required default-IHash full82236 terminal0 through final reader doc tests,
+/private/tmp/suss-default-hash-full.log, including all45 ABI regressions and
+unchanged parent oracle/native boundaries. Draft PR108 opened atbefb2c0 with Refs
+links, base reviewed1077b530784. Mandatory /root/review_pr108 dispatched in
+isolated actual pin; static review found no significant defect so far and seven
+new probes are provisional pending certification. Root's cargo/oracle/push/create
+handles57181/24294/13236/15708/82236/59134/72327 terminal. Heavy slot releases to
+reviewer after this evidence push. Exact reviewed-head CI and review fixes/full
+still gate readiness. No merges/issue closures/milestone acceptance.
+
+
+## Independent PR108 review — 2026-10-01
+
+Reviewedbefb2c0/root evidence9bb3f92 against independently reviewed1077b530784
+in isolated /private/tmp/suss-review-pr108 with actual detached upstreamc4295f30.
+Read accepted design/ROADMAP/inventory/handoff. Complete root/default IHash
+source, live root lookup, existing canonical prototype storage, zero-arity
+HIR/IR adapter, standalone hash-bound patch provenance and EPL artifacts
+inspected; no significant production defect found.
+
+Seven additive probes preserve all original21 source/reference objects and
+parent corpora. Fresh19855 terminal0:28 exact primary/native2,
+/private/tmp/suss-pr108-review-oracle28.log. They cover direct priority without
+root lookup, default root once, target-before-root effects, root restoration,
+throw recovery and zero-root hash not allocating a UID. Native67088 terminal0:
+3 tests, /private/tmp/suss-pr108-review-native3.log; extra guard preserves
+captured dispatcher/owner/provider across forced GC and live root redefinition,
+restores original root and UID, and rejects a thrown target before root effects.
+Compiler35764 terminal0/1, /private/tmp/suss-pr108-review-compiler.log.
+Python48498 terminal0/81, /private/tmp/suss-pr108-review-python.log; import101/
+setup5/diff checks pass. No provisional failures, skipped results or changed
+original expectations. PR107's exact IFn strict-arity boundary remains unchanged.
+
+Root full82236 terminal0/all handles terminal before explicit slot release.
+Reviewer required full78254 is live /private/tmp/suss-pr108-review-full.log,
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2; no RUSTFLAGS. Reviewer
+retains exclusive heavy slot until full/all handles terminal, then commit/push
+review evidence. Exact reviewed-head CI gates readiness; no merges, issue
+closure or milestone acceptance. Next complete public hash Date/case branches,
+ordered/unordered composition, remaining collections/macros and M2–M9 gates.
+
+
+Independent full78254 terminal0; inspected /private/tmp/suss-pr108-review-full.log
+through final reader doc tests. Required shared-target/build2 workspace --locked/
+--test-threads=2 baseline passes, including default3/28, ABI45, all unchanged
+reviewed parent corpora and exact IFn strict-arity boundary. Existing manual
+ignores and diagnostic9passes/7knownfailures remain unchanged. All reviewer
+handles19855/48498/67088/35764/78254 terminal. Reviewer releases heavy slot after
+review evidence push; root must gate readiness on successful exact reviewed-head
+CI. No merge, issue closure or milestone acceptance.
+
+
+### PR108 final-head CI timeout correction — 2026-10-01
+
+Exact reviewed707b5b609fa139ee033f62f4424ca8b78c6b49c4 run36861360401
+attempts1 and2 are authoritative completed CANCELLED, not passing CI.
+Attempt1 required workspace step reported success after24m29s, but the overall
+job elapsed25m03s and was cancelled. Attempt2 job elapsed25m15s and cancelled
+the required step after24m39s. The25-minute job budget leaves insufficient
+room for checkout/toolchain/provenance and cleanup. Independent followup raises
+only timeout-minutes25→35 with the same explanatory comment already reviewed
+in PR110f7841dd. No checks, worker limits or test commands removed or reduced.
+
+Production, runtime artifacts, compiler/native/Python tests and oracle corpus
+bytes are unchanged from707b5b6, verified by scoped Git diff. Thus prior reviewer
+full78254 remains applicable to the identical tested code, but it is not a fresh
+run at this followup commit. Root owns the heavy slot (publichash full61362);
+no cargo/JVM/Node process was started for this static workflow/evidence fix.
+Fresh exact final-head CI is mandatory; draft remains, no readiness/merge claim.
+
+
+### PR108 retargeted stack rebase — 2026-10-01
+
+User reported merging a large stack as#109. Root GitHub audit found no#109
+and found#96–107 merged into the stack branch while#93–95 remain open and main
+still ends at#91. Reviewer independently verified#107 MERGED at13:51:09Z and
+#108 OPEN with auto-retargeted base portable/core-bitwise-hash/CONFLICTING.
+Fetched base015767ae44b5e2739782fb979f6324c46a3db9eb has an exactly identical
+tree to reviewed1077b5307849aa641f0fabe26f5257335526f48fa3b. Rebased only the
+five PR108 commits with --onto015767ae 7b530784; no conflicts. Entire rebased
+tree was byte-identical to reviewedc6cc97b before this evidence append.
+Scoped diff proves all production/tests/oracles/runtime/workflow/lock bytes remain
+identical after this append, so prior local baseline applies to unchanged code,
+not a newly executed full at this commit. No heavy processes started; root keeps
+the exclusive slot. Push uses exact old-head force-with-lease. Fresh final-head
+CI remains required; no readiness/merge/issue or milestone closure claim.
+
+
+### PR108 full-test success cancelled during cache cleanup — 2026-10-01
+
+Exact23fe2528782d28e60901621fe7dd1e805ae91a78 CI36872972201 completed CANCELLED.
+Independent annotation inspection confirms: "The job has exceeded the maximum
+execution time of 35m0s". Setup/provenance succeeded in29s; required workspace
+step succeeded14:01:55–14:36:33 (34m38s), including final reader doc tests.
+Post rust-cache14:36:33–14:36:39 was cancelled while tar/zstd cleanup remained;
+job elapsed35m17s. Full log /private/tmp/suss-pr108-ci35-cancelled.log preserved.
+This is a job-budget failure, not a passing final-head run or a hidden test error.
+
+Independent correction increases only job timeout35→60 minutes, allowing
+substantial runner/cache variance after two observed full-step durations24m29s
+and34m38s. Retains every enabled check, locked command, two build workers and
+two test threads; no production/test/runtime/oracle/lock bytes changed relative
+reviewed23fe252. Prior local full78254 still covers identical tested code, not a
+fresh local execution for this static fix. No cargo/JVM/Node process started;
+root retains exclusive heavy slot/full22313. Descendants are not rebased here.
+Fresh exact-head CI mandatory before readiness; no merge or milestone claim.
+
+
+### PR108 rebase onto reviewed PR95 CI fix — 2026-10-01
+
+Rebased only PR108 commits from oldbase015767ae onto independently reviewed
+PR95head447bed49003938ea69fd5ff752b69a92330c9ba2. Preserved its complete
+26-line expanded-baseline review evidence and every PR108 evidence section.
+Resolved workflow conflict to exact reviewed7ffad606 bytes: final budget60;
+PR95ancestor retains its own35-minute change. Scoped diff proves crates/scripts/
+runtime/tests/oracles/workflow/Cargo/lock bytes identical to7ffad606 after rebase.
+Only handoff gains PR95 evidence and this record; no fresh local full claimed.
+No heavy runs or descendant changes. Push uses exact7ffad606 force-with-lease;
+fresh reviewed-head CI remains required before readiness, no merge claim.

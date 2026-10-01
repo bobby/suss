@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8a808825ab5fd049e3f1d28932a655074c2d1930a2b2175080edf16f78734951",
+  "replacement": "(def root-obj (fn [] (suss.bootstrap/object-default-prototype)))",
+  "rationale": "Explicit private root-object adapter returns the runtime-owned canonical Object prototype corresponding to the pinned Function-to-Object prototype chain. This replaces host prototype traversal with existing descriptor-backed storage, preserving identity and the default IHash zero special case. General host Function/Object interoperability and private-var metadata remain unfinished."
+}

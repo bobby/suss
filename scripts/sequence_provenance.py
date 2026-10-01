@@ -22,12 +22,38 @@ def verify_payload(record, source, loader):
         original[bounds] = source[form.start:form.end]
     expected = []
     for statement in record['statements']:
-        exact(statement, 'source line end-line sha256', 'sequence statement')
+        required = 'source line end-line sha256'
+        exact(statement, required + (' patch patch-sha256' if 'patch' in statement else ''), 'sequence statement')
         if statement['source'] != 'clojurescript/src/main/cljs/cljs/core.cljs':
             raise ValueError('unexpected sequence source')
         text = original.get((statement['line'], statement['end-line']))
         if text is None or hashlib.sha256(text.encode()).hexdigest() != statement['sha256']:
             raise ValueError('sequence statement is not a complete matching source form')
+        if 'patch' in statement:
+            patch_bytes = repository_file(ROOT, statement['patch']).read_bytes()
+            if hashlib.sha256(patch_bytes).hexdigest() != statement['patch-sha256']:
+                raise ValueError('sequence setup patch file hash mismatch')
+            patch = json_data(patch_bytes)
+            exact(patch, 'schema source-sha256 replacement rationale', 'sequence setup patch')
+            if type(patch['schema']) is not int or patch['schema'] != 1:
+                raise ValueError('unsupported sequence setup patch schema')
+            if patch['source-sha256'] != statement['sha256']:
+                raise ValueError('sequence setup patch source hash is stale')
+            if not isinstance(patch['rationale'], str) or not patch['rationale'].strip():
+                raise ValueError('sequence setup patch rationale is required')
+            replacement = patch['replacement']
+            if not isinstance(replacement, str):
+                raise ValueError('sequence setup replacement must be source text')
+            forms = Scanner(replacement).all()
+            # Standalone adaptations preserve the form head and target; named
+            # declarations are instead checked by core_import.adapt_form.
+            originals = Scanner(text).all()
+            if (len(forms) != 1 or forms[0].kind != 'list'
+                    or len(forms[0].children) < 2
+                    or [replacement[x.start:x.end] for x in forms[0].children[:2]]
+                    != [text[x.start:x.end] for x in originals[0].children[:2]]):
+                raise ValueError('sequence setup patch must preserve one complete form and target')
+            text = replacement
         expected.append(text)
     actual = [loader[form.start:form.end] for form in Scanner(loader).all()]
     if actual != expected:

@@ -108,6 +108,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::Array => {}
                         Nominal::LanguageError => { names.insert("language-error-new"); }
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
+                        Nominal::NativeObjectDefaultPrototype => { names.insert("native-object-default-prototype"); }
                         Nominal::NativeObjectGet => { names.insert("native-object-property-get"); }
                         Nominal::NativeObjectSet => { names.insert("native-object-property-set"); }
                         Nominal::NativeObjectStrictSet => { names.insert("native-object-property-set-strict"); }
@@ -241,7 +242,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "source-array-length-args"
             | "source-array-get-indices"
             | "source-array-set-indices" => (vec![VALUE], vec![VALUE]),
-            "arity-error" | "native-object-factory-function" => (vec![], vec![VALUE]),
+            "arity-error" | "native-object-factory-function" | "native-object-default-prototype" => (vec![], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
             "closure-new" => (
                 vec![
@@ -935,6 +936,7 @@ fn emit_function(
                         Nominal::Class
                         | Nominal::LanguageError
                         | Nominal::NativeObjectFactory
+                        | Nominal::NativeObjectDefaultPrototype
                         | Nominal::NativeObjectGet
                         | Nominal::NativeObjectSet
                         | Nominal::NativeObjectStrictSet
@@ -952,6 +954,7 @@ fn emit_function(
                                 Nominal::Class => "class-value-new",
                                 Nominal::LanguageError => "language-error-new",
                                 Nominal::NativeObjectFactory => "native-object-factory-function",
+                                Nominal::NativeObjectDefaultPrototype => "native-object-default-prototype",
                                 Nominal::NativeObjectGet => "native-object-property-get",
                                 Nominal::NativeObjectSet => "native-object-property-set",
                                 Nominal::NativeObjectStrictSet => "native-object-property-set-strict",

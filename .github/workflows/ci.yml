@@ -14,7 +14,8 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    # The full workspace step took 34m38s; allow runner variance and cache cleanup.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:

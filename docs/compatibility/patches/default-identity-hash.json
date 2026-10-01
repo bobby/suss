@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8e6a532afc21e94a1abf91d7dc055ea532e9bf29112d99802da268808a5a0553",
+  "replacement": "(extend-type default\n  IHash\n  (-hash [o]\n    (if (identical? o (root-obj))\n      0\n      (suss.bootstrap/identity-uid o))))",
+  "rationale": "Retain the complete pinned default IHash extension and root-object zero branch. Replace only Closure getUid with the original owner-held UID intrinsic; dispatch and the live root-obj call remain source algorithms. Scalar/internal unsupported owners retain typed adapter errors; public hash and complete collection hashing remain subsequent work."
+}

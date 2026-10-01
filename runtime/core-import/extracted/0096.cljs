@@ -6,24 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-;; Retained standalone upstream forms: canonical singleton and nil count extension.
-(set! (.-EMPTY List) (EmptyList. nil))
-
-(extend-type nil
-  ICounted
-  (-count [_] 0))
-
-(extend-type number
-  IEquiv
-  (-equiv [x o] (identical? x o)))
-
-(extend-type default
-  IEquiv
-  (-equiv [x o] (identical? x o)))
-
-(extend-type default
-  IHash
-  (-hash [o]
-    (if (identical? o (root-obj))
-      0
-      (suss.bootstrap/identity-uid o))))
+(defn- root-obj
+  []
+  (->> js/Function
+    (.getPrototypeOf js/Object)
+    (.getPrototypeOf js/Object)))

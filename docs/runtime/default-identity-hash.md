@@ -1,0 +1,78 @@
+# Retained default identity hashing
+
+This work retains the complete pinned default IHash extension at core.cljs
+1492–1497. Its source branches still distinguish the root Object prototype from
+ordinary owners. An explicit standalone patch replaces only goog/getUid with
+the GC-owned identity adapter. The retained private root-obj declaration uses
+a zero-argument storage adapter to the existing canonical Object prototype.
+There is no new registry or runtime layout change beyond ABI2 from PR107.
+
+The provenance verifier checks the complete source form, exact source hash,
+explicit patch, retained form head/target, final loader bytes and upstream EPL
+notice. Core extraction now selects97 forms/101 licensed artifacts; review
+statuses remain partial (190 reviewed/875 unassessed). No public hash, collection
+composition, complete metadata or milestone acceptance is claimed.
+
+Twenty-eight observations now match fresh pinned ClojureScript and independent
+native decoding, preserving all original twenty-one. The corpus covers root-object
+zero, default identity, mutation, errors, class/protocol owners, metadata, direct
+method priority and live root lookup. Native3 and compiler1 focused tests pass,
+including typed scalar-owner errors, effects, GC recovery, compile atomicity and
+HIR/IR rejection. The fresh oracle emits expected private root-obj access warnings
+for development-only probes; no shipped Java dependency is introduced.
+
+This branch is rebased onto independently reviewed PR107 commit7b530784. Focused
+parent protocol/identity/sequence tests pass, including its unchanged exact IFn
+strict-arity boundary. Python81/import101/setup5/reviews190+875/diff checks pass.
+Required full82236 ended0 through final doc tests, including all45 ABI tests,
+/private/tmp/suss-default-hash-full.log. Existing manual/diagnostic boundaries
+remain explicit. Independent PR review/fixes and exact reviewed-head CI remain
+pending. No milestone is complete from these tests.
+
+Required validation:
+
+```
+sh scripts/test-default-hash-oracle.sh
+cargo test -p suss-cli --test portable_default_hash --locked -- --test-threads=2
+python3 scripts/core_import.py --check
+python3 scripts/sequence_provenance.py
+python3 -m unittest discover -s scripts -p 'test_*.py'
+cargo test --workspace --locked -- --test-threads=2
+```
+
+Next integrate the full public scalar hash and ordered/unordered composition,
+then the remaining persistent collection types, metadata/transients and release
+gates. The public hash's Date branch and source case macro dependencies require
+explicit handling; do not remove those branches to certify a smaller function.
+Issue98 continues to defer algorithm evaluation.
+
+Independent PR108 review found no significant production defect. Seven fresh
+probes establish direct methods bypass root lookup, default lookup once,
+argument-before-root effects, root restoration/throw recovery and zero-root
+hashing without UID allocation. A third native test preserves a captured
+dispatcher and owner across forced-GC fragments, observes root redefinition,
+restores the provider and verifies a thrown target prevents root effects.
+All original cases and parent reference observations remain unchanged.
+Fresh19855 and focused67088/35764 ended0; Python48498 ended0 with81 tests.
+The required independent full78254 is running; final reviewed-head CI remains
+a separate readiness gate.
+
+Independent full78254 ended0 through final reader doc tests:
+/private/tmp/suss-pr108-review-full.log. All required enabled suites pass,
+including the original parent corpora and exact strict-arity boundary; existing
+manual ignores and diagnostic known failures remain explicit. All reviewer
+handles19855/48498/67088/35764/78254 are terminal.
+
+Exact reviewed-head CI36861360401 attempts1/2 ended cancelled at the25-minute
+job boundary. Attempt1's required test step reported success, but the overall
+run did not pass. The followup extends only the job budget to35 minutes; all
+checks/worker limits remain. Tested production/test/corpus bytes are identical
+to707b5b6, so prior local full78254 applies to the unchanged code; no fresh local
+full is claimed for this workflow-only fix. Fresh exact-head CI remains required.
+
+The subsequent exact23fe252 run36872972201 also cancelled at its35-minute
+job budget, during cache cleanup after the required workspace step succeeded
+in34m38s. Its timeout annotation and full log were independently inspected.
+The job budget is now60 minutes to allow runner/cache variance while preserving
+all checks and workers. Production/test bytes and prior local evidence remain
+unchanged; fresh exact-head CI is still required, and cancellation is not success.

@@ -1,0 +1,230 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "root-object-zero",
+      "source": "(= (-hash (rootobj)) 0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "object-prototype-zero",
+      "source": "(let [f js-obj o (f)] (= (-hash (.-__proto__ o)) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "function-stable",
+      "source": "(let [f (fn [] 17)] (= (-hash f) (-hash f)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "function-uid",
+      "source": "(let [f (fn [] 17)] (= (-hash f) (uid f)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "function-distinct",
+      "source": "(not (= (-hash (fn [] 17)) (-hash (fn [] 17))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-stable",
+      "source": "(let [a (array 1)] (= (-hash a) (-hash a)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-distinct",
+      "source": "(not (= (-hash (array 1)) (-hash (array 1))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "array-mutation",
+      "source": "(let [a (array 1) h (-hash a)] (aset a 0 19) (= h (-hash a)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "protocol-stable",
+      "source": "(= (-hash IHash) (-hash IHash))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "class-stable",
+      "source": "(= (-hash List) (-hash List))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "native-object-distinct",
+      "source": "(let [f js-obj] (not (= (-hash (f)) (-hash (f)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "error-stable",
+      "source": "(let [e (error \"x\")] (= (-hash e) (-hash e)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "exception-info-stable",
+      "source": "(let [e (new ExceptionInfo \"x\" nil)] (= (-hash e) (-hash e)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "default-satisfies",
+      "source": "(satisfies? IHash (fn [] 1))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "default-not-direct",
+      "source": "(not (implements? IHash (fn [] 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "metafn-uid",
+      "source": "(let [f (with-meta (fn [] 17) false)] (= (-hash f) (uid f)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "metadata-kept",
+      "source": "(let [f (with-meta (fn [] 17) false)] (-hash f) (= (meta f) false))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "source-default-live-root",
+      "source": "(let [f js-obj o (f)] (with-redefs [cljs.core/root-obj (fn [] o)] (= (-hash o) 0)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-hash-precedes-default",
+      "source": "(do (deftype DefaultHashProbe [] IHash (-hash [o] 23)) (= (-hash (DefaultHashProbe.)) 23))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "captured-dispatch-live-root",
+      "source": "(let [h -hash f js-obj o (f)] (with-redefs [cljs.core/root-obj (fn [] o)] (= (h o) 0)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "root-uid-independent",
+      "source": "(let [r (rootobj)] (uid r) (= (-hash r) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-hash-avoids-root-lookup",
+      "source": "(do (deftype ReviewHashDirect [] IHash (-hash [o] 37)) (with-redefs [cljs.core/root-obj (fn [] (throw (error \"unexpected root\")))] (= (-hash (ReviewHashDirect.)) 37)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "root-restored-after-redefinition",
+      "source": "(let [r (rootobj) f js-obj o (f)] (with-redefs [cljs.core/root-obj (fn [] o)] (-hash o)) (= (-hash r) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "default-root-called-once",
+      "source": "(let [f js-obj o (f) calls (array 0)] (with-redefs [cljs.core/root-obj (fn [] (aset calls 0 (inc (aget calls 0))) o)] (and (= (-hash o) 0) (= (aget calls 0) 1))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "argument-before-root-effects",
+      "source": "(let [f js-obj o (f) effects (array 0)] (with-redefs [cljs.core/root-obj (fn [] (aset effects 0 (+ (* (aget effects 0) 10) 2)) o)] (-hash (do (aset effects 0 1) o)) (= (aget effects 0) 12)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "root-throws-and-recovers",
+      "source": "(let [f js-obj o (f)] (try (with-redefs [cljs.core/root-obj (fn [] (throw (error \"root\")))] (-hash o)) (catch :default e nil)) (= (-hash o) (uid o)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "root-zero-does-not-consume-uid",
+      "source": "(let [a (fn [] 1) b (fn [] 2) first-id (uid a)] (-hash (rootobj)) (= (uid b) (inc first-id)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-hash-preserves-target-effects",
+      "source": "(do (deftype ReviewHashEffects [n] IHash (-hash [o] n)) (let [a (array 0)] (and (= (-hash (do (aset a 0 (inc (aget a 0))) (ReviewHashEffects. 41))) 41) (= (aget a 0) 1))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}
