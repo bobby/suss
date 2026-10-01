@@ -6,14 +6,15 @@ use wasm_encoder::*;
 mod arithmetic;
 mod arrays;
 mod closure_properties;
+mod comparisons;
 mod dynamic;
 mod exception_info;
 mod exceptions;
+mod named_properties;
 mod native_protocols;
 mod nominal;
 mod numeric;
 mod predicates;
-mod comparisons;
 
 pub const VERSION: u32 = 1;
 // Internal constructor/ordinary-type-call undefined, distinct from source nil.
@@ -613,6 +614,7 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(exception_info::functions(&mut b));
     arithmetic_functions.extend(predicates::functions(&mut b));
     arithmetic_functions.extend(comparisons::functions(&mut b));
+    named_properties::functions(&mut b);
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
     let mut tags = TagSection::new();

@@ -177,6 +177,222 @@
         "tag": "f64",
         "bits": "4026000000000000"
       }
+    },
+    {
+      "id": "named-publication-preserves-native-protocol",
+      "source": "(do (defprotocol PropertyNative (property-native [value])) (extend-type number PropertyNative (property-native [value] (+ value 1))) (set! (.-EMPTY PropertyNative) 17) (set! (.-cache property-native) 19) (if (satisfies? PropertyNative 7) (property-native 7) 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "native-extension-preserves-named-properties",
+      "source": "(do (extend-type string PropertyNative (property-native [value] 23)) (+ (.-EMPTY PropertyNative) (.-cache property-native)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4042000000000000"
+      }
+    },
+    {
+      "id": "native-number-dispatch-after-name-write",
+      "source": "(property-native 11)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "native-string-dispatch-after-name-write",
+      "source": "(property-native \"x\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "named-overwrite-preserves-native-method",
+      "source": "(do (set! (.-cache property-native) 29) (+ (property-native 7) (.-cache property-native)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4042800000000000"
+      }
+    },
+    {
+      "id": "captured-closure-environment-preserved",
+      "source": "(do (def property-captured (let [n 31] (fn [x] (+ n x)))) (set! (.-cache property-captured) 41) (property-captured 5))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4042000000000000"
+      }
+    },
+    {
+      "id": "nested-property-value-remains-rooted",
+      "source": "(do (set! (.-nested property-captured) property-old-class) (.-value (.-EMPTY (.-nested property-captured))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    },
+    {
+      "id": "field-name-length-is-not-array-length",
+      "source": "(do (deftype NamedLength [length]) (.-length (NamedLength. 43)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045800000000000"
+      }
+    },
+    {
+      "id": "dynamic-undefined-property-is-catchable",
+      "source": "(do (def property-uninitialized) (try ((fn [owner] (.-EMPTY owner)) property-uninitialized) (catch :default e 47)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4047800000000000"
+      }
+    },
+    {
+      "id": "zero-and-false-property-values",
+      "source": "(do (set! (.-zero property-captured) 0) (set! (.-falseValue property-captured) false) (if (identical? false (.-falseValue property-captured)) (.-zero property-captured) 99))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "native-number-method-visible-by-name",
+      "source": "((.-number property-native) 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "native-number-marker-visible-by-name",
+      "source": "(.-number PropertyNative)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "native-number-marker-write-controls-membership",
+      "source": "(do (set! (.-number PropertyNative) false) (native-satisfies? PropertyNative 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "native-number-method-write-controls-dispatch",
+      "source": "(do (set! (.-number PropertyNative) true) (set! (.-number property-native) (fn [value] (+ value 5))) (property-native 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "native-default-marker-is-public-name",
+      "source": "(do (set! (.-_ PropertyNative) true) (native-satisfies? PropertyNative property-object))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "native-zero-marker-is-falsy",
+      "source": "(do (set! (.-_ PropertyNative) false) (set! (.-number PropertyNative) 0) (native-satisfies? PropertyNative 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "native-negative-zero-marker-is-falsy",
+      "source": "(do (set! (.-_ PropertyNative) false) (set! (.-number PropertyNative) -0.0) (native-satisfies? PropertyNative 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "native-nan-marker-is-falsy",
+      "source": "(do (set! (.-_ PropertyNative) false) (set! (.-number PropertyNative) (/ 0 0)) (native-satisfies? PropertyNative 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "native-empty-string-marker-is-falsy",
+      "source": "(do (set! (.-_ PropertyNative) false) (set! (.-number PropertyNative) \"\") (native-satisfies? PropertyNative 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "native-nil-marker-is-falsy",
+      "source": "(do (set! (.-_ PropertyNative) false) (set! (.-number PropertyNative) nil) (native-satisfies? PropertyNative 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "native-falsy-specific-marker-uses-default",
+      "source": "(do (set! (.-_ PropertyNative) true) (native-satisfies? PropertyNative 7))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "native-truthy-string-marker",
+      "source": "(do (set! (.-_ PropertyNative) false) (set! (.-number PropertyNative) \"yes\") (native-satisfies? PropertyNative 7))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "native-false-method-method-rejects-call",
+      "source": "(do (set! (.-_ property-native) (fn [value] 53)) (set! (.-number property-native) false) (try (property-native 7) (catch :default e 53)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404a800000000000"
+      }
+    },
+    {
+      "id": "native-zero-method-method-rejects-call",
+      "source": "(do (set! (.-_ property-native) (fn [value] 53)) (set! (.-number property-native) 0) (try (property-native 7) (catch :default e 53)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404a800000000000"
+      }
+    },
+    {
+      "id": "native-empty-string-method-method-rejects-call",
+      "source": "(do (set! (.-_ property-native) (fn [value] 53)) (set! (.-number property-native) \"\") (try (property-native 7) (catch :default e 53)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404a800000000000"
+      }
+    },
+    {
+      "id": "native-undefined-marker-is-falsy",
+      "source": "(do (set! (.-_ PropertyNative) false) (set! (.-number PropertyNative) property-uninitialized) (native-satisfies? PropertyNative 7))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "native-undefined-method-uses-default",
+      "source": "(do (set! (.-number property-native) property-uninitialized) (property-native 7))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404a800000000000"
+      }
     }
   ]
 }

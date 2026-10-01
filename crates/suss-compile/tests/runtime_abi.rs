@@ -2227,3 +2227,157 @@ fn runtime_abi_source_array_bad_inputs_and_capacity_fail_as_language_errors() {
     assert!(error.is::<wasmtime::ThrownException>());
     assert!(!error.is::<wasmtime::Trap>());
 }
+
+#[test]
+fn runtime_abi_named_storage_preserves_native_keys_and_rejects_malformed_tables() {
+    fn key(store: &mut Store<()>, runtime: Instance, text: &str) -> Val {
+        let units = text.encode_utf16().collect::<Vec<_>>();
+        let value = nominal_value(
+            store,
+            runtime,
+            "string-new",
+            &[Val::I32(units.len() as i32)],
+        );
+        let array = value
+            .unwrap_anyref()
+            .unwrap()
+            .as_array(&*store)
+            .unwrap()
+            .unwrap();
+        for (index, unit) in units.into_iter().enumerate() {
+            array
+                .set(&mut *store, index as u32, Val::I32(unit as i32))
+                .unwrap();
+        }
+        value
+    }
+    fn language_error(store: &mut Store<()>, runtime: Instance, name: &str, args: &[Val]) {
+        let mut results = if name == "property-find" {
+            vec![Val::I32(0)]
+        } else {
+            vec![Val::null_any_ref()]
+        };
+        let error = runtime
+            .get_func(&mut *store, name)
+            .unwrap()
+            .call(&mut *store, args, &mut results)
+            .unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{name}: {error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        let exception = store.take_pending_exception().unwrap();
+        let tag = exception.tag(&mut *store).unwrap();
+        assert!(wasmtime::Tag::eq(
+            &tag,
+            &runtime.get_tag(&mut *store, "language-exception").unwrap(),
+            &*store
+        ));
+    }
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let owner = nominal_value(&mut store, runtime, "predicate-nil", &[]);
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let value = nominal_value(
+        &mut store,
+        runtime,
+        "number-box",
+        &[Val::F64(17.0f64.to_bits())],
+    );
+    let name = key(&mut store, runtime, "cache");
+    let other_name = key(&mut store, runtime, "cache");
+    nominal_value(
+        &mut store,
+        runtime,
+        "closure-property-set",
+        &[owner.clone(), Val::I32(0), value.clone()],
+    );
+    nominal_value(
+        &mut store,
+        runtime,
+        "named-property-set",
+        &[owner.clone(), name.clone(), nil.clone()],
+    );
+    store.gc(None).unwrap();
+    let actual = nominal_value(
+        &mut store,
+        runtime,
+        "named-property-get",
+        &[owner.clone(), other_name.clone()],
+    );
+    assert_eq!(
+        actual
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&store)
+            .unwrap()
+            .unwrap()
+            .get_i32(),
+        0
+    );
+    let actual = nominal_value(
+        &mut store,
+        runtime,
+        "closure-property-get",
+        &[owner.clone(), Val::I32(0)],
+    );
+    let fields = actual
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap()
+        .fields(&mut store)
+        .unwrap()
+        .collect::<Vec<_>>();
+    assert!(matches!(fields.as_slice(), [Val::F64(bits)] if *bits == 17.0f64.to_bits()));
+    let empty = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    for stride in [0, 3] {
+        language_error(
+            &mut store,
+            runtime,
+            "property-find",
+            &[empty.clone(), name.clone(), Val::I32(stride)],
+        );
+    }
+    language_error(
+        &mut store,
+        runtime,
+        "named-property-get",
+        &[owner.clone(), nil.clone()],
+    );
+    language_error(
+        &mut store,
+        runtime,
+        "named-property-set",
+        &[nil.clone(), name.clone(), value.clone()],
+    );
+    // A host-forged opaque key is neither a native-kind key nor a UTF-16 name.
+    let payload = nominal_value(
+        &mut store,
+        runtime,
+        "closure-property-fields",
+        &[owner.clone()],
+    );
+    let table = payload
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap()
+        .get(&mut store, 1)
+        .unwrap();
+    table
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap()
+        .set(&mut store, 0, value)
+        .unwrap();
+    language_error(&mut store, runtime, "named-property-get", &[owner, name]);
+}

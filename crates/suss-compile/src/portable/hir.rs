@@ -182,6 +182,8 @@ pub enum Nominal {
     Instance,
     Field(usize),
     FieldSet(usize),
+    NamedGet,
+    NamedSet,
     Key(usize),
     Dispatcher,
     Set,
@@ -203,6 +205,8 @@ impl Nominal {
         count <= i32::MAX as usize
             && match self {
                 Self::Array => true,
+                Self::NamedGet => count == 2 && arguments[1] == Type::String,
+                Self::NamedSet => count == 3 && arguments[1] == Type::String,
                 Self::LiveDispatcher | Self::NativeSet(_) => count == 2,
                 Self::NativeMarker(_) => count == 1,
                 Self::Descriptor => arguments.iter().all(|ty| *ty == Type::String),
@@ -815,6 +819,20 @@ impl Analyzer {
             },
         })
     }
+    fn property_name(form: &Form, operator: &str) -> Result<String, Diagnostic> {
+        let name = &operator[2..];
+        if name.is_empty()
+            || !name
+                .bytes()
+                .all(|c| c.is_ascii_alphanumeric() || c == b'_' || c == b'$')
+        {
+            return Err(fail(
+                form.span.clone(),
+                "Computed or munged property names are not implemented yet",
+            ));
+        }
+        Ok(name.into())
+    }
     fn list(
         &mut self,
         form: &Form,
@@ -840,6 +858,18 @@ impl Analyzer {
                 ty: Type::Bool,
                 kind: Expression::NilTest(Box::new(self.form(&args[0])?)),
             });
+        }
+        if bare && symbol.name.starts_with(".-") {
+            if args.len() != 1 || matches!(args[0].kind, Kind::Nil) {
+                return Err(fail(
+                    form.span.clone(),
+                    "Named property read requires one non-literal-nil owner",
+                ));
+            }
+            let key = Self::property_name(form, &symbol.name)?;
+            let owner = self.form(&args[0])?;
+            let key = self.literal_form(form, Literal::String(key.encode_utf16().collect()));
+            return Ok(self.nominal(form, Nominal::NamedGet, vec![owner, key]));
         }
         if symbol.name.ends_with('.') && symbol.name.len() > 1 {
             let mut constructor = items[0].clone();
@@ -907,6 +937,28 @@ impl Analyzer {
         if bare && symbol.name == "set!" {
             if args.len() != 2 {
                 return Err(fail(form.span.clone(), "set! requires a var and value"));
+            }
+            if let Kind::List(target) = &args[0].kind {
+                if let Some(Form {
+                    kind: Kind::Symbol(name),
+                    ..
+                }) = target.first()
+                {
+                    if name.namespace.is_none() && name.name.starts_with(".-") {
+                        if target.len() != 2 || matches!(target[1].kind, Kind::Nil) {
+                            return Err(fail(
+                                args[0].span.clone(),
+                                "Named property assignment requires one non-literal-nil owner",
+                            ));
+                        }
+                        let key = Self::property_name(&args[0], &name.name)?;
+                        let owner = self.form(&target[1])?;
+                        let key = self
+                            .literal_form(&args[0], Literal::String(key.encode_utf16().collect()));
+                        let value = self.form(&args[1])?;
+                        return Ok(self.nominal(form, Nominal::NamedSet, vec![owner, key, value]));
+                    }
+                }
             }
             if let Kind::Symbol(name) = &args[0].kind {
                 if name.namespace.is_none() && !self.locals.contains_key(&name.name) {

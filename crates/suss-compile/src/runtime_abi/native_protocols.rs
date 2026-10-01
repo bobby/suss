@@ -79,6 +79,60 @@ pub(super) fn functions(
     }
     body.push(I32Const(5));
     let kind = b.function("protocol-native-kind", &[VALUE], &[ValType::I32], &body);
+    // native-satisfies? is defined under *unchecked-if*: its property tests use
+    // JS truthiness, while ordinary portable if keeps ClojureScript truthiness.
+    let mut body = vec![];
+    for sentinel in [0, 2, UNDEFINED] {
+        body.extend([
+            LocalGet(0),
+            I32Const(sentinel),
+            RefI31,
+            RefEq,
+            If(BlockType::Empty),
+            I32Const(0),
+            Return,
+            End,
+        ]);
+    }
+    body.extend([
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        If(BlockType::Empty),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(NUMBER)),
+        StructGet {
+            struct_type_index: NUMBER,
+            field_index: 0,
+        },
+        LocalSet(1),
+        LocalGet(1),
+        F64Const(0.0.into()),
+        F64Ne,
+        LocalGet(1),
+        LocalGet(1),
+        F64Eq,
+        I32And,
+        Return,
+        End,
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(STRING)),
+        If(BlockType::Empty),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(STRING)),
+        ArrayLen,
+        I32Const(0),
+        I32Ne,
+        Return,
+        End,
+        I32Const(1),
+    ]);
+    let property_truthy = b.function_with_locals(
+        "protocol-native-property-truthy",
+        &[VALUE],
+        &[ValType::I32],
+        &[(1, ValType::F64)],
+        &body,
+    );
     let property_get = b.names["closure-property-get"];
     let property_set = b.names["closure-property-set"];
     let mut body = vec![
@@ -248,6 +302,11 @@ pub(super) fn functions(
         I32Const(0),
         RefI31,
         RefEq,
+        LocalGet(3),
+        I32Const(UNDEFINED),
+        RefI31,
+        RefEq,
+        I32Or,
         If(BlockType::Empty),
         LocalGet(4),
         I32Const(7),
@@ -361,9 +420,8 @@ pub(super) fn functions(
         Call(property_get),
         LocalSet(2),
         LocalGet(2),
-        I32Const(0),
-        RefI31,
-        RefEq,
+        Call(property_truthy),
+        I32Eqz,
         If(BlockType::Empty),
         LocalGet(0),
         I32Const(7),
@@ -371,10 +429,7 @@ pub(super) fn functions(
         LocalSet(2),
         End,
         LocalGet(2),
-        I32Const(0),
-        RefI31,
-        RefEq,
-        I32Eqz,
+        Call(property_truthy),
     ]);
     let satisfies = b.function_with_locals(
         "protocol-native-satisfies",

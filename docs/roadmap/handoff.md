@@ -5215,3 +5215,81 @@ observations, plus full workspace results. PR89 was marked ready without merging
 PR description records final run and independent review. The property preparation
 remains local and explicitly native-red; next execute its actual implementation,
 not claim the preparation as passing acceptance. All local graphs are terminal.
+
+
+## Named-property implementation — 2026-09-30
+
+Previous goal turn made authoritative progress: PR89 imports five complete source
+protocols, independently reviewed09ae837 and ready with inspected finalCI36795130080;
+no merge. Its local property preparation78f0646 was a verified native-red regression.
+Revalidated this clean worktree and AGENTS/design/ROADMAP/inventory/handoff before
+implementation. All prior local graphs terminal; root owns exclusive test slot.
+
+Original checked storage now supports literal identifier .-name reads and set!
+for class/function owners and known instance fields, plus actual string/array
+length. Closure tables mix UTF-16 name keys with existing native-kind i31 keys0–7;
+callback environments, native guard range, ten shared types/globals and ABI version
+stay unchanged. Four appended checked helper exports; no owner registry or shipped
+JVM/Node. Munged/computed names, extra instance fields, length writes and unsupported
+owner shapes stay explicit. Source Object methods, full reflection/metadata and
+real persistent collections remain unfinished.
+
+Initial implementation42618 terminal0: original22 observations execute successfully
+under actual Wasm validation and GC. Added10 independent probes preserving original22:
+native/name entries and extensions, captured environments, nested owner roots,
+field named length, dynamic undefined errors and zero/false values. Fresh36222
+terminal0:32 exact primary/native2, /private/tmp/suss-named-property-final-primary.log.
+Intentional upstream ->PropertyProbe replacement warning remains retained.
+Command: `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-named-property-oracle.sh`.
+
+Added direct ABI malformed-key regression before correcting storage:22167 ended101
+because an opaque table key became missing-property success. Tightened find guards
+to UTF-16 or valid0–7 native keys. Focus91720 terminal0: forged keys/stride/owner/name
+errors are tagged language exceptions, never traps; native entries stay intact
+through GC. CLI guarded30237 terminal0: interfaces5/namedproperties2/indexedstrings2/
+mutablefields2/nativeprotocols11. Logs /private/tmp/suss-named-property-malformed-
+{red,fix}.log and /private/tmp/suss-named-property-guarded-cli.log.
+
+Two existing source reviews extended, overlay80/985; source artifacts stay30 with
+review hash only. Next full ABI/provenance and required workspace baseline, then
+independent PR review/fixes and exact final-head CI. No issue or milestone closure.
+Continue actual source Object methods/canonical empty list/List/EmptyList/Cons/
+IndexedSeq and hashing/reduction/rest/apply toward the full M2–M9 objective.
+
+
+### Public native property aliases and truthiness
+
+Live GitHub check retains PR85–89 open and unmerged; next PR bases on reviewed89.
+Added public native-name probes: fresh98120 certified37 primary observations but
+failed natively on property-native.number. Normalized the eight names to existing
+native slots;98035 then failed on false marker membership. The pin defines
+native-satisfies? under unchecked-if (JS property truthiness), while method macros
+explicitly check nil?. A provisional fallback expectation produced a primary
+TypeError; corrected probes catch noncallable method errors rather than reporting
+that failed expectation as success. Fresh89564 certified47 observations and
+retained the false-marker native failure. First helper build8437 failed to compile
+an encoder f64 literal; fixed its typed encoding. Fresh69752 certified49 primary
+observations and failed only native undefined-method fallback. Native membership
+now rejects nil/undefined/false/zero/NaN/empty strings, and method lookup falls back
+on nil/undefined alone. Ordinary portable conditional truthiness stays unchanged.
+
+Fresh98331 terminal0:49 exact primary observations and both native tests pass,
+/private/tmp/suss-named-property-final49-primary.log. Original22 and intermediate32
+expectations remain unchanged. Five named-storage helpers plus one membership
+helper; shared prelude/global/version unchanged. Alias fixes extend native protocol
+semantics only at verified boundaries. Source inventory80partial/985unassessed and
+30 retained source artifacts remain unchanged. Guarded/full validation and
+independent PR review/final-head CI are still required before readiness.
+
+
+Root final guards76636 terminal0: named properties2/native protocols11/interfaces5/
+mutable fields2/indexed strings2. Compiler28115 terminal0: ABI19/pipeline17/nominal5.
+Python38499 terminal0:71 tests; inventory1065/reviews80+985/core-import30/WIT15/6/
+numeric/offline10milestones39issues verified. Required full baseline33237 terminal0,
+all enabled workspace/doc tests pass; existing diagnostic differential9 pass/7fail
+and legacy/manual ignores remain explicit. Log
+/private/tmp/suss-named-property-root-baseline.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+All root local Cargo/JVM/Node graphs terminal; mandatory independent review may
+own the shared test slot next. No issue closure or merge. Next review/fix and
+require final-head CI, then continue retained Object methods and actual sequences.
