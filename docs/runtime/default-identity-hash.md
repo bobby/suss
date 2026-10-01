@@ -13,10 +13,10 @@ notice. Core extraction now selects97 forms/101 licensed artifacts; review
 statuses remain partial (190 reviewed/875 unassessed). No public hash, collection
 composition, complete metadata or milestone acceptance is claimed.
 
-Twenty-one observations now match fresh pinned ClojureScript and independent
-native decoding, preserving the original eighteen. The corpus covers root-object
+Twenty-eight observations now match fresh pinned ClojureScript and independent
+native decoding, preserving all original twenty-one. The corpus covers root-object
 zero, default identity, mutation, errors, class/protocol owners, metadata, direct
-method priority and live root lookup. Native2 and compiler1 focused tests pass,
+method priority and live root lookup. Native3 and compiler1 focused tests pass,
 including typed scalar-owner errors, effects, GC recovery, compile atomicity and
 HIR/IR rejection. The fresh oracle emits expected private root-obj access warnings
 for development-only probes; no shipped Java dependency is introduced.
@@ -45,3 +45,20 @@ then the remaining persistent collection types, metadata/transients and release
 gates. The public hash's Date branch and source case macro dependencies require
 explicit handling; do not remove those branches to certify a smaller function.
 Issue98 continues to defer algorithm evaluation.
+
+Independent PR108 review found no significant production defect. Seven fresh
+probes establish direct methods bypass root lookup, default lookup once,
+argument-before-root effects, root restoration/throw recovery and zero-root
+hashing without UID allocation. A third native test preserves a captured
+dispatcher and owner across forced-GC fragments, observes root redefinition,
+restores the provider and verifies a thrown target prevents root effects.
+All original cases and parent reference observations remain unchanged.
+Fresh19855 and focused67088/35764 ended0; Python48498 ended0 with81 tests.
+The required independent full78254 is running; final reviewed-head CI remains
+a separate readiness gate.
+
+Independent full78254 ended0 through final reader doc tests:
+/private/tmp/suss-pr108-review-full.log. All required enabled suites pass,
+including the original parent corpora and exact strict-arity boundary; existing
+manual ignores and diagnostic known failures remain explicit. All reviewer
+handles19855/48498/67088/35764/78254 are terminal.

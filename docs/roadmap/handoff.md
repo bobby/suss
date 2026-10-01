@@ -7587,3 +7587,45 @@ new probes are provisional pending certification. Root's cargo/oracle/push/creat
 handles57181/24294/13236/15708/82236/59134/72327 terminal. Heavy slot releases to
 reviewer after this evidence push. Exact reviewed-head CI and review fixes/full
 still gate readiness. No merges/issue closures/milestone acceptance.
+
+
+## Independent PR108 review — 2026-10-01
+
+Reviewedbefb2c0/root evidence9bb3f92 against independently reviewed1077b530784
+in isolated /private/tmp/suss-review-pr108 with actual detached upstreamc4295f30.
+Read accepted design/ROADMAP/inventory/handoff. Complete root/default IHash
+source, live root lookup, existing canonical prototype storage, zero-arity
+HIR/IR adapter, standalone hash-bound patch provenance and EPL artifacts
+inspected; no significant production defect found.
+
+Seven additive probes preserve all original21 source/reference objects and
+parent corpora. Fresh19855 terminal0:28 exact primary/native2,
+/private/tmp/suss-pr108-review-oracle28.log. They cover direct priority without
+root lookup, default root once, target-before-root effects, root restoration,
+throw recovery and zero-root hash not allocating a UID. Native67088 terminal0:
+3 tests, /private/tmp/suss-pr108-review-native3.log; extra guard preserves
+captured dispatcher/owner/provider across forced GC and live root redefinition,
+restores original root and UID, and rejects a thrown target before root effects.
+Compiler35764 terminal0/1, /private/tmp/suss-pr108-review-compiler.log.
+Python48498 terminal0/81, /private/tmp/suss-pr108-review-python.log; import101/
+setup5/diff checks pass. No provisional failures, skipped results or changed
+original expectations. PR107's exact IFn strict-arity boundary remains unchanged.
+
+Root full82236 terminal0/all handles terminal before explicit slot release.
+Reviewer required full78254 is live /private/tmp/suss-pr108-review-full.log,
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2; no RUSTFLAGS. Reviewer
+retains exclusive heavy slot until full/all handles terminal, then commit/push
+review evidence. Exact reviewed-head CI gates readiness; no merges, issue
+closure or milestone acceptance. Next complete public hash Date/case branches,
+ordered/unordered composition, remaining collections/macros and M2–M9 gates.
+
+
+Independent full78254 terminal0; inspected /private/tmp/suss-pr108-review-full.log
+through final reader doc tests. Required shared-target/build2 workspace --locked/
+--test-threads=2 baseline passes, including default3/28, ABI45, all unchanged
+reviewed parent corpora and exact IFn strict-arity boundary. Existing manual
+ignores and diagnostic9passes/7knownfailures remain unchanged. All reviewer
+handles19855/48498/67088/35764/78254 terminal. Reviewer releases heavy slot after
+review evidence push; root must gate readiness on successful exact reviewed-head
+CI. No merge, issue closure or milestone acceptance.

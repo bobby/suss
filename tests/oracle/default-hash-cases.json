@@ -169,6 +169,62 @@
         "tag": "bool",
         "value": true
       }
+    },
+    {
+      "id": "direct-hash-avoids-root-lookup",
+      "source": "(do (deftype ReviewHashDirect [] IHash (-hash [o] 37)) (with-redefs [cljs.core/root-obj (fn [] (throw (error \"unexpected root\")))] (= (-hash (ReviewHashDirect.)) 37)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "root-restored-after-redefinition",
+      "source": "(let [r (rootobj) f js-obj o (f)] (with-redefs [cljs.core/root-obj (fn [] o)] (-hash o)) (= (-hash r) 0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "default-root-called-once",
+      "source": "(let [f js-obj o (f) calls (array 0)] (with-redefs [cljs.core/root-obj (fn [] (aset calls 0 (inc (aget calls 0))) o)] (and (= (-hash o) 0) (= (aget calls 0) 1))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "argument-before-root-effects",
+      "source": "(let [f js-obj o (f) effects (array 0)] (with-redefs [cljs.core/root-obj (fn [] (aset effects 0 (+ (* (aget effects 0) 10) 2)) o)] (-hash (do (aset effects 0 1) o)) (= (aget effects 0) 12)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "root-throws-and-recovers",
+      "source": "(let [f js-obj o (f)] (try (with-redefs [cljs.core/root-obj (fn [] (throw (error \"root\")))] (-hash o)) (catch :default e nil)) (= (-hash o) (uid o)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "root-zero-does-not-consume-uid",
+      "source": "(let [a (fn [] 1) b (fn [] 2) first-id (uid a)] (-hash (rootobj)) (= (uid b) (inc first-id)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "direct-hash-preserves-target-effects",
+      "source": "(do (deftype ReviewHashEffects [n] IHash (-hash [o] n)) (let [a (array 0)] (and (= (-hash (do (aset a 0 (inc (aget a 0))) (ReviewHashEffects. 41))) 41) (= (aget a 0) 1))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
     }
   ]
 }

@@ -26,7 +26,7 @@ fn default_hash_matches_pinned_identity_and_root_relations() {
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 21);
+    assert_eq!(cases.len(), 28);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -108,4 +108,41 @@ fn default_hash_errors_preserve_effects_and_private_adapter_is_checked() {
         )
         .is_err());
     }
+}
+
+#[test]
+fn captured_default_dispatch_observes_root_redefinition_across_gc_fragments() {
+    let mut session = Session::new().unwrap();
+    session
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .unwrap();
+    session.enter_namespace("user").unwrap();
+    session.eval("(def review-root-provider suss.core/root-obj) (def review-root (review-root-provider)) (def review-hash -hash) (def review-owner ((let [factory js-obj] factory))) (def review-owner-id (review-hash review-owner))").unwrap();
+    session.collect().unwrap();
+    session
+        .eval("(set! suss.core/root-obj (fn [] review-owner))")
+        .unwrap();
+    session.collect().unwrap();
+    assert!(eval_bool(&mut session, "(= (review-hash review-owner) 0)"));
+    assert!(eval_bool(
+        &mut session,
+        "(= (suss.bootstrap/identity-uid review-owner) review-owner-id)"
+    ));
+    session
+        .eval("(set! suss.core/root-obj review-root-provider)")
+        .unwrap();
+    session.collect().unwrap();
+    assert!(eval_bool(
+        &mut session,
+        "(and (= (review-hash review-root) 0) (= (review-hash review-owner) review-owner-id))"
+    ));
+    session.eval("(def review-root-effect false)").unwrap();
+    use suss_cli::portable_session::SessionError;
+    assert!(matches!(session.eval("(with-redefs [suss.core/root-obj (fn [] (set! review-root-effect true) review-root)] (review-hash (throw (suss.bootstrap/error \"argument\"))))"), Err(SessionError::Language(_))));
+    session.collect().unwrap();
+    assert!(!eval_bool(&mut session, "review-root-effect"));
+    assert!(eval_bool(
+        &mut session,
+        "(= (review-hash review-owner) review-owner-id)"
+    ));
 }
