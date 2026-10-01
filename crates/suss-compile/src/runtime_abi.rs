@@ -14,6 +14,7 @@ mod exceptions;
 mod named_properties;
 mod native_protocols;
 mod native_objects;
+mod native_object_methods;
 mod nominal;
 mod numeric;
 mod numeric_hash;
@@ -624,6 +625,7 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(bitwise::functions(&mut b));
     arithmetic_functions.extend(named_properties::functions(&mut b));
     native_objects::functions(&mut b);
+    arithmetic_functions.extend(native_object_methods::functions(&mut b));
     let mut elements = ElementSection::new();
     elements.declared(Elements::Functions(Cow::Owned(arithmetic_functions)));
     let mut tags = TagSection::new();
@@ -865,6 +867,9 @@ fn build_module() -> Vec<u8> {
     globals.global(GlobalType { val_type: reference(DESCRIPTOR), mutable: false, shared: false },
         &ConstExpr::extended([I64Const(0), I32Const(0), ArrayNewDefault(ARGS),
             I32Const(0), ArrayNewDefault(ARGS), I32Const(0), RefI31, StructNew(DESCRIPTOR)]));
+    // Lazy shared default Object prototype, owned by the runtime GC root.
+    globals.global(GlobalType { val_type: VALUE, mutable: true, shared: false },
+        &ConstExpr::extended([I32Const(0), RefI31]));
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);
     b.exports

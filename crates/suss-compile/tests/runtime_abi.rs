@@ -3166,3 +3166,84 @@ fn runtime_abi_native_prototype_long_chain_and_forged_tail_cycle_survive_gc() {
     let inherited = nominal_value(&mut store, runtime, "native-object-chain-get", &[head, key]);
     assert_eq!(inherited.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 0).unwrap().unwrap_f64(), 19.0);
 }
+
+#[test]
+fn runtime_abi_default_object_methods_are_callable_shared_and_survive_gc() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let owner = nominal_value(&mut store, runtime, "native-object-default-new", &[]);
+    let other = nominal_value(&mut store, runtime, "native-object-default-new", &[]);
+    let root = nominal_value(&mut store, runtime, "native-object-prototype", &[owner.clone()]);
+    let root2 = nominal_value(&mut store, runtime, "native-object-prototype", &[other.clone()]);
+    assert!(wasmtime::Rooted::ref_eq(&store, root.unwrap_anyref().unwrap(), root2.unwrap_anyref().unwrap()).unwrap());
+    let args = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    let mut methods = vec![];
+    for name in ["toString", "valueOf", "hasOwnProperty", "isPrototypeOf", "constructor"] {
+        let key = nominal_value(&mut store, runtime, "string-new", &[Val::I32(name.len() as i32)]);
+        for (i, byte) in name.bytes().enumerate() {
+            runtime.get_func(&mut store, "string-set-unit").unwrap().call(&mut store, &[key.clone(), Val::I32(i as i32), Val::I32(byte as i32)], &mut [Val::I32(0)]).unwrap();
+        }
+        let method = nominal_value(&mut store, runtime, "native-object-chain-get", &[owner.clone(), key]);
+        assert!(method.unwrap_anyref().unwrap().as_struct(&store).unwrap().is_some(), "{name}");
+        methods.push(method);
+    }
+    store.gc(None).unwrap();
+    let string = nominal_value(&mut store, runtime, "object-method-invoke", &[methods[0].clone(), owner.clone(), args.clone()]);
+    let units = string.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    let actual = (0..units.len(&store).unwrap()).map(|i| units.get(&mut store, i).unwrap().unwrap_i32() as u16).collect::<Vec<_>>();
+    assert_eq!(actual, "[object Object]".encode_utf16().collect::<Vec<_>>());
+    let returned = nominal_value(&mut store, runtime, "object-method-invoke", &[methods[1].clone(), owner.clone(), args.clone()]);
+    assert!(wasmtime::Rooted::ref_eq(&store, returned.unwrap_anyref().unwrap(), owner.unwrap_anyref().unwrap()).unwrap());
+    for method in [&methods[2], &methods[3]] {
+        let result = nominal_value(&mut store, runtime, "object-method-invoke", &[method.clone(), owner.clone(), args.clone()]);
+        assert_eq!(result.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 2);
+    }
+    let one = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    let one_array = one.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    one_array.set(&mut store, 0, owner.clone()).unwrap();
+    let result = nominal_value(&mut store, runtime, "object-method-invoke", &[methods[3].clone(), root, one.clone()]);
+    assert_eq!(result.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 4);
+    let same = nominal_value(&mut store, runtime, "protocol-native-invoke", &[methods[4].clone(), one]);
+    assert!(wasmtime::Rooted::ref_eq(&store, same.unwrap_anyref().unwrap(), owner.unwrap_anyref().unwrap()).unwrap());
+    let created = nominal_value(&mut store, runtime, "protocol-native-invoke", &[methods[4].clone(), args.clone()]);
+    assert!(!wasmtime::Rooted::ref_eq(&store, created.unwrap_anyref().unwrap(), owner.unwrap_anyref().unwrap()).unwrap());
+    let string = nominal_value(&mut store, runtime, "protocol-native-invoke", &[methods[0].clone(), args.clone()]);
+    let units = string.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    let actual = (0..units.len(&store).unwrap()).map(|i| units.get(&mut store, i).unwrap().unwrap_i32() as u16).collect::<Vec<_>>();
+    assert_eq!(actual, "[object Undefined]".encode_utf16().collect::<Vec<_>>());
+    for method in &methods[1..3] {
+        let error = runtime.get_func(&mut store, "protocol-native-invoke").unwrap().call(&mut store, &[method.clone(), args.clone()], &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        assert!(store.take_pending_exception().is_some());
+    }
+    let result = nominal_value(&mut store, runtime, "protocol-native-invoke", &[methods[3].clone(), args.clone()]);
+    assert_eq!(result.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 2);
+    let scalar = nominal_value(&mut store, runtime, "number-box", &[Val::F64(7.0f64.to_bits())]);
+    one_array.set(&mut store, 0, scalar).unwrap();
+    let one = Val::AnyRef(Some(one_array.into()));
+    let result = nominal_value(&mut store, runtime, "protocol-native-invoke", &[methods[3].clone(), one.clone()]);
+    assert_eq!(result.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 2);
+    let own_key = nominal_value(&mut store, runtime, "string-new", &[Val::I32(11)]);
+    for (i, byte) in "constructor".bytes().enumerate() {
+        runtime.get_func(&mut store, "string-set-unit").unwrap().call(&mut store, &[own_key.clone(), Val::I32(i as i32), Val::I32(byte as i32)], &mut [Val::I32(0)]).unwrap();
+    }
+    one_array.set(&mut store, 0, own_key.clone()).unwrap();
+    let present = nominal_value(&mut store, runtime, "object-method-invoke", &[methods[2].clone(), root2, one.clone()]);
+    assert_eq!(present.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 4);
+    let absent = nominal_value(&mut store, runtime, "object-method-invoke", &[methods[2].clone(), owner.clone(), one.clone()]);
+    assert_eq!(absent.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 2);
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    nominal_value(&mut store, runtime, "native-object-own-set", &[owner.clone(), own_key, nil]);
+    store.gc(None).unwrap();
+    let present = nominal_value(&mut store, runtime, "object-method-invoke", &[methods[2].clone(), owner.clone(), one.clone()]);
+    assert_eq!(present.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 4);
+    one_array.set(&mut store, 0, owner.clone()).unwrap();
+    let error = runtime.get_func(&mut store, "protocol-native-invoke").unwrap().call(&mut store, &[methods[3].clone(), one], &mut [Val::null_any_ref()]).unwrap_err();
+    assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+    assert!(!error.is::<wasmtime::Trap>());
+    assert!(store.take_pending_exception().is_some());
+    store.gc(None).unwrap();
+    nominal_value(&mut store, runtime, "object-method-invoke", &[methods[1].clone(), other, args]);
+}

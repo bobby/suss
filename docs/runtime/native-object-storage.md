@@ -26,7 +26,8 @@ The two `runtime_abi_owned_dynamic_properties_*` tests validate and instantiate
 actual Wasm and exercise table growth, replacement, separate owners, literal
 reserved keys, UTF-16, forced GC, corrupt storage and typed recovery. Three additional prototype tests exercise inherited lookup, Undefined shadowing,
 atomic cycle rejection, forged cycles and a 130-object chain after forced GC.
-The complete runtime ABI suite passes 31 tests. This does not establish source factory,
+The complete runtime ABI suite passes 32 tests, including the bounded default
+prototype method checks below. This does not establish source factory,
 property-key conversion, prototype accessors, inherited methods or cache behavior.
 
 `native-object-prototype` reads and validates the immediate raw prototype;
@@ -44,3 +45,37 @@ primitive `__proto__` writes ignored, null prototype removal, own data shadows a
 cycle rejection. Then wire source adapters and retain the pinned cache forms with
 EPL/source provenance. Preserve the 64 certified oracle observations, including
 the original 48, rather than changing expectations to fit implementation.
+
+
+## Default prototype preparation
+
+`native-object-default-new` creates an object with one lazy GC-rooted shared
+prototype. `native-object-default-prototype` exposes that root internally.
+Five real function values currently live there: `constructor`, `toString`,
+`valueOf`, `hasOwnProperty` and `isPrototypeOf`. The four member methods use the
+existing unbound Object wrapper convention; member invocation supplies the
+receiver and detached invocation does not retain an object owner.
+
+For owned objects, toString returns `[object Object]`, valueOf returns the same
+receiver, hasOwnProperty distinguishes own presence from inherited properties,
+and isPrototypeOf walks the actual validated chain. Undefined/null toString
+receivers use their corresponding object tags. Detached valueOf/hasOwnProperty
+raise language exceptions. isPrototypeOf returns false for missing or supported
+primitive arguments before validating the receiver; a detached object argument
+raises an exception. Constructor calls create a default object for missing/nil/
+Undefined arguments and preserve identity for an existing owned object.
+
+Primitive boxing, other object kinds, Symbol.toStringTag, the remaining Object
+methods, property attributes and legacy accessors remain unsupported. This root
+is preparation, not a complete public Object prototype or source cache success.
+No placeholder function is provided for an unfinished method. To finish cache
+integration, add real remaining methods and attributes, inherited __proto__ getter/
+setter semantics, primitive-key conversion and immutable default prototype rules.
+Do not replace these with own-map behavior or false successful observations.
+
+The executing default-method regression covers shared prototype identity, actual
+member/detached calls, constructor identity/allocation, own nil-valued presence,
+inherited versus own keys, argument-sensitive detached isPrototypeOf behavior,
+and forced GC/error recovery. A development Node check confirmed the detached
+call distinctions; it is not a fresh pinned ClojureScript corpus comparison.
+Specification reference: [ECMAScript Object prototype operations](https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-properties-of-the-object-prototype-object).

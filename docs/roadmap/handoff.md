@@ -6384,3 +6384,39 @@ Then wire source adapters and retain licensed cached hashing forms, preserving a
 certified observations. The full cache suite still has64 unresolved native failures;
 these ABI tests do not establish cache/public js-obj compatibility. PR99 remains
 ready at reviewed0fe9889/final CI36825310559 SUCCESS, no merge. M2–M9 remain active.
+
+
+## Callable default Object prototype preparation — 2026-10-01
+
+Continuation afterb5e8e45 implements original native_object_methods.rs and one
+lazy shared GC root. Default-new objects share this root. Five actual closures
+are installed: constructor/toString/valueOf/hasOwnProperty/isPrototypeOf. Member
+methods use existing unbound Object wrapper invocation; no retained receiver or
+placeholder for unfinished methods. Constructor accepts missing/nil/Undefined
+or an existing owned object; primitive boxing remains explicitly unsupported.
+Other object domains and Symbol.toStringTag are not claimed. New private mutable
+root is appended; shared types/ABI version/core cells stay unchanged.
+
+Validation12365 passed the existing3 prototype regressions on the new artifact.
+New actual method invocation69798 passed1. A development Node check and the
+ECMAScript Object prototype operations exposed incorrect detached isPrototypeOf
+ordering: missing/primitive arguments return false before receiver validation;
+object arguments throw for detached undefined this. Corrected both callback
+paths and added regressions;92930 passed1. Final10496 passed1 with own nil presence,
+inherited/own distinction, constructor identity/allocation, prototype identity,
+member/detached semantics, forced GC and recovery. Complete ABI66488 passed32.
+Logs /private/tmp/suss-default-object-methods-final.log and
+/private/tmp/suss-default-object-methods-abi.log. Commands use shared target/build
+workers2 with cargo test -p suss-compile --test runtime_abi
+[runtime_abi_default_object] --locked -- --test-threads=2. Node evidence is
+builtin development evidence, not fresh pinned ClojureScript source comparison.
+All local processes terminal; root retains the test slot for continuation.
+
+This unpublished preparation has no full workspace/review/final CI claim. The
+source cache corpus remains64 unresolved native failures; no cache/native success
+or milestone closure. Default prototype remains incomplete: actual remaining
+methods, property attributes, inherited __proto__ getter/setter, immutable root
+prototype rules and scalar property adapters are next. Then retain licensed
+source cache forms, require fresh64 pinned/native agreement, independent PR review,
+full required baseline and exact final-head CI. Do not infer complete public
+js-obj/Object/hash behavior from these five bounded builtins. M2–M9 stay active.
