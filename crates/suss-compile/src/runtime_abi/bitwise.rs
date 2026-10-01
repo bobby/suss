@@ -44,6 +44,27 @@ pub(super) fn intrinsics(b: &mut Builder) {
 pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     use Instruction::*;
     let convert = b.names["coerce-int32"];
+    // A variadic source body passes the current canonical var to reduce once.
+    // Capturing the function body does not freeze that var's contents.
+    let mut reducer_body = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(5)),
+        I32Eqz,
+        If(BlockType::Empty),
+    ];
+    let message: Vec<_> = "Invalid bitwise reducer cell".encode_utf16().collect();
+    reducer_body.extend(message.iter().map(|unit| I32Const(*unit as i32)));
+    reducer_body.extend([
+        ArrayNewFixed {
+            array_type_index: STRING,
+            array_size: message.len() as u32,
+        },
+        Throw(0),
+        End,
+        LocalGet(0),
+        Call(b.names["binding-get"]),
+    ]);
+    let reducer = b.function("bitwise-current-reducer", &[VALUE], &[VALUE], &reducer_body);
     let mut declared = Vec::new();
     for (name, arity, variadic) in [
         ("int", 1, false),
@@ -118,6 +139,16 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         if variadic {
             callback_body.extend([
                 LocalSet(3),
+                // Fixed two-argument calls do not consult the tail reducer.
+                LocalGet(1),
+                ArrayLen,
+                I32Const(2),
+                I32GtU,
+                If(BlockType::Empty),
+                LocalGet(0),
+                Call(reducer),
+                LocalSet(4),
+                End,
                 I32Const(2),
                 LocalSet(2),
                 Block(BlockType::Empty),
@@ -127,11 +158,16 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 ArrayLen,
                 I32GeU,
                 BrIf(1),
+                LocalGet(4),
                 LocalGet(3),
                 LocalGet(1),
                 LocalGet(2),
                 ArrayGet(ARGS),
-                Call(helper),
+                ArrayNewFixed {
+                    array_type_index: ARGS,
+                    array_size: 2,
+                },
+                Call(b.names["invoke"]),
                 LocalSet(3),
                 LocalGet(2),
                 I32Const(1),
@@ -145,7 +181,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         }
         let callback = b.count;
         b.functions.function(INVOKE);
-        let mut function = Function::new([(1, ValType::I32), (1, VALUE)]);
+        let mut function = Function::new([(1, ValType::I32), (2, VALUE)]);
         for instruction in callback_body {
             function.instruction(&instruction);
         }
@@ -155,11 +191,11 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         declared.push(callback);
         b.function(
             &format!("primitive-{name}-function"),
-            &[],
+            if variadic { &[VALUE] } else { &[] },
             &[VALUE],
             &[
-                I32Const(0),
-                RefI31,
+                if variadic { LocalGet(0) } else { I32Const(0) },
+                if variadic { Nop } else { RefI31 },
                 RefFunc(callback),
                 I32Const(arity as i32),
                 I32Const(if variadic { -1 } else { arity as i32 }),

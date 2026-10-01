@@ -316,9 +316,13 @@ review hash. Complete List/Cons hashing and compiled macros remain unfinished;
 see [hash caching](../runtime/caching-hash.md).
 
 
-Bitwise hashing prerequisites now have54 exact primary/native observations plus
+Bitwise hashing prerequisites now have70 exact primary/native observations plus
 namespace, arity, ordered coercion and recovery guards. Thirty additional partial
 reviews bring the overlay to113/952. Retained bit-count and int-rotate-left add
 two licensed forms:30 selected forms/34 artifacts. Captured JavaScript off-arity
 behavior remains an explicit divergence under the accepted error contract; no full
-public/core/collection acceptance is claimed. See [bitwise hashing](../runtime/bitwise-hashing.md).
+public/core/collection acceptance is claimed. The conditional imul provenance
+record is checked against the pin and exact complete form bounds in CI by
+`scripts/bitwise_provenance.py`. Four pinned public-wrapper errors and five separate
+internal-body diagnostics preserve the captured variadic/live reducer boundary;
+these are outside the70 equal public observations. See [bitwise hashing](../runtime/bitwise-hashing.md).

@@ -23,8 +23,8 @@ rather than ordinary f64 multiplication followed by a lossy conversion.
 Coercion should share the checked numeric runtime; object-to-primitive behavior
 remains an explicit unsupported boundary until separately implemented.
 
-The 54-case shared scalar corpus matches fresh pinned ClojureScript and independently
-decoded validated native Wasm exactly, preserving the original 37 cases. It covers
+The 70-case shared scalar corpus matches fresh pinned ClojureScript and independently
+decoded validated native Wasm exactly, preserving the original 54 cases (including the original 37). It covers
 coercions, shifts, wrapping multiplication, advertised direct/computed/variadic
 calls, namespace qualification, redefinitions and old captures. Separate native
 guards check aliases, exclusions, both compiler phases, located compile errors and
@@ -35,7 +35,11 @@ Direct bitwise macros use immutable primitive lowering. Variadic direct calls ne
 pairs as the pin does; conversion of each pair precedes later operand syntax.
 First-class values reside in canonical live cells and use universal Invoke;
 computed calls evaluate all arguments before the function folds their internal
-argument buffer. That buffer is private call storage, not a persistent source list.
+argument buffer. Variadic bodies compute the initial pair with the original
+primitive, then read their canonical live cell once for the reducer passed to the
+tail fold. A saved function value preserves the original body while that var
+lookup observes redefinitions/dynamic bindings; mutations during an earlier
+tail call do not replace the already selected reducer. That buffer is private call storage, not a persistent source list.
 The alias bit-shift-right-zero-fill preserves its own public cell. Resident native
 bootstrap cells now number45; retained source loading additionally defines the two
 hashing functions. All source selection/license bytes are reproducible:30 selected
@@ -56,11 +60,31 @@ An original private `coerce-int32` runtime intrinsic now reuses scalar coercion.
 It rejects unsupported objects as language exceptions, returns zero for nonfinite
 values, truncates fractions and computes an exact power-of-two remainder before
 Wasm unsigned conversion. It changes no shared GC layouts, language cells or ABI
-version. All 21 runtime ABI tests pass; the added regression covers 20 boundaries,
+version. All 22 runtime ABI tests pass; the added regression covers 20 boundaries,
 2,048 varied float encodings, scalar sentinels, UTF-16 parsing after forced GC and
 typed opaque-object rejection followed by successful conversion.
 
-Next independently review the PR, push significant findings, run the required
-full baseline and require exact reviewed-head CI. Then continue retained ordered
+Independent review fixed variadic captured-function bodies that previously froze
+all tail operations to the primitive. The red native probe returned7 instead of107;
+canonical cell environments now preserve the original initial pair and resolve the
+tail reducer once, following the pinned retained definition. Six source tests and the ABI guard cover
+GC, dynamic frames, reducer arity/throw recovery, selected reducer identity and
+malformed cells failing as language exceptions rather than traps.
+
+Four separately tracked pinned public-wrapper calls throw exact TypeErrors because
+the generated JS dispatcher reads the replacement global variadic property. These
+are recorded in `tests/oracle/bitwise-capture-observations.json`; they are not counted
+among the70 equal public observations. Five separate development-only js* probes
+inspect the captured pinned implementation body, confirming107/104/107/105 and215
+when an earlier reducer call redefines its own var. The native expected outcomes
+follow the accepted old-function/live-var contract; unequal wrapper observations
+are preserved explicitly. Complete public wrapper compatibility is not claimed.
+
+Independent review added sixteen primary/native boundary probes and repaired the
+conditional imul provenance range:953–964 covers precisely the complete conditional
+form; the old953–966 range also included a following Murmur comment. CI now verifies
+the pin, whole-file hash, region hash and complete form bounds with
+`scripts/bitwise_provenance.py`, with mutation regressions. Require exact
+reviewed-head CI after the required full baseline. Then continue retained ordered
 hashing/Murmur dependencies and actual persistent sequence/list source. Full List/Cons,
 Murmur hashing, equality, printing and compiled macros remain unfinished.

@@ -5785,3 +5785,90 @@ corrected helper/generated manifest validated. No failures hidden or ignored.
 All local Cargo/JVM/Node graphs are terminal. Next independent PR review/fixes,
 required full workspace baseline and exact reviewed-head CI before readiness.
 No issue closure/merge; full List/Cons/Murmur hashing/macros/M2–M9 remain open.
+
+
+## Independent PR95 review — 2026-10-01
+
+Review worktree /private/tmp/suss-review-pr95 starts at candidate458b5df on
+portable/core-bitwise-hash, base reviewed PR94 head74120cb. Original54 source
+cases/expectations are unchanged; sixteen independent probes add extreme finite
+and subnormal conversion, low bits near2^53, negative/fraction/infinite shift
+counts, wrapping multiplication, scalar coercion, retained hashing algorithms and
+nested captured callbacks. Fresh first graph98551 ended0:70 exact primary/native
+observations and native4. Log /private/tmp/suss-pr95-review-primary70.log.
+The pre-fix required full baseline40057 ended0, but is superseded by the significant
+captured variadic-body fix below; do not treat it as the final review gate.
+
+Significant semantic finding: variadic callbacks used an immutable primitive for
+every tail operand, whereas the retained core definition passes its current var
+once to reduce after calculating the original primitive initial pair. Native red
+2922 ended101 with7 versus107. The original function body is now preserved while
+its tail reducer resolves through its canonical live cell, including dynamic
+frames; earlier reducer calls redefining the var do not replace the reducer already
+passed to reduce. Variadic initializer exports now accept their canonical self cell;
+the native session allocates that cell before constructing its closure and then
+publishes the resulting value into the same cell. Cell count45/shared GC layouts/
+ABI version unchanged. A checked callback environment rejects malformed nil/opaque
+cells as language exceptions rather than Wasm casts/traps.
+
+Fresh pinned public calls through saved generic JS wrappers throw four exact
+TypeErrors on the replacement global variadic property. They remain explicit
+observations outside the70 equal public cases. Five development-only js* probes
+independently inspect the retained implementation bodies:107/104/107/105 for the
+four current reducers and215 when the first tail call redefines its own var.
+The var is read once, not per iteration. These source adaptations are recorded in
+ tests/oracle/bitwise-capture-observations.json and certified separately by
+ scripts/bitwise_capture_oracle.py; host interop/public-wrapper equality is not
+advertised. The initial diagnostic fixture54395 ended1 at an unmatched delimiter;
+corrected21810 ended0. Native first fix8097 ended0 with bitwise5. Logs:
+/private/tmp/suss-pr95-review-capture-primary.log,
+/private/tmp/suss-pr95-review-capture-primary-fixed.log,
+/private/tmp/suss-pr95-review-capture-native-red.log,
+/private/tmp/suss-pr95-review-capture-native-fixed.log.
+
+Provenance finding: the candidate imul region953–966 included a following unrelated
+Murmur comment. Corrected953–964 hashes precisely the complete conditional form.
+New scripts/bitwise_provenance.py verifies the pin, file hash, region hash, complete
+form bounds and both conditional definitions; explicit CI and mutation gates reject
+stale hashes, truncated/extra source, invalid ranges and duplicate metadata. The
+candidate JSON is rejected by the new exact-form validator. No declaration IDs are
+invented for definitions absent from the top-level scanner. Retained source/license
+selection remains30 forms/34 artifacts,113 partial reviews/952 unassessed.
+
+Final focused source graph65015 ended0: bitwise6/persistent-session33, including
+GC, dynamic scope, noncallable/wrong-arity/throwing reducers and recovery. Compiler
+fixture48942 failed to compile on an I31 Option; corrected17971 ended101 because
+the fixture requested nonexistent args-set. Typed Wasmtime array writes now exercise
+the actual shared ABI. Final27147 ended0: bitwise1/pipeline17/ABI22 including all
+malformed-cell guards after GC. Logs /private/tmp/suss-pr95-review-source-final.log,
+/private/tmp/suss-pr95-review-compiler-final.log,
+/private/tmp/suss-pr95-review-compiler-final-fixed.log,
+/private/tmp/suss-pr95-review-compiler-final-fixed2.log. Commands select respective
+-p suss-cli --test portable_bitwise_hash --test persistent_session or
+-p suss-compile --test portable_bitwise --test portable_pipeline --test runtime_abi,
+with shared target/two workers, --locked -- --test-threads=2. An incidental workspace
+format command touched unrelated formatting; all34 unrelated files were restored
+before final checks. No unrelated change is included.
+
+Final fresh graph90990 ended0: all70 exact primary/native public observations,
+4 exact pinned wrapper errors,5 separate internal-body diagnostics and native6.
+Log /private/tmp/suss-pr95-review-primary-final70.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-bitwise-hash-oracle.sh`.
+Final provenance graph89710 ended0: Python76, inventory1065/reviews113+952/import34,
+conditional imul exact-region gate, WIT15 files/6 packages, numeric manifest and
+offline roadmap10 milestones/39 issues pass. Log
+/private/tmp/suss-pr95-review-provenance-final.log. Negative diagnostic-observation
+regressions reject malformed schema, missing/duplicate results and changed errors
+or bits. No failure, ignored test or divergence is relabeled as a success.
+
+Final required full workspace graph12800 ended0: every enabled workspace/doc test
+passes, including bitwise6/persistent-session33, compiler bitwise1/pipeline17/ABI22
+and the existing strict legacy/diagnostic suites. Manual/legacy ignored tests and
+9 passing/7 exact failing diagnostic observations remain explicit. Log:
+/private/tmp/suss-pr95-review-full-baseline-final.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Candidate CI36817667394 succeeded at458b5df and does not certify these review fixes.
+All local Cargo/JVM/Node processes are terminal; the shared slot is released once
+the review push finishes. Root requires exact reviewed-head CI before PR95 readiness. No merge,
+issue closure or milestone acceptance claim. Next retain actual Murmur/ordered
+hashing and persistent sequence/list source; complete core/macros/M2–M9 remain open.

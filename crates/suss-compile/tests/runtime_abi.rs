@@ -2736,3 +2736,67 @@ fn runtime_abi_int32_coercion_wraps_finite_values_and_zeroes_nonfinite() {
         assert_eq!(result[0].unwrap_i32(), expected, "{state:016x}");
     }
 }
+
+#[test]
+fn runtime_abi_variadic_bitwise_callback_rejects_bad_cells_without_trapping() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let nil = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(
+        &mut store,
+        wasmtime::I31::new_u32(0).unwrap(),
+    )));
+    let mut args = [Val::null_any_ref()];
+    runtime
+        .get_func(&mut store, "args-new")
+        .unwrap()
+        .call(&mut store, &[Val::I32(3)], &mut args)
+        .unwrap();
+    let mut boxed = [Val::null_any_ref()];
+    runtime
+        .get_func(&mut store, "number-box")
+        .unwrap()
+        .call(&mut store, &[Val::F64(1.0f64.to_bits())], &mut boxed)
+        .unwrap();
+    let array = args[0].unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    for index in 0..3 {
+        array.set(&mut store, index, boxed[0].clone()).unwrap();
+    }
+    for export in [
+        "primitive-bit-and-function",
+        "primitive-bit-or-function",
+        "primitive-bit-xor-function",
+        "primitive-bit-and-not-function",
+    ] {
+        for bad_cell in [nil.clone(), args[0].clone()] {
+            let mut closure = [Val::null_any_ref()];
+            runtime
+                .get_func(&mut store, export)
+                .unwrap()
+                .call(&mut store, &[bad_cell], &mut closure)
+                .unwrap();
+            store.gc(None).unwrap();
+            let error = runtime
+                .get_func(&mut store, "invoke")
+                .unwrap()
+                .call(
+                    &mut store,
+                    &[closure[0].clone(), args[0].clone()],
+                    &mut [Val::null_any_ref()],
+                )
+                .unwrap_err();
+            assert!(error.is::<wasmtime::ThrownException>(), "{error:?}");
+            let exception = store.take_pending_exception().unwrap();
+            assert!(wasmtime::Tag::eq(
+                &exception.tag(&mut store).unwrap(),
+                &runtime.get_tag(&mut store, "language-exception").unwrap(),
+                &store
+            ));
+        }
+    }
+}

@@ -8,7 +8,7 @@ fn bitwise_hash_match_independently_decoded_primary_observations_after_gc() {
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 54);
+    assert_eq!(cases.len(), 70);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -194,4 +194,62 @@ fn bitwise_alias_exclusion_and_both_compilation_phases_are_explicit() {
         )
         .unwrap();
     }
+}
+
+#[test]
+fn captured_variadic_bitwise_body_reads_the_current_tail_reducer_once() {
+    let mut session = Session::new().unwrap();
+    let corpus: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/oracle/bitwise-capture-observations.json"
+    ))
+    .unwrap();
+    for case in corpus["cases"].as_array().unwrap() {
+        // Four pinned public wrapper errors remain separate observations, never
+        // counted as equal public-source matches. The five body diagnostics use
+        // development-only JS to inspect the retained implementation directly.
+        let actual = bitwise_number(&mut session, case["native-source"].as_str().unwrap());
+        assert_eq!(
+            format!("{:016x}", actual.to_bits()),
+            case["expected-native"]["bits"].as_str().unwrap(),
+            "{}",
+            case["id"]
+        );
+        session.collect().unwrap();
+    }
+    assert_eq!(bitwise_number(&mut session, "(bit-or 1 2 4)"), 7.0);
+}
+
+#[test]
+fn variadic_bitwise_reducers_preserve_gc_errors_and_dynamic_recovery() {
+    use suss_cli::portable_session::SessionError;
+    let mut session = Session::new().unwrap();
+    session.eval("(def bitwise_saved bit-or)").unwrap();
+    session.collect().unwrap();
+    // No tail arguments: the original pair succeeds without reading a reducer.
+    assert_eq!(
+        bitwise_number(
+            &mut session,
+            "(with-redefs [cljs.core/bit-or nil] (bitwise_saved 1 2))"
+        ),
+        3.0
+    );
+    for replacement in ["nil", "(fn [x] x)", "(fn [x y] (throw 29))"] {
+        let source =
+            format!("(with-redefs [cljs.core/bit-or {replacement}] (bitwise_saved 1 2 4))");
+        assert!(
+            matches!(session.eval(&source), Err(SessionError::Language(_))),
+            "{source}"
+        );
+        session.collect().unwrap();
+        assert_eq!(bitwise_number(&mut session, "(bitwise_saved 1 2 4)"), 7.0);
+    }
+    assert_eq!(
+        bitwise_number(
+            &mut session,
+            "(binding [cljs.core/bit-or (fn [x y] (+ x y 100))] (bitwise_saved 1 2 4))"
+        ),
+        107.0
+    );
+    session.collect().unwrap();
+    assert_eq!(bitwise_number(&mut session, "(bitwise_saved 1 2 4)"), 7.0);
 }

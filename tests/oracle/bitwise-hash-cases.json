@@ -433,6 +433,134 @@
         "tag": "f64",
         "bits": "bff0000000000000"
       }
+    },
+    {
+      "id": "review-int-negative-max",
+      "source": "(int -1.7976931348623157e308)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-int-positive-max",
+      "source": "(int 1.7976931348623157e308)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-int-large-low-bits",
+      "source": "(int 9007199254740990)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c000000000000000"
+      }
+    },
+    {
+      "id": "review-int-negative-large-low-bits",
+      "source": "(int -9007199254740990)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "review-int-negative-subnormal",
+      "source": "(let [f int] (f -5e-324))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-int-negative-zero",
+      "source": "(int -0.0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-int-prefix-string",
+      "source": "(let [f int] (f \" 0xffffffff \"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "review-shift-negative-fraction",
+      "source": "(bit-shift-left 1 -1.9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1e0000000000000"
+      }
+    },
+    {
+      "id": "review-shift-infinity",
+      "source": "(let [f unsigned-bit-shift-right] (f -1 (/ 1 0)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41efffffffe00000"
+      }
+    },
+    {
+      "id": "review-imul-sign-boundary",
+      "source": "(imul 2147483648 -1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1e0000000000000"
+      }
+    },
+    {
+      "id": "review-imul-both-wrap",
+      "source": "(let [f imul] (f 4294967297 4294967297))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "review-imul-string-bool",
+      "source": "(imul \"0xffffffff\" true)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "review-first-class-and-not-fold",
+      "source": "(let [f bit-and-not] (f 31 1 2 4 8))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4030000000000000"
+      }
+    },
+    {
+      "id": "review-rotate-negative",
+      "source": "(int-rotate-left 1 -1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1e0000000000000"
+      }
+    },
+    {
+      "id": "review-count-nan",
+      "source": "(let [f bit-count] (f (/ 0 0)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-nested-callback",
+      "source": "(let [make (fn [f] (fn [a b] (f a b))) f (make imul)] (f 2147483647 2147483647))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
     }
   ]
 }
