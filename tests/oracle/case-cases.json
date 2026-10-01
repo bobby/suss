@@ -1,0 +1,326 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "number-match",
+      "source": "(case 1 1 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "number-default",
+      "source": "(case 2 1 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "group-first",
+      "source": "(case 1 (1 2) 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "group-last",
+      "source": "(case 2 (1 2) 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "default-only",
+      "source": "(case 1 17)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "positive-zero",
+      "source": "(case 0 -0.0 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "negative-zero",
+      "source": "(case -0.0 0 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "nan-selector",
+      "source": "(case ##NaN 0 17 ##NaN 23 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "positive-infinity",
+      "source": "(case ##Inf ##Inf 17 ##-Inf 23 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "negative-infinity",
+      "source": "(case ##-Inf ##Inf 17 ##-Inf 23 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "finite-infinity-default",
+      "source": "(case 3 ##Inf 17 ##-Inf 23 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "string-match",
+      "source": "(case \"ab\" \"ab\" 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "string-default",
+      "source": "(case \"ab\" \"a\" 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "string-number-distinct",
+      "source": "(case \"1\" 1 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "number-string-distinct",
+      "source": "(case 1 \"1\" 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "utf16-astral",
+      "source": "(case \"\\ud83d\\ude00\" \"\\ud83d\\ude00\" 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "utf16-surrogate",
+      "source": "(case \"\\ud800\" \"\\ud800\" 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "character-string",
+      "source": "(case \\a \"a\" 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "true-match",
+      "source": "(case true true 17 false 23 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "false-match",
+      "source": "(case false true 17 false 23 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "nil-match",
+      "source": "(case nil nil 17 false 23 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "nil-false-distinct",
+      "source": "(case nil false 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "mixed-number-boolean",
+      "source": "(case 1 true 23 1 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "captured-result",
+      "source": "(let [x 17 f (case 1 1 (fn [] x) (fn [] 19))] (f))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "tail-recur",
+      "source": "(loop [n 0] (case n 3 17 (recur (+ n 1))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "qualified-case",
+      "source": "(cljs.core/case 1 1 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "lexical-shadow",
+      "source": "(let [case (fn [x] (+ x 16))] (case 1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "primitive-ignores-equality",
+      "source": "(with-redefs [cljs.core/= (fn [a b] false)] (case 1 1 17 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "generic-reads-equality",
+      "source": "(with-redefs [cljs.core/= (fn [a b] false)] (case true true 17 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "mixed-reads-equality",
+      "source": "(with-redefs [cljs.core/= (fn [a b] false)] (case 1 true 23 1 17 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "expression-once",
+      "source": "(do (def case-trace 0) (case (do (set! case-trace (+ case-trace 1)) 2) (1 2) (set! case-trace (+ case-trace 16)) (set! case-trace 99)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "generic-constant-first",
+      "source": "(with-redefs [cljs.core/= (fn [a b] (identical? a false))] (case true false 17 true 23 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "generic-ignores-lexical-equality",
+      "source": "(let [= (fn [a b] false)] (case true true 17 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "mixed-primitives-ignore-equality",
+      "source": "(with-redefs [cljs.core/= (fn [a b] false)] (case \"a\" 1 23 \"a\" 17 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "mixed-group-primitives",
+      "source": "(case \"a\" (1 \"a\") 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "generic-test-effects-order",
+      "source": "(do (def case-review-trace 0) (with-redefs [cljs.core/= (fn [a b] (do (set! case-review-trace (+ (* case-review-trace 10) (if (identical? a false) 1 2))) (identical? a b)))] (case true false 23 true case-review-trace 19)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4028000000000000"
+      }
+    },
+    {
+      "id": "generic-group-short-circuit",
+      "source": "(do (def case-review-count 0) (with-redefs [cljs.core/= (fn [a b] (do (set! case-review-count (+ case-review-count 1)) true))] (case true (false nil true) case-review-count 19)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "generic-live-between-tests",
+      "source": "(with-redefs [cljs.core/= (fn [a b] (do (set! cljs.core/= (fn [a b] true)) false))] (case true false 23 true 17 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "generic-eight-constants",
+      "source": "(case 5 (false nil 0 1 2 3 4 5) 17 19)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "generic-tail-recur",
+      "source": "(loop [n false] (case n false (recur true) true 17 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    }
+  ]
+}

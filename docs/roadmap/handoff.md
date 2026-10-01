@@ -7698,3 +7698,140 @@ runtime/tests/oracles/workflow/Cargo/lock bytes identical to7ffad606 after rebas
 Only handoff gains PR95 evidence and this record; no fresh local full claimed.
 No heavy runs or descendant changes. Push uses exact7ffad606 force-with-lease;
 fresh reviewed-head CI remains required before readiness, no merge claim.
+
+
+## Scalar case bootstrap — 2026-10-01
+
+Branch portable/core-scalar-case, isolated /private/tmp/suss-core-scalar-case,
+based on independently reviewed PR108707b5b609fa139ee033f62f4424ca8b78c6b49c4.
+Actual detached upstream c4295f30. Original Rust bootstrap follows pinned
+case/assoc-test provenance and EPL1 notice; selector once, source-order analysis,
+private number/string comparison, live qualified constant-first core equality,
+explicit defaults, bounded scalar groups and phase namespace resolution.
+No full compiled macro acceptance or issue/milestone completion claim.
+
+Initial regression41004 failed101 on unresolved Runtime case; implementation
+3264 passed1. Fresh88591 failed1 on pinned empty-group invalid generated JS.
+The unchanged source now has a separate strict reference failure/native located
+compile-error boundary, not a successful value or skip. Fresh63374 terminal0:
+31 matches/1 boundary/native3. Fresh17662 terminal0:33 matches/1 boundary/native4,
+/private/tmp/suss-case-primary33-boundary1.log. Compiler95117 terminal0/1 actual
+validated Runtime/Macro execution and forced GC,
+/private/tmp/suss-case-both-phases.log. Full compiled upstream macros remain open.
+
+A strengthened direct boundary invocation initially failed because Node resolved
+Closure output relative to the repository root. Captured MODULE_NOT_FOUND did
+not count as the expected failure. Explicit oracle cwd fixes the harness;
+root invocation now verifies exit1, empty stdout, exact SyntaxError and source
+caret from the original generated input. Python82 pass in
+/private/tmp/suss-case-python82-final.log. Import101/reviews192+873/setup5/diff
+checks pass. Parent focused22322 and its first retry failed101 on mistaken test
+target names before running tests; corrected90679 terminal0 passes control3,
+default3 and identity4, /private/tmp/suss-case-parent-focused.log.
+
+Required full16020 running /private/tmp/suss-case-full.log, shared target/build2,
+cargo test --workspace --locked -- --test-threads=2, no RUSTFLAGS. Root retains
+exclusive heavy slot until authoritative terminal result. Independent PR review
+and exact reviewed-head CI remain required before readiness.
+
+PR1077b530784 exact CI36859350775 succeeded; final reader doc tests inspected.
+PR107 is ready, no merge. PR108707b5b6 independent reviewer full78254 terminal0;
+exact CI36861360401 completed cancelled near its25-minute job limit despite the
+workspace step reporting success. It does not satisfy the overall CI gate;
+rerun dispatched at unchanged head, PR108 remains draft. No merge or closure.
+Next: complete this full/review/CI gate, then public hash Date branch and ordered/
+unordered composition, remaining macro/collection/core and M2–M9 acceptance.
+
+
+PR110 opened draft at5ec1492; mandatory /root/review_pr110 dispatched for static
+review while root full16020 owns heavy slot. PR108 CI attempt2 is live at the
+same707b5b6. PR108's preceding required workspace step took24m29s, leaving no
+reliable cleanup margin under the25-minute job timeout. PR110 raises the job
+limit to35 minutes without changing the full command, enabled tests or build
+concurrency; independent review and exact-head CI must validate this change too.
+
+
+Root full16020 terminal0; /private/tmp/suss-case-full.log inspected through final
+reader doc tests. Required workspace --locked/--test-threads=2 shared target/
+build2 baseline passes with new native4/compiler1, existing ABI45 and unchanged
+parent corpora/strict-arity boundary. Existing manual ignores and diagnostic
+known failures remain explicit. All root handles22322/90679/16020/40683/50092
+terminal; mistaken-target retries also terminal101. Release exclusive heavy slot
+to /root/review_pr110 after this evidence push. Independent oracle/full and exact
+reviewed-head CI still gate PR110 readiness; PR108 attempt2 pending. No merges.
+
+
+## Independent PR110 review — 2026-10-01
+
+Reviewed5ec1492 plus root CI/evidence commits throughd12f061 against reviewed
+PR108707b5b6 in isolated /private/tmp/suss-review-pr110, actual detached upstream
+c4295f30. Read accepted design/ROADMAP/inventory/handoff and pinned case/assoc-test.
+No significant production defect found. Mixed number/string private comparison,
+generic qualified constant-first equality, bounded insertion order, selector
+once, tail/source analysis, aliases and strict empty-group negative boundary
+inspected. CI timeout25→35 responds to actual cleanup cancellation, retaining
+all required suites, shared engines and two workers.
+
+Root full16020 terminal0/all handles terminal before explicit heavy-slot release.
+Seven additive observations preserve original33 source/reference objects and all
+parent corpora. Fresh81349 terminal0 certifies40 exact matches plus1 original
+exact parse boundary/native4, /private/tmp/suss-pr110-review-oracle40.log.
+Native76696 terminal0/5 adds thrown equality restoration, no unselected effects,
+GC retained closure, signed-zero duplicate and ninth generic constant/atomic
+publication guards: /private/tmp/suss-pr110-review-native5.log. Compiler41542
+terminal0/1 actual Runtime/Macro execution, /private/tmp/suss-pr110-review-phases.log.
+Python82 pass /private/tmp/suss-pr110-review-python82.log; import101/reviews192+873/
+setup5/diff pass. Mistaken nonexistent core_setup_provenance.py failed; actual
+sequence_provenance.py corrected/verifies5. No skips, altered expectations or
+claimed compiled-macro acceptance. Reviewer owns heavy slot for required full.
+No merges/issue closure/milestone acceptance. Public hash Date branch, ordered/
+unordered composition, complete collections/macros and M2–M9 release gates next.
+
+
+Independent full69411 authoritative terminal0; inspected
+/private/tmp/suss-pr110-review-full.log through final suss_reader doc tests.
+Required shared-target/build2 workspace --locked/--test-threads=2 baseline passes,
+including case5/40 plus exact negative boundary, both phase fragments, ABI45 and
+unchanged parent corpora/boundaries. Existing manual ignores and diagnostic
+9passes/7knownfailures unchanged. All reviewer handles81349/76696/41542/69411
+terminal. Reviewer releases heavy slot after evidence commit/push. Exact final
+reviewed-head CI still gates readiness; no merge/issue or milestone closure.
+
+### PR110 reviewed-stack rebase — 2026-10-01
+
+Static rebase of reviewed f7841ddcae14d5094499148438eca1decf50619e onto
+reviewed PR108 c6cc97b134555c42104310156198c3f0a1a2b2c5 preserves parent timeout
+and child scalar-case/full-review evidence. Scoped Git diff verifies all crates,
+runtime artifacts, scripts, tests/oracle corpora, Cargo files and CI workflow
+bytes identical to f7841dd. The only inherited differences are parent handoff
+and default-identity-hash documentation. Prior independent full69411 applies to
+identical tested code; no fresh baseline at this rebase is claimed. Root owns
+the heavy slot with publichash full61362; no cargo/JVM/Node process started.
+Exact new reviewed-head CI remains mandatory before readiness; no merge/closure.
+
+### PR110 parent retarget reconciliation — 2026-10-01
+
+Statically rebased reviewed d507c5ecb2afa5c9319fcbdef3112c99fd699d4e onto
+reviewed PR10823fe2528782d28e60901621fe7dd1e805ae91a78 after user stack merges.
+Preserved parent retarget audit and all child case/review/full evidence in the
+append conflict. Scoped Git diff verifies production crates, runtime artifacts,
+scripts, tests/oracle corpora, workflow and Cargo bytes identical to d507c5e.
+Only parent audit and this reconciliation evidence change. Prior full69411
+applies to identical tested code; this is not a fresh baseline. Root owns the
+heavy slot for collection oracle1484; no cargo/JVM/Node process started here.
+Exact old-head force-with-lease protects the owned branch; successful exact new
+reviewed-head CI remains required, with no readiness/merge/closure claim.
+
+### PR110 historical CI success and updated parent budget — 2026-10-01
+
+Independent verification confirms exact c53cfe35fde0310a8ceacf174d399ce48fd1e646
+CI36873277022 completed SUCCESS. Downloaded log
+/private/tmp/suss-pr110-c53-final-ci.log inspected through final reader doc tests.
+Rebased only reviewed case commits onto reviewed PR108e2d8b6123b7948a0210e5330c5881894d47ce480,
+preserving parent CI/audit evidence and every child review/test/evidence section.
+Scoped Git diff proves crates/runtime/scripts/tests/oracle/Cargo bytes identical
+to c53cfe3. Workflow exactly matches parent: budget60, every test/worker unchanged.
+This inherits the independently audited35-minute cleanup cancellation correction.
+Prior independent full69411 covers unchanged tested bytes, not a fresh baseline.
+Reviewer113 owns the heavy slot; no cargo/JVM/Node started. Historical successful
+CI does not satisfy the new exact-head gate. No readiness/merge/closure claim.

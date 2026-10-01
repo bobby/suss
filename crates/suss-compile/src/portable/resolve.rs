@@ -61,6 +61,7 @@ pub enum ControlForm {
     And,
     Or,
     Cond,
+    Case,
     Declare,
     CachingHash,
     ThreadFirst,
@@ -83,6 +84,7 @@ impl ControlForm {
             "and" => Self::And,
             "or" => Self::Or,
             "cond" => Self::Cond,
+            "case" => Self::Case,
             "declare" => Self::Declare,
             "caching-hash" => Self::CachingHash,
             "->" => Self::ThreadFirst,
@@ -349,6 +351,7 @@ impl Environment {
                 "and",
                 "or",
                 "cond",
+                "case",
                 "declare",
                 "caching-hash",
                 "unchecked-get",
@@ -643,6 +646,7 @@ impl Environment {
                         | "and"
                         | "or"
                         | "cond"
+                        | "case"
                         | "declare"
                         | "caching-hash"
                         | "->"
@@ -701,6 +705,7 @@ impl Environment {
                         | "and"
                         | "or"
                         | "cond"
+                        | "case"
                         | "declare"
                         | "caching-hash"
                         | "->"
@@ -759,6 +764,7 @@ impl Environment {
                         | "and"
                         | "or"
                         | "cond"
+                        | "case"
                         | "declare"
                         | "caching-hash"
                         | "->"
@@ -817,6 +823,7 @@ impl Environment {
                     | "and"
                     | "or"
                     | "cond"
+                    | "case"
                     | "declare"
                     | "caching-hash"
                     | "->"
@@ -867,6 +874,7 @@ impl Environment {
                     | "and"
                     | "or"
                     | "cond"
+                    | "case"
                     | "declare"
                     | "caching-hash"
                     | "->"

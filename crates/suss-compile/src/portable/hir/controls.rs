@@ -3,7 +3,7 @@ use super::*;
 use crate::portable::resolve::ControlForm;
 
 impl Analyzer {
-    fn control_if(&self, form: &Form, condition: Hir, consequent: Hir, alternative: Hir) -> Hir {
+    pub(super) fn control_if(&self, form: &Form, condition: Hir, consequent: Hir, alternative: Hir) -> Hir {
         let ty = if consequent.ty == alternative.ty {
             consequent.ty
         } else {
@@ -45,6 +45,7 @@ impl Analyzer {
         }
         let nil = self.literal_form(form, Literal::Nil);
         match operation {
+            ControlForm::Case => self.case_form(form, args, statement, tail),
             ControlForm::UncheckedGet | ControlForm::UncheckedSet => {
                 let operation = if operation == ControlForm::UncheckedGet { Nominal::NativeObjectGet } else { Nominal::NativeObjectSet };
                 if !operation.valid(&vec![Type::Value; args.len()]) {

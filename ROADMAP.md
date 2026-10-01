@@ -156,3 +156,14 @@ bring selection to96 forms/100 licensed artifacts and189 partial reviews/876
 unassessed. Public/default and collection hashing, general IFn invocation, apply,
 full metadata and milestone gates remain open. See
 [identity evidence](docs/runtime/identity-hashing.md).
+
+
+Scalar `case` bootstrap now supports grouped binary64/UTF-16 literals and bounded
+boolean/nil equality tables with selector-once evaluation and live qualified
+core equality. There are 40 fresh pinned/native value matches and one separately
+asserted pinned empty-group parse failure; native rejects that input with a
+located compile diagnostic. Actual fragments execute in Runtime and Macro
+phases. Selection97/artifacts101 and192 partial/873 unassessed reviews remain
+prerequisites. Full compiled macros, complete case/case*, public hash Date
+handling, collections and release gates remain unfinished. See
+[scalar case evidence](docs/runtime/scalar-case.md).

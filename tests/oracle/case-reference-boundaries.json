@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "empty-group",
+      "source": "(case 1 () 17 19)",
+      "reference": {
+        "stage": "node-parse",
+        "kind": "SyntaxError",
+        "message": "Unexpected token 'return'"
+      },
+      "native": {
+        "stage": "compile",
+        "message": "case bootstrap requires nonempty groups"
+      }
+    }
+  ]
+}
