@@ -1,110 +1,98 @@
-# Owned dynamic property storage
+# Owned native objects and descriptors
 
-This original runtime kernel is a prerequisite for the adapted string hash cache.
-It implements own data storage and raw prototype chains, not full JavaScript
-prototype behavior or public
-`js-obj`. The source cache corpus still fails natively and is not acceptance
-evidence for this kernel.
+This original runtime code is a prerequisite for adapted string hash caching.
+The source cache corpus still has 64 unresolved native failures. Executing ABI
+tests below do not establish source `js-obj`, public properties or cache acceptance.
+
+## Owned storage
 
 `native-object-new` creates an existing shared GC UserObject with a private
-descriptor identity. Its owned header contains an alternating UTF-16 key/value
-table and a prototype slot. No process registry retains objects.
-The shared type layout and ABI version are unchanged. This private object is
-not a persistent map and does not implement persistent collection contracts.
+descriptor identity. Its owned header contains an alternating UTF-16 key/property
+descriptor table and a prototype. No process registry retains objects. Shared
+GC types, ABI version and core cell count are unchanged. These objects are not
+persistent maps or persistent collection implementations.
 
-`native-object-own-slot`, `native-object-own-get` and `native-object-own-set`
-compare raw UTF-16 content, preserving empty strings, astral units and lone
-surrogates. They do not normalize protocol names such as `object` or `array`.
-Missing keys return language Undefined. Replacing a property preserves the owner;
-adding a property allocates a new owned table with bounded length. The setter
-returns the stored value. Physical null references, foreign owners, malformed
-pair tables and non-string keys raise language exceptions. Language nil is a
-valid value. These own-storage operations treat `__proto__` as an ordinary key;
-the future prototype adapter must intercept inherited accessor writes.
+Private property descriptors reuse owned GC arrays: `[flags, payload]`. Flags
+are writable1, enumerable2, configurable4, accessor8. Data payloads are non-null
+language values. Accessor payloads contain two callable values or Undefined:
+getter and setter. Checks reject malformed lengths, invalid flags, writable
+accessor descriptors, physical nulls and noncallable accessors with language
+exceptions before mutation. Keys compare raw UTF-16 content, preserving empty
+strings, astral units and lone surrogates without protocol-name normalization.
 
-The two `runtime_abi_owned_dynamic_properties_*` tests validate and instantiate
-actual Wasm and exercise table growth, replacement, separate owners, literal
-reserved keys, UTF-16, forced GC, corrupt storage and typed recovery. Three additional prototype tests exercise inherited lookup, Undefined shadowing,
-atomic cycle rejection, forged cycles and a 130-object chain after forced GC.
-The existing 34 runtime ABI tests pass, including the bounded default
-prototype method checks below. A new own-accessor reflection regression fails
-until actual descriptor storage is implemented. This does not establish source factory,
-property-key conversion, prototype accessors, inherited methods or cache behavior.
+`native-object-own-descriptor` returns an own descriptor or Undefined;
+`native-object-own-get` reads its raw payload without invoking accessors.
+`native-object-own-store` and `native-object-own-define` are internal storage
+operations; they do not implement public Object.defineProperty restrictions.
+`native-object-own-set` defines an ordinary data property with flags7. Internal
+operations can redefine properties; future public definitions/deletion must enforce
+configurability and descriptor compatibility. This boundary is not public success.
 
-`native-object-prototype` reads and validates the immediate raw prototype;
-`native-object-prototype-set` accepts an owned object or nil and validates the
-complete candidate chain before mutation. It rejects cycles atomically.
-`native-object-chain-get` returns the first present own value, including Undefined,
-or language Undefined for an absent key. An iterative Floyd check rejects forged
-cycles before traversal, without recursion, registries or a fixed chain depth cap.
-These exports do not coerce keys or invoke a JavaScript accessor. Raw prototype
-set rejects primitive values; the future inherited `__proto__` setter must instead
-ignore primitive assignments.
+## Prototypes and scalar properties
 
-Next implement the default Object prototype with genuine inherited function values,
-primitive `__proto__` writes ignored, null prototype removal, own data shadows and
-cycle rejection. Then wire source adapters and retain the pinned cache forms with
-EPL/source provenance. Preserve the 64 certified oracle observations, including
-the original 48, rather than changing expectations to fit implementation.
+Raw prototype operations accept owned objects or nil, validate candidate chains
+before mutation, and reject owner-containing cycles atomically. Iterative Floyd
+checking rejects forged cycles without recursion, registries or arbitrary depth
+limits. Raw chain lookup returns the first present own payload, including Undefined.
 
-
-## Default prototype preparation
-
-`native-object-default-new` creates an object with one lazy GC-rooted shared
-prototype. `native-object-default-prototype` exposes that root internally.
-Five real function values currently live there: `constructor`, `toString`,
-`valueOf`, `hasOwnProperty` and `isPrototypeOf`. The four member methods use the
-existing unbound Object wrapper convention; member invocation supplies the
-receiver and detached invocation does not retain an object owner.
-
-For owned objects, toString returns `[object Object]`, valueOf returns the same
-receiver, hasOwnProperty distinguishes own presence from inherited properties,
-and isPrototypeOf walks the actual validated chain. Undefined/null toString
-receivers use their corresponding object tags. Detached valueOf/hasOwnProperty
-raise language exceptions. isPrototypeOf returns false for missing or supported
-primitive arguments before validating the receiver; a detached object argument
-raises an exception. Constructor calls create a default object for missing/nil/
-Undefined arguments and preserve identity for an existing owned object.
-
-Primitive boxing, other object kinds, Symbol.toStringTag, the remaining Object
-methods, property attributes and legacy accessors remain unsupported. This root
-is preparation, not a complete public Object prototype or source cache success.
-No placeholder function is provided for an unfinished method. To finish cache
-integration, add real remaining methods and attributes, inherited __proto__ getter/
-setter semantics, primitive-key conversion and immutable default prototype rules.
-Do not replace these with own-map behavior or false successful observations.
-
-The executing default-method regression covers shared prototype identity, actual
-member/detached calls, constructor identity/allocation, own nil-valued presence,
-inherited versus own keys, argument-sensitive detached isPrototypeOf behavior,
-and forced GC/error recovery. A development Node check confirmed the detached
-call distinctions; it is not a fresh pinned ClojureScript corpus comparison.
-Specification reference: [ECMAScript Object prototype operations](https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-properties-of-the-object-prototype-object).
-
-
-## Scalar properties and legacy prototype accessor preparation
-
+`native-object-property-descriptor` resolves a stored descriptor through the chain.
 `native-object-property-get` and `native-object-property-set` convert supported
-scalar keys through the existing checked UTF-16 string coercion. They layer the
-legacy `__proto__` operation above raw storage: a nearer own/inherited data slot
-shadows the default accessor, primitive setter values are ignored, nil removes
-the chain, and subsequent writes on a null-prototype object become own data.
-Accessor reads return the original receiver's prototype. Cycle errors preserve
-the former chain, and changing the shared default root's prototype fails; setting
-its existing nil prototype remains allowed. Foreign object domains and physical
-null references remain language errors instead of successful unknown coercions.
+scalar keys through checked UTF-16 coercion and invoke getter/setter values through
+the existing receiver-aware call path. Getter-less accessors return Undefined;
+setter-less accessors and non-writable data ignore writes in this bounded non-strict
+adapter. Writable own data retains its flags; writable inherited data becomes an
+ordinary own property. Assigned values are evaluated before calling this layer.
+Physical null and unsupported foreign object domains remain explicit errors.
 
-Two executing tests cover these operations and scalar keys (negative zero, NaN,
-nil, booleans, Undefined, fractional numbers, empty/astral/lone-surrogate strings),
-forced GC and typed recovery. Development Node assertions independently confirm
-the write/shadow/root rules. This is not a pinned source cache comparison.
+The shared default root owns an actual non-enumerable, configurable `__proto__`
+accessor descriptor. Its callable getter returns the original receiver's prototype.
+Its setter ignores supported primitives, permits nil removal, rejects cycles and
+protects the default root's immutable prototype (setting its existing nil is allowed).
+Nearer own/inherited data descriptors shadow the accessor. After nil removal,
+subsequent `__proto__` writes can create ordinary own data. Root-identity lookup
+special-casing has been removed; hasOwnProperty correctly observes the descriptor.
 
-The default accessor is currently recognized by root identity, not a stored
-property descriptor. An executing regression confirms this unfinished behavior: `hasOwnProperty` on the root with key
-`__proto__` currently returns false, whereas Node returns true. Property attributes,
-reflection, custom accessors and deletion require actual owned descriptors;
-do not claim these operations based on the adapter. Replace the implicit default
-accessor with that descriptor representation, implement remaining methods, and
-then wire source cache forms. The source corpus still has 64 unresolved native
-failures, and no public factory/property compatibility gate is complete.
-Specification reference: [ECMAScript legacy prototype accessor](https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-object.prototype.__proto__).
+## Default builtin preparation
+
+`native-object-default-new` attaches one lazy GC-rooted shared prototype. Seven
+real functions currently live there: constructor, toString, valueOf, hasOwnProperty,
+isPrototypeOf, propertyIsEnumerable and toLocaleString. Builtin data descriptors
+are writable/configurable and non-enumerable (flags5). Methods are unbound values;
+member calls supply a receiver, and detached calls retain no owner.
+
+For owned objects, toString returns the Object tag, valueOf preserves receiver
+identity, hasOwnProperty checks presence, isPrototypeOf checks the actual chain,
+and propertyIsEnumerable reads descriptor flags. toLocaleString reads and invokes
+the current toString property, including overrides and accessor lookup. Undefined/
+nil toString uses its corresponding tag. Detached isPrototypeOf returns false for
+missing/supported primitive arguments before receiver validation; object arguments
+throw for undefined this. Constructor creates a default object for missing/nil/
+Undefined arguments and preserves an existing owned object's identity.
+
+Remaining legacy define/lookup getter/setter methods, primitive boxing, other
+object kinds, Symbol.toStringTag, public descriptor definition/deletion and source
+factory/property adapters remain unfinished. No placeholder functions stand in
+for those operations. Complete these boundaries before claiming public Object or
+cached hashing compatibility.
+
+## Executing evidence
+
+The complete runtime ABI suite passes 37 tests. Owned-object tests validate and
+instantiate actual Wasm, covering storage growth/replacement, separate owners,
+UTF-16, malformed tables/descriptors, typed recovery, inherited values, Undefined
+shadowing, atomic cycle rejection, a 130-object chain and forced GC. Method tests
+exercise member/detached calls, constructor identity/allocation, own nil-valued
+presence, descriptor attributes, readonly writes, copied getter/setter receiver
+behavior, root reflection and live toString lookup. The former failing own-accessor
+reflection regression now passes unchanged. Independent development Node assertions
+confirm bounded descriptor/accessor behavior; they are not a fresh pinned
+ClojureScript corpus comparison. No full workspace/review/final CI claim on this
+unpublished preparation branch.
+
+Next implement real remaining legacy methods, then wire source factory/property
+adapters and retain cache forms with EPL/source provenance. Preserve all 64
+certified source observations, including the original 48; require fresh native
+agreement, independent PR review, full workspace tests and exact final-head CI.
+
+Specification references: [Object prototype operations](https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-properties-of-the-object-prototype-object),
+[legacy prototype accessor](https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-object.prototype.__proto__).

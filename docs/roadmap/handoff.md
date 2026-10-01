@@ -6459,3 +6459,46 @@ methods and source adapters. Preserve the64 certified source corpus; native cach
 forms still unresolved. No PR/full workspace/independent review/final CI claim on
 this unpublished preparation branch. All local processes terminal. M2–M9 active;
 no merge, closure or milestone acceptance.
+
+
+## Owned data/accessor descriptors — 2026-10-01
+
+Continuation afterb4c7d16 replaces implicit root-identity __proto__ recognition
+with real owned descriptors [flags,payload], reusing existing GC arrays. Data
+flags writable1/enumerable2/configurable4; accessor8 requires a pair of callable
+getter/setter values or Undefined, with writable accessors rejected. All storage
+checks descriptors before mutation; lengths/flags/null/malformed/noncallable cases
+raise language exceptions. Integer flags are checked before i31 truncation.
+Raw own-store/define are private internal redefinition operations, not public
+Object.defineProperty semantics; configurable compatibility enforcement stays open.
+
+Default root owns an actual configurable/non-enumerable __proto__ descriptor with
+real unbound callable getter/setter wrappers. Generic property resolution/invocation
+replaces the lookup special case. Nearer descriptors shadow farther ones; receiver
+is preserved for arbitrary descriptor keys. Readonly data and setter-less accessors
+ignore writes in the bounded non-strict adapter; writable own data retains flags,
+and writable inherited data creates ordinary ownflags7. Builtin methods now have
+proper non-enumerable/writable/configurable flags5. Added real propertyIsEnumerable
+and toLocaleString (live property lookup/invocation). No placeholder methods.
+No shared type/layout/ABI/core-cell change. Root remains lazy GC-owned.
+
+Original desired reflection regression80735 passed1 unchanged. Existing property
+regressions passed2, log /private/tmp/suss-descriptor-property-regressions.log.
+9863 passed existing default method1. New descriptor20307 passed2: readonly own/
+inherited writes, ordinary new property flags, copied getter/setter receiver,
+invalid signed/truncated flags, malformed payloads, enumerability and live toString
+returning the actual receiver through valueOf. Complete ABI38225 passed37, log
+/private/tmp/suss-owned-descriptors-abi.log; focused log
+/private/tmp/suss-owned-descriptors-first.log. Commands use shared target/build
+workers2 and cargo test -p suss-compile --test runtime_abi [descriptor] --locked
+-- --test-threads=2. All active tests enabled; previous own-accessor failure fixed.
+Independent development Node assertions pass, log
+/private/tmp/suss-owned-descriptors-node.log. No fresh pinned source comparison
+or full workspace/review/final CI claim for this unpublished preparation.
+
+Next implement remaining real legacy define/lookup getter/setter methods with
+receiver/key/callability/descriptor compatibility checks, then wire source adapters
+and licensed cached hashing forms. Public define/delete, primitive boxing, foreign
+object domains and Symbol.toStringTag remain open. Preserve64 certified source
+observations; native cache forms still unresolved, not acceptance. All processes
+terminal. M2–M9 goal active, no merge/closure/milestone acceptance.

@@ -35,10 +35,17 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     let prototype = b.names["native-object-prototype"];
     let new = b.names["native-object-new"];
     let set_proto = b.names["native-object-prototype-set"];
-    let set = b.names["native-object-own-set"];
+    let set = b.names["native-object-own-define"];
     let mut refs = vec![];
     let mut methods = vec![];
-    for name in ["toString", "valueOf", "hasOwnProperty", "isPrototypeOf"] {
+    for name in [
+        "toString",
+        "valueOf",
+        "hasOwnProperty",
+        "isPrototypeOf",
+        "propertyIsEnumerable",
+        "toLocaleString",
+    ] {
         let mut code = vec![LocalGet(1), ArrayLen, I32Eqz, If(BlockType::Empty)];
         nominal::error(&mut code);
         code.extend([End, LocalGet(1), I32Const(0), ArrayGet(ARGS), LocalSet(2)]);
@@ -83,6 +90,56 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         I32GeS,
                     ]);
                     boolean(&mut code);
+                }
+                "propertyIsEnumerable" => {
+                    code.extend([
+                        LocalGet(2),
+                        LocalGet(1),
+                        ArrayLen,
+                        I32Const(1),
+                        I32GtU,
+                        If(BlockType::Result(VALUE)),
+                        LocalGet(1),
+                        I32Const(1),
+                        ArrayGet(ARGS),
+                        Else,
+                        I32Const(UNDEFINED),
+                        RefI31,
+                        End,
+                        Call(b.names["coerce-string"]),
+                        Call(b.names["native-object-own-descriptor"]),
+                        LocalSet(3),
+                        LocalGet(3),
+                        I32Const(UNDEFINED),
+                        RefI31,
+                        RefEq,
+                        If(BlockType::Result(ValType::I32)),
+                        I32Const(0),
+                        Else,
+                        LocalGet(3),
+                        RefCastNonNull(HeapType::Concrete(ARGS)),
+                        I32Const(0),
+                        ArrayGet(ARGS),
+                        RefCastNonNull(HeapType::I31),
+                        I31GetU,
+                        I32Const(2),
+                        I32And,
+                        I32Eqz,
+                        I32Eqz,
+                        End,
+                    ]);
+                    boolean(&mut code);
+                }
+                "toLocaleString" => {
+                    code.push(LocalGet(2));
+                    code.extend(text("toString"));
+                    code.extend([
+                        Call(b.names["native-object-property-get"]),
+                        LocalGet(2),
+                        I32Const(0),
+                        ArrayNewDefault(ARGS),
+                        Call(b.names["object-method-invoke"]),
+                    ]);
                 }
                 "isPrototypeOf" => {
                     code.extend([
@@ -219,6 +276,61 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     ]);
     let constructor = callback(b, &[(1, VALUE)], &code);
     refs.push(constructor);
+    let getter = callback(
+        b,
+        &[],
+        &[
+            LocalGet(1),
+            ArrayLen,
+            I32Eqz,
+            If(BlockType::Empty),
+            // A typed throw for malformed copied callbacks, before array access.
+            I32Const(0),
+            RefI31,
+            Call(fields),
+            Drop,
+            End,
+            LocalGet(1),
+            I32Const(0),
+            ArrayGet(ARGS),
+            Call(prototype),
+        ],
+    );
+    let setter = callback(
+        b,
+        &[],
+        &[
+            LocalGet(1),
+            ArrayLen,
+            I32Eqz,
+            If(BlockType::Empty),
+            I32Const(0),
+            RefI31,
+            Call(fields),
+            Drop,
+            End,
+            LocalGet(1),
+            I32Const(0),
+            ArrayGet(ARGS),
+            LocalGet(1),
+            ArrayLen,
+            I32Const(1),
+            I32GtU,
+            If(BlockType::Result(VALUE)),
+            LocalGet(1),
+            I32Const(1),
+            ArrayGet(ARGS),
+            Else,
+            I32Const(UNDEFINED),
+            RefI31,
+            End,
+            Call(b.names["native-object-proto-write"]),
+        ],
+    );
+    let mut detached_code = vec![];
+    nominal::error(&mut detached_code);
+    let detached = callback(b, &[], &detached_code);
+    refs.extend([getter, setter, detached]);
     let mut code = vec![
         GlobalGet(ROOT),
         I32Const(0),
@@ -250,10 +362,44 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             I32Const(0),
             I32Const(-1),
             Call(b.names["closure-new"]),
+            I32Const(5),
             Call(set),
             Drop,
         ]);
     }
+    code.push(LocalGet(0));
+    code.extend(text("__proto__"));
+    for anchored in [getter, setter] {
+        code.extend([
+            GlobalGet(object_methods::TAG_GLOBAL),
+            I32Const(0),
+            RefI31,
+            RefFunc(anchored),
+            I32Const(1),
+            I32Const(-1),
+            Call(b.names["closure-new"]),
+            ArrayNewFixed {
+                array_type_index: ARGS,
+                array_size: 1,
+            },
+            I32Const(0),
+            RefI31,
+            StructNew(7),
+            RefFunc(detached),
+            I32Const(0),
+            I32Const(-1),
+            Call(b.names["closure-new"]),
+        ]);
+    }
+    code.extend([
+        ArrayNewFixed {
+            array_type_index: ARGS,
+            array_size: 2,
+        },
+        I32Const(12),
+        Call(set),
+        Drop,
+    ]);
     code.push(LocalGet(0));
     code.extend(text("constructor"));
     code.extend([
@@ -263,6 +409,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         I32Const(0),
         I32Const(-1),
         Call(b.names["closure-new"]),
+        I32Const(5),
         Call(set),
         Drop,
         LocalGet(0),

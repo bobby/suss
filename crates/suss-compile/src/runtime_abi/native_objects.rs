@@ -21,6 +21,7 @@ fn array(body: &mut Vec<Instruction<'static>>, local: u32) {
 }
 pub(super) fn functions(b: &mut Builder) {
     use Instruction::*;
+    let descriptor = descriptor_functions(b);
     b.function(
         "native-object-new",
         &[],
@@ -94,11 +95,9 @@ pub(super) fn functions(b: &mut Builder) {
         I32Const(1),
         I32Add,
         ArrayGet(ARGS),
-        RefIsNull,
-        If(BlockType::Empty),
+        Call(descriptor),
+        Drop,
     ]);
-    nominal::error(&mut body);
-    body.push(End);
     body.extend([
         LocalGet(3),
         I32Const(2),
@@ -187,11 +186,35 @@ pub(super) fn functions(b: &mut Builder) {
         End,
     ];
     b.function_with_locals(
-        "native-object-own-get",
+        "native-object-own-descriptor",
         &[VALUE, VALUE],
         &[VALUE],
         &[(1, ValType::I32)],
         &body,
+    );
+    b.function_with_locals(
+        "native-object-own-get",
+        &[VALUE, VALUE],
+        &[VALUE],
+        &[(1, VALUE)],
+        &[
+            LocalGet(0),
+            LocalGet(1),
+            Call(b.names["native-object-own-descriptor"]),
+            LocalSet(2),
+            LocalGet(2),
+            I32Const(UNDEFINED),
+            RefI31,
+            RefEq,
+            If(BlockType::Result(VALUE)),
+            LocalGet(2),
+            Else,
+            LocalGet(2),
+            RefCastNonNull(HeapType::Concrete(ARGS)),
+            I32Const(1),
+            ArrayGet(ARGS),
+            End,
+        ],
     );
     body = vec![
         LocalGet(0),
@@ -199,11 +222,10 @@ pub(super) fn functions(b: &mut Builder) {
         Call(slot),
         LocalSet(3),
         LocalGet(2),
-        RefIsNull,
-        If(BlockType::Empty),
+        Call(descriptor),
+        Drop,
     ];
-    nominal::error(&mut body);
-    body.extend([End, LocalGet(0), Call(fields), LocalSet(4)]);
+    body.extend([LocalGet(0), Call(fields), LocalSet(4)]);
     array(&mut body, 4);
     body.extend([
         I32Const(0),
@@ -267,11 +289,50 @@ pub(super) fn functions(b: &mut Builder) {
     array(&mut body, 4);
     body.extend([I32Const(0), LocalGet(6), ArraySet(ARGS), LocalGet(2)]);
     b.function_with_locals(
-        "native-object-own-set",
+        "native-object-own-store",
         &[VALUE, VALUE, VALUE],
         &[VALUE],
         &[(1, ValType::I32), (3, VALUE)],
         &body,
+    );
+    let store = b.names["native-object-own-store"];
+    b.function_with_locals(
+        "native-object-own-define",
+        &[VALUE, VALUE, VALUE, ValType::I32],
+        &[VALUE],
+        &[],
+        &{
+            let mut code = vec![LocalGet(3), I32Const(15), I32GtU, If(BlockType::Empty)];
+            nominal::error(&mut code);
+            code.push(End);
+            code.extend([
+                LocalGet(0),
+                LocalGet(1),
+                LocalGet(3),
+                RefI31,
+                LocalGet(2),
+                ArrayNewFixed {
+                    array_type_index: ARGS,
+                    array_size: 2,
+                },
+                Call(store),
+                Drop,
+                LocalGet(2),
+            ]);
+            code
+        },
+    );
+    b.function(
+        "native-object-own-set",
+        &[VALUE, VALUE, VALUE],
+        &[VALUE],
+        &[
+            LocalGet(0),
+            LocalGet(1),
+            LocalGet(2),
+            I32Const(7),
+            Call(b.names["native-object-own-define"]),
+        ],
     );
     prototype_functions(b, fields, slot);
 }
@@ -444,4 +505,85 @@ fn prototype_functions(b: &mut Builder, fields: u32, slot: u32) {
         &[(1, VALUE)],
         &body,
     );
+}
+
+// Private GC-owned descriptors: [attribute flags, data value/accessor pair].
+// Flags: writable1, enumerable2, configurable4, accessor8. The shared array
+// type is reused; no new type group or process registry is introduced.
+fn descriptor_functions(b: &mut Builder) -> u32 {
+    use Instruction::*;
+    let mut code = vec![];
+    guard(&mut code, 0, ARGS);
+    array(&mut code, 0);
+    code.extend([ArrayLen, I32Const(2), I32Ne, If(BlockType::Empty)]);
+    nominal::error(&mut code);
+    code.push(End);
+    array(&mut code, 0);
+    code.extend([I32Const(0), ArrayGet(ARGS), LocalSet(1)]);
+    code.extend([
+        LocalGet(1),
+        RefTestNonNull(HeapType::I31),
+        I32Eqz,
+        If(BlockType::Empty),
+    ]);
+    nominal::error(&mut code);
+    code.push(End);
+    code.extend([
+        LocalGet(1),
+        RefCastNonNull(HeapType::I31),
+        I31GetU,
+        LocalSet(2),
+        LocalGet(2),
+        I32Const(15),
+        I32GtU,
+        If(BlockType::Empty),
+    ]);
+    nominal::error(&mut code);
+    code.push(End);
+    array(&mut code, 0);
+    code.extend([
+        I32Const(1),
+        ArrayGet(ARGS),
+        LocalSet(1),
+        LocalGet(1),
+        RefIsNull,
+        If(BlockType::Empty),
+    ]);
+    nominal::error(&mut code);
+    code.extend([End, LocalGet(2), I32Const(8), I32And, If(BlockType::Empty)]);
+    code.extend([LocalGet(2), I32Const(1), I32And, If(BlockType::Empty)]);
+    nominal::error(&mut code);
+    code.push(End);
+    guard(&mut code, 1, ARGS);
+    array(&mut code, 1);
+    code.extend([ArrayLen, I32Const(2), I32Ne, If(BlockType::Empty)]);
+    nominal::error(&mut code);
+    code.push(End);
+    for index in [0, 1] {
+        array(&mut code, 1);
+        code.extend([
+            I32Const(index),
+            ArrayGet(ARGS),
+            LocalSet(3),
+            LocalGet(3),
+            RefTestNonNull(HeapType::Concrete(4)),
+            LocalGet(3),
+            I32Const(UNDEFINED),
+            RefI31,
+            RefEq,
+            I32Or,
+            I32Eqz,
+            If(BlockType::Empty),
+        ]);
+        nominal::error(&mut code);
+        code.push(End);
+    }
+    code.extend([End, LocalGet(0)]);
+    b.function_with_locals(
+        "native-object-descriptor-check",
+        &[VALUE],
+        &[VALUE],
+        &[(1, VALUE), (1, ValType::I32), (1, VALUE)],
+        &code,
+    )
 }
