@@ -5389,3 +5389,38 @@ and existing legacy/manual ignores still explicit. Log
 `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
 All root local graphs terminal. Next independent review/fixes and final-head CI;
 then restore the retained Object-method implementation path. No issue closure/merge.
+
+
+## Independent review of PR #91 — 2026-10-01
+
+Review worktree /private/tmp/suss-review-pr91 starts at candidate 061412d,
+with parent reviewed PR #90 d155059. The production change follows pinned
+analyzer.cljc parse-type: enclosing locals are replaced by the new type fields;
+restoring locals/fields before propagating a method-analysis error preserves the
+surrounding environment. Runtime extend-type remains on its normal capture path.
+No significant production finding remains.
+
+Four independent source probes cover namespace-qualified global access against
+an own field, self type and arrow constructor references despite enclosing local
+shadows, and sibling-method parameter isolation. Original ten cases and their
+expectations are unchanged. Fresh oracle/native session 8599 ended 0: all fourteen
+pinned observations match independently decoded validated Wasm after forced GC,
+and both native tests pass. Log /private/tmp/suss-pr91-review-primary.log.
+The pin emits an undeclared generated-arrow warning for the self-reference probe;
+the warning remains visible and its executed value matches. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-type-method-scope-oracle.sh`.
+
+Python 71 tests, inventory 1,065, reviews 80 partial/985 unassessed, imported
+artifacts 30, official WIT 15 files/6 packages, numeric manifest and offline
+roadmap 10 milestones/39 issues pass. The manifest changes only the review hash.
+Source forms, shared runtime ABI and production code are unchanged by review.
+
+Required full workspace baseline session 99149 ended 0: all enabled workspace
+and doc tests pass. Existing manual/legacy ignores and the diagnostic differential
+baseline of nine passing/seven exact failing observations remain explicit.
+Log /private/tmp/suss-pr91-review-full-baseline.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+All review Cargo/JVM/Node graphs are terminal; shared test slot is released.
+Next require exact reviewed-head CI before readiness, without merging. Then
+continue retained Object methods and real persistent sequence/list foundations.
+No issue/milestone closure or full-core acceptance claim.

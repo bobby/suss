@@ -81,6 +81,38 @@
         "tag": "f64",
         "bits": "404f000000000000"
       }
+    },
+    {
+      "id": "qualified-global-bypasses-own-field",
+      "source": "(do (deftype ScopeQualified [scope-factor] ScopeProtocol (scope-result [this] suss-oracle.type-method-scope-cases/scope-factor)) (scope-result (ScopeQualified. 7)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    },
+    {
+      "id": "self-arrow-resolves-over-enclosing-local",
+      "source": "(do (let [->ScopeSelf (fn [value] 99)] (deftype ScopeSelf [value] ScopeProtocol (scope-result [this] (.-value (->ScopeSelf (+ value 1)))))) (scope-result (ScopeSelf. 5)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "self-type-resolves-over-enclosing-local",
+      "source": "(do (let [ScopeSelfType (fn [value] 99)] (deftype ScopeSelfType [value] ScopeProtocol (scope-result [this] (.-value (ScopeSelfType. (+ value 2)))))) (scope-result (ScopeSelfType. 5)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "sibling-method-parameter-does-not-leak",
+      "source": "(do (defprotocol ScopeSiblingProtocol (scope-first [this scope-factor]) (scope-second [this])) (let [scope-factor 7] (deftype ScopeSibling [value] ScopeSiblingProtocol (scope-first [this scope-factor] (+ value scope-factor)) (scope-second [this] (* value scope-factor)))) (+ (scope-first (ScopeSibling. 5) 3) (scope-second (ScopeSibling. 5))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "404f800000000000"
+      }
     }
   ]
 }
