@@ -7302,3 +7302,88 @@ passes after provenance updates, /private/tmp/suss-pr105-review-python-final.log
 All reviewer handles42082/54796/62505/37532/92436/18859/92345 terminal. Reviewer
 releases exclusive heavy slot after review commit/push; root must gate readiness
 on successful exact final reviewed-head CI. No merge or issue/milestone closure.
+
+## Numeric hash boundaries — 2026-10-01
+
+Previous goal turn made progress: PR105 opened/pushed; root56/native2/full52953
+pass; reviewed103/104 exact CI success and ready, no merges. Independent105 now
+pushed19d71da6670aae60d43910e97846076ed5270e4d, fresh62/native3/Python80/full92345
+terminal0, no significant production defect, all handles terminal and heavy slot
+released to root. Exact reviewed-head CI36849333687 live; draft stays until gate.
+
+New isolated portable/core-hash-numeric-boundaries rebased onto reviewed105.
+Original private finite/safe-integer/floor/safe-integer-remainder adapters serve
+pinned public hash's numeric branch; no new GC layout/ABI/core cell. Explicit
+range/nonzero guards prevent conversion/rem traps and retain numerator signed
+zero. No general js-mod/public hash claim; object conversion remains incomplete.
+See docs/runtime/hash-numeric-boundaries.md for provenance, scope and limitations.
+Fresh81729 ended1 on new provisional floor-negative-zero expected sign; actual
+pinned observation preserved, corrected only unverified expectation. Fresh24694
+ended0:68 exact primary/native1. Focused8853/native2 and compiler/ABI65505/1each
+terminal0. Python80/import96/setup4/reviews185+880/diff pass. New phase-test57845
+compile101 on test-only PreparedFragment Debug requirement; corrected explicit
+Err matching; focused84046 live. Full/review/exact-head CI pending; root heavy
+slot. Commands shared target/build2/--locked/--test-threads=2, no RUSTFLAGS.
+Next complete baseline, open/review numeric PR, then retain public and collection
+hashing, printing, remaining persistent types/macros and M2–M9 release gates.
+No issue/milestone closure or merge; alternative algorithms remain deferred #98.
+
+Focused84046 terminal0: native3, both-phase artifact/arity checks pass;
+/private/tmp/suss-hash-numeric-boundaries-focused-final-retry.log. Required
+full baseline now running /private/tmp/suss-hash-numeric-boundaries-full.log;
+root owns exclusive heavy slot. No full acceptance claim until terminal.
+
+Required full73818 terminal0; inspected /private/tmp/suss-hash-numeric-boundaries-full.log
+through final reader doc tests. All enabled required suites pass, including new
+native3/68, numeric HIR/IR1 and direct ABI1, plus reviewed parent indexing3/62
+and source corpora. Manual ignored suites and diagnostic9passes/7knownfailures
+remain explicit. Required command: CARGO_TARGET_DIR=/Users/bobby/code/github/
+bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked --
+--test-threads=2, no RUSTFLAGS. Draft PR106 candidatead73ca9 is open; independent
+reviewer106 prepared additional probes while root held heavy slot. Root now
+releases slot after evidence push; reviewer baseline and exact final-head CI
+remain mandatory. No merge, issue or milestone completion claim.
+
+
+## Independent PR106 review — 2026-10-01
+
+Reviewed candidatead73ca9 and evidence followupf083348 against reviewed105
+19d71da6670aae60d43910e97846076ed5270e4d in isolated /private/tmp/suss-review-pr106
+with actual detached upstreamc4295f30. Read AGENTS/accepted design/ROADMAP/
+inventory/handoff. Inspected original scalar adapters, noncoercing safe-integer
+predicate, HIR/IR Boolean/Number types, reserved private namespace/arity/phase
+behavior, additive imports and coercion/finite/range/zero guards. Exact safe i64
+remainder followed by numerator sign matches the bounded source domain. No
+significant production defect found. This is a public hash prerequisite, not
+public/default identity hashing or general js-mod; existing limitations remain.
+
+Seven review probes preserve all original68 source/expected objects and parent
+corpus bytes. Fresh85831 terminal0:75 exact primary/native4,
+/private/tmp/suss-pr106-review-oracle75.log. They add negative modulus zero signs,
+large safe divisors, scalar remainder coercion, negative safe endpoints and floor
+effects once. Fourth native guard proves denominator fractional/unsafe/nonfinite/
+opaque/zero rejection, both operands evaluated before numeric checks, thrown first
+operand prevents later effects and signed-zero GC recovery. No review provisional
+failures, original expected changes or skips. Python68129 terminal0:80 tests,
+/private/tmp/suss-pr106-review-python.log; import96/setup4/reviews185partial+880
+unassessed/diff checks pass. Commands shared target/build2, no RUSTFLAGS.
+
+Root full73818 ended0 before explicit release; reviewer exclusively owns heavy
+slot now. Required independent full68749 live,
+/private/tmp/suss-pr106-review-full.log, command CARGO_TARGET_DIR=/Users/bobby/
+code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2. Must inspect terminal final output, commit/push review evidence
+and release slot only when all handles terminal. Exact reviewed-head CI remains
+root's readiness gate. No merge/issue closure or milestone acceptance. Next
+retained public/collection hashing, printing, remaining persistent types/compiled
+macros and surrounding M2–M9 release gates.
+
+
+Independent full68749 ended0; inspected /private/tmp/suss-pr106-review-full.log
+through all final reader doc tests. Required shared-target/build2 workspace
+--locked/--test-threads=2 baseline passes, including numeric boundaries4/75,
+HIR/IR contracts, runtime ABI42 and unchanged reviewed parent corpora. Existing
+manual ignores and explicit diagnostic9passing/7knownfailures remain unchanged.
+All reviewer handles68129/85831/68749 terminal; slot released to root after
+review commit/push. Exact final reviewed-head CI still gates readiness. No merge,
+issue closure or milestone acceptance; public/collection hashing remains next.

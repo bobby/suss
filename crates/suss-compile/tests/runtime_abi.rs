@@ -3613,3 +3613,27 @@ fn runtime_abi_strict_owned_store_rejects_readonly_data_before_mutation() {
     let value = nominal_value(&mut store, runtime, "native-object-property-get", &[owner, key]);
     assert_eq!(value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 0).unwrap().unwrap_f64(), 9.0);
 }
+
+#[test]
+fn runtime_abi_numeric_hash_boundaries_reject_bad_values_without_traps() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let three = nominal_value(&mut store, runtime, "number-box", &[Val::F64(3.0f64.to_bits())]);
+    let opaque = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    let forged = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(&mut store, wasmtime::I31::new_u32(99).unwrap())));
+    for input in [opaque, forged, Val::null_any_ref()] {
+        for export in ["primitive-f64-floor", "primitive-f64-finite", "primitive-safe-integer-remainder"] {
+            let args = if export == "primitive-safe-integer-remainder" { vec![input.clone(), three.clone()] } else { vec![input.clone()] };
+            let error = runtime.get_func(&mut store, export).unwrap().call(&mut store, &args, &mut [Val::null_any_ref()]).unwrap_err();
+            assert!(error.is::<wasmtime::ThrownException>(), "{export}: {error:#}");
+            assert!(!error.is::<wasmtime::Trap>());
+            assert!(store.take_pending_exception().is_some());
+            store.gc(None).unwrap();
+            let recovered = nominal_value(&mut store, runtime, "primitive-safe-integer-remainder", &[three.clone(), three.clone()]);
+            assert_eq!(recovered.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 0).unwrap().unwrap_f64().to_bits(), 0.0f64.to_bits());
+        }
+        let output = nominal_value(&mut store, runtime, "primitive-f64-safe-integer", &[input]);
+        assert_eq!(output.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 2);
+    }
+}
