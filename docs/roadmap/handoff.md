@@ -8083,3 +8083,87 @@ Historical exact-head CI36875609291 atdf5e42ba was still in_progress when checke
 it is not a success or new-head certification. New exact reviewed-head CI remains
 mandatory. Reviewer113 owns heavy slot full69149; no cargo/JVM/Node started here.
 Exact old-head lease protects push. No readiness/merge/issue/milestone closure.
+
+## Vector trie prerequisites — 2026-10-01
+
+Root isolated /private/tmp/suss-core-vector-trie, branch portable/core-vector-trie,
+base independently reviewed112df5e42ba, actual detached upstreamc4295f30.
+Initial11514 terminal101: missing suss.core/pv-fresh-node located compile failure,
+/private/tmp/suss-vector-trie-initial.log. Retained complete VectorNode plusnine
+private helper algorithms; explicit fixed defn bootstrap patches/source hashes/EPL
+preserve original branches. No native vector replacement or ABI change.
+Focused33628 terminal0 clone ownership; fresh73307 terminal0:23 exact pinned
+observations/native2, /private/tmp/suss-vector-trie-oracle.log. Added cross-fragment
+association/GC and live clone exception19 recovery tests, focused68047 terminal0/4,
+/private/tmp/suss-vector-trie-native4.log. Python82/import115/reviews206+859 pass.
+All root handles terminal; root exclusively owns local heavy slot for required
+workspace baseline next. Full PersistentVector and remaining M2–M9 gates remain
+open; no issue/milestone closure. Independent review and final-head CI required.
+
+Expanded95 CI36871799306 cancelled at25m; independent reviewer proved source-tree
+identity to reviewed107 and pushed timeout-only35-minute fix447bed49 plus evidence.
+Exact CI36877052183 running;95 nowdraft. No test removal or concurrency change.
+108/110/111/112 retain their reviewed heads and require exact-head CI before ready.
+No root merges performed. User109 cannot resolve in this repository; authoritative
+merged96–107 are in the stack branch,93–95 remain open, main remains at91.
+
+
+Root vector required full22313 authoritative terminal0, inspected final reader
+doc tests and no FAILED/error entries in /private/tmp/suss-vector-trie-full.log.
+Shared target/build2 cargo test --workspace --locked -- --test-threads=2 passes
+vector4/23 exact oracle values, unchanged parent corpora and ABI45. Existing
+manual ignores and diagnostic9passes/7knownfailures remain explicit. All root
+heavy handles11514/33628/73307/68047/22313 terminal; heavy slot can transfer to
+independent reviewer after PR creation. Selection111/artifacts115/reviews206+859.
+Next retain actual vector indexing/error and iterator/reduction prerequisites,
+then complete PersistentVector. No issue/milestone acceptance or merge claimed.
+
+PR108 CI35-minute run finished enabled workspace tests in34m38 then timed out
+compressing post-job cache. Independent reviewer pushed timeout-only60-minute
+fix7ffad606 and is rebasing onto95reviewed447bed49; all production/tests unchanged.
+Propagate via static reviewer rebases before exact final-head readiness checks.
+
+
+## Independent PR113 review — 2026-10-01
+
+Isolated detached /private/tmp/suss-review-pr113 at4a19f9a, actual pinned
+upstreamc4295f30 without symlinks. Read AGENTS/design/ROADMAP/inventory/handoff;
+reviewed complete retained5575–5619/5648–5670, explicit hash-bound defn- patches,
+source artifacts/EPL, clone ownership, structural sharing and live lookup order.
+No significant production defect found. All root heavy handles terminal before
+exclusive cargo/JVM/Node slot transfer.
+
+Original23 corpus objects and all parent corpora unchanged. Six additive probes
+cover live new-path fresh/set order, recursive pop child-before-parent cloning,
+association parent-before-child cloning, nonempty recursive child preservation,
+collapse avoiding cloning and inserted path nil edit. Initial9662 terminal101:
+pinned29 matched, native new trace fixture used unsupported js-obj brackets.
+Corrected only new trace fixture to numeric GC array; fresh52790 terminal0:
+29 exact pinned/native values across4 tests,
+/private/tmp/suss-pr113-review-oracle29-final.log. Added native outer-pop-clone
+throw23 after successful child cloning; focused60491 terminal0/5 proves raw
+one-field Number23, original path intact, restored helper and recovery acrossGC,
+/private/tmp/suss-pr113-review-native5.log. Python82/import115/inventory1065/
+reviews206+859/diff checks pass. Required shared-target/build2 workspace
+baseline69149 LIVE /private/tmp/suss-pr113-review-full.log, noRUSTFLAGS.
+No merge, readiness, issue or milestone closure; full PersistentVector and M2–M9
+remain unfinished. Exact reviewed-head CI required.
+
+
+Reviewer113 full69149 authoritative terminal0 through final reader doctests;
+no FAILED/error entries in /private/tmp/suss-pr113-review-full.log. Required
+shared-target/build2 --workspace --locked -- --test-threads=2 baseline passes
+vector5/29 exact values and unchanged parent corpora/explicit boundaries.
+Existing manual ignores remain explicit. All heavy handles9662/52790/60491/69149
+terminal. Algorithm-byte comparison independently confirms all nine patches only
+replace the declaration wrapper. No significant production defect found.
+Static parent rebase and exact final reviewed-head CI remain readiness gates.
+
+Reviewer113 static rebase onto reviewed1124a01ab6f preserves both append-only
+handoff audits. Scoped git diff --exit-code88981af -- crates runtime scripts tests
+Cargo.toml Cargo.lock confirms tested production/native/oracle inputs unchanged.
+Workflow exactly matches reviewed parent4a01ab6f, inheriting60-minute budget;
+no command, suite, concurrency or lock changes. Prior full69149 evidence applies
+unchanged inputs; no new heavy baseline claimed for static ancestry/docs change.
+All reviewer heavy handles terminal, exclusive heavy slot released to root.
+Exact reviewed-head CI remains pending; no readiness/merge/milestone closure.

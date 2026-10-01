@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "6e7f2e59f9c3d97f1d1231d6101ecc9b0a8214ee6a1dbeb3d2fb700faf30203e",
+  "replacement": "(def pv-clone-node\n  (fn [node]\n  (VectorNode. (.-edit node) (aclone (.-arr node)))))",
+  "rationale": "Retain complete pinned vector trie declaration and source field layout. Executing clone and structural-sharing tests cover source node algorithms; full PersistentVector integration and complete collection acceptance remain pending. Explicit defn- to def/fn bootstrap preserves every algorithm branch and evaluation order; runtime private Var visibility and compiled upstream macros remain unsupported."
+}

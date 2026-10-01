@@ -432,3 +432,11 @@ selection101/artifacts105 and196 partial/869 unassessed reviews remain
 prerequisites. Persistent vectors/maps/sets/map entries, collision nodes and
 compiled macro/release gates remain required; see
 [collection hashing evidence](../runtime/collection-hashing.md).
+
+
+Vector trie prerequisites now retain complete source5575–5619/5648–5670:
+VectorNode, pv-fresh-node, pv-aget, pv-aset, pv-clone-node, tail-off, new-path,
+push-tail, do-assoc and pop-tail. Selection111/artifacts115;206 partial reviews,
+859 unassessed. Private defn bootstrap visibility remains unfinished, and these
+helpers do not establish PersistentVector, map/set or M4/M7 acceptance.
+[Execution evidence](../runtime/vector-trie.md).

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "07376f027a1a74917ec41310b6874d9ede3177bd607721c2876de2a24e5874b1",
+  "replacement": "(def pop-tail\n  (fn [pv level node]\n  (let [subidx (bit-and (bit-shift-right-zero-fill (- (.-cnt pv) 2) level) 0x01f)]\n    (cond\n     (> level 5) (let [new-child (pop-tail pv (- level 5) (pv-aget node subidx))]\n                   (if (and (nil? new-child) (zero? subidx))\n                     nil\n                     (let [ret (pv-clone-node node)]\n                       (pv-aset ret subidx new-child)\n                       ret)))\n     (zero? subidx) nil\n     :else (let [ret (pv-clone-node node)]\n             (pv-aset ret subidx nil)\n             ret)))))",
+  "rationale": "Retain complete pinned vector trie declaration and source field layout. Executing clone and structural-sharing tests cover source node algorithms; full PersistentVector integration and complete collection acceptance remain pending. Explicit defn- to def/fn bootstrap preserves every algorithm branch and evaluation order; runtime private Var visibility and compiled upstream macros remain unsupported."
+}

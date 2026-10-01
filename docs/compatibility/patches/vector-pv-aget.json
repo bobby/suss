@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "6c7a0c68f5cfba6af80c9901686a939a01a223247d511a9627ea2ce0ffad3a23",
+  "replacement": "(def pv-aget\n  (fn [node idx]\n  (aget (.-arr node) idx)))",
+  "rationale": "Retain complete pinned vector trie declaration and source field layout. Executing clone and structural-sharing tests cover source node algorithms; full PersistentVector integration and complete collection acceptance remain pending. Explicit defn- to def/fn bootstrap preserves every algorithm branch and evaluation order; runtime private Var visibility and compiled upstream macros remain unsupported."
+}

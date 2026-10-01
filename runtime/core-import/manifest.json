@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "2696fafc6f2582b140a8ba22f798a0755fe3da63fd31edbb3d37695dd0d1c598",
-  "reviews-sha256": "34b68c55ecabf79ba6cf3a6e988930ed7016100b4200e45152db0dfa7bd8c0bc",
+  "recipe-sha256": "d8949fa31b163496377da6343571bdedfd041d8fd2187835dd338e2b401263a3",
+  "reviews-sha256": "9b5033eca1bf1ac1125335098dfd7b53c12a363e3db28f8363a8928fbb0e62c2",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -3302,6 +3302,314 @@
         "crates/suss-cli/tests/portable_collection_hash.rs",
         "tests/oracle/collection-hash-cases.json"
       ]
+    },
+    {
+      "id": "runtime:VectorNode:5575",
+      "name": "VectorNode",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5575,
+      "end-line": 5575,
+      "byte-start": 151988,
+      "byte-end": 152019,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "2a8adf3c73a45552f9b9cf903b17a45d1565b5d0b792b5aa16aa0620bb8a3e33",
+      "extracted": "extracted/0101.cljs",
+      "extracted-sha256": "b94c61ffd70adfc7f808d37304e0dcfa3f94384c9ddad3275652423e90d06971",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "2a8adf3c73a45552f9b9cf903b17a45d1565b5d0b792b5aa16aa0620bb8a3e33",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "source field layout edit/arr"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_vector_trie.rs",
+        "tests/oracle/vector-trie-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:pv-fresh-node:5577",
+      "name": "pv-fresh-node",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5577,
+      "end-line": 5578,
+      "byte-start": 152021,
+      "byte-end": 152086,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "ebd156065a3b962e086677c417e7aebf1fa49bdb57f38fe7cac8e4a1b6d1d7c6",
+      "extracted": "extracted/0102.cljs",
+      "extracted-sha256": "5f46c44ac06c3125f201776ccaf86718b860c44fe7ac6198a3c2ceb599f18712",
+      "patch": "docs/compatibility/patches/vector-pv-fresh-node.json",
+      "patch-sha256": "00f101d0b11995189a91731a448463d59a142e45bc4179b79b231bd80d7365a1",
+      "adapted-form-sha256": "aaa4db3b1739350027992058ca99d5fc69a3cf49a625f6197bdeb03ec934b0a7",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:VectorNode:5575",
+        "bootstrap make-array"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_vector_trie.rs",
+        "tests/oracle/vector-trie-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:pv-aget:5580",
+      "name": "pv-aget",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5580,
+      "end-line": 5581,
+      "byte-start": 152088,
+      "byte-end": 152140,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "6c7a0c68f5cfba6af80c9901686a939a01a223247d511a9627ea2ce0ffad3a23",
+      "extracted": "extracted/0103.cljs",
+      "extracted-sha256": "5baaa957626281659f0dbc9c90e91b76a2de3e30e1514f03982481acf03f0b97",
+      "patch": "docs/compatibility/patches/vector-pv-aget.json",
+      "patch-sha256": "244b703c0ede012b4c9ae3443d2fc6c29c4f062fb7d34aabb4d7f1a758a6f5ba",
+      "adapted-form-sha256": "9015da1cec41942e4fa4ba44452d0a8a5a5887639c192f2ee92bd9f4878fe9b0",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "bootstrap aget"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_vector_trie.rs",
+        "tests/oracle/vector-trie-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:pv-aset:5583",
+      "name": "pv-aset",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5583,
+      "end-line": 5584,
+      "byte-start": 152142,
+      "byte-end": 152202,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "081ab875ab723c15f356db8f09f0ac3d9dced45b7ff468fa7c8c4cbf1edf5911",
+      "extracted": "extracted/0104.cljs",
+      "extracted-sha256": "4128c99793c64c424e7d65b4f7546738168fb23f91a855b409e66b285cca4128",
+      "patch": "docs/compatibility/patches/vector-pv-aset.json",
+      "patch-sha256": "352d2ebddfff5958ecec47b6b0f25683242b66bda5660cc4f1ef9cdd196b3c97",
+      "adapted-form-sha256": "5f42f2aadc87ecf6de53137a7c494fefd022a5b3f7dcf343c714d912e03d66f3",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "bootstrap aset"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_vector_trie.rs",
+        "tests/oracle/vector-trie-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:pv-clone-node:5586",
+      "name": "pv-clone-node",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5586,
+      "end-line": 5587,
+      "byte-start": 152204,
+      "byte-end": 152284,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "6e7f2e59f9c3d97f1d1231d6101ecc9b0a8214ee6a1dbeb3d2fb700faf30203e",
+      "extracted": "extracted/0105.cljs",
+      "extracted-sha256": "7ec5342f391042edbd2b90464265caca3c5719740a42a12b88c83a7b22f9913f",
+      "patch": "docs/compatibility/patches/vector-pv-clone-node.json",
+      "patch-sha256": "448e2b6cd2e099686588182b205e4591cefb479e820d90ed9be8ad9be53b2b55",
+      "adapted-form-sha256": "1a7946a42b1eb7206e72eb0c1365a09f0308d3178de9ae307e0002da7f5bb16e",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:VectorNode:5575",
+        "runtime:aclone:468"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_vector_trie.rs",
+        "tests/oracle/vector-trie-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:tail-off:5589",
+      "name": "tail-off",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5589,
+      "end-line": 5593,
+      "byte-start": 152286,
+      "byte-end": 152425,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "0a87f5ff1ea15cc836354b399c4e91f4cf57847f7894a02f3ef223406c06acd5",
+      "extracted": "extracted/0106.cljs",
+      "extracted-sha256": "6ec5e84bc057acf6057afe18cd0eeb514452175f07f974a12189d32fa2d87905",
+      "patch": "docs/compatibility/patches/vector-tail-off.json",
+      "patch-sha256": "7858f87a5d9523d61c69baba56620a1c73a21d07e9dcd2845e3e639e4fafeb63",
+      "adapted-form-sha256": "12efc263bd74baa781e556a012a7b269b34dfbf54fd824ce63f714f98a7fc0ec",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:dec:2803",
+        "bootstrap binary64 comparison and ToUint32 shifts"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_vector_trie.rs",
+        "tests/oracle/vector-trie-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:new-path:5595",
+      "name": "new-path",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5595,
+      "end-line": 5603,
+      "byte-start": 152427,
+      "byte-end": 152649,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "e52815eaa2649d415c3fada17153384d2f190262aa5d9a8c508e79b139b1499e",
+      "extracted": "extracted/0107.cljs",
+      "extracted-sha256": "082f23a73d9b2284d63bc0e182d980cdc6757c33859d3281342ae77a0081a692",
+      "patch": "docs/compatibility/patches/vector-new-path.json",
+      "patch-sha256": "1afa3dd8283e948081a24b765eede223c26393cbea8566a084dde8797dd78b60",
+      "adapted-form-sha256": "5797b057c89854068fcc4b0e9d75b7d2382edfb646d40af14ff3867db2f19eae",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:pv-fresh-node:5577",
+        "runtime:pv-aset:5583",
+        "runtime:zero?:3081",
+        "bootstrap loop/recur and arithmetic"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_vector_trie.rs",
+        "tests/oracle/vector-trie-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:push-tail:5605",
+      "name": "push-tail",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5605,
+      "end-line": 5619,
+      "byte-start": 152651,
+      "byte-end": 153243,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "2ff9171783365baee0f7d78b49f62a72b1a64b61ab3aab5aa0e3d214b08e0861",
+      "extracted": "extracted/0108.cljs",
+      "extracted-sha256": "abe85d12d3854949c578c8eff86284e2937e95ec427658482fbee071c2444b7a",
+      "patch": "docs/compatibility/patches/vector-push-tail.json",
+      "patch-sha256": "9b83052527f815c2f8c0e5fff9df353f197985e07d19c643df01afc01286b10a",
+      "adapted-form-sha256": "e8fd68dcbbf3cd2ba7c7324bdc7ae7e99dc95be3d1bd5564e837669e94daeecc",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:pv-clone-node:5586",
+        "runtime:pv-aget:5580",
+        "runtime:pv-aset:5583",
+        "runtime:new-path:5595",
+        "bootstrap recursion and shifts"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_vector_trie.rs",
+        "tests/oracle/vector-trie-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:do-assoc:5648",
+      "name": "do-assoc",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5648,
+      "end-line": 5656,
+      "byte-start": 154091,
+      "byte-end": 154422,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "2aaaf1055911975d7fd2cded32e542c7d7f15543915bd3af77fff2e531b09d64",
+      "extracted": "extracted/0109.cljs",
+      "extracted-sha256": "ed80d41f34e1dfa3a89cf192ff4ec20450189bc20585efae86cbab44c55e3f3e",
+      "patch": "docs/compatibility/patches/vector-do-assoc.json",
+      "patch-sha256": "8e45168f1fd3ab46804353dd8043bfbd62c3c886d3ba86d33d329f61b38e9a81",
+      "adapted-form-sha256": "bba0e05f802597aab8dcd5089e8ff0d3f201de27d5ee11c784ed11db9df6bc29",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:pv-clone-node:5586",
+        "runtime:pv-aget:5580",
+        "runtime:pv-aset:5583",
+        "runtime:zero?:3081",
+        "bootstrap recursion and shifts"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_vector_trie.rs",
+        "tests/oracle/vector-trie-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:pop-tail:5658",
+      "name": "pop-tail",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5658,
+      "end-line": 5670,
+      "byte-start": 154424,
+      "byte-end": 154979,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "07376f027a1a74917ec41310b6874d9ede3177bd607721c2876de2a24e5874b1",
+      "extracted": "extracted/0110.cljs",
+      "extracted-sha256": "cd6d83d1cbc7b19ead3ba92dd887b7728924bf17e0f428eeb1c37334e68afd78",
+      "patch": "docs/compatibility/patches/vector-pop-tail.json",
+      "patch-sha256": "66188f93414d01ab72bd80eb032ca792276ca7f190382e76a6550f21a72ec8e9",
+      "adapted-form-sha256": "1542aba2dc4118680ac79a6f3c1a78c485a841c5b7c433e7b20cd78693038d5d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:pv-clone-node:5586",
+        "runtime:pv-aget:5580",
+        "runtime:pv-aset:5583",
+        "runtime:zero?:3081",
+        "bootstrap cond and shifts"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_vector_trie.rs",
+        "tests/oracle/vector-trie-cases.json"
+      ]
     }
   ],
   "loader": {
@@ -3418,6 +3726,16 @@
     "extracted/0098.cljs": "4d368661b8719dfd64154329b4aabff05ba43168e1a3089c060600d1dc6b0772",
     "extracted/0099.cljs": "3e41178f5f106b23ba02a74d924ae9e63423ab37d7fd59601b231f2c893e1254",
     "extracted/0100.cljs": "18cda86ca6e46171b36d92ab85ac5600f088a0eff29525794a4b12f552c5c532",
-    "suss/core.sus": "3d9c657c007fb2ae160f8554cc55fa0abe4b6ab00744fbf2a2ca5ffdcb53b86d"
+    "extracted/0101.cljs": "b94c61ffd70adfc7f808d37304e0dcfa3f94384c9ddad3275652423e90d06971",
+    "extracted/0102.cljs": "5f46c44ac06c3125f201776ccaf86718b860c44fe7ac6198a3c2ceb599f18712",
+    "extracted/0103.cljs": "5baaa957626281659f0dbc9c90e91b76a2de3e30e1514f03982481acf03f0b97",
+    "extracted/0104.cljs": "4128c99793c64c424e7d65b4f7546738168fb23f91a855b409e66b285cca4128",
+    "extracted/0105.cljs": "7ec5342f391042edbd2b90464265caca3c5719740a42a12b88c83a7b22f9913f",
+    "extracted/0106.cljs": "6ec5e84bc057acf6057afe18cd0eeb514452175f07f974a12189d32fa2d87905",
+    "extracted/0107.cljs": "082f23a73d9b2284d63bc0e182d980cdc6757c33859d3281342ae77a0081a692",
+    "extracted/0108.cljs": "abe85d12d3854949c578c8eff86284e2937e95ec427658482fbee071c2444b7a",
+    "extracted/0109.cljs": "ed80d41f34e1dfa3a89cf192ff4ec20450189bc20585efae86cbab44c55e3f3e",
+    "extracted/0110.cljs": "cd6d83d1cbc7b19ead3ba92dd887b7728924bf17e0f428eeb1c37334e68afd78",
+    "suss/core.sus": "336cedf50a3e28dd5e4aff5fb8b653638342bb28ed22d9ad9d91fe6377651494"
   }
 }

@@ -508,6 +508,56 @@
       "id": "runtime:empty-unordered-hash:1432",
       "source-sha256": "b073882d1c68b8ad2df8edd26d3f2be46bca2b67474628089d2e50439bfed9da",
       "patch": "docs/compatibility/patches/empty-unordered-hash.json"
+    },
+    {
+      "id": "runtime:VectorNode:5575",
+      "source-sha256": "2a8adf3c73a45552f9b9cf903b17a45d1565b5d0b792b5aa16aa0620bb8a3e33",
+      "patch": null
+    },
+    {
+      "id": "runtime:pv-fresh-node:5577",
+      "source-sha256": "ebd156065a3b962e086677c417e7aebf1fa49bdb57f38fe7cac8e4a1b6d1d7c6",
+      "patch": "docs/compatibility/patches/vector-pv-fresh-node.json"
+    },
+    {
+      "id": "runtime:pv-aget:5580",
+      "source-sha256": "6c7a0c68f5cfba6af80c9901686a939a01a223247d511a9627ea2ce0ffad3a23",
+      "patch": "docs/compatibility/patches/vector-pv-aget.json"
+    },
+    {
+      "id": "runtime:pv-aset:5583",
+      "source-sha256": "081ab875ab723c15f356db8f09f0ac3d9dced45b7ff468fa7c8c4cbf1edf5911",
+      "patch": "docs/compatibility/patches/vector-pv-aset.json"
+    },
+    {
+      "id": "runtime:pv-clone-node:5586",
+      "source-sha256": "6e7f2e59f9c3d97f1d1231d6101ecc9b0a8214ee6a1dbeb3d2fb700faf30203e",
+      "patch": "docs/compatibility/patches/vector-pv-clone-node.json"
+    },
+    {
+      "id": "runtime:tail-off:5589",
+      "source-sha256": "0a87f5ff1ea15cc836354b399c4e91f4cf57847f7894a02f3ef223406c06acd5",
+      "patch": "docs/compatibility/patches/vector-tail-off.json"
+    },
+    {
+      "id": "runtime:new-path:5595",
+      "source-sha256": "e52815eaa2649d415c3fada17153384d2f190262aa5d9a8c508e79b139b1499e",
+      "patch": "docs/compatibility/patches/vector-new-path.json"
+    },
+    {
+      "id": "runtime:push-tail:5605",
+      "source-sha256": "2ff9171783365baee0f7d78b49f62a72b1a64b61ab3aab5aa0e3d214b08e0861",
+      "patch": "docs/compatibility/patches/vector-push-tail.json"
+    },
+    {
+      "id": "runtime:do-assoc:5648",
+      "source-sha256": "2aaaf1055911975d7fd2cded32e542c7d7f15543915bd3af77fff2e531b09d64",
+      "patch": "docs/compatibility/patches/vector-do-assoc.json"
+    },
+    {
+      "id": "runtime:pop-tail:5658",
+      "source-sha256": "07376f027a1a74917ec41310b6874d9ede3177bd607721c2876de2a24e5874b1",
+      "patch": "docs/compatibility/patches/vector-pop-tail.json"
     }
   ],
   "loader": {
