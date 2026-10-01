@@ -24,8 +24,10 @@ for development-only probes; no shipped Java dependency is introduced.
 This branch is rebased onto independently reviewed PR107 commit7b530784. Focused
 parent protocol/identity/sequence tests pass, including its unchanged exact IFn
 strict-arity boundary. Python81/import101/setup5/reviews190+875/diff checks pass.
-The required full workspace baseline, independent PR review/fixes and exact
-reviewed-head CI remain pending. No milestone is complete from these tests.
+Required full82236 ended0 through final doc tests, including all45 ABI tests,
+/private/tmp/suss-default-hash-full.log. Existing manual/diagnostic boundaries
+remain explicit. Independent PR review/fixes and exact reviewed-head CI remain
+pending. No milestone is complete from these tests.
 
 Required validation:
 

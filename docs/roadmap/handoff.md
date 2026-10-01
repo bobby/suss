@@ -7577,3 +7577,13 @@ Compiler13236 terminal0/1, /private/tmp/suss-default-hash-hir-ir.log. Parent foc
 reviews190partial875unassessed/diff pass. Full/review/final-head CI still required.
 Root owns the heavy slot for the next full baseline. Public hash's complete
 Date/case branches, ordered/unordered composition and remaining gates are next.
+
+Required default-IHash full82236 terminal0 through final reader doc tests,
+/private/tmp/suss-default-hash-full.log, including all45 ABI regressions and
+unchanged parent oracle/native boundaries. Draft PR108 opened atbefb2c0 with Refs
+links, base reviewed1077b530784. Mandatory /root/review_pr108 dispatched in
+isolated actual pin; static review found no significant defect so far and seven
+new probes are provisional pending certification. Root's cargo/oracle/push/create
+handles57181/24294/13236/15708/82236/59134/72327 terminal. Heavy slot releases to
+reviewer after this evidence push. Exact reviewed-head CI and review fixes/full
+still gate readiness. No merges/issue closures/milestone acceptance.
