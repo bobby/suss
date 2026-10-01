@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "bbe7e7f08fc8553d57eb4501dc00a2d2387d7982c34d0eed90a333648148c3da",
+  "replacement": "(def reversible?\n  \"Returns true if coll satisfies? IReversible.\"\n  (fn [coll]\n  (satisfies? IReversible coll)))",
+  "rationale": "Explicit defn-to-def/fn bootstrap preserves original metadata/docstring/arity and dispatch algorithm. Full compiled defn and runtime Var metadata remain unfinished."
+}

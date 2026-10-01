@@ -7073,3 +7073,18 @@ All reviewer local handles51369/24238/63450/55771/70561/97105/40341 terminal.
 Reviewer releases heavy slot after committing/pushing this evidence and tests;
 root must verify successful exact reviewed-head CI before readiness. No merge,
 issue closure, milestone acceptance or broad portable compatibility claim.
+
+## Sequence iteration/reversal preparation — 2026-10-01
+
+Isolated branch portable/core-sequence-iteration from candidate1030d74c4e prepares
+complete pinned IndexedSeqIterator1644/RSeq1768 and reversible?3356/rseq3361.
+No source method removal, new runtime ABI/type/bootstrap-cell or fake dependency.
+Import86/artifacts90/reviews176partial+889unassessed and new53 candidates are
+UNVERIFIED preparation counts only. No native/fresh/full success claim yet.
+Root reads source and creates original fixtures while reviewer103 exclusively
+owns heavy slot. Must rebase onto final reviewed103 parent, validate and actually
+execute fresh pin/native, correct failures transparently, then full baseline and
+mandatory PR review/fixes/final-head CI before readiness. No merges/closures.
+No RUSTFLAGS; shared target/build2/test threads2. Hash/printing/index helpers,
+generic reverse, other persistent collections/lazy/chunked/transducers and full
+compiled macro/release acceptance remain unfinished.
