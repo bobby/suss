@@ -194,3 +194,12 @@ reviews do not establish full PersistentVector or M4 acceptance. Fresh23 exact
 oracle values and four native tests cover shallow ownership, structural sharing,
 GC, tail boundaries, recursive association/removal and exception recovery.
 See [vector trie evidence](docs/runtime/vector-trie.md).
+
+
+M2-02 collection expression lowering now has19 fresh pinned/native observations:
+15 shared values and4 separately asserted observations of the accepted textual
+map/set evaluation-order variance,0 skips. Five native tests guard constructor
+interfaces, method capture, thrown-entry order, GC and located missing-class
+diagnostics. This is a compiler prerequisite using development-only fixtures;
+full collection/core and M2 acceptance remain open. See
+[collection literals](docs/runtime/collection-literals.md).

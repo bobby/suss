@@ -349,6 +349,18 @@ layouts also fail linking. Existing generated artifacts must be rebuilt. The
 universal invocation, source semantics and release gates do not change. Evidence
 and remaining limits belong in docs/runtime/identity-hashing.md and handoff.
 
+2026-10-01 collection literal ordering decision: preserve textual evaluation
+order for vector, map and set literals. In a map, evaluate each key followed by
+its value before advancing to the next pair, regardless of collection size.
+In a set, evaluate entries in textual order. Each expression runs exactly once;
+a thrown entry prevents later entries and construction. This clarifies section4
+and deliberately differs from incidental reader hash iteration and the pinned
+compiler's large-map all-keys-before-values emission. It does not specify map/set
+iteration order or change equality/hash semantics. Differential evidence must
+retain exact, separately asserted Suss and pinned results for these variances;
+they are not compatibility matches or skipped cases. See
+[collection literal evidence](../runtime/collection-literals.md).
+
 ## Primary references
 
 * [ClojureScript differences](https://clojurescript.org/about/differences)

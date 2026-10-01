@@ -440,3 +440,16 @@ push-tail, do-assoc and pop-tail. Selection111/artifacts115;206 partial reviews,
 859 unassessed. Private defn bootstrap visibility remains unfinished, and these
 helpers do not establish PersistentVector, map/set or M4/M7 acceptance.
 [Execution evidence](../runtime/vector-trie.md).
+
+
+## Collection literal compiler foundation
+
+Vector/map/set expressions now lower through explicit HIR temporaries and existing
+constructor/member/array interfaces. Fresh19 pinned observations and independently
+decoded native results record15 shared values plus4 exact observations of the
+accepted textual-order variance, with0 skips. Six native tests cover threshold
+interfaces, lookup capture, entry exceptions, GC and compile-atomic diagnostics.
+These use development-only constructor fixtures; persistent collection types,
+keyword/symbol literals, quoted collections, runtime metadata and complete M2/M4
+acceptance remain unfinished. No inventory status changed. See
+[collection literal evidence](../runtime/collection-literals.md).
