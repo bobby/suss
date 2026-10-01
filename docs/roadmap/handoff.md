@@ -6145,3 +6145,49 @@ test slot, certify primary/native red, then adapt typed byte access with explici
 source/provenance and execute the artifact. General typed-buffer/host interop and
 public numeric/hash/cached string/collection hashing remain incomplete. Do not
 claim success from these unexecuted preparations or close M2–M9 issues.
+
+## Retained scalar numeric hashing candidate — 2026-10-01
+
+Rebased numeric preparation onto independently reviewed PR97 8947aaa; preserved
+both review and preparation handoff entries through an append-only conflict. PR97
+full11226 passed and final CI36823514952 is live; it remains draft. Root acquired
+its explicitly released shared Cargo/JVM/Node slot. First31865 ended1 from a copied
+reference-runner typo (JSON.numericify), corrected to JSON.stringify. Fresh48310
+ended101:42 exact primary matches, all42 native unresolved before implementation.
+Logs /private/tmp/suss-numeric-hash-first-red.log and
+/private/tmp/suss-numeric-hash-first-red-fixed.log. Native import24198 ended0:42
+exact primary-derived native matches.
+
+Two explicit fixed defn patches retain hash-double/hash-combine with original
+composition, metadata and EPL provenance. Nonescaping typed storage in hash-double
+is adapted to one checked scalar binary64 temporary plus exact big-endian words
+at offsets0/4 over specified little-endian bytes. Original live hash-long call
+remains after both reads. No general JS typed buffers/object coercion or public
+numeric hash acceptance is claimed. Three original private unary compiler/runtime
+adapters reuse checked bitwise HIR/IR result/arity verification; they are not public
+bitwise macro names or core cells. GC layouts/ABI version/cell count unchanged.
+
+Added10 probes preserve original42. Fresh91061 ended101:52 exact pinned/native
+value observations but a new guard incorrectly expected compile-time rejection
+for dynamically loaded core function wrong arity. Those calls instead use checked
+universal runtime arity, so the guard now verifies language error/recovery;
+compile-atomic assertions remain on statically known private primitives. Source4904
+ended0: numeric3/String3/bitwise6 pass. Logs
+/private/tmp/suss-numeric-hash-final52.log and
+/private/tmp/suss-numeric-hash-source-guards.log. Compiler69823 ended0: HIR/IR2,
+ABI25, including267 exact binary64 encodings, raw signed/signaling/quiet NaN payloads,
+byte order and malformed storage/typed recovery. Log /private/tmp/suss-numeric-hash-abi.log.
+Python76/inventory1065/reviews132+933/import45 selections49 licensed files,
+WIT15/6/numeric/bitwise/offline roadmap10/39 pass; log
+/private/tmp/suss-numeric-hash-python.log. Final fresh corrected fixture is running
+and terminal results follow. Commands use shared target/build workers2/locked/
+--test-threads=2, with sh scripts/test-numeric-hash-oracle.sh for fresh pin comparison.
+Independent PR review/fixes, full required baseline and exact final-head CI remain
+before readiness. No merge, closure or milestone acceptance. Cached/public numeric/
+string/collection hashing, persistent source sequences and M2–M9 remain unfinished.
+
+Final fresh52520 ended0:52 exact pinned/native observations and numeric3 guards
+pass. Log /private/tmp/suss-numeric-hash-final52-fixed.log. All root local
+Cargo/JVM/Node processes are terminal; the shared slot will pass exclusively to
+the independent reviewer after draft publication. Final reviewed-head CI remains
+required; no readiness or merge claim for this numeric candidate.

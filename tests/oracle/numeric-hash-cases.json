@@ -337,6 +337,86 @@
         "tag": "f64",
         "bits": "4028000000000000"
       }
+    },
+    {
+      "id": "negative-subnormal",
+      "source": "(hash-double -5e-324)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4170000800000000"
+      }
+    },
+    {
+      "id": "negative-max",
+      "source": "(hash-double -1.7976931348623157e308)",
+      "expected": {
+        "tag": "f64",
+        "bits": "40b0000000000000"
+      }
+    },
+    {
+      "id": "hex-scalar",
+      "source": "(hash-double \"0x10\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "40c8200000000000"
+      }
+    },
+    {
+      "id": "spaced-scalar",
+      "source": "(hash-double \" 1.5 \")",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ef07e000000000"
+      }
+    },
+    {
+      "id": "undefined-scalar",
+      "source": "(hash-double (.-missing \"x\"))",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ef0fe000000000"
+      }
+    },
+    {
+      "id": "captured-double-cell",
+      "source": "(let [saved hash-double] (with-redefs [hash-double (fn [x] 9)] (saved 1.5)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "40ef07e000000000"
+      }
+    },
+    {
+      "id": "current-double-cell",
+      "source": "(with-redefs [hash-double (fn [x] 9)] (let [current hash-double] (current 1.5)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "captured-combine-cell",
+      "source": "(let [saved hash-combine] (with-redefs [hash-combine (fn [a b] 9)] (saved 0 0)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d8722191c00000"
+      }
+    },
+    {
+      "id": "combine-immutable-bitwise",
+      "source": "(let [saved hash-combine] (with-redefs [bit-xor (fn [a b] 9)] (saved 0 0)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1d8722191c00000"
+      }
+    },
+    {
+      "id": "double-throwing-argument",
+      "source": "(do (def hash_throw_trace 0) (try (hash-double (do (set! hash_throw_trace 1) (throw 9))) (catch :default e nil)) hash_throw_trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
     }
   ]
 }

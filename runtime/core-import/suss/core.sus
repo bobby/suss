@@ -232,3 +232,17 @@
             hash))
         0))
     0)))
+
+(def hash-double (fn [f]
+  (let [arr  (suss.bootstrap/f64-coerce f)
+        buf  arr
+        high (suss.bootstrap/f64-word0 buf)
+        low  (suss.bootstrap/f64-word4 buf)]
+    (hash-long high low))))
+
+(def hash-combine (fn [seed hash]
+  ; a la boost
+  (bit-xor seed
+    (+ hash 0x9e3779b9
+      (bit-shift-left seed 6)
+      (bit-shift-right seed 2)))))

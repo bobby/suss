@@ -185,6 +185,10 @@ pub enum Bitwise {
     Right,
     Unsigned,
     Imul,
+    /// Private scalar binary64 storage adapters; never public bitwise macros.
+    F64Coerce,
+    F64Word0,
+    F64Word4,
 }
 impl Bitwise {
     pub(crate) fn from_name(name: &str) -> Option<Self> {
@@ -222,11 +226,14 @@ impl Bitwise {
             Self::Right => "primitive-bit-shift-right",
             Self::Unsigned => "primitive-unsigned-bit-shift-right",
             Self::Imul => "primitive-imul",
+            Self::F64Coerce => "primitive-f64-coerce",
+            Self::F64Word0 => "primitive-f64-word0",
+            Self::F64Word4 => "primitive-f64-word4",
         }
     }
     pub(crate) fn arity(self) -> usize {
         match self {
-            Self::Int | Self::Not => 1,
+            Self::Int | Self::Not | Self::F64Coerce | Self::F64Word0 | Self::F64Word4 => 1,
             _ => 2,
         }
     }
@@ -964,6 +971,17 @@ impl Analyzer {
         };
         let args = &items[1..];
         let bare = symbol.namespace.is_none();
+        if symbol.namespace.as_deref() == Some("suss.bootstrap") {
+            let operation = match symbol.name.as_str() {
+                "f64-coerce" => Some(Bitwise::F64Coerce),
+                "f64-word0" => Some(Bitwise::F64Word0),
+                "f64-word4" => Some(Bitwise::F64Word4),
+                _ => None,
+            };
+            if let Some(operation) = operation {
+                return self.bitwise_form(form, args, operation);
+            }
+        }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") && symbol.name == "nil?" {
             if args.len() != 1 {
                 return Err(fail(

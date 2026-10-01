@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "98efb0a5a5bdb7aa2f4f0629cbe15bc86884e6a11fff1ac340fa047f1a9052ce",
-  "reviews-sha256": "9c6b3e5893187a244c87b78b87ccd10531096df0b410dc8b987e74811f066c84",
+  "recipe-sha256": "928f7d402003f1dbdda22d8903d6aaaa0c22aef82dcd3436aa2f2f439696f965",
+  "reviews-sha256": "e3a2ba72f278c879e5f7341e329c7f597f542a459e1d107fa4178828687c5e9d",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -1324,6 +1324,68 @@
         "crates/suss-cli/tests/portable_string_hash.rs",
         "tests/oracle/string-hash-cases.json"
       ]
+    },
+    {
+      "id": "runtime:hash-double:996",
+      "name": "hash-double",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 996,
+      "end-line": 1001,
+      "byte-start": 30364,
+      "byte-end": 30589,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "783d46872fe343707525c9c5e6f87b4b22d5732c8e76e86d87ce2f54808d8646",
+      "extracted": "extracted/0043.cljs",
+      "extracted-sha256": "e292ecd2c96173f18992f2787ce710ae1c8bb618cef14e2aa0ca904e30a2dd42",
+      "patch": "docs/compatibility/patches/hash-double.json",
+      "patch-sha256": "da57c04d3a685d61177fba6a27843fadc99683ec23588c05861c267ee7c436c9",
+      "adapted-form-sha256": "c3e7e8627bef21ee59bb155faa77fa0d0b9b7d9f3f2912351a9a231b3fc43b73",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:hash-long:993",
+        "private scalar f64 normalization and big-endian word reads"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_numeric_hash.rs",
+        "tests/oracle/numeric-hash-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:hash-combine:1092",
+      "name": "hash-combine",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1092,
+      "end-line": 1097,
+      "byte-start": 32937,
+      "byte-end": 33085,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "2ba652546dd2df6915b3c7d18660eb813666166aaab21d7de9512278e729e962",
+      "extracted": "extracted/0044.cljs",
+      "extracted-sha256": "3ed8d84b19976589c1f9ad695caa4794f17f31887abdf9b89885e4debe92978b",
+      "patch": "docs/compatibility/patches/hash-combine.json",
+      "patch-sha256": "5c4936739b3308c79cd1788254fd4dfac40d51ff0ff2db19b8beb3d96c3c9c2b",
+      "adapted-form-sha256": "54af05205d0daa20434823fcf84f26df9eb2b64db4750ec7f535de716f4b35df",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "macro:bit-xor:1243",
+        "macro:bit-shift-left:1260",
+        "macro:bit-shift-right:1263",
+        "binary64 arithmetic"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_numeric_hash.rs",
+        "tests/oracle/numeric-hash-cases.json"
+      ]
     }
   ],
   "files": {
@@ -1372,6 +1434,8 @@
     "extracted/0040.cljs": "a325eb4370e9bdb9612f555e4786f8ddb3c7817e3f051546dd6808e5fc4709c1",
     "extracted/0041.cljs": "b4763de780cca6b8b300acd333ec1a304c163aaa2dbbcf95e998c9ed6bc23937",
     "extracted/0042.cljs": "e5e8bcc13a1bda69c09c320865b9865341df2b4bcad4df777581739593116fdf",
-    "suss/core.sus": "f29e675b4e36ea2a1aa3ae393b5e82d059dfe8693e14000715d115090621b968"
+    "extracted/0043.cljs": "e292ecd2c96173f18992f2787ce710ae1c8bb618cef14e2aa0ca904e30a2dd42",
+    "extracted/0044.cljs": "3ed8d84b19976589c1f9ad695caa4794f17f31887abdf9b89885e4debe92978b",
+    "suss/core.sus": "38c08f724a4d5f83562de3dd71e4cd9914135d6aff18937d681ddb23283eddd1"
   }
 }

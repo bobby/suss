@@ -2900,3 +2900,45 @@ fn runtime_abi_string_method_copied_callbacks_and_corrupt_environments_do_not_tr
     let recovered = nominal_value(&mut store, runtime, "string-char-code-at", &[text, nil]);
     assert_eq!(recovered.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 0).unwrap().unwrap_f64(), 57343.0);
 }
+
+#[test]
+fn runtime_abi_binary64_words_preserve_payloads_byte_order_and_typed_errors() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let mut samples = vec![0u64, 0x8000000000000000, 0x3ff0000000000000,
+        0x0000000000000001, 0x7ff0000000000000, 0xfff0000000000000,
+        0x7ff8000000000123, 0xfff8000000000123, 0x7ff0000000000001,
+        0xfff0000000000001, 0x0123456789abcdef];
+    let mut sample_bits = 0x1397abcde0123456u64;
+    for _ in 0..256 {
+        sample_bits ^= sample_bits << 13; sample_bits ^= sample_bits >> 7; sample_bits ^= sample_bits << 17;
+        samples.push(sample_bits);
+    }
+    for bits in samples {
+        let input = nominal_value(&mut store, runtime, "number-box", &[Val::F64(bits)]);
+        let normalized = nominal_value(&mut store, runtime, "primitive-f64-coerce", &[input.clone()]);
+        let object = normalized.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+        assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64().to_bits(), bits);
+        for (name, word) in [("primitive-f64-word0", bits as u32), ("primitive-f64-word4", (bits >> 32) as u32)] {
+            let value = nominal_value(&mut store, runtime, name, &[input.clone()]);
+            let object = value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+            assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64(), f64::from(word.swap_bytes() as i32), "{name}: {bits:016x}");
+        }
+    }
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let opaque = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    store.gc(None).unwrap();
+    for name in ["primitive-f64-word0", "primitive-f64-word4"] {
+        for input in [nil.clone(), opaque.clone(), Val::null_any_ref()] {
+            let error = runtime.get_func(&mut store, name).unwrap().call(&mut store, &[input], &mut [Val::null_any_ref()]).unwrap_err();
+            assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+            assert!(!error.is::<wasmtime::Trap>());
+            assert!(store.take_pending_exception().is_some());
+        }
+    }
+    let normalized = nominal_value(&mut store, runtime, "primitive-f64-coerce", &[nil]);
+    let output = nominal_value(&mut store, runtime, "primitive-f64-word0", &[normalized]);
+    let object = output.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+    assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64(), 0.0);
+}

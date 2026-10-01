@@ -218,6 +218,16 @@
       "id": "runtime:hash-string*:1026",
       "source-sha256": "2b47893e9e7a081ccb89a6a0e574b23c1cf9ea8507725c69c21c9192fb7a8c9a",
       "patch": "docs/compatibility/patches/hash-string-uncached.json"
+    },
+    {
+      "id": "runtime:hash-double:996",
+      "source-sha256": "783d46872fe343707525c9c5e6f87b4b22d5732c8e76e86d87ce2f54808d8646",
+      "patch": "docs/compatibility/patches/hash-double.json"
+    },
+    {
+      "id": "runtime:hash-combine:1092",
+      "source-sha256": "2ba652546dd2df6915b3c7d18660eb813666166aaab21d7de9512278e729e962",
+      "patch": "docs/compatibility/patches/hash-combine.json"
     }
   ]
 }

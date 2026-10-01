@@ -15,6 +15,7 @@ mod named_properties;
 mod native_protocols;
 mod nominal;
 mod numeric;
+mod numeric_hash;
 mod object_methods;
 mod predicates;
 mod string_methods;
@@ -610,6 +611,7 @@ fn build_module() -> Vec<u8> {
     let binding_set = dynamic::binding_set(&mut b, dynamic_lookup);
     let primitives = numeric::intrinsics(&mut b, numeric_info);
     bitwise::intrinsics(&mut b);
+    numeric_hash::intrinsics(&mut b);
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
     arithmetic_functions.extend(arrays::functions(&mut b));
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));

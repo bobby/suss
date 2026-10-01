@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "2ba652546dd2df6915b3c7d18660eb813666166aaab21d7de9512278e729e962",
+  "replacement": "(def hash-combine (fn [seed hash]\n  ; a la boost\n  (bit-xor seed\n    (+ hash 0x9e3779b9\n      (bit-shift-left seed 6)\n      (bit-shift-right seed 2)))))",
+  "rationale": "Explicit fixed defn bootstrap adaptation retains original numeric hashing composition. For hash-double, private scalar binary64 storage replaces the nonescaping typed buffer: one checked scalar ToNumber conversion and two exact signed big-endian DataView reads over little-endian Float64Array bytes. Live hash-long lookup remains after both words. General typed buffers/JavaScript object conversion and public hashing remain unfinished."
+}

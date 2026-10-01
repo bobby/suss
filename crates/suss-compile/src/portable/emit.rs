@@ -242,7 +242,8 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 ],
                 vec![VALUE],
             ),
-            "binding-get" | "binding-bound" | "number-negate" | "value-negate" => {
+            "binding-get" | "binding-bound" | "number-negate" | "value-negate"
+            | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
