@@ -43,7 +43,7 @@ fn hash_numeric_boundaries_match_independently_encoded_primary_observations() {
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 68);
+    assert_eq!(cases.len(), 75);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -155,4 +155,48 @@ fn numeric_hash_adapters_validate_in_both_compilation_phases() {
             assert!(error.span.end > error.span.start);
         }
     }
+}
+
+#[test]
+fn numeric_hash_remainder_checks_both_operands_after_source_evaluation() {
+    use suss_cli::portable_session::SessionError;
+    let mut session = Session::new().unwrap();
+    session.eval("(def review-effects 0)").unwrap();
+    for source in [
+        "(suss.bootstrap/safe-integer-remainder 17 1.5)",
+        "(suss.bootstrap/safe-integer-remainder 17 9007199254740992)",
+        "(suss.bootstrap/safe-integer-remainder 17 ##NaN)",
+        "(suss.bootstrap/safe-integer-remainder 17 (array 1))",
+        "(suss.bootstrap/safe-integer-remainder 17 0)",
+    ] {
+        assert!(
+            matches!(session.eval(source), Err(SessionError::Language(_))),
+            "{source}"
+        );
+        session.collect().unwrap();
+        assert_eq!(
+            eval_number(
+                &mut session,
+                "(suss.bootstrap/safe-integer-remainder -17 -17)"
+            ),
+            (-0.0f64).to_bits()
+        );
+    }
+    assert!(matches!(session.eval("(suss.bootstrap/safe-integer-remainder (do (set! review-effects 1) 1.5) (do (set! review-effects (+ review-effects 10)) 3))"), Err(SessionError::Language(_))));
+    assert_eq!(
+        eval_number(&mut session, "review-effects"),
+        11.0f64.to_bits()
+    );
+    session.eval("(set! review-effects 0)").unwrap();
+    assert!(matches!(
+        session.eval(
+            "(suss.bootstrap/safe-integer-remainder (throw 17) (do (set! review-effects 99) 3))"
+        ),
+        Err(SessionError::Language(_))
+    ));
+    session.collect().unwrap();
+    assert_eq!(
+        eval_number(&mut session, "review-effects"),
+        0.0f64.to_bits()
+    );
 }

@@ -7343,3 +7343,47 @@ bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked --
 reviewer106 prepared additional probes while root held heavy slot. Root now
 releases slot after evidence push; reviewer baseline and exact final-head CI
 remain mandatory. No merge, issue or milestone completion claim.
+
+
+## Independent PR106 review — 2026-10-01
+
+Reviewed candidatead73ca9 and evidence followupf083348 against reviewed105
+19d71da6670aae60d43910e97846076ed5270e4d in isolated /private/tmp/suss-review-pr106
+with actual detached upstreamc4295f30. Read AGENTS/accepted design/ROADMAP/
+inventory/handoff. Inspected original scalar adapters, noncoercing safe-integer
+predicate, HIR/IR Boolean/Number types, reserved private namespace/arity/phase
+behavior, additive imports and coercion/finite/range/zero guards. Exact safe i64
+remainder followed by numerator sign matches the bounded source domain. No
+significant production defect found. This is a public hash prerequisite, not
+public/default identity hashing or general js-mod; existing limitations remain.
+
+Seven review probes preserve all original68 source/expected objects and parent
+corpus bytes. Fresh85831 terminal0:75 exact primary/native4,
+/private/tmp/suss-pr106-review-oracle75.log. They add negative modulus zero signs,
+large safe divisors, scalar remainder coercion, negative safe endpoints and floor
+effects once. Fourth native guard proves denominator fractional/unsafe/nonfinite/
+opaque/zero rejection, both operands evaluated before numeric checks, thrown first
+operand prevents later effects and signed-zero GC recovery. No review provisional
+failures, original expected changes or skips. Python68129 terminal0:80 tests,
+/private/tmp/suss-pr106-review-python.log; import96/setup4/reviews185partial+880
+unassessed/diff checks pass. Commands shared target/build2, no RUSTFLAGS.
+
+Root full73818 ended0 before explicit release; reviewer exclusively owns heavy
+slot now. Required independent full68749 live,
+/private/tmp/suss-pr106-review-full.log, command CARGO_TARGET_DIR=/Users/bobby/
+code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2. Must inspect terminal final output, commit/push review evidence
+and release slot only when all handles terminal. Exact reviewed-head CI remains
+root's readiness gate. No merge/issue closure or milestone acceptance. Next
+retained public/collection hashing, printing, remaining persistent types/compiled
+macros and surrounding M2–M9 release gates.
+
+
+Independent full68749 ended0; inspected /private/tmp/suss-pr106-review-full.log
+through all final reader doc tests. Required shared-target/build2 workspace
+--locked/--test-threads=2 baseline passes, including numeric boundaries4/75,
+HIR/IR contracts, runtime ABI42 and unchanged reviewed parent corpora. Existing
+manual ignores and explicit diagnostic9passing/7knownfailures remain unchanged.
+All reviewer handles68129/85831/68749 terminal; slot released to root after
+review commit/push. Exact final reviewed-head CI still gates readiness. No merge,
+issue closure or milestone acceptance; public/collection hashing remains next.

@@ -23,7 +23,7 @@ shared GC layouts, ABI version and automatic core cells remain unchanged. Four
 runtime exports are additive. No JVM/Node dependency ships; the reference runner
 uses the pinned development compiler and direct host numeric operations.
 
-68 fresh primary/native observations cover scalar coercion, NaN/infinities,
+75 fresh primary/native observations cover scalar coercion, NaN/infinities,
 signed zero, subnormals, safe-integer endpoints, large positive/negative remainders
 and noncoercing predicates. Shared #? fixtures use :suss private adapters and
 :cljs reference operations, with :suss first to preserve reader feature order.
@@ -65,3 +65,29 @@ bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked --
 reviewer106 prepared additional probes while root held heavy slot. Root now
 releases slot after evidence push; reviewer baseline and exact final-head CI
 remain mandatory. No merge, issue or milestone completion claim.
+
+
+Independent PR106 review inspected the scalar coercion domain, noncoercing
+safe-integer predicate, HIR/IR types and private arities/phases, additive imports
+and range/nonzero checks. No significant production defect found. Seven review
+observations preserve all original68 and parent corpus bytes, adding negative
+modulus zero signs, large divisors, scalar coercion, negative safe endpoints and
+once-only floor effects. Fresh85831 ended0:75 exact primary/native4, in
+/private/tmp/suss-pr106-review-oracle75.log. The fourth native test checks both
+operand ranges, denominator zero/nonfinite/opaque failures, effects before numeric
+checks and throw preventing the later operand; GC recovery retains exact signed
+zero. No provisional review failures, changed original expectations or skips.
+Python68129 terminal0:80 tests; import96/setup4/reviews185+880/diff checks pass.
+Required independent full68749 running in /private/tmp/suss-pr106-review-full.log;
+reviewer owns exclusive heavy slot until terminal output is inspected. Final
+reviewed-head CI remains required before readiness; no merge or milestone claim.
+
+
+Independent full68749 ended0; inspected /private/tmp/suss-pr106-review-full.log
+through all final reader doc tests. Required shared-target/build2 workspace
+--locked/--test-threads=2 baseline passes, including numeric boundaries4/75,
+HIR/IR contracts, runtime ABI42 and unchanged reviewed parent corpora. Existing
+manual ignores and explicit diagnostic9passing/7knownfailures remain unchanged.
+All reviewer handles68129/85831/68749 terminal; slot released to root after
+review commit/push. Exact final reviewed-head CI still gates readiness. No merge,
+issue closure or milestone acceptance; public/collection hashing remains next.

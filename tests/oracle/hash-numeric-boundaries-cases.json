@@ -545,6 +545,62 @@
         "tag": "f64",
         "bits": "4000000000000000"
       }
+    },
+    {
+      "id": "review-rem-negative-divisor-zero",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder -17 -17) :cljs (cljs.core/js-mod -17 -17))",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "review-rem-small-safe-max",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder 17 9007199254740991) :cljs (cljs.core/js-mod 17 9007199254740991))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "review-rem-negative-unit",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder -9007199254740991 -1) :cljs (cljs.core/js-mod -9007199254740991 -1))",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "review-rem-scalar-coercion",
+      "source": "#?(:suss (suss.bootstrap/safe-integer-remainder \"17\" true) :cljs (cljs.core/js-mod \"17\" true))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "review-safe-negative-endpoint",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer -9007199254740991) :cljs (js/Number.isSafeInteger -9007199254740991))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-safe-negative-unsafe",
+      "source": "#?(:suss (suss.bootstrap/f64-safe-integer -9007199254740992) :cljs (js/Number.isSafeInteger -9007199254740992))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "review-floor-effect-once",
+      "source": "#?(:suss (let [a (array 0)] (suss.bootstrap/f64-floor (do (aset a 0 (inc (aget a 0))) -1.25)) (aget a 0)) :cljs (let [a (array 0)] (js/Math.floor (do (aset a 0 (inc (aget a 0))) -1.25)) (aget a 0)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
     }
   ]
 }
