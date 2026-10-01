@@ -5888,3 +5888,10 @@ new PR. PR95 final reviewed-head CI is still required before readiness. Do not
 claim List/Cons/hash-ordered/hash-unordered/string/numeric hashing complete or
 substitute private argument buffers for persistent source collections. See
  docs/runtime/murmur-hashing.md. No PR merge or issue closure.
+
+
+The unpublished Murmur preparation now has52 provisional probes (original35
+unchanged).17 new ->/as->/zero? cases cover lexical shadowing, captures, tail recur
+and strict zero testing. They have not run against the pin/native and are NOT
+success evidence. PR95 reviewer is investigating captured variadic tail dispatch;
+root still holds no local test slot and has launched no Cargo/JVM/Node processes.

@@ -10,7 +10,7 @@ original algorithms using explicit fixed defn bootstrap patches and EPL provenan
 The original ->/as-> syntax requires bounded expansions before those forms execute;
 zero? requires strict primitive comparison with numeric zero. Prepared expansion
 retains source order, lexical identities, captures, source spans/metadata and tail
-context. It has NOT been compiled or tested.35 provisional scalar probes are prepared
+context. It has NOT been compiled or tested.52 provisional scalar/control probes are prepared
 with independent mathematical expectations; no primary/native success is recorded.
 
 Do not replace hash-ordered-coll/hash-unordered-coll with argument-array folds.

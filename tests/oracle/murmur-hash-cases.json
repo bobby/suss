@@ -281,6 +281,142 @@
         "tag": "f64",
         "bits": "41dfffffffc00000"
       }
+    },
+    {
+      "id": "thread-identity",
+      "source": "(-> 7)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "thread-symbol",
+      "source": "(-> 7 inc)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "thread-pairs",
+      "source": "(-> 3 (imul 5) (bit-or 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402e000000000000"
+      }
+    },
+    {
+      "id": "thread-local-call",
+      "source": "(let [f (fn [x y] (+ x y))] (-> 3 (f 7)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4024000000000000"
+      }
+    },
+    {
+      "id": "thread-tail-recur",
+      "source": "(loop [n 100] (if (> n 0) (-> (- n 1) recur) n))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "as-identity",
+      "source": "(as-> 7 x)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "as-chain",
+      "source": "(as-> 3 x (imul x 5) (bit-or x 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "402e000000000000"
+      }
+    },
+    {
+      "id": "as-captured-old-binding",
+      "source": "(as-> 7 x (fn [] x) (x))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "as-shadows-local",
+      "source": "(let [x 100] (+ (as-> 7 x (+ x 3)) x))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405b800000000000"
+      }
+    },
+    {
+      "id": "as-tail-recur",
+      "source": "(loop [n 100] (if (> n 0) (as-> n v (- v 1) (recur v)) n))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "zero-negative",
+      "source": "(zero? -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "zero-nil",
+      "source": "(zero? nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "zero-string",
+      "source": "(zero? \"0\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "zero-false",
+      "source": "(zero? false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "zero-nan",
+      "source": "(zero? (/ 0 0))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "first-class-zero",
+      "source": "(let [f zero?] (f -0.0))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "shadow-zero",
+      "source": "(let [zero? (fn [x] 71)] (zero? 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4051c00000000000"
+      }
     }
   ]
 }
