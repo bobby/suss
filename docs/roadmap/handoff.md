@@ -8070,3 +8070,16 @@ Existing manual ignores remain explicit. All reviewer heavy handles30098/43535/
 10323/27387 terminal. Reviewer commits/pushes additive probes and evidence, then
 releases exclusive heavy slot. Exact final reviewed-head CI gates readiness;
 no merge, issue or milestone closure.
+
+### PR112 inherited timeout reconciliation — 2026-10-01
+
+Static rebase of independently revieweddf5e42ba onto independently reviewed
+PR111835fe7c4 preserves both parent timeout audits and all collection review
+and full-baseline evidence. Scoped git diff verifies crates/runtime/scripts/tests/
+oracle/Cargo bytes identicaldf5e42ba. Workflow matches reviewed parent exactly,
+inheriting35→60 minutes and rationale; no suite, concurrency or lock gate changes.
+Prior full27387 remains identical-code evidence; no fresh baseline is claimed.
+Historical exact-head CI36875609291 atdf5e42ba was still in_progress when checked;
+it is not a success or new-head certification. New exact reviewed-head CI remains
+mandatory. Reviewer113 owns heavy slot full69149; no cargo/JVM/Node started here.
+Exact old-head lease protects push. No readiness/merge/issue/milestone closure.
