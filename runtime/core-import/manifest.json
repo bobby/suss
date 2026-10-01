@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "928f7d402003f1dbdda22d8903d6aaaa0c22aef82dcd3436aa2f2f439696f965",
-  "reviews-sha256": "e3a2ba72f278c879e5f7341e329c7f597f542a459e1d107fa4178828687c5e9d",
+  "recipe-sha256": "bb3b586fab9732d7ff0b75588b6607747900d6ba4738450657c36bdf9aadf130",
+  "reviews-sha256": "c04c6f536c163a51275557844b239a449da546425b4ae53849e5a5964c68147c",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -1386,6 +1386,168 @@
         "crates/suss-cli/tests/portable_numeric_hash.rs",
         "tests/oracle/numeric-hash-cases.json"
       ]
+    },
+    {
+      "id": "runtime:js-obj:2284",
+      "name": "js-obj",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2284,
+      "end-line": 2290,
+      "byte-start": 62271,
+      "byte-end": 62469,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "ac50f5ef05cbceeec7227d1284b2f9f7ddbce55b06cd374f9dd8a43458cff19e",
+      "extracted": "extracted/0045.cljs",
+      "extracted-sha256": "4dea21ea9fca69edf5e7139a910fa1af62459450fbdeeeb7487c0221c3e9d655",
+      "patch": "docs/compatibility/patches/js-object-factory.json",
+      "patch-sha256": "39e426d6ac9ddd7be01ef93a330470d0357ac42a3e0eff3a80764acd39042bab",
+      "adapted-form-sha256": "f2ff6152282039302fe8794ce3adac52ce9f1d1afb45d42816f0381367af1957",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "owned GC Object prototype and descriptor-aware properties",
+        "first-class variadic factory callback"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_string_cache.rs",
+        "tests/oracle/string-cache-cases.json",
+        "crates/suss-cli/tests/portable_native_objects.rs",
+        "crates/suss-compile/tests/runtime_abi.rs"
+      ]
+    },
+    {
+      "id": "runtime:string-hash-cache:1022",
+      "name": "string-hash-cache",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1022,
+      "end-line": 1022,
+      "byte-start": 31235,
+      "byte-end": 31267,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "f502ec246497077f91b0ff08201637b4777f9e1298657d1f96dfa7505bfec0d3",
+      "extracted": "extracted/0046.cljs",
+      "extracted-sha256": "7d873eca4d1ba7c9696ce70d9bbeb1171bcdc6ca7487bcc9786275e85ccaedb8",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "f502ec246497077f91b0ff08201637b4777f9e1298657d1f96dfa7505bfec0d3",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:js-obj:2284"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_string_cache.rs",
+        "tests/oracle/string-cache-cases.json",
+        "crates/suss-cli/tests/portable_native_objects.rs",
+        "crates/suss-compile/tests/runtime_abi.rs"
+      ]
+    },
+    {
+      "id": "runtime:string-hash-cache-count:1023",
+      "name": "string-hash-cache-count",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1023,
+      "end-line": 1023,
+      "byte-start": 31268,
+      "byte-end": 31299,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "e0f3d50788bdf85a2e7df1ae6a19ed4d0fbd2c37a660658cba3cde8cc0e46579",
+      "extracted": "extracted/0047.cljs",
+      "extracted-sha256": "2087e470510cb5de463fca4f29e409243d36b6d834b24df41eae8dfc3108abc4",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "e0f3d50788bdf85a2e7df1ae6a19ed4d0fbd2c37a660658cba3cde8cc0e46579",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_string_cache.rs",
+        "tests/oracle/string-cache-cases.json",
+        "crates/suss-cli/tests/portable_native_objects.rs",
+        "crates/suss-compile/tests/runtime_abi.rs"
+      ]
+    },
+    {
+      "id": "runtime:add-to-string-hash-cache:1037",
+      "name": "add-to-string-hash-cache",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1037,
+      "end-line": 1041,
+      "byte-start": 31652,
+      "byte-end": 31827,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "7f3a6b72d88216e5d5d58b62fcb5805bb7bb79cf8879c0341d36238bfe93ce3e",
+      "extracted": "extracted/0048.cljs",
+      "extracted-sha256": "926a25f6b43a15c64250d66f829b021b7f1baebbaa358cf9c8e1d4db8d5f82cf",
+      "patch": "docs/compatibility/patches/add-to-string-hash-cache.json",
+      "patch-sha256": "6af77b343d748ac4bcd6dc82178587be29430d74bde6102a64b359530c86cff8",
+      "adapted-form-sha256": "03c7485f16af252549469a09db9a0f8740ba40c0b6dd38be8dd6d12403ffd564",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:hash-string*:1026",
+        "runtime:string-hash-cache:1022",
+        "runtime:string-hash-cache-count:1023",
+        "runtime:inc:1505",
+        "checked scalar object property set"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_string_cache.rs",
+        "tests/oracle/string-cache-cases.json",
+        "crates/suss-cli/tests/portable_native_objects.rs",
+        "crates/suss-compile/tests/runtime_abi.rs"
+      ]
+    },
+    {
+      "id": "runtime:hash-string:1043",
+      "name": "hash-string",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1043,
+      "end-line": 1052,
+      "byte-start": 31829,
+      "byte-end": 32110,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "3ca4d933c808bb44c7fc13a4c925b043930d735d9fd03b938e48a0ba796cba53",
+      "extracted": "extracted/0049.cljs",
+      "extracted-sha256": "64305fb66936fad35809478202121a70c573ecfedb1d10a78f1f90adf8265b1e",
+      "patch": "docs/compatibility/patches/hash-string-cached.json",
+      "patch-sha256": "d01f20bcddeaca1917ac316d5544e5d89901e197e83e02a5138c9ba3b1214f52",
+      "adapted-form-sha256": "f977dd22af3e0f2cecfd16146d3b7985e7dc2b72a3514432556cb5650e97a9a9",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:js-obj:2284",
+        "runtime:add-to-string-hash-cache:1037",
+        "macro:unchecked-get:1070",
+        "runtime:number?:258",
+        "live cache bindings and source-ordered reset"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_string_cache.rs",
+        "tests/oracle/string-cache-cases.json",
+        "crates/suss-cli/tests/portable_native_objects.rs",
+        "crates/suss-compile/tests/runtime_abi.rs"
+      ]
     }
   ],
   "files": {
@@ -1436,6 +1598,11 @@
     "extracted/0042.cljs": "e5e8bcc13a1bda69c09c320865b9865341df2b4bcad4df777581739593116fdf",
     "extracted/0043.cljs": "e292ecd2c96173f18992f2787ce710ae1c8bb618cef14e2aa0ca904e30a2dd42",
     "extracted/0044.cljs": "3ed8d84b19976589c1f9ad695caa4794f17f31887abdf9b89885e4debe92978b",
-    "suss/core.sus": "38c08f724a4d5f83562de3dd71e4cd9914135d6aff18937d681ddb23283eddd1"
+    "extracted/0045.cljs": "4dea21ea9fca69edf5e7139a910fa1af62459450fbdeeeb7487c0221c3e9d655",
+    "extracted/0046.cljs": "7d873eca4d1ba7c9696ce70d9bbeb1171bcdc6ca7487bcc9786275e85ccaedb8",
+    "extracted/0047.cljs": "2087e470510cb5de463fca4f29e409243d36b6d834b24df41eae8dfc3108abc4",
+    "extracted/0048.cljs": "926a25f6b43a15c64250d66f829b021b7f1baebbaa358cf9c8e1d4db8d5f82cf",
+    "extracted/0049.cljs": "64305fb66936fad35809478202121a70c573ecfedb1d10a78f1f90adf8265b1e",
+    "suss/core.sus": "1de9fa82ec7ea389b4f680870e92a7a8b27727f03f787eaa3d38aa6b26584921"
   }
 }

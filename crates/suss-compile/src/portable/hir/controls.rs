@@ -45,6 +45,14 @@ impl Analyzer {
         }
         let nil = self.literal_form(form, Literal::Nil);
         match operation {
+            ControlForm::UncheckedGet | ControlForm::UncheckedSet => {
+                let operation = if operation == ControlForm::UncheckedGet { Nominal::NativeObjectGet } else { Nominal::NativeObjectSet };
+                if !operation.valid(&vec![Type::Value; args.len()]) {
+                    return Err(fail(form.span.clone(), "Invalid unchecked property macro arity"));
+                }
+                let operands = args.iter().map(|argument| self.form(argument)).collect::<Result<Vec<_>, _>>()?;
+                Ok(self.nominal(form, operation, operands))
+            }
             ControlForm::Zero | ControlForm::Positive => {
                 if args.len() != 1 {
                     return Err(fail(

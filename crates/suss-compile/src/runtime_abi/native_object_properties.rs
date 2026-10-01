@@ -274,6 +274,65 @@ pub(super) fn functions(b: &mut Builder) {
         &code,
     );
     legacy_functions(b, resolve);
+    for writing in [false, true] {
+        let mut code = vec![
+            LocalGet(1),
+            RefTestNonNull(HeapType::Concrete(STRING)),
+            I32Eqz,
+            If(BlockType::Empty),
+        ];
+        nominal::error(&mut code);
+        code.extend([
+            End,
+            LocalGet(0),
+            Call(b.names["native-object?"]),
+            If(BlockType::Result(VALUE)),
+            LocalGet(0),
+            LocalGet(1),
+        ]);
+        if writing {
+            code.push(LocalGet(2));
+        }
+        code.extend([
+            Call(
+                b.names[if writing {
+                    "native-object-property-set"
+                } else {
+                    "native-object-property-get"
+                }],
+            ),
+            Else,
+            LocalGet(0),
+            LocalGet(1),
+        ]);
+        if writing {
+            code.push(LocalGet(2));
+        }
+        code.extend([
+            Call(
+                b.names[if writing {
+                    "fixed-named-property-set"
+                } else {
+                    "fixed-named-property-get"
+                }],
+            ),
+            End,
+        ]);
+        b.function(
+            if writing {
+                "named-property-set"
+            } else {
+                "named-property-get"
+            },
+            if writing {
+                &[VALUE, VALUE, VALUE]
+            } else {
+                &[VALUE, VALUE]
+            },
+            &[VALUE],
+            &code,
+        );
+    }
 }
 
 // Original bounded legacy accessor operations over owned objects and scalar keys.

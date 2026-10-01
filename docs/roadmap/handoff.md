@@ -6576,3 +6576,36 @@ observations and certify fresh primary/native agreement. No full workspace/PR
 review/final CI claim for this unpublished branch. Source cache64 remains unresolved
 until forms are retained; full public foreign-object/boxing/descriptor definition/
 delete/Symbol behavior and M2–M9 remain open. All local processes terminal.
+
+
+## Retained cached string hashing first green — 2026-10-01
+
+Continuation after2a66db4 retains5 runtime forms with explicit patches/original
+metadata/EPL: js-obj/cache/cache-count/add-to-string-hash-cache/hash-string. Cache
+source order and live dependencies retained. Added bounded checked unchecked-get/
+set macro lowering. Macro literal js-obj and general foreign/array/string bracket
+interop remain explicitly incomplete. Original native named member wrapper routes
+owned objects to descriptors while preserving fixed nominal/String/Array fallback.
+No shared type/layout/ABI/core-cell change. Source cache uses Object descriptors,
+not persistent maps. Recipe50/import54 and reviews139/926 remain partial.
+
+Native first91365 passed64 observations. Fresh primary67283 passed64 exact pin
+observations and native1, log /private/tmp/suss-cache-fresh-primary.log, command
+shared target/build workers2 sh scripts/test-string-cache-oracle.sh. Original48
+and all64 certified expected/source entries unchanged. Final native98787 passed3
+with aliases, first-class variadic factories, native members, own accessor reflection,
+mutable named property, captured/live hasher dependencies, lexical shadowing,
+compile-atomic macro arities/runtime core arities/effect-before-error/recovery.
+Log /private/tmp/suss-cache-source-final.log. Python/provenance5116 ended0:
+Python76/inventory1065/reviews139+926/import54. Log /private/tmp/suss-cache-python.log.
+Final ABI36609 passed40, /private/tmp/suss-cache-abi-final.log. No skips or false
+milestone success. Commands cargo use --locked/--test-threads=2/shared target and
+build workers2.
+
+Required full workspace baseline29258 is running, confirmed live at launch; log
+/private/tmp/suss-cache-full-baseline.log. Root exclusively owns heavy local test
+slot until that handle is terminal. No independent PR review or final-head CI
+claim yet. Next inspect terminal full result, open the coherent cached hashing PR
+with Refs9/11/14/16/19, dispatch independent review/fixes and require exact reviewed-
+head CI. Do not merge. Public hashing/equality, actual persistent sequences/maps,
+compiled macros, complete host-property operations and M2–M9 remain unfinished.

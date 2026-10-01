@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "3ca4d933c808bb44c7fc13a4c925b043930d735d9fd03b938e48a0ba796cba53",
+  "replacement": "(def hash-string (fn [k]\n  (when (> string-hash-cache-count 1024)\n    (set! string-hash-cache (js-obj))\n    (set! string-hash-cache-count 0))\n  (if (nil? k)\n    0\n    (let [h (unchecked-get string-hash-cache k)]\n      (if (number? h)\n        h\n        (add-to-string-hash-cache k))))))",
+  "rationale": "Retain pinned cache algorithm and live binding/reset/storage order with original source metadata and EPL. Replace JS-only factory/property mechanisms with checked owned GC objects, descriptors and a first-class variadic factory. Full foreign-object interoperability, primitive boxing and compiled macro acceptance remain open."
+}

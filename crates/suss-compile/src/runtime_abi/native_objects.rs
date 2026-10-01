@@ -23,6 +23,27 @@ pub(super) fn functions(b: &mut Builder) {
     use Instruction::*;
     let descriptor = descriptor_functions(b);
     b.function(
+        "native-object?",
+        &[VALUE],
+        &[ValType::I32],
+        &[
+            LocalGet(0),
+            RefTestNonNull(HeapType::Concrete(7)),
+            If(BlockType::Result(ValType::I32)),
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(7)),
+            StructGet {
+                struct_type_index: 7,
+                field_index: 0,
+            },
+            GlobalGet(TAG_GLOBAL),
+            RefEq,
+            Else,
+            I32Const(0),
+            End,
+        ],
+    );
+    b.function(
         "native-object-new",
         &[],
         &[VALUE],
