@@ -320,6 +320,15 @@ impl Analyzer {
                     "Type fields require unqualified symbols",
                 ));
             };
+            // Pinned constructors assign this.__proto__, invoking the inherited
+            // setter rather than creating a field. Physical protocol slots must
+            // not silently turn that prototype mutation into an ordinary field.
+            if symbol.name == "__proto__" {
+                return Err(fail(
+                    field.span.clone(),
+                    "Type __proto__ fields require unsupported prototype mutation",
+                ));
+            }
             if symbol.namespace.is_some() || symbol.name == "&" || !seen.insert(symbol.name.clone())
             {
                 return Err(fail(
@@ -819,6 +828,15 @@ impl Analyzer {
                         ));
                     }
                     let name = Self::property_name(method_name, &format!(".-{}", symbol.name))?;
+                    // Pinned add-obj-methods assigns prototype.__proto__; its
+                    // inherited setter changes the prototype instead of storing
+                    // an ordinary method. The prototype adapter is unfinished.
+                    if name == "__proto__" {
+                        return Err(fail(
+                            method_name.span.clone(),
+                            "Object __proto__ methods require unsupported prototype mutation",
+                        ));
+                    }
                     let group =
                         if let Some(group) = groups.iter().position(|(_, key, _)| key == &name) {
                             group

@@ -183,19 +183,26 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
     // A plain detached call uses the non-strict portable realm's implicit this.
     // Rebuild the wrapper from its already unwrapped callback environment.
     let detached_index = b.count;
-    let detached = callback(
-        b,
-        &[
-            LocalGet(0),
-            RefFunc(detached_index),
-            I32Const(0),
-            I32Const(-1),
-            Call(b.names["closure-new"]),
-            GlobalGet(DEFAULT_THIS),
-            LocalGet(1),
-            Call(invoke),
-        ],
-    );
+    // This callback belongs only to tagged Object wrappers. Foreign closures
+    // can copy a typed function reference, so validate its private environment
+    // before reconstruction; a plain-function fallback would invoke itself.
+    let mut detached_body = vec![];
+    guard(&mut detached_body, 0, 7);
+    get(&mut detached_body, 0, 7, 0);
+    detached_body.extend([GlobalGet(TAG_GLOBAL), RefEq, I32Eqz, If(BlockType::Empty)]);
+    nominal::error(&mut detached_body);
+    detached_body.push(End);
+    detached_body.extend([
+        LocalGet(0),
+        RefFunc(detached_index),
+        I32Const(0),
+        I32Const(-1),
+        Call(b.names["closure-new"]),
+        GlobalGet(DEFAULT_THIS),
+        LocalGet(1),
+        Call(invoke),
+    ]);
+    let detached = callback(b, &detached_body);
 
     let mut body = vec![
         LocalGet(0),

@@ -5486,3 +5486,70 @@ macro/core/collection acceptance claim. Log /private/tmp/suss-object-method-prov
 All local Cargo/JVM/Node graphs terminal. Next independent PR review/fixes and
 required full baseline/final reviewed-head CI; then retained persistent collections.
 No issue closure or merge. M2–M9 goal remains active.
+
+## Independent review of PR #93 — 2026-10-01
+
+Review starts at candidate2f1ceb4 in /private/tmp/suss-review-pr93, based on merged
+main89e5dce123db7dbeba15868f0b2dd9f0497fabf1 (#90 and #91 are already merged).
+Three findings were fixed: the resident-cell regression must count the new js-fn?
+primitive (30 rather than29); __proto__ method/field declarations must reject
+unfinished prototype mutation rather than fabricate ordinary storage; and a
+foreign closure copying the detached callback with nil/wrong-tag environment
+must fail through the language exception rather than recursively invoke itself.
+Source-field rejection protects physical protocol slots, while the runtime schema
+guard protects host-created named storage. Compile errors retain exact spans and
+publish no preceding definitions. No other significant production finding remains.
+
+Pinned compiler.cljc emits constructor this.<field> assignments and host method
+assignments; a separate fresh primary namespace confirms primitive __proto__
+initialization has no own field/does not read7 and an Object __proto__ method
+changes the prototype to a function. It also confirms raw null/constructor methods
+return13/29 and both raw named reads are functions; emit-dot uses an empty reserved
+set for these paths, unlike constructor field munging. These are diagnostic boundary
+observations, not additional matching native corpus cases. Log
+/private/tmp/suss-pr93-review-prototype-reserved-primary.log, session39940 ended0.
+
+Eight independent source probes preserve the original44 unchanged: duplicate
+arity last-wins, shared detached implicit-this identity, nested receiver capture,
+properties on method wrappers, noncallable own-field argument order, parallel
+recur bindings, parameter shadows, and Object call versus Fn marker. Fresh final
+source graph37647 ended0 with52 exact primary/native observations and both native
+tests. Pinned duplicate-arity/protocol-recur warnings stay visible. Log
+/private/tmp/suss-pr93-review-primary-wrapper-fixed.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 sh scripts/test-object-method-oracle.sh`.
+An initial provisional wrapper result was corrected from124 to24 before final
+certification; old instances retain original class methods. A discarded js-fn?
+value probe produced primary macro-value warnings; the retained Fn probe tests
+public fn?. Earlier strict compare session6823 failed; fresh final probes pass.
+
+The foreign copied-callback ABI regression first failed (session2438 terminal101)
+with call-stack-exhausted: /private/tmp/suss-pr93-review-detached-wrapper-red.log.
+After private environment/tag validation, all20 ABI tests pass (31161 terminal0),
+including opaque tail keys after matching prefixes, malformed tagged names,
+corrupt payloads, nil/wrong-tag copied callbacks and host-created __proto__ named
+get/set. Log /private/tmp/suss-pr93-review-abi-wrapper-fixed.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test -p suss-compile --test runtime_abi --locked -- --test-threads=2`.
+The first ABI fixture used an unavailable StructRef setter (8037 compile101);
+final fixtures use supported Args mutation and a validated shared-prelude module.
+
+Python71/inventory1065/reviews82 partial+983 unassessed/import32 files/WIT15 files
+and6 packages/numeric manifest/offline roadmap10 milestones+39 issues all pass.
+Log /private/tmp/suss-pr93-review-provenance-wrapper-fixed.log. Only review hash
+changes in the generated import manifest;28 selected forms/32 licensed artifacts
+and full-core/macro/collection limitations remain unchanged.
+
+Initial full baseline14475 failed the stale29-cell assertion. Baselines98735,
+41097 and64057 passed their earlier snapshots; later boundary fixes supersede
+those runs. Final required workspace baseline results follow below. The exact
+reviewed-head CI gate remains root work before readiness; no issue closure or merge.
+Next unblocked task is retained collection dependencies and complete persistent
+sequence/list foundations, with Object blocks preserved. M2–M9 remains active.
+
+Final required full workspace baseline44285 ended0: all enabled workspace and
+doc tests pass, including Object2/property4/native11/type-scope2/interfaces5,
+nominal5/pipeline17 and ABI20. Existing manual/legacy ignores and the diagnostic
+nine passing/seven exact failing observations remain explicit. Log
+/private/tmp/suss-pr93-review-full-baseline-wrapper-fixed.log. Command:
+`CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+All review Cargo/JVM/Node graphs are terminal. Shared test slot is released;
+root must require exact final reviewed-head CI before readiness. No merge/closure.

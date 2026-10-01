@@ -279,6 +279,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         "methods",
         "null",
         "constructor",
+        "__proto__",
     ] {
         body.push(LocalGet(0));
         name(&mut body, reserved);

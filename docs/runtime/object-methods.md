@@ -1,8 +1,8 @@
 # Retained Object methods
 
 The checked bootstrap now lowers user-type Object blocks and direct dot calls.
-Forty-four fresh pinned observations match independently decoded validated Wasm
-with forced GC; the original24 probes are unchanged. Two native tests cover the
+Fifty-two fresh pinned observations match independently decoded validated Wasm
+with forced GC; the original44 probes are unchanged. Two native tests cover the
 corpus and malformed declaration/compile-atomic recovery.
 
 The class descriptor owns named keys and unbound method functions. Instances of
@@ -36,7 +36,13 @@ source is copied by the original lowering/runtime helpers or development corpus.
 
 Public prototype access/replacement, dynamic extra instance fields, computed or
 munged names, default-realm property mutation, primitive Object extension and full
-host attributes remain explicit unsupported paths. This bounded adapter supports
+host attributes remain explicit unsupported paths. Object __proto__ declarations
+raise a located compile error: pinned prototype assignment invokes its inherited
+setter and requires prototype mutation rather than ordinary method storage. Raw
+__proto__ fields also raise a located compile error, including protocol bodies
+that would otherwise bypass named storage. Host-created __proto__ schemas reject
+named get/set explicitly. Pinned constructors assign this.__proto__, invoking the
+same setter. This bounded adapter supports
 retained user-type methods; it is not a claim of general JS interop or full core.
 
 Command:
@@ -70,3 +76,47 @@ The global11/local7 discriminator returns55, confirming namespace lookup rather
 than an outer lexical capture. Intentional ->ObjectProbe replacement warning stays
 visible; the revised lexical discriminator has no undeclared-var warning. Native
 method implementation, receiver storage and full prototype surfaces remain open.
+
+
+Independent PR #93 review adds eight source probes without changing the original44.
+Fresh session73059 ended0 with52 exact primary/native observations. It checks
+duplicate arity last-wins behavior, shared detached implicit-this identity, nested
+receiver captures, properties on method wrappers, noncallable own-field argument
+order, parallel recur bindings, parameter shadows, and Object call versus Fn.
+Log /private/tmp/suss-pr93-review-primary-final.log. Pinned duplicate-arity and
+protocol-recur warnings remain visible. A discarded exploratory js-fn? value probe
+produced macro-value warnings; the retained Fn probe uses the public fn? contract.
+An initial provisional wrapper result was corrected from124 to24 before final
+certification; old instances correctly retain their original class methods.
+
+The independent malformed-storage test rejects opaque tail keys despite matching
+prefixes, tagged keys with non-string names, and corrupted wrapper payloads using
+checked language exceptions, without Wasm traps. Focused session76342 ended0.
+Log /private/tmp/suss-pr93-review-abi-guards-final.log. The first guard-test compile
+used an unavailable Wasmtime StructRef setter; the final fixture mutates an owned
+Args table through its supported API.
+
+Final guarded source graph17758 ended0 with52 exact primary/native observations
+and both native tests. Log /private/tmp/suss-pr93-review-primary-final-head.log.
+A separate pinned diagnostic namespace confirms __proto__ primitive initialization
+has no own field and does not read7, while an Object __proto__ method changes the
+prototype to a function. This establishes an unsupported boundary, not three
+additional matching corpus cases. Log /private/tmp/suss-pr93-review-prototype-primary.log.
+
+A foreign shared-ABI closure copying the detached callback with nil or wrong-tag
+environment exposed a recursive fallback and Wasm call-stack exhaustion. Red
+session2438 ended101; log /private/tmp/suss-pr93-review-detached-wrapper-red.log.
+The detached callback now checks its private UserObject/tag before reconstruction.
+Fixed ABI session31161 ended0 with20 tests: both copied environments and corrupted
+payloads raise checked language exceptions without traps. Log
+/private/tmp/suss-pr93-review-abi-wrapper-fixed.log. Valid-source behavior and the
+ten shared GC prelude types remain unchanged.
+
+Fresh fixed-wrapper graph37647 ended0:52 exact primary/native observations and
+both native tests. Log /private/tmp/suss-pr93-review-primary-wrapper-fixed.log.
+A separate pinned reserved-name diagnostic confirms null/constructor Object
+methods stay raw for direct calls and named function reads (13/true and29/true).
+Compiler emit-dot uses an empty reserved set for these property paths, unlike
+constructor field munging. No blanket reserved Object-method guard is justified.
+Log /private/tmp/suss-pr93-review-prototype-reserved-primary.log; these diagnostic
+observations do not expand the52 matching native corpus.

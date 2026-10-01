@@ -8,7 +8,7 @@ fn object_methods_match_independently_decoded_primary_observations_after_gc() {
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 44);
+    assert_eq!(cases.len(), 52);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -99,6 +99,8 @@ fn malformed_object_methods_fail_atomically_and_session_recovers() {
         "(do (def object-unpublished 3) (deftype ObjectInvalid [] Object (missing [] 1)))",
         "(deftype ObjectInvalid [] Object (missing [this] object-private-name))",
         "(deftype ObjectInvalid [] Object (bad-name [this] 1))",
+        "(do (def object-unpublished 3) (deftype ObjectInvalid [] Object (__proto__ [this] 1)))",
+        "(do (def object-unpublished 3) (defprotocol ObjectProtoGuard (read-proto [this])) (deftype ObjectInvalid [__proto__] ObjectProtoGuard (read-proto [this] __proto__)))",
         "(deftype ObjectInvalid [] Object (missing [this & rest] 1))",
         "(deftype ObjectInvalid [] Object (missing [this n] (recur this n)))",
     ] {
@@ -107,6 +109,13 @@ fn malformed_object_methods_fail_atomically_and_session_recovers() {
             matches!(error, suss_cli::portable_session::SessionError::Compile(_)),
             "{source}: {error:?}"
         );
+        if let Some(start) = source.find("__proto__") {
+            let suss_cli::portable_session::SessionError::Compile(diagnostic) = &error else {
+                unreachable!()
+            };
+            assert_eq!(diagnostic.span, start..start + "__proto__".len());
+            assert!(diagnostic.message.contains("prototype mutation"));
+        }
         for name in ["object-unpublished", "ObjectInvalid", "->ObjectInvalid"] {
             assert!(
                 session.eval(name).is_err(),

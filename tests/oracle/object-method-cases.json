@@ -365,6 +365,70 @@
         "tag": "bool",
         "value": false
       }
+    },
+    {
+      "id": "review-object-duplicate-arity-last-wins",
+      "source": "(do (deftype ReviewDuplicate [] Object (read [this] 11) (read [this] 37)) (.read (ReviewDuplicate.)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4042800000000000"
+      }
+    },
+    {
+      "id": "review-detached-methods-share-implicit-realm",
+      "source": "(do (deftype ReviewThis [] Object (self [this] this)) (identical? ((.-self (ReviewThis.))) ((.-self (ObjectSelf. 1)))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "review-nested-function-retains-physical-this",
+      "source": "(do (deftype ReviewCapture [value] Object (capture [this] (fn [] (+ value (.-value this))))) (def review-capture (.capture (ReviewCapture. 17))) (review-capture))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4041000000000000"
+      }
+    },
+    {
+      "id": "review-method-wrapper-properties-preserve-environment",
+      "source": "(do (set! (.-cache (.-score object-probe)) 9) (+ (.score object-probe 2) (.-cache (.-score object-probe))))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4038000000000000"
+      }
+    },
+    {
+      "id": "review-noncallable-own-field-evaluates-arguments",
+      "source": "(do (aset object-effects 0 0) (try (.score (object-mark 1 (ObjectShadow. 7)) (object-mark 2 3) (object-mark 3 4)) (catch :default e nil)) (aget object-effects 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "review-object-recur-parallel-binding",
+      "source": "(do (deftype ReviewSwap [value] Object (swap [this n a b] (if (<= n 0) (+ value (* a 10) b) (recur (dec n) b a)))) (.swap (ReviewSwap. 7) 1 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4043800000000000"
+      }
+    },
+    {
+      "id": "review-method-parameter-shadows-field",
+      "source": "(do (deftype ReviewParam [value] Object (read [this value] value)) (.read (ReviewParam. 11) 43))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045800000000000"
+      }
+    },
+    {
+      "id": "review-object-call-method-is-not-Fn-marker",
+      "source": "(do (deftype ReviewCallable [] Object (call [this] 1)) (fn? (ReviewCallable.)))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
     }
   ]
 }

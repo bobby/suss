@@ -300,8 +300,8 @@ captures. The existing partial deftype review is extended without changing
 compiled macro/core acceptance remain unfinished.
 
 
-Object methods now have44 fresh pinned/native observations, preserving their
-original24, and compile-atomic malformed declaration guards. Fn and fn? add two
+Object methods now have52 fresh pinned/native observations, preserving their
+original44, and compile-atomic malformed declaration guards. Fn and fn? add two
 partial source reviews (82/983);28 selected forms retain32 licensed artifacts.
 The Fn marker branch remains part of the imported predicate. Direct calls preserve
 lookup-before-argument order, unbound shared function identity and anchored recur.
