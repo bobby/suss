@@ -7136,3 +7136,54 @@ no broad compatibility acceptance. All root handles47858/8957/26590/65494/60603
 terminal, two failures above preserved. Ready for final candidate commit/push/draft
 PR and independent reviewer with exclusive heavy-slot release. Exact final
 reviewed-head CI still gates readiness; no merge or issue/milestone closure.
+
+
+## Independent PR104 review — 2026-10-01
+
+Reviewed candidate1d4cbf0379510bd551ced43914d36ad2801edace against reviewed
+PR103 basee11771eb368a75b559a31a90a8737440a12a4a66 in isolated
+/private/tmp/suss-review-pr104 with actual detached pinned upstreamc4295f30.
+Read AGENTS/accepted design/ROADMAP/inventory/handoff. Inspected complete
+IndexedSeqIterator/RSeq methods, metadata/docstrings/arities of reversible?/rseq,
+hash-bound patches and EPL provenance. Mutable offsets, live storage/length,
+UTF-16, cloning/tails/metadata, public protocol/Object dispatch, source equality
+and Reduced stopping behavior align with the pin. No significant production
+defect found in this bounded port. Hash/printing/index helpers remain pending.
+
+Named .length writes are an explicitly unsupported host-property adapter, outside
+the general JS/Closure interoperability promise. Retained source only reads that
+property. The exact separate one-case boundary remains fresh certified false on
+the pin and requires native Language error/storage recovery. It is not a shared
+matching value, skip or reason to exclude a portable core definition. The retained
+global-array negative guard separately proves failed writes preserve owned storage.
+
+Independent original fresh61992 ended0:53 shared exact primary/native2 and the
+separate1 primary boundary. Six review probes preserve every original case and add
+exhausted offset advancement, UTF-16 starting offset, direct reversal dispatch,
+clone storage/metadata sharing, live reverse tails and Reduced stopping indexed
+reads. Fresh12322 ended0:59 shared exact primary/native2 plus unchanged1 boundary,
+/private/tmp/suss-pr104-review-oracle59.log. Original53 objects, exact boundary
+text and parent corpora verified unchanged. Python80 pass,
+/private/tmp/suss-pr104-review-python.log; import90/setup4/reviews176partial+889
+unassessed and diff-check pass. No failed provisional probes or retargeted results
+in this review. Commands use shared target/build2, no RUSTFLAGS: sh
+scripts/test-iteration-oracle.sh; python3 -m unittest discover -s scripts -p
+"test_*.py"; core_import.py --check; sequence_provenance.py; cljs_reviews.py.
+
+Required independent full30823 running, /private/tmp/suss-pr104-review-full.log.
+Reviewer owns heavy slot until all handles terminal and final full output
+inspected, then review tests/evidence commit/push. Root must require successful
+exact reviewed-head CI before readiness. No merge/issue or milestone closure.
+Next source hashing/printing/index helpers, generic reverse, other persistent
+types, compiled macros and M2–M9 release gates remain unfinished.
+
+Independent full30823 ended0; inspected /private/tmp/suss-pr104-review-full.log
+through final reader doc tests. Required command: CARGO_TARGET_DIR=/Users/bobby/
+code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2. All enabled required suites pass, including iteration2/59,
+parent sequence6/137, reduction2/65, control3/81, HIR if-let1, closure14 and ABI41.
+Existing manual ignored tests and explicit diagnostic9passing/7knownfailures
+remain unchanged. All reviewer handles61992/12322/30823 terminal; reviewer
+releases heavy slot after committing/pushing review tests and evidence. Root
+must verify successful exact reviewed-head CI before readiness. No merge or
+issue/milestone closure; M2–M9 acceptance remains incomplete.

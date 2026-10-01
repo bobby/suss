@@ -18,7 +18,7 @@ reduction on Reduced. rseq preserves direct protocol dispatch and returns nil fo
 an empty IndexedSeq. RSeq itself is not IReversible. No runtime intrinsic algorithm,
 shared ABI/type/bootstrap-cell change or fake dependency is introduced.
 
-The shared53-case corpus matches fresh pinned ClojureScript/Node and independently
+The shared59-case corpus matches fresh pinned ClojureScript/Node and independently
 decoded validated native Wasm, with GC after every case. It covers actual iterator
 methods, offset/exhaustion, array growth/current values, UTF-16/nil/false values,
 independent offsets, Object-method operand effects, direct iterator reduction,
@@ -76,3 +76,35 @@ cargo test --workspace --locked -- --test-threads=2
 
 Next close public/ordered hashing and printing/index-search dependencies while
 implementing remaining persistent types and compiled macro/release acceptance.
+
+## Independent PR104 review
+
+Reviewed candidate1d4cbf0379510bd551ced43914d36ad2801edace against reviewed
+PR103 basee11771eb368a75b559a31a90a8737440a12a4a66 in isolated
+/private/tmp/suss-review-pr104 with the actual detached pinned upstream. Complete
+retained type methods, defn adaptations, source hashes/EPL, public dispatch, mutable
+offsets, storage sharing, metadata and source Reduced behavior were inspected.
+No significant production defect was identified in this bounded source slice.
+The separate named length-write boundary is faithful to the explicit unsupported
+host-property adapter; it does not justify excluding a portable core declaration.
+
+Independent fresh61992 ended0 with all original53 shared matches and the separate
+exact boundary/native2. Six review probes add exhausted offset advancement, UTF-16
+starting offset, direct IReversible dispatch, clone storage/metadata sharing, live
+reverse tails and Reduced avoiding subsequent indexed reads. Fresh12322 ended0
+with59 shared matches and1 separate primary boundary/native2, log
+/private/tmp/suss-pr104-review-oracle59.log. All original53 source/expectation
+objects, boundary text and parent corpora are unchanged. Python80/import90/
+licensed setup4/reviews176+889 and diff-check pass. No certified expectation was
+retargeted and no failure was skipped.
+
+Independent full30823 ended0; inspected /private/tmp/suss-pr104-review-full.log
+through final reader doc tests. Required command: CARGO_TARGET_DIR=/Users/bobby/
+code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo test --workspace --locked
+-- --test-threads=2. All enabled required suites pass, including iteration2/59,
+parent sequence6/137, reduction2/65, control3/81, HIR if-let1, closure14 and ABI41.
+Existing manual ignored tests and explicit diagnostic9passing/7knownfailures
+remain unchanged. All reviewer handles61992/12322/30823 terminal; reviewer
+releases heavy slot after committing/pushing review tests and evidence. Root
+must verify successful exact reviewed-head CI before readiness. No merge or
+issue/milestone closure; M2–M9 acceptance remains incomplete.

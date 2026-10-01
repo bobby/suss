@@ -425,6 +425,54 @@
         "tag": "f64",
         "bits": "4031000000000000"
       }
+    },
+    {
+      "id": "iterator-exhaustion-advances-offset",
+      "source": "(let [it (IndexedSeqIterator. (array 1) 0)] (.next it) (.next it) (.-i it))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "iterator-string-offset",
+      "source": "(identical? \"\\ude00\" (.next (IndexedSeqIterator. \"😀\" 1)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "rseq-direct-reversible-dispatch",
+      "source": "(do (deftype IterationReverseProbe [] IReversible (-rseq [_] 17)) (rseq (IterationReverseProbe.)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "rseq-clone-shares-live-storage-and-meta",
+      "source": "(let [a (array 1 2) r (-with-meta (rseq (seq a)) 17) c (-clone r)] (aset a 1 9) (+ (* 10 (-meta c)) (first c)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4066600000000000"
+      }
+    },
+    {
+      "id": "rseq-rest-live-storage",
+      "source": "(let [a (array 1 2 3) r (rseq (seq a)) t (rest r)] (aset a 1 9) (first t))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "rseq-reduced-does-not-read-next-index",
+      "source": "(do (def iteration-index-trace 0) (deftype IterationIndexProbe [] IIndexed (-nth [_ i] (set! iteration-index-trace (+ (* 10 iteration-index-trace) (inc i))) (inc i)) (-nth [_ i not-found] (set! iteration-index-trace (+ (* 10 iteration-index-trace) (inc i))) (inc i))) (reduce (fn [a b] (reduced b)) 0 (RSeq. (IterationIndexProbe.) 2 nil)) iteration-index-trace)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
     }
   ]
 }
