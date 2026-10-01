@@ -63,7 +63,7 @@ than baking in an allocation or cached value.
 
 The original48 certified sequence observations are preserved. Three candidate
 observations test lexical shadowing and live static-property replacement/restoration;
-fresh certification is still pending. An original nominal adapter test exercises
+fresh certification now passes for all51; native full corpus remains red on unresolved seq. An original nominal adapter test exercises
 compiler property lookup and GC only. It does not implement upstream List or
 EmptyList. Source sequence/list import, full51 native corpus and complete
 collection behavior remain unfinished. The native corpus now explicitly loads the
@@ -91,3 +91,16 @@ General variadic rest arguments must become persistent sequences before upstream
 list's variadic implementation is claimed. Do not use invocation Args as a fake
 list or certify a fixed-arity substitute. Complete equality, hashing, metadata,
 reduction, iterators and compiled macros remain part of the target.
+
+
+Focused execution after rebasing onto reviewed PR1003e5af02 passes all6 core
+interface tests, including the new canonical literal regression. It also checks
+compile-atomic failure before the core List binding is available and live nil
+static-property reads. Final session19497 ended0; log
+/private/tmp/suss-sequence-canonical-final.log.
+
+Fresh session18929 certifies51 exact pinned observations, including all3 new
+static-property probes, then ends101 at the native unresolved Runtime name seq.
+Log /private/tmp/suss-sequence-primary51-native-red.log. No expectation changed
+or skip added. This is the baseline for actual source sequence/list import,
+not a green native sequence result.

@@ -6709,3 +6709,43 @@ reviewed100 head, run focused core_sequence_interfaces and fresh sequence oracle
 (record native red transparently), then retain actual upstream list/sequence types
 with their full dependency closure. Require independent review/full/final-head CI
 for every eventual PR. Never merge. M2–M9 remain active and incomplete.
+
+
+## Sequence canonical lookup executed / fresh51 red — 2026-10-01
+
+Independent PR100 review finished and pushed3e5af026f5b2f0de09edace672ad0f45c084e93a.
+Root inspected final workspace log /private/tmp/suss-pr100-review-full-final.log
+and reviewer handoff; full79254 is terminal0, sourcecache70/private2/ABI41 and
+Python76/inventory1065/reviews139+926/import54 pass. Two significant strict Closure
+findings are fixed; no remaining significant finding. Updated PR100 body with
+actual review/fixes/results. Exact-head CI36834509263/job110278870352 is confirmed
+in_progress at3e5af02. Candidate36832808888 is cancelled and cannot gate readiness.
+PR100 stays draft; next require this exact CI success before marking ready.
+
+Rebased sequence preparation2d44d8b onto reviewed3e5af02; resolved only appended
+handoff conflict by preserving both histories, producing53281ca. Pinned source
+is a detached nested Git worktree atc4295f30, not a tracked symlink. No unrelated
+root files/stashes changed. All original48 source/expectation JSON values were
+checked against7b60562 and remain equal;3 candidates are now independently certified.
+
+Focused core_sequence_interfaces10925 ended0 with6 passing tests. Extended the
+canonical literal regression with compile-atomic premature definition failure
+and live nil EMPTY reads, then final19497 ended0 with6/6 passing. Log
+/private/tmp/suss-sequence-canonical-final.log. Command: shared target/build2
+cargo test -p suss-cli --test core_sequence_interfaces --locked -- --test-threads=2.
+
+Fresh sequence18929 ended101: primary51 all match exactly; native explicitly
+loads core then fails on unresolved Runtime name seq at7..10. Log
+/private/tmp/suss-sequence-primary51-native-red.log. Command: shared target/build2
+sh scripts/test-sequence-oracle.sh. Recorded failure is the actual next implementation
+boundary; no ignored test/expectation substitution/native sequence success claim.
+All root local processes terminal. Full workspace is not claimed green for this
+unfinished sequence branch, which contains the deliberate native red regression.
+
+Next retain actual upstream List/EmptyList/Cons/IndexedSeq and their audited
+source dependency closure, publish the real EmptyList on List.EMPTY, implement
+seq APIs and general persistent variadic rest. Preserve51 observations and certify
+native execution with equality/hash/metadata/reduction/iterator/lazy obligations
+still in scope. Do not replace concrete types with the original literal test adapter.
+No new PR yet; require independent review/fixes/full/final-head CI before readiness.
+M2–M9 stay active; no merges or issue/milestone completion claims.

@@ -295,6 +295,14 @@ fn malformed_operation_declarations_and_extensions_preserve_loaded_core() {
 #[test]
 fn empty_list_literal_reads_canonical_core_class_property_after_gc() {
     let mut session = Session::new().unwrap();
+    assert!(matches!(
+        session.eval("(def premature-empty ())"),
+        Err(SessionError::Compile(_))
+    ));
+    assert!(matches!(
+        session.eval("premature-empty"),
+        Err(SessionError::Compile(_))
+    ));
     // Original adapter fixture only: concrete upstream list types are not yet loaded.
     session.enter_namespace("suss.core").unwrap();
     session
@@ -325,4 +333,7 @@ fn empty_list_literal_reads_canonical_core_class_property_after_gc() {
         eval_number(&mut session, "(.-value (read-empty))"),
         29.0f64.to_bits()
     );
+    session.eval("(set! (.-EMPTY cljs.core/List) nil)").unwrap();
+    assert!(eval_bool(&mut session, "(nil? ())"));
+    assert!(eval_bool(&mut session, "(nil? (read-empty))"));
 }
