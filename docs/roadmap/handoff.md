@@ -8122,3 +8122,39 @@ PR108 CI35-minute run finished enabled workspace tests in34m38 then timed out
 compressing post-job cache. Independent reviewer pushed timeout-only60-minute
 fix7ffad606 and is rebasing onto95reviewed447bed49; all production/tests unchanged.
 Propagate via static reviewer rebases before exact final-head readiness checks.
+
+
+## Independent PR113 review — 2026-10-01
+
+Isolated detached /private/tmp/suss-review-pr113 at4a19f9a, actual pinned
+upstreamc4295f30 without symlinks. Read AGENTS/design/ROADMAP/inventory/handoff;
+reviewed complete retained5575–5619/5648–5670, explicit hash-bound defn- patches,
+source artifacts/EPL, clone ownership, structural sharing and live lookup order.
+No significant production defect found. All root heavy handles terminal before
+exclusive cargo/JVM/Node slot transfer.
+
+Original23 corpus objects and all parent corpora unchanged. Six additive probes
+cover live new-path fresh/set order, recursive pop child-before-parent cloning,
+association parent-before-child cloning, nonempty recursive child preservation,
+collapse avoiding cloning and inserted path nil edit. Initial9662 terminal101:
+pinned29 matched, native new trace fixture used unsupported js-obj brackets.
+Corrected only new trace fixture to numeric GC array; fresh52790 terminal0:
+29 exact pinned/native values across4 tests,
+/private/tmp/suss-pr113-review-oracle29-final.log. Added native outer-pop-clone
+throw23 after successful child cloning; focused60491 terminal0/5 proves raw
+one-field Number23, original path intact, restored helper and recovery acrossGC,
+/private/tmp/suss-pr113-review-native5.log. Python82/import115/inventory1065/
+reviews206+859/diff checks pass. Required shared-target/build2 workspace
+baseline69149 LIVE /private/tmp/suss-pr113-review-full.log, noRUSTFLAGS.
+No merge, readiness, issue or milestone closure; full PersistentVector and M2–M9
+remain unfinished. Exact reviewed-head CI required.
+
+
+Reviewer113 full69149 authoritative terminal0 through final reader doctests;
+no FAILED/error entries in /private/tmp/suss-pr113-review-full.log. Required
+shared-target/build2 --workspace --locked -- --test-threads=2 baseline passes
+vector5/29 exact values and unchanged parent corpora/explicit boundaries.
+Existing manual ignores remain explicit. All heavy handles9662/52790/60491/69149
+terminal. Algorithm-byte comparison independently confirms all nine patches only
+replace the declaration wrapper. No significant production defect found.
+Static parent rebase and exact final reviewed-head CI remain readiness gates.

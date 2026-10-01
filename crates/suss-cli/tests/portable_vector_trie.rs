@@ -38,7 +38,7 @@ fn vector_trie_matches_independently_decoded_primary_values() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/vector-trie-cases.json")).unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 23);
+    assert_eq!(cases.len(), 29);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -124,4 +124,37 @@ fn throwing_live_clone_prevents_source_parent_mutation_and_recovers() {
         .unwrap();
     session.collect().unwrap();
     assert!(boolean(&mut session,"(and (= trie-effects 1) (= (suss.core/pv-aget trie-guarded 31) 17) (= (suss.core/pv-aget (suss.core/do-assoc nil 0 trie-guarded 31 23) 31) 23) (= (suss.core/pv-aget trie-guarded 31) 17))"));
+}
+
+#[test]
+fn throwing_outer_pop_clone_preserves_original_recursive_path_after_gc() {
+    use suss_cli::portable_session::SessionError;
+    use wasmtime::Val;
+    let mut session = Session::new().unwrap();
+    session
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .unwrap();
+    session.enter_namespace("user").unwrap();
+    session.eval("(deftype VectorFixture [cnt]) (def pop-child (suss.core/pv-fresh-node 1)) (def pop-root (suss.core/pv-fresh-node 2)) (suss.core/pv-aset pop-child 1 17) (suss.core/pv-aset pop-root 0 pop-child) (def pop-trace 0) (def pop-clone suss.core/pv-clone-node)").unwrap();
+    let Err(SessionError::Language(thrown)) = session.eval("(with-redefs [suss.core/pv-clone-node (fn [n] (do (set! pop-trace (+ (* pop-trace 10) (.-edit n))) (if (= (.-edit n) 2) (throw 23) (pop-clone n))))] (suss.core/pop-tail (VectorFixture. 65) 10 pop-root))") else {
+        panic!("expected numeric language exception")
+    };
+    session
+        .inspect(&thrown, |mut store, value| {
+            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
+            let [Val::F64(bits)] = fields.as_slice() else {
+                panic!("Number layout")
+            };
+            assert_eq!(*bits, 23f64.to_bits());
+            Ok(())
+        })
+        .unwrap();
+    session.collect().unwrap();
+    assert!(boolean(&mut session,"(and (= pop-trace 12) (identical? (suss.core/pv-aget pop-root 0) pop-child) (= (suss.core/pv-aget pop-child 1) 17))"));
+    session
+        .eval("(def pop-result (suss.core/pop-tail (VectorFixture. 65) 10 pop-root))")
+        .unwrap();
+    session.collect().unwrap();
+    assert!(boolean(&mut session,"(and (not (identical? pop-result pop-root)) (not (identical? (suss.core/pv-aget pop-result 0) pop-child)) (nil? (suss.core/pv-aget (suss.core/pv-aget pop-result 0) 1)) (= (suss.core/pv-aget pop-child 1) 17))"));
 }

@@ -185,6 +185,54 @@
         "tag": "bool",
         "value": true
       }
+    },
+    {
+      "id": "path-live-helper-order",
+      "source": "(let [trace (make-array 1) fresh suss.core/pv-fresh-node put suss.core/pv-aset n (fresh nil) r (with-redefs [suss.core/pv-fresh-node (fn [e] (do (aset trace 0 (+ (* (or (aget trace 0) 0) 10) 1)) (fresh e))) suss.core/pv-aset (fn [n i v] (do (aset trace 0 (+ (* (aget trace 0) 10) 2)) (put n i v)))] (suss.core/new-path nil 10 n))] (and (= (aget trace 0) 1212) (identical? (suss.core/pv-aget (suss.core/pv-aget r 0) 0) n)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "pop-keeps-recursive-child",
+      "source": "(let [e (js-obj) a (suss.core/pv-fresh-node e) b (suss.core/pv-fresh-node e) c (suss.core/pv-fresh-node e) root (suss.core/pv-fresh-node e) _ (suss.core/pv-aset c 0 a) _ (suss.core/pv-aset c 1 b) _ (suss.core/pv-aset root 0 c) r (suss.core/pop-tail (VectorFixture. 65) 10 root) rc (suss.core/pv-aget r 0)] (and (not (identical? r root)) (not (identical? rc c)) (identical? (.-edit r) e) (identical? (.-edit rc) e) (identical? (suss.core/pv-aget rc 0) a) (nil? (suss.core/pv-aget rc 1)) (identical? (suss.core/pv-aget c 1) b)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "pop-recursive-clone-order",
+      "source": "(let [trace (make-array 1) clone suss.core/pv-clone-node c (suss.core/pv-fresh-node 1) root (suss.core/pv-fresh-node 2) _ (suss.core/pv-aset root 0 c) r (with-redefs [suss.core/pv-clone-node (fn [n] (do (aset trace 0 (+ (* (or (aget trace 0) 0) 10) (.-edit n))) (clone n)))] (suss.core/pop-tail (VectorFixture. 65) 10 root))] (and (= (aget trace 0) 12) (not (nil? r))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "assoc-recursive-clone-order",
+      "source": "(let [trace (make-array 1) clone suss.core/pv-clone-node c (suss.core/pv-fresh-node 1) root (suss.core/pv-fresh-node 2) _ (suss.core/pv-aset root 0 c) r (with-redefs [suss.core/pv-clone-node (fn [n] (do (aset trace 0 (+ (* (or (aget trace 0) 0) 10) (.-edit n))) (clone n)))] (suss.core/do-assoc nil 5 root 1 17))] (and (= (aget trace 0) 21) (= (suss.core/pv-aget (suss.core/pv-aget r 0) 1) 17)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "pop-collapse-does-not-clone",
+      "source": "(let [root (suss.core/pv-fresh-node nil)] (with-redefs [suss.core/pv-clone-node (fn [_] (throw 17))] (nil? (suss.core/pop-tail (VectorFixture. 33) 5 root))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "push-new-path-nil-edit",
+      "source": "(let [e (js-obj) tail (suss.core/pv-fresh-node e) root (suss.core/pv-fresh-node e) r (suss.core/push-tail (VectorFixture. 1057) 10 root tail)] (and (identical? (.-edit r) e) (nil? (.-edit (suss.core/pv-aget r 1))) (identical? (suss.core/pv-aget (suss.core/pv-aget r 1) 0) tail)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
     }
   ]
 }

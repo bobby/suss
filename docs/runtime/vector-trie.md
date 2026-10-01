@@ -16,19 +16,23 @@ It is a test fixture and is not shipped as a replacement collection.
 
 `CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
 sh scripts/test-vector-trie-oracle.sh` freshly compiles and executes the pinned
-reference: 23 exact raw Boolean/IEEE754 observations match. Private Var warnings
+reference: 29 exact raw Boolean/IEEE754 observations match, preserving all original23. Private Var warnings
 are expected from calling the actual pinned helpers. Native tests independently
 decode raw i31 Booleans and one-field f64 Numbers; no opaque node wildcard or
 runtime encoder is used. Nodes are observed through identity, width, field reads
 and mutation effects. Tail counts 0/31/32/33/1024/1025, new paths through level 15,
 existing/new insertion paths, recursive association and both removal branches
-execute. Four focused native tests pass, including fragments separated by GC,
-shallow clone ownership, unchanged branches, live helper exception 19 and recovery.
+execute. Five focused native tests pass, including fragments separated by GC,
+shallow clone ownership, unchanged branches, live helper exceptions19/23 and recovery. Independent review adds live helper
+ordering, recursive pop preservation, collapse avoiding cloning and nil edit
+probes. A throwing parent clone after successful child cloning leaves the old
+path intact across GC and permits recovery.
 
 82 Python tests, 115 strict import artifacts and review counts 206/859 checks pass. Required full workspace
 baseline passes through final reader doc tests using the shared target, build jobs2,
 --workspace --locked -- --test-threads=2. Existing explicit manual ignores remain.
-Independent PR review and exact reviewed-head CI are pending. Full PersistentVector, transient vectors, chunked iteration, public
+Independent review found no significant production defect; final reviewed-head
+CI remains required. Full PersistentVector, transient vectors, chunked iteration, public
 collection protocols, collision nodes, maps/sets and M4/M7 acceptance remain open.
 Next retain the required vector indexing/error and iteration/reduction dependencies,
 then the complete PersistentVector and its source protocol methods.
