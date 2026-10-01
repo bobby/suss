@@ -8223,3 +8223,35 @@ review checks passed. No production/native/oracle inputs changed during this ful
 run. All root heavy handles terminal; release exclusive heavy slot to mandatory
 PR114 reviewer after this documentation-only result update is pushed. Final
 independently reviewed head and its CI remain readiness gates; no merge or closure.
+
+
+## Independent PR114 review — 2026-10-01
+
+Isolated /private/tmp/suss-review-pr114 at root docs-only head5a58ba1, with actual
+detached upstreamc4295f30. Read AGENTS/design/ROADMAP/inventory/handoff. Reviewed
+literal HIR, sequential operand lowering, canonical constructor thresholds,
+captured factory owner/methods, metadata/spans and compile-atomic diagnostics.
+No significant production defect found. Root full28575 was terminal before the
+exclusive cargo/JVM/Node slot transferred to this reviewer.
+
+Added one native regression proving the small-vector constructor and EMPTY_NODE
+are captured before an entry redefines the canonical class and mutates its prior
+root. The next literal observes the replacement; both nominal identities, roots
+and tails remain valid across forced GC. Original19 corpus sources, their exact
+expected/reference values and all production inputs remain unchanged.
+
+Fresh25458 authoritative terminal0: shared-target/build2
+sh scripts/test-collection-literal-oracle.sh, /private/tmp/suss-pr114-review-oracle19.log,
+19 exact pinned observations,15 shared values/4 exact accepted variance
+observations/0 skips, and all6 native tests. Python86 checks85438 terminal0;
+inventory1065/import115/review overlay206+859/diff checks pass.
+Required shared-target/build2 cargo test --workspace --locked -- --test-threads=2
+full8004 authoritative terminal0 through final suss_reader doctests,
+/private/tmp/suss-pr114-review-full.log. All enabled tests pass; existing manual
+ignores and diagnostic known-failure records remain explicit. No RUSTFLAGS.
+
+All reviewer heavy work finished; release exclusive slot to root. Exact final
+independently reviewed-head CI remains a readiness gate. No merge, issue closure
+or M2/M4 completion claimed. Literal keyword/symbol/quote, runtime metadata,
+duplicate-reader forms and real persistent collection types remain documented
+boundaries. Next M2 task remains the criterion-by-criterion #8/#9/#11 audit.

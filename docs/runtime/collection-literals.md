@@ -53,7 +53,8 @@ CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 c
 python3 -m unittest discover -s scripts -p 'test_collection_literal_oracle.py'
 ```
 
-Native guards also exercise owner/method capture before entry mutation, thrown
+Native guards also exercise owner/method capture before entry mutation, direct
+vector constructor and EMPTY_NODE capture before entry redefinition, thrown
 map/set entries stopping later effects and construction, retained objects after
 GC, source-located missing-class errors and compile-atomic binding preservation.
 Harness negatives reject missing/duplicate/changed reference observations,

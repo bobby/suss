@@ -447,7 +447,7 @@ helpers do not establish PersistentVector, map/set or M4/M7 acceptance.
 Vector/map/set expressions now lower through explicit HIR temporaries and existing
 constructor/member/array interfaces. Fresh19 pinned observations and independently
 decoded native results record15 shared values plus4 exact observations of the
-accepted textual-order variance, with0 skips. Five native tests cover threshold
+accepted textual-order variance, with0 skips. Six native tests cover threshold
 interfaces, lookup capture, entry exceptions, GC and compile-atomic diagnostics.
 These use development-only constructor fixtures; persistent collection types,
 keyword/symbol literals, quoted collections, runtime metadata and complete M2/M4

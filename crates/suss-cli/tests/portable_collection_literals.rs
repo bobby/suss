@@ -135,6 +135,30 @@ fn large_vector_method_is_captured_before_entry_property_mutation() {
 }
 
 #[test]
+fn small_vector_captures_constructor_and_empty_node_before_entry_redefinition() {
+    let mut session = Session::new().unwrap();
+    session
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .unwrap();
+    session.enter_namespace("suss.core").unwrap();
+    session.eval("(deftype PersistentVector [meta cnt shift root tail __hash]) (set! (.-EMPTY_NODE PersistentVector) 17)").unwrap();
+    session.enter_namespace("user").unwrap();
+    session.eval("(def literal-original-vector suss.core/PersistentVector) (deftype LiteralReplacement [meta cnt shift root tail __hash]) (set! (.-EMPTY_NODE LiteralReplacement) 23)").unwrap();
+    session.eval("(def literal-before [(do (set! suss.core/PersistentVector LiteralReplacement) (set! (.-EMPTY_NODE literal-original-vector) 19) 31)])").unwrap();
+    session.collect().unwrap();
+    assert!(boolean(
+        &mut session,
+        "(and (instance? literal-original-vector literal-before) (= (.-root literal-before) 17) (= (aget (.-tail literal-before) 0) 31))"
+    ));
+    session.eval("(def literal-after [37])").unwrap();
+    session.collect().unwrap();
+    assert!(boolean(
+        &mut session,
+        "(and (instance? LiteralReplacement literal-after) (= (.-root literal-after) 23) (= (aget (.-tail literal-after) 0) 37))"
+    ));
+}
+
+#[test]
 fn missing_literal_classes_fail_before_initializer_effects_or_publication() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
