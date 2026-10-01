@@ -121,6 +121,7 @@ pub struct SessionStats {
 
 pub struct Session {
     engine: Engine,
+    phase: Phase,
     options: SessionOptions,
     identity: u64,
     handles: Arc<AtomicUsize>,
@@ -286,6 +287,13 @@ impl Session {
         session.provision_core()?;
         Ok(session)
     }
+    /// Isolated compiled execution for macro bodies. This owns a separate Store
+    /// and phase-qualified cells; it does not yet expand source defmacro forms.
+    pub fn new_macro() -> Result<Self, SessionError> {
+        let mut session = Self::with_options_in(SessionOptions::default(), Phase::Macro)?;
+        session.provision_core()?;
+        Ok(session)
+    }
     fn provision_core(&mut self) -> Result<(), SessionError> {
         let namespace = self.current_namespace().to_owned();
         self.eval(include_str!("../../../runtime/core-import/suss/core.sus"))?;
@@ -294,10 +302,21 @@ impl Session {
         Ok(())
     }
     pub fn with_options(options: SessionOptions) -> Result<Self, SessionError> {
-        Self::with_engine(engine()?, options)
+        Self::with_options_in(options, Phase::Runtime)
+    }
+    /// Create a minimal session whose artifacts and cells use one fixed phase.
+    pub fn with_options_in(options: SessionOptions, phase: Phase) -> Result<Self, SessionError> {
+        Self::with_engine_in(engine()?, options, phase)
     }
     /// Caller-supplied engines must enable ABI features and fuel consumption.
     pub fn with_engine(engine: Engine, options: SessionOptions) -> Result<Self, SessionError> {
+        Self::with_engine_in(engine, options, Phase::Runtime)
+    }
+    pub fn with_engine_in(
+        engine: Engine,
+        options: SessionOptions,
+        phase: Phase,
+    ) -> Result<Self, SessionError> {
         static NEXT_ID: AtomicU64 = AtomicU64::new(1);
         let identity = NEXT_ID.fetch_add(1, Ordering::Relaxed);
         let mut store = Store::new(&engine, ());
@@ -314,11 +333,11 @@ impl Session {
         let environment = Environment::default();
         let mut cells = BTreeMap::new();
         let mut initializers = environment
-            .core_bindings(Phase::Runtime)
+            .core_bindings(phase)
             .into_iter()
             .map(|(global, export)| (global, export.to_string()))
             .collect::<Vec<_>>();
-        for (identity, operator) in environment.arithmetic_bindings(Phase::Runtime) {
+        for (identity, operator) in environment.arithmetic_bindings(phase) {
             use suss_compile::portable::hir::Arithmetic;
             let name = match operator {
                 Arithmetic::Add => "add",
@@ -405,10 +424,11 @@ impl Session {
             cells.insert(identity, global);
         }
         let provided = BTreeSet::from([
-            ModuleIdentity::new(Phase::Runtime, "suss.core").map_err(SessionError::Compile)?
+            ModuleIdentity::new(phase, "suss.core").map_err(SessionError::Compile)?
         ]);
         Ok(Self {
             engine,
+            phase,
             options,
             identity,
             handles: Arc::new(AtomicUsize::new(0)),
@@ -424,6 +444,9 @@ impl Session {
             bootstrap_core: false,
         })
     }
+    pub fn phase(&self) -> Phase {
+        self.phase
+    }
     pub fn options(&self) -> &SessionOptions {
         &self.options
     }
@@ -431,7 +454,7 @@ impl Session {
         self.options.fuel_per_operation = fuel;
     }
     pub fn current_namespace(&self) -> &str {
-        self.environment.current_namespace(Phase::Runtime)
+        self.environment.current_namespace(self.phase)
     }
     // Use the same binary64 formatter as compiled arithmetic. The REPL never
     // recompiles or re-evaluates the input to print its already-rooted result.
@@ -459,7 +482,7 @@ impl Session {
     }
     pub fn enter_namespace(&mut self, namespace: &str) -> Result<(), SessionError> {
         self.environment
-            .enter_namespace(Phase::Runtime, namespace)
+            .enter_namespace(self.phase, namespace)
             .map_err(SessionError::Compile)
     }
     pub fn stats(&self) -> SessionStats {
@@ -479,7 +502,8 @@ impl Session {
     /// Create the replacement before discarding the old Store. No replay or retained
     /// fragment state crosses reset, and old/foreign handles are checked before use.
     pub fn reset(&mut self) -> Result<(), SessionError> {
-        let mut replacement = Self::with_engine(self.engine.clone(), self.options.clone())?;
+        let mut replacement =
+            Self::with_engine_in(self.engine.clone(), self.options.clone(), self.phase)?;
         if self.bootstrap_core {
             replacement.provision_core()?;
         }
@@ -606,7 +630,7 @@ impl Session {
             source,
             &self.options.source_paths,
             &self.environment,
-            Phase::Runtime,
+            self.phase,
             &self.provided,
         )
         .map_err(|error| match error {
@@ -647,8 +671,7 @@ impl Session {
         namespace: &str,
         dependencies: bool,
     ) -> Result<Option<SessionValue>, SessionError> {
-        let identity =
-            ModuleIdentity::new(Phase::Runtime, namespace).map_err(SessionError::Compile)?;
+        let identity = ModuleIdentity::new(self.phase, namespace).map_err(SessionError::Compile)?;
         if identity.namespace() == "suss.core" {
             return Err(SessionError::Compile(Diagnostic {
                 span: 0..0,
@@ -660,7 +683,7 @@ impl Session {
             .iter()
             .filter(|module| {
                 if dependencies {
-                    module.namespace() == "suss.core" || module.phase() != Phase::Runtime
+                    module.namespace() == "suss.core" || module.phase() != self.phase
                 } else {
                     **module != identity
                 }
@@ -679,12 +702,12 @@ impl Session {
             namespace,
             &self.options.source_paths,
             &self.environment,
-            Phase::Runtime,
+            self.phase,
             &provided,
         )
         .map_err(SessionError::Module)?;
         plan.environment
-            .enter_namespace(Phase::Runtime, self.current_namespace())
+            .enter_namespace(self.phase, self.current_namespace())
             .map_err(SessionError::Compile)?;
         self.budget()?;
         let bytes: Vec<_> = plan
