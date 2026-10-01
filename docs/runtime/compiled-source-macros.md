@@ -15,8 +15,9 @@ expansion. Expansion recursion uses the existing bounded analysis-depth diagnost
 Runtime compile failures publish no bindings/modules; compile-time body effects
 remain isolated in the Macro Store. Macro exceptions and invalid data become
 located compile errors at the call site. The native prompt now registers standalone definitions and uses this host for
-later inputs and explicit load/reload. Automatic macro namespace loading, mixed
-definition/runtime inputs and full AOT integration remain unfinished; see
+later inputs and explicit load/reload. Explicit source macro namespace imports now execute through the isolated host;
+mixed Runtime definition inputs, complete reload/privacy/cache policy and full AOT
+integration remain unfinished; see
 [compiled REPL macro integration](compiled-repl-macros.md).
 
 The structural definition adaptation follows pinned core.cljc defmacro3440–3481,
@@ -30,13 +31,16 @@ registration retains independent function roots. Macro bodies use the same
 lexical expansion host against an immutable compiler snapshot, then install in
 the original Macro Store; successful prior expansions in compiled bodies stay
 stable after macro replacement. Runtime macro marker/Var metadata, &env, full
-&form metadata and automatic namespace aliases/requires remain unfinished. Bare &env
+&form metadata and complete namespace reload/privacy policy remain unfinished. Bare &env
 is an explicit unresolved compile error; no placeholder nil environment is passed.
 
 Syntaxquote/unquote/splicing, deterministic gensyms, persistent metadata/collection/
-complete sequence transport, macro phase dependency loading, Java-free reproducible
+complete sequence transport, full macro phase reload/cache policy, Java-free reproducible
 versioned bootstrap, complete cache keys/invalidation and evaluator removal remain
 required by #14. This host exposes real analyzed local binding context for future
 &env integration but does not claim its runtime map representation exists. #15
 cancellation/pending interactive I/O/live GC accounting remains unfinished. M3
 stays open, and the legacy evaluator remains until bootstrap acceptance passes.
+
+[Compiled source imports](compiled-macro-imports.md) document executing phase
+dependencies, aliases/refers and their remaining acceptance boundaries.

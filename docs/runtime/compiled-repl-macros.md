@@ -25,7 +25,7 @@ cooperative cancellation, pending I/O cleanup or live heap accounting.
 
 This is native prompt integration of the current supported macro subset. Mixed
 inputs containing source macro definitions and runtime forms, nested defmacro,
-automatic macro namespace imports/aliases/privacy, complete AOT/frontend sharing,
+complete macro namespace reload/privacy/cache policy, complete AOT/frontend sharing,
 &env, full runtime &form metadata, syntaxquote/splicing/gensyms, persistent
 collection/lazy/metadata data, versioned Java-free bootstrap, complete cache keys/
 invalidation and legacy evaluator removal remain required M3 work. Unsupported
@@ -39,3 +39,6 @@ a sixth host second-phase reset-failure regression preserves both original phase
 The implementation is original Rust integrating the partial pinned defmacro
 adaptation documented in compiled-source-macros.md. No new upstream source is
 copied or selected, and no ABI/dependency/shipped JVM/Node requirement is added.
+
+Explicit `:require-macros` source imports now execute through the isolated Store;
+see [phase imports](compiled-macro-imports.md) for evidence and remaining scope.

@@ -186,13 +186,14 @@ fn core_options<'a>(items: &'a [Form], form: &Form) -> Result<Vec<CoreOption<'a>
 }
 enum Clause<'a> {
     Require(Vec<Requirement<'a>>),
+    Macros(Vec<Requirement<'a>>),
     Core(Vec<CoreOption<'a>>),
 }
 struct Header<'a> {
     name: &'a Form,
     clauses: Vec<Clause<'a>>,
 }
-fn header(form: &Form) -> Result<Option<Header<'_>>, Diagnostic> {
+fn header_with_phases(form: &Form, macro_imports: bool) -> Result<Option<Header<'_>>, Diagnostic> {
     let Kind::List(items) = &form.kind else {
         return Ok(None);
     };
@@ -233,6 +234,7 @@ fn header(form: &Form) -> Result<Option<Header<'_>>, Diagnostic> {
         clauses.push(match key {
             "require" => Clause::Require(items[1..].iter().map(requirement).collect::<Result<_, _>>()?),
             "refer-clojure" => Clause::Core(core_options(&items[1..], clause)?),
+            "require-macros" if macro_imports => Clause::Macros(items[1..].iter().map(requirement).collect::<Result<_, _>>()?),
             "require-macros" => return Err(error(clause, "Source macro imports require an isolated compiled macro session, not yet integrated")),
             _ => return Err(error(head, "Namespace clause is not supported")),
         });
@@ -250,10 +252,23 @@ pub(crate) fn input_header(
     )>,
     Diagnostic,
 > {
+    input_header_with_macros(forms, false)
+}
+pub(crate) fn input_header_with_macros(
+    forms: &[Form],
+    macro_imports: bool,
+) -> Result<
+    Option<(
+        String,
+        std::ops::Range<usize>,
+        Vec<(String, std::ops::Range<usize>)>,
+    )>,
+    Diagnostic,
+> {
     let Some(first) = forms.first() else {
         return Ok(None);
     };
-    let Some(header) = header(first)? else {
+    let Some(header) = header_with_phases(first, macro_imports)? else {
         return Ok(None);
     };
     let mut dependencies = Vec::new();
@@ -292,11 +307,12 @@ pub(crate) fn namespace(
     forms: &mut [Form],
     env: &mut Environment,
     phase: Phase,
+    expander: &mut dyn super::ExpansionHost,
 ) -> Result<Option<Form>, Diagnostic> {
     let Some(form) = forms.first_mut() else {
         return Ok(None);
     };
-    let Some(header) = header(form)? else {
+    let Some(header) = header_with_phases(form, expander.supports_macro_imports())? else {
         return Ok(None);
     };
     located(
@@ -308,6 +324,29 @@ pub(crate) fn namespace(
             Clause::Require(requirements) => {
                 for requirement in requirements {
                     apply_requirement(env, phase, requirement)?;
+                }
+            }
+            Clause::Macros(requirements) => {
+                for requirement in requirements {
+                    let namespace = symbol(requirement.namespace)?;
+                    let exports = expander
+                        .load_macro_namespace(namespace, requirement.namespace.span.clone())?;
+                    env.declare_macro_exports(phase, namespace, &exports)?;
+                    if let Some(alias) = requirement.alias {
+                        located(env.macro_alias(phase, symbol(alias)?, namespace), alias)?;
+                    }
+                    for original in &requirement.referred {
+                        let name = symbol(original)?;
+                        let target = requirement
+                            .renamed
+                            .iter()
+                            .find(|(old, _)| symbol(old).ok() == Some(name))
+                            .map_or(*original, |(_, new)| *new);
+                        located(
+                            env.macro_refer(phase, symbol(target)?, namespace, name),
+                            target,
+                        )?;
+                    }
                 }
             }
             Clause::Core(options) => {
@@ -335,4 +374,48 @@ pub(crate) fn namespace(
     let directive = form.clone();
     form.kind = Kind::Nil;
     Ok(Some(directive))
+}
+
+/// Discover namespace edges without treating a Macro dependency as a Runtime
+/// declaration or marking it initialized. Actual phase execution belongs to the
+/// compiled host; ordinary preparation keeps rejecting unavailable macro imports.
+pub(crate) fn phase_dependencies(
+    forms: &[Form],
+    phase: Phase,
+) -> Result<
+    (
+        String,
+        std::ops::Range<usize>,
+        Vec<(Phase, String, std::ops::Range<usize>)>,
+    ),
+    Diagnostic,
+> {
+    let first = forms.first().ok_or_else(|| Diagnostic {
+        span: 0..0,
+        message: "Source module requires a leading ns declaration".into(),
+    })?;
+    let header = header_with_phases(first, true)?
+        .ok_or_else(|| error(first, "Source module requires a leading ns declaration"))?;
+    let mut dependencies = Vec::new();
+    for clause in header.clauses {
+        let (target_phase, requirements) = match clause {
+            Clause::Require(requirements) => (phase, requirements),
+            Clause::Macros(requirements) => (Phase::Macro, requirements),
+            Clause::Core(_) => continue,
+        };
+        for requirement in requirements {
+            let name = symbol(requirement.namespace)?;
+            located(super::resolve::valid_namespace(name), requirement.namespace)?;
+            dependencies.push((
+                target_phase,
+                name.to_owned(),
+                requirement.namespace.span.clone(),
+            ));
+        }
+    }
+    Ok((
+        symbol(header.name)?.into(),
+        header.name.span.clone(),
+        dependencies,
+    ))
 }

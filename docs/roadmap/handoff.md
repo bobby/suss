@@ -9015,3 +9015,54 @@ Python86/finalreader; watcher23236/log92926 terminal0. Root markedready, API OPE
 notdraft/headsame. PR125/126 also ready; none merged and all M3 issues stay open.
 
 Replacement native REPL full31177 terminal0:887passed/0failed/17existing ignores/81groups through final reader doctests. Evidence: /private/tmp/suss-m3-repl-macros-full2.log. Final focused70 and compiler modules11 also pass after namespace alias/exclusion fix. Heavy slot released. Publish draft and require independent review, significant fixes and exact reviewed-head CI before ready. M3 remains in progress with all outstanding acceptance criteria preserved.
+
+PR128 https://github.com/bobby/suss/pull/128 draft head3fa84b5 bases on1271169a04.
+Full31177 terminal0887/0/17/81, native70/modules11/Python86/provenance pass.
+Independent review_pr128 owns heavy slot. CI36941605461 confirmed in_progress
+on3fa84b5; readiness pending review/fixes/exact-head CI. Issue14 comment5942747446.
+Root child /private/tmp/suss-m3-macro-imports portable/m3-macro-imports starts
+actual native command regression compiled_macro_imports: automatic tools macro
+namespace requiring ordinary Macro-phase helper, aliases/refers/renames and
+separate Runtime helper cells during source reload. Not yet executed; current
+strict :require-macros rejection means implementation remains required. No skip
+or success claim. Next run focused before-test when review releases heavy slot,
+then integrate actual phase graph/source definitions/publication policy across
+compiler and isolated Macro host; do not erase clause or fabricate loaded state.
+
+Macro imports before97332 terminal101: real command rejects source clause;
+/private/tmp/suss-m3-macro-imports-before.log. Phase discovery58288 terminal0
+14pass (three new graph + eleven executing ordinary module tests). Implemented
+compiled host source imports, phase-qualified provided identities, Macro source
+helpers/definitions executed once in textual order, catalogs/aliases/refers separate
+from Runtime cells. Initial after83774 terminal0 automatic command1. Focus17324
+terminal0 20pass macro imports3/repl6/definitions3/source4/namespace4. Broader96269
+terminal101: fourth new test reached known unsupported List display; revised that
+regression to observe all four scalar functions individually rather than assert
+unsupported formatting. No skip or lost namespace/shadowing observation.
+Final focus39213 live; root owns exclusive heavy slot. Source macro reload/
+privacy/inference/AOT/cache/bootstrap and all full M3 criteria remain required.
+PR128 independent review exact3fa84b5 approves no significant findings; 17 existing
+tests plus3 independent probes pass, heavy slot released. CI36941605461 remains
+in_progress; no readiness/merge/issue closure.
+
+Final macro imports focus39213 terminal0:66pass/0fail/0ignore across nine native
+suites, /private/tmp/suss-m3-macro-imports-final-focus2.log. Module focus39807
+terminal0:14pass (existing11/newphase3), /private/tmp/suss-m3-macro-imports-module-focus2.log.
+Source/tests now frozen. Required full18144 live, /private/tmp/suss-m3-macro-imports-full.log;
+root owns exclusive heavy slot; re-poll18144 to terminal without restart from
+observation timeout. Python95463 live, /private/tmp/suss-m3-macro-imports-python.log.
+Inventory1065/reviews224841/import132 verified after partial review update; no
+selected source/ABI/dependency/new skip changes. Only docs/evidence may change
+while full runs. Before any PR publication require full/Python pass, independent
+review/significant fixes and exact reviewed-head CI. Next complete that gate,
+then integrate source macro reload/cache/privacy and remaining complete bootstrap,
+&form/&env/syntaxquote/gensyms, evaluator removal and #15 scheduler/cancellation/
+pending-I/O/live GC accounting acceptance. No milestone closure or merge.
+
+Macro imports Python95463 terminal0:86pass, no errors. Full18144 confirmed live
+and progressing through native persistent_session, not terminal. PR128 CI watcher
+93300 live, /private/tmp/suss-pr128-final-ci-watch.log, exact approved3fa84b5.
+Issue14 partial progress comment5942922285 records imports/focused evidence and
+remaining original acceptance. Do not claim full/CI success before terminal logs.
+
+Macro imports full18144 terminal0:894passed/0failed/17existing ignores/83groups through finalreader doctests, /private/tmp/suss-m3-macro-imports-full.log. Source/tests frozen; focus66/module14/Python86/provenance pass. Heavy slot released. Publish draft; require independent review/significant fixes/exact final-head CI before readiness. All remaining original M3 acceptance requirements stay open.

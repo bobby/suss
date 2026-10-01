@@ -5,7 +5,7 @@ use crate::{
 };
 use std::collections::BTreeMap;
 use suss_compile::portable::{Diagnostic, ExpansionContext, ExpansionHost};
-use suss_reader::forms::{read_forms, Form, Kind};
+use suss_reader::forms::{Form, Kind, read_forms};
 pub struct CompiledMacros {
     session: Session,
     bridge: FormBridge,
@@ -81,6 +81,58 @@ impl CompiledMacros {
         }
         self.define_form(forms.into_iter().next().unwrap(), 0..source.len())
             .map(|_| ())
+    }
+    fn load_source_namespace(&mut self, namespace: &str) -> Result<Vec<String>, SessionError> {
+        use suss_compile::portable::{modules, resolve::Phase};
+        let snapshot = self.session.compilation_snapshot();
+        let graph = modules::discover_phase_modules(
+            namespace,
+            &snapshot.source_paths,
+            &snapshot.environment,
+            Phase::Macro,
+            &snapshot.provided,
+        )
+        .map_err(SessionError::Module)?;
+        let caller = self.session.current_namespace().to_owned();
+        let result = (|| {
+            for unit in graph {
+                // Source snapshots are already selected and dependency-first. Each
+                // form executes once in Macro phase; definitions compile to the
+                // same native function pipeline and become available to later forms.
+                for mut form in unit.forms {
+                    let definition = matches!(&form.kind, Kind::List(items) if matches!(items.first().map(|head| &head.kind), Some(Kind::Symbol(head)) if self.session.resolves_macro_definition(head)));
+                    if definition {
+                        let Kind::List(items) = &mut form.kind else {
+                            unreachable!()
+                        };
+                        let Kind::Symbol(head) = &mut items[0].kind else {
+                            unreachable!()
+                        };
+                        head.namespace = Some("suss.core".into());
+                        head.name = "defmacro".into();
+                        let span = form.span.clone();
+                        self.define_form(form, span)?;
+                    } else {
+                        let span = form.span.clone();
+                        let prepared =
+                            self.session
+                                .compilation_snapshot()
+                                .prepare(vec![form], span, self)?;
+                        self.session.eval_prepared(prepared)?;
+                    }
+                }
+                self.session
+                    .initialized_source_namespace(unit.identity.namespace())?;
+            }
+            Ok(self
+                .definitions
+                .keys()
+                .filter(|(ns, _)| ns == namespace)
+                .map(|(_, name)| name.clone())
+                .collect())
+        })();
+        self.session.enter_namespace(&caller)?;
+        result
     }
     pub fn set_operation_fuel(&mut self, fuel: u64) {
         self.session.set_operation_fuel(fuel);
@@ -192,6 +244,24 @@ impl CompiledMacros {
     }
 }
 impl ExpansionHost for CompiledMacros {
+    fn supports_macro_imports(&self) -> bool {
+        true
+    }
+    fn source_paths(&mut self, paths: &[std::path::PathBuf]) {
+        self.session.set_source_paths(paths);
+    }
+    fn load_macro_namespace(
+        &mut self,
+        namespace: &str,
+        span: std::ops::Range<usize>,
+    ) -> Result<Vec<String>, Diagnostic> {
+        self.load_source_namespace(namespace)
+            .map_err(|error| Diagnostic {
+                span,
+                message: format!("Compiled macro namespace loading failed: {error}"),
+            })
+    }
+
     fn expand(
         &mut self,
         form: &Form,
@@ -231,15 +301,19 @@ impl ExpansionHost for CompiledMacros {
         {
             return Ok(None);
         }
-        let namespace = name
-            .namespace
-            .as_deref()
-            .unwrap_or(context.environment.current_namespace(context.phase));
-        let Some(function) = self
-            .definitions
-            .get(&(namespace.into(), name.name.clone()))
-            .cloned()
-        else {
+        let target = context
+            .environment
+            .resolve_source_macro(context.phase, name)
+            .unwrap_or_else(|| {
+                (
+                    name.namespace
+                        .as_deref()
+                        .unwrap_or(context.environment.current_namespace(context.phase))
+                        .into(),
+                    name.name.clone(),
+                )
+            });
+        let Some(function) = self.definitions.get(&target).cloned() else {
             return Ok(None);
         };
         let result = (|| -> Result<Form, SessionError> {

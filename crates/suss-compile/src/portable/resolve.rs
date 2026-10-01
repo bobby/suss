@@ -1,7 +1,7 @@
 //! Phase-specific namespace identities. No runtime values or source replay live here.
 use super::{
-    hir::{Arithmetic, ArrayOperation, Bitwise, Comparison},
     Diagnostic,
+    hir::{Arithmetic, ArrayOperation, Bitwise, Comparison},
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -169,6 +169,8 @@ struct Scope {
     aliases: BTreeMap<String, String>,
     refers: BTreeMap<String, Global>,
     excluded_core: BTreeSet<String>,
+    macro_aliases: BTreeMap<String, String>,
+    macro_refers: BTreeMap<String, (String, String)>,
 }
 impl Scope {
     fn new(namespace: &str) -> Self {
@@ -177,6 +179,8 @@ impl Scope {
             aliases: BTreeMap::new(),
             refers: BTreeMap::new(),
             excluded_core: BTreeSet::new(),
+            macro_aliases: BTreeMap::new(),
+            macro_refers: BTreeMap::new(),
         }
     }
 }
@@ -189,6 +193,8 @@ pub struct Environment {
     scopes: BTreeMap<(Phase, String), Scope>,
     current: BTreeMap<Phase, String>,
     materialized_bootstrap: BTreeSet<Global>,
+    macro_exports: BTreeSet<(Phase, String, String)>,
+    macro_namespaces: BTreeSet<(Phase, String)>,
     pub(crate) protocols: BTreeMap<Global, Vec<ProtocolMethod>>,
 }
 pub(crate) fn canonical(namespace: &str) -> &str {
@@ -221,7 +227,7 @@ pub(crate) fn valid_namespace(namespace: &str) -> Result<(), Diagnostic> {
     Ok(())
 }
 fn valid_name(name: &str) -> Result<(), Diagnostic> {
-    use suss_reader::forms::{read_forms, Kind};
+    use suss_reader::forms::{Kind, read_forms};
     match read_forms(name).ok().as_deref() {
         Some([form])
             if form.metadata.is_empty()
@@ -246,6 +252,8 @@ impl Environment {
             scopes: BTreeMap::new(),
             current: BTreeMap::new(),
             materialized_bootstrap: BTreeSet::new(),
+            macro_exports: BTreeSet::new(),
+            macro_namespaces: BTreeSet::new(),
             protocols: BTreeMap::new(),
         };
         for phase in [Phase::Runtime, Phase::Macro] {
@@ -602,6 +610,107 @@ impl Environment {
         valid_name(name)?;
         self.scope_mut(phase).excluded_core.insert(name.into());
         Ok(())
+    }
+    /// Macro catalogs describe functions in the isolated host, never Runtime cells.
+    pub fn declare_macro_exports(
+        &mut self,
+        phase: Phase,
+        namespace: &str,
+        names: &[String],
+    ) -> Result<(), Diagnostic> {
+        valid_namespace(namespace)?;
+        for name in names {
+            valid_name(name)?;
+        }
+        let namespace = canonical(namespace);
+        self.macro_namespaces.insert((phase, namespace.into()));
+        self.macro_exports
+            .retain(|(p, ns, _)| *p != phase || ns != namespace);
+        self.macro_exports.extend(
+            names
+                .iter()
+                .map(|name| (phase, namespace.into(), name.clone())),
+        );
+        Ok(())
+    }
+    pub fn macro_alias(
+        &mut self,
+        phase: Phase,
+        alias: &str,
+        namespace: &str,
+    ) -> Result<(), Diagnostic> {
+        valid_namespace(alias)?;
+        if matches!(alias, "suss.core" | "cljs.core") {
+            return Err(error("Canonical core namespaces cannot be aliased away"));
+        }
+        valid_namespace(namespace)?;
+        let namespace = canonical(namespace);
+        if !self.macro_namespaces.contains(&(phase, namespace.into())) {
+            return Err(error(format!("Unknown macro namespace {namespace}")));
+        }
+        if self.macro_namespaces.contains(&(phase, alias.into())) && alias != namespace {
+            return Err(error(format!("Ambiguous macro namespace alias {alias}")));
+        }
+        let scope = self.scope_mut(phase);
+        if scope
+            .macro_aliases
+            .get(alias)
+            .is_some_and(|old| old != namespace)
+        {
+            return Err(error(format!("Ambiguous macro namespace alias {alias}")));
+        }
+        scope.macro_aliases.insert(alias.into(), namespace.into());
+        Ok(())
+    }
+    pub fn macro_refer(
+        &mut self,
+        phase: Phase,
+        local: &str,
+        namespace: &str,
+        name: &str,
+    ) -> Result<(), Diagnostic> {
+        valid_name(local)?;
+        let namespace = canonical(namespace);
+        if !self
+            .macro_exports
+            .contains(&(phase, namespace.into(), name.into()))
+        {
+            return Err(error(format!("Unknown macro binding {namespace}/{name}")));
+        }
+        let target = (namespace.into(), name.into());
+        let scope = self.scope_mut(phase);
+        if scope
+            .macro_refers
+            .get(local)
+            .is_some_and(|old| *old != target)
+        {
+            return Err(error(format!("Ambiguous macro binding {local}")));
+        }
+        scope.macro_refers.insert(local.into(), target);
+        Ok(())
+    }
+    pub fn resolve_source_macro(&self, phase: Phase, symbol: &Symbol) -> Option<(String, String)> {
+        let scope = self.scope(phase);
+        let target = if let Some(namespace) = &symbol.namespace {
+            (
+                canonical(
+                    scope
+                        .macro_aliases
+                        .get(namespace)
+                        .or_else(|| scope.aliases.get(namespace))
+                        .map_or(namespace.as_str(), String::as_str),
+                )
+                .into(),
+                symbol.name.clone(),
+            )
+        } else if let Some(target) = scope.macro_refers.get(&symbol.name) {
+            target.clone()
+        } else {
+            (scope.namespace.clone(), symbol.name.clone())
+        };
+        self.macro_exports
+            .contains(&(phase, target.0.clone(), target.1.clone()))
+            .then_some(target)
     }
     /// Identify a bounded core macro before its complete source bootstrap exists.
     /// This supplies no runtime binding/value: excluded, shadowed or non-core
