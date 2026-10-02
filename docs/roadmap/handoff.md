@@ -8762,3 +8762,61 @@ PR123 exact reviewed241c9b9 CI36929435478 SUCCESS:865/0/17/76groups/finalreader/
 3newphase guards verified. Watch75917 and log95923 terminal0; independent review
 no significant findings/fixes; tree clean. Root marked123ready; API OPEN/MERGEABLE/
 notdraft/exacthead. PR122 also ready; neither merged and no issues closed.
+
+## M3 source macro execution/expansion in progress
+
+Root isolated child portable/m3-source-macros starts at1249295c8b. PR124 independent
+review approves exacthead with45focused plus independent storage/budget/parity
+probes; no findings/fixes. CI36932620871 watcher91480 confirmed live. Heavy slot
+released by reviewer; root owns it for source macro checks.
+
+Before30755 terminal101 missing CompiledMacros/eval_with_macros APIs. First72944
+terminal101 callback routed through wrong prepare_modules wrapper; corrected.
+After59174 terminal0 two native source definition/expansion tests pass. Focus23946
+terminal0:48pass across source2/forms6/phase3/namespace4/persistent33. Stronger71692
+terminal0:source3 verifies actual dependency artifact expansion/redefinition/failed
+replacement. Logs/private/tmp/suss-m3-source-macros-{before,after,after2,focus,frozen-focus}.log.
+Real pinned submodule36983 terminal0. Partial defmacro review adds224/841;132 licensed
+artifacts only change review manifest hash. docs/runtime/compiled-source-macros.md
+records pinned SHA/lines, original Rust and every unsupported definition feature.
+
+ExpansionHost is invoked from real HIR lexical analysis, preserving local/field
+shadowing, source order, quote bypass and bounded recursion. Source and dependency
+fragments use the same host/pipeline. Native CompiledMacros compiles macro bodies
+into its separate Macro Store, marshals actual &form/arguments and reads actual
+returned data. No native macro body evaluator. Missing &env remains compile error;
+no fake nil map. Explicit registration only; aliases/require-macros, macro-body
+expansion, full defmacro signatures/attrs/marker metadata and prompt/AOT integration
+remain unfinished. Syntaxquote/gensyms/full form-env metadata/collections/bootstrap/
+cache/evaluator removal and #15 cancellation/live accounting are still required.
+
+Source/tests now frozen; full workspace baseline live, log
+/private/tmp/suss-m3-source-macros-full.log. Re-poll returned handle, never restart
+from an observation timeout. After full/Python/provenance success publish draft
+Refs14/13/12 and dispatch independent review/fixes/exact final-head CI. No M3 closure.
+
+Source macro full34035 terminal0:874passed/0failed/17existing ignores/78groups
+through finalreader doctests, /private/tmp/suss-m3-source-macros-full.log. Checks69553
+terminal0:Python86, inventory1065, reviews224/841, licensed import132 and offline
+roadmap preview pass. No added skips, ABI/dependency changes or RUSTFLAGS. Root
+heavy slot released. Publish draft and require independent review plus exact-head
+CI; full M3 acceptance, automatic macro loading and bootstrap remain unfinished.
+
+## PR125 independent review fix — source macro special forms
+
+Independent review of515457ae found that registered loop* macros intercepted the
+compiler's true unqualified loop* special form. The failing regression36892
+terminal101 reached macro argument transport and rejected its bindings vector;
+ordinary loop*/recur behavior must retain special-form priority. CompiledMacros
+now protects loop* alongside the existing special forms. The regression also
+executes qualified user/loop* as a normal macro lookup. Focused83427 terminal0:
+4 compiled_source_macros tests pass. Original focused61573 terminal0:16pass
+(forms6/phase3/source3/namespace4). Temporary independent probes3898 terminal0:
+tail recur through macro expansion/non-tail rejection, qualified lookup despite
+local shadowing, macro exception compile atomicity/recovery, real lexical callback
+context, textual analysis order and quoted-data bypass. Probe source retained at
+/private/tmp/suss-pr125-independent-probe.rs; temporary test removed.
+
+Review fix requires a replacement-head full workspace baseline and exact final-head
+CI before readiness. No merge or M3 completion; all full macro/bootstrap/lifecycle
+acceptance remains open.

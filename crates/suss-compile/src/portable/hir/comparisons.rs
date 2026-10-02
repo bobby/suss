@@ -1,6 +1,6 @@
 //! Original bounded expansion of the pinned comparison macros.
 use super::*;
-impl Analyzer {
+impl Analyzer<'_> {
     pub(super) fn comparison_form(
         &mut self,
         form: &Form,

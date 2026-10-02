@@ -239,13 +239,36 @@ fn compile_snapshots(
     environment: &Environment,
     phase: Phase,
 ) -> Result<(Vec<PreparedModule>, Environment), ModuleDiagnostic> {
+    compile_snapshots_with_expander(snapshots, environment, phase, &mut super::NoExpansion)
+}
+fn compile_snapshots_with_expander(
+    snapshots: Vec<Snapshot>,
+    environment: &Environment,
+    phase: Phase,
+    expander: &mut dyn super::ExpansionHost,
+) -> Result<(Vec<PreparedModule>, Environment), ModuleDiagnostic> {
     let mut snapshot = environment.clone();
     let mut modules = Vec::new();
     for unit in snapshots {
         let PreparedFragment {
             wasm, environment, ..
-        } = prepare_fragment(&unit.source, &snapshot, phase)
-            .map_err(|error| located(&unit.identity, Some(&unit.path), error))?;
+        } = super::prepare_fragment_forms_with_expander(
+            read_forms(&unit.source).map_err(|error| {
+                located(
+                    &unit.identity,
+                    Some(&unit.path),
+                    Diagnostic {
+                        span: error.span,
+                        message: error.message,
+                    },
+                )
+            })?,
+            0..unit.source.len(),
+            &snapshot,
+            phase,
+            expander,
+        )
+        .map_err(|error| located(&unit.identity, Some(&unit.path), error))?;
         snapshot = environment;
         modules.push(PreparedModule {
             identity: unit.identity,
@@ -304,6 +327,25 @@ pub fn prepare_input_forms<P: AsRef<Path>>(
     phase: Phase,
     provided: &BTreeSet<ModuleIdentity>,
 ) -> Result<PreparedInput, InputDiagnostic> {
+    prepare_input_forms_with_expander(
+        forms,
+        span,
+        roots,
+        environment,
+        phase,
+        provided,
+        &mut super::NoExpansion,
+    )
+}
+pub fn prepare_input_forms_with_expander<P: AsRef<Path>>(
+    forms: Vec<suss_reader::forms::Form>,
+    span: Range<usize>,
+    roots: &[P],
+    environment: &Environment,
+    phase: Phase,
+    provided: &BTreeSet<ModuleIdentity>,
+    expander: &mut dyn super::ExpansionHost,
+) -> Result<PreparedInput, InputDiagnostic> {
     let forms = resolve_conditionals(forms).map_err(|error| {
         InputDiagnostic::Compile(Diagnostic {
             span: error.span,
@@ -328,12 +370,14 @@ pub fn prepare_input_forms<P: AsRef<Path>>(
                 .map_err(InputDiagnostic::Dependency)?;
         }
     }
-    let (modules, mut snapshot) = compile_snapshots(discovery.snapshots, environment, phase)
-        .map_err(InputDiagnostic::Dependency)?;
+    let (modules, mut snapshot) =
+        compile_snapshots_with_expander(discovery.snapshots, environment, phase, expander)
+            .map_err(InputDiagnostic::Dependency)?;
     snapshot
         .enter_namespace(phase, environment.current_namespace(phase))
         .map_err(InputDiagnostic::Compile)?;
-    let fragment = prepare_selected_fragment(forms, span, &snapshot, phase)
-        .map_err(InputDiagnostic::Compile)?;
+    let fragment =
+        super::prepare_selected_fragment_with_expander(forms, span, &snapshot, phase, expander)
+            .map_err(InputDiagnostic::Compile)?;
     Ok(PreparedInput { modules, fragment })
 }

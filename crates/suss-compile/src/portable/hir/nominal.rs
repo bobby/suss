@@ -2,7 +2,7 @@
 use super::*;
 use crate::portable::resolve::{NominalForm, ProtocolMethod};
 
-impl Analyzer {
+impl Analyzer<'_> {
     pub(super) fn nominal(&self, form: &Form, operation: Nominal, arguments: Vec<Hir>) -> Hir {
         Hir {
             span: form.span.clone(),

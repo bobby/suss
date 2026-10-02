@@ -639,6 +639,32 @@ impl Session {
         })?;
         self.eval_prepared(prepared)
     }
+    pub fn eval_with_macros(
+        &mut self,
+        source: &str,
+        expander: &mut dyn portable::ExpansionHost,
+    ) -> Result<SessionValue, SessionError> {
+        let forms = suss_reader::forms::read_forms(source).map_err(|error| {
+            SessionError::Compile(Diagnostic {
+                span: error.span,
+                message: error.message,
+            })
+        })?;
+        let prepared = portable::modules::prepare_input_forms_with_expander(
+            forms,
+            0..source.len(),
+            &self.options.source_paths,
+            &self.environment,
+            self.phase,
+            &self.provided,
+            expander,
+        )
+        .map_err(|error| match error {
+            portable::modules::InputDiagnostic::Compile(error) => SessionError::Compile(error),
+            portable::modules::InputDiagnostic::Dependency(error) => SessionError::Module(error),
+        })?;
+        self.eval_prepared(prepared)
+    }
     /// Compile reader or expanded forms through the ordinary phase/module pipeline.
     /// No source printing/rereading, initializer replay or host interpretation.
     pub fn eval_forms(

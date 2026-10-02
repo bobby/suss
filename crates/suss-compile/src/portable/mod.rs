@@ -17,6 +17,29 @@ pub struct Diagnostic {
     pub message: String,
 }
 
+/// Expansion executes in a host's isolated compiled session, not the compiler.
+pub struct ExpansionContext<'a> {
+    pub environment: &'a resolve::Environment,
+    pub phase: resolve::Phase,
+    pub locals: &'a std::collections::HashMap<String, (hir::BindingId, hir::Type)>,
+}
+pub trait ExpansionHost {
+    fn expand(
+        &mut self,
+        form: &suss_reader::forms::Form,
+        context: ExpansionContext<'_>,
+    ) -> Result<Option<suss_reader::forms::Form>, Diagnostic>;
+}
+pub(crate) struct NoExpansion;
+impl ExpansionHost for NoExpansion {
+    fn expand(
+        &mut self,
+        _: &suss_reader::forms::Form,
+        _: ExpansionContext<'_>,
+    ) -> Result<Option<suss_reader::forms::Form>, Diagnostic> {
+        Ok(None)
+    }
+}
 pub fn analyze(source: &str) -> Result<hir::Hir, Diagnostic> {
     analyze_in(
         source,
@@ -99,14 +122,36 @@ pub fn prepare_fragment_forms(
     prepare_selected_fragment(forms, span, environment, phase)
 }
 pub(crate) fn prepare_selected_fragment(
-    mut forms: Vec<suss_reader::forms::Form>,
+    forms: Vec<suss_reader::forms::Form>,
     span: Range<usize>,
     environment: &resolve::Environment,
     phase: resolve::Phase,
 ) -> Result<PreparedFragment, Diagnostic> {
+    prepare_selected_fragment_with_expander(forms, span, environment, phase, &mut NoExpansion)
+}
+pub fn prepare_fragment_forms_with_expander(
+    forms: Vec<suss_reader::forms::Form>,
+    span: Range<usize>,
+    environment: &resolve::Environment,
+    phase: resolve::Phase,
+    expander: &mut dyn ExpansionHost,
+) -> Result<PreparedFragment, Diagnostic> {
+    let forms = resolve_conditionals(forms).map_err(|error| Diagnostic {
+        span: error.span,
+        message: error.message,
+    })?;
+    prepare_selected_fragment_with_expander(forms, span, environment, phase, expander)
+}
+pub(crate) fn prepare_selected_fragment_with_expander(
+    mut forms: Vec<suss_reader::forms::Form>,
+    span: Range<usize>,
+    environment: &resolve::Environment,
+    phase: resolve::Phase,
+    expander: &mut dyn ExpansionHost,
+) -> Result<PreparedFragment, Diagnostic> {
     let mut snapshot = environment.clone();
     let namespace_directive = source::namespace(&mut forms, &mut snapshot, phase)?;
-    let (hir, environment) = hir::prepare(&forms, span, &snapshot, phase)?;
+    let (hir, environment) = hir::prepare_with_expander(&forms, span, &snapshot, phase, expander)?;
     let wasm = compile_ir(&ir::lower(&hir)?)?;
     let cells = environment
         .cells()

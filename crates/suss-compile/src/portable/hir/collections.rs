@@ -3,7 +3,7 @@
 //! No persistent collection implementation or upstream source is copied here.
 use super::*;
 
-impl Analyzer {
+impl Analyzer<'_> {
     fn collection_class(&mut self, form: &Form, name: &str) -> Result<Hir, Diagnostic> {
         let symbol = suss_reader::Symbol {
             namespace: Some("suss.core".into()),

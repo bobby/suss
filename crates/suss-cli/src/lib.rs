@@ -5,3 +5,5 @@ pub mod portable_session;
 pub mod portable_repl;
 #[cfg(not(target_family = "wasm"))]
 pub mod portable_macro_data;
+#[cfg(not(target_family = "wasm"))]
+pub mod portable_macros;

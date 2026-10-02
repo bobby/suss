@@ -2,7 +2,7 @@
 use super::*;
 use crate::portable::resolve::ControlForm;
 
-impl Analyzer {
+impl Analyzer<'_> {
     pub(super) fn control_if(&self, form: &Form, condition: Hir, consequent: Hir, alternative: Hir) -> Hir {
         let ty = if consequent.ty == alternative.ty {
             consequent.ty
