@@ -26,3 +26,5 @@
   persistent-array-map-seq map? record? vector? key val map-entry? contains?
   keys vals es6-iterator es6-entries-iterator ci-reduce assoc into
   PersistentHashMap TransientArrayMap key-test pam-dupes? pam-new-size pam-grow-seed-array)
+
+(declare ArrayChunk array-chunk ChunkedSeq chunked-seq)

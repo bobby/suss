@@ -2953,4 +2953,67 @@
    :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
    :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-pam-grow-seed-array.json" :alternative nil
    :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:IChunk:871"
+  {:source-sha256 "9fbb6fa1b28e4ac82306b82e0417e3369dcc1d070cdc97003560c62ba4928805" :visibility :public :arities nil
+   :dependencies ["retained vector/sequence/protocol algorithms" "canonical source arrays; declared pending js-mod and ES6/printing dependencies"]
+   :classification :portable
+   :rationale "Retain full chunk sequence source needed by compiled macro vector/metadata data. Focused executing primary/native evidence required; this partial review does not certify complete collection APIs."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_metadata.rs"]}
+
+  "runtime:IChunkedSeq:876"
+  {:source-sha256 "550ec3c46000e3a23e175c5f01fd50264d436737f47baf4eec2c43c8e8420ed2" :visibility :public :arities nil
+   :dependencies ["retained vector/sequence/protocol algorithms" "canonical source arrays; declared pending js-mod and ES6/printing dependencies"]
+   :classification :portable
+   :rationale "Retain full chunk sequence source needed by compiled macro vector/metadata data. Focused executing primary/native evidence required; this partial review does not certify complete collection APIs."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_metadata.rs"]}
+
+  "runtime:IChunkedNext:883"
+  {:source-sha256 "5fbc4536f7003e21ef83d0200c3dfb36a47d72c8aa2890795881d2cbe130c333" :visibility :public :arities nil
+   :dependencies ["retained vector/sequence/protocol algorithms" "canonical source arrays; declared pending js-mod and ES6/printing dependencies"]
+   :classification :portable
+   :rationale "Retain full chunk sequence source needed by compiled macro vector/metadata data. Focused executing primary/native evidence required; this partial review does not certify complete collection APIs."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_metadata.rs"]}
+
+  "runtime:ArrayChunk:3690"
+  {:source-sha256 "333e6efaaf40da955693cafa95b637aa1fef0a27cbf77226217fa1cb539a9126" :visibility :public :arities nil
+   :dependencies ["retained vector/sequence/protocol algorithms" "canonical source arrays; declared pending js-mod and ES6/printing dependencies"]
+   :classification :adapted
+   :rationale "Retain full chunk sequence source needed by compiled macro vector/metadata data. Focused executing primary/native evidence required; this partial review does not certify complete collection APIs."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/metadata-chunked-ArrayChunk.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_metadata.rs"]}
+
+  "runtime:array-chunk:3714"
+  {:source-sha256 "f3e4d329c8cadea5daf7b24e371fd1d72fa2cf0a79e9ab4ce86c4402389daddc" :visibility :public :arities {:fixed [1 2 3] :variadic-min nil}
+   :dependencies ["retained vector/sequence/protocol algorithms" "canonical source arrays; declared pending js-mod and ES6/printing dependencies"]
+   :classification :adapted
+   :rationale "Retain full chunk sequence source needed by compiled macro vector/metadata data. Focused executing primary/native evidence required; this partial review does not certify complete collection APIs."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/metadata-chunked-array-chunk.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_metadata.rs"]}
+
+  "runtime:ChunkedSeq:5968"
+  {:source-sha256 "08f17ae1e89e79fb17ed94ef40152f5c84585e2a14517b52b2362baa602949b7" :visibility :public :arities nil
+   :dependencies ["retained vector/sequence/protocol algorithms" "canonical source arrays; declared pending js-mod and ES6/printing dependencies"]
+   :classification :portable
+   :rationale "Retain full chunk sequence source needed by compiled macro vector/metadata data. Focused executing primary/native evidence required; this partial review does not certify complete collection APIs."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_metadata.rs"]}
+
+  "runtime:chunked-seq:6069"
+  {:source-sha256 "e8c9767107a5e11472b988225c612c2e895c41f748f1c07e8cefa241d02a6b0c" :visibility :public :arities {:fixed [3 4 5] :variadic-min nil}
+   :dependencies ["retained vector/sequence/protocol algorithms" "canonical source arrays; declared pending js-mod and ES6/printing dependencies"]
+   :classification :adapted
+   :rationale "Retain full chunk sequence source needed by compiled macro vector/metadata data. Focused executing primary/native evidence required; this partial review does not certify complete collection APIs."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/metadata-chunked-chunked-seq.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_metadata.rs"]}
+
+  "runtime:js-mod:2971"
+  {:source-sha256 "28fb8bfcc4d4674152954edf54d2a9b9bfd135b573d42e556c844d5e88b7ce7d" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["original binary64 remainder and shared scalar coercion adapter"]
+   :classification :adapted :rationale "Retain full pinned wrapper with exact binary64 remainder needed by real vector iterators and chunk offsets. General object coercion remains unfinished; no full public core acceptance claim."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/metadata-js-mod.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_metadata.rs"]}
 }}

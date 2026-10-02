@@ -59,14 +59,36 @@ impl Analyzer<'_> {
         Ok(self.nominal(form, Nominal::Construct, arguments))
     }
     pub(super) fn quote_data(&mut self, form: &Form, depth: usize) -> Result<Hir, Diagnostic> {
+        self.quote_data_impl(form, depth, false)
+    }
+    /// Native form transport uses the same lowering while retaining reader data
+    /// that the pinned compiler elides from ordinary runtime quoted constants.
+    pub(super) fn quote_form_data(&mut self, form: &Form) -> Result<Hir, Diagnostic> {
+        self.quote_data_impl(form, 0, true)
+    }
+    fn quote_data_impl(
+        &mut self,
+        form: &Form,
+        depth: usize,
+        reader_data: bool,
+    ) -> Result<Hir, Diagnostic> {
         if depth >= 64 {
             return Err(fail(form.span.clone(), "Quoted data nesting exceeds 64"));
         }
         if !form.metadata.is_empty() {
-            return Err(fail(
-                form.span.clone(),
-                "Quoted runtime metadata needs persistent metadata maps, not yet implemented",
-            ));
+            if !matches!(
+                form.kind,
+                Kind::Symbol(_) | Kind::List(_) | Kind::Vector(_) | Kind::Map(_) | Kind::Set(_)
+            ) {
+                return Err(fail(
+                    form.span.clone(),
+                    "Metadata requires a symbol or collection",
+                ));
+            }
+            let mut bare = form.clone();
+            bare.metadata.clear();
+            let value = self.quote_data_impl(&bare, depth, reader_data)?;
+            return self.attach_data_metadata(form, value, depth, reader_data);
         }
         match &form.kind {
             Kind::Symbol(value) => {
@@ -79,7 +101,7 @@ impl Analyzer<'_> {
             Kind::Vector(items) => {
                 let entries = items
                     .iter()
-                    .map(|item| self.quote_data(item, depth + 1))
+                    .map(|item| self.quote_data_impl(item, depth + 1, reader_data))
                     .collect::<Result<Vec<_>, _>>()?;
                 self.vector_values(form, entries)
             }
@@ -92,7 +114,7 @@ impl Analyzer<'_> {
                 }
                 let entries = items
                     .iter()
-                    .map(|item| self.quote_data(item, depth + 1))
+                    .map(|item| self.quote_data_impl(item, depth + 1, reader_data))
                     .collect::<Result<Vec<_>, _>>()?;
                 self.map_values(form, items, entries)
             }
@@ -110,7 +132,7 @@ impl Analyzer<'_> {
                 };
                 let arguments = items
                     .iter()
-                    .map(|value| self.quote_data(value, depth + 1))
+                    .map(|value| self.quote_data_impl(value, depth + 1, reader_data))
                     .collect::<Result<Vec<_>, _>>()?;
                 Ok(Hir {
                     span: form.span.clone(),
@@ -127,6 +149,116 @@ impl Analyzer<'_> {
                 "Quoted vector/map/set data needs persistent collection types, not yet implemented",
             )),
         }
+    }
+    fn data_core_call(
+        &mut self,
+        form: &Form,
+        name: &str,
+        arguments: Vec<Hir>,
+    ) -> Result<Hir, Diagnostic> {
+        let symbol = suss_reader::Symbol {
+            namespace: Some("suss.core".into()),
+            name: name.into(),
+        };
+        let (kind, ty) = self.global_value(&symbol, form.span.clone())?;
+        let callee = Hir {
+            span: form.span.clone(),
+            metadata: vec![],
+            kind,
+            ty,
+        };
+        Ok(Hir {
+            span: form.span.clone(),
+            metadata: vec![],
+            ty: Type::Value,
+            kind: Expression::Call {
+                callee: Box::new(callee),
+                arguments,
+            },
+        })
+    }
+    pub(super) fn attach_literal_metadata(
+        &mut self,
+        form: &Form,
+        value: Hir,
+    ) -> Result<Hir, Diagnostic> {
+        self.attach_data_metadata(form, value, 0, false)
+    }
+    fn attach_data_metadata(
+        &mut self,
+        form: &Form,
+        value: Hir,
+        depth: usize,
+        reader_data: bool,
+    ) -> Result<Hir, Diagnostic> {
+        if form.metadata.is_empty() {
+            return Ok(value);
+        }
+        let empty = self.map_values(form, &[], vec![])?;
+        let mut result = self.fresh_binding(form, empty);
+        let mut bindings = vec![result.clone()];
+        let mut retained = reader_data;
+        // Pinned tools.reader/read-meta merges inner metadata first, then outer.
+        // Actual source -assoc supplies key equality and last-value semantics.
+        for prefix in form.metadata.iter().rev() {
+            let entries = match &prefix.kind {
+                Kind::Map(entries) if entries.len() % 2 == 0 => entries.clone(),
+                Kind::Keyword(_) => vec![
+                    prefix.clone(),
+                    Form {
+                        span: prefix.span.clone(),
+                        metadata: vec![],
+                        kind: Kind::Bool(true),
+                    },
+                ],
+                Kind::Symbol(_) | Kind::String(_) => vec![
+                    Form {
+                        span: prefix.span.clone(),
+                        metadata: vec![],
+                        kind: Kind::Keyword(suss_reader::Keyword {
+                            namespace: None,
+                            name: "tag".into(),
+                        }),
+                    },
+                    prefix.clone(),
+                ],
+                _ => {
+                    return Err(fail(
+                        prefix.span.clone(),
+                        "Invalid metadata: expected a map, keyword, symbol or string",
+                    ));
+                }
+            };
+            for pair in entries.chunks_exact(2) {
+                // cljs.analyzer/elide-irrelevant-meta, pinned source4435-4452.
+                let irrelevant = matches!(&pair[0].kind, Kind::Keyword(key) if
+                    (key.namespace.is_none() && matches!(key.name.as_str(), "file" | "line" | "column" | "end-column" | "end-line" | "source"))
+                    || (key.namespace.as_deref() == Some("cljs.analyzer") && key.name == "analyzed"));
+                if !reader_data && irrelevant {
+                    continue;
+                }
+                let key = self.quote_data_impl(&pair[0], depth + 2, reader_data)?;
+                let item = self.quote_data_impl(&pair[1], depth + 2, reader_data)?;
+                let previous = self.local(form, result.id);
+                let next = self.data_core_call(form, "-assoc", vec![previous, key, item])?;
+                result = self.fresh_binding(form, next);
+                bindings.push(result.clone());
+                retained = true;
+            }
+        }
+        if !retained {
+            return Ok(value);
+        }
+        let result = Hir {
+            span: form.span.clone(),
+            metadata: vec![],
+            ty: Type::Value,
+            kind: Expression::Let {
+                bindings,
+                body: Box::new(self.local(form, result.id)),
+            },
+        };
+        self.data_core_call(form, "with-meta", vec![value, result])
     }
 }
 

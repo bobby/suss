@@ -69,8 +69,10 @@ fn compiled_macro_forms_keep_locations_metadata_and_compile_atomicity() {
         panic!("quote");
     };
     items[1].span = 701..720;
+    items[1].metadata[0].span = 701..720;
+    items[1].metadata[0].kind = Kind::Number(1.0);
     let Err(SessionError::Compile(error)) = session.eval_forms(forms, 700..730) else {
-        panic!("Metadata must not be discarded");
+        panic!("Invalid metadata must not be discarded");
     };
     assert_eq!(error.span, 701..720);
     assert!(error.message.contains("metadata"));

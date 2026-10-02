@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "e8c9767107a5e11472b988225c612c2e895c41f748f1c07e8cefa241d02a6b0c",
+  "replacement": "(def chunked-seq\n  (fn ([vec i off] (ChunkedSeq. vec (array-for vec i) i off nil nil))\n([vec node i off] (ChunkedSeq. vec node i off nil nil))\n([vec node i off meta]\n     (ChunkedSeq. vec node i off meta nil))))",
+  "rationale": "Retain complete pinned vector chunk sequence declarations and methods required by observable metadata-bearing vector equality. Defn bootstrap preserves every signature/body; typed Error adapter preserves errors. ES6/printing/public APIs and full collection acceptance remain required separately."
+}

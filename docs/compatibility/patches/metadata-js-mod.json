@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "28fb8bfcc4d4674152954edf54d2a9b9bfd135b573d42e556c844d5e88b7ce7d",
+  "replacement": "(def js-mod\n  \"Modulus of num and div with original javascript behavior. i.e. bug for negative numbers\"\n  (fn [n d] (suss.bootstrap/f64-remainder n d)))",
+  "rationale": "Retain complete pinned two-argument public wrapper/docs. Replace recursive core macro delegation with original binary64 remainder adapter using exact power-of-two long division, shared scalar coercion, signed zero/NaN/infinity behavior and bounded exponent work. No safe-integer-only substitution. General object-to-primitive coercion remains unfinished and errors explicitly."
+}

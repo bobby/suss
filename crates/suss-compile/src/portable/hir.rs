@@ -10,8 +10,8 @@ mod exceptions;
 mod nominal;
 mod quotes;
 use super::{
-    resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
     Diagnostic,
+    resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
 };
 use std::{
     collections::{BTreeSet, HashMap},
@@ -197,6 +197,7 @@ pub enum Bitwise {
     F64SafeInteger,
     F64TimeClip,
     SafeIntegerRemainder,
+    F64Remainder,
     IdentityUid,
 }
 impl Bitwise {
@@ -243,6 +244,7 @@ impl Bitwise {
             Self::F64SafeInteger => "primitive-f64-safe-integer",
             Self::F64TimeClip => "primitive-f64-time-clip",
             Self::SafeIntegerRemainder => "primitive-safe-integer-remainder",
+            Self::F64Remainder => "primitive-f64-remainder",
             Self::IdentityUid => "identity-uid",
         }
     }
@@ -561,11 +563,25 @@ impl Analyzer<'_> {
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
             Kind::String(value) => Expression::Literal(Literal::String(value.clone())),
             Kind::Keyword(value) => {
-                return self.identifier_literal(form, value.namespace.as_deref(), &value.name, true)
+                return self.identifier_literal(
+                    form,
+                    value.namespace.as_deref(),
+                    &value.name,
+                    true,
+                );
             }
-            Kind::Vector(items) => return self.vector_literal(form, items),
-            Kind::Map(items) => return self.map_literal(form, items),
-            Kind::Set(items) => return self.set_literal(form, items),
+            Kind::Vector(items) => {
+                let value = self.vector_literal(form, items)?;
+                return self.attach_literal_metadata(form, value);
+            }
+            Kind::Map(items) => {
+                let value = self.map_literal(form, items)?;
+                return self.attach_literal_metadata(form, value);
+            }
+            Kind::Set(items) => {
+                let value = self.set_literal(form, items)?;
+                return self.attach_literal_metadata(form, value);
+            }
             Kind::List(items) if items.is_empty() => {
                 // The pinned emitter reads List.EMPTY for each empty-list literal.
                 // Resolve the canonical core binding, never a lexical/user List.
@@ -582,7 +598,8 @@ impl Analyzer<'_> {
                 };
                 let key =
                     self.literal_form(form, Literal::String("EMPTY".encode_utf16().collect()));
-                return Ok(self.nominal(form, Nominal::NamedGet, vec![owner, key]));
+                let value = self.nominal(form, Nominal::NamedGet, vec![owner, key]);
+                return self.attach_literal_metadata(form, value);
             }
             Kind::Symbol(symbol) => {
                 let (kind, ty) = if symbol.namespace.is_none() {
@@ -1160,6 +1177,7 @@ impl Analyzer<'_> {
                 "f64-safe-integer" => Some(Bitwise::F64SafeInteger),
                 "f64-time-clip" => Some(Bitwise::F64TimeClip),
                 "safe-integer-remainder" => Some(Bitwise::SafeIntegerRemainder),
+                "f64-remainder" => Some(Bitwise::F64Remainder),
                 "identity-uid" => Some(Bitwise::IdentityUid),
                 _ => None,
             };
@@ -1242,6 +1260,15 @@ impl Analyzer<'_> {
                 .map(|argument| self.form(argument))
                 .collect::<Result<Vec<_>, _>>()?;
             return Ok(self.nominal(form, Nominal::Construct, arguments));
+        }
+        if symbol.namespace.as_deref() == Some("suss.bootstrap") && symbol.name == "quote-form" {
+            if args.len() != 1 {
+                return Err(fail(
+                    form.span.clone(),
+                    "quote-form requires exactly one operand",
+                ));
+            }
+            return self.quote_form_data(&args[0]);
         }
         if bare && symbol.name == "quote" {
             if args.len() != 1 {

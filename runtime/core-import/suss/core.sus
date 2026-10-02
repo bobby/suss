@@ -37,6 +37,8 @@
   persistent-array-map-seq map? record? vector? key val map-entry? contains?
   keys vals es6-iterator es6-entries-iterator ci-reduce assoc into
   PersistentHashMap TransientArrayMap key-test pam-dupes? pam-new-size pam-grow-seed-array)
+
+(declare ArrayChunk array-chunk ChunkedSeq chunked-seq)
 (def identity (fn [x] x))
 
 (def not (fn [x] (if x false true)))
@@ -2678,6 +2680,164 @@
           (aset ret (inc i) (-val kv))
           (recur (+ 2 i) (next extra-kvs)))
         ret)))))
+
+(defprotocol IChunk
+  "Protocol for accessing the items of a chunk."
+  (-drop-first [coll]
+    "Return a new chunk of coll with the first item removed."))
+
+(defprotocol IChunkedSeq
+  "Protocol for accessing a collection as sequential chunks."
+  (-chunked-first [coll]
+    "Returns the first chunk in coll.")
+  (-chunked-rest [coll]
+    "Return a new collection of coll with the first chunk removed."))
+
+(defprotocol IChunkedNext
+  "Protocol for accessing the chunks of a collection."
+  (-chunked-next [coll]
+    "Returns a new collection of coll without the first chunk."))
+
+(deftype ArrayChunk [arr off end]
+  ICounted
+  (-count [_] (- end off))
+
+  IIndexed
+  (-nth [coll i]
+    (aget arr (+ off i)))
+  (-nth [coll i not-found]
+    (if (and (>= i 0) (< i (- end off)))
+      (aget arr (+ off i))
+      not-found))
+
+  IChunk
+  (-drop-first [coll]
+    (if (== off end)
+      (throw (suss.bootstrap/error "-drop-first of empty chunk"))
+      (ArrayChunk. arr (inc off) end)))
+
+  IReduce
+  (-reduce [coll f]
+    (array-reduce arr f (aget arr off) (inc off)))
+  (-reduce [coll f start]
+    (array-reduce arr f start off)))
+
+(def array-chunk
+  (fn ([arr]
+     (ArrayChunk. arr 0 (alength arr)))
+([arr off]
+     (ArrayChunk. arr off (alength arr)))
+([arr off end]
+     (ArrayChunk. arr off end))))
+
+(deftype ChunkedSeq [vec node i off meta ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (chunked-seq vec node i off new-meta)))
+  IMeta
+  (-meta [coll] meta)
+
+  ISeqable
+  (-seq [coll] coll)
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  ASeq
+  ISeq
+  (-first [coll]
+    (aget node off))
+  (-rest [coll]
+    (if (< (inc off) (alength node))
+      (let [s (chunked-seq vec node i (inc off))]
+        (if (nil? s)
+          ()
+          s))
+      (-chunked-rest coll)))
+
+  INext
+  (-next [coll]
+    (if (< (inc off) (alength node))
+      (let [s (chunked-seq vec node i (inc off))]
+        (if (nil? s)
+          nil
+          s))
+      (-chunked-next coll)))
+
+  IDrop
+  (-drop [coll n]
+    (let [o (+ off n)]
+      (if (< o (alength node))
+        (chunked-seq vec node i o)
+        (let [i (+ i o)]
+          (if (< i (-count vec))
+            (let [new-offset (js-mod i 32)]
+              (chunked-seq vec (unchecked-array-for vec i) (- i new-offset) new-offset))
+            nil)))))
+
+  ICollection
+  (-conj [coll o]
+    (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll]
+    ())
+
+  ICounted
+  (-count [coll]
+    (- (-count vec) (+ i off)))
+
+  IChunkedSeq
+  (-chunked-first [coll]
+    (array-chunk node off))
+  (-chunked-rest [coll]
+    (let [end (+ i (alength node))]
+      (if (< end (-count vec))
+        (chunked-seq vec (unchecked-array-for vec end) end 0)
+        ())))
+
+  IChunkedNext
+  (-chunked-next [coll]
+    (let [end (+ i (alength node))]
+      (when (< end (-count vec))
+        (chunked-seq vec (unchecked-array-for vec end) end 0))))
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
+
+  IReduce
+  (-reduce [coll f]
+    (pv-reduce vec f (+ i off) (count vec)))
+
+  (-reduce [coll f start]
+    (pv-reduce vec f start (+ i off) (count vec))))
+
+(def chunked-seq
+  (fn ([vec i off] (ChunkedSeq. vec (array-for vec i) i off nil nil))
+([vec node i off] (ChunkedSeq. vec node i off nil nil))
+([vec node i off meta]
+     (ChunkedSeq. vec node i off meta nil))))
+
+(def js-mod
+  "Modulus of num and div with original javascript behavior. i.e. bug for negative numbers"
+  (fn [n d] (suss.bootstrap/f64-remainder n d)))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
