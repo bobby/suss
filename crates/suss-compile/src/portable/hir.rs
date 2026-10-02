@@ -1,5 +1,7 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
+mod local_bindings;
+pub use local_bindings::{LocalBinding, LocalKind};
 mod bitwise;
 mod cases;
 mod collections;
@@ -482,9 +484,10 @@ fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
 }
 struct Analyzer<'a> {
     expander: &'a mut dyn super::ExpansionHost,
+    origin: Option<super::SourceOrigin>,
     environment: Environment,
     phase: Phase,
-    locals: HashMap<String, (BindingId, Type)>,
+    locals: HashMap<String, LocalBinding>,
     fields: HashMap<String, (Hir, bool)>,
     next: usize,
     next_loop: usize,
@@ -559,6 +562,7 @@ impl Analyzer<'_> {
                 if !shadowed {
                     let context = super::ExpansionContext {
                         environment: &self.environment,
+                        origin: self.origin.as_ref(),
                         phase: self.phase,
                         locals: &self.locals,
                     };
@@ -617,8 +621,8 @@ impl Analyzer<'_> {
             }
             Kind::Symbol(symbol) => {
                 let (kind, ty) = if symbol.namespace.is_none() {
-                    if let Some((id, ty)) = self.locals.get(&symbol.name) {
-                        (Expression::Local(*id), *ty)
+                    if let Some(binding) = self.locals.get(&symbol.name) {
+                        (Expression::Local(binding.id), binding.ty)
                     } else if let Some((field, _)) = self.fields.get(&symbol.name) {
                         (field.kind.clone(), field.ty)
                     } else {
@@ -760,7 +764,17 @@ impl Analyzer<'_> {
         } else {
             args.get(1)
         };
+        let mut definition = super::resolve::DefinitionInfo {
+            declaration: args[0].clone(),
+            docstring: if args.len() == 3 { match &args[1].kind { Kind::String(units) => Some(units.clone()), _ => unreachable!() } } else { None },
+            origin: self.origin.clone(), initializer: None, once,
+        };
+        self.environment.record_definition(global.clone(), definition.clone());
         let initializer = init.map(|init| self.form(init).map(Box::new)).transpose()?;
+        // A nested initializer can declare this same global. Publish the outer
+        // declaration and its initializer together when its analysis completes.
+        definition.initializer = initializer.as_deref().cloned().map(std::sync::Arc::new);
+        self.environment.record_definition(global.clone(), definition);
         Ok(Hir {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
@@ -809,7 +823,7 @@ impl Analyzer<'_> {
             }
             let id = BindingId(self.next);
             self.next += 1;
-            self.locals.insert(name.name.clone(), (id, Type::Value));
+            self.insert_local(&args[0], id, Type::Value, LocalKind::FunctionName, None);
             (
                 Some(Parameter {
                     id,
@@ -943,7 +957,7 @@ impl Analyzer<'_> {
             }
             names.remove(index);
         }
-        let method = self.fixed_function(form, &args, bootstrap_macro)?;
+        let method = self.fixed_function_fields(form, &args, bootstrap_macro, &[], false, false, markers.first().copied())?;
         let Expression::Function {
             parameters,
             body,
@@ -967,7 +981,7 @@ impl Analyzer<'_> {
         args: &[Form],
         bootstrap_macro: bool,
     ) -> Result<Hir, Diagnostic> {
-        self.fixed_function_fields(form, args, bootstrap_macro, &[], false, false)
+        self.fixed_function_fields(form, args, bootstrap_macro, &[], false, false, None)
     }
     fn fixed_function_fields(
         &mut self,
@@ -977,6 +991,7 @@ impl Analyzer<'_> {
         fields: &[Form],
         method_receiver: bool,
         object_method: bool,
+        rest_parameter: Option<usize>,
     ) -> Result<Hir, Diagnostic> {
         let Some(params) = args.first() else {
             return Err(fail(form.span.clone(), "fn requires a parameter vector"));
@@ -1015,7 +1030,7 @@ impl Analyzer<'_> {
         let outer = self.locals.clone();
         let outer_fields = self.fields.clone();
         let mut parameters = Vec::new();
-        for name in names {
+        for (index, name) in names.iter().enumerate() {
             let Kind::Symbol(symbol) = &name.kind else {
                 return Err(fail(
                     name.span.clone(),
@@ -1030,7 +1045,7 @@ impl Analyzer<'_> {
             }
             let id = BindingId(self.next);
             self.next += 1;
-            self.locals.insert(symbol.name.clone(), (id, Type::Value));
+            self.insert_local(name, id, Type::Value, LocalKind::Argument { index, rest: rest_parameter == Some(index) }, None);
             parameters.push(Parameter {
                 id,
                 name: symbol.name.clone(),
@@ -1059,8 +1074,7 @@ impl Analyzer<'_> {
                     kind: Expression::Local(parameter.id),
                 },
             });
-            self.locals
-                .insert(parameter.name.clone(), (id, Type::Value));
+            self.remap_local(&parameter.name, id, Type::Value);
         }
         if method_receiver {
             let parameter = parameters
@@ -1068,8 +1082,7 @@ impl Analyzer<'_> {
                 .ok_or_else(|| fail(form.span.clone(), "Protocol method requires a receiver"))?;
             // The pin anchors a method's physical receiver across recur. The
             // first recur operand still evaluates, but does not replace `this`.
-            self.locals
-                .insert(parameter.name.clone(), (parameter.id, Type::Value));
+            self.remap_local(&parameter.name, parameter.id, Type::Value);
         }
         if !fields.is_empty() {
             let receiver = parameters
@@ -1549,10 +1562,8 @@ impl Analyzer<'_> {
                     let value = self.form(&pair[1])?;
                     let id = BindingId(self.next);
                     self.next += 1;
-                    self.locals.insert(
-                        name.name.clone(),
-                        (id, if is_loop { Type::Value } else { value.ty }),
-                    );
+                    self.insert_local(&pair[0], id, if is_loop { Type::Value } else { value.ty },
+                        if is_loop { LocalKind::Loop } else { LocalKind::Let }, Some(value.clone()));
                     bindings.push(Binding {
                         id,
                         name: name.name.clone(),
@@ -1740,8 +1751,15 @@ pub(crate) fn prepare_with_expander(
     phase: Phase,
     expander: &mut dyn super::ExpansionHost,
 ) -> Result<(Hir, Environment), Diagnostic> {
+    prepare_with_origin(forms, span, environment, phase, expander, None)
+}
+pub(crate) fn prepare_with_origin(
+    forms: &[Form], span: Range<usize>, environment: &Environment, phase: Phase,
+    expander: &mut dyn super::ExpansionHost, origin: Option<&super::SourceOrigin>,
+) -> Result<(Hir, Environment), Diagnostic> {
     let mut analyzer = Analyzer {
         expander,
+        origin: origin.cloned(),
         environment: environment.clone(),
         phase,
         locals: HashMap::new(),

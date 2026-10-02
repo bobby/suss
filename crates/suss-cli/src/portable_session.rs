@@ -145,13 +145,11 @@ pub(crate) struct CompilationSnapshot {
     pub(crate) provided: BTreeSet<ModuleIdentity>,
 }
 impl CompilationSnapshot {
-    pub(crate) fn prepare(
-        &self,
-        forms: Vec<suss_reader::forms::Form>,
-        span: std::ops::Range<usize>,
-        expander: &mut dyn portable::ExpansionHost,
+    pub(crate) fn prepare_with_origin(
+        &self, forms: Vec<suss_reader::forms::Form>, span: std::ops::Range<usize>,
+        expander: &mut dyn portable::ExpansionHost, origin: Option<&portable::SourceOrigin>,
     ) -> Result<portable::modules::PreparedInput, SessionError> {
-        portable::modules::prepare_input_forms_with_expander(
+        portable::modules::prepare_input_forms_with_origin(
             forms,
             span,
             &self.source_paths,
@@ -159,6 +157,7 @@ impl CompilationSnapshot {
             self.phase,
             &self.provided,
             expander,
+            origin,
         )
         .map_err(|error| match error {
             portable::modules::InputDiagnostic::Compile(error) => SessionError::Compile(error),
@@ -724,7 +723,7 @@ impl Session {
         })?;
         let prepared = self
             .compilation_snapshot()
-            .prepare(forms, 0..source.len(), expander)?;
+            .prepare_with_origin(forms, 0..source.len(), expander, Some(&portable::SourceOrigin::new(source, None)))?;
         self.eval_prepared(prepared)
     }
     /// Compile reader or expanded forms through the ordinary phase/module pipeline.

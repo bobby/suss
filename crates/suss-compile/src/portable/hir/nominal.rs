@@ -990,6 +990,7 @@ impl Analyzer<'_> {
                             fields,
                             true,
                             true,
+                            None,
                         )?;
                         let Expression::Function {
                             parameters, body, ..
@@ -1146,6 +1147,7 @@ impl Analyzer<'_> {
                         fields,
                         true,
                         false,
+                        None,
                     )?;
                     let key =
                         self.nominal(method_name, Nominal::Key(key_index), vec![protocol.clone()]);

@@ -304,12 +304,13 @@ fn compile_snapshots_with_expander(
     for unit in snapshots {
         let PreparedFragment {
             wasm, environment, ..
-        } = super::prepare_fragment_forms_with_expander(
+        } = super::prepare_fragment_forms_with_origin(
             unit.forms,
             0..unit.source.len(),
             &snapshot,
             phase,
             expander,
+            Some(&super::SourceOrigin::new(unit.source.as_str(), Some(unit.path.clone()))),
         )
         .map_err(|error| located(&unit.identity, Some(&unit.path), error))?;
         snapshot = environment;
@@ -351,14 +352,8 @@ pub fn prepare_input<P: AsRef<Path>>(
             message: error.message,
         })
     })?;
-    prepare_input_forms(
-        forms,
-        0..source_text.len(),
-        roots,
-        environment,
-        phase,
-        provided,
-    )
+    prepare_input_forms_with_origin(forms, 0..source_text.len(), roots, environment, phase,
+        provided, &mut super::NoExpansion, Some(&super::SourceOrigin::new(source_text, None)))
 }
 /// Prepare source or macro-expanded reader forms through the same staged module
 /// graph and fragment pipeline, preserving metadata and caller source locations.
@@ -388,6 +383,14 @@ pub fn prepare_input_forms_with_expander<P: AsRef<Path>>(
     phase: Phase,
     provided: &BTreeSet<ModuleIdentity>,
     expander: &mut dyn super::ExpansionHost,
+) -> Result<PreparedInput, InputDiagnostic> {
+    prepare_input_forms_with_origin(forms, span, roots, environment, phase, provided, expander, None)
+}
+/// Supply the immutable root input origin separately from its dependency files.
+pub fn prepare_input_forms_with_origin<P: AsRef<Path>>(
+    forms: Vec<suss_reader::forms::Form>, span: Range<usize>, roots: &[P],
+    environment: &Environment, phase: Phase, provided: &BTreeSet<ModuleIdentity>,
+    expander: &mut dyn super::ExpansionHost, origin: Option<&super::SourceOrigin>,
 ) -> Result<PreparedInput, InputDiagnostic> {
     let forms = resolve_conditionals(forms).map_err(|error| {
         InputDiagnostic::Compile(Diagnostic {
@@ -429,7 +432,7 @@ pub fn prepare_input_forms_with_expander<P: AsRef<Path>>(
         .enter_namespace(phase, environment.current_namespace(phase))
         .map_err(InputDiagnostic::Compile)?;
     let fragment =
-        super::prepare_selected_fragment_with_expander(forms, span, &snapshot, phase, expander)
+        super::prepare_selected_fragment_with_origin(forms, span, &snapshot, phase, expander, origin)
             .map_err(InputDiagnostic::Compile)?;
     Ok(PreparedInput { modules, fragment })
 }

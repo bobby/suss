@@ -7,6 +7,8 @@ pub mod ir;
 pub mod modules;
 pub mod resolve;
 mod source;
+mod origin;
+pub use origin::{SourceOrigin, SourcePosition};
 use std::ops::Range;
 use suss_reader::forms::{read_forms, resolve_conditionals};
 
@@ -20,8 +22,9 @@ pub struct Diagnostic {
 /// Expansion executes in a host's isolated compiled session, not the compiler.
 pub struct ExpansionContext<'a> {
     pub environment: &'a resolve::Environment,
+    pub origin: Option<&'a SourceOrigin>,
     pub phase: resolve::Phase,
-    pub locals: &'a std::collections::HashMap<String, (hir::BindingId, hir::Type)>,
+    pub locals: &'a std::collections::HashMap<String, hir::LocalBinding>,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MacroReload {
@@ -94,7 +97,7 @@ pub fn analyze_in(
         })?;
     let mut snapshot = environment.clone();
     source::namespace(&mut forms, &mut snapshot, phase, &mut NoExpansion)?;
-    hir::analyze_in(&forms, 0..source.len(), &snapshot, phase)
+    Ok(hir::prepare_with_origin(&forms, 0..source.len(), &snapshot, phase, &mut NoExpansion, Some(&SourceOrigin::new(source, None)))?.0)
 }
 pub fn compile(source: &str) -> Result<Vec<u8>, Diagnostic> {
     compile_in(
@@ -137,7 +140,7 @@ pub fn prepare_fragment(
         span: error.span,
         message: error.message,
     })?;
-    prepare_fragment_forms(forms, 0..source.len(), environment, phase)
+    prepare_fragment_forms_with_origin(forms, 0..source.len(), environment, phase, &mut NoExpansion, Some(&SourceOrigin::new(source, None)))
 }
 /// Compile owned reader/expanded forms without printing or rereading them.
 /// Conditional selection and namespace preparation preserve original form spans
@@ -169,22 +172,35 @@ pub fn prepare_fragment_forms_with_expander(
     phase: resolve::Phase,
     expander: &mut dyn ExpansionHost,
 ) -> Result<PreparedFragment, Diagnostic> {
+    prepare_fragment_forms_with_origin(forms, span, environment, phase, expander, None)
+}
+/// Compile forms with the exact source they refer to; no printing or rereading.
+/// None explicitly means no origin is available for these forms.
+pub fn prepare_fragment_forms_with_origin(
+    forms: Vec<suss_reader::forms::Form>, span: Range<usize>,
+    environment: &resolve::Environment, phase: resolve::Phase,
+    expander: &mut dyn ExpansionHost, origin: Option<&SourceOrigin>,
+) -> Result<PreparedFragment, Diagnostic> {
     let forms = resolve_conditionals(forms).map_err(|error| Diagnostic {
-        span: error.span,
-        message: error.message,
+        span: error.span, message: error.message,
     })?;
-    prepare_selected_fragment_with_expander(forms, span, environment, phase, expander)
+    prepare_selected_fragment_with_origin(forms, span, environment, phase, expander, origin)
 }
 pub(crate) fn prepare_selected_fragment_with_expander(
-    mut forms: Vec<suss_reader::forms::Form>,
-    span: Range<usize>,
-    environment: &resolve::Environment,
-    phase: resolve::Phase,
+    forms: Vec<suss_reader::forms::Form>, span: Range<usize>,
+    environment: &resolve::Environment, phase: resolve::Phase,
     expander: &mut dyn ExpansionHost,
+) -> Result<PreparedFragment, Diagnostic> {
+    prepare_selected_fragment_with_origin(forms, span, environment, phase, expander, None)
+}
+pub(crate) fn prepare_selected_fragment_with_origin(
+    mut forms: Vec<suss_reader::forms::Form>, span: Range<usize>,
+    environment: &resolve::Environment, phase: resolve::Phase,
+    expander: &mut dyn ExpansionHost, origin: Option<&SourceOrigin>,
 ) -> Result<PreparedFragment, Diagnostic> {
     let mut snapshot = environment.clone();
     let namespace_directive = source::namespace(&mut forms, &mut snapshot, phase, expander)?;
-    let (hir, environment) = hir::prepare_with_expander(&forms, span, &snapshot, phase, expander)?;
+    let (hir, environment) = hir::prepare_with_origin(&forms, span, &snapshot, phase, expander, origin)?;
     let wasm = compile_ir(&ir::lower(&hir)?)?;
     let cells = environment
         .cells()

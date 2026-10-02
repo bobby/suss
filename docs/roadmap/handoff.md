@@ -10142,6 +10142,80 @@ files; review overlay verified345 partial/720 unassessed; the12 pinned lookup
 observations matched exactly. Source/semantic tests were unchanged. Full workspace
 and exact final-head CI remain required; no M3 or issue acceptance claim.
 
+
+PR142 full workspace24875 completed terminal0 through final reader doctests.
+Independent count of /private/tmp/suss-m3-hamt-lookup-full.log:961 passed,
+0 failed,17 existing ignores across94 result groups, including all47 runtime ABI
+tests. Exact reviewed head7d70b9f differs from7d16c08 only in oracle script suite
+spelling and reviewer handoff; source and semantic tests are unchanged. PR body
+records full evidence; final-head CI37013353157 remains live and required.
+PR140 repair CI37012087148 and PR141 repair CI37012180540 also remain live.
+No readiness or merge is claimed while exact-head CI is incomplete.
+
+Compiled macro environment work is in /private/tmp/suss-m3-macro-environment,
+branch portable/m3-macro-environment based on PR142 reviewed7d70b9f. This branch
+is not yet a published PR or complete &env implementation. Analyzer lexical
+lookup now retains actual LocalBinding records rather than only(id,type): reader
+declaration/span/metadata, current lowered ID/type, let/loop/parameter/rest/self/
+catch role, analyzed initializer and shared lexical shadow chain. Parameter
+loop remapping updates ID without inventing another source shadow declaration.
+Source analysis and saved lexical scopes share these records. ExpansionContext
+exposes them to the host; CompiledMacros still does not yet marshal &env.
+No initializer is re-evaluated to produce binding data. New Rust code is original;
+no upstream source import/provenance count changed.
+
+Initial compiler focus31419 terminal101 identified private remap_local visibility;
+corrected focus32923 terminal0:2 native tests in both Stores verify real source
+metadata/spans, initializer AST, lexical shadow restoration, catch roles, named
+and variadic function arguments and actual results/effects once. Broadened89521
+terminal0:9 native tests (2 records,3 transient lookup,4 source macro) and22 compiler
+tests (14 closures,2 exceptions,1 if-let,5 nominal). Logs:
+/private/tmp/suss-m3-macro-environment-{focus2,macro-focus,compiler-focus}.log.
+Commands use CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target
+CARGO_BUILD_JOBS=2 cargo test -p suss-cli --locked with the three named suites,
+then cargo test -p suss-compile --locked with the four named suites;
+all include -- --test-threads=2. Full new-branch baseline/review/CI are pending.
+
+Next concrete work: retain namespace definition/alias metadata, source file and
+line/column context, function scopes and field declaration facts; marshal the
+actual rich environment as canonical compiled data and pass &env beside &form.
+Validate context/locals/metadata against fresh pinned macro observations and
+execute macros that inspect them. Do not substitute a scalar map of local names
+or claim these records alone satisfy &env. Syntax quote/unquote/splicing,
+deterministic gensyms, bounded reproducible versioned Java-free bootstrap,
+complete cache identity/invalidation, evaluator removal and scheduler/lifecycle
+acceptance remain open. Re-read live issues12–15 this turn: their original
+acceptance criteria remain unchanged and no issue/milestone closure is claimed.
+
+
+Macro environment source/namespace facts checkpoint (not complete &env): actual
+immutable source text and canonical file paths now accompany analysis, lexical
+records and definition declarations. SourceOrigin maps UTF-8 offsets to one-based
+UTF-16 columns, handling LF, CRLF and standalone CR; invalid offsets and APIs
+without original source remain explicitly unknown. Namespace snapshots retain
+actual aliases/refers and definition metadata, docstrings, once flag and analyzed
+initializer; these are compiler facts, distinct from initialized runtime values.
+Compile failure does not publish partial declarations. Runtime initializer failure
+preserves old live values, while compiler facts truthfully describe the new AST.
+
+Fresh pinned development-only CLJS observation35551 terminal0 yielded source
+positions [[3,12],[4,30],[5,11],[6,13]], including a non-BMP prefix and mixed newline
+forms. Strict environment_origin_oracle.py comparison passed all4 observations.
+New native fact suites71568 terminal0:6passed, both Stores; initial45442 had one
+fixture path assertion failure, corrected to the actual canonical /private/var
+path. Broader94378 terminal0:32passed across binding records/source positions,
+source macros/imports/reload/REPL and namespace session suites. Verification75362 terminal0 proves Python88/import249/review345; compiler32328
+terminal0 proves36passed across closures/exceptions/if-let/modules/
+nominal/phase modules. Logs /private/tmp/suss-m3-macro-facts-{focus2,broader,
+python,compiler}.log. All native commands use the shared target, two build workers
+and --test-threads=2; no full new-branch baseline or independent PR review yet.
+
+CompiledMacros still does not marshal &env. Next establish metadata declaration
+positions, genuine function/context and field records against pinned observations,
+then transport rich canonical environment data and execute inspecting macros.
+Do not equate the Rust host inspection fixture with source-level &env support.
+All original issues12–15 and their remaining acceptance criteria stay open.
+
 PR140 independent review found that the CI job's 60-minute budget, based on an
 older 34m38s baseline, now cancels the expanded required workspace command before
 completion. Exact c5f85eb run37012087148 was canceled at60m18s; its complete
@@ -10157,3 +10231,71 @@ No native source/tests or skips change. Prior local full954/0/17 proof remains
 applicable, but exact new-head CI must complete successfully before PR readiness.
 Next propagate the reviewed workflow repair to children and inspect complete
 final-head runs; further timeouts remain failures requiring investigation.
+
+
+PR140 reviewer pushed CI budget fixf9087cb, independently reviewed and propagated
+through PR141e929de9 and PR142531ff53; both child reviewers approved exact heads.
+Only workflow timeout60→90/comment and16handoff lines changed; all verifiers/full
+workspace/two-worker limits remain. Exact CI37022116674/37023033025/37024044072
+are in progress, all PRs draft. Issue14 comment5955330508 records incomplete old
+canceled runs and remaining acceptance scope. No merge or readiness claim.
+
+Macro source position continuation: pinned metadata-local probe79057 terminal0
+observed [[3,18],[4,27],[5,38],[6,48]], locating actual variable tokens after plain,
+tagged/chained/map metadata. Initial33663 failed only a misplaced development
+fixture path; corrected primary43377 terminal0 uses the retained fixture/macro.
+SourceOrigin.symbol_position validates actual reader syntax and symbol spelling;
+unknown/generated mismatches remain unknown. Reader spans/metadata are preserved.
+Initial native54220 terminal0:3positions passed; after final assertions/restoring
+incidental formatter output,77206 terminal0:7facts passed (4binding+3position),
+log /private/tmp/suss-m3-metadata-positions-final-focus.log. End-to-end oracle76191
+terminal0 rebuilt both pinned development namespaces, compared all8 exact position
+facts and executed3native tests, log /private/tmp/suss-m3-environment-origin-end-to-end.log.
+All source tests execute real artifacts and independently decode after GC in both
+Stores. No source-level rich &env support is claimed. Only this turn's80 proven
+formatter-only changes were removed; all intended source work remains.
+See docs/runtime/compiled-macro-environment-facts.md. Next full new-branch workspace
+baseline, then genuine function/context/field facts and rich compiled transport.
+Original issues12–15, bootstrap/cache/evaluator removal and scheduler acceptance
+remain open; this local branch is not a published PR.
+
+
+Macro-facts full workspace38391 terminal0 at54e9789 completed through final reader
+doctests. Independently counted /private/tmp/suss-m3-macro-environment-full.log:
+968passed/0failed/17existingignores across96 result groups, including all47ABI.
+No source or tests changed during that baseline. Full rich &env, bootstrap/cache/
+evaluator removal and all remaining original M3 acceptance remain open.
+Next publish this bounded prerequisite as draft Refs14, dispatch independent review,
+push significant reviewer fixes and require exactfinal-headCI. Continue field/
+context/function facts and actual environment transport in isolated child work.
+
+PR143 independent review found a significant compiler-fact consistency defect:
+an inner definition of the same global replaced declaration metadata, then the
+outer analysis updated only its initializer, mixing two source declarations.
+The reviewer now retains each definition's own record and publishes it together
+with its initializer when analysis completes. In-progress inner declarations
+remain observable while their bodies are analyzed; runtime evaluation is unchanged.
+The new executing regression checks inner defonce/private/no-doc facts and final
+outer def/doc/Do-initializer facts in both Stores, with the live value preserved.
+An initial test fixture incorrectly gave defonce a docstring; after correcting
+that unsupported arity, native session25609 failed at the actual outer.once
+assertion (/private/tmp/suss-pr143-nested-before-valid.log). After the fix,
+session47195 completed 5 binding-record tests, 0 failures, 0 ignores
+(/private/tmp/suss-pr143-nested-after.log), using the shared target and two workers.
+Oracle Python parses, shell syntax and git diff whitespace checks pass.
+The prior 968/0/17 full baseline predates this source fix; rerun the full baseline
+and require exact final-head CI before readiness. Rich compiled source &env and
+the original M3 acceptance remain open. No PR was merged.
+
+PR143 reviewer followup found a significant oracle freshness defect: both position
+cljs.main invocations could reuse cached compiled output after macro-source edits.
+The root's context oracle observed this reuse, then obtained a fresh trace with
+:force true and :cache-analysis false. The reviewer independently checked pinned
+compiler.cljc's force recompilation branch and analyzer cache option handling,
+then applied both options to each position invocation. Node, strict eight-fact
+comparison and the complete native position command remain unchanged. Shell syntax
+and whitespace checks pass. This runner/docs-only fix does not alter Rust source;
+the live isolated baseline at55e4f64 remains applicable to native source, but exact
+new-head CI is still required. The reviewer did not rerun JVM/Node or native
+position tests during this followup; prior position evidence is not relabeled as
+fresh evidence for the repaired runner. No readiness or M3 completion is claimed.

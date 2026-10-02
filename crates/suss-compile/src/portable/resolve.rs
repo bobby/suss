@@ -184,12 +184,32 @@ impl Scope {
         }
     }
 }
+/// Compiler declaration facts, distinct from initialized runtime cell metadata.
+#[derive(Debug, Clone)]
+pub struct DefinitionInfo {
+    pub declaration: suss_reader::forms::Form,
+    pub docstring: Option<Vec<u16>>,
+    pub origin: Option<super::SourceOrigin>,
+    pub initializer: Option<std::sync::Arc<super::hir::Hir>>,
+    pub once: bool,
+}
+/// Borrowed phase-specific source scope. Catalog entries do not certify loading.
+pub struct NamespaceScope<'a> {
+    pub namespace: &'a str,
+    pub aliases: &'a BTreeMap<String, String>,
+    pub refers: &'a BTreeMap<String, Global>,
+    pub excluded_core: &'a BTreeSet<String>,
+    pub macro_aliases: &'a BTreeMap<String, String>,
+    pub macro_refers: &'a BTreeMap<String, (String, String)>,
+    pub declarations: Vec<(&'a Global, &'a DefinitionInfo)>,
+}
 /// Explicit input to analysis, shared by future AOT, REPL and macro-session callers.
 /// Configuration is checked before mutation. Source analysis borrows it immutably.
 #[derive(Debug, Clone)]
 pub struct Environment {
     namespaces: BTreeSet<(Phase, String)>,
     bindings: BTreeMap<Global, Binding>,
+    definitions: BTreeMap<Global, DefinitionInfo>,
     scopes: BTreeMap<(Phase, String), Scope>,
     current: BTreeMap<Phase, String>,
     materialized_bootstrap: BTreeSet<Global>,
@@ -249,6 +269,7 @@ impl Environment {
         let mut env = Self {
             namespaces: BTreeSet::new(),
             bindings: BTreeMap::new(),
+            definitions: BTreeMap::new(),
             scopes: BTreeMap::new(),
             current: BTreeMap::new(),
             materialized_bootstrap: BTreeSet::new(),
@@ -411,6 +432,19 @@ impl Environment {
     }
     pub fn current_namespace(&self, phase: Phase) -> &str {
         &self.current[&phase]
+    }
+    pub fn namespace_scope(&self, phase: Phase) -> NamespaceScope<'_> {
+        let scope = self.scope(phase);
+        NamespaceScope {
+            namespace: &scope.namespace, aliases: &scope.aliases,
+            refers: &scope.refers, excluded_core: &scope.excluded_core,
+            macro_aliases: &scope.macro_aliases, macro_refers: &scope.macro_refers,
+            declarations: self.definitions.iter().filter(|(global, _)|
+                global.phase() == phase && global.namespace() == scope.namespace).collect(),
+        }
+    }
+    pub(crate) fn record_definition(&mut self, global: Global, info: DefinitionInfo) {
+        self.definitions.insert(global, info);
     }
     /// Explicit declarations, not evidence that any source file has loaded.
     pub fn has_namespace(&self, phase: Phase, namespace: &str) -> bool {
