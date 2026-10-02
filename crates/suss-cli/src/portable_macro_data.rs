@@ -13,6 +13,8 @@ enum Class {
     List,
     EmptyList,
     Cons,
+    IndexedSeq,
+    SourceArray,
 }
 /// Captured canonical class roots remain valid through redefinition and GC.
 /// A reset or another Store invalidates this bridge; construct a new one there.
@@ -30,6 +32,7 @@ impl FormBridge {
             ("List", Class::List),
             ("EmptyList", Class::EmptyList),
             ("Cons", Class::Cons),
+            ("IndexedSeq", Class::IndexedSeq),
         ] {
             let value = session.eval(&format!("suss.core/{name}"))?;
             let id = session.inspect(&value, |mut store, value| {
@@ -52,6 +55,23 @@ impl FormBridge {
             }
             roots.push(value);
         }
+        // Source arrays have a private runtime descriptor rather than a public
+        // class constructor. Capture its actual identity from one owned sample.
+        let value = session.eval("(suss.core/array)")?;
+        let id = session.inspect(&value, |mut store, value| {
+            let owner = fields(&mut store, &value, 4)?;
+            let descriptor = fields(&mut store, &owner[0], 5)?;
+            match descriptor[0] {
+                Val::I64(id) => Ok(id),
+                _ => Err(error("Invalid source array descriptor identity")),
+            }
+        })?;
+        if classes.insert(id, Class::SourceArray).is_some() {
+            return Err(SessionError::Host(error(
+                "Duplicate macro data array identity",
+            )));
+        }
+        roots.push(value);
         Ok(Self { roots, classes })
     }
     fn check(&self, session: &mut Session) -> Result<(), SessionError> {
@@ -268,7 +288,8 @@ fn decode(
                         Kind::Keyword(suss_reader::Keyword { namespace, name })
                     }
                 }
-                Class::List | Class::Cons | Class::EmptyList => {
+                Class::SourceArray => return Err(error("Raw source arrays are not macro syntax")),
+                Class::List | Class::Cons | Class::EmptyList | Class::IndexedSeq => {
                     Kind::List(sequence(store, value, classes, span, depth, budget)?)
                 }
             }
@@ -321,6 +342,10 @@ fn sequence(
                 items.push(decode(store, &data[1], classes, span, depth + 1, budget)?);
                 cursor = data[2].clone();
             }
+            Class::IndexedSeq => {
+                append_indexed(store, &data, classes, span, depth, budget, &mut items)?;
+                break;
+            }
             _ => return Err(error("Unsupported macro sequence tail")),
         }
     }
@@ -330,4 +355,80 @@ fn sequence(
         }
     }
     Ok(items)
+}
+
+fn append_indexed(
+    store: &mut StoreContextMut<'_, ()>,
+    data: &[Val],
+    classes: &BTreeMap<i64, Class>,
+    span: &Range<usize>,
+    depth: usize,
+    budget: &mut Budget,
+    items: &mut Vec<Form>,
+) -> wasmtime::Result<()> {
+    if data.len() != 3 {
+        return Err(error("Invalid IndexedSeq field layout"));
+    }
+    metadata(store, &data[2])?;
+    let index = fields(store, &data[1], 1)?;
+    let [Val::F64(bits)] = index.as_slice() else {
+        return Err(error("Invalid IndexedSeq index"));
+    };
+    let index = f64::from_bits(*bits);
+    if !index.is_finite() || index < 0.0 || index.fract() != 0.0 {
+        return Err(error("Invalid IndexedSeq index"));
+    }
+    let backing = if let Some(array) = reference(&data[0])?.as_array(&*store)? {
+        if !matches!(
+            array.ty(&*store)?.element_type(),
+            wasmtime::StorageType::I16
+        ) {
+            return Err(error("IndexedSeq string needs UTF16 storage"));
+        }
+        (array, true)
+    } else {
+        let (class, owner) = object(store, &data[0], classes)?;
+        if !matches!(class, Class::SourceArray) || owner.len() != 1 {
+            return Err(error("IndexedSeq needs actual source array storage"));
+        }
+        let array = reference(&owner[0])?
+            .as_array(&*store)?
+            .ok_or_else(|| error("Invalid source array element storage"))?;
+        if !matches!(
+            array.ty(&*store)?.element_type(),
+            wasmtime::StorageType::ValType(wasmtime::ValType::Ref(_))
+        ) {
+            return Err(error("Invalid source array element storage"));
+        }
+        (array, false)
+    };
+    let length = backing.0.len(&*store)?;
+    if index > f64::from(length) {
+        return Err(error("IndexedSeq index exceeds backing storage"));
+    }
+    let index = index as u32;
+    if (length - index) as usize > budget.nodes {
+        return Err(error("IndexedSeq exceeds macro data traversal bound"));
+    }
+    for offset in index..length {
+        let value = backing.0.get(&mut *store, offset)?;
+        if backing.1 {
+            spend(budget)?;
+            budget.units = budget
+                .units
+                .checked_sub(1)
+                .ok_or_else(|| error("Macro data exceeds total UTF16 storage bound"))?;
+            let Val::I32(unit) = value else {
+                return Err(error("Invalid UTF16 indexed unit"));
+            };
+            items.push(Form {
+                span: span.clone(),
+                metadata: vec![],
+                kind: Kind::String(vec![unit as u16]),
+            });
+        } else {
+            items.push(decode(store, &value, classes, span, depth + 1, budget)?);
+        }
+    }
+    Ok(())
 }

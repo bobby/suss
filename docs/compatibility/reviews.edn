@@ -2234,7 +2234,7 @@
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/sequence-IndexedSeq.json"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_sequences.rs" "crates/suss-cli/tests/core_sequence_interfaces.rs" "tests/oracle/sequence-cases.json" "crates/suss-cli/tests/compiled_macro_indexed_data.rs"]}
   "runtime:seq:1282"
   {:source-sha256 "a5f7566fb9a39433f3d1a9a983d7fd56b43709dd8f8bab95395207ca5edbd0b4" :visibility :public
    :arities {:fixed [1] :variadic-min nil}
