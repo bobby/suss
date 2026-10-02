@@ -1,7 +1,7 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
 mod local_bindings;
-pub use local_bindings::{FieldBinding, LocalBinding, LocalKind};
+pub use local_bindings::{FieldBinding, FunctionScope, LocalBinding, LocalKind};
 mod bitwise;
 mod cases;
 mod collections;
@@ -489,6 +489,7 @@ struct Analyzer<'a> {
     phase: Phase,
     locals: HashMap<String, LocalBinding>,
     fields: HashMap<String, FieldBinding>,
+    function_scopes: Vec<std::sync::Arc<FunctionScope>>,
     next: usize,
     next_loop: usize,
     analysis_depth: usize,
@@ -534,6 +535,9 @@ impl Analyzer<'_> {
         self.form_in(form, super::AnalysisContext::Expression, false)
     }
     fn form_in(&mut self, form: &Form, context: super::AnalysisContext, tail: bool) -> Result<Hir, Diagnostic> {
+        self.form_in_named(form, context, tail, None)
+    }
+    fn form_in_named(&mut self, form: &Form, context: super::AnalysisContext, tail: bool, name_hint: Option<&Form>) -> Result<Hir, Diagnostic> {
         // Bounded bootstrap expansion can create deeper syntax than the reader
         // saw (notably nested threading). Check total analysis depth, including
         // nested macros, before recursive analyzer frames exhaust the stack.
@@ -545,7 +549,7 @@ impl Analyzer<'_> {
         }
         self.analysis_depth += 1;
         let result = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-            self.expand_or_analyze(form, context, tail)
+            self.expand_or_analyze(form, context, tail, name_hint)
         });
         self.analysis_depth -= 1;
         result
@@ -555,6 +559,7 @@ impl Analyzer<'_> {
         form: &Form,
         context: super::AnalysisContext,
         tail: bool,
+        name_hint: Option<&Form>,
     ) -> Result<Hir, Diagnostic> {
         if let Kind::List(items) = &form.kind {
             if let Some(Form {
@@ -573,16 +578,17 @@ impl Analyzer<'_> {
                         context,
                         locals: &self.locals,
                         fields: &self.fields,
+                        function_scopes: &self.function_scopes,
                     };
                     if let Some(expanded) = self.expander.expand(form, expansion_context)? {
-                        return self.form_in(&expanded, context, tail);
+                        return self.form_in_named(&expanded, context, tail, name_hint);
                     }
                 }
             }
         }
-        self.form_inner(form, context, tail)
+        self.form_inner(form, context, tail, name_hint)
     }
-    fn form_inner(&mut self, form: &Form, context: super::AnalysisContext, tail: bool) -> Result<Hir, Diagnostic> {
+    fn form_inner(&mut self, form: &Form, context: super::AnalysisContext, tail: bool, name_hint: Option<&Form>) -> Result<Hir, Diagnostic> {
         let kind = match &form.kind {
             Kind::Nil => Expression::Literal(Literal::Nil),
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
@@ -647,7 +653,7 @@ impl Analyzer<'_> {
                 });
             }
             Kind::List(items) if !items.is_empty() => {
-                return self.list(form, items, context, tail);
+                return self.list(form, items, context, tail, name_hint);
             }
             _ => {
                 return Err(fail(
@@ -778,7 +784,7 @@ impl Analyzer<'_> {
             origin: self.origin.clone(), initializer: None, once,
         };
         self.environment.record_definition(global.clone(), definition.clone());
-        let initializer = init.map(|init| self.form(init).map(Box::new)).transpose()?;
+        let initializer = init.map(|init| self.form_in_named(init, super::AnalysisContext::Expression, false, Some(&args[0])).map(Box::new)).transpose()?;
         // A nested initializer can declare this same global. Publish the outer
         // declaration and its initializer together when its analysis completes.
         definition.initializer = initializer.as_deref().cloned().map(std::sync::Arc::new);
@@ -805,16 +811,27 @@ impl Analyzer<'_> {
         })
     }
     fn function(
+        &mut self, form: &Form, args: &[Form], bootstrap_macro: bool,
+        name_hint: Option<&Form>,
+    ) -> Result<Hir, Diagnostic> {
+        let outer_scope_count = self.function_scopes.len();
+        let result = self.function_inner(form, args, bootstrap_macro, name_hint);
+        self.function_scopes.truncate(outer_scope_count);
+        result
+    }
+    fn function_inner(
         &mut self,
         form: &Form,
         args: &[Form],
         bootstrap_macro: bool,
+        name_hint: Option<&Form>,
     ) -> Result<Hir, Diagnostic> {
         if args
             .first()
             .is_some_and(|arg| matches!(&arg.kind, Kind::Vector(names)
                 if !names.iter().any(|name| matches!(&name.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "&"))))
         {
+            self.enter_function_scope(name_hint, None);
             return self.fixed_function(form, args, bootstrap_macro);
         }
         let outer = self.locals.clone();
@@ -844,6 +861,9 @@ impl Analyzer<'_> {
         } else {
             (None, args)
         };
+        let declaration = if self_binding.is_some() { args.first() } else { name_hint };
+        let local = self_binding.as_ref().map(|binding| self.locals[&binding.name].clone());
+        self.enter_function_scope(declaration, local);
         let mut methods = Vec::new();
         let mut captures = BTreeSet::new();
         if signatures
@@ -1188,6 +1208,7 @@ impl Analyzer<'_> {
         items: &[Form],
         context: super::AnalysisContext,
         tail: bool,
+        name_hint: Option<&Form>,
     ) -> Result<Hir, Diagnostic> {
         let Kind::Symbol(symbol) = &items[0].kind else {
             return self.call(form, items);
@@ -1505,6 +1526,7 @@ impl Analyzer<'_> {
                 form,
                 args,
                 matches!(resolved, Some(ResolvedBinding::BootstrapFn(_))),
+                name_hint,
             )?;
             return self.attach_literal_metadata(form, value);
         }
@@ -1780,6 +1802,7 @@ pub(crate) fn prepare_with_origin(
         phase,
         locals: HashMap::new(),
         fields: HashMap::new(),
+        function_scopes: Vec::new(),
         next: 0,
         next_loop: 0,
         analysis_depth: 0,

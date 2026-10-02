@@ -1,0 +1,128 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "calls": [
+    {
+      "label": "hinted",
+      "names": [
+        "hinted"
+      ],
+      "locals": []
+    },
+    {
+      "label": "named",
+      "names": [
+        "n"
+      ],
+      "locals": [
+        "n"
+      ]
+    },
+    {
+      "label": "anonymous",
+      "names": [],
+      "locals": []
+    },
+    {
+      "label": "nested",
+      "names": [
+        "outer",
+        "inner"
+      ],
+      "locals": [
+        "inner",
+        "outer"
+      ]
+    },
+    {
+      "label": "inherited",
+      "names": [
+        "outer"
+      ],
+      "locals": [
+        "outer"
+      ]
+    },
+    {
+      "label": "declared",
+      "names": [
+        "declared"
+      ],
+      "locals": []
+    },
+    {
+      "label": "shadowed",
+      "names": [
+        "n"
+      ],
+      "locals": [
+        "n"
+      ]
+    },
+    {
+      "label": "zero",
+      "names": [
+        "m"
+      ],
+      "locals": [
+        "m"
+      ]
+    },
+    {
+      "label": "one",
+      "names": [
+        "m"
+      ],
+      "locals": [
+        "m",
+        "x"
+      ]
+    },
+    {
+      "label": "rest",
+      "names": [
+        "v"
+      ],
+      "locals": [
+        "v",
+        "xs"
+      ]
+    },
+    {
+      "label": "outside",
+      "names": [],
+      "locals": []
+    }
+  ],
+  "results": [
+    [
+      "hinted"
+    ],
+    [
+      "n"
+    ],
+    [],
+    [
+      "outer",
+      "inner"
+    ],
+    [
+      "outer"
+    ],
+    [
+      "declared"
+    ],
+    [
+      "n"
+    ],
+    [
+      "m"
+    ],
+    [
+      "m"
+    ],
+    [
+      "v"
+    ]
+  ]
+}

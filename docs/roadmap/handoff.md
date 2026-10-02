@@ -10433,3 +10433,23 @@ cache path; AST parsing requires no cache write). Full final-source baseline and
 exact-head CI remain required; rich source &env and original M3 work remain open.
 Final corpus cardinality assertion was also executed in native61710 terminal0:
 1 context test passed, log /private/tmp/suss-pr144-context-final.log.
+
+PR143 isolated95872 terminal0:969/0/17 in96groups, all47ABI/finalreader.
+Repaired position runner primary95170 terminal0 fresh8 exactfacts; native74387
+terminal0 three tests. Exact7f821ac CI37035852942 running; keep draft. PR144
+reviewer significant fixce61d90 approved, expanded corpus24/15 and22focuspass;
+compiler99884 terminal0 35/0/0. Parent full97902 running atce61d90 log
+/private/tmp/suss-m3-pr144-full.log; exact CI37037789125 running. No merge.
+
+Downstream portable/m3-function-scopes retains actual named function declarations,
+origins, phase namespace, immutable shared parents and real self/shadow bindings.
+Definition hints introduce no lexical ID; anonymous functions inherit scope and
+function exit restores it. Fresh primary22457 terminal0 +Node captured11calls and
+10executednamevectors; strict checker passes. Initial26381 recompiled unchanged
+corpus after a preceding wrong-cwd edit failure; that is not expanded-corpus proof.
+Actual expanded golden is from22457. Python AST/shell/whitespace pass; py_compile
+attempt failed because system PYTHONPYCACHEPREFIX pointed to an unwritable cache,
+so no bytecode cache success is claimed. Native fixture is prepared but NOT RUN.
+Wait for97902 native release, execute function-scope focused regressions and
+compiler closures, then full baseline/review/CI before readiness. Rich compiled
+source &env and original M3 gates remain unfinished.
