@@ -1008,6 +1008,21 @@
       "id": "runtime:apply:4100",
       "source-sha256": "fa0746b45b6cbb451e3fbf04e57e29b7db2864f75b1e415a87f735069cf3b672",
       "patch": "docs/compatibility/patches/apply-apply.json"
+    },
+    {
+      "id": "runtime:dissoc:2093",
+      "source-sha256": "1b74edd939ab99349407d3a1c18972692aa1fd7b9149d868bcf06959d88a347f",
+      "patch": "docs/compatibility/patches/hash-map-dissoc.json"
+    },
+    {
+      "id": "runtime:assoc!:4012",
+      "source-sha256": "23ce891b8f5d4e5078b51d374143a235ac976c1278805cce1b6794e96c5374a6",
+      "patch": "docs/compatibility/patches/hash-map-assoc-bang.json"
+    },
+    {
+      "id": "runtime:dissoc!:4024",
+      "source-sha256": "aadf9f8f2c1c506fae0290c9ba508e936d3db15404fcde2944e95991d18b2059",
+      "patch": "docs/compatibility/patches/hash-map-dissoc-bang.json"
     }
   ],
   "loader": {

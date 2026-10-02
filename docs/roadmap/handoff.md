@@ -9918,3 +9918,18 @@ ABI/final reader doctests present in complete logs
 exact heads previously; remoteheads rechecked unchanged. Marked ready, no merges.
 PR138 e661139 independently approved; fresh CI36968779862 confirmedLIVE. Corrected
 one handoff session typo above; final full workspace rerun follows this doc head.
+
+Next isolated hash-map prerequisite now has6focused regressions (initial4 executed
+BEFORE68971 terminal101:0pass/4fail; corpus/canonical-root additions not executed).
+Fresh35primary compile23130+Node/compare terminal0 at actual pinned source. Native
+failures remain explicit: map9Language error, publicdissoc/assoc! unresolved.
+Retained complete publicdissoc/assoc!/dissoc! source with docstrings/allarity/branch
+protocol dispatch using explicit defnbootstrap; exactextraction/EPL/patch hashes,
+208importfiles and304partialreviews+761unassessed checkpass. These new source
+helpers have not yet executed; do not claim they or HAMT acceptance pass.
+ParentPR138 source remains frozen48c4b08, full75027 still running in otherworktree;
+no overlapping native Cargo run. Next retain complete HAMT/TransientArrayMap/node/
+sequence algorithms and public dependencies, sourcearraypop adapter and canonical
+GC transport/guard coverage. Run focus after parentterminal, then freshprimary
+andfullbaseline/review/final-headCI before opening readiness. Full M3 &env,
+locations/syntaxquote/bootstrap/cache/lifecycle remain original uncompletedscope.

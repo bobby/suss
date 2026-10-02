@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "aadf9f8f2c1c506fae0290c9ba508e936d3db15404fcde2944e95991d18b2059",
+  "replacement": "(def dissoc!\n \"Returns a transient map that doesn't contain a mapping for key(s).\"\n (fn\n ([tcoll key]\n    (-dissoc! tcoll key))\n  ([tcoll key & ks]\n    (let [ntcoll (-dissoc! tcoll key)]\n      (if ks\n        (recur ntcoll (first ks) (next ks))\n        ntcoll)))))",
+  "rationale": "Explicit defn bootstrap preserves every pinned public signature, docstring, branch and protocol dispatch. Hash-map and transient implementations plus native acceptance remain unfinished; this is retained-source prerequisite progress only."
+}

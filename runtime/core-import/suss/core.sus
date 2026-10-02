@@ -2964,6 +2964,45 @@
          (apply-to f bc arglist)
          (.cljs$lang$applyTo f arglist)))
      (apply-to-simple f a b c d (spread args))))))
+
+(def dissoc
+ "dissoc[iate]. Returns a new map of the same (hashed/sorted) type,
+  that does not contain a mapping for key(s)."
+ (fn
+ ([coll] coll)
+  ([coll k]
+    (when-not (nil? coll)
+      (-dissoc coll k)))
+  ([coll k & ks]
+    (when-not (nil? coll)
+      (let [ret (dissoc coll k)]
+        (if ks
+          (recur ret (first ks) (next ks))
+          ret))))))
+
+(def assoc!
+ "When applied to a transient map, adds mapping of key(s) to
+  val(s). When applied to a transient vector, sets the val at index.
+  Note - index must be <= (count vector). Returns coll."
+ (fn
+ ([tcoll key val]
+    (-assoc! tcoll key val))
+  ([tcoll key val & kvs]
+    (let [ntcoll (-assoc! tcoll key val)]
+      (if kvs
+        (recur ntcoll (first kvs) (second kvs) (nnext kvs))
+        ntcoll)))))
+
+(def dissoc!
+ "Returns a transient map that doesn't contain a mapping for key(s)."
+ (fn
+ ([tcoll key]
+    (-dissoc! tcoll key))
+  ([tcoll key & ks]
+    (let [ntcoll (-dissoc! tcoll key)]
+      (if ks
+        (recur ntcoll (first ks) (next ks))
+        ntcoll)))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

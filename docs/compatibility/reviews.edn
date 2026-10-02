@@ -3076,4 +3076,23 @@
    :classification :adapted :rationale "Complete pinned generator source and EPL retained, with deterministic bounded development expansion of the full arity ladder and source-array fallback. Fresh source apply execution is evidence for this prerequisite only; the original source macros are not yet compiled in the Macro Store and full Java-free bootstrap acceptance remains unfinished."
    :status :in-progress :adaptation-path "scripts/apply_bootstrap.py" :alternative nil
    :tests ["crates/suss-cli/tests/portable_source_apply.rs" "scripts/apply_bootstrap.py --check"]}
+
+  "runtime:dissoc:2093"
+  {:source-sha256 "1b74edd939ab99349407d3a1c18972692aa1fd7b9149d868bcf06959d88a347f" :visibility :public :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["retained IMap/ITransientMap/ITransientAssociative" "retained first/next/second/nnext and compiled variadic dispatch"]
+   :classification :adapted :rationale "Explicit defn bootstrap preserves every pinned public signature, docstring, branch and protocol dispatch. Hash-map and transient implementations plus native acceptance remain unfinished; this is retained-source prerequisite progress only."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hash-map-dissoc.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:assoc!:4012"
+  {:source-sha256 "23ce891b8f5d4e5078b51d374143a235ac976c1278805cce1b6794e96c5374a6" :visibility :public :arities {:fixed [3] :variadic-min 3}
+   :dependencies ["retained IMap/ITransientMap/ITransientAssociative" "retained first/next/second/nnext and compiled variadic dispatch"]
+   :classification :adapted :rationale "Explicit defn bootstrap preserves every pinned public signature, docstring, branch and protocol dispatch. Hash-map and transient implementations plus native acceptance remain unfinished; this is retained-source prerequisite progress only."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hash-map-assoc-bang.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:dissoc!:4024"
+  {:source-sha256 "aadf9f8f2c1c506fae0290c9ba508e936d3db15404fcde2944e95991d18b2059" :visibility :public :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["retained IMap/ITransientMap/ITransientAssociative" "retained first/next/second/nnext and compiled variadic dispatch"]
+   :classification :adapted :rationale "Explicit defn bootstrap preserves every pinned public signature, docstring, branch and protocol dispatch. Hash-map and transient implementations plus native acceptance remain unfinished; this is retained-source prerequisite progress only."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hash-map-dissoc-bang.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
 }}
