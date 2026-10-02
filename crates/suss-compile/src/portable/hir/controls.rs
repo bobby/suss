@@ -34,7 +34,7 @@ impl Analyzer<'_> {
         form: &Form,
         args: &[Form],
         operation: ControlForm,
-        statement: bool,
+        context: super::super::AnalysisContext,
         tail: bool,
     ) -> Result<Hir, Diagnostic> {
         if args.len() > 256 {
@@ -45,7 +45,7 @@ impl Analyzer<'_> {
         }
         let nil = self.literal_form(form, Literal::Nil);
         match operation {
-            ControlForm::Case => self.case_form(form, args, statement, tail),
+            ControlForm::Case => self.case_form(form, args, context, tail),
             ControlForm::UncheckedGet | ControlForm::UncheckedSet => {
                 let operation = if operation == ControlForm::UncheckedGet { Nominal::NativeObjectGet } else { Nominal::NativeObjectSet };
                 if !operation.valid(&vec![Type::Value; args.len()]) {
@@ -125,7 +125,7 @@ impl Analyzer<'_> {
                         },
                     };
                 }
-                self.form_in(&threaded, statement, tail)
+                self.form_in(&threaded, context, tail)
             }
             ControlForm::AsThread => {
                 if args.len() < 2 {
@@ -162,9 +162,9 @@ impl Analyzer<'_> {
                         bindings.push(binding);
                     }
                     let body = if args.len() == 2 {
-                        self.form_in(&args[1], statement, tail)?
+                        self.form_in(&args[1], context, tail)?
                     } else {
-                        self.form_in(args.last().unwrap(), statement, tail)?
+                        self.form_in(args.last().unwrap(), context, tail)?
                     };
                     Ok(Hir {
                         span: form.span.clone(),
@@ -218,8 +218,8 @@ impl Analyzer<'_> {
                     && !self.locals.contains_key(&key.name)
                     && self.fields.contains_key(&key.name)
                 {
-                    let (field, mutable) = self.fields[&key.name].clone();
-                    if !mutable {
+                    let field = self.fields[&key.name].clone();
+                    if !field.mutable {
                         return Err(fail(
                             args[2].span.clone(),
                             "Cannot assign a local or immutable field",
@@ -228,7 +228,7 @@ impl Analyzer<'_> {
                     let Expression::Nominal {
                         operation,
                         mut arguments,
-                    } = field.kind
+                    } = field.access.kind
                     else {
                         unreachable!()
                     };
@@ -278,7 +278,7 @@ impl Analyzer<'_> {
                 })
             }
             ControlForm::Declare => {
-                if !statement {
+                if context != super::super::AnalysisContext::Statement {
                     return Err(fail(
                         form.span.clone(),
                         "Declaration expression results are not certified yet; use a declaration statement",
@@ -319,7 +319,7 @@ impl Analyzer<'_> {
                     return Err(fail(form.span.clone(), "when/when-not require a test"));
                 }
                 let test = self.control_test(&args[0])?;
-                let body = self.body(&args[1..], form.span.clone(), statement, tail)?;
+                let body = self.body(&args[1..], form.span.clone(), context, tail)?;
                 Ok(if operation == ControlForm::When {
                     self.control_if(form, test, body, nil)
                 } else {
@@ -327,6 +327,7 @@ impl Analyzer<'_> {
                 })
             }
             ControlForm::IfLet => {
+                let context = context.returning();
                 if !(2..=3).contains(&args.len()) {
                     return Err(fail(
                         form.span.clone(),
@@ -366,7 +367,7 @@ impl Analyzer<'_> {
                 binding.metadata = entries[0].metadata.clone();
                 let outer = self.locals.clone();
                 self.insert_local(&entries[0], binding.id, binding.value.ty, LocalKind::Let, Some(binding.value.clone()));
-                let consequent = self.form_in(&args[1], statement, tail);
+                let consequent = self.form_in(&args[1], context, tail);
                 self.locals = outer;
                 let consequent = consequent?;
                 let consequent = Hir {
@@ -379,7 +380,7 @@ impl Analyzer<'_> {
                     },
                 };
                 let alternative = if args.len() == 3 {
-                    self.form_in(&args[2], statement, tail)?
+                    self.form_in(&args[2], context, tail)?
                 } else {
                     nil
                 };
@@ -402,9 +403,9 @@ impl Analyzer<'_> {
                     ));
                 }
                 let test = self.control_test(&args[0])?;
-                let consequent = self.form_in(&args[1], statement, tail)?;
+                let consequent = self.form_in(&args[1], context, tail)?;
                 let alternative = if args.len() == 3 {
-                    self.form_in(&args[2], statement, tail)?
+                    self.form_in(&args[2], context, tail)?
                 } else {
                     nil
                 };
@@ -421,9 +422,9 @@ impl Analyzer<'_> {
                     return Ok(nil);
                 }
                 let test = self.control_test(&args[0])?;
-                let consequent = self.form_in(&args[1], statement, tail)?;
+                let consequent = self.form_in(&args[1], context, tail)?;
                 let alternative =
-                    self.control_form(form, &args[2..], operation, statement, tail)?;
+                    self.control_form(form, &args[2..], operation, context, tail)?;
                 Ok(self.control_if(form, test, consequent, alternative))
             }
             ControlForm::And | ControlForm::Or => {
@@ -435,7 +436,7 @@ impl Analyzer<'_> {
                     });
                 }
                 if args.len() == 1 {
-                    return self.form_in(&args[0], statement, tail);
+                    return self.form_in(&args[0], context, tail);
                 }
                 let value = self.form(&args[0])?;
                 let id = BindingId(self.next);
@@ -446,7 +447,7 @@ impl Analyzer<'_> {
                     ty: value.ty,
                     kind: Expression::Local(id),
                 };
-                let rest = self.control_form(form, &args[1..], operation, statement, tail)?;
+                let rest = self.control_form(form, &args[1..], operation, context, tail)?;
                 let body = if operation == ControlForm::And {
                     self.control_if(form, local.clone(), rest, local)
                 } else {

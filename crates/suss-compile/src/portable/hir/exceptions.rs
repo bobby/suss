@@ -21,11 +21,11 @@ impl Analyzer<'_> {
         &mut self,
         form: &Form,
         args: &[Form],
-        statement: bool,
+        context: super::super::AnalysisContext,
     ) -> Result<Hir, Diagnostic> {
         let locals = self.locals.clone();
         let target = self.target.take();
-        let result = self.try_regions(form, args, statement);
+        let result = self.try_regions(form, args, context.returning());
         self.locals = locals;
         self.target = target;
         result
@@ -34,7 +34,7 @@ impl Analyzer<'_> {
         &mut self,
         form: &Form,
         args: &[Form],
-        statement: bool,
+        context: super::super::AnalysisContext,
     ) -> Result<Hir, Diagnostic> {
         fn clause(form: &Form) -> Option<(&str, &[Form])> {
             let Kind::List(items) = &form.kind else {
@@ -93,7 +93,7 @@ impl Analyzer<'_> {
                 }
             }
         }
-        let body = self.body(&args[..body_end], form.span.clone(), statement, false)?;
+        let body = self.body(&args[..body_end], form.span.clone(), context, false)?;
         let body = self.exception_region(form, vec![], body);
         let handler = if catches.is_empty() {
             self.literal_form(form, Literal::Nil)
@@ -126,7 +126,7 @@ impl Analyzer<'_> {
                     unreachable!()
                 };
                 let previous = self.insert_local(&items[1], id, Type::Value, LocalKind::Catch, None);
-                let body = self.body(&items[2..], catch.span.clone(), statement, false);
+                let body = self.body(&items[2..], catch.span.clone(), context, false);
                 if let Some(previous) = previous {
                     self.locals.insert(name.name.clone(), previous);
                 } else {
@@ -153,7 +153,7 @@ impl Analyzer<'_> {
             self.exception_region(form, vec![parameter], selected)
         };
         let cleanup = if let Some((cleanup, forms)) = cleanup {
-            let body = self.body(forms, cleanup.span.clone(), true, false)?;
+            let body = self.body(forms, cleanup.span.clone(), super::super::AnalysisContext::Statement, false)?;
             self.exception_region(cleanup, vec![], body)
         } else {
             self.literal_form(form, Literal::Nil)
