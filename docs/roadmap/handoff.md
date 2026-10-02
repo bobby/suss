@@ -9385,3 +9385,13 @@ PR132 exact739f0df CI36951307622 confirmed in_progress, not yet ready; no merge.
 
 Parent739f0df integrated with both handoff evidence blocks preserved. Map source/tests
 frozen for required full workspace baseline; root owns exclusive heavy slot.
+
+Map draft PR133 published from a00cf9a with Refs#14; mandatory independent
+review_pr133 dispatched. Required full75886 terminal101, not success: old
+portable_quoted_identifiers quote-error row still expected supported '{:x 1}
+to fail. Preserve compile-atomic metadata failure with '^:tag {:x 1}, retaining
+all48identifier cases and actual plain map success coverage. Reviewer flagged
+map sequence synthetic-entry nesting bound; owns heavy slot now to prove/fix/push
+significant finding before corrected full. Root edits only this stale test guard
+and handoff during review. PR132 exact739f0df CI36951307622 remains LIVE; root
+watch26758 confirmed live, /private/tmp/suss-pr132-watch.log. No ready/merge claim.
