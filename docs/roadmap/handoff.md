@@ -10334,3 +10334,58 @@ Oracle Python parses, shell syntax and git diff whitespace checks pass.
 The prior 968/0/17 full baseline predates this source fix; rerun the full baseline
 and require exact final-head CI before readiness. Rich compiled source &env and
 the original M3 acceptance remain open. No PR was merged.
+
+
+PR143 significant reviewer fix55e4f64 independently approved: nested same-global
+DefinitionInfo now stays paired with its own initializer. Parent ff-integrated it;
+required new-source workspace6974 is LIVE at55e4f64, log
+/private/tmp/suss-m3-macro-environment-reviewed-full.log. CI37029058491 is LIVE on
+exact55e4f64; prior849 CI canceled/superseded, not final evidence. Child merge
+ e439354 preserves all field/context code and both handoff records. No merge of a
+GitHub PR or readiness is claimed. Root will not start another native build until
+6974 terminal. The initial full968 result does not cover the reviewer source fix.
+
+Ordered-context regression continuation remains uncommitted. Fresh force-compiled
+primary35792 terminal0 + Node yielded17compile-time context calls and10executed
+result strings. It confirms bare try with no handlers is :expr and the pin visits
+finally/catch/body during expansion. Golden was captured from this actual trace;
+strict checker17/10 passes. Native test now retains ordered calls and includes
+bare try, but has NOT been executed; run it BEFORE production repair when6974
+releases the target, record genuine failure, then fix analyzer traversal/context
+and rerun focused+exception/runtime effect tests. Preserve runtime operand/body/
+cleanup ordering while matching actual compiler-phase macro effects. Rich source
+&env, genuine function scopes and original M3 acceptance remain unfinished.
+
+
+Exact final-head CI now succeeds for PR140f9087cb/run37022116674,
+PR141e929de9/run37023033025 and PR142531ff53/run37024044072. Complete downloaded
+logs /private/tmp/suss-ci-{37022116674,37023033025,37024044072}-success.log
+independently count954/0/17/92groups,958/0/17/93groups and961/0/17/94groups;
+all include47ABI and final reader doctests. ANSI escapes were stripped for the
+reader heading check. All three exact heads have independent approval; PR bodies
+updated and draft flags removed, OPEN/mergedAt:null/autoMergeRequest:null confirmed.
+No GitHub PR was merged and no issue/milestone closure is claimed.
+
+PR143 new-source local full6974 terminal101:63completed groups358/0/0, then Cargo
+could not execute expected suss_compile-af924c6051b608e3 because it was absent.
+Compiler unit tests and remaining baseline never ran. This is incomplete evidence,
+not a passing full baseline or a source assertion failure. Cause is not established;
+process inspection later found only root's next native Cargo/rustc. No unrelated
+files deleted. Required full55e4f64 rerun still required; exactCI37029058491 live.
+
+Ordered context BEFORE37228 terminal101 confirmed bare try :return mismatch;
+strengthened BEFORE68215 terminal101 records actual body/catch/finally expansion
+order versus pinned finally/catch/body, plus bare context mismatch. Logs
+/private/tmp/suss-m3-macro-context-order-before{,2}.log. Production now preserves
+bare-try caller context, uses return context only with handlers/cleanup, and
+analyzes finally/catches/body while emitting unchanged runtime body/handler/cleanup
+regions. AFTER50907 terminal0:17passed (1context,5binding,1field,10exception),
+including both Stores, exact ordered17primary contexts and10decodedresultstrings,
+GC and non-tail recur rejection. Log /private/tmp/suss-m3-macro-context-order-after.log.
+Next finish end-to-end oracle runner, rerun full PR143 baseline in an isolated
+owned target to avoid the unresolved shared-artifact disappearance, then final
+child compiler/full checks and genuine function scopes/rich source &env transport.
+Function scope primary42853 terminal0 and Node produced actual name stacks:
+[["hinted"],["n"],[],["outer","inner"],["outer"],["declared"]]; raw records in
+/private/tmp/suss-m3-function-scopes-primary.edn. This is upstream-only evidence;
+no native scope records or compiled rich &env are implemented yet.
