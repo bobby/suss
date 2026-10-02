@@ -1,7 +1,7 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
 mod local_bindings;
-pub use local_bindings::{FieldBinding, FunctionScope, LocalBinding, LocalKind};
+pub use local_bindings::{FieldBinding, FunctionScope, LocalBinding, LocalKind, SourceRole};
 mod bitwise;
 mod cases;
 mod collections;
@@ -985,7 +985,7 @@ impl Analyzer<'_> {
             }
             names.remove(index);
         }
-        let method = self.fixed_function_fields(form, &args, bootstrap_macro, &[], false, false, markers.first().copied())?;
+        let method = self.fixed_function_fields(form, &args, bootstrap_macro, &[], false, false, markers.first().copied(), None)?;
         let Expression::Function {
             parameters,
             body,
@@ -1009,7 +1009,7 @@ impl Analyzer<'_> {
         args: &[Form],
         bootstrap_macro: bool,
     ) -> Result<Hir, Diagnostic> {
-        self.fixed_function_fields(form, args, bootstrap_macro, &[], false, false, None)
+        self.fixed_function_fields(form, args, bootstrap_macro, &[], false, false, None, None)
     }
     fn fixed_function_fields(
         &mut self,
@@ -1020,6 +1020,7 @@ impl Analyzer<'_> {
         method_receiver: bool,
         object_method: bool,
         rest_parameter: Option<usize>,
+        receiver_type: Option<&Form>,
     ) -> Result<Hir, Diagnostic> {
         let Some(params) = args.first() else {
             return Err(fail(form.span.clone(), "fn requires a parameter vector"));
@@ -1104,14 +1105,6 @@ impl Analyzer<'_> {
             });
             self.remap_local(&parameter.name, id, Type::Value);
         }
-        if method_receiver {
-            let parameter = parameters
-                .first()
-                .ok_or_else(|| fail(form.span.clone(), "Protocol method requires a receiver"))?;
-            // The pin anchors a method's physical receiver across recur. The
-            // first recur operand still evaluates, but does not replace `this`.
-            self.remap_local(&parameter.name, parameter.id, Type::Value);
-        }
         if !fields.is_empty() {
             let receiver = parameters
                 .first()
@@ -1154,6 +1147,24 @@ impl Analyzer<'_> {
                 }
                 self.fields.insert(symbol.name.clone(), record);
             }
+        }
+        // Retain the visible argument before this-as anchors the receiver.
+        // Repeated names are legal: the last formal can shadow the receiver.
+        let receiver_argument = if receiver_type.is_some() {
+            parameters.first().and_then(|parameter| self.locals.get(&parameter.name)).cloned()
+        } else {
+            None
+        };
+        if method_receiver {
+            let parameter = parameters
+                .first()
+                .ok_or_else(|| fail(form.span.clone(), "Protocol method requires a receiver"))?;
+            // The pin anchors a method's physical receiver across recur. The
+            // first recur operand still evaluates, but does not replace `this`.
+            self.remap_local(&parameter.name, parameter.id, Type::Value);
+        }
+        if let Some(receiver_type) = receiver_type {
+            self.record_method_roles(&parameters, names, receiver_type, object_method, receiver_argument);
         }
         // Field reads occur at the original use, including in nested closures;
         // unreferenced fields must not introduce checks or effects before a body.

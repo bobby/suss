@@ -510,3 +510,9 @@ create no lexical ID; explicit self names retain their actual compiler binding.
 Focused native execution and independent review cover macro expansion, scope
 restoration and unknown origins. Rich source-level `&env` remains unfinished; see
 [function scope facts](../runtime/compiled-macro-function-scopes.md).
+
+Physical method parameter slots now retain separate source role facts. Six exact
+pinned observations and four executed results cover receiver/argument/field
+shadows and nested scope restoration in both Stores. This is compiler-fact
+preparation, not source-level rich `&env` completion; see
+[method binding roles](../runtime/compiled-macro-method-roles.md).

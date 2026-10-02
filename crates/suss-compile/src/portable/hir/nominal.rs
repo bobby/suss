@@ -312,7 +312,7 @@ impl Analyzer<'_> {
                 let binding = self.fresh_binding(class, value);
                 let class_value = self.local(class, binding.id);
                 let mut effects =
-                    self.protocol_extensions(form, &args[1..], class_value, &[], false)?;
+                    self.protocol_extensions(form, &args[1..], class_value, &[], false, class)?;
                 if effects.is_empty() {
                     effects.push(self.literal_form(form, Literal::Nil));
                 }
@@ -458,7 +458,7 @@ impl Analyzer<'_> {
         let outer_locals = std::mem::take(&mut self.locals);
         let outer_fields = std::mem::take(&mut self.fields);
         let extensions =
-            self.protocol_extensions(form, &args[2..], class_value.clone(), fields, true);
+            self.protocol_extensions(form, &args[2..], class_value.clone(), fields, true, &args[0]);
         self.locals = outer_locals;
         self.fields = outer_fields;
         let mut effects = extensions?;
@@ -903,6 +903,7 @@ impl Analyzer<'_> {
         class: Hir,
         fields: &[Form],
         in_deftype: bool,
+        type_declaration: &Form,
     ) -> Result<Vec<Hir>, Diagnostic> {
         let mut effects = Vec::new();
         let mut index = 0;
@@ -991,6 +992,7 @@ impl Analyzer<'_> {
                             true,
                             true,
                             None,
+                            Some(type_declaration),
                         )?;
                         let Expression::Function {
                             parameters, body, ..
@@ -1148,6 +1150,7 @@ impl Analyzer<'_> {
                         true,
                         false,
                         None,
+                        Some(type_declaration),
                     )?;
                     let key =
                         self.nominal(method_name, Nominal::Key(key_index), vec![protocol.clone()]);

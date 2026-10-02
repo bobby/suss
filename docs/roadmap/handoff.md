@@ -10484,6 +10484,75 @@ protocol index1, and source this-as :let with protocol argument shadow. This is
 upstream-only evidence; native logical method roles remain the next pending fact
 slice before complete rich &env transport.
 
+PR146 final independently reviewed headf021e7f: new-source full2446 LIVE,
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+--workspace --locked -- --test-threads=2; log/private/tmp/suss-m3-pr146-full.log.
+Exact CI37040123297 live; parent1437f821ac CI37035852942 and144ce61d90
+CI37037789125 live. Prior superseded146 runs canceled, not final evidence.
+
+Downstream portable/m3-method-binding-roles worktree adds neutral SourceRole and
+source_kind() view, preserving original physicalkind/ID. Fresh primary14015
+terminal0 +Node captured6 ordered role observations and4results[2,2,3,3], golden
+tests/oracle/method-role-observations.json. Strict comparator/shell/Python AST
+and whitespace pass. Native regression prepared but NOT RUN; roles remain Plain
+so it must execute and fail before populating method adaptation records. Wait
+for2446 terminal, run before using the same owned target, retain actual mismatch,
+then retain genuine receiver/argument/source type records and rerun focused
+method/runtime/capture/field/scope tests. No claim that access equals source JS AST
+or that this implements full source &env. Original M3 goals remain open.
+
+PR146 full2446 terminal0 finalsourcef021e7f:973/0/17 across99groups, all47ABI
+and finalreader; body updated, exact CI37040123297 remainsrunning; keepdraft.
+Method role BEFORE83541 terminal101 executing actual artifacts confirmed all6
+role-set mismatches (this Arg0 versusLet, missing originalreceiver shadows, Object
+argument1 versus0, nestedreceiver shadowarg versuslet), log
+/private/tmp/suss-m3-method-roles-before.log. SourceRole now retains originaltype
+declaration, physicalreceiveraccess and originalprotocolargument withoutnewIDs.
+Object user positions exclude physicalreceiver; physicalkind/ID unchanged.
+AFTER62312 terminal0:23/0/0 across7groups bothStores, includingactualprimitive
+resultsafterGC andruntime method/capture/exception/object/field/function tests,
+log/private/tmp/suss-m3-method-roles-after.log. End-to-end freshrunner running;
+then compilerfocused, mandatoryreview and finalsourcefull/CI. No merge orfullrich
+&env/M3completion is claimed.
+
+Fresh end-to-end method runner12858 terminal0: exact6roles/4results primary
+comparison and executing native1/0/0, log
+/private/tmp/suss-m3-method-roles-end-to-end.log. No cached primary output counted.
+Next mandatory independent review and compiler/fullfinalsource checks plusCI.
+
+
+PR147 independent review found a significant repeated-formal method-role defect.
+Pinned analyzer folds parameters by name without rejecting repeats. Fresh forced
+primary42429 terminal0 plus Node accepted protocol/Object [r r], returning[1,1]
+and source this-as let shadows arg1/arg0. Expanded force primary3706 terminal0
+plus Node also accepted Object [r r r], returning[1,1,1] and immediate arg1 shadow;
+logs /private/tmp/suss-pr147-duplicate{,-expanded}-primary.log. Initial wrong-cwd
+probe65035 exited1 without compiling the intended fixture; not evidence.
+BEFORE99867 terminal101 actually executed the native artifacts and failed exact
+role assertions: receiver let was overwritten as arg. Log
+/private/tmp/suss-pr147-duplicate-before.log. Reviewer retains the visible argument
+snapshot after field setup and before anchored receiver remapping; applies user
+roles before final this-as role; retains actual first receiver Form separately
+from the last repeated physical formal; preserves existing loop/receiver IDs.
+Object shadow ancestors omit only the exact implicit receiver ID, retain true
+outer shadows and number genuine earlier user arguments correctly. Runtime body
+and operand ordering are unchanged. New regression uses arbitrary source receiver
+names, exact fresh pinned facts, declaration order, distinct real IDs/deeper shadows
+and independently decoded number results after GC in both Stores.
+Final AFTER55202 terminal0:9passed/0failed/0ignored across5groups:
+compiled_macro_method_roles(2), compiled_macro_field_records(1),
+compiled_macro_function_scopes(2), portable_type_method_scopes(2),
+portable_object_methods(2). Command CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target
+CARGO_BUILD_JOBS=2 cargo test -p suss-cli --locked --test compiled_macro_method_roles
+--test compiled_macro_field_records --test compiled_macro_function_scopes
+--test portable_type_method_scopes --test portable_object_methods -- --test-threads=2;
+log /private/tmp/suss-pr147-duplicate-final.log. Initial after command named a
+nonexistent target and executed no tests; interim9442 passed9 but preceded final
+shadow cleanup and expanded test, so final55202 is the source evidence.
+Whitespace checks pass. Native resource released. Full final-source baseline and
+exact final-head CI remain required; rich source &env and original M3 goals stay
+open. No merge or issue closure is claimed.
+
 
 ## PR #144 rebase onto main — 2026-10-02
 
@@ -10517,3 +10586,43 @@ remote exact head/fresh CI. Final-head CI is pending at this recording; older CI
 is not final-head evidence. No PR merge, readiness, issue closure or milestone
 completion is claimed. Next unblocked task remains genuine function scopes and
 canonical rich compiled &env transport, with original M3 acceptance still open.
+
+
+## PR #147 complete baseline and ancestry repair — 2026-10-02
+
+User merged PR144 onto main8139597. PR146 repaired9edb0aa retains the exact
+reviewed9001c07 tree. PR147 repaired267c1cf has parentsb10edf2 and9edb0aa;
+its complete tree61d8f1345b24966818f19c2456ac4a80fac2d872 exactly matches
+reviewedb10edf2. Independent reviewer verified main8139597 and9edb0aa ancestry,
+no source changes, and retention of the repeated-receiver fix/regressions.
+
+Initial full85826 exited101: compiler errors claimed SourceRole/source_kind/
+source_role absent although checked-out source contained them. Log
+/private/tmp/suss-m3-pr147-full.log. This is failed validation, not a pass; cause
+is unproven. Root cleaned only suss-compile and suss-cli build artifacts in its
+owned target (625files/2.5GiB reported):
+`CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target cargo clean -p suss-compile -p suss-cli`.
+Then reran the complete required command:
+`CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Rebuilt full18650 exited0; independently parsed complete log
+/private/tmp/suss-m3-pr147-full-rebuilt.log contains100groups,
+975passed/0failed/17existingignores, all47 runtime ABI tests and final reader
+doctests. No RUSTFLAGS override. The run began on b10edf2 checkout; ancestry-only
+267c1cf had the identical entire tracked tree, and root reported no checkout file
+changes during the run. This establishes full native source evidence for267c1cf
+and the following handoff-only addition; it does not establish GitHub CI success.
+
+Exact267c1cf CI37047080272 failed before any workflow steps: GitHub jobs API
+reports steps:[], runner_id:0; independently read annotation states the job was
+not started because recent account payments failed or the spending limit needs
+increase. This is an external CI launch failure, not a source/test assertion.
+Require successful final-head CI after account service is restored; retain draft
+status, no readiness/merge/issue closure claim. Older CI is not final-head proof.
+
+Next implementation is isolated in /private/tmp/suss-m3-rich-macro-environment:
+actual SourceAnalysis source/form/context facts and a strengthened binding
+regression are currently uncommitted and unvalidated; focused execution remains
+pending. This baseline does not validate those child edits. Complete canonical
+rich source-level &env, bootstrap/evaluator removal, cache acceptance and original
+M3 requirements remain open. Root will reconcile the PR body and issue14 with
+this evidence, then incorporate this handoff-only record into that child.
