@@ -10258,3 +10258,13 @@ See docs/runtime/compiled-macro-environment-facts.md. Next full new-branch works
 baseline, then genuine function/context/field facts and rich compiled transport.
 Original issues12–15, bootstrap/cache/evaluator removal and scheduler acceptance
 remain open; this local branch is not a published PR.
+
+
+Macro-facts full workspace38391 terminal0 at54e9789 completed through final reader
+doctests. Independently counted /private/tmp/suss-m3-macro-environment-full.log:
+968passed/0failed/17existingignores across96 result groups, including all47ABI.
+No source or tests changed during that baseline. Full rich &env, bootstrap/cache/
+evaluator removal and all remaining original M3 acceptance remain open.
+Next publish this bounded prerequisite as draft Refs14, dispatch independent review,
+push significant reviewer fixes and require exactfinal-headCI. Continue field/
+context/function facts and actual environment transport in isolated child work.
