@@ -10141,3 +10141,19 @@ Independent Python verification passed88 tests; generated import check verified2
 files; review overlay verified345 partial/720 unassessed; the12 pinned lookup
 observations matched exactly. Source/semantic tests were unchanged. Full workspace
 and exact final-head CI remain required; no M3 or issue acceptance claim.
+
+PR140 independent review found that the CI job's 60-minute budget, based on an
+older 34m38s baseline, now cancels the expanded required workspace command before
+completion. Exact c5f85eb run37012087148 was canceled at60m18s; its complete
+downloaded log /private/tmp/suss-ci-37012087148-cancelled.log contains62 completed
+groups with747passed/0failed/12ignored, followed by cancellation during conformance.
+This is incomplete CI evidence, not a passing baseline. Independent GitHub job
+inspection also confirmed PR141 run37012180540 canceled at60m21s and PR142
+run37013353157 at60m19s; their completed test groups had no failures. All three
+inventory verification steps succeeded. The reviewer raises only the bounded job
+allowance to90minutes; the complete cargo test --workspace --locked --
+--test-threads=2 command, CARGO_BUILD_JOBS=2 and every verifier remain unchanged.
+No native source/tests or skips change. Prior local full954/0/17 proof remains
+applicable, but exact new-head CI must complete successfully before PR readiness.
+Next propagate the reviewed workflow repair to children and inspect complete
+final-head runs; further timeouts remain failures requiring investigation.
