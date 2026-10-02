@@ -8,20 +8,27 @@ A separate `SourceRole` records method adaptations without replacing those IDs.
 Pinned Object methods exclude their implicit receiver when numbering user
 arguments. Protocol methods include their explicit receiver at argument zero.
 Both adapters expose the receiver through `this-as`, a source local binding.
-Protocol receiver bindings shadow their original argument; Object receivers have
-no original argument. Nested parameters can shadow that receiver and method exit
+Protocol receiver bindings shadow their visible original argument. Object receivers
+have no implicit source argument, but can shadow an actual same-named user argument.
+Repeated formal names are legal in the pin; the final this-as receiver role must
+remain a source local even when a user argument repeats its name. Nested parameters can shadow that receiver and method exit
 restores the enclosing bindings. Parameter/field shadows retain actual field
 metadata and access records.
 
 The role record retains the original target type declaration and actual lowered
-receiver access. Inspecting access does not read the receiver or fields. It does
+receiver access and the actual first source receiver declaration, independently
+of the last repeated physical formal. Inspecting access does not read the receiver or fields. It does
 not invent a separate lowered ID, evaluate an initializer or claim that a lowered
 access expression is the pinned JavaScript initializer AST. Canonical rich
 transport and remaining source AST/inference facts still need implementation.
 
 The fresh development-only pinned ClojureScript oracle captured six ordered role
 observations and four executed count results. The strict comparator checks exact
-roles, argument positions, field mutability and immediate shadows. It rejects
+roles, argument positions, field mutability and immediate shadows. Independent
+review also freshly forced three repeated-name cases: protocol receiver/user name,
+Object receiver/user name and three equal Object formals. The pin accepts these
+signatures and returns counts `[1,1,1]`; native regressions additionally inspect
+actual receiver declaration spans, distinct existing IDs and deeper source shadows. It rejects
 malformed/missing/unknown facts and is not a general runtime value decoder. The
 executing native regression compares actual compiler records, executes the
 resulting artifacts in both Stores, inspects real IDs and independently decodes

@@ -10519,3 +10519,36 @@ Fresh end-to-end method runner12858 terminal0: exact6roles/4results primary
 comparison and executing native1/0/0, log
 /private/tmp/suss-m3-method-roles-end-to-end.log. No cached primary output counted.
 Next mandatory independent review and compiler/fullfinalsource checks plusCI.
+
+
+PR147 independent review found a significant repeated-formal method-role defect.
+Pinned analyzer folds parameters by name without rejecting repeats. Fresh forced
+primary42429 terminal0 plus Node accepted protocol/Object [r r], returning[1,1]
+and source this-as let shadows arg1/arg0. Expanded force primary3706 terminal0
+plus Node also accepted Object [r r r], returning[1,1,1] and immediate arg1 shadow;
+logs /private/tmp/suss-pr147-duplicate{,-expanded}-primary.log. Initial wrong-cwd
+probe65035 exited1 without compiling the intended fixture; not evidence.
+BEFORE99867 terminal101 actually executed the native artifacts and failed exact
+role assertions: receiver let was overwritten as arg. Log
+/private/tmp/suss-pr147-duplicate-before.log. Reviewer retains the visible argument
+snapshot after field setup and before anchored receiver remapping; applies user
+roles before final this-as role; retains actual first receiver Form separately
+from the last repeated physical formal; preserves existing loop/receiver IDs.
+Object shadow ancestors omit only the exact implicit receiver ID, retain true
+outer shadows and number genuine earlier user arguments correctly. Runtime body
+and operand ordering are unchanged. New regression uses arbitrary source receiver
+names, exact fresh pinned facts, declaration order, distinct real IDs/deeper shadows
+and independently decoded number results after GC in both Stores.
+Final AFTER55202 terminal0:9passed/0failed/0ignored across5groups:
+compiled_macro_method_roles(2), compiled_macro_field_records(1),
+compiled_macro_function_scopes(2), portable_type_method_scopes(2),
+portable_object_methods(2). Command CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target
+CARGO_BUILD_JOBS=2 cargo test -p suss-cli --locked --test compiled_macro_method_roles
+--test compiled_macro_field_records --test compiled_macro_function_scopes
+--test portable_type_method_scopes --test portable_object_methods -- --test-threads=2;
+log /private/tmp/suss-pr147-duplicate-final.log. Initial after command named a
+nonexistent target and executed no tests; interim9442 passed9 but preceded final
+shadow cleanup and expanded test, so final55202 is the source evidence.
+Whitespace checks pass. Native resource released. Full final-source baseline and
+exact final-head CI remain required; rich source &env and original M3 goals stay
+open. No merge or issue closure is claimed.
