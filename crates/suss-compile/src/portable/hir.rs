@@ -764,13 +764,17 @@ impl Analyzer<'_> {
         } else {
             args.get(1)
         };
-        self.environment.record_definition(global.clone(), super::resolve::DefinitionInfo {
+        let mut definition = super::resolve::DefinitionInfo {
             declaration: args[0].clone(),
             docstring: if args.len() == 3 { match &args[1].kind { Kind::String(units) => Some(units.clone()), _ => unreachable!() } } else { None },
             origin: self.origin.clone(), initializer: None, once,
-        });
+        };
+        self.environment.record_definition(global.clone(), definition.clone());
         let initializer = init.map(|init| self.form(init).map(Box::new)).transpose()?;
-        self.environment.definition_initializer(&global, initializer.as_deref());
+        // A nested initializer can declare this same global. Publish the outer
+        // declaration and its initializer together when its analysis completes.
+        definition.initializer = initializer.as_deref().cloned().map(std::sync::Arc::new);
+        self.environment.record_definition(global.clone(), definition);
         Ok(Hir {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
