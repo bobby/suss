@@ -195,7 +195,7 @@ fn compiled_macro_prerequisite_quote_errors_are_located_and_preserve_session_sta
         "(def leaked 99) (quote)",
         "(def leaked 99) (quote x y)",
         "(def leaked 99) (def keep '^:tag replacement)",
-        "(def leaked 99) (def keep '[1 2])",
+        "(def leaked 99) (def keep '^:tag [1 2])",
         "(def leaked 99) (def keep '{:x 1})",
         "(def leaked 99) (def keep '#{1 2})",
     ] {

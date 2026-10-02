@@ -9327,3 +9327,14 @@ verified OPEN/notdraft/head03a6d8f after approved-head CI SUCCESS. No merge.
 After full terminal, publish vector draft with Refs#14, dispatch independent
 subagent review, push significant fixes and require final-head CI. Next source
 work is persistent maps/metadata/&env, preserving all other original M3 gates.
+
+Vector full42522 terminal101, not success: old portable_quoted_identifiers guard
+still expected '[1 2] to fail after real vectors became supported. Preserved that
+row's compile-atomic metadata failure using '^:tag [1 2], while independent vector
+success tests already cover plain/large quoted values. Focus88582 terminal0:
+7vector+3identifier tests, retaining all48identifier and40vector primary cases.
+No production code changed, no removed tests or skips. Commitb5fc263 holds frozen
+vector source; next commit records the guard update, then required full rerun.
+Root heavy slot free until full restart on this corrected source/test snapshot.
+Child portable/m3-macro-maps /private/tmp/suss-m3-macro-maps currently has no edits
+and real initialized pin; fast-forward it to the corrected parent before new work.
