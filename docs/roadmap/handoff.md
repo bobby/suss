@@ -9201,3 +9201,13 @@ PR131 corrected module focus88831 terminal0:14pass,
 polling ownership/heavy slot. Re-poll to terminal, never restart solely due to an
 observation timeout. All provenance remains unchanged; this fix copies no source,
 changes no runtime ABI/dependencies/selection and adds no skips.
+
+PR131 significant review fix bcb1c5cfec33c48b62d7abafbbae574eb55e5de5 pushed:
+outer-prefix effective policy lookup plus focused regression/provenance docs.
+Final-source full82782 terminal0:902passed/0failed/17existing ignores/84groups
+through finalreader doctests, /private/tmp/suss-pr131-review-full.log. Focus22,
+module14/Python86/inventory1065/reviews224841/import132 pass. No further significant
+review findings after independent nested reload/discovery failure/cycle scope
+probes. Reviewer releases heavy slot; source/tests remain unchanged. This evidence
+only docs commit must also receive exact final-head CI before readiness. No merge;
+M3 bootstrap/cache/full environment/privacy/shared AOT and lifecycle remain open.
