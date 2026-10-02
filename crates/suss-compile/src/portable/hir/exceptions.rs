@@ -2,7 +2,12 @@
 use super::*;
 
 impl Analyzer<'_> {
-    pub(super) fn exception_region(&self, form: &Form, parameters: Vec<Parameter>, body: Hir) -> Hir {
+    pub(super) fn exception_region(
+        &self,
+        form: &Form,
+        parameters: Vec<Parameter>,
+        body: Hir,
+    ) -> Hir {
         let bound = parameters.iter().map(|parameter| parameter.id).collect();
         let mut free = BTreeSet::new();
         free_bindings(&body, &bound, &mut free);
@@ -25,7 +30,7 @@ impl Analyzer<'_> {
     ) -> Result<Hir, Diagnostic> {
         let locals = self.locals.clone();
         let target = self.target.take();
-        let result = self.try_regions(form, args, context.returning());
+        let result = self.try_regions(form, args, context);
         self.locals = locals;
         self.target = target;
         result
@@ -93,8 +98,25 @@ impl Analyzer<'_> {
                 }
             }
         }
-        let body = self.body(&args[..body_end], form.span.clone(), context, false)?;
-        let body = self.exception_region(form, vec![], body);
+        // Pinned analyzer parse-try visits finally, catches, then body during
+        // macro expansion. Runtime regions remain body/handler/cleanup below.
+        // A bare try preserves expression context; handlers introduce return.
+        let context = if catches.is_empty() && cleanup.is_none() {
+            context
+        } else {
+            context.returning()
+        };
+        let cleanup = if let Some((cleanup, forms)) = cleanup {
+            let body = self.body(
+                forms,
+                cleanup.span.clone(),
+                super::super::AnalysisContext::Statement,
+                false,
+            )?;
+            self.exception_region(cleanup, vec![], body)
+        } else {
+            self.literal_form(form, Literal::Nil)
+        };
         let handler = if catches.is_empty() {
             self.literal_form(form, Literal::Nil)
         } else {
@@ -125,7 +147,8 @@ impl Analyzer<'_> {
                 let Kind::Symbol(name) = &items[1].kind else {
                     unreachable!()
                 };
-                let previous = self.insert_local(&items[1], id, Type::Value, LocalKind::Catch, None);
+                let previous =
+                    self.insert_local(&items[1], id, Type::Value, LocalKind::Catch, None);
                 let body = self.body(&items[2..], catch.span.clone(), context, false);
                 if let Some(previous) = previous {
                     self.locals.insert(name.name.clone(), previous);
@@ -152,12 +175,8 @@ impl Analyzer<'_> {
             }
             self.exception_region(form, vec![parameter], selected)
         };
-        let cleanup = if let Some((cleanup, forms)) = cleanup {
-            let body = self.body(forms, cleanup.span.clone(), super::super::AnalysisContext::Statement, false)?;
-            self.exception_region(cleanup, vec![], body)
-        } else {
-            self.literal_form(form, Literal::Nil)
-        };
+        let body = self.body(&args[..body_end], form.span.clone(), context, false)?;
+        let body = self.exception_region(form, vec![], body);
         Ok(Hir {
             span: form.span.clone(),
             metadata: form.metadata.clone(),

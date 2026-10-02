@@ -6,6 +6,7 @@ use suss_reader::forms::{Form, Kind};
 #[derive(Default)]
 struct Contexts {
     calls: BTreeMap<String, String>,
+    ordered_calls: Vec<(String, String)>,
 }
 impl portable::ExpansionHost for Contexts {
     fn expand(
@@ -28,6 +29,8 @@ impl portable::ExpansionHost for Contexts {
             AnalysisContext::Expression => "expr",
             AnalysisContext::Return => "return",
         };
+        self.ordered_calls
+            .push((String::from_utf16(label).unwrap(), value.into()));
         assert!(
             self.calls
                 .insert(String::from_utf16(label).unwrap(), value.into())
@@ -63,19 +66,31 @@ fn compiler_analysis_context_matches_pinned_facts_without_granting_recur_tail_sc
             )
         })
         .collect();
-    assert_eq!(calls.len(), 16);
+    assert_eq!(calls.len(), 17);
+    let ordered_calls: Vec<(String, String)> = golden["calls"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|pair| {
+            (
+                pair[0].as_str().unwrap().into(),
+                pair[1].as_str().unwrap().into(),
+            )
+        })
+        .collect();
     let body =
         &fixture[fixture.find("(context \"top\")").unwrap()..fixture.find("(defn -main").unwrap()];
     let source = format!("\n\n{body}");
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut host = Contexts::default();
         session.eval_with_macros(&source, &mut host).unwrap();
+        assert_eq!(host.ordered_calls, ordered_calls);
         assert_eq!(host.calls, calls);
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
         for (name, expected) in [
-            "direct", "doone", "domany", "letone", "letinit", "branch", "tried", "function",
-            "fnbranch",
+            "direct", "doone", "domany", "letone", "letinit", "branch", "bare", "tried",
+            "function", "fnbranch",
         ]
         .into_iter()
         .zip(golden["results"].as_array().unwrap())

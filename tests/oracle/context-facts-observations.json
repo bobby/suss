@@ -35,6 +35,10 @@
       "expr"
     ],
     [
+      "bare-try",
+      "expr"
+    ],
+    [
       "cleanup",
       "statement"
     ],
@@ -72,6 +76,7 @@
     "expr",
     "return",
     "return",
+    "expr",
     "expr",
     "expr",
     "return",
