@@ -11151,3 +11151,19 @@ fully tested d25d7e9 (b77e6e14f17bd8e57c1d080405a46a4ba3a889ab), so no source
 change was hidden by conflict resolution. Namespace repair05543da is now being
 integrated with sets. Its focused resolution suite passed, but the 998 baseline
 predates this namespace repair. Run combined module/import regressions next.
+
+
+Combined namespace repair verification on rich sourcec6a0b44 terminated successfully:
+compiler resolution/module/phase suites27/0/0 (three groups) and native namespace/
+compiled import/reload suites16/0/0 (three groups). Commands used shared warm
+target /private/tmp/suss-m3-pr143-target, CARGO_BUILD_JOBS=2 and test-threads=2:
+`cargo test --locked -p suss-compile --test portable_resolution --test portable_phase_modules
+--test portable_modules -- --test-threads=2` and `cargo test --locked -p suss-cli
+--test namespace_session --test compiled_macro_imports --test compiled_macro_reload
+-- --test-threads=2`. Logs: /private/tmp/suss-namespace-combined-{compiler,cli}-focus.log.
+No live jobs remain. Namespace repair is not included in the preceding998 baseline.
+Push source and evidence; next build actual portable namespace maps (ordinary and
+macro require/use/rename), compare fresh pinned namespace observations and execute
+compiled queries through canonical graph data. Complete source AST/inference and
+implicit &env remain required before bootstrap acceptance. No new PR until that
+transport is reviewable; dispatch independent review and require final-head CI.
