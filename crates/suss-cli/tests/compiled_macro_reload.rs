@@ -297,3 +297,72 @@ fn namespace_session_command_reloads_macro_source_from_libspec_metadata() {
         "nil\n1\n#<function>\nnil\n1\nnil\n2\n1\nnil\n3\n1\n"
     );
 }
+
+#[test]
+fn namespace_session_compiled_macro_reload_metadata_outer_prefix_wins() {
+    let project = tempfile::tempdir().unwrap();
+    let source = project.path().join("tools.sus");
+    std::fs::write(&source, "(ns tools) (defmacro answer [] 42)").unwrap();
+    let mut runtime = runtime(project.path());
+    let mut macros = CompiledMacros::new().unwrap();
+    runtime
+        .eval_with_macros("(ns user (:require-macros [tools :as t]))", &mut macros)
+        .unwrap();
+    std::fs::write(&source, "(ns tools) (defmacro answer [] 43)").unwrap();
+    runtime
+        .eval_with_macros(
+            "(ns user (:require-macros ^{:reload :reload} ^{:reload nil} [tools :as t]))",
+            &mut macros,
+        )
+        .unwrap();
+    assert_eq!(
+        number(&mut runtime, &mut macros, "(t/answer)"),
+        43.0f64.to_bits()
+    );
+    std::fs::write(&source, "(ns tools) (defmacro answer [] 44)").unwrap();
+    for metadata in [
+        "^{:reload nil} ^{:reload :reload}",
+        "^{:reload false} ^{:reload :reload}",
+        "^{:reload nil} ^{:reload 7}",
+        "^{:reload false} ^:reload",
+    ] {
+        let input = format!("(ns user (:require-macros {metadata} [tools :as t]))");
+        runtime.eval_with_macros(&input, &mut macros).unwrap();
+        assert_eq!(
+            number(&mut runtime, &mut macros, "(t/answer)"),
+            43.0f64.to_bits()
+        );
+    }
+    runtime
+        .eval_with_macros(
+            "(ns user (:require-macros ^{:reload :reload} ^{:reload 7} [tools :as t]))",
+            &mut macros,
+        )
+        .unwrap();
+    assert_eq!(
+        number(&mut runtime, &mut macros, "(t/answer)"),
+        44.0f64.to_bits()
+    );
+    let input = "(ns user (:require-macros ^{:reload 7} ^{:reload nil} [tools :as t]))";
+    let error = runtime.eval_with_macros(input, &mut macros).unwrap_err();
+    assert!(
+        error.to_string().contains("reload metadata must"),
+        "{error}"
+    );
+    assert_eq!(
+        number(&mut runtime, &mut macros, "(t/answer)"),
+        44.0f64.to_bits()
+    );
+    // The same effective metadata on an ordinary Runtime libspec is still
+    // unsupported rather than silently acquiring macro reload semantics.
+    let error = runtime
+        .eval_with_macros(
+            "(ns user (:require ^{:reload nil} ^{:reload :reload} [tools :as t]))",
+            &mut macros,
+        )
+        .unwrap_err();
+    assert!(
+        error.to_string().contains("Require reload metadata"),
+        "{error}"
+    );
+}

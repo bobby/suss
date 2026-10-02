@@ -19,12 +19,14 @@ exception/effect behavior, not transaction rollback of arbitrary language effect
 
 Reload policy is explicit compiler/host data, separate from source declaration
 catalogs or Wasm binding cells. Nil/false reload metadata leaves normal once-only
-loading in effect; malformed policy values fail at the libspec before Runtime
+loading in effect. Repeated metadata prefixes follow the pinned reader merge:
+the outer prefix overrides inner metadata, and only the effective reload value
+is validated. Malformed effective policy values fail at the libspec before Runtime
 publication. The bounded bootstrap core cannot be source-reloaded. Ordinary
 Runtime require reload metadata and whole-clause reload flags remain unfinished
 and keep diagnostics; this change handles explicit source macro libspec policy.
 
-Five native host regressions execute changed source, reachable helper changes,
+Six native host regressions execute changed source, reachable helper changes,
 retained Runtime expansions, failed definition/retry, unreachable module reuse
 and metadata errors. One actual command regression executes `:load`, `:reload`
 and `:reload-all` with source macro reload metadata, once-only initializers and
@@ -42,3 +44,8 @@ Implementation is original Rust. Libspec reload metadata and policy lookup were
 checked against pinned analyzer.cljc3484–3486/4490–4510 at
 c4295f303100bbf5afac449242d30bca1126f1a1 (EPL1.0). No upstream code was copied;
 structural defmacro adaptation retains its documented source/license provenance.
+
+Prefix precedence was checked against pinned
+`src/main/clojure/cljs/vendor/clojure/tools/reader.clj` 372–386: outer metadata
+overrides the metadata of the recursively read inner form. This is an original
+Rust lookup over retained reader syntax; no upstream reader code was copied.

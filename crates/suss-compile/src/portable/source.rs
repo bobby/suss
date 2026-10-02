@@ -55,44 +55,44 @@ fn renames(form: &Form) -> Result<Vec<(&Form, &Form)>, Diagnostic> {
     Ok(out)
 }
 fn requirement(spec: &Form, macro_import: bool) -> Result<Requirement<'_>, Diagnostic> {
-    let mut reload = super::MacroReload::Once;
-    for metadata in &spec.metadata {
+    // Prefixes are stored outermost first. The pinned reader merges outer
+    // metadata over the already read inner metadata, so only the first effective
+    // reload key is interpreted; shadowed values are not directives.
+    let effective = spec.metadata.iter().find_map(|metadata| {
         let key = |form: &Form| matches!(&form.kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "reload");
-        let mut values = Vec::new();
         if key(metadata) {
-            values.push(None);
+            Some(None)
+        } else if let Kind::Map(entries) = &metadata.kind {
+            entries.chunks_exact(2).rev().find(|entry| key(&entry[0])).map(|entry| Some(&entry[1]))
+        } else {
+            None
         }
-        if let Kind::Map(entries) = &metadata.kind {
-            for entry in entries.chunks_exact(2) {
-                if key(&entry[0]) {
-                    values.push(Some(&entry[1]));
-                }
+    });
+    let reload = if let Some(value) = effective {
+        if !macro_import {
+            return Err(error(
+                spec,
+                "Require reload metadata needs source loading and initialization policy, not yet integrated",
+            ));
+        }
+        match value.map(|form| &form.kind) {
+            Some(Kind::Nil | Kind::Bool(false)) => super::MacroReload::Once,
+            Some(Kind::Keyword(key)) if key.namespace.is_none() && key.name == "reload" => {
+                super::MacroReload::Reload
             }
-        }
-        for value in values {
-            if !macro_import {
+            Some(Kind::Keyword(key)) if key.namespace.is_none() && key.name == "reload-all" => {
+                super::MacroReload::ReloadAll
+            }
+            _ => {
                 return Err(error(
                     spec,
-                    "Require reload metadata needs source loading and initialization policy, not yet integrated",
+                    "Macro reload metadata must be :reload, :reload-all, nil or false",
                 ));
             }
-            reload = match value.map(|form| &form.kind) {
-                Some(Kind::Nil | Kind::Bool(false)) => super::MacroReload::Once,
-                Some(Kind::Keyword(key)) if key.namespace.is_none() && key.name == "reload" => {
-                    super::MacroReload::Reload
-                }
-                Some(Kind::Keyword(key)) if key.namespace.is_none() && key.name == "reload-all" => {
-                    super::MacroReload::ReloadAll
-                }
-                _ => {
-                    return Err(error(
-                        spec,
-                        "Macro reload metadata must be :reload, :reload-all, nil or false",
-                    ));
-                }
-            };
         }
-    }
+    } else {
+        super::MacroReload::Once
+    };
     let items = match &spec.kind {
         Kind::Symbol(_) => std::slice::from_ref(spec),
         Kind::Vector(items) | Kind::List(items) if !items.is_empty() => items,

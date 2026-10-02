@@ -9175,3 +9175,29 @@ Issue13 progress comment5943209138 records focused reload evidence and remaining
 M3 namespace/bootstrap/cache/lifecycle criteria. Source/tests remain frozen.
 
 Source macro reload full19242 terminal0:901passed/0failed/17existing ignores/84groups through finalreader doctests, /private/tmp/suss-m3-macro-reload-full.log. Source/tests frozen, native73/module14/Python86/provenance verified. Heavy slot released. Publish draft and require independent review/significant fixes/exact final-head CI before readiness. M3 original requirements remain in progress.
+
+
+PR131 independent review of710dbb6 found significant reload-metadata precedence
+bug: prefixes are stored outermost first, but source policy validation treated
+last prefix as effective. Pinned vendor/tools/reader.clj372–386 merges outer over
+inner. New native outer-prefix regression before98106 terminal101:outer reload
+with inner nil incorrectly retained42 instead of reading43;
+/private/tmp/suss-pr131-metadata-before.log. Fixed policy lookup selects first
+outer reload key and validates only effective value; tests cover nil/false masking
+inner reload/invalid7/shorthand, outer reload masking inner invalid7, effective
+invalid outer rejection, and ordinary Runtime reload diagnostics. Corrected
+focus67370 terminal0:22pass (defs3/import5/reload7/repl6/independentprobe1),
+/private/tmp/suss-pr131-review-after.log. Independent probe checks discovery
+failure retains provided namespace and caller scope, nested explicit reload works,
+and reachable cyclic reload-all fails preserving old Runtime expansions/scope;
+/private/tmp/suss-pr131-independent-probe.rs (temporary test removed).
+Python98961 terminal0:86, inventory1065/reviews224841/import132 verified. Module
+focus88831 live; reviewer owns heavy slot. No readiness until corrected full and
+exact final reviewed-head CI; no merge and original M3 requirements remain open.
+
+PR131 corrected module focus88831 terminal0:14pass,
+/private/tmp/suss-pr131-review-modules.log. Final-source full82782 is live,
+/private/tmp/suss-pr131-review-full.log; source/tests are frozen, reviewer retains
+polling ownership/heavy slot. Re-poll to terminal, never restart solely due to an
+observation timeout. All provenance remains unchanged; this fix copies no source,
+changes no runtime ABI/dependencies/selection and adds no skips.
