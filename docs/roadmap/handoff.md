@@ -10084,3 +10084,19 @@ including all 47 runtime ABI tests. Source/tests remain unchanged.
 CI36979640340 passed at08615ba; new documentation head needs
 independent review confirmation and exactfinal-headCI before readiness. Issue14
 comment5947608500 tracks originalcriteria/gaps, no issueclosure or merge.
+
+
+Parent stack integration on 2026-10-02: GitHub confirms #133, #135, #136 and
+#138 merged; #139 does not exist in this repository. Main35740aa has the exact
+same full file tree as the former parent806d701 (9b2679e44830b0aed4b8b0c51cc0759a4efa4dfc).
+PR140 repair merge c5f85eb retains the entire approved eec2aef tree
+15ba77434785f008f41b40d316e0bd363a800c5a. Independent reviewer confirmed this
+repair. The 954-pass local baseline remains applicable; its old CI run was
+cancelled after approximately 60 minutes, and exact repair-head CI is required.
+PR141 ancestry merge87caf9e likewise retains the entire reviewed e0fd886 tree
+17c7f080b668d878ddd39e87d48846cb051e6b4e. Source-head CI36979640340 completed
+successfully: independently counted958/0/17 across93 groups, including47 ABI
+passes and final reader doctests. This handoff update requires final-head review
+and CI. Neither PR is merged or ready without those checks. Original M3 criteria
+remain open; next unblocked work is omitted-argument undefined storage semantics,
+transient lifecycle enforcement and the rich compiled macro environment.
