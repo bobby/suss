@@ -13,6 +13,23 @@ pub enum LocalKind {
     Catch,
 }
 
+/// Source adaptation facts, separate from physical parameter/loop lowering.
+#[derive(Debug, Clone)]
+pub enum SourceRole {
+    Plain,
+    MethodArgument {
+        index: usize,
+        rest: bool,
+    },
+    MethodThis {
+        type_declaration: Form,
+        /// Original explicit protocol argument; Object receivers have none.
+        argument: Option<Arc<LocalBinding>>,
+        /// Actual lowered receiver access; inspecting it does not read a value.
+        access: Hir,
+    },
+}
+
 /// Named source function scope; a definition hint does not create a lexical ID.
 #[derive(Debug, Clone)]
 pub struct FunctionScope {
@@ -44,13 +61,54 @@ pub struct LocalBinding {
     pub declaration: Form,
     pub origin: Option<super::super::SourceOrigin>,
     pub kind: LocalKind,
+    pub source_role: SourceRole,
     /// Actual analyzed initializer; absent for parameters/self/catch bindings.
     pub initializer: Option<Arc<Hir>>,
     /// Previous lexical declaration, excluding compiler-only ID remapping.
     pub shadow: Option<Arc<LocalBinding>>,
     pub shadow_field: Option<Arc<FieldBinding>>,
 }
+impl LocalBinding {
+    /// Portable source role without changing the actual lowered binding identity.
+    pub fn source_kind(&self) -> LocalKind {
+        match &self.source_role {
+            SourceRole::Plain => self.kind,
+            SourceRole::MethodArgument { index, rest } => LocalKind::Argument {
+                index: *index,
+                rest: *rest,
+            },
+            SourceRole::MethodThis { .. } => LocalKind::Let,
+        }
+    }
+}
 impl Analyzer<'_> {
+    pub(super) fn record_method_roles(
+        &mut self,
+        parameters: &[Parameter],
+        type_declaration: &Form,
+        object_method: bool,
+    ) {
+        for (index, parameter) in parameters.iter().enumerate() {
+            let original = self.locals[&parameter.name].clone();
+            let role = if index == 0 {
+                SourceRole::MethodThis {
+                    type_declaration: type_declaration.clone(),
+                    argument: (!object_method).then(|| Arc::new(original.clone())),
+                    access: self.local(&original.declaration, parameter.id),
+                }
+            } else {
+                SourceRole::MethodArgument {
+                    index: index - usize::from(object_method),
+                    rest: matches!(original.kind, LocalKind::Argument { rest: true, .. }),
+                }
+            };
+            self.locals
+                .get_mut(&parameter.name)
+                .expect("method parameter")
+                .source_role = role;
+        }
+    }
+
     pub(super) fn enter_function_scope(
         &mut self,
         declaration: Option<&Form>,
@@ -109,6 +167,7 @@ impl Analyzer<'_> {
                 declaration: declaration.clone(),
                 origin: self.origin.clone(),
                 kind,
+                source_role: SourceRole::Plain,
                 initializer: initializer.map(Arc::new),
                 shadow,
                 shadow_field,

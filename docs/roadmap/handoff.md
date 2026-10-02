@@ -10483,3 +10483,39 @@ executed pinned method-role probe9965 and Node returned[42,42,42,42], raw record
 protocol index1, and source this-as :let with protocol argument shadow. This is
 upstream-only evidence; native logical method roles remain the next pending fact
 slice before complete rich &env transport.
+
+PR146 final independently reviewed headf021e7f: new-source full2446 LIVE,
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+--workspace --locked -- --test-threads=2; log/private/tmp/suss-m3-pr146-full.log.
+Exact CI37040123297 live; parent1437f821ac CI37035852942 and144ce61d90
+CI37037789125 live. Prior superseded146 runs canceled, not final evidence.
+
+Downstream portable/m3-method-binding-roles worktree adds neutral SourceRole and
+source_kind() view, preserving original physicalkind/ID. Fresh primary14015
+terminal0 +Node captured6 ordered role observations and4results[2,2,3,3], golden
+tests/oracle/method-role-observations.json. Strict comparator/shell/Python AST
+and whitespace pass. Native regression prepared but NOT RUN; roles remain Plain
+so it must execute and fail before populating method adaptation records. Wait
+for2446 terminal, run before using the same owned target, retain actual mismatch,
+then retain genuine receiver/argument/source type records and rerun focused
+method/runtime/capture/field/scope tests. No claim that access equals source JS AST
+or that this implements full source &env. Original M3 goals remain open.
+
+PR146 full2446 terminal0 finalsourcef021e7f:973/0/17 across99groups, all47ABI
+and finalreader; body updated, exact CI37040123297 remainsrunning; keepdraft.
+Method role BEFORE83541 terminal101 executing actual artifacts confirmed all6
+role-set mismatches (this Arg0 versusLet, missing originalreceiver shadows, Object
+argument1 versus0, nestedreceiver shadowarg versuslet), log
+/private/tmp/suss-m3-method-roles-before.log. SourceRole now retains originaltype
+declaration, physicalreceiveraccess and originalprotocolargument withoutnewIDs.
+Object user positions exclude physicalreceiver; physicalkind/ID unchanged.
+AFTER62312 terminal0:23/0/0 across7groups bothStores, includingactualprimitive
+resultsafterGC andruntime method/capture/exception/object/field/function tests,
+log/private/tmp/suss-m3-method-roles-after.log. End-to-end freshrunner running;
+then compilerfocused, mandatoryreview and finalsourcefull/CI. No merge orfullrich
+&env/M3completion is claimed.
+
+Fresh end-to-end method runner12858 terminal0: exact6roles/4results primary
+comparison and executing native1/0/0, log
+/private/tmp/suss-m3-method-roles-end-to-end.log. No cached primary output counted.
+Next mandatory independent review and compiler/fullfinalsource checks plusCI.
