@@ -9730,3 +9730,45 @@ PR135 final17f00a3 independently approved, CI36960926070 SUCCESS. Downloaded com
 setup12/finalreader. Marked ready after exact-head verification; no merge. Original
 M3 issues12–15 remain open. Next unblocked task: retain complete source apply and
 its callable behavior before macro environment/syntaxquote/bootstrap/cache work.
+
+
+## Stack #137 rebase — 2026-10-02
+
+At the user's request, imported GitHub stack137 using `gh stack checkout 137`,
+rebased PR133 -> PR135 -> PR136 onto main03125fa using `gh stack rebase`, and
+continued the cascading rebase with `gh stack rebase --continue`. Existing clean
+map/metadata worktrees were temporarily detached and restored to their updated
+branches. Initial checkout/rebase attempts reported occupied worktrees; no user
+changes were overwritten.
+
+The first map conflict attempted to replay quoted-identifier and later prerequisite
+commits already squash-merged into main. Independently verified main03125fa, old
+vector prerequisite739f0df and repaired prerequisite df4661c have identical complete
+tracked tree b3199bec7a79a7684b27af8208162131b90c678b; first map commit a00cf9a
+directly follows739f0df. Omitted only those sixteen duplicate prerequisites from
+the active rebase plan, preserving all map/metadata/callable commits. Automatic
+approval review initially rejected omission due to possible lost work; after
+exact tree/boundary checks, the verified operation was approved.
+
+Before this handoff-only addition, each rebased branch tree exactly equals its
+original remote head: PR133 3ccd372 -> c05b212; PR135 17f00a3 -> 4e02022;
+PR136 35d270f -> d6b8b1c. Separate independent reviewers approved each exact
+rebased head, unchanged range-diff patches and new ancestry, with no findings.
+No compiler/runtime/test/inventory/provenance content changed.
+
+Validation on the frozen rebased top source, shared existing CARGO_TARGET_DIR and
+CARGO_BUILD_JOBS=2, no RUSTFLAGS override:
+
+- `cargo test -p suss-cli --test compiled_macro_maps --test compiled_macro_metadata --test compiled_macro_vectors --test portable_callable_metadata --test portable_quoted_identifiers --locked -- --test-threads=2`: exit0, 30passed/0failed/0ignored; /private/tmp/suss-stack137-focused.log.
+- `cargo test --workspace --locked -- --test-threads=2`: exit0 through final reader doctests, 931passed/0failed/17existingignores/88groups; /private/tmp/suss-stack137-full.log.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: exit0, 88passed; /private/tmp/suss-stack137-python.log.
+- CI inventory/review/core-import/sequence-provenance/bitwise-provenance/WIT-lock/numeric-runtime checks and offline roadmap preview: all exit0; /private/tmp/suss-stack137-checks.log. Stable issue IDs and existing acceptance statuses preserved.
+- `git diff --check`: passed. No fresh JVM/Node oracle rerun; tracked source and
+  fixtures are unchanged, and executing native baseline passed.
+
+Push the updated branches with `gh stack push`, then verify remote exact heads and
+fresh final-head CI. CI remains pending at this recording; earlier CI is not proof
+for new commit IDs. No PR merge, issue closure or milestone completion is claimed.
+Next unblocked development task remains complete retained source apply/callable
+behavior before macro environments/locations/syntaxquote/bootstrap/cache and
+stackless lifecycle work; original M3 acceptance remains open.
