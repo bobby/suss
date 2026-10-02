@@ -259,3 +259,40 @@ fn native_analysis_graph_reader_depth_is_independent_of_record_depth() {
         .unwrap();
     assert!(matches!(host.calls[0].kind, Kind::Number(42.0)));
 }
+
+#[test]
+fn native_analysis_graph_retains_staged_definition_and_function_syntax() {
+    let query = r#"(fn [env]
+      (let [definition (get (get (get env :ns) :defs) 'staged)
+            scope (nth (get env :fn-scope) 0)]
+        [(get definition :suss/initializer-recorded)
+         (get definition :suss/initializer-form)
+         (get (get scope :info) :suss/function-form)]))"#;
+    let function = "(fn staged ([x] (inspect-graph)) ([x & xs] (inspect-graph)))";
+    let expected = suss_reader::forms::read_forms(function).unwrap().remove(0);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut host = Inspect::new(query);
+        session.eval_with_macros(&format!("(def staged {function})"), &mut host).unwrap();
+        assert_eq!(host.calls.len(), 2);
+        for call in &host.calls {
+            let Kind::Vector(values) = &call.kind else { panic!("staged query") };
+            assert!(matches!(values[0].kind, Kind::Bool(false)));
+            // Read-back spans deliberately refer to the macro call. Compare
+            // actual syntax after discarding only those host-owned spans.
+            fn erase_span(form: &mut Form) {
+                form.span = 0..0;
+                for metadata in &mut form.metadata { erase_span(metadata); }
+                if let Kind::List(items) | Kind::Vector(items) = &mut form.kind {
+                    for item in items { erase_span(item); }
+                }
+            }
+            let mut expected = expected.clone(); erase_span(&mut expected);
+            for actual in &values[1..] {
+                let mut actual = actual.clone(); erase_span(&mut actual);
+                assert_eq!(actual, expected);
+            }
+        }
+        let result = session.eval("(== (+ (staged 1) (staged 1 2 3)) 84)").unwrap();
+        assert_eq!(session.inspect(&result, |store, value| Ok(value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32())).unwrap(), 4);
+    }
+}

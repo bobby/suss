@@ -956,6 +956,7 @@ impl Analyzer<'_> {
                 None
             },
             origin: self.origin.clone(),
+            initializer_form: init.cloned(),
             initializer: None,
             once,
         };
@@ -1023,7 +1024,7 @@ impl Analyzer<'_> {
             .is_some_and(|arg| matches!(&arg.kind, Kind::Vector(names)
                 if !names.iter().any(|name| matches!(&name.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "&"))))
         {
-            self.enter_function_scope(name_hint, None);
+            self.enter_function_scope(form, name_hint, None);
             return self.fixed_function(form, args, bootstrap_macro);
         }
         let outer = self.locals.clone();
@@ -1075,7 +1076,7 @@ impl Analyzer<'_> {
         let local = self_binding
             .as_ref()
             .map(|binding| self.locals[&binding.name].clone());
-        self.enter_function_scope(declaration, local);
+        self.enter_function_scope(form, declaration, local);
         let mut methods = Vec::new();
         let mut captures = BTreeSet::new();
         if signatures

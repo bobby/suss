@@ -432,6 +432,9 @@ impl<'a> AnalysisGraph<'a> {
             if let Some(info) = namespace.declarations.get(global) {
                 fields.push(("suss/declaration", self.form(&info.declaration, depth + 1)?));
                 fields.push(("suss/defonce", self.flag(info.once)?));
+                if let Some(form) = &info.initializer_form {
+                    fields.push(("suss/initializer-form", self.form(form, depth + 1)?));
+                }
                 fields.push((
                     "suss/initializer-recorded",
                     self.flag(info.initializer.is_some())?,
@@ -607,6 +610,7 @@ impl<'a> AnalysisGraph<'a> {
         let mut info = vec![
             ("fn-scope", parents),
             ("suss/explicit-self", explicit),
+            ("suss/function-form", self.form(&scope.function_form, depth + 1)?),
             ("suss/phase", phase),
         ];
         if let Some(shadow) = &scope.shadow {

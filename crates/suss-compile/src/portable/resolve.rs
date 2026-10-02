@@ -190,6 +190,8 @@ pub struct DefinitionInfo {
     pub declaration: suss_reader::forms::Form,
     pub docstring: Option<Vec<u16>>,
     pub origin: Option<super::SourceOrigin>,
+    /// Actual initializer syntax, available before its body is analyzed.
+    pub initializer_form: Option<suss_reader::forms::Form>,
     pub initializer: Option<std::sync::Arc<super::hir::Hir>>,
     pub once: bool,
 }

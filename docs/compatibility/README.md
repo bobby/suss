@@ -541,3 +541,9 @@ effects. The native representation keeps explicit backend facts; it does not
 establish the portable source `&env` schema, AST inference or invocation contract.
 See [analysis graph](../runtime/compiled-macro-analysis-graph.md). Original M3
 acceptance remains open and no inventory declaration is reclassified.
+
+Staged declaration preparation now retains actual definition initializer syntax
+before body analysis and actual named function syntax before method expansion.
+An executing native graph query inspects both fixed and variadic bodies and then
+executes both signatures in each Store; it fails with the prior graph transport.
+This does not certify portable function metadata, inference or source `&env`.

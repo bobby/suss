@@ -10844,3 +10844,38 @@ and AST inference, including real persistent sets, then wire actual implicit
 branch together until transport is reviewable; then run full final-head checks,
 open a PR with `Refs #14`, dispatch its independent reviewer and require green
 final-head CI. Issues12–15 and all remaining M3 acceptance stay open.
+
+
+### Staged initializer and function syntax
+
+`DefinitionInfo.initializer_form` records the actual initializer syntax before
+body analysis; named `FunctionScope.function_form` records actual function syntax
+before any method body expansion. Native graph keys are explicitly
+`suss/initializer-form` and `suss/function-form`. This does not manufacture portable
+fn-var/arglists metadata or infer runtime initialization. The original syntax
+and analyzed initializer HIR are distinct records.
+
+A new compiled graph query executes during analysis of both fixed and variadic
+method bodies in each Store, observes the initializer HIR as absent and both
+retained forms as the original function syntax, then executes both signatures.
+The regression failed with the previous committed graph transport (nil instead
+of the actual source form) and passed after restoration of the implementation.
+
+Validation: `CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test --locked -p suss-cli --test compiled_macro_analysis_graph
+--test compiled_macro_function_scopes --test compiled_macro_method_roles
+--test compiled_macro_binding_records -- --test-threads=2` completed successfully:
+17 passed, 0 failed, 0 ignored (graph6, bindings7, scopes2, methods2). Log:
+`/private/tmp/suss-rich-env-staged-final-focus.log`. Prior-transport failing evidence:
+`/private/tmp/suss-rich-env-staged-before.log` (0 passed, 1 failed).
+
+The required full `cargo test --workspace --locked -- --test-threads=2` baseline
+will run on the committed source version with the same target/jobs settings; log
+`/private/tmp/suss-rich-env-staged-full.log`. Do not claim its result before terminal
+output. Issue14 progress tracking:
+https://github.com/bobby/suss/issues/14#issuecomment-5962316620
+
+Next: complete portable namespace/declaration and AST inference data and real
+persistent set transport, then actual implicit &env and fresh oracle comparison.
+No new PR until transport is reviewable; require independent review and exact-head
+CI. Existing PR146/147 remain open, reviewed and green. No issue or M3 completion.

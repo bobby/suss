@@ -31,7 +31,7 @@ namespace and declaration schema. Exclusions currently appear as an explicitly
 named native vector; persistent set transport is still required for the complete
 portable schema. No loaded/initialized status is inferred from declaration records.
 
-Five executing native regressions cover:
+Six executing native regressions cover:
 
 * A 96-binding shadow chain, whose final initializer environment and shadow refer
   to the same canonical binding object after forced GC. A compiled function walks
@@ -47,6 +47,18 @@ Five executing native regressions cover:
   independently of analysis record depth. This does not claim equivalent nesting
   support for an enclosing source-reader fixture.
 
+* Staged definition and function syntax visible in both fixed and variadic method
+  bodies while the initializer HIR is still absent, followed by actual execution
+  of both signatures in each Store. The prior transport returns nil for this
+  syntax and fails the regression.
+
+Definitions retain `initializer_form` before initializer analysis; named function
+scopes retain the actual `function_form` before body expansion. The graph exposes
+these as explicit native `suss/initializer-form` and `suss/function-form` facts.
+They preserve source declarations rather than inferring initialized runtime
+status or fabricating portable method metadata. Syntax and analyzed initializer
+HIR remain distinct facts.
+
 Construction and inspection leave resident fragment/byte and external handle
 counts unchanged. Those counters do not establish live GC memory accounting.
 The long compiled inspection uses an explicit 100,000,000-fuel stress allowance;
@@ -54,7 +66,8 @@ its first default-budget attempt failed. Another attempt failed because the test
 expected `Sum` while the actual compiler operation is `Arithmetic::Add`. Both
 failures are recorded as failures before the corrected checks passed.
 
-Focused graph tests pass 5/0/0; scope/role/binding tests pass 11/0/0 with new identity
+Focused graph tests passed 5/0/0 before staged syntax; the new staged regression
+passes in both Stores and fails with the prior graph transport. The final graph/scope/role/binding suites pass 17/0/0, including new identity
 and declaration environment assertions. The required full workspace run completed with
 984 passed, 0 failed and 17 ignored across 102 result groups, before the two edge
 fixes. Both new edge regressions failed against that version and passed after the

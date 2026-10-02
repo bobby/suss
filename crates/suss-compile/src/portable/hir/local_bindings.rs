@@ -47,6 +47,8 @@ pub enum SourceRole {
 /// Named source function scope; a definition hint does not create a lexical ID.
 #[derive(Debug, Clone)]
 pub struct FunctionScope {
+    /// Actual function syntax before any method body expansion or lowering.
+    pub function_form: Form,
     pub declaration: Form,
     pub origin: Option<super::super::SourceOrigin>,
     pub namespace: String,
@@ -195,6 +197,7 @@ impl Analyzer<'_> {
 
     pub(super) fn enter_function_scope(
         &mut self,
+        function_form: &Form,
         declaration: Option<&Form>,
         self_binding: Option<LocalBinding>,
     ) {
@@ -225,6 +228,7 @@ impl Analyzer<'_> {
         }
         let scope = self.capture_source_namespace();
         self.function_scopes.push(Arc::new(FunctionScope {
+            function_form: function_form.clone(),
             declaration: declaration.clone(),
             origin: self.origin.clone(),
             namespace: self.environment.current_namespace(self.phase).to_owned(),
