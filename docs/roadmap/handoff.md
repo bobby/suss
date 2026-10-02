@@ -10691,3 +10691,105 @@ not finish the requested environment transport.
 Original issue14 and all M3 syntax-quote/gensym/bootstrap/cache/evaluator-removal,
 frontends and scheduler/lifecycle acceptance remain open. No issue closure or M3
 completion is claimed.
+
+## Rich environment snapshots and native data transport — 2026-10-02
+
+Continue in `/private/tmp/suss-m3-rich-macro-environment`, branch
+`portable/m3-rich-macro-environment`, parent `44633c8`. This slice adds actual
+immutable lexical/namespace/function snapshots and resolved declaration records,
+declaration contexts, source function variadic facts and method declaration
+namespaces. Namespace snapshot generation is local to the analyzer; it is not a
+persistent artifact cache key. Compiler-only nodes still have no invented source.
+
+Private catch payloads retain their actual physical parameter IDs and avoid user
+name collisions. User catches retain a separate logical let role and actual
+payload access. An executing regression checks scope restoration and original
+initializer/declaration facts after global redefinition. No source initializer is
+reexecuted for introspection; runtime operand ordering is preserved.
+
+`Session` now constructs rooted scalars, source arrays and captured class instances
+through protected shared-runtime entry points. Class values require the actual
+compiler `new` path: descriptor, source constructor, invocation. Ordinary class
+invocation was an actual bug discovered by execution, yielding undefined keys and
+collapsing a seventeen-pair map to one pair. Replacing the source array helper
+alone did not repair it; those failed runs remain failures. The actual constructor
+fix passes. Small maps use the retained duplicate-aware factory; large maps use
+fromArrays. Equal distinct key objects retain the final value in both paths.
+
+`FormBridge::quote` now constructs bounded reader data directly instead of
+compiling transport fragments. It reuses existing compiler metadata normalization
+and identifier hashing; no new hashing algorithm or upstream implementation was
+ported. Captured factories construct maps/vectors; constructors build identifiers
+and lists. Limits are 4096 form nodes, 64 levels and 1048576 UTF-16 units. Persistent
+set data and unresolved reader prefixes fail explicitly. Shared values preserve
+identity after forced GC; foreign/reset handles fail. Resident artifact counters
+and external handle counts are checked; none is claimed as live GC accounting.
+
+Validation uses the owned target `/private/tmp/suss-m3-pr143-target`,
+`CARGO_BUILD_JOBS=2`, no RUSTFLAGS override. Initial native attempts include the
+private UNDEFINED constant compile error and incorrect test use of Result-valued
+i31 access; both were fixed and rerun, not treated as execution evidence. Builder
+runs exposed the constructor failure above. A later second-level vector stress
+fixture exhausted the default fuel allowance; the bounded fixture now explicitly
+uses 100000000 fuel and passes. No skip or cancellation claim was added.
+
+* Catch regression30361 exited0:1/0/0,6filtered;
+  `cargo test -p suss-cli --locked --test compiled_macro_binding_records
+  compiler_catch_records -- --test-threads=2`, same target/jobs;
+  `/private/tmp/suss-rich-env-catch-snapshot-regression.log`.
+* Direct form/metadata56966 exited0:19/0/0 across3groups (builders3, forms6,
+  metadata10), `cargo test -p suss-cli --locked --test compiled_macro_data_builders
+  --test compiled_macro_forms --test compiled_macro_metadata -- --test-threads=2`;
+  `/private/tmp/suss-rich-env-direct-form-regression.log`.
+* Final focused98451 exited0:16/0/0 across5groups (context1, bindings7, builders4,
+  function2, method2). Command: `cargo test -p suss-cli --locked
+  --test compiled_macro_data_builders --test compiled_macro_binding_records
+  --test compiled_macro_function_scopes --test compiled_macro_method_roles
+  --test compiled_macro_analysis_context -- --test-threads=2`;
+  `/private/tmp/suss-rich-env-final-native-focus.log`.
+* Fresh genuine pinned JVM/Node oracle79645 exited0:
+  `sh scripts/test-rich-environment-oracle.sh`, log
+  `/private/tmp/suss-rich-env-primary-normalized.log`. Strict comparison matches
+  sixteen ordered actual analyzer records and thirteen executed results. The
+  runner forces compilation with analysis caches disabled and checks the local
+  checkout pin. Only names identified by actual private-catch role are normalized;
+  no other source name or AST fact is changed. This is upstream evidence, not a
+  native source &env test. No shipped JVM/Node dependency was added.
+* Python discovery88/0; upstream inventory1065 verified; shell syntax, strict
+  oracle comparison and git diff --check pass.
+* Required full56520 exited0:
+  `CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+  cargo test --workspace --locked -- --test-threads=2`;
+  `/private/tmp/suss-rich-env-full-baseline.log`. Independently parsed complete log:
+  981passed/0failed/17existingignores across101groups, all47 runtime ABI tests and
+  finalreader doctests. A naive test-name prefix count reported46 because one
+  test starts runtime_abi2_; the actual ABI group explicitly passes47/0/0.
+  Only comment/documentation edits
+  followed its start; no executable source behavior was changed during the run.
+
+GitHub main remains8139597 (merged PR144). GitHub cannot resolve145 as an issue or
+PR; do not infer an additional merge from that number. PR146 head9edb0aa and
+PR147 head1bb6dee remain OPEN/draft/MERGEABLE and unmerged. Their original exact-head
+workflow attempts failed before launch for billing/spending-limit reasons.
+Read-only queries now show **attempt2** executing actual test steps on the same
+heads: run37047007492/PR146 and run37048703012/PR147. Inventory steps passed; final
+CI success is pending. Existing independent reviewers were redispatched for
+read-only final-head/CI verification and confirmed their source approvals remain
+valid, with no significant outstanding findings. No local builds/edits were
+requested from them, and no PR was merged. Update PR bodies/readiness only when
+successful exact-head CI is confirmed.
+
+Next unblocked implementation remains the memoized canonical environment graph:
+declare and pass &env beside &form, preserve shared analysis records without
+flattening initializer environments into duplicated reader trees, and expose
+actual locals/fields/shadows/scopes, namespace facts and initializer source ASTs.
+Use stable ownership-backed record identities for memoization; numeric namespace
+generations are not cross-fork cache identities. Function declaration environments,
+protocol receiver provenance and staged method metadata need faithful retention.
+The fresh oracle records upstream JS initializer ASTs; represent genuine native
+arithmetic/receiver lowering and document precise backend variance rather than
+inventing JS nodes. Full AST/inference and persistent set prerequisites remain.
+Keep this branch together until environment transport is reviewable; do not open
+a source-facts-only PR. Source macro &env still rejects; original issues12–15,
+syntax quote/gensyms/versioned bootstrap/cache/evaluator removal, frontend and
+scheduler/lifecycle acceptance remain open. No M3 completion or issue closure.

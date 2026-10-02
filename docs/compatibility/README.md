@@ -523,3 +523,14 @@ The records retain reader/expansion forms and actual context/phase/origin;
 compiler-only lowering nodes have no source record. Executing focused evidence
 passes 9 native macro and 38 compiler tests. This does not certify a complete
 source AST, inference, rich source-level `&env`, bootstrap or M3 acceptance.
+
+Source records now preserve immutable lexical/namespace snapshots and resolved
+declarations. Native bounded form construction preserves canonical data, sharing,
+metadata normalization, exact scalar storage and Store identity without compiling
+transport fragments. Sixteen focused native tests pass; a separate fresh upstream
+rich environment oracle checks sixteen observations and thirteen executed results.
+The required full workspace baseline passes 981 tests with zero failures and
+17 existing ignores across 101 groups, including all 47 runtime ABI tests.
+Source macro `&env`, memoized environment graph construction, complete AST/inference,
+persistent set transport and original M3 acceptance remain unestablished. No
+inventory declaration is reclassified on this preparatory evidence.

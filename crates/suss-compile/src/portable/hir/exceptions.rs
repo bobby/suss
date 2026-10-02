@@ -123,12 +123,23 @@ impl Analyzer<'_> {
         } else {
             let id = BindingId(self.next);
             self.next += 1;
+            let mut hidden_name = format!("$exception{}", id.0);
+            while self.locals.contains_key(&hidden_name) {
+                hidden_name.push('$');
+            }
             let parameter = Parameter {
                 id,
-                name: format!("$exception{}", id.0),
+                name: hidden_name.clone(),
                 metadata: Vec::new(),
                 span: form.span.clone(),
             };
+            let hidden_declaration = Form {
+                span: form.span.clone(), metadata: Vec::new(),
+                kind: Kind::Symbol(suss_reader::Symbol::new(&hidden_name)),
+            };
+            self.insert_local(&hidden_declaration, id, Type::Value, LocalKind::Catch, None);
+            self.locals.get_mut(&hidden_name).unwrap().source_role = SourceRole::PrivateCatch { anchor: form.span.clone() };
+            let hidden = std::sync::Arc::new(self.locals[&hidden_name].clone());
             let payload = self.local(form, id);
             let mut selected = Hir {
                 source: None,
@@ -151,6 +162,7 @@ impl Analyzer<'_> {
                 };
                 let previous =
                     self.insert_local(&items[1], id, Type::Value, LocalKind::Catch, None);
+                self.locals.get_mut(&name.name).unwrap().source_role = SourceRole::CatchBinding { hidden: hidden.clone(), access: payload.clone() };
                 let body = self.body(&items[2..], catch.span.clone(), context, false);
                 if let Some(previous) = previous {
                     self.locals.insert(name.name.clone(), previous);
@@ -176,6 +188,7 @@ impl Analyzer<'_> {
                     body
                 };
             }
+            self.locals.remove(&hidden_name);
             self.exception_region(form, vec![parameter], selected)
         };
         let body = self.body(&args[..body_end], form.span.clone(), context, false)?;

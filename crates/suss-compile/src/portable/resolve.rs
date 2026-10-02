@@ -210,6 +210,7 @@ pub struct Environment {
     namespaces: BTreeSet<(Phase, String)>,
     bindings: BTreeMap<Global, Binding>,
     definitions: BTreeMap<Global, DefinitionInfo>,
+    source_generation: u64,
     scopes: BTreeMap<(Phase, String), Scope>,
     current: BTreeMap<Phase, String>,
     materialized_bootstrap: BTreeSet<Global>,
@@ -270,6 +271,7 @@ impl Environment {
             namespaces: BTreeSet::new(),
             bindings: BTreeMap::new(),
             definitions: BTreeMap::new(),
+            source_generation: 0,
             scopes: BTreeMap::new(),
             current: BTreeMap::new(),
             materialized_bootstrap: BTreeSet::new(),
@@ -424,7 +426,12 @@ impl Environment {
     fn scope(&self, phase: Phase) -> &Scope {
         &self.scopes[&(phase, self.current[&phase].clone())]
     }
+    fn source_changed(&mut self) {
+        self.source_generation = self.source_generation.checked_add(1).expect("compiler source generation exhausted");
+    }
+    pub(crate) fn source_generation(&self) -> u64 { self.source_generation }
     fn scope_mut(&mut self, phase: Phase) -> &mut Scope {
+        self.source_changed();
         let namespace = self.current[&phase].clone();
         self.scopes
             .get_mut(&(phase, namespace))
@@ -443,7 +450,11 @@ impl Environment {
                 global.phase() == phase && global.namespace() == scope.namespace).collect(),
         }
     }
+    pub fn definition_info(&self, global: &Global) -> Option<&DefinitionInfo> {
+        self.definitions.get(global)
+    }
     pub(crate) fn record_definition(&mut self, global: Global, info: DefinitionInfo) {
+        self.source_changed();
         self.definitions.insert(global, info);
     }
     /// Explicit declarations, not evidence that any source file has loaded.
@@ -464,7 +475,7 @@ impl Environment {
             .collect()
     }
     pub(crate) fn materialize_bootstrap(&mut self, global: Global) {
-        self.materialized_bootstrap.insert(global);
+        if self.materialized_bootstrap.insert(global) { self.source_changed(); }
     }
     /// Bootstrap cell initializers for native hosts; source values share these
     /// canonical identities and later declarations may replace their contents.
@@ -512,6 +523,7 @@ impl Environment {
             .entry((phase, namespace.into()))
             .or_insert_with(|| Scope::new(namespace));
         self.current.insert(phase, namespace.into());
+        self.source_changed();
         Ok(())
     }
     /// An ns declaration replaces imports; entering a REPL namespace preserves them.
@@ -524,6 +536,7 @@ impl Environment {
         let namespace = self.current[&phase].clone();
         self.scopes
             .insert((phase, namespace.clone()), Scope::new(&namespace));
+        self.source_changed();
         Ok(())
     }
     pub fn declare_cell(
@@ -557,6 +570,7 @@ impl Environment {
         self.declare_namespace(phase, &global.namespace)?;
         self.bindings
             .insert(global.clone(), Binding::Cell(global.clone()));
+        self.source_changed();
         Ok(global)
     }
     pub(crate) fn protocol_key(&mut self, protocol: &Global, method: &str, arity: usize) -> Global {

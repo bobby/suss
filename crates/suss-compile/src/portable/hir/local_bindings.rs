@@ -17,12 +17,16 @@ pub enum LocalKind {
 #[derive(Debug, Clone)]
 pub enum SourceRole {
     Plain,
+    FunctionName { variadic: bool },
+    PrivateCatch { anchor: std::ops::Range<usize> },
+    CatchBinding { hidden: Arc<LocalBinding>, access: Hir },
     MethodArgument {
         index: usize,
         rest: bool,
     },
     MethodThis {
         type_declaration: Form,
+        namespace: String,
         /// Actual source receiver form, independent of a same-named last formal.
         receiver_declaration: Form,
         /// Visible source argument shadow; Object receivers may shadow a user arg.
@@ -38,6 +42,7 @@ pub struct FunctionScope {
     pub declaration: Form,
     pub origin: Option<super::super::SourceOrigin>,
     pub namespace: String,
+    pub declaration_context: super::super::AnalysisContext,
     pub parents: Arc<[Arc<FunctionScope>]>,
     pub self_binding: Option<LocalBinding>,
     pub shadow: Option<Arc<LocalBinding>>,
@@ -63,6 +68,7 @@ pub struct LocalBinding {
     pub declaration: Form,
     pub origin: Option<super::super::SourceOrigin>,
     pub kind: LocalKind,
+    pub declaration_context: super::super::AnalysisContext,
     pub source_role: SourceRole,
     /// Actual analyzed initializer; absent for parameters/self/catch bindings.
     pub initializer: Option<Arc<Hir>>,
@@ -74,7 +80,8 @@ impl LocalBinding {
     /// Portable source role without changing the actual lowered binding identity.
     pub fn source_kind(&self) -> LocalKind {
         match &self.source_role {
-            SourceRole::Plain => self.kind,
+            SourceRole::Plain | SourceRole::FunctionName { .. } | SourceRole::PrivateCatch { .. } => self.kind,
+            SourceRole::CatchBinding { .. } => LocalKind::Let,
             SourceRole::MethodArgument { index, rest } => LocalKind::Argument {
                 index: *index,
                 rest: *rest,
@@ -144,6 +151,7 @@ impl Analyzer<'_> {
         };
         let role = SourceRole::MethodThis {
             type_declaration: type_declaration.clone(),
+            namespace: self.environment.current_namespace(self.phase).to_owned(),
             receiver_declaration: declarations[0].clone(),
             argument,
             access: self.local(&declarations[0], receiver.id),
@@ -177,6 +185,7 @@ impl Analyzer<'_> {
             declaration: declaration.clone(),
             origin: self.origin.clone(),
             namespace: self.environment.current_namespace(self.phase).to_owned(),
+            declaration_context: self.analysis_contexts.last().copied().expect("source analysis context"),
             parents: self.function_scopes.clone().into(),
             self_binding,
             shadow,
@@ -209,6 +218,7 @@ impl Analyzer<'_> {
                 declaration: declaration.clone(),
                 origin: self.origin.clone(),
                 kind,
+                declaration_context: self.analysis_contexts.last().copied().expect("source analysis context"),
                 source_role: SourceRole::Plain,
                 initializer: initializer.map(Arc::new),
                 shadow,

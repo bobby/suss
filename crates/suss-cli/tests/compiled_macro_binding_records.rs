@@ -81,6 +81,54 @@ fn scalar(session: &mut Session, source: &str) -> f64 {
 }
 
 #[test]
+fn compiler_catch_records_keep_private_payload_and_immutable_source_declarations() {
+    use portable::hir::{SourceBinding, SourceRole};
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut host = Observe::default();
+        let source = r#"(def prior 40)
+(def result (let [$exception2 7 x prior]
+  (try (throw 42) (catch :default problem (checkpoint "caught" problem)))
+  (checkpoint "outside" x)))
+(def prior 41)"#;
+        session.eval_with_macros(source, &mut host).unwrap();
+        assert_eq!(scalar(&mut session, "result"), 40.0);
+        assert_eq!(scalar(&mut session, "prior"), 41.0);
+        let caught = snapshot(&host, "caught");
+        let problem = &caught["problem"];
+        assert_eq!(problem.kind, LocalKind::Catch);
+        assert_eq!(problem.source_kind(), LocalKind::Let);
+        let SourceRole::CatchBinding { hidden, access } = &problem.source_role else { panic!("source catch alias") };
+        let Kind::Symbol(name) = &hidden.declaration.kind else { panic!("private catch symbol") };
+        assert_eq!(name.name, "$exception2$");
+        assert!(caught.contains_key(&name.name));
+        assert!(caught.contains_key("$exception2"));
+        assert_eq!(hidden.id, problem.id);
+        assert_ne!(hidden.id, caught["$exception2"].id);
+        assert_eq!(hidden.kind, LocalKind::Catch);
+        assert!(hidden.initializer.is_none());
+        assert!(matches!(access.kind, Expression::Local(id) if id == hidden.id));
+        assert!(access.source.is_none());
+        let SourceRole::PrivateCatch { anchor } = &hidden.source_role else { panic!("private payload role") };
+        assert!(source[anchor.clone()].starts_with("(try "));
+        let outside = snapshot(&host, "outside");
+        assert!(!outside.contains_key(&name.name));
+        assert!(!outside.contains_key("problem"));
+        assert_eq!(outside["$exception2"].id, caught["$exception2"].id);
+        let original = caught["x"].initializer.as_ref().unwrap().source.as_ref().unwrap();
+        assert_eq!(original.context, portable::AnalysisContext::Expression);
+        assert!(original.locals.contains_key("$exception2"));
+        assert!(!original.locals.contains_key("x"));
+        assert!(!original.locals.contains_key(&name.name));
+        let Some(SourceBinding::Global { global, declaration: Some(info) }) = &original.resolved else { panic!("actual resolved declaration") };
+        assert_eq!(global.name(), "prior");
+        assert!(matches!(info.initializer.as_ref().unwrap().kind, Expression::Literal(portable::hir::Literal::Number(40.0))));
+        let catalog = &original.scope.declarations[global];
+        assert!(matches!(catalog.initializer.as_ref().unwrap().kind, Expression::Literal(portable::hir::Literal::Number(40.0))));
+        assert_eq!(original.origin.as_ref().unwrap().text(), source);
+    }
+}
+
+#[test]
 fn compiler_macro_binding_records_preserve_initializer_shadow_scope_and_once_only_effects() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut host = Observe::default();

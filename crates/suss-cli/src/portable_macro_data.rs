@@ -1,12 +1,12 @@
 //! Bounded native transport between reader forms and real compiled macro values.
-//! Macro bodies execute in Wasm; this module only reads their nominal data results.
+//! Macro bodies execute in Wasm; this module constructs and reads nominal data.
 use crate::portable_session::{Session, SessionError, SessionValue};
 use std::{collections::BTreeMap, ops::Range};
 use suss_compile::portable::Diagnostic;
 use suss_reader::forms::{Form, Kind};
 use wasmtime::{AnyRef, Rooted, StoreContextMut, Val};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum Class {
     Symbol,
     Keyword,
@@ -33,11 +33,14 @@ enum Class {
 pub struct FormBridge {
     roots: Vec<SessionValue>,
     classes: BTreeMap<i64, Class>,
+    constructors: BTreeMap<Class, usize>,
+    factories: BTreeMap<&'static str, SessionValue>,
 }
 impl FormBridge {
     pub fn new(session: &mut Session) -> Result<Self, SessionError> {
         let mut roots = Vec::new();
         let mut classes = BTreeMap::new();
+        let mut constructors = BTreeMap::new();
         for (name, class) in [
             ("Symbol", Class::Symbol),
             ("Keyword", Class::Keyword),
@@ -77,6 +80,7 @@ impl FormBridge {
                     "Duplicate macro data class identity",
                 )));
             }
+            constructors.insert(class, roots.len());
             roots.push(value);
         }
         // Source arrays have a private runtime descriptor rather than a public
@@ -96,7 +100,26 @@ impl FormBridge {
             )));
         }
         roots.push(value);
-        Ok(Self { roots, classes })
+        let mut factories = BTreeMap::new();
+        for (name, source) in [
+            (
+                "array-map",
+                "(.-createAsIfByAssoc suss.core/PersistentArrayMap)",
+            ),
+            ("vector", "(.-fromArray suss.core/PersistentVector)"),
+            ("hash-map", "(.-fromArrays suss.core/PersistentHashMap)"),
+            ("empty-map", "(.-EMPTY suss.core/PersistentArrayMap)"),
+            ("empty-list", "(.-EMPTY suss.core/List)"),
+            ("with-meta", "suss.core/with-meta"),
+        ] {
+            factories.insert(name, session.eval(source)?);
+        }
+        Ok(Self {
+            roots,
+            classes,
+            constructors,
+            factories,
+        })
     }
     fn check(&self, session: &mut Session) -> Result<(), SessionError> {
         for root in &self.roots {
@@ -104,25 +127,240 @@ impl FormBridge {
         }
         Ok(())
     }
+    /// Native canonical data construction preserves sharing in analysis graphs.
+    /// Inputs and factories are rooted in this Store; no source is interpreted.
+    pub fn scalar(
+        &self,
+        session: &mut Session,
+        literal: &suss_compile::portable::hir::Literal,
+    ) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        session.data_scalar(literal)
+    }
+    pub fn map_values(
+        &self,
+        session: &mut Session,
+        entries: &[(SessionValue, SessionValue)],
+    ) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        if entries.is_empty() {
+            return Ok(self.factories["empty-map"].clone());
+        }
+        if entries.len() <= 8 {
+            let arguments: Vec<_> = entries
+                .iter()
+                .flat_map(|(key, value)| [key, value])
+                .collect();
+            let array = session.data_array(&arguments)?;
+            session.invoke(&self.factories["array-map"], &[&array])
+        } else {
+            let keys: Vec<_> = entries.iter().map(|(key, _)| key).collect();
+            let values: Vec<_> = entries.iter().map(|(_, value)| value).collect();
+            let keys = session.data_array(&keys)?;
+            let values = session.data_array(&values)?;
+            session.invoke(&self.factories["hash-map"], &[&keys, &values])
+        }
+    }
+    pub fn vector_values(
+        &self,
+        session: &mut Session,
+        items: &[SessionValue],
+    ) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        let arguments: Vec<_> = items.iter().collect();
+        let array = session.data_array(&arguments)?;
+        let owned = self.scalar(session, &suss_compile::portable::hir::Literal::Bool(true))?;
+        session.invoke(&self.factories["vector"], &[&array, &owned])
+    }
+    pub fn list_values(
+        &self,
+        session: &mut Session,
+        items: &[SessionValue],
+    ) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        let nil = self.scalar(session, &suss_compile::portable::hir::Literal::Nil)?;
+        let mut tail = self.factories["empty-list"].clone();
+        for (index, value) in items.iter().enumerate().rev() {
+            let count = self.scalar(
+                session,
+                &suss_compile::portable::hir::Literal::Number((items.len() - index) as f64),
+            )?;
+            tail = session.data_construct(
+                &self.roots[self.constructors[&Class::List]],
+                &[&nil, value, &tail, &count, &nil],
+            )?;
+        }
+        Ok(tail)
+    }
+    pub fn identifier(
+        &self,
+        session: &mut Session,
+        namespace: Option<&str>,
+        name: &str,
+        keyword: bool,
+        metadata: Option<&SessionValue>,
+    ) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        let nil = self.scalar(session, &suss_compile::portable::hir::Literal::Nil)?;
+        let ns = if let Some(namespace) = namespace {
+            self.scalar(
+                session,
+                &suss_compile::portable::hir::Literal::String(namespace.encode_utf16().collect()),
+            )?
+        } else {
+            nil.clone()
+        };
+        let name_value = self.scalar(
+            session,
+            &suss_compile::portable::hir::Literal::String(name.encode_utf16().collect()),
+        )?;
+        let fqn = namespace.map_or_else(
+            || name.to_owned(),
+            |namespace| format!("{namespace}/{name}"),
+        );
+        let fqn = self.scalar(
+            session,
+            &suss_compile::portable::hir::Literal::String(fqn.encode_utf16().collect()),
+        )?;
+        let hash = self.scalar(
+            session,
+            &suss_compile::portable::hir::Literal::Number(
+                suss_compile::portable::hir::identifier_hash(namespace, name, keyword) as f64,
+            ),
+        )?;
+        if keyword {
+            if metadata.is_some() {
+                return Err(SessionError::Host(error(
+                    "Keyword compiler data cannot carry metadata",
+                )));
+            }
+            session.data_construct(
+                &self.roots[self.constructors[&Class::Keyword]],
+                &[&ns, &name_value, &fqn, &hash],
+            )
+        } else {
+            session.data_construct(
+                &self.roots[self.constructors[&Class::Symbol]],
+                &[&ns, &name_value, &fqn, &hash, metadata.unwrap_or(&nil)],
+            )
+        }
+    }
     pub fn quote(&self, session: &mut Session, form: Form) -> Result<SessionValue, SessionError> {
         self.check(session)?;
-        let span = form.span.clone();
-        let operator = Form {
-            span: span.clone(),
-            metadata: vec![],
-            kind: Kind::Symbol(suss_reader::Symbol {
-                namespace: Some("suss.bootstrap".into()),
-                name: "quote-form".into(),
-            }),
+        let mut budget = Budget {
+            nodes: 4096,
+            units: 1_048_576,
         };
-        session.eval_forms(
-            vec![Form {
-                span: span.clone(),
-                metadata: vec![],
-                kind: Kind::List(vec![operator, form]),
-            }],
-            span,
-        )
+        self.form_value(session, &form, 0, &mut budget)
+    }
+    fn form_value(
+        &self,
+        session: &mut Session,
+        form: &Form,
+        depth: usize,
+        budget: &mut Budget,
+    ) -> Result<SessionValue, SessionError> {
+        use suss_compile::portable::hir::Literal;
+        let failure = |message: &str| {
+            SessionError::Compile(Diagnostic {
+                span: form.span.clone(),
+                message: message.into(),
+            })
+        };
+        if depth >= 64 {
+            return Err(failure("Macro form construction exceeds 64 levels"));
+        }
+        spend(budget).map_err(SessionError::Host)?;
+        let units = match &form.kind {
+            Kind::String(value) => value.len(),
+            Kind::Symbol(value) => {
+                2 * (value.name.encode_utf16().count()
+                    + value
+                        .namespace
+                        .as_ref()
+                        .map_or(0, |ns| ns.encode_utf16().count() + 1))
+            }
+            Kind::Keyword(value) => {
+                2 * (value.name.encode_utf16().count()
+                    + value
+                        .namespace
+                        .as_ref()
+                        .map_or(0, |ns| ns.encode_utf16().count() + 1))
+            }
+            _ => 0,
+        };
+        budget.units = budget
+            .units
+            .checked_sub(units)
+            .ok_or_else(|| failure("Macro form construction exceeds UTF-16 storage bound"))?;
+        let value = match &form.kind {
+            Kind::Nil => self.scalar(session, &Literal::Nil)?,
+            Kind::Bool(value) => self.scalar(session, &Literal::Bool(*value))?,
+            Kind::Number(value) => self.scalar(session, &Literal::Number(*value))?,
+            Kind::String(value) => self.scalar(session, &Literal::String(value.clone()))?,
+            Kind::Symbol(value) => self.identifier(
+                session,
+                value.namespace.as_deref(),
+                &value.name,
+                false,
+                None,
+            )?,
+            Kind::Keyword(value) => {
+                self.identifier(session, value.namespace.as_deref(), &value.name, true, None)?
+            }
+            Kind::List(items) | Kind::Vector(items) => {
+                let items = items
+                    .iter()
+                    .map(|item| self.form_value(session, item, depth + 1, budget))
+                    .collect::<Result<Vec<_>, _>>()?;
+                if matches!(form.kind, Kind::List(_)) {
+                    self.list_values(session, &items)?
+                } else {
+                    self.vector_values(session, &items)?
+                }
+            }
+            Kind::Map(items) => {
+                if items.len() % 2 != 0 {
+                    return Err(failure("Macro form map requires paired entries"));
+                }
+                let mut entries = Vec::new();
+                for pair in items.chunks_exact(2) {
+                    entries.push((
+                        self.form_value(session, &pair[0], depth + 1, budget)?,
+                        self.form_value(session, &pair[1], depth + 1, budget)?,
+                    ));
+                }
+                self.map_values(session, &entries)?
+            }
+            Kind::Set(_) => {
+                return Err(failure(
+                    "Native macro set data requires persistent set support",
+                ));
+            }
+            Kind::Conditional(_) | Kind::Discard(_) | Kind::Prefix { .. } => {
+                return Err(failure(
+                    "Native macro data requires resolved reader prefixes",
+                ));
+            }
+        };
+        if form.metadata.is_empty() {
+            return Ok(value);
+        }
+        if !matches!(
+            form.kind,
+            Kind::Symbol(_) | Kind::List(_) | Kind::Vector(_) | Kind::Map(_) | Kind::Set(_)
+        ) {
+            return Err(failure("Metadata requires a symbol or collection"));
+        }
+        let pairs = suss_compile::portable::hir::reader_metadata_pairs(form)
+            .map_err(SessionError::Compile)?;
+        let metadata = Form {
+            span: form.span.clone(),
+            metadata: vec![],
+            kind: Kind::Map(pairs),
+        };
+        let metadata = self.form_value(session, &metadata, depth + 1, budget)?;
+        session.invoke(&self.factories["with-meta"], &[&value, &metadata])
     }
     /// Original result locations are not encoded in runtime values. Attribute
     /// expansion data to the supplied macro call site; never invent source bytes.

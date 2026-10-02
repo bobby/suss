@@ -888,6 +888,74 @@ impl Session {
         }
         Ok(result)
     }
+    /// Allocate compiler data scalars through the shared runtime without compiling
+    /// source, replaying initializers or adding resident fragments.
+    pub(crate) fn data_scalar(&mut self, literal: &portable::hir::Literal) -> Result<SessionValue, SessionError> {
+        use portable::hir::Literal;
+        self.budget()?;
+        let mut scope = RootScope::new(&mut self.store);
+        match literal {
+            Literal::Undefined => Err(SessionError::Host(wasmtime::Error::msg("Compiler data has no undefined source literal"))),
+            Literal::Nil | Literal::Bool(_) => {
+                let sentinel = match literal {
+                    Literal::Nil => 0,
+                    Literal::Bool(false) => 2,
+                    Literal::Bool(true) => 4,
+                    _ => unreachable!(),
+                };
+                let value = Val::AnyRef(Some(AnyRef::from_i31(&mut scope, wasmtime::I31::new_u32(sentinel).expect("runtime sentinel fits i31"))));
+                own(&mut scope, value, self.identity, &self.handles)
+            }
+            Literal::Number(value) => {
+                let function = self.runtime.get_func(&mut scope, "number-box").expect("shared runtime number constructor");
+                call(&mut scope, self.runtime, function, &[Val::F64(value.to_bits())], self.identity, &self.handles)
+            }
+            Literal::String(units) => {
+                let length = i32::try_from(units.len()).map_err(|_| SessionError::Host(wasmtime::Error::msg("Compiler data string exceeds runtime length")))?;
+                let function = self.runtime.get_func(&mut scope, "string-new").expect("shared runtime string constructor");
+                let value = call(&mut scope, self.runtime, function, &[Val::I32(length)], self.identity, &self.handles)?;
+                let array = value.value.to_rooted(&mut scope).as_array(&scope)?.expect("runtime string is a UTF-16 array");
+                for (index, unit) in units.iter().enumerate() {
+                    array.set(&mut scope, index as u32, Val::I32(i32::from(*unit)))?;
+                }
+                Ok(value)
+            }
+        }
+    }
+    /// Build a language source array from already rooted values. The runtime
+    /// clones the internal argument buffer, preserving element identities.
+    pub(crate) fn data_array(&mut self, values: &[&SessionValue]) -> Result<SessionValue, SessionError> {
+        for value in values { self.check(value)?; }
+        let length = i32::try_from(values.len()).map_err(|_| SessionError::Host(wasmtime::Error::msg("Compiler data array exceeds runtime length")))?;
+        self.budget()?;
+        let mut scope = RootScope::new(&mut self.store);
+        let mut result = [Val::null_any_ref()];
+        self.runtime.get_func(&mut scope, "args-new").expect("shared runtime argument constructor")
+            .call(&mut scope, &[Val::I32(length)], &mut result)?;
+        let array = result[0].unwrap_anyref().unwrap().as_array(&scope)?.expect("runtime argument array");
+        for (index, value) in values.iter().enumerate() {
+            let value = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
+            array.set(&mut scope, index as u32, value)?;
+        }
+        let function = self.runtime.get_func(&mut scope, "source-array-new").expect("shared runtime source array constructor");
+        call(&mut scope, self.runtime, function, &result, self.identity, &self.handles)
+    }
+    /// Follow the compiler's `new` path using a captured canonical class value.
+    pub(crate) fn data_construct(&mut self, class: &SessionValue, arguments: &[&SessionValue]) -> Result<SessionValue, SessionError> {
+        self.check(class)?;
+        for argument in arguments { self.check(argument)?; }
+        self.budget()?;
+        let constructor = {
+            let mut scope = RootScope::new(&mut self.store);
+            let function = self.runtime.get_func(&mut scope, "constructor-descriptor").expect("shared runtime class descriptor");
+            let value = Val::AnyRef(Some(class.value.to_rooted(&mut scope)));
+            let descriptor = call(&mut scope, self.runtime, function, &[value], self.identity, &self.handles)?;
+            let function = self.runtime.get_func(&mut scope, "source-constructor-new").expect("shared runtime source constructor");
+            let value = Val::AnyRef(Some(descriptor.value.to_rooted(&mut scope)));
+            call(&mut scope, self.runtime, function, &[value], self.identity, &self.handles)?
+        };
+        self.invoke(&constructor, arguments)
+    }
     pub fn invoke(
         &mut self,
         function: &SessionValue,

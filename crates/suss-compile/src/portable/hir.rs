@@ -12,6 +12,7 @@ mod exceptions;
 mod nominal;
 mod callable_signatures;
 mod quotes;
+pub use quotes::{identifier_hash, reader_metadata_pairs};
 use super::{
     Diagnostic,
     resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
@@ -383,9 +384,44 @@ pub struct Method {
 }
 /// Reader/expansion syntax actually analyzed for this expression. Compiler-only
 /// lowering nodes have no source record; their syntax must never be fabricated.
+/// Immutable namespace facts at the actual source analysis boundary.
+#[derive(Debug, Clone)]
+pub struct SourceNamespace {
+    pub namespace: String,
+    pub aliases: BTreeMap<String, String>,
+    pub refers: BTreeMap<String, Global>,
+    pub excluded_core: BTreeSet<String>,
+    pub macro_aliases: BTreeMap<String, String>,
+    pub macro_refers: BTreeMap<String, (String, String)>,
+    pub declarations: BTreeMap<Global, std::sync::Arc<super::resolve::DefinitionInfo>>,
+    pub identities: Vec<Global>,
+}
+impl SourceNamespace {
+    pub fn capture(environment: &Environment, phase: Phase) -> Self {
+        let scope = environment.namespace_scope(phase);
+        Self {
+            namespace: scope.namespace.into(), aliases: scope.aliases.clone(), refers: scope.refers.clone(),
+            excluded_core: scope.excluded_core.clone(), macro_aliases: scope.macro_aliases.clone(), macro_refers: scope.macro_refers.clone(),
+            declarations: scope.declarations.into_iter().map(|(global, info)| (global.clone(), std::sync::Arc::new(info.clone()))).collect(),
+            identities: environment.cells().into_iter().filter(|global| global.phase() == phase && global.namespace() == scope.namespace).collect(),
+        }
+    }
+}
+#[derive(Debug, Clone)]
+pub enum SourceBinding {
+    Local(std::sync::Arc<LocalBinding>),
+    Field(std::sync::Arc<FieldBinding>),
+    Global { global: Global, declaration: Option<std::sync::Arc<super::resolve::DefinitionInfo>> },
+}
 #[derive(Debug, Clone)]
 pub struct SourceAnalysis {
     pub form: Form,
+    pub resolved: Option<SourceBinding>,
+    pub name_hint: Option<Form>,
+    pub scope: std::sync::Arc<SourceNamespace>,
+    pub locals: std::sync::Arc<HashMap<String, LocalBinding>>,
+    pub fields: std::sync::Arc<HashMap<String, FieldBinding>>,
+    pub function_scopes: std::sync::Arc<[std::sync::Arc<FunctionScope>]>,
     pub context: super::AnalysisContext,
     pub phase: Phase,
     pub namespace: String,
@@ -504,6 +540,8 @@ struct Analyzer<'a> {
     next: usize,
     next_loop: usize,
     analysis_depth: usize,
+    analysis_contexts: Vec<super::AnalysisContext>,
+    source_namespace: Option<(u64, Phase, String, std::sync::Arc<SourceNamespace>)>,
     callable_keys: BTreeMap<Global, Hir>,
     target: Option<(LoopId, usize)>,
 }
@@ -560,10 +598,12 @@ impl Analyzer<'_> {
             ));
         }
         self.analysis_depth += 1;
+        self.analysis_contexts.push(context);
         let result = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
             self.expand_or_analyze(form, context, tail, name_hint)
         });
         self.analysis_depth -= 1;
+        self.analysis_contexts.pop();
         result
     }
     fn expand_or_analyze(
@@ -599,6 +639,38 @@ impl Analyzer<'_> {
             }
         }
         let namespace = self.environment.current_namespace(self.phase).to_owned();
+        let generation = self.environment.source_generation();
+        let scope = match &self.source_namespace {
+            Some((version, phase, name, scope)) if *version == generation && *phase == self.phase && *name == namespace => scope.clone(),
+            _ => {
+                let scope = std::sync::Arc::new(SourceNamespace::capture(&self.environment, self.phase));
+                self.source_namespace = Some((generation, self.phase, namespace.clone(), scope.clone()));
+                scope
+            }
+        };
+        let locals = std::sync::Arc::new(self.locals.clone());
+        let fields = std::sync::Arc::new(self.fields.clone());
+        let function_scopes = self.function_scopes.clone().into();
+        let symbol = match &form.kind {
+            Kind::Symbol(symbol) => Some(symbol),
+            Kind::List(items) => items.first().and_then(|head| if let Kind::Symbol(symbol) = &head.kind { Some(symbol) } else { None }),
+            _ => None,
+        };
+        let resolved = symbol.and_then(|symbol| {
+            if symbol.namespace.is_none() {
+                if let Some(binding) = self.locals.get(&symbol.name) {
+                    return Some(SourceBinding::Local(std::sync::Arc::new(binding.clone())));
+                }
+                if let Some(field) = self.fields.get(&symbol.name) {
+                    return Some(SourceBinding::Field(std::sync::Arc::new(field.clone())));
+                }
+            }
+            self.environment.resolve(self.phase, symbol, form.span.clone()).ok().map(|binding| {
+                let global = binding.global().clone();
+                let declaration = self.environment.definition_info(&global).cloned().map(std::sync::Arc::new);
+                SourceBinding::Global { global, declaration }
+            })
+        });
         self.form_inner(form, context, tail, name_hint).map(|mut expression| {
             // A bootstrap/source expansion may already have returned its actual
             // analyzed node. Preserve that record instead of attributing the
@@ -606,6 +678,9 @@ impl Analyzer<'_> {
             if expression.source.is_none() {
                 expression.source = Some(std::sync::Arc::new(SourceAnalysis {
                     form: form.clone(),
+                    resolved,
+                    name_hint: name_hint.cloned(),
+                    scope, locals, fields, function_scopes,
                     context,
                     phase: self.phase,
                     namespace,
@@ -893,6 +968,15 @@ impl Analyzer<'_> {
         } else {
             (None, args)
         };
+        if let Some(parameter) = &self_binding {
+            // These signatures are actual source declarations, before body analysis.
+            let variadic = if let Some(Form { kind: Kind::Vector(names), .. }) = signatures.first() {
+                names.iter().any(|name| matches!(&name.kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "&"))
+            } else {
+                signatures.iter().any(|signature| matches!(&signature.kind, Kind::List(parts) if matches!(parts.first().map(|part| &part.kind), Some(Kind::Vector(names)) if names.iter().any(|name| matches!(&name.kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "&")))))
+            };
+            self.locals.get_mut(&parameter.name).unwrap().source_role = SourceRole::FunctionName { variadic };
+        }
         let declaration = if self_binding.is_some() { args.first() } else { name_hint };
         let local = self_binding.as_ref().map(|binding| self.locals[&binding.name].clone());
         self.enter_function_scope(declaration, local);
@@ -1108,6 +1192,9 @@ impl Analyzer<'_> {
             let id = BindingId(self.next);
             self.next += 1;
             self.insert_local(name, id, Type::Value, LocalKind::Argument { index, rest: rest_parameter == Some(index) }, None);
+            if receiver_type.is_some() {
+                self.locals.get_mut(&symbol.name).unwrap().declaration_context = super::AnalysisContext::Expression;
+            }
             parameters.push(Parameter {
                 id,
                 name: symbol.name.clone(),
@@ -1860,6 +1947,8 @@ pub(crate) fn prepare_with_origin(
         next: 0,
         next_loop: 0,
         analysis_depth: 0,
+        analysis_contexts: Vec::new(),
+        source_namespace: None,
         callable_keys: BTreeMap::new(),
         target: None,
     };
