@@ -10453,3 +10453,23 @@ so no bytecode cache success is claimed. Native fixture is prepared but NOT RUN.
 Wait for97902 native release, execute function-scope focused regressions and
 compiler closures, then full baseline/review/CI before readiness. Rich compiled
 source &env and original M3 gates remain unfinished.
+
+
+PR146 independent review of94f7e2a found no significant production defect.
+Pinned analyzer2101 supplies only direct def initializer hints; fn*2305-2324
+prefers explicit self names and adds a lexical self only for named functions.
+Added a meaningful native regression: direct hints survive macro expansion,
+generated self overrides the hint with its real binding ID, arbitrary let bodies
+drop hints, completed siblings restore scope, generated call-site spans do not
+invent token positions, and owned-forms compilation retains unknown origins.
+Native canonical vectors execute and independently decode after GC in both Stores;
+the raw owned-forms branch inspects compiler facts without claiming execution.
+Reviewer focus87986 terminal0:9passed/0failed/0ignored, consisting of2 scope,
+5 binding,1 context and1 field tests. Command CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target
+CARGO_BUILD_JOBS=2 cargo test -p suss-cli --locked --test compiled_macro_function_scopes
+--test compiled_macro_binding_records --test compiled_macro_analysis_context
+--test compiled_macro_field_records -- --test-threads=2; log
+/private/tmp/suss-pr146-review-focus.log. Python AST, shell syntax and whitespace
+checks pass. Native resource released; next run complete final-source baseline
+and require exact final-head CI before readiness. Rich source-level &env and
+original M3 acceptance remain open; no merge or issue closure claimed.

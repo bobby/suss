@@ -44,11 +44,10 @@ impl portable::ExpansionHost for Observe {
         locals.sort();
         self.calls
             .push(serde_json::json!({"label": label, "names": names, "locals": locals}));
-        assert!(
-            self.scopes
-                .insert(label.clone(), context.function_scopes.to_vec())
-                .is_none()
-        );
+        assert!(self
+            .scopes
+            .insert(label.clone(), context.function_scopes.to_vec())
+            .is_none());
         self.locals.insert(label, context.locals.clone());
         Ok(Some(Form {
             span: form.span.clone(),
@@ -180,15 +179,140 @@ fn genuine_function_scopes_match_pinned_names_and_do_not_invent_hint_bindings() 
             assert_eq!(serde_json::json!(names), *expected);
         }
         // Failed analysis never publishes its partial scope into a later fragment.
-        assert!(
-            session
-                .eval_with_macros("(def failed (fn doomed [] missing))", &mut host)
-                .is_err()
-        );
+        assert!(session
+            .eval_with_macros("(def failed (fn doomed [] missing))", &mut host)
+            .is_err());
         let mut recovered = Observe::default();
         session
             .eval_with_macros("(scope \"recovered\")", &mut recovered)
             .unwrap();
         assert!(recovered.scopes["recovered"].is_empty());
+    }
+}
+
+/// Expansion-created declarations must retain honest provenance, and only the
+/// direct definition initializer may carry a definition name hint.
+#[test]
+fn function_hints_follow_expansion_without_leaking_into_operands_or_fabricating_origins() {
+    #[derive(Default)]
+    struct Expand {
+        observed: Observe,
+        facts_only: bool,
+    }
+    impl portable::ExpansionHost for Expand {
+        fn expand(
+            &mut self,
+            form: &Form,
+            context: portable::ExpansionContext<'_>,
+        ) -> Result<Option<Form>, portable::Diagnostic> {
+            if let Kind::List(items) = &form.kind {
+                if let Some(Form {
+                    kind: Kind::Symbol(symbol),
+                    ..
+                }) = items.first()
+                {
+                    let generated = match symbol.name.as_str() {
+                        "make-function" => Some("(fn [] (scope \"expanded\"))"),
+                        "make-self" => Some("(fn actual [] (scope \"self\"))"),
+                        _ => None,
+                    };
+                    if let Some(generated) = generated {
+                        let mut generated =
+                            suss_reader::forms::read_forms(generated).unwrap().remove(0);
+                        // A macro result has a call-site span, not a claim that
+                        // its generated self-name occurs at that source token.
+                        fn call_site(form: &mut Form, span: &std::ops::Range<usize>) {
+                            form.span = span.clone();
+                            if let Kind::List(items) | Kind::Vector(items) = &mut form.kind {
+                                for item in items {
+                                    call_site(item, span);
+                                }
+                            }
+                        }
+                        call_site(&mut generated, &form.span);
+                        return Ok(Some(generated));
+                    }
+                }
+            }
+            let mut expanded = self.observed.expand(form, context)?;
+            if self.facts_only {
+                if let Some(form) = &mut expanded {
+                    form.kind = Kind::Nil;
+                }
+            }
+            Ok(expanded)
+        }
+    }
+    let source = r#"(def hinted (make-function))
+(def overridden (make-self))
+(def wrapped (let [] (fn [] (scope "wrapped"))))
+(scope "after")"#;
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut host = Expand::default();
+        session.eval_with_macros(source, &mut host).unwrap();
+        let hinted = &host.observed.scopes["expanded"][0];
+        assert_eq!(name(hinted), "hinted");
+        assert!(hinted.self_binding.is_none());
+        assert!(!host.observed.locals["expanded"].contains_key("hinted"));
+        assert_eq!(hinted.namespace, "user");
+        assert!(hinted
+            .origin
+            .as_ref()
+            .unwrap()
+            .symbol_position(&hinted.declaration)
+            .is_some());
+        let explicit = &host.observed.scopes["self"][0];
+        assert_eq!(name(explicit), "actual");
+        assert_eq!(
+            explicit.self_binding.as_ref().unwrap().id,
+            host.observed.locals["self"]["actual"].id
+        );
+        assert!(explicit
+            .origin
+            .as_ref()
+            .unwrap()
+            .symbol_position(&explicit.declaration)
+            .is_none());
+        assert!(host.observed.scopes["wrapped"].is_empty());
+        assert!(host.observed.scopes["after"].is_empty());
+        let bridge = FormBridge::new(&mut session).unwrap();
+        for (call, expected) in [("(hinted)", "hinted"), ("(overridden)", "actual")] {
+            let value = session.eval(call).unwrap();
+            session.collect().unwrap();
+            let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
+            let Kind::Vector(items) = decoded.kind else {
+                panic!("executed scope vector")
+            };
+            assert_eq!(items.len(), 1);
+            assert!(matches!(&items[0].kind, Kind::String(units)
+                if String::from_utf16(units).unwrap() == expected));
+        }
+    }
+    // The public owned-forms API explicitly has no source origin.
+    for phase in [
+        portable::resolve::Phase::Runtime,
+        portable::resolve::Phase::Macro,
+    ] {
+        let mut host = Expand::default();
+        host.facts_only = true;
+        let forms = suss_reader::forms::read_forms(source).unwrap();
+        let _prepared = portable::prepare_fragment_forms_with_expander(
+            forms,
+            0..source.len(),
+            &portable::resolve::Environment::default(),
+            phase,
+            &mut host,
+        )
+        .unwrap();
+        assert_eq!(host.observed.calls.len(), 4);
+        assert_eq!(host.observed.scopes["expanded"].len(), 1);
+        assert_eq!(host.observed.scopes["self"].len(), 1);
+        for scope in host.observed.scopes.values().flatten() {
+            assert!(scope.origin.is_none());
+            assert_eq!(scope.namespace, "user");
+            if let Some(binding) = &scope.self_binding {
+                assert!(binding.origin.is_none());
+            }
+        }
     }
 }

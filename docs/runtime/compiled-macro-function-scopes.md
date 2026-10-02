@@ -17,10 +17,14 @@ caching disabled. Eleven actual ordered compiler observations cover definition
 hints, named/anonymous/nested functions, inherited scopes, shadowed locals,
 multiple arities, rest parameters and restoration. Ten executed name vectors
 were captured from Node. The strict comparator checks exact names and lexical
-name sets; it is not a general runtime value decoder. The native fixture is
-prepared to compare those observations and decode actual canonical vectors after
-GC in both Stores, while inspecting binding IDs and structural parent/shadow
-records. Native execution has not yet been validated.
+name sets; it is not a general runtime value decoder. The native fixture now
+compares those observations and decodes actual canonical vectors after GC in both
+Stores, while inspecting binding IDs and structural parent/shadow records.
+Independent review added an executing regression for definition hints through
+macro expansion, explicit generated self names, sibling restoration and dropping
+hints inside arbitrary let bodies. Generated self declarations cannot fabricate
+a source token position; the owned-forms compiler API keeps absent origins absent.
+The two scope tests and seven binding/context/field regressions all passed.
 
 ```sh
 CARGO_BUILD_JOBS=2 scripts/test-function-scope-oracle.sh
@@ -31,7 +35,7 @@ cargo test -p suss-cli --locked --test compiled_macro_function_scopes \
 
 Compiler and oracle additions are original code; no upstream core import or
 license count changes. No Java or JavaScript dependency is added to shipped code.
-Native validation, complete baseline, independent PR review and exact-head CI
-remain required. Canonical rich environment transport, logical method receiver
+Independent source review and focused native validation are complete. The complete
+baseline and exact-head CI remain required. Canonical rich environment transport, logical method receiver
 roles, syntax quote/bootstrap/cache/evaluator removal and original M3 acceptance
 remain open.
