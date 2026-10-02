@@ -125,7 +125,7 @@ impl Analyzer<'_> {
                 let Kind::Symbol(name) = &items[1].kind else {
                     unreachable!()
                 };
-                let previous = self.locals.insert(name.name.clone(), (id, Type::Value));
+                let previous = self.insert_local(&items[1], id, Type::Value, LocalKind::Catch, None);
                 let body = self.body(&items[2..], catch.span.clone(), statement, false);
                 if let Some(previous) = previous {
                     self.locals.insert(name.name.clone(), previous);

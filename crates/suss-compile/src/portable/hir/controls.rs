@@ -151,16 +151,14 @@ impl Analyzer<'_> {
                     let mut binding = self.fresh_binding(&args[1], value);
                     binding.name = name.clone();
                     binding.metadata = args[1].metadata.clone();
-                    self.locals
-                        .insert(name.clone(), (binding.id, binding.value.ty));
+                    self.insert_local(&args[1], binding.id, binding.value.ty, LocalKind::Let, Some(binding.value.clone()));
                     bindings.push(binding);
                     for step in args[2..].iter().take(args.len().saturating_sub(3)) {
                         let value = self.form(step)?;
                         let mut binding = self.fresh_binding(&args[1], value);
                         binding.name = name.clone();
                         binding.metadata = args[1].metadata.clone();
-                        self.locals
-                            .insert(name.clone(), (binding.id, binding.value.ty));
+                        self.insert_local(&args[1], binding.id, binding.value.ty, LocalKind::Let, Some(binding.value.clone()));
                         bindings.push(binding);
                     }
                     let body = if args.len() == 2 {
@@ -367,8 +365,7 @@ impl Analyzer<'_> {
                 binding.name = name.name.clone();
                 binding.metadata = entries[0].metadata.clone();
                 let outer = self.locals.clone();
-                self.locals
-                    .insert(name.name.clone(), (binding.id, binding.value.ty));
+                self.insert_local(&entries[0], binding.id, binding.value.ty, LocalKind::Let, Some(binding.value.clone()));
                 let consequent = self.form_in(&args[1], statement, tail);
                 self.locals = outer;
                 let consequent = consequent?;

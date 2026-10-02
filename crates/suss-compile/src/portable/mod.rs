@@ -21,7 +21,7 @@ pub struct Diagnostic {
 pub struct ExpansionContext<'a> {
     pub environment: &'a resolve::Environment,
     pub phase: resolve::Phase,
-    pub locals: &'a std::collections::HashMap<String, (hir::BindingId, hir::Type)>,
+    pub locals: &'a std::collections::HashMap<String, hir::LocalBinding>,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MacroReload {

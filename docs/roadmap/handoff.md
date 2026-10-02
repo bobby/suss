@@ -10141,3 +10141,48 @@ Independent Python verification passed88 tests; generated import check verified2
 files; review overlay verified345 partial/720 unassessed; the12 pinned lookup
 observations matched exactly. Source/semantic tests were unchanged. Full workspace
 and exact final-head CI remain required; no M3 or issue acceptance claim.
+
+
+PR142 full workspace24875 completed terminal0 through final reader doctests.
+Independent count of /private/tmp/suss-m3-hamt-lookup-full.log:961 passed,
+0 failed,17 existing ignores across94 result groups, including all47 runtime ABI
+tests. Exact reviewed head7d70b9f differs from7d16c08 only in oracle script suite
+spelling and reviewer handoff; source and semantic tests are unchanged. PR body
+records full evidence; final-head CI37013353157 remains live and required.
+PR140 repair CI37012087148 and PR141 repair CI37012180540 also remain live.
+No readiness or merge is claimed while exact-head CI is incomplete.
+
+Compiled macro environment work is in /private/tmp/suss-m3-macro-environment,
+branch portable/m3-macro-environment based on PR142 reviewed7d70b9f. This branch
+is not yet a published PR or complete &env implementation. Analyzer lexical
+lookup now retains actual LocalBinding records rather than only(id,type): reader
+declaration/span/metadata, current lowered ID/type, let/loop/parameter/rest/self/
+catch role, analyzed initializer and shared lexical shadow chain. Parameter
+loop remapping updates ID without inventing another source shadow declaration.
+Source analysis and saved lexical scopes share these records. ExpansionContext
+exposes them to the host; CompiledMacros still does not yet marshal &env.
+No initializer is re-evaluated to produce binding data. New Rust code is original;
+no upstream source import/provenance count changed.
+
+Initial compiler focus31419 terminal101 identified private remap_local visibility;
+corrected focus32923 terminal0:2 native tests in both Stores verify real source
+metadata/spans, initializer AST, lexical shadow restoration, catch roles, named
+and variadic function arguments and actual results/effects once. Broadened89521
+terminal0:9 native tests (2 records,3 transient lookup,4 source macro) and22 compiler
+tests (14 closures,2 exceptions,1 if-let,5 nominal). Logs:
+/private/tmp/suss-m3-macro-environment-{focus2,macro-focus,compiler-focus}.log.
+Commands use CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target
+CARGO_BUILD_JOBS=2 cargo test -p suss-cli --locked with the three named suites,
+then cargo test -p suss-compile --locked with the four named suites;
+all include -- --test-threads=2. Full new-branch baseline/review/CI are pending.
+
+Next concrete work: retain namespace definition/alias metadata, source file and
+line/column context, function scopes and field declaration facts; marshal the
+actual rich environment as canonical compiled data and pass &env beside &form.
+Validate context/locals/metadata against fresh pinned macro observations and
+execute macros that inspect them. Do not substitute a scalar map of local names
+or claim these records alone satisfy &env. Syntax quote/unquote/splicing,
+deterministic gensyms, bounded reproducible versioned Java-free bootstrap,
+complete cache identity/invalidation, evaluator removal and scheduler/lifecycle
+acceptance remain open. Re-read live issues12–15 this turn: their original
+acceptance criteria remain unchanged and no issue/milestone closure is claimed.
