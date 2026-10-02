@@ -689,6 +689,11 @@ impl Session {
     pub(crate) fn set_source_paths(&mut self, paths: &[PathBuf]) {
         self.options.source_paths = paths.to_vec();
     }
+    pub(crate) fn invalidate_source_modules(&mut self, identities: &[ModuleIdentity]) {
+        for identity in identities {
+            self.provided.remove(identity);
+        }
+    }
     /// Called only after every form of this phase module has initialized.
     pub(crate) fn initialized_source_namespace(
         &mut self,

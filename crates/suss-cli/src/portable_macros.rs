@@ -82,9 +82,35 @@ impl CompiledMacros {
         self.define_form(forms.into_iter().next().unwrap(), 0..source.len())
             .map(|_| ())
     }
-    fn load_source_namespace(&mut self, namespace: &str) -> Result<Vec<String>, SessionError> {
+    fn load_source_namespace(
+        &mut self,
+        namespace: &str,
+        policy: suss_compile::portable::MacroReload,
+    ) -> Result<Vec<String>, SessionError> {
         use suss_compile::portable::{modules, resolve::Phase};
-        let snapshot = self.session.compilation_snapshot();
+        if matches!(namespace, "suss.core" | "cljs.core")
+            && policy != suss_compile::portable::MacroReload::Once
+        {
+            return Err(SessionError::Compile(Diagnostic {
+                span: 0..0,
+                message: "The compiled macro bootstrap core cannot be source-reloaded".into(),
+            }));
+        }
+        let mut snapshot = self.session.compilation_snapshot();
+        match policy {
+            suss_compile::portable::MacroReload::Once => {}
+            suss_compile::portable::MacroReload::Reload => {
+                snapshot.provided.remove(
+                    &modules::ModuleIdentity::new(Phase::Macro, namespace)
+                        .map_err(SessionError::Compile)?,
+                );
+            }
+            suss_compile::portable::MacroReload::ReloadAll => {
+                snapshot
+                    .provided
+                    .retain(|identity| identity.namespace() == "suss.core");
+            }
+        }
         let graph = modules::discover_phase_modules(
             namespace,
             &snapshot.source_paths,
@@ -93,6 +119,14 @@ impl CompiledMacros {
             &snapshot.provided,
         )
         .map_err(SessionError::Module)?;
+        // Discovery errors preserve previous loaded identities. Once execution
+        // starts, each selected phase unit must initialize before being loaded again.
+        self.session.invalidate_source_modules(
+            &graph
+                .iter()
+                .map(|unit| unit.identity.clone())
+                .collect::<Vec<_>>(),
+        );
         let caller = self.session.current_namespace().to_owned();
         let result = (|| {
             for unit in graph {
@@ -261,13 +295,25 @@ impl ExpansionHost for CompiledMacros {
         namespace: &str,
         span: std::ops::Range<usize>,
     ) -> Result<Vec<String>, Diagnostic> {
-        self.load_source_namespace(namespace)
+        self.load_source_namespace(namespace, suss_compile::portable::MacroReload::Once)
             .map_err(|error| Diagnostic {
                 span,
                 message: format!("Compiled macro namespace loading failed: {error}"),
             })
     }
 
+    fn load_macro_namespace_with_policy(
+        &mut self,
+        namespace: &str,
+        policy: suss_compile::portable::MacroReload,
+        span: std::ops::Range<usize>,
+    ) -> Result<Vec<String>, Diagnostic> {
+        self.load_source_namespace(namespace, policy)
+            .map_err(|error| Diagnostic {
+                span,
+                message: format!("Compiled macro namespace loading failed: {error}"),
+            })
+    }
     fn expand(
         &mut self,
         form: &Form,
