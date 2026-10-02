@@ -10433,3 +10433,37 @@ cache path; AST parsing requires no cache write). Full final-source baseline and
 exact-head CI remain required; rich source &env and original M3 work remain open.
 Final corpus cardinality assertion was also executed in native61710 terminal0:
 1 context test passed, log /private/tmp/suss-pr144-context-final.log.
+
+
+## PR #144 rebase onto main — 2026-10-02
+
+At the user's request, fetched origin and rebased portable/m3-macro-context onto
+main ea78a37 with `git rebase --onto origin/main 7f821ac portable/m3-macro-context`.
+Verified prerequisite7f821ac and squash-merged main have identical complete tree
+8edb5b6fc4d159aafd08b770e6cfcc7d1bd5afbc, so only the three PR-specific nonmerge
+commits were replayed. Two handoff append conflicts were resolved preserving all
+parent/child records; the second used the previously integrated a667fcf handoff.
+No source conflict or semantic change was introduced.
+
+Rebased1fc432b and original ce61d90 have identical complete tracked tree
+727e43883f5de693f8bae45b650ee1ef2d861e77 before this handoff-only addition.
+Independent review approved ancestry, unchanged non-handoff patches and exact
+final handoff identity, with no findings. Existing full baseline log
+/private/tmp/suss-m3-pr144-full.log was independently verified through reader
+doctests:98groups/971passed/0failed/17existingignores. That baseline remains prior
+evidence for identical source, not a newly executed full run.
+
+Fresh focused validation uses the existing isolated
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target, CARGO_BUILD_JOBS=2 and no
+RUSTFLAGS override:
+`cargo test -p suss-cli --test compiled_macro_analysis_context --test compiled_macro_field_records --test compiled_macro_binding_records --test portable_case --test portable_control_flow --test portable_exceptions --test portable_type_method_scopes --locked -- --test-threads=2`
+exited0:27passed/0failed/0ignored across7groups;
+/private/tmp/suss-pr144-rebase-focused.log. `git diff --check` passes. No fresh
+JVM/Node oracle or full-workspace rerun; compiler/runtime/tests/oracle/provenance
+are unchanged.
+
+Push the rebased branch with an explicit old-head force-with-lease and verify
+remote exact head/fresh CI. Final-head CI is pending at this recording; older CI
+is not final-head evidence. No PR merge, readiness, issue closure or milestone
+completion is claimed. Next unblocked task remains genuine function scopes and
+canonical rich compiled &env transport, with original M3 acceptance still open.
