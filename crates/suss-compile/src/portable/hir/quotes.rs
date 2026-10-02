@@ -316,12 +316,14 @@ fn reader_key_equal(
             true
         }
         (Kind::Set(a), Kind::Set(b)) => {
+            let a = reader_set_members(a, depth + 1, work)?;
+            let b = reader_set_members(b, depth + 1, work)?;
             if a.len() != b.len() {
                 return Ok(false);
             }
             for a in a {
                 let mut found = false;
-                for b in b {
+                for b in &b {
                     if reader_key_equal(a, b, depth + 1, work)? {
                         found = true;
                         break;
@@ -334,14 +336,16 @@ fn reader_key_equal(
             true
         }
         (Kind::Map(a), Kind::Map(b)) => {
-            if a.len() != b.len() || a.len() % 2 != 0 {
+            let a = reader_map_entries(a, depth + 1, work)?;
+            let b = reader_map_entries(b, depth + 1, work)?;
+            if a.len() != b.len() {
                 return Ok(false);
             }
-            for a in a.chunks_exact(2) {
+            for a in a {
                 let mut found = false;
-                for b in b.chunks_exact(2) {
-                    if reader_key_equal(&a[0], &b[0], depth + 1, work)? {
-                        if !reader_key_equal(&a[1], &b[1], depth + 1, work)? {
+                for b in &b {
+                    if reader_key_equal(a.0, b.0, depth + 1, work)? {
+                        if !reader_key_equal(a.1, b.1, depth + 1, work)? {
                             return Ok(false);
                         }
                         found = true;
@@ -357,6 +361,58 @@ fn reader_key_equal(
         _ => false,
     })
 }
+// Native Forms can contain repeated map/set entries even though the pinned
+// textual reader rejects some such spellings. Compare their canonical data,
+// matching source map construction's last-value and set uniqueness semantics.
+fn reader_map_entries<'a>(
+    items: &'a [Form],
+    depth: usize,
+    work: &mut usize,
+) -> Result<Vec<(&'a Form, &'a Form)>, Diagnostic> {
+    if items.len() % 2 != 0 {
+        return Err(fail(
+            items.last().unwrap().span.clone(),
+            "Metadata key map requires paired entries",
+        ));
+    }
+    let mut entries: Vec<(&Form, &Form)> = Vec::new();
+    for pair in items.chunks_exact(2) {
+        let mut previous = None;
+        for (index, entry) in entries.iter().enumerate() {
+            if reader_key_equal(entry.0, &pair[0], depth, work)? {
+                previous = Some(index);
+                break;
+            }
+        }
+        if let Some(index) = previous {
+            entries[index].1 = &pair[1];
+        } else {
+            entries.push((&pair[0], &pair[1]));
+        }
+    }
+    Ok(entries)
+}
+fn reader_set_members<'a>(
+    items: &'a [Form],
+    depth: usize,
+    work: &mut usize,
+) -> Result<Vec<&'a Form>, Diagnostic> {
+    let mut entries: Vec<&Form> = Vec::new();
+    for item in items {
+        let mut present = false;
+        for previous in &entries {
+            if reader_key_equal(previous, item, depth, work)? {
+                present = true;
+                break;
+            }
+        }
+        if !present {
+            entries.push(item);
+        }
+    }
+    Ok(entries)
+}
+
 fn irrelevant_metadata_key(form: &Form) -> bool {
     matches!(&form.kind, Kind::Keyword(key) if
         (key.namespace.is_none() && matches!(key.name.as_str(), "file" | "line" | "column" | "end-column" | "end-line" | "source"))
@@ -434,5 +490,30 @@ fn identifier_hash(namespace: Option<&str>, name: &str, keyword: bool) -> i32 {
         combined.wrapping_add(0x9e3779b9) as i32
     } else {
         combined as i32
+    }
+}
+
+#[cfg(test)]
+mod metadata_reader_tests {
+    use super::*;
+    #[test]
+    fn metadata_reader_keys_compare_canonical_duplicate_map_and_set_data() {
+        for (a, b, equal) in [
+            ("{:a 1 :a 1}", "{:a 1 :b 1}", false),
+            ("{:a 1 :a 2}", "{:a 2}", true),
+            ("{:a 1 :a 2}", "{:a 1}", false),
+            ("#{1 1}", "#{1 2}", false),
+            ("#{1 1}", "#{1}", true),
+            ("#{[1 2] (1 2)}", "#{(1 2)}", true),
+            ("{:a #{1 1} :b [1 2]}", "{:b (1 2) :a #{1}}", true),
+        ] {
+            let a = suss_reader::forms::read_forms(a).unwrap().remove(0);
+            let b = suss_reader::forms::read_forms(b).unwrap().remove(0);
+            assert_eq!(reader_key_equal(&a, &b, 0, &mut 1_048_576).unwrap(), equal);
+            assert_eq!(reader_key_equal(&b, &a, 0, &mut 1_048_576).unwrap(), equal);
+        }
+        let value = suss_reader::forms::read_forms("#{1 1}").unwrap().remove(0);
+        assert!(reader_key_equal(&value, &value, 0, &mut 1).is_err());
+        assert!(reader_key_equal(&value, &value, 64, &mut 1_048_576).is_err());
     }
 }

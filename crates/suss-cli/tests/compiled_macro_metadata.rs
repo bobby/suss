@@ -347,3 +347,37 @@ fn compiled_macro_metadata_merges_data_before_constructing_discarded_values() {
             .unwrap();
     }
 }
+
+#[test]
+fn compiled_macro_metadata_keeps_distinct_duplicate_map_syntax_keys() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        for source in [
+            "(== (count (meta '^{{:a 1 :a 1} 7} ^{{:a 1 :b 1} 8} x)) 2)",
+            "(== (count (meta '^{{:a 1 :b 1} 7} ^{{:a 1 :a 1} 8} x)) 2)",
+            "(let [value ^{{:a 1 :a 1} 7} ^{{:a 1 :b 1} 8} []] (and (== (get (meta value) {:a 1}) 7) (== (get (meta value) {:a 1 :b 1}) 8)))",
+            "(== (get (meta '^{{:a 1 :a 2} 7} ^{{:a 2} 8} x) {:a 2}) 7)",
+        ] {
+            let value = session.eval(source).unwrap();
+            assert!(
+                session
+                    .inspect(&value, |store, value| Ok(value
+                        .unwrap_anyref()
+                        .unwrap()
+                        .as_i31(&store)?
+                        .unwrap()
+                        .get_u32()
+                        == 4))
+                    .unwrap(),
+                "{source}"
+            );
+        }
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let input = read_forms("^{{:a 1 :a 1} 7} ^{{:a 1 :b 1} 8} x")
+            .unwrap()
+            .remove(0);
+        let value = bridge.quote(&mut session, input).unwrap();
+        session.collect().unwrap();
+        let output = bridge.read(&mut session, &value, 830..840).unwrap();
+        assert!(matches!(&output.metadata[0].kind, Kind::Map(entries) if entries.len() == 4));
+    }
+}

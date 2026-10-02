@@ -6,7 +6,8 @@ retained `with-meta` and `-assoc` source/protocol bindings. Prefix metadata is
 normalized before constructing values: keywords mean `{key true}`, symbols/strings
 mean `{:tag value}`, and inner prefixes merge before outer prefixes. Reader-key
 comparison ignores spans/metadata, shares list/vector sequential data equality,
-and compares map/set data without relying on iteration order. An existing inner
+and compares map/set data without relying on iteration order. Duplicate map entries compare by their last value, and set members compare
+by unique data, including native Forms with repeated entries. An existing inner
 key object remains while the outer value wins. A depth64/comparison-work bound
 keeps this syntax normalization bounded. Actual compiled association supplies
 equality of evaluated runtime keys; the reader-data comparison does not replace
@@ -50,12 +51,12 @@ unsupported and produces a language error.
 Fresh pinned compiler/Node comparison matches 56 tagged observations, including
 actual macro-time `&form` metadata, vector equality, chunk boundaries and numeric
 remainder edge cases. Every observation also passes independently in the Runtime
-and Macro stores after forced GC. Nine metadata tests cover nested metadata,
+and Macro stores after forced GC. Ten metadata tests cover nested metadata,
 prefix precedence, reader-key elision, returned sequence metadata, malformed data,
 cycles, actual vector trie traversal, core-callee capture, ordinary lexical/effectful
 metadata, reader-key retention, discarded constructor suppression and ordered
 remainder arguments. The combined metadata/forms/maps/vectors/identifier focus
-passes 31 tests; the ABI and bitwise focus passes 48 tests.
+passes 32 tests; the ABI and bitwise focus passes 48 tests.
 
 Initial native vector equality failed because the retained RangedIterator needed
 `js-mod`; source inspection narrowed the generic language failure to this missing

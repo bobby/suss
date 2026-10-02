@@ -9591,3 +9591,32 @@ and successful exact-reviewed-final-head CI before readiness. No PR was merged.
 M3 issues12–15 stay open; function metadata, HAMT/transients, &env/source locations/
 syntaxquote/gensyms/bootstrap/cache/evaluator removal and stackless scheduling/
 I/O cancellation/live-GC accounting remain original required acceptance.
+
+
+PR135 follow-up review identified duplicate structural-key normalization gaps in
+5b46a6d. Suss reader/native Forms can retain repeated map/set syntax entries;
+comparison must use canonical last-value maps and unique set members rather than
+raw length or reusing the same member match. Initial duplicate regression66629
+terminal0 reused a stale shared-target artifact from the isolated callable child,
+not the current source; touching current quotes/hir forced a rebuild. Correct
+before57189 terminal101 proves broken duplicate-map prefix precedence,
+/private/tmp/suss-pr135-review-duplicate-before2.log. Added both directions of
+repeated-map versus distinct-map keys and actual native quote/read coverage.
+
+Canonical map/set comparison now normalizes duplicates under the existing depth/
+work bound, preserving the first key object and final map value. Unit9887 compile101
+was explicit Vec<&Form> inference, corrected28032 terminal0:1 focused semantic
+unit for both-direction duplicate/equal/unequal/nested keys and exhausted bounds,
+/private/tmp/suss-pr135-review-duplicate-unit2.log. Correct-source focus10133
+terminal0 explicitly rebuilt reader/compile/CLI:32tests/5groups (metadata10/forms6/
+maps6/vectors7/identifiers3), /private/tmp/suss-pr135-review-duplicate-focus.log.
+Fresh scripts/test-macro-metadata-oracle.sh42954 terminal0:unchanged56primary
+observations match exactly plus10native metadata tests in bothStores/GC,
+/private/tmp/suss-pr135-review-duplicate-oracle.log. Python88/import199/setup12/
+inventory1065/reviews291partial774unassessed and diffcheck pass. No primary duplicate
+textual-reader claim; native Form cases preserve existing accepted transport data.
+
+Push this significant follow-up fix, freeze its source, then require full workspace
+baseline and successful exact-final-head CI. Previous83a92e5/5b46a6d CI does not
+certify this new source. No merge; original M3 acceptance remains open. Root owns
+next full baseline after reviewer releases the exclusive heavy slot.
