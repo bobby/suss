@@ -130,14 +130,14 @@ pub fn evaluate_compiled(
                     });
                     macros.enter_namespace(runtime.current_namespace())?;
                     return macros
-                        .define_form_display(forms.into_iter().next().unwrap(), 0..source.len());
+                        .define_form_display(forms.into_iter().next().unwrap(), 0..source.len(), Some(&suss_compile::portable::SourceOrigin::new(source, None)));
                 }
             }
         }
     }
     let prepared = runtime
         .compilation_snapshot()
-        .prepare(forms, 0..source.len(), macros)?;
+        .prepare_with_origin(forms, 0..source.len(), macros, Some(&suss_compile::portable::SourceOrigin::new(source, None)))?;
     let value = runtime.eval_prepared(prepared)?;
     display(runtime, &value)
 }

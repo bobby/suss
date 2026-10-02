@@ -79,7 +79,7 @@ impl CompiledMacros {
                 message: "Expected exactly one source defmacro".into(),
             }));
         }
-        self.define_form(forms.into_iter().next().unwrap(), 0..source.len())
+        self.define_form_with_origin(forms.into_iter().next().unwrap(), 0..source.len(), Some(&suss_compile::portable::SourceOrigin::new(source, None)))
             .map(|_| ())
     }
     fn load_source_namespace(
@@ -130,6 +130,7 @@ impl CompiledMacros {
         let caller = self.session.current_namespace().to_owned();
         let result = (|| {
             for unit in graph {
+                let origin = suss_compile::portable::SourceOrigin::new(unit.source.as_str(), Some(unit.path.clone()));
                 // Source snapshots are already selected and dependency-first. Each
                 // form executes once in Macro phase; definitions compile to the
                 // same native function pipeline and become available to later forms.
@@ -145,13 +146,13 @@ impl CompiledMacros {
                         head.namespace = Some("suss.core".into());
                         head.name = "defmacro".into();
                         let span = form.span.clone();
-                        self.define_form(form, span)?;
+                        self.define_form_with_origin(form, span, Some(&origin))?;
                     } else {
                         let span = form.span.clone();
                         let prepared =
                             self.session
                                 .compilation_snapshot()
-                                .prepare(vec![form], span, self)?;
+                                .prepare_with_origin(vec![form], span, self, Some(&origin))?;
                         self.session.eval_prepared(prepared)?;
                     }
                 }
@@ -184,14 +185,14 @@ impl CompiledMacros {
         &mut self,
         form: Form,
         span: std::ops::Range<usize>,
+        origin: Option<&suss_compile::portable::SourceOrigin>,
     ) -> Result<String, SessionError> {
-        let value = self.define_form(form, span)?;
+        let value = self.define_form_with_origin(form, span, origin)?;
         crate::portable_repl::display(&mut self.session, &value)
     }
-    fn define_form(
-        &mut self,
-        form: Form,
-        span: std::ops::Range<usize>,
+    fn define_form_with_origin(
+        &mut self, form: Form, span: std::ops::Range<usize>,
+        origin: Option<&suss_compile::portable::SourceOrigin>,
     ) -> Result<SessionValue, SessionError> {
         let form = &form;
         let Kind::List(items) = &form.kind else {
@@ -268,7 +269,7 @@ impl CompiledMacros {
             kind: Kind::List(definition),
         };
         let snapshot = self.session.compilation_snapshot();
-        let prepared = snapshot.prepare(vec![definition], span, self)?;
+        let prepared = snapshot.prepare_with_origin(vec![definition], span, self, origin)?;
         let value = self.session.eval_prepared(prepared)?;
         let namespace = self.session.current_namespace().to_owned();
         self.definitions

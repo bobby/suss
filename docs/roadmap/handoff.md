@@ -10186,3 +10186,32 @@ deterministic gensyms, bounded reproducible versioned Java-free bootstrap,
 complete cache identity/invalidation, evaluator removal and scheduler/lifecycle
 acceptance remain open. Re-read live issues12–15 this turn: their original
 acceptance criteria remain unchanged and no issue/milestone closure is claimed.
+
+
+Macro environment source/namespace facts checkpoint (not complete &env): actual
+immutable source text and canonical file paths now accompany analysis, lexical
+records and definition declarations. SourceOrigin maps UTF-8 offsets to one-based
+UTF-16 columns, handling LF, CRLF and standalone CR; invalid offsets and APIs
+without original source remain explicitly unknown. Namespace snapshots retain
+actual aliases/refers and definition metadata, docstrings, once flag and analyzed
+initializer; these are compiler facts, distinct from initialized runtime values.
+Compile failure does not publish partial declarations. Runtime initializer failure
+preserves old live values, while compiler facts truthfully describe the new AST.
+
+Fresh pinned development-only CLJS observation35551 terminal0 yielded source
+positions [[3,12],[4,30],[5,11],[6,13]], including a non-BMP prefix and mixed newline
+forms. Strict environment_origin_oracle.py comparison passed all4 observations.
+New native fact suites71568 terminal0:6passed, both Stores; initial45442 had one
+fixture path assertion failure, corrected to the actual canonical /private/var
+path. Broader94378 terminal0:32passed across binding records/source positions,
+source macros/imports/reload/REPL and namespace session suites. Verification75362 terminal0 proves Python88/import249/review345; compiler32328
+terminal0 proves36passed across closures/exceptions/if-let/modules/
+nominal/phase modules. Logs /private/tmp/suss-m3-macro-facts-{focus2,broader,
+python,compiler}.log. All native commands use the shared target, two build workers
+and --test-threads=2; no full new-branch baseline or independent PR review yet.
+
+CompiledMacros still does not marshal &env. Next establish metadata declaration
+positions, genuine function/context and field records against pinned observations,
+then transport rich canonical environment data and execute inspecting macros.
+Do not equate the Rust host inspection fixture with source-level &env support.
+All original issues12–15 and their remaining acceptance criteria stay open.

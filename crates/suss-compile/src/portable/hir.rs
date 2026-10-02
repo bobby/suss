@@ -484,6 +484,7 @@ fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
 }
 struct Analyzer<'a> {
     expander: &'a mut dyn super::ExpansionHost,
+    origin: Option<super::SourceOrigin>,
     environment: Environment,
     phase: Phase,
     locals: HashMap<String, LocalBinding>,
@@ -561,6 +562,7 @@ impl Analyzer<'_> {
                 if !shadowed {
                     let context = super::ExpansionContext {
                         environment: &self.environment,
+                        origin: self.origin.as_ref(),
                         phase: self.phase,
                         locals: &self.locals,
                     };
@@ -762,7 +764,13 @@ impl Analyzer<'_> {
         } else {
             args.get(1)
         };
+        self.environment.record_definition(global.clone(), super::resolve::DefinitionInfo {
+            declaration: args[0].clone(),
+            docstring: if args.len() == 3 { match &args[1].kind { Kind::String(units) => Some(units.clone()), _ => unreachable!() } } else { None },
+            origin: self.origin.clone(), initializer: None, once,
+        });
         let initializer = init.map(|init| self.form(init).map(Box::new)).transpose()?;
+        self.environment.definition_initializer(&global, initializer.as_deref());
         Ok(Hir {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
@@ -1739,8 +1747,15 @@ pub(crate) fn prepare_with_expander(
     phase: Phase,
     expander: &mut dyn super::ExpansionHost,
 ) -> Result<(Hir, Environment), Diagnostic> {
+    prepare_with_origin(forms, span, environment, phase, expander, None)
+}
+pub(crate) fn prepare_with_origin(
+    forms: &[Form], span: Range<usize>, environment: &Environment, phase: Phase,
+    expander: &mut dyn super::ExpansionHost, origin: Option<&super::SourceOrigin>,
+) -> Result<(Hir, Environment), Diagnostic> {
     let mut analyzer = Analyzer {
         expander,
+        origin: origin.cloned(),
         environment: environment.clone(),
         phase,
         locals: HashMap::new(),

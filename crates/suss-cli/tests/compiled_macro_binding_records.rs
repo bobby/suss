@@ -9,6 +9,13 @@ use suss_reader::forms::{Form, Kind};
 #[derive(Default)]
 struct Observe {
     snapshots: Vec<(String, HashMap<String, LocalBinding>)>,
+    origins: Vec<(String, Option<portable::SourceOrigin>)>,
+    catalogs: Vec<(
+        String,
+        String,
+        std::collections::BTreeMap<String, String>,
+        Vec<(portable::resolve::Global, portable::resolve::DefinitionInfo)>,
+    )>,
 }
 impl portable::ExpansionHost for Observe {
     fn expand(
@@ -26,8 +33,20 @@ impl portable::ExpansionHost for Observe {
         let Kind::String(label) = &items[1].kind else {
             panic!("label")
         };
-        self.snapshots
-            .push((String::from_utf16(label).unwrap(), context.locals.clone()));
+        let label = String::from_utf16(label).unwrap();
+        self.origins.push((label.clone(), context.origin.cloned()));
+        let scope = context.environment.namespace_scope(context.phase);
+        self.catalogs.push((
+            label.clone(),
+            scope.namespace.into(),
+            scope.aliases.clone(),
+            scope
+                .declarations
+                .into_iter()
+                .map(|(global, info)| (global.clone(), info.clone()))
+                .collect(),
+        ));
+        self.snapshots.push((label, context.locals.clone()));
         Ok(Some(items[2].clone()))
     }
 }
@@ -122,5 +141,168 @@ fn compiler_macro_binding_records_preserve_parameter_roles_catches_and_lowered_l
         let binding_id = args["x"].id;
         assert_ne!(binding_id, args["x"].shadow.as_ref().unwrap().id);
         assert_eq!(snapshot(&host, "restored")["x"].kind, LocalKind::Let);
+    }
+}
+
+#[test]
+fn compiler_macro_namespace_facts_are_phase_scoped_staged_and_distinct_from_runtime_values() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut host = Observe::default();
+        let source = r#"(ns catalog (:require [cljs.core :as c]))
+(def ^:private tracked "original doc" 40)
+(def pending (checkpoint "inside" tracked))
+(checkpoint "after" (c/hash pending))"#;
+        session.eval_with_macros(source, &mut host).unwrap();
+        let inside = host.catalogs.iter().find(|x| x.0 == "inside").unwrap();
+        assert_eq!(inside.1, "catalog");
+        assert_eq!(inside.2["c"], "suss.core");
+        let tracked = inside
+            .3
+            .iter()
+            .find(|(g, _)| g.name() == "tracked")
+            .unwrap();
+        assert_eq!(tracked.1.declaration.metadata.len(), 1);
+        assert_eq!(
+            String::from_utf16(tracked.1.docstring.as_ref().unwrap()).unwrap(),
+            "original doc"
+        );
+        assert_eq!(tracked.1.origin.as_ref().unwrap().text(), source);
+        assert!(matches!(
+            tracked.1.initializer.as_ref().unwrap().kind,
+            Expression::Literal(_)
+        ));
+        let pending = inside
+            .3
+            .iter()
+            .find(|(g, _)| g.name() == "pending")
+            .unwrap();
+        assert!(pending.1.initializer.is_none()); // initializer is being analyzed here
+        let after = host.catalogs.iter().find(|x| x.0 == "after").unwrap();
+        assert!(
+            after
+                .3
+                .iter()
+                .find(|(g, _)| g.name() == "pending")
+                .unwrap()
+                .1
+                .initializer
+                .is_some()
+        );
+        assert!(session.eval("(def broken no-such-name)").is_err());
+        session
+            .eval_with_macros(r#"(checkpoint "failed-compile" tracked)"#, &mut host)
+            .unwrap();
+        assert!(
+            !host
+                .catalogs
+                .iter()
+                .find(|x| x.0 == "failed-compile")
+                .unwrap()
+                .3
+                .iter()
+                .any(|(g, _)| g.name() == "broken")
+        );
+        assert!(matches!(
+            session.eval(r#"(def tracked "changed compiler doc" (throw 1))"#),
+            Err(suss_cli::portable_session::SessionError::Language(_))
+        ));
+        assert_eq!(scalar(&mut session, "tracked"), 40.0);
+        session
+            .eval_with_macros(r#"(checkpoint "failed-init" tracked)"#, &mut host)
+            .unwrap();
+        let declared = &host
+            .catalogs
+            .iter()
+            .find(|x| x.0 == "failed-init")
+            .unwrap()
+            .3
+            .iter()
+            .find(|(g, _)| g.name() == "tracked")
+            .unwrap()
+            .1;
+        assert!(matches!(
+            declared.initializer.as_ref().unwrap().kind,
+            Expression::Throw(_)
+        ));
+        session.reset().unwrap();
+        session
+            .eval_with_macros(r#"(checkpoint "reset" 0)"#, &mut host)
+            .unwrap();
+        assert!(
+            !host
+                .catalogs
+                .iter()
+                .find(|x| x.0 == "reset")
+                .unwrap()
+                .3
+                .iter()
+                .any(|(g, _)| g.name() == "tracked")
+        );
+    }
+}
+
+#[test]
+fn compiler_macro_source_origins_keep_module_paths_separate_from_inline_inputs() {
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("origin_module.sus");
+    let source = "(ns origin-module)\n(def x 21)\n(def y (checkpoint \"module\" (+ x 1)))";
+    std::fs::write(&path, source).unwrap();
+    let path = path.canonicalize().unwrap();
+    for phase in [
+        portable::resolve::Phase::Runtime,
+        portable::resolve::Phase::Macro,
+    ] {
+        let mut session = Session::with_options_in(
+            suss_cli::portable_session::SessionOptions {
+                source_paths: vec![root.path().to_path_buf()],
+                ..Default::default()
+            },
+            phase,
+        )
+        .unwrap();
+        let mut host = Observe::default();
+        session
+            .load_namespace_with_macros("origin-module", &mut host)
+            .unwrap();
+        let origin = host
+            .origins
+            .iter()
+            .find(|x| x.0 == "module")
+            .unwrap()
+            .1
+            .as_ref()
+            .unwrap();
+        assert_eq!(origin.path(), Some(path.as_path()));
+        assert_eq!(origin.text(), source);
+        session.enter_namespace("origin-module").unwrap();
+        session
+            .eval_with_macros(r#"(checkpoint "inline" y)"#, &mut host)
+            .unwrap();
+        assert!(
+            host.origins
+                .iter()
+                .find(|x| x.0 == "inline")
+                .unwrap()
+                .1
+                .as_ref()
+                .unwrap()
+                .path()
+                .is_none()
+        );
+        let declaration = &host
+            .catalogs
+            .iter()
+            .find(|x| x.0 == "inline")
+            .unwrap()
+            .3
+            .iter()
+            .find(|(g, _)| g.name() == "y")
+            .unwrap()
+            .1;
+        assert_eq!(
+            declaration.origin.as_ref().unwrap().path(),
+            Some(path.as_path())
+        );
+        assert_eq!(scalar(&mut session, "y"), 22.0);
     }
 }

@@ -18,8 +18,9 @@ pub struct LocalBinding {
     /// Current lowered binding used for lexical lookup, including loop remapping.
     pub id: BindingId,
     pub ty: Type,
-    /// Original reader declaration, preserving its span and metadata.
+    /// Reader or expansion declaration, preserving source/call-site span and metadata.
     pub declaration: Form,
+    pub origin: Option<super::super::SourceOrigin>,
     pub kind: LocalKind,
     /// Actual analyzed initializer; absent for parameters/self/catch bindings.
     pub initializer: Option<Arc<Hir>>,
@@ -45,6 +46,7 @@ impl Analyzer<'_> {
                 id,
                 ty,
                 declaration: declaration.clone(),
+                origin: self.origin.clone(),
                 kind,
                 initializer: initializer.map(Arc::new),
                 shadow,
