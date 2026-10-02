@@ -9646,3 +9646,31 @@ actual retained source methods own behavior. Native explicit -invoke remains its
 separate path. No new core stub or fake MetaFn. ROOT owns next focused child run.
 Full M3 issues12–15 remain open, including source environments/locations/syntaxquote/
 gensyms/bootstrap/cache/evaluator removal and stackless lifecycle acceptance.
+Next callable-metadata prerequisite prepared in isolated child
+/private/tmp/suss-m3-callable-metadata, branch portable/m3-callable-metadata,
+currently based on pre-review metadata83a92e5. Three focused regressions are
+UNEXECUTED: ordinary MetaFn invocation preserving captured functions and metadata
+across GC/redefinitions; lexical function-literal metadata with callable body;
+canonical vector/map IFn invocation. No success claim or PR yet. Parent reviewer135
+owns exclusive heavy slot for significant metadata fixes and fresh oracle; root
+must integrate its pushed final source before executing this child.
+
+Source inspection: current ABI invoke accepts canonical closures only. Complete
+licensed MetaFn/IFn are already retained; explicit -invoke has a pin-specific
+receiver convention and is not an implementation of ordinary callable-object
+syntax. Generic calls need canonical IFn dispatch with one evaluated receiver,
+correct implicit receiver arity, live methods and argument effects, plus ordinary
+function literal metadata lowering. Preserve compiled protocol phase identity,
+rooted old captures and shared ABI; do not use an evaluator or eager fake wrapper.
+Full original M3 bootstrap/environment/cache/lifecycle obligations remain open.
+
+
+Callable child before94209 terminal101:all3 regressions fail (0passed/3failed),
+/private/tmp/suss-m3-callable-metadata-before.log. Source83a92e5 cannot ordinarily
+invoke canonical MetaFn/vector/map values and ignores function literal metadata.
+Integrated final reviewed metadata2fe68294165d0f5610b1f954c9253a4f1067697b into
+child with both handoff blocks preserved. Parent full74540 confirmed LIVE,
+/private/tmp/suss-m3-macro-metadata-reviewed-full.log; ROOT exclusive heavy owner.
+No child Cargo/JVM/Node until parent baseline terminal. Next implement ordinary
+callable dispatch and function metadata through source HIR/IR/shared ABI, retain
+actual licensed MetaFn methods, then validate pin/native effects/arity/GC.
