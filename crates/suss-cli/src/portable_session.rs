@@ -676,6 +676,16 @@ impl Session {
         })?;
         self.eval_prepared(prepared)
     }
+    /// Publish only actual compiled macro roots owned by this phase Store.
+    pub(crate) fn declare_macro_exports(
+        &mut self,
+        namespace: &str,
+        names: &[String],
+    ) -> Result<(), SessionError> {
+        self.environment
+            .declare_macro_exports(self.phase, namespace, names)
+            .map_err(SessionError::Compile)
+    }
     pub(crate) fn set_source_paths(&mut self, paths: &[PathBuf]) {
         self.options.source_paths = paths.to_vec();
     }

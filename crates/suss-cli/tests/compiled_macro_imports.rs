@@ -202,3 +202,33 @@ fn namespace_session_compiled_macro_aliases_are_separate_and_lexical_locals_win(
         "nil\n17\n42\n42\n39\n"
     );
 }
+
+#[test]
+fn namespace_session_macro_bodies_expand_ordinary_phase_aliases_and_refers() {
+    let output = run_sources(
+        &[
+            ("helper.sus", "(ns helper) (defmacro forty [] 40)"),
+            (
+                "tools.sus",
+                concat!(
+                    "(ns tools (:require [helper :as h :refer [forty] :rename {forty base}])) ",
+                    "(defmacro aliased [] (+ (h/forty) 2)) ",
+                    "(defmacro referred [] (+ (base) 2))"
+                ),
+            ),
+        ],
+        concat!(
+            "(ns user (:require-macros [tools :as t]))\n",
+            "(t/aliased)\n",
+            "(t/referred)\n",
+            // Runtime helpers are still functions, not inferred macro imports.
+            "(+ 20 22)\n"
+        ),
+    );
+    assert!(output.status.success(), "{output:?}");
+    assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
+    assert_eq!(
+        String::from_utf8(output.stdout).unwrap(),
+        "nil\n42\n42\n42\n"
+    );
+}

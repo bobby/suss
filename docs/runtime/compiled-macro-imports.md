@@ -14,16 +14,19 @@ and `:rename` rules. Macro catalogs and imports are separate from Runtime cells
 and aliases. HIR uses those imports at its actual lexical scope; lexical locals
 continue to hide macros. File definitions resolve core aliases/exclusions and
 ordinary bindings using the Macro environment, preserving source spans. Ordinary
-helper initializers and macro definitions execute in source order. A module is
+helper initializers and macro definitions execute in source order. Successful
+compiled definitions publish Macro-phase export catalogs from their actual
+registered roots. Ordinary aliases/refers within Macro source resolve through
+that catalog; this does not infer Runtime macro imports. A module is
 marked initialized only after all its forms succeed. Earlier executing Macro
 phase effects remain in that isolated Store on failure; Runtime compilation
 failure publishes no Runtime input bindings. Caller namespace is restored after
 macro loading, including failures. Successful modules initialize once until
 session reset; reset discards both phase registries and loaded identities.
 
-Four actual native command regressions cover automatic macro dependencies,
+Five actual native command regressions cover automatic macro dependencies,
 qualified aliases/renamed refers, separate Runtime/Macro dependency cells,
-once-only initialization, core definition resolution, lexical shadowing,
+once-only initialization, core definition resolution, ordinary Macro-phase alias/renamed-refer expansion in macro bodies, lexical shadowing,
 compile/refer errors and reset. Three discovery tests cover order, same-file
 phase identities, actual provided catalogs, cycles and located missing edges.
 The existing eleven executing module tests retain their ordinary preparation

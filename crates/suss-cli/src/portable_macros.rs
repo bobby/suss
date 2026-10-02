@@ -236,10 +236,16 @@ impl CompiledMacros {
         let snapshot = self.session.compilation_snapshot();
         let prepared = snapshot.prepare(vec![definition], span, self)?;
         let value = self.session.eval_prepared(prepared)?;
-        self.definitions.insert(
-            (self.session.current_namespace().into(), name.name.clone()),
-            value.clone(),
-        );
+        let namespace = self.session.current_namespace().to_owned();
+        self.definitions
+            .insert((namespace.clone(), name.name.clone()), value.clone());
+        let exports = self
+            .definitions
+            .keys()
+            .filter(|(ns, _)| ns == &namespace)
+            .map(|(_, name)| name.clone())
+            .collect::<Vec<_>>();
+        self.session.declare_macro_exports(&namespace, &exports)?;
         Ok(value)
     }
 }

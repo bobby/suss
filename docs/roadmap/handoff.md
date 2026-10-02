@@ -9066,3 +9066,39 @@ Issue14 partial progress comment5942922285 records imports/focused evidence and
 remaining original acceptance. Do not claim full/CI success before terminal logs.
 
 Macro imports full18144 terminal0:894passed/0failed/17existing ignores/83groups through finalreader doctests, /private/tmp/suss-m3-macro-imports-full.log. Source/tests frozen; focus66/module14/Python86/provenance pass. Heavy slot released. Publish draft; require independent review/significant fixes/exact final-head CI before readiness. All remaining original M3 acceptance requirements stay open.
+
+
+## PR129 independent review fix — Macro dependency alias/refers
+
+Independent review of2a2912b reproduced a significant source macro-body bug:
+helper.sus defines `(defmacro forty [] 40)`; tools.sus ordinarily requires that
+Macro-phase dependency using an alias and a renamed refer. The compiler resolved
+both names as ordinary calls to the implicit-&form function because actual
+registered helper roots were absent from the Macro export catalog. New native
+command regression failed before the fix41903 terminal101 with both macro calls
+throwing. No success/skip was substituted.
+
+Successful compiled definitions now publish only actual registered roots into
+the Macro Store environment's export catalog. Macro-phase ordinary refers are
+eligible for macro resolution through that catalog, including renamed refers;
+qualified ordinary aliases already follow the existing phase alias lookup.
+Runtime ordinary-import inference remains unsupported and is not widened.
+
+Focused99003 terminal0:21passed/0failed/0ignored across imports5/definitions3/
+phase3/repl6/source4, /private/tmp/suss-pr129-review-after.log. Discovery/modules
+7962 terminal0:14passed, /private/tmp/suss-pr129-review-modules.log. Independent
+command probes exercised forward declarations, explicit macro-body dependencies,
+duplicate alias failure, excluded defmacro and retry after Macro initializer
+throw. Full19941 is live at /private/tmp/suss-pr129-review-full.log; source/tests
+are frozen. Require terminal baseline and exact reviewed-head CI before readiness.
+No merge or completed M3 claim; all previously recorded requirements remain open.
+
+
+PR128 final reviewed3fa84b5 CI36941605461 completedSUCCESS:887passed/0failed/
+17existing ignores/81groups, Python86, all six native command guards and final
+reader doctests. Root verified /private/tmp/suss-pr128-final-ci.log, watch93300/
+log45922 terminal0, then marked128ready:API OPEN/notdraft/headsame. No merge.
+
+PR129 review-fix Python43118 terminal0:86passed. Provenance40015 terminal0:
+132 core imports and1065 upstream declarations verified; diff whitespace passes.
+Full19941 remains live; no terminal result or readiness is claimed yet.

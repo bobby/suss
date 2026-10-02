@@ -705,6 +705,12 @@ impl Environment {
             )
         } else if let Some(target) = scope.macro_refers.get(&symbol.name) {
             target.clone()
+        } else if phase == Phase::Macro
+            && let Some(target) = scope.refers.get(&symbol.name)
+        {
+            // Ordinary dependencies of compiled macro source live in this same
+            // phase. Only a real registered macro export can pass the check below.
+            (target.namespace.clone(), target.name.clone())
         } else {
             (scope.namespace.clone(), symbol.name.clone())
         };
