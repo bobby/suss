@@ -9772,3 +9772,162 @@ for new commit IDs. No PR merge, issue closure or milestone completion is claime
 Next unblocked development task remains complete retained source apply/callable
 behavior before macro environments/locations/syntaxquote/bootstrap/cache and
 stackless lifecycle work; original M3 acceptance remains open.
+
+Next isolated worktree /private/tmp/suss-m3-source-apply, branch
+portable/m3-source-apply, based on final reviewed callable35d270f. Real pinned
+ClojureScript submodule initialized at c4295f303100bbf5afac449242d30bca1126f1a1.
+Source apply BEFORE80197 terminal101:3failed/0passed, log
+/private/tmp/suss-m3-source-apply-before.log. Regressions cover fixed/variadic and
+captured functions/GC, actual MetaFn/vector/map/keyword calls, ordered operand
+effects and language arity failure/recovery. These are intentionally unfinished
+acceptance tests, not skips or baseline success; no PR/full-baseline claim yet.
+
+Complete pinned bounded-count/spread/list*/next* now retained with exact extracted
+source/EPL and explicit defn bootstrap, four new reviewed declarations. Import203
+artifacts/reviews295partial+770unassessed; original core algorithms/branches retained.
+Helper BEFORE43207 terminal101:2failed/0passed using unchanged parent core artifact;
+focus66913 terminal101 rejected next*'s preserved :private attribute. Pinned
+analyzer.cljc resolve* (1249ff) allows qualified private access with a warning.
+Definitions now preserve that attribute and remain callable; warning emission and
+namespace filtering remain unfinished (do not claim full privacy policy).
+Focus43396 terminal0:3passed; fresh primary76888 terminal0:14exact observations and
+private-access WARNING preserved, then3native tests. Final native70782 terminal0:
+4passed including all14corpus cases after GC and bounded custom INext effect counts.
+Logs /private/tmp/suss-m3-apply-sequences-{before,focus,focus2,oracle,final-focus}.log.
+Inventory1065/review/import/diff checks pass. Only trailing whitespace in the new
+spread patch was normalized after finalfocus; no semantic changes.
+
+Next: retain complete apply-to/apply-to-simple/apply plus bounded reproducible
+gen-apply-to/gen-apply-to-simple bootstrap. Existing named closure properties
+explicitly reject call/apply; universal closure min/max bounds do not expose full
+signatures/maxFixedArity/applyTo. Adapt the actual compiler-owned signature data
+and source-array call/apply operations, keeping all pinned dispatch branches and
+sequence forcing. Do not replace source apply with a host evaluator/sequence loop,
+drop variadic/lazy branches, or mark the failing source apply regressions passing.
+Need fresh primary/native callable/arity/effect corpus, required full baseline,
+independent PR review/significant fixes and exact-final-head CI before readiness.
+M3 issues12–15 remain open, including environments/syntaxquote/bootstrap/cache and
+stackless lifecycle. PR136 final35d270f review independently approved, CI36963299893
+confirmed IN_PROGRESS; keep draft until actual final-head success. No merge.
+
+
+Source apply implementation in portable/m3-source-apply now retains full apply-to-
+simple/apply source and every branch, plus bounded v1 pinned generator expansion
+with complete licensed four generators/cs extraction and exact provenance checks.
+Compiler creates rooted arity properties and compiled sequence-preserving applyTo;
+native closure/IFn call/apply and source-array push preserve canonical phase keys,
+large-argument tail packing, receiver identity, effects and language errors. ABI2
+layouts unchanged. Stacker0.1.22 already locked, now direct compiler dependency;
+bounded growth plus64-depth guard retains excessive-expansion diagnostics.
+
+Execution logs in /private/tmp/suss-m3-source-apply-*:
+- signatures-focus78739 terminal101 Number constructor expectedf64, corrected52260
+  terminal0 existing8helper/callable tests.
+- focus44869 terminal101 early bootstrap apply-to lacked-first declaration. Moved
+  definition into the compiled apply-to-simple initializer after protocol declarations,
+  retaining before forward declaration. focus39304 terminal101 depth24 exceeded.
+- focus59307 terminal101 SIGABRT stack overflow after raising depth alone. Correct
+  bounded stack growth23998 terminal101:controls3pass, apply2pass/1missingIFn call
+  adaptation. No failed or aborted run counted as success.
+- focus32598 terminal101 uncovered new nominal match omission; corrected34263
+  confirmed live excessive JIT code (3.3GBRSS/400%CPU). Intentionally SIGINT stopped
+  terminal130 after sharing keys investigation. Key table now hoisted once per
+  phase/protocol;53733 terminal101 missingBTreeMap import, corrected26114 terminal101:
+  apply3pass/1high-arity failure requiringsourceArray.push.
+- focus6946 terminal0:4applytests/4.2s including25args andunboundedseqforcing.
+- freshoracle82176 terminal1 observedvectorwrongaritypin1, retained actual primary
+  value and added explicit strictnative47 boundary. corrected50421 terminal0:
+  22freshprimary observations;5native tests eachphase20matches+2strict boundaries.
+  original strictfixedpin7/native111 also retained explicitly.
+- finalfocus98269 terminal0:30tests metadata10/helper4/callable4/control3/named4/apply5.
+- ABI guard26367 terminal0:1new copied callback/emptypush/typedtag/recovery regression.
+  Python54922 terminal0:88testsOK.
+- closure/ABI32966 terminal101:13closurepass/1fixtureunresolvedseq. Updated only
+  verifier setup to forwarddeclare required real seq dependency.13042 terminal101:
+  all14closurepass; ABI executable NEVER EXECUTED because shared target disappeared
+  between binaries. Root inspected other live Cargo/rustc processes; no new heavy
+  run until shared environment is available. Do not claim47ABI or full success.
+- inventory1065/import205/reviews301partial+764unassessed/bootstrapv1/setup12/bitwise/
+  WIT15files6pkgs/numeric/offlinechecks terminal0 (38164), diffclean.
+
+Concurrent external stack137 repair changed parent PR136 from35d270f to2b857d9,
+only42handoff lines differ, source/tests identical. CI36963299893 CANCELLED; new
+36965789944 confirmedLIVE. Independent reviewer136 approvedexact2b857d9 and verified
+externalstackfull931/0/17/88. PR135 repaired4e02022 treeidenticalapproved17f; reviewer135
+approvedexact4e. Root returned135todraft because newCI36965790098LIVE. No merges.
+Next integrate repaired2b before publishing thischild, require47ABI and fullworkspace
+baseline, mandatory independent review with significantfixes pushed and exactheadCI.
+Docs/runtime/source-apply.md recordsscope/variance/failures/remainingoriginalM3gates.
+
+PR138 published draft at52b4b0e on repaired parent2b857d9. Independent reviewer
+review_pr138 approved source with no significant findings; inspected signatures,
+named self/recur, sequence forcing, IFn tail packing and callback guards; bootstrap
+provenance and diff checks passed. CI36967095236 terminalFAILURE: compiled macro
+definitions test still expected :private rejection, contradicting retained pinned
+metadata behavior. Exact log /private/tmp/suss-pr138-ci52b-failed.log. Updated test
+to define and execute private-one=1 while keeping unsupported :const rejection,
+failed redefinition and missing-body checks. Reviewer independently approved this
+test-only correction; no skipped failures or broader privacy acceptance claim.
+Fresh target rebuild focused command (CARGO_TARGET_DIR main target, jobs2, cargo
+test -p suss-cli --test compiled_macro_definitions --locked -- --test-threads=2)
+running session43968, log /private/tmp/suss-m3-source-apply-private-focus.log.
+Required full workspace and47ABI remain unexecuted; exact final-head CI pending
+new push. PR135/136 exact-head checks confirmedLIVE. No merges, issue closures or
+M3 completion. Next run focused to terminal, full required baseline, resolve any
+failures, re-review final head and verify final-head CI before readiness; then
+continue complete macro environments/locations/syntaxquote/bootstrap/cache.
+
+Source apply focused private-declaration suite43968 terminal0:3passed/0failed,
+log /private/tmp/suss-m3-source-apply-private-focus.log; exact0482e6d independently
+approved. Full workspace10188 terminal101 at portable_murmur_hash: old test
+expected32 expanded/40 explicit nesting to fail, but guarded analysis now64.
+Log /private/tmp/suss-m3-source-apply-full.log is failed baseline evidence, not
+success. Rejection now uses two40-step thread macros (shallow source, combined
+expansion beyond64); original16+16 and explicit40 forms retained as executing
+positive33/41 checks. Existing per-macro256/255 budget, located diagnostic, no
+publication and recovery checks preserved. Independent reviewer138 approved
+test-only correction. Focus37039 terminal0:5passed/0failed/0ignored, log
+/private/tmp/suss-m3-source-apply-limit-focus.log. Need push and fresh full baseline,
+final-head independent review confirmation and exact-head CI before readiness.
+
+Next M3 prerequisite isolated branch portable/m3-hash-map-data in
+/private/tmp/suss-m3-hash-map-data, real pinned upstream initialized. Four new
+not-yet-passing acceptance regressions cover9/16/17/32/33/65 map transport both
+phases afterGC, persistent old roots/nil/equality/hash,20colliding keys, transient
+array-to-hash growth/closed lifecycle. Development primary35observations fresh
+compile/Node/compare terminal0: all exact. Initial runner27004 needed common
+oracle fixture generation; corrected primary3 log and out observations retained.
+Initial80405 failed wrong-directory setup, no primary evidence from that attempt.
+Native BEFORE has just started; no map implementation or success claim yet.
+Real HAMT/transient source needed before unrestricted &env maps; analyzer also
+needs rich locals/namespaces and context semantics (pinned do final expressions
+can become:return independent of current tail flag). &env/fullM3 remain open.
+
+Hash-map BEFORE68971 terminal101:0passed/4failed/0ignored, log
+/private/tmp/suss-m3-hash-map-before.log. Nine-entry quoted map reaches Language
+failure; public dissoc/assoc! are unresolved before other tests execute. These
+failures establish missing prerequisites, not successful HAMT evidence. Fresh
+primary23130 compile terminal0, Node/compare terminal0:35exact pinned observations.
+All unimplemented tests remain in isolated next worktree, outside PR138 baseline.
+
+PR135 repaired4e02022 and PR136 repaired2b857d9 final-head CI completedSUCCESS:
+36965790098 verified926passed/0failed/17existingignores/87groups;36965789944 verified
+931passed/0failed/17existingignores/88groups. Both Python88/import199/setup12/runtime
+ABI/final reader doctests present in complete logs
+/private/tmp/suss-pr{135,136}-repaired-final-ci.log. Independent reviewers approved
+exact heads previously; remoteheads rechecked unchanged. Marked ready, no merges.
+PR138 e661139 independently approved; fresh CI36968779862 confirmedLIVE. Corrected
+one handoff session typo above; final full workspace rerun follows this doc head.
+
+Source apply required full75027 terminal0 at independently reviewed48c4b08:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2. Verified941passed/0failed/
+17existingignores/90groups through final reader doctests, including complete47ABI
+with new foreignENV/emptypush callback regression. Log
+/private/tmp/suss-m3-source-apply-full2.log. No new ignores or suppressed failures.
+Source/tests unchanged by this documentation-only evidence update; final-head
+independent review reconfirmation and fresh exact-head CI still required before
+PR138 readiness. Prior48 CI36968929794 confirmedLIVE, not yet success. No merges
+or issue/milestone closures; next unblocked work is complete retained HAMT/
+transient source and canonical macro data, then original macroenvironment/
+location/syntaxquote/bootstrap/cache/lifecycle acceptance.

@@ -3922,3 +3922,65 @@ fn runtime_abi_callable_adapter_roots_source_method_and_rejects_corrupt_environm
     let result = nominal_value(&mut store, runtime, "invoke", &[bound, empty]);
     assert_eq!(result.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 2);
 }
+
+#[test]
+fn runtime_abi_apply_callbacks_reject_foreign_environments_and_empty_push_buffers() {
+    use wasm_encoder::{HeapType, Instruction};
+    fn language_error(store: &mut Store<()>, runtime: Instance, callback: Val, args: Val) {
+        let error = runtime.get_func(&mut *store, "invoke").unwrap().call(&mut *store, &[callback, args], &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        let exception = store.take_pending_exception().unwrap();
+        assert!(wasmtime::Tag::eq(&exception.tag(&mut *store).unwrap(), &runtime.get_tag(&mut *store, "language-exception").unwrap(), &*store));
+    }
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let empty = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    let one = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    let keys = nominal_value(&mut store, runtime, "args-new", &[Val::I32(22)]);
+    let owner = nominal_value(&mut store, runtime, "arithmetic-add", &[]);
+    let mut types = runtime_abi::prelude();
+    let value = wasm_encoder::ValType::Ref(wasm_encoder::RefType::EQREF);
+    types.ty().function([value, value], [value]);
+    let mut functions = wasm_encoder::FunctionSection::new();
+    functions.function(10);
+    let mut exports = wasm_encoder::ExportSection::new();
+    exports.export("copy-callback", wasm_encoder::ExportKind::Func, 0);
+    let mut code = wasm_encoder::CodeSection::new();
+    let mut forge = wasm_encoder::Function::new([]);
+    forge.instruction(&Instruction::LocalGet(1))
+        .instruction(&Instruction::LocalGet(0))
+        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(4)))
+        .instruction(&Instruction::StructGet { struct_type_index: 4, field_index: 1 })
+        .instruction(&Instruction::I32Const(0)).instruction(&Instruction::I32Const(-1))
+        .instruction(&Instruction::I32Const(0)).instruction(&Instruction::RefI31)
+        .instruction(&Instruction::StructNew(4)).instruction(&Instruction::End);
+    code.function(&forge);
+    let mut module = wasm_encoder::Module::new();
+    module.section(&types).section(&functions).section(&exports).section(&code);
+    let foreign = Instance::new(&mut store, &Module::new(&engine, module.finish()).unwrap(), &[]).unwrap();
+    for export in ["closure-call-method", "closure-apply-method", "ifn-call-method", "ifn-apply-method"] {
+        let arguments = if export.starts_with("ifn-") { vec![owner.clone(), keys.clone()] } else { vec![owner.clone()] };
+        let valid = nominal_value(&mut store, runtime, export, &arguments);
+        for environment in [nil.clone(), empty.clone(), one.clone(), Val::null_any_ref()] {
+            let copied = nominal_value(&mut store, foreign, "copy-callback", &[valid.clone(), environment]);
+            store.gc(None).unwrap();
+            language_error(&mut store, runtime, copied, empty.clone());
+        }
+    }
+    let push = nominal_value(&mut store, runtime, "source-array-push-method", &[]);
+    let tagged = nominal_value(&mut store, runtime, "closure-environment", &[push]);
+    let tagged = tagged.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+    let fields = tagged.fields(&mut store).unwrap().collect::<Vec<_>>();
+    let array = fields[1].unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    let anchored = array.get(&mut store, 0).unwrap();
+    let copied = nominal_value(&mut store, foreign, "copy-callback", &[anchored, nil]);
+    store.gc(None).unwrap();
+    language_error(&mut store, runtime, copied, empty.clone());
+    let valid = nominal_value(&mut store, runtime, "closure-call-method", &[owner]);
+    let value = nominal_value(&mut store, runtime, "invoke", &[valid, empty]);
+    let bits = value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().fields(&mut store).unwrap().collect::<Vec<_>>();
+    assert!(matches!(bits.as_slice(), [Val::F64(bits)] if *bits == 0.0f64.to_bits()));
+}

@@ -1,0 +1,1 @@
+(def seq-effects 0) (deftype ApplySeq [n] ISeqable (-seq [this] this) ISeq (-first [_] (do (set! seq-effects (+ seq-effects 10)) n)) (-rest [_] (do (set! seq-effects (+ seq-effects 100)) (ApplySeq. (+ n 1)))) INext (-next [_] (do (set! seq-effects (+ seq-effects 1)) (ApplySeq. (+ n 1)))))

@@ -1,0 +1,118 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "sequence-0",
+      "source": "(if (nil? (spread nil)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "sequence-1",
+      "source": "(if (= (spread (list [1 2])) '(1 2)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "sequence-2",
+      "source": "(if (= (spread (list 1 2 [3 4])) '(1 2 3 4)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "sequence-3",
+      "source": "(if (= (list* [1 2]) '(1 2)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "sequence-4",
+      "source": "(if (= (list* 1 [2 3]) '(1 2 3)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "sequence-5",
+      "source": "(if (= (list* 1 2 [3 4]) '(1 2 3 4)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "sequence-6",
+      "source": "(if (= (list* 1 2 3 [4 5]) '(1 2 3 4 5)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "sequence-7",
+      "source": "(if (= (list* 1 2 3 4 5 6 [7 8]) '(1 2 3 4 5 6 7 8)) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "count-0",
+      "source": "(bounded-count 1 [1 2 3 4])",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "count-1",
+      "source": "(bounded-count 0 (list 1 2 3))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "count-2",
+      "source": "(bounded-count -1 nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "count-3",
+      "source": "(bounded-count 3 (seq [1 2 3 4]))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4010000000000000"
+      }
+    },
+    {
+      "id": "count-4",
+      "source": "(count (list* 1 2 3 4 [5 6]))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4018000000000000"
+      }
+    },
+    {
+      "id": "private-qualified",
+      "source": "(private-defs/hidden 42)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045800000000000"
+      }
+    }
+  ]
+}

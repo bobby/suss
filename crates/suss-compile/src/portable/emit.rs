@@ -118,6 +118,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ObjectInvoke => {
                             names.insert("object-method-invoke");
                         }
+                        Nominal::CallableGet => { names.insert("callable-property-get"); }
                         Nominal::NamedGet => {
                             names.insert("named-property-get");
                         }
@@ -266,7 +267,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
-            "named-property-set" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
+            "callable-property-get" | "named-property-set" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
             "string-new" => (vec![ValType::I32], vec![VALUE]),
@@ -957,6 +958,7 @@ fn emit_function(
                         | Nominal::NativeObjectStrictSet
                         | Nominal::ObjectSet
                         | Nominal::NamedGet
+                        | Nominal::CallableGet
                         | Nominal::NamedSet
                         | Nominal::Protocol
                         | Nominal::Dispatcher
@@ -975,6 +977,7 @@ fn emit_function(
                                 Nominal::NativeObjectStrictSet => "native-object-property-set-strict",
                                 Nominal::ObjectSet => "object-method-set",
                                 Nominal::NamedGet => "named-property-get",
+                            Nominal::CallableGet => "callable-property-get",
                                 Nominal::NamedSet => "named-property-set",
                                 Nominal::Protocol => "protocol-value-new",
                                 Nominal::Dispatcher => "protocol-dispatcher-new",

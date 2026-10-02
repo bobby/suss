@@ -28,3 +28,7 @@
   PersistentHashMap TransientArrayMap key-test pam-dupes? pam-new-size pam-grow-seed-array)
 
 (declare ArrayChunk array-chunk ChunkedSeq chunked-seq)
+
+;; BEGIN pinned apply bootstrap v1
+(declare apply-to)
+;; END pinned apply bootstrap v1

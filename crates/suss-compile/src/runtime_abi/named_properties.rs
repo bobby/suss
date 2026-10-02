@@ -135,6 +135,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     let mut callbacks = object_methods::functions(b, equal);
     callbacks.extend(string_methods::functions(b));
     callbacks.extend(array_methods::functions(b));
+    callbacks.extend(array_push::functions(b));
+    let (call, apply) = closure_calls::functions(b);
+    callbacks.extend([call, apply]);
 
     // Public JS native names and internal kind keys name the same owned entry.
     let mut body = vec![];
@@ -453,6 +456,13 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             Call(b.names["closure-property-fields"]),
             LocalSet(payload),
         ]);
+        if !writing {
+            for (spelling, adapter) in [("call", "closure-call-method"), ("apply", "closure-apply-method")] {
+                body.push(LocalGet(1));
+                name(&mut body, spelling);
+                body.extend([Call(equal), If(BlockType::Empty), LocalGet(0), Call(b.names[adapter]), Return, End]);
+            }
+        }
         reject_host_names(&mut body, equal, INHERITED_NAMES);
         reject_host_names(
             &mut body,
@@ -611,6 +621,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 End,
             ]);
             body.push(LocalGet(1));
+            name(&mut body, "push");
+            body.extend([Call(equal), If(BlockType::Empty), Call(b.names["source-array-push-method"]), Return, End]);
+            body.push(LocalGet(1));
             name(&mut body, "slice");
             body.extend([
                 Call(equal),
@@ -704,5 +717,6 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             &body,
         );
     }
+    callbacks.extend(callable_properties::functions(b, equal));
     callbacks
 }

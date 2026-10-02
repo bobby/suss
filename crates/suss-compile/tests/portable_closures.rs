@@ -638,7 +638,8 @@ fn multiple_signatures_verify_exact_methods_captures_and_isolated_recur_targets(
 #[test]
 fn verified_variadic_entries_require_class_and_valid_persistent_rest_shape() {
     use portable::ir;
-    let hir = portable::analyze("(ns suss.core) (declare IndexedSeq) (fn [& xs] xs)").unwrap();
+    // The executable applyTo entry also imports its retained sequence dependency.
+    let hir = portable::analyze("(ns suss.core) (declare IndexedSeq seq) (fn [& xs] xs)").unwrap();
     let original = ir::lower(&hir).unwrap();
     portable::compile_ir(&original).unwrap();
     for damage in 0..3 {

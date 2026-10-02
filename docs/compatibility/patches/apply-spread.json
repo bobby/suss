@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c1c94e15c0056ee7785273dc1a460c1606e80fdb440fdfd947c0191e8e052902",
+  "replacement": "(def spread\n\n (fn [arglist]\n (when-not (nil? arglist)\n    (let [n (next arglist)]\n      (if (nil? n)\n        (seq (first arglist))\n        (cons (first arglist)\n              (spread n)))))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains the complete pinned signature, metadata, docstring and sequence algorithm required by source apply. Full apply dispatch, compiled upstream macros and M3 acceptance remain unfinished."
+}

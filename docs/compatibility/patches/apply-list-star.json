@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "85095026161d0706fd7094c83e89741d37a547530ac9e1fd6c4ecb8acee42600",
+  "replacement": "(def list*\n \"Creates a new list containing the items prepended to the rest, the\n  last of which will be treated as a sequence.\"\n (fn ([args] (seq args))\n ([a args] (cons a args))\n ([a b args] (cons a (cons b args)))\n ([a b c args] (cons a (cons b (cons c args))))\n ([a b c d & more]\n     (cons a (cons b (cons c (cons d (spread more))))))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains the complete pinned signature, metadata, docstring and sequence algorithm required by source apply. Full apply dispatch, compiled upstream macros and M3 acceptance remain unfinished."
+}

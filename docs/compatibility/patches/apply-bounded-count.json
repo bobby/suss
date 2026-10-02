@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "d63700971866bf77e738fe14d1e4bf7479485d353c577543c79efff07b58b5ea",
+  "replacement": "(def ^{:added \"1.9\"} bounded-count\n \"If coll is counted? returns its count, else will count at most the first n\n   elements of coll using its seq\"\n (fn [n coll]\n (if (counted? coll)\n    (count coll)\n    (loop [i 0 s (seq coll)]\n      (if (and (not (nil? s)) (< i n))\n        (recur (inc i) (next s))\n        i)))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains the complete pinned signature, metadata, docstring and sequence algorithm required by source apply. Full apply dispatch, compiled upstream macros and M3 acceptance remain unfinished."
+}

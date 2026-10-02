@@ -3016,4 +3016,64 @@
    :classification :adapted :rationale "Retain full pinned wrapper with exact binary64 remainder needed by real vector iterators and chunk offsets. General object coercion remains unfinished; no full public core acceptance claim."
    :status :in-progress :adaptation-path "docs/compatibility/patches/metadata-js-mod.json" :alternative nil
    :tests ["crates/suss-cli/tests/compiled_macro_metadata.rs"]}
+  "runtime:bounded-count:3928"
+  {:source-sha256 "d63700971866bf77e738fe14d1e4bf7479485d353c577543c79efff07b58b5ea" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["retained seq/first/next/cons/count and INext"]
+   :classification :adapted :rationale "Explicit defn-to-def/fn bootstrap retains the complete pinned signature, metadata, docstring and sequence algorithm required by source apply. Full apply dispatch, compiled upstream macros and M3 acceptance remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/apply-bounded-count.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_apply_sequences.rs"]}
+  "runtime:spread:3940"
+  {:source-sha256 "c1c94e15c0056ee7785273dc1a460c1606e80fdb440fdfd947c0191e8e052902" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["retained seq/first/next/cons/count and INext"]
+   :classification :adapted :rationale "Explicit defn-to-def/fn bootstrap retains the complete pinned signature, metadata, docstring and sequence algorithm required by source apply. Full apply dispatch, compiled upstream macros and M3 acceptance remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/apply-spread.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_apply_sequences.rs"]}
+  "runtime:list*:3974"
+  {:source-sha256 "85095026161d0706fd7094c83e89741d37a547530ac9e1fd6c4ecb8acee42600" :visibility :public :arities {:fixed [1 2 3 4] :variadic-min 4}
+   :dependencies ["retained seq/first/next/cons/count and INext"]
+   :classification :adapted :rationale "Explicit defn-to-def/fn bootstrap retains the complete pinned signature, metadata, docstring and sequence algorithm required by source apply. Full apply dispatch, compiled upstream macros and M3 acceptance remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/apply-list-star.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_apply_sequences.rs"]}
+  "runtime:next*:4059"
+  {:source-sha256 "093facc2d56831859066c5f53f337f02dd0a79657320d594f35de7fbe3f3f331" :visibility :private :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["retained seq/first/next/cons/count and INext"]
+   :classification :adapted :rationale "Explicit defn-to-def/fn bootstrap retains the complete pinned signature, metadata, docstring and sequence algorithm required by source apply. Full apply dispatch, compiled upstream macros and M3 acceptance remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/apply-next-star.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_apply_sequences.rs"]}
+  "runtime:apply-to-simple:4066"
+  {:source-sha256 "aa87233069f96340d49ea7e610c61c6c2975ac5cf22af6996bdd12b6b67479ed" :visibility :private :arities {:fixed [2 3 4 5 6] :variadic-min nil}
+   :dependencies ["retained bounded-count/spread/list*/next*" "compiler-owned applyTo/arity and call/apply adapters" "bounded apply bootstrap v1"]
+   :classification :adapted :rationale "Retain every pinned source apply branch and signature with explicit defn bootstrap. Bounded reproducible apply generators preserve the complete arity ladder and source-array fallback; compiler-owned closures supply rooted arity properties and sequence-preserving applyTo. Full compiled macro/bootstrap and namespace warning acceptance remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/apply-apply-to-simple.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_source_apply.rs"]}
+  "runtime:apply:4100"
+  {:source-sha256 "fa0746b45b6cbb451e3fbf04e57e29b7db2864f75b1e415a87f735069cf3b672" :visibility :public :arities {:fixed [2 3 4 5] :variadic-min 5}
+   :dependencies ["retained bounded-count/spread/list*/next*" "compiler-owned applyTo/arity and call/apply adapters" "bounded apply bootstrap v1"]
+   :classification :adapted :rationale "Retain every pinned source apply branch and signature with explicit defn bootstrap. Bounded reproducible apply generators preserve the complete arity ladder and source-array fallback; compiler-owned closures supply rooted arity properties and sequence-preserving applyTo. Full compiled macro/bootstrap and namespace warning acceptance remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/apply-apply.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_source_apply.rs"]}
+  "macro:gen-apply-to-helper:2887"
+  {:source-sha256 "452ee5345051045e06bee77a29db5a697cd466ff7df4e33f857e2f235261fed2" :visibility :private :arities {:fixed [0 1] :variadic-min nil}
+   :dependencies ["bounded apply bootstrap v1" "compiler callable signature/call/apply adapters"]
+   :classification :adapted :rationale "Complete pinned generator source and EPL retained, with deterministic bounded development expansion of the full arity ladder and source-array fallback. Fresh source apply execution is evidence for this prerequisite only; the original source macros are not yet compiled in the Macro Store and full Java-free bootstrap acceptance remains unfinished."
+   :status :in-progress :adaptation-path "scripts/apply_bootstrap.py" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_source_apply.rs" "scripts/apply_bootstrap.py --check"]}
+  "macro:gen-apply-to:2898"
+  {:source-sha256 "90f891b7f044200137efb9f8d1b4b6ad86ff1457d108796327d99dbd53907fe0" :visibility :public :arities {:fixed [0] :variadic-min nil}
+   :dependencies ["bounded apply bootstrap v1" "compiler callable signature/call/apply adapters"]
+   :classification :adapted :rationale "Complete pinned generator source and EPL retained, with deterministic bounded development expansion of the full arity ladder and source-array fallback. Fresh source apply execution is evidence for this prerequisite only; the original source macros are not yet compiled in the Macro Store and full Java-free bootstrap acceptance remains unfinished."
+   :status :in-progress :adaptation-path "scripts/apply_bootstrap.py" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_source_apply.rs" "scripts/apply_bootstrap.py --check"]}
+  "macro:gen-apply-to-simple-helper:2908"
+  {:source-sha256 "5d176d91c55caaea659ea7dd22452c6328e1d3ec7ed20023811bd4cae6335473" :visibility :private :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["bounded apply bootstrap v1" "compiler callable signature/call/apply adapters"]
+   :classification :adapted :rationale "Complete pinned generator source and EPL retained, with deterministic bounded development expansion of the full arity ladder and source-array fallback. Fresh source apply execution is evidence for this prerequisite only; the original source macros are not yet compiled in the Macro Store and full Java-free bootstrap acceptance remains unfinished."
+   :status :in-progress :adaptation-path "scripts/apply_bootstrap.py" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_source_apply.rs" "scripts/apply_bootstrap.py --check"]}
+  "macro:gen-apply-to-simple:2932"
+  {:source-sha256 "49eca93b1db966fa8fe7ffd164c90f6836e0b3a632287c1e6e1f0ba0b9110db2" :visibility :public :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["bounded apply bootstrap v1" "compiler callable signature/call/apply adapters"]
+   :classification :adapted :rationale "Complete pinned generator source and EPL retained, with deterministic bounded development expansion of the full arity ladder and source-array fallback. Fresh source apply execution is evidence for this prerequisite only; the original source macros are not yet compiled in the Macro Store and full Java-free bootstrap acceptance remains unfinished."
+   :status :in-progress :adaptation-path "scripts/apply_bootstrap.py" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_source_apply.rs" "scripts/apply_bootstrap.py --check"]}
 }}

@@ -39,6 +39,10 @@
   PersistentHashMap TransientArrayMap key-test pam-dupes? pam-new-size pam-grow-seed-array)
 
 (declare ArrayChunk array-chunk ChunkedSeq chunked-seq)
+
+;; BEGIN pinned apply bootstrap v1
+(declare apply-to)
+;; END pinned apply bootstrap v1
 (def identity (fn [x] x))
 
 (def not (fn [x] (if x false true)))
@@ -2838,6 +2842,128 @@
 (def js-mod
   "Modulus of num and div with original javascript behavior. i.e. bug for negative numbers"
   (fn [n d] (suss.bootstrap/f64-remainder n d)))
+
+(def ^{:added "1.9"} bounded-count
+ "If coll is counted? returns its count, else will count at most the first n
+   elements of coll using its seq"
+ (fn [n coll]
+ (if (counted? coll)
+    (count coll)
+    (loop [i 0 s (seq coll)]
+      (if (and (not (nil? s)) (< i n))
+        (recur (inc i) (next s))
+        i)))))
+
+(def spread
+
+ (fn [arglist]
+ (when-not (nil? arglist)
+    (let [n (next arglist)]
+      (if (nil? n)
+        (seq (first arglist))
+        (cons (first arglist)
+              (spread n)))))))
+
+(def list*
+ "Creates a new list containing the items prepended to the rest, the
+  last of which will be treated as a sequence."
+ (fn ([args] (seq args))
+ ([a args] (cons a args))
+ ([a b args] (cons a (cons b args)))
+ ([a b c args] (cons a (cons b (cons c args))))
+ ([a b c d & more]
+     (cons a (cons b (cons c (cons d (spread more))))))))
+
+(def ^:private ^seq next*
+ "Internal. DO NOT USE! Next without the nil? check."
+ (fn [coll]
+ (if (implements? INext coll)
+    (-next ^not-native coll)
+    (seq (rest coll)))))
+
+(def ^:private apply-to-simple
+  "Internal. DO NOT USE!
+  Assumes args was already called with seq beforehand!"
+  (do (def apply-to (fn [f argc args] (let [args (seq args)] (if (zero? argc) (f) (let [a0 (-first args) args (-rest args)] (if (== argc 1) (f a0) (let [a1 (-first args) args (-rest args)] (if (== argc 2) (f a0 a1) (let [a2 (-first args) args (-rest args)] (if (== argc 3) (f a0 a1 a2) (let [a3 (-first args) args (-rest args)] (if (== argc 4) (f a0 a1 a2 a3) (let [a4 (-first args) args (-rest args)] (if (== argc 5) (f a0 a1 a2 a3 a4) (let [a5 (-first args) args (-rest args)] (if (== argc 6) (f a0 a1 a2 a3 a4 a5) (let [a6 (-first args) args (-rest args)] (if (== argc 7) (f a0 a1 a2 a3 a4 a5 a6) (let [a7 (-first args) args (-rest args)] (if (== argc 8) (f a0 a1 a2 a3 a4 a5 a6 a7) (let [a8 (-first args) args (-rest args)] (if (== argc 9) (f a0 a1 a2 a3 a4 a5 a6 a7 a8) (let [a9 (-first args) args (-rest args)] (if (== argc 10) (f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9) (let [a10 (-first args) args (-rest args)] (if (== argc 11) (f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10) (let [a11 (-first args) args (-rest args)] (if (== argc 12) (f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11) (let [a12 (-first args) args (-rest args)] (if (== argc 13) (f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12) (let [a13 (-first args) args (-rest args)] (if (== argc 14) (f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13) (let [a14 (-first args) args (-rest args)] (if (== argc 15) (f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14) (let [a15 (-first args) args (-rest args)] (if (== argc 16) (f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15) (let [a16 (-first args) args (-rest args)] (if (== argc 17) (f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16) (let [a17 (-first args) args (-rest args)] (if (== argc 18) (f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17) (let [a18 (-first args) args (-rest args)] (if (== argc 19) (f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18) (let [a19 (-first args) args (-rest args)] (if (== argc 20) (f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19) (throw (suss.bootstrap/error "Only up to 20 arguments supported on functions"))))))))))))))))))))))))))))))))))))))))))))))
+ (fn
+  ([f ^seq args]
+   (if (nil? args)
+     (if (.-cljs$core$IFn$_invoke$arity$0 f)
+       (.cljs$core$IFn$_invoke$arity$0 f)
+       (.call f f))
+     (apply-to-simple f (-first args) (next* args))))
+  ([f a0 ^seq args]
+   (if (nil? args)
+     (if (.-cljs$core$IFn$_invoke$arity$1 f)
+       (.cljs$core$IFn$_invoke$arity$1 f a0)
+       (.call f f a0))
+     (apply-to-simple f a0 (-first args) (next* args))))
+  ([f a0 a1 ^seq args]
+   (if (nil? args)
+     (if (.-cljs$core$IFn$_invoke$arity$2 f)
+       (.cljs$core$IFn$_invoke$arity$2 f a0 a1)
+       (.call f f a0 a1))
+     (apply-to-simple f a0 a1 (-first args) (next* args))))
+  ([f a0 a1 a2 ^seq args]
+   (if (nil? args)
+     (if (.-cljs$core$IFn$_invoke$arity$3 f)
+       (.cljs$core$IFn$_invoke$arity$3 f a0 a1 a2)
+       (.call f f a0 a1 a2))
+     (apply-to-simple f a0 a1 a2 (-first args) (next* args))))
+  ([f a0 a1 a2 a3 ^seq args]
+   (if (nil? args)
+     (if (.-cljs$core$IFn$_invoke$arity$4 f)
+       (.cljs$core$IFn$_invoke$arity$4 f a0 a1 a2 a3)
+       (.call f f a0 a1 a2 a3))
+     (let [a4 (cljs.core/-first args) next_4 (cljs.core/next args)] (if (nil? next_4) (if (.-cljs$core$IFn$_invoke$arity$5 f) (.cljs$core$IFn$_invoke$arity$5 f a0 a1 a2 a3 a4) (.call f f a0 a1 a2 a3 a4)) (let [a5 (cljs.core/-first next_4) next_5 (cljs.core/next next_4)] (if (nil? next_5) (if (.-cljs$core$IFn$_invoke$arity$6 f) (.cljs$core$IFn$_invoke$arity$6 f a0 a1 a2 a3 a4 a5) (.call f f a0 a1 a2 a3 a4 a5)) (let [a6 (cljs.core/-first next_5) next_6 (cljs.core/next next_5)] (if (nil? next_6) (if (.-cljs$core$IFn$_invoke$arity$7 f) (.cljs$core$IFn$_invoke$arity$7 f a0 a1 a2 a3 a4 a5 a6) (.call f f a0 a1 a2 a3 a4 a5 a6)) (let [a7 (cljs.core/-first next_6) next_7 (cljs.core/next next_6)] (if (nil? next_7) (if (.-cljs$core$IFn$_invoke$arity$8 f) (.cljs$core$IFn$_invoke$arity$8 f a0 a1 a2 a3 a4 a5 a6 a7) (.call f f a0 a1 a2 a3 a4 a5 a6 a7)) (let [a8 (cljs.core/-first next_7) next_8 (cljs.core/next next_7)] (if (nil? next_8) (if (.-cljs$core$IFn$_invoke$arity$9 f) (.cljs$core$IFn$_invoke$arity$9 f a0 a1 a2 a3 a4 a5 a6 a7 a8) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8)) (let [a9 (cljs.core/-first next_8) next_9 (cljs.core/next next_8)] (if (nil? next_9) (if (.-cljs$core$IFn$_invoke$arity$10 f) (.cljs$core$IFn$_invoke$arity$10 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)) (let [a10 (cljs.core/-first next_9) next_10 (cljs.core/next next_9)] (if (nil? next_10) (if (.-cljs$core$IFn$_invoke$arity$11 f) (.cljs$core$IFn$_invoke$arity$11 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)) (let [a11 (cljs.core/-first next_10) next_11 (cljs.core/next next_10)] (if (nil? next_11) (if (.-cljs$core$IFn$_invoke$arity$12 f) (.cljs$core$IFn$_invoke$arity$12 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)) (let [a12 (cljs.core/-first next_11) next_12 (cljs.core/next next_11)] (if (nil? next_12) (if (.-cljs$core$IFn$_invoke$arity$13 f) (.cljs$core$IFn$_invoke$arity$13 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)) (let [a13 (cljs.core/-first next_12) next_13 (cljs.core/next next_12)] (if (nil? next_13) (if (.-cljs$core$IFn$_invoke$arity$14 f) (.cljs$core$IFn$_invoke$arity$14 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)) (let [a14 (cljs.core/-first next_13) next_14 (cljs.core/next next_13)] (if (nil? next_14) (if (.-cljs$core$IFn$_invoke$arity$15 f) (.cljs$core$IFn$_invoke$arity$15 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)) (let [a15 (cljs.core/-first next_14) next_15 (cljs.core/next next_14)] (if (nil? next_15) (if (.-cljs$core$IFn$_invoke$arity$16 f) (.cljs$core$IFn$_invoke$arity$16 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)) (let [a16 (cljs.core/-first next_15) next_16 (cljs.core/next next_15)] (if (nil? next_16) (if (.-cljs$core$IFn$_invoke$arity$17 f) (.cljs$core$IFn$_invoke$arity$17 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16)) (let [a17 (cljs.core/-first next_16) next_17 (cljs.core/next next_16)] (if (nil? next_17) (if (.-cljs$core$IFn$_invoke$arity$18 f) (.cljs$core$IFn$_invoke$arity$18 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17)) (let [a18 (cljs.core/-first next_17) next_18 (cljs.core/next next_17)] (if (nil? next_18) (if (.-cljs$core$IFn$_invoke$arity$19 f) (.cljs$core$IFn$_invoke$arity$19 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18)) (let [a19 (cljs.core/-first next_18) next_19 (cljs.core/next next_18)] (if (nil? next_19) (if (.-cljs$core$IFn$_invoke$arity$20 f) (.cljs$core$IFn$_invoke$arity$20 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19)) (let [arr (array a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19)] (loop [s next_19] (when s (do (.push arr (-first s)) (recur (next s))))) (.apply f f arr)))))))))))))))))))))))))))))))))))))))
+
+(def apply
+ "Applies fn f to the argument list formed by prepending intervening arguments to args."
+ (fn ([f args]
+   (if (.-cljs$lang$applyTo f)
+     (let [fixed-arity (.-cljs$lang$maxFixedArity f)
+           bc (bounded-count (inc fixed-arity) args)]
+       (if (<= bc fixed-arity)
+         (apply-to f bc args)
+         (.cljs$lang$applyTo f args)))
+     (apply-to-simple f (seq args))))
+ ([f x args]
+   (if (.-cljs$lang$applyTo f)
+     (let [arglist (list* x args)
+           fixed-arity (.-cljs$lang$maxFixedArity f)
+           bc (inc (bounded-count fixed-arity args))]
+       (if (<= bc fixed-arity)
+         (apply-to f bc arglist)
+         (.cljs$lang$applyTo f arglist)))
+     (apply-to-simple f x (seq args))))
+ ([f x y args]
+   (if (.-cljs$lang$applyTo f)
+     (let [arglist (list* x y args)
+           fixed-arity (.-cljs$lang$maxFixedArity f)
+           bc (+ 2 (bounded-count (dec fixed-arity) args))]
+       (if (<= bc fixed-arity)
+         (apply-to f bc arglist)
+         (.cljs$lang$applyTo f arglist)))
+     (apply-to-simple f x y (seq args))))
+ ([f x y z args]
+   (if (.-cljs$lang$applyTo f)
+     (let [arglist (list* x y z args)
+           fixed-arity (.-cljs$lang$maxFixedArity f)
+           bc (+ 3 (bounded-count (- fixed-arity 2) args))]
+       (if (<= bc fixed-arity)
+         (apply-to f bc arglist)
+         (.cljs$lang$applyTo f arglist)))
+     (apply-to-simple f x y z (seq args))))
+ ([f a b c d & args]
+   (if (.-cljs$lang$applyTo f)
+     (let [spread-args (spread args)
+           arglist (cons a (cons b (cons c (cons d spread-args))))
+           fixed-arity (.-cljs$lang$maxFixedArity f)
+           bc (+ 4 (bounded-count (- fixed-arity 3) spread-args))]
+       (if (<= bc fixed-arity)
+         (apply-to f bc arglist)
+         (.cljs$lang$applyTo f arglist)))
+     (apply-to-simple f a b c d (spread args))))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

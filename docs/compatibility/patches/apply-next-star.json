@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "093facc2d56831859066c5f53f337f02dd0a79657320d594f35de7fbe3f3f331",
+  "replacement": "(def ^:private ^seq next*\n \"Internal. DO NOT USE! Next without the nil? check.\"\n (fn [coll]\n (if (implements? INext coll)\n    (-next ^not-native coll)\n    (seq (rest coll)))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains the complete pinned signature, metadata, docstring and sequence algorithm required by source apply. Full apply dispatch, compiled upstream macros and M3 acceptance remain unfinished."
+}
