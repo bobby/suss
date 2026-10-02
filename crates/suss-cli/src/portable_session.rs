@@ -139,10 +139,10 @@ pub struct Session {
 /// Owned compiler inputs permit macro expansion to execute in this same phase
 /// Store while preparation reads an immutable namespace/module snapshot.
 pub(crate) struct CompilationSnapshot {
-    environment: Environment,
+    pub(crate) environment: Environment,
     phase: Phase,
-    source_paths: Vec<PathBuf>,
-    provided: BTreeSet<ModuleIdentity>,
+    pub(crate) source_paths: Vec<PathBuf>,
+    pub(crate) provided: BTreeSet<ModuleIdentity>,
 }
 impl CompilationSnapshot {
     pub(crate) fn prepare(
@@ -675,6 +675,28 @@ impl Session {
             portable::modules::InputDiagnostic::Dependency(error) => SessionError::Module(error),
         })?;
         self.eval_prepared(prepared)
+    }
+    /// Publish only actual compiled macro roots owned by this phase Store.
+    pub(crate) fn declare_macro_exports(
+        &mut self,
+        namespace: &str,
+        names: &[String],
+    ) -> Result<(), SessionError> {
+        self.environment
+            .declare_macro_exports(self.phase, namespace, names)
+            .map_err(SessionError::Compile)
+    }
+    pub(crate) fn set_source_paths(&mut self, paths: &[PathBuf]) {
+        self.options.source_paths = paths.to_vec();
+    }
+    /// Called only after every form of this phase module has initialized.
+    pub(crate) fn initialized_source_namespace(
+        &mut self,
+        namespace: &str,
+    ) -> Result<(), SessionError> {
+        self.provided
+            .insert(ModuleIdentity::new(self.phase, namespace).map_err(SessionError::Compile)?);
+        Ok(())
     }
     pub(crate) fn compilation_snapshot(&self) -> CompilationSnapshot {
         CompilationSnapshot {

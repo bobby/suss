@@ -24,6 +24,18 @@ pub struct ExpansionContext<'a> {
     pub locals: &'a std::collections::HashMap<String, (hir::BindingId, hir::Type)>,
 }
 pub trait ExpansionHost {
+    fn supports_macro_imports(&self) -> bool {
+        false
+    }
+    fn source_paths(&mut self, _paths: &[std::path::PathBuf]) {}
+    fn load_macro_namespace(
+        &mut self,
+        _namespace: &str,
+        span: Range<usize>,
+    ) -> Result<Vec<String>, Diagnostic> {
+        Err(Diagnostic { span, message: "Source macro imports require an isolated compiled macro session, not yet integrated".into() })
+    }
+
     fn expand(
         &mut self,
         form: &suss_reader::forms::Form,
@@ -60,7 +72,7 @@ pub fn analyze_in(
             message: error.message,
         })?;
     let mut snapshot = environment.clone();
-    source::namespace(&mut forms, &mut snapshot, phase)?;
+    source::namespace(&mut forms, &mut snapshot, phase, &mut NoExpansion)?;
     hir::analyze_in(&forms, 0..source.len(), &snapshot, phase)
 }
 pub fn compile(source: &str) -> Result<Vec<u8>, Diagnostic> {
@@ -150,7 +162,7 @@ pub(crate) fn prepare_selected_fragment_with_expander(
     expander: &mut dyn ExpansionHost,
 ) -> Result<PreparedFragment, Diagnostic> {
     let mut snapshot = environment.clone();
-    let namespace_directive = source::namespace(&mut forms, &mut snapshot, phase)?;
+    let namespace_directive = source::namespace(&mut forms, &mut snapshot, phase, expander)?;
     let (hir, environment) = hir::prepare_with_expander(&forms, span, &snapshot, phase, expander)?;
     let wasm = compile_ir(&ir::lower(&hir)?)?;
     let cells = environment

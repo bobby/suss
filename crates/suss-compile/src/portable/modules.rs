@@ -1,8 +1,8 @@
 //! Immutable dependency graph preparation. Runtime initialization belongs to the host.
 use super::{
-    prepare_fragment, prepare_selected_fragment,
+    Diagnostic, PreparedFragment, prepare_fragment, prepare_selected_fragment,
     resolve::{self, Environment, Phase},
-    source, Diagnostic, PreparedFragment,
+    source,
 };
 use std::{
     collections::BTreeSet,
@@ -70,11 +70,14 @@ pub struct ModulePlan {
     pub environment: Environment,
     pub cells: Vec<resolve::Global>,
 }
-struct Snapshot {
-    identity: ModuleIdentity,
-    path: PathBuf,
-    source: String,
-    dependencies: Vec<ModuleIdentity>,
+/// Exact selected forms and source text used by phase dependency discovery.
+#[derive(Debug)]
+pub struct SourceModule {
+    pub identity: ModuleIdentity,
+    pub path: PathBuf,
+    pub source: String,
+    pub forms: Vec<suss_reader::forms::Form>,
+    pub dependencies: Vec<ModuleIdentity>,
 }
 struct Discovery<'a, P> {
     roots: &'a [P],
@@ -82,7 +85,9 @@ struct Discovery<'a, P> {
     provided: &'a BTreeSet<ModuleIdentity>,
     active: Vec<ModuleIdentity>,
     done: BTreeSet<ModuleIdentity>,
-    snapshots: Vec<Snapshot>,
+    snapshots: Vec<SourceModule>,
+    phase_graph: bool,
+    macro_imports: bool,
 }
 impl<P: AsRef<Path>> Discovery<'_, P> {
     fn visit(
@@ -119,7 +124,13 @@ impl<P: AsRef<Path>> Discovery<'_, P> {
             let chain = self.active[index..]
                 .iter()
                 .chain(std::iter::once(&identity))
-                .map(|module| module.namespace.as_str())
+                .map(|module| {
+                    if self.phase_graph {
+                        format!("{:?}:{}", module.phase, module.namespace)
+                    } else {
+                        module.namespace.clone()
+                    }
+                })
                 .collect::<Vec<_>>()
                 .join(" -> ");
             return Err(fail(format!("Cyclic namespace dependency: {chain}")));
@@ -151,8 +162,28 @@ impl<P: AsRef<Path>> Discovery<'_, P> {
                     },
                 )
             })?;
-        let (declared, declared_span, dependencies) =
-            source::dependencies(&forms).map_err(|error| located(&identity, Some(&path), error))?;
+        let (declared, declared_span, dependencies) = if self.phase_graph {
+            source::phase_dependencies(&forms, identity.phase)
+        } else {
+            source::input_header_with_macros(&forms, self.macro_imports)
+                .and_then(|header| {
+                    header.ok_or_else(|| Diagnostic {
+                        span: forms.first().map_or(0..0, |f| f.span.clone()),
+                        message: "Source module requires a leading ns declaration".into(),
+                    })
+                })
+                .map(|(name, span, edges)| {
+                    (
+                        name,
+                        span,
+                        edges
+                            .into_iter()
+                            .map(|(name, span)| (identity.phase, name, span))
+                            .collect(),
+                    )
+                })
+        }
+        .map_err(|error| located(&identity, Some(&path), error))?;
         if resolve::canonical(&declared) != identity.namespace {
             return Err(located(
                 &identity,
@@ -169,12 +200,11 @@ impl<P: AsRef<Path>> Discovery<'_, P> {
         self.active.push(identity.clone());
         let mut ordered = Vec::new();
         let mut seen = BTreeSet::new();
-        for (namespace, span) in dependencies {
-            let dependency =
-                ModuleIdentity::new(identity.phase, &namespace).map_err(|mut error| {
-                    error.span = span.clone();
-                    located(&identity, Some(&path), error)
-                })?;
+        for (phase, namespace, span) in dependencies {
+            let dependency = ModuleIdentity::new(phase, &namespace).map_err(|mut error| {
+                error.span = span.clone();
+                located(&identity, Some(&path), error)
+            })?;
             if seen.insert(dependency.clone()) {
                 self.visit(dependency.clone(), Some(&path), span)?;
                 ordered.push(dependency);
@@ -182,10 +212,11 @@ impl<P: AsRef<Path>> Discovery<'_, P> {
         }
         self.active.pop();
         self.done.insert(identity.clone());
-        self.snapshots.push(Snapshot {
+        self.snapshots.push(SourceModule {
             identity,
             path,
             source: text,
+            forms,
             dependencies: ordered,
         });
         Ok(())
@@ -228,6 +259,12 @@ pub fn prepare_modules_with_expander<P: AsRef<Path>>(
         span: error.span,
         message: error.message,
     })?;
+    expander.source_paths(
+        &roots
+            .iter()
+            .map(|root| root.as_ref().to_path_buf())
+            .collect::<Vec<_>>(),
+    );
     let mut discovery = Discovery {
         roots,
         environment,
@@ -235,6 +272,8 @@ pub fn prepare_modules_with_expander<P: AsRef<Path>>(
         active: Vec::new(),
         done: BTreeSet::new(),
         snapshots: Vec::new(),
+        phase_graph: false,
+        macro_imports: expander.supports_macro_imports(),
     };
     discovery.visit(identity.clone(), None, 0..0)?;
     let (modules, mut snapshot) =
@@ -255,7 +294,7 @@ pub fn prepare_modules_with_expander<P: AsRef<Path>>(
 }
 
 fn compile_snapshots_with_expander(
-    snapshots: Vec<Snapshot>,
+    snapshots: Vec<SourceModule>,
     environment: &Environment,
     phase: Phase,
     expander: &mut dyn super::ExpansionHost,
@@ -266,16 +305,7 @@ fn compile_snapshots_with_expander(
         let PreparedFragment {
             wasm, environment, ..
         } = super::prepare_fragment_forms_with_expander(
-            read_forms(&unit.source).map_err(|error| {
-                located(
-                    &unit.identity,
-                    Some(&unit.path),
-                    Diagnostic {
-                        span: error.span,
-                        message: error.message,
-                    },
-                )
-            })?,
+            unit.forms,
             0..unit.source.len(),
             &snapshot,
             phase,
@@ -365,7 +395,14 @@ pub fn prepare_input_forms_with_expander<P: AsRef<Path>>(
             message: error.message,
         })
     })?;
-    let header = source::input_header(&forms).map_err(InputDiagnostic::Compile)?;
+    let header = source::input_header_with_macros(&forms, expander.supports_macro_imports())
+        .map_err(InputDiagnostic::Compile)?;
+    expander.source_paths(
+        &roots
+            .iter()
+            .map(|root| root.as_ref().to_path_buf())
+            .collect::<Vec<_>>(),
+    );
     let mut discovery = Discovery {
         roots,
         environment,
@@ -373,6 +410,8 @@ pub fn prepare_input_forms_with_expander<P: AsRef<Path>>(
         active: Vec::new(),
         done: BTreeSet::new(),
         snapshots: Vec::new(),
+        phase_graph: false,
+        macro_imports: expander.supports_macro_imports(),
     };
     if let Some((_, _, dependencies)) = header {
         for (namespace, span) in dependencies {
@@ -393,4 +432,35 @@ pub fn prepare_input_forms_with_expander<P: AsRef<Path>>(
         super::prepare_selected_fragment_with_expander(forms, span, &snapshot, phase, expander)
             .map_err(InputDiagnostic::Compile)?;
     Ok(PreparedInput { modules, fragment })
+}
+
+/// Read one immutable, dependency-first source graph spanning Runtime and Macro
+/// identities. This neither compiles nor runs initializers. A host must provide
+/// actual phase catalogs and mark modules provided only after successful execution.
+/// The same physical file can occur in both phases; phase identity is never erased.
+pub fn discover_phase_modules<P: AsRef<Path>>(
+    namespace: &str,
+    roots: &[P],
+    environment: &Environment,
+    phase: Phase,
+    provided: &BTreeSet<ModuleIdentity>,
+) -> Result<Vec<SourceModule>, ModuleDiagnostic> {
+    let identity = ModuleIdentity::new(phase, namespace).map_err(|error| ModuleDiagnostic {
+        namespace: namespace.into(),
+        source_path: None,
+        span: error.span,
+        message: error.message,
+    })?;
+    let mut discovery = Discovery {
+        roots,
+        environment,
+        provided,
+        active: Vec::new(),
+        done: BTreeSet::new(),
+        snapshots: Vec::new(),
+        phase_graph: true,
+        macro_imports: true,
+    };
+    discovery.visit(identity, None, 0..0)?;
+    Ok(discovery.snapshots)
 }
