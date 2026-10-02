@@ -136,6 +136,36 @@ pub struct Session {
     artifact_bytes: usize,
     bootstrap_core: bool,
 }
+/// Owned compiler inputs permit macro expansion to execute in this same phase
+/// Store while preparation reads an immutable namespace/module snapshot.
+pub(crate) struct CompilationSnapshot {
+    environment: Environment,
+    phase: Phase,
+    source_paths: Vec<PathBuf>,
+    provided: BTreeSet<ModuleIdentity>,
+}
+impl CompilationSnapshot {
+    pub(crate) fn prepare(
+        &self,
+        forms: Vec<suss_reader::forms::Form>,
+        span: std::ops::Range<usize>,
+        expander: &mut dyn portable::ExpansionHost,
+    ) -> Result<portable::modules::PreparedInput, SessionError> {
+        portable::modules::prepare_input_forms_with_expander(
+            forms,
+            span,
+            &self.source_paths,
+            &self.environment,
+            self.phase,
+            &self.provided,
+            expander,
+        )
+        .map_err(|error| match error {
+            portable::modules::InputDiagnostic::Compile(error) => SessionError::Compile(error),
+            portable::modules::InputDiagnostic::Dependency(error) => SessionError::Module(error),
+        })
+    }
+}
 fn engine() -> Result<Engine, SessionError> {
     static ENGINE: OnceLock<Result<Engine, String>> = OnceLock::new();
     ENGINE
@@ -639,6 +669,14 @@ impl Session {
         })?;
         self.eval_prepared(prepared)
     }
+    pub(crate) fn compilation_snapshot(&self) -> CompilationSnapshot {
+        CompilationSnapshot {
+            environment: self.environment.clone(),
+            phase: self.phase,
+            source_paths: self.options.source_paths.clone(),
+            provided: self.provided.clone(),
+        }
+    }
     pub fn eval_with_macros(
         &mut self,
         source: &str,
@@ -650,19 +688,9 @@ impl Session {
                 message: error.message,
             })
         })?;
-        let prepared = portable::modules::prepare_input_forms_with_expander(
-            forms,
-            0..source.len(),
-            &self.options.source_paths,
-            &self.environment,
-            self.phase,
-            &self.provided,
-            expander,
-        )
-        .map_err(|error| match error {
-            portable::modules::InputDiagnostic::Compile(error) => SessionError::Compile(error),
-            portable::modules::InputDiagnostic::Dependency(error) => SessionError::Module(error),
-        })?;
+        let prepared = self
+            .compilation_snapshot()
+            .prepare(forms, 0..source.len(), expander)?;
         self.eval_prepared(prepared)
     }
     /// Compile reader or expanded forms through the ordinary phase/module pipeline.
@@ -686,7 +714,7 @@ impl Session {
         })?;
         self.eval_prepared(prepared)
     }
-    fn eval_prepared(
+    pub(crate) fn eval_prepared(
         &mut self,
         prepared: portable::modules::PreparedInput,
     ) -> Result<SessionValue, SessionError> {

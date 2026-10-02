@@ -8820,3 +8820,66 @@ context, textual analysis order and quoted-data bypass. Probe source retained at
 Review fix requires a replacement-head full workspace baseline and exact final-head
 CI before readiness. No merge or M3 completion; all full macro/bootstrap/lifecycle
 acceptance remains open.
+
+
+## M3 definition signatures and macro-body expansion in progress
+
+PR124 exact9295c8b independently approved and CI36932620871 SUCCESS871/0/17/77,
+all six guards/finalreader; watcher91480/log73134 terminal0. Root marked ready,
+API OPEN/notdraft/headsame. No merge or issue closure.
+
+PR125 opened at515457a with full874/0/17/78. Independent review found macro named
+loop* could intercept a true special form. Reviewer added regression before36892
+terminal101/after83427 terminal0 four source tests; temporary3898 two meaningful
+lexical/tail/order/exception probes pass. Fix81bfbadd pushed. Required replacement
+full49081 is live /private/tmp/suss-pr125-reviewed-full.log, exact-head CI36935692730
+watcher27273 live. Reviewer owns exclusive heavy slot; no competing Cargo commands.
+Do not mark125ready until terminal full plus exact-head CI verification.
+
+Root child /private/tmp/suss-m3-macro-signatures portable/m3-macro-signatures now
+bases directly on81bfbadd (temporary identical-tree cherry418e8c9 normalized by
+verified soft reset). Uncommitted definition parser supports single/multiple/variadic
+signatures, docs and ordinary source attribute maps; attributes stay Forms metadata,
+not fake observable runtime maps. Privacy/const/macro/export still explicit errors.
+Namespace enter/identity delegates actual Macro Store environment and keeps roots.
+
+Before40116 terminal101 missing namespace APIs, log macro-definitions-before.
+Firstafter3222 terminal101 correctly rejected :private true, rather than silently
+accepting unsupported privacy policy. Regression now uses ordinary :added attrs and
+asserts privacy rejection. Focus85219 terminal0 definitions2/source4, log
+/private/tmp/suss-m3-macro-definitions-after2.log. Root returned heavy slot to reviewer.
+Since that focus, added owned CompilationSnapshot and real macro-body expansion
+through same HIR host/original Macro Store, a third definition regression and
+single multi-signature edge fix. THESE LAST EDITS ARE NOT YET RUST-TESTED. Next run
+focused definitions/source/forms/phase/persistent, resolve failures then freeze and
+run required full baseline. Do not publish or claim current child tests passed.
+
+Actual pinned submodule47317 terminal0. Provenance initial check failed because new
+submodule was uninitialized; real pin initialized, not symlinked. Import132/inventory
+1065 pass; reviews --check was invalid CLI usage, corrected plain cljs_reviews.py
+passes224/841. Python11550 terminal0:86 tests. No source selection/new skips/ABI
+changes. &env/metadata collections/automatic macro imports/syntaxquote/gensyms/
+versioned Java-free bootstrap/full cache/evaluator removal and #15 full cancellation/
+live accounting remain required. Milestone issue14 progress comment5942000424.
+
+
+Reviewer PR125 full49081 terminal0:875/0/17existing ignores/78groups/finalreader,
+all4 source guards. Exact81bfbadd approved after significant fix; CI36935692730
+watch27273 remains live. Heavy slot released to root.
+
+Root final child focus44580 terminal0:53passed/0failed/0ignored across definitions3/
+forms6/phase3/source4/namespace4/persistent33, log
+/private/tmp/suss-m3-macro-definitions-focus.log. New macro-body snapshot/expansion
+and single multi-signature edge now actually execute. Source/tests frozen; next
+required full workspace baseline. Only docs/evidence may change during full.
+
+Frozen definition full96199 now live, /private/tmp/suss-m3-macro-definitions-full.log;
+root owns exclusive heavy slot. Re-poll same handle to terminal. After success
+finish docs/evidence, publish child draft, dispatch independent review/fixes and
+require exact-head CI. All remaining original M3 criteria stay open.
+
+Definition full96199 terminal0:878passed/0failed/17existing ignores/79groups
+through finalreader doctests, /private/tmp/suss-m3-macro-definitions-full.log.
+Focused53 and Python86/provenance pass. Source/tests stayed frozen; no added
+skips/ABI/dependency/source-selection changes. Ready to publish draft and dispatch
+independent review/significant fixes/exact reviewed-head CI. All M3 gaps remain.
