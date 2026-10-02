@@ -67,8 +67,10 @@ the failure. The original case remains in the corpus. See
 
 Source tests preserve compile-atomic rejection of invalid metadata. Previously
 unsupported valid metadata is now covered by positive tests; no blanket skips or
-removed case catalog entries establish success. Full baseline, independent review,
-significant fixes and final reviewed-head CI remain PR readiness gates.
+removed case catalog entries establish success. Independent review fixed three
+significant findings. The required full workspace baseline passed 926 tests, zero
+failures and 17 existing ignores across 87 groups through reader doctests on the
+reviewed source. Successful exact final-head CI remains the PR readiness gate.
 
 ## Remaining acceptance
 

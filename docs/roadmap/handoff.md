@@ -9620,3 +9620,29 @@ Push this significant follow-up fix, freeze its source, then require full worksp
 baseline and successful exact-final-head CI. Previous83a92e5/5b46a6d CI does not
 certify this new source. No merge; original M3 acceptance remains open. Root owns
 next full baseline after reviewer releases the exclusive heavy slot.
+
+
+PR135 reviewed source2fe68294165d0f5610b1f954c9253a4f1067697b frozen full74540
+terminal0:926passed/0failed/17existingignores/87groups through finalreader doctests,
+/private/tmp/suss-m3-macro-metadata-reviewed-full.log. Reviewer135 independently
+approved exact2fe after pushing all3 significant findings. This final publication
+evidence changes docs only; require independent final-head confirmation and fresh
+exact-head CI, keeping draft until terminal success. No merge.
+
+PR133 exact repaired3ccd3723 CI36957307954 SUCCESS:downloaded complete
+/private/tmp/suss-pr133-repaired-final-ci.log, stripped only ANSI display codes,
+verified915/0/17/86groups/Python88/import191/setup12/finalreader. Reviewer133
+independently approved3ccd. Root marked133ready and verified OPEN/notdraft/head
+unchanged; no merge. Repaired #12939b3e9f CI36956034013, #13154e2402 CI36956034110,
+#132df4661c CI36956034518 also SUCCESS on their new heads. Old-head/cancelled runs
+were not reused as repair proof.
+
+Next child /private/tmp/suss-m3-callable-metadata integrated reviewed2fe and has
+three meaningful BEFORE94209 terminal101 regressions for ordinary MetaFn/collection
+calls and function-literal metadata. Initial original HIR/ABI adaptation is prepared
+but unexecuted: source callee captured once; closures retain universal invocation;
+nominal callable method captured before arguments through canonical IFn key;
+actual retained source methods own behavior. Native explicit -invoke remains its
+separate path. No new core stub or fake MetaFn. ROOT owns next focused child run.
+Full M3 issues12–15 remain open, including source environments/locations/syntaxquote/
+gensyms/bootstrap/cache/evaluator removal and stackless lifecycle acceptance.
