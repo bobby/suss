@@ -1213,6 +1213,21 @@
       "id": "runtime:assoc:2076",
       "source-sha256": "8561935c5fc21642683dbf8aae3d1739a776696f0dcd898b1a1078e274132232",
       "patch": "docs/compatibility/patches/hamt-assoc.json"
+    },
+    {
+      "id": "runtime:conj:1870",
+      "source-sha256": "4910efcbaf03c87d78039a840327e8d8cf34c1fc1bfd80ac36e113bc91ce5a2a",
+      "patch": "docs/compatibility/patches/hamt-sequence-conj.json"
+    },
+    {
+      "id": "runtime:transduce:2706",
+      "source-sha256": "a46d4deab5fff402ca558016d99844946237297b22e262b7835d1d2992454eca",
+      "patch": "docs/compatibility/patches/hamt-sequence-transduce.json"
+    },
+    {
+      "id": "runtime:into:5430",
+      "source-sha256": "a1b44f2d0c5a0c7c8c34326e8a99db5a7985e6a1f53062e5a201286203ba7734",
+      "patch": "docs/compatibility/patches/hamt-sequence-into.json"
     }
   ],
   "loader": {

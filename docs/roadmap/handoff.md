@@ -10036,3 +10036,40 @@ Required fullworkspace19934 terminal0 at reviewed35efa9e; complete log
 /private/tmp/suss-m3-hamt-full.log through final reader doctests. Verified954passed/0failed/17existingignores/92groups, including all47ABI.
 Source remains unchanged; no new skips or suppressed failures. Exactfinal-head
 CI remains required before readiness.
+
+ParentPR140 full19934 terminal0 independently counted954/0/17/92, all47ABI/final
+reader; dochead eec2aef independently approved, source/testsunchanged. ExactCI
+36976094484 confirmedLIVE; old35run36975001885 cancelled/superseded, notfinalproof.
+Parent remainsdraft until exactheadCI. Nextisolated sequenceworktree
+/private/tmp/suss-m3-hamt-sequences branchportable/m3-hamt-sequences nowbasedeec2aef
+with actualpinnedsubmodule, notsymlink. No parentimplementation changes.
+
+Newsequence BEFORE23256 terminal101:0/2tests; bothphases all13cases executed,
+11transportfailures (unknownNodeSeq/ArrayNodeSeq) +2collisionexecutionfailures.
+Primary53448 terminal0 initial13observations; constructorliteralcollisionorder
+reader-driven (key5first), variance against textualSussorder documented. Raw
+initial corpus/observations saved /private/tmp/suss-m3-hamt-sequence-incidental-*
+(not differential success). Orderedassoc primary98058 terminal0, all13exact,
+key0..19collisionorder. Probe63095 terminal101 identifies persistentArrayMap ninth
+assoc callsuninitializedinto; first2Symbolhash/key-test/transientops probe39102
+terminal0. Initialportscript29006 failedTypeError beforeedits, thenregeneratedold
+246artifact andranfirst2probe; notsourceinto executionevidence. Correctcomplete
+sourceconj/transduce/into retained (allarity/docs/branches/metadata, onlydefnpatch),
+249importfiles.98188 terminal0 after20persistentSymbolassocs, includingreal8->9
+conversion. NewcanonicalNodeSeq/ArrayNodeSeqroots+boundedcursor/childtransport
+71941 terminal0:3tests; depthguards protectrecursivecursors, sparseunusedslots
+honorpinnednil?/undefined while rawundefinedsyntax stillrejected.
+
+Extendedprimary73120 terminal0:27observations; existing13 unchanged,14newpublic
+conj/into/transduce arity/metadata/nil/list/vector/xfcompletion/reducedobservations
+captured frompinnedrun andstrictcomparepasses. Focus34576 terminal0:4newsequence+
+7hashmap+6helpers+5sourceapply (22total), bothStores and27exactentry/numericresults.
+Strengthenedmetadataassertions verify:doc7 exactly, oversized/cycliccursor and
+validsparse/recovery guards; finalfocused78447 terminal0:4/4, log
+/private/tmp/suss-m3-hamt-sequence-final-focus.log. All22combined results log
+/private/tmp/suss-m3-hamt-sequence-focus2.log. Python62093 terminal0:88tests,
+249imports/17setups/345in-progressreviews+720unassessed. No skips or fullcollection/
+M3acceptanceclaims. See docs/runtime/compiled-macro-hamt-sequences.md.
+NextpushdraftlinkedRefs14, dispatchindependentreviewer, requiredfullworkspace and
+exactfinalheadCI before readiness. Then remainingiterator/reify/undefinedboundary
+and originalrich&env/locations/syntaxquote/bootstrap/cache/lifecycle requirements.

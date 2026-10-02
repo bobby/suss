@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "a1b44f2d0c5a0c7c8c34326e8a99db5a7985e6a1f53062e5a201286203ba7734",
+  "replacement": "(def into\n  \"Returns a new coll consisting of to-coll with all of the items of\n  from-coll conjoined. A transducer may be supplied.\"\n  (fn ([] [])\n  ([to] to)\n  ([to from]\n     (if-not (nil? to)\n       (if (implements? IEditableCollection to)\n         (-with-meta (persistent! (reduce -conj! (transient to) from)) (meta to))\n         (reduce -conj to from))\n       (reduce conj to from)))\n  ([to xform from]\n     (if (implements? IEditableCollection to)\n       (let [tm (meta to)\n             rf (fn\n                  ([coll] (-> (persistent! coll) (-with-meta tm)))\n                  ([coll v] (conj! coll v)))]\n         (transduce xform rf (transient to) from))\n       (transduce xform conj to from)))))",
+  "rationale": "Complete pinned public collection dependency retained with only explicit defn bootstrap. All source arities, metadata, nil/transient/metadata branches and transducer completion remain present. Focused executing proof and full collection/M3 acceptance remain required."
+}

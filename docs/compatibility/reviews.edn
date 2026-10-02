@@ -3331,4 +3331,23 @@
    :classification :adapted :rationale "Complete pinned public assoc fixed/variadic/nil branches and canonical associative protocol dispatch retained with explicit defn bootstrap, replacing the prototype vector-only bootstrap binding. Full map transport and compatibility acceptance remain unfinished."
    :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-assoc.json" :alternative nil
    :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs"]}
+
+  "runtime:conj:1870"
+  {:source-sha256 "4910efcbaf03c87d78039a840327e8d8cf34c1fc1bfd80ac36e113bc91ce5a2a" :visibility :public :arities {:fixed [0 1 2] :variadic-min 2}
+   :dependencies ["retained canonical sequence/map/vector and transient protocols" "source reduce/conj/conj!/transduce and metadata"]
+   :classification :adapted :rationale "Complete pinned public collection dependency retained with only explicit defn bootstrap. All source arities, metadata, nil/transient/metadata branches and transducer completion remain present. Focused executing proof and full collection/M3 acceptance remain required."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-sequence-conj.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hamt_sequences.rs" "tests/oracle/hamt-sequence-cases.json"]}
+  "runtime:transduce:2706"
+  {:source-sha256 "a46d4deab5fff402ca558016d99844946237297b22e262b7835d1d2992454eca" :visibility :public :arities {:fixed [3 4] :variadic-min nil}
+   :dependencies ["retained canonical sequence/map/vector and transient protocols" "source reduce/conj/conj!/transduce and metadata"]
+   :classification :adapted :rationale "Complete pinned public collection dependency retained with only explicit defn bootstrap. All source arities, metadata, nil/transient/metadata branches and transducer completion remain present. Focused executing proof and full collection/M3 acceptance remain required."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-sequence-transduce.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hamt_sequences.rs" "tests/oracle/hamt-sequence-cases.json"]}
+  "runtime:into:5430"
+  {:source-sha256 "a1b44f2d0c5a0c7c8c34326e8a99db5a7985e6a1f53062e5a201286203ba7734" :visibility :public :arities {:fixed [0 1 2 3] :variadic-min nil}
+   :dependencies ["retained canonical sequence/map/vector and transient protocols" "source reduce/conj/conj!/transduce and metadata"]
+   :classification :adapted :rationale "Complete pinned public collection dependency retained with only explicit defn bootstrap. All source arities, metadata, nil/transient/metadata branches and transducer completion remain present. Focused executing proof and full collection/M3 acceptance remain required."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-sequence-into.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hamt_sequences.rs" "tests/oracle/hamt-sequence-cases.json"]}
 }}

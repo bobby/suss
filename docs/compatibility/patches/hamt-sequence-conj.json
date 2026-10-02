@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "4910efcbaf03c87d78039a840327e8d8cf34c1fc1bfd80ac36e113bc91ce5a2a",
+  "replacement": "(def conj\n  \"conj[oin]. Returns a new collection with the xs\n  'added'. (conj nil item) returns (item).\n  (conj coll) returns coll. (conj) returns [].\n  The 'addition' may happen at different 'places' depending\n  on the concrete type.\"\n  (fn ([] [])\n  ([coll] coll)\n  ([coll x]\n    (if-not (nil? coll)\n      (-conj coll x)\n      (list x)))\n  ([coll x & xs]\n    (if xs\n      (recur (conj coll x) (first xs) (next xs))\n      (conj coll x)))))",
+  "rationale": "Complete pinned public collection dependency retained with only explicit defn bootstrap. All source arities, metadata, nil/transient/metadata branches and transducer completion remain present. Focused executing proof and full collection/M3 acceptance remain required."
+}
