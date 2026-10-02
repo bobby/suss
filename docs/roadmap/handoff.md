@@ -9338,3 +9338,13 @@ vector source; next commit records the guard update, then required full rerun.
 Root heavy slot free until full restart on this corrected source/test snapshot.
 Child portable/m3-macro-maps /private/tmp/suss-m3-macro-maps currently has no edits
 and real initialized pin; fast-forward it to the corrected parent before new work.
+
+Vector final-source full80479 terminal0:909passed/0failed/17existing ignores/
+85groups through finalreader doctests, /private/tmp/suss-m3-vector-factory-full2.log.
+Final source709918b includes both preserved stale error guards; focused identifier/
+vector10 and final primary40native-each-phase pass. Python87/provenance161/
+inventory253partial812unassessed/setup8 verified. No new ignores. Heavy slot free;
+publish draft, dispatch mandatory independent review, fix significant findings,
+require exact final reviewed-head CI before readiness. No merge or M3 completion.
+Child map worktree is separate: source-backed import preparation is unexecuted,
+not passing evidence; use focused tests before any new full baseline there.
