@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "present",
+      "source": "(get (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101)) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4059400000000000"
+      }
+    },
+    {
+      "id": "missing-is-nil",
+      "source": "(nil? (get (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101)) 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "missing-identical-nil",
+      "source": "(identical? nil (get (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101)) 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "empty-identical-nil",
+      "source": "(identical? nil (get (transient (PersistentHashMap. nil 0 nil false nil nil)) 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-missing-identical",
+      "source": "(identical? nil (get (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101)) nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-present",
+      "source": "(get (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) nil 700 1 101)) nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4085e00000000000"
+      }
+    },
+    {
+      "id": "explicit-notfound",
+      "source": "(get (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101)) 2 909)",
+      "expected": {
+        "tag": "f64",
+        "bits": "408c680000000000"
+      }
+    },
+    {
+      "id": "explicit-nil",
+      "source": "(identical? nil (get (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101)) 2 nil))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "missing-truth",
+      "source": "(if (get (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101)) 2) 1 0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "call-present",
+      "source": "((transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101)) 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4059400000000000"
+      }
+    },
+    {
+      "id": "call-missing-identical",
+      "source": "(identical? nil ((transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101)) 2))",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "persistent-missing-identical",
+      "source": "(identical? nil (get (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101) 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    }
+  ]
+}

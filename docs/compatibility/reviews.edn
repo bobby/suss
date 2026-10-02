@@ -3292,9 +3292,9 @@
   "runtime:TransientHashMap:8202"
   {:source-sha256 "f6a272f0f422e96395efc5082da2d8a7ca6d258185c8d30954e33628560bf1f4" :visibility :public :arities nil
    :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
-   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Lookup now checks the edit token in both arities, enforcing the accepted design after persistence; this is an explicit variance from pinned hash-map lookup. Active omitted arguments retain undefined, not nil. Broader compatibility remains unfinished."
    :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-TransientHashMap.json" :alternative nil
-   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json" "crates/suss-cli/tests/compiled_macro_hamt_lookup.rs" "tests/oracle/hamt-lookup-cases.json"]}
 
   "runtime:fix:2937"
   {:source-sha256 "c47590843d9d7fa984c09c2f6cffcf8daf054adb8bf113b2c42971e414b02c2e" :visibility :private :arities {:fixed [1] :variadic-min nil}

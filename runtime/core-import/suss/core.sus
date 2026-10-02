@@ -4107,21 +4107,25 @@
 
   ILookup
   (-lookup [tcoll k]
-    (if (nil? k)
+    (if edit
+      (if (nil? k)
       (if has_nil_QMARK_
         nil_val)
       (if (nil? root)
         nil
-        (.inode_lookup root 0 (hash k) k))))
+        (.inode_lookup root 0 (hash k) k)))
+      (throw (suss.bootstrap/error "lookup after persistent!"))))
 
   (-lookup [tcoll k not-found]
-    (if (nil? k)
+    (if edit
+      (if (nil? k)
       (if has_nil_QMARK_
         nil_val
         not-found)
       (if (nil? root)
         not-found
-        (.inode_lookup root 0 (hash k) k not-found))))
+        (.inode_lookup root 0 (hash k) k not-found)))
+      (throw (suss.bootstrap/error "lookup after persistent!"))))
 
   ITransientCollection
   (-conj! [tcoll val] (.conj_BANG_ tcoll val))

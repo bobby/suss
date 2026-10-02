@@ -478,3 +478,10 @@ Source defmacro execution now has a partial pinned review (224 reviewed/841
 unassessed). Explicitly registered macro functions execute in the isolated Store
 and expand inside real lexical analysis; this is not complete macro bootstrap.
 [Source macro evidence and limitations](../runtime/compiled-source-macros.md).
+
+
+Transient hash-map lookup now enforces the accepted post-persistence lifecycle
+in both arities, documenting the pinned source variance. Twelve fresh active
+lookup observations preserve omitted undefined versus nil behavior in both phase
+Stores. This remains a partial review with full M3/core acceptance unfinished.
+[Evidence and provenance](../runtime/compiled-macro-hamt-lookup.md).
