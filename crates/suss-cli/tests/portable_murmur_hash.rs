@@ -214,8 +214,9 @@ fn threading_expansion_limits_are_located_atomic_and_recover() {
     for body in [
         format!("(-> 1 {})", "(+ 1) ".repeat(256)),
         format!("(as-> 1 n {})", "(+ n 1) ".repeat(255)),
-        format!("(-> (-> 1 {}) {})", "(+ 1) ".repeat(16), "(+ 1) ".repeat(16)),
-        format!("{}1{}", "(+ 1 ".repeat(40), ")".repeat(40)),
+        // Each macro is within its own expansion budget, but their combined
+        // expansion exceeds the guarded 64-level analyzer boundary.
+        format!("(-> (-> 1 {}) {})", "(+ 1) ".repeat(40), "(+ 1) ".repeat(40)),
     ] {
         let source = format!("(do (def threading_limit_unpublished 7) {body})");
         let SessionError::Compile(error) = session.eval(&source).unwrap_err() else {
@@ -230,6 +231,14 @@ fn threading_expansion_limits_are_located_atomic_and_recover() {
     assert_eq!(
         murmur_number(&mut session, &format!("(-> 1 {})", "(+ 1) ".repeat(16))),
         17.0
+    );
+    assert_eq!(
+        murmur_number(&mut session, &format!("(-> (-> 1 {}) {})", "(+ 1) ".repeat(16), "(+ 1) ".repeat(16))),
+        33.0
+    );
+    assert_eq!(
+        murmur_number(&mut session, &format!("{}1{}", "(+ 1 ".repeat(40), ")".repeat(40))),
+        41.0
     );
     assert_eq!(
         murmur_number(&mut session, &format!("(as-> 1 n {})", "(+ n 1) ".repeat(254))),

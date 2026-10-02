@@ -9876,3 +9876,29 @@ new push. PR135/136 exact-head checks confirmedLIVE. No merges, issue closures o
 M3 completion. Next run focused to terminal, full required baseline, resolve any
 failures, re-review final head and verify final-head CI before readiness; then
 continue complete macro environments/locations/syntaxquote/bootstrap/cache.
+
+Source apply focused private-declaration suite43968 terminal0:3passed/0failed,
+log /private/tmp/suss-m3-source-apply-private-focus.log; exact0482e6d independently
+approved. Full workspace10188 terminal101 at portable_murmur_hash: old test
+expected32 expanded/40 explicit nesting to fail, but guarded analysis now64.
+Log /private/tmp/suss-m3-source-apply-full.log is failed baseline evidence, not
+success. Rejection now uses two40-step thread macros (shallow source, combined
+expansion beyond64); original16+16 and explicit40 forms retained as executing
+positive33/41 checks. Existing per-macro256/255 budget, located diagnostic, no
+publication and recovery checks preserved. Independent reviewer138 approved
+test-only correction. Focus37039 terminal0:5passed/0failed/0ignored, log
+/private/tmp/suss-m3-source-apply-limit-focus.log. Need push and fresh full baseline,
+final-head independent review confirmation and exact-head CI before readiness.
+
+Next M3 prerequisite isolated branch portable/m3-hash-map-data in
+/private/tmp/suss-m3-hash-map-data, real pinned upstream initialized. Four new
+not-yet-passing acceptance regressions cover9/16/17/32/33/65 map transport both
+phases afterGC, persistent old roots/nil/equality/hash,20colliding keys, transient
+array-to-hash growth/closed lifecycle. Development primary35observations fresh
+compile/Node/compare terminal0: all exact. Initial runner23130 needed common
+oracle fixture generation; corrected primary3 log and out observations retained.
+Initial80405 failed wrong-directory setup, no primary evidence from that attempt.
+Native BEFORE has just started; no map implementation or success claim yet.
+Real HAMT/transient source needed before unrestricted &env maps; analyzer also
+needs rich locals/namespaces and context semantics (pinned do final expressions
+can become:return independent of current tail flag). &env/fullM3 remain open.
