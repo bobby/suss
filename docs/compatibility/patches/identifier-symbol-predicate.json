@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "f7197c7cdb7ab810a9a05a7b0f1b8c35d5181687b267393bea498d5167ef3b50",
+  "replacement": "(def ^boolean symbol?\n  \"Return true if x is a Symbol\"\n  (fn [x]\n  (instance? Symbol x)))",
+  "rationale": "Retain complete pinned identifier types and named/equality/hash protocols as real GC-owned values needed by compiled macro forms. Fixed defn bootstrap adaptation preserves every source branch; general constructor conversions, IFn lookup/get, writer printing, runtime collection metadata, private Var policy and compiled macro bootstrap remain unfinished. All declarations remain in-progress; quoted literals use source-compatible constant hashes and canonical core classes, never string substitutes or constructor fixtures."
+}

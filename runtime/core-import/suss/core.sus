@@ -15,7 +15,7 @@
   counted? list? sequential? accumulating-seq-count empty-ordered-hash
   Reduced reduced reduced? ensure-reduced unreduced deref iterable? iter-reduce reduce
   pr-str* -indexOf -lastIndexOf equiv-sequential = hash-ordered-coll seq-reduce
-  array-reduce IndexedSeqIterator RSeq indexed? neg? linear-traversal-nth nth str_ type type->str MetaFn apply with-meta meta)
+  array-reduce IndexedSeqIterator RSeq indexed? neg? linear-traversal-nth nth str_ type type->str MetaFn apply with-meta meta Symbol Keyword hash-symbol hash-keyword get -write)
 
 
 ;; Original portable numeric-Date storage, not copied upstream source.
@@ -1400,6 +1400,135 @@
                (throw (ex-info "Bootstrap swap! requires an Atom" nil))))
     ([a f x y] (if (instance? Atom a) (reset! a (f (.-state a) x y))
                  (throw (ex-info "Bootstrap swap! requires an Atom" nil))))))
+
+(defprotocol INamed
+  "Protocol for adding a name."
+  (^string -name [x]
+    "Returns the name String of x.")
+  ( ^{:tag #{string clj-nil}}-namespace [x]
+    "Returns the namespace String of x."))
+
+(defprotocol IPrintWithWriter
+  "The old IPrintable protocol's implementation consisted of building a giant
+   list of strings to concatenate.  This involved lots of concat calls,
+   intermediate vectors, and lazy-seqs, and was very slow in some older JS
+   engines.  IPrintWithWriter implements printing via the IWriter protocol, so it
+   be implemented efficiently in terms of e.g. a StringBuffer append."
+  (-pr-writer [o writer opts]))
+
+(def hash-symbol (fn [sym]
+  (hash-combine
+    (m3-hash-unencoded-chars (.-name sym))
+    (hash-string (.-ns sym)))))
+
+(def hash-keyword (fn [k]
+  (int (+ (hash-symbol k) 0x9e3779b9))))
+
+(deftype Symbol [ns name str ^:mutable _hash _meta]
+  Object
+  (toString [_] str)
+  (equiv [this other] (-equiv this other))
+
+  IEquiv
+  (-equiv [_ other]
+    (if (instance? Symbol other)
+      (identical? str (.-str other))
+      false))
+
+  IFn
+  (-invoke [sym coll]
+    (get coll sym))
+  (-invoke [sym coll not-found]
+    (get coll sym not-found))
+
+  IMeta
+  (-meta [_] _meta)
+
+  IWithMeta
+  (-with-meta [_ new-meta] (Symbol. ns name str _hash new-meta))
+
+  IHash
+  (-hash [sym]
+    (caching-hash sym hash-symbol _hash))
+
+  INamed
+  (-name [_] name)
+  (-namespace [_] ns)
+
+  IPrintWithWriter
+  (-pr-writer [o writer _] (-write writer str)))
+
+(deftype Keyword [ns name fqn ^:mutable _hash]
+  Object
+  (toString [_] (str_ ":" fqn))
+  (equiv [this other]
+    (-equiv this other))
+
+  IEquiv
+  (-equiv [_ other]
+    (if (instance? Keyword other)
+      (identical? fqn (.-fqn other))
+      false))
+  IFn
+  (-invoke [kw coll]
+    (get coll kw))
+  (-invoke [kw coll not-found]
+    (get coll kw not-found))
+
+  IHash
+  (-hash [this]
+    (caching-hash this hash-keyword _hash))
+
+  INamed
+  (-name [_] name)
+  (-namespace [_] ns)
+
+  IPrintWithWriter
+  (-pr-writer [o writer _] (-write writer (str_ ":" fqn))))
+
+(def ^boolean symbol?
+  "Return true if x is a Symbol"
+  (fn [x]
+  (instance? Symbol x)))
+
+(def keyword?
+  "Return true if x is a Keyword"
+  (fn [x]
+  (instance? Keyword x)))
+
+(def name
+  "Returns the name String of a string, symbol or keyword."
+  (fn [x]
+  (if (implements? INamed x)
+    (-name x)
+    (if (string? x)
+      x
+      (throw (suss.bootstrap/error (str_ "Doesn't support name: " x)))))))
+
+(def namespace
+  "Returns the namespace String of a symbol or keyword, or nil if not present."
+  (fn [x]
+  (if (implements? INamed x)
+    (-namespace x)
+    (throw (suss.bootstrap/error (str_ "Doesn't support namespace: " x))))))
+
+(def keyword-identical?
+  "Efficient test to determine that two keywords are identical."
+  (fn [x y]
+  (if (identical? x y)
+    true
+    (if (and (keyword? x) (keyword? y))
+      (identical? (.-fqn x) (.-fqn y))
+      false))))
+
+(def symbol-identical?
+  "Efficient test to determine that two symbols are identical."
+  (fn [x y]
+  (if (identical? x y)
+    true
+    (if (and (symbol? x) (symbol? y))
+      (identical? (.-str x) (.-str y))
+      false))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

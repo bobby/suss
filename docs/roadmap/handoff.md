@@ -8588,3 +8588,56 @@ Source/tests were frozen throughout the full command:
 CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo
 test --workspace --locked -- --test-threads=2. No RUSTFLAGS; no new ignored guards.
 Root heavy slot is released pending independent namespace PR review.
+
+## M3 quoted identifier/list data prerequisite — 2026-10-01
+
+PR1190d8f086 final CI36921984358 SUCCESS:855/0/17/73groups/finalreader/newguards
+verified independently. Initial observer75563 terminal1 was ANSI around reader
+doctests; normalization observer45174 terminal0 completed readiness using same
+run/no restart/no source edits. GitHub OPEN/MERGEABLE/notdraft/headunchanged.
+PR12010ad0de final CI36923691274 SUCCESS:859/0/17/74groups/finalreader/4namespace
+guards verified. Reviewer16182 terminal0:45focused; first wrong testtarget failed
+before execution and was corrected. Initialobserver36172 ANSI failure corrected
+88243 terminal0 on same run. GitHub OPEN/MERGEABLE/notdraft/headunchanged; no
+significant findings/source fixes. No merges/issueclosures. Progress comments13
+5940195826 and12 5940196364 published. Both reviewers release heavy slot.
+
+New isolated portable/m3-quoted-identifiers child worktree starts at12010ad0de with
+real pinned upstreamc4295f30. This is a necessary compiled-macro language-data
+prerequisite, not alternative host syntax or macro interpreter. Before71794
+terminal101 unresolved quote, /private/tmp/suss-m3-quotes-before.log. First42013
+terminal101 core source js/Error unresolved; name/namespace patches now use typed
+private runtime error construction, preserve source branches/pending str_ dependency.
+90453 terminal0 one nestedSymbol/Keyword/list/UTF16/GC regression passes.
+
+Twelve source selections retain full types/protocols/predicate/name/equality/hash
+methods, hashes and EPL; all in-progress. Compiler adds canonical constructor and
+quote/list lowering, exact pinned cached identifier hashes using UTF16/signed32
+arithmetic (EPL notice/provenance in originalRust quotes.rs). No modern hash change
+or prototype xxHash use. Full constructor conversions/get/str_/writer branches
+remain pending, not fake implementations or compatibility claims.
+
+Fresh primary87836 matched all48 source cases, then terminal101 in native decoder
+class-layout assumption. Backtrace probe terminal101 and93218 terminal101 identify
+closure-owned property wrapper, not a production value mismatch. Native68198
+terminal0 validates actual wrapper/descriptor and matches all48 independently
+decoded values. Stronger87866 terminal0:quotes3/command8/atoms4/namespace4 pass,
+/private/tmp/suss-m3-quotes-final-focus.log. Invalid quote arities/metadata/collections
+retain located errors and compile atomicity; quoted effects do not execute, and
+owned identifier roots survive unbinding/GC. No ignored guards.
+
+Next full frozen baseline/import/Python checks and independent PR review/CI.
+Quoted vector/map/set and runtime metadata still require actual persistent types;
+then isolate compiled macro session using same pipeline, syntaxquote/gensyms/
+&form/&env, phase dependencies/versioned Java-free bootstrap/cache invalidation
+and remove old evaluator only after acceptance. #15 pending-I/O/running cancellation/
+cleanup/live memory remains unfinished. All #12–#15/M3 scope stays active.
+
+Quote full8386 terminal0:862passed/0failed/17existing ignored/75groups through
+finalreader doctests, /private/tmp/suss-m3-quotes-full.log. Frozen source/runtime/
+tests; only docs and development oracle variable naming changed during full.
+Python86/inventory1065/reviews223+842/import132/offline roadmap preview all pass.
+Final combined fresh pinned oracle46204 terminal0:48exact observations and3native
+guards, /private/tmp/suss-m3-quotes-final-oracle.log; primary private-var warning
+retained. Root local heavy handles all terminal and slot released for mandatory
+quote PR review. No milestone/issue closure from this prerequisite.

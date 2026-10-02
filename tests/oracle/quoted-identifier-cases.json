@@ -1,0 +1,615 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "symbol-0",
+      "source": "'hello",
+      "expected": {
+        "tag": "symbol",
+        "namespace": {
+          "tag": "nil"
+        },
+        "name": {
+          "tag": "string",
+          "units": [
+            104,
+            101,
+            108,
+            108,
+            111
+          ]
+        }
+      }
+    },
+    {
+      "id": "keyword-0",
+      "source": ":hello",
+      "expected": {
+        "tag": "keyword",
+        "namespace": {
+          "tag": "nil"
+        },
+        "name": {
+          "tag": "string",
+          "units": [
+            104,
+            101,
+            108,
+            108,
+            111
+          ]
+        }
+      }
+    },
+    {
+      "id": "symbol-hash-0",
+      "source": "(hash 'hello)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d4cb6ef4800000"
+      }
+    },
+    {
+      "id": "symbol-cached-0",
+      "source": "(.-_hash 'hello)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d4cb6ef4800000"
+      }
+    },
+    {
+      "id": "keyword-hash-0",
+      "source": "(hash :hello)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1ad3594ea000000"
+      }
+    },
+    {
+      "id": "keyword-cached-0",
+      "source": "(.-_hash :hello)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1ad3594ea000000"
+      }
+    },
+    {
+      "id": "symbol-6",
+      "source": "'app/name",
+      "expected": {
+        "tag": "symbol",
+        "namespace": {
+          "tag": "string",
+          "units": [
+            97,
+            112,
+            112
+          ]
+        },
+        "name": {
+          "tag": "string",
+          "units": [
+            110,
+            97,
+            109,
+            101
+          ]
+        }
+      }
+    },
+    {
+      "id": "keyword-6",
+      "source": ":app/name",
+      "expected": {
+        "tag": "keyword",
+        "namespace": {
+          "tag": "string",
+          "units": [
+            97,
+            112,
+            112
+          ]
+        },
+        "name": {
+          "tag": "string",
+          "units": [
+            110,
+            97,
+            109,
+            101
+          ]
+        }
+      }
+    },
+    {
+      "id": "symbol-hash-6",
+      "source": "(hash 'app/name)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1c828dfb4800000"
+      }
+    },
+    {
+      "id": "symbol-cached-6",
+      "source": "(.-_hash 'app/name)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1c828dfb4800000"
+      }
+    },
+    {
+      "id": "keyword-hash-6",
+      "source": "(hash :app/name)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41db796e94000000"
+      }
+    },
+    {
+      "id": "keyword-cached-6",
+      "source": "(.-_hash :app/name)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41db796e94000000"
+      }
+    },
+    {
+      "id": "symbol-12",
+      "source": "'\u00e9\ud83d\ude00",
+      "expected": {
+        "tag": "symbol",
+        "namespace": {
+          "tag": "nil"
+        },
+        "name": {
+          "tag": "string",
+          "units": [
+            233,
+            55357,
+            56832
+          ]
+        }
+      }
+    },
+    {
+      "id": "keyword-12",
+      "source": ":\u00e9\ud83d\ude00",
+      "expected": {
+        "tag": "keyword",
+        "namespace": {
+          "tag": "nil"
+        },
+        "name": {
+          "tag": "string",
+          "units": [
+            233,
+            55357,
+            56832
+          ]
+        }
+      }
+    },
+    {
+      "id": "symbol-hash-12",
+      "source": "(hash '\u00e9\ud83d\ude00)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b985d685000000"
+      }
+    },
+    {
+      "id": "symbol-cached-12",
+      "source": "(.-_hash '\u00e9\ud83d\ude00)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b985d685000000"
+      }
+    },
+    {
+      "id": "keyword-hash-12",
+      "source": "(hash :\u00e9\ud83d\ude00)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1ded39733000000"
+      }
+    },
+    {
+      "id": "keyword-cached-12",
+      "source": "(.-_hash :\u00e9\ud83d\ude00)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1ded39733000000"
+      }
+    },
+    {
+      "id": "symbol-18",
+      "source": "'\ud83d\ude00/\u00e9",
+      "expected": {
+        "tag": "symbol",
+        "namespace": {
+          "tag": "string",
+          "units": [
+            55357,
+            56832
+          ]
+        },
+        "name": {
+          "tag": "string",
+          "units": [
+            233
+          ]
+        }
+      }
+    },
+    {
+      "id": "keyword-18",
+      "source": ":\ud83d\ude00/\u00e9",
+      "expected": {
+        "tag": "keyword",
+        "namespace": {
+          "tag": "string",
+          "units": [
+            55357,
+            56832
+          ]
+        },
+        "name": {
+          "tag": "string",
+          "units": [
+            233
+          ]
+        }
+      }
+    },
+    {
+      "id": "symbol-hash-18",
+      "source": "(hash '\ud83d\ude00/\u00e9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41da3ed669000000"
+      }
+    },
+    {
+      "id": "symbol-cached-18",
+      "source": "(.-_hash '\ud83d\ude00/\u00e9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "41da3ed669000000"
+      }
+    },
+    {
+      "id": "keyword-hash-18",
+      "source": "(hash :\ud83d\ude00/\u00e9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "419ccb4d74000000"
+      }
+    },
+    {
+      "id": "keyword-cached-18",
+      "source": "(.-_hash :\ud83d\ude00/\u00e9)",
+      "expected": {
+        "tag": "f64",
+        "bits": "419ccb4d74000000"
+      }
+    },
+    {
+      "id": "quoted-nil",
+      "source": "'nil",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "quoted-false",
+      "source": "'false",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "quoted-negzero",
+      "source": "'-0.0",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "quoted-large",
+      "source": "'1e21",
+      "expected": {
+        "tag": "f64",
+        "bits": "444b1ae4d6e2ef50"
+      }
+    },
+    {
+      "id": "quoted-utf16",
+      "source": "'\"\\uD800\ud83d\ude00\"",
+      "expected": {
+        "tag": "string",
+        "units": [
+          55296,
+          55357,
+          56832
+        ]
+      }
+    },
+    {
+      "id": "empty-list",
+      "source": "'()",
+      "expected": {
+        "tag": "seq",
+        "items": []
+      }
+    },
+    {
+      "id": "nested-list",
+      "source": "'(hello :app/world (nested \"\\uD800\ud83d\ude00\"))",
+      "expected": {
+        "tag": "seq",
+        "items": [
+          {
+            "tag": "symbol",
+            "namespace": {
+              "tag": "nil"
+            },
+            "name": {
+              "tag": "string",
+              "units": [
+                104,
+                101,
+                108,
+                108,
+                111
+              ]
+            }
+          },
+          {
+            "tag": "keyword",
+            "namespace": {
+              "tag": "string",
+              "units": [
+                97,
+                112,
+                112
+              ]
+            },
+            "name": {
+              "tag": "string",
+              "units": [
+                119,
+                111,
+                114,
+                108,
+                100
+              ]
+            }
+          },
+          {
+            "tag": "seq",
+            "items": [
+              {
+                "tag": "symbol",
+                "namespace": {
+                  "tag": "nil"
+                },
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    110,
+                    101,
+                    115,
+                    116,
+                    101,
+                    100
+                  ]
+                }
+              },
+              {
+                "tag": "string",
+                "units": [
+                  55296,
+                  55357,
+                  56832
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "double-quote",
+      "source": "''hello",
+      "expected": {
+        "tag": "seq",
+        "items": [
+          {
+            "tag": "symbol",
+            "namespace": {
+              "tag": "nil"
+            },
+            "name": {
+              "tag": "string",
+              "units": [
+                113,
+                117,
+                111,
+                116,
+                101
+              ]
+            }
+          },
+          {
+            "tag": "symbol",
+            "namespace": {
+              "tag": "nil"
+            },
+            "name": {
+              "tag": "string",
+              "units": [
+                104,
+                101,
+                108,
+                108,
+                111
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "quote-never-runs",
+      "source": "(do (def calls 0) (def data '(set! calls 99)) calls)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "name-symbol",
+      "source": "(name 'app/hello)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          104,
+          101,
+          108,
+          108,
+          111
+        ]
+      }
+    },
+    {
+      "id": "namespace-symbol",
+      "source": "(namespace 'app/hello)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          97,
+          112,
+          112
+        ]
+      }
+    },
+    {
+      "id": "name-keyword",
+      "source": "(name :app/hello)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          104,
+          101,
+          108,
+          108,
+          111
+        ]
+      }
+    },
+    {
+      "id": "namespace-keyword",
+      "source": "(namespace :app/hello)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          97,
+          112,
+          112
+        ]
+      }
+    },
+    {
+      "id": "plain-namespace",
+      "source": "(namespace 'hello)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "string-name",
+      "source": "(name \"\ud83d\ude00\")",
+      "expected": {
+        "tag": "string",
+        "units": [
+          55357,
+          56832
+        ]
+      }
+    },
+    {
+      "id": "symbol-equality",
+      "source": "(= 'app/x 'app/x)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-ns-distinct",
+      "source": "(= 'app/x 'other/x)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "keyword-equality",
+      "source": "(= :app/x :app/x)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "keyword-ns-distinct",
+      "source": "(= :app/x :other/x)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "different-types",
+      "source": "(= 'app/x :app/x)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "symbol-meta",
+      "source": "(meta 'app/x)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "runtime-hash-symbol",
+      "source": "(hash (Symbol. \"app\" \"\u00e9\ud83d\ude00\" \"app/\u00e9\ud83d\ude00\" nil nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1b9875ca4000000"
+      }
+    },
+    {
+      "id": "runtime-hash-keyword",
+      "source": "(hash (Keyword. \"app\" \"\u00e9\ud83d\ude00\" \"app/\u00e9\ud83d\ude00\" nil))",
+      "expected": {
+        "tag": "f64",
+        "bits": "c1ded3f8bac00000"
+      }
+    },
+    {
+      "id": "literal-hash-ignores-redefs",
+      "source": "(with-redefs [cljs.core/hash-symbol (fn [x] 17)] (hash 'hello))",
+      "expected": {
+        "tag": "f64",
+        "bits": "41d4cb6ef4800000"
+      }
+    }
+  ]
+}
