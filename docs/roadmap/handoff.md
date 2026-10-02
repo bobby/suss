@@ -9422,3 +9422,46 @@ shows quoted metadata rejection, /private/tmp/suss-m3-macro-metadata-before.log.
 Next unblocked work is real metadata transport and &env/syntaxquote; HAMT/transients,
 bootstrap/cache/privacy/evaluator removal and stackless scheduler/I/O cancellation/
 live-GC accounting remain required original M3 acceptance. No completion claim.
+
+
+## Open PR stack ancestry repair — 2026-10-01
+
+The requested pr-stack-fixes session found PR #129 conflicting with current main
+8ef2f07 after predecessors #122–#128 were squash-merged. Resolved the overlap by
+retaining the independently reviewed macro-import changes and integrating main
+ancestry. Propagated fast-forward merge commits through #131/#132/#133 without
+rewriting their original commits. Before this evidence-only addition, every
+repaired tree exactly matched its corresponding reviewed original tree:
+
+- #129: 9256e6c -> 39b3e9f; original parent tree also exactly matches main.
+- #131: 03a6d8f -> 54e2402; repaired #129 is an ancestor.
+- #132: 739f0df -> df4661c; repaired #131 is an ancestor.
+- #133: 6d97fa1 -> 2a12919; repaired #132 is an ancestor.
+
+Separate independent subagent reviews for each PR found no significant issue.
+No production semantics, source/license hashes, tests, issue IDs or inventory
+statuses changed. All source/tests were frozen during verification.
+
+Commands and terminal results (CARGO_BUILD_JOBS=2, no RUSTFLAGS override):
+
+- Focused cargo test -p suss-cli --test compiled_macro_imports --test compiled_macro_reload --test compiled_macro_vectors --test compiled_macro_maps --test portable_quoted_identifiers --locked -- --test-threads=2: 28 passed, zero failed/ignored; /private/tmp/suss-pr-stack-fixes-focused-shared.log.
+- cargo test --workspace --locked -- --test-threads=2: 915 passed, zero failed, 17 existing ignores across 86 groups, exit 0 through reader doctests; /private/tmp/suss-pr-stack-fixes-full.log.
+- python3 -m unittest discover -s scripts -p 'test_*.py': 88 passed, exit 0; /private/tmp/suss-pr-stack-fixes-python.log.
+- Inventory/review/import checks: 1,065 declarations, 283 partially reviewed, 782 unassessed; 191 core import files and 12 complete licensed setup forms verified. Sequence/bitwise provenance, all 15 WIT files/six packages, numeric artifact integrity, offline roadmap preview and git diff --check pass.
+
+The initial fresh-target Cargo build was deliberately terminated (exit 143)
+before execution to reuse the existing repository cache. Focused and full runs
+then executed sequentially with CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target;
+no overlapping native Cargo invocation or skipped regression.
+
+Published #129–#132 repairs have new exact-head CI runs 36956034013,
+36956034110 and 36956034518, pending at this evidence snapshot. Superseded
+36956033925/36956033885 are cancelled, not passing. #133's original reviewed
+6d97fa1 passed 36953923303, which does not certify its ancestry repair. Require
+new successful exact-final-head CI for all repaired PRs before readiness.
+Keep #133 draft until its repaired head passes. No PR was merged.
+
+Refs #13/#14 remain partial; M3 and subsequent milestone acceptance remain open.
+Next unblocked implementation is metadata transport and &env/syntaxquote in the
+separate child increment; full HAMT/transients, bootstrap/cache/privacy/evaluator
+removal and stackless scheduler/I/O cancellation/live-GC accounting remain required.
