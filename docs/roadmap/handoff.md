@@ -8641,3 +8641,62 @@ Final combined fresh pinned oracle46204 terminal0:48exact observations and3nativ
 guards, /private/tmp/suss-m3-quotes-final-oracle.log; primary private-var warning
 retained. Root local heavy handles all terminal and slot released for mandatory
 quote PR review. No milestone/issue closure from this prerequisite.
+
+## M3 compiled phase-session execution in progress — 2026-10-01
+
+Authoritative GitHub main613d6f8 includes merged118/119/120 and is tree-identical
+with reviewed12010ad0de. Quote commit was moved without tree changes onto main:
+PR122 ed839062, independent review dispatched; CI36928085693 confirmed live.
+Issue14 progress comment5940891653 records partial quote data and all remaining
+macro acceptance requirements. PR stays draft until review/fixes/final-head CI.
+
+Isolated child portable/m3-phase-session now has two proposed executing regression
+tests for separate Runtime/Macro Stores, phase-qualified core/global cells, owned
+root rejection, mutations, source dependencies/reload/error recovery and reset.
+Before/after commands remain pending while mandatory PR122 reviewer owns the
+exclusive local heavy slot. Native Session presently hardcodes PhaseRuntime; next
+implement explicit phase construction and preserve it across every host operation.
+This is an execution prerequisite, not completed macro expansion: defmacro/source
+require-macros, syntaxquote/unquote/splicing/gensyms/&form/&env, collection/metadata
+macro data, versioned Java-free bootstrap, complete cache invalidation and legacy
+evaluator removal are still required. Cancellation/pending I/O/live GC accounting
+also remain open M3 work. No issue closure or milestone completion.
+
+Phase before78140 terminal101: three missing native APIs,
+/private/tmp/suss-m3-phase-before.log. After66092 terminal0: first two actual
+Runtime/Macro execution tests pass, /private/tmp/suss-m3-phase-after.log.
+Session now owns immutable phase; all intrinsic cells/module plans/input/scope/
+reload/reset use it. Existing constructors remain Runtime; new_macro provisions
+retained source in its isolated Macro Store. No compiler/ABI/dependency change.
+Added third compiled transformer invocation and failed-reset preservation test.
+Final focused15761 is live:compiled_phase_session/persistent_session/portable_atoms/
+namespace_session/persistent_repl, /private/tmp/suss-m3-phase-final-focus.log.
+Re-poll same handle; no full until focused success. Root owns local heavy slot.
+
+PR122 independent reviewer approves ed839062 with no significant findings/fixes.
+Temporary probe94117 terminal0 covers deep quoted lists through48 nesting, bounded
+reader errors63/64/65/100 with unchanged stats, and128-wide GC-rooted list/recovery.
+Temporary probe removed; quote worktree clean. Import132/reviews223+842/provenance
+verified. CI36928085693 still live; reviewer owns remote readiness gate only and
+has explicitly released heavy slot. No merge/closure.
+
+Final phase focused15761 terminal0:3phase/4namespace/8command/33persistent/4atoms
+(52pass/0fail/0ignore), /private/tmp/suss-m3-phase-final-focus.log. Source/tests
+frozen. Full63172 is live, /private/tmp/suss-m3-phase-full.log, required command:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 cargo
+test --workspace --locked -- --test-threads=2. Same handle must be observed until
+terminal. Python/provenance36774 terminal0:86tests/inventory1065/reviews223+842/
+import132/offline roadmap preview. Real pinned upstream submodule initialized;
+local shallow reference initialization failed before clone and direct pinned
+checkout58549 succeeded. No symlink, no hidden provenance failure.
+
+Next after full success publish phase prerequisite stacked on122, dispatch its
+independent review and require final-head CI. Then integrate actual compiled
+source macro expansion/phase edges and remaining language data/bootstrap/cache;
+keep original all-requirements M3 scope. No evaluator deletion before acceptance.
+
+Phase full63172 terminal0:865passed/0failed/17existing ignores/76groups through
+final reader doctests, /private/tmp/suss-m3-phase-full.log. Source/tests frozen;
+only docs/issue evidence changed during full. No RUSTFLAGS/new skips/ABI changes.
+Root heavy slot released for mandatory independent phase PR review. Publication
+uses Refs14/13/15; source macro/bootstrap/cancellation acceptance remains open.
