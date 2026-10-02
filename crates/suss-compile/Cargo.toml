@@ -14,6 +14,7 @@ wasmparser = { workspace = true }
 wit-parser = { workspace = true }
 wit-component = { workspace = true }
 thiserror = { workspace = true }
+stacker = "=0.1.22"
 xxhash-rust = { version = "0.8.15", features = ["xxh32"] }
 
 [dev-dependencies]

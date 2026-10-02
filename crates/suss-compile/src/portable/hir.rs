@@ -8,13 +8,14 @@ mod controls;
 mod dynamic;
 mod exceptions;
 mod nominal;
+mod callable_signatures;
 mod quotes;
 use super::{
     Diagnostic,
     resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
 };
 use std::{
-    collections::{BTreeSet, HashMap},
+    collections::{BTreeMap, BTreeSet, HashMap},
     ops::Range,
 };
 use suss_reader::forms::{Form, Kind};
@@ -293,6 +294,7 @@ pub enum Nominal {
     Field(usize),
     FieldSet(usize),
     NamedGet,
+    CallableGet,
     NamedSet,
     NativeObjectFactory,
     NativeObjectDefaultPrototype,
@@ -331,6 +333,7 @@ impl Nominal {
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
                 Self::NamedGet => count == 2 && arguments[1] == Type::String,
+                Self::CallableGet => count == 3 && arguments[1] == Type::String,
                 Self::NamedSet | Self::ObjectSet => count == 3 && arguments[1] == Type::String,
                 Self::ObjectInvoke => count >= 2,
                 Self::LiveDispatcher | Self::NativeSet(_) => count == 2,
@@ -483,6 +486,7 @@ struct Analyzer<'a> {
     next: usize,
     next_loop: usize,
     analysis_depth: usize,
+    callable_keys: BTreeMap<Global, Hir>,
     target: Option<(LoopId, usize)>,
 }
 impl Analyzer<'_> {
@@ -521,14 +525,16 @@ impl Analyzer<'_> {
         // Bounded bootstrap expansion can create deeper syntax than the reader
         // saw (notably nested threading). Check total analysis depth, including
         // nested macros, before recursive analyzer frames exhaust the stack.
-        if self.analysis_depth >= 24 {
+        if self.analysis_depth >= 64 {
             return Err(fail(
                 form.span.clone(),
                 "Bootstrap analysis expansion limit exceeded",
             ));
         }
         self.analysis_depth += 1;
-        let result = self.expand_or_analyze(form, statement, tail);
+        let result = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+            self.expand_or_analyze(form, statement, tail)
+        });
         self.analysis_depth -= 1;
         result
     }
@@ -892,7 +898,7 @@ impl Analyzer<'_> {
         if let Some(parameter) = &self_binding {
             captures.remove(&parameter.id);
         }
-        Ok(Hir {
+        let function = Hir {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
@@ -902,7 +908,8 @@ impl Analyzer<'_> {
                 self_binding,
                 rest_class,
             },
-        })
+        };
+        self.attach_callable_signatures(form, function)
     }
     fn general_method(
         &mut self,
@@ -1221,7 +1228,7 @@ impl Analyzer<'_> {
             let key = Self::property_name(form, &symbol.name)?;
             let owner = self.form(&args[0])?;
             let key = self.literal_form(form, Literal::String(key.encode_utf16().collect()));
-            return Ok(self.nominal(form, Nominal::NamedGet, vec![owner, key]));
+            return self.callable_named_get(form, owner, key, &symbol.name[2..]);
         }
         if bare && symbol.name.starts_with('.') && !symbol.name.starts_with(".-") {
             let Some(owner) = args.first() else {
@@ -1232,7 +1239,7 @@ impl Analyzer<'_> {
             let owner_binding = self.fresh_binding(owner, owner_value);
             let owner_read = self.local(owner, owner_binding.id);
             let key = self.literal_form(form, Literal::String(key.encode_utf16().collect()));
-            let lookup = self.nominal(form, Nominal::NamedGet, vec![owner_read.clone(), key]);
+            let lookup = self.callable_named_get(form, owner_read.clone(), key, &symbol.name[1..])?;
             let method_binding = self.fresh_binding(form, lookup);
             let mut arguments = vec![self.local(form, method_binding.id), owner_read];
             for arg in &args[1..] {
@@ -1738,8 +1745,17 @@ pub(crate) fn prepare_with_expander(
         next: 0,
         next_loop: 0,
         analysis_depth: 0,
+        callable_keys: BTreeMap::new(),
         target: None,
     };
-    let hir = analyzer.body(forms, span, true, false)?;
+    let mut hir = analyzer.body(forms, span, true, false)?;
+    if !analyzer.callable_keys.is_empty() {
+        let mut initializers = analyzer.callable_keys.into_values().collect::<Vec<_>>();
+        let ty = hir.ty;
+        let span = hir.span.clone();
+        let metadata = hir.metadata.clone();
+        initializers.push(hir);
+        hir = Hir { span, metadata, ty, kind: Expression::Do(initializers) };
+    }
     Ok((hir, analyzer.environment))
 }

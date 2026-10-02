@@ -1,0 +1,182 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "zero",
+      "source": "(apply (fn [] 7) nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "one",
+      "source": "(apply (fn [x] (+ x 1)) [41])",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "two",
+      "source": "(apply (fn [x y] (+ x y)) (list 17 19))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4042000000000000"
+      }
+    },
+    {
+      "id": "overloads",
+      "source": "(apply (fn ([x] x) ([x y] (+ x y))) [17 19])",
+      "expected": {
+        "tag": "f64",
+        "bits": "4042000000000000"
+      }
+    },
+    {
+      "id": "variadic-zero",
+      "source": "(apply (fn [& xs] (count xs)) [])",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "variadic-prefix",
+      "source": "(apply (fn [x & xs] (+ x (count xs))) 10 [1 2 3])",
+      "expected": {
+        "tag": "f64",
+        "bits": "402a000000000000"
+      }
+    },
+    {
+      "id": "variadic-empty-rest",
+      "source": "(apply (fn [x & xs] (+ x (count xs))) [42])",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "leading-many",
+      "source": "(apply (fn [& xs] (count xs)) 1 2 3 4 5 6 [7 8])",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "metafn",
+      "source": "(apply (with-meta (fn [x] (+ x 1)) {:doc 7}) [41])",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "metafn-zero",
+      "source": "(apply (with-meta (fn [] 17) {:doc 7}) [])",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "vector",
+      "source": "(apply [17 19] [1])",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "map",
+      "source": "(apply {:x 23} [:x])",
+      "expected": {
+        "tag": "f64",
+        "bits": "4037000000000000"
+      }
+    },
+    {
+      "id": "map-default",
+      "source": "(apply {:x 23} [:missing 29])",
+      "expected": {
+        "tag": "f64",
+        "bits": "403d000000000000"
+      }
+    },
+    {
+      "id": "keyword",
+      "source": "(apply :x [{:x 31}])",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "symbol",
+      "source": "(apply 'x [{'x 37}])",
+      "expected": {
+        "tag": "f64",
+        "bits": "4042800000000000"
+      }
+    },
+    {
+      "id": "non-callable",
+      "source": "(try (apply 7 [1]) (catch :default e 43))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045800000000000"
+      }
+    },
+    {
+      "id": "vector-wrong-arity",
+      "source": "(try (apply [1] [0 1 2]) (catch :default e 47))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "high-fixed",
+      "source": "(apply (fn [a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20 a21 a22 a23 a24] a24) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24])",
+      "expected": {
+        "tag": "f64",
+        "bits": "4038000000000000"
+      }
+    },
+    {
+      "id": "high-variadic",
+      "source": "(apply (fn [x & xs] (count xs)) [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24])",
+      "expected": {
+        "tag": "f64",
+        "bits": "4038000000000000"
+      }
+    },
+    {
+      "id": "sequence-forcing",
+      "source": "(do (set! seq-effects 0) (apply (fn [x y & more] x) (ApplySeq. 0)) seq-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "405f000000000000"
+      }
+    },
+    {
+      "id": "zero-prefix-forcing",
+      "source": "(do (set! seq-effects 0) (apply (fn [& more] (first more)) (ApplySeq. 0)) seq-effects)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    },
+    {
+      "id": "strict-fixed-arity-boundary",
+      "source": "(try (apply (fn [x] x) [7 8]) (catch :default e 111))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    }
+  ]
+}

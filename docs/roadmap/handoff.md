@@ -9809,3 +9809,52 @@ independent PR review/significant fixes and exact-final-head CI before readiness
 M3 issues12–15 remain open, including environments/syntaxquote/bootstrap/cache and
 stackless lifecycle. PR136 final35d270f review independently approved, CI36963299893
 confirmed IN_PROGRESS; keep draft until actual final-head success. No merge.
+
+
+Source apply implementation in portable/m3-source-apply now retains full apply-to-
+simple/apply source and every branch, plus bounded v1 pinned generator expansion
+with complete licensed four generators/cs extraction and exact provenance checks.
+Compiler creates rooted arity properties and compiled sequence-preserving applyTo;
+native closure/IFn call/apply and source-array push preserve canonical phase keys,
+large-argument tail packing, receiver identity, effects and language errors. ABI2
+layouts unchanged. Stacker0.1.22 already locked, now direct compiler dependency;
+bounded growth plus64-depth guard retains excessive-expansion diagnostics.
+
+Execution logs in /private/tmp/suss-m3-source-apply-*:
+- signatures-focus78739 terminal101 Number constructor expectedf64, corrected52260
+  terminal0 existing8helper/callable tests.
+- focus44869 terminal101 early bootstrap apply-to lacked-first declaration. Moved
+  definition into the compiled apply-to-simple initializer after protocol declarations,
+  retaining before forward declaration. focus39304 terminal101 depth24 exceeded.
+- focus59307 terminal101 SIGABRT stack overflow after raising depth alone. Correct
+  bounded stack growth23998 terminal101:controls3pass, apply2pass/1missingIFn call
+  adaptation. No failed or aborted run counted as success.
+- focus32598 terminal101 uncovered new nominal match omission; corrected34263
+  confirmed live excessive JIT code (3.3GBRSS/400%CPU). Intentionally SIGINT stopped
+  terminal130 after sharing keys investigation. Key table now hoisted once per
+  phase/protocol;53733 terminal101 missingBTreeMap import, corrected26114 terminal101:
+  apply3pass/1high-arity failure requiringsourceArray.push.
+- focus6946 terminal0:4applytests/4.2s including25args andunboundedseqforcing.
+- freshoracle82176 terminal1 observedvectorwrongaritypin1, retained actual primary
+  value and added explicit strictnative47 boundary. corrected50421 terminal0:
+  22freshprimary observations;5native tests eachphase20matches+2strict boundaries.
+  original strictfixedpin7/native111 also retained explicitly.
+- finalfocus98269 terminal0:30tests metadata10/helper4/callable4/control3/named4/apply5.
+- ABI guard26367 terminal0:1new copied callback/emptypush/typedtag/recovery regression.
+  Python54922 terminal0:88testsOK.
+- closure/ABI32966 terminal101:13closurepass/1fixtureunresolvedseq. Updated only
+  verifier setup to forwarddeclare required real seq dependency.13042 terminal101:
+  all14closurepass; ABI executable NEVER EXECUTED because shared target disappeared
+  between binaries. Root inspected other live Cargo/rustc processes; no new heavy
+  run until shared environment is available. Do not claim47ABI or full success.
+- inventory1065/import205/reviews301partial+764unassessed/bootstrapv1/setup12/bitwise/
+  WIT15files6pkgs/numeric/offlinechecks terminal0 (38164), diffclean.
+
+Concurrent external stack137 repair changed parent PR136 from35d270f to2b857d9,
+only42handoff lines differ, source/tests identical. CI36963299893 CANCELLED; new
+36965789944 confirmedLIVE. Independent reviewer136 approvedexact2b857d9 and verified
+externalstackfull931/0/17/88. PR135 repaired4e02022 treeidenticalapproved17f; reviewer135
+approvedexact4e. Root returned135todraft because newCI36965790098LIVE. No merges.
+Next integrate repaired2b before publishing thischild, require47ABI and fullworkspace
+baseline, mandatory independent review with significantfixes pushed and exactheadCI.
+Docs/runtime/source-apply.md recordsscope/variance/failures/remainingoriginalM3gates.

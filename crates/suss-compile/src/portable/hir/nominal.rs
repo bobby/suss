@@ -152,6 +152,27 @@ impl Analyzer<'_> {
             },
         })
     }
+    pub(super) fn callable_named_get(&mut self, form: &Form, owner: Hir, name: Hir, spelling: &str) -> Result<Hir, Diagnostic> {
+        if !matches!(spelling, "call" | "apply") && !spelling.starts_with("cljs$core$IFn$_invoke$arity$") {
+            return Ok(self.nominal(form, Nominal::NamedGet, vec![owner, name]));
+        }
+        let protocol = self.environment.protocols.keys().find(|global| global.phase() == self.phase && global.namespace() == "suss.core" && global.name() == "IFn").cloned();
+        let Some(protocol) = protocol else { return Ok(self.nominal(form, Nominal::NamedGet, vec![owner, name])); };
+        let table = self.environment.protocol_key(&protocol, "$callable-property-keys", 22);
+        if !self.callable_keys.contains_key(&table) {
+            let keys = (1..=22).map(|arity| {
+                let schema = (0..arity).map(|_| self.literal_form(form, Literal::String(vec![]))).collect();
+                self.stable_key(form, &protocol, "-invoke", arity, schema)
+            }).collect();
+            let keys = self.nominal(form, Nominal::Array, keys);
+            let definition = Hir { span: form.span.clone(), metadata: vec![], ty: Type::Value,
+                kind: Expression::Definition { global: table.clone(), name_metadata: vec![], name_span: form.span.clone(), docstring: None,
+                    initializer: Some(Box::new(keys)), once: true } };
+            self.callable_keys.insert(table.clone(), definition);
+        }
+        let keys = Hir { span: form.span.clone(), metadata: vec![], ty: Type::Value, kind: Expression::Global(table) };
+        Ok(self.nominal(form, Nominal::CallableGet, vec![owner, name, keys]))
+    }
     fn named_global(&self, name: &Form) -> Result<Global, Diagnostic> {
         let Kind::Symbol(symbol) = &name.kind else {
             return Err(fail(

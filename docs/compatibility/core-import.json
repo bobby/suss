@@ -998,12 +998,22 @@
       "id": "runtime:next*:4059",
       "source-sha256": "093facc2d56831859066c5f53f337f02dd0a79657320d594f35de7fbe3f3f331",
       "patch": "docs/compatibility/patches/apply-next-star.json"
+    },
+    {
+      "id": "runtime:apply-to-simple:4066",
+      "source-sha256": "aa87233069f96340d49ea7e610c61c6c2975ac5cf22af6996bdd12b6b67479ed",
+      "patch": "docs/compatibility/patches/apply-apply-to-simple.json"
+    },
+    {
+      "id": "runtime:apply:4100",
+      "source-sha256": "fa0746b45b6cbb451e3fbf04e57e29b7db2864f75b1e415a87f735069cf3b672",
+      "patch": "docs/compatibility/patches/apply-apply.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "e281457a822c9df2693b6272623b9c504b90b46ee0a4cec17184806119c7cd9a"
+      "sha256": "157493a52edc5109c480751f5b9b94026d43d47adcbc65a85dc9da655fd1bf14"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",

@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "upstream-commit": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "source": "src/main/clojure/cljs/core.cljc",
+  "source-sha256": "46d23d8934ca57c7a1b318f500ca2fd962ed673cb664b15651eaf277b67b53d9",
+  "forms": [
+    {
+      "id": "macro:cs:2885",
+      "sha256": "85761f92aec428b82eb3a238df7c67c61a9bb0242fb641b4e2eb579dd3acbea0"
+    },
+    {
+      "id": "macro:gen-apply-to-helper:2887",
+      "sha256": "452ee5345051045e06bee77a29db5a697cd466ff7df4e33f857e2f235261fed2"
+    },
+    {
+      "id": "macro:gen-apply-to:2898",
+      "sha256": "90f891b7f044200137efb9f8d1b4b6ad86ff1457d108796327d99dbd53907fe0"
+    },
+    {
+      "id": "macro:gen-apply-to-simple-helper:2908",
+      "sha256": "5d176d91c55caaea659ea7dd22452c6328e1d3ec7ed20023811bd4cae6335473"
+    },
+    {
+      "id": "macro:gen-apply-to-simple:2932",
+      "sha256": "49eca93b1db966fa8fe7ffd164c90f6836e0b3a632287c1e6e1f0ba0b9110db2"
+    }
+  ]
+}

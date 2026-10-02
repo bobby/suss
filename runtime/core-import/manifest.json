@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "9a500fc20c7dac36a41c336635ab3f59cef461e7f73beb4f20a0343f12323bb2",
-  "reviews-sha256": "b260cf95822b2335a6df7a337b1ed3be7f2d1422692ad04df1090eaa0bf139fa",
+  "recipe-sha256": "84c769f1c9c5a28bfde82180301d994e4ae1a465a5069aa828ede0f41559fc74",
+  "reviews-sha256": "e47d8d8a3704ae142cdb36a7564ec305dd75cfc6400994e0b02fbad3085dc402",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -6215,12 +6215,72 @@
       "semantic-tests": [
         "crates/suss-cli/tests/portable_apply_sequences.rs"
       ]
+    },
+    {
+      "id": "runtime:apply-to-simple:4066",
+      "name": "apply-to-simple",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4066,
+      "end-line": 4098,
+      "byte-start": 106537,
+      "byte-end": 107718,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "aa87233069f96340d49ea7e610c61c6c2975ac5cf22af6996bdd12b6b67479ed",
+      "extracted": "extracted/0199.cljs",
+      "extracted-sha256": "7de261eb0bcb138e8a835d226e34956c7d07171ff3b1e20f49f33d4121f3d94f",
+      "patch": "docs/compatibility/patches/apply-apply-to-simple.json",
+      "patch-sha256": "4af6be6f4c1b377a0c1f45f617b4a9ed7598b3e247fe405a1e137fe21e7c7370",
+      "adapted-form-sha256": "f11dd21280f26c74854390f22d630e16cfb92f7922d783c680bc8bd57d22942b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained bounded-count/spread/list*/next*",
+        "compiler-owned applyTo/arity and call/apply adapters",
+        "bounded apply bootstrap v1"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_source_apply.rs"
+      ]
+    },
+    {
+      "id": "runtime:apply:4100",
+      "name": "apply",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4100,
+      "end-line": 4146,
+      "byte-start": 107720,
+      "byte-end": 109568,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "fa0746b45b6cbb451e3fbf04e57e29b7db2864f75b1e415a87f735069cf3b672",
+      "extracted": "extracted/0200.cljs",
+      "extracted-sha256": "74e3ef1bfcd90f54bde59f7b12712c1bf8a2f9b45b7794c6bc01d8286998820b",
+      "patch": "docs/compatibility/patches/apply-apply.json",
+      "patch-sha256": "9873c52f025f8599aa9f0c342996d5cec93db927462eee861b464cb149aba8a7",
+      "adapted-form-sha256": "792cace544d9675afc220831bacbda46724cd1f0b515926662d2fc321d4759e5",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained bounded-count/spread/list*/next*",
+        "compiler-owned applyTo/arity and call/apply adapters",
+        "bounded apply bootstrap v1"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_source_apply.rs"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "e281457a822c9df2693b6272623b9c504b90b46ee0a4cec17184806119c7cd9a"
+      "sha256": "157493a52edc5109c480751f5b9b94026d43d47adcbc65a85dc9da655fd1bf14"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -6429,6 +6489,8 @@
     "extracted/0196.cljs": "599ffb570491228ce5a9be4e3a7f3d77c4ed7521c852aafa8fb2ec07e5232aaf",
     "extracted/0197.cljs": "2d048080adb026c2ed0d560c70fb72ea57726d4cf29d9570dbacc5a9bf0f0251",
     "extracted/0198.cljs": "d2f254066804c8de749be884055e165e6ec846f59f14569c1e83440291679bf4",
-    "suss/core.sus": "428bfd62bc08e947b51d28d1b48ebb14fcf7070cb113c8ae8074cbf6598fb976"
+    "extracted/0199.cljs": "7de261eb0bcb138e8a835d226e34956c7d07171ff3b1e20f49f33d4121f3d94f",
+    "extracted/0200.cljs": "74e3ef1bfcd90f54bde59f7b12712c1bf8a2f9b45b7794c6bc01d8286998820b",
+    "suss/core.sus": "24e748062042f16cdc404671da057acc7647007e5769415a622116cf0f1434ca"
   }
 }
