@@ -10473,3 +10473,13 @@ CARGO_BUILD_JOBS=2 cargo test -p suss-cli --locked --test compiled_macro_functio
 checks pass. Native resource released; next run complete final-source baseline
 and require exact final-head CI before readiness. Rich source-level &env and
 original M3 acceptance remain open; no merge or issue closure claimed.
+
+Parent PR144 final-source ce61d90 full97902 completed successfully; root independently
+verified971passed/0failed/17existingignores across98groups, including47ABI tests
+and final reader doctests, /private/tmp/suss-m3-pr144-full.log. This establishes the
+parent baseline, not the required new PR146 full baseline. Root also freshly
+executed pinned method-role probe9965 and Node returned[42,42,42,42], raw records
+/private/tmp/suss-m3-method-role-primary.edn: Object user argument index0 versus
+protocol index1, and source this-as :let with protocol argument shadow. This is
+upstream-only evidence; native logical method roles remain the next pending fact
+slice before complete rich &env transport.
