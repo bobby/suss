@@ -637,6 +637,33 @@ impl Session {
             portable::modules::InputDiagnostic::Compile(error) => SessionError::Compile(error),
             portable::modules::InputDiagnostic::Dependency(error) => SessionError::Module(error),
         })?;
+        self.eval_prepared(prepared)
+    }
+    /// Compile reader or expanded forms through the ordinary phase/module pipeline.
+    /// No source printing/rereading, initializer replay or host interpretation.
+    pub fn eval_forms(
+        &mut self,
+        forms: Vec<suss_reader::forms::Form>,
+        span: std::ops::Range<usize>,
+    ) -> Result<SessionValue, SessionError> {
+        let prepared = portable::modules::prepare_input_forms(
+            forms,
+            span,
+            &self.options.source_paths,
+            &self.environment,
+            self.phase,
+            &self.provided,
+        )
+        .map_err(|error| match error {
+            portable::modules::InputDiagnostic::Compile(error) => SessionError::Compile(error),
+            portable::modules::InputDiagnostic::Dependency(error) => SessionError::Module(error),
+        })?;
+        self.eval_prepared(prepared)
+    }
+    fn eval_prepared(
+        &mut self,
+        prepared: portable::modules::PreparedInput,
+    ) -> Result<SessionValue, SessionError> {
         let PreparedFragment {
             wasm,
             environment,

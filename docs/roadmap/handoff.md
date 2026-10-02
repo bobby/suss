@@ -8700,3 +8700,65 @@ final reader doctests, /private/tmp/suss-m3-phase-full.log. Source/tests frozen;
 only docs/issue evidence changed during full. No RUSTFLAGS/new skips/ABI changes.
 Root heavy slot released for mandatory independent phase PR review. Publication
 uses Refs14/13/15; source macro/bootstrap/cancellation acceptance remains open.
+
+## M3 compiled macro form/data integration — 2026-10-01
+
+PR122 ed839062 independent review approved; CI36928085693 SUCCESS exacthead,
+862passed/0failed/17existing ignores/75groups/finalreader/3new guards verified.
+Watcher51625 terminal0 and root marked122ready; API OPEN/MERGEABLE/notdraft/head
+unchanged. PR123241c9b9 independent review approved; focused82969 terminal0:40.
+Temporary50674 terminal0 verifies sharedEngine/actual macro imports/no runtime
+imports/foreign arguments/exceptions/dynamic restoration/reset. Tree clean;
+reviewer remote CI watcher75917 live on36929435478; root heavy slot is free.
+Issue14 comment5941078615 tracks partial phase execution; no merge/closure.
+
+Root child portable/m3-macro-forms at123241c9b9 has a real pinned submodule91464
+terminal0. Before47755 terminal101:missing eval_forms API. After91666 terminal0:
+three native scalar/spans/metadata/dependency regressions pass. Source and owned
+forms now share selected-form namespace/HIR/IR/module preparation; input no longer
+rereads source after dependency discovery. Existing source behavior stays enabled.
+
+Bridge-before command terminal101:missing portable_macro_data module. After81505
+terminal0:compiled transformer returns real List data, native reads Forms and
+Runtime compiles/executes result42. FormBridge captures canonical source class
+roots and validates nominal storage, with source span errors, no native macro body
+interpretation. Five roots survive rebinding/GC and are invalid after reset.
+
+Negative first check terminal101: budget signature edits incomplete; corrected.
+Negative91690 terminal101:extra probe attempted second ns directive inside one
+input, unsupported by existing grammar. Corrected probe uses enter_namespace;
+no production behavior changed for that expectation. Bound probe first command
+terminal101:ArrayRef allocator argument incorrect. Corrected ArrayRefPre use.
+Bounds13805 terminal0:all6native tests pass, including cycles and total UTF16
+allocation guard. Finalfocus4642 terminal0:57native tests pass. Strengthened
+62147 now live after adding128-wide GC data and65-deep runtime-data bound; log
+/private/tmp/suss-m3-forms-final-focus2.log. Re-poll same handle until terminal.
+
+Root owns heavy slot until focus/full complete. Source/tests not frozen until
+62147 passes. Next full frozen workspace baseline/Python/provenance, publish
+Refs14/12/13/15 draft, independent review/significant fixes/exactfinalheadCI.
+Then integrate source macros and required complete data/bootstrap/cache behavior;
+all explicit M3 acceptance remains intact. MacroEvaluator still present; no
+scripts/verify-bootstrap.sh exists yet. docs/runtime/compiled-macro-forms.md records
+metadata/collections/sequence data gaps instead of certifying incomplete support.
+
+Strengthened focus62147 terminal0:57pass/0fail/0ignore across forms6/phase3/namespace4/
+command8/persistent33/quote3. Frozen counter regression96253 terminal0:forms6
+pass; compiled transformer effects observed exactly1 after result transport and
+runtime compilation. Full59225 now live on frozen source/tests,
+/private/tmp/suss-m3-forms-full.log, full required workspace command/sharedtarget/
+2jobs/no RUSTFLAGS. Checks39817 also live; re-poll both handles rather than restart.
+Only docs/issue evidence change during full. Root still owns heavy slot.
+
+Forms full59225 terminal0:871passed/0failed/17existing ignores/77groups through
+finalreader doctests, /private/tmp/suss-m3-forms-full.log. Source/tests frozen; only
+docs/issue evidence changed during full. Checks39817 terminal0:Python86/inventory
+1065/reviews223+842/import132/offline roadmap preview. No new skips/RUSTFLAGS/ABI/
+dependency/source selection changes. Root heavy slot released for independent
+forms/data PR review. Source macro expansion and all remaining named acceptance
+stay required; this transport is not a completed bootstrap or interpreter substitute.
+
+PR123 exact reviewed241c9b9 CI36929435478 SUCCESS:865/0/17/76groups/finalreader/
+3newphase guards verified. Watch75917 and log95923 terminal0; independent review
+no significant findings/fixes; tree clean. Root marked123ready; API OPEN/MERGEABLE/
+notdraft/exacthead. PR122 also ready; neither merged and no issues closed.

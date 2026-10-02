@@ -1,5 +1,5 @@
 //! Replacement source -> HIR -> verified explicit IR -> shared-ABI fragments.
-//! The CLI/AOT/macro paths still use the prototype; migration remains incomplete.
+//! Native sessions use this pipeline; AOT and source macro integration remain incomplete.
 //! Supports scalars, resolved cells, fixed closures/universal calls and numeric bootstrap.
 mod emit;
 pub mod hir;
@@ -77,15 +77,36 @@ pub fn prepare_fragment(
     environment: &resolve::Environment,
     phase: resolve::Phase,
 ) -> Result<PreparedFragment, Diagnostic> {
-    let mut forms = read_forms(source)
-        .and_then(resolve_conditionals)
-        .map_err(|error| Diagnostic {
-            span: error.span,
-            message: error.message,
-        })?;
+    let forms = read_forms(source).map_err(|error| Diagnostic {
+        span: error.span,
+        message: error.message,
+    })?;
+    prepare_fragment_forms(forms, 0..source.len(), environment, phase)
+}
+/// Compile owned reader/expanded forms without printing or rereading them.
+/// Conditional selection and namespace preparation preserve original form spans
+/// and metadata. The caller supplies the enclosing source/call-site span.
+pub fn prepare_fragment_forms(
+    forms: Vec<suss_reader::forms::Form>,
+    span: Range<usize>,
+    environment: &resolve::Environment,
+    phase: resolve::Phase,
+) -> Result<PreparedFragment, Diagnostic> {
+    let forms = resolve_conditionals(forms).map_err(|error| Diagnostic {
+        span: error.span,
+        message: error.message,
+    })?;
+    prepare_selected_fragment(forms, span, environment, phase)
+}
+pub(crate) fn prepare_selected_fragment(
+    mut forms: Vec<suss_reader::forms::Form>,
+    span: Range<usize>,
+    environment: &resolve::Environment,
+    phase: resolve::Phase,
+) -> Result<PreparedFragment, Diagnostic> {
     let mut snapshot = environment.clone();
     let namespace_directive = source::namespace(&mut forms, &mut snapshot, phase)?;
-    let (hir, environment) = hir::prepare(&forms, 0..source.len(), &snapshot, phase)?;
+    let (hir, environment) = hir::prepare(&forms, span, &snapshot, phase)?;
     let wasm = compile_ir(&ir::lower(&hir)?)?;
     let cells = environment
         .cells()
