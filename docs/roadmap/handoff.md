@@ -9858,3 +9858,21 @@ approvedexact4e. Root returned135todraft because newCI36965790098LIVE. No merges
 Next integrate repaired2b before publishing thischild, require47ABI and fullworkspace
 baseline, mandatory independent review with significantfixes pushed and exactheadCI.
 Docs/runtime/source-apply.md recordsscope/variance/failures/remainingoriginalM3gates.
+
+PR138 published draft at52b4b0e on repaired parent2b857d9. Independent reviewer
+review_pr138 approved source with no significant findings; inspected signatures,
+named self/recur, sequence forcing, IFn tail packing and callback guards; bootstrap
+provenance and diff checks passed. CI36967095236 terminalFAILURE: compiled macro
+definitions test still expected :private rejection, contradicting retained pinned
+metadata behavior. Exact log /private/tmp/suss-pr138-ci52b-failed.log. Updated test
+to define and execute private-one=1 while keeping unsupported :const rejection,
+failed redefinition and missing-body checks. Reviewer independently approved this
+test-only correction; no skipped failures or broader privacy acceptance claim.
+Fresh target rebuild focused command (CARGO_TARGET_DIR main target, jobs2, cargo
+test -p suss-cli --test compiled_macro_definitions --locked -- --test-threads=2)
+running session43968, log /private/tmp/suss-m3-source-apply-private-focus.log.
+Required full workspace and47ABI remain unexecuted; exact final-head CI pending
+new push. PR135/136 exact-head checks confirmedLIVE. No merges, issue closures or
+M3 completion. Next run focused to terminal, full required baseline, resolve any
+failures, re-review final head and verify final-head CI before readiness; then
+continue complete macro environments/locations/syntaxquote/bootstrap/cache.

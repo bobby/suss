@@ -27,10 +27,14 @@ fn compiled_macro_definitions_dispatch_all_signatures_and_keep_prior_definition_
     macros
         .define("(defmacro choose \"two signatures\" {:added \"1\"} ([] 42) ([x] (list '+ x 2)))")
         .unwrap();
-    assert!(macros
+    macros
         .define("(defmacro private-one {:private true} [] 1)")
-        .is_err());
+        .unwrap();
     let mut runtime = Session::new_repl().unwrap();
+    assert_eq!(number(&mut runtime, "(private-one)", &mut macros), 1.0);
+    assert!(macros
+        .define("(defmacro unsupported {:const true} [] 1)")
+        .is_err());
     assert_eq!(number(&mut runtime, "(choose)", &mut macros), 42.0);
     assert_eq!(number(&mut runtime, "(choose 40)", &mut macros), 42.0);
     assert!(matches!(
