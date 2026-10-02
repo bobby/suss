@@ -21,6 +21,7 @@ impl Analyzer<'_> {
             arguments.push(self.form(arg)?);
         }
         let mut result = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: operation.result(),
@@ -32,6 +33,7 @@ impl Analyzer<'_> {
         for arg in &args[operation.arity()..] {
             let right = self.form(arg)?;
             result = Hir {
+                source: None,
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: operation.result(),

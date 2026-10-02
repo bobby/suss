@@ -7,6 +7,7 @@ use suss_compile::portable::{
 #[test]
 fn public_bitwise_hir_and_ir_reject_bad_arity_and_result_before_emission() {
     let make = |count, ty| Hir {
+        source: None,
         span: 4..19,
         metadata: vec![],
         ty,
@@ -14,6 +15,7 @@ fn public_bitwise_hir_and_ir_reject_bad_arity_and_result_before_emission() {
             operation: Bitwise::And,
             arguments: (0..count)
                 .map(|_| Hir {
+                    source: None,
                     span: 7..8,
                     metadata: vec![],
                     ty: Type::Number,
@@ -56,8 +58,10 @@ fn public_bitwise_hir_and_ir_reject_bad_arity_and_result_before_emission() {
 fn private_binary64_storage_hir_and_ir_check_unary_result_contract() {
     for operation in [Bitwise::F64Coerce, Bitwise::F64Word0, Bitwise::F64Word4, Bitwise::IdentityUid] {
         let make = |count, ty| Hir {
+            source: None,
             span: 3..21, metadata: vec![], ty,
             kind: Expression::Bitwise { operation, arguments: (0..count).map(|_| Hir {
+                source: None,
                 span: 5..6, metadata: vec![], ty: Type::Number,
                 kind: Expression::Literal(Literal::Number(-0.0)),
             }).collect() },
@@ -89,8 +93,10 @@ fn numeric_hash_boundary_hir_ir_preserve_boolean_and_number_contracts() {
         (Bitwise::SafeIntegerRemainder, 2, Type::Number),
     ] {
         let make = |count, ty| Hir {
+            source: None,
             span: 3..21, metadata: vec![], ty,
             kind: Expression::Bitwise { operation, arguments: (0..count).map(|_| Hir {
+                source: None,
                 span: 5..6, metadata: vec![], ty: Type::Number,
                 kind: Expression::Literal(Literal::Number(3.0)),
             }).collect() },

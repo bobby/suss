@@ -11,6 +11,7 @@ impl Analyzer<'_> {
         };
         let (kind, ty) = self.global_value(&symbol, form.span.clone())?;
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             ty,
@@ -31,6 +32,7 @@ impl Analyzer<'_> {
 
     fn collection_array(&self, form: &Form, arguments: Vec<Hir>) -> Hir {
         Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
@@ -72,6 +74,7 @@ impl Analyzer<'_> {
         let mut bindings = vec![owner_binding, method_binding];
         bindings.extend(entries);
         Ok(Hir {
+            source: None,
             kind: Expression::Let {
                 bindings,
                 body: Box::new(body),

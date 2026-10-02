@@ -10626,3 +10626,68 @@ pending. This baseline does not validate those child edits. Complete canonical
 rich source-level &env, bootstrap/evaluator removal, cache acceptance and original
 M3 requirements remain open. Root will reconcile the PR body and issue14 with
 this evidence, then incorporate this handoff-only record into that child.
+
+
+## Rich compiled environment work — actual analyzed syntax, 2026-10-02
+
+Root now works in /private/tmp/suss-m3-rich-macro-environment on
+portable/m3-rich-macro-environment, based on independently reviewed PR147
+handoff head1bb6dee. The parent required full baseline is terminal0:
+/private/tmp/suss-m3-pr147-full-rebuilt.log, 975/0/17 across100groups,
+all47ABI and finalreader doctests. Initial full85826 terminal101 remains a
+failed compile attempt with unproven cause; only owned compiler/CLI artifacts
+were cleared before rebuilt full18650 terminal0. Final parent CI37048703012
+failed before any steps with GitHub account payment/spending-limit annotation;
+user has been informed. It is not a source failure or CI pass. Root merged no PR.
+
+Original SourceAnalysis now retains the actual reader/expansion Form, analysis
+context, phase, namespace at entry and optional actual source origin alongside
+HIR via immutable Arc. Compiler-only lowering constructors explicitly set
+source=None. Existing analyzed expansion records are preserved instead of
+relabeled with the original macro call. Generated spans remain call-site
+provenance, not proof of a generated token in original source text. IR operations,
+operand ordering and runtime evaluation are unchanged; source is not executed to
+construct a record. This is not complete source AST/inference or rich &env.
+
+Focused native16326 terminal0:9/0/0 across3groups, binding6/context1/function2;
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-cli --locked --test compiled_macro_binding_records
+--test compiled_macro_function_scopes --test compiled_macro_analysis_context
+-- --test-threads=2; log/private/tmp/suss-rich-env-source-focus.log. Regressions
+inspect actual do/arithmetic initializer syntax and child records while executing
+and independently checking once-only effects in both Stores; actual expanded
+numeric initializer executes and survivesGC with its generated syntax retained.
+
+Compiler19014 terminal0:38/0/0 across4groups;
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-compile --locked --test portable_pipeline --test portable_closures
+--test portable_nominal --test portable_exceptions -- --test-threads=2;
+log/private/tmp/suss-rich-env-source-compiler-focus.log. After adding honest
+owned-form origin assertions, final changed-test87048 terminal0:1/0/0,
+5filtered; cargo test -p suss-cli --locked --test compiled_macro_binding_records
+compiler_source_analysis -- --test-threads=2 with the same target/jobs;
+log/private/tmp/suss-rich-env-source-origin-focus.log. The owned-form assertions
+inspect compilation provenance; runtime execution evidence comes from the same
+test's two Store cases. Syntax parsing and git diff --check pass. All native/JVM
+handles are terminal; no heavy job is live. No RUSTFLAGS override.
+
+The genuine local pinned ClojureScript checkout was cloned into this worktree
+from the verified parent and detached atc4295f303100bbf5afac449242d30bca1126f1a1
+(1.12.134). No fresh JVM/Node environment oracle was run this slice. No upstream
+implementation was ported and no shipped Java/JavaScript dependency was added.
+
+Next unblocked work is comprehensive rich compiled &env transport and source AST
+records using the genuine pinned analyzer schema and fresh observations: declare
+and supply &env beside &form, construct real canonical maps from actual context,
+namespace declarations/aliases/refers, locals/fields/shadows/function scopes and
+actual initializer syntax/analysis. Preserve source versus compiler-generated
+loops/receivers, real IDs, absent facts and bounded traversal; do not invent source
+JS initializer ASTs or reexecute source. Current source macro definitions still
+reject &env. Full new-source baseline, independent review and final-head CI remain
+required before readying the resulting PR. Once the complete transport change is
+reviewable, open its PR, dispatch the mandatory independent reviewer and obtain
+passing final-head CI. Continue on this branch; this source-fact commit alone does
+not finish the requested environment transport.
+Original issue14 and all M3 syntax-quote/gensym/bootstrap/cache/evaluator-removal,
+frontends and scheduler/lifecycle acceptance remain open. No issue closure or M3
+completion is claimed.

@@ -34,6 +34,7 @@ impl Analyzer<'_> {
         };
         let (kind, ty) = self.global_value(&symbol, form.span.clone())?;
         let constructor = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             ty,
@@ -125,6 +126,7 @@ impl Analyzer<'_> {
                 };
                 let (kind, ty) = self.global_value(&symbol, form.span.clone())?;
                 let callee = Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: vec![],
                     ty,
@@ -135,6 +137,7 @@ impl Analyzer<'_> {
                     .map(|value| self.quote_data_impl(value, depth + 1, reader_data))
                     .collect::<Result<Vec<_>, _>>()?;
                 Ok(Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: vec![],
                     ty: Type::Value,
@@ -162,12 +165,14 @@ impl Analyzer<'_> {
         };
         let (kind, ty) = self.global_value(&symbol, form.span.clone())?;
         let callee = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             kind,
             ty,
         };
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
@@ -230,6 +235,7 @@ impl Analyzer<'_> {
             return Ok(value);
         }
         let result = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,

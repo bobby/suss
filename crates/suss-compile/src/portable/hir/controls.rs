@@ -10,6 +10,7 @@ impl Analyzer<'_> {
             Type::Value
         };
         Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty,
@@ -68,6 +69,7 @@ impl Analyzer<'_> {
                 let ty = arithmetic_type(operator, &arguments.iter().map(|arg| arg.ty).collect::<Vec<_>>())
                     .ok_or_else(|| fail(args[0].span.clone(), "Arithmetic object coercions are not lowered yet"))?;
                 Ok(Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty,
@@ -83,6 +85,7 @@ impl Analyzer<'_> {
                 }
                 let value = self.form(&args[0])?;
                 Ok(Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: Type::Bool,
@@ -170,6 +173,7 @@ impl Analyzer<'_> {
                         self.form_in(args.last().unwrap(), context, tail)?
                     };
                     Ok(Hir {
+                        source: None,
                         span: form.span.clone(),
                         metadata: form.metadata.clone(),
                         ty: body.ty,
@@ -196,6 +200,7 @@ impl Analyzer<'_> {
                 let cached_binding = self.fresh_binding(&args[2], cached);
                 let cached = self.local(&args[2], cached_binding.id);
                 let test = Hir {
+                    source: None,
                     span: args[2].span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Bool,
@@ -204,6 +209,7 @@ impl Analyzer<'_> {
                 let callee = self.form(&args[1])?;
                 let collection = self.form(&args[0])?;
                 let hash = Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
@@ -245,6 +251,7 @@ impl Analyzer<'_> {
                 } else {
                     let global = self.assignment_target(&args[2])?;
                     Hir {
+                        source: None,
                         span: form.span.clone(),
                         metadata: Vec::new(),
                         ty: Type::Value,
@@ -255,12 +262,14 @@ impl Analyzer<'_> {
                     }
                 };
                 let miss_body = Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
                     kind: Expression::Do(vec![assignment, hash]),
                 };
                 let miss = Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
@@ -271,6 +280,7 @@ impl Analyzer<'_> {
                 };
                 let body = self.control_if(form, test, miss, cached);
                 Ok(Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: body.ty,
@@ -311,6 +321,7 @@ impl Analyzer<'_> {
                     definitions.push(self.definition(form, &[declared], false)?);
                 }
                 Ok(Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: Type::Nil,
@@ -374,6 +385,7 @@ impl Analyzer<'_> {
                 self.locals = outer;
                 let consequent = consequent?;
                 let consequent = Hir {
+                    source: None,
                     span: args[1].span.clone(),
                     metadata: args[1].metadata.clone(),
                     ty: consequent.ty,
@@ -389,6 +401,7 @@ impl Analyzer<'_> {
                 };
                 let body = self.control_if(form, condition, consequent, alternative);
                 Ok(Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: body.ty,
@@ -445,6 +458,7 @@ impl Analyzer<'_> {
                 let id = BindingId(self.next);
                 self.next += 1;
                 let local = Hir {
+                    source: None,
                     span: args[0].span.clone(),
                     metadata: Vec::new(),
                     ty: value.ty,
@@ -457,6 +471,7 @@ impl Analyzer<'_> {
                     self.control_if(form, local.clone(), local, rest)
                 };
                 Ok(Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: body.ty,

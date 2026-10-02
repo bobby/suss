@@ -11,6 +11,7 @@ impl Analyzer<'_> {
             return Err(fail(form.span.clone(), "Wrong bootstrap array macro arity"));
         }
         let node = |operation, arguments| Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
@@ -58,6 +59,7 @@ impl Analyzer<'_> {
                     ));
                 }
                 Hir {
+                    source: None,
                     span: args[1].span.clone(),
                     metadata: vec![],
                     ty: Type::Number,
@@ -68,6 +70,7 @@ impl Analyzer<'_> {
             };
             let size = self.array_temporary(&args[1], value);
             let nil = Hir {
+                source: None,
                 span: form.span.clone(),
                 metadata: vec![],
                 ty: Type::Nil,
@@ -82,6 +85,7 @@ impl Analyzer<'_> {
             let body = node(operation, operands);
             dimensions.push(size);
             return Ok(Hir {
+                source: None,
                 kind: Expression::Let {
                     bindings: dimensions,
                     body: Box::new(body),
@@ -100,6 +104,7 @@ impl Analyzer<'_> {
                 }
                 operation = ArrayOperation::MakeLiteral;
                 arguments.push(Hir {
+                    source: None,
                     span: args[0].span.clone(),
                     metadata: vec![],
                     ty: Type::Number,

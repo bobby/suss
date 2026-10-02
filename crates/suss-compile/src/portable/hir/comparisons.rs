@@ -24,6 +24,7 @@ impl Analyzer<'_> {
             return Ok(self.literal_form(form, Literal::Bool(true)));
         }
         let comparison = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Bool,
@@ -39,6 +40,7 @@ impl Analyzer<'_> {
         // while the If avoids effects in comparisons after the first false pair.
         let rest = self.comparison_form(form, &args[1..], operation)?;
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Bool,

@@ -12,6 +12,7 @@ impl Analyzer<'_> {
         let mut free = BTreeSet::new();
         free_bindings(&body, &bound, &mut free);
         Hir {
+            source: None,
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Closure(parameters.len()),
@@ -130,6 +131,7 @@ impl Analyzer<'_> {
             };
             let payload = self.local(form, id);
             let mut selected = Hir {
+                source: None,
                 span: form.span.clone(),
                 metadata: Vec::new(),
                 ty: Type::Value,
@@ -160,6 +162,7 @@ impl Analyzer<'_> {
             for (catch, test, body) in analyzed.into_iter().rev() {
                 selected = if let Some(test) = test {
                     Hir {
+                        source: None,
                         span: catch.span.clone(),
                         metadata: Vec::new(),
                         ty: Type::Value,
@@ -178,6 +181,7 @@ impl Analyzer<'_> {
         let body = self.body(&args[..body_end], form.span.clone(), context, false)?;
         let body = self.exception_region(form, vec![], body);
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,

@@ -516,3 +516,10 @@ pinned observations and four executed results cover receiver/argument/field
 shadows and nested scope restoration in both Stores. This is compiler-fact
 preparation, not source-level rich `&env` completion; see
 [method binding roles](../runtime/compiled-macro-method-roles.md).
+
+Actual analyzed syntax is now retained alongside HIR for rich environment
+preparation: [source analysis records](../runtime/compiled-macro-source-analysis.md).
+The records retain reader/expansion forms and actual context/phase/origin;
+compiler-only lowering nodes have no source record. Executing focused evidence
+passes 9 native macro and 38 compiler tests. This does not certify a complete
+source AST, inference, rich source-level `&env`, bootstrap or M3 acceptance.

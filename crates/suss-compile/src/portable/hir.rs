@@ -381,8 +381,19 @@ pub struct Method {
     pub parameters: Vec<Parameter>,
     pub body: Box<Hir>,
 }
+/// Reader/expansion syntax actually analyzed for this expression. Compiler-only
+/// lowering nodes have no source record; their syntax must never be fabricated.
+#[derive(Debug, Clone)]
+pub struct SourceAnalysis {
+    pub form: Form,
+    pub context: super::AnalysisContext,
+    pub phase: Phase,
+    pub namespace: String,
+    pub origin: Option<super::SourceOrigin>,
+}
 #[derive(Debug, Clone)]
 pub struct Hir {
+    pub source: Option<std::sync::Arc<SourceAnalysis>>,
     pub span: Range<usize>,
     pub metadata: Vec<Form>,
     pub ty: Type,
@@ -525,6 +536,7 @@ impl Analyzer<'_> {
             .collect::<Result<Vec<_>, _>>()?;
         let ty = items.last().map_or(Type::Nil, |item| item.ty);
         Ok(Hir {
+            source: None,
             span,
             metadata: Vec::new(),
             ty,
@@ -586,7 +598,22 @@ impl Analyzer<'_> {
                 }
             }
         }
-        self.form_inner(form, context, tail, name_hint)
+        let namespace = self.environment.current_namespace(self.phase).to_owned();
+        self.form_inner(form, context, tail, name_hint).map(|mut expression| {
+            // A bootstrap/source expansion may already have returned its actual
+            // analyzed node. Preserve that record instead of attributing the
+            // original macro call to the expanded expression.
+            if expression.source.is_none() {
+                expression.source = Some(std::sync::Arc::new(SourceAnalysis {
+                    form: form.clone(),
+                    context,
+                    phase: self.phase,
+                    namespace,
+                    origin: self.origin.clone(),
+                }));
+            }
+            expression
+        })
     }
     fn form_inner(&mut self, form: &Form, context: super::AnalysisContext, tail: bool, name_hint: Option<&Form>) -> Result<Hir, Diagnostic> {
         let kind = match &form.kind {
@@ -623,6 +650,7 @@ impl Analyzer<'_> {
                 };
                 let (kind, ty) = self.global_value(&symbol, form.span.clone())?;
                 let owner = Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: Vec::new(),
                     ty,
@@ -646,6 +674,7 @@ impl Analyzer<'_> {
                     self.global_value(symbol, form.span.clone())?
                 };
                 return Ok(Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty,
@@ -667,6 +696,7 @@ impl Analyzer<'_> {
             _ => unreachable!(),
         };
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty,
@@ -708,6 +738,7 @@ impl Analyzer<'_> {
             }
         }
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
@@ -790,6 +821,7 @@ impl Analyzer<'_> {
         definition.initializer = initializer.as_deref().cloned().map(std::sync::Arc::new);
         self.environment.record_definition(global.clone(), definition);
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
@@ -944,6 +976,7 @@ impl Analyzer<'_> {
             captures.remove(&parameter.id);
         }
         let function = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
@@ -1097,6 +1130,7 @@ impl Analyzer<'_> {
                 metadata: parameter.metadata.clone(),
                 span: parameter.span.clone(),
                 value: Hir {
+                    source: None,
                     span: parameter.span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
@@ -1171,6 +1205,7 @@ impl Analyzer<'_> {
         let inner_body = self.body(&args[1..], form.span.clone(), super::AnalysisContext::Return, true)?;
         self.target = outer_target;
         let body = Box::new(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: inner_body.ty,
@@ -1186,6 +1221,7 @@ impl Analyzer<'_> {
         let mut captures = BTreeSet::new();
         free_bindings(&body, &bound, &mut captures);
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Closure(parameters.len()),
@@ -1277,6 +1313,7 @@ impl Analyzer<'_> {
                 ));
             }
             return Ok(Hir {
+                source: None,
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: Type::Bool,
@@ -1312,6 +1349,7 @@ impl Analyzer<'_> {
             }
             let body = self.nominal(form, Nominal::ObjectInvoke, arguments);
             return Ok(Hir {
+                source: None,
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: Type::Value,
@@ -1459,6 +1497,7 @@ impl Analyzer<'_> {
             }
             let global = self.assignment_target(&args[0])?;
             return Ok(Hir {
+                source: None,
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: Type::Value,
@@ -1479,6 +1518,7 @@ impl Analyzer<'_> {
                 ));
             }
             return Ok(Hir {
+                source: None,
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: Type::Value,
@@ -1512,6 +1552,7 @@ impl Analyzer<'_> {
                 .map(|arg| self.form(arg))
                 .collect::<Result<Vec<_>, _>>()?;
             return Ok(Hir {
+                source: None,
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: Type::Value,
@@ -1556,6 +1597,7 @@ impl Analyzer<'_> {
                     self.form_in(&args[2], context, tail)?
                 } else {
                     Hir {
+                        source: None,
                         span: form.span.clone(),
                         metadata: Vec::new(),
                         ty: Type::Nil,
@@ -1685,6 +1727,7 @@ impl Analyzer<'_> {
             }
         };
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty,
@@ -1827,7 +1870,7 @@ pub(crate) fn prepare_with_origin(
         let span = hir.span.clone();
         let metadata = hir.metadata.clone();
         initializers.push(hir);
-        hir = Hir { span, metadata, ty, kind: Expression::Do(initializers) };
+        hir = Hir { source: None, span, metadata, ty, kind: Expression::Do(initializers) };
     }
     Ok((hir, analyzer.environment))
 }

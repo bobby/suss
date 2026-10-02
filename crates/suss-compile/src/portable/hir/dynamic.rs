@@ -59,6 +59,7 @@ impl Analyzer<'_> {
         self.target = target;
         let body = self.exception_region(form, vec![], body?);
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,

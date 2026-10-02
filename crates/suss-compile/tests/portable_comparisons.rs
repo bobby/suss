@@ -6,6 +6,7 @@ use suss_compile::portable::{
 #[test]
 fn comparison_hir_ir_guards_require_binary_boolean_and_dominating_operands() {
     let value = Hir {
+        source: None,
         span: 2..3,
         metadata: vec![],
         ty: Type::Number,
@@ -25,6 +26,7 @@ fn comparison_hir_ir_guards_require_binary_boolean_and_dominating_operands() {
             (2, Type::Number),
         ] {
             let hir = Hir {
+                source: None,
                 span: 0..7,
                 metadata: vec![],
                 ty,
@@ -36,6 +38,7 @@ fn comparison_hir_ir_guards_require_binary_boolean_and_dominating_operands() {
             assert!(ir::lower(&hir).is_err());
         }
         let hir = Hir {
+            source: None,
             span: 0..7,
             metadata: vec![],
             ty: Type::Bool,

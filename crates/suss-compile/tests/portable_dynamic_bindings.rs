@@ -39,6 +39,7 @@ fn dynamic_scope_requires_a_fixed_body_and_complete_snapshot_value_pairs() {
         panic!("scope")
     };
     **body = Hir {
+        source: None,
         span: 1..5,
         metadata: vec![],
         ty: Type::Nil,

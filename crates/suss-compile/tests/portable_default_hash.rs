@@ -6,6 +6,7 @@ use suss_compile::portable::{
 #[test]
 fn default_prototype_adapter_rejects_invalid_public_hir_and_ir() {
     let make = |count, ty| Hir {
+        source: None,
         span: 3..23,
         metadata: vec![],
         ty,
@@ -13,6 +14,7 @@ fn default_prototype_adapter_rejects_invalid_public_hir_and_ir() {
             operation: Nominal::NativeObjectDefaultPrototype,
             arguments: (0..count)
                 .map(|_| Hir {
+                    source: None,
                     span: 5..6,
                     metadata: vec![],
                     ty: Type::Number,

@@ -6,6 +6,7 @@ use suss_compile::portable::{
 #[test]
 fn array_hir_ir_reject_bad_arity_type_and_non_dominating_operands() {
     let value = Hir {
+        source: None,
         span: 2..3,
         metadata: vec![],
         ty: Type::Nil,
@@ -19,6 +20,7 @@ fn array_hir_ir_reject_bad_arity_type_and_non_dominating_operands() {
         ArrayOperation::Set,
     ] {
         let invalid = Hir {
+            source: None,
             span: 0..7,
             metadata: vec![],
             ty: Type::Value,
@@ -30,6 +32,7 @@ fn array_hir_ir_reject_bad_arity_type_and_non_dominating_operands() {
         assert!(ir::lower(&invalid).is_err(), "{operation:?}");
     }
     let mut hir = Hir {
+        source: None,
         span: 0..7,
         metadata: vec![],
         ty: Type::Bool,
