@@ -75,9 +75,13 @@ reviewed source. Successful exact final-head CI remains the PR readiness gate.
 ## Remaining acceptance
 
 This does not establish full M3 or collection compatibility. HAMT/large metadata
-maps, transients, function literal metadata, remaining chunk methods/public APIs,
+maps, transients, remaining chunk methods/public APIs,
 general object numeric coercion,
 ES6/printing, full reader-derived source locations, `&env`, syntax quote/splicing,
 deterministic gensyms, reproducible versioned Java-free bootstrap, complete cache
 invalidation and legacy evaluator removal remain required. Stackless scheduling,
 I/O cancellation and live GC accounting remain separate original M3 obligations.
+
+Ordinary function-literal metadata and canonical callable-object syntax have
+subsequent focused evidence in [callable metadata](callable-metadata.md); full
+source apply and M3 acceptance remain open.

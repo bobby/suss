@@ -449,6 +449,94 @@
         "tag": "f64",
         "bits": "401c000000000000"
       }
+    },
+    {
+      "id": "callable-metafn-zero",
+      "source": "((with-meta (fn [] 17) {:doc 7}))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "callable-metafn-one",
+      "source": "((with-meta (fn [x] (+ x 1)) {:doc 7}) 16)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "callable-function-metadata",
+      "source": "(let [answer 41] (get (meta ^{:answer answer} (fn [] 17)) :answer))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4044800000000000"
+      }
+    },
+    {
+      "id": "callable-vector",
+      "source": "([17 19] 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4033000000000000"
+      }
+    },
+    {
+      "id": "callable-map",
+      "source": "({:x 23} :missing 29)",
+      "expected": {
+        "tag": "f64",
+        "bits": "403d000000000000"
+      }
+    },
+    {
+      "id": "callable-keyword",
+      "source": "(:x {:x 31})",
+      "expected": {
+        "tag": "f64",
+        "bits": "403f000000000000"
+      }
+    },
+    {
+      "id": "callable-symbol",
+      "source": "('x {'x 37})",
+      "expected": {
+        "tag": "f64",
+        "bits": "4042800000000000"
+      }
+    },
+    {
+      "id": "callable-captured-method",
+      "source": "(do (deftype MetadataCapturedCall [] IFn (-invoke [_ x] x)) (def metadata-captured-call (MetadataCapturedCall.)) (metadata-captured-call (do (extend-type MetadataCapturedCall IFn (-invoke ([_ x] 99))) 17)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "callable-ifn-last-signature",
+      "source": "(do (deftype MetadataLastCall [] IFn (-invoke [_ a b c d e f g h i j k l m n o p q r s t tail] tail)) ((MetadataLastCall.) 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 42))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "callable-noncallable-effects",
+      "source": "(do (def metadata-call-effects 0) (try (17 (do (set! metadata-call-effects 1) 19)) (catch :default e metadata-call-effects)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "callable-vector-wrong-arity-effects",
+      "source": "(do (def metadata-vector-effects 0) (try ([1] (do (set! metadata-vector-effects 1) 0) (do (set! metadata-vector-effects (+ metadata-vector-effects 10)) 1) (do (set! metadata-vector-effects (+ metadata-vector-effects 100)) 2)) (catch :default e metadata-vector-effects)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
     }
   ]
 }

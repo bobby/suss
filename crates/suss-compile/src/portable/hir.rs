@@ -278,6 +278,8 @@ impl Bitwise {
 /// construction storage, never source-language persistent collections.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Nominal {
+    IsClosure,
+    BindCallable,
     LiveDispatcher,
     IFnLiveDispatcher,
     NativeMarker(NativeKind),
@@ -310,9 +312,11 @@ pub enum Nominal {
 impl Nominal {
     pub fn result(self) -> Type {
         match self {
-            Self::Instance | Self::Satisfies | Self::NativeSatisfies | Self::NativeMarker(_) => {
-                Type::Bool
-            }
+            Self::IsClosure
+            | Self::Instance
+            | Self::Satisfies
+            | Self::NativeSatisfies
+            | Self::NativeMarker(_) => Type::Bool,
             _ => Type::Value,
         }
     }
@@ -322,7 +326,8 @@ impl Nominal {
             && match self {
                 Self::Array => true,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
-                Self::LanguageError => count == 1,
+                Self::LanguageError | Self::IsClosure => count == 1,
+                Self::BindCallable => count == 2,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
                 Self::NamedGet => count == 2 && arguments[1] == Type::String,
@@ -679,7 +684,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind: Expression::Call { callee, arguments },
+            kind: Expression::Call {
+                callee: Box::new(self.prepare_source_callee(form, *callee, arguments.len())?),
+                arguments,
+            },
         })
     }
     fn definition(&mut self, form: &Form, args: &[Form], once: bool) -> Result<Hir, Diagnostic> {
@@ -1449,11 +1457,12 @@ impl Analyzer<'_> {
         if (bare && symbol.name == "fn*")
             || matches!(resolved, Some(ResolvedBinding::BootstrapFn(_)))
         {
-            return self.function(
+            let value = self.function(
                 form,
                 args,
                 matches!(resolved, Some(ResolvedBinding::BootstrapFn(_))),
-            );
+            )?;
+            return self.attach_literal_metadata(form, value);
         }
         let (kind, ty) = match (bare, symbol.name.as_str()) {
             (true, "do") => {

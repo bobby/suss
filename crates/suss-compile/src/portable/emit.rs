@@ -124,6 +124,10 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::NamedSet => {
                             names.insert("named-property-set");
                         }
+                        Nominal::IsClosure => {}
+                        Nominal::BindCallable => {
+                            names.insert("callable-bind");
+                        }
                         Nominal::LiveDispatcher => {
                             names.insert("protocol-live-dispatcher-new");
                         }
@@ -831,6 +835,17 @@ fn emit_function(
                     arguments,
                 } => {
                     match operation {
+                        Nominal::IsClosure => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(4)));
+                        }
+                        Nominal::BindCallable => {
+                            for argument in arguments {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&Call(index("callable-bind")));
+                        }
                         Nominal::LiveDispatcher | Nominal::IFnLiveDispatcher => {
                             for argument in arguments {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));

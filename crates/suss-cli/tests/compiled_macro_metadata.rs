@@ -103,7 +103,7 @@ fn compiled_macro_metadata_match_fresh_pinned_scalar_observations_in_both_phases
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 56);
+    assert_eq!(cases.len(), 67);
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
         let mut macros = suss_cli::portable_macros::CompiledMacros::new().unwrap();
@@ -113,6 +113,8 @@ fn compiled_macro_metadata_match_fresh_pinned_scalar_observations_in_both_phases
         macros
             .define("(defmacro form-line [] (get (meta &form) :line))")
             .unwrap();
+        let mut matching = 0;
+        let mut strict_arity_boundaries = 0;
         for case in cases {
             let value = session
                 .eval_with_macros(case["source"].as_str().unwrap(), &mut macros)
@@ -148,8 +150,19 @@ fn compiled_macro_metadata_match_fresh_pinned_scalar_observations_in_both_phases
                     })
                 })
                 .unwrap();
-            assert_eq!(actual, case["expected"], "{}", case["id"]);
+            if case["id"] == "callable-vector-wrong-arity-effects" {
+                // Keep the fresh pin's ignored-extra-argument result. The
+                // accepted portable design requires wrong-arity errors; all
+                // three argument effects run before its catch returns111.
+                assert_eq!(case["expected"], serde_json::json!({"tag":"f64","bits":"3ff0000000000000"}));
+                assert_eq!(actual, serde_json::json!({"tag":"f64","bits":"405bc00000000000"}));
+                strict_arity_boundaries += 1;
+            } else {
+                assert_eq!(actual, case["expected"], "{}", case["id"]);
+                matching += 1;
+            }
         }
+        assert_eq!((matching, strict_arity_boundaries), (66, 1));
     }
 }
 

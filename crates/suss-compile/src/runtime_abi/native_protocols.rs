@@ -529,5 +529,73 @@ pub(super) fn functions(
             Call(b.names["closure-new"]),
         ],
     );
-    vec![dispatch, function]
+    // Original ordinary IFn call adapter. Capture the actual source method
+    // before arguments execute, matching emitted .call evaluation. The receiver
+    // and method remain rooted in a canonical closure environment; source MetaFn
+    // still owns behavior. Explicit -invoke uses its separate native fallback.
+    let mut code = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(ARGS)),
+        I32Eqz,
+        If(BlockType::Empty),
+    ];
+    error(&mut code);
+    code.extend([
+        End,
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        ArrayLen,
+        I32Const(2),
+        I32Ne,
+        If(BlockType::Empty),
+    ]);
+    error(&mut code);
+    code.extend([
+        End,
+        LocalGet(1),
+        ArrayLen,
+        I32Const(i32::MAX),
+        I32GeU,
+        If(BlockType::Empty),
+    ]);
+    error(&mut code);
+    code.extend([
+        End,
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        ArrayGet(ARGS),
+        LocalGet(1),
+        ArrayLen,
+        I32Const(1),
+        I32Add,
+        ArrayNew(ARGS),
+        LocalSet(2),
+        LocalGet(2),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(1),
+        LocalGet(1),
+        I32Const(0),
+        LocalGet(1),
+        ArrayLen,
+        ArrayCopy {
+            array_type_index_dst: ARGS,
+            array_type_index_src: ARGS,
+        },
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(1),
+        ArrayGet(ARGS),
+        LocalGet(2),
+        Call(invoke),
+    ]);
+    let bound = callback(b, &code);
+    let mut code = vec![LocalGet(1), RefTestNonNull(HeapType::Concrete(DESCRIPTOR)), I32Eqz, If(BlockType::Empty)];
+    error(&mut code);
+    code.extend([End, LocalGet(0), RefTestNonNull(HeapType::Concrete(7)), If(BlockType::Result(VALUE)),
+        LocalGet(0), Call(descriptor), LocalGet(1), Call(method_get), Else, I32Const(0), RefI31, End, LocalSet(2),
+        LocalGet(0), LocalGet(2), ArrayNewFixed { array_type_index: ARGS, array_size: 2 },
+        RefFunc(bound), I32Const(0), I32Const(-1), Call(b.names["closure-new"])]);
+    b.function_with_locals("callable-bind", &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &code);
+    vec![dispatch, function, bound]
 }

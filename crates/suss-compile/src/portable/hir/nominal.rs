@@ -89,6 +89,69 @@ impl Analyzer<'_> {
         };
         self.do_hir(form, vec![initialize, read])
     }
+    /// Prepare one source callee before its arguments. Canonical closures keep
+    /// the universal ABI path; objects invoke the actual retained IFn method.
+    /// The branch is lazy so function calls do not read protocol bindings.
+    pub(super) fn prepare_source_callee(
+        &mut self,
+        form: &Form,
+        value: Hir,
+        arity: usize,
+    ) -> Result<Hir, Diagnostic> {
+        if matches!(value.ty, Type::Closure(_)) {
+            return Ok(value);
+        }
+        let protocol = self
+            .environment
+            .protocols
+            .keys()
+            .find(|global| {
+                global.phase() == self.phase
+                    && global.namespace() == "suss.core"
+                    && global.name() == "IFn"
+            })
+            .cloned();
+        let Some(protocol) = protocol else {
+            // Before compiled core declares IFn, bootstrap calls are closures.
+            return Ok(value);
+        };
+        let callee = self.fresh_binding(form, value);
+        let test = self.nominal(form, Nominal::IsClosure, vec![self.local(form, callee.id)]);
+        let signature = arity
+            .checked_add(1)
+            .ok_or_else(|| fail(form.span.clone(), "Too many callable arguments"))?;
+        let schema = (0..signature)
+            .map(|_| self.literal_form(form, Literal::String(vec![])))
+            .collect();
+        let key = self.stable_key(form, &protocol, "-invoke", signature, schema);
+        // Ordinary emitted ClojureScript calls capture the object's callable
+        // method before evaluating arguments. Explicit -invoke separately uses
+        // its live native protocol table and receiver convention.
+        let bound = self.nominal(
+            form,
+            Nominal::BindCallable,
+            vec![self.local(form, callee.id), key],
+        );
+        let body = Hir {
+            span: form.span.clone(),
+            metadata: vec![],
+            ty: Type::Value,
+            kind: Expression::If {
+                condition: Box::new(test),
+                consequent: Box::new(self.local(form, callee.id)),
+                alternative: Box::new(bound),
+            },
+        };
+        Ok(Hir {
+            span: form.span.clone(),
+            metadata: vec![],
+            ty: Type::Value,
+            kind: Expression::Let {
+                bindings: vec![callee],
+                body: Box::new(body),
+            },
+        })
+    }
     fn named_global(&self, name: &Form) -> Result<Global, Diagnostic> {
         let Kind::Symbol(symbol) = &name.kind else {
             return Err(fail(

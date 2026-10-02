@@ -9646,3 +9646,129 @@ actual retained source methods own behavior. Native explicit -invoke remains its
 separate path. No new core stub or fake MetaFn. ROOT owns next focused child run.
 Full M3 issues12–15 remain open, including source environments/locations/syntaxquote/
 gensyms/bootstrap/cache/evaluator removal and stackless lifecycle acceptance.
+Next callable-metadata prerequisite prepared in isolated child
+/private/tmp/suss-m3-callable-metadata, branch portable/m3-callable-metadata,
+currently based on pre-review metadata83a92e5. Three focused regressions are
+UNEXECUTED: ordinary MetaFn invocation preserving captured functions and metadata
+across GC/redefinitions; lexical function-literal metadata with callable body;
+canonical vector/map IFn invocation. No success claim or PR yet. Parent reviewer135
+owns exclusive heavy slot for significant metadata fixes and fresh oracle; root
+must integrate its pushed final source before executing this child.
+
+Source inspection: current ABI invoke accepts canonical closures only. Complete
+licensed MetaFn/IFn are already retained; explicit -invoke has a pin-specific
+receiver convention and is not an implementation of ordinary callable-object
+syntax. Generic calls need canonical IFn dispatch with one evaluated receiver,
+correct implicit receiver arity, live methods and argument effects, plus ordinary
+function literal metadata lowering. Preserve compiled protocol phase identity,
+rooted old captures and shared ABI; do not use an evaluator or eager fake wrapper.
+Full original M3 bootstrap/environment/cache/lifecycle obligations remain open.
+
+
+Callable child before94209 terminal101:all3 regressions fail (0passed/3failed),
+/private/tmp/suss-m3-callable-metadata-before.log. Source83a92e5 cannot ordinarily
+invoke canonical MetaFn/vector/map values and ignores function literal metadata.
+Integrated final reviewed metadata2fe68294165d0f5610b1f954c9253a4f1067697b into
+child with both handoff blocks preserved. Parent full74540 confirmed LIVE,
+/private/tmp/suss-m3-macro-metadata-reviewed-full.log; ROOT exclusive heavy owner.
+No child Cargo/JVM/Node until parent baseline terminal. Next implement ordinary
+callable dispatch and function metadata through source HIR/IR/shared ABI, retain
+actual licensed MetaFn methods, then validate pin/native effects/arity/GC.
+
+
+Callable child initial original source implementation now executes: callee once,
+lazy closure/direct nominal IFn selection; actual method captured before arguments,
+retained MetaFn source remains authoritative; lexical fn-literal metadata attaches
+actual persistent maps. New private callable-bind export, unchanged ABI2 layouts.
+Focus5261 terminal101 generated-Wasm type mismatch from double Boolean conversion;
+corrected65606 terminal0:3callable+4identity regressions. New direct strict wrong-arity
+regression added. Final focus71765 terminal0:18 tests (callable4/identity4/metadata10).
+
+Fresh primary38248 terminal1 IFn extend-type probe required grouped signatures;
+corrected44107 terminal1 exact comparison showed pin ignores vector extra args,
+returning1. Retained that actual reference result; native explicitly tests accepted
+strict-arity contract (effects111 then language error/catch111), not a skip or match.
+Oracle78447 terminal0:67 fresh primary observations exact; native66matching+1explicit
+strict boundary EACH Runtime/Macro Store after GC, all10metadata tests pass.
+Logs /private/tmp/suss-m3-callable-metadata-focus2.log,
+/private/tmp/suss-m3-callable-metadata-final-focus.log,
+/private/tmp/suss-m3-callable-metadata-oracle3.log. ABI98764 confirmed LIVE for new
+copied/corrupt callback/GC/captured-method guards plus full ABI regressions;
+/private/tmp/suss-m3-callable-metadata-abi-focus.log. ROOT owns heavy slot.
+
+Metadata135 parent final doc-only17f00a3d993695b564328c31b9c749e9bb9389b0 independently
+approved; source/tests unchanged from reviewed2fe full74540 terminal0:926/0/17/87groups.
+CI36960926070 confirmed LIVE on17f, draft. Parent133 independently reviewed3ccd fresh
+CI36957307954 SUCCESS verified915/0/17/86groups/Python88/import191/setup12/finalreader;
+markedready OPEN/notdraft/headunchanged, no merge. Integrate final metadata docs
+before callable child publication. M3 remains open; next unblocked work after this
+validation/review is source apply, environments/locations/syntaxquote/bootstrap/cache
+and stackless lifecycle, preserving every original issue12–15 acceptance criterion.
+
+
+ABI98764 terminal101:45pass/1failed; new fixture attempted to replace method with
+nil, correctly rejected by protocol-method-set. Correct fixture uses a valid
+arity2 callback replacement; new bound callback errors, old captured arity1 method
+still works after GC. ABI92753 terminal0:46tests including malformed key/copyENV/
+exception-tag/recovery guard, /private/tmp/suss-m3-callable-metadata-abi-focus2.log.
+Source/core behavior unchanged by fixture repair. Import199/setup12/reviews291partial
+774unassessed remain partial; current artifacts regenerated after evidence overlay.
+Next integrate final metadata17f docs, freeze source and run full baseline, publish
+Refs#14 draft and dispatch required independent review; no ready/merge claim yet.
+
+
+PR136 published draft, Refs#14, source5367d075b34f7da69fc89b1ce4c4039cc6a428f0.
+Independent reviewer136 approved exact5367 with no significant findings; import199,
+review-overlay291/774 and licensed setup12 checks independently pass. ROOT full7750
+terminal0:931passed/0failed/17existingignores/88groups through finalreader doctests,
+/private/tmp/suss-m3-callable-metadata-full.log. Heavy slot released. This publication
+changes docs only; require independent final-head confirmation and exact-final-head
+CI before marking ready. No merge.
+
+PR135 final17f00a3 independently approved, CI36960926070 SUCCESS. Downloaded complete
+/private/tmp/suss-pr135-final-ci.log and verified926/0/17/87groups/Python88/import199/
+setup12/finalreader. Marked ready after exact-head verification; no merge. Original
+M3 issues12–15 remain open. Next unblocked task: retain complete source apply and
+its callable behavior before macro environment/syntaxquote/bootstrap/cache work.
+
+
+## Stack #137 rebase — 2026-10-02
+
+At the user's request, imported GitHub stack137 using `gh stack checkout 137`,
+rebased PR133 -> PR135 -> PR136 onto main03125fa using `gh stack rebase`, and
+continued the cascading rebase with `gh stack rebase --continue`. Existing clean
+map/metadata worktrees were temporarily detached and restored to their updated
+branches. Initial checkout/rebase attempts reported occupied worktrees; no user
+changes were overwritten.
+
+The first map conflict attempted to replay quoted-identifier and later prerequisite
+commits already squash-merged into main. Independently verified main03125fa, old
+vector prerequisite739f0df and repaired prerequisite df4661c have identical complete
+tracked tree b3199bec7a79a7684b27af8208162131b90c678b; first map commit a00cf9a
+directly follows739f0df. Omitted only those sixteen duplicate prerequisites from
+the active rebase plan, preserving all map/metadata/callable commits. Automatic
+approval review initially rejected omission due to possible lost work; after
+exact tree/boundary checks, the verified operation was approved.
+
+Before this handoff-only addition, each rebased branch tree exactly equals its
+original remote head: PR133 3ccd372 -> c05b212; PR135 17f00a3 -> 4e02022;
+PR136 35d270f -> d6b8b1c. Separate independent reviewers approved each exact
+rebased head, unchanged range-diff patches and new ancestry, with no findings.
+No compiler/runtime/test/inventory/provenance content changed.
+
+Validation on the frozen rebased top source, shared existing CARGO_TARGET_DIR and
+CARGO_BUILD_JOBS=2, no RUSTFLAGS override:
+
+- `cargo test -p suss-cli --test compiled_macro_maps --test compiled_macro_metadata --test compiled_macro_vectors --test portable_callable_metadata --test portable_quoted_identifiers --locked -- --test-threads=2`: exit0, 30passed/0failed/0ignored; /private/tmp/suss-stack137-focused.log.
+- `cargo test --workspace --locked -- --test-threads=2`: exit0 through final reader doctests, 931passed/0failed/17existingignores/88groups; /private/tmp/suss-stack137-full.log.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: exit0, 88passed; /private/tmp/suss-stack137-python.log.
+- CI inventory/review/core-import/sequence-provenance/bitwise-provenance/WIT-lock/numeric-runtime checks and offline roadmap preview: all exit0; /private/tmp/suss-stack137-checks.log. Stable issue IDs and existing acceptance statuses preserved.
+- `git diff --check`: passed. No fresh JVM/Node oracle rerun; tracked source and
+  fixtures are unchanged, and executing native baseline passed.
+
+Push the updated branches with `gh stack push`, then verify remote exact heads and
+fresh final-head CI. CI remains pending at this recording; earlier CI is not proof
+for new commit IDs. No PR merge, issue closure or milestone completion is claimed.
+Next unblocked development task remains complete retained source apply/callable
+behavior before macro environments/locations/syntaxquote/bootstrap/cache and
+stackless lifecycle work; original M3 acceptance remains open.
