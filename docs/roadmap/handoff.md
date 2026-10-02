@@ -10586,3 +10586,43 @@ remote exact head/fresh CI. Final-head CI is pending at this recording; older CI
 is not final-head evidence. No PR merge, readiness, issue closure or milestone
 completion is claimed. Next unblocked task remains genuine function scopes and
 canonical rich compiled &env transport, with original M3 acceptance still open.
+
+
+## PR #147 complete baseline and ancestry repair — 2026-10-02
+
+User merged PR144 onto main8139597. PR146 repaired9edb0aa retains the exact
+reviewed9001c07 tree. PR147 repaired267c1cf has parentsb10edf2 and9edb0aa;
+its complete tree61d8f1345b24966818f19c2456ac4a80fac2d872 exactly matches
+reviewedb10edf2. Independent reviewer verified main8139597 and9edb0aa ancestry,
+no source changes, and retention of the repeated-receiver fix/regressions.
+
+Initial full85826 exited101: compiler errors claimed SourceRole/source_kind/
+source_role absent although checked-out source contained them. Log
+/private/tmp/suss-m3-pr147-full.log. This is failed validation, not a pass; cause
+is unproven. Root cleaned only suss-compile and suss-cli build artifacts in its
+owned target (625files/2.5GiB reported):
+`CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target cargo clean -p suss-compile -p suss-cli`.
+Then reran the complete required command:
+`CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test --workspace --locked -- --test-threads=2`.
+Rebuilt full18650 exited0; independently parsed complete log
+/private/tmp/suss-m3-pr147-full-rebuilt.log contains100groups,
+975passed/0failed/17existingignores, all47 runtime ABI tests and final reader
+doctests. No RUSTFLAGS override. The run began on b10edf2 checkout; ancestry-only
+267c1cf had the identical entire tracked tree, and root reported no checkout file
+changes during the run. This establishes full native source evidence for267c1cf
+and the following handoff-only addition; it does not establish GitHub CI success.
+
+Exact267c1cf CI37047080272 failed before any workflow steps: GitHub jobs API
+reports steps:[], runner_id:0; independently read annotation states the job was
+not started because recent account payments failed or the spending limit needs
+increase. This is an external CI launch failure, not a source/test assertion.
+Require successful final-head CI after account service is restored; retain draft
+status, no readiness/merge/issue closure claim. Older CI is not final-head proof.
+
+Next implementation is isolated in /private/tmp/suss-m3-rich-macro-environment:
+actual SourceAnalysis source/form/context facts and a strengthened binding
+regression are currently uncommitted and unvalidated; focused execution remains
+pending. This baseline does not validate those child edits. Complete canonical
+rich source-level &env, bootstrap/evaluator removal, cache acceptance and original
+M3 requirements remain open. Root will reconcile the PR body and issue14 with
+this evidence, then incorporate this handoff-only record into that child.
