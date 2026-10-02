@@ -446,10 +446,6 @@ impl Environment {
     pub(crate) fn record_definition(&mut self, global: Global, info: DefinitionInfo) {
         self.definitions.insert(global, info);
     }
-    pub(crate) fn definition_initializer(&mut self, global: &Global, value: Option<&super::hir::Hir>) {
-        self.definitions.get_mut(global).expect("recorded declaration").initializer =
-            value.cloned().map(std::sync::Arc::new);
-    }
     /// Explicit declarations, not evidence that any source file has loaded.
     pub fn has_namespace(&self, phase: Phase, namespace: &str) -> bool {
         self.namespaces

@@ -10307,3 +10307,30 @@ pushed significant nested-definition record fix55e4f64; parent full baseline mus
 be rerun for that source and child must integrate it. Next ordered phase-expansion
 regression/repair, bare try context check, function scopes and rich environment
 transport. No new child PR or full child baseline yet.
+
+Macro-facts full workspace38391 terminal0 at54e9789 completed through final reader
+doctests. Independently counted /private/tmp/suss-m3-macro-environment-full.log:
+968passed/0failed/17existingignores across96 result groups, including all47ABI.
+No source or tests changed during that baseline. Full rich &env, bootstrap/cache/
+evaluator removal and all remaining original M3 acceptance remain open.
+Next publish this bounded prerequisite as draft Refs14, dispatch independent review,
+push significant reviewer fixes and require exactfinal-headCI. Continue field/
+context/function facts and actual environment transport in isolated child work.
+
+PR143 independent review found a significant compiler-fact consistency defect:
+an inner definition of the same global replaced declaration metadata, then the
+outer analysis updated only its initializer, mixing two source declarations.
+The reviewer now retains each definition's own record and publishes it together
+with its initializer when analysis completes. In-progress inner declarations
+remain observable while their bodies are analyzed; runtime evaluation is unchanged.
+The new executing regression checks inner defonce/private/no-doc facts and final
+outer def/doc/Do-initializer facts in both Stores, with the live value preserved.
+An initial test fixture incorrectly gave defonce a docstring; after correcting
+that unsupported arity, native session25609 failed at the actual outer.once
+assertion (/private/tmp/suss-pr143-nested-before-valid.log). After the fix,
+session47195 completed 5 binding-record tests, 0 failures, 0 ignores
+(/private/tmp/suss-pr143-nested-after.log), using the shared target and two workers.
+Oracle Python parses, shell syntax and git diff whitespace checks pass.
+The prior 968/0/17 full baseline predates this source fix; rerun the full baseline
+and require exact final-head CI before readiness. Rich compiled source &env and
+the original M3 acceptance remain open. No PR was merged.

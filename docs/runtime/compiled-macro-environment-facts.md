@@ -23,9 +23,11 @@ are distinct from initialized binding values. Failed compilation does not publis
 partial declarations. A failed runtime initializer preserves the old live binding;
 its new compiler declaration still describes the actual attempted initializer AST.
 
-Seven focused native tests cover lexical facts, shadow restoration, lowered IDs,
+Eight focused native tests cover lexical facts, shadow restoration, lowered IDs,
 module versus inline origins, phase namespace staging and failure recovery, and
-source positions. Fresh pinned ClojureScript observations verify four macro call
+source positions. Nested definitions of the same global publish each declaration
+with its own initializer rather than mixing inner metadata with an outer AST.
+Fresh pinned ClojureScript observations verify four macro call
 positions (including non-BMP text and mixed newlines) and four local token positions
 (plain, tagged, chained metadata and map metadata). Each resulting position vector
 is independently decoded after forced GC in both Runtime and Macro Stores.

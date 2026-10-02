@@ -306,3 +306,49 @@ fn compiler_macro_source_origins_keep_module_paths_separate_from_inline_inputs()
         assert_eq!(scalar(&mut session, "y"), 22.0);
     }
 }
+
+#[test]
+fn compiler_macro_nested_definitions_keep_each_declaration_and_initializer_together() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut host = Observe::default();
+        let source = r#"(def tracked "outer doc"
+  (do (defonce ^:private tracked (checkpoint "inner-body" 7))
+      (checkpoint "outer-body" tracked)))
+(checkpoint "after-nesting" tracked)"#;
+        session.eval_with_macros(source, &mut host).unwrap();
+        assert_eq!(scalar(&mut session, "tracked"), 7.0);
+        let declared = |label: &str| {
+            &host
+                .catalogs
+                .iter()
+                .find(|x| x.0 == label)
+                .unwrap()
+                .3
+                .iter()
+                .find(|(g, _)| g.name() == "tracked")
+                .unwrap()
+                .1
+        };
+        let inner = declared("inner-body");
+        assert!(inner.once);
+        assert_eq!(inner.declaration.metadata.len(), 1);
+        assert!(inner.docstring.is_none());
+        assert!(inner.initializer.is_none());
+        assert!(matches!(
+            declared("outer-body").initializer.as_ref().unwrap().kind,
+            Expression::Literal(_)
+        ));
+        let outer = declared("after-nesting");
+        assert!(!outer.once);
+        assert!(outer.declaration.metadata.is_empty());
+        assert_eq!(
+            String::from_utf16(outer.docstring.as_ref().unwrap()).unwrap(),
+            "outer doc"
+        );
+        assert!(matches!(
+            outer.initializer.as_ref().unwrap().kind,
+            Expression::Do(_)
+        ));
+        assert_eq!(&source[outer.declaration.span.clone()], "tracked");
+    }
+}
