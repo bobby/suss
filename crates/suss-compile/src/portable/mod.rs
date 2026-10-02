@@ -23,6 +23,12 @@ pub struct ExpansionContext<'a> {
     pub phase: resolve::Phase,
     pub locals: &'a std::collections::HashMap<String, (hir::BindingId, hir::Type)>,
 }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MacroReload {
+    Once,
+    Reload,
+    ReloadAll,
+}
 pub trait ExpansionHost {
     fn supports_macro_imports(&self) -> bool {
         false
@@ -36,6 +42,21 @@ pub trait ExpansionHost {
         Err(Diagnostic { span, message: "Source macro imports require an isolated compiled macro session, not yet integrated".into() })
     }
 
+    fn load_macro_namespace_with_policy(
+        &mut self,
+        namespace: &str,
+        policy: MacroReload,
+        span: Range<usize>,
+    ) -> Result<Vec<String>, Diagnostic> {
+        if policy == MacroReload::Once {
+            self.load_macro_namespace(namespace, span)
+        } else {
+            Err(Diagnostic {
+                span,
+                message: "Source macro reload requires a compiled phase loading host".into(),
+            })
+        }
+    }
     fn expand(
         &mut self,
         form: &suss_reader::forms::Form,

@@ -9102,3 +9102,76 @@ log45922 terminal0, then marked128ready:API OPEN/notdraft/headsame. No merge.
 PR129 review-fix Python43118 terminal0:86passed. Provenance40015 terminal0:
 132 core imports and1065 upstream declarations verified; diff whitespace passes.
 Full19941 remains live; no terminal result or readiness is claimed yet.
+
+## Source macro reload continuation
+
+PR129 independently reviewed fix9256e6c4e99b70a1de0d6dc4ab8cd151a99bef5e pushes
+significant alias/refer repairs: actual Macro exports are published after real
+compiled definition success; Macro ordinary aliases/renamed refers now resolve
+those roots during macro-body expansion. Focus21/module14/Python86/provenance pass.
+Final-source full19941 is agent-scoped to review_pr129, which retains polling
+ownership/heavy slot; root cannot write_stdin that agent's handle. Do not restart.
+Root authoritative escalated ps confirms Cargo PID64246 live (~3m39s elapsed);
+reviewer also re-polled19941 live at conformance. Log /private/tmp/suss-pr129-review-full.log.
+Final-head CI36944259806 IN_PROGRESS on9256. No PR129 readiness before full/CI.
+
+PR128 exact reviewed3fa84b5 CI36941605461 SUCCESS887/0/17/81/Python86/allnativeguards/
+finalreader verified from /private/tmp/suss-pr128-final-ci.log (ANSI stripped for
+reader labels); watch93300/log45922 terminal0. Root markedready; API OPEN/notdraft/
+headsame. Nothing merged.
+
+Root child /private/tmp/suss-m3-macro-reload portable/m3-macro-reload fast-forwarded
+9256 and initialized real upstream pin. New compiled_macro_reload.rs has two
+unexecuted native host regressions: metadata ^{:reload :reload} updates source
+macro functions while previous Runtime expansions stay42; ^{:reload :reload-all}
+updates reachable Macro helper source while plain reload preserves loaded helpers.
+Syntax follows pinned analyzer reloads table (metadata :reload keyword value),
+not invented :reload-all metadata keys. Wait for19941 terminal before focused
+before-test; then implement actual phase reload/invalidation and preserve all
+original M3 criteria (privacy/inference/AOT, full &form/&env/syntaxquote/gensyms,
+versioned bounded bootstrap/cache/evaluator removal, #15 stackless cancellation/
+pending I/O/cleanup/dynamic scope/live memory accounting). Goal remains active.
+
+Source macro reload before84676 terminal101:both new host tests hit existing
+located reload-metadata error; /private/tmp/suss-m3-macro-reload-before.log.
+After86438 terminal101: incorrect reader enum spelling fixed to Kind::Bool;
+after33571 terminal0:two new host tests pass. Implemented explicit MacroReload
+Once/Reload/ReloadAll host policy, checked macro-only libspec metadata, protected
+bootstrap core, actual selected phase identity invalidation after valid discovery,
+reachable reload-all without losing unrelated provided units. Prior executing
+Macro effects retain documented session behavior; failed definitions keep old roots
+and Runtime input compile errors publish no bindings. Ordinary Runtime require
+reload metadata/whole-clause flags remain diagnosed and unimplemented.
+
+Added failure/retry, unrelated cached module and nil/false/invalid-policy/core
+guards plus actual command metadata reload with once-only/captured-old behavior.
+Focus88217 terminal0 before final guards; focus53125 terminal0 on fivehost guards.
+Final source focus98700 now live, /private/tmp/suss-m3-macro-reload-final-focus2.log;
+root owns heavy slot. Source/tests freeze after this final command addition.
+Next module focus, Python/provenance and required full baseline before publication,
+then mandatory independent review/significant fixes/exact-head CI. Full original
+M3 bootstrap/environment/cache/phase-private/AOT and #15 acceptance stay required.
+PR129 corrected reviewed9256 full19941 terminal0:895/0/17/83 through finalreader;
+reviewer approved/no further findings, heavy slot released. CI36944259806 pending
+exact9256. No readiness without CI and no merges.
+
+Final source macro reload focus98700 terminal0:73pass/0fail/0ignore across10native
+suites, /private/tmp/suss-m3-macro-reload-final-focus2.log. Module focus65355
+terminal0:14pass (existing11/newphase3), /private/tmp/suss-m3-macro-reload-module-focus.log.
+Source/tests frozen now; full19242 live, /private/tmp/suss-m3-macro-reload-full.log,
+root owns exclusive heavy slot. Re-poll19242 to terminal; do not restart due to
+observation timeout. Python83820 live, /private/tmp/suss-m3-macro-reload-python.log.
+PR129 exact reviewed9256 CI watcher27467 live, /private/tmp/suss-pr129-final-ci-watch.log;
+no readiness until exact final-head CI. Provenance/inventory1065/reviews224841/import132
+verified, selection unchanged. Only docs/evidence may change during full. Next
+full/Python pass then draft publication, independent review/significant fixes and
+exact-head CI; preserve all original remaining M3 acceptance including real cache
+keys/versioned bootstrap/evaluator removal and #15 stackless interruption/I/O/live
+accounting. No source ABI/dependency changes/new skips and no merges.
+
+Macro reload Python83820 terminal0:86tests pass. Full19242 confirmed live and
+progressing through portable_dynamic_bindings; no terminal/full-success claim.
+Issue13 progress comment5943209138 records focused reload evidence and remaining
+M3 namespace/bootstrap/cache/lifecycle criteria. Source/tests remain frozen.
+
+Source macro reload full19242 terminal0:901passed/0failed/17existing ignores/84groups through finalreader doctests, /private/tmp/suss-m3-macro-reload-full.log. Source/tests frozen, native73/module14/Python86/provenance verified. Heavy slot released. Publish draft and require independent review/significant fixes/exact final-head CI before readiness. M3 original requirements remain in progress.

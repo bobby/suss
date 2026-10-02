@@ -33,8 +33,8 @@ The existing eleven executing module tests retain their ordinary preparation
 contract. Hosts without compiled macro support still return located diagnostics;
 an accepted clause alone never claims the macro function is loaded.
 
-This remains partial M3 integration. Source macro reload metadata and changed
-source invalidation, private/export policy, inferred imports, mixed Runtime
+This remains partial M3 integration. Complete source reload/ordinary require policy, artifact cache invalidation,
+private/export policy, inferred imports, mixed Runtime
 macro-definition inputs, complete AOT command integration, full &form/&env data,
 syntaxquote/unquote/splicing/gensyms, versioned bounded Java-free bootstrap,
 complete cache keys and legacy evaluator removal remain required. No complete
@@ -46,3 +46,6 @@ against pinned analyzer.cljc4177–4229 at
 c4295f303100bbf5afac449242d30bca1126f1a1 (EPL1.0); no upstream text was copied.
 The structural defmacro adaptation retains the provenance recorded in
 [compiled source macros](compiled-source-macros.md).
+
+Explicit macro libspec reload/reload-all now executes phase source refresh;
+[reload evidence](compiled-macro-reload.md) preserves its acceptance limits.

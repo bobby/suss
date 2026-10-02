@@ -2391,9 +2391,9 @@
    :arities {:fixed [] :variadic-min 1}
    :dependencies ["macro:defn:3364" "isolated compiled Macro Store" "actual Symbol/Keyword/List/Cons data" "persistent metadata/collections and &env pending"]
    :classification :adapted
-   :rationale "Original Rust structural bootstrap follows pinned defmacro implicit form argument/compiled function registration. Bodies execute through the shared pipeline in a separate phase Store. Single/multiple signatures, docs/source attribute maps and macro-body expansion use the compiled pipeline. Full implicit environment maps, observable persistent metadata/privacy policy, macro marker/Var metadata, complete source reload/privacy policy and syntaxquote/bootstrap/cache remain unfinished. Explicit source macro imports now execute dependencies in the isolated Store and resolve aliases/refers/renames. Missing &env is a located compile error, not nil. No upstream source copied; original macro is EPL1.0."
+   :rationale "Original Rust structural bootstrap follows pinned defmacro implicit form argument/compiled function registration. Bodies execute through the shared pipeline in a separate phase Store. Single/multiple signatures, docs/source attribute maps and macro-body expansion use the compiled pipeline. Full implicit environment maps, observable persistent metadata/privacy policy, macro marker/Var metadata, complete ordinary source reload/privacy policy and syntaxquote/bootstrap/cache remain unfinished. Explicit macro libspec reload/reload-all now refreshes source while preserving old Runtime expansions. Explicit source macro imports now execute dependencies in the isolated Store and resolve aliases/refers/renames. Missing &env is a located compile error, not nil. No upstream source copied; original macro is EPL1.0."
    :status :in-progress
    :adaptation-path "docs/runtime/compiled-source-macros.md"
    :alternative nil
-   :tests ["crates/suss-cli/tests/compiled_source_macros.rs" "crates/suss-cli/tests/compiled_macro_definitions.rs" "crates/suss-cli/tests/compiled_repl_macros.rs" "crates/suss-cli/tests/compiled_macro_imports.rs"]}
+   :tests ["crates/suss-cli/tests/compiled_source_macros.rs" "crates/suss-cli/tests/compiled_macro_definitions.rs" "crates/suss-cli/tests/compiled_repl_macros.rs" "crates/suss-cli/tests/compiled_macro_imports.rs" "crates/suss-cli/tests/compiled_macro_reload.rs"]}
 }}

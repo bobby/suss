@@ -54,22 +54,43 @@ fn renames(form: &Form) -> Result<Vec<(&Form, &Form)>, Diagnostic> {
     }
     Ok(out)
 }
-fn requirement(spec: &Form) -> Result<Requirement<'_>, Diagnostic> {
-    // Pinned ns analysis reads reload policy from libspec metadata. Retaining
-    // the directive cannot implement its required initialization behavior.
+fn requirement(spec: &Form, macro_import: bool) -> Result<Requirement<'_>, Diagnostic> {
+    let mut reload = super::MacroReload::Once;
     for metadata in &spec.metadata {
-        let reload = |form: &Form| {
-            matches!(&form.kind, Kind::Keyword(key)
-                if key.namespace.is_none() && key.name == "reload")
-        };
-        if reload(metadata)
-            || matches!(&metadata.kind, Kind::Map(entries)
-                if entries.chunks_exact(2).any(|entry| reload(&entry[0])))
-        {
-            return Err(error(
-                spec,
-                "Require reload metadata needs source loading and initialization policy, not yet integrated",
-            ));
+        let key = |form: &Form| matches!(&form.kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "reload");
+        let mut values = Vec::new();
+        if key(metadata) {
+            values.push(None);
+        }
+        if let Kind::Map(entries) = &metadata.kind {
+            for entry in entries.chunks_exact(2) {
+                if key(&entry[0]) {
+                    values.push(Some(&entry[1]));
+                }
+            }
+        }
+        for value in values {
+            if !macro_import {
+                return Err(error(
+                    spec,
+                    "Require reload metadata needs source loading and initialization policy, not yet integrated",
+                ));
+            }
+            reload = match value.map(|form| &form.kind) {
+                Some(Kind::Nil | Kind::Bool(false)) => super::MacroReload::Once,
+                Some(Kind::Keyword(key)) if key.namespace.is_none() && key.name == "reload" => {
+                    super::MacroReload::Reload
+                }
+                Some(Kind::Keyword(key)) if key.namespace.is_none() && key.name == "reload-all" => {
+                    super::MacroReload::ReloadAll
+                }
+                _ => {
+                    return Err(error(
+                        spec,
+                        "Macro reload metadata must be :reload, :reload-all, nil or false",
+                    ));
+                }
+            };
         }
     }
     let items = match &spec.kind {
@@ -118,12 +139,14 @@ fn requirement(spec: &Form) -> Result<Requirement<'_>, Diagnostic> {
     }
     Ok(Requirement {
         namespace: &items[0],
+        reload,
         alias,
         referred,
         renamed,
     })
 }
 struct Requirement<'a> {
+    reload: super::MacroReload,
     namespace: &'a Form,
     alias: Option<&'a Form>,
     referred: Vec<&'a Form>,
@@ -232,9 +255,9 @@ fn header_with_phases(form: &Form, macro_imports: bool) -> Result<Option<Header<
             return Err(error(clause, "Duplicate namespace clause"));
         }
         clauses.push(match key {
-            "require" => Clause::Require(items[1..].iter().map(requirement).collect::<Result<_, _>>()?),
+            "require" => Clause::Require(items[1..].iter().map(|spec| requirement(spec, false)).collect::<Result<_, _>>()?),
             "refer-clojure" => Clause::Core(core_options(&items[1..], clause)?),
-            "require-macros" if macro_imports => Clause::Macros(items[1..].iter().map(requirement).collect::<Result<_, _>>()?),
+            "require-macros" if macro_imports => Clause::Macros(items[1..].iter().map(|spec| requirement(spec, true)).collect::<Result<_, _>>()?),
             "require-macros" => return Err(error(clause, "Source macro imports require an isolated compiled macro session, not yet integrated")),
             _ => return Err(error(head, "Namespace clause is not supported")),
         });
@@ -329,8 +352,11 @@ pub(crate) fn namespace(
             Clause::Macros(requirements) => {
                 for requirement in requirements {
                     let namespace = symbol(requirement.namespace)?;
-                    let exports = expander
-                        .load_macro_namespace(namespace, requirement.namespace.span.clone())?;
+                    let exports = expander.load_macro_namespace_with_policy(
+                        namespace,
+                        requirement.reload,
+                        requirement.namespace.span.clone(),
+                    )?;
                     env.declare_macro_exports(phase, namespace, &exports)?;
                     if let Some(alias) = requirement.alias {
                         located(env.macro_alias(phase, symbol(alias)?, namespace), alias)?;
