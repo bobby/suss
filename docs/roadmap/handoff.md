@@ -10409,3 +10409,27 @@ Parent isolated full95872 remains running at native source55e4f64, log
 /private/tmp/suss-m3-pr143-isolated-full.log. Exact new-head143 CI37035852942
 is running; neither readiness nor full success is claimed. Next run the repaired
 position runner freshly, child compiler/full baseline, then mandatory child review.
+
+PR144 independent review found significant missing return contexts at generated
+let boundaries in as->, multi-operand and/or and case. Fresh pinned primary47661
+and then complete retained-corpus primary69832 both terminated0 with force true
+and analysis caching disabled; Node executed the generated artifacts. The expanded
+corpus records24 ordered calls and15 independently returned strings. Before-fix
+native83869 terminated101 at the ordered-call assertion: five positions incorrectly
+reported expr instead of the pin's return; one-operand and correctly stays expr.
+Log /private/tmp/suss-pr144-context-before.log. Reviewer now uses returning() only
+for the generated let bodies; initializer contexts, tail legality and runtime
+operand/branch ordering are unchanged. AFTER38274 terminated0:22 passed/0 failed/
+0 ignored across context, field records, case, control flow, exceptions and type
+method scopes, two workers/jobs2, isolated target /private/tmp/suss-m3-pr143-target.
+Log /private/tmp/suss-pr144-context-after-valid.log. The initial after command used
+an incorrect nonexistent test target and exited before executing tests; it is not
+validation evidence. The field fixture now also checks a direct method parameter
+colliding with an actual mutable field: declaration/shadow/access facts, lexical
+precedence and actual42 result after GC in both Stores. Strict expanded checker
+passes24/15 against freshly generated artifacts. Python AST and shell syntax,
+whitespace checks pass (py_compile initially could not write an external macOS
+cache path; AST parsing requires no cache write). Full final-source baseline and
+exact-head CI remain required; rich source &env and original M3 work remain open.
+Final corpus cardinality assertion was also executed in native61710 terminal0:
+1 context test passed, log /private/tmp/suss-pr144-context-final.log.

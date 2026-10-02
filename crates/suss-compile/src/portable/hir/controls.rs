@@ -128,6 +128,9 @@ impl Analyzer<'_> {
                 self.form_in(&threaded, context, tail)
             }
             ControlForm::AsThread => {
+                // The pinned macro introduces a let, whose body returns in
+                // expression context; initializers retain expression context.
+                let context = context.returning();
                 if args.len() < 2 {
                     return Err(fail(
                         form.span.clone(),
@@ -447,7 +450,7 @@ impl Analyzer<'_> {
                     ty: value.ty,
                     kind: Expression::Local(id),
                 };
-                let rest = self.control_form(form, &args[1..], operation, context, tail)?;
+                let rest = self.control_form(form, &args[1..], operation, context.returning(), tail)?;
                 let body = if operation == ControlForm::And {
                     self.control_if(form, local.clone(), rest, local)
                 } else {

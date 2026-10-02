@@ -497,7 +497,7 @@ acceptance criterion is marked complete by this work. See
 [compiler facts](../runtime/compiled-macro-environment-facts.md).
 
 Actual field/shadow records and three-way analysis contexts have focused executing
-evidence. Seventeen ordered pinned context observations and ten executed result
+evidence. Twenty-four ordered pinned context observations and fifteen executed result
 strings agree in both Stores, including bare try context and finally/catch/body
 macro expansion order. This is compiler-fact evidence; full source-level `&env`
 and M3 acceptance remain open. See

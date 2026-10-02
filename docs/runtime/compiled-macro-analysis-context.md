@@ -17,11 +17,13 @@ selection and cleanup order are unchanged. A before-fix executing regression sho
 both the previous traversal order and the incorrect bare-try context.
 
 The development oracle force-compiles the pinned local ClojureScript source with
-analysis caching disabled, then checks all 17 ordered context observations and 10
+analysis caching disabled, then checks all 24 ordered context observations and 15
 executed context result strings. Cached output without a new macro trace was
 rejected during runner development. The native fixture compares the ordered
 observations and independently decodes actual UTF-16 results after GC in both
-Stores; it also verifies non-tail recur rejection and session recovery.
+Stores. Additional observations cover the generated let boundaries in `as->`,
+`and`/`or` and `case`; one-operand `and` preserves expression context. The fixture
+also verifies non-tail recur rejection and session recovery.
 
 Field records retain real declaration syntax/metadata, source origin, field index,
 mutability and lowered access expression. Inspecting a record does not read the

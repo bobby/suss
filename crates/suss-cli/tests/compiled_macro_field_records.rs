@@ -41,13 +41,17 @@ impl portable::ExpansionHost for Observe {
 #[test]
 fn compiler_macro_field_records_preserve_declarations_access_and_parameter_shadows() {
     let source = r#"(defprotocol Probe (probe [this]))
+(defprotocol ProbeArg (probe-arg [this x]))
 (deftype Holder [^:mutable x]
   Probe
   (probe [this]
     (checkpoint "field" x)
     (let [f (fn [x] (checkpoint "shadow" x))] (f x))
-    (checkpoint "restored" x)))
-(def result (probe (Holder. 42)))"#;
+    (checkpoint "restored" x))
+  ProbeArg
+  (probe-arg [this x] (checkpoint "direct-shadow" x)))
+(def result (probe (Holder. 42)))
+(def direct-result (probe-arg (Holder. 7) 42))"#;
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut host = Observe::default();
         session.eval_with_macros(source, &mut host).unwrap();
@@ -84,22 +88,49 @@ fn compiler_macro_field_records_preserve_declarations_access_and_parameter_shado
         let (_, locals, fields) = call("restored");
         assert!(!locals.contains_key("x"));
         assert_eq!(fields["x"].declaration, field.declaration);
+        let (_, locals, fields) = call("direct-shadow");
+        let direct = &locals["x"];
+        assert!(matches!(
+            direct.kind,
+            portable::hir::LocalKind::Argument {
+                index: 1,
+                rest: false
+            }
+        ));
+        assert_eq!(&source[direct.declaration.span.clone()], "x");
+        assert!(direct.shadow.is_none());
+        let direct_field = direct
+            .shadow_field
+            .as_ref()
+            .expect("method parameter shadows actual field");
+        assert_eq!(direct_field.declaration, field.declaration);
+        assert_eq!(direct_field.declaration, fields["x"].declaration);
+        assert!(direct_field.mutable);
+        assert!(matches!(
+            direct_field.access.kind,
+            Expression::Nominal {
+                operation: Nominal::Field(0),
+                ..
+            }
+        ));
         session.collect().unwrap();
-        let result = session.eval("result").unwrap();
-        session
-            .inspect(&result, |mut store, value| {
-                let number = value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_struct(&store)?
-                    .unwrap()
-                    .fields(&mut store)?
-                    .next()
-                    .unwrap()
-                    .unwrap_f64();
-                assert_eq!(number.to_bits(), 42f64.to_bits());
-                Ok(())
-            })
-            .unwrap();
+        for name in ["result", "direct-result"] {
+            let result = session.eval(name).unwrap();
+            session
+                .inspect(&result, |mut store, value| {
+                    let number = value
+                        .unwrap_anyref()
+                        .unwrap()
+                        .as_struct(&store)?
+                        .unwrap()
+                        .fields(&mut store)?
+                        .next()
+                        .unwrap()
+                        .unwrap_f64();
+                    assert_eq!(number.to_bits(), 42f64.to_bits());
+                    Ok(())
+                })
+                .unwrap();
+        }
     }
 }
