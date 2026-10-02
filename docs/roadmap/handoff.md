@@ -10389,3 +10389,23 @@ Function scope primary42853 terminal0 and Node produced actual name stacks:
 [["hinted"],["n"],[],["outer","inner"],["outer"],["declared"]]; raw records in
 /private/tmp/suss-m3-function-scopes-primary.edn. This is upstream-only evidence;
 no native scope records or compiled rich &env are implemented yet.
+PR143 reviewer followup found a significant oracle freshness defect: both position
+cljs.main invocations could reuse cached compiled output after macro-source edits.
+The root's context oracle observed this reuse, then obtained a fresh trace with
+:force true and :cache-analysis false. The reviewer independently checked pinned
+compiler.cljc's force recompilation branch and analyzer cache option handling,
+then applied both options to each position invocation. Node, strict eight-fact
+comparison and the complete native position command remain unchanged. Shell syntax
+and whitespace checks pass. This runner/docs-only fix does not alter Rust source;
+the live isolated baseline at55e4f64 remains applicable to native source, but exact
+new-head CI is still required. The reviewer did not rerun JVM/Node or native
+position tests during this followup; prior position evidence is not relabeled as
+fresh evidence for the repaired runner. No readiness or M3 completion is claimed.
+
+Child context checkpoint8434499 incorporates reviewer143 runner repair7f821ac.
+End-to-end context runner5425 terminal0 freshly checked17orderedcalls/10results
+and the executing native context test; log /private/tmp/suss-m3-context-facts-end-to-end.log.
+Parent isolated full95872 remains running at native source55e4f64, log
+/private/tmp/suss-m3-pr143-isolated-full.log. Exact new-head143 CI37035852942
+is running; neither readiness nor full success is claimed. Next run the repaired
+position runner freshly, child compiler/full baseline, then mandatory child review.
