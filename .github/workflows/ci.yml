@@ -14,8 +14,9 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # The full workspace step took 34m38s; allow runner variance and cache cleanup.
-    timeout-minutes: 60
+    # The expanded suite reached the 60-minute job cap with tests still running.
+    # Keep a bounded allowance for the complete baseline and cache cleanup.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
         with:
