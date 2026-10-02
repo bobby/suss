@@ -69,6 +69,34 @@
     [
       "do-stmt-two",
       "statement"
+    ],
+    [
+      "as-final",
+      "return"
+    ],
+    [
+      "and-first",
+      "expr"
+    ],
+    [
+      "and-last",
+      "return"
+    ],
+    [
+      "or-last",
+      "return"
+    ],
+    [
+      "case-arm",
+      "return"
+    ],
+    [
+      "case-default",
+      "return"
+    ],
+    [
+      "and-one",
+      "expr"
     ]
   ],
   "results": [
@@ -81,6 +109,11 @@
     "expr",
     "return",
     "return",
-    "return"
+    "return",
+    "return",
+    "return",
+    "return",
+    "return",
+    "expr"
   ]
 }

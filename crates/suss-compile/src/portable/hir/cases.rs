@@ -93,6 +93,8 @@ impl Analyzer<'_> {
         let value = self.form(&args[0])?;
         let binding = self.fresh_binding(&args[0], value);
         let selected = self.local(&args[0], binding.id);
+        // The pinned case macro binds its selector in a let before branching.
+        let context = context.returning();
         let mut arms = vec![];
         for (group, body) in groups {
             arms.push((group, self.form_in(body, context, tail)?));

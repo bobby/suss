@@ -16,15 +16,15 @@ if set(expected) != {'schema', 'upstream', 'calls', 'results'} or type(expected[
 actual_calls = [json.loads(line) for line in (root / 'tests/oracle/out/context-facts-calls.jsonl').read_text().splitlines()]
 actual_results = json.loads((root / 'tests/oracle/out/context-facts-results.json').read_text())
 for calls, results in ((expected['calls'], expected['results']), (actual_calls, actual_results)):
-    if not isinstance(calls, list) or len(calls) != 17:
+    if not isinstance(calls, list) or len(calls) != 24:
         raise ValueError('missing compiler contexts')
     labels = set()
     for pair in calls:
         if not isinstance(pair, list) or len(pair) != 2 or not isinstance(pair[0], str) or not pair[0] or pair[0] in labels or pair[1] not in ('statement', 'expr', 'return'):
             raise ValueError('invalid/duplicate compiler context')
         labels.add(pair[0])
-    if not isinstance(results, list) or len(results) != 10 or any(value not in ('statement', 'expr', 'return') for value in results):
+    if not isinstance(results, list) or len(results) != 15 or any(value not in ('statement', 'expr', 'return') for value in results):
         raise ValueError('missing/invalid context results')
 if actual_calls != expected['calls'] or actual_results != expected['results']:
     raise ValueError('changed pinned compiler context facts')
-print('17 pinned compiler contexts and 10 context result strings match exactly')
+print('24 pinned compiler contexts and 15 context result strings match exactly')

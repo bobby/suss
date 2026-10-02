@@ -66,7 +66,8 @@ fn compiler_analysis_context_matches_pinned_facts_without_granting_recur_tail_sc
             )
         })
         .collect();
-    assert_eq!(calls.len(), 17);
+    assert_eq!(calls.len(), 24);
+    assert_eq!(golden["results"].as_array().unwrap().len(), 15);
     let ordered_calls: Vec<(String, String)> = golden["calls"]
         .as_array()
         .unwrap()
@@ -90,7 +91,7 @@ fn compiler_analysis_context_matches_pinned_facts_without_granting_recur_tail_sc
         session.collect().unwrap();
         for (name, expected) in [
             "direct", "doone", "domany", "letone", "letinit", "branch", "bare", "tried",
-            "function", "fnbranch",
+            "function", "fnbranch", "asfinal", "andmany", "ormany", "selected", "andone",
         ]
         .into_iter()
         .zip(golden["results"].as_array().unwrap())
