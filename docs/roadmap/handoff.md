@@ -10793,3 +10793,54 @@ Keep this branch together until environment transport is reviewable; do not open
 a source-facts-only PR. Source macro &env still rejects; original issues12–15,
 syntax quote/gensyms/versioned bootstrap/cache/evaluator removal, frontend and
 scheduler/lifecycle acceptance remain open. No M3 completion or issue closure.
+
+
+### Native analysis graph increment and ready prerequisite PRs
+
+PR146 head `9edb0aa62c148727199c4b38cdf2741184ee105b` and PR147 head
+`1bb6dee679e595e4ca27f5751c003e37b1e99cd6` now have successful exact-head
+CI: runs 37047007492 and 37048703012, attempt 2. Actual full test steps
+ran successfully. Redispatched independent reviewers retained source approval,
+with no significant outstanding findings. Both PRs were marked ready; neither
+was merged. GitHub shows PRs140–144 merged and no PR145; do not infer a
+further merge from the reported stack number.
+
+This increment retains ownership-backed local/field identity, function outer
+namespace/local/field environments and actual protocol receiver provenance.
+`portable_macro_graph.rs` plans native compiler records through a bounded work
+queue, then iteratively orders and materializes canonical rooted values.
+Shared initializer environments and shadow records remain shared after GC.
+The native extension schema is groundwork, not full portable `&env`; source macro
+signatures still reject `&env`. See `docs/runtime/compiled-macro-analysis-graph.md`.
+
+Commands and results (CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target,
+CARGO_BUILD_JOBS=2; no RUSTFLAGS override):
+
+* Scope, method and binding focused regressions: 11 passed, 0 failed, 0 ignored.
+* `cargo test --workspace --locked -- --test-threads=2`: terminal success,
+  984 passed, 0 failed, 17 ignored in 102 groups; log
+  `/private/tmp/suss-rich-env-queued-graph-full.log`. This preceded the edge fixes.
+* `cargo test --locked -p suss-cli --test compiled_macro_analysis_graph
+  native_analysis_graph_ -- --test-threads=2`: first harness did not compile
+  because a borrowed locals map outlived its inferred context; after correcting
+  the harness, 2 passed and 2 failed (slash-key qualification and reader depth).
+* After fixing those demonstrated bugs, `cargo test --locked -p suss-cli
+  --test compiled_macro_analysis_graph -- --test-threads=2`: terminal success,
+  5 passed, 0 failed, 0 ignored; log `/private/tmp/suss-rich-env-edges-final.log`.
+* Earlier graph stress attempts failed on default query fuel and an incorrect
+  `Sum` test expectation; bounded 100-million-fuel inspection and real `Add`
+  expectation subsequently passed. Oversized metadata fails before source
+  effects or macro-store allocation. Counters establish residency/handle behavior,
+  not live GC memory accounting.
+
+A workspace formatter also changed 79 otherwise untouched files. Full backups
+are retained at `/private/tmp/suss-graph-pre-format-cleanup`. Every such file was
+independently verified byte-for-byte equal to rustfmt(HEAD), then only those
+verified formatting edits were restored. Intended changes remain preserved.
+
+Next unblocked task: complete portable environment schema, staged declarations
+and AST inference, including real persistent sets, then wire actual implicit
+`&env` and compare executing macros against the fresh pinned oracle. Keep this
+branch together until transport is reviewable; then run full final-head checks,
+open a PR with `Refs #14`, dispatch its independent reviewer and require green
+final-head CI. Issues12–15 and all remaining M3 acceptance stay open.

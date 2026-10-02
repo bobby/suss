@@ -534,3 +534,10 @@ The required full workspace baseline passes 981 tests with zero failures and
 Source macro `&env`, memoized environment graph construction, complete AST/inference,
 persistent set transport and original M3 acceptance remain unestablished. No
 inventory declaration is reclassified on this preparatory evidence.
+
+Queued native graph transport has three executing regressions for shared binding
+identity, a 96-binding chain, declaration environments, bounds and once-only
+effects. The native representation keeps explicit backend facts; it does not
+establish the portable source `&env` schema, AST inference or invocation contract.
+See [analysis graph](../runtime/compiled-macro-analysis-graph.md). Original M3
+acceptance remains open and no inventory declaration is reclassified.
