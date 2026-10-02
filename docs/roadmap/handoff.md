@@ -9395,3 +9395,30 @@ map sequence synthetic-entry nesting bound; owns heavy slot now to prove/fix/pus
 significant finding before corrected full. Root edits only this stale test guard
 and handoff during review. PR132 exact739f0df CI36951307622 remains LIVE; root
 watch26758 confirmed live, /private/tmp/suss-pr132-watch.log. No ready/merge claim.
+
+PR133 independent reviewer confirmed and pushed significant nesting fix9f9e0c4:
+synthetic map entry vectors now count their own level before decoding children.
+Before61059 terminal101 accepted overdeep syntax; after33943 terminal0:6map+
+3identifier. Additional bounds68037 terminal101 hit default fuel during fixture
+construction;39582 terminal101 rejected correctly but diagnostic assertion was
+over-specific. Final31032 terminal0 with explicit bounded fuel:6map+3identifier,
+61/62wrapper boundary in bothStores, total4096node guard, malformed/oversized/
+metadata/index rejection and recovery. Python88/import191/setup12 independent
+checks pass; reviewer approves exact9f9e0c4813455a9c33a5269ddd5a7c4a5db5599e.
+
+Corrected frozen full91421 terminal0:915passed/0failed/17existing ignores/86groups
+through finalreader doctests; /private/tmp/suss-m3-macro-maps-full2.log. No new
+ignores or removed tests. PR133 remains draft pending final reviewed-head CI.
+This publication evidence changes docs only; tested source/tests remain9f9e0c4.
+
+PR132 exact reviewed739f0df CI36951307622 completedSUCCESS:909passed/0failed/
+17existing ignores/85groups, Python87/import161/setup8/reviews253partial812unassessed
+through finalreader. Initial log assertion missed ANSI separators; stripping only
+ANSI display codes confirmed full evidence. Root verified /private/tmp/suss-pr132-final-ci.log
+and watch26758 terminal0, then marked132ready; API OPEN/notdraft/head unchanged.
+No merge. Issue14 progress5944079840/5944158852 records partial map/review proof.
+Metadata child is separate from frozen map source; its first focused68659 terminal101
+shows quoted metadata rejection, /private/tmp/suss-m3-macro-metadata-before.log.
+Next unblocked work is real metadata transport and &env/syntaxquote; HAMT/transients,
+bootstrap/cache/privacy/evaluator removal and stackless scheduler/I/O cancellation/
+live-GC accounting remain required original M3 acceptance. No completion claim.
