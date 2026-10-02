@@ -10434,6 +10434,56 @@ exact-head CI remain required; rich source &env and original M3 work remain open
 Final corpus cardinality assertion was also executed in native61710 terminal0:
 1 context test passed, log /private/tmp/suss-pr144-context-final.log.
 
+PR143 isolated95872 terminal0:969/0/17 in96groups, all47ABI/finalreader.
+Repaired position runner primary95170 terminal0 fresh8 exactfacts; native74387
+terminal0 three tests. Exact7f821ac CI37035852942 running; keep draft. PR144
+reviewer significant fixce61d90 approved, expanded corpus24/15 and22focuspass;
+compiler99884 terminal0 35/0/0. Parent full97902 running atce61d90 log
+/private/tmp/suss-m3-pr144-full.log; exact CI37037789125 running. No merge.
+
+Downstream portable/m3-function-scopes retains actual named function declarations,
+origins, phase namespace, immutable shared parents and real self/shadow bindings.
+Definition hints introduce no lexical ID; anonymous functions inherit scope and
+function exit restores it. Fresh primary22457 terminal0 +Node captured11calls and
+10executednamevectors; strict checker passes. Initial26381 recompiled unchanged
+corpus after a preceding wrong-cwd edit failure; that is not expanded-corpus proof.
+Actual expanded golden is from22457. Python AST/shell/whitespace pass; py_compile
+attempt failed because system PYTHONPYCACHEPREFIX pointed to an unwritable cache,
+so no bytecode cache success is claimed. Native fixture is prepared but NOT RUN.
+Wait for97902 native release, execute function-scope focused regressions and
+compiler closures, then full baseline/review/CI before readiness. Rich compiled
+source &env and original M3 gates remain unfinished.
+
+
+PR146 independent review of94f7e2a found no significant production defect.
+Pinned analyzer2101 supplies only direct def initializer hints; fn*2305-2324
+prefers explicit self names and adds a lexical self only for named functions.
+Added a meaningful native regression: direct hints survive macro expansion,
+generated self overrides the hint with its real binding ID, arbitrary let bodies
+drop hints, completed siblings restore scope, generated call-site spans do not
+invent token positions, and owned-forms compilation retains unknown origins.
+Native canonical vectors execute and independently decode after GC in both Stores;
+the raw owned-forms branch inspects compiler facts without claiming execution.
+Reviewer focus87986 terminal0:9passed/0failed/0ignored, consisting of2 scope,
+5 binding,1 context and1 field tests. Command CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target
+CARGO_BUILD_JOBS=2 cargo test -p suss-cli --locked --test compiled_macro_function_scopes
+--test compiled_macro_binding_records --test compiled_macro_analysis_context
+--test compiled_macro_field_records -- --test-threads=2; log
+/private/tmp/suss-pr146-review-focus.log. Python AST, shell syntax and whitespace
+checks pass. Native resource released; next run complete final-source baseline
+and require exact final-head CI before readiness. Rich source-level &env and
+original M3 acceptance remain open; no merge or issue closure claimed.
+
+Parent PR144 final-source ce61d90 full97902 completed successfully; root independently
+verified971passed/0failed/17existingignores across98groups, including47ABI tests
+and final reader doctests, /private/tmp/suss-m3-pr144-full.log. This establishes the
+parent baseline, not the required new PR146 full baseline. Root also freshly
+executed pinned method-role probe9965 and Node returned[42,42,42,42], raw records
+/private/tmp/suss-m3-method-role-primary.edn: Object user argument index0 versus
+protocol index1, and source this-as :let with protocol argument shadow. This is
+upstream-only evidence; native logical method roles remain the next pending fact
+slice before complete rich &env transport.
+
 
 ## PR #144 rebase onto main — 2026-10-02
 

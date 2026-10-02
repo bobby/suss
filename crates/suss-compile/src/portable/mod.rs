@@ -40,6 +40,7 @@ pub struct ExpansionContext<'a> {
     pub context: AnalysisContext,
     pub locals: &'a std::collections::HashMap<String, hir::LocalBinding>,
     pub fields: &'a std::collections::HashMap<String, hir::FieldBinding>,
+    pub function_scopes: &'a [std::sync::Arc<hir::FunctionScope>],
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MacroReload {

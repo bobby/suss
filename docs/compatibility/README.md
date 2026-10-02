@@ -502,3 +502,11 @@ strings agree in both Stores, including bare try context and finally/catch/body
 macro expansion order. This is compiler-fact evidence; full source-level `&env`
 and M3 acceptance remain open. See
 [context and field facts](../runtime/compiled-macro-analysis-context.md).
+
+
+Actual named function scope records now retain declarations, origins, phase
+namespaces, shared parent scopes and lexical/field shadows. Definition hints
+create no lexical ID; explicit self names retain their actual compiler binding.
+Focused native execution and independent review cover macro expansion, scope
+restoration and unknown origins. Rich source-level `&env` remains unfinished; see
+[function scope facts](../runtime/compiled-macro-function-scopes.md).
