@@ -18,6 +18,10 @@ enum Class {
     PersistentVector,
     VectorNode,
     PersistentArrayMap,
+    PersistentHashMap,
+    BitmapIndexedNode,
+    ArrayNode,
+    HashCollisionNode,
     MapEntry,
     PersistentArrayMapSeq,
     ChunkedSeq,
@@ -42,6 +46,10 @@ impl FormBridge {
             ("PersistentVector", Class::PersistentVector),
             ("VectorNode", Class::VectorNode),
             ("PersistentArrayMap", Class::PersistentArrayMap),
+            ("PersistentHashMap", Class::PersistentHashMap),
+            ("BitmapIndexedNode", Class::BitmapIndexedNode),
+            ("ArrayNode", Class::ArrayNode),
+            ("HashCollisionNode", Class::HashCollisionNode),
             ("MapEntry", Class::MapEntry),
             ("PersistentArrayMapSeq", Class::PersistentArrayMapSeq),
             ("ChunkedSeq", Class::ChunkedSeq),
@@ -295,6 +303,7 @@ fn decode(
                 Class::Symbol => Some(4),
                 Class::PersistentVector
                 | Class::PersistentArrayMap
+                | Class::PersistentHashMap
                 | Class::List
                 | Class::Cons
                 | Class::EmptyList => Some(0),
@@ -341,6 +350,12 @@ fn decode(
                             .map(|entry| decode(store, entry, classes, span, depth + 1, budget))
                             .collect::<wasmtime::Result<Vec<_>>>()?,
                     )
+                }
+                Class::PersistentHashMap => {
+                    Kind::Map(hash_map(store, &data, classes, span, depth, budget)?)
+                }
+                Class::BitmapIndexedNode | Class::ArrayNode | Class::HashCollisionNode => {
+                    return Err(error("Hash trie nodes are not macro syntax"));
                 }
                 Class::MapEntry => {
                     if data.len() != 3 {
@@ -707,4 +722,133 @@ fn vector_leaf(
         level -= 5;
     }
     Ok(node)
+}
+
+// Traverse the pinned inode ordering directly, without invoking user protocols.
+// Canonical descriptors, logical counts, bounded depth and the shared budget
+// guard this transport even when source code mutates a node's physical fields.
+fn hash_map(
+    store: &mut StoreContextMut<'_, ()>,
+    data: &[Val],
+    classes: &BTreeMap<i64, Class>,
+    span: &Range<usize>,
+    depth: usize,
+    budget: &mut Budget,
+) -> wasmtime::Result<Vec<Form>> {
+    if data.len() != 6 {
+        return Err(error("Invalid persistent hash map field layout"));
+    }
+    let count = integer(store, &data[1])?;
+    if count > budget.nodes / 2 {
+        return Err(error("Hash map exceeds bounded pair storage"));
+    }
+    let has_nil = match sentinel(store, &data[3])? {
+        Some(2) => false,
+        Some(4) => true,
+        _ => return Err(error("Invalid hash map nil-key flag")),
+    };
+    let mut pairs = Vec::new();
+    if has_nil {
+        pairs.push(Val::AnyRef(Some(AnyRef::from_i31(
+            &mut *store,
+            wasmtime::I31::new_u32(0).expect("zero fits i31"),
+        ))));
+        pairs.push(data[4].clone());
+    }
+    if !nil(store, &data[2])? {
+        hash_node(store, &data[2], classes, 0, budget, &mut pairs)?;
+    }
+    if pairs.len() != count * 2 {
+        return Err(error("Hash map count disagrees with trie storage"));
+    }
+    pairs
+        .iter()
+        .map(|entry| decode(store, entry, classes, span, depth + 1, budget))
+        .collect()
+}
+fn bitmap(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u32> {
+    let data = fields(store, value, 1)?;
+    let [Val::F64(bits)] = data.as_slice() else {
+        return Err(error("Invalid hash trie bitmap"));
+    };
+    let n = f64::from_bits(*bits);
+    if !n.is_finite() || n.fract() != 0.0 || n < i32::MIN as f64 || n > i32::MAX as f64 {
+        return Err(error("Invalid signed hash trie bitmap"));
+    }
+    Ok(n as i32 as u32)
+}
+fn hash_node(
+    store: &mut StoreContextMut<'_, ()>,
+    value: &Val,
+    classes: &BTreeMap<i64, Class>,
+    level: usize,
+    budget: &mut Budget,
+    pairs: &mut Vec<Val>,
+) -> wasmtime::Result<()> {
+    if level > 7 {
+        return Err(error("Hash trie depth exceeds 32-bit hash path"));
+    }
+    spend(budget)?;
+    let (class, data) = object(store, value, classes)?;
+    match class {
+        Class::BitmapIndexedNode => {
+            if data.len() != 3 {
+                return Err(error("Invalid bitmap node field layout"));
+            }
+            let count = bitmap(store, &data[1])?.count_ones() as usize;
+            let entries = source_elements(store, &data[2], classes)?;
+            if entries.len() < count * 2 || entries.len() % 2 != 0 {
+                return Err(error("Bitmap population exceeds pair storage"));
+            }
+            for pair in entries[..count * 2].chunks_exact(2) {
+                if nil(store, &pair[0])? {
+                    hash_node(store, &pair[1], classes, level + 1, budget, pairs)?;
+                } else {
+                    pairs.extend_from_slice(pair);
+                }
+            }
+        }
+        Class::ArrayNode => {
+            if data.len() != 3 {
+                return Err(error("Invalid array node field layout"));
+            }
+            let count = integer(store, &data[1])?;
+            let entries = source_elements(store, &data[2], classes)?;
+            if entries.len() != 32 {
+                return Err(error("Invalid hash array node width"));
+            }
+            let mut occupied = 0;
+            for entry in entries {
+                if !nil(store, &entry)? {
+                    occupied += 1;
+                    hash_node(store, &entry, classes, level + 1, budget, pairs)?;
+                }
+            }
+            if occupied != count {
+                return Err(error("Array node count disagrees with storage"));
+            }
+        }
+        Class::HashCollisionNode => {
+            if data.len() != 4 {
+                return Err(error("Invalid collision node field layout"));
+            }
+            bitmap(store, &data[1])?;
+            let count = integer(store, &data[2])?;
+            let entries = source_elements(store, &data[3], classes)?;
+            if count == 0 || entries.len() < count * 2 || entries.len() % 2 != 0 {
+                return Err(error("Collision count exceeds pair storage"));
+            }
+            for pair in entries[..count * 2].chunks_exact(2) {
+                if nil(store, &pair[0])? {
+                    return Err(error("Nil key in hash collision node"));
+                }
+                pairs.extend_from_slice(pair);
+            }
+        }
+        _ => return Err(error("Hash map needs canonical trie nodes")),
+    }
+    if pairs.len() > budget.nodes {
+        return Err(error("Hash trie exceeds bounded pair storage"));
+    }
+    Ok(())
 }

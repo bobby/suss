@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "5df4045846eaa98268236a3c604ca4e887513ff526b28e286257e9a9e1776c8b",
+  "replacement": "(def reduce-kv\n  \"Reduces an associative collection. f should be a function of 3\n  arguments. Returns the result of applying f to init, the first key\n  and the first value in coll, then applying f to that result and the\n  2nd key and value, etc. If coll contains no entries, returns init\n  and f is not called. Note that reduce-kv is supported on vectors,\n  where the keys will be the ordinals.\"\n  (fn ([f init coll]\n    (if (satisfies? IKVReduce coll)\n      (-kv-reduce coll f init)\n      (reduce (fn [ret me]\n                (f ret (-key me) (-val me)))\n        init coll)))))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+}

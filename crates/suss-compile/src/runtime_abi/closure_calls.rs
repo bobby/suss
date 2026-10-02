@@ -73,7 +73,41 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
                 },
             ]);
         }
+        // Route only canonical native wrappers through the anchored physical
+        // receiver dispatcher. Ordinary functions retain invoke's strict arity.
         code.extend([
+            LocalGet(0),
+            Call(b.names["closure-environment"]),
+            LocalSet(5),
+            LocalGet(5),
+            RefTestNonNull(HeapType::Concrete(7)),
+            If(BlockType::Empty),
+            LocalGet(5),
+            RefCastNonNull(HeapType::Concrete(7)),
+            StructGet {
+                struct_type_index: 7,
+                field_index: 0,
+            },
+            GlobalGet(object_methods::TAG_GLOBAL),
+            RefEq,
+            If(BlockType::Empty),
+            LocalGet(0),
+            LocalGet(2),
+            I32Eqz,
+            If(BlockType::Result(VALUE)),
+            I32Const(UNDEFINED),
+            RefI31,
+            Else,
+            LocalGet(1),
+            I32Const(0),
+            ArrayGet(ARGS),
+            End,
+            LocalGet(4),
+            RefCastNonNull(HeapType::Concrete(ARGS)),
+            Call(b.names["object-method-invoke"]),
+            Return,
+            End,
+            End,
             LocalGet(0),
             LocalGet(4),
             RefCastNonNull(HeapType::Concrete(ARGS)),
@@ -82,9 +116,9 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
         let callback = b.count;
         b.functions.function(INVOKE);
         let locals = if applying {
-            vec![(1, ValType::I32), (2, VALUE)]
+            vec![(1, ValType::I32), (3, VALUE)]
         } else {
-            vec![(2, ValType::I32), (1, VALUE)]
+            vec![(2, ValType::I32), (2, VALUE)]
         };
         let mut body = Function::new(locals);
         for instruction in code {

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c47590843d9d7fa984c09c2f6cffcf8daf054adb8bf113b2c42971e414b02c2e",
+  "replacement": "(def ^:private ^number fix (fn [q]\n  (if (>= q 0)\n    (suss.bootstrap/f64-floor q)\n    (suss.bootstrap/f64-ceil q))))",
+  "rationale": "Complete pinned numeric dependency retained with explicit defn bootstrap; Math floor/ceil use guarded native binary64 adapters with existing number coercion. Quotient/remainder branches and metadata are preserved. Broader numeric coercion and full HAMT/M3 acceptance remain unfinished."
+}

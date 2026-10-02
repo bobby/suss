@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "3f15a3d83e91cf683252e81b6f16640403ccb062823adee70ee2741d8ee2c196",
+  "replacement": "(def ^:private array-copy-downward (fn\n  ([from i to j len]\n     (loop [i (+ i (dec len)) j (+ j (dec len)) len len]\n       (if (zero? len)\n         to\n         (do (aset to j (aget from i))\n             (recur (dec i) (dec j) (dec len))))))))",
+  "rationale": "Explicit defn bootstrap retains complete pinned reverse overlapping array copy, original direction, loop bindings and returned owner. Full HAMT acceptance remains unfinished."
+}

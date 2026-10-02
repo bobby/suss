@@ -3970,15 +3970,19 @@ fn runtime_abi_apply_callbacks_reject_foreign_environments_and_empty_push_buffer
             language_error(&mut store, runtime, copied, empty.clone());
         }
     }
-    let push = nominal_value(&mut store, runtime, "source-array-push-method", &[]);
-    let tagged = nominal_value(&mut store, runtime, "closure-environment", &[push]);
-    let tagged = tagged.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
-    let fields = tagged.fields(&mut store).unwrap().collect::<Vec<_>>();
-    let array = fields[1].unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
-    let anchored = array.get(&mut store, 0).unwrap();
-    let copied = nominal_value(&mut store, foreign, "copy-callback", &[anchored, nil]);
-    store.gc(None).unwrap();
-    language_error(&mut store, runtime, copied, empty.clone());
+    for method in ["source-array-push-method", "source-array-pop-method"] {
+        let wrapper = nominal_value(&mut store, runtime, method, &[]);
+        let tagged = nominal_value(&mut store, runtime, "closure-environment", &[wrapper]);
+        let tagged = tagged.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+        let fields = tagged.fields(&mut store).unwrap().collect::<Vec<_>>();
+        let array = fields[1].unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+        let anchored = array.get(&mut store, 0).unwrap();
+        let copied = nominal_value(&mut store, foreign, "copy-callback", &[anchored, nil.clone()]);
+        store.gc(None).unwrap();
+        language_error(&mut store, runtime, copied.clone(), empty.clone());
+        // A nonempty invocation still rejects a foreign physical receiver.
+        language_error(&mut store, runtime, copied, one.clone());
+    }
     let valid = nominal_value(&mut store, runtime, "closure-call-method", &[owner]);
     let value = nominal_value(&mut store, runtime, "invoke", &[valid, empty]);
     let bits = value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().fields(&mut store).unwrap().collect::<Vec<_>>();

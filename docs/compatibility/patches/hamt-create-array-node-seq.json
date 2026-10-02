@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c645aca699308e862d4ba60f506009bc623d25a4b71ff97102c1057ee34d8e89",
+  "replacement": "(def ^:private create-array-node-seq\n  (fn ([nodes] (create-array-node-seq nodes 0 nil))\n  ([nodes i s]\n     (if (nil? s)\n       (let [len (alength nodes)]\n         (loop [j i]\n           (if (< j len)\n             (let [hamt-bootstrap-iflet-7 (aget nodes j)] (if hamt-bootstrap-iflet-7 (let [nj hamt-bootstrap-iflet-7] (let [hamt-bootstrap-iflet-8 (.inode_seq nj)] (if hamt-bootstrap-iflet-8 (let [ns hamt-bootstrap-iflet-8] (ArrayNodeSeq. nil nodes (inc j) ns nil)) (recur (inc j))))) (recur (inc j)))))))\n       (ArrayNodeSeq. nil nodes i s nil)))))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished. Object method/member and punctuated field identifiers use pinned emitted native spelling consistently; general source identifier munging remains unfinished."
+}

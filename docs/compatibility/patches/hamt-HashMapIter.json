@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "836d2748a2f4a1356ec021e6b42dc10240e689477b0aa6f2961cb5646f5a7edd",
+  "replacement": "(deftype HashMapIter [nil_val root_iter ^:mutable seen]\n  Object\n  (hasNext [_]\n    (or (not ^boolean seen) ^boolean (.hasNext root_iter)))\n  (next [_]\n    (if-not ^boolean seen\n      (do\n        (set! seen true)\n        (MapEntry. nil nil_val nil))\n      (.next root_iter)))\n  (remove [_] (suss.bootstrap/error \"Unsupported operation\")))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished. Object method/member and punctuated field identifiers use pinned emitted native spelling consistently; general source identifier munging remains unfinished."
+}

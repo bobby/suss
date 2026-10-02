@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8561935c5fc21642683dbf8aae3d1739a776696f0dcd898b1a1078e274132232",
+  "replacement": "(def assoc\n  \"assoc[iate]. When applied to a map, returns a new map of the\n   same (hashed/sorted) type, that contains the mapping of key(s) to\n   val(s). When applied to a vector, returns a new vector that\n   contains val at index. Note - index must be <= (count vector).\"\n  (fn ([coll k v]\n   (if (implements? IAssociative coll)\n     (-assoc coll k v)\n     (if-not (nil? coll)\n       (-assoc coll k v)\n       {k v})))\n  ([coll k v & kvs]\n     (let [ret (assoc coll k v)]\n       (if kvs\n         (recur ret (first kvs) (second kvs) (nnext kvs))\n         ret)))))",
+  "rationale": "Complete pinned public assoc fixed/variadic/nil branches and canonical associative protocol dispatch retained with explicit defn bootstrap, replacing the prototype vector-only bootstrap binding. Full map transport and compatibility acceptance remain unfinished."
+}

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "20e72121c6e0a74329a884d7bf4a3305c4252b4f39510c22910823360ae6556b",
+  "replacement": "(def ^:private bitmap-indexed-node-index (fn [bitmap bit]\n  (bit-count (bit-and bitmap (dec bit)))))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+}

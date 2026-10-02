@@ -85,6 +85,40 @@
       "line": 7172,
       "end-line": 7204,
       "sha256": "aa1aa9c21227e6334ed24577e2d5eca1f99a2c6bff0f069b9d1307df524335eb"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7598,
+      "end-line": 7598,
+      "sha256": "ec71a3f21acd412fb954a94820200f52bd82408a676a37e76aeb7a6e247d933f"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8166,
+      "end-line": 8166,
+      "sha256": "4c8e6a69c201a66e9c1416d0ad09d0921105bd6547b6648979cde70efc690c50"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8168,
+      "end-line": 8176,
+      "sha256": "c901ef6f7f1312fcae1ea22aafa539d7205b312624920d119fa1ebfe8c469857"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8178,
+      "end-line": 8186,
+      "sha256": "6e9584257ca7d93220b51941cf6442cef0985421fbe7560ad4141ef499580cac",
+      "patch": "docs/compatibility/patches/hamt-setup-8178.json",
+      "patch-sha256": "fbde162fb051b5d0787bac6f4393a4030854407d6c71971d18b9736d124d5ca7"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8188,
+      "end-line": 8198,
+      "sha256": "1221f1a0c84fd78f55f135ae6b9f59b28850f2ef4f24eaa7b1fbc0e7fc4de7c6",
+      "patch": "docs/compatibility/patches/hamt-setup-8188.json",
+      "patch-sha256": "3e3e465b488708a92438b449c7421b5647537aac7f13e920467ececf5ed75e97"
     }
   ]
 }

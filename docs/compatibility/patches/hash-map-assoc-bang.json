@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "23ce891b8f5d4e5078b51d374143a235ac976c1278805cce1b6794e96c5374a6",
+  "replacement": "(def assoc!\n \"When applied to a transient map, adds mapping of key(s) to\n  val(s). When applied to a transient vector, sets the val at index.\n  Note - index must be <= (count vector). Returns coll.\"\n (fn\n ([tcoll key val]\n    (-assoc! tcoll key val))\n  ([tcoll key val & kvs]\n    (let [ntcoll (-assoc! tcoll key val)]\n      (if kvs\n        (recur ntcoll (first kvs) (second kvs) (nnext kvs))\n        ntcoll)))))",
+  "rationale": "Explicit defn bootstrap preserves every pinned public signature, docstring, branch and protocol dispatch. Hash-map and transient implementations plus native acceptance remain unfinished; this is retained-source prerequisite progress only."
+}

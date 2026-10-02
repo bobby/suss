@@ -7,6 +7,7 @@ mod arithmetic;
 mod arrays;
 mod array_methods;
 mod array_push;
+mod array_pop;
 mod bitwise;
 mod closure_properties;
 mod closure_calls;

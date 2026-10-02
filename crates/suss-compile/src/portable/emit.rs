@@ -263,7 +263,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             ),
             "binding-get" | "binding-bound" | "number-negate" | "value-negate"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
-            | "primitive-f64-floor" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "language-error-new" => {
+            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "language-error-new" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),

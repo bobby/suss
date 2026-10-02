@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "1b74edd939ab99349407d3a1c18972692aa1fd7b9149d868bcf06959d88a347f",
+  "replacement": "(def dissoc\n \"dissoc[iate]. Returns a new map of the same (hashed/sorted) type,\n  that does not contain a mapping for key(s).\"\n (fn\n ([coll] coll)\n  ([coll k]\n    (when-not (nil? coll)\n      (-dissoc coll k)))\n  ([coll k & ks]\n    (when-not (nil? coll)\n      (let [ret (dissoc coll k)]\n        (if ks\n          (recur ret (first ks) (next ks))\n          ret))))))",
+  "rationale": "Explicit defn bootstrap preserves every pinned public signature, docstring, branch and protocol dispatch. Hash-map and transient implementations plus native acceptance remain unfinished; this is retained-source prerequisite progress only."
+}

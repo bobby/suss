@@ -102,6 +102,17 @@ pub(super) fn intrinsics(b: &mut Builder) {
         b.function_with_locals(name, &[VALUE], &[VALUE], &[(1, ValType::I32)], &body);
     }
     b.function(
+        "primitive-f64-ceil",
+        &[VALUE],
+        &[VALUE],
+        &[
+            LocalGet(0),
+            Call(b.names["coerce-number"]),
+            F64Ceil,
+            Call(b.names["number-box"]),
+        ],
+    );
+    b.function(
         "primitive-f64-floor",
         &[VALUE],
         &[VALUE],

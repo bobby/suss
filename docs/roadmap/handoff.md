@@ -9931,3 +9931,124 @@ PR138 readiness. Prior48 CI36968929794 confirmedLIVE, not yet success. No merges
 or issue/milestone closures; next unblocked work is complete retained HAMT/
 transient source and canonical macro data, then original macroenvironment/
 location/syntaxquote/bootstrap/cache/lifecycle acceptance.
+
+Next isolated hash-map prerequisite now has6focused regressions (initial4 executed
+BEFORE68971 terminal101:0pass/4fail; corpus/canonical-root additions not executed).
+Fresh35primary compile23130+Node/compare terminal0 at actual pinned source. Native
+failures remain explicit: map9Language error, publicdissoc/assoc! unresolved.
+Retained complete publicdissoc/assoc!/dissoc! source with docstrings/allarity/branch
+protocol dispatch using explicit defnbootstrap; exactextraction/EPL/patch hashes,
+208importfiles and304partialreviews+761unassessed checkpass. These new source
+helpers have not yet executed; do not claim they or HAMT acceptance pass.
+ParentPR138 source remains frozen48c4b08, full75027 still running in otherworktree;
+no overlapping native Cargo run. Next retain complete HAMT/TransientArrayMap/node/
+sequence algorithms and public dependencies, sourcearraypop adapter and canonical
+GC transport/guard coverage. Run focus after parentterminal, then freshprimary
+andfullbaseline/review/final-headCI before opening readiness. Full M3 &env,
+locations/syntaxquote/bootstrap/cache/lifecycle remain original uncompletedscope.
+
+Hash-map helper focus92476 terminal101:0pass/6fail during core compilation because
+second missing. Retained complete pinnedsecond/nnext and ITransientMap protocol
+in dependency order, source/EPL/hashbounddefn adaptations;211importfiles and
+307partialreviews+758unassessed verified. Helper focus75136 terminal0:2tests both
+phases; added source ITransientMap probe verifies actualdissoc! fixed/variadic
+protocol dispatch, receiveridentity and357ordered trace afterGC. Final62805
+terminal0:3passed/0failed/0ignored, log
+/private/tmp/suss-m3-map-mutation-helper-final.log. All threepublic mutation helper
+algorithms now execute; complete hash-map acceptance still unfinished.
+Combined10797 terminal101:0pass/6hashmapfail now Language instead of unresolved
+names; Cargo stopped before helperbinary, so this command is not helper evidence.
+Log /private/tmp/suss-m3-map-mutation-and-hash-focus.log. Remaining completeHAMT/
+TransientArrayMap/nodes/sequences/sourcearraypop and canonicalGCtransport are next.
+No blanketskips, fullworkspace success claim for this child or PR opened yet.
+Parent806d701 dochead independently reviewed, production/tests identical to
+48c4b08 full941/0/17/90 including47ABI. ExactCI36969751041 confirmedLIVE; parent
+remainsdraft. No merges, issueclosures or M3 completion.
+
+PR138 final806d701 CI36969751041 terminalSUCCESS. Downloaded complete log
+/private/tmp/suss-pr138-final-ci.log:941passed/0failed/17existingignores/90groups,
+all47ABI, Python88/import205/setup12 and final reader doctests. Independent
+reviewer approved exact806 previously; remotehead rechecked unchanged. Marked
+ready, no merge. This is parent evidence, not the new hash-map child's baseline.
+
+Hash-map child retains complete HAMT/node/sequence/transient forms plus fix/quot,
+array-copy-downward, not= and publicassoc, with exact original bytes/EPL and
+explicit member/bootstrap/Error patches.246importfiles,342partialreviews and
+723unassessed;17complete licensed setup statements verified. Python88passed.
+Initial native source focus35733 missingquot;47126 failed generation and ran old
+artifact (not newquot evidence);26785/77287 unsupported unadapted members;
+35823 missingarray-copy-downward;49919 invalidWasm from own ceil import signature.
+Debug13797 identified unaryceil incorrectly imported as binary; debug emission
+removed and signature corrected.39758 terminal0:3helper regressions pass.
+Factories initialized;51598 terminal101:0/6maps, canonicaltransport missing and
+10Mdefaultfuel traps. Bounded100Mprobe96240 constructed33entries;97479 isolated
+prototype publicassoc failure. Complete sourceassoc fixed it:23147 terminal0:1
+persistent-root regression.23606 terminal101:4/6map tests pass, including actual
+35primary observations in both phases, only canonicaltransport failures remain.
+Bridge25314 terminal0:6/6map tests pass. Additional guard/numeric/popBEFORE17349
+terminal101:7maptests+4helpers pass, transientarraymapremoval fails missingpop.
+Ownedpop46266 terminal101:7maps+5helpers pass, copiedmethod.call fails existing
+receiver-discarding closure adapter;85831 confirms that exact stage. Both native
+call/apply now use existing anchored method dispatcher. Final focused13665 is
+running, log /private/tmp/suss-m3-hamt-pop-call-focus.log, no final success claim.
+New rawABI guard checks cover both push/pop callbacks and forged receiver buffers;
+not yet executed. Tests use bounded100Mfuel explicitly; defaultbudgetperformance
+remains a limitation. See docs/runtime/compiled-macro-hash-maps.md for remaining
+NodeSeq/ArrayNodeSeqtransport/reify/undefined/formatting and fullM3 scope.
+Next finish focused to terminal, fix failures, run required fullworkspace and
+independent PR review, push significant fixes and require exact final-headCI.
+No new PR yet, issueclosures, merge or M3completion.
+
+13665 terminal101:7hashmap+6helper regressions pass, sourceapply3pass/2fail because
+ordinary closures reached protocol-native-invoke and lost strict arity. Corrected
+routing to only canonical Object native-wrapper tags; ordinary closures retain
+originalinvoke. Focus25527 running same three binaries at final code, log
+/private/tmp/suss-m3-hamt-pop-call-focus2.log. Earlier13665 is failed regression
+evidence, not full sourceapply success. No skips or adjusted strict expectations.
+
+25527 terminal0:7hashmap+6helper+5sourceapply tests pass (18total), log
+/private/tmp/suss-m3-hamt-pop-call-focus2.log. Both phases pass35freshprimary
+observations, nil/persistence/collision/transient/GC/canonicalguards and numerical
+ceil/fix/quot boundaries. Native method.call/apply preserve physicalreceivers;
+sourceapplystrictarityandorderedfailure regressions pass unchanged. Formatted
+only affectedbridge/newtests/newpop/closurecall source. RawABI focus45049 isLIVE,
+log /private/tmp/suss-m3-hamt-abi-guards.log; dependencyfeaturebuild, no rawABIpass
+or fullworkspace claim yet. Python69963 terminal0:88tests,246imports,17setups,
+342in-progressreviews+723unassessed. Next wait45049terminal before any othernative
+Cargo run, then requiredfullworkspace; dispatch independentreview for draftPR
+and fix significantfindings, with exactfinal-headCI required before readiness.
+
+Published child draftPR140 at35efa9e15d481b721ec6e8b42c82dfaeb66da9fa,
+https://github.com/bobby/suss/pull/140, basePR138806d701. Parent handoff-only merge
+conflict resolved preserving both complete evidence records. RawABI45049
+terminal0:1passed/0failed/46filtered, forgedcallback/emptyandforeignreceiver guards,
+log /private/tmp/suss-m3-hamt-abi-guards.log. Requiredfullworkspace19934 confirmed
+LIVE at35efa9e, log /private/tmp/suss-m3-hamt-full.log; early compiledphase/macro/
+hashmap suites pass but full baseline is not yet proved. Independent reviewer140
+approved exact35efa9e with no significant findings/fixes, independently verified
+246imports/17setups/342reviews and inspected18focused+1ABI passing logs.
+ExactCI36975001885 at35efa9e confirmedLIVE. Issue14 progress comment5946901899
+records prerequisites and remainingoriginalacceptance. PR140 remainsdraft until
+fullworkspace andfinal-headCI; no merge, issueclosure or M3completion. Nextpoll
+same19934 untilterminal; resolve anyfailures and push fixes with newreview/finalCI.
+
+Required fullworkspace19934 terminal0 at reviewed35efa9e; complete log
+/private/tmp/suss-m3-hamt-full.log through final reader doctests. Verified954passed/0failed/17existingignores/92groups, including all47ABI.
+Source remains unchanged; no new skips or suppressed failures. Exactfinal-head
+CI remains required before readiness.
+
+PR140 independent review found that the CI job's 60-minute budget, based on an
+older 34m38s baseline, now cancels the expanded required workspace command before
+completion. Exact c5f85eb run37012087148 was canceled at60m18s; its complete
+downloaded log /private/tmp/suss-ci-37012087148-cancelled.log contains62 completed
+groups with747passed/0failed/12ignored, followed by cancellation during conformance.
+This is incomplete CI evidence, not a passing baseline. Independent GitHub job
+inspection also confirmed PR141 run37012180540 canceled at60m21s and PR142
+run37013353157 at60m19s; their completed test groups had no failures. All three
+inventory verification steps succeeded. The reviewer raises only the bounded job
+allowance to90minutes; the complete cargo test --workspace --locked --
+--test-threads=2 command, CARGO_BUILD_JOBS=2 and every verifier remain unchanged.
+No native source/tests or skips change. Prior local full954/0/17 proof remains
+applicable, but exact new-head CI must complete successfully before PR readiness.
+Next propagate the reviewed workflow repair to children and inspect complete
+final-head runs; further timeouts remain failures requiring investigation.

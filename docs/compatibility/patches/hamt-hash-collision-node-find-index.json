@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "7e2c890f1b6d53a4e021d08d31b245056c0f65e85ba862af2686e2af53324266",
+  "replacement": "(def ^:private hash-collision-node-find-index (fn [arr cnt key]\n  (let [lim (* 2 cnt)]\n    (loop [i 0]\n      (if (< i lim)\n        (if (key-test key (aget arr i))\n          i\n          (recur (+ i 2)))\n        -1)))))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+}

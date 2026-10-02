@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "1221f1a0c84fd78f55f135ae6b9f59b28850f2ef4f24eaa7b1fbc0e7fc4de7c6",
+  "replacement": "(set! (.-createWithCheck PersistentHashMap)\n  (fn [arr]\n    (let [len (alength arr)\n          ret (transient (.-EMPTY PersistentHashMap))]\n      (loop [i 0]\n        (when (< i len)\n          (-assoc! ret (aget arr i) (aget arr (inc i)))\n          (if (not= (-count ret) (inc (/ i 2)))\n            (throw (suss.bootstrap/error (str_ \"Duplicate key: \" (aget arr i))))\n            (recur (+ i 2)))))\n      (-persistent! ret))))",
+  "rationale": "Retain complete pinned hash-map factory and all branches, using the typed Error construction adapter. Formatting dependencies and complete acceptance remain unfinished."
+}

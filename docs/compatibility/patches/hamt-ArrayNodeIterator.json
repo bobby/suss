@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "a8a2d2127159faec92735881735c889f96d7580f24a519290ca45a32ee74a0cb",
+  "replacement": "(deftype ArrayNodeIterator [arr ^:mutable i ^:mutable next_iter]\n  Object\n  (hasNext [this]\n    (let [len (alength arr)]\n      (loop []\n        (if-not (and  (some? next_iter) ^boolean (.hasNext next_iter))\n          (if (< i len)\n            (let [node (aget arr i)]\n              (set! i (inc i))\n              (when (some? node)\n                (set! next_iter (-iterator node)))\n              (recur))\n            false)\n          true))))\n  (next [this]\n    (if ^boolean (.hasNext this)\n      (.next next_iter)\n      (throw (suss.bootstrap/error \"No such element\"))))\n  (remove [_] (suss.bootstrap/error \"Unsupported operation\")))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished. Object method/member and punctuated field identifiers use pinned emitted native spelling consistently; general source identifier munging remains unfinished."
+}
