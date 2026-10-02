@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "01585e78250b6513368160ff00e86ce901f9a87c1228dd3e8f9abc254a3ca2e3",
-  "reviews-sha256": "4520228f4018a8983c39db291fd705223b35fd44dba2966f1f91244ec411c78d",
+  "recipe-sha256": "3dc95e66c10844222203d7d1d6d5aff2c3a3aafdaf1118247564e57aae02e200",
+  "reviews-sha256": "6bad085a6f3cfbe5d498651b2ca3b5bb16d42fffdcecb9c8601a0c15b6813f37",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -7527,6 +7527,96 @@
       "semantic-tests": [
         "crates/suss-cli/tests/compiled_macro_hash_maps.rs"
       ]
+    },
+    {
+      "id": "runtime:conj:1870",
+      "name": "conj",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1870,
+      "end-line": 1885,
+      "byte-start": 51577,
+      "byte-end": 52013,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "4910efcbaf03c87d78039a840327e8d8cf34c1fc1bfd80ac36e113bc91ce5a2a",
+      "extracted": "extracted/0242.cljs",
+      "extracted-sha256": "7ac863aea1b87b9fbe682b7b84e725ce00cbbcdfe57c4455badfa559d5463240",
+      "patch": "docs/compatibility/patches/hamt-sequence-conj.json",
+      "patch-sha256": "6736641df5bacfa8ce71d23779c91da0266b3679b590503ee9b266d0e34cbca5",
+      "adapted-form-sha256": "7324b203ecd56d1c1119c7754e4da29ff97742e0504e398c8cb54daf0db2ddf1",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical sequence/map/vector and transient protocols",
+        "source reduce/conj/conj!/transduce and metadata"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hamt_sequences.rs",
+        "tests/oracle/hamt-sequence-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:transduce:2706",
+      "name": "transduce",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2706,
+      "end-line": 2719,
+      "byte-start": 72907,
+      "byte-end": 73585,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "a46d4deab5fff402ca558016d99844946237297b22e262b7835d1d2992454eca",
+      "extracted": "extracted/0243.cljs",
+      "extracted-sha256": "82b8d0d7dbd46cc776d577f4e3c6e638129f662807372a0b70b263dad06003de",
+      "patch": "docs/compatibility/patches/hamt-sequence-transduce.json",
+      "patch-sha256": "3dd4f8a1931117fad141071cdf3c21c39ba570af105a81d91c2681530c96ecc5",
+      "adapted-form-sha256": "33f8cc2f6bec863b73271df41b75c8d73f72a8d29345977a1734842c4d700d92",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical sequence/map/vector and transient protocols",
+        "source reduce/conj/conj!/transduce and metadata"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hamt_sequences.rs",
+        "tests/oracle/hamt-sequence-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:into:5430",
+      "name": "into",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5430,
+      "end-line": 5448,
+      "byte-start": 147172,
+      "byte-end": 147873,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "a1b44f2d0c5a0c7c8c34326e8a99db5a7985e6a1f53062e5a201286203ba7734",
+      "extracted": "extracted/0244.cljs",
+      "extracted-sha256": "3f120dc92f4356542e2cef5dd244b48281d42165ec0318a30bd42194c98763f8",
+      "patch": "docs/compatibility/patches/hamt-sequence-into.json",
+      "patch-sha256": "3e6572976c6d7238ee9a3e57a701481a97c0b23b6df722713775de21a716c963",
+      "adapted-form-sha256": "a0f8acb4d1d86888a1ad14509a1e0ebc0ecacfdaf0fc42ebcea4fecb305be8e1",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical sequence/map/vector and transient protocols",
+        "source reduce/conj/conj!/transduce and metadata"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hamt_sequences.rs",
+        "tests/oracle/hamt-sequence-cases.json"
+      ]
     }
   ],
   "loader": {
@@ -7784,6 +7874,9 @@
     "extracted/0239.cljs": "f30a77034e6565d9a36cca363d0f81a65e1cefbfcfa4fc7691b37bb5def6ed95",
     "extracted/0240.cljs": "9753abfbd20e6fba7d4ea69695962965cdd9e70cfd5c629833e9773e84e54422",
     "extracted/0241.cljs": "d495bee2deedee17d97b087b9d7fe49a2d3290df44a426208a233706e6f8bf48",
-    "suss/core.sus": "20223ce34c0e2634a32d57a86f994f5724b682ecc283c2d4778a7ab868ab6910"
+    "extracted/0242.cljs": "7ac863aea1b87b9fbe682b7b84e725ce00cbbcdfe57c4455badfa559d5463240",
+    "extracted/0243.cljs": "82b8d0d7dbd46cc776d577f4e3c6e638129f662807372a0b70b263dad06003de",
+    "extracted/0244.cljs": "3f120dc92f4356542e2cef5dd244b48281d42165ec0318a30bd42194c98763f8",
+    "suss/core.sus": "439fe8177aa173b0e013a7aa51e23505133cd34446b04f07d326d38d194924e8"
   }
 }

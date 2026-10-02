@@ -10037,6 +10037,70 @@ Required fullworkspace19934 terminal0 at reviewed35efa9e; complete log
 Source remains unchanged; no new skips or suppressed failures. Exactfinal-head
 CI remains required before readiness.
 
+ParentPR140 full19934 terminal0 independently counted954/0/17/92, all47ABI/final
+reader; dochead eec2aef independently approved, source/testsunchanged. ExactCI
+36976094484 confirmedLIVE; old35run36975001885 cancelled/superseded, notfinalproof.
+Parent remainsdraft until exactheadCI. Nextisolated sequenceworktree
+/private/tmp/suss-m3-hamt-sequences branchportable/m3-hamt-sequences nowbasedeec2aef
+with actualpinnedsubmodule, notsymlink. No parentimplementation changes.
+
+Newsequence BEFORE23256 terminal101:0/2tests; bothphases all13cases executed,
+11transportfailures (unknownNodeSeq/ArrayNodeSeq) +2collisionexecutionfailures.
+Primary53448 terminal0 initial13observations; constructorliteralcollisionorder
+reader-driven (key5first), variance against textualSussorder documented. Raw
+initial corpus/observations saved /private/tmp/suss-m3-hamt-sequence-incidental-*
+(not differential success). Orderedassoc primary98058 terminal0, all13exact,
+key0..19collisionorder. Probe63095 terminal101 identifies persistentArrayMap ninth
+assoc callsuninitializedinto; first2Symbolhash/key-test/transientops probe39102
+terminal0. Initialportscript29006 failedTypeError beforeedits, thenregeneratedold
+246artifact andranfirst2probe; notsourceinto executionevidence. Correctcomplete
+sourceconj/transduce/into retained (allarity/docs/branches/metadata, onlydefnpatch),
+249importfiles.98188 terminal0 after20persistentSymbolassocs, includingreal8->9
+conversion. NewcanonicalNodeSeq/ArrayNodeSeqroots+boundedcursor/childtransport
+71941 terminal0:3tests; depthguards protectrecursivecursors, sparseunusedslots
+honorpinnednil?/undefined while rawundefinedsyntax stillrejected.
+
+Extendedprimary73120 terminal0:27observations; existing13 unchanged,14newpublic
+conj/into/transduce arity/metadata/nil/list/vector/xfcompletion/reducedobservations
+captured frompinnedrun andstrictcomparepasses. Focus34576 terminal0:4newsequence+
+7hashmap+6helpers+5sourceapply (22total), bothStores and27exactentry/numericresults.
+Strengthenedmetadataassertions verify:doc7 exactly, oversized/cycliccursor and
+validsparse/recovery guards; finalfocused78447 terminal0:4/4, log
+/private/tmp/suss-m3-hamt-sequence-final-focus.log. All22combined results log
+/private/tmp/suss-m3-hamt-sequence-focus2.log. Python62093 terminal0:88tests,
+249imports/17setups/345in-progressreviews+720unassessed. No skips or fullcollection/
+M3acceptanceclaims. See docs/runtime/compiled-macro-hamt-sequences.md.
+NextpushdraftlinkedRefs14, dispatchindependentreviewer, requiredfullworkspace and
+exactfinalheadCI before readiness. Then remainingiterator/reify/undefinedboundary
+and originalrich&env/locations/syntaxquote/bootstrap/cache/lifecycle requirements.
+
+PR141 published at08615ba, https://github.com/bobby/suss/pull/141, stacked on
+PR140eec2aef. Independent reviewer approved exact08615ba without significant
+findings/fixes; independently reran Python88/import249/setup17/review345 and
+inspected focus/provenance/cursor semantics. Required fullworkspace3258 terminal0
+at08615ba, log /private/tmp/suss-m3-hamt-sequence-full.log through final reader
+doctests: 958 passed, 0 failed, 17 existing ignores across 93 result groups,
+including all 47 runtime ABI tests. Source/tests remain unchanged.
+CI36979640340 passed at08615ba; new documentation head needs
+independent review confirmation and exactfinal-headCI before readiness. Issue14
+comment5947608500 tracks originalcriteria/gaps, no issueclosure or merge.
+
+
+Parent stack integration on 2026-10-02: GitHub confirms #133, #135, #136 and
+#138 merged; #139 does not exist in this repository. Main35740aa has the exact
+same full file tree as the former parent806d701 (9b2679e44830b0aed4b8b0c51cc0759a4efa4dfc).
+PR140 repair merge c5f85eb retains the entire approved eec2aef tree
+15ba77434785f008f41b40d316e0bd363a800c5a. Independent reviewer confirmed this
+repair. The 954-pass local baseline remains applicable; its old CI run was
+cancelled after approximately 60 minutes, and exact repair-head CI is required.
+PR141 ancestry merge87caf9e likewise retains the entire reviewed e0fd886 tree
+17c7f080b668d878ddd39e87d48846cb051e6b4e. Source-head CI36979640340 completed
+successfully: independently counted958/0/17 across93 groups, including47 ABI
+passes and final reader doctests. This handoff update requires final-head review
+and CI. Neither PR is merged or ready without those checks. Original M3 criteria
+remain open; next unblocked work is omitted-argument undefined storage semantics,
+transient lifecycle enforcement and the rich compiled macro environment.
+
 PR140 independent review found that the CI job's 60-minute budget, based on an
 older 34m38s baseline, now cancels the expanded required workspace command before
 completion. Exact c5f85eb run37012087148 was canceled at60m18s; its complete

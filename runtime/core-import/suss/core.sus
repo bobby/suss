@@ -4163,6 +4163,58 @@
        (if kvs
          (recur ret (first kvs) (second kvs) (nnext kvs))
          ret)))))
+
+(def conj
+  "conj[oin]. Returns a new collection with the xs
+  'added'. (conj nil item) returns (item).
+  (conj coll) returns coll. (conj) returns [].
+  The 'addition' may happen at different 'places' depending
+  on the concrete type."
+  (fn ([] [])
+  ([coll] coll)
+  ([coll x]
+    (if-not (nil? coll)
+      (-conj coll x)
+      (list x)))
+  ([coll x & xs]
+    (if xs
+      (recur (conj coll x) (first xs) (next xs))
+      (conj coll x)))))
+
+(def transduce
+  "reduce with a transformation of f (xf). If init is not
+  supplied, (f) will be called to produce it. f should be a reducing
+  step function that accepts both 1 and 2 arguments, if it accepts
+  only 2 you can add the arity-1 with 'completing'. Returns the result
+  of applying (the transformed) xf to init and the first item in coll,
+  then applying xf to that result and the 2nd item, etc. If coll
+  contains no items, returns init and f is not called. Note that
+  certain transforms may inject or skip items."
+  (fn ([xform f coll] (transduce xform f (f) coll))
+  ([xform f init coll]
+     (let [f (xform f)
+           ret (reduce f init coll)]
+       (f ret)))))
+
+(def into
+  "Returns a new coll consisting of to-coll with all of the items of
+  from-coll conjoined. A transducer may be supplied."
+  (fn ([] [])
+  ([to] to)
+  ([to from]
+     (if-not (nil? to)
+       (if (implements? IEditableCollection to)
+         (-with-meta (persistent! (reduce -conj! (transient to) from)) (meta to))
+         (reduce -conj to from))
+       (reduce conj to from)))
+  ([to xform from]
+     (if (implements? IEditableCollection to)
+       (let [tm (meta to)
+             rf (fn
+                  ([coll] (-> (persistent! coll) (-with-meta tm)))
+                  ([coll v] (conj! coll v)))]
+         (transduce xform rf (transient to) from))
+       (transduce xform conj to from)))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

@@ -22,6 +22,8 @@ enum Class {
     BitmapIndexedNode,
     ArrayNode,
     HashCollisionNode,
+    NodeSeq,
+    ArrayNodeSeq,
     MapEntry,
     PersistentArrayMapSeq,
     ChunkedSeq,
@@ -50,6 +52,8 @@ impl FormBridge {
             ("BitmapIndexedNode", Class::BitmapIndexedNode),
             ("ArrayNode", Class::ArrayNode),
             ("HashCollisionNode", Class::HashCollisionNode),
+            ("NodeSeq", Class::NodeSeq),
+            ("ArrayNodeSeq", Class::ArrayNodeSeq),
             ("MapEntry", Class::MapEntry),
             ("PersistentArrayMapSeq", Class::PersistentArrayMapSeq),
             ("ChunkedSeq", Class::ChunkedSeq),
@@ -256,6 +260,10 @@ fn object(
         .ok_or_else(|| error("Unrecognized nominal macro data type"))?;
     Ok((class, array(store, &storage[1])?))
 }
+fn absent(store: &StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<bool> {
+    // ABI2 nil (0) and undefined (6) both satisfy the pinned nil? storage test.
+    Ok(matches!(sentinel(store, value)?, Some(0 | 6)))
+}
 struct Budget {
     nodes: usize,
     units: usize,
@@ -304,6 +312,8 @@ fn decode(
                 Class::PersistentVector
                 | Class::PersistentArrayMap
                 | Class::PersistentHashMap
+                | Class::NodeSeq
+                | Class::ArrayNodeSeq
                 | Class::List
                 | Class::Cons
                 | Class::EmptyList => Some(0),
@@ -368,7 +378,10 @@ fn decode(
                             .collect::<wasmtime::Result<Vec<_>>>()?,
                     )
                 }
-                Class::PersistentArrayMapSeq | Class::ChunkedSeq => {
+                Class::PersistentArrayMapSeq
+                | Class::ChunkedSeq
+                | Class::NodeSeq
+                | Class::ArrayNodeSeq => {
                     Kind::List(sequence(store, value, classes, span, depth, budget)?)
                 }
                 Class::VectorNode => return Err(error("Vector trie nodes are not macro syntax")),
@@ -393,6 +406,9 @@ fn sequence(
     depth: usize,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Form>> {
+    if depth >= 64 {
+        return Err(error("Macro sequence nesting exceeds 64"));
+    }
     let mut cursor = value.clone();
     let mut items = Vec::new();
     let mut counts = Vec::new();
@@ -430,6 +446,66 @@ fn sequence(
                 }
                 items.push(decode(store, &data[1], classes, span, depth + 1, budget)?);
                 cursor = data[2].clone();
+            }
+            Class::NodeSeq | Class::ArrayNodeSeq => {
+                if data.len() != 5 {
+                    return Err(error("Invalid hash node sequence field layout"));
+                }
+                if !first_segment {
+                    metadata(store, &data[0], classes, span, depth, budget)?;
+                }
+                let nodes = source_elements(store, &data[1], classes)?;
+                let index = integer(store, &data[2])?;
+                let is_array = matches!(class, Class::ArrayNodeSeq);
+                if index > nodes.len()
+                    || (is_array && nodes.len() != 32)
+                    || (!is_array && (nodes.len() % 2 != 0 || index % 2 != 0))
+                {
+                    return Err(error("Invalid bounded hash node sequence cursor"));
+                }
+                if !absent(store, &data[3])? {
+                    let current = sequence(store, &data[3], classes, span, depth + 1, budget)?;
+                    if current.is_empty() {
+                        return Err(error("Hash node sequence retains an empty child cursor"));
+                    }
+                    items.extend(current);
+                } else if is_array || index == nodes.len() || absent(store, &nodes[index])? {
+                    return Err(error("Hash node sequence has no current entry"));
+                }
+                let mut pairs = Vec::new();
+                if is_array {
+                    for node in &nodes[index..] {
+                        if !absent(store, node)? {
+                            hash_node(store, node, classes, 0, budget, &mut pairs)?;
+                        }
+                    }
+                } else {
+                    for pair in nodes[index..].chunks_exact(2) {
+                        if absent(store, &pair[0])? {
+                            if !absent(store, &pair[1])? {
+                                hash_node(store, &pair[1], classes, 0, budget, &mut pairs)?;
+                            }
+                        } else {
+                            pairs.extend_from_slice(pair);
+                        }
+                        if pairs.len() > budget.nodes {
+                            return Err(error("Hash node sequence exceeds bounded pair storage"));
+                        }
+                    }
+                }
+                for pair in pairs.chunks_exact(2) {
+                    spend(budget)?;
+                    let pair = pair
+                        .iter()
+                        .map(|entry| decode(store, entry, classes, span, depth + 2, budget))
+                        .collect::<wasmtime::Result<Vec<_>>>()?;
+                    items.push(Form {
+                        span: span.clone(),
+                        metadata: vec![],
+                        kind: Kind::Vector(pair),
+                    });
+                }
+                break;
             }
             Class::PersistentArrayMapSeq => {
                 if data.len() != 3 {
@@ -801,7 +877,7 @@ fn hash_node(
                 return Err(error("Bitmap population exceeds pair storage"));
             }
             for pair in entries[..count * 2].chunks_exact(2) {
-                if nil(store, &pair[0])? {
+                if absent(store, &pair[0])? {
                     hash_node(store, &pair[1], classes, level + 1, budget, pairs)?;
                 } else {
                     pairs.extend_from_slice(pair);
@@ -819,7 +895,7 @@ fn hash_node(
             }
             let mut occupied = 0;
             for entry in entries {
-                if !nil(store, &entry)? {
+                if !absent(store, &entry)? {
                     occupied += 1;
                     hash_node(store, &entry, classes, level + 1, budget, pairs)?;
                 }
@@ -839,7 +915,7 @@ fn hash_node(
                 return Err(error("Collision count exceeds pair storage"));
             }
             for pair in entries[..count * 2].chunks_exact(2) {
-                if nil(store, &pair[0])? {
+                if absent(store, &pair[0])? {
                     return Err(error("Nil key in hash collision node"));
                 }
                 pairs.extend_from_slice(pair);
