@@ -9772,3 +9772,40 @@ for new commit IDs. No PR merge, issue closure or milestone completion is claime
 Next unblocked development task remains complete retained source apply/callable
 behavior before macro environments/locations/syntaxquote/bootstrap/cache and
 stackless lifecycle work; original M3 acceptance remains open.
+
+Next isolated worktree /private/tmp/suss-m3-source-apply, branch
+portable/m3-source-apply, based on final reviewed callable35d270f. Real pinned
+ClojureScript submodule initialized at c4295f303100bbf5afac449242d30bca1126f1a1.
+Source apply BEFORE80197 terminal101:3failed/0passed, log
+/private/tmp/suss-m3-source-apply-before.log. Regressions cover fixed/variadic and
+captured functions/GC, actual MetaFn/vector/map/keyword calls, ordered operand
+effects and language arity failure/recovery. These are intentionally unfinished
+acceptance tests, not skips or baseline success; no PR/full-baseline claim yet.
+
+Complete pinned bounded-count/spread/list*/next* now retained with exact extracted
+source/EPL and explicit defn bootstrap, four new reviewed declarations. Import203
+artifacts/reviews295partial+770unassessed; original core algorithms/branches retained.
+Helper BEFORE43207 terminal101:2failed/0passed using unchanged parent core artifact;
+focus66913 terminal101 rejected next*'s preserved :private attribute. Pinned
+analyzer.cljc resolve* (1249ff) allows qualified private access with a warning.
+Definitions now preserve that attribute and remain callable; warning emission and
+namespace filtering remain unfinished (do not claim full privacy policy).
+Focus43396 terminal0:3passed; fresh primary76888 terminal0:14exact observations and
+private-access WARNING preserved, then3native tests. Final native70782 terminal0:
+4passed including all14corpus cases after GC and bounded custom INext effect counts.
+Logs /private/tmp/suss-m3-apply-sequences-{before,focus,focus2,oracle,final-focus}.log.
+Inventory1065/review/import/diff checks pass. Only trailing whitespace in the new
+spread patch was normalized after finalfocus; no semantic changes.
+
+Next: retain complete apply-to/apply-to-simple/apply plus bounded reproducible
+gen-apply-to/gen-apply-to-simple bootstrap. Existing named closure properties
+explicitly reject call/apply; universal closure min/max bounds do not expose full
+signatures/maxFixedArity/applyTo. Adapt the actual compiler-owned signature data
+and source-array call/apply operations, keeping all pinned dispatch branches and
+sequence forcing. Do not replace source apply with a host evaluator/sequence loop,
+drop variadic/lazy branches, or mark the failing source apply regressions passing.
+Need fresh primary/native callable/arity/effect corpus, required full baseline,
+independent PR review/significant fixes and exact-final-head CI before readiness.
+M3 issues12–15 remain open, including environments/syntaxquote/bootstrap/cache and
+stackless lifecycle. PR136 final35d270f review independently approved, CI36963299893
+confirmed IN_PROGRESS; keep draft until actual final-head success. No merge.

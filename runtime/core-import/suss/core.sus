@@ -2838,6 +2838,44 @@
 (def js-mod
   "Modulus of num and div with original javascript behavior. i.e. bug for negative numbers"
   (fn [n d] (suss.bootstrap/f64-remainder n d)))
+
+(def ^{:added "1.9"} bounded-count
+ "If coll is counted? returns its count, else will count at most the first n
+   elements of coll using its seq"
+ (fn [n coll]
+ (if (counted? coll)
+    (count coll)
+    (loop [i 0 s (seq coll)]
+      (if (and (not (nil? s)) (< i n))
+        (recur (inc i) (next s))
+        i)))))
+
+(def spread
+
+ (fn [arglist]
+ (when-not (nil? arglist)
+    (let [n (next arglist)]
+      (if (nil? n)
+        (seq (first arglist))
+        (cons (first arglist)
+              (spread n)))))))
+
+(def list*
+ "Creates a new list containing the items prepended to the rest, the
+  last of which will be treated as a sequence."
+ (fn ([args] (seq args))
+ ([a args] (cons a args))
+ ([a b args] (cons a (cons b args)))
+ ([a b c args] (cons a (cons b (cons c args))))
+ ([a b c d & more]
+     (cons a (cons b (cons c (cons d (spread more))))))))
+
+(def ^:private ^seq next*
+ "Internal. DO NOT USE! Next without the nil? check."
+ (fn [coll]
+ (if (implements? INext coll)
+    (-next ^not-native coll)
+    (seq (rest coll)))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

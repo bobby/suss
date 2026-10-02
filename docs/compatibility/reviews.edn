@@ -3016,4 +3016,28 @@
    :classification :adapted :rationale "Retain full pinned wrapper with exact binary64 remainder needed by real vector iterators and chunk offsets. General object coercion remains unfinished; no full public core acceptance claim."
    :status :in-progress :adaptation-path "docs/compatibility/patches/metadata-js-mod.json" :alternative nil
    :tests ["crates/suss-cli/tests/compiled_macro_metadata.rs"]}
+  "runtime:bounded-count:3928"
+  {:source-sha256 "d63700971866bf77e738fe14d1e4bf7479485d353c577543c79efff07b58b5ea" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["retained seq/first/next/cons/count and INext"]
+   :classification :adapted :rationale "Explicit defn-to-def/fn bootstrap retains the complete pinned signature, metadata, docstring and sequence algorithm required by source apply. Full apply dispatch, compiled upstream macros and M3 acceptance remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/apply-bounded-count.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_apply_sequences.rs"]}
+  "runtime:spread:3940"
+  {:source-sha256 "c1c94e15c0056ee7785273dc1a460c1606e80fdb440fdfd947c0191e8e052902" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["retained seq/first/next/cons/count and INext"]
+   :classification :adapted :rationale "Explicit defn-to-def/fn bootstrap retains the complete pinned signature, metadata, docstring and sequence algorithm required by source apply. Full apply dispatch, compiled upstream macros and M3 acceptance remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/apply-spread.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_apply_sequences.rs"]}
+  "runtime:list*:3974"
+  {:source-sha256 "85095026161d0706fd7094c83e89741d37a547530ac9e1fd6c4ecb8acee42600" :visibility :public :arities {:fixed [1 2 3 4] :variadic-min 4}
+   :dependencies ["retained seq/first/next/cons/count and INext"]
+   :classification :adapted :rationale "Explicit defn-to-def/fn bootstrap retains the complete pinned signature, metadata, docstring and sequence algorithm required by source apply. Full apply dispatch, compiled upstream macros and M3 acceptance remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/apply-list-star.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_apply_sequences.rs"]}
+  "runtime:next*:4059"
+  {:source-sha256 "093facc2d56831859066c5f53f337f02dd0a79657320d594f35de7fbe3f3f331" :visibility :private :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["retained seq/first/next/cons/count and INext"]
+   :classification :adapted :rationale "Explicit defn-to-def/fn bootstrap retains the complete pinned signature, metadata, docstring and sequence algorithm required by source apply. Full apply dispatch, compiled upstream macros and M3 acceptance remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/apply-next-star.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_apply_sequences.rs"]}
 }}

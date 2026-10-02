@@ -978,6 +978,26 @@
       "id": "runtime:js-mod:2971",
       "source-sha256": "28fb8bfcc4d4674152954edf54d2a9b9bfd135b573d42e556c844d5e88b7ce7d",
       "patch": "docs/compatibility/patches/metadata-js-mod.json"
+    },
+    {
+      "id": "runtime:bounded-count:3928",
+      "source-sha256": "d63700971866bf77e738fe14d1e4bf7479485d353c577543c79efff07b58b5ea",
+      "patch": "docs/compatibility/patches/apply-bounded-count.json"
+    },
+    {
+      "id": "runtime:spread:3940",
+      "source-sha256": "c1c94e15c0056ee7785273dc1a460c1606e80fdb440fdfd947c0191e8e052902",
+      "patch": "docs/compatibility/patches/apply-spread.json"
+    },
+    {
+      "id": "runtime:list*:3974",
+      "source-sha256": "85095026161d0706fd7094c83e89741d37a547530ac9e1fd6c4ecb8acee42600",
+      "patch": "docs/compatibility/patches/apply-list-star.json"
+    },
+    {
+      "id": "runtime:next*:4059",
+      "source-sha256": "093facc2d56831859066c5f53f337f02dd0a79657320d594f35de7fbe3f3f331",
+      "patch": "docs/compatibility/patches/apply-next-star.json"
     }
   ],
   "loader": {
