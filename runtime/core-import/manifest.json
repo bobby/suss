@@ -9,7 +9,7 @@
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
   "recipe-sha256": "d3ef2cc86cdca6c3b68d5b6c3ef75699e01897c6ee5f449463b11e89788597e8",
-  "reviews-sha256": "5621c8071a278bad201e3e8701fbf9599ffa3803673e7114c35c4eac0e0d2c0a",
+  "reviews-sha256": "d5921552e123d90c226c624dd3d3171f31801349b35b5c2b7bb2983423607a8d",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -3033,12 +3033,16 @@
         "runtime:IMeta:728",
         "runtime:IWithMeta:733",
         "IFn and MetaFn complete source",
-        "general IFn invocation and apply pending"
+        "ordinary canonical IFn invocation",
+        "source apply pending"
       ],
       "semantic-tests": [
         "crates/suss-cli/tests/portable_identity_hash.rs",
         "tests/oracle/identity-hash-cases.json",
-        "docs/runtime/identity-hashing.md"
+        "docs/runtime/identity-hashing.md",
+        "crates/suss-cli/tests/portable_callable_metadata.rs",
+        "tests/oracle/macro-metadata-cases.json",
+        "docs/runtime/callable-metadata.md"
       ]
     },
     {
@@ -3066,12 +3070,16 @@
         "runtime:IMeta:728",
         "runtime:IWithMeta:733",
         "IFn and MetaFn complete source",
-        "general IFn invocation and apply pending"
+        "ordinary canonical IFn invocation",
+        "source apply pending"
       ],
       "semantic-tests": [
         "crates/suss-cli/tests/portable_identity_hash.rs",
         "tests/oracle/identity-hash-cases.json",
-        "docs/runtime/identity-hashing.md"
+        "docs/runtime/identity-hashing.md",
+        "crates/suss-cli/tests/portable_callable_metadata.rs",
+        "tests/oracle/macro-metadata-cases.json",
+        "docs/runtime/callable-metadata.md"
       ]
     },
     {
@@ -3099,12 +3107,16 @@
         "runtime:IMeta:728",
         "runtime:IWithMeta:733",
         "IFn and MetaFn complete source",
-        "general IFn invocation and apply pending"
+        "ordinary canonical IFn invocation",
+        "source apply pending"
       ],
       "semantic-tests": [
         "crates/suss-cli/tests/portable_identity_hash.rs",
         "tests/oracle/identity-hash-cases.json",
-        "docs/runtime/identity-hashing.md"
+        "docs/runtime/identity-hashing.md",
+        "crates/suss-cli/tests/portable_callable_metadata.rs",
+        "tests/oracle/macro-metadata-cases.json",
+        "docs/runtime/callable-metadata.md"
       ]
     },
     {
@@ -3132,12 +3144,16 @@
         "runtime:IMeta:728",
         "runtime:IWithMeta:733",
         "IFn and MetaFn complete source",
-        "general IFn invocation and apply pending"
+        "ordinary canonical IFn invocation",
+        "source apply pending"
       ],
       "semantic-tests": [
         "crates/suss-cli/tests/portable_identity_hash.rs",
         "tests/oracle/identity-hash-cases.json",
-        "docs/runtime/identity-hashing.md"
+        "docs/runtime/identity-hashing.md",
+        "crates/suss-cli/tests/portable_callable_metadata.rs",
+        "tests/oracle/macro-metadata-cases.json",
+        "docs/runtime/callable-metadata.md"
       ]
     },
     {

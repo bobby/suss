@@ -3853,3 +3853,72 @@ fn runtime_abi_uid_safe_integer_exhaustion_preserves_cached_owners() {
     )
     .unwrap());
 }
+
+#[test]
+fn runtime_abi_callable_adapter_roots_source_method_and_rejects_corrupt_environments() {
+    use wasm_encoder::{HeapType, Instruction};
+    fn language_error(store: &mut Store<()>, runtime: Instance, export: &str, args: &[Val]) {
+        let error = runtime.get_func(&mut *store, export).unwrap()
+            .call(&mut *store, args, &mut [Val::null_any_ref()]).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
+        assert!(!error.is::<wasmtime::Trap>());
+        let exception = store.take_pending_exception().unwrap();
+        assert!(wasmtime::Tag::eq(&exception.tag(&mut *store).unwrap(),
+            &runtime.get_tag(&mut *store, "language-exception").unwrap(), &*store));
+    }
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let nil = nominal_value(&mut store, runtime, "nil", &[]);
+    let empty = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
+    let one = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
+    let descriptor = nominal_value(&mut store, runtime, "descriptor-new", &[empty.clone()]);
+    let key = nominal_value(&mut store, runtime, "descriptor-new", &[one.clone()]);
+    let owner = nominal_value(&mut store, runtime, "object-new", &[descriptor.clone(), empty.clone()]);
+    let method = nominal_value(&mut store, runtime, "predicate-nil", &[]);
+    runtime.get_func(&mut store, "protocol-method-set").unwrap()
+        .call(&mut store, &[descriptor.clone(), key.clone(), method], &mut []).unwrap();
+    let bound = nominal_value(&mut store, runtime, "callable-bind", &[owner.clone(), key.clone()]);
+    // Later table replacement cannot replace a method already captured as callee.
+    // This valid replacement has arity2, so the newer bound callback errors.
+    let replacement = nominal_value(&mut store, runtime, "predicate-identical", &[]);
+    runtime.get_func(&mut store, "protocol-method-set").unwrap()
+        .call(&mut store, &[descriptor, key.clone(), replacement], &mut []).unwrap();
+    store.gc(None).unwrap();
+    let result = nominal_value(&mut store, runtime, "invoke", &[bound.clone(), empty.clone()]);
+    assert_eq!(result.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 2);
+    let newer = nominal_value(&mut store, runtime, "callable-bind", &[owner.clone(), key.clone()]);
+    language_error(&mut store, runtime, "invoke", &[newer, empty.clone()]);
+    for malformed in [nil.clone(), empty.clone(), Val::null_any_ref()] {
+        language_error(&mut store, runtime, "callable-bind", &[owner.clone(), malformed]);
+    }
+    // Independently copy the actual callback with malformed closure environments.
+    let mut types = runtime_abi::prelude();
+    let value = wasm_encoder::ValType::Ref(wasm_encoder::RefType::EQREF);
+    types.ty().function([value, value], [value]);
+    let mut functions = wasm_encoder::FunctionSection::new();
+    functions.function(10);
+    let mut exports = wasm_encoder::ExportSection::new();
+    exports.export("copy-callback", wasm_encoder::ExportKind::Func, 0);
+    let mut code = wasm_encoder::CodeSection::new();
+    let mut forge = wasm_encoder::Function::new([]);
+    forge.instruction(&Instruction::LocalGet(1))
+        .instruction(&Instruction::LocalGet(0))
+        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(4)))
+        .instruction(&Instruction::StructGet { struct_type_index: 4, field_index: 1 })
+        .instruction(&Instruction::I32Const(0)).instruction(&Instruction::I32Const(-1))
+        .instruction(&Instruction::I32Const(0)).instruction(&Instruction::RefI31)
+        .instruction(&Instruction::StructNew(4)).instruction(&Instruction::End);
+    code.function(&forge);
+    let mut module = wasm_encoder::Module::new();
+    module.section(&types).section(&functions).section(&exports).section(&code);
+    let foreign = Instance::new(&mut store, &Module::new(&engine, module.finish()).unwrap(), &[]).unwrap();
+    for malformed in [nil, empty.clone(), one, Val::null_any_ref()] {
+        let copied = nominal_value(&mut store, foreign, "copy-callback", &[bound.clone(), malformed]);
+        store.gc(None).unwrap();
+        language_error(&mut store, runtime, "invoke", &[copied, empty.clone()]);
+    }
+    // Corruption did not poison the valid rooted callback or runtime exception tag.
+    let result = nominal_value(&mut store, runtime, "invoke", &[bound, empty]);
+    assert_eq!(result.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 2);
+}

@@ -9674,3 +9674,44 @@ child with both handoff blocks preserved. Parent full74540 confirmed LIVE,
 No child Cargo/JVM/Node until parent baseline terminal. Next implement ordinary
 callable dispatch and function metadata through source HIR/IR/shared ABI, retain
 actual licensed MetaFn methods, then validate pin/native effects/arity/GC.
+
+
+Callable child initial original source implementation now executes: callee once,
+lazy closure/direct nominal IFn selection; actual method captured before arguments,
+retained MetaFn source remains authoritative; lexical fn-literal metadata attaches
+actual persistent maps. New private callable-bind export, unchanged ABI2 layouts.
+Focus5261 terminal101 generated-Wasm type mismatch from double Boolean conversion;
+corrected65606 terminal0:3callable+4identity regressions. New direct strict wrong-arity
+regression added. Final focus71765 terminal0:18 tests (callable4/identity4/metadata10).
+
+Fresh primary38248 terminal1 IFn extend-type probe required grouped signatures;
+corrected44107 terminal1 exact comparison showed pin ignores vector extra args,
+returning1. Retained that actual reference result; native explicitly tests accepted
+strict-arity contract (effects111 then language error/catch111), not a skip or match.
+Oracle78447 terminal0:67 fresh primary observations exact; native66matching+1explicit
+strict boundary EACH Runtime/Macro Store after GC, all10metadata tests pass.
+Logs /private/tmp/suss-m3-callable-metadata-focus2.log,
+/private/tmp/suss-m3-callable-metadata-final-focus.log,
+/private/tmp/suss-m3-callable-metadata-oracle3.log. ABI98764 confirmed LIVE for new
+copied/corrupt callback/GC/captured-method guards plus full ABI regressions;
+/private/tmp/suss-m3-callable-metadata-abi-focus.log. ROOT owns heavy slot.
+
+Metadata135 parent final doc-only17f00a3d993695b564328c31b9c749e9bb9389b0 independently
+approved; source/tests unchanged from reviewed2fe full74540 terminal0:926/0/17/87groups.
+CI36960926070 confirmed LIVE on17f, draft. Parent133 independently reviewed3ccd fresh
+CI36957307954 SUCCESS verified915/0/17/86groups/Python88/import191/setup12/finalreader;
+markedready OPEN/notdraft/headunchanged, no merge. Integrate final metadata docs
+before callable child publication. M3 remains open; next unblocked work after this
+validation/review is source apply, environments/locations/syntaxquote/bootstrap/cache
+and stackless lifecycle, preserving every original issue12–15 acceptance criterion.
+
+
+ABI98764 terminal101:45pass/1failed; new fixture attempted to replace method with
+nil, correctly rejected by protocol-method-set. Correct fixture uses a valid
+arity2 callback replacement; new bound callback errors, old captured arity1 method
+still works after GC. ABI92753 terminal0:46tests including malformed key/copyENV/
+exception-tag/recovery guard, /private/tmp/suss-m3-callable-metadata-abi-focus2.log.
+Source/core behavior unchanged by fixture repair. Import199/setup12/reviews291partial
+774unassessed remain partial; current artifacts regenerated after evidence overlay.
+Next integrate final metadata17f docs, freeze source and run full baseline, publish
+Refs#14 draft and dispatch required independent review; no ready/merge claim yet.
