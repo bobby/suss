@@ -9429,7 +9429,7 @@ live-GC accounting remain required original M3 acceptance. No completion claim.
 The requested pr-stack-fixes session found PR #129 conflicting with current main
 8ef2f07 after predecessors #122–#128 were squash-merged. Resolved the overlap by
 retaining the independently reviewed macro-import changes and integrating main
-ancestry. Propagated fast-forward merge commits through #131/#132/#133 without
+ancestry. Propagated ancestry merge commits through #131/#132/#133 without
 rewriting their original commits. Before this evidence-only addition, every
 repaired tree exactly matched its corresponding reviewed original tree:
 
