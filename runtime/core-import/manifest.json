@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "b76ac8bdfd474cc52565a9b13a597206caa615797d2d8f3247b105ee658912cc",
-  "reviews-sha256": "b8a896dc5f22315586e334897aa6b508b10b821377daa076504655db924b10e9",
+  "recipe-sha256": "d3ef2cc86cdca6c3b68d5b6c3ef75699e01897c6ee5f449463b11e89788597e8",
+  "reviews-sha256": "5621c8071a278bad201e3e8701fbf9599ffa3803673e7114c35c4eac0e0d2c0a",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -5856,12 +5856,243 @@
       "semantic-tests": [
         "crates/suss-cli/tests/compiled_macro_maps.rs"
       ]
+    },
+    {
+      "id": "runtime:IChunk:871",
+      "name": "IChunk",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 871,
+      "end-line": 874,
+      "byte-start": 26344,
+      "byte-end": 26498,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "9fbb6fa1b28e4ac82306b82e0417e3369dcc1d070cdc97003560c62ba4928805",
+      "extracted": "extracted/0187.cljs",
+      "extracted-sha256": "93112297ba93a8890f51ebcf3d49308aeb135da6e2b8eee222383a143cb7aadc",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "9fbb6fa1b28e4ac82306b82e0417e3369dcc1d070cdc97003560c62ba4928805",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector/sequence/protocol algorithms",
+        "canonical source arrays; declared pending js-mod and ES6/printing dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_metadata.rs"
+      ]
+    },
+    {
+      "id": "runtime:IChunkedSeq:876",
+      "name": "IChunkedSeq",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 876,
+      "end-line": 881,
+      "byte-start": 26500,
+      "byte-end": 26745,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "550ec3c46000e3a23e175c5f01fd50264d436737f47baf4eec2c43c8e8420ed2",
+      "extracted": "extracted/0188.cljs",
+      "extracted-sha256": "95890db48f70e3b9908ec7da90f0db1527e48c4e868052d3c1f7f78078a6af74",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "550ec3c46000e3a23e175c5f01fd50264d436737f47baf4eec2c43c8e8420ed2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector/sequence/protocol algorithms",
+        "canonical source arrays; declared pending js-mod and ES6/printing dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_metadata.rs"
+      ]
+    },
+    {
+      "id": "runtime:IChunkedNext:883",
+      "name": "IChunkedNext",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 883,
+      "end-line": 886,
+      "byte-start": 26747,
+      "byte-end": 26917,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5fbc4536f7003e21ef83d0200c3dfb36a47d72c8aa2890795881d2cbe130c333",
+      "extracted": "extracted/0189.cljs",
+      "extracted-sha256": "cadbe85793a97e52e0096162b152ba3d932a88321bd0240f753228ca1e056f43",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "5fbc4536f7003e21ef83d0200c3dfb36a47d72c8aa2890795881d2cbe130c333",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector/sequence/protocol algorithms",
+        "canonical source arrays; declared pending js-mod and ES6/printing dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_metadata.rs"
+      ]
+    },
+    {
+      "id": "runtime:ArrayChunk:3690",
+      "name": "ArrayChunk",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3690,
+      "end-line": 3712,
+      "byte-start": 96982,
+      "byte-end": 97514,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "333e6efaaf40da955693cafa95b637aa1fef0a27cbf77226217fa1cb539a9126",
+      "extracted": "extracted/0190.cljs",
+      "extracted-sha256": "3ef9f90cb0ae2fb0b8cfdc065d8ad0a7a8ba41bbb50b6aebde796c68f9715fe3",
+      "patch": "docs/compatibility/patches/metadata-chunked-ArrayChunk.json",
+      "patch-sha256": "2f0152660345b37d1d17f2cf23e167e6e0f71cdc4e6e6b06e17a48ead54b9628",
+      "adapted-form-sha256": "6eff510338a54d3186896695639b6310f38de35c9ec58ac8decda002da8c6fb2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector/sequence/protocol algorithms",
+        "canonical source arrays; declared pending js-mod and ES6/printing dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_metadata.rs"
+      ]
+    },
+    {
+      "id": "runtime:array-chunk:3714",
+      "name": "array-chunk",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3714,
+      "end-line": 3720,
+      "byte-start": 97516,
+      "byte-end": 97687,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "f3e4d329c8cadea5daf7b24e371fd1d72fa2cf0a79e9ab4ce86c4402389daddc",
+      "extracted": "extracted/0191.cljs",
+      "extracted-sha256": "f83e0d9821e2f3003f667d349914fc2d5d10c5705132e1c5ebbc45cacd97a559",
+      "patch": "docs/compatibility/patches/metadata-chunked-array-chunk.json",
+      "patch-sha256": "6bd5f22b699be3048d5e48c0f89ef9927d69e3845f7be0fc0bd620f842088075",
+      "adapted-form-sha256": "8ed5593c472583c6d426a775f6dda280d2a1d968104916f15b4d6d8c2c5f724c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector/sequence/protocol algorithms",
+        "canonical source arrays; declared pending js-mod and ES6/printing dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_metadata.rs"
+      ]
+    },
+    {
+      "id": "runtime:ChunkedSeq:5968",
+      "name": "ChunkedSeq",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5968,
+      "end-line": 6065,
+      "byte-start": 163759,
+      "byte-end": 165963,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "08f17ae1e89e79fb17ed94ef40152f5c84585e2a14517b52b2362baa602949b7",
+      "extracted": "extracted/0192.cljs",
+      "extracted-sha256": "844dcdab7fd863d50dcf73f967798a1d7dadcbee5dccf0b9154e6a79b5e271e1",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "08f17ae1e89e79fb17ed94ef40152f5c84585e2a14517b52b2362baa602949b7",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector/sequence/protocol algorithms",
+        "canonical source arrays; declared pending js-mod and ES6/printing dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_metadata.rs"
+      ]
+    },
+    {
+      "id": "runtime:chunked-seq:6069",
+      "name": "chunked-seq",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6069,
+      "end-line": 6073,
+      "byte-start": 165992,
+      "byte-end": 166203,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "e8c9767107a5e11472b988225c612c2e895c41f748f1c07e8cefa241d02a6b0c",
+      "extracted": "extracted/0193.cljs",
+      "extracted-sha256": "194712ae758d0bcff0401347bc9c41b78e33b2bd8f653563f2ff62fdcc7d9d9a",
+      "patch": "docs/compatibility/patches/metadata-chunked-chunked-seq.json",
+      "patch-sha256": "0db024b69e567c89c3299c0feab8acc771fba8fd16b32e92afe9429236daa056",
+      "adapted-form-sha256": "e4130fa5367256e663b8bbb381d4e07a5dcf38ee52be6ae0b266ffb27c2effd2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector/sequence/protocol algorithms",
+        "canonical source arrays; declared pending js-mod and ES6/printing dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_metadata.rs"
+      ]
+    },
+    {
+      "id": "runtime:js-mod:2971",
+      "name": "js-mod",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2971,
+      "end-line": 2974,
+      "byte-start": 79870,
+      "byte-end": 80008,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "28fb8bfcc4d4674152954edf54d2a9b9bfd135b573d42e556c844d5e88b7ce7d",
+      "extracted": "extracted/0194.cljs",
+      "extracted-sha256": "983c6ce1f85324eaafdd136981be25983cddd8d2a97f523ff18fe40548d7365b",
+      "patch": "docs/compatibility/patches/metadata-js-mod.json",
+      "patch-sha256": "90fc3b8c6343df85a78dce13b78312d154e9d8798e1f15b6b4b69aaa0f8a068b",
+      "adapted-form-sha256": "0b72a43cf5e297c388d572b686f5d7e83e7a7a017cab38e30ec8e7dcdc30ab8b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "original binary64 remainder and shared scalar coercion adapter"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_metadata.rs"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "7b91f047f96c7b5b7bbeb19e9934e81f0beca2d77157d761e9e99b9da2d996eb"
+      "sha256": "e281457a822c9df2693b6272623b9c504b90b46ee0a4cec17184806119c7cd9a"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -6058,6 +6289,14 @@
     "extracted/0184.cljs": "ff4dd546a60fda26df22acc6b124b600f8e064e1501ffd49410701cd9ef7f710",
     "extracted/0185.cljs": "0a0811cdbd623f966c21c116d63720d4b9234fb31abf9fac3cc6979e6a06936e",
     "extracted/0186.cljs": "cd1e3d5c5412e08f19f895323048d0fa411b362e7a5f3127a52319dd6ff8a14a",
-    "suss/core.sus": "dc981df1e0ec0a88b54717551faa249425ee1ac4d00a7141116d0553d0597653"
+    "extracted/0187.cljs": "93112297ba93a8890f51ebcf3d49308aeb135da6e2b8eee222383a143cb7aadc",
+    "extracted/0188.cljs": "95890db48f70e3b9908ec7da90f0db1527e48c4e868052d3c1f7f78078a6af74",
+    "extracted/0189.cljs": "cadbe85793a97e52e0096162b152ba3d932a88321bd0240f753228ca1e056f43",
+    "extracted/0190.cljs": "3ef9f90cb0ae2fb0b8cfdc065d8ad0a7a8ba41bbb50b6aebde796c68f9715fe3",
+    "extracted/0191.cljs": "f83e0d9821e2f3003f667d349914fc2d5d10c5705132e1c5ebbc45cacd97a559",
+    "extracted/0192.cljs": "844dcdab7fd863d50dcf73f967798a1d7dadcbee5dccf0b9154e6a79b5e271e1",
+    "extracted/0193.cljs": "194712ae758d0bcff0401347bc9c41b78e33b2bd8f653563f2ff62fdcc7d9d9a",
+    "extracted/0194.cljs": "983c6ce1f85324eaafdd136981be25983cddd8d2a97f523ff18fe40548d7365b",
+    "suss/core.sus": "0a52ad5d06a9f3fbbda3ca3c0bda92a92b5bebf3ad008e9baf7ae07c3f391756"
   }
 }

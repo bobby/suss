@@ -9465,3 +9465,184 @@ Refs #13/#14 remain partial; M3 and subsequent milestone acceptance remain open.
 Next unblocked implementation is metadata transport and &env/syntaxquote in the
 separate child increment; full HAMT/transients, bootstrap/cache/privacy/evaluator
 removal and stackless scheduler/I/O cancellation/live-GC accounting remain required.
+Metadata child /private/tmp/suss-m3-macro-metadata at reviewed map9f9e0c4 now
+contains an unexecuted regression for nested real metadata maps, original explicit
+:line metadata on transported forms, both Stores and forced GC. Parent corrected
+full91421 is confirmed LIVE and root owns heavy slot. Do not run child Cargo yet.
+Pinned compiler elides source/compiler metadata for ordinary runtime literals,
+while form transport must preserve explicit reader data for &form; keep these
+purposes separate within the shared quote lowering instead of a phase-dependent
+semantic change. No metadata success or completed M3 acceptance is claimed.
+
+Map corrected full91421 terminal0:915/0/17/86groups finalreader. Parent final docs-only
+6d97fa10078f6088a31b3003dacceb84cbc641fa independently approved by reviewer133;
+source/tests unchanged from9f9e0c4. Push79327 terminal0; new exact-head CI36953923303
+confirmed LIVE. PR132 final reviewed739f0df CI36951307622 SUCCESS verified complete
+909/0/17/85groups/Python87/import161/setup8/finalreader after stripping ANSI display
+codes; root marked132ready, no merge. Integrate final map docs before child publish.
+
+Metadata before68659 terminal101: quoted metadata rejected. After74196 terminal0:
+1nested canonical transport test bothStores/GC. After16523 terminal0:3metadata tests
+for prefix precedence/runtime reader-key elision, returned sequence metadata,
+malformed/foreign metadata and cycles. Shared quote lowering now has explicit
+native form-data purpose via suss.bootstrap/quote-form; ordinary literals elide
+pinned irrelevant keys, native transport retains explicit data for &form.
+
+Metadata focus44822 terminal101: stale compiled_macro_forms expected valid private
+metadata to fail; preserve located compile-atomic error with a manually malformed
+Number metadata form. Quote-identifier error rows use invalid ^42 prefixes on the
+same symbol/vector/map targets. Focus79611 terminal101 was case-sensitive diagnostic
+assertion; explicit Invalid metadata diagnostic corrected without dropping guards.
+Oracle68237 terminal1 wrong plural runner namespace, corrected79531: pinned compile,
+Node and exact24 observations pass, native terminal101 at vector-value-equality
+with a generic language failure. Later source inspection identified the missing
+RangedIterator js-mod binding; keep the case and retain its complete dependency.
+
+Seven complete chunk declarations prepared; initial core_import rejected changed
+forward-loader hash. Focus97220 was confirmed LIVE compiling stale artifact, so
+identified owned CargoPID17814 and deliberately SIGINT stopped it; terminal130,
+not success. Updated exact loader input hash and regenerated198licensed artifacts.
+Reviews290partial775unassessed; setup12 unchanged. Correct-artifact focus47311 LIVE
+/private/tmp/suss-m3-macro-metadata-focus4.log; root owns exclusive heavy slot and
+source/tests frozen until terminal. Independent Python53681 terminal0:88tests.
+Next poll47311 to terminal, repair only evidenced failures, then rerun fresh24
+primary/native comparison and complete focus before full baseline/review/CI.
+No metadata PR or M3 completion claim. HAMT/transients, &env/syntaxquote/gensyms,
+bootstrap/cache/privacy/evaluator and stackless scheduler/I/O/live-GC remain open.
+
+
+Metadata child validation update: focus47311 terminal101 retained vector equality
+failure after real chunk declarations; source RangedIterator calls missing js-mod.
+Retained the complete pinned js-mod wrapper and added original binary64 remainder
+adapter, with exact scaling/subtraction, scalar coercion and signed-zero/NaN/edge
+handling. Generator now retains199 licensed artifacts (195 source selections),
+setup12. Diagnostic probe89443 failed in its own exception .message lookup and
+establishes no semantic result; moved outside the tracked suite.
+
+Focused94341 terminal0:27 tests. Fresh oracle55107 terminal0:45 pinned compiler/Node
+observations match native decoding in BOTH Runtime and Macro stores after GC.
+Final focused73950 terminal0:29 tests across metadata7/forms6/maps6/vectors7/ids3,
+including actual chunk backing corruption, core-callee capture and remainder
+arity/evaluation-order recovery. ABI/bitwise66784 terminal0:48 tests (45+3).
+Logs: /private/tmp/suss-m3-macro-metadata-oracle3.log,
+/private/tmp/suss-m3-macro-metadata-final-focus.log,
+/private/tmp/suss-m3-macro-metadata-abi-focus.log. Full workspace baseline and
+mandatory independent review/final-head CI still required before ready.
+
+Concurrent authorized stack repair changed map parent to3ccd3723 and vector to
+df4661ca. Map source/tests equal reviewed6d97fa1; only43 handoff lines differ.
+Independent reviewer133 approved exact3ccd; CI36957307954 remains LIVE. PR133 was
+restored to draft when changed head was discovered. PR132 exactdf4661ca fresh
+CI36956034518 SUCCESS. Integrate final map ancestry/evidence into metadata child
+before publishing; never overwrite repaired parent branches with old local heads.
+Original M3 issues12–15 remain open; this prerequisite does not fulfill their
+complete acceptance criteria.
+
+Metadata commit rebased onto final repaired map3ccd3723; preserved both parent
+stack-repair and child validation evidence. Production/tests unchanged by rebase.
+Final independent Python suite:88 passed; inventory1065/reviews291partial774unassessed/
+import199/setup12 verified; sequence/bitwise/WIT/numeric/offline checks pass.
+Next run the required full workspace baseline on this frozen metadata tree.
+
+
+## PR135 independent review and significant fixes — 2026-10-01
+
+Root pre-review full97215 terminal0:922passed/0failed/17existing ignores/87groups
+through finalreader doctests; /private/tmp/suss-m3-macro-metadata-full.log. This
+baseline precedes the review fixes below and does not prove their final head.
+
+Independent review of83a92e5 found two significant metadata issues. First,
+ordinary vector/map/set metadata was quoted instead of analyzed in its lexical
+environment. Before93981 terminal101 reproduced lexical answer7 becoming a symbol,
+/private/tmp/suss-pr135-review-before.log. Pinned analyzer analyze-wrap-meta uses
+analyze-map; quoted data and empty-list constants use constant emission instead.
+Reader-prefix coalescing now happens before analysis, preserves the inner existing
+key object and the outer winning value, ignores spans/metadata in reader-data key
+equivalence, and orders surviving entries textually under the accepted variance.
+Discarded expressions never run. Runtime map construction/association still owns
+equality of evaluated runtime keys. with-meta callee-first capture is preserved.
+
+Second, quoted/native metadata constructed discarded inner values before overwriting
+them. Rebinding PersistentVector.fromArray exposed that construction. Initial
+fixture45348 terminal0 used a tiny vector's direct constructor and did not exercise
+the factory; corrected32-element fixture43825 terminal101 proves the bug,
+/private/tmp/suss-pr135-review-data-before2.log. Shared bounded reader-prefix
+coalescing now removes discarded data before construction in quote/native paths.
+Function literal metadata remains required subsequent work, explicitly documented.
+
+Reviewer exclusive heavy-slot commands/results, all sequential with shared target,
+CARGO_BUILD_JOBS=2 and no RUSTFLAGS override:
+- Focus38821 terminal0:30 tests/5groups after the ordinary-expression fix.
+- Fresh oracle9220 compile terminal0 and exact53primary observations; oracle91626
+  terminal0:55fresh primary observations plus8native metadata tests, bothStores.
+- Final focused60479 terminal0:31 tests/5groups, metadata9/forms6/maps6/vectors7/ids3;
+  /private/tmp/suss-pr135-review-final-focused.log.
+- Final scripts/test-macro-metadata-oracle.sh75480 terminal0:56fresh pinned compiler/
+  Node observations match exact expected tags/bits; native9metadata tests independently
+  execute all56cases in BOTH Runtime and Macro Stores after GC;
+  /private/tmp/suss-pr135-review-final-oracle.log. Original45cases remain unchanged.
+  Pinned bool/string js-mod warnings remain visible; no skips or expectation rewrites.
+- python3 -m unittest discover -s scripts -p 'test_*.py':88passed, terminal0,
+  /private/tmp/suss-pr135-review-python.log. Import199/setup12, inventory1065 and
+  reviews291partial774unassessed independently verified; git diff --check passes.
+
+Significant fixes must be pushed to PR135; then require a new frozen full baseline
+and successful exact-reviewed-final-head CI before readiness. No PR was merged.
+M3 issues12–15 stay open; function metadata, HAMT/transients, &env/source locations/
+syntaxquote/gensyms/bootstrap/cache/evaluator removal and stackless scheduling/
+I/O cancellation/live-GC accounting remain original required acceptance.
+
+
+PR135 follow-up review identified duplicate structural-key normalization gaps in
+5b46a6d. Suss reader/native Forms can retain repeated map/set syntax entries;
+comparison must use canonical last-value maps and unique set members rather than
+raw length or reusing the same member match. Initial duplicate regression66629
+terminal0 reused a stale shared-target artifact from the isolated callable child,
+not the current source; touching current quotes/hir forced a rebuild. Correct
+before57189 terminal101 proves broken duplicate-map prefix precedence,
+/private/tmp/suss-pr135-review-duplicate-before2.log. Added both directions of
+repeated-map versus distinct-map keys and actual native quote/read coverage.
+
+Canonical map/set comparison now normalizes duplicates under the existing depth/
+work bound, preserving the first key object and final map value. Unit9887 compile101
+was explicit Vec<&Form> inference, corrected28032 terminal0:1 focused semantic
+unit for both-direction duplicate/equal/unequal/nested keys and exhausted bounds,
+/private/tmp/suss-pr135-review-duplicate-unit2.log. Correct-source focus10133
+terminal0 explicitly rebuilt reader/compile/CLI:32tests/5groups (metadata10/forms6/
+maps6/vectors7/identifiers3), /private/tmp/suss-pr135-review-duplicate-focus.log.
+Fresh scripts/test-macro-metadata-oracle.sh42954 terminal0:unchanged56primary
+observations match exactly plus10native metadata tests in bothStores/GC,
+/private/tmp/suss-pr135-review-duplicate-oracle.log. Python88/import199/setup12/
+inventory1065/reviews291partial774unassessed and diffcheck pass. No primary duplicate
+textual-reader claim; native Form cases preserve existing accepted transport data.
+
+Push this significant follow-up fix, freeze its source, then require full workspace
+baseline and successful exact-final-head CI. Previous83a92e5/5b46a6d CI does not
+certify this new source. No merge; original M3 acceptance remains open. Root owns
+next full baseline after reviewer releases the exclusive heavy slot.
+
+
+PR135 reviewed source2fe68294165d0f5610b1f954c9253a4f1067697b frozen full74540
+terminal0:926passed/0failed/17existingignores/87groups through finalreader doctests,
+/private/tmp/suss-m3-macro-metadata-reviewed-full.log. Reviewer135 independently
+approved exact2fe after pushing all3 significant findings. This final publication
+evidence changes docs only; require independent final-head confirmation and fresh
+exact-head CI, keeping draft until terminal success. No merge.
+
+PR133 exact repaired3ccd3723 CI36957307954 SUCCESS:downloaded complete
+/private/tmp/suss-pr133-repaired-final-ci.log, stripped only ANSI display codes,
+verified915/0/17/86groups/Python88/import191/setup12/finalreader. Reviewer133
+independently approved3ccd. Root marked133ready and verified OPEN/notdraft/head
+unchanged; no merge. Repaired #12939b3e9f CI36956034013, #13154e2402 CI36956034110,
+#132df4661c CI36956034518 also SUCCESS on their new heads. Old-head/cancelled runs
+were not reused as repair proof.
+
+Next child /private/tmp/suss-m3-callable-metadata integrated reviewed2fe and has
+three meaningful BEFORE94209 terminal101 regressions for ordinary MetaFn/collection
+calls and function-literal metadata. Initial original HIR/ABI adaptation is prepared
+but unexecuted: source callee captured once; closures retain universal invocation;
+nominal callable method captured before arguments through canonical IFn key;
+actual retained source methods own behavior. Native explicit -invoke remains its
+separate path. No new core stub or fake MetaFn. ROOT owns next focused child run.
+Full M3 issues12–15 remain open, including source environments/locations/syntaxquote/
+gensyms/bootstrap/cache/evaluator removal and stackless lifecycle acceptance.

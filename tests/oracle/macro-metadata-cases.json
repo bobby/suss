@@ -1,0 +1,454 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "symbol-map",
+      "source": "(get (meta '^{:answer 7} x) :answer)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "keyword-sugar",
+      "source": "(true? (get (meta '^:private x) :private))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "symbol-tag",
+      "source": "(= (get (meta '^Item x) :tag) 'Item)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "string-tag",
+      "source": "(= (get (meta '^\"Item\" x) :tag) \"Item\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "utf16-tag",
+      "source": "(= (get (meta '^\"\ud83d\ude00\" x) :tag) \"\ud83d\ude00\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "outer-wins",
+      "source": "(get (meta '^{:answer 1} ^{:answer 2 :other 3} x) :answer)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "inner-retained",
+      "source": "(get (meta '^{:answer 1} ^{:answer 2 :other 3} x) :other)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "symbol-reader-elision",
+      "source": "(nil? (meta '^{:line 10 :column 20 :file \"source\"} x))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "vector-reader-elision",
+      "source": "(nil? (get (meta ^{:line 10 :doc 7} [1]) :line))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "vector-doc",
+      "source": "(get (meta ^{:line 10 :doc 7} [1]) :doc)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "map-doc",
+      "source": "(get (meta ^{:doc 7} {:x 1}) :doc)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "empty-list-doc",
+      "source": "(get (meta ^{:doc 7} ()) :doc)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "quoted-list-doc",
+      "source": "(get (meta '^{:doc 7} (x)) :doc)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "empty-prefix-runtime-elision",
+      "source": "(nil? (meta '^{} x))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-with-meta",
+      "source": "(nil? (with-meta nil {}))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "runtime-empty-map",
+      "source": "(= (meta (with-meta [1] {})) {})",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "explicit-runtime-line",
+      "source": "(get (meta (with-meta [1] {:line 17})) :line)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "vector-value-equality",
+      "source": "(= (with-meta [1] {:doc 7}) [1])",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "vector-value-hash",
+      "source": "(== (hash (with-meta [1] {:doc 7})) (hash [1]))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "map-value-equality",
+      "source": "(= (with-meta {:a 1} {:doc 7}) {:a 1})",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nested-symbol",
+      "source": "(true? (get (meta (nth '[^:private x] 0)) :private))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nested-list",
+      "source": "(get (meta (nth '[^{:answer 7} (x)] 0)) :answer)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "macro-form-tag",
+      "source": "^{:probe 41} (form-tag)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4044800000000000"
+      }
+    },
+    {
+      "id": "macro-form-line",
+      "source": "^{:line 17} (form-line)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "remainder-negative",
+      "source": "(js-mod -7 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "bff0000000000000"
+      }
+    },
+    {
+      "id": "remainder-negative-divisor",
+      "source": "(js-mod 7 -3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "remainder-fraction",
+      "source": "(js-mod 7.5 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff8000000000000"
+      }
+    },
+    {
+      "id": "remainder-negative-zero",
+      "source": "(js-mod -4 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "remainder-zero",
+      "source": "(js-mod 0 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "remainder-huge",
+      "source": "(js-mod 1e300 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "remainder-max",
+      "source": "(js-mod 1.7976931348623157e308 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "remainder-subnormal-divisor",
+      "source": "(js-mod 1 5e-324)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "remainder-subnormal-value",
+      "source": "(js-mod 1.5e-323 1e-323)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000001"
+      }
+    },
+    {
+      "id": "remainder-infinite-divisor",
+      "source": "(js-mod -7 ##Inf)",
+      "expected": {
+        "tag": "f64",
+        "bits": "c01c000000000000"
+      }
+    },
+    {
+      "id": "remainder-nil",
+      "source": "(js-mod nil 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "remainder-boolean",
+      "source": "(js-mod true 3)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "remainder-string",
+      "source": "(js-mod \"7.5\" 2)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff8000000000000"
+      }
+    },
+    {
+      "id": "remainder-zero-divisor",
+      "source": "(let [value (js-mod 1 0)] (not (== value value)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "remainder-infinity",
+      "source": "(let [value (js-mod ##Inf 3)] (not (== value value)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "remainder-nan",
+      "source": "(let [value (js-mod ##NaN 3)] (not (== value value)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "remainder-divisor-nan",
+      "source": "(let [value (js-mod 3 ##NaN)] (not (== value value)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "chunk-seq-count",
+      "source": "(count (seq [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64]))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4050400000000000"
+      }
+    },
+    {
+      "id": "chunk-seq-first-next",
+      "source": "(first (-chunked-next (seq [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64])))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "chunk-seq-first-count",
+      "source": "(count (-chunked-first (seq [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64])))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040000000000000"
+      }
+    },
+    {
+      "id": "chunk-seq-nth",
+      "source": "(nth (seq [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64]) 33)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4040800000000000"
+      }
+    },
+    {
+      "id": "literal-lexical-value",
+      "source": "(let [answer 7] (get (meta ^{:answer answer} [0]) :answer))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "literal-map-call-value",
+      "source": "(get (meta ^{:answer (+ 1 2)} {:x 0}) :answer)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "literal-symbol-tag-value",
+      "source": "(let [tag 7] (get (meta ^tag [0]) :tag))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "literal-reader-key-retention",
+      "source": "(let [value ^{(1 2) 7} ^{[1 2] (throw 29)} []] (get (meta value) [1 2]))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "literal-reader-overridden-value",
+      "source": "(let [trace (array 0) value ^{:answer 7} ^{:answer (aset trace 0 29)} [0]] (+ (* (aget trace 0) 10) (get (meta value) :answer)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "literal-metadata-effect-order",
+      "source": "(let [trace (array 0) value ^{:answer (do (aset trace 0 (+ (* (aget trace 0) 10) 2)) 7) :extra (do (aset trace 0 (+ (* (aget trace 0) 10) 3)) 8)} [(do (aset trace 0 (+ (* (aget trace 0) 10) 1)) 42)]] (aget trace 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "quoted-metadata-expression-data",
+      "source": "(= (get (meta '^{:answer (+ 1 2)} [0]) :answer) '(+ 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-list-metadata-expression-data",
+      "source": "(= (get (meta ^{:answer (+ 1 2)} ()) :answer) '(+ 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "literal-reader-map-key-order",
+      "source": "(let [value ^{{:a 1 :b 2} 7} ^{{:b 2 :a 1} (throw 29)} []] (get (meta value) {:a 1 :b 2}))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "literal-reader-key-metadata",
+      "source": "(let [x 7 value ^{[^{:doc 1} x] 7} ^{[x] (throw 29)} []] (get (meta value) [7]))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "quoted-reader-discarded-construction",
+      "source": "(let [trace (array 0) prior (.-fromArray PersistentVector)] (set! (.-fromArray PersistentVector) (fn [entries no-clone] (aset trace 0 (inc (aget trace 0))) (prior entries no-clone))) (let [value (get (meta '^{:answer 7} ^{:answer [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31]} x) :answer)] (set! (.-fromArray PersistentVector) prior) (+ (* (aget trace 0) 10) value)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    }
+  ]
+}

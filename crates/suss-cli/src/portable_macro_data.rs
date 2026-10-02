@@ -20,6 +20,7 @@ enum Class {
     PersistentArrayMap,
     MapEntry,
     PersistentArrayMapSeq,
+    ChunkedSeq,
 }
 /// Captured canonical class roots remain valid through redefinition and GC.
 /// A reset or another Store invalidates this bridge; construct a new one there.
@@ -43,6 +44,7 @@ impl FormBridge {
             ("PersistentArrayMap", Class::PersistentArrayMap),
             ("MapEntry", Class::MapEntry),
             ("PersistentArrayMapSeq", Class::PersistentArrayMapSeq),
+            ("ChunkedSeq", Class::ChunkedSeq),
         ] {
             let value = session.eval(&format!("suss.core/{name}"))?;
             let id = session.inspect(&value, |mut store, value| {
@@ -97,8 +99,8 @@ impl FormBridge {
             span: span.clone(),
             metadata: vec![],
             kind: Kind::Symbol(suss_reader::Symbol {
-                namespace: None,
-                name: "quote".into(),
+                namespace: Some("suss.bootstrap".into()),
+                name: "quote-form".into(),
             }),
         };
         session.eval_forms(
@@ -176,15 +178,26 @@ fn sentinel(store: &StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<Op
 fn nil(store: &StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<bool> {
     Ok(sentinel(store, value)? == Some(0))
 }
-fn metadata(store: &StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<()> {
+fn metadata(
+    store: &mut StoreContextMut<'_, ()>,
+    value: &Val,
+    classes: &BTreeMap<i64, Class>,
+    span: &Range<usize>,
+    depth: usize,
+    budget: &mut Budget,
+) -> wasmtime::Result<Vec<Form>> {
     if nil(store, value)? {
-        Ok(())
-    } else {
-        Err(error(
-            "Runtime macro metadata requires persistent metadata maps, not yet integrated",
-        ))
+        return Ok(vec![]);
     }
+    let form = decode(store, value, classes, span, depth + 1, budget)?;
+    if !matches!(form.kind, Kind::Map(_)) {
+        return Err(error(
+            "Runtime macro metadata requires a canonical persistent map",
+        ));
+    }
+    Ok(vec![form])
 }
+
 fn text(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
@@ -259,6 +272,7 @@ fn decode(
     }
     spend(budget)?;
     let reference = reference(value)?;
+    let mut reader_metadata = vec![];
     let kind = if let Some(sentinel) = sentinel(store, value)? {
         match sentinel {
             0 => Kind::Nil,
@@ -277,14 +291,25 @@ fn decode(
             Kind::Number(f64::from_bits(*bits))
         } else {
             let (class, data) = object(store, value, classes)?;
+            let slot = match class {
+                Class::Symbol => Some(4),
+                Class::PersistentVector
+                | Class::PersistentArrayMap
+                | Class::List
+                | Class::Cons
+                | Class::EmptyList => Some(0),
+                Class::IndexedSeq | Class::PersistentArrayMapSeq => Some(2),
+                Class::ChunkedSeq => Some(4),
+                _ => None,
+            };
+            if let Some(value) = slot.and_then(|index| data.get(index)) {
+                reader_metadata = metadata(store, value, classes, span, depth, budget)?;
+            }
             match class {
                 Class::Symbol | Class::Keyword => {
                     let count = if matches!(class, Class::Symbol) { 5 } else { 4 };
                     if data.len() != count {
                         return Err(error("Invalid identifier field layout"));
-                    }
-                    if count == 5 {
-                        metadata(store, &data[4])?;
                     }
                     let namespace = if nil(store, &data[0])? {
                         None
@@ -305,7 +330,6 @@ fn decode(
                     if data.len() != 4 {
                         return Err(error("Invalid persistent array map field layout"));
                     }
-                    metadata(store, &data[0])?;
                     let count = integer(store, &data[1])?;
                     let entries = source_elements(store, &data[2], classes)?;
                     if entries.len() != count * 2 || entries.len() > budget.nodes {
@@ -329,7 +353,7 @@ fn decode(
                             .collect::<wasmtime::Result<Vec<_>>>()?,
                     )
                 }
-                Class::PersistentArrayMapSeq => {
+                Class::PersistentArrayMapSeq | Class::ChunkedSeq => {
                     Kind::List(sequence(store, value, classes, span, depth, budget)?)
                 }
                 Class::VectorNode => return Err(error("Vector trie nodes are not macro syntax")),
@@ -342,7 +366,7 @@ fn decode(
     };
     Ok(Form {
         span: span.clone(),
-        metadata: vec![],
+        metadata: reader_metadata,
         kind,
     })
 }
@@ -357,6 +381,7 @@ fn sequence(
     let mut cursor = value.clone();
     let mut items = Vec::new();
     let mut counts = Vec::new();
+    let mut first_segment = true;
     loop {
         if nil(store, &cursor)? {
             break;
@@ -368,7 +393,9 @@ fn sequence(
                 if data.len() != 1 {
                     return Err(error("Invalid empty list layout"));
                 }
-                metadata(store, &data[0])?;
+                if !first_segment {
+                    metadata(store, &data[0], classes, span, depth, budget)?;
+                }
                 break;
             }
             Class::List | Class::Cons => {
@@ -376,7 +403,9 @@ fn sequence(
                 if data.len() != count {
                     return Err(error("Invalid sequence field layout"));
                 }
-                metadata(store, &data[0])?;
+                if !first_segment {
+                    metadata(store, &data[0], classes, span, depth, budget)?;
+                }
                 if count == 5 {
                     let boxed = fields(store, &data[3], 1)?;
                     let [Val::F64(bits)] = boxed.as_slice() else {
@@ -391,7 +420,9 @@ fn sequence(
                 if data.len() != 3 {
                     return Err(error("Invalid array map sequence field layout"));
                 }
-                metadata(store, &data[2])?;
+                if !first_segment {
+                    metadata(store, &data[2], classes, span, depth, budget)?;
+                }
                 let index = integer(store, &data[1])?;
                 let entries = source_elements(store, &data[0], classes)?;
                 if entries.len() % 2 != 0
@@ -417,12 +448,55 @@ fn sequence(
                 }
                 break;
             }
+            Class::ChunkedSeq => {
+                if data.len() != 6 {
+                    return Err(error("Invalid chunked vector sequence layout"));
+                }
+                if !first_segment {
+                    metadata(store, &data[4], classes, span, depth, budget)?;
+                }
+                let (owner, vector_data) = object(store, &data[0], classes)?;
+                if !matches!(owner, Class::PersistentVector) || vector_data.len() != 6 {
+                    return Err(error(
+                        "Chunked vector sequence needs canonical vector storage",
+                    ));
+                }
+                let count = integer(store, &vector_data[1])?;
+                let mut index = integer(store, &data[2])?;
+                let mut offset = integer(store, &data[3])?;
+                let mut node = source_elements(store, &data[1], classes)?;
+                if index >= count || offset >= node.len() {
+                    return Err(error("Invalid chunked vector sequence index"));
+                }
+                // Validate the backing vector even when the first node exhausts
+                // the sequence; use the supplied node for its actual contents.
+                vector_leaf(store, &vector_data, index, classes, budget)?;
+                loop {
+                    if node.is_empty() || node.len() > 32 || index + node.len() > count {
+                        return Err(error("Invalid bounded chunked vector sequence node"));
+                    }
+                    for entry in &node[offset..] {
+                        items.push(decode(store, entry, classes, span, depth + 1, budget)?);
+                    }
+                    index += node.len();
+                    if index == count {
+                        break;
+                    }
+                    node = vector_leaf(store, &vector_data, index, classes, budget)?;
+                    offset = 0;
+                }
+                break;
+            }
             Class::IndexedSeq => {
+                if !first_segment && data.len() == 3 {
+                    metadata(store, &data[2], classes, span, depth, budget)?;
+                }
                 append_indexed(store, &data, classes, span, depth, budget, &mut items)?;
                 break;
             }
             _ => return Err(error("Unsupported macro sequence tail")),
         }
+        first_segment = false;
     }
     for (index, count) in counts {
         if count != (items.len() - index) as f64 {
@@ -444,7 +518,6 @@ fn append_indexed(
     if data.len() != 3 {
         return Err(error("Invalid IndexedSeq field layout"));
     }
-    metadata(store, &data[2])?;
     let index = fields(store, &data[1], 1)?;
     let [Val::F64(bits)] = index.as_slice() else {
         return Err(error("Invalid IndexedSeq index"));
@@ -558,7 +631,6 @@ fn vector(
     if data.len() != 6 {
         return Err(error("Invalid persistent vector layout"));
     }
-    metadata(store, &data[0])?;
     let count = integer(store, &data[1])?;
     let shift = integer(store, &data[2])?;
     if shift < 5 || shift > 30 || shift % 5 != 0 {
@@ -596,4 +668,43 @@ fn vector(
         items.push(decode(store, &value, classes, span, depth + 1, budget)?);
     }
     Ok(items)
+}
+
+// Read the same canonical trie/tail storage used by unchecked-array-for. This
+// adapter decodes syntax; it never invokes arbitrary user collection protocols.
+fn vector_leaf(
+    store: &mut StoreContextMut<'_, ()>,
+    data: &[Val],
+    index: usize,
+    classes: &BTreeMap<i64, Class>,
+    budget: &mut Budget,
+) -> wasmtime::Result<Vec<Val>> {
+    let count = integer(store, &data[1])?;
+    let shift = integer(store, &data[2])?;
+    if shift < 5 || shift > 30 || shift % 5 != 0 || index >= count {
+        return Err(error("Invalid chunked vector trie range"));
+    }
+    let tail_offset = if count < 32 {
+        0
+    } else {
+        ((count - 1) >> 5) << 5
+    };
+    let (_, root_data) = object(store, &data[3], classes)?;
+    if root_data.len() != 2 || !nil(store, &root_data[0])? {
+        return Err(error("Persistent vector root retains an active edit token"));
+    }
+    let mut node = node_elements(store, &data[3], classes, budget)?;
+    if index >= tail_offset {
+        let tail = source_elements(store, &data[4], classes)?;
+        if tail.len() != count - tail_offset {
+            return Err(error("Vector count disagrees with tail storage"));
+        }
+        return Ok(tail);
+    }
+    let mut level = shift;
+    while level > 0 {
+        node = node_elements(store, &node[(index >> level) & 31], classes, budget)?;
+        level -= 5;
+    }
+    Ok(node)
 }

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "333e6efaaf40da955693cafa95b637aa1fef0a27cbf77226217fa1cb539a9126",
+  "replacement": "(deftype ArrayChunk [arr off end]\n  ICounted\n  (-count [_] (- end off))\n\n  IIndexed\n  (-nth [coll i]\n    (aget arr (+ off i)))\n  (-nth [coll i not-found]\n    (if (and (>= i 0) (< i (- end off)))\n      (aget arr (+ off i))\n      not-found))\n\n  IChunk\n  (-drop-first [coll]\n    (if (== off end)\n      (throw (suss.bootstrap/error \"-drop-first of empty chunk\"))\n      (ArrayChunk. arr (inc off) end)))\n\n  IReduce\n  (-reduce [coll f]\n    (array-reduce arr f (aget arr off) (inc off)))\n  (-reduce [coll f start]\n    (array-reduce arr f start off)))",
+  "rationale": "Retain complete pinned vector chunk sequence declarations and methods required by observable metadata-bearing vector equality. Defn bootstrap preserves every signature/body; typed Error adapter preserves errors. ES6/printing/public APIs and full collection acceptance remain required separately."
+}

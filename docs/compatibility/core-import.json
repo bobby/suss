@@ -938,12 +938,52 @@
       "id": "runtime:pam-grow-seed-array:7150",
       "source-sha256": "4d4e90cc5906829748a00d4a9dbb19101932d964080bd623d5c50f498e2bc7c6",
       "patch": "docs/compatibility/patches/array-map-pam-grow-seed-array.json"
+    },
+    {
+      "id": "runtime:IChunk:871",
+      "source-sha256": "9fbb6fa1b28e4ac82306b82e0417e3369dcc1d070cdc97003560c62ba4928805",
+      "patch": null
+    },
+    {
+      "id": "runtime:IChunkedSeq:876",
+      "source-sha256": "550ec3c46000e3a23e175c5f01fd50264d436737f47baf4eec2c43c8e8420ed2",
+      "patch": null
+    },
+    {
+      "id": "runtime:IChunkedNext:883",
+      "source-sha256": "5fbc4536f7003e21ef83d0200c3dfb36a47d72c8aa2890795881d2cbe130c333",
+      "patch": null
+    },
+    {
+      "id": "runtime:ArrayChunk:3690",
+      "source-sha256": "333e6efaaf40da955693cafa95b637aa1fef0a27cbf77226217fa1cb539a9126",
+      "patch": "docs/compatibility/patches/metadata-chunked-ArrayChunk.json"
+    },
+    {
+      "id": "runtime:array-chunk:3714",
+      "source-sha256": "f3e4d329c8cadea5daf7b24e371fd1d72fa2cf0a79e9ab4ce86c4402389daddc",
+      "patch": "docs/compatibility/patches/metadata-chunked-array-chunk.json"
+    },
+    {
+      "id": "runtime:ChunkedSeq:5968",
+      "source-sha256": "08f17ae1e89e79fb17ed94ef40152f5c84585e2a14517b52b2362baa602949b7",
+      "patch": null
+    },
+    {
+      "id": "runtime:chunked-seq:6069",
+      "source-sha256": "e8c9767107a5e11472b988225c612c2e895c41f748f1c07e8cefa241d02a6b0c",
+      "patch": "docs/compatibility/patches/metadata-chunked-chunked-seq.json"
+    },
+    {
+      "id": "runtime:js-mod:2971",
+      "source-sha256": "28fb8bfcc4d4674152954edf54d2a9b9bfd135b573d42e556c844d5e88b7ce7d",
+      "patch": "docs/compatibility/patches/metadata-js-mod.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "7b91f047f96c7b5b7bbeb19e9934e81f0beca2d77157d761e9e99b9da2d996eb"
+      "sha256": "e281457a822c9df2693b6272623b9c504b90b46ee0a4cec17184806119c7cd9a"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
