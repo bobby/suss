@@ -9919,6 +9919,19 @@ exact heads previously; remoteheads rechecked unchanged. Marked ready, no merges
 PR138 e661139 independently approved; fresh CI36968779862 confirmedLIVE. Corrected
 one handoff session typo above; final full workspace rerun follows this doc head.
 
+Source apply required full75027 terminal0 at independently reviewed48c4b08:
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2. Verified941passed/0failed/
+17existingignores/90groups through final reader doctests, including complete47ABI
+with new foreignENV/emptypush callback regression. Log
+/private/tmp/suss-m3-source-apply-full2.log. No new ignores or suppressed failures.
+Source/tests unchanged by this documentation-only evidence update; final-head
+independent review reconfirmation and fresh exact-head CI still required before
+PR138 readiness. Prior48 CI36968929794 confirmedLIVE, not yet success. No merges
+or issue/milestone closures; next unblocked work is complete retained HAMT/
+transient source and canonical macro data, then original macroenvironment/
+location/syntaxquote/bootstrap/cache/lifecycle acceptance.
+
 Next isolated hash-map prerequisite now has6focused regressions (initial4 executed
 BEFORE68971 terminal101:0pass/4fail; corpus/canonical-root additions not executed).
 Fresh35primary compile23130+Node/compare terminal0 at actual pinned source. Native
