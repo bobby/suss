@@ -30,6 +30,7 @@ enum Recipe {
     Form(Form),
     Map(Vec<(Value, Value)>),
     Vector(Vec<Value>),
+    Set(Vec<Value>),
     Alias(Value),
 }
 enum Task {
@@ -132,7 +133,7 @@ impl<'a> AnalysisGraph<'a> {
                 stack.push((id, true));
                 let dependencies: Vec<_> = match recipe {
                     Recipe::Alias(value) => vec![*value],
-                    Recipe::Vector(values) => values.clone(),
+                    Recipe::Vector(values) | Recipe::Set(values) => values.clone(),
                     Recipe::Map(entries) => entries
                         .iter()
                         .flat_map(|(key, value)| [*key, *value])
@@ -162,7 +163,7 @@ impl<'a> AnalysisGraph<'a> {
                     .as_ref()
                     .expect("ordered alias dependency")
                     .clone(),
-                Recipe::Vector(items) => {
+                Recipe::Vector(items) | Recipe::Set(items) => {
                     let items = items
                         .iter()
                         .map(|id| {
@@ -172,7 +173,11 @@ impl<'a> AnalysisGraph<'a> {
                                 .clone()
                         })
                         .collect::<Vec<_>>();
-                    self.bridge.vector_values(self.session, &items)?
+                    if matches!(recipe, Recipe::Set(_)) {
+                        self.bridge.set_values(self.session, &items)?
+                    } else {
+                        self.bridge.vector_values(self.session, &items)?
+                    }
                 }
                 Recipe::Map(entries) => {
                     let entries = entries
@@ -422,7 +427,8 @@ impl<'a> AnalysisGraph<'a> {
             .iter()
             .map(|name| self.symbol(name))
             .collect::<Result<Vec<_>>>()?;
-        let exclusions = self.vector(&exclusions)?;
+        self.charge(0)?;
+        let exclusions = self.recipe(Recipe::Set(exclusions))?;
         let mut declarations = Vec::new();
         for global in &namespace.identities {
             let short = self.symbol(global.name())?;
@@ -451,7 +457,7 @@ impl<'a> AnalysisGraph<'a> {
             ("name", name),
             ("requires", aliases),
             ("suss/refers", refers),
-            ("suss/excluded-core", exclusions),
+            ("excludes", exclusions),
             ("defs", declarations),
         ])?;
         Ok(value)

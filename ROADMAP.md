@@ -1,4 +1,4 @@
-# Resurrection roadmap
+# Suss roadmap
 
 The accepted target is [the design specification](docs/design/suss-0.3.1.md).
 The prototype has not reached the WASI alpha gate. Work below is dependency ordered;
@@ -83,6 +83,7 @@ any release gate complete.
   Actual reader/expansion syntax now accompanies analyzed HIR, with explicit absence on compiler-only nodes. Focused executing evidence passes; full source AST/inference and canonical rich `&env` transport remain unfinished ([source analysis records](docs/runtime/compiled-macro-source-analysis.md)).
   Immutable source snapshots and native canonical form construction now have focused executing evidence, including GC, bounds, duplicate keys and unchanged resident code counts. A fresh upstream rich environment oracle matches sixteen observations and thirteen executed results. This does not supply source `&env`; graph transport and the original M3 gates remain open.
   A queued native analysis graph now preserves shared records across deep initializer environments and GC, with actual declaration scopes and aggregate bounds. Three compiled graph inspections pass; complete portable schema/inference and source macro invocation remain open ([analysis graph](docs/runtime/compiled-macro-analysis-graph.md)).
+  Retained persistent/transient set and KeySeq prerequisites now have 39 fresh pinned observations agreeing with independently decoded native values in both Stores. Canonical namespace `:excludes` sets, textual literal order, HAMT size thresholds and captured set reconstruction after class redefinition have executing regressions. Public empty/vec helpers, generic ES6/printing, full portable environment schema remain pending; the set prerequisite full baseline passes998/0/17; no issue is complete.
 - **M3-04 — Session lifecycle and interruption** (in-progress). Define reset, roots, code residency and cancellation while interactive I/O is pending. Native session reset/owned handles/fuel recovery/residency counters now have executing evidence; interactive cancellation and live heap accounting remain.
 
 Retained cached string hashing now matches64 fresh pinned observations over owned GC

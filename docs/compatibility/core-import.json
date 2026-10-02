@@ -1228,16 +1228,76 @@
       "id": "runtime:into:5430",
       "source-sha256": "a1b44f2d0c5a0c7c8c34326e8a99db5a7985e6a1f53062e5a201286203ba7734",
       "patch": "docs/compatibility/patches/hamt-sequence-into.json"
+    },
+    {
+      "id": "runtime:ISet:700",
+      "source-sha256": "fc214ee9f3f4fca4632116e9f28e3d51a2f540c2acceecf8d63f0e4ea7845e6d",
+      "patch": null
+    },
+    {
+      "id": "runtime:ITransientSet:860",
+      "source-sha256": "ccae9ee350c3e7bbb71d98b0af1b5736d4f0a2cff9f9bf0a90e964175786d2e1",
+      "patch": null
+    },
+    {
+      "id": "runtime:KeySeq:9107",
+      "source-sha256": "14c23f92f53ef1429618b287af6ccd72a8e313d45c284dfa5c96d9943759fa7d",
+      "patch": null
+    },
+    {
+      "id": "runtime:keys:9175",
+      "source-sha256": "c4d97d8eb33f33da3e2d54f524b14a08e32dec9dad6797aa26d57ef733a7b0e9",
+      "patch": "docs/compatibility/patches/hash-set-keys.json"
+    },
+    {
+      "id": "runtime:set?:2231",
+      "source-sha256": "d97c196e3627687ce08a51ad074df3c49630f949f46984905b871474eb7af6b5",
+      "patch": "docs/compatibility/patches/hash-set-setpredicate.json"
+    },
+    {
+      "id": "runtime:HashSetIter:9307",
+      "source-sha256": "7a3b478e51bf5267327f225f8f4fb411c105243a9ef89e4554aaf43b391cc085",
+      "patch": "docs/compatibility/patches/hash-set-HashSetIter.json"
+    },
+    {
+      "id": "runtime:PersistentHashSet:9317",
+      "source-sha256": "223ce116c5b9eb5ff3fa294781d76e048edec6215cb6bc467177ece4ac86dfe5",
+      "patch": "docs/compatibility/patches/hash-set-PersistentHashSet.json"
+    },
+    {
+      "id": "runtime:TransientHashSet:9445",
+      "source-sha256": "5f3d2b88ceb343ed24e5087e8763b2d64849fd7dcb3de835e1184abae8a8663a",
+      "patch": null
+    },
+    {
+      "id": "runtime:set:9593",
+      "source-sha256": "669f3fa354e60fd6df1c75d7b55b42e7037769ffbf14efed3ffd279e88657e7d",
+      "patch": "docs/compatibility/patches/hash-set-set.json"
+    },
+    {
+      "id": "runtime:hash-set:9612",
+      "source-sha256": "14c2afd4a49fa0c089e0d030fd8e0a4a185a2f5883622148a6c4bfe7aa6fcd2f",
+      "patch": "docs/compatibility/patches/hash-set-hash-set.json"
+    },
+    {
+      "id": "runtime:disj:2196",
+      "source-sha256": "e02df8819ade280a6cb218595af4ff0806065805458e0af587be319675157d42",
+      "patch": "docs/compatibility/patches/hash-set-disj.json"
+    },
+    {
+      "id": "runtime:disj!:4040",
+      "source-sha256": "b9c22b181d6a9e76ceeb9608b3f8e53d1f850a830a5e1125eea753bbde8b8396",
+      "patch": "docs/compatibility/patches/hash-set-disjbang.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "356bb5c819fdc2c6a6c337a1ecd9d8898d69471bdbd38376e9b47f9015780cab"
+      "sha256": "9f8426ed85331627fb12823d389e824487bfb2cc6d54c6c0d98f09ce18a6e45f"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "f25a6a1d6cf1b680ccec84b29e46006bdaa6b24f1428c75cce0ff400bfbe1c6b"
+      "sha256": "2808c764c2500c1c9f2e18a924930272ac460fdbe8ecd4022fce4f458c71b22d"
     }
   }
 }

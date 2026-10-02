@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "3dc95e66c10844222203d7d1d6d5aff2c3a3aafdaf1118247564e57aae02e200",
-  "reviews-sha256": "578762f24040fb40da75a8170c2cf19c2d31f5e13c27d86fb6d70c1ab8457738",
+  "recipe-sha256": "2049ebc98200b1c3ae515ed6a1d5fbebd86a56a47c56d1af35fd4564f73677a1",
+  "reviews-sha256": "dbd1989da33491eff22f800fe79ac0cffa4bfecba626d80a949f105f330b1c53",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -7619,16 +7619,376 @@
         "crates/suss-cli/tests/compiled_macro_hamt_sequences.rs",
         "tests/oracle/hamt-sequence-cases.json"
       ]
+    },
+    {
+      "id": "runtime:ISet:700",
+      "name": "ISet",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 700,
+      "end-line": 703,
+      "byte-start": 19804,
+      "byte-end": 19972,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "fc214ee9f3f4fca4632116e9f28e3d51a2f540c2acceecf8d63f0e4ea7845e6d",
+      "extracted": "extracted/0245.cljs",
+      "extracted-sha256": "b3cf973424598360fbc4f4394b9284a45b7f5f74f2c4d477d04a29b1be0f89b8",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "fc214ee9f3f4fca4632116e9f28e3d51a2f540c2acceecf8d63f0e4ea7845e6d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical HAMT/map/sequence and transient protocols",
+        "rooted native Error predicate; pending generic ES6 helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_sets.rs",
+        "crates/suss-cli/tests/portable_error_predicate.rs"
+      ]
+    },
+    {
+      "id": "runtime:ITransientSet:860",
+      "name": "ITransientSet",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 860,
+      "end-line": 863,
+      "byte-start": 25955,
+      "byte-end": 26111,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "ccae9ee350c3e7bbb71d98b0af1b5736d4f0a2cff9f9bf0a90e964175786d2e1",
+      "extracted": "extracted/0246.cljs",
+      "extracted-sha256": "7e5a5dc564f397546c1139aa6daf6ee60c40472dc98d5597b38c598b98321139",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "ccae9ee350c3e7bbb71d98b0af1b5736d4f0a2cff9f9bf0a90e964175786d2e1",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical HAMT/map/sequence and transient protocols",
+        "rooted native Error predicate; pending generic ES6 helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_sets.rs",
+        "crates/suss-cli/tests/portable_error_predicate.rs"
+      ]
+    },
+    {
+      "id": "runtime:KeySeq:9107",
+      "name": "KeySeq",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9107,
+      "end-line": 9171,
+      "byte-start": 254953,
+      "byte-end": 256304,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "14c23f92f53ef1429618b287af6ccd72a8e313d45c284dfa5c96d9943759fa7d",
+      "extracted": "extracted/0247.cljs",
+      "extracted-sha256": "616151982a308fac9a77f8d6a46c918d05b5533281e8b0a6c57a04f85a114f5a",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "14c23f92f53ef1429618b287af6ccd72a8e313d45c284dfa5c96d9943759fa7d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical HAMT/map/sequence and transient protocols",
+        "rooted native Error predicate; pending generic ES6 helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_sets.rs",
+        "crates/suss-cli/tests/portable_error_predicate.rs"
+      ]
+    },
+    {
+      "id": "runtime:keys:9175",
+      "name": "keys",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9175,
+      "end-line": 9179,
+      "byte-start": 256329,
+      "byte-end": 256475,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c4d97d8eb33f33da3e2d54f524b14a08e32dec9dad6797aa26d57ef733a7b0e9",
+      "extracted": "extracted/0248.cljs",
+      "extracted-sha256": "4a7fef8b92571dd1fcf37eab5dba1be3427f540c90f4b22c937a89d549e876fd",
+      "patch": "docs/compatibility/patches/hash-set-keys.json",
+      "patch-sha256": "c780e4c8f17d6a2a55f5d67aa211dcedea13d1a138ce6a290e7e9215ecada647",
+      "adapted-form-sha256": "900b4f7760f2218c19acf09da09102b29ed9182c338cbaf9cdd1fa108c254518",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical HAMT/map/sequence and transient protocols",
+        "rooted native Error predicate; pending generic ES6 helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_sets.rs",
+        "crates/suss-cli/tests/portable_error_predicate.rs"
+      ]
+    },
+    {
+      "id": "runtime:set?:2231",
+      "name": "set?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2231,
+      "end-line": 2236,
+      "byte-start": 61199,
+      "byte-end": 61303,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "d97c196e3627687ce08a51ad074df3c49630f949f46984905b871474eb7af6b5",
+      "extracted": "extracted/0249.cljs",
+      "extracted-sha256": "7697c1cea82466d5231a66e773b435adb2505db11653eac818292ad597b23400",
+      "patch": "docs/compatibility/patches/hash-set-setpredicate.json",
+      "patch-sha256": "6ebd7aaec9038b5c76cb7e2384c34650f8019f00389f57a6b8cac581fed004d6",
+      "adapted-form-sha256": "fb845bc1b591bc4af4ba8d3c10793487ecf37644098262b5e48756a6542f122c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical HAMT/map/sequence and transient protocols",
+        "rooted native Error predicate; pending generic ES6 helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_sets.rs",
+        "crates/suss-cli/tests/portable_error_predicate.rs"
+      ]
+    },
+    {
+      "id": "runtime:HashSetIter:9307",
+      "name": "HashSetIter",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9307,
+      "end-line": 9315,
+      "byte-start": 259610,
+      "byte-end": 259852,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "7a3b478e51bf5267327f225f8f4fb411c105243a9ef89e4554aaf43b391cc085",
+      "extracted": "extracted/0250.cljs",
+      "extracted-sha256": "a6ef1cde7d22fd1bbab378f0d8f59ccc824992f2c4ebe73a9158facf4a4b3f57",
+      "patch": "docs/compatibility/patches/hash-set-HashSetIter.json",
+      "patch-sha256": "dcd501c993ba199c71104b1e30aaea37a2b995e7ce97433610b419dd68bb91ac",
+      "adapted-form-sha256": "9faccd6aedfa32f48903fe7fadbfa72eaa764cbfb6b1503c9956f1df2342827d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical HAMT/map/sequence and transient protocols",
+        "rooted native Error predicate; pending generic ES6 helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_sets.rs",
+        "crates/suss-cli/tests/portable_error_predicate.rs"
+      ]
+    },
+    {
+      "id": "runtime:PersistentHashSet:9317",
+      "name": "PersistentHashSet",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9317,
+      "end-line": 9405,
+      "byte-start": 259854,
+      "byte-end": 261775,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "223ce116c5b9eb5ff3fa294781d76e048edec6215cb6bc467177ece4ac86dfe5",
+      "extracted": "extracted/0251.cljs",
+      "extracted-sha256": "1a33fde1ed706853f81765fa28e56b8010da627ab67cfa0c03426843bd533616",
+      "patch": "docs/compatibility/patches/hash-set-PersistentHashSet.json",
+      "patch-sha256": "d5e01b29c0b48d5f9531e7b860a510b5bf05bc46a11ea5a8409e1631d7b53d74",
+      "adapted-form-sha256": "99860c53adde625a4d902e41a01c9114988f63623391b1a15f05b3abc8605e9a",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical HAMT/map/sequence and transient protocols",
+        "rooted native Error predicate; pending generic ES6 helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_sets.rs",
+        "crates/suss-cli/tests/portable_error_predicate.rs"
+      ]
+    },
+    {
+      "id": "runtime:TransientHashSet:9445",
+      "name": "TransientHashSet",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9445,
+      "end-line": 9480,
+      "byte-start": 263186,
+      "byte-end": 264048,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5f3d2b88ceb343ed24e5087e8763b2d64849fd7dcb3de835e1184abae8a8663a",
+      "extracted": "extracted/0252.cljs",
+      "extracted-sha256": "0827371e3f7095d8da09ab17870fd44c2db5b88b6bfce0ff8764575d329902f5",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "5f3d2b88ceb343ed24e5087e8763b2d64849fd7dcb3de835e1184abae8a8663a",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical HAMT/map/sequence and transient protocols",
+        "rooted native Error predicate; pending generic ES6 helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_sets.rs",
+        "crates/suss-cli/tests/portable_error_predicate.rs"
+      ]
+    },
+    {
+      "id": "runtime:set:9593",
+      "name": "set",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9593,
+      "end-line": 9610,
+      "byte-start": 266545,
+      "byte-end": 267053,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "669f3fa354e60fd6df1c75d7b55b42e7037769ffbf14efed3ffd279e88657e7d",
+      "extracted": "extracted/0253.cljs",
+      "extracted-sha256": "fc089db96d8ac24be6fd60b108bec126e72f785bf9871ea16cef8c2b1f08799b",
+      "patch": "docs/compatibility/patches/hash-set-set.json",
+      "patch-sha256": "a773370b4613709c9eae58b0434e389821b45cbb88c9e537f7f53fe56f6c608a",
+      "adapted-form-sha256": "128e6e67186a2cffd9473ee261ed89d7e4c52327a7536389592a8621292be47f",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical HAMT/map/sequence and transient protocols",
+        "rooted native Error predicate; pending generic ES6 helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_sets.rs",
+        "crates/suss-cli/tests/portable_error_predicate.rs"
+      ]
+    },
+    {
+      "id": "runtime:hash-set:9612",
+      "name": "hash-set",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9612,
+      "end-line": 9616,
+      "byte-start": 267055,
+      "byte-end": 267214,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "14c2afd4a49fa0c089e0d030fd8e0a4a185a2f5883622148a6c4bfe7aa6fcd2f",
+      "extracted": "extracted/0254.cljs",
+      "extracted-sha256": "01dcda1ac9a84ffe17946eb018a9f81a7fef2fa5c5beb9666ebfb97c7d0ee615",
+      "patch": "docs/compatibility/patches/hash-set-hash-set.json",
+      "patch-sha256": "4e11402685ea8710d87d97fd9353c85d9ca2bdb3641f274d8516827e61ea7da8",
+      "adapted-form-sha256": "6144d3ff7209e3091caf3fcc46ccfbd8266ee3b802b6d86e6fb10be2d6b85f7c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical HAMT/map/sequence and transient protocols",
+        "rooted native Error predicate; pending generic ES6 helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_sets.rs",
+        "crates/suss-cli/tests/portable_error_predicate.rs"
+      ]
+    },
+    {
+      "id": "runtime:disj:2196",
+      "name": "disj",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2196,
+      "end-line": 2208,
+      "byte-start": 60456,
+      "byte-end": 60796,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "e02df8819ade280a6cb218595af4ff0806065805458e0af587be319675157d42",
+      "extracted": "extracted/0255.cljs",
+      "extracted-sha256": "8e53bd4cf07093623313b99021f0b3d5e4e8302986ffca800b30292adc219a58",
+      "patch": "docs/compatibility/patches/hash-set-disj.json",
+      "patch-sha256": "49b1016dc581ab94ddc3b211ea738c0be1faaa7b2c74b9b9bbffd4bef478f18e",
+      "adapted-form-sha256": "b850ae9f1ce50000832d21e1f20ea48a7a4ce3ca53e28b4a5a855288379d2d0a",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical HAMT/map/sequence and transient protocols",
+        "rooted native Error predicate; pending generic ES6 helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_sets.rs",
+        "crates/suss-cli/tests/portable_error_predicate.rs"
+      ]
+    },
+    {
+      "id": "runtime:disj!:4040",
+      "name": "disj!",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4040,
+      "end-line": 4049,
+      "byte-start": 105950,
+      "byte-end": 106252,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b9c22b181d6a9e76ceeb9608b3f8e53d1f850a830a5e1125eea753bbde8b8396",
+      "extracted": "extracted/0256.cljs",
+      "extracted-sha256": "f4153e236906151c0b8eb837b71b6b63c69ffcb3c8e1f9ff09cf7bbf6a82f440",
+      "patch": "docs/compatibility/patches/hash-set-disjbang.json",
+      "patch-sha256": "000061cdaa333bd0f4e8e906267acd79c5dd4999bf45025c95594a413dad2173",
+      "adapted-form-sha256": "5e17581e37737cc97eee64d110b3f512d79b34d7502ff5cb961e6fd610948be7",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical HAMT/map/sequence and transient protocols",
+        "rooted native Error predicate; pending generic ES6 helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_sets.rs",
+        "crates/suss-cli/tests/portable_error_predicate.rs"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "356bb5c819fdc2c6a6c337a1ecd9d8898d69471bdbd38376e9b47f9015780cab"
+      "sha256": "9f8426ed85331627fb12823d389e824487bfb2cc6d54c6c0d98f09ce18a6e45f"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "f25a6a1d6cf1b680ccec84b29e46006bdaa6b24f1428c75cce0ff400bfbe1c6b"
+      "sha256": "2808c764c2500c1c9f2e18a924930272ac460fdbe8ecd4022fce4f458c71b22d"
     }
   },
   "files": {
@@ -7879,6 +8239,18 @@
     "extracted/0242.cljs": "7ac863aea1b87b9fbe682b7b84e725ce00cbbcdfe57c4455badfa559d5463240",
     "extracted/0243.cljs": "82b8d0d7dbd46cc776d577f4e3c6e638129f662807372a0b70b263dad06003de",
     "extracted/0244.cljs": "3f120dc92f4356542e2cef5dd244b48281d42165ec0318a30bd42194c98763f8",
-    "suss/core.sus": "f17133689074d7317680178b2561ab57006cbcd1f64f8bd4e8e9a1f46427b2d1"
+    "extracted/0245.cljs": "b3cf973424598360fbc4f4394b9284a45b7f5f74f2c4d477d04a29b1be0f89b8",
+    "extracted/0246.cljs": "7e5a5dc564f397546c1139aa6daf6ee60c40472dc98d5597b38c598b98321139",
+    "extracted/0247.cljs": "616151982a308fac9a77f8d6a46c918d05b5533281e8b0a6c57a04f85a114f5a",
+    "extracted/0248.cljs": "4a7fef8b92571dd1fcf37eab5dba1be3427f540c90f4b22c937a89d549e876fd",
+    "extracted/0249.cljs": "7697c1cea82466d5231a66e773b435adb2505db11653eac818292ad597b23400",
+    "extracted/0250.cljs": "a6ef1cde7d22fd1bbab378f0d8f59ccc824992f2c4ebe73a9158facf4a4b3f57",
+    "extracted/0251.cljs": "1a33fde1ed706853f81765fa28e56b8010da627ab67cfa0c03426843bd533616",
+    "extracted/0252.cljs": "0827371e3f7095d8da09ab17870fd44c2db5b88b6bfce0ff8764575d329902f5",
+    "extracted/0253.cljs": "fc089db96d8ac24be6fd60b108bec126e72f785bf9871ea16cef8c2b1f08799b",
+    "extracted/0254.cljs": "01dcda1ac9a84ffe17946eb018a9f81a7fef2fa5c5beb9666ebfb97c7d0ee615",
+    "extracted/0255.cljs": "8e53bd4cf07093623313b99021f0b3d5e4e8302986ffca800b30292adc219a58",
+    "extracted/0256.cljs": "f4153e236906151c0b8eb837b71b6b63c69ffcb3c8e1f9ff09cf7bbf6a82f440",
+    "suss/core.sus": "dd17e6c2ac4adf2e9d25610e7a94b5b459860f56fd0eb6f5c2aec41afdb29a30"
   }
 }

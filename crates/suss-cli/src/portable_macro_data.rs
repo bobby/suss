@@ -19,12 +19,14 @@ enum Class {
     VectorNode,
     PersistentArrayMap,
     PersistentHashMap,
+    PersistentHashSet,
     BitmapIndexedNode,
     ArrayNode,
     HashCollisionNode,
     NodeSeq,
     ArrayNodeSeq,
     MapEntry,
+    KeySeq,
     PersistentArrayMapSeq,
     ChunkedSeq,
 }
@@ -52,12 +54,14 @@ impl FormBridge {
             ("VectorNode", Class::VectorNode),
             ("PersistentArrayMap", Class::PersistentArrayMap),
             ("PersistentHashMap", Class::PersistentHashMap),
+            ("PersistentHashSet", Class::PersistentHashSet),
             ("BitmapIndexedNode", Class::BitmapIndexedNode),
             ("ArrayNode", Class::ArrayNode),
             ("HashCollisionNode", Class::HashCollisionNode),
             ("NodeSeq", Class::NodeSeq),
             ("ArrayNodeSeq", Class::ArrayNodeSeq),
             ("MapEntry", Class::MapEntry),
+            ("KeySeq", Class::KeySeq),
             ("PersistentArrayMapSeq", Class::PersistentArrayMapSeq),
             ("ChunkedSeq", Class::ChunkedSeq),
         ] {
@@ -109,6 +113,7 @@ impl FormBridge {
             ("vector", "(.-fromArray suss.core/PersistentVector)"),
             ("hash-map", "(.-fromArrays suss.core/PersistentHashMap)"),
             ("empty-map", "(.-EMPTY suss.core/PersistentArrayMap)"),
+            ("empty-set", "(.-EMPTY suss.core/PersistentHashSet)"),
             ("empty-list", "(.-EMPTY suss.core/List)"),
             ("with-meta", "suss.core/with-meta"),
         ] {
@@ -160,6 +165,31 @@ impl FormBridge {
             let values = session.data_array(&values)?;
             session.invoke(&self.factories["hash-map"], &[&keys, &values])
         }
+    }
+    pub fn set_values(
+        &self,
+        session: &mut Session,
+        items: &[SessionValue],
+    ) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        if items.is_empty() { return Ok(self.factories["empty-set"].clone()); }
+        let nil = self.scalar(session, &suss_compile::portable::hir::Literal::Nil)?;
+        self.set_with_metadata(session, items, &nil)
+    }
+    fn set_with_metadata(
+        &self,
+        session: &mut Session,
+        items: &[SessionValue],
+        metadata: &SessionValue,
+    ) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        let nil = self.scalar(session, &suss_compile::portable::hir::Literal::Nil)?;
+        let entries = items.iter().map(|item| (item.clone(), nil.clone())).collect::<Vec<_>>();
+        let map = self.map_values(session, &entries)?;
+        session.data_construct(
+            &self.roots[self.constructors[&Class::PersistentHashSet]],
+            &[metadata, &map, &nil],
+        )
     }
     pub fn vector_values(
         &self,
@@ -293,6 +323,7 @@ impl FormBridge {
             .units
             .checked_sub(units)
             .ok_or_else(|| failure("Macro form construction exceeds UTF-16 storage bound"))?;
+        let mut set_items = None;
         let value = match &form.kind {
             Kind::Nil => self.scalar(session, &Literal::Nil)?,
             Kind::Bool(value) => self.scalar(session, &Literal::Bool(*value))?,
@@ -332,10 +363,18 @@ impl FormBridge {
                 }
                 self.map_values(session, &entries)?
             }
-            Kind::Set(_) => {
-                return Err(failure(
-                    "Native macro set data requires persistent set support",
-                ));
+            Kind::Set(items) => {
+                let items = items.iter()
+                    .map(|item| self.form_value(session, item, depth + 1, budget))
+                    .collect::<Result<Vec<_>, _>>()?;
+                if form.metadata.is_empty() {
+                    self.set_values(session, &items)?
+                } else {
+                    // Metadata reconstruction must use the captured class root:
+                    // retained -with-meta code resolves its constructor global.
+                    set_items = Some(items);
+                    self.scalar(session, &Literal::Nil)?
+                }
             }
             Kind::Conditional(_) | Kind::Discard(_) | Kind::Prefix { .. } => {
                 return Err(failure(
@@ -360,7 +399,11 @@ impl FormBridge {
             kind: Kind::Map(pairs),
         };
         let metadata = self.form_value(session, &metadata, depth + 1, budget)?;
-        session.invoke(&self.factories["with-meta"], &[&value, &metadata])
+        if let Some(items) = set_items {
+            self.set_with_metadata(session, &items, &metadata)
+        } else {
+            session.invoke(&self.factories["with-meta"], &[&value, &metadata])
+        }
     }
     /// Original result locations are not encoded in runtime values. Attribute
     /// expansion data to the supplied macro call site; never invent source bytes.
@@ -550,6 +593,7 @@ fn decode(
                 Class::PersistentVector
                 | Class::PersistentArrayMap
                 | Class::PersistentHashMap
+                | Class::PersistentHashSet
                 | Class::NodeSeq
                 | Class::ArrayNodeSeq
                 | Class::List
@@ -557,6 +601,7 @@ fn decode(
                 | Class::EmptyList => Some(0),
                 Class::IndexedSeq | Class::PersistentArrayMapSeq => Some(2),
                 Class::ChunkedSeq => Some(4),
+                Class::KeySeq => Some(1),
                 _ => None,
             };
             if let Some(value) = slot.and_then(|index| data.get(index)) {
@@ -602,6 +647,28 @@ fn decode(
                 Class::PersistentHashMap => {
                     Kind::Map(hash_map(store, &data, classes, span, depth, budget)?)
                 }
+                Class::PersistentHashSet => {
+                    if data.len() != 3 {
+                        return Err(error("Invalid persistent hash set field layout"));
+                    }
+                    let (map_class, map_data) = object(store, &data[1], classes)?;
+                    let entries = match map_class {
+                        Class::PersistentHashMap => hash_map_pairs(store, &map_data, classes, budget)?,
+                        Class::PersistentArrayMap => {
+                            if map_data.len() != 4 { return Err(error("Invalid set array map layout")); }
+                            let count = integer(store, &map_data[1])?;
+                            let entries = source_elements(store, &map_data[2], classes)?;
+                            if entries.len() != count * 2 || count > budget.nodes {
+                                return Err(error("Set count disagrees with bounded array map storage"));
+                            }
+                            entries
+                        }
+                        _ => return Err(error("Set needs a canonical persistent backing map")),
+                    };
+                    Kind::Set(entries.chunks_exact(2)
+                        .map(|pair| decode(store, &pair[0], classes, span, depth + 1, budget))
+                        .collect::<wasmtime::Result<Vec<_>>>()?)
+                }
                 Class::BitmapIndexedNode | Class::ArrayNode | Class::HashCollisionNode => {
                     return Err(error("Hash trie nodes are not macro syntax"));
                 }
@@ -621,6 +688,13 @@ fn decode(
                 | Class::NodeSeq
                 | Class::ArrayNodeSeq => {
                     Kind::List(sequence(store, value, classes, span, depth, budget)?)
+                }
+                Class::KeySeq => {
+                    if data.len() != 2 { return Err(error("Invalid key sequence field layout")); }
+                    Kind::List(map_sequence_pairs(store, &data[0], classes, 0, budget)?
+                        .chunks_exact(2)
+                        .map(|pair| decode(store, &pair[0], classes, span, depth + 1, budget))
+                        .collect::<wasmtime::Result<Vec<_>>>()?)
                 }
                 Class::VectorNode => return Err(error("Vector trie nodes are not macro syntax")),
                 Class::SourceArray => return Err(error("Raw source arrays are not macro syntax")),
@@ -684,6 +758,14 @@ fn sequence(
                 }
                 items.push(decode(store, &data[1], classes, span, depth + 1, budget)?);
                 cursor = data[2].clone();
+            }
+            Class::KeySeq => {
+                if data.len() != 2 { return Err(error("Invalid key sequence field layout")); }
+                if !first_segment { metadata(store, &data[1], classes, span, depth, budget)?; }
+                for pair in map_sequence_pairs(store, &data[0], classes, 0, budget)?.chunks_exact(2) {
+                    items.push(decode(store, &pair[0], classes, span, depth + 1, budget)?);
+                }
+                break;
             }
             Class::NodeSeq | Class::ArrayNodeSeq => {
                 if data.len() != 5 {
@@ -1052,8 +1134,25 @@ fn hash_map(
     if data.len() != 6 {
         return Err(error("Invalid persistent hash map field layout"));
     }
+    if integer(store, &data[1])? > budget.nodes / 2 {
+        return Err(error("Hash map exceeds bounded pair storage"));
+    }
+    hash_map_pairs(store, data, classes, budget)?
+        .iter()
+        .map(|entry| decode(store, entry, classes, span, depth + 1, budget))
+        .collect()
+}
+fn hash_map_pairs(
+    store: &mut StoreContextMut<'_, ()>,
+    data: &[Val],
+    classes: &BTreeMap<i64, Class>,
+    budget: &mut Budget,
+) -> wasmtime::Result<Vec<Val>> {
+    if data.len() != 6 {
+        return Err(error("Invalid persistent hash map field layout"));
+    }
     let count = integer(store, &data[1])?;
-    if count > budget.nodes / 2 {
+    if count > budget.nodes {
         return Err(error("Hash map exceeds bounded pair storage"));
     }
     let has_nil = match sentinel(store, &data[3])? {
@@ -1075,10 +1174,79 @@ fn hash_map(
     if pairs.len() != count * 2 {
         return Err(error("Hash map count disagrees with trie storage"));
     }
-    pairs
-        .iter()
-        .map(|entry| decode(store, entry, classes, span, depth + 1, budget))
-        .collect()
+    Ok(pairs)
+}
+// Canonical map cursors expose keys without interpreting discarded values or
+// counting their private entry vectors as source nesting. Cursor recursion has
+// its own bound, independent of reader nesting.
+fn map_sequence_pairs(
+    store: &mut StoreContextMut<'_, ()>,
+    value: &Val,
+    classes: &BTreeMap<i64, Class>,
+    cursor_depth: usize,
+    budget: &mut Budget,
+) -> wasmtime::Result<Vec<Val>> {
+    if cursor_depth >= 64 { return Err(error("Key sequence cursor nesting exceeds 64")); }
+    if nil(store, value)? { return Ok(Vec::new()); }
+    spend(budget)?;
+    let (class, data) = object(store, value, classes)?;
+    let mut pairs = Vec::new();
+    match class {
+        Class::PersistentArrayMapSeq => {
+            if data.len() != 3 { return Err(error("Invalid array map key cursor layout")); }
+            let index = integer(store, &data[1])?;
+            let entries = source_elements(store, &data[0], classes)?;
+            if entries.len() % 2 != 0 || index % 2 != 0 || index >= entries.len() {
+                return Err(error("Invalid array map key cursor range"));
+            }
+            pairs.extend_from_slice(&entries[index..]);
+        }
+        Class::NodeSeq | Class::ArrayNodeSeq => {
+            if data.len() != 5 { return Err(error("Invalid hash key cursor layout")); }
+            let nodes = source_elements(store, &data[1], classes)?;
+            let index = integer(store, &data[2])?;
+            let is_array = matches!(class, Class::ArrayNodeSeq);
+            if index > nodes.len() || (is_array && nodes.len() != 32)
+                || (!is_array && (nodes.len() % 2 != 0 || index % 2 != 0)) {
+                return Err(error("Invalid hash key cursor range"));
+            }
+            if !absent(store, &data[3])? {
+                let current = map_sequence_pairs(store, &data[3], classes, cursor_depth + 1, budget)?;
+                if current.is_empty() { return Err(error("Hash key cursor retains an empty child")); }
+                pairs.extend(current);
+            } else if is_array || index == nodes.len() || absent(store, &nodes[index])? {
+                return Err(error("Hash key cursor has no current entry"));
+            }
+            if is_array {
+                for node in &nodes[index..] {
+                    if !absent(store, node)? { hash_node(store, node, classes, 0, budget, &mut pairs)?; }
+                }
+            } else {
+                for pair in nodes[index..].chunks_exact(2) {
+                    if absent(store, &pair[0])? {
+                        if !absent(store, &pair[1])? { hash_node(store, &pair[1], classes, 0, budget, &mut pairs)?; }
+                    } else { pairs.extend_from_slice(pair); }
+                    if pairs.len() > budget.nodes { return Err(error("Key cursor exceeds bounded pair storage")); }
+                }
+            }
+        }
+        Class::List | Class::Cons => {
+            let expected = if matches!(class, Class::List) { 5 } else { 4 };
+            if data.len() != expected { return Err(error("Invalid key cursor list layout")); }
+            let (entry_class, entry) = object(store, &data[1], classes)?;
+            if !matches!(entry_class, Class::MapEntry) || entry.len() != 3 {
+                return Err(error("Key cursor list needs canonical map entries"));
+            }
+            pairs.extend_from_slice(&entry[..2]);
+            pairs.extend(map_sequence_pairs(store, &data[2], classes, cursor_depth + 1, budget)?);
+        }
+        Class::EmptyList => {
+            if data.len() != 1 { return Err(error("Invalid empty key cursor layout")); }
+        }
+        _ => return Err(error("Key sequence needs a canonical map cursor")),
+    }
+    if pairs.len() > budget.nodes { return Err(error("Key cursor exceeds bounded pair storage")); }
+    Ok(pairs)
 }
 fn bitmap(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u32> {
     let data = fields(store, value, 1)?;

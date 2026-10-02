@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "14c2afd4a49fa0c089e0d030fd8e0a4a185a2f5883622148a6c4bfe7aa6fcd2f",
+  "replacement": "(def hash-set\n \"Returns a new hash set with supplied keys.  Any equal keys are\n  handled as if by repeated uses of conj.\"\n(fn ([] #{})\n  ([& keys] (set keys))))",
+  "rationale": "Complete pinned set/KeySeq declaration retained. Explicit defn/when-let/if-let and known nonchunked set forEach adapters preserve order and branches. The reduce-kv callback accepts its real three native operands; unused arguments remain unused. Typed Error catching uses rooted native Error identity and rethrows other payloads. Error constructors use the existing typed adapter. Full native execution, fresh pinned comparison, generic ES6 interfaces and M3 acceptance remain pending."
+}

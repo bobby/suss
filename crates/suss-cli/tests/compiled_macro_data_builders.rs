@@ -282,14 +282,12 @@ fn native_macro_form_transport_is_bounded_data_and_adds_no_resident_code() {
                 .to_string()
                 .contains("UTF-16")
         );
-        let unsupported = form(Kind::Set(vec![]));
-        assert!(
-            bridge
-                .quote(&mut session, unsupported)
-                .unwrap_err()
-                .to_string()
-                .contains("persistent set")
-        );
+        let empty_set = bridge.quote(&mut session, form(Kind::Set(vec![]))).unwrap();
+        session.collect().unwrap();
+        let decoded = bridge.read(&mut session, &empty_set, 100..120).unwrap();
+        assert_eq!(decoded.span, 100..120);
+        assert!(matches!(decoded.kind, Kind::Set(items) if items.is_empty()));
+        drop(empty_set);
         session.collect().unwrap();
         assert_eq!(
             session.stats().resident_fragments,

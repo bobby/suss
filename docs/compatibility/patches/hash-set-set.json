@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "669f3fa354e60fd6df1c75d7b55b42e7037769ffbf14efed3ffd279e88657e7d",
+  "replacement": "(def set\n \"Returns a set of the distinct elements of coll.\"\n(fn [coll]\n  (if (set? coll)\n    (with-meta coll nil)\n    (let [in (seq coll)]\n      (cond\n        (nil? in) #{}\n\n        (and (instance? IndexedSeq in) (zero? (.-i in)))\n        (.createAsIfByAssoc PersistentHashSet (.-arr in))\n\n        :else\n        (loop [^not-native in  in\n               ^not-native out (-as-transient #{})]\n          (if-not (nil? in)\n            (recur (next in) (-conj! out (-first in)))\n            (persistent! out))))))))",
+  "rationale": "Complete pinned set/KeySeq declaration retained. Explicit defn/when-let/if-let and known nonchunked set forEach adapters preserve order and branches. The reduce-kv callback accepts its real three native operands; unused arguments remain unused. Typed Error catching uses rooted native Error identity and rethrows other payloads. Error constructors use the existing typed adapter. Full native execution, fresh pinned comparison, generic ES6 interfaces and M3 acceptance remain pending."
+}

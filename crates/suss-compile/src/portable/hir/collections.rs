@@ -199,7 +199,7 @@ impl Analyzer<'_> {
         if items.is_empty() {
             return self.collection_property(form, "PersistentHashSet", "EMPTY");
         }
-        if !distinct_constants(&items.iter().collect::<Vec<_>>()) {
+        if items.len() > 8 || !distinct_constants(&items.iter().collect::<Vec<_>>()) {
             let mut entries = Vec::new();
             for item in items {
                 entries.push(self.form(item)?);

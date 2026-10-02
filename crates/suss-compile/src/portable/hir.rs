@@ -308,6 +308,7 @@ pub enum Nominal {
     NativeObjectSet,
     NativeObjectStrictSet,
     LanguageError,
+    IsLanguageError,
     ObjectSet,
     ObjectInvoke,
     Key(usize),
@@ -321,6 +322,7 @@ impl Nominal {
     pub fn result(self) -> Type {
         match self {
             Self::IsClosure
+            | Self::IsLanguageError
             | Self::Instance
             | Self::Satisfies
             | Self::NativeSatisfies
@@ -334,7 +336,7 @@ impl Nominal {
             && match self {
                 Self::Array => true,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
-                Self::LanguageError | Self::IsClosure => count == 1,
+                Self::LanguageError | Self::IsLanguageError | Self::IsClosure => count == 1,
                 Self::BindCallable => count == 2,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
@@ -1489,6 +1491,7 @@ impl Analyzer<'_> {
                 "object-factory" => Some(Nominal::NativeObjectFactory),
                 "object-default-prototype" => Some(Nominal::NativeObjectDefaultPrototype),
                 "error" => Some(Nominal::LanguageError),
+                "error?" => Some(Nominal::IsLanguageError),
                 "object-get" => Some(Nominal::NativeObjectGet),
                 "object-set" => Some(Nominal::NativeObjectSet),
                 "object-set-strict" => Some(Nominal::NativeObjectStrictSet),

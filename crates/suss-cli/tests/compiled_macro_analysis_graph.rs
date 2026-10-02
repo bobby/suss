@@ -296,3 +296,14 @@ fn native_analysis_graph_retains_staged_definition_and_function_syntax() {
         assert_eq!(session.inspect(&result, |store, value| Ok(value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32())).unwrap(), 4);
     }
 }
+
+#[test]
+fn native_analysis_graph_namespace_exclusions_are_canonical_sets() {
+    let mut host = Inspect::new("(fn [env] (let [excludes (get (get env :ns) :excludes)] [(set? excludes) (count excludes) (contains? excludes 'identity)]))");
+    let mut session = Session::new_repl().unwrap();
+    session.eval_with_macros("(ns exclusions (:refer-clojure :exclude [identity])) (inspect-graph)", &mut host).unwrap();
+    let Kind::Vector(values) = &host.calls[0].kind else { panic!("namespace exclusions") };
+    assert!(matches!(values[0].kind, Kind::Bool(true)));
+    assert!(matches!(values[1].kind, Kind::Number(1.0)));
+    assert!(matches!(values[2].kind, Kind::Bool(true)));
+}

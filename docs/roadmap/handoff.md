@@ -10879,3 +10879,228 @@ Next: complete portable namespace/declaration and AST inference data and real
 persistent set transport, then actual implicit &env and fresh oracle comparison.
 No new PR until transport is reviewable; require independent review and exact-head
 CI. Existing PR146/147 remain open, reviewed and green. No issue or M3 completion.
+
+
+### Pending native Error predicate prerequisite
+
+While full baseline session59345 for committed source9bec866 remains live,
+prepared an additive private `suss.bootstrap/error?` lowering and runtime export
+`language-error-is : (Value) -> i32`. It checks rooted canonical Error descriptor
+identity, including native builtin errors and canonical ExceptionInfo. It rejects
+structurally identical payloads with a copied descriptor. No recursive ABI type or
+public shipped core function is changed. This prerequisite is intended for a
+faithful retained PersistentHashSet typed Error catch adapter: catch default,
+return false only for actual Errors, and rethrow every other payload unchanged.
+The set source is not yet imported, and this does not establish general JS Error
+class/prototype compatibility.
+
+UNVALIDATED and uncommitted: compiler/runtime changes plus focused source test
+`crates/suss-cli/tests/portable_error_predicate.rs` and ABI descriptor-forgery/GC
+regression appended to `crates/suss-compile/tests/runtime_abi.rs`. Do not claim
+success or push these edits until focused execution. Keep one heavy job at a time.
+
+Next immediate action: poll existing baseline59345 until authoritative terminal
+status (log `/private/tmp/suss-rich-env-staged-full.log`); do not restart for an
+observation timeout. That run uses compiled source9bec866, not these pending edits.
+Then run focused predicate and ABI regressions, prove failure against the prior
+implementation, repair findings and record results. Continue retained ISet,
+ITransientSet, KeySeq/keys, PersistentHashSet/TransientHashSet and canonical native
+set data construction/decoding, with actual pinned provenance, licenses and fresh
+oracle comparisons. Portable &env/schema and original M3 acceptance remain open.
+
+
+Pending predicate preparation: standalone rustfmt parsing of the five changed/new
+Rust files completed successfully without changing source; this is syntax-only,
+not compilation or execution evidence. A small Node probe loaded the already
+compiled, genuine pinned core runtime from
+`tests/oracle/out/rich-environment-cljs` (produced by the previous fresh rich
+oracle run). For Error, TypeError, RangeError, canonical ExceptionInfo, nil, number,
+empty map and ordinary function, actual `instanceof Error` results were exactly
+`[true,true,true,true,false,false,false,false]`. The generated core explicitly links
+ExceptionInfo.prototype to Error.prototype. This confirms the adapter must include
+canonical ExceptionInfo identity; it is not a newly recompiled oracle or native
+acceptance proof. Refresh/reproduce upstream evidence after the heavy baseline.
+
+
+Set port preparation remains unvalidated: twelve pinned source selections are in
+`/private/tmp/suss-set-import-selections.json`, review proposals in
+`/private/tmp/suss-set-import-reviews.edn`, forward declarations and four static
+initializer proposals in `/private/tmp/suss-set-forward-declarations.sus` and
+`/private/tmp/suss-set-initializers.sus`. Eight explicit patch JSON files are
+untracked under docs/compatibility/patches/hash-set-*. All adapted declaration
+identities/source hashes were validated using the production importer, and the
+four initializer proposals parsed with the inventory scanner. Active recipe,
+reviews overlay and generated core remain unchanged during baseline59345.
+
+Prepared (not executed) three native set regressions in
+`crates/suss-cli/tests/compiled_macro_sets.rs`: persistent versions/lookup/callable
+sets/equality/metadata, transient rejection after persistence, and canonical
+small/HAMT set transport through GC at 0/1/8/9/17/33/65 entries with unchanged
+residency. These tests require the actual set import and FormBridge set support;
+expect the current implementation to fail. Run before/after proof after the
+existing heavy baseline completes. Do not skip failures or claim acceptance.
+The explicit reduce-kv callback adapter accepts three native operands (its pinned
+anonymous helper names only %2); verify actual upstream extra-argument behavior.
+The forEach adaptation assumes the actual set's nonchunked KeySeq; verify source
+behavior, including scalar elements/destructuring errors. Generic ES6 helpers,
+printing/str_ error-message dependencies remain explicit pending source work.
+
+
+Additional pending set regression preserves textual effect order and stops later
+entries at the first throw, in both Stores (intentional documented unordered
+literal ordering variance). A second direct Node probe of the existing pinned
+runtime gave set equality true for #{1 2}/#{2 1}. Object forEach over that scalar
+set invoked the callback zero times and threw an actual Error with message
+"nth not supported on this type function Number() { [native code] }". Preserve that source behavior in the
+explicit destructuring adaptation; do not quietly replace it with a different
+ES6 callback contract. These probes use the previously compiled upstream runtime,
+not a freshly regenerated oracle or native acceptance result.
+
+
+Immediate focused commands after baseline59345 terminates, using the shared warm
+target and CARGO_BUILD_JOBS=2, no RUSTFLAGS override:
+
+* `cargo test --locked -p suss-cli --test portable_error_predicate -- --test-threads=2`
+* `cargo test --locked -p suss-compile --test runtime_abi
+  runtime_abi_language_error_predicate_uses_rooted_descriptor_identity_after_gc
+  -- --test-threads=2`
+
+Only after actual predicate proof, apply the staged set selections/reviews and
+loader inputs to the production recipe, update both loader SHA-256 hashes and run
+`python3 scripts/core_import.py` followed by `--check` and review/inventory gates.
+Then execute the new set regression before/after canonical FormBridge set and
+KeySeq support. Capture primary pinned results freshly after the native job ends.
+The transient regression now checks count, lookup and both callable arities before
+persistence, so post-persistence failure cannot be mistaken for permanently broken
+IFn or lookup support. A hash equality invariant is also prepared; it is not an
+exact pinned hash oracle. All pending changes remain uncommitted/unpushed.
+
+
+### User merged PR146 and PR147; retained sets under validation
+
+GitHub confirms PR146 merged at 2026-10-02T23:04:06Z (ec247c9), and
+PR147 at 23:04:07Z (83b24f7). Fetched origin/main is 83b24f7. Both had
+independent review and successful final-head CI before the user merged them.
+The rich-environment worktree still has uncommitted changes; do not rebase or
+replace those changes while aligning with main. No issue is complete.
+
+The required full baseline for committed 9bec866 terminated successfully:
+987 passed, 0 failed, 17 ignored across 102 groups. This does not validate the
+subsequent uncommitted set/Error changes. Focused native Error tests passed
+(source predicate 1/0/0, rooted descriptor forgery and GC ABI test 1/0/0).
+
+Applied twelve provenance-tracked pinned set/KeySeq selections and eight explicit
+adaptations, regenerated core, and verified 261 import files. Reviews remain
+in-progress (357 reviewed, 708 unassessed). Before importing, four executing set
+tests failed with unresolved PersistentHashSet. After import and canonical native
+set transport, all four passed. Added KeySeq function-valued map transport and
+namespace :excludes set tests: analysis graph 7/0/0. KeySeq stress initially hit
+the default operation fuel; explicit bounded 100 million fuel passed all five set
+tests. This is test budget evidence, not scheduler/cancellation acceptance.
+
+A sixth executing regression found nine-entry source set literals retained
+array-map backing storage (132 versus actual hash-map descriptor 155 in the same
+Store). Routing literals above eight entries through retained createAsIfByAssoc
+fixed the regression: 1/0/0 in both phases. Logs: /private/tmp/suss-sets-before-import.log,
+suss-sets-first-import-focus.log, suss-sets-graph-focus.log,
+suss-sets-second-focus.log and suss-set-literal-hamt-{before,final}.log.
+
+Next: freshly compile pinned set observations and compare independently decoded
+native values, broaden focused transport regression checks, and run the required
+full baseline for the final pending source. Generic ES6 iterator/printing and
+str_ error-message dependencies remain pending; KeySeq supports canonical map
+cursors, not arbitrary custom sequences. Actual implicit &env, complete portable
+schema/inference and original M3 acceptance remain open. No new PR until the
+rich-environment transport is reviewable; require independent review and final-head CI.
+
+
+Fresh set oracle attempt: the freshly compiled pinned ClojureScript run matched
+all 39 prepared scalar/vector observations exactly, but native comparison failed
+in both phases on empty-metadata and two keys cases due to unimported public
+empty/vec helpers. No pass is claimed for that native attempt. Revised the set
+method case to invoke actual -empty, and keys cases to decode the actual KeySeq
+directly rather than require vec. Public empty/vec remain explicit pending work;
+this focused corpus does not establish their support. Rerun fresh primary and
+native comparison against the revised source before claiming agreement.
+
+
+The corrected force-compiled set oracle completed successfully:
+`CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+sh scripts/test-set-data-oracle.sh`, log /private/tmp/suss-set-fresh-oracle-final.log.
+All 39 primary observations match exactly; independently decoded native values
+agree in Runtime and Macro Stores after GC (1/0/0). Production import and overlay
+checks also pass: 261 files; 357 reviewed, 708 unassessed.
+
+Additional retained-root regression first failed after nominal class redefinition:
+metadata reconstruction via captured with-meta still resolves a constructor
+global in its retained method. For metadata-bearing sets, FormBridge now builds
+through the captured PersistentHashSet class directly, with normalized metadata
+and rooted native map storage. The new test passes: old sets and KeySeq remain
+readable, canonical quote reconstruction survives redefinition, nil and duplicate
+keys and metadata are preserved, and forged classes/malformed storage fail after
+GC. No source transport fragments are compiled. First failure log:
+/private/tmp/suss-set-roots-focus.log; repaired suite:
+/private/tmp/suss-set-roots-final-focus.log (await terminal status before claiming
+complete suite success). This fix covers sets; it does not certify metadata
+reconstruction for every other class after redefinition.
+
+
+Repaired set suite terminated successfully: 7/0/0, plus native 39-case oracle
+1/0/0 in /private/tmp/suss-set-roots-final-focus.log. Required full baseline
+started as session73945, log /private/tmp/suss-retained-sets-full.log, command
+`CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2`. It is running; await its
+authoritative terminal status and count results before claiming full success.
+Keep one heavy job at a time; no RUSTFLAGS override. Pending source is uncommitted.
+
+
+Full baseline73945 terminated with exit101: native data builders 3 passed/1 failed.
+The failure at compiled_macro_data_builders.rs:289 was the previous unsupported
+empty-set assertion (`unwrap_err` on the now-successful canonical value). Earlier
+graph7 and binding-record7 suites passed. Replaced that stale assertion with an
+executing empty-set quote/GC/read round trip, preserving span and zero residency/
+external-handle growth checks and existing depth/width/UTF-16 failures. No full
+pending-source pass is claimed. Next: affected data-builder suite, then required
+full baseline; keep the failure log /private/tmp/suss-retained-sets-full.log.
+
+
+The corrected native macro bounds/data test terminated successfully (1/0/0):
+/private/tmp/suss-set-old-bound-regression.log. Required baseline restarted for
+this test repair, log /private/tmp/suss-retained-sets-full-final.log. Await the
+actual session terminal status before recording full success; no code edits
+while this run compiles/executes. Then commit/push tested set prerequisites and
+align the rich branch with user-merged main safely, preserving pending work.
+Next architecture step: complete portable namespace macro-alias/referral maps
+(`:require-macros`, `:use-macros`) from retained facts; pinned analyzer.cljc
+3588–3600 is the authoritative namespace schema. Complete AST/inference and real
+implicit &env integration remain required, followed by original bootstrap/cache
+and scheduler/lifecycle acceptance. No issue closure or M3 completion.
+
+Restarted required full baseline is session28856; poll that exact handle.
+
+
+Namespace schema inspection while baseline28856 remains live: pinned analyzer
+parse-require-spec (analyzer.cljc:3161 onward) records both alias->library and
+library->library in :requires/:require-macros, ordinary unrenamed refers as
+:uses/:use-macros local->namespace, and renamed refers as :renames/:rename-macros
+local->qualified-original-symbol. Current source.rs apply_requirement and macro
+clause retain only optional aliases and refers. A require with neither loses its
+per-namespace dependency fact, so complete portable transport cannot infer the
+required library set from aliases. Next repair must retain explicit Runtime/Macro
+namespace require facts (including no-alias imports), keep rename/ref distinctions,
+then expose and freshly compare the actual maps. Do not merely serialize the
+currently incomplete alias maps as if they establish the pinned contract.
+No architecture source edits made during this baseline; original issue14 stays open.
+
+
+Required pending-set baseline28856 terminated successfully with exit0:
+998 passed, 0 failed, 17 ignored across 105 result groups. Command:
+`CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2`; authoritative log
+/private/tmp/suss-retained-sets-full-final.log. This includes the repaired
+empty-set round-trip, all seven set tests, the 39-case native comparison and
+rooted Error descriptor forgery/GC regression. No other architecture worktree
+changes were included. Original full-run failure remains recorded above.
+Commit/push retained set prerequisites next. Portable namespace facts are being
+prepared independently in /private/tmp/suss-m3-namespace-require-facts; original
+M3 &env/bootstrap/cache/scheduler acceptance remains open. No new PR or merge.

@@ -27,11 +27,10 @@ Source forms and their actual contexts are preserved alongside explicit native
 lowering records. Compiler-only operations stay under `suss` extension keys rather
 than being fabricated as JavaScript ASTs. The native representation is not a
 substitute for the remaining portable `:op`, inference/tag, method metadata,
-namespace and declaration schema. Exclusions currently appear as an explicitly
-named native vector; persistent set transport is still required for the complete
-portable schema. No loaded/initialized status is inferred from declaration records.
+namespace and declaration schema. Namespace exclusions now appear under portable
+`:excludes` as canonical persistent sets built through the rooted data bridge. No loaded/initialized status is inferred from declaration records.
 
-Six executing native regressions cover:
+Seven executing native regressions cover:
 
 * A 96-binding shadow chain, whose final initializer environment and shadow refer
   to the same canonical binding object after forced GC. A compiled function walks
@@ -41,6 +40,9 @@ Six executing native regressions cover:
   while the function body sees the real self binding, including actual phase.
 * Oversized reader metadata rejected before macro-store allocation, caller binding
   publication or source runtime effects.
+
+* Actual namespace `:refer-clojure :exclude` facts exposed as a set with executable
+  `set?`, count and membership checks.
 
 * An unqualified `/` local key in a hash map with more than eight locals.
 * Host-owned declaration metadata at the bridge's legal reader nesting limit,

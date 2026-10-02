@@ -107,6 +107,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Nominal { operation, .. } => match operation {
                         Nominal::Array => {}
                         Nominal::LanguageError => { names.insert("language-error-new"); }
+                        Nominal::IsLanguageError => { names.insert("language-error-is"); }
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
                         Nominal::NativeObjectDefaultPrototype => { names.insert("native-object-default-prototype"); }
                         Nominal::NativeObjectGet => { names.insert("native-object-property-get"); }
@@ -209,6 +210,7 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "protocol-native-marker-set" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
+            "language-error-is" => (vec![VALUE], vec![ValType::I32]),
             "object-instance" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
             }
@@ -951,6 +953,7 @@ fn emit_function(
                         }
                         Nominal::Class
                         | Nominal::LanguageError
+                        | Nominal::IsLanguageError
                         | Nominal::NativeObjectFactory
                         | Nominal::NativeObjectDefaultPrototype
                         | Nominal::NativeObjectGet
@@ -970,6 +973,7 @@ fn emit_function(
                             function.instruction(&Call(index(match operation {
                                 Nominal::Class => "class-value-new",
                                 Nominal::LanguageError => "language-error-new",
+                                Nominal::IsLanguageError => "language-error-is",
                                 Nominal::NativeObjectFactory => "native-object-factory-function",
                                 Nominal::NativeObjectDefaultPrototype => "native-object-default-prototype",
                                 Nominal::NativeObjectGet => "native-object-property-get",

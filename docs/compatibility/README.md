@@ -532,7 +532,8 @@ rich environment oracle checks sixteen observations and thirteen executed result
 The required full workspace baseline passes 981 tests with zero failures and
 17 existing ignores across 101 groups, including all 47 runtime ABI tests.
 Source macro `&env`, memoized environment graph construction, complete AST/inference,
-persistent set transport and original M3 acceptance remain unestablished. No
+original M3 acceptance remain unestablished. Subsequent focused set transport
+evidence is recorded below; it does not establish the complete environment schema. No
 inventory declaration is reclassified on this preparatory evidence.
 
 Queued native graph transport has three executing regressions for shared binding
@@ -547,3 +548,23 @@ before body analysis and actual named function syntax before method expansion.
 An executing native graph query inspects both fixed and variadic bodies and then
 executes both signatures in each Store; it fails with the prior graph transport.
 This does not certify portable function metadata, inference or source `&env`.
+
+
+Retained set prerequisites now include pinned ISet/ITransientSet,
+PersistentHashSet/TransientHashSet, HashSetIter and KeySeq/keys selections with
+explicit source adaptations and retained EPL notices. Import verification covers
+261 files; each new review remains in-progress. Native construction and decoding
+retain canonical Store descriptor identity, metadata and bounded HAMT traversal.
+Namespace `:excludes` now carries a real persistent set. Literal sets above eight
+entries use the retained HAMT factory, while source effects preserve textual
+order (the accepted variance from pinned reader hash iteration).
+
+Expanded focused execution passes 18 tests: seven graph, four existing HAMT
+sequence, six set and one Error predicate regression. A separate ABI test rejects
+copied descriptor identity after GC. Generic ES6/printing helpers, exact duplicate
+error messages and arbitrary custom KeySeq cursors remain pending. A fresh force-compiled pinned ClojureScript corpus matches 39 observations
+exactly, and independently decoded native results agree in both Stores after GC.
+The first native attempt failed on unimported public empty/vec helpers; the final
+focused corpus invokes the retained -empty method and transports keys directly.
+Those public helpers remain pending. The required workspace baseline for this set prerequisite source passes
+998/0/17 across 105 groups. Original M3 environment/bootstrap acceptance remains open. No declaration is reclassified as fully implemented.
