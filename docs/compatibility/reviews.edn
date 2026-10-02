@@ -2395,5 +2395,5 @@
    :status :in-progress
    :adaptation-path "docs/runtime/compiled-source-macros.md"
    :alternative nil
-   :tests ["crates/suss-cli/tests/compiled_source_macros.rs" "crates/suss-cli/tests/compiled_macro_definitions.rs"]}
+   :tests ["crates/suss-cli/tests/compiled_source_macros.rs" "crates/suss-cli/tests/compiled_macro_definitions.rs" "crates/suss-cli/tests/compiled_repl_macros.rs"]}
 }}

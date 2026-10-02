@@ -79,12 +79,40 @@ impl CompiledMacros {
                 message: "Expected exactly one source defmacro".into(),
             }));
         }
-        let form = &forms[0];
+        self.define_form(forms.into_iter().next().unwrap(), 0..source.len())
+            .map(|_| ())
+    }
+    pub fn set_operation_fuel(&mut self, fuel: u64) {
+        self.session.set_operation_fuel(fuel);
+    }
+    pub(crate) fn replacement(&self) -> Result<Self, SessionError> {
+        let mut session = self.session.replacement()?;
+        let bridge = FormBridge::new(&mut session)?;
+        Ok(Self {
+            session,
+            bridge,
+            definitions: BTreeMap::new(),
+        })
+    }
+    pub(crate) fn define_form_display(
+        &mut self,
+        form: Form,
+        span: std::ops::Range<usize>,
+    ) -> Result<String, SessionError> {
+        let value = self.define_form(form, span)?;
+        crate::portable_repl::display(&mut self.session, &value)
+    }
+    fn define_form(
+        &mut self,
+        form: Form,
+        span: std::ops::Range<usize>,
+    ) -> Result<SessionValue, SessionError> {
+        let form = &form;
         let Kind::List(items) = &form.kind else {
             return Err(failure(form, "Expected source defmacro"));
         };
         if items.len() < 3
-            || !matches!(&items[0].kind, Kind::Symbol(s) if s.namespace.is_none() && s.name == "defmacro")
+            || !matches!(&items[0].kind, Kind::Symbol(s) if s.name == "defmacro" && (s.namespace.is_none() || matches!(s.namespace.as_deref(), Some("suss.core" | "cljs.core"))))
         {
             return Err(failure(form, "Expected defmacro name parameters and body"));
         }
@@ -154,13 +182,13 @@ impl CompiledMacros {
             kind: Kind::List(definition),
         };
         let snapshot = self.session.compilation_snapshot();
-        let prepared = snapshot.prepare(vec![definition], 0..source.len(), self)?;
+        let prepared = snapshot.prepare(vec![definition], span, self)?;
         let value = self.session.eval_prepared(prepared)?;
         self.definitions.insert(
             (self.session.current_namespace().into(), name.name.clone()),
-            value,
+            value.clone(),
         );
-        Ok(())
+        Ok(value)
     }
 }
 impl ExpansionHost for CompiledMacros {

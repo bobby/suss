@@ -14,8 +14,10 @@ future expansion; previously compiled runtime artifacts retain their original
 expansion. Expansion recursion uses the existing bounded analysis-depth diagnostic.
 Runtime compile failures publish no bindings/modules; compile-time body effects
 remain isolated in the Macro Store. Macro exceptions and invalid data become
-located compile errors at the call site. Explicit registration is required; this
-is not yet automatic namespace macro loading or the native prompt default.
+located compile errors at the call site. The native prompt now registers standalone definitions and uses this host for
+later inputs and explicit load/reload. Automatic macro namespace loading, mixed
+definition/runtime inputs and full AOT integration remain unfinished; see
+[compiled REPL macro integration](compiled-repl-macros.md).
 
 The structural definition adaptation follows pinned core.cljc defmacro3440–3481,
 SHA25680f2964a97e3cf5bb7adde5eb9fabcb5fe014040ab8c29217c19e8b13679f171,

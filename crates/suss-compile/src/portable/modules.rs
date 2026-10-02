@@ -203,6 +203,25 @@ pub fn prepare_modules<P: AsRef<Path>>(
     phase: Phase,
     provided: &BTreeSet<ModuleIdentity>,
 ) -> Result<ModulePlan, ModuleDiagnostic> {
+    prepare_modules_with_expander(
+        namespace,
+        roots,
+        environment,
+        phase,
+        provided,
+        &mut super::NoExpansion,
+    )
+}
+/// Prepare explicitly loaded/reloaded source with the same lexical macro host
+/// used for input fragments; no initializer runs during preparation.
+pub fn prepare_modules_with_expander<P: AsRef<Path>>(
+    namespace: &str,
+    roots: &[P],
+    environment: &Environment,
+    phase: Phase,
+    provided: &BTreeSet<ModuleIdentity>,
+    expander: &mut dyn super::ExpansionHost,
+) -> Result<ModulePlan, ModuleDiagnostic> {
     let identity = ModuleIdentity::new(phase, namespace).map_err(|error| ModuleDiagnostic {
         namespace: namespace.into(),
         source_path: None,
@@ -218,7 +237,8 @@ pub fn prepare_modules<P: AsRef<Path>>(
         snapshots: Vec::new(),
     };
     discovery.visit(identity.clone(), None, 0..0)?;
-    let (modules, mut snapshot) = compile_snapshots(discovery.snapshots, environment, phase)?;
+    let (modules, mut snapshot) =
+        compile_snapshots_with_expander(discovery.snapshots, environment, phase, expander)?;
     snapshot
         .enter_namespace(phase, &identity.namespace)
         .map_err(|error| located(&identity, None, error))?;
@@ -234,13 +254,6 @@ pub fn prepare_modules<P: AsRef<Path>>(
     })
 }
 
-fn compile_snapshots(
-    snapshots: Vec<Snapshot>,
-    environment: &Environment,
-    phase: Phase,
-) -> Result<(Vec<PreparedModule>, Environment), ModuleDiagnostic> {
-    compile_snapshots_with_expander(snapshots, environment, phase, &mut super::NoExpansion)
-}
 fn compile_snapshots_with_expander(
     snapshots: Vec<Snapshot>,
     environment: &Environment,

@@ -603,6 +603,30 @@ impl Environment {
         self.scope_mut(phase).excluded_core.insert(name.into());
         Ok(())
     }
+    /// Identify a bounded core macro before its complete source bootstrap exists.
+    /// This supplies no runtime binding/value: excluded, shadowed or non-core
+    /// names continue through ordinary lookup and its diagnostics.
+    pub fn resolves_bootstrap_name(&self, phase: Phase, symbol: &Symbol, name: &str) -> bool {
+        let scope = self.scope(phase);
+        if let Some(namespace) = &symbol.namespace {
+            let namespace = scope
+                .aliases
+                .get(namespace)
+                .map_or(namespace.as_str(), String::as_str);
+            return canonical(namespace) == "suss.core" && symbol.name == name;
+        }
+        if let Some(target) = scope.refers.get(&symbol.name) {
+            return target.namespace == "suss.core" && target.name == name;
+        }
+        let own = Global {
+            phase,
+            namespace: scope.namespace.clone(),
+            name: symbol.name.clone(),
+        };
+        symbol.name == name
+            && !scope.excluded_core.contains(name)
+            && !self.bindings.contains_key(&own)
+    }
     /// The bounded bootstrap macro lookup is separate from ordinary var lookup:
     /// lexical locals (handled by HIR) hide macros. User runtime definitions also
     /// hide automatic core bootstrap macros, as observed in the pinned compiler.
@@ -831,8 +855,8 @@ impl Environment {
                     | "zero?"
                     | "pos?"
                     | "neg?"
-                        | "inc"
-                        | "dec"
+                    | "inc"
+                    | "dec"
                     | "int"
                     | "bit-and"
                     | "bit-or"
@@ -882,8 +906,8 @@ impl Environment {
                     | "zero?"
                     | "pos?"
                     | "neg?"
-                        | "inc"
-                        | "dec"
+                    | "inc"
+                    | "dec"
                     | "int"
                     | "bit-and"
                     | "bit-or"

@@ -8932,3 +8932,86 @@ Indexed full42871 terminal0:881passed/0failed/17existing ignores/80groups
 through finalreader doctests, /private/tmp/suss-m3-indexed-data-full.log. Frozen
 source/tests preserved;52focused/Python86/inventory1065/reviews224841/import132
 pass. Publish draft then independent review/fixes/exact reviewed-head CI.
+
+
+## Native REPL compiled macro integration in progress
+
+PR1271169a04 published after881/0/17/80full; independent review approves exacthead,
+no significant findings. Probe/focus89228 terminal0:20pass, including suffix-only
+reads skipping10000-cell and unsupported prefixes, signed zero/UTF16/empty suffix,
+nested cycles/foreign/reset roots. Tree clean. CI36938307507 watcher23236 live;
+PR126825b32f CI36937011198 watcher16832 still live. No readiness without final CI.
+
+PR125 review fix81bfbadd exact CI36935692730 SUCCESS875/0/17/78/alljobs/four guards/
+Python86/finalreader. Watch27273/log21147 terminal0; root markedready, API OPEN/
+notdraft/headsame. No merge or issue closure.
+
+Root child /private/tmp/suss-m3-repl-macros portable/m3-repl-macros bases on1271169a04.
+Before3261 terminal101:two actual native command macro regressions failed; first
+implementation after29042 terminal0 macro2/oldcommand8. Added load/reload, reset
+second-phase failure and alias/conditional/shadow tests. Load-before92881 terminal101
+saw stale shared-target library, touch relevant cli source mtimes forced correct
+rebuild; before2 15199 terminal101:4pass/one genuine load macro unresolved failure.
+
+Module prepare_modules_with_expander now supplies same lexical host to load/reload;
+existing APIs delegate no expansion. Native command owns Runtime+Macro Stores,
+registers standalone parsed selected definitions, formats actual Macro function
+result, and compiles later owned forms without printing/reparse/replay. Resolved
+runtime defmacro bindings retain call semantics. Reset creates both replacements
+before discarding either phase; macro replacement failure preserves old runtime
+roots/bindings/macros. Namespace registration tracks current Runtime namespace.
+No fake runtime macro Var/marker or metadata/environment maps.
+
+Focus81460 terminal0:24pass command5/oldcommand8/namespace4/definitions3/source4.
+Broader53696 terminal0:69pass across9native suites, nofails/ignores, log
+/private/tmp/suss-m3-repl-macros-final-focus.log. Compiler module56662 terminal0:
+11pass, /private/tmp/suss-m3-repl-macros-module-focus.log. Main edits after broad
+focus only formatting; semantic source/tests frozen now. Realpin63823 terminal0;
+import132/inventory1065/reviews224841 pass. PendingPython and required frozenfull.
+
+Four actual command regressions plus one native host reset-failure regression
+record current subset. docs/runtime/compiled-repl-macros.md lists mixed/nested
+macro definitions, automatic phase imports/alias/privacy, complete AOT, &env/full
+&form metadata, syntaxquote/gensyms/splicing, persistent/lazy data, versioned
+Java-free bootstrap/cache/evaluator removal and #15 cancellation/live accounting
+as still required. No scripts/verify-bootstrap.sh exists. Next full/Python pass,
+publish draft, dispatch independent review/significant fixes/exact-head CI; then
+continue automatic macro phase loading and full language-data/bootstrap acceptance.
+
+Frozen native REPL full88080 now live, /private/tmp/suss-m3-repl-macros-full.log;
+root owns exclusive heavy slot. Re-poll same handle to terminal, never restart
+solely from timeout. Python4053 terminal0:86pass; finaldiffcheck clean.
+PR126 exact reviewed825b32f CI36937011198 SUCCESS878/0/17/79/alljobs/all3guards/
+finalreader, watch16832/log45004 terminal0. Root markedready; API OPEN/notdraft/
+headsame. PR1271169a04 independently approved/no significant findings, CI36938307507
+watch23236 still live. No merges or issue closures.
+
+
+First REPL frozen full88080 terminal0:886/0/17existing ignores/81groups/finalreader.
+Before publication root inspection found core exclusions/aliases not honored by
+standalone definition dispatch. Added sixth native command regression. Before14436
+terminal101:5pass/one genuine namespace failure, log
+/private/tmp/suss-m3-repl-macros-alias-before.log. Environment now supplies explicit
+bootstrap-origin resolution respecting aliases/refers/exclusions/own bindings;
+canonicalize only the definition head with original spans/metadata. No phantom
+runtime bindings/values created. Qualified core bootstrap remains explicit.
+
+Finalfocus70944 terminal0:70pass/0fail/0ignore across9native suites including6new
+command/host guards, log /private/tmp/suss-m3-repl-macros-final-focus2.log. First
+886baseline is not final-head evidence after this semantic fix. Run module focus
+then a new frozen full required baseline; no publication until that succeeds.
+Source/tests frozen again. Core/Phase import policy and all original M3 gaps stay
+required. Issue14progress comment5942545379 records127 and open criteria.
+
+Module focus84836 terminal0:11pass after alias/exclusion fix. Replacement frozen
+full now live, /private/tmp/suss-m3-repl-macros-full2.log; record returned handle
+and re-poll to terminal. Root owns exclusive heavy slot. Only docs/evidence may
+change while full runs. No RUSTFLAGS/new skips/ABI/dependency/selection changes.
+
+Replacement native REPL full31177 live, /private/tmp/suss-m3-repl-macros-full2.log;
+re-poll31177 to terminal. Root owns exclusive heavy slot. Source/tests frozen.
+PR127 exact reviewed1169a04 CI36938307507 SUCCESS881/0/17/80/alljobs/all3guards/
+Python86/finalreader; watcher23236/log92926 terminal0. Root markedready, API OPEN/
+notdraft/headsame. PR125/126 also ready; none merged and all M3 issues stay open.
+
+Replacement native REPL full31177 terminal0:887passed/0failed/17existing ignores/81groups through final reader doctests. Evidence: /private/tmp/suss-m3-repl-macros-full2.log. Final focused70 and compiler modules11 also pass after namespace alias/exclusion fix. Heavy slot released. Publish draft and require independent review, significant fixes and exact reviewed-head CI before ready. M3 remains in progress with all outstanding acceptance criteria preserved.
