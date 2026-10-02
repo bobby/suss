@@ -495,3 +495,10 @@ prefixes and UTF-16 columns. These host inspection fixtures are prerequisites;
 compiled source macros still do not receive rich `&env`. No inventory item or M3
 acceptance criterion is marked complete by this work. See
 [compiler facts](../runtime/compiled-macro-environment-facts.md).
+
+Actual field/shadow records and three-way analysis contexts have focused executing
+evidence. Twenty-four ordered pinned context observations and fifteen executed result
+strings agree in both Stores, including bare try context and finally/catch/body
+macro expansion order. This is compiler-fact evidence; full source-level `&env`
+and M3 acceptance remain open. See
+[context and field facts](../runtime/compiled-macro-analysis-context.md).

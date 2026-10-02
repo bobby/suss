@@ -38,7 +38,7 @@ impl Analyzer<'_> {
         &mut self,
         form: &Form,
         args: &[Form],
-        statement: bool,
+        context: super::super::AnalysisContext,
         tail: bool,
     ) -> Result<Hir, Diagnostic> {
         if args.len() < 2 || args.len() % 2 != 0 {
@@ -93,11 +93,13 @@ impl Analyzer<'_> {
         let value = self.form(&args[0])?;
         let binding = self.fresh_binding(&args[0], value);
         let selected = self.local(&args[0], binding.id);
+        // The pinned case macro binds its selector in a let before branching.
+        let context = context.returning();
         let mut arms = vec![];
         for (group, body) in groups {
-            arms.push((group, self.form_in(body, statement, tail)?));
+            arms.push((group, self.form_in(body, context, tail)?));
         }
-        let mut body = self.form_in(args.last().unwrap(), statement, tail)?;
+        let mut body = self.form_in(args.last().unwrap(), context, tail)?;
         for (group, result) in arms.into_iter().rev() {
             let mut condition = self.literal_form(form, Literal::Bool(false));
             for (syntax, value) in group.into_iter().rev() {

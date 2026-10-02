@@ -10260,6 +10260,54 @@ Original issues12–15, bootstrap/cache/evaluator removal and scheduler acceptan
 remain open; this local branch is not a published PR.
 
 
+Isolated next worktree /private/tmp/suss-m3-macro-context, branch
+portable/m3-macro-context at parent54e9789, actual pinned submodule initialized40062
+terminal0. Parent baseline38391 remains live on unchanged54e9789, log
+/private/tmp/suss-m3-macro-environment-full.log; no concurrent native build started.
+New uncommitted field-fact implementation replaces private(field-Hir,mutable)
+tuples with FieldBinding declarations/origins/index/mutability/actual access HIR,
+exposes fields to ExpansionContext and retains genuine field shadows on locals.
+Method parameters continue to take lexical precedence while retaining the field
+they shadow; field reads/setters/caching-hash still use the same lowered accesses.
+A new native field regression is written but NOT executed yet; compile/runtime
+validity remains unproven until the parent baseline releases the shared target.
+
+Fresh pinned field environment compiler96505 terminal0 and Node execution returned42;
+full raw analyzer observations /private/tmp/suss-m3-field-environment-primary.edn
+show field declaration/mutable metadata and a nested parameter's field shadow.
+This is upstream evidence, not native differential success. Development-only
+fixture/macro files are in ignored tests/oracle/out/generated/suss_oracle.
+Next poll parent38391 to terminal and inspect its complete log; then compile and
+execute new field-record/nominal/scope regressions, fixing actual failures. Continue
+with genuine function scopes, three-way analysis context and rich environment
+transport. Existing statement/tail booleans are not blindly mapped to pinned
+:context. Original M3 scope stays open; no new PR is published or merged.
+
+
+Field/context continuation now has actual native evidence. Focus86971 terminal0:
+9passed (1context,4binding,1field,3sourcepositions), both Stores; log
+/private/tmp/suss-m3-macro-context-focus.log. Broader23398 terminal0:24passed across
+context/field/source macros/caching-hash/exceptions/native objects/type method
+scope suites, log /private/tmp/suss-m3-macro-context-broader.log. Fields retain
+actual lowered accesses and shadow metadata without executing reads. Analysis
+contexts explicitly distinguish Statement/Expression/Return, with recur tail
+checks separate. Context test independently decodes9result strings after GC and
+compares16fresh pinned context facts by label; it does not claim expansion-order
+agreement. Pin32985/34910 observed finally/catch/body visit order while Suss still
+uses body/catch/finally analysis. This observable compile-phase ordering gap needs
+an ordered regression and repair; runtime try/finally effects remain source-correct.
+
+Oracle continuation16389 reused cached cljs output and produced no newly located
+trace; strict checker rejected missing trace rather than accept stale success.
+Force-compilation77212 terminal0 (:force true/:cache-analysis false) created a
+fresh16-call trace; Node and strict context_facts_oracle.py agree with all16calls
+and9results. scripts/test-context-facts-oracle.sh uses those options for real macro
+execution each run. No source-level &env or M3 gate is claimed. PR143 reviewer has
+pushed significant nested-definition record fix55e4f64; parent full baseline must
+be rerun for that source and child must integrate it. Next ordered phase-expansion
+regression/repair, bare try context check, function scopes and rich environment
+transport. No new child PR or full child baseline yet.
+
 Macro-facts full workspace38391 terminal0 at54e9789 completed through final reader
 doctests. Independently counted /private/tmp/suss-m3-macro-environment-full.log:
 968passed/0failed/17existingignores across96 result groups, including all47ABI.
@@ -10287,6 +10335,60 @@ The prior 968/0/17 full baseline predates this source fix; rerun the full baseli
 and require exact final-head CI before readiness. Rich compiled source &env and
 the original M3 acceptance remain open. No PR was merged.
 
+
+PR143 significant reviewer fix55e4f64 independently approved: nested same-global
+DefinitionInfo now stays paired with its own initializer. Parent ff-integrated it;
+required new-source workspace6974 is LIVE at55e4f64, log
+/private/tmp/suss-m3-macro-environment-reviewed-full.log. CI37029058491 is LIVE on
+exact55e4f64; prior849 CI canceled/superseded, not final evidence. Child merge
+ e439354 preserves all field/context code and both handoff records. No merge of a
+GitHub PR or readiness is claimed. Root will not start another native build until
+6974 terminal. The initial full968 result does not cover the reviewer source fix.
+
+Ordered-context regression continuation remains uncommitted. Fresh force-compiled
+primary35792 terminal0 + Node yielded17compile-time context calls and10executed
+result strings. It confirms bare try with no handlers is :expr and the pin visits
+finally/catch/body during expansion. Golden was captured from this actual trace;
+strict checker17/10 passes. Native test now retains ordered calls and includes
+bare try, but has NOT been executed; run it BEFORE production repair when6974
+releases the target, record genuine failure, then fix analyzer traversal/context
+and rerun focused+exception/runtime effect tests. Preserve runtime operand/body/
+cleanup ordering while matching actual compiler-phase macro effects. Rich source
+&env, genuine function scopes and original M3 acceptance remain unfinished.
+
+
+Exact final-head CI now succeeds for PR140f9087cb/run37022116674,
+PR141e929de9/run37023033025 and PR142531ff53/run37024044072. Complete downloaded
+logs /private/tmp/suss-ci-{37022116674,37023033025,37024044072}-success.log
+independently count954/0/17/92groups,958/0/17/93groups and961/0/17/94groups;
+all include47ABI and final reader doctests. ANSI escapes were stripped for the
+reader heading check. All three exact heads have independent approval; PR bodies
+updated and draft flags removed, OPEN/mergedAt:null/autoMergeRequest:null confirmed.
+No GitHub PR was merged and no issue/milestone closure is claimed.
+
+PR143 new-source local full6974 terminal101:63completed groups358/0/0, then Cargo
+could not execute expected suss_compile-af924c6051b608e3 because it was absent.
+Compiler unit tests and remaining baseline never ran. This is incomplete evidence,
+not a passing full baseline or a source assertion failure. Cause is not established;
+process inspection later found only root's next native Cargo/rustc. No unrelated
+files deleted. Required full55e4f64 rerun still required; exactCI37029058491 live.
+
+Ordered context BEFORE37228 terminal101 confirmed bare try :return mismatch;
+strengthened BEFORE68215 terminal101 records actual body/catch/finally expansion
+order versus pinned finally/catch/body, plus bare context mismatch. Logs
+/private/tmp/suss-m3-macro-context-order-before{,2}.log. Production now preserves
+bare-try caller context, uses return context only with handlers/cleanup, and
+analyzes finally/catches/body while emitting unchanged runtime body/handler/cleanup
+regions. AFTER50907 terminal0:17passed (1context,5binding,1field,10exception),
+including both Stores, exact ordered17primary contexts and10decodedresultstrings,
+GC and non-tail recur rejection. Log /private/tmp/suss-m3-macro-context-order-after.log.
+Next finish end-to-end oracle runner, rerun full PR143 baseline in an isolated
+owned target to avoid the unresolved shared-artifact disappearance, then final
+child compiler/full checks and genuine function scopes/rich source &env transport.
+Function scope primary42853 terminal0 and Node produced actual name stacks:
+[["hinted"],["n"],[],["outer","inner"],["outer"],["declared"]]; raw records in
+/private/tmp/suss-m3-function-scopes-primary.edn. This is upstream-only evidence;
+no native scope records or compiled rich &env are implemented yet.
 PR143 reviewer followup found a significant oracle freshness defect: both position
 cljs.main invocations could reuse cached compiled output after macro-source edits.
 The root's context oracle observed this reuse, then obtained a fresh trace with
@@ -10299,3 +10401,69 @@ the live isolated baseline at55e4f64 remains applicable to native source, but ex
 new-head CI is still required. The reviewer did not rerun JVM/Node or native
 position tests during this followup; prior position evidence is not relabeled as
 fresh evidence for the repaired runner. No readiness or M3 completion is claimed.
+
+Child context checkpoint8434499 incorporates reviewer143 runner repair7f821ac.
+End-to-end context runner5425 terminal0 freshly checked17orderedcalls/10results
+and the executing native context test; log /private/tmp/suss-m3-context-facts-end-to-end.log.
+Parent isolated full95872 remains running at native source55e4f64, log
+/private/tmp/suss-m3-pr143-isolated-full.log. Exact new-head143 CI37035852942
+is running; neither readiness nor full success is claimed. Next run the repaired
+position runner freshly, child compiler/full baseline, then mandatory child review.
+
+PR144 independent review found significant missing return contexts at generated
+let boundaries in as->, multi-operand and/or and case. Fresh pinned primary47661
+and then complete retained-corpus primary69832 both terminated0 with force true
+and analysis caching disabled; Node executed the generated artifacts. The expanded
+corpus records24 ordered calls and15 independently returned strings. Before-fix
+native83869 terminated101 at the ordered-call assertion: five positions incorrectly
+reported expr instead of the pin's return; one-operand and correctly stays expr.
+Log /private/tmp/suss-pr144-context-before.log. Reviewer now uses returning() only
+for the generated let bodies; initializer contexts, tail legality and runtime
+operand/branch ordering are unchanged. AFTER38274 terminated0:22 passed/0 failed/
+0 ignored across context, field records, case, control flow, exceptions and type
+method scopes, two workers/jobs2, isolated target /private/tmp/suss-m3-pr143-target.
+Log /private/tmp/suss-pr144-context-after-valid.log. The initial after command used
+an incorrect nonexistent test target and exited before executing tests; it is not
+validation evidence. The field fixture now also checks a direct method parameter
+colliding with an actual mutable field: declaration/shadow/access facts, lexical
+precedence and actual42 result after GC in both Stores. Strict expanded checker
+passes24/15 against freshly generated artifacts. Python AST and shell syntax,
+whitespace checks pass (py_compile initially could not write an external macOS
+cache path; AST parsing requires no cache write). Full final-source baseline and
+exact-head CI remain required; rich source &env and original M3 work remain open.
+Final corpus cardinality assertion was also executed in native61710 terminal0:
+1 context test passed, log /private/tmp/suss-pr144-context-final.log.
+
+
+## PR #144 rebase onto main — 2026-10-02
+
+At the user's request, fetched origin and rebased portable/m3-macro-context onto
+main ea78a37 with `git rebase --onto origin/main 7f821ac portable/m3-macro-context`.
+Verified prerequisite7f821ac and squash-merged main have identical complete tree
+8edb5b6fc4d159aafd08b770e6cfcc7d1bd5afbc, so only the three PR-specific nonmerge
+commits were replayed. Two handoff append conflicts were resolved preserving all
+parent/child records; the second used the previously integrated a667fcf handoff.
+No source conflict or semantic change was introduced.
+
+Rebased1fc432b and original ce61d90 have identical complete tracked tree
+727e43883f5de693f8bae45b650ee1ef2d861e77 before this handoff-only addition.
+Independent review approved ancestry, unchanged non-handoff patches and exact
+final handoff identity, with no findings. Existing full baseline log
+/private/tmp/suss-m3-pr144-full.log was independently verified through reader
+doctests:98groups/971passed/0failed/17existingignores. That baseline remains prior
+evidence for identical source, not a newly executed full run.
+
+Fresh focused validation uses the existing isolated
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target, CARGO_BUILD_JOBS=2 and no
+RUSTFLAGS override:
+`cargo test -p suss-cli --test compiled_macro_analysis_context --test compiled_macro_field_records --test compiled_macro_binding_records --test portable_case --test portable_control_flow --test portable_exceptions --test portable_type_method_scopes --locked -- --test-threads=2`
+exited0:27passed/0failed/0ignored across7groups;
+/private/tmp/suss-pr144-rebase-focused.log. `git diff --check` passes. No fresh
+JVM/Node oracle or full-workspace rerun; compiler/runtime/tests/oracle/provenance
+are unchanged.
+
+Push the rebased branch with an explicit old-head force-with-lease and verify
+remote exact head/fresh CI. Final-head CI is pending at this recording; older CI
+is not final-head evidence. No PR merge, readiness, issue closure or milestone
+completion is claimed. Next unblocked task remains genuine function scopes and
+canonical rich compiled &env transport, with original M3 acceptance still open.

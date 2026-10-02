@@ -19,12 +19,27 @@ pub struct Diagnostic {
     pub message: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AnalysisContext {
+    Statement,
+    Expression,
+    Return,
+}
+impl AnalysisContext {
+    /// Body contexts produce a return expression without granting recur scope.
+    pub(crate) fn returning(self) -> Self {
+        if self == Self::Expression { Self::Return } else { self }
+    }
+}
+
 /// Expansion executes in a host's isolated compiled session, not the compiler.
 pub struct ExpansionContext<'a> {
     pub environment: &'a resolve::Environment,
     pub origin: Option<&'a SourceOrigin>,
     pub phase: resolve::Phase,
+    pub context: AnalysisContext,
     pub locals: &'a std::collections::HashMap<String, hir::LocalBinding>,
+    pub fields: &'a std::collections::HashMap<String, hir::FieldBinding>,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MacroReload {

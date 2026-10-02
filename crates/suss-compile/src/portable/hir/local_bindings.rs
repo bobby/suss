@@ -14,6 +14,16 @@ pub enum LocalKind {
 }
 
 #[derive(Debug, Clone)]
+pub struct FieldBinding {
+    pub declaration: Form,
+    pub origin: Option<super::super::SourceOrigin>,
+    pub index: usize,
+    pub mutable: bool,
+    /// Actual lowered access expression; inspecting it does not read the field.
+    pub access: Hir,
+}
+
+#[derive(Debug, Clone)]
 pub struct LocalBinding {
     /// Current lowered binding used for lexical lookup, including loop remapping.
     pub id: BindingId,
@@ -26,6 +36,7 @@ pub struct LocalBinding {
     pub initializer: Option<Arc<Hir>>,
     /// Previous lexical declaration, excluding compiler-only ID remapping.
     pub shadow: Option<Arc<LocalBinding>>,
+    pub shadow_field: Option<Arc<FieldBinding>>,
 }
 impl Analyzer<'_> {
     pub(super) fn insert_local(
@@ -40,6 +51,11 @@ impl Analyzer<'_> {
             unreachable!("validated declaration")
         };
         let shadow = self.locals.get(&name.name).cloned().map(Arc::new);
+        let shadow_field = if shadow.is_none() {
+            self.fields.get(&name.name).cloned().map(Arc::new)
+        } else {
+            None
+        };
         self.locals.insert(
             name.name.clone(),
             LocalBinding {
@@ -50,6 +66,7 @@ impl Analyzer<'_> {
                 kind,
                 initializer: initializer.map(Arc::new),
                 shadow,
+                shadow_field,
             },
         )
     }
