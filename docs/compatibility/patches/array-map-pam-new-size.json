@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "df69d62720870b8ee1b8c2fba36c65533801fc50bb2dc8c8cdf562a17a0478bc",
+  "replacement": "(def pam-new-size\n  (fn [arr]\n(loop [i 0 n 0]\n    (if (< i (alength arr))\n      (let [dupe? (loop [j 0]\n                    (if (< j i)\n                      (or\n                        (key-test (aget arr i) (aget arr j))\n                        (recur (+ 2 j)))\n                      false))]\n        (recur (+ 2 i) (if dupe? n (+ n 2))))\n      n))))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}

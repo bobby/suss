@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "67dcff8e2ecac81e807baae4116706812f1276cb4176fbc8201e350332623319",
+  "replacement": "(def vector?\n  (fn [x]\n(satisfies? IVector x)))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}

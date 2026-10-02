@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b4f0e17d6d8d76a928f62e131d03ff86c765e538c9ed0c6fd855613e58d61732",
+  "replacement": "(set! (.-HASHMAP_THRESHOLD PersistentArrayMap) 8)",
+  "rationale": "Preserve pinned numeric threshold with exact emitted HASHMAP_THRESHOLD property spelling."
+}

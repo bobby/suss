@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "a4249c9b45655b0a6fad8d27dc2bf8fdb7a118580dcdd8fcdf068ec64d83d062",
-  "reviews-sha256": "763b52e09c45fa9ccfe937e65365e41518d138cd000e31092a592ba138f6c3a5",
+  "recipe-sha256": "b76ac8bdfd474cc52565a9b13a597206caa615797d2d8f3247b105ee658912cc",
+  "reviews-sha256": "b8a896dc5f22315586e334897aa6b508b10b821377daa076504655db924b10e9",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -4986,16 +4986,886 @@
       "semantic-tests": [
         "crates/suss-cli/tests/compiled_macro_vectors.rs"
       ]
+    },
+    {
+      "id": "runtime:IMap:687",
+      "name": "IMap",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 687,
+      "end-line": 691,
+      "byte-start": 19420,
+      "byte-end": 19623,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "ea524a99cbc3a2a63a20d9fde06cc2df85b561e45a933c5d641d44954b9a0200",
+      "extracted": "extracted/0157.cljs",
+      "extracted-sha256": "365aae2b3f9bffb107338fbf8a6da0b8a55a8d548fb2ff3f160d458de17fd08e",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "ea524a99cbc3a2a63a20d9fde06cc2df85b561e45a933c5d641d44954b9a0200",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:IMapEntry:693",
+      "name": "IMapEntry",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 693,
+      "end-line": 698,
+      "byte-start": 19625,
+      "byte-end": 19802,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "ee9f827657e98068d4628e76fe98f82d279b46ef7745efac02ee529a826bb018",
+      "extracted": "extracted/0158.cljs",
+      "extracted-sha256": "259e61c25d5aafeb46f53e6e06a8125ffc4bed4d5d28c6eb2b381dfe74210ae0",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "ee9f827657e98068d4628e76fe98f82d279b46ef7745efac02ee529a826bb018",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:IRecord:774",
+      "name": "IRecord",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 774,
+      "end-line": 775,
+      "byte-start": 22403,
+      "byte-end": 22472,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "0e262ad0ffecf590908e084dc088254c3087d22bc6ad281cc6b24cb83e5c8aa4",
+      "extracted": "extracted/0159.cljs",
+      "extracted-sha256": "94b70b011961bc3a555336230fdb2213e8edfe6bf60cc579b868c340dc53c7ce",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "0e262ad0ffecf590908e084dc088254c3087d22bc6ad281cc6b24cb83e5c8aa4",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:map?:2258",
+      "name": "map?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2258,
+      "end-line": 2263,
+      "byte-start": 61771,
+      "byte-end": 61874,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b059014dc47aeeefbf94665ea95d3796958bbf42442f04e045b455f9ce9b0591",
+      "extracted": "extracted/0160.cljs",
+      "extracted-sha256": "141cbf36ba78945420d5e1426fd0d476317662e6bd3f6de5de7dd19e649b2a1c",
+      "patch": "docs/compatibility/patches/array-map-map-predicate.json",
+      "patch-sha256": "63e4983a398f0b9c19cd8462956e36fca6e2a7e35d375a4e84ec0900698e6d94",
+      "adapted-form-sha256": "79646f4123ce2ba5d2e8482008db6b7b7091b4428994b0f79b9e0dbd426d156b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:record?:2265",
+      "name": "record?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2265,
+      "end-line": 2268,
+      "byte-start": 61876,
+      "byte-end": 61960,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "90c9cccf05b785cbabd7625f1a2a61cdd521d624bf4fec2c63441b06db373f0f",
+      "extracted": "extracted/0161.cljs",
+      "extracted-sha256": "d8585dbac85948e8c2b4d42bd8b9733717246dec2f8b75827be0e7e77d7b43df",
+      "patch": "docs/compatibility/patches/array-map-record-predicate.json",
+      "patch-sha256": "5f8b3a5140384345f78f3d384c58e57a6a87d80402af510ddc250eeda6556503",
+      "adapted-form-sha256": "63c357fe6391b2db8e4a5b4d00521408bad5b8901fce3841c8a6a7081fc38b15",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:vector?:2270",
+      "name": "vector?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2270,
+      "end-line": 2272,
+      "byte-start": 61962,
+      "byte-end": 62044,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "67dcff8e2ecac81e807baae4116706812f1276cb4176fbc8201e350332623319",
+      "extracted": "extracted/0162.cljs",
+      "extracted-sha256": "3869ec8964b994e8898f81936d881102dc91c244fd66b1203bf77575db60db12",
+      "patch": "docs/compatibility/patches/array-map-vector-predicate.json",
+      "patch-sha256": "18aa001ff17e61cca7b3dec760a06a3b824d2de13243b30b560532a376ae8c9d",
+      "adapted-form-sha256": "ce5d5a2b04c2d68029283b186930310cb9387eafb4a597c093405ce1e5678f6a",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:get:2031",
+      "name": "get",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2031,
+      "end-line": 2072,
+      "byte-start": 55883,
+      "byte-end": 56889,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "4a351a9b6f818fab75759873b315cb2b41954f2a48437273ea42b26e17591803",
+      "extracted": "extracted/0163.cljs",
+      "extracted-sha256": "3133f795eadde2b358446602353d951b1385bafaf66ff29713432729b9d8097b",
+      "patch": "docs/compatibility/patches/array-map-get.json",
+      "patch-sha256": "f589769ce015cd0c5ed26fa6202cdb142ff64b1777589c419f9599eabe0fbb06",
+      "adapted-form-sha256": "f12b82db8869a3b885fb2d8532efddbfe06f2f74d3bab9571a9186455247d1ac",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:contains?:2451",
+      "name": "contains?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2451,
+      "end-line": 2469,
+      "byte-start": 65892,
+      "byte-end": 66510,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "e768814bfd741d4012923480329f1d4c53bee058827f49d7ecae8f10f2b0f858",
+      "extracted": "extracted/0164.cljs",
+      "extracted-sha256": "597a4d456442f7eb43a5db46be66ba81f67a4eed90dee2ef27b507da4f84ffc7",
+      "patch": "docs/compatibility/patches/array-map-contains-predicate.json",
+      "patch-sha256": "39a7c3d0fe3723d7fea35bb1ad8fc96797f93856c742d846a03068b1dd5914aa",
+      "adapted-form-sha256": "0d1b0aba4d7f7e38b5da928593c24d2c18be9c65df191863eb88c2825fcf5843",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:key:9181",
+      "name": "key",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9181,
+      "end-line": 9184,
+      "byte-start": 256477,
+      "byte-end": 256558,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "6db5db5ec29d1bbbf98d39626fbc54c1240ce33341cb208b87df344f2e28f8af",
+      "extracted": "extracted/0165.cljs",
+      "extracted-sha256": "294f0538e03b949ff54875ab7f73ad949253d7c5085617b74c828613c1c4cdf8",
+      "patch": "docs/compatibility/patches/array-map-key.json",
+      "patch-sha256": "52c30e9109d549584b4c74c414f1c2ff6bbe7d2219c814520090030f6abab990",
+      "adapted-form-sha256": "3bd1d3d4071aaf21cef57429173a845a271f612253e46eee31d72ce5c77cc289",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:val:9260",
+      "name": "val",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9260,
+      "end-line": 9263,
+      "byte-start": 258086,
+      "byte-end": 258169,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "1e079735228b5b43a6393236b0bb4a993cec053479a8def2c7a674cabe5c189f",
+      "extracted": "extracted/0166.cljs",
+      "extracted-sha256": "3f9b2ab097710fd02f267f2af603e532f293cb4ae32c54b9dc9fa00b33b62a9c",
+      "patch": "docs/compatibility/patches/array-map-val.json",
+      "patch-sha256": "175254415e4808390d90a8190b986dc4aae70001af7963f2fab75c218b6b1a30",
+      "adapted-form-sha256": "1156d450a5d9fa02cf9d4a4533c720ca37179491031bfccc169dfd9f82b53bb1",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:lookup-sentinel:2321",
+      "name": "lookup-sentinel",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2321,
+      "end-line": 2321,
+      "byte-start": 63190,
+      "byte-end": 63230,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "4f300922437deb85550d0224c940f532a7631717a7fe61c567a1d056fc021171",
+      "extracted": "extracted/0167.cljs",
+      "extracted-sha256": "061d3f63c1d9dcae33e787e331229276aeb50503c778b140b7d6060a166d1605",
+      "patch": "docs/compatibility/patches/array-map-lookup-sentinel.json",
+      "patch-sha256": "75dab76ce03ceb047c54869a559ddf34f8e0688e20aeb3649660ed2a93de8541",
+      "adapted-form-sha256": "5bf0fe5ba24503329864f57d74a35892c91bea812454d2ec6b1db09c15fac20c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:array-index-of-nil?:6645",
+      "name": "array-index-of-nil?",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6645,
+      "end-line": 6651,
+      "byte-start": 182562,
+      "byte-end": 182735,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b6d2a2ba00be8863b7cd71ab3daf312a4b48a7a11c94a1c4eacbdf5cbd765e67",
+      "extracted": "extracted/0168.cljs",
+      "extracted-sha256": "a27092459eae02ca06dd790010dd82f50f31678ec5ae2921911bd979208589f5",
+      "patch": "docs/compatibility/patches/array-map-array-index-of-nil-predicate.json",
+      "patch-sha256": "d4aacaa878d34bbc44f05eba9cc992f43874c0bf0dd1d2a607b7d9f792756d0e",
+      "adapted-form-sha256": "ad91e38cfe83108d545a35c9c39c27b214e40624827e74d3b8ff111833310efd",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:array-index-of-keyword?:6653",
+      "name": "array-index-of-keyword?",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6653,
+      "end-line": 6661,
+      "byte-start": 182737,
+      "byte-end": 183002,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "22aa69ef1e1bb34714d59d7c42ec1d1492f13f90e19fb5f89a2e696688e6ca89",
+      "extracted": "extracted/0169.cljs",
+      "extracted-sha256": "455b8abcd3a9e7226278874503d1884b21b6e35b9d175c77dca39dd5ad37ffcc",
+      "patch": "docs/compatibility/patches/array-map-array-index-of-keyword-predicate.json",
+      "patch-sha256": "d2021287614095b72e25c791df60b66137a59a04aa36043cb5c20be61937cc8a",
+      "adapted-form-sha256": "81ad10d3af11509df40033bb9a702b23ee4d56e1d75a5a52d9cde978943053fb",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:array-index-of-symbol?:6663",
+      "name": "array-index-of-symbol?",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6663,
+      "end-line": 6671,
+      "byte-start": 183004,
+      "byte-end": 183267,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "71c7e5f04fae612776d3e61a4c492c985ed3fa255328165a29d0c4cc00fd526c",
+      "extracted": "extracted/0170.cljs",
+      "extracted-sha256": "f992c2b8f66ca754311a43f45a6594a931f696f352eaee33b8188b87558f87bd",
+      "patch": "docs/compatibility/patches/array-map-array-index-of-symbol-predicate.json",
+      "patch-sha256": "af897984b71c4dc70a851c3a51c80523b13de2497c54498aa0d6c97b827a46a7",
+      "adapted-form-sha256": "27441f022de4c684cc95c66ac993cf86d8f1a716cc3b119d563e4669ac830042",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:array-index-of-identical?:6673",
+      "name": "array-index-of-identical?",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6673,
+      "end-line": 6679,
+      "byte-start": 183269,
+      "byte-end": 183458,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8ee8dc7ccef100dc1391e6a24d1dcde4fc2b499664ea7178d1fba16168b5f3ad",
+      "extracted": "extracted/0171.cljs",
+      "extracted-sha256": "b8018125c6ef2fa74ba934a7082927f8ba1e9cf27d23f320b7c88d6f0665dce5",
+      "patch": "docs/compatibility/patches/array-map-array-index-of-identical-predicate.json",
+      "patch-sha256": "e58af8102f162cc0f9e87ea9b5d333397011515aab5d7ebcb6ecba005bd10c2e",
+      "adapted-form-sha256": "3a4e30e8be97b80574c2c8e5dc30946db522c3bed2330387a1a38c9fc30d83a3",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:array-index-of-equiv?:6681",
+      "name": "array-index-of-equiv?",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6681,
+      "end-line": 6687,
+      "byte-start": 183460,
+      "byte-end": 183636,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "675fe01af401c33aca7a00d11177f03ca3d73d15796c7450b88d51be7eee066c",
+      "extracted": "extracted/0172.cljs",
+      "extracted-sha256": "d6f13b0ddf560214c918aff839154285d47c61ba7d4c2b79e6c9f9fbabcba488",
+      "patch": "docs/compatibility/patches/array-map-array-index-of-equiv-predicate.json",
+      "patch-sha256": "25fd16be33f9a08dc2092265b27080f9336d10010a285490b3a0f33aa6b6055d",
+      "adapted-form-sha256": "c8fbb5188585b7bb5f9aadafa00ad8736cc700ffefc1b32157d00b7351cde2c4",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:array-index-of:6689",
+      "name": "array-index-of",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6689,
+      "end-line": 6701,
+      "byte-start": 183638,
+      "byte-end": 183930,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b44f72da40a23c6d1ba71399bb42f64044345218b6325a9ba3ed92a3a0f4c2ca",
+      "extracted": "extracted/0173.cljs",
+      "extracted-sha256": "f14043254cd1918907c3a92f184f8e47e034213251cec368c6ec0e29fbfee8b8",
+      "patch": "docs/compatibility/patches/array-map-array-index-of.json",
+      "patch-sha256": "6f9a7325cd3ddce82223a1fec4d1c58b539d9356b036cb5a3bb1902becc0fbef",
+      "adapted-form-sha256": "db893f9fed65a9f11b09a8751ad372f31791a7bdad9b542dfdb1134bdc2e19c8",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:array-map-index-of:6703",
+      "name": "array-map-index-of",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6703,
+      "end-line": 6704,
+      "byte-start": 183932,
+      "byte-end": 183995,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "721b772eab7a1aa54e590e60c457da3ed8e7d0f8f3a104b78ba1231a52a6647d",
+      "extracted": "extracted/0174.cljs",
+      "extracted-sha256": "09a81befebfa627b0e40e28e6cacc35a50054912a2c71ddd484946b7102a7dcb",
+      "patch": "docs/compatibility/patches/array-map-array-map-index-of.json",
+      "patch-sha256": "2feb5b53b78bf68e5dd97c718c3b396cad0125e0f953ff867b585751d16f5aec",
+      "adapted-form-sha256": "726b109c776c5b5e7d979488023cd72949262c2bf19731c2edb3c0494bfe19c5",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:array-extend-kv:6706",
+      "name": "array-extend-kv",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6706,
+      "end-line": 6715,
+      "byte-start": 183997,
+      "byte-end": 184242,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "45ff8e8bb13652523282916ebde2a66ab03257f02602dc880d70c87c1444a2b0",
+      "extracted": "extracted/0175.cljs",
+      "extracted-sha256": "95c39d0f15515cb56e65cb07be5d9e4306f0453cee7697fb3fac7d0903e2021d",
+      "patch": "docs/compatibility/patches/array-map-array-extend-kv.json",
+      "patch-sha256": "abfcb442350e7ac3db0474f0bf825bd0879d5ca1d0843bdcb5b0974cf5d2c2b2",
+      "adapted-form-sha256": "dce895796c23b4412d0eda3780c0e78a6ba2b2fa4019a32dc820111c93248df2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:array-map-extend-kv:6717",
+      "name": "array-map-extend-kv",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6717,
+      "end-line": 6718,
+      "byte-start": 184244,
+      "byte-end": 184313,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "29610ff840e2a865b5e5e9e29e78cb79331b6ef0dd589fbb205a1632124a9279",
+      "extracted": "extracted/0176.cljs",
+      "extracted-sha256": "cd8971a5f6067acb02278ba53eb975fc723dbb8f8593520ff280f048590eb952",
+      "patch": "docs/compatibility/patches/array-map-array-map-extend-kv.json",
+      "patch-sha256": "515a6eeb76daac3a7ecc38f87fad2767ca8b6749771bab42ea7cc8cfb1cb1ed4",
+      "adapted-form-sha256": "21ee2dde6bf9d3dc8be0a64b09f3d65b8e997ebda25c9d42cf9df7b53097e4df",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:MapEntry:6722",
+      "name": "MapEntry",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6722,
+      "end-line": 6820,
+      "byte-start": 184344,
+      "byte-end": 186072,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "3873948b6575cf990d4794cc91bf721481697049b7b084e02bdd9b5170e45a23",
+      "extracted": "extracted/0177.cljs",
+      "extracted-sha256": "4f87e92127eb7dfd9757bb19370114eae0fc5ef67b9f89f71ac95133d0d7a63d",
+      "patch": "docs/compatibility/patches/array-map-MapEntry.json",
+      "patch-sha256": "25215805ac17ada98d47677d2b75731d25257aec764b6ee0fbd78669603925e9",
+      "adapted-form-sha256": "472c55490417d20fe45e266c1159bedfc6739e1dd1cc37cc93f9ffa5b4fbdbc0",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:map-entry?:6822",
+      "name": "map-entry?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6822,
+      "end-line": 6825,
+      "byte-start": 186074,
+      "byte-end": 186167,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "9b9f01680256f6fafea985504d8d97d3db349eb3f567b6d801ecbdbe9b49e9f3",
+      "extracted": "extracted/0178.cljs",
+      "extracted-sha256": "493933c28b1de666d43bc3c8b61fece266a70062538da3592f60a3e41c577cb4",
+      "patch": "docs/compatibility/patches/array-map-map-entry-predicate.json",
+      "patch-sha256": "91ff97e99da304e7b209c5075845d21f16769cde46f1a46eaca5843e97d2327b",
+      "adapted-form-sha256": "5d79a061e5bbb32ae80ff7c7857fe9ea8fbcbe3615e77a99198910439f8ab234",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:PersistentArrayMapSeq:6827",
+      "name": "PersistentArrayMapSeq",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6827,
+      "end-line": 6893,
+      "byte-start": 186169,
+      "byte-end": 187551,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "dad31044823d406326d43b238f3490d6765f379740a406af39d2f25953f51e7c",
+      "extracted": "extracted/0179.cljs",
+      "extracted-sha256": "4246fd65d4ab3ecd4cbc98eae383810c8be1e3f8b712da492c709c7f7faee8f4",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "dad31044823d406326d43b238f3490d6765f379740a406af39d2f25953f51e7c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:persistent-array-map-seq:6897",
+      "name": "persistent-array-map-seq",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6897,
+      "end-line": 6899,
+      "byte-start": 187591,
+      "byte-end": 187713,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "9e68cfa89c4cfa3b2e865b4c60e80861fe05056495d37fac88eaa944fa44fdec",
+      "extracted": "extracted/0180.cljs",
+      "extracted-sha256": "d21aec1f86718937d7927f41111861c2d1a5aa20e5cb2e8b98c0c4612aaa661d",
+      "patch": "docs/compatibility/patches/array-map-persistent-array-map-seq.json",
+      "patch-sha256": "1db65de6d4deeb7854ca53dfad6c0f04f14b71c16d62675f4fb4f41fd1f58671",
+      "adapted-form-sha256": "e7047fbd895332d8ec972d6c6071f5dfbc678ce703674f778ba9150e64b051e2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:PersistentArrayMapIterator:6903",
+      "name": "PersistentArrayMapIterator",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6903,
+      "end-line": 6910,
+      "byte-start": 187736,
+      "byte-end": 187943,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b5e84230489d81208723c799f92b5ad5d4fbc227fac6e49073fd123a3e46de54",
+      "extracted": "extracted/0181.cljs",
+      "extracted-sha256": "7071402fcf6f5bee5ab8149c4651506ea8251db3ebb36c99fdf36b9261ced75e",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "b5e84230489d81208723c799f92b5ad5d4fbc227fac6e49073fd123a3e46de54",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:PersistentArrayMap:6912",
+      "name": "PersistentArrayMap",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6912,
+      "end-line": 7080,
+      "byte-start": 187945,
+      "byte-end": 192378,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "67825e14b0644251a5d5a5acf592ca441feea03bba7ad87e1e9d9e0fc22e6b21",
+      "extracted": "extracted/0182.cljs",
+      "extracted-sha256": "dd90ed709251498973cb3fb29961d6f8b7d67dd88bb6a7fe5b3890539dba09f9",
+      "patch": "docs/compatibility/patches/array-map-PersistentArrayMap.json",
+      "patch-sha256": "8f298d3cc285f59393aa7aa4d5552a7132ba3819438d88277e62513e55cf67c3",
+      "adapted-form-sha256": "8b9c7aba4a7fe7755a426726b2c6831a7237e774a2f74a52fb0463abfa36b05f",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:key-test:7120",
+      "name": "key-test",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7120,
+      "end-line": 7124,
+      "byte-start": 193631,
+      "byte-end": 193763,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "7975ffe7d82e3a5c9e910a9c9be664d83a3e07ace8149c68ef5ab022320e43f0",
+      "extracted": "extracted/0183.cljs",
+      "extracted-sha256": "cad66ea908bbd384d6d9a569f529fa77e117da2a478b66f9d062792cf34703f5",
+      "patch": "docs/compatibility/patches/array-map-key-test.json",
+      "patch-sha256": "7b5a8811365a5253ad3ecb99dd45e622b9b109feea67e2eea2ea48e735348263",
+      "adapted-form-sha256": "0b27c4913e51eebe4f383cc6f8edb54adedd767b35bc58bbd0262ea6f74d934e",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:pam-dupes?:7126",
+      "name": "pam-dupes?",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7126,
+      "end-line": 7136,
+      "byte-start": 193765,
+      "byte-end": 194111,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "7845f6b9281d46028d83d906ac7ae437b0c35f482eda66d19dee1da1e6c6a095",
+      "extracted": "extracted/0184.cljs",
+      "extracted-sha256": "ff4dd546a60fda26df22acc6b124b600f8e064e1501ffd49410701cd9ef7f710",
+      "patch": "docs/compatibility/patches/array-map-pam-dupes-predicate.json",
+      "patch-sha256": "4f315b800da813833ee39fafcb360c8faaeeb174fb5eb27c0ef87e642f225244",
+      "adapted-form-sha256": "876fe75b1c245a9d4d3356e7798e793deb01cbe2f3dde630029f2eebec39ac22",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:pam-new-size:7138",
+      "name": "pam-new-size",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7138,
+      "end-line": 7148,
+      "byte-start": 194113,
+      "byte-end": 194462,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "df69d62720870b8ee1b8c2fba36c65533801fc50bb2dc8c8cdf562a17a0478bc",
+      "extracted": "extracted/0185.cljs",
+      "extracted-sha256": "0a0811cdbd623f966c21c116d63720d4b9234fb31abf9fac3cc6979e6a06936e",
+      "patch": "docs/compatibility/patches/array-map-pam-new-size.json",
+      "patch-sha256": "19d8e46d7d58e53372dec574eebf3fa0849e9eee3f2f2ba0e00ed56ad5924965",
+      "adapted-form-sha256": "c7c32473c9dc3abeb32591f6c192c66a039270d0c685a2323a699d0528ac0e0b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:pam-grow-seed-array:7150",
+      "name": "pam-grow-seed-array",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7150,
+      "end-line": 7161,
+      "byte-start": 194464,
+      "byte-end": 194931,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "4d4e90cc5906829748a00d4a9dbb19101932d964080bd623d5c50f498e2bc7c6",
+      "extracted": "extracted/0186.cljs",
+      "extracted-sha256": "cd1e3d5c5412e08f19f895323048d0fa411b362e7a5f3127a52319dd6ff8a14a",
+      "patch": "docs/compatibility/patches/array-map-pam-grow-seed-array.json",
+      "patch-sha256": "4e0a99e31862d7672113a4d9bbc52cf84d50224a2f60cab595e8f6bb12cd9fdc",
+      "adapted-form-sha256": "ac1f3eabae74f6ad6cb385444a6c4152f78aecd1b3913303ca83a3fc77ceb91c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical sequence/vector/identifier protocols and array storage",
+        "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_maps.rs"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "3d1a2fb81efe06eacfe946f3c838ddb5afd6686829ea58b1f3f65caff613fab3"
+      "sha256": "7b91f047f96c7b5b7bbeb19e9934e81f0beca2d77157d761e9e99b9da2d996eb"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "9a366ddbbbcbc324862e06bdab694e5fed62e4e80a2fd7fa8322199c93507f77"
+      "sha256": "b9a27cd38b31706bfe3ec98da0568f35d67432a178623889267921f884ed11e4"
     }
   },
   "files": {
@@ -5158,6 +6028,36 @@
     "extracted/0154.cljs": "92cb3a3ca3850fab4335c2db871bcf635fe1c03a9a8dd1e6038e63a14d8ac249",
     "extracted/0155.cljs": "23c0adf766926e8a6b6747c39c0335c2fea64f2e40e46a2912c5b40ba19562a0",
     "extracted/0156.cljs": "50992891ff5bb617a92b1475cd7c21c3f7e3e4957e0ac8fd577095e9c7f91156",
-    "suss/core.sus": "d24a51ca2a59a941a1bcc09956e69697e00d9a699377930477f20e4dded8e96b"
+    "extracted/0157.cljs": "365aae2b3f9bffb107338fbf8a6da0b8a55a8d548fb2ff3f160d458de17fd08e",
+    "extracted/0158.cljs": "259e61c25d5aafeb46f53e6e06a8125ffc4bed4d5d28c6eb2b381dfe74210ae0",
+    "extracted/0159.cljs": "94b70b011961bc3a555336230fdb2213e8edfe6bf60cc579b868c340dc53c7ce",
+    "extracted/0160.cljs": "141cbf36ba78945420d5e1426fd0d476317662e6bd3f6de5de7dd19e649b2a1c",
+    "extracted/0161.cljs": "d8585dbac85948e8c2b4d42bd8b9733717246dec2f8b75827be0e7e77d7b43df",
+    "extracted/0162.cljs": "3869ec8964b994e8898f81936d881102dc91c244fd66b1203bf77575db60db12",
+    "extracted/0163.cljs": "3133f795eadde2b358446602353d951b1385bafaf66ff29713432729b9d8097b",
+    "extracted/0164.cljs": "597a4d456442f7eb43a5db46be66ba81f67a4eed90dee2ef27b507da4f84ffc7",
+    "extracted/0165.cljs": "294f0538e03b949ff54875ab7f73ad949253d7c5085617b74c828613c1c4cdf8",
+    "extracted/0166.cljs": "3f9b2ab097710fd02f267f2af603e532f293cb4ae32c54b9dc9fa00b33b62a9c",
+    "extracted/0167.cljs": "061d3f63c1d9dcae33e787e331229276aeb50503c778b140b7d6060a166d1605",
+    "extracted/0168.cljs": "a27092459eae02ca06dd790010dd82f50f31678ec5ae2921911bd979208589f5",
+    "extracted/0169.cljs": "455b8abcd3a9e7226278874503d1884b21b6e35b9d175c77dca39dd5ad37ffcc",
+    "extracted/0170.cljs": "f992c2b8f66ca754311a43f45a6594a931f696f352eaee33b8188b87558f87bd",
+    "extracted/0171.cljs": "b8018125c6ef2fa74ba934a7082927f8ba1e9cf27d23f320b7c88d6f0665dce5",
+    "extracted/0172.cljs": "d6f13b0ddf560214c918aff839154285d47c61ba7d4c2b79e6c9f9fbabcba488",
+    "extracted/0173.cljs": "f14043254cd1918907c3a92f184f8e47e034213251cec368c6ec0e29fbfee8b8",
+    "extracted/0174.cljs": "09a81befebfa627b0e40e28e6cacc35a50054912a2c71ddd484946b7102a7dcb",
+    "extracted/0175.cljs": "95c39d0f15515cb56e65cb07be5d9e4306f0453cee7697fb3fac7d0903e2021d",
+    "extracted/0176.cljs": "cd8971a5f6067acb02278ba53eb975fc723dbb8f8593520ff280f048590eb952",
+    "extracted/0177.cljs": "4f87e92127eb7dfd9757bb19370114eae0fc5ef67b9f89f71ac95133d0d7a63d",
+    "extracted/0178.cljs": "493933c28b1de666d43bc3c8b61fece266a70062538da3592f60a3e41c577cb4",
+    "extracted/0179.cljs": "4246fd65d4ab3ecd4cbc98eae383810c8be1e3f8b712da492c709c7f7faee8f4",
+    "extracted/0180.cljs": "d21aec1f86718937d7927f41111861c2d1a5aa20e5cb2e8b98c0c4612aaa661d",
+    "extracted/0181.cljs": "7071402fcf6f5bee5ab8149c4651506ea8251db3ebb36c99fdf36b9261ced75e",
+    "extracted/0182.cljs": "dd90ed709251498973cb3fb29961d6f8b7d67dd88bb6a7fe5b3890539dba09f9",
+    "extracted/0183.cljs": "cad66ea908bbd384d6d9a569f529fa77e117da2a478b66f9d062792cf34703f5",
+    "extracted/0184.cljs": "ff4dd546a60fda26df22acc6b124b600f8e064e1501ffd49410701cd9ef7f710",
+    "extracted/0185.cljs": "0a0811cdbd623f966c21c116d63720d4b9234fb31abf9fac3cc6979e6a06936e",
+    "extracted/0186.cljs": "cd1e3d5c5412e08f19f895323048d0fa411b362e7a5f3127a52319dd6ff8a14a",
+    "suss/core.sus": "dc981df1e0ec0a88b54717551faa249425ee1ac4d00a7141116d0553d0597653"
   }
 }

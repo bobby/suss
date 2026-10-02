@@ -788,16 +788,166 @@
       "id": "runtime:conj!:3999",
       "source-sha256": "7268fae1f200a3f5ce62cd65efeede08eaa95fdc39f663b6ad5a182c23dd713b",
       "patch": "docs/compatibility/patches/vector-conj-bang.json"
+    },
+    {
+      "id": "runtime:IMap:687",
+      "source-sha256": "ea524a99cbc3a2a63a20d9fde06cc2df85b561e45a933c5d641d44954b9a0200",
+      "patch": null
+    },
+    {
+      "id": "runtime:IMapEntry:693",
+      "source-sha256": "ee9f827657e98068d4628e76fe98f82d279b46ef7745efac02ee529a826bb018",
+      "patch": null
+    },
+    {
+      "id": "runtime:IRecord:774",
+      "source-sha256": "0e262ad0ffecf590908e084dc088254c3087d22bc6ad281cc6b24cb83e5c8aa4",
+      "patch": null
+    },
+    {
+      "id": "runtime:map?:2258",
+      "source-sha256": "b059014dc47aeeefbf94665ea95d3796958bbf42442f04e045b455f9ce9b0591",
+      "patch": "docs/compatibility/patches/array-map-map-predicate.json"
+    },
+    {
+      "id": "runtime:record?:2265",
+      "source-sha256": "90c9cccf05b785cbabd7625f1a2a61cdd521d624bf4fec2c63441b06db373f0f",
+      "patch": "docs/compatibility/patches/array-map-record-predicate.json"
+    },
+    {
+      "id": "runtime:vector?:2270",
+      "source-sha256": "67dcff8e2ecac81e807baae4116706812f1276cb4176fbc8201e350332623319",
+      "patch": "docs/compatibility/patches/array-map-vector-predicate.json"
+    },
+    {
+      "id": "runtime:get:2031",
+      "source-sha256": "4a351a9b6f818fab75759873b315cb2b41954f2a48437273ea42b26e17591803",
+      "patch": "docs/compatibility/patches/array-map-get.json"
+    },
+    {
+      "id": "runtime:contains?:2451",
+      "source-sha256": "e768814bfd741d4012923480329f1d4c53bee058827f49d7ecae8f10f2b0f858",
+      "patch": "docs/compatibility/patches/array-map-contains-predicate.json"
+    },
+    {
+      "id": "runtime:key:9181",
+      "source-sha256": "6db5db5ec29d1bbbf98d39626fbc54c1240ce33341cb208b87df344f2e28f8af",
+      "patch": "docs/compatibility/patches/array-map-key.json"
+    },
+    {
+      "id": "runtime:val:9260",
+      "source-sha256": "1e079735228b5b43a6393236b0bb4a993cec053479a8def2c7a674cabe5c189f",
+      "patch": "docs/compatibility/patches/array-map-val.json"
+    },
+    {
+      "id": "runtime:lookup-sentinel:2321",
+      "source-sha256": "4f300922437deb85550d0224c940f532a7631717a7fe61c567a1d056fc021171",
+      "patch": "docs/compatibility/patches/array-map-lookup-sentinel.json"
+    },
+    {
+      "id": "runtime:array-index-of-nil?:6645",
+      "source-sha256": "b6d2a2ba00be8863b7cd71ab3daf312a4b48a7a11c94a1c4eacbdf5cbd765e67",
+      "patch": "docs/compatibility/patches/array-map-array-index-of-nil-predicate.json"
+    },
+    {
+      "id": "runtime:array-index-of-keyword?:6653",
+      "source-sha256": "22aa69ef1e1bb34714d59d7c42ec1d1492f13f90e19fb5f89a2e696688e6ca89",
+      "patch": "docs/compatibility/patches/array-map-array-index-of-keyword-predicate.json"
+    },
+    {
+      "id": "runtime:array-index-of-symbol?:6663",
+      "source-sha256": "71c7e5f04fae612776d3e61a4c492c985ed3fa255328165a29d0c4cc00fd526c",
+      "patch": "docs/compatibility/patches/array-map-array-index-of-symbol-predicate.json"
+    },
+    {
+      "id": "runtime:array-index-of-identical?:6673",
+      "source-sha256": "8ee8dc7ccef100dc1391e6a24d1dcde4fc2b499664ea7178d1fba16168b5f3ad",
+      "patch": "docs/compatibility/patches/array-map-array-index-of-identical-predicate.json"
+    },
+    {
+      "id": "runtime:array-index-of-equiv?:6681",
+      "source-sha256": "675fe01af401c33aca7a00d11177f03ca3d73d15796c7450b88d51be7eee066c",
+      "patch": "docs/compatibility/patches/array-map-array-index-of-equiv-predicate.json"
+    },
+    {
+      "id": "runtime:array-index-of:6689",
+      "source-sha256": "b44f72da40a23c6d1ba71399bb42f64044345218b6325a9ba3ed92a3a0f4c2ca",
+      "patch": "docs/compatibility/patches/array-map-array-index-of.json"
+    },
+    {
+      "id": "runtime:array-map-index-of:6703",
+      "source-sha256": "721b772eab7a1aa54e590e60c457da3ed8e7d0f8f3a104b78ba1231a52a6647d",
+      "patch": "docs/compatibility/patches/array-map-array-map-index-of.json"
+    },
+    {
+      "id": "runtime:array-extend-kv:6706",
+      "source-sha256": "45ff8e8bb13652523282916ebde2a66ab03257f02602dc880d70c87c1444a2b0",
+      "patch": "docs/compatibility/patches/array-map-array-extend-kv.json"
+    },
+    {
+      "id": "runtime:array-map-extend-kv:6717",
+      "source-sha256": "29610ff840e2a865b5e5e9e29e78cb79331b6ef0dd589fbb205a1632124a9279",
+      "patch": "docs/compatibility/patches/array-map-array-map-extend-kv.json"
+    },
+    {
+      "id": "runtime:MapEntry:6722",
+      "source-sha256": "3873948b6575cf990d4794cc91bf721481697049b7b084e02bdd9b5170e45a23",
+      "patch": "docs/compatibility/patches/array-map-MapEntry.json"
+    },
+    {
+      "id": "runtime:map-entry?:6822",
+      "source-sha256": "9b9f01680256f6fafea985504d8d97d3db349eb3f567b6d801ecbdbe9b49e9f3",
+      "patch": "docs/compatibility/patches/array-map-map-entry-predicate.json"
+    },
+    {
+      "id": "runtime:PersistentArrayMapSeq:6827",
+      "source-sha256": "dad31044823d406326d43b238f3490d6765f379740a406af39d2f25953f51e7c",
+      "patch": null
+    },
+    {
+      "id": "runtime:persistent-array-map-seq:6897",
+      "source-sha256": "9e68cfa89c4cfa3b2e865b4c60e80861fe05056495d37fac88eaa944fa44fdec",
+      "patch": "docs/compatibility/patches/array-map-persistent-array-map-seq.json"
+    },
+    {
+      "id": "runtime:PersistentArrayMapIterator:6903",
+      "source-sha256": "b5e84230489d81208723c799f92b5ad5d4fbc227fac6e49073fd123a3e46de54",
+      "patch": null
+    },
+    {
+      "id": "runtime:PersistentArrayMap:6912",
+      "source-sha256": "67825e14b0644251a5d5a5acf592ca441feea03bba7ad87e1e9d9e0fc22e6b21",
+      "patch": "docs/compatibility/patches/array-map-PersistentArrayMap.json"
+    },
+    {
+      "id": "runtime:key-test:7120",
+      "source-sha256": "7975ffe7d82e3a5c9e910a9c9be664d83a3e07ace8149c68ef5ab022320e43f0",
+      "patch": "docs/compatibility/patches/array-map-key-test.json"
+    },
+    {
+      "id": "runtime:pam-dupes?:7126",
+      "source-sha256": "7845f6b9281d46028d83d906ac7ae437b0c35f482eda66d19dee1da1e6c6a095",
+      "patch": "docs/compatibility/patches/array-map-pam-dupes-predicate.json"
+    },
+    {
+      "id": "runtime:pam-new-size:7138",
+      "source-sha256": "df69d62720870b8ee1b8c2fba36c65533801fc50bb2dc8c8cdf562a17a0478bc",
+      "patch": "docs/compatibility/patches/array-map-pam-new-size.json"
+    },
+    {
+      "id": "runtime:pam-grow-seed-array:7150",
+      "source-sha256": "4d4e90cc5906829748a00d4a9dbb19101932d964080bd623d5c50f498e2bc7c6",
+      "patch": "docs/compatibility/patches/array-map-pam-grow-seed-array.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "3d1a2fb81efe06eacfe946f3c838ddb5afd6686829ea58b1f3f65caff613fab3"
+      "sha256": "7b91f047f96c7b5b7bbeb19e9934e81f0beca2d77157d761e9e99b9da2d996eb"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "9a366ddbbbcbc324862e06bdab694e5fed62e4e80a2fd7fa8322199c93507f77"
+      "sha256": "b9a27cd38b31706bfe3ec98da0568f35d67432a178623889267921f884ed11e4"
     }
   }
 }

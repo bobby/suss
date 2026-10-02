@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b44f72da40a23c6d1ba71399bb42f64044345218b6325a9ba3ed92a3a0f4c2ca",
+  "replacement": "(def array-index-of\n  (fn [arr k]\n(cond\n    (keyword? k) (array-index-of-keyword? arr k)\n\n    (or (string? k) (number? k))\n    (array-index-of-identical? arr k)\n\n    (symbol? k) (array-index-of-symbol? arr k)\n\n    (nil? k)\n    (array-index-of-nil? arr)\n\n    :else (array-index-of-equiv? arr k))))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}

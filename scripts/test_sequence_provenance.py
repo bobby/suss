@@ -65,3 +65,18 @@ class SequenceProvenance(unittest.TestCase):
         with patch.object(provenance, 'json_data', side_effect=changed_patch):
             with self.assertRaisesRegex(ValueError, 'preserve one complete form and target'):
                 provenance.verify_payload(self.record, self.source, self.loader)
+
+    def test_map_threshold_munging_preserves_exact_canonical_target(self):
+        statement = next(s for s in self.record['statements']
+                         if s.get('patch') == 'docs/compatibility/patches/array-map-threshold.json')
+        original = provenance.json_data(
+            provenance.repository_file(provenance.ROOT, statement['patch']).read_bytes())
+        changed = copy.deepcopy(original)
+        changed['replacement'] = changed['replacement'].replace('HASHMAP_THRESHOLD', 'OTHER_THRESHOLD')
+        decode = provenance.json_data
+        def changed_patch(raw):
+            value = decode(raw)
+            return changed if value == original else value
+        with patch.object(provenance, 'json_data', side_effect=changed_patch):
+            with self.assertRaisesRegex(ValueError, 'preserve one complete form and target'):
+                provenance.verify_payload(self.record, self.source, self.loader)

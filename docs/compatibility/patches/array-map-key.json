@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "6db5db5ec29d1bbbf98d39626fbc54c1240ce33341cb208b87df344f2e28f8af",
+  "replacement": "(def key\n  (fn [map-entry]\n(-key map-entry)))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}

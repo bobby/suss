@@ -9348,3 +9348,120 @@ publish draft, dispatch mandatory independent review, fix significant findings,
 require exact final reviewed-head CI before readiness. No merge or M3 completion.
 Child map worktree is separate: source-backed import preparation is unexecuted,
 not passing evidence; use focused tests before any new full baseline there.
+
+Map child now has an unexecuted focused regression for actual quoted canonical
+PersistentArrayMap data, nested binding vectors, persistent assoc/dissoc,
+lookup/defaults and order-independent equality/hash. No success is claimed; wait
+for parent80479 full terminal before Cargo/JVM/Node. Parent source remains frozen
+at709918b (vectorb5fc263 plus stale quote-guard fix), full /private/tmp/suss-m3-vector-factory-full2.log.
+
+Map child focused83416 terminal101: retained MapEntry #js reader dispatch failed.
+Explicit source-array patch fixed that; source8343 terminal101 exposed private
+lookup-sentinel metadata, recorded bounded bootstrap omission;83527 terminal101
+exposed when-some. Whole-form adaptation preserves initializer-once nil test.
+Initial Rust15458 terminal101 was a local iterator-shadowing compile error, fixed.
+Source87976 terminal0: actual canonical quoted map, persistent updates/equality/hash.
+Provenance narrow threshold target normalization and negative regression pass;
+Python69914 terminal0:88tests/import191/reviews283partial782unassessed/setup12.
+
+Focus44596 terminal101: foreign-class test incorrectly called missing factory after
+rebinding class. Direct foreign constructor preserves meaningful nominal rejection.
+Focus56714 terminal0:22tests (maps3/forms6/vectors7/literals6). Fresh oracle91859
+terminal0: pinned compile, Node, exact24tagged observations, native maps4 in EACH
+Runtime and Macro phase with independent decode/GC. Final focus83893 terminal0:
+5map tests adding actual factory capture, textual order and throw short circuit.
+Logs /private/tmp/suss-m3-macro-maps-{before,source,after2,after3,focus,focus2,oracle,final-focus}.log.
+
+Incidental cargo fmt touched70unrelated files. Automatic review rejected broad
+restore; every file was backed up under /private/tmp/suss-map-incidental-format-backup
+and proved byte-identical to rustfmt edition2024(HEAD). Reviewed retry restored
+only those verified formatting files; actual map changes preserved. No blocker.
+Next integrate parent739f0df publication evidence, freeze and run required full
+workspace baseline; then mandatory independent review/significant fixes/exact-head
+CI before PR readiness. No map PR yet. Retained HAMT/transients, metadata transport,
+&env/syntaxquote/gensyms/bootstrap/cache/evaluator removal and stackless scheduler/
+I/O cancellation/live-GC accounting remain original M3 acceptance, not completed.
+PR132 exact739f0df CI36951307622 confirmed in_progress, not yet ready; no merge.
+
+Parent739f0df integrated with both handoff evidence blocks preserved. Map source/tests
+frozen for required full workspace baseline; root owns exclusive heavy slot.
+
+Map draft PR133 published from a00cf9a with Refs#14; mandatory independent
+review_pr133 dispatched. Required full75886 terminal101, not success: old
+portable_quoted_identifiers quote-error row still expected supported '{:x 1}
+to fail. Preserve compile-atomic metadata failure with '^:tag {:x 1}, retaining
+all48identifier cases and actual plain map success coverage. Reviewer flagged
+map sequence synthetic-entry nesting bound; owns heavy slot now to prove/fix/push
+significant finding before corrected full. Root edits only this stale test guard
+and handoff during review. PR132 exact739f0df CI36951307622 remains LIVE; root
+watch26758 confirmed live, /private/tmp/suss-pr132-watch.log. No ready/merge claim.
+
+PR133 independent reviewer confirmed and pushed significant nesting fix9f9e0c4:
+synthetic map entry vectors now count their own level before decoding children.
+Before61059 terminal101 accepted overdeep syntax; after33943 terminal0:6map+
+3identifier. Additional bounds68037 terminal101 hit default fuel during fixture
+construction;39582 terminal101 rejected correctly but diagnostic assertion was
+over-specific. Final31032 terminal0 with explicit bounded fuel:6map+3identifier,
+61/62wrapper boundary in bothStores, total4096node guard, malformed/oversized/
+metadata/index rejection and recovery. Python88/import191/setup12 independent
+checks pass; reviewer approves exact9f9e0c4813455a9c33a5269ddd5a7c4a5db5599e.
+
+Corrected frozen full91421 terminal0:915passed/0failed/17existing ignores/86groups
+through finalreader doctests; /private/tmp/suss-m3-macro-maps-full2.log. No new
+ignores or removed tests. PR133 remains draft pending final reviewed-head CI.
+This publication evidence changes docs only; tested source/tests remain9f9e0c4.
+
+PR132 exact reviewed739f0df CI36951307622 completedSUCCESS:909passed/0failed/
+17existing ignores/85groups, Python87/import161/setup8/reviews253partial812unassessed
+through finalreader. Initial log assertion missed ANSI separators; stripping only
+ANSI display codes confirmed full evidence. Root verified /private/tmp/suss-pr132-final-ci.log
+and watch26758 terminal0, then marked132ready; API OPEN/notdraft/head unchanged.
+No merge. Issue14 progress5944079840/5944158852 records partial map/review proof.
+Metadata child is separate from frozen map source; its first focused68659 terminal101
+shows quoted metadata rejection, /private/tmp/suss-m3-macro-metadata-before.log.
+Next unblocked work is real metadata transport and &env/syntaxquote; HAMT/transients,
+bootstrap/cache/privacy/evaluator removal and stackless scheduler/I/O cancellation/
+live-GC accounting remain required original M3 acceptance. No completion claim.
+
+
+## Open PR stack ancestry repair — 2026-10-01
+
+The requested pr-stack-fixes session found PR #129 conflicting with current main
+8ef2f07 after predecessors #122–#128 were squash-merged. Resolved the overlap by
+retaining the independently reviewed macro-import changes and integrating main
+ancestry. Propagated ancestry merge commits through #131/#132/#133 without
+rewriting their original commits. Before this evidence-only addition, every
+repaired tree exactly matched its corresponding reviewed original tree:
+
+- #129: 9256e6c -> 39b3e9f; original parent tree also exactly matches main.
+- #131: 03a6d8f -> 54e2402; repaired #129 is an ancestor.
+- #132: 739f0df -> df4661c; repaired #131 is an ancestor.
+- #133: 6d97fa1 -> 2a12919; repaired #132 is an ancestor.
+
+Separate independent subagent reviews for each PR found no significant issue.
+No production semantics, source/license hashes, tests, issue IDs or inventory
+statuses changed. All source/tests were frozen during verification.
+
+Commands and terminal results (CARGO_BUILD_JOBS=2, no RUSTFLAGS override):
+
+- Focused cargo test -p suss-cli --test compiled_macro_imports --test compiled_macro_reload --test compiled_macro_vectors --test compiled_macro_maps --test portable_quoted_identifiers --locked -- --test-threads=2: 28 passed, zero failed/ignored; /private/tmp/suss-pr-stack-fixes-focused-shared.log.
+- cargo test --workspace --locked -- --test-threads=2: 915 passed, zero failed, 17 existing ignores across 86 groups, exit 0 through reader doctests; /private/tmp/suss-pr-stack-fixes-full.log.
+- python3 -m unittest discover -s scripts -p 'test_*.py': 88 passed, exit 0; /private/tmp/suss-pr-stack-fixes-python.log.
+- Inventory/review/import checks: 1,065 declarations, 283 partially reviewed, 782 unassessed; 191 core import files and 12 complete licensed setup forms verified. Sequence/bitwise provenance, all 15 WIT files/six packages, numeric artifact integrity, offline roadmap preview and git diff --check pass.
+
+The initial fresh-target Cargo build was deliberately terminated (exit 143)
+before execution to reuse the existing repository cache. Focused and full runs
+then executed sequentially with CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target;
+no overlapping native Cargo invocation or skipped regression.
+
+Published #129–#132 repairs have new exact-head CI runs 36956034013,
+36956034110 and 36956034518, pending at this evidence snapshot. Superseded
+36956033925/36956033885 are cancelled, not passing. #133's original reviewed
+6d97fa1 passed 36953923303, which does not certify its ancestry repair. Require
+new successful exact-final-head CI for all repaired PRs before readiness.
+Keep #133 draft until its repaired head passes. No PR was merged.
+
+Refs #13/#14 remain partial; M3 and subsequent milestone acceptance remain open.
+Next unblocked implementation is metadata transport and &env/syntaxquote in the
+separate child increment; full HAMT/transients, bootstrap/cache/privacy/evaluator
+removal and stackless scheduler/I/O cancellation/live-GC accounting remain required.

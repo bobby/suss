@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b6d2a2ba00be8863b7cd71ab3daf312a4b48a7a11c94a1c4eacbdf5cbd765e67",
+  "replacement": "(def array-index-of-nil?\n  (fn [arr]\n(let [len (alength arr)]\n    (loop [i 0]\n      (cond\n        (<= len i) -1\n        (nil? (aget arr i)) i\n        :else (recur (+ i 2)))))))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}

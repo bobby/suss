@@ -130,6 +130,19 @@ impl Analyzer<'_> {
                 "Map literal requires paired entries",
             ));
         }
+        let entries = items
+            .iter()
+            .map(|item| self.form(item))
+            .collect::<Result<Vec<_>, _>>()?;
+        self.map_values(form, items, entries)
+    }
+
+    pub(super) fn map_values(
+        &mut self,
+        form: &Form,
+        items: &[Form],
+        values: Vec<Hir>,
+    ) -> Result<Hir, Diagnostic> {
         if items.is_empty() {
             return self.collection_property(form, "PersistentArrayMap", "EMPTY");
         }
@@ -138,13 +151,14 @@ impl Analyzer<'_> {
             // The accepted 2026-10-01 decision records the pinned emitter variance.
             let mut entries = Vec::new();
             let mut keys = Vec::new();
+            let mut lowered = values.into_iter();
             let mut values = Vec::new();
             for entry in items.chunks_exact(2) {
-                let key = self.form(&entry[0])?;
+                let key = lowered.next().expect("paired map key");
                 let key = self.fresh_binding(&entry[0], key);
                 keys.push(self.local(&entry[0], key.id));
                 entries.push(key);
-                let value = self.form(&entry[1])?;
+                let value = lowered.next().expect("paired map value");
                 let value = self.fresh_binding(&entry[1], value);
                 values.push(self.local(&entry[1], value.id));
                 entries.push(value);
@@ -160,11 +174,7 @@ impl Analyzer<'_> {
             );
         }
         let constructor = self.collection_class(form, "PersistentArrayMap")?;
-        let mut entries = Vec::new();
-        for item in items {
-            entries.push(self.form(item)?);
-        }
-        let array = self.collection_array(form, entries);
+        let array = self.collection_array(form, values);
         if !distinct_constants(&items.iter().step_by(2).collect::<Vec<_>>()) {
             return self.collection_method(
                 form,

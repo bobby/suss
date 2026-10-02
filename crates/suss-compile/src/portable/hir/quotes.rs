@@ -83,6 +83,19 @@ impl Analyzer<'_> {
                     .collect::<Result<Vec<_>, _>>()?;
                 self.vector_values(form, entries)
             }
+            Kind::Map(items) => {
+                if items.len() % 2 != 0 {
+                    return Err(fail(
+                        form.span.clone(),
+                        "Map literal requires paired entries",
+                    ));
+                }
+                let entries = items
+                    .iter()
+                    .map(|item| self.quote_data(item, depth + 1))
+                    .collect::<Result<Vec<_>, _>>()?;
+                self.map_values(form, items, entries)
+            }
             Kind::List(items) => {
                 let symbol = suss_reader::Symbol {
                     namespace: Some("suss.core".into()),

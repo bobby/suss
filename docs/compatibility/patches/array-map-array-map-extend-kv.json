@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "29610ff840e2a865b5e5e9e29e78cb79331b6ef0dd589fbb205a1632124a9279",
+  "replacement": "(def array-map-extend-kv\n  (fn [m k v]\n(array-extend-kv (.-arr m) k v)))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}
