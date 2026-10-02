@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "9063a0706d9748c73ec75e7d2d31e1e4aae238f01ef16ef2db387a7a7f87fdc9",
+  "replacement": "(def pv-reduce\n  (fn ([pv f start end]\n   (if (< start end)\n     (pv-reduce pv f (nth pv start) (inc start) end)\n     (f)))\n([pv f init start end]\n   (loop [acc init i start arr (unchecked-array-for pv start)]\n     (if (< i end)\n       (let [j (bit-and i 0x01f)\n             arr (if (zero? j) (unchecked-array-for pv i) arr)\n             nacc (f acc (aget arr j))]\n         (if (reduced? nacc)\n           @nacc\n           (recur nacc (inc i) arr)))\n       acc)))))",
+  "rationale": "Preserve the complete pinned vector algorithm through explicit defn bootstrap. Private Var visibility and complete compiled macro bootstrap remain unfinished."
+}

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "3513c53ac454dc31f9ee2c958344dcbc43f46e0226181f9db5b5528d305ccd68",
+  "replacement": "(def tv-editable-tail\n  (fn [tl]\n(let [ret (make-array 32)]\n    (array-copy tl 0 ret 0 (alength tl))\n    ret)))",
+  "rationale": "Retain complete pinned transient vector algorithms and edit-token lifetime checks through explicit defn bootstrap. Source Error construction uses typed runtime error adapter. Two known .. field-chain uses lower to nested named property access without repeating receiver evaluation. No source methods or error branches are removed; complete public vector/core acceptance remains unfinished."
+}

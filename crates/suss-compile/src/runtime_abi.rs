@@ -5,6 +5,7 @@ use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
 mod arrays;
+mod array_methods;
 mod bitwise;
 mod closure_properties;
 mod comparisons;
@@ -886,6 +887,9 @@ fn build_module() -> Vec<u8> {
         &ConstExpr::extended([I64Const(0), I32Const(0), ArrayNewDefault(ARGS),
             I32Const(0), ArrayNewDefault(ARGS), I32Const(0), RefI31, I32Const(0), RefI31, StructNew(DESCRIPTOR)]));
     // Lazy shared default Object prototype, owned by the runtime GC root.
+    globals.global(GlobalType { val_type: VALUE, mutable: true, shared: false },
+        &ConstExpr::extended([I32Const(0), RefI31]));
+    // Shared Array.slice function root; no receiver retained.
     globals.global(GlobalType { val_type: VALUE, mutable: true, shared: false },
         &ConstExpr::extended([I32Const(0), RefI31]));
     // Scalar-only UID allocator; no global reference table retains owners.

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "a22b7bbd7ff4430cdbe4bdd917a42ff358d56e3ecec5ee9de8e6e8e6bfee3e89",
+  "replacement": "(def array-for\n  (fn [pv i]\n(if (and (<= 0 i) (< i (.-cnt pv)))\n    (unchecked-array-for pv i)\n    (vector-index-out-of-bounds i (.-cnt pv)))))",
+  "rationale": "Preserve the complete pinned vector algorithm through explicit defn bootstrap. Private Var visibility and complete compiled macro bootstrap remain unfinished."
+}

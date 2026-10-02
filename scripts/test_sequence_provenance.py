@@ -50,3 +50,18 @@ class SequenceProvenance(unittest.TestCase):
         next(s for s in changed_record['statements'] if 'patch' in s)['patch-sha256'] = '0' * 64
         with self.assertRaisesRegex(ValueError, 'patch file hash mismatch'):
             provenance.verify_payload(changed_record, self.source, self.loader)
+
+    def test_vector_property_munging_preserves_exact_canonical_target(self):
+        statement = next(s for s in self.record['statements']
+                         if s.get('patch') == 'docs/compatibility/patches/vector-empty-node.json')
+        original = provenance.json_data(
+            provenance.repository_file(provenance.ROOT, statement['patch']).read_bytes())
+        changed = copy.deepcopy(original)
+        changed['replacement'] = changed['replacement'].replace('EMPTY_NODE', 'DIFFERENT_NODE')
+        decode = provenance.json_data
+        def changed_patch(raw):
+            value = decode(raw)
+            return changed if value == original else value
+        with patch.object(provenance, 'json_data', side_effect=changed_patch):
+            with self.assertRaisesRegex(ValueError, 'preserve one complete form and target'):
+                provenance.verify_payload(self.record, self.source, self.loader)

@@ -9211,3 +9211,140 @@ review findings after independent nested reload/discovery failure/cycle scope
 probes. Reviewer releases heavy slot; source/tests remain unchanged. This evidence
 only docs commit must also receive exact final-head CI before readiness. No merge;
 M3 bootstrap/cache/full environment/privacy/shared AOT and lifecycle remain open.
+
+## M3 persistent macro vector continuation
+
+PR129 exact reviewed9256e6c CI36944259806 SUCCESS:895/0/17/83groups through final
+reader doctests, Python86/inventory1065/reviews224841/import132. Root downloaded
+/private/tmp/suss-pr129-final-ci.log and marked129ready; no merge.
+PR131 independently approved03a6d8f3bc79d09eea6a989b533dcc972f9f4393:
+reviewer full82782 terminal0:902/0/17/84 through finalreader; final-head CI
+36947152902 confirmed in_progress, not ready yet.
+
+New branch portable/m3-macro-vectors at /private/tmp/suss-m3-macro-vectors starts
+from reviewed03a6d8f and real initialized source pin. Retains complete vector type,
+15 source supporting declarations, indexed traversal and standalone canonical
+EMPTY setup with explicit provenance. Quoted vectors and canonical rooted vector
+transport now execute compiled binding-vector macro results. Original Array.slice
+adapter supplies real copied source storage for upstream pop. No removed source
+methods or fake collection implementations. See docs/runtime/compiled-macro-vectors.md.
+
+Before83126 terminal101 unresolved PersistentVector. Subsequent after81426/78480/
+3861/58878/78131 exposed Error adaptation, munged EMPTY property, ILookup and
+missing slice. After52574 and96266 terminal0 basic vector and macro expansion pass.
+Focus6659 terminal101:1,100-element stress exhausted default10million fuel; explicit
+bounded100million test allowance fixes that. Final-focus93439 terminal0:33tests
+across six native suites. Python38758 terminal1 caught bad mock intercepting an
+unrelated earlier patch; corrected95327 terminal0:87tests. Provenance147generated
+files,7complete licensed setup forms. Runtime focus62999 terminal101:the UID
+exhaustion test expects scalar allocator as final private global; moved Array.slice
+root before allocator and adjusted internal constants. Corrected runtime focus
+74850 is live at /private/tmp/suss-m3-macro-vectors-final-focus2.log; root owns
+exclusive heavy slot. Re-poll to terminal. Do not claim full success yet.
+
+Next unblocked implementation: retain and execute actual transient vector/
+fromArray dependencies so large literal and quoted vector construction uses the
+pinned algorithm; then metadata maps/&env/syntaxquote/versioned bootstrap/cache.
+Current constructor/transport prerequisite must pass frozen full baseline and
+independent PR review/exact-head CI before readiness. All original M3 issue12–15
+acceptance remains required, including whole source privacy/cache/AOT and stackless
+scheduler cancellation with pending-I/O cleanup/dynamic scope/live-GC accounting.
+
+Corrected runtime focus74850 terminal0:61tests across vector5/portable arrays10/
+CLIprint1/ABI45; scalar UID exhaustion and the shared slice root both pass.
+Python95327 terminal0:87tests. Current inventory239partial/826unassessed,147core
+import files,7complete standalone licensed forms. Source/tests frozen now; root
+starts required full workspace baseline, exclusive heavy slot remains root-owned.
+No milestone completion or full/remote/readiness claim until terminal evidence.
+
+Full workspace11057 confirmed live and advancing through compiled macro/phase
+native suites with no failures, /private/tmp/suss-m3-macro-vectors-full.log.
+Root owns this process and exclusive heavy slot; poll11057 until terminal before
+another Cargo/JVM/Node workload. Source/tests stay frozen. Partial milestone
+progress recorded on issue14 comment5943556369; no issue closure. Final CI131
+36947152902 remains confirmed in_progress on approved03a6d8f. Do not use older
+head CI. No PR for vectors yet; obtain full and fresh differential evidence,
+then independent review/significant fixes/final-head CI before readiness.
+
+## M3 vector factory completion within the current increment
+
+Full11057 terminal101 (not success): portable_collection_literals stale missing-
+constructor test assumed imported PersistentVector remained absent. Kept the real
+compile-atomic missing-constructor regression in a fresh Session with no core
+import, rather than deleting/skipping it; corrected67415 terminal0:6tests.
+
+Extended this same vector increment with complete retained transient protocols,
+array-copy, edit-token helpers, TransientVector, transient/persistent!/conj! and
+actual fromArray standalone factory. Factory boundary test52966 never executed:
+os Permission denied while launching newly built test binary; no semantic before
+result is claimed. Subsequent28262 terminal101 reproduced real transport error:
+persistent! clears only root edit token; descendant nodes retain old tokens.
+Decoder corrected to enforce nil root token and allow actual retained descendants.
+After8527 terminal0:6native tests, including31/32/33/65/1057 quoted factory data,
+copy-on-write and post-persistent! count/nth/conj/assoc/pop/persist errors.
+
+Oracle initial65366 terminal1: wrong generator working directory meant namespace
+was not generated. Corrected generator then8839 terminal1: main transport requires
+generated base cases. Ran scripts/oracle_cases.py, then62738 terminal0 pinned
+compiler, Node terminal0 and exact compare37passed. Native87954 terminal0:7vector
+and6literal tests, including37 observations independently decoded in EACH of
+Runtime and Macro Stores; no fake constructor fixture. Added active-root/narrow-
+node malformed guards and exact nested signed-zero bits, preserving all37cases.
+Python46936 terminal0:87tests. Source-backed inventory253partial/812unassessed;
+161core import files and8complete standalone licensed setup forms verified.
+
+Final source focus53158 is live at /private/tmp/suss-m3-vector-factory-final-focus.log;
+root owns exclusive heavy slot. Includes vector7/literals6/forms6/indexed3/source4/
+trie5/arrays10 and runtimeABI45/compilerarrays. Re-poll to terminal, then freeze
+source/tests and run required full workspace baseline. PR131 reviewed03a6d8f CI
+36947152902 confirmed live at01:08UTC, test step in progress. Watch21496 live.
+No vector PR yet; require full then independent review/significant fixes/final-head
+CI. Next unblocked original M3 task is persistent map/metadata transport and &env/
+syntaxquote; complete bootstrap/cache/privacy/AOT/evaluator removal and #15
+stackless scheduler/cancellation/pending-I/O/live-GC accounting remain required.
+
+Final focus53158 terminal0:87Rust tests/9groups, including45ABI. Preserved original
+37oracle cases and added fromArray alias/clone plus transient-pop trie boundary:
+final pinned compile45348 terminal0, Node terminal0, exact compare40pass;
+final native7103 terminal0:7tests, all40observations independently decoded in each
+of Runtime and Macro phases. No expected observation was replaced. Source/tests
+frozen now for the required full workspace baseline; root retains heavy slot.
+
+PR131 exact reviewed03a6d8f CI36947152902 completedSUCCESS:902passed/0failed/
+17existing ignores/84groups through finalreader, Python86/import132 and existing
+provenance checks. Root verified /private/tmp/suss-pr131-final-ci.log, watch21496
+terminal0, and marked131ready. No merge. New vector issue14 progress remains
+partial until all original acceptance (including maps/&env/syntaxquote/cache/
+bootstrap/evaluator and stackless lifecycle) is actually proved.
+
+Final-source full42522 confirmed LIVE through vector7 and compiled_phase_session
+(native suites), /private/tmp/suss-m3-vector-factory-full.log. Root owns process
+and exclusive Cargo/JVM/Node slot; poll42522 to terminal, never restart solely
+because observation times out. Source/tests remain frozen. Issue14 partial
+factory progress comment5943730682 records40fresh primary observations and both
+native phases, remaining acceptance and no completed milestone claim. PR131 API
+verified OPEN/notdraft/head03a6d8f after approved-head CI SUCCESS. No merge.
+After full terminal, publish vector draft with Refs#14, dispatch independent
+subagent review, push significant fixes and require final-head CI. Next source
+work is persistent maps/metadata/&env, preserving all other original M3 gates.
+
+Vector full42522 terminal101, not success: old portable_quoted_identifiers guard
+still expected '[1 2] to fail after real vectors became supported. Preserved that
+row's compile-atomic metadata failure using '^:tag [1 2], while independent vector
+success tests already cover plain/large quoted values. Focus88582 terminal0:
+7vector+3identifier tests, retaining all48identifier and40vector primary cases.
+No production code changed, no removed tests or skips. Commitb5fc263 holds frozen
+vector source; next commit records the guard update, then required full rerun.
+Root heavy slot free until full restart on this corrected source/test snapshot.
+Child portable/m3-macro-maps /private/tmp/suss-m3-macro-maps currently has no edits
+and real initialized pin; fast-forward it to the corrected parent before new work.
+
+Vector final-source full80479 terminal0:909passed/0failed/17existing ignores/
+85groups through finalreader doctests, /private/tmp/suss-m3-vector-factory-full2.log.
+Final source709918b includes both preserved stale error guards; focused identifier/
+vector10 and final primary40native-each-phase pass. Python87/provenance161/
+inventory253partial812unassessed/setup8 verified. No new ignores. Heavy slot free;
+publish draft, dispatch mandatory independent review, fix significant findings,
+require exact final reviewed-head CI before readiness. No merge or M3 completion.
+Child map worktree is separate: source-backed import preparation is unexecuted,
+not passing evidence; use focused tests before any new full baseline there.

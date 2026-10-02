@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "84de58e5f430f7610e2d90f8009b1f948d396b1300aca911b327036ee47f3970",
+  "replacement": "(def vector-index-out-of-bounds\n  (fn [i cnt]\n(throw (suss.bootstrap/error (str_ \"No item \" i \" in vector of length \" cnt)))))",
+  "rationale": "Preserve the complete pinned vector algorithm through explicit defn bootstrap. Private Var visibility and complete compiled macro bootstrap remain unfinished. Source Error construction uses the existing typed runtime error adapter."
+}

@@ -1,7 +1,7 @@
 //! Original owner-held identity UID for adapting Closure getUid.
 //! The only allocator root is a scalar counter; owner references are never global.
 use super::*;
-pub(super) const COUNTER: u32 = native_objects::TAG_GLOBAL + 2;
+pub(super) const COUNTER: u32 = array_methods::METHOD_ROOT + 1;
 const MAX_UID: i64 = 9_007_199_254_740_991;
 
 pub(super) fn intrinsics(b: &mut Builder) {

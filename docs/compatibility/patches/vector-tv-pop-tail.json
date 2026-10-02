@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "2f1a50a26e919af3b1132735678cab31877750820b19185163d5d4025152a1a0",
+  "replacement": "(def tv-pop-tail\n  (fn [tv level node]\n(let [node   (tv-ensure-editable (.-edit (.-root tv)) node)\n        subidx (bit-and (bit-shift-right-zero-fill (- (.-cnt tv) 2) level) 0x01f)]\n    (cond\n      (> level 5) (let [new-child (tv-pop-tail\n                                   tv (- level 5) (pv-aget node subidx))]\n                    (if (and (nil? new-child) (zero? subidx))\n                      nil\n                      (do (pv-aset node subidx new-child)\n                          node)))\n      (zero? subidx) nil\n      :else (do (pv-aset node subidx nil)\n                node)))))",
+  "rationale": "Retain complete pinned transient vector algorithms and edit-token lifetime checks through explicit defn bootstrap. Source Error construction uses typed runtime error adapter. Two known .. field-chain uses lower to nested named property access without repeating receiver evaluation. No source methods or error branches are removed; complete public vector/core acceptance remains unfinished."
+}

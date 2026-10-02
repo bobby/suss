@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "9b910ffbcda31b39ea143e879db98bfc46a9fcac705fac92ffbf87fbc107c857",
+  "replacement": "(set! (.-EMPTY_NODE PersistentVector) (VectorNode. nil (make-array 32)))",
+  "rationale": "Use emitted EMPTY_NODE spelling of the pinned compiler-munged EMPTY-NODE property."
+}

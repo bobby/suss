@@ -134,6 +134,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
 
     let mut callbacks = object_methods::functions(b, equal);
     callbacks.extend(string_methods::functions(b));
+    callbacks.extend(array_methods::functions(b));
 
     // Public JS native names and internal kind keys name the same owned entry.
     let mut body = vec![];
@@ -606,6 +607,15 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                     array_size: 1,
                 },
                 Call(b.names["source-array-length-args"]),
+                Return,
+                End,
+            ]);
+            body.push(LocalGet(1));
+            name(&mut body, "slice");
+            body.extend([
+                Call(equal),
+                If(BlockType::Empty),
+                Call(b.names["source-array-slice-method"]),
                 Return,
                 End,
             ]);
