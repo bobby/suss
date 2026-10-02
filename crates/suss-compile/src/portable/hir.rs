@@ -1,7 +1,7 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
 mod local_bindings;
-pub use local_bindings::{LocalBinding, LocalKind};
+pub use local_bindings::{FieldBinding, LocalBinding, LocalKind};
 mod bitwise;
 mod cases;
 mod collections;
@@ -488,7 +488,7 @@ struct Analyzer<'a> {
     environment: Environment,
     phase: Phase,
     locals: HashMap<String, LocalBinding>,
-    fields: HashMap<String, (Hir, bool)>,
+    fields: HashMap<String, FieldBinding>,
     next: usize,
     next_loop: usize,
     analysis_depth: usize,
@@ -500,7 +500,7 @@ impl Analyzer<'_> {
         &mut self,
         forms: &[Form],
         span: Range<usize>,
-        statement: bool,
+        context: super::AnalysisContext,
         tail: bool,
     ) -> Result<Hir, Diagnostic> {
         // Intermediate forms discard their result; only the final form inherits
@@ -511,7 +511,13 @@ impl Analyzer<'_> {
             .map(|(index, form)| {
                 self.form_in(
                     form,
-                    statement || index + 1 < forms.len(),
+                    if index + 1 < forms.len() {
+                        super::AnalysisContext::Statement
+                    } else if forms.len() > 1 {
+                        context.returning()
+                    } else {
+                        context
+                    },
                     tail && index + 1 == forms.len(),
                 )
             })
@@ -525,9 +531,9 @@ impl Analyzer<'_> {
         })
     }
     fn form(&mut self, form: &Form) -> Result<Hir, Diagnostic> {
-        self.form_in(form, false, false)
+        self.form_in(form, super::AnalysisContext::Expression, false)
     }
-    fn form_in(&mut self, form: &Form, statement: bool, tail: bool) -> Result<Hir, Diagnostic> {
+    fn form_in(&mut self, form: &Form, context: super::AnalysisContext, tail: bool) -> Result<Hir, Diagnostic> {
         // Bounded bootstrap expansion can create deeper syntax than the reader
         // saw (notably nested threading). Check total analysis depth, including
         // nested macros, before recursive analyzer frames exhaust the stack.
@@ -539,7 +545,7 @@ impl Analyzer<'_> {
         }
         self.analysis_depth += 1;
         let result = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-            self.expand_or_analyze(form, statement, tail)
+            self.expand_or_analyze(form, context, tail)
         });
         self.analysis_depth -= 1;
         result
@@ -547,7 +553,7 @@ impl Analyzer<'_> {
     fn expand_or_analyze(
         &mut self,
         form: &Form,
-        statement: bool,
+        context: super::AnalysisContext,
         tail: bool,
     ) -> Result<Hir, Diagnostic> {
         if let Kind::List(items) = &form.kind {
@@ -560,21 +566,23 @@ impl Analyzer<'_> {
                     && (self.locals.contains_key(&symbol.name)
                         || self.fields.contains_key(&symbol.name));
                 if !shadowed {
-                    let context = super::ExpansionContext {
+                    let expansion_context = super::ExpansionContext {
                         environment: &self.environment,
                         origin: self.origin.as_ref(),
                         phase: self.phase,
+                        context,
                         locals: &self.locals,
+                        fields: &self.fields,
                     };
-                    if let Some(expanded) = self.expander.expand(form, context)? {
-                        return self.form_in(&expanded, statement, tail);
+                    if let Some(expanded) = self.expander.expand(form, expansion_context)? {
+                        return self.form_in(&expanded, context, tail);
                     }
                 }
             }
         }
-        self.form_inner(form, statement, tail)
+        self.form_inner(form, context, tail)
     }
-    fn form_inner(&mut self, form: &Form, statement: bool, tail: bool) -> Result<Hir, Diagnostic> {
+    fn form_inner(&mut self, form: &Form, context: super::AnalysisContext, tail: bool) -> Result<Hir, Diagnostic> {
         let kind = match &form.kind {
             Kind::Nil => Expression::Literal(Literal::Nil),
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
@@ -623,8 +631,8 @@ impl Analyzer<'_> {
                 let (kind, ty) = if symbol.namespace.is_none() {
                     if let Some(binding) = self.locals.get(&symbol.name) {
                         (Expression::Local(binding.id), binding.ty)
-                    } else if let Some((field, _)) = self.fields.get(&symbol.name) {
-                        (field.kind.clone(), field.ty)
+                    } else if let Some(field) = self.fields.get(&symbol.name) {
+                        (field.access.kind.clone(), field.access.ty)
                     } else {
                         self.global_value(symbol, form.span.clone())?
                     }
@@ -639,7 +647,7 @@ impl Analyzer<'_> {
                 });
             }
             Kind::List(items) if !items.is_empty() => {
-                return self.list(form, items, statement, tail);
+                return self.list(form, items, context, tail);
             }
             _ => {
                 return Err(fail(
@@ -1089,13 +1097,10 @@ impl Analyzer<'_> {
                 let Kind::Symbol(symbol) = &field.kind else {
                     unreachable!()
                 };
-                if parameters
-                    .iter()
-                    .any(|parameter| parameter.name == symbol.name)
-                {
-                    continue;
+                let parameter = parameters.iter().any(|parameter| parameter.name == symbol.name);
+                if !parameter {
+                    self.locals.remove(&symbol.name);
                 }
-                self.locals.remove(&symbol.name);
                 let value = if object_method {
                     let key = self
                         .literal_form(field, Literal::String(symbol.name.encode_utf16().collect()));
@@ -1111,13 +1116,24 @@ impl Analyzer<'_> {
                         vec![self.local(field, receiver)],
                     )
                 };
-                self.fields
-                    .insert(symbol.name.clone(), (value, Self::field_mutable(field)?));
+                let record = FieldBinding {
+                    declaration: field.clone(),
+                    origin: self.origin.clone(),
+                    index,
+                    mutable: Self::field_mutable(field)?,
+                    access: value,
+                };
+                if parameter {
+                    let binding = self.locals.get_mut(&symbol.name).expect("method parameter");
+                    binding.shadow = None;
+                    binding.shadow_field = Some(std::sync::Arc::new(record.clone()));
+                }
+                self.fields.insert(symbol.name.clone(), record);
             }
         }
         // Field reads occur at the original use, including in nested closures;
         // unreferenced fields must not introduce checks or effects before a body.
-        let inner_body = self.body(&args[1..], form.span.clone(), false, true)?;
+        let inner_body = self.body(&args[1..], form.span.clone(), super::AnalysisContext::Return, true)?;
         self.target = outer_target;
         let body = Box::new(Hir {
             span: form.span.clone(),
@@ -1166,7 +1182,7 @@ impl Analyzer<'_> {
         &mut self,
         form: &Form,
         items: &[Form],
-        statement: bool,
+        context: super::AnalysisContext,
         tail: bool,
     ) -> Result<Hir, Diagnostic> {
         let Kind::Symbol(symbol) = &items[0].kind else {
@@ -1336,7 +1352,7 @@ impl Analyzer<'_> {
             )
         };
         if let Some(ResolvedBinding::BootstrapControl { operation, .. }) = &resolved {
-            return self.control_form(form, args, *operation, statement, tail);
+            return self.control_form(form, args, *operation, context, tail);
         }
         if let Some(ResolvedBinding::BootstrapBitwise { operation, .. }) = &resolved {
             return self.bitwise_form(form, args, *operation);
@@ -1381,8 +1397,8 @@ impl Analyzer<'_> {
             }
             if let Kind::Symbol(name) = &args[0].kind {
                 if name.namespace.is_none() && !self.locals.contains_key(&name.name) {
-                    if let Some((field, mutable)) = self.fields.get(&name.name).cloned() {
-                        if !mutable {
+                    if let Some(field) = self.fields.get(&name.name).cloned() {
+                        if !field.mutable {
                             return Err(fail(
                                 args[0].span.clone(),
                                 "Cannot assign a local or immutable field",
@@ -1391,7 +1407,7 @@ impl Analyzer<'_> {
                         let Expression::Nominal {
                             operation,
                             mut arguments,
-                        } = field.kind
+                        } = field.access.kind
                         else {
                             unreachable!()
                         };
@@ -1417,7 +1433,7 @@ impl Analyzer<'_> {
             });
         }
         if matches!(resolved, Some(ResolvedBinding::BootstrapBinding(_))) {
-            return self.dynamic_scope(form, args, statement);
+            return self.dynamic_scope(form, args, context);
         }
         if bare && symbol.name == "throw" {
             if args.len() != 1 {
@@ -1434,7 +1450,7 @@ impl Analyzer<'_> {
             });
         }
         if bare && symbol.name == "try" {
-            return self.try_form(form, args, statement);
+            return self.try_form(form, args, context);
         }
         if bare && symbol.name == "recur" {
             let Some((target, arity)) = self.target else {
@@ -1467,7 +1483,7 @@ impl Analyzer<'_> {
             });
         }
         if bare && symbol.name == "def" {
-            if args.len() == 1 && !statement {
+            if args.len() == 1 && context != super::AnalysisContext::Statement {
                 return Err(fail(
                     form.span.clone(),
                     "Initializerless def expression results are not certified yet; use a declaration statement",
@@ -1490,7 +1506,7 @@ impl Analyzer<'_> {
         }
         let (kind, ty) = match (bare, symbol.name.as_str()) {
             (true, "do") => {
-                let body = self.body(args, form.span.clone(), statement, tail)?;
+                let body = self.body(args, form.span.clone(), context, tail)?;
                 (body.kind, body.ty)
             }
             (true, "if") => {
@@ -1498,9 +1514,9 @@ impl Analyzer<'_> {
                     return Err(fail(form.span.clone(), "if requires two or three operands"));
                 }
                 let condition = Box::new(self.form(&args[0])?);
-                let consequent = Box::new(self.form_in(&args[1], statement, tail)?);
+                let consequent = Box::new(self.form_in(&args[1], context, tail)?);
                 let alternative = Box::new(if args.len() == 3 {
-                    self.form_in(&args[2], statement, tail)?
+                    self.form_in(&args[2], context, tail)?
                 } else {
                     Hir {
                         span: form.span.clone(),
@@ -1577,7 +1593,7 @@ impl Analyzer<'_> {
                 let body = Box::new(self.body(
                     &args[1..],
                     form.span.clone(),
-                    statement,
+                    context.returning(),
                     is_loop || tail,
                 )?);
                 self.target = outer_target;
@@ -1766,7 +1782,7 @@ pub(crate) fn prepare_with_origin(
         callable_keys: BTreeMap::new(),
         target: None,
     };
-    let mut hir = analyzer.body(forms, span, true, false)?;
+    let mut hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
     if !analyzer.callable_keys.is_empty() {
         let mut initializers = analyzer.callable_keys.into_values().collect::<Vec<_>>();
         let ty = hir.ty;

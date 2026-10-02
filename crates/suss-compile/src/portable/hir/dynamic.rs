@@ -35,7 +35,7 @@ impl Analyzer<'_> {
         &mut self,
         form: &Form,
         args: &[Form],
-        statement: bool,
+        context: super::super::AnalysisContext,
     ) -> Result<Hir, Diagnostic> {
         let Some(Form {
             kind: Kind::Vector(pairs),
@@ -55,7 +55,7 @@ impl Analyzer<'_> {
             bindings.push((self.assignment_target(&pair[0])?, self.form(&pair[1])?));
         }
         let target = self.target.take();
-        let body = self.body(&args[1..], form.span.clone(), statement, false);
+        let body = self.body(&args[1..], form.span.clone(), context.returning(), false);
         self.target = target;
         let body = self.exception_region(form, vec![], body?);
         Ok(Hir {

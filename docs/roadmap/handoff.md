@@ -10258,3 +10258,52 @@ See docs/runtime/compiled-macro-environment-facts.md. Next full new-branch works
 baseline, then genuine function/context/field facts and rich compiled transport.
 Original issues12–15, bootstrap/cache/evaluator removal and scheduler acceptance
 remain open; this local branch is not a published PR.
+
+
+Isolated next worktree /private/tmp/suss-m3-macro-context, branch
+portable/m3-macro-context at parent54e9789, actual pinned submodule initialized40062
+terminal0. Parent baseline38391 remains live on unchanged54e9789, log
+/private/tmp/suss-m3-macro-environment-full.log; no concurrent native build started.
+New uncommitted field-fact implementation replaces private(field-Hir,mutable)
+tuples with FieldBinding declarations/origins/index/mutability/actual access HIR,
+exposes fields to ExpansionContext and retains genuine field shadows on locals.
+Method parameters continue to take lexical precedence while retaining the field
+they shadow; field reads/setters/caching-hash still use the same lowered accesses.
+A new native field regression is written but NOT executed yet; compile/runtime
+validity remains unproven until the parent baseline releases the shared target.
+
+Fresh pinned field environment compiler96505 terminal0 and Node execution returned42;
+full raw analyzer observations /private/tmp/suss-m3-field-environment-primary.edn
+show field declaration/mutable metadata and a nested parameter's field shadow.
+This is upstream evidence, not native differential success. Development-only
+fixture/macro files are in ignored tests/oracle/out/generated/suss_oracle.
+Next poll parent38391 to terminal and inspect its complete log; then compile and
+execute new field-record/nominal/scope regressions, fixing actual failures. Continue
+with genuine function scopes, three-way analysis context and rich environment
+transport. Existing statement/tail booleans are not blindly mapped to pinned
+:context. Original M3 scope stays open; no new PR is published or merged.
+
+
+Field/context continuation now has actual native evidence. Focus86971 terminal0:
+9passed (1context,4binding,1field,3sourcepositions), both Stores; log
+/private/tmp/suss-m3-macro-context-focus.log. Broader23398 terminal0:24passed across
+context/field/source macros/caching-hash/exceptions/native objects/type method
+scope suites, log /private/tmp/suss-m3-macro-context-broader.log. Fields retain
+actual lowered accesses and shadow metadata without executing reads. Analysis
+contexts explicitly distinguish Statement/Expression/Return, with recur tail
+checks separate. Context test independently decodes9result strings after GC and
+compares16fresh pinned context facts by label; it does not claim expansion-order
+agreement. Pin32985/34910 observed finally/catch/body visit order while Suss still
+uses body/catch/finally analysis. This observable compile-phase ordering gap needs
+an ordered regression and repair; runtime try/finally effects remain source-correct.
+
+Oracle continuation16389 reused cached cljs output and produced no newly located
+trace; strict checker rejected missing trace rather than accept stale success.
+Force-compilation77212 terminal0 (:force true/:cache-analysis false) created a
+fresh16-call trace; Node and strict context_facts_oracle.py agree with all16calls
+and9results. scripts/test-context-facts-oracle.sh uses those options for real macro
+execution each run. No source-level &env or M3 gate is claimed. PR143 reviewer has
+pushed significant nested-definition record fix55e4f64; parent full baseline must
+be rerun for that source and child must integrate it. Next ordered phase-expansion
+regression/repair, bare try context check, function scopes and rich environment
+transport. No new child PR or full child baseline yet.
