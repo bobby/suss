@@ -9348,3 +9348,40 @@ publish draft, dispatch mandatory independent review, fix significant findings,
 require exact final reviewed-head CI before readiness. No merge or M3 completion.
 Child map worktree is separate: source-backed import preparation is unexecuted,
 not passing evidence; use focused tests before any new full baseline there.
+
+Map child now has an unexecuted focused regression for actual quoted canonical
+PersistentArrayMap data, nested binding vectors, persistent assoc/dissoc,
+lookup/defaults and order-independent equality/hash. No success is claimed; wait
+for parent80479 full terminal before Cargo/JVM/Node. Parent source remains frozen
+at709918b (vectorb5fc263 plus stale quote-guard fix), full /private/tmp/suss-m3-vector-factory-full2.log.
+
+Map child focused83416 terminal101: retained MapEntry #js reader dispatch failed.
+Explicit source-array patch fixed that; source8343 terminal101 exposed private
+lookup-sentinel metadata, recorded bounded bootstrap omission;83527 terminal101
+exposed when-some. Whole-form adaptation preserves initializer-once nil test.
+Initial Rust15458 terminal101 was a local iterator-shadowing compile error, fixed.
+Source87976 terminal0: actual canonical quoted map, persistent updates/equality/hash.
+Provenance narrow threshold target normalization and negative regression pass;
+Python69914 terminal0:88tests/import191/reviews283partial782unassessed/setup12.
+
+Focus44596 terminal101: foreign-class test incorrectly called missing factory after
+rebinding class. Direct foreign constructor preserves meaningful nominal rejection.
+Focus56714 terminal0:22tests (maps3/forms6/vectors7/literals6). Fresh oracle91859
+terminal0: pinned compile, Node, exact24tagged observations, native maps4 in EACH
+Runtime and Macro phase with independent decode/GC. Final focus83893 terminal0:
+5map tests adding actual factory capture, textual order and throw short circuit.
+Logs /private/tmp/suss-m3-macro-maps-{before,source,after2,after3,focus,focus2,oracle,final-focus}.log.
+
+Incidental cargo fmt touched70unrelated files. Automatic review rejected broad
+restore; every file was backed up under /private/tmp/suss-map-incidental-format-backup
+and proved byte-identical to rustfmt edition2024(HEAD). Reviewed retry restored
+only those verified formatting files; actual map changes preserved. No blocker.
+Next integrate parent739f0df publication evidence, freeze and run required full
+workspace baseline; then mandatory independent review/significant fixes/exact-head
+CI before PR readiness. No map PR yet. Retained HAMT/transients, metadata transport,
+&env/syntaxquote/gensyms/bootstrap/cache/evaluator removal and stackless scheduler/
+I/O cancellation/live-GC accounting remain original M3 acceptance, not completed.
+PR132 exact739f0df CI36951307622 confirmed in_progress, not yet ready; no merge.
+
+Parent739f0df integrated with both handoff evidence blocks preserved. Map source/tests
+frozen for required full workspace baseline; root owns exclusive heavy slot.

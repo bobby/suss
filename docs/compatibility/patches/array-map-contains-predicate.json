@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "e768814bfd741d4012923480329f1d4c53bee058827f49d7ecae8f10f2b0f858",
+  "replacement": "(def contains?\n  (fn [coll v]\n(cond\n    (implements? IAssociative coll)\n    (-contains-key? coll v)\n\n    (native-satisfies? IAssociative coll)\n    (-contains-key? coll v)\n\n    (identical? (get coll v lookup-sentinel) lookup-sentinel)\n    false\n\n    :else\n    true)))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}

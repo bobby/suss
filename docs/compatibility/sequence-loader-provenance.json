@@ -59,6 +59,32 @@
       "sha256": "5935cf83dd3c2359c818b7b5200e8b3c3aaa1df4f02efd7b2768d20c8f29e138",
       "patch": "docs/compatibility/patches/vector-from-array.json",
       "patch-sha256": "d10e73dd207825f0e0117a5cbc7e619bcca4a8be66e80ae366b7e0b9ef946697"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7082,
+      "end-line": 7082,
+      "sha256": "8b175171b1c779b69e713066d12836225117c8149e9e9d0310a5825198797f57"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7084,
+      "end-line": 7084,
+      "sha256": "b4f0e17d6d8d76a928f62e131d03ff86c765e538c9ed0c6fd855613e58d61732",
+      "patch": "docs/compatibility/patches/array-map-threshold.json",
+      "patch-sha256": "764eab98d758c0624ddcb45d9c8f5de19d7b60e94c2ed483a3e2cb0664f26989"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7163,
+      "end-line": 7170,
+      "sha256": "dd8f5dea122159236db48e4ae6c2dfc34f053b2865b7f5547ba7021d755d5575"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7172,
+      "end-line": 7204,
+      "sha256": "aa1aa9c21227e6334ed24577e2d5eca1f99a2c6bff0f069b9d1307df524335eb"
     }
   ]
 }

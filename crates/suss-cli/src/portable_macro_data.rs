@@ -17,6 +17,9 @@ enum Class {
     SourceArray,
     PersistentVector,
     VectorNode,
+    PersistentArrayMap,
+    MapEntry,
+    PersistentArrayMapSeq,
 }
 /// Captured canonical class roots remain valid through redefinition and GC.
 /// A reset or another Store invalidates this bridge; construct a new one there.
@@ -37,6 +40,9 @@ impl FormBridge {
             ("IndexedSeq", Class::IndexedSeq),
             ("PersistentVector", Class::PersistentVector),
             ("VectorNode", Class::VectorNode),
+            ("PersistentArrayMap", Class::PersistentArrayMap),
+            ("MapEntry", Class::MapEntry),
+            ("PersistentArrayMapSeq", Class::PersistentArrayMapSeq),
         ] {
             let value = session.eval(&format!("suss.core/{name}"))?;
             let id = session.inspect(&value, |mut store, value| {
@@ -295,6 +301,37 @@ fn decode(
                 Class::PersistentVector => {
                     Kind::Vector(vector(store, &data, classes, span, depth, budget)?)
                 }
+                Class::PersistentArrayMap => {
+                    if data.len() != 4 {
+                        return Err(error("Invalid persistent array map field layout"));
+                    }
+                    metadata(store, &data[0])?;
+                    let count = integer(store, &data[1])?;
+                    let entries = source_elements(store, &data[2], classes)?;
+                    if entries.len() != count * 2 || entries.len() > budget.nodes {
+                        return Err(error("Map count disagrees with bounded pair storage"));
+                    }
+                    Kind::Map(
+                        entries
+                            .iter()
+                            .map(|entry| decode(store, entry, classes, span, depth + 1, budget))
+                            .collect::<wasmtime::Result<Vec<_>>>()?,
+                    )
+                }
+                Class::MapEntry => {
+                    if data.len() != 3 {
+                        return Err(error("Invalid map entry field layout"));
+                    }
+                    Kind::Vector(
+                        data[..2]
+                            .iter()
+                            .map(|entry| decode(store, entry, classes, span, depth + 1, budget))
+                            .collect::<wasmtime::Result<Vec<_>>>()?,
+                    )
+                }
+                Class::PersistentArrayMapSeq => {
+                    Kind::List(sequence(store, value, classes, span, depth, budget)?)
+                }
                 Class::VectorNode => return Err(error("Vector trie nodes are not macro syntax")),
                 Class::SourceArray => return Err(error("Raw source arrays are not macro syntax")),
                 Class::List | Class::Cons | Class::EmptyList | Class::IndexedSeq => {
@@ -349,6 +386,34 @@ fn sequence(
                 }
                 items.push(decode(store, &data[1], classes, span, depth + 1, budget)?);
                 cursor = data[2].clone();
+            }
+            Class::PersistentArrayMapSeq => {
+                if data.len() != 3 {
+                    return Err(error("Invalid array map sequence field layout"));
+                }
+                metadata(store, &data[2])?;
+                let index = integer(store, &data[1])?;
+                let entries = source_elements(store, &data[0], classes)?;
+                if entries.len() % 2 != 0
+                    || index % 2 != 0
+                    || index >= entries.len()
+                    || entries.len() - index > budget.nodes
+                {
+                    return Err(error("Invalid bounded array map sequence pair storage"));
+                }
+                for pair in entries[index..].chunks_exact(2) {
+                    spend(budget)?;
+                    let pair = pair
+                        .iter()
+                        .map(|entry| decode(store, entry, classes, span, depth + 1, budget))
+                        .collect::<wasmtime::Result<Vec<_>>>()?;
+                    items.push(Form {
+                        span: span.clone(),
+                        metadata: vec![],
+                        kind: Kind::Vector(pair),
+                    });
+                }
+                break;
             }
             Class::IndexedSeq => {
                 append_indexed(store, &data, classes, span, depth, budget, &mut items)?;

@@ -1,0 +1,198 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "count-0",
+      "source": "(count {})",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "count-1",
+      "source": "(count {:0 0})",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "count-7",
+      "source": "(count {:0 0 :1 1 :2 2 :3 3 :4 4 :5 5 :6 6})",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "count-8",
+      "source": "(count {:0 0 :1 1 :2 2 :3 3 :4 4 :5 5 :6 6 :7 7})",
+      "expected": {
+        "tag": "f64",
+        "bits": "4020000000000000"
+      }
+    },
+    {
+      "id": "keyword-lookup",
+      "source": "(get {:a 1 :b 2} :b)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "default",
+      "source": "(get {:a 1} :b 91)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4056c00000000000"
+      }
+    },
+    {
+      "id": "nil-value",
+      "source": "(nil? (get {:a nil} :a 91))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "nil-key",
+      "source": "(get {nil 7} nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "string-key",
+      "source": "(get {\"\ud83d\ude00\" 17 \"a\" 2} \"\ud83d\ude00\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4031000000000000"
+      }
+    },
+    {
+      "id": "symbol-key",
+      "source": "(get {'a 11} 'a)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4026000000000000"
+      }
+    },
+    {
+      "id": "duplicate-dynamic",
+      "source": "(let [k :a m {k 1 :a 9}] (get m :a))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "duplicate-count",
+      "source": "(let [k :a] (count {k 1 :a 9}))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "equivalent-symbols",
+      "source": "(let [k 'a] (get {k 1 'a 9} 'a))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4022000000000000"
+      }
+    },
+    {
+      "id": "signed-zero-key",
+      "source": "(let [k -0.0] (count {k 1 0 2}))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "assoc-sharing",
+      "source": "(let [a {:a 1} b (-assoc a :a 9)] (and (== (get a :a) 1) (== (get b :a) 9)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "assoc-identical",
+      "source": "(let [a {:a 1}] (identical? a (-assoc a :a (get a :a))))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "assoc-add",
+      "source": "(count (-assoc {:a 1} :b 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "dissoc",
+      "source": "(count (-dissoc {:a 1 :b 2} :a))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "dissoc-missing",
+      "source": "(let [a {:a 1}] (identical? a (-dissoc a :b)))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "dissoc-empty",
+      "source": "(count (-dissoc {:a 1} :a))",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "unordered-equality",
+      "source": "(= {:a 1 :b 2} {:b 2 :a 1})",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "unordered-hash",
+      "source": "(== (hash {:a 1 :b 2}) (hash {:b 2 :a 1}))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "entry",
+      "source": "(== (val (first {:a 9})) 9)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "kv-reduce",
+      "source": "(-kv-reduce {:a 1 :b 2} (fn [a k v] (+ a v)) 10)",
+      "expected": {
+        "tag": "f64",
+        "bits": "402a000000000000"
+      }
+    }
+  ]
+}

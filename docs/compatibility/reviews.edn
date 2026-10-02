@@ -2683,4 +2683,274 @@
    :rationale "Retain complete pinned transient vector declarations for actual large quoted macro data. Executing boundary, persistence and post-persistent errors are required; this partial review does not establish complete public vector/core compatibility."
    :status :in-progress :adaptation-path "docs/compatibility/patches/vector-conj-bang.json" :alternative nil
    :tests ["crates/suss-cli/tests/compiled_macro_vectors.rs"]}
+
+  "runtime:IMap:687"
+  {:source-sha256 "ea524a99cbc3a2a63a20d9fde06cc2df85b561e45a933c5d641d44954b9a0200" :visibility :public
+   :arities nil
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :portable
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:IMapEntry:693"
+  {:source-sha256 "ee9f827657e98068d4628e76fe98f82d279b46ef7745efac02ee529a826bb018" :visibility :public
+   :arities nil
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :portable
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:IRecord:774"
+  {:source-sha256 "0e262ad0ffecf590908e084dc088254c3087d22bc6ad281cc6b24cb83e5c8aa4" :visibility :public
+   :arities nil
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :portable
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:map?:2258"
+  {:source-sha256 "b059014dc47aeeefbf94665ea95d3796958bbf42442f04e045b455f9ce9b0591" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-map-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:record?:2265"
+  {:source-sha256 "90c9cccf05b785cbabd7625f1a2a61cdd521d624bf4fec2c63441b06db373f0f" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-record-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:vector?:2270"
+  {:source-sha256 "67dcff8e2ecac81e807baae4116706812f1276cb4176fbc8201e350332623319" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-vector-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:get:2031"
+  {:source-sha256 "4a351a9b6f818fab75759873b315cb2b41954f2a48437273ea42b26e17591803" :visibility :public
+   :arities {:fixed [2 3] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-get.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:contains?:2451"
+  {:source-sha256 "e768814bfd741d4012923480329f1d4c53bee058827f49d7ecae8f10f2b0f858" :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-contains-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:key:9181"
+  {:source-sha256 "6db5db5ec29d1bbbf98d39626fbc54c1240ce33341cb208b87df344f2e28f8af" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-key.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:val:9260"
+  {:source-sha256 "1e079735228b5b43a6393236b0bb4a993cec053479a8def2c7a674cabe5c189f" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-val.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:lookup-sentinel:2321"
+  {:source-sha256 "4f300922437deb85550d0224c940f532a7631717a7fe61c567a1d056fc021171" :visibility :private
+   :arities nil
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-lookup-sentinel.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:array-index-of-nil?:6645"
+  {:source-sha256 "b6d2a2ba00be8863b7cd71ab3daf312a4b48a7a11c94a1c4eacbdf5cbd765e67" :visibility :private
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-array-index-of-nil-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:array-index-of-keyword?:6653"
+  {:source-sha256 "22aa69ef1e1bb34714d59d7c42ec1d1492f13f90e19fb5f89a2e696688e6ca89" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-array-index-of-keyword-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:array-index-of-symbol?:6663"
+  {:source-sha256 "71c7e5f04fae612776d3e61a4c492c985ed3fa255328165a29d0c4cc00fd526c" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-array-index-of-symbol-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:array-index-of-identical?:6673"
+  {:source-sha256 "8ee8dc7ccef100dc1391e6a24d1dcde4fc2b499664ea7178d1fba16168b5f3ad" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-array-index-of-identical-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:array-index-of-equiv?:6681"
+  {:source-sha256 "675fe01af401c33aca7a00d11177f03ca3d73d15796c7450b88d51be7eee066c" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-array-index-of-equiv-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:array-index-of:6689"
+  {:source-sha256 "b44f72da40a23c6d1ba71399bb42f64044345218b6325a9ba3ed92a3a0f4c2ca" :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-array-index-of.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:array-map-index-of:6703"
+  {:source-sha256 "721b772eab7a1aa54e590e60c457da3ed8e7d0f8f3a104b78ba1231a52a6647d" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-array-map-index-of.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:array-extend-kv:6706"
+  {:source-sha256 "45ff8e8bb13652523282916ebde2a66ab03257f02602dc880d70c87c1444a2b0" :visibility :private
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-array-extend-kv.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:array-map-extend-kv:6717"
+  {:source-sha256 "29610ff840e2a865b5e5e9e29e78cb79331b6ef0dd589fbb205a1632124a9279" :visibility :private
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-array-map-extend-kv.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:MapEntry:6722"
+  {:source-sha256 "3873948b6575cf990d4794cc91bf721481697049b7b084e02bdd9b5170e45a23" :visibility :public
+   :arities nil
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-MapEntry.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:map-entry?:6822"
+  {:source-sha256 "9b9f01680256f6fafea985504d8d97d3db349eb3f567b6d801ecbdbe9b49e9f3" :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-map-entry-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:PersistentArrayMapSeq:6827"
+  {:source-sha256 "dad31044823d406326d43b238f3490d6765f379740a406af39d2f25953f51e7c" :visibility :public
+   :arities nil
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :portable
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:persistent-array-map-seq:6897"
+  {:source-sha256 "9e68cfa89c4cfa3b2e865b4c60e80861fe05056495d37fac88eaa944fa44fdec" :visibility :public
+   :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-persistent-array-map-seq.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:PersistentArrayMapIterator:6903"
+  {:source-sha256 "b5e84230489d81208723c799f92b5ad5d4fbc227fac6e49073fd123a3e46de54" :visibility :public
+   :arities nil
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :portable
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:PersistentArrayMap:6912"
+  {:source-sha256 "67825e14b0644251a5d5a5acf592ca441feea03bba7ad87e1e9d9e0fc22e6b21" :visibility :public
+   :arities nil
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-PersistentArrayMap.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:key-test:7120"
+  {:source-sha256 "7975ffe7d82e3a5c9e910a9c9be664d83a3e07ace8149c68ef5ab022320e43f0" :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-key-test.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:pam-dupes?:7126"
+  {:source-sha256 "7845f6b9281d46028d83d906ac7ae437b0c35f482eda66d19dee1da1e6c6a095" :visibility :private
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-pam-dupes-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:pam-new-size:7138"
+  {:source-sha256 "df69d62720870b8ee1b8c2fba36c65533801fc50bb2dc8c8cdf562a17a0478bc" :visibility :private
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-pam-new-size.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
+
+  "runtime:pam-grow-seed-array:7150"
+  {:source-sha256 "4d4e90cc5906829748a00d4a9dbb19101932d964080bd623d5c50f498e2bc7c6" :visibility :private
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["canonical sequence/vector/identifier protocols and array storage" "retained array-map/MapEntry algorithms; declared pending HAMT/ES6 dependencies"]
+   :classification :adapted
+   :rationale "Retain complete pinned declarations needed by actual map/metadata macro data. Source methods and error branches remain present. Focused executing proof is required; this in-progress review does not establish complete public core/collection acceptance."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/array-map-pam-grow-seed-array.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_maps.rs"]}
 }}

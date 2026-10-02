@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "721b772eab7a1aa54e590e60c457da3ed8e7d0f8f3a104b78ba1231a52a6647d",
+  "replacement": "(def array-map-index-of\n  (fn [m k]\n(array-index-of (.-arr m) k)))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}

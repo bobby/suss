@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "7975ffe7d82e3a5c9e910a9c9be664d83a3e07ace8149c68ef5ab022320e43f0",
+  "replacement": "(def key-test\n  (fn [key other]\n(cond\n    (identical? key other) true\n    (keyword-identical? key other) true\n    :else (= key other))))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}

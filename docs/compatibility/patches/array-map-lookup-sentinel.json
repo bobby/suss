@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "4f300922437deb85550d0224c940f532a7631717a7fe61c567a1d056fc021171",
+  "replacement": "(def lookup-sentinel (js-obj))",
+  "rationale": "Retain canonical identity sentinel allocation. The bounded bootstrap omits private Var metadata until phase visibility is implemented; this is not complete private binding support."
+}

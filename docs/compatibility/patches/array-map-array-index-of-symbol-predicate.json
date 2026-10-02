@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "71c7e5f04fae612776d3e61a4c492c985ed3fa255328165a29d0c4cc00fd526c",
+  "replacement": "(def array-index-of-symbol?\n  (fn [arr k]\n(let [len  (alength arr)\n        kstr (.-str k)]\n    (loop [i 0]\n      (cond\n        (<= len i) -1\n        (and (symbol? (aget arr i))\n             (identical? kstr (.-str (aget arr i)))) i\n        :else (recur (+ i 2)))))))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}

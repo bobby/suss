@@ -31,6 +31,12 @@
 (declare PersistentVector MapEntry TransientVector tv-editable-root tv-editable-tail chunked-seq integer? js-mod)
 
 (declare array-copy tv-ensure-editable tv-push-tail tv-pop-tail unchecked-editable-array-for transient persistent! conj!)
+
+(declare PersistentArrayMap PersistentArrayMapSeq PersistentArrayMapIterator lookup-sentinel
+  array-index-of array-map-index-of array-extend-kv array-map-extend-kv
+  persistent-array-map-seq map? record? vector? key val map-entry? contains?
+  keys vals es6-iterator es6-entries-iterator ci-reduce assoc into
+  PersistentHashMap TransientArrayMap key-test pam-dupes? pam-new-size pam-grow-seed-array)
 (def identity (fn [x] x))
 
 (def not (fn [x] (if x false true)))
@@ -2083,6 +2089,595 @@
       (if vals
         (recur ntcoll (first vals) (next vals))
         ntcoll)))))
+
+(defprotocol IMap
+  "Protocol for adding mapping functionality to collections."
+  #_(-assoc-ex [coll k v])
+  (^clj -dissoc [coll k]
+    "Returns a new collection of coll without the mapping for key k."))
+
+(defprotocol IMapEntry
+  "Protocol for examining a map entry."
+  (-key [coll]
+    "Returns the key of the map entry.")
+  (-val [coll]
+    "Returns the value of the map entry."))
+
+(defprotocol IRecord
+  "Marker interface indicating a record object")
+
+(def map?
+  (fn [x]
+(if (nil? x)
+    false
+    (satisfies? IMap x))))
+
+(def record?
+  (fn [x]
+(satisfies? IRecord x)))
+
+(def vector?
+  (fn [x]
+(satisfies? IVector x)))
+
+(def get
+  (fn ([o k]
+    (when-not (nil? o)
+      (cond
+        (implements? ILookup o)
+        (-lookup o k)
+
+        (array? o)
+        (when (and (some? k) (< k (.-length o)))
+          (aget o (int k)))
+
+        (string? o)
+        (when (and (some? k) (< -1 k (.-length o)))
+          (.charAt o (int k)))
+
+        (native-satisfies? ILookup o)
+        (-lookup o k)
+
+        :else nil)))
+([o k not-found]
+    (if-not (nil? o)
+      (cond
+        (implements? ILookup o)
+        (-lookup o k not-found)
+
+        (array? o)
+        (if (and (some? k) (< -1 k (.-length o)))
+          (aget o (int k))
+          not-found)
+
+        (string? o)
+        (if (and (some? k) (< -1 k (.-length o)))
+          (.charAt o (int k))
+          not-found)
+
+        (native-satisfies? ILookup o)
+        (-lookup o k not-found)
+
+        :else not-found)
+      not-found))))
+
+(def contains?
+  (fn [coll v]
+(cond
+    (implements? IAssociative coll)
+    (-contains-key? coll v)
+
+    (native-satisfies? IAssociative coll)
+    (-contains-key? coll v)
+
+    (identical? (get coll v lookup-sentinel) lookup-sentinel)
+    false
+
+    :else
+    true)))
+
+(def key
+  (fn [map-entry]
+(-key map-entry)))
+
+(def val
+  (fn [map-entry]
+(-val map-entry)))
+
+(def lookup-sentinel (js-obj))
+
+(def array-index-of-nil?
+  (fn [arr]
+(let [len (alength arr)]
+    (loop [i 0]
+      (cond
+        (<= len i) -1
+        (nil? (aget arr i)) i
+        :else (recur (+ i 2)))))))
+
+(def array-index-of-keyword?
+  (fn [arr k]
+(let [len  (alength arr)
+        kstr (.-fqn k)]
+    (loop [i 0]
+      (cond
+        (<= len i) -1
+        (and (keyword? (aget arr i))
+             (identical? kstr (.-fqn (aget arr i)))) i
+        :else (recur (+ i 2)))))))
+
+(def array-index-of-symbol?
+  (fn [arr k]
+(let [len  (alength arr)
+        kstr (.-str k)]
+    (loop [i 0]
+      (cond
+        (<= len i) -1
+        (and (symbol? (aget arr i))
+             (identical? kstr (.-str (aget arr i)))) i
+        :else (recur (+ i 2)))))))
+
+(def array-index-of-identical?
+  (fn [arr k]
+(let [len (alength arr)]
+    (loop [i 0]
+      (cond
+        (<= len i) -1
+        (identical? k (aget arr i)) i
+        :else (recur (+ i 2)))))))
+
+(def array-index-of-equiv?
+  (fn [arr k]
+(let [len (alength arr)]
+    (loop [i 0]
+      (cond
+        (<= len i) -1
+        (= k (aget arr i)) i
+        :else (recur (+ i 2)))))))
+
+(def array-index-of
+  (fn [arr k]
+(cond
+    (keyword? k) (array-index-of-keyword? arr k)
+
+    (or (string? k) (number? k))
+    (array-index-of-identical? arr k)
+
+    (symbol? k) (array-index-of-symbol? arr k)
+
+    (nil? k)
+    (array-index-of-nil? arr)
+
+    :else (array-index-of-equiv? arr k))))
+
+(def array-map-index-of
+  (fn [m k]
+(array-index-of (.-arr m) k)))
+
+(def array-extend-kv
+  (fn [arr k v]
+(let [l (alength arr)
+        narr (make-array (+ l 2))]
+    (loop [i 0]
+      (when (< i l)
+        (aset narr i (aget arr i))
+        (recur (inc i))))
+    (aset narr l k)
+    (aset narr (inc l) v)
+    narr)))
+
+(def array-map-extend-kv
+  (fn [m k v]
+(array-extend-kv (.-arr m) k v)))
+
+(deftype MapEntry [key val ^:mutable __hash]
+  Object
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  IMapEntry
+  (-key [node] key)
+  (-val [node] val)
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
+
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  IMeta
+  (-meta [node] nil)
+
+  IWithMeta
+  (-with-meta [node meta]
+    (with-meta [key val] meta))
+
+  IStack
+  (-peek [node] val)
+
+  (-pop [node] [key])
+
+  ICollection
+  (-conj [node o] [key val o])
+
+  IEmptyableCollection
+  (-empty [node] nil)
+
+  ISequential
+  ISeqable
+  (-seq [node] (IndexedSeq. (array key val) 0 nil))
+
+  IReversible
+  (-rseq [node] (IndexedSeq. (array val key) 0 nil))
+
+  ICounted
+  (-count [node] 2)
+
+  IIndexed
+  (-nth [node n]
+    (case n
+      0 key
+      1 val
+      (throw (suss.bootstrap/error "Index out of bounds"))))
+
+  (-nth [node n not-found]
+    (case n
+      0 key
+      1 val
+      not-found))
+
+  ILookup
+  (-lookup [node k] (-nth node k nil))
+  (-lookup [node k not-found] (-nth node k not-found))
+
+  IAssociative
+  (-assoc [node k v]
+    (assoc [key val] k v))
+  (-contains-key? [node k]
+    (case k
+      0 true
+      1 true
+      false))
+
+  IFind
+  (-find [node k]
+    (case k
+      0 (MapEntry. 0 key nil)
+      1 (MapEntry. 1 val nil)
+      nil))
+
+  IVector
+  (-assoc-n [node n v]
+    (-assoc-n [key val] n v))
+
+  IReduce
+  (-reduce [node f]
+    (ci-reduce node f))
+
+  (-reduce [node f start]
+    (ci-reduce node f start))
+
+  IFn
+  (-invoke [node k]
+    (-nth node k))
+
+  (-invoke [node k not-found]
+    (-nth node k not-found)))
+
+(def map-entry?
+  (fn [x]
+(implements? IMapEntry x)))
+
+(deftype PersistentArrayMapSeq [arr i _meta]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  IMeta
+  (-meta [coll] _meta)
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta _meta)
+      coll
+      (PersistentArrayMapSeq. arr i new-meta)))
+
+  ICounted
+  (-count [coll]
+    (/ (- (alength arr) i) 2))
+
+  ISeqable
+  (-seq [coll] coll)
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  ICollection
+  (-conj [coll o]
+    (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
+
+  IHash
+  (-hash [coll] (hash-ordered-coll coll))
+
+  ISeq
+  (-first [coll]
+    (MapEntry. (aget arr i) (aget arr (inc i)) nil))
+
+  (-rest [coll]
+    (if (< i (- (alength arr) 2))
+      (PersistentArrayMapSeq. arr (+ i 2) nil)
+      ()))
+
+  INext
+  (-next [coll]
+    (when (< i (- (alength arr) 2))
+      (PersistentArrayMapSeq. arr (+ i 2) nil)))
+
+  IDrop
+  (-drop [coll n]
+    (when (< n (-count coll))
+      (PersistentArrayMapSeq. arr (+ i (* 2 n)) nil)))
+
+  IReduce
+  (-reduce [coll f] (seq-reduce f coll))
+  (-reduce [coll f start] (seq-reduce f start coll)))
+
+(def persistent-array-map-seq
+  (fn [arr i _meta]
+(when (<= i (- (alength arr) 2))
+    (PersistentArrayMapSeq. arr i _meta))))
+
+(deftype PersistentArrayMapIterator [arr ^:mutable i cnt]
+  Object
+  (hasNext [_]
+    (< i cnt))
+  (next [_]
+    (let [ret (MapEntry. (aget arr i) (aget arr (inc i)) nil)]
+      (set! i (+ i 2))
+      ret)))
+
+(deftype PersistentArrayMap [meta cnt arr ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (keys [coll]
+    (es6-iterator (keys coll)))
+  (entries [coll]
+    (es6-entries-iterator (seq coll)))
+  (values [coll]
+    (es6-iterator (vals coll)))
+  (has [coll k]
+    (contains? coll k))
+  (get [coll k not-found]
+    (-lookup coll k not-found))
+  (forEach [coll f]
+    (loop [entries (seq coll)]
+      (when entries
+        (let [entry (first entries)
+              k (nth entry 0 nil)
+              v (nth entry 1 nil)]
+          (f v k))
+        (recur (next entries)))))
+
+  ICloneable
+  (-clone [_] (PersistentArrayMap. meta cnt arr __hash))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (PersistentArrayMap. new-meta cnt arr __hash)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ICollection
+  (-conj [coll entry]
+    (if (vector? entry)
+      (-assoc coll (-nth entry 0) (-nth entry 1))
+      (loop [ret coll es (seq entry)]
+        (if (nil? es)
+          ret
+          (let [e (first es)]
+            (if (vector? e)
+              (recur (-assoc ret (-nth e 0) (-nth e 1))
+                     (next es))
+              (throw (suss.bootstrap/error "conj on a map takes map entries or seqables of map entries"))))))))
+
+  IEmptyableCollection
+  (-empty [coll] (-with-meta (.-EMPTY PersistentArrayMap) meta))
+
+  IEquiv
+  (-equiv [coll other]
+    (if (and (map? other) (not (record? other)))
+      (let [alen (alength arr)
+            ^not-native other other]
+        (if (== cnt (-count other))
+          (loop [i 0]
+            (if (< i alen)
+              (let [v (-lookup other (aget arr i) lookup-sentinel)]
+                (if-not (identical? v lookup-sentinel)
+                  (if (= (aget arr (inc i)) v)
+                    (recur (+ i 2))
+                    false)
+                  false))
+              true))
+          false))
+      false))
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-unordered-coll __hash))
+
+  IIterable
+  (-iterator [this]
+    (PersistentArrayMapIterator. arr 0 (* cnt 2)))
+
+  ISeqable
+  (-seq [coll]
+    (persistent-array-map-seq arr 0 nil))
+
+  IDrop
+  (-drop [coll n]
+    (let [s (-seq coll)]
+      (if (nil? s) nil (-drop s n))))
+
+  ICounted
+  (-count [coll] cnt)
+
+  ILookup
+  (-lookup [coll k]
+    (-lookup coll k nil))
+
+  (-lookup [coll k not-found]
+    (let [idx (array-map-index-of coll k)]
+      (if (== idx -1)
+        not-found
+        (aget arr (inc idx)))))
+
+  IAssociative
+  (-assoc [coll k v]
+    (let [idx (array-map-index-of coll k)]
+      (cond
+        (== idx -1)
+        (if (< cnt (.-HASHMAP_THRESHOLD PersistentArrayMap))
+          (let [arr (array-map-extend-kv coll k v)]
+            (PersistentArrayMap. meta (inc cnt) arr nil))
+          (-> (into (.-EMPTY PersistentHashMap) coll)
+            (-assoc k v)
+            (-with-meta meta)))
+
+        (identical? v (aget arr (inc idx)))
+        coll
+
+        :else
+        (let [arr (let [copy (aclone arr)]
+                    (aset copy (inc idx) v)
+                    copy)]
+          (PersistentArrayMap. meta cnt arr nil)))))
+
+  (-contains-key? [coll k]
+    (not (== (array-map-index-of coll k) -1)))
+
+  IFind
+  (-find [coll k]
+    (let [idx (array-map-index-of coll k)]
+      (when-not (== idx -1)
+        (MapEntry. (aget arr idx) (aget arr (inc idx)) nil))))
+
+  IMap
+  (-dissoc [coll k]
+    (let [idx (array-map-index-of coll k)]
+      (if (>= idx 0)
+        (let [len     (alength arr)
+              new-len (- len 2)]
+          (if (zero? new-len)
+            (-empty coll)
+            (let [new-arr (make-array new-len)]
+              (loop [s 0 d 0]
+                (cond
+                  (>= s len) (PersistentArrayMap. meta (dec cnt) new-arr nil)
+                  (= k (aget arr s)) (recur (+ s 2) d)
+                  :else (do (aset new-arr d (aget arr s))
+                            (aset new-arr (inc d) (aget arr (inc s)))
+                            (recur (+ s 2) (+ d 2))))))))
+        coll)))
+
+  IKVReduce
+  (-kv-reduce [coll f init]
+    (let [len (alength arr)]
+      (loop [i 0 init init]
+        (if (< i len)
+          (let [init (f init (aget arr i) (aget arr (inc i)))]
+            (if (reduced? init)
+              @init
+              (recur (+ i 2) init)))
+          init))))
+
+  IReduce
+  (-reduce [coll f]
+    (iter-reduce coll f))
+  (-reduce [coll f start]
+    (iter-reduce coll f start))
+
+  IFn
+  (-invoke [coll k]
+    (-lookup coll k))
+
+  (-invoke [coll k not-found]
+    (-lookup coll k not-found))
+
+  IEditableCollection
+  (-as-transient [coll]
+    (TransientArrayMap. (js-obj) (alength arr) (aclone arr))))
+
+(def key-test
+  (fn [key other]
+(cond
+    (identical? key other) true
+    (keyword-identical? key other) true
+    :else (= key other))))
+
+(def pam-dupes?
+  (fn [arr]
+(loop [i 0]
+    (if (< i (alength arr))
+      (let [dupe? (loop [j 0]
+                    (if (< j i)
+                      (or
+                        (key-test (aget arr i) (aget arr j))
+                        (recur (+ 2 j)))
+                      false))]
+        (or dupe? (recur (+ 2 i))))
+      false))))
+
+(def pam-new-size
+  (fn [arr]
+(loop [i 0 n 0]
+    (if (< i (alength arr))
+      (let [dupe? (loop [j 0]
+                    (if (< j i)
+                      (or
+                        (key-test (aget arr i) (aget arr j))
+                        (recur (+ 2 j)))
+                      false))]
+        (recur (+ 2 i) (if dupe? n (+ n 2))))
+      n))))
+
+(def pam-grow-seed-array
+  (fn [seed trailing]
+(let [seed-cnt  (dec (alength seed))
+        extra-kvs (seq trailing)
+        ret       (make-array (+ seed-cnt (* 2 (count extra-kvs))))
+        ret       (array-copy seed 0 ret 0 seed-cnt)]
+    (loop [i seed-cnt extra-kvs extra-kvs]
+      (if extra-kvs
+        (let [kv (first extra-kvs)]
+          (aset ret i (-key kv))
+          (aset ret (inc i) (-val kv))
+          (recur (+ 2 i) (next extra-kvs)))
+        ret)))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
@@ -2130,3 +2725,50 @@
             (if (< i l)
               (recur (inc i) (conj! out (aget xs i)))
               (persistent! out))))))))
+
+(set! (.-EMPTY PersistentArrayMap) (PersistentArrayMap. nil 0 (array) empty-unordered-hash))
+
+(set! (.-HASHMAP_THRESHOLD PersistentArrayMap) 8)
+
+(set! (.-createAsIfByAssoc PersistentArrayMap)
+  (fn [init]
+    ;; check trailing element
+    (let [len           (alength init)
+          has-trailing? (== 1 (bit-and len 1))]
+      (if-not (or has-trailing? (pam-dupes? init))
+        (PersistentArrayMap. nil (/ len 2) init nil)
+        (.createAsIfByAssocComplexPath PersistentArrayMap init has-trailing?)))))
+
+(set! (.-createAsIfByAssocComplexPath PersistentArrayMap)
+  (fn [init ^boolean has-trailing?]
+    (let [init (if has-trailing?
+                 (pam-grow-seed-array init
+                   ;; into {} in case the final element is not a map but something conj-able
+                   ;; for parity with Clojure implementation of CLJ-2603
+                   (into {} (aget init (dec (alength init)))))
+                 init)
+          n    (pam-new-size init)
+          len  (alength init)]
+      (if (< n len)
+        (let [nodups (make-array n)]
+          (loop [i 0 m 0]
+            (if (< i len)
+              (let [dupe? (loop [j 0]
+                            (if (< j m)
+                              (or
+                                (key-test (aget init i) (aget init j))
+                                (recur (+ 2 j)))
+                              false))]
+                (if-not dupe?
+                  (let [j (loop [j (- len 2)]
+                            (if (>= j i)
+                              (if (key-test (aget init i) (aget init j))
+                                j
+                                (recur (- j 2)))
+                              j))]
+                    (aset nodups m (aget init i))
+                    (aset nodups (inc m) (aget init (inc j)))
+                    (recur (+ 2 i) (+ 2 m)))
+                  (recur (+ 2 i) m)))))
+          (PersistentArrayMap. nil (/ (alength nodups) 2) nodups nil))
+        (PersistentArrayMap. nil (/ (alength init) 2) init nil)))))

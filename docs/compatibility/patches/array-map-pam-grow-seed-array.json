@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "4d4e90cc5906829748a00d4a9dbb19101932d964080bd623d5c50f498e2bc7c6",
+  "replacement": "(def pam-grow-seed-array\n  (fn [seed trailing]\n(let [seed-cnt  (dec (alength seed))\n        extra-kvs (seq trailing)\n        ret       (make-array (+ seed-cnt (* 2 (count extra-kvs))))\n        ret       (array-copy seed 0 ret 0 seed-cnt)]\n    (loop [i seed-cnt extra-kvs extra-kvs]\n      (if extra-kvs\n        (let [kv (first extra-kvs)]\n          (aset ret i (-key kv))\n          (aset ret (inc i) (-val kv))\n          (recur (+ 2 i) (next extra-kvs)))\n        ret)))))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}

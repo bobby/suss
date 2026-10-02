@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "45ff8e8bb13652523282916ebde2a66ab03257f02602dc880d70c87c1444a2b0",
+  "replacement": "(def array-extend-kv\n  (fn [arr k v]\n(let [l (alength arr)\n        narr (make-array (+ l 2))]\n    (loop [i 0]\n      (when (< i l)\n        (aset narr i (aget arr i))\n        (recur (inc i))))\n    (aset narr l k)\n    (aset narr (inc l) v)\n    narr)))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}

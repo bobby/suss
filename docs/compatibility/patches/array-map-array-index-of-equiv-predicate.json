@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "675fe01af401c33aca7a00d11177f03ca3d73d15796c7450b88d51be7eee066c",
+  "replacement": "(def array-index-of-equiv?\n  (fn [arr k]\n(let [len (alength arr)]\n    (loop [i 0]\n      (cond\n        (<= len i) -1\n        (= k (aget arr i)) i\n        :else (recur (+ i 2)))))))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}

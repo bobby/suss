@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "90c9cccf05b785cbabd7625f1a2a61cdd521d624bf4fec2c63441b06db373f0f",
+  "replacement": "(def record?\n  (fn [x]\n(satisfies? IRecord x)))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}

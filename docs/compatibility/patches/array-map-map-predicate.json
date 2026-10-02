@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b059014dc47aeeefbf94665ea95d3796958bbf42442f04e045b455f9ce9b0591",
+  "replacement": "(def map?\n  (fn [x]\n(if (nil? x)\n    false\n    (satisfies? IMap x))))",
+  "rationale": "Retain complete pinned persistent array-map declarations and algorithms. Explicit defn bootstrap preserves function signatures/bodies; Error construction uses typed adapter and HASHMAP-THRESHOLD uses pinned emitted spelling. Known forEach doseq/destructuring and assoc doto sites lower to ordered lexical loops/lets without removing methods or branches. Complete hash-map transition, ES6 interfaces, public core and compiled bootstrap remain unfinished."
+}
