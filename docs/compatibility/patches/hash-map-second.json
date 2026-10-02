@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "5e122524bf48d266287a92d80e2a47f4fb71e6379f808fc9e3a1e32b6a08f0af",
+  "replacement": "(def second\n \"Same as (first (next x))\"\n (fn\n [coll]\n  (first (next coll))))",
+  "rationale": "Explicit defn bootstrap preserves the complete pinned signature, docstring and sequence algorithm required by variadic map mutation helpers. Full hash-map and macro acceptance remain unfinished."
+}

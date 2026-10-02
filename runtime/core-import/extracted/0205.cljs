@@ -6,7 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn nnext
-  "Same as (next (next x))"
-  [coll]
-  (next (next coll)))
+(defn assoc!
+  "When applied to a transient map, adds mapping of key(s) to
+  val(s). When applied to a transient vector, sets the val at index.
+  Note - index must be <= (count vector). Returns coll."
+  ([tcoll key val]
+    (-assoc! tcoll key val))
+  ([tcoll key val & kvs]
+    (let [ntcoll (-assoc! tcoll key val)]
+      (if kvs
+        (recur ntcoll (first kvs) (second kvs) (nnext kvs))
+        ntcoll))))

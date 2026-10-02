@@ -2965,6 +2965,23 @@
          (.cljs$lang$applyTo f arglist)))
      (apply-to-simple f a b c d (spread args))))))
 
+(defprotocol ITransientMap
+  "Protocol for adding mapping functionality to transient collections."
+  (^clj -dissoc! [tcoll key]
+    "Returns a new transient collection of tcoll without the mapping for key."))
+
+(def second
+ "Same as (first (next x))"
+ (fn
+ [coll]
+  (first (next coll))))
+
+(def nnext
+ "Same as (next (next x))"
+ (fn
+ [coll]
+  (next (next coll))))
+
 (def dissoc
  "dissoc[iate]. Returns a new map of the same (hashed/sorted) type,
   that does not contain a mapping for key(s)."

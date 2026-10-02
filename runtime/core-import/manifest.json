@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "f6bcb2ae8964dce1f0bf36c1fffe6400a93fe8fea94de33bef5eacc3dec0adb9",
-  "reviews-sha256": "ecc4e193fce3ba2db60c24faf83e548d1971b65c8ab2346285b8e1f53cec1056",
+  "recipe-sha256": "a01f4f438063cc3e18e4da748f422900f82107653cd5d2a1707ba35412237c75",
+  "reviews-sha256": "200664d0f5fc35d001a96f533a802d8bdda5be8334472636d82c685d49d0ce90",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -6277,6 +6277,93 @@
       ]
     },
     {
+      "id": "runtime:ITransientMap:848",
+      "name": "ITransientMap",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 848,
+      "end-line": 851,
+      "byte-start": 25474,
+      "byte-end": 25682,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "9aedbc443395aee3bb157f3fbeab91205c89ec8c5234f55ad2b671122b765bfb",
+      "extracted": "extracted/0201.cljs",
+      "extracted-sha256": "ecb8ae8c804db3c1ae0ed4debee435a036ebb0ffdcb78e017e5b64b7d9c83fa5",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "9aedbc443395aee3bb157f3fbeab91205c89ec8c5234f55ad2b671122b765bfb",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained first/next and canonical phase protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "crates/suss-cli/tests/portable_map_mutation_helpers.rs"
+      ]
+    },
+    {
+      "id": "runtime:second:1833",
+      "name": "second",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1833,
+      "end-line": 1836,
+      "byte-start": 50992,
+      "byte-end": 51065,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5e122524bf48d266287a92d80e2a47f4fb71e6379f808fc9e3a1e32b6a08f0af",
+      "extracted": "extracted/0202.cljs",
+      "extracted-sha256": "1e9cfaa3d81c1af3ddf4dc7f9af027debdcc1c07485bdf326bc34a6e95c1b052",
+      "patch": "docs/compatibility/patches/hash-map-second.json",
+      "patch-sha256": "546ae33acf4c6d8cab462f67fb414aebaed8b7e40170bc9e1e9cfa5bf9f53ed1",
+      "adapted-form-sha256": "1ac71b7440e63578320694926766d0162b25874aca9122ff048045c535a24d12",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained first/next and canonical phase protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "crates/suss-cli/tests/portable_map_mutation_helpers.rs"
+      ]
+    },
+    {
+      "id": "runtime:nnext:1853",
+      "name": "nnext",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1853,
+      "end-line": 1856,
+      "byte-start": 51293,
+      "byte-end": 51363,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "3002424f553192208ac5a4da39f27bdaad79e893d671e85f8ff9917d805b87be",
+      "extracted": "extracted/0203.cljs",
+      "extracted-sha256": "2811975830480430f736aea96992902181fa95555e1ce123607c97332e9c4f41",
+      "patch": "docs/compatibility/patches/hash-map-nnext.json",
+      "patch-sha256": "a6a50e1aa58995960051f142d02de3de4f8b605d7111f9ce0c5ac20343e509eb",
+      "adapted-form-sha256": "679e0beb972288d5f926063de159148cbac230caba367720899a18743308c4a5",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained first/next and canonical phase protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "crates/suss-cli/tests/portable_map_mutation_helpers.rs"
+      ]
+    },
+    {
       "id": "runtime:dissoc:2093",
       "name": "dissoc",
       "kind": "defn",
@@ -6289,7 +6376,7 @@
       "context": [],
       "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
       "source-sha256": "1b74edd939ab99349407d3a1c18972692aa1fd7b9149d868bcf06959d88a347f",
-      "extracted": "extracted/0201.cljs",
+      "extracted": "extracted/0204.cljs",
       "extracted-sha256": "e001f6bb4f6032f686e599d1a569880682520ed86176dea6e7af288879a549b9",
       "patch": "docs/compatibility/patches/hash-map-dissoc.json",
       "patch-sha256": "4fcf2297cfc158969db13af889662bb3738e03a990104692ce58dae0070e0299",
@@ -6319,7 +6406,7 @@
       "context": [],
       "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
       "source-sha256": "23ce891b8f5d4e5078b51d374143a235ac976c1278805cce1b6794e96c5374a6",
-      "extracted": "extracted/0202.cljs",
+      "extracted": "extracted/0205.cljs",
       "extracted-sha256": "358217ff733742d6e494758a7b5d21cf91804a5a754192a9c48d137a314f327e",
       "patch": "docs/compatibility/patches/hash-map-assoc-bang.json",
       "patch-sha256": "d2fba2db553b94422d104c75972e19816623972db55c2cfad5fbcfb731e85532",
@@ -6349,7 +6436,7 @@
       "context": [],
       "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
       "source-sha256": "aadf9f8f2c1c506fae0290c9ba508e936d3db15404fcde2944e95991d18b2059",
-      "extracted": "extracted/0203.cljs",
+      "extracted": "extracted/0206.cljs",
       "extracted-sha256": "03b9e89e679e11b62bcc749e0e5675798e59733f85c8f99ffea85cebda7b5c3f",
       "patch": "docs/compatibility/patches/hash-map-dissoc-bang.json",
       "patch-sha256": "e737e0c9bd783cb36fa771c0434731e98f6827fc5a1438337420a11d1879790c",
@@ -6581,9 +6668,12 @@
     "extracted/0198.cljs": "d2f254066804c8de749be884055e165e6ec846f59f14569c1e83440291679bf4",
     "extracted/0199.cljs": "7de261eb0bcb138e8a835d226e34956c7d07171ff3b1e20f49f33d4121f3d94f",
     "extracted/0200.cljs": "74e3ef1bfcd90f54bde59f7b12712c1bf8a2f9b45b7794c6bc01d8286998820b",
-    "extracted/0201.cljs": "e001f6bb4f6032f686e599d1a569880682520ed86176dea6e7af288879a549b9",
-    "extracted/0202.cljs": "358217ff733742d6e494758a7b5d21cf91804a5a754192a9c48d137a314f327e",
-    "extracted/0203.cljs": "03b9e89e679e11b62bcc749e0e5675798e59733f85c8f99ffea85cebda7b5c3f",
-    "suss/core.sus": "a7e054f7f6358fbbb1957f60e492090c0a694c2913381ab4f72e53fdfcbf2a19"
+    "extracted/0201.cljs": "ecb8ae8c804db3c1ae0ed4debee435a036ebb0ffdcb78e017e5b64b7d9c83fa5",
+    "extracted/0202.cljs": "1e9cfaa3d81c1af3ddf4dc7f9af027debdcc1c07485bdf326bc34a6e95c1b052",
+    "extracted/0203.cljs": "2811975830480430f736aea96992902181fa95555e1ce123607c97332e9c4f41",
+    "extracted/0204.cljs": "e001f6bb4f6032f686e599d1a569880682520ed86176dea6e7af288879a549b9",
+    "extracted/0205.cljs": "358217ff733742d6e494758a7b5d21cf91804a5a754192a9c48d137a314f327e",
+    "extracted/0206.cljs": "03b9e89e679e11b62bcc749e0e5675798e59733f85c8f99ffea85cebda7b5c3f",
+    "suss/core.sus": "d175d647d25f2513aca042354ea7d3376c378dda5052da0e39f27505c8636d36"
   }
 }

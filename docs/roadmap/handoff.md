@@ -9933,3 +9933,21 @@ sequence algorithms and public dependencies, sourcearraypop adapter and canonica
 GC transport/guard coverage. Run focus after parentterminal, then freshprimary
 andfullbaseline/review/final-headCI before opening readiness. Full M3 &env,
 locations/syntaxquote/bootstrap/cache/lifecycle remain original uncompletedscope.
+
+Hash-map helper focus92476 terminal101:0pass/6fail during core compilation because
+second missing. Retained complete pinnedsecond/nnext and ITransientMap protocol
+in dependency order, source/EPL/hashbounddefn adaptations;211importfiles and
+307partialreviews+758unassessed verified. Helper focus75136 terminal0:2tests both
+phases; added source ITransientMap probe verifies actualdissoc! fixed/variadic
+protocol dispatch, receiveridentity and357ordered trace afterGC. Final62805
+terminal0:3passed/0failed/0ignored, log
+/private/tmp/suss-m3-map-mutation-helper-final.log. All threepublic mutation helper
+algorithms now execute; complete hash-map acceptance still unfinished.
+Combined10797 terminal101:0pass/6hashmapfail now Language instead of unresolved
+names; Cargo stopped before helperbinary, so this command is not helper evidence.
+Log /private/tmp/suss-m3-map-mutation-and-hash-focus.log. Remaining completeHAMT/
+TransientArrayMap/nodes/sequences/sourcearraypop and canonicalGCtransport are next.
+No blanketskips, fullworkspace success claim for this child or PR opened yet.
+Parent806d701 dochead independently reviewed, production/tests identical to
+48c4b08 full941/0/17/90 including47ABI. ExactCI36969751041 confirmedLIVE; parent
+remainsdraft. No merges, issueclosures or M3 completion.

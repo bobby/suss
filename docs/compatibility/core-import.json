@@ -1010,6 +1010,21 @@
       "patch": "docs/compatibility/patches/apply-apply.json"
     },
     {
+      "id": "runtime:ITransientMap:848",
+      "source-sha256": "9aedbc443395aee3bb157f3fbeab91205c89ec8c5234f55ad2b671122b765bfb",
+      "patch": null
+    },
+    {
+      "id": "runtime:second:1833",
+      "source-sha256": "5e122524bf48d266287a92d80e2a47f4fb71e6379f808fc9e3a1e32b6a08f0af",
+      "patch": "docs/compatibility/patches/hash-map-second.json"
+    },
+    {
+      "id": "runtime:nnext:1853",
+      "source-sha256": "3002424f553192208ac5a4da39f27bdaad79e893d671e85f8ff9917d805b87be",
+      "patch": "docs/compatibility/patches/hash-map-nnext.json"
+    },
+    {
       "id": "runtime:dissoc:2093",
       "source-sha256": "1b74edd939ab99349407d3a1c18972692aa1fd7b9149d868bcf06959d88a347f",
       "patch": "docs/compatibility/patches/hash-map-dissoc.json"

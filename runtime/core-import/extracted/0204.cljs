@@ -6,7 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn nnext
-  "Same as (next (next x))"
-  [coll]
-  (next (next coll)))
+(defn dissoc
+  "dissoc[iate]. Returns a new map of the same (hashed/sorted) type,
+  that does not contain a mapping for key(s)."
+  ([coll] coll)
+  ([coll k]
+    (when-not (nil? coll)
+      (-dissoc coll k)))
+  ([coll k & ks]
+    (when-not (nil? coll)
+      (let [ret (dissoc coll k)]
+        (if ks
+          (recur ret (first ks) (next ks))
+          ret)))))

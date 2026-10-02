@@ -6,16 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn dissoc
-  "dissoc[iate]. Returns a new map of the same (hashed/sorted) type,
-  that does not contain a mapping for key(s)."
-  ([coll] coll)
-  ([coll k]
-    (when-not (nil? coll)
-      (-dissoc coll k)))
-  ([coll k & ks]
-    (when-not (nil? coll)
-      (let [ret (dissoc coll k)]
-        (if ks
-          (recur ret (first ks) (next ks))
-          ret)))))
+(defprotocol ITransientMap
+  "Protocol for adding mapping functionality to transient collections."
+  (^clj -dissoc! [tcoll key]
+    "Returns a new transient collection of tcoll without the mapping for key."))
