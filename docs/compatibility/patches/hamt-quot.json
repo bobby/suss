@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c9bbfc736e9ce4ce97512b8daa674f51e3692af2871b3fbd4e0cec38570da662",
+  "replacement": "(def quot\n  \"quot[ient] of dividing numerator by denominator.\"\n  (fn [n d]\n  (let [rem (js-mod n d)]\n    (fix (/ (- n rem) d)))))",
+  "rationale": "Complete pinned numeric dependency retained with explicit defn bootstrap; Math floor/ceil use guarded native binary64 adapters with existing number coercion. Quotient/remainder branches and metadata are preserved. Broader numeric coercion and full HAMT/M3 acceptance remain unfinished."
+}

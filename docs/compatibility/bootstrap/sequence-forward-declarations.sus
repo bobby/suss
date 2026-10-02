@@ -32,3 +32,9 @@
 ;; BEGIN pinned apply bootstrap v1
 (declare apply-to)
 ;; END pinned apply bootstrap v1
+
+;; Original declarations for complete retained HAMT mutual references.
+(declare Box BitmapIndexedNode ArrayNode HashCollisionNode NodeIterator ArrayNodeIterator
+ NodeSeq ArrayNodeSeq HashMapIter TransientHashMap create-inode-seq create-array-node-seq
+ create-node array-to-transient-hash-map array->transient-hash-map pack-array-node
+ inode-kv-reduce nil-iter equiv-map every? reduce-kv)

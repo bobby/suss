@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "1c68cfcfbb1b011ef80e5d9b60c1080e42133359addffcf9134ac45ad5ab5567",
+  "replacement": "(def every?\n  \"Returns true if (pred x) is logical true for every x in coll, else\n  false.\"\n  (fn [pred coll]\n  (cond\n   (nil? (seq coll)) true\n   (pred (first coll)) (recur pred (next coll))\n   :else false)))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+}

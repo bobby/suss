@@ -2,7 +2,7 @@ use suss_cli::{
     portable_macro_data::FormBridge,
     portable_session::{Session, SessionError},
 };
-use suss_reader::forms::{Kind, read_forms};
+use suss_reader::forms::{read_forms, Kind};
 use wasmtime::Val;
 
 fn number(session: &mut Session, source: &str) -> f64 {
@@ -38,6 +38,7 @@ fn literal(size: usize) -> String {
 #[test]
 fn compiled_macro_hash_maps_transport_large_literals_in_both_phases_after_gc() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
         let bridge = FormBridge::new(&mut session).unwrap();
         for size in [9, 16, 17, 32, 33, 65] {
             let input = read_forms(&literal(size)).unwrap().remove(0);
@@ -69,7 +70,19 @@ fn compiled_macro_hash_maps_transport_large_literals_in_both_phases_after_gc() {
 #[test]
 fn compiled_macro_hash_maps_preserve_old_roots_and_nil_entries_across_growth() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
-        session.eval(&format!("(def original {}) (def changed (assoc original nil 700 32 999)) (def removed (dissoc changed 0 nil))", literal(33))).unwrap();
+        session.set_operation_fuel(100_000_000);
+        for source in [
+            format!("(def original {})", literal(33)),
+            "(def changed (assoc original nil 700 32 999))".into(),
+            "(def removed (dissoc changed 0 nil))".into(),
+        ] {
+            if let Err(error) = session.eval(&source) {
+                panic!(
+                    "{source}: {}",
+                    suss_cli::portable_repl::error_display(&mut session, &error)
+                );
+            }
+        }
         session.collect().unwrap();
         for (source, expected) in [
             ("(count original)", 33.0),
@@ -104,6 +117,7 @@ fn compiled_macro_hash_maps_preserve_old_roots_and_nil_entries_across_growth() {
 #[test]
 fn compiled_macro_hash_maps_resolve_collision_nodes_and_preserve_earlier_values() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
         session.eval("(deftype CollisionKey [id] IHash (-hash [_] 7) IEquiv (-equiv [_ other] (and (instance? CollisionKey other) (== id (.-id other)))))").unwrap();
         let pairs = (0..20)
             .map(|i| format!("(CollisionKey. {i}) {}", i + 100))
@@ -135,6 +149,7 @@ fn compiled_macro_hash_maps_resolve_collision_nodes_and_preserve_earlier_values(
 #[test]
 fn compiled_macro_hash_maps_transients_cross_array_boundary_and_close_after_persistence() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
         session.eval(&format!("(def old {}) (def edit (transient old)) (def grown (loop [m edit i 8] (if (< i 40) (recur (assoc! m i (+ i 100)) (+ i 1)) m))) (def finished (persistent! (dissoc! grown 3)))", literal(8))).unwrap();
         session.collect().unwrap();
         assert_eq!(number(&mut session, "(count old)"), 8.0);
@@ -161,6 +176,7 @@ fn compiled_macro_hash_maps_match_fresh_pinned_observations_in_both_phases() {
         serde_json::from_str(include_str!("../../../tests/oracle/hash-map-cases.json")).unwrap();
     assert_eq!(corpus["cases"].as_array().unwrap().len(), 35);
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
         session
             .eval(include_str!("../../../tests/oracle/hash-map-fixture.sus"))
             .unwrap();
@@ -177,6 +193,7 @@ fn compiled_macro_hash_maps_match_fresh_pinned_observations_in_both_phases() {
 #[test]
 fn compiled_macro_hash_maps_keep_canonical_roots_after_class_redefinition() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
         let bridge = FormBridge::new(&mut session).unwrap();
         session
             .eval(&format!(
@@ -198,5 +215,40 @@ fn compiled_macro_hash_maps_keep_canonical_roots_after_class_redefinition() {
         let decoded = bridge.read(&mut session, &saved, 50..60).unwrap();
         assert!(matches!(decoded.kind, Kind::Map(entries) if entries.len() == 18));
         assert_eq!(decoded.metadata.len(), 1);
+    }
+}
+
+#[test]
+fn compiled_macro_hash_maps_validate_counts_flags_nodes_and_cycles() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let bridge = FormBridge::new(&mut session).unwrap();
+        for source in [
+            "(PersistentHashMap. nil 1 nil false nil nil)",
+            "(PersistentHashMap. nil 0 nil 1 nil nil)",
+            "(PersistentHashMap. nil 1 (BitmapIndexedNode. nil 3 (array 7 8)) false nil nil)",
+            "(PersistentHashMap. nil 1 (BitmapIndexedNode. nil 1.5 (array 7 8)) false nil nil)",
+            "(PersistentHashMap. nil 1 (ArrayNode. nil 1 (array nil)) false nil nil)",
+            "(PersistentHashMap. nil 1 (HashCollisionNode. nil 7 2 (array 7 8)) false nil nil)",
+            "(PersistentHashMap. nil 1 (HashCollisionNode. nil 7 1 (array nil 8)) false nil nil)",
+            "(let [a (array nil nil) node (BitmapIndexedNode. nil 1 a)] (aset a 1 node) (PersistentHashMap. nil 1 node false nil nil))",
+            "(let [a (array nil nil) node (BitmapIndexedNode. nil 1 a)] (aset a 1 node) node)",
+        ] {
+            let value = session.eval(source).unwrap();
+            session.collect().unwrap();
+            let error = bridge.read(&mut session, &value, 70..80).unwrap_err();
+            assert!(matches!(error, SessionError::Compile(ref diagnostic) if diagnostic.span == (70..80)), "{source}: {error:?}");
+        }
+        // Bit 31 is a signed JS bitmap. Nil is stored outside the trie and
+        // precedes entries in the actual pinned hash-map sequence.
+        let value = session.eval("(PersistentHashMap. nil 2 (BitmapIndexedNode. nil -2147483648 (array 7 8)) true 9 nil)").unwrap();
+        session.collect().unwrap();
+        let decoded = bridge.read(&mut session, &value, 70..80).unwrap();
+        let Kind::Map(entries) = decoded.kind else {
+            panic!("map")
+        };
+        assert!(matches!(entries[0].kind, Kind::Nil));
+        assert!(matches!(entries[1].kind, Kind::Number(9.0)));
+        assert!(matches!(entries[2].kind, Kind::Number(7.0)));
+        assert!(matches!(entries[3].kind, Kind::Number(8.0)));
     }
 }

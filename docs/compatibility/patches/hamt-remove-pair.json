@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "fae76615597fe4e37b8d8162b74fa77d9de3ccc42966435037d0a3d20741acaf",
+  "replacement": "(def ^:private remove-pair (fn [arr i]\n  (let [new-arr (make-array (- (alength arr) 2))]\n    (array-copy arr 0 new-arr 0 (* 2 i))\n    (array-copy arr (* 2 (inc i)) new-arr (* 2 i) (- (alength new-arr) (* 2 i)))\n    new-arr)))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+}

@@ -9951,3 +9951,56 @@ No blanketskips, fullworkspace success claim for this child or PR opened yet.
 Parent806d701 dochead independently reviewed, production/tests identical to
 48c4b08 full941/0/17/90 including47ABI. ExactCI36969751041 confirmedLIVE; parent
 remainsdraft. No merges, issueclosures or M3 completion.
+
+PR138 final806d701 CI36969751041 terminalSUCCESS. Downloaded complete log
+/private/tmp/suss-pr138-final-ci.log:941passed/0failed/17existingignores/90groups,
+all47ABI, Python88/import205/setup12 and final reader doctests. Independent
+reviewer approved exact806 previously; remotehead rechecked unchanged. Marked
+ready, no merge. This is parent evidence, not the new hash-map child's baseline.
+
+Hash-map child retains complete HAMT/node/sequence/transient forms plus fix/quot,
+array-copy-downward, not= and publicassoc, with exact original bytes/EPL and
+explicit member/bootstrap/Error patches.246importfiles,342partialreviews and
+723unassessed;17complete licensed setup statements verified. Python88passed.
+Initial native source focus35733 missingquot;47126 failed generation and ran old
+artifact (not newquot evidence);26785/77287 unsupported unadapted members;
+35823 missingarray-copy-downward;49919 invalidWasm from own ceil import signature.
+Debug13797 identified unaryceil incorrectly imported as binary; debug emission
+removed and signature corrected.39758 terminal0:3helper regressions pass.
+Factories initialized;51598 terminal101:0/6maps, canonicaltransport missing and
+10Mdefaultfuel traps. Bounded100Mprobe96240 constructed33entries;97479 isolated
+prototype publicassoc failure. Complete sourceassoc fixed it:23147 terminal0:1
+persistent-root regression.23606 terminal101:4/6map tests pass, including actual
+35primary observations in both phases, only canonicaltransport failures remain.
+Bridge25314 terminal0:6/6map tests pass. Additional guard/numeric/popBEFORE17349
+terminal101:7maptests+4helpers pass, transientarraymapremoval fails missingpop.
+Ownedpop46266 terminal101:7maps+5helpers pass, copiedmethod.call fails existing
+receiver-discarding closure adapter;85831 confirms that exact stage. Both native
+call/apply now use existing anchored method dispatcher. Final focused13665 is
+running, log /private/tmp/suss-m3-hamt-pop-call-focus.log, no final success claim.
+New rawABI guard checks cover both push/pop callbacks and forged receiver buffers;
+not yet executed. Tests use bounded100Mfuel explicitly; defaultbudgetperformance
+remains a limitation. See docs/runtime/compiled-macro-hash-maps.md for remaining
+NodeSeq/ArrayNodeSeqtransport/reify/undefined/formatting and fullM3 scope.
+Next finish focused to terminal, fix failures, run required fullworkspace and
+independent PR review, push significant fixes and require exact final-headCI.
+No new PR yet, issueclosures, merge or M3completion.
+
+13665 terminal101:7hashmap+6helper regressions pass, sourceapply3pass/2fail because
+ordinary closures reached protocol-native-invoke and lost strict arity. Corrected
+routing to only canonical Object native-wrapper tags; ordinary closures retain
+originalinvoke. Focus25527 running same three binaries at final code, log
+/private/tmp/suss-m3-hamt-pop-call-focus2.log. Earlier13665 is failed regression
+evidence, not full sourceapply success. No skips or adjusted strict expectations.
+
+25527 terminal0:7hashmap+6helper+5sourceapply tests pass (18total), log
+/private/tmp/suss-m3-hamt-pop-call-focus2.log. Both phases pass35freshprimary
+observations, nil/persistence/collision/transient/GC/canonicalguards and numerical
+ceil/fix/quot boundaries. Native method.call/apply preserve physicalreceivers;
+sourceapplystrictarityandorderedfailure regressions pass unchanged. Formatted
+only affectedbridge/newtests/newpop/closurecall source. RawABI focus45049 isLIVE,
+log /private/tmp/suss-m3-hamt-abi-guards.log; dependencyfeaturebuild, no rawABIpass
+or fullworkspace claim yet. Python69963 terminal0:88tests,246imports,17setups,
+342in-progressreviews+723unassessed. Next wait45049terminal before any othernative
+Cargo run, then requiredfullworkspace; dispatch independentreview for draftPR
+and fix significantfindings, with exactfinal-headCI required before readiness.

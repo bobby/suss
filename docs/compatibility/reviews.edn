@@ -3114,4 +3114,221 @@
    :classification :adapted :rationale "Explicit defn bootstrap preserves the complete pinned signature, docstring and sequence algorithm required by variadic map mutation helpers. Full hash-map and macro acceptance remain unfinished."
    :status :in-progress :adaptation-path "docs/compatibility/patches/hash-map-nnext.json" :alternative nil
    :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "crates/suss-cli/tests/portable_map_mutation_helpers.rs"]}
+
+  "runtime:reduce-kv:2677"
+  {:source-sha256 "5df4045846eaa98268236a3c604ca4e887513ff526b28e286257e9a9e1776c8b" :visibility :public :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-reduce-kv.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:every?:4416"
+  {:source-sha256 "1c68cfcfbb1b011ef80e5d9b60c1080e42133359addffcf9134ac45ad5ab5567" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-every-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:NeverEquiv:6578"
+  {:source-sha256 "df8fa56924ce7dfa643aacb4f35ab1f8594bd7197fb97cd110e9686c5518ffaa" :visibility :public :arities nil
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :portable :rationale "Complete pinned HAMT/transient/sequence source retained. Execution and canonical macro transport acceptance remain unfinished; no full map or M3 compatibility claim."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:never-equiv:6585"
+  {:source-sha256 "07f2af8e08e858fc37d7d73c1edef21a5eb6e00c13e925250cc2345e0e0e8e6d" :visibility :private :arities nil
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :portable :rationale "Complete pinned HAMT/transient/sequence source retained. Execution and canonical macro transport acceptance remain unfinished; no full map or M3 compatibility claim."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:equiv-map:6587"
+  {:source-sha256 "f624e155c995687f39e652b97a6e73b2a7ce62705cd970e97fb01ad128a27f22" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-equiv-map.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:TransientArrayMap:7210"
+  {:source-sha256 "574df686e28daa72c65795b50803ec26d1c356824c1182efb7b5d786236bb865" :visibility :public :arities nil
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-TransientArrayMap.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:array->transient-hash-map:7292"
+  {:source-sha256 "25a564ede2723a88067198b97bb3f3cb7063e672773f2ab471b6adb74a3b3b58" :visibility :private :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-array-totransient-hash-map.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:Box:7301"
+  {:source-sha256 "153de2c4cf516fd43a72dd003bb7355dc2695d7381fa0ac8cd9a0d29174658e9" :visibility :public :arities nil
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :portable :rationale "Complete pinned HAMT/transient/sequence source retained. Execution and canonical macro transport acceptance remain unfinished; no full map or M3 compatibility claim."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:mask:7305"
+  {:source-sha256 "5072e7061ccc390fcc2adb98fd4334b434e2f2bd0d9135d3c7a11a4e0962ad62" :visibility :private :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-mask.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:clone-and-set:7308"
+  {:source-sha256 "ccb9460ad4f3eb826947372d4bb46dbefa6ed60a2707fbdbe9cc996874975cbb" :visibility :private :arities {:fixed [3 5] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-clone-and-set.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:remove-pair:7317"
+  {:source-sha256 "fae76615597fe4e37b8d8162b74fa77d9de3ccc42966435037d0a3d20741acaf" :visibility :private :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-remove-pair.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:bitmap-indexed-node-index:7323"
+  {:source-sha256 "20e72121c6e0a74329a884d7bf4a3305c4252b4f39510c22910823360ae6556b" :visibility :private :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-bitmap-indexed-node-index.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:bitpos:7326"
+  {:source-sha256 "6cee52ef95652ab6fe04b516930c17e5a13a7cd6e728ddba0d59cfeb9c183957" :visibility :private :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-bitpos.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:edit-and-set:7329"
+  {:source-sha256 "158bbb1c9fcd4e18967520011019b038c63ad872372683614a67cfda11207d47" :visibility :private :arities {:fixed [4 6] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-edit-and-set.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:inode-kv-reduce:7340"
+  {:source-sha256 "a5ca35bf21047d8d93cbc59e8ca76291a752acfdb1f454aae0ffd2b669f9e9c1" :visibility :private :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-inode-kv-reduce.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:NodeIterator:7358"
+  {:source-sha256 "05116f09c7c6b1ba7856661b0bb66e614ae0356d26457ebbd024b69e0c873264" :visibility :public :arities nil
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-NodeIterator.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:BitmapIndexedNode:7396"
+  {:source-sha256 "8d63f0d669aa5599492785b21814089fbb25a31bcc0dd3fde414483769d16271" :visibility :public :arities nil
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence source retained. Execution and canonical macro transport acceptance remain unfinished; no full map or M3 compatibility claim."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-BitmapIndexedNode.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:pack-array-node:7600"
+  {:source-sha256 "ddb5f38559e4f19982eb4c6d31d7c689d5e6e5940e54bd29172dee5ff9840e78" :visibility :private :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-pack-array-node.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:ArrayNodeIterator:7613"
+  {:source-sha256 "a8a2d2127159faec92735881735c889f96d7580f24a519290ca45a32ee74a0cb" :visibility :public :arities nil
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-ArrayNodeIterator.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:ArrayNode:7633"
+  {:source-sha256 "49cf5bc6f01da6eb9be99cb6935a48aaadd19d328ccaaefd4c2c0de8777e3bc5" :visibility :public :arities nil
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence source retained. Execution and canonical macro transport acceptance remain unfinished; no full map or M3 compatibility claim."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-ArrayNode.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:hash-collision-node-find-index:7734"
+  {:source-sha256 "7e2c890f1b6d53a4e021d08d31b245056c0f65e85ba862af2686e2af53324266" :visibility :private :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-hash-collision-node-find-index.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:HashCollisionNode:7743"
+  {:source-sha256 "9aaf40a02fe024655983bb173e59423d3b6e0aae01d6bc8d26a25173ff8903db" :visibility :public :arities nil
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence source retained. Execution and canonical macro transport acceptance remain unfinished; no full map or M3 compatibility claim."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-HashCollisionNode.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:create-node:7843"
+  {:source-sha256 "5ab873916adaa98ae3bcbaf69a08639ea23f591a071798c6abb6374b08da1356" :visibility :private :arities {:fixed [6 7] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-create-node.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:NodeSeq:7861"
+  {:source-sha256 "988079f450d630fdfc0a15d229400edceb6399aa1b7be544e864fa06323bc7e1" :visibility :public :arities nil
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :portable :rationale "Complete pinned HAMT/transient/sequence source retained. Execution and canonical macro transport acceptance remain unfinished; no full map or M3 compatibility claim."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:create-inode-seq:7925"
+  {:source-sha256 "fb082c903ae9a7ac8133f2e517a4e34cc3760ee57cc3fe6023fc8c5c1c43f2b9" :visibility :private :arities {:fixed [1 3] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-create-inode-seq.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:ArrayNodeSeq:7942"
+  {:source-sha256 "6df4a2664f25cb2d67bc184951822e30a33a5f69d2935c7cd208c7da9ce52c34" :visibility :public :arities nil
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :portable :rationale "Complete pinned HAMT/transient/sequence source retained. Execution and canonical macro transport acceptance remain unfinished; no full map or M3 compatibility claim."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:create-array-node-seq:7998"
+  {:source-sha256 "c645aca699308e862d4ba60f506009bc623d25a4b71ff97102c1057ee34d8e89" :visibility :private :arities {:fixed [1 3] :variadic-min nil}
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-create-array-node-seq.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:HashMapIter:8012"
+  {:source-sha256 "836d2748a2f4a1356ec021e6b42dc10240e689477b0aa6f2961cb5646f5a7edd" :visibility :public :arities nil
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-HashMapIter.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:PersistentHashMap:8024"
+  {:source-sha256 "fd205b0bbc0e4f983b5b4c76666e00eb1496f8ca5a3d1b9072fbe1624a8454f5" :visibility :public :arities nil
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-PersistentHashMap.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+  "runtime:TransientHashMap:8202"
+  {:source-sha256 "f6a272f0f422e96395efc5082da2d8a7ca6d258185c8d30954e33628560bf1f4" :visibility :public :arities nil
+   :dependencies ["retained canonical map/sequence/transient protocols" "retained arrays/hash/equality and compiled Object methods" "HAMT mutually recursive node types and helpers"]
+   :classification :adapted :rationale "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-TransientHashMap.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "tests/oracle/hash-map-cases.json"]}
+
+  "runtime:fix:2937"
+  {:source-sha256 "c47590843d9d7fa984c09c2f6cffcf8daf054adb8bf113b2c42971e414b02c2e" :visibility :private :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["retained js-mod and comparisons" "guarded binary64 floor/ceil number coercion"]
+   :classification :adapted :rationale "Complete pinned numeric dependency retained with explicit defn bootstrap; Math floor/ceil use guarded native binary64 adapters with existing number coercion. Quotient/remainder branches and metadata are preserved. Broader numeric coercion and full HAMT/M3 acceptance remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-fix.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "crates/suss-cli/tests/portable_map_mutation_helpers.rs"]}
+  "runtime:quot:2981"
+  {:source-sha256 "c9bbfc736e9ce4ce97512b8daa674f51e3692af2871b3fbd4e0cec38570da662" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["retained js-mod and comparisons" "guarded binary64 floor/ceil number coercion"]
+   :classification :adapted :rationale "Complete pinned numeric dependency retained with explicit defn bootstrap; Math floor/ceil use guarded native binary64 adapters with existing number coercion. Quotient/remainder branches and metadata are preserved. Broader numeric coercion and full HAMT/M3 acceptance remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-quot.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs" "crates/suss-cli/tests/portable_map_mutation_helpers.rs"]}
+
+
+
+  "runtime:array-copy-downward:2311"
+  {:source-sha256 "3f15a3d83e91cf683252e81b6f16640403ccb062823adee70ee2741d8ee2c196" :visibility :private :arities {:fixed [5] :variadic-min nil}
+   :dependencies ["retained aget/aset and binary64 indexing"]
+   :classification :adapted :rationale "Explicit defn bootstrap retains complete pinned reverse overlapping array copy, original direction, loop bindings and returned owner. Full HAMT acceptance remains unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-array-copy-downward.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs"]}
+
+  "runtime:not=:4187"
+  {:source-sha256 "9878ad61661b7fcc9eb687d249383bab601923153da8294adc7bec9e502bdabf" :visibility :public :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["retained not/apply/="]
+   :classification :adapted :rationale "Complete pinned not= signatures and apply/equality branches retained with explicit defn bootstrap. Full HAMT factory and compatibility acceptance remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-not-equal.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs"]}
+
+  "runtime:assoc:2076"
+  {:source-sha256 "8561935c5fc21642683dbf8aae3d1739a776696f0dcd898b1a1078e274132232" :visibility :public :arities {:fixed [3] :variadic-min 3}
+   :dependencies ["retained IAssociative and -assoc" "retained first/second/nnext and array/hash map factories"]
+   :classification :adapted :rationale "Complete pinned public assoc fixed/variadic/nil branches and canonical associative protocol dispatch retained with explicit defn bootstrap, replacing the prototype vector-only bootstrap binding. Full map transport and compatibility acceptance remain unfinished."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-assoc.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_hash_maps.rs"]}
 }}

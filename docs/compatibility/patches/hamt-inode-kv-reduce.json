@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "a5ca35bf21047d8d93cbc59e8ca76291a752acfdb1f454aae0ffd2b669f9e9c1",
+  "replacement": "(def ^:private inode-kv-reduce (fn [arr f init]\n  (let [len (alength arr)]\n    (loop [i 0 init init]\n      (if (< i len)\n        (let [init (let [k (aget arr i)]\n                     (if-not (nil? k)\n                       (f init k (aget arr (inc i)))\n                       (let [node (aget arr (inc i))]\n                         (if-not (nil? node)\n                           (.kv_reduce node f init)\n                           init))))]\n          (if (reduced? init)\n            init\n            (recur (+ i 2) init)))\n        init)))))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished. Object method/member and punctuated field identifiers use pinned emitted native spelling consistently; general source identifier munging remains unfinished."
+}

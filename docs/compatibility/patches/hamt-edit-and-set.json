@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "158bbb1c9fcd4e18967520011019b038c63ad872372683614a67cfda11207d47",
+  "replacement": "(def ^:private edit-and-set\n  (fn ([inode edit i a]\n     (let [editable (.ensure_editable inode edit)]\n       (aset (.-arr editable) i a)\n       editable))\n  ([inode edit i a j b]\n     (let [editable (.ensure_editable inode edit)]\n       (aset (.-arr editable) i a)\n       (aset (.-arr editable) j b)\n       editable))))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished. Object method/member and punctuated field identifiers use pinned emitted native spelling consistently; general source identifier munging remains unfinished."
+}

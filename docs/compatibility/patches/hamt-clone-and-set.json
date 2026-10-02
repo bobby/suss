@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "ccb9460ad4f3eb826947372d4bb46dbefa6ed60a2707fbdbe9cc996874975cbb",
+  "replacement": "(def ^:private clone-and-set\n  (fn ([arr i a]\n     (let [hamt-bootstrap-doto-3 (aclone arr)] (aset hamt-bootstrap-doto-3 i a) hamt-bootstrap-doto-3))\n  ([arr i a j b]\n     (let [hamt-bootstrap-doto-4 (aclone arr)] (aset hamt-bootstrap-doto-4 i a) (aset hamt-bootstrap-doto-4 j b) hamt-bootstrap-doto-4))))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+}

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "f624e155c995687f39e652b97a6e73b2a7ce62705cd970e97fb01ad128a27f22",
+  "replacement": "(def equiv-map\n  \"Test map equivalence. Returns true if x equals y, otherwise returns false.\"\n  (fn [x y]\n  (boolean\n    (when (and (map? y) (not (record? y)))\n      ; assume all maps are counted\n      (when (== (count x) (count y))\n        (if (satisfies? IKVReduce x)\n          (reduce-kv\n            (fn [_ k v]\n              (if (= (get y k never-equiv) v)\n                true\n                (reduced false)))\n            true x)\n          (every?\n            (fn [xkv]\n              (= (get y (first xkv) never-equiv) (second xkv)))\n            x)))))))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+}

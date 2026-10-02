@@ -1038,16 +1038,191 @@
       "id": "runtime:dissoc!:4024",
       "source-sha256": "aadf9f8f2c1c506fae0290c9ba508e936d3db15404fcde2944e95991d18b2059",
       "patch": "docs/compatibility/patches/hash-map-dissoc-bang.json"
+    },
+    {
+      "id": "runtime:reduce-kv:2677",
+      "source-sha256": "5df4045846eaa98268236a3c604ca4e887513ff526b28e286257e9a9e1776c8b",
+      "patch": "docs/compatibility/patches/hamt-reduce-kv.json"
+    },
+    {
+      "id": "runtime:every?:4416",
+      "source-sha256": "1c68cfcfbb1b011ef80e5d9b60c1080e42133359addffcf9134ac45ad5ab5567",
+      "patch": "docs/compatibility/patches/hamt-every-predicate.json"
+    },
+    {
+      "id": "runtime:NeverEquiv:6578",
+      "source-sha256": "df8fa56924ce7dfa643aacb4f35ab1f8594bd7197fb97cd110e9686c5518ffaa",
+      "patch": null
+    },
+    {
+      "id": "runtime:never-equiv:6585",
+      "source-sha256": "07f2af8e08e858fc37d7d73c1edef21a5eb6e00c13e925250cc2345e0e0e8e6d",
+      "patch": null
+    },
+    {
+      "id": "runtime:equiv-map:6587",
+      "source-sha256": "f624e155c995687f39e652b97a6e73b2a7ce62705cd970e97fb01ad128a27f22",
+      "patch": "docs/compatibility/patches/hamt-equiv-map.json"
+    },
+    {
+      "id": "runtime:fix:2937",
+      "source-sha256": "c47590843d9d7fa984c09c2f6cffcf8daf054adb8bf113b2c42971e414b02c2e",
+      "patch": "docs/compatibility/patches/hamt-fix.json"
+    },
+    {
+      "id": "runtime:quot:2981",
+      "source-sha256": "c9bbfc736e9ce4ce97512b8daa674f51e3692af2871b3fbd4e0cec38570da662",
+      "patch": "docs/compatibility/patches/hamt-quot.json"
+    },
+    {
+      "id": "runtime:array-copy-downward:2311",
+      "source-sha256": "3f15a3d83e91cf683252e81b6f16640403ccb062823adee70ee2741d8ee2c196",
+      "patch": "docs/compatibility/patches/hamt-array-copy-downward.json"
+    },
+    {
+      "id": "runtime:TransientArrayMap:7210",
+      "source-sha256": "574df686e28daa72c65795b50803ec26d1c356824c1182efb7b5d786236bb865",
+      "patch": "docs/compatibility/patches/hamt-TransientArrayMap.json"
+    },
+    {
+      "id": "runtime:array->transient-hash-map:7292",
+      "source-sha256": "25a564ede2723a88067198b97bb3f3cb7063e672773f2ab471b6adb74a3b3b58",
+      "patch": "docs/compatibility/patches/hamt-array-totransient-hash-map.json"
+    },
+    {
+      "id": "runtime:Box:7301",
+      "source-sha256": "153de2c4cf516fd43a72dd003bb7355dc2695d7381fa0ac8cd9a0d29174658e9",
+      "patch": null
+    },
+    {
+      "id": "runtime:mask:7305",
+      "source-sha256": "5072e7061ccc390fcc2adb98fd4334b434e2f2bd0d9135d3c7a11a4e0962ad62",
+      "patch": "docs/compatibility/patches/hamt-mask.json"
+    },
+    {
+      "id": "runtime:clone-and-set:7308",
+      "source-sha256": "ccb9460ad4f3eb826947372d4bb46dbefa6ed60a2707fbdbe9cc996874975cbb",
+      "patch": "docs/compatibility/patches/hamt-clone-and-set.json"
+    },
+    {
+      "id": "runtime:remove-pair:7317",
+      "source-sha256": "fae76615597fe4e37b8d8162b74fa77d9de3ccc42966435037d0a3d20741acaf",
+      "patch": "docs/compatibility/patches/hamt-remove-pair.json"
+    },
+    {
+      "id": "runtime:bitmap-indexed-node-index:7323",
+      "source-sha256": "20e72121c6e0a74329a884d7bf4a3305c4252b4f39510c22910823360ae6556b",
+      "patch": "docs/compatibility/patches/hamt-bitmap-indexed-node-index.json"
+    },
+    {
+      "id": "runtime:bitpos:7326",
+      "source-sha256": "6cee52ef95652ab6fe04b516930c17e5a13a7cd6e728ddba0d59cfeb9c183957",
+      "patch": "docs/compatibility/patches/hamt-bitpos.json"
+    },
+    {
+      "id": "runtime:edit-and-set:7329",
+      "source-sha256": "158bbb1c9fcd4e18967520011019b038c63ad872372683614a67cfda11207d47",
+      "patch": "docs/compatibility/patches/hamt-edit-and-set.json"
+    },
+    {
+      "id": "runtime:inode-kv-reduce:7340",
+      "source-sha256": "a5ca35bf21047d8d93cbc59e8ca76291a752acfdb1f454aae0ffd2b669f9e9c1",
+      "patch": "docs/compatibility/patches/hamt-inode-kv-reduce.json"
+    },
+    {
+      "id": "runtime:NodeIterator:7358",
+      "source-sha256": "05116f09c7c6b1ba7856661b0bb66e614ae0356d26457ebbd024b69e0c873264",
+      "patch": "docs/compatibility/patches/hamt-NodeIterator.json"
+    },
+    {
+      "id": "runtime:BitmapIndexedNode:7396",
+      "source-sha256": "8d63f0d669aa5599492785b21814089fbb25a31bcc0dd3fde414483769d16271",
+      "patch": "docs/compatibility/patches/hamt-BitmapIndexedNode.json"
+    },
+    {
+      "id": "runtime:pack-array-node:7600",
+      "source-sha256": "ddb5f38559e4f19982eb4c6d31d7c689d5e6e5940e54bd29172dee5ff9840e78",
+      "patch": "docs/compatibility/patches/hamt-pack-array-node.json"
+    },
+    {
+      "id": "runtime:ArrayNodeIterator:7613",
+      "source-sha256": "a8a2d2127159faec92735881735c889f96d7580f24a519290ca45a32ee74a0cb",
+      "patch": "docs/compatibility/patches/hamt-ArrayNodeIterator.json"
+    },
+    {
+      "id": "runtime:ArrayNode:7633",
+      "source-sha256": "49cf5bc6f01da6eb9be99cb6935a48aaadd19d328ccaaefd4c2c0de8777e3bc5",
+      "patch": "docs/compatibility/patches/hamt-ArrayNode.json"
+    },
+    {
+      "id": "runtime:hash-collision-node-find-index:7734",
+      "source-sha256": "7e2c890f1b6d53a4e021d08d31b245056c0f65e85ba862af2686e2af53324266",
+      "patch": "docs/compatibility/patches/hamt-hash-collision-node-find-index.json"
+    },
+    {
+      "id": "runtime:HashCollisionNode:7743",
+      "source-sha256": "9aaf40a02fe024655983bb173e59423d3b6e0aae01d6bc8d26a25173ff8903db",
+      "patch": "docs/compatibility/patches/hamt-HashCollisionNode.json"
+    },
+    {
+      "id": "runtime:create-node:7843",
+      "source-sha256": "5ab873916adaa98ae3bcbaf69a08639ea23f591a071798c6abb6374b08da1356",
+      "patch": "docs/compatibility/patches/hamt-create-node.json"
+    },
+    {
+      "id": "runtime:NodeSeq:7861",
+      "source-sha256": "988079f450d630fdfc0a15d229400edceb6399aa1b7be544e864fa06323bc7e1",
+      "patch": null
+    },
+    {
+      "id": "runtime:create-inode-seq:7925",
+      "source-sha256": "fb082c903ae9a7ac8133f2e517a4e34cc3760ee57cc3fe6023fc8c5c1c43f2b9",
+      "patch": "docs/compatibility/patches/hamt-create-inode-seq.json"
+    },
+    {
+      "id": "runtime:ArrayNodeSeq:7942",
+      "source-sha256": "6df4a2664f25cb2d67bc184951822e30a33a5f69d2935c7cd208c7da9ce52c34",
+      "patch": null
+    },
+    {
+      "id": "runtime:create-array-node-seq:7998",
+      "source-sha256": "c645aca699308e862d4ba60f506009bc623d25a4b71ff97102c1057ee34d8e89",
+      "patch": "docs/compatibility/patches/hamt-create-array-node-seq.json"
+    },
+    {
+      "id": "runtime:HashMapIter:8012",
+      "source-sha256": "836d2748a2f4a1356ec021e6b42dc10240e689477b0aa6f2961cb5646f5a7edd",
+      "patch": "docs/compatibility/patches/hamt-HashMapIter.json"
+    },
+    {
+      "id": "runtime:PersistentHashMap:8024",
+      "source-sha256": "fd205b0bbc0e4f983b5b4c76666e00eb1496f8ca5a3d1b9072fbe1624a8454f5",
+      "patch": "docs/compatibility/patches/hamt-PersistentHashMap.json"
+    },
+    {
+      "id": "runtime:TransientHashMap:8202",
+      "source-sha256": "f6a272f0f422e96395efc5082da2d8a7ca6d258185c8d30954e33628560bf1f4",
+      "patch": "docs/compatibility/patches/hamt-TransientHashMap.json"
+    },
+    {
+      "id": "runtime:not=:4187",
+      "source-sha256": "9878ad61661b7fcc9eb687d249383bab601923153da8294adc7bec9e502bdabf",
+      "patch": "docs/compatibility/patches/hamt-not-equal.json"
+    },
+    {
+      "id": "runtime:assoc:2076",
+      "source-sha256": "8561935c5fc21642683dbf8aae3d1739a776696f0dcd898b1a1078e274132232",
+      "patch": "docs/compatibility/patches/hamt-assoc.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "157493a52edc5109c480751f5b9b94026d43d47adcbc65a85dc9da655fd1bf14"
+      "sha256": "356bb5c819fdc2c6a6c337a1ecd9d8898d69471bdbd38376e9b47f9015780cab"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "b9a27cd38b31706bfe3ec98da0568f35d67432a178623889267921f884ed11e4"
+      "sha256": "f25a6a1d6cf1b680ccec84b29e46006bdaa6b24f1428c75cce0ff400bfbe1c6b"
     }
   }
 }

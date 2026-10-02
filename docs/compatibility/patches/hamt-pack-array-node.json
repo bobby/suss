@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "ddb5f38559e4f19982eb4c6d31d7c689d5e6e5940e54bd29172dee5ff9840e78",
+  "replacement": "(def ^:private pack-array-node (fn [array-node edit idx]\n  (let [arr     (.-arr array-node)\n        len     (alength arr)\n        new-arr (make-array (* 2 (dec (.-cnt array-node))))]\n    (loop [i 0 j 1 bitmap 0]\n      (if (< i len)\n        (if (and (not (== i idx))\n                 (not (nil? (aget arr i))))\n          (do (aset new-arr j (aget arr i))\n              (recur (inc i) (+ j 2) (bit-or bitmap (bit-shift-left 1 i))))\n          (recur (inc i) j bitmap))\n        (BitmapIndexedNode. edit bitmap new-arr))))))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+}

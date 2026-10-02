@@ -194,6 +194,7 @@ pub enum Bitwise {
     F64Word0,
     F64Word4,
     F64Floor,
+    F64Ceil,
     F64Finite,
     F64SafeInteger,
     F64TimeClip,
@@ -241,6 +242,7 @@ impl Bitwise {
             Self::F64Word0 => "primitive-f64-word0",
             Self::F64Word4 => "primitive-f64-word4",
             Self::F64Floor => "primitive-f64-floor",
+            Self::F64Ceil => "primitive-f64-ceil",
             Self::F64Finite => "primitive-f64-finite",
             Self::F64SafeInteger => "primitive-f64-safe-integer",
             Self::F64TimeClip => "primitive-f64-time-clip",
@@ -257,6 +259,7 @@ impl Bitwise {
             | Self::F64Word0
             | Self::F64Word4
             | Self::F64Floor
+            | Self::F64Ceil
             | Self::F64Finite
             | Self::F64SafeInteger
             | Self::F64TimeClip
@@ -1192,6 +1195,7 @@ impl Analyzer<'_> {
                 "f64-word0" => Some(Bitwise::F64Word0),
                 "f64-word4" => Some(Bitwise::F64Word4),
                 "f64-floor" => Some(Bitwise::F64Floor),
+                "f64-ceil" => Some(Bitwise::F64Ceil),
                 "f64-finite" => Some(Bitwise::F64Finite),
                 "f64-safe-integer" => Some(Bitwise::F64SafeInteger),
                 "f64-time-clip" => Some(Bitwise::F64TimeClip),

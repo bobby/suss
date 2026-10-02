@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "25a564ede2723a88067198b97bb3f3cb7063e672773f2ab471b6adb74a3b3b58",
+  "replacement": "(def ^:private array->transient-hash-map (fn [len arr]\n  (loop [out (transient (.-EMPTY PersistentHashMap))\n         i   0]\n    (if (< i len)\n      (recur (assoc! out (aget arr i) (aget arr (inc i))) (+ i 2))\n      out))))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+}

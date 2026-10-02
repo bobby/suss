@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "9878ad61661b7fcc9eb687d249383bab601923153da8294adc7bec9e502bdabf",
+  "replacement": "(def ^boolean not=\n  \"Same as (not (= obj1 obj2))\"\n  (fn ([x] false)\n  ([x y] (not (= x y)))\n  ([x y & more]\n   (not (apply = x y more)))))",
+  "rationale": "Complete pinned not= signatures and apply/equality branches retained with explicit defn bootstrap. Full HAMT factory and compatibility acceptance remain unfinished."
+}

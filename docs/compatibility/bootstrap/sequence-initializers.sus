@@ -92,3 +92,39 @@
                   (recur (+ 2 i) m)))))
           (PersistentArrayMap. nil (/ (alength nodups) 2) nodups nil))
         (PersistentArrayMap. nil (/ (alength init) 2) init nil)))))
+
+(set! (.-EMPTY BitmapIndexedNode) (BitmapIndexedNode. nil 0 (make-array 0)))
+
+(set! (.-EMPTY PersistentHashMap) (PersistentHashMap. nil 0 nil false nil empty-unordered-hash))
+
+(set! (.-fromArray PersistentHashMap)
+  (fn [arr ^boolean no-clone]
+    (let [arr (if no-clone arr (aclone arr))
+          len (alength arr)]
+      (loop [i 0 ret (transient (.-EMPTY PersistentHashMap))]
+        (if (< i len)
+          (recur (+ i 2)
+            (-assoc! ret (aget arr i) (aget arr (inc i))))
+          (-persistent! ret))))))
+
+(set! (.-fromArrays PersistentHashMap)
+  (fn [ks vs]
+    (let [len (alength ks)]
+      (loop [i 0 ^not-native out (transient (.-EMPTY PersistentHashMap))]
+        (if (< i len)
+          (if (<= (alength vs) i)
+            (throw (suss.bootstrap/error (str_ "No value supplied for key: " (aget ks i))))
+            (recur (inc i) (-assoc! out (aget ks i) (aget vs i))))
+          (persistent! out))))))
+
+(set! (.-createWithCheck PersistentHashMap)
+  (fn [arr]
+    (let [len (alength arr)
+          ret (transient (.-EMPTY PersistentHashMap))]
+      (loop [i 0]
+        (when (< i len)
+          (-assoc! ret (aget arr i) (aget arr (inc i)))
+          (if (not= (-count ret) (inc (/ i 2)))
+            (throw (suss.bootstrap/error (str_ "Duplicate key: " (aget arr i))))
+            (recur (+ i 2)))))
+      (-persistent! ret))))

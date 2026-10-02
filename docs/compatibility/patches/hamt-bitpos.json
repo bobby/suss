@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "6cee52ef95652ab6fe04b516930c17e5a13a7cd6e728ddba0d59cfeb9c183957",
+  "replacement": "(def ^:private bitpos (fn [hash shift]\n  (bit-shift-left 1 (mask hash shift))))",
+  "rationale": "Complete pinned HAMT/transient/sequence algorithm retained. Explicit defn, doto, if-let and exact forEach bootstrap preserve all branches and evaluation order; Error construction uses the typed adapter and threshold spelling follows the pinned emitter. Native execution/transport and broader compatibility remain unfinished."
+}

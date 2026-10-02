@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "6e9584257ca7d93220b51941cf6442cef0985421fbe7560ad4141ef499580cac",
+  "replacement": "(set! (.-fromArrays PersistentHashMap)\n  (fn [ks vs]\n    (let [len (alength ks)]\n      (loop [i 0 ^not-native out (transient (.-EMPTY PersistentHashMap))]\n        (if (< i len)\n          (if (<= (alength vs) i)\n            (throw (suss.bootstrap/error (str_ \"No value supplied for key: \" (aget ks i))))\n            (recur (inc i) (-assoc! out (aget ks i) (aget vs i))))\n          (persistent! out))))))",
+  "rationale": "Retain complete pinned hash-map factory and all branches, using the typed Error construction adapter. Formatting dependencies and complete acceptance remain unfinished."
+}

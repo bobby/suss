@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "a01f4f438063cc3e18e4da748f422900f82107653cd5d2a1707ba35412237c75",
-  "reviews-sha256": "200664d0f5fc35d001a96f533a802d8bdda5be8334472636d82c685d49d0ce90",
+  "recipe-sha256": "01585e78250b6513368160ff00e86ce901f9a87c1228dd3e8f9abc254a3ca2e3",
+  "reviews-sha256": "4520228f4018a8983c39db291fd705223b35fd44dba2966f1f91244ec411c78d",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -6452,16 +6452,1091 @@
         "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
         "tests/oracle/hash-map-cases.json"
       ]
+    },
+    {
+      "id": "runtime:reduce-kv:2677",
+      "name": "reduce-kv",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2677,
+      "end-line": 2689,
+      "byte-start": 71977,
+      "byte-end": 72551,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5df4045846eaa98268236a3c604ca4e887513ff526b28e286257e9a9e1776c8b",
+      "extracted": "extracted/0207.cljs",
+      "extracted-sha256": "f25d60be13c706de045275bbdacb5f96c889335783c3b4d112a6e15296e21226",
+      "patch": "docs/compatibility/patches/hamt-reduce-kv.json",
+      "patch-sha256": "9b70a9b9d85b391d87eddc380eafd4b66c707b36021c76ddcab9378d421de766",
+      "adapted-form-sha256": "37166a8f2b11d1f80d56519e5a27b9a8638091b42e61e471d9eed062ae0e9a92",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:every?:4416",
+      "name": "every?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4416,
+      "end-line": 4423,
+      "byte-start": 116749,
+      "byte-end": 116954,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "1c68cfcfbb1b011ef80e5d9b60c1080e42133359addffcf9134ac45ad5ab5567",
+      "extracted": "extracted/0208.cljs",
+      "extracted-sha256": "539229cde6eb7f6e25c0899e853ec74d32a669af6edfd94ef9636423de122750",
+      "patch": "docs/compatibility/patches/hamt-every-predicate.json",
+      "patch-sha256": "adde3428ab164ffd1e330e50b31f24bf53dc3ef3135611d2302a944df8e90675",
+      "adapted-form-sha256": "87711389e6bbfaa86f43470b0cce7f733364dc29d3987ad825d012e7c736f470",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:NeverEquiv:6578",
+      "name": "NeverEquiv",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6578,
+      "end-line": 6583,
+      "byte-start": 180844,
+      "byte-end": 180959,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "df8fa56924ce7dfa643aacb4f35ab1f8594bd7197fb97cd110e9686c5518ffaa",
+      "extracted": "extracted/0209.cljs",
+      "extracted-sha256": "bd0298ff2afdf46bb046522f260a773c7127bc489dfc956170807a4da0a75f60",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "df8fa56924ce7dfa643aacb4f35ab1f8594bd7197fb97cd110e9686c5518ffaa",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:never-equiv:6585",
+      "name": "never-equiv",
+      "kind": "def",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6585,
+      "end-line": 6585,
+      "byte-start": 180961,
+      "byte-end": 181002,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "07f2af8e08e858fc37d7d73c1edef21a5eb6e00c13e925250cc2345e0e0e8e6d",
+      "extracted": "extracted/0210.cljs",
+      "extracted-sha256": "93a7034763c5550b8272f2c0e879c3e30bfc6cbed9916f6bdbb0d76eb61ee0f4",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "07f2af8e08e858fc37d7d73c1edef21a5eb6e00c13e925250cc2345e0e0e8e6d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:equiv-map:6587",
+      "name": "equiv-map",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6587,
+      "end-line": 6604,
+      "byte-start": 181004,
+      "byte-end": 181560,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "f624e155c995687f39e652b97a6e73b2a7ce62705cd970e97fb01ad128a27f22",
+      "extracted": "extracted/0211.cljs",
+      "extracted-sha256": "21bbebffb11afb506db7d3c33ffff15ecb0fd331ead0717e77fd641e3a7a6dbf",
+      "patch": "docs/compatibility/patches/hamt-equiv-map.json",
+      "patch-sha256": "f9512f802e1df3d12b17208da4bd30c573b077289fea51e53c37fbc8d6acfa34",
+      "adapted-form-sha256": "8006287b8628e8706edb4a6292f6d490042ee5e1cb0ac279509ee938002f0db5",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:fix:2937",
+      "name": "fix",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2937,
+      "end-line": 2940,
+      "byte-start": 79376,
+      "byte-end": 79452,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c47590843d9d7fa984c09c2f6cffcf8daf054adb8bf113b2c42971e414b02c2e",
+      "extracted": "extracted/0212.cljs",
+      "extracted-sha256": "7ccd8583cf61e917691da8d5a85e53fbda7c8fd3debaeba7a2e96ceaef3112ca",
+      "patch": "docs/compatibility/patches/hamt-fix.json",
+      "patch-sha256": "00c5c78fbf6792258f2848710edd96f5cdff840e60ad6b95897ea0934b8c8cfd",
+      "adapted-form-sha256": "b87a18b09f2bdb8c9ccc209bd115ac8303e0f67a4919f8598da0f0b86f3df62e",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained js-mod and comparisons",
+        "guarded binary64 floor/ceil number coercion"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "crates/suss-cli/tests/portable_map_mutation_helpers.rs"
+      ]
+    },
+    {
+      "id": "runtime:quot:2981",
+      "name": "quot",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2981,
+      "end-line": 2985,
+      "byte-start": 80126,
+      "byte-end": 80251,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c9bbfc736e9ce4ce97512b8daa674f51e3692af2871b3fbd4e0cec38570da662",
+      "extracted": "extracted/0213.cljs",
+      "extracted-sha256": "d6a65e6839e57493e6309095f33422c160aea39a70de5b9fba24f4a425ba8b31",
+      "patch": "docs/compatibility/patches/hamt-quot.json",
+      "patch-sha256": "d83d5b291bef7905f76ae776487e8b657aef5dabfb2786177e246e63c12e7324",
+      "adapted-form-sha256": "bc57577a113a7f8a492f939c58c9d7947d74892de723727af8e1d089a4c984ec",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained js-mod and comparisons",
+        "guarded binary64 floor/ceil number coercion"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "crates/suss-cli/tests/portable_map_mutation_helpers.rs"
+      ]
+    },
+    {
+      "id": "runtime:array-copy-downward:2311",
+      "name": "array-copy-downward",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2311,
+      "end-line": 2317,
+      "byte-start": 62915,
+      "byte-end": 63145,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "3f15a3d83e91cf683252e81b6f16640403ccb062823adee70ee2741d8ee2c196",
+      "extracted": "extracted/0214.cljs",
+      "extracted-sha256": "dcc804dfbad2b924521f7736d592577fde33b965c44a9e3a626d41b983f8065c",
+      "patch": "docs/compatibility/patches/hamt-array-copy-downward.json",
+      "patch-sha256": "dec1a231fff91154b3a0de39728726ca944e8bfea450208959e2d103afd6984f",
+      "adapted-form-sha256": "5094f9303fb5e2257f8cc7541cd4543d9e8bdf8dd29585cd0ed4e54a683e8cc8",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained aget/aset and binary64 indexing"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:TransientArrayMap:7210",
+      "name": "TransientArrayMap",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7210,
+      "end-line": 7288,
+      "byte-start": 196882,
+      "byte-end": 199138,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "574df686e28daa72c65795b50803ec26d1c356824c1182efb7b5d786236bb865",
+      "extracted": "extracted/0215.cljs",
+      "extracted-sha256": "438229186b35aed8dd79d8c7017e1e0dcdf9d0ce05451cee35bf559598484b1b",
+      "patch": "docs/compatibility/patches/hamt-TransientArrayMap.json",
+      "patch-sha256": "305ff458b30049f38c5b4d4bf012395335ed6310931ab78c31e31c8fa59af2df",
+      "adapted-form-sha256": "9720a3708b4281736e859eac52e73fe4380cc23f38b07b21c8d49d311bf51c58",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:array->transient-hash-map:7292",
+      "name": "array->transient-hash-map",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7292,
+      "end-line": 7297,
+      "byte-start": 199168,
+      "byte-end": 199377,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "25a564ede2723a88067198b97bb3f3cb7063e672773f2ab471b6adb74a3b3b58",
+      "extracted": "extracted/0216.cljs",
+      "extracted-sha256": "3e0e104b0c6581c412e5094808dda5c8feddef97db1c211ac166932b6b8eb57e",
+      "patch": "docs/compatibility/patches/hamt-array-totransient-hash-map.json",
+      "patch-sha256": "66222916af5d30f4a76db2f60ad898e748e01dbcbe87fd154154779658c3f46e",
+      "adapted-form-sha256": "8e6832a87eaba329d005e4bb3863c2b73fea378b9dfd899dffeef97bda1b99fd",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:Box:7301",
+      "name": "Box",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7301,
+      "end-line": 7301,
+      "byte-start": 199402,
+      "byte-end": 199431,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "153de2c4cf516fd43a72dd003bb7355dc2695d7381fa0ac8cd9a0d29174658e9",
+      "extracted": "extracted/0217.cljs",
+      "extracted-sha256": "0fae34166014086f6ae8556f7a9c7fd5dfa9aef778d5652400fb256dede6fb31",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "153de2c4cf516fd43a72dd003bb7355dc2695d7381fa0ac8cd9a0d29174658e9",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:mask:7305",
+      "name": "mask",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7305,
+      "end-line": 7306,
+      "byte-start": 199495,
+      "byte-end": 199577,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5072e7061ccc390fcc2adb98fd4334b434e2f2bd0d9135d3c7a11a4e0962ad62",
+      "extracted": "extracted/0218.cljs",
+      "extracted-sha256": "50c4df412e7725574efeb4c73ced20203008914c3c5a7f2caaffe93f621af2d7",
+      "patch": "docs/compatibility/patches/hamt-mask.json",
+      "patch-sha256": "30a2ec68dca39ce4dfba6f078bb42c53e279f3e936ba2f75ab356a69f098fad0",
+      "adapted-form-sha256": "ff40e4d8f5bf4bda5ce1a74e3b96136eb4a25d8632af9add14880a9a753b862d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:clone-and-set:7308",
+      "name": "clone-and-set",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7308,
+      "end-line": 7315,
+      "byte-start": 199579,
+      "byte-end": 199736,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "ccb9460ad4f3eb826947372d4bb46dbefa6ed60a2707fbdbe9cc996874975cbb",
+      "extracted": "extracted/0219.cljs",
+      "extracted-sha256": "e4d52b7c77a3f1e78df112ad7716f9163f3bc4924eca93e47623240abfd3f764",
+      "patch": "docs/compatibility/patches/hamt-clone-and-set.json",
+      "patch-sha256": "7f394483e640c2a3fcfea76d105b2eda046f06059a6cac9a58c772d36bb61ad7",
+      "adapted-form-sha256": "c5c0e02dbe937e82586cc0200db844f37fdcd59251c2f040747550c204b1113f",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:remove-pair:7317",
+      "name": "remove-pair",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7317,
+      "end-line": 7321,
+      "byte-start": 199738,
+      "byte-end": 199950,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "fae76615597fe4e37b8d8162b74fa77d9de3ccc42966435037d0a3d20741acaf",
+      "extracted": "extracted/0220.cljs",
+      "extracted-sha256": "a6d87fa5f374f9243011cfe4f838898403c5fda58600f76f291b9068425fd6e5",
+      "patch": "docs/compatibility/patches/hamt-remove-pair.json",
+      "patch-sha256": "753e0b5df4a5418c53f3037aba161a2b6298f98deaf95338df5f68d0c803a74b",
+      "adapted-form-sha256": "f81821ab1db571352e7c0c5b2b1adcc2a98510d1bf6c24c5f29157c7c5e9a8eb",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:bitmap-indexed-node-index:7323",
+      "name": "bitmap-indexed-node-index",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7323,
+      "end-line": 7324,
+      "byte-start": 199952,
+      "byte-end": 200039,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "20e72121c6e0a74329a884d7bf4a3305c4252b4f39510c22910823360ae6556b",
+      "extracted": "extracted/0221.cljs",
+      "extracted-sha256": "3b6dcb2ac84cb42ca4aa6849d65b8889c7d50e653b7c7bf1f41a2d99b1d6ab4b",
+      "patch": "docs/compatibility/patches/hamt-bitmap-indexed-node-index.json",
+      "patch-sha256": "b109ea8a0a7d671abc40d33d2c93a2db426ff511092573cb25860334b5ff240f",
+      "adapted-form-sha256": "7a71a010b69a4e4afbd4833ec7a014a71abc186f91d188c3ffd6ddf1fedc0e0d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:bitpos:7326",
+      "name": "bitpos",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7326,
+      "end-line": 7327,
+      "byte-start": 200041,
+      "byte-end": 200107,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "6cee52ef95652ab6fe04b516930c17e5a13a7cd6e728ddba0d59cfeb9c183957",
+      "extracted": "extracted/0222.cljs",
+      "extracted-sha256": "2dbda4fdd87a4ac3efb627d9333fea624e7a9c75c6d5d60dfd6291a76d5b87f8",
+      "patch": "docs/compatibility/patches/hamt-bitpos.json",
+      "patch-sha256": "ed3afa5deb842100e74fd0d5591c9d38def12bcb91c600718b6d173607be7547",
+      "adapted-form-sha256": "d6ba67c1c59ae8e944a4e9b7345da740db94c1cd074279f16f38c150b78f3f0f",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:edit-and-set:7329",
+      "name": "edit-and-set",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7329,
+      "end-line": 7338,
+      "byte-start": 200109,
+      "byte-end": 200416,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "158bbb1c9fcd4e18967520011019b038c63ad872372683614a67cfda11207d47",
+      "extracted": "extracted/0223.cljs",
+      "extracted-sha256": "542826ae7b3cdaa7add5f37be758bdea7ca5bf28b1a47d94b010481f571c8c6d",
+      "patch": "docs/compatibility/patches/hamt-edit-and-set.json",
+      "patch-sha256": "480d7e3c4332b19728c19b349fd300f7c5ca9174085b9dba037c2dac5a689e3b",
+      "adapted-form-sha256": "2850f407421d3b21767df0450dce432068c989ddf647467a27847d9baf9e9618",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:inode-kv-reduce:7340",
+      "name": "inode-kv-reduce",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7340,
+      "end-line": 7354,
+      "byte-start": 200418,
+      "byte-end": 200945,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "a5ca35bf21047d8d93cbc59e8ca76291a752acfdb1f454aae0ffd2b669f9e9c1",
+      "extracted": "extracted/0224.cljs",
+      "extracted-sha256": "5903afcd0f1e773a7e80e7b1a320b193acc10365b0337272c09c45dc9c534115",
+      "patch": "docs/compatibility/patches/hamt-inode-kv-reduce.json",
+      "patch-sha256": "42b29984fccf2cabeba8951a6bdca22bd6aeb1276b301efc8eac92e96c2e42bb",
+      "adapted-form-sha256": "12b38eef7154b0e989fd90189ff4a945c32670c68239fcec667d1e7eb90fd4b1",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:NodeIterator:7358",
+      "name": "NodeIterator",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7358,
+      "end-line": 7394,
+      "byte-start": 200969,
+      "byte-end": 202236,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "05116f09c7c6b1ba7856661b0bb66e614ae0356d26457ebbd024b69e0c873264",
+      "extracted": "extracted/0225.cljs",
+      "extracted-sha256": "f8e669a87712e572b794e8f85aebf896d34158b7fa01f885d622d784d711f830",
+      "patch": "docs/compatibility/patches/hamt-NodeIterator.json",
+      "patch-sha256": "f96fa288479f629fa4b87f7f14ba1130539949e1adaa7f32b8d213a04b73fc25",
+      "adapted-form-sha256": "ba233ea7ac03e762860283c82ca71cb1ead5935c30047d27ff789950b2f2cc96",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:BitmapIndexedNode:7396",
+      "name": "BitmapIndexedNode",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7396,
+      "end-line": 7596,
+      "byte-start": 202238,
+      "byte-end": 211473,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8d63f0d669aa5599492785b21814089fbb25a31bcc0dd3fde414483769d16271",
+      "extracted": "extracted/0226.cljs",
+      "extracted-sha256": "e7a22ba6e898d3bcc527464d244eff634e39b19b37bc865c6dff3dbe831b17c0",
+      "patch": "docs/compatibility/patches/hamt-BitmapIndexedNode.json",
+      "patch-sha256": "d1f02d7e7ee9f3cc63e6eb5e6a384c3fed1963464b6388efda5e66b03a3520de",
+      "adapted-form-sha256": "f298c55fb3f20f967bc4c391c8bf5d46295d342a596cd41c4844e3c58106129d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:pack-array-node:7600",
+      "name": "pack-array-node",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7600,
+      "end-line": 7611,
+      "byte-start": 211553,
+      "byte-end": 212059,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "ddb5f38559e4f19982eb4c6d31d7c689d5e6e5940e54bd29172dee5ff9840e78",
+      "extracted": "extracted/0227.cljs",
+      "extracted-sha256": "39b781a2f815066ca268bc73cf989a5e5cb663593ba94c06f7a446a6352718b5",
+      "patch": "docs/compatibility/patches/hamt-pack-array-node.json",
+      "patch-sha256": "62a1f410d2e21f6d2749573cdb26e0de9b290c29e64aea02431cbc0fdd3f0133",
+      "adapted-form-sha256": "0626460ee4d6ffdc604cd8cadb318a4ba3906fdcb839f6fe990ab013ea1443a2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:ArrayNodeIterator:7613",
+      "name": "ArrayNodeIterator",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7613,
+      "end-line": 7631,
+      "byte-start": 212061,
+      "byte-end": 212674,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "a8a2d2127159faec92735881735c889f96d7580f24a519290ca45a32ee74a0cb",
+      "extracted": "extracted/0228.cljs",
+      "extracted-sha256": "40e57bcc040c35ea179864017a38305245b1d2f87b5e9dba5a9582b18c4e78f9",
+      "patch": "docs/compatibility/patches/hamt-ArrayNodeIterator.json",
+      "patch-sha256": "4dbafd883b8c7e84814aaa18419f5ceca1ba336ccde86698128134b204cc5282",
+      "adapted-form-sha256": "9275bfcd7eb20b580da460f560e60dc2a83b694ac201644181ba9e3c3a68c4c8",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:ArrayNode:7633",
+      "name": "ArrayNode",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7633,
+      "end-line": 7732,
+      "byte-start": 212676,
+      "byte-end": 215969,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "49cf5bc6f01da6eb9be99cb6935a48aaadd19d328ccaaefd4c2c0de8777e3bc5",
+      "extracted": "extracted/0229.cljs",
+      "extracted-sha256": "6b911458f799aea65ee3141b4838209d459f0e463788cd1d912e3a4b1ba939c8",
+      "patch": "docs/compatibility/patches/hamt-ArrayNode.json",
+      "patch-sha256": "4d30274a6fa1c7c061d1d808a16339aca7d82891bce3c40deb9c0c3bfc4849fd",
+      "adapted-form-sha256": "60e1b992657431a4cf0a2d5f89eaed885d1a8b8cec7afdf982d44a047c2b2685",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:hash-collision-node-find-index:7734",
+      "name": "hash-collision-node-find-index",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7734,
+      "end-line": 7741,
+      "byte-start": 215971,
+      "byte-end": 216175,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "7e2c890f1b6d53a4e021d08d31b245056c0f65e85ba862af2686e2af53324266",
+      "extracted": "extracted/0230.cljs",
+      "extracted-sha256": "7b44d6fca355bcd04276fce7e1c2d63bb19f657a2f00285f47b5a85a570239ce",
+      "patch": "docs/compatibility/patches/hamt-hash-collision-node-find-index.json",
+      "patch-sha256": "de2e10e579c0acacef31e6375c7a69ebf325e9022fea3670889515b01a6ba588",
+      "adapted-form-sha256": "6cbdbbd2d57204ac3450b8e71c32c6c42018f88ba13888c1ee579ff7005e620f",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:HashCollisionNode:7743",
+      "name": "HashCollisionNode",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7743,
+      "end-line": 7841,
+      "byte-start": 216177,
+      "byte-end": 220164,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "9aaf40a02fe024655983bb173e59423d3b6e0aae01d6bc8d26a25173ff8903db",
+      "extracted": "extracted/0231.cljs",
+      "extracted-sha256": "a3d65532b8d0d0296088ed99bd0ebeba9b032ad55a39d0dc09a9cf215f1cd853",
+      "patch": "docs/compatibility/patches/hamt-HashCollisionNode.json",
+      "patch-sha256": "6e3a09d645347f1843d83a88dd0a9713558390649f8f508d99cea143ea11663d",
+      "adapted-form-sha256": "91d96337cbf62f3f9092597a301c4c041438439765521082461bb78220d2594b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:create-node:7843",
+      "name": "create-node",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7843,
+      "end-line": 7859,
+      "byte-start": 220166,
+      "byte-end": 221008,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5ab873916adaa98ae3bcbaf69a08639ea23f591a071798c6abb6374b08da1356",
+      "extracted": "extracted/0232.cljs",
+      "extracted-sha256": "1f9a5b47c21bf7daa191318ff0711da211d63ae9b620e5edcbf3809efad7a069",
+      "patch": "docs/compatibility/patches/hamt-create-node.json",
+      "patch-sha256": "042333155aa8ec258ce73eef195bf2329482ceea7a13b48407c884e93dee737c",
+      "adapted-form-sha256": "550199cbfd237ba517706de0a7ff456bbf4f7554ff16ea0c071080dfbcc53973",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:NodeSeq:7861",
+      "name": "NodeSeq",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7861,
+      "end-line": 7921,
+      "byte-start": 221010,
+      "byte-end": 222373,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "988079f450d630fdfc0a15d229400edceb6399aa1b7be544e864fa06323bc7e1",
+      "extracted": "extracted/0233.cljs",
+      "extracted-sha256": "009b360ff3cf7188300c7ce3c8fa483763b853d72aea0d32b4847aa96669d501",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "988079f450d630fdfc0a15d229400edceb6399aa1b7be544e864fa06323bc7e1",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:create-inode-seq:7925",
+      "name": "create-inode-seq",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7925,
+      "end-line": 7940,
+      "byte-start": 222399,
+      "byte-end": 222951,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "fb082c903ae9a7ac8133f2e517a4e34cc3760ee57cc3fe6023fc8c5c1c43f2b9",
+      "extracted": "extracted/0234.cljs",
+      "extracted-sha256": "7b504fca6117988c5a7b2148a18bade0875d8e3dd9d67e91fc7b8bc6e7a06a42",
+      "patch": "docs/compatibility/patches/hamt-create-inode-seq.json",
+      "patch-sha256": "e44ecb42a7e633e4e1977d225415d66a944f1e442d4eef4af76b77316091af4a",
+      "adapted-form-sha256": "88f7093c8514da60ae0211e423aa79434ce6dde8cef684bc9a72eec386a5dbcc",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:ArrayNodeSeq:7942",
+      "name": "ArrayNodeSeq",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7942,
+      "end-line": 7994,
+      "byte-start": 222953,
+      "byte-end": 224108,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "6df4a2664f25cb2d67bc184951822e30a33a5f69d2935c7cd208c7da9ce52c34",
+      "extracted": "extracted/0235.cljs",
+      "extracted-sha256": "951ea0ded4bfda2807950c87fbde129f9ab75004b743917643b05434af221cdd",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "6df4a2664f25cb2d67bc184951822e30a33a5f69d2935c7cd208c7da9ce52c34",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:create-array-node-seq:7998",
+      "name": "create-array-node-seq",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 7998,
+      "end-line": 8010,
+      "byte-start": 224139,
+      "byte-end": 224584,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c645aca699308e862d4ba60f506009bc623d25a4b71ff97102c1057ee34d8e89",
+      "extracted": "extracted/0236.cljs",
+      "extracted-sha256": "2512c2d5fd2507fce8a2f27f775ab2a4089e5a562c1e3f6730bf7f1c9d1cb9bd",
+      "patch": "docs/compatibility/patches/hamt-create-array-node-seq.json",
+      "patch-sha256": "b2780ecf8fc3c65de1ac3d60d72af6b8e208668c80be152adb403122978dd844",
+      "adapted-form-sha256": "c44281c0e62a4f766cf8b8505c152f9353d250dd5a37c48ede9f67126c4e40d5",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:HashMapIter:8012",
+      "name": "HashMapIter",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8012,
+      "end-line": 8022,
+      "byte-start": 224586,
+      "byte-end": 224913,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "836d2748a2f4a1356ec021e6b42dc10240e689477b0aa6f2961cb5646f5a7edd",
+      "extracted": "extracted/0237.cljs",
+      "extracted-sha256": "426399e524b9dae44c42dfd14e5efaeb6553342f2427b2d30872213e0b081e1e",
+      "patch": "docs/compatibility/patches/hamt-HashMapIter.json",
+      "patch-sha256": "a9e0ba6f1c8df829d880a411e5b725a8edb7d23a05819bc8bb364f3a3b690535",
+      "adapted-form-sha256": "069be03796b07fb946641dc9549f732e7902da732a0925e9178af46c72c898f1",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:PersistentHashMap:8024",
+      "name": "PersistentHashMap",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8024,
+      "end-line": 8164,
+      "byte-start": 224915,
+      "byte-end": 228943,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "fd205b0bbc0e4f983b5b4c76666e00eb1496f8ca5a3d1b9072fbe1624a8454f5",
+      "extracted": "extracted/0238.cljs",
+      "extracted-sha256": "2dfa082e1128c1856ef25c45ab706a3a4d7e0d42ab772cd9b218eaf7802364ea",
+      "patch": "docs/compatibility/patches/hamt-PersistentHashMap.json",
+      "patch-sha256": "95d3410d897da18c5db433a21ad4f63fe962ffefe6d7d4c330db47046c0fa724",
+      "adapted-form-sha256": "595200700d42cdcdb8f48f0925e2cc29c5c55f60f62ac1bc62ac9519b1d17466",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:TransientHashMap:8202",
+      "name": "TransientHashMap",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 8202,
+      "end-line": 8317,
+      "byte-start": 230230,
+      "byte-end": 233464,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "f6a272f0f422e96395efc5082da2d8a7ca6d258185c8d30954e33628560bf1f4",
+      "extracted": "extracted/0239.cljs",
+      "extracted-sha256": "f30a77034e6565d9a36cca363d0f81a65e1cefbfcfa4fc7691b37bb5def6ed95",
+      "patch": "docs/compatibility/patches/hamt-TransientHashMap.json",
+      "patch-sha256": "31518705810c924662a032848290d5833e689b4b88593475ba96795446ddc963",
+      "adapted-form-sha256": "72cdff0c53eaec999e792be42f696184a1eaa4e66960a34f951ff844d5a4196c",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained canonical map/sequence/transient protocols",
+        "retained arrays/hash/equality and compiled Object methods",
+        "HAMT mutually recursive node types and helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+        "tests/oracle/hash-map-cases.json"
+      ]
+    },
+    {
+      "id": "runtime:not=:4187",
+      "name": "not=",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 4187,
+      "end-line": 4192,
+      "byte-start": 110724,
+      "byte-end": 110859,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "9878ad61661b7fcc9eb687d249383bab601923153da8294adc7bec9e502bdabf",
+      "extracted": "extracted/0240.cljs",
+      "extracted-sha256": "9753abfbd20e6fba7d4ea69695962965cdd9e70cfd5c629833e9773e84e54422",
+      "patch": "docs/compatibility/patches/hamt-not-equal.json",
+      "patch-sha256": "7a84c75ff20b76d5055ef0d2ba75d927a3853fbdc08c042e147b096ccaa6a7c4",
+      "adapted-form-sha256": "78ac8918be5ed45896062c8d41c78778af85d2cd9ab2913c61935da98e9c6513",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained not/apply/="
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs"
+      ]
+    },
+    {
+      "id": "runtime:assoc:2076",
+      "name": "assoc",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2076,
+      "end-line": 2091,
+      "byte-start": 56948,
+      "byte-end": 57507,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8561935c5fc21642683dbf8aae3d1739a776696f0dcd898b1a1078e274132232",
+      "extracted": "extracted/0241.cljs",
+      "extracted-sha256": "d495bee2deedee17d97b087b9d7fe49a2d3290df44a426208a233706e6f8bf48",
+      "patch": "docs/compatibility/patches/hamt-assoc.json",
+      "patch-sha256": "e2f2bc0b34463f0850d342bfec4d6f1e1ddc82fe75d7240315f866e849aed468",
+      "adapted-form-sha256": "341815de6bacb2dc5090e60b9588775ee3f77d1ff8e8cf0622561b073eb7fc8b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained IAssociative and -assoc",
+        "retained first/second/nnext and array/hash map factories"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_hash_maps.rs"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "157493a52edc5109c480751f5b9b94026d43d47adcbc65a85dc9da655fd1bf14"
+      "sha256": "356bb5c819fdc2c6a6c337a1ecd9d8898d69471bdbd38376e9b47f9015780cab"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "b9a27cd38b31706bfe3ec98da0568f35d67432a178623889267921f884ed11e4"
+      "sha256": "f25a6a1d6cf1b680ccec84b29e46006bdaa6b24f1428c75cce0ff400bfbe1c6b"
     }
   },
   "files": {
@@ -6674,6 +7749,41 @@
     "extracted/0204.cljs": "e001f6bb4f6032f686e599d1a569880682520ed86176dea6e7af288879a549b9",
     "extracted/0205.cljs": "358217ff733742d6e494758a7b5d21cf91804a5a754192a9c48d137a314f327e",
     "extracted/0206.cljs": "03b9e89e679e11b62bcc749e0e5675798e59733f85c8f99ffea85cebda7b5c3f",
-    "suss/core.sus": "d175d647d25f2513aca042354ea7d3376c378dda5052da0e39f27505c8636d36"
+    "extracted/0207.cljs": "f25d60be13c706de045275bbdacb5f96c889335783c3b4d112a6e15296e21226",
+    "extracted/0208.cljs": "539229cde6eb7f6e25c0899e853ec74d32a669af6edfd94ef9636423de122750",
+    "extracted/0209.cljs": "bd0298ff2afdf46bb046522f260a773c7127bc489dfc956170807a4da0a75f60",
+    "extracted/0210.cljs": "93a7034763c5550b8272f2c0e879c3e30bfc6cbed9916f6bdbb0d76eb61ee0f4",
+    "extracted/0211.cljs": "21bbebffb11afb506db7d3c33ffff15ecb0fd331ead0717e77fd641e3a7a6dbf",
+    "extracted/0212.cljs": "7ccd8583cf61e917691da8d5a85e53fbda7c8fd3debaeba7a2e96ceaef3112ca",
+    "extracted/0213.cljs": "d6a65e6839e57493e6309095f33422c160aea39a70de5b9fba24f4a425ba8b31",
+    "extracted/0214.cljs": "dcc804dfbad2b924521f7736d592577fde33b965c44a9e3a626d41b983f8065c",
+    "extracted/0215.cljs": "438229186b35aed8dd79d8c7017e1e0dcdf9d0ce05451cee35bf559598484b1b",
+    "extracted/0216.cljs": "3e0e104b0c6581c412e5094808dda5c8feddef97db1c211ac166932b6b8eb57e",
+    "extracted/0217.cljs": "0fae34166014086f6ae8556f7a9c7fd5dfa9aef778d5652400fb256dede6fb31",
+    "extracted/0218.cljs": "50c4df412e7725574efeb4c73ced20203008914c3c5a7f2caaffe93f621af2d7",
+    "extracted/0219.cljs": "e4d52b7c77a3f1e78df112ad7716f9163f3bc4924eca93e47623240abfd3f764",
+    "extracted/0220.cljs": "a6d87fa5f374f9243011cfe4f838898403c5fda58600f76f291b9068425fd6e5",
+    "extracted/0221.cljs": "3b6dcb2ac84cb42ca4aa6849d65b8889c7d50e653b7c7bf1f41a2d99b1d6ab4b",
+    "extracted/0222.cljs": "2dbda4fdd87a4ac3efb627d9333fea624e7a9c75c6d5d60dfd6291a76d5b87f8",
+    "extracted/0223.cljs": "542826ae7b3cdaa7add5f37be758bdea7ca5bf28b1a47d94b010481f571c8c6d",
+    "extracted/0224.cljs": "5903afcd0f1e773a7e80e7b1a320b193acc10365b0337272c09c45dc9c534115",
+    "extracted/0225.cljs": "f8e669a87712e572b794e8f85aebf896d34158b7fa01f885d622d784d711f830",
+    "extracted/0226.cljs": "e7a22ba6e898d3bcc527464d244eff634e39b19b37bc865c6dff3dbe831b17c0",
+    "extracted/0227.cljs": "39b781a2f815066ca268bc73cf989a5e5cb663593ba94c06f7a446a6352718b5",
+    "extracted/0228.cljs": "40e57bcc040c35ea179864017a38305245b1d2f87b5e9dba5a9582b18c4e78f9",
+    "extracted/0229.cljs": "6b911458f799aea65ee3141b4838209d459f0e463788cd1d912e3a4b1ba939c8",
+    "extracted/0230.cljs": "7b44d6fca355bcd04276fce7e1c2d63bb19f657a2f00285f47b5a85a570239ce",
+    "extracted/0231.cljs": "a3d65532b8d0d0296088ed99bd0ebeba9b032ad55a39d0dc09a9cf215f1cd853",
+    "extracted/0232.cljs": "1f9a5b47c21bf7daa191318ff0711da211d63ae9b620e5edcbf3809efad7a069",
+    "extracted/0233.cljs": "009b360ff3cf7188300c7ce3c8fa483763b853d72aea0d32b4847aa96669d501",
+    "extracted/0234.cljs": "7b504fca6117988c5a7b2148a18bade0875d8e3dd9d67e91fc7b8bc6e7a06a42",
+    "extracted/0235.cljs": "951ea0ded4bfda2807950c87fbde129f9ab75004b743917643b05434af221cdd",
+    "extracted/0236.cljs": "2512c2d5fd2507fce8a2f27f775ab2a4089e5a562c1e3f6730bf7f1c9d1cb9bd",
+    "extracted/0237.cljs": "426399e524b9dae44c42dfd14e5efaeb6553342f2427b2d30872213e0b081e1e",
+    "extracted/0238.cljs": "2dfa082e1128c1856ef25c45ab706a3a4d7e0d42ab772cd9b218eaf7802364ea",
+    "extracted/0239.cljs": "f30a77034e6565d9a36cca363d0f81a65e1cefbfcfa4fc7691b37bb5def6ed95",
+    "extracted/0240.cljs": "9753abfbd20e6fba7d4ea69695962965cdd9e70cfd5c629833e9773e84e54422",
+    "extracted/0241.cljs": "d495bee2deedee17d97b087b9d7fe49a2d3290df44a426208a233706e6f8bf48",
+    "suss/core.sus": "20223ce34c0e2634a32d57a86f994f5724b682ecc283c2d4778a7ab868ab6910"
   }
 }
