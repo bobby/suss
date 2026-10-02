@@ -10286,3 +10286,16 @@ Oracle Python parses, shell syntax and git diff whitespace checks pass.
 The prior 968/0/17 full baseline predates this source fix; rerun the full baseline
 and require exact final-head CI before readiness. Rich compiled source &env and
 the original M3 acceptance remain open. No PR was merged.
+
+PR143 reviewer followup found a significant oracle freshness defect: both position
+cljs.main invocations could reuse cached compiled output after macro-source edits.
+The root's context oracle observed this reuse, then obtained a fresh trace with
+:force true and :cache-analysis false. The reviewer independently checked pinned
+compiler.cljc's force recompilation branch and analyzer cache option handling,
+then applied both options to each position invocation. Node, strict eight-fact
+comparison and the complete native position command remain unchanged. Shell syntax
+and whitespace checks pass. This runner/docs-only fix does not alter Rust source;
+the live isolated baseline at55e4f64 remains applicable to native source, but exact
+new-head CI is still required. The reviewer did not rerun JVM/Node or native
+position tests during this followup; prior position evidence is not relabeled as
+fresh evidence for the repaired runner. No readiness or M3 completion is claimed.
