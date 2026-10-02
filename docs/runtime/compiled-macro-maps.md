@@ -33,6 +33,21 @@ Focused regressions additionally exercise nested quoted forms, actual entries an
 sequences, malformed/foreign storage, old values after class redefinition, factory
 capture, entry order and exceptions. See `crates/suss-cli/tests/compiled_macro_maps.rs`.
 
+Independent PR #133 review found that sequence transport counted a generated entry
+vector's children at the vector's own depth. The focused before-fix test failed:
+62 enclosing lists incorrectly passed the 64-level syntax bound. Children now use
+two levels below the sequence, accounting for the entry vector. Regressions in
+both stores accept 61 enclosing lists, reject 62 after GC, reject a flat sequence
+exceeding the total 4096-node budget and verify recovery. Additional malformed
+index, metadata and oversized backing-array cases remain rejected.
+
+The initial large budget probe exhausted the default operation fuel while
+constructing its data; it now explicitly uses bounded 100-million operation fuel.
+A subsequent diagnostic assertion was corrected to the guard's actual bounded
+pair-storage error. Final focused validation passed all six map and three quoted
+identifier tests (`/private/tmp/suss-pr133-final-focused.log`). Independent Python
+checks passed 88 tests, with 191 imported files and 12 licensed setup forms verified.
+
 ## Remaining acceptance
 
 This does not certify full maps, public core or compiled bootstrap. Large literal

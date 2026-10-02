@@ -82,9 +82,14 @@ fn compiled_macro_maps_reject_foreign_and_malformed_storage_and_recover() {
         "(suss.core/PersistentArrayMap. nil 1.5 (array :a 1) nil)",
         "(suss.core/PersistentArrayMap. nil 1 (js-obj) nil)",
         "(suss.core/PersistentArrayMap. true 1 (array :a 1) nil)",
+        "(suss.core/PersistentArrayMap. nil 2049 (make-array 4098) nil)",
         "(suss.core/PersistentArrayMapSeq. (array :a 1) 1 nil)",
         "(suss.core/PersistentArrayMapSeq. (array :a 1) 2 nil)",
         "(suss.core/PersistentArrayMapSeq. (array :a) 0 nil)",
+        "(suss.core/PersistentArrayMapSeq. (array :a 1) -1 nil)",
+        "(suss.core/PersistentArrayMapSeq. (array :a 1) 0.5 nil)",
+        "(suss.core/PersistentArrayMapSeq. (array :a 1) 0 true)",
+        "(suss.core/PersistentArrayMapSeq. (make-array 4098) 0 nil)",
     ] {
         let value = session.eval(source).unwrap();
         session.collect().unwrap();
@@ -194,4 +199,30 @@ fn compiled_macro_maps_capture_factory_before_ordered_entries_and_stop_on_throw(
                 == 4))
             .unwrap()
     );
+}
+
+#[test]
+fn compiled_macro_map_sequences_count_entry_vectors_in_nesting_bound() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
+        let bridge = FormBridge::new(&mut session).unwrap();
+        for (wrappers, accepted) in [(61, true), (62, false)] {
+            let source = format!(
+                "(loop [v (seq {{:a 1}}) i 0] (if (< i {wrappers}) (recur (cons v nil) (inc i)) v))"
+            );
+            let value = session.eval(&source).unwrap();
+            session.collect().unwrap();
+            let result = bridge.read(&mut session, &value, 0..1);
+            assert_eq!(result.is_ok(), accepted, "{wrappers} wrappers");
+        }
+        let value = session.eval("(loop [v (seq {:a 1}) i 0] (if (< i 1500) (recur (cons (seq {:a 1}) v) (inc i)) v))").unwrap();
+        session.collect().unwrap();
+        let error = bridge.read(&mut session, &value, 0..1).unwrap_err();
+        assert!(
+            format!("{error}").contains("bounded array map sequence pair storage"),
+            "{error}"
+        );
+        let value = session.eval("(seq {:recovered 7})").unwrap();
+        assert!(bridge.read(&mut session, &value, 0..1).is_ok());
+    }
 }

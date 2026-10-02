@@ -405,7 +405,9 @@ fn sequence(
                     spend(budget)?;
                     let pair = pair
                         .iter()
-                        .map(|entry| decode(store, entry, classes, span, depth + 1, budget))
+                        // The generated entry vector is one syntax level below
+                        // this sequence; its key/value children are another.
+                        .map(|entry| decode(store, entry, classes, span, depth + 2, budget))
                         .collect::<wasmtime::Result<Vec<_>>>()?;
                     items.push(Form {
                         span: span.clone(),
