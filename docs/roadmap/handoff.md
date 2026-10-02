@@ -9895,10 +9895,26 @@ Next M3 prerequisite isolated branch portable/m3-hash-map-data in
 not-yet-passing acceptance regressions cover9/16/17/32/33/65 map transport both
 phases afterGC, persistent old roots/nil/equality/hash,20colliding keys, transient
 array-to-hash growth/closed lifecycle. Development primary35observations fresh
-compile/Node/compare terminal0: all exact. Initial runner23130 needed common
+compile/Node/compare terminal0: all exact. Initial runner27004 needed common
 oracle fixture generation; corrected primary3 log and out observations retained.
 Initial80405 failed wrong-directory setup, no primary evidence from that attempt.
 Native BEFORE has just started; no map implementation or success claim yet.
 Real HAMT/transient source needed before unrestricted &env maps; analyzer also
 needs rich locals/namespaces and context semantics (pinned do final expressions
 can become:return independent of current tail flag). &env/fullM3 remain open.
+
+Hash-map BEFORE68971 terminal101:0passed/4failed/0ignored, log
+/private/tmp/suss-m3-hash-map-before.log. Nine-entry quoted map reaches Language
+failure; public dissoc/assoc! are unresolved before other tests execute. These
+failures establish missing prerequisites, not successful HAMT evidence. Fresh
+primary23130 compile terminal0, Node/compare terminal0:35exact pinned observations.
+All unimplemented tests remain in isolated next worktree, outside PR138 baseline.
+
+PR135 repaired4e02022 and PR136 repaired2b857d9 final-head CI completedSUCCESS:
+36965790098 verified926passed/0failed/17existingignores/87groups;36965789944 verified
+931passed/0failed/17existingignores/88groups. Both Python88/import199/setup12/runtime
+ABI/final reader doctests present in complete logs
+/private/tmp/suss-pr{135,136}-repaired-final-ci.log. Independent reviewers approved
+exact heads previously; remoteheads rechecked unchanged. Marked ready, no merges.
+PR138 e661139 independently approved; fresh CI36968779862 confirmedLIVE. Corrected
+one handoff session typo above; final full workspace rerun follows this doc head.
