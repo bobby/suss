@@ -103,7 +103,7 @@ fn compiled_macro_metadata_match_fresh_pinned_scalar_observations_in_both_phases
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 45);
+    assert_eq!(cases.len(), 56);
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
         let mut macros = suss_cli::portable_macros::CompiledMacros::new().unwrap();
@@ -255,4 +255,95 @@ fn compiled_macro_remainder_preserves_operand_order_arity_errors_and_recovers_af
     assert!(session.eval("(js-mod (js-obj) 3)").is_err());
     session.collect().unwrap();
     assert!(session.eval("(js-mod 7 3)").is_ok());
+}
+
+#[test]
+fn compiled_macro_metadata_evaluates_ordinary_literal_expressions_after_reader_merging() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        for source in [
+            "(let [answer 7] (== (get (meta ^{:answer answer} [0]) :answer) 7))",
+            "(== (get (meta ^{:answer (+ 1 2)} {:x 0}) :answer) 3)",
+            "(let [tag 7] (== (get (meta ^tag [0]) :tag) 7))",
+            "(let [value ^{(1 2) 7} ^{[1 2] (throw 29)} []] (== (get (meta value) [1 2]) 7))",
+            "(= (get (meta '^{:answer (+ 1 2)} [0]) :answer) '(+ 1 2))",
+            "(= (get (meta ^{:answer (+ 1 2)} ()) :answer) '(+ 1 2))",
+        ] {
+            let value = session
+                .eval(source)
+                .unwrap_or_else(|failure| panic!("{source}: {failure:?}"));
+            assert!(
+                session
+                    .inspect(&value, |store, value| Ok(value
+                        .unwrap_anyref()
+                        .unwrap()
+                        .as_i31(&store)?
+                        .unwrap()
+                        .get_u32()
+                        == 4))
+                    .unwrap(),
+                "{source}"
+            );
+        }
+        session.eval("(def metadata-trace 0)").unwrap();
+        session.eval("(def metadata-result ^{:answer (do (set! metadata-trace (+ (* metadata-trace 10) 2)) 7)} ^{:answer (throw 29) :extra (do (set! metadata-trace (+ (* metadata-trace 10) 3)) 8)} [(do (set! metadata-trace (+ (* metadata-trace 10) 1)) 42)])").unwrap();
+        session.collect().unwrap();
+        let value = session.eval("(and (== metadata-trace 123) (== (get (meta metadata-result) :answer) 7) (== (get (meta metadata-result) :extra) 8) (== (nth metadata-result 0) 42))").unwrap();
+        assert!(
+            session
+                .inspect(&value, |store, value| Ok(value
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_i31(&store)?
+                    .unwrap()
+                    .get_u32()
+                    == 4))
+                .unwrap()
+        );
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let input = read_forms("^{:answer (+ 1 2)} [0]").unwrap().remove(0);
+        let value = bridge.quote(&mut session, input).unwrap();
+        session.collect().unwrap();
+        let output = bridge.read(&mut session, &value, 800..810).unwrap();
+        let Kind::Map(entries) = &output.metadata[0].kind else {
+            panic!("metadata map");
+        };
+        assert!(matches!(&entries[1].kind, Kind::List(items) if items.len() == 3));
+    }
+}
+
+#[test]
+fn compiled_macro_metadata_merges_data_before_constructing_discarded_values() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let bridge = FormBridge::new(&mut session).unwrap();
+        session.eval("(def metadata-constructions 0) (def prior-vector-from-array (.-fromArray suss.core/PersistentVector))").unwrap();
+        session.eval("(set! (.-fromArray suss.core/PersistentVector) (fn [entries no-clone] (set! metadata-constructions (inc metadata-constructions)) (prior-vector-from-array entries no-clone)))").unwrap();
+        let discarded = (0..32).map(|n| n.to_string()).collect::<Vec<_>>().join(" ");
+        let syntax = format!("^{{:answer 7}} ^{{:answer [{discarded}]}} x");
+        let value = session
+            .eval(&format!("(get (meta '{syntax}) :answer)"))
+            .unwrap();
+        session.collect().unwrap();
+        let form = bridge.read(&mut session, &value, 810..820).unwrap();
+        assert!(matches!(form.kind, Kind::Number(7.0)));
+        let input = read_forms(&syntax).unwrap().remove(0);
+        let value = bridge.quote(&mut session, input).unwrap();
+        session.collect().unwrap();
+        let output = bridge.read(&mut session, &value, 820..830).unwrap();
+        assert!(matches!(output.kind, Kind::Symbol(_)));
+        let value = session.eval("(== metadata-constructions 0)").unwrap();
+        assert!(
+            session
+                .inspect(&value, |store, value| Ok(value
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_i31(&store)?
+                    .unwrap()
+                    .get_u32()
+                    == 4))
+                .unwrap()
+        );
+        session
+            .eval("(set! (.-fromArray suss.core/PersistentVector) prior-vector-from-array)")
+            .unwrap();
+    }
 }

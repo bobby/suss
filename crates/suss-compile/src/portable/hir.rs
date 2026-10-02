@@ -599,7 +599,7 @@ impl Analyzer<'_> {
                 let key =
                     self.literal_form(form, Literal::String("EMPTY".encode_utf16().collect()));
                 let value = self.nominal(form, Nominal::NamedGet, vec![owner, key]);
-                return self.attach_literal_metadata(form, value);
+                return self.attach_constant_metadata(form, value);
             }
             Kind::Symbol(symbol) => {
                 let (kind, ty) = if symbol.namespace.is_none() {

@@ -361,6 +361,94 @@
         "tag": "f64",
         "bits": "4040800000000000"
       }
+    },
+    {
+      "id": "literal-lexical-value",
+      "source": "(let [answer 7] (get (meta ^{:answer answer} [0]) :answer))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "literal-map-call-value",
+      "source": "(get (meta ^{:answer (+ 1 2)} {:x 0}) :answer)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4008000000000000"
+      }
+    },
+    {
+      "id": "literal-symbol-tag-value",
+      "source": "(let [tag 7] (get (meta ^tag [0]) :tag))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "literal-reader-key-retention",
+      "source": "(let [value ^{(1 2) 7} ^{[1 2] (throw 29)} []] (get (meta value) [1 2]))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "literal-reader-overridden-value",
+      "source": "(let [trace (array 0) value ^{:answer 7} ^{:answer (aset trace 0 29)} [0]] (+ (* (aget trace 0) 10) (get (meta value) :answer)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "literal-metadata-effect-order",
+      "source": "(let [trace (array 0) value ^{:answer (do (aset trace 0 (+ (* (aget trace 0) 10) 2)) 7) :extra (do (aset trace 0 (+ (* (aget trace 0) 10) 3)) 8)} [(do (aset trace 0 (+ (* (aget trace 0) 10) 1)) 42)]] (aget trace 0))",
+      "expected": {
+        "tag": "f64",
+        "bits": "405ec00000000000"
+      }
+    },
+    {
+      "id": "quoted-metadata-expression-data",
+      "source": "(= (get (meta '^{:answer (+ 1 2)} [0]) :answer) '(+ 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "empty-list-metadata-expression-data",
+      "source": "(= (get (meta ^{:answer (+ 1 2)} ()) :answer) '(+ 1 2))",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "literal-reader-map-key-order",
+      "source": "(let [value ^{{:a 1 :b 2} 7} ^{{:b 2 :a 1} (throw 29)} []] (get (meta value) {:a 1 :b 2}))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "literal-reader-key-metadata",
+      "source": "(let [x 7 value ^{[^{:doc 1} x] 7} ^{[x] (throw 29)} []] (get (meta value) [7]))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
+    },
+    {
+      "id": "quoted-reader-discarded-construction",
+      "source": "(let [trace (array 0) prior (.-fromArray PersistentVector)] (set! (.-fromArray PersistentVector) (fn [entries no-clone] (aset trace 0 (inc (aget trace 0))) (prior entries no-clone))) (let [value (get (meta '^{:answer 7} ^{:answer [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31]} x) :answer)] (set! (.-fromArray PersistentVector) prior) (+ (* (aget trace 0) 10) value)))",
+      "expected": {
+        "tag": "f64",
+        "bits": "401c000000000000"
+      }
     }
   ]
 }

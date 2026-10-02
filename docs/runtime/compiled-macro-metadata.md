@@ -3,11 +3,23 @@
 This M3-03 prerequisite retains reader metadata as actual compiled persistent-map
 data across the native form bridge. Quoted symbols, lists, vectors and maps use
 retained `with-meta` and `-assoc` source/protocol bindings. Prefix metadata is
-normalized in the compiler: keywords mean `{key true}`, symbols/strings mean
-`{:tag value}`, and map entries merge inner prefixes first so outer prefixes win.
-Actual compiled association supplies key equality; Rust does not substitute host
-map equality. Ordered HIR temporaries avoid a deep chain of metadata-association
-expressions and preserve one evaluation per operand.
+normalized before constructing values: keywords mean `{key true}`, symbols/strings
+mean `{:tag value}`, and inner prefixes merge before outer prefixes. Reader-key
+comparison ignores spans/metadata, shares list/vector sequential data equality,
+and compares map/set data without relying on iteration order. An existing inner
+key object remains while the outer value wins. A depth64/comparison-work bound
+keeps this syntax normalization bounded. Actual compiled association supplies
+equality of evaluated runtime keys; the reader-data comparison does not replace
+that runtime operation. Ordered HIR temporaries avoid deep association chains.
+
+Ordinary vector/map/set metadata evaluates expressions in the surrounding lexical
+environment after collection entries. The `with-meta` callee is captured first.
+Reader merging removes overridden expressions before analysis or evaluation.
+Quoted literals, empty-list constants and native form transport retain metadata
+as data. Discarded data values are not constructed, so redefining a public vector
+factory cannot expose discarded metadata. Surviving metadata entries use textual
+order, following the accepted source-order decision instead of the pinned reader's
+incidental hash iteration or prefix insertion order.
 
 Ordinary runtime constants and collection literals elide the six reader-location
 keys and `cljs.analyzer/analyzed`, matching the pinned analyzer/compiler. The
@@ -35,14 +47,15 @@ unsupported and produces a language error.
 
 ## Evidence and gates
 
-Fresh pinned compiler/Node comparison matches 45 tagged observations, including
+Fresh pinned compiler/Node comparison matches 56 tagged observations, including
 actual macro-time `&form` metadata, vector equality, chunk boundaries and numeric
 remainder edge cases. Every observation also passes independently in the Runtime
-and Macro stores after forced GC. Seven metadata tests cover nested metadata,
+and Macro stores after forced GC. Nine metadata tests cover nested metadata,
 prefix precedence, reader-key elision, returned sequence metadata, malformed data,
-cycles, actual vector trie traversal, core-callee capture and ordered remainder
-arguments. The combined metadata/forms/maps/vectors/identifier focus passes 29
-tests; the ABI and bitwise focus passes 48 tests.
+cycles, actual vector trie traversal, core-callee capture, ordinary lexical/effectful
+metadata, reader-key retention, discarded constructor suppression and ordered
+remainder arguments. The combined metadata/forms/maps/vectors/identifier focus
+passes 31 tests; the ABI and bitwise focus passes 48 tests.
 
 Initial native vector equality failed because the retained RangedIterator needed
 `js-mod`; source inspection narrowed the generic language failure to this missing
@@ -59,7 +72,8 @@ significant fixes and final reviewed-head CI remain PR readiness gates.
 ## Remaining acceptance
 
 This does not establish full M3 or collection compatibility. HAMT/large metadata
-maps, transients, remaining chunk methods/public APIs, general object numeric coercion,
+maps, transients, function literal metadata, remaining chunk methods/public APIs,
+general object numeric coercion,
 ES6/printing, full reader-derived source locations, `&env`, syntax quote/splicing,
 deterministic gensyms, reproducible versioned Java-free bootstrap, complete cache
 invalidation and legacy evaluator removal remain required. Stackless scheduling,

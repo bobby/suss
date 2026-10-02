@@ -182,6 +182,22 @@ impl Analyzer<'_> {
         form: &Form,
         value: Hir,
     ) -> Result<Hir, Diagnostic> {
+        // Ordinary vector/map/set metadata is an expression, analyzed in the
+        // surrounding lexical environment (pinned analyze-wrap-meta). Reader
+        // prefix merging happens before analysis: discarded values never run.
+        let entries = merged_metadata_pairs(form, false)?;
+        if entries.is_empty() {
+            return Ok(value);
+        }
+        let metadata = self.map_literal(form, &entries)?;
+        self.data_core_call(form, "with-meta", vec![value, metadata])
+    }
+    pub(super) fn attach_constant_metadata(
+        &mut self,
+        form: &Form,
+        value: Hir,
+    ) -> Result<Hir, Diagnostic> {
+        // Empty-list literals are constants, so their metadata remains data.
         self.attach_data_metadata(form, value, 0, false)
     }
     fn attach_data_metadata(
@@ -198,53 +214,17 @@ impl Analyzer<'_> {
         let mut result = self.fresh_binding(form, empty);
         let mut bindings = vec![result.clone()];
         let mut retained = reader_data;
-        // Pinned tools.reader/read-meta merges inner metadata first, then outer.
-        // Actual source -assoc supplies key equality and last-value semantics.
-        for prefix in form.metadata.iter().rev() {
-            let entries = match &prefix.kind {
-                Kind::Map(entries) if entries.len() % 2 == 0 => entries.clone(),
-                Kind::Keyword(_) => vec![
-                    prefix.clone(),
-                    Form {
-                        span: prefix.span.clone(),
-                        metadata: vec![],
-                        kind: Kind::Bool(true),
-                    },
-                ],
-                Kind::Symbol(_) | Kind::String(_) => vec![
-                    Form {
-                        span: prefix.span.clone(),
-                        metadata: vec![],
-                        kind: Kind::Keyword(suss_reader::Keyword {
-                            namespace: None,
-                            name: "tag".into(),
-                        }),
-                    },
-                    prefix.clone(),
-                ],
-                _ => {
-                    return Err(fail(
-                        prefix.span.clone(),
-                        "Invalid metadata: expected a map, keyword, symbol or string",
-                    ));
-                }
-            };
-            for pair in entries.chunks_exact(2) {
-                // cljs.analyzer/elide-irrelevant-meta, pinned source4435-4452.
-                let irrelevant = matches!(&pair[0].kind, Kind::Keyword(key) if
-                    (key.namespace.is_none() && matches!(key.name.as_str(), "file" | "line" | "column" | "end-column" | "end-line" | "source"))
-                    || (key.namespace.as_deref() == Some("cljs.analyzer") && key.name == "analyzed"));
-                if !reader_data && irrelevant {
-                    continue;
-                }
-                let key = self.quote_data_impl(&pair[0], depth + 2, reader_data)?;
-                let item = self.quote_data_impl(&pair[1], depth + 2, reader_data)?;
-                let previous = self.local(form, result.id);
-                let next = self.data_core_call(form, "-assoc", vec![previous, key, item])?;
-                result = self.fresh_binding(form, next);
-                bindings.push(result.clone());
-                retained = true;
-            }
+        // Reader-data merging precedes construction. Actual source -assoc
+        // supplies equality of the resulting compiled runtime keys.
+        let entries = merged_metadata_pairs(form, reader_data)?;
+        for pair in entries.chunks_exact(2) {
+            let key = self.quote_data_impl(&pair[0], depth + 2, reader_data)?;
+            let item = self.quote_data_impl(&pair[1], depth + 2, reader_data)?;
+            let previous = self.local(form, result.id);
+            let next = self.data_core_call(form, "-assoc", vec![previous, key, item])?;
+            result = self.fresh_binding(form, next);
+            bindings.push(result.clone());
+            retained = true;
         }
         if !retained {
             return Ok(value);
@@ -260,6 +240,157 @@ impl Analyzer<'_> {
         };
         self.data_core_call(form, "with-meta", vec![value, result])
     }
+}
+
+// Pinned tools.reader/read-meta (reader.clj386) merges inner metadata before
+// outer metadata. Do this before constructing or evaluating any value.
+fn merged_metadata_pairs(form: &Form, reader_data: bool) -> Result<Vec<Form>, Diagnostic> {
+    let mut entries: Vec<(Form, Form, (usize, usize))> = Vec::new();
+    let mut comparisons = 1_048_576;
+    for (prefix_index, prefix) in form.metadata.iter().enumerate().rev() {
+        let pairs = metadata_pairs(prefix)?;
+        for (pair_index, pair) in pairs.chunks_exact(2).enumerate() {
+            if !reader_data && irrelevant_metadata_key(&pair[0]) {
+                continue;
+            }
+            let mut previous = None;
+            for (index, (key, _, _)) in entries.iter().enumerate() {
+                if reader_key_equal(key, &pair[0], 0, &mut comparisons)? {
+                    previous = Some(index);
+                    break;
+                }
+            }
+            let order = (prefix_index, pair_index);
+            if let Some(index) = previous {
+                // Pinned tools.reader merges inner first. Association keeps
+                // the existing key object and replaces only its value.
+                entries[index].1 = pair[1].clone();
+                entries[index].2 = order;
+            } else {
+                entries.push((pair[0].clone(), pair[1].clone(), order));
+            }
+        }
+    }
+    // Use the accepted textual order for surviving metadata entries, even
+    // when the pinned reader's hash iteration incidentally reorders them.
+    entries.sort_by_key(|(_, _, order)| *order);
+    Ok(entries
+        .into_iter()
+        .flat_map(|(key, value, _)| [key, value])
+        .collect())
+}
+
+// Original reader-data normalization. This comparison is deliberately about
+// syntax before evaluation, not equality of evaluated metadata keys. Reader
+// locations/metadata do not participate; lists/vectors share sequential data
+// equality, and maps/sets compare without an iteration-order dependency.
+fn reader_key_equal(
+    a: &Form,
+    b: &Form,
+    depth: usize,
+    work: &mut usize,
+) -> Result<bool, Diagnostic> {
+    if depth >= 64 || *work == 0 {
+        return Err(fail(
+            a.span.clone(),
+            "Metadata key normalization exceeds traversal bounds",
+        ));
+    }
+    *work -= 1;
+    Ok(match (&a.kind, &b.kind) {
+        (Kind::Nil, Kind::Nil) => true,
+        (Kind::Bool(a), Kind::Bool(b)) => a == b,
+        (Kind::Number(a), Kind::Number(b)) => a == b,
+        (Kind::String(a), Kind::String(b)) => a == b,
+        (Kind::Symbol(a), Kind::Symbol(b)) => a == b,
+        (Kind::Keyword(a), Kind::Keyword(b)) => a == b,
+        (Kind::List(a) | Kind::Vector(a), Kind::List(b) | Kind::Vector(b)) => {
+            if a.len() != b.len() {
+                return Ok(false);
+            }
+            for (a, b) in a.iter().zip(b) {
+                if !reader_key_equal(a, b, depth + 1, work)? {
+                    return Ok(false);
+                }
+            }
+            true
+        }
+        (Kind::Set(a), Kind::Set(b)) => {
+            if a.len() != b.len() {
+                return Ok(false);
+            }
+            for a in a {
+                let mut found = false;
+                for b in b {
+                    if reader_key_equal(a, b, depth + 1, work)? {
+                        found = true;
+                        break;
+                    }
+                }
+                if !found {
+                    return Ok(false);
+                }
+            }
+            true
+        }
+        (Kind::Map(a), Kind::Map(b)) => {
+            if a.len() != b.len() || a.len() % 2 != 0 {
+                return Ok(false);
+            }
+            for a in a.chunks_exact(2) {
+                let mut found = false;
+                for b in b.chunks_exact(2) {
+                    if reader_key_equal(&a[0], &b[0], depth + 1, work)? {
+                        if !reader_key_equal(&a[1], &b[1], depth + 1, work)? {
+                            return Ok(false);
+                        }
+                        found = true;
+                        break;
+                    }
+                }
+                if !found {
+                    return Ok(false);
+                }
+            }
+            true
+        }
+        _ => false,
+    })
+}
+fn irrelevant_metadata_key(form: &Form) -> bool {
+    matches!(&form.kind, Kind::Keyword(key) if
+        (key.namespace.is_none() && matches!(key.name.as_str(), "file" | "line" | "column" | "end-column" | "end-line" | "source"))
+        || (key.namespace.as_deref() == Some("cljs.analyzer") && key.name == "analyzed"))
+}
+fn metadata_pairs(prefix: &Form) -> Result<Vec<Form>, Diagnostic> {
+    Ok(match &prefix.kind {
+        Kind::Map(entries) if entries.len() % 2 == 0 => entries.clone(),
+        Kind::Keyword(_) => vec![
+            prefix.clone(),
+            Form {
+                span: prefix.span.clone(),
+                metadata: vec![],
+                kind: Kind::Bool(true),
+            },
+        ],
+        Kind::Symbol(_) | Kind::String(_) => vec![
+            Form {
+                span: prefix.span.clone(),
+                metadata: vec![],
+                kind: Kind::Keyword(suss_reader::Keyword {
+                    namespace: None,
+                    name: "tag".into(),
+                }),
+            },
+            prefix.clone(),
+        ],
+        _ => {
+            return Err(fail(
+                prefix.span.clone(),
+                "Invalid metadata: expected a map, keyword, symbol or string",
+            ));
+        }
+    })
 }
 
 // Keep the pinned literal hash independent of redefinitions of public hash cells.

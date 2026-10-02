@@ -9543,3 +9543,51 @@ stack-repair and child validation evidence. Production/tests unchanged by rebase
 Final independent Python suite:88 passed; inventory1065/reviews291partial774unassessed/
 import199/setup12 verified; sequence/bitwise/WIT/numeric/offline checks pass.
 Next run the required full workspace baseline on this frozen metadata tree.
+
+
+## PR135 independent review and significant fixes — 2026-10-01
+
+Root pre-review full97215 terminal0:922passed/0failed/17existing ignores/87groups
+through finalreader doctests; /private/tmp/suss-m3-macro-metadata-full.log. This
+baseline precedes the review fixes below and does not prove their final head.
+
+Independent review of83a92e5 found two significant metadata issues. First,
+ordinary vector/map/set metadata was quoted instead of analyzed in its lexical
+environment. Before93981 terminal101 reproduced lexical answer7 becoming a symbol,
+/private/tmp/suss-pr135-review-before.log. Pinned analyzer analyze-wrap-meta uses
+analyze-map; quoted data and empty-list constants use constant emission instead.
+Reader-prefix coalescing now happens before analysis, preserves the inner existing
+key object and the outer winning value, ignores spans/metadata in reader-data key
+equivalence, and orders surviving entries textually under the accepted variance.
+Discarded expressions never run. Runtime map construction/association still owns
+equality of evaluated runtime keys. with-meta callee-first capture is preserved.
+
+Second, quoted/native metadata constructed discarded inner values before overwriting
+them. Rebinding PersistentVector.fromArray exposed that construction. Initial
+fixture45348 terminal0 used a tiny vector's direct constructor and did not exercise
+the factory; corrected32-element fixture43825 terminal101 proves the bug,
+/private/tmp/suss-pr135-review-data-before2.log. Shared bounded reader-prefix
+coalescing now removes discarded data before construction in quote/native paths.
+Function literal metadata remains required subsequent work, explicitly documented.
+
+Reviewer exclusive heavy-slot commands/results, all sequential with shared target,
+CARGO_BUILD_JOBS=2 and no RUSTFLAGS override:
+- Focus38821 terminal0:30 tests/5groups after the ordinary-expression fix.
+- Fresh oracle9220 compile terminal0 and exact53primary observations; oracle91626
+  terminal0:55fresh primary observations plus8native metadata tests, bothStores.
+- Final focused60479 terminal0:31 tests/5groups, metadata9/forms6/maps6/vectors7/ids3;
+  /private/tmp/suss-pr135-review-final-focused.log.
+- Final scripts/test-macro-metadata-oracle.sh75480 terminal0:56fresh pinned compiler/
+  Node observations match exact expected tags/bits; native9metadata tests independently
+  execute all56cases in BOTH Runtime and Macro Stores after GC;
+  /private/tmp/suss-pr135-review-final-oracle.log. Original45cases remain unchanged.
+  Pinned bool/string js-mod warnings remain visible; no skips or expectation rewrites.
+- python3 -m unittest discover -s scripts -p 'test_*.py':88passed, terminal0,
+  /private/tmp/suss-pr135-review-python.log. Import199/setup12, inventory1065 and
+  reviews291partial774unassessed independently verified; git diff --check passes.
+
+Significant fixes must be pushed to PR135; then require a new frozen full baseline
+and successful exact-reviewed-final-head CI before readiness. No PR was merged.
+M3 issues12–15 stay open; function metadata, HAMT/transients, &env/source locations/
+syntaxquote/gensyms/bootstrap/cache/evaluator removal and stackless scheduling/
+I/O cancellation/live-GC accounting remain original required acceptance.
