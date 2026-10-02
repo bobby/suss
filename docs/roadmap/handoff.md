@@ -10101,6 +10101,47 @@ and CI. Neither PR is merged or ready without those checks. Original M3 criteria
 remain open; next unblocked work is omitted-argument undefined storage semantics,
 transient lifecycle enforcement and the rich compiled macro environment.
 
+
+Transient hash-map lookup continuation (partial #14): isolated worktree
+/private/tmp/suss-m3-hamt-lookup, branch portable/m3-hamt-lookup, parent PR141
+8adf32d. Initial test probes exposed test API mistakes (49635 and before4.log compile failures
+are not compatibility failures) and unavailable public hash-map (20930).
+The permanent cases construct actual retained PersistentHashMap and use assoc;
+no constructor fixture or substitute algorithm. First source execution30949
+failed a test's number-layout assumption; corrected probe16440 terminal0 proves
+omitted not-found already preserves ABI2 undefined. No new compiler adapter added.
+Initial primary70681 failed missing generated base corpus; after oracle_cases.py,
+fresh pinned run69487 terminal0 produced12 active observations, captured exactly
+and strict comparison passes. The corpus checks nil?/identical? distinctions,
+empty and nil-key branches, explicit defaults, IFn and persistent lookup.
+
+Lifecycle BEFORE82160 terminal101: active undefined test passed, lookup after
+persistent! failed the accepted-design assertion. Both complete retained lookup
+methods now wrap existing bodies in the edit-token check; all active branches,
+omitted argument and other methods remain. This is an explicit variance from
+pinned TransientHashMap lookup, aligned with design section4. AFTER5293 terminal0
+passed2 initial regressions. Strengthened focused15480 terminal0 passed25/0/0
+(3 lookup,4 sequence,7 map,6 helpers,5 source apply), including both Stores,
+forcedGC/captured closure, all key/default branches, argument effect order and
+persistent-map recovery. Python68267 terminal0:88 tests,249 imports,345 partial
+reviews/720 unassessed; fresh primary12 strict comparisons pass. Commands use
+CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2
+cargo test -p suss-cli --locked with the five named suites -- --test-threads=2.
+Required full workspace, independent review and exactfinal-headCI remain pending.
+See docs/runtime/compiled-macro-hamt-lookup.md. No issue or M3 closure. Remaining
+iterator/reify, rich &env/locations/syntaxquote/bootstrap/cache and real session
+scheduler/cancellation requirements remain the next unblocked work.
+
+
+PR #142 independent review found the documented oracle runner selected the
+nonexistent Cargo suite `compiled_macro_hamt_lookups`. The reviewer corrected it
+to `compiled_macro_hamt_lookup`, verified the real target through locked Cargo
+metadata and checked shell syntax without starting a concurrent native build.
+Independent Python verification passed88 tests; generated import check verified249
+files; review overlay verified345 partial/720 unassessed; the12 pinned lookup
+observations matched exactly. Source/semantic tests were unchanged. Full workspace
+and exact final-head CI remain required; no M3 or issue acceptance claim.
+
 PR140 independent review found that the CI job's 60-minute budget, based on an
 older 34m38s baseline, now cancels the expanded required workspace command before
 completion. Exact c5f85eb run37012087148 was canceled at60m18s; its complete
