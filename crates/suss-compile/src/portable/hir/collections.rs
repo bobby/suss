@@ -85,16 +85,25 @@ impl Analyzer<'_> {
         form: &Form,
         items: &[Form],
     ) -> Result<Hir, Diagnostic> {
-        if items.is_empty() {
+        let entries = items
+            .iter()
+            .map(|item| self.form(item))
+            .collect::<Result<Vec<_>, _>>()?;
+        self.vector_values(form, entries)
+    }
+
+    pub(super) fn vector_values(
+        &mut self,
+        form: &Form,
+        entries: Vec<Hir>,
+    ) -> Result<Hir, Diagnostic> {
+        if entries.is_empty() {
             return self.collection_property(form, "PersistentVector", "EMPTY");
         }
         let constructor = self.collection_class(form, "PersistentVector")?;
-        let mut entries = Vec::new();
-        for item in items {
-            entries.push(self.form(item)?);
-        }
+        let count = entries.len();
         let array = self.collection_array(form, entries);
-        if items.len() >= 32 {
+        if count >= 32 {
             let no_clone = self.literal_form(form, Literal::Bool(true));
             return self.collection_method(
                 form,
@@ -104,7 +113,7 @@ impl Analyzer<'_> {
             );
         }
         let nil = self.literal_form(form, Literal::Nil);
-        let count = self.literal_form(form, Literal::Number(items.len() as f64));
+        let count = self.literal_form(form, Literal::Number(count as f64));
         let shift = self.literal_form(form, Literal::Number(5.0));
         let root = self.collection_property(form, "PersistentVector", "EMPTY_NODE")?;
         Ok(self.nominal(

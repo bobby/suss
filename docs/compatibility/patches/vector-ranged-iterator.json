@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "7dad60d425d3b2066a2fe72b7ca5d9b5bc0474f556107d179c5dea2d203aac49",
+  "replacement": "(def ranged-iterator\n  (fn [v start end]\n(let [i start]\n    (RangedIterator. i (- i (js-mod i 32))\n      (when (< start (count v))\n        (unchecked-array-for v i))\n      v start end))))",
+  "rationale": "Preserve the complete pinned vector algorithm through explicit defn bootstrap. Private Var visibility and complete compiled macro bootstrap remain unfinished."
+}

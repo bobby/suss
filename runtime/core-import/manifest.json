@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "ffce6d4eca504ba4b6ed169ad00dd8dd0f885516d98e3f929ba2772a7b35b09d",
-  "reviews-sha256": "3925c743c70f7f8a5b50331f353f1299b9493cb218befae1e727c2d87a8206d2",
+  "recipe-sha256": "a4249c9b45655b0a6fad8d27dc2bf8fdb7a118580dcdd8fcdf068ec64d83d062",
+  "reviews-sha256": "763b52e09c45fa9ccfe937e65365e41518d138cd000e31092a592ba138f6c3a5",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -4160,16 +4160,842 @@
         "crates/suss-cli/tests/portable_quoted_identifiers.rs",
         "docs/runtime/quoted-identifiers.md"
       ]
+    },
+    {
+      "id": "runtime:ILookup:668",
+      "name": "ILookup",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 668,
+      "end-line": 672,
+      "byte-start": 18692,
+      "byte-end": 18951,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "275ee54cd85042a469f25e31bf748dab6a706fc199209cb15f196dc869d7f240",
+      "extracted": "extracted/0128.cljs",
+      "extracted-sha256": "fb025ae6f5cd118f13a2bec363a50939a60d2ef0cc12c9550253faf2c80aab84",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "275ee54cd85042a469f25e31bf748dab6a706fc199209cb15f196dc869d7f240",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained nominal protocol dispatch"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:IAssociative:674",
+      "name": "IAssociative",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 674,
+      "end-line": 681,
+      "byte-start": 18953,
+      "byte-end": 19258,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "3f6870b2db2e5474e432dfe1cf2f84d158ac218c60d8231a35a3049d7add2714",
+      "extracted": "extracted/0129.cljs",
+      "extracted-sha256": "13840362bda02064e7d5f6439719228b330da62f6798d320ecd411ef4f7e6c86",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "3f6870b2db2e5474e432dfe1cf2f84d158ac218c60d8231a35a3049d7add2714",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector source protocols, algorithms and nominal storage; declared pending helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:IFind:683",
+      "name": "IFind",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 683,
+      "end-line": 685,
+      "byte-start": 19260,
+      "byte-end": 19418,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c895c1930ab96a50b9bef061e299930168ac5901cefd417aaab752e67a23f123",
+      "extracted": "extracted/0130.cljs",
+      "extracted-sha256": "bc54fe095044b7929cf4a901a878c75b9c62769e690303d6fbaa64d75f6336f7",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "c895c1930ab96a50b9bef061e299930168ac5901cefd417aaab752e67a23f123",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector source protocols, algorithms and nominal storage; declared pending helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:IVector:715",
+      "name": "IVector",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 715,
+      "end-line": 718,
+      "byte-start": 20384,
+      "byte-end": 20560,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "11ba143537d3bff1a6301f2dc615f23821727698d0689a19fcc15629ee30b674",
+      "extracted": "extracted/0131.cljs",
+      "extracted-sha256": "7381b0ca9192ed024dc2e2ab36adb035c02668a0a6bd05a8d51bc78b514b2c5d",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "11ba143537d3bff1a6301f2dc615f23821727698d0689a19fcc15629ee30b674",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector source protocols, algorithms and nominal storage; declared pending helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:IKVReduce:746",
+      "name": "IKVReduce",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 746,
+      "end-line": 751,
+      "byte-start": 21445,
+      "byte-end": 21743,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "49b36177303c37298dc202935b553eb937fa21113e94edc3316c5bcd6b665288",
+      "extracted": "extracted/0132.cljs",
+      "extracted-sha256": "1eb7e4be9b9a80cef6656976209100fe642f109690ce71fbfb6d01ea7f68bb87",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "49b36177303c37298dc202935b553eb937fa21113e94edc3316c5bcd6b665288",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector source protocols, algorithms and nominal storage; declared pending helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:IEditableCollection:830",
+      "name": "IEditableCollection",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 830,
+      "end-line": 833,
+      "byte-start": 24752,
+      "byte-end": 24957,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "224e74ae2594ed199e6d75284f2c50578243b4721ab906c4e1050ff88025857e",
+      "extracted": "extracted/0133.cljs",
+      "extracted-sha256": "fdccafde53de003c29cc5eb3178d6de9dd3a7b655c0f09db46997cced4fca9a7",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "224e74ae2594ed199e6d75284f2c50578243b4721ab906c4e1050ff88025857e",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector source protocols, algorithms and nominal storage; declared pending helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:APersistentVector:5710",
+      "name": "APersistentVector",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5710,
+      "end-line": 5711,
+      "byte-start": 156064,
+      "byte-end": 156115,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "0927a28062024772a4968c5708d8d87bf5030473fc84bb7bbd80ca5ac794ab1e",
+      "extracted": "extracted/0134.cljs",
+      "extracted-sha256": "01893847e9fc4cd75d887b6c79706fc23fca1bb6b48754fed9768084093f5fb2",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "0927a28062024772a4968c5708d8d87bf5030473fc84bb7bbd80ca5ac794ab1e",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector source protocols, algorithms and nominal storage; declared pending helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:vector-index-out-of-bounds:5621",
+      "name": "vector-index-out-of-bounds",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5621,
+      "end-line": 5622,
+      "byte-start": 153245,
+      "byte-end": 153357,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "84de58e5f430f7610e2d90f8009b1f948d396b1300aca911b327036ee47f3970",
+      "extracted": "extracted/0135.cljs",
+      "extracted-sha256": "d3bf28b5b65754f05b77bcfa8c0fd1cfaaacc74e4f8af703f43f0250429f7e75",
+      "patch": "docs/compatibility/patches/vector-vector-index-out-of-bounds.json",
+      "patch-sha256": "00221dd443270ba56c0e7b09ba07a052fa2775cff527701021f41001b2a83a03",
+      "adapted-form-sha256": "2f11b84856cad03c4aebd7ec6d07e969e005e3e4b0a1e3c4e86ee348db86aec5",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector source protocols, algorithms and nominal storage; declared pending helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:first-array-for-longvec:5624",
+      "name": "first-array-for-longvec",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5624,
+      "end-line": 5630,
+      "byte-start": 153359,
+      "byte-end": 153569,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "c1edb57cf0c05cbdb3d52a608bed7a60a89671aa867a05dcac4734ae498bb8be",
+      "extracted": "extracted/0136.cljs",
+      "extracted-sha256": "7ae027681133df395df8cbe0c1cf0d0bdd656dd10d30925eba27dfd2c6c6a604",
+      "patch": "docs/compatibility/patches/vector-first-array-for-longvec.json",
+      "patch-sha256": "4fe0a2601a53283185a3477a787c62c86e9f6cfcec519f4d7a92ed88346539b3",
+      "adapted-form-sha256": "1279066f1b3841fca2154ad1065b9394edb2185952642226f83198088d497dc8",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector source protocols, algorithms and nominal storage; declared pending helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:unchecked-array-for:5632",
+      "name": "unchecked-array-for",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5632,
+      "end-line": 5641,
+      "byte-start": 153571,
+      "byte-end": 153947,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "fa6f9192c8efbbde4d2fbd668fd40b9b61c54f544f13af457f0e0efdabd23477",
+      "extracted": "extracted/0137.cljs",
+      "extracted-sha256": "9e49467b22d5e67384fc7225e0a4beeb2968ab9d20f4376c9ac0224c899bde35",
+      "patch": "docs/compatibility/patches/vector-unchecked-array-for.json",
+      "patch-sha256": "47c89b1c1cf511d9f57a94b66290da7f482256a74dab58887e707612d9274d86",
+      "adapted-form-sha256": "9ed6b3bb9266ce9dfcbaa51cc5475b9d1369c225b6f1792b6df22579bd005795",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector source protocols, algorithms and nominal storage; declared pending helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:array-for:5643",
+      "name": "array-for",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5643,
+      "end-line": 5646,
+      "byte-start": 153949,
+      "byte-end": 154089,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "a22b7bbd7ff4430cdbe4bdd917a42ff358d56e3ecec5ee9de8e6e8e6bfee3e89",
+      "extracted": "extracted/0138.cljs",
+      "extracted-sha256": "40fa0e3d80aecd46d106eb1de9c7c51ee828f2cccb718b85b395d7850f7441fc",
+      "patch": "docs/compatibility/patches/vector-array-for.json",
+      "patch-sha256": "85356045f5e6c52e3d3fb1f31c8b7cc91ed30afd728c97f108a61c357b48f950",
+      "adapted-form-sha256": "8b1cebc15d6491733bebbcd741c6e686fa0d52f04181012d04401d81eb336dbb",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector source protocols, algorithms and nominal storage; declared pending helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:RangedIterator:5672",
+      "name": "RangedIterator",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5672,
+      "end-line": 5682,
+      "byte-start": 154981,
+      "byte-end": 155299,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5999100e5c119d3ea83a85d5b8ba63fde67dbbc8ecaaecc1f809bb2ec3bf73ce",
+      "extracted": "extracted/0139.cljs",
+      "extracted-sha256": "fd99794a44cbd0fb2bcc3de031f5892c8a6b7f3f17ce80e0d9637c136ac69446",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "5999100e5c119d3ea83a85d5b8ba63fde67dbbc8ecaaecc1f809bb2ec3bf73ce",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector source protocols, algorithms and nominal storage; declared pending helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:ranged-iterator:5684",
+      "name": "ranged-iterator",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5684,
+      "end-line": 5689,
+      "byte-start": 155301,
+      "byte-end": 155484,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "7dad60d425d3b2066a2fe72b7ca5d9b5bc0474f556107d179c5dea2d203aac49",
+      "extracted": "extracted/0140.cljs",
+      "extracted-sha256": "a0aeffaa06558744866f9505a84aee7e91b84261429ffa5dc4320ea1cc9d2031",
+      "patch": "docs/compatibility/patches/vector-ranged-iterator.json",
+      "patch-sha256": "43c83bcce8703b11cfeb168f98a3d1f44f76baecc657bd2f2afa62a2041343b0",
+      "adapted-form-sha256": "8902f549edd755627e3954412eb20e3237c5874ae5a1df58c6c6f92d530877ad",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector source protocols, algorithms and nominal storage; declared pending helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:pv-reduce:5691",
+      "name": "pv-reduce",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5691,
+      "end-line": 5705,
+      "byte-start": 155486,
+      "byte-end": 155949,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "9063a0706d9748c73ec75e7d2d31e1e4aae238f01ef16ef2db387a7a7f87fdc9",
+      "extracted": "extracted/0141.cljs",
+      "extracted-sha256": "7f246fb35404bebb6df575ea19d2c41478ffb427a78c0cf46d01c8c430c45ec9",
+      "patch": "docs/compatibility/patches/vector-pv-reduce.json",
+      "patch-sha256": "f7df5e3528e98e4f79a057f73ea351793c0c67bbf3362201fa53835631a49204",
+      "adapted-form-sha256": "83e2e0cbcb57d091aeaf0166370f8d152276e2354bb2116736ceedc6ada872a9",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector source protocols, algorithms and nominal storage; declared pending helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:PersistentVector:5713",
+      "name": "PersistentVector",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5713,
+      "end-line": 5915,
+      "byte-start": 156117,
+      "byte-end": 162324,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "9208b736d82fa1c0a8649147cc1e30cea5d3fad6d733e805a750744242d4a205",
+      "extracted": "extracted/0142.cljs",
+      "extracted-sha256": "a084c97574a4e1d22d23973be4f9ecb9dc9850e264092917cba5d4fbab44d5e7",
+      "patch": "docs/compatibility/patches/vector-persistent-vector.json",
+      "patch-sha256": "cb7cf46e9ef3157c180f19a64d656d8d360beeede66b66cc5b76e83364672978",
+      "adapted-form-sha256": "eb9995341a11890ef9a8e6bd4b81b51d1c77c622b706d7a4e689d3d409735419",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "retained vector source protocols, algorithms and nominal storage; declared pending helpers"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:ITransientCollection:835",
+      "name": "ITransientCollection",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 835,
+      "end-line": 840,
+      "byte-start": 24959,
+      "byte-end": 25239,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "8da0a1d06ad99fd6f778f1eb5ab53be6a50cb7a9927f286e29fa4c02fcbb4c5d",
+      "extracted": "extracted/0143.cljs",
+      "extracted-sha256": "fd8cf77a3bf848d2b9143e307cfd98eff5df5f1eead50ca2e4ab1b9a21404229",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "8da0a1d06ad99fd6f778f1eb5ab53be6a50cb7a9927f286e29fa4c02fcbb4c5d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical VectorNode/PersistentVector and source arrays",
+        "retained transient edit-token algorithms/protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:ITransientAssociative:842",
+      "name": "ITransientAssociative",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 842,
+      "end-line": 846,
+      "byte-start": 25241,
+      "byte-end": 25472,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "4a125d21134326f4d165048296682b8e94d9b99fb5dc3ee7f6bf9170f1a05d60",
+      "extracted": "extracted/0144.cljs",
+      "extracted-sha256": "df65369d411cc11d316a87d892bc6328fa80321eff1c78d94b34cca335212de2",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "4a125d21134326f4d165048296682b8e94d9b99fb5dc3ee7f6bf9170f1a05d60",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical VectorNode/PersistentVector and source arrays",
+        "retained transient edit-token algorithms/protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:ITransientVector:853",
+      "name": "ITransientVector",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 853,
+      "end-line": 858,
+      "byte-start": 25684,
+      "byte-end": 25953,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "1664c2f3b4eabe68c2ab11e4f0c05ec1d2e343421f489c3551a2fd3b944e704d",
+      "extracted": "extracted/0145.cljs",
+      "extracted-sha256": "c99d562fa4772c2b4db13594efc68fcee851a7fd7670cc06e747e2e04f64b29e",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "1664c2f3b4eabe68c2ab11e4f0c05ec1d2e343421f489c3551a2fd3b944e704d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical VectorNode/PersistentVector and source arrays",
+        "retained transient edit-token algorithms/protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:array-copy:2303",
+      "name": "array-copy",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2303,
+      "end-line": 2309,
+      "byte-start": 62721,
+      "byte-end": 62913,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b6c76f02e6732573f4a0918c4d544fcaec8ebb45bc783d85d5eea088122d6ff2",
+      "extracted": "extracted/0146.cljs",
+      "extracted-sha256": "886dd5d2a3ceaf1a344304406de022aca870e7e449590adbae796a385121d35d",
+      "patch": "docs/compatibility/patches/vector-array-copy.json",
+      "patch-sha256": "56f4302662041cdc94936bd1ce2e3f4c3f84c4ba2f71ef1e596ec12f8d2868d3",
+      "adapted-form-sha256": "150bcccc1f080c3c8e934e55c6315e68a22e25d8ea50e9c07e0d847cba9d7d21",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical VectorNode/PersistentVector and source arrays",
+        "retained transient edit-token algorithms/protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:tv-ensure-editable:6242",
+      "name": "tv-ensure-editable",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6242,
+      "end-line": 6245,
+      "byte-start": 170674,
+      "byte-end": 170805,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "9b87be463c1c6706df6d55ae32607118bb7581a32627483821676b916322170f",
+      "extracted": "extracted/0147.cljs",
+      "extracted-sha256": "039b069d1072c1d861176f0f29d75be949575daab4ab16133a0e3bf426880911",
+      "patch": "docs/compatibility/patches/vector-tv-ensure-editable.json",
+      "patch-sha256": "7885368276c04bafcd92a728c9e7896c625439465dc557f4207ed9bec65fa826",
+      "adapted-form-sha256": "54e45c4a0f763eeca300cd9a8fdcfb99c904ba4e158af25f70b7e2cb7c9838ff",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical VectorNode/PersistentVector and source arrays",
+        "retained transient edit-token algorithms/protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:tv-editable-root:6247",
+      "name": "tv-editable-root",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6247,
+      "end-line": 6248,
+      "byte-start": 170807,
+      "byte-end": 170885,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "3f417959b742f08307129a1f4339d0a2294a579229f1596e81cf477d6e90edc6",
+      "extracted": "extracted/0148.cljs",
+      "extracted-sha256": "ca35acd7167feb0492c36fdc304961ee98dee21cdba8d3878d30ba453fe52751",
+      "patch": "docs/compatibility/patches/vector-tv-editable-root.json",
+      "patch-sha256": "30934e575ebfd50308720fd362b5e06e6252441e78e0381a13e5ac07e6b0ad6d",
+      "adapted-form-sha256": "cb3457c714e44a5bdf7ed218a08b15ca4c8152ce0a1d8330e45a0032c8c19134",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical VectorNode/PersistentVector and source arrays",
+        "retained transient edit-token algorithms/protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:tv-editable-tail:6250",
+      "name": "tv-editable-tail",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6250,
+      "end-line": 6253,
+      "byte-start": 170887,
+      "byte-end": 170995,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "3513c53ac454dc31f9ee2c958344dcbc43f46e0226181f9db5b5528d305ccd68",
+      "extracted": "extracted/0149.cljs",
+      "extracted-sha256": "c5d52f2d31365d67b110e0250b083cf68cfd9fdd1e5afab0cf2d2c5b5039a651",
+      "patch": "docs/compatibility/patches/vector-tv-editable-tail.json",
+      "patch-sha256": "ab890ca992896f7fbb37e6da3670164fb6140608960246e26ca2f7a6baadc8cf",
+      "adapted-form-sha256": "8cbb7859da6daa97188be70fac6b8dc88b1d9becdab772394b21ffb5f4182103",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical VectorNode/PersistentVector and source arrays",
+        "retained transient edit-token algorithms/protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:tv-push-tail:6255",
+      "name": "tv-push-tail",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6255,
+      "end-line": 6265,
+      "byte-start": 170997,
+      "byte-end": 171507,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "1a6a840de86c8d89ace73f0a541392d5ae4a367f1e043fb600b23173dc43f838",
+      "extracted": "extracted/0150.cljs",
+      "extracted-sha256": "d77aca23739cc0dd8179609b0d768078f20daed15d08fdb8db3aa3347d1e9d2b",
+      "patch": "docs/compatibility/patches/vector-tv-push-tail.json",
+      "patch-sha256": "96d19cf19456c9e7280d5a5351b5b37e99523841ec130254b07cd910ff78b773",
+      "adapted-form-sha256": "e005ba65127ae082729bdd4770261887c6c188d7ace85e83b4c83238670c1b52",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical VectorNode/PersistentVector and source arrays",
+        "retained transient edit-token algorithms/protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:tv-pop-tail:6267",
+      "name": "tv-pop-tail",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6267,
+      "end-line": 6279,
+      "byte-start": 171509,
+      "byte-end": 172090,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "2f1a50a26e919af3b1132735678cab31877750820b19185163d5d4025152a1a0",
+      "extracted": "extracted/0151.cljs",
+      "extracted-sha256": "c10f7bf5cbd35f72aa09d4adc59e26c61cf907d66a50a6162bf9336dfc6c05ce",
+      "patch": "docs/compatibility/patches/vector-tv-pop-tail.json",
+      "patch-sha256": "1cf4aa73ebd8678d988dca71923d6f13a86449d60014332ec132940920ba5ac3",
+      "adapted-form-sha256": "992c2a1d080b35134325030f3063c7eea96dd3acefc51150e4e5907d4dcdd8af",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical VectorNode/PersistentVector and source arrays",
+        "retained transient edit-token algorithms/protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:unchecked-editable-array-for:6281",
+      "name": "unchecked-editable-array-for",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6281,
+      "end-line": 6295,
+      "byte-start": 172092,
+      "byte-end": 172609,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b0bc16cb2beb1816daabe909ecd991cfc4092af601f86190331c0ced2c6acb86",
+      "extracted": "extracted/0152.cljs",
+      "extracted-sha256": "d3f7bb72ccdceae80374b5360dc632a3e914e5f28ff45b224f1c8a53d6233f75",
+      "patch": "docs/compatibility/patches/vector-unchecked-editable-array-for.json",
+      "patch-sha256": "3837c95a53cf7d6f7ae0bff02711ef8662163391548a86054b749b1a1f20ae58",
+      "adapted-form-sha256": "9e7fa0c5322fa17ce6394c9636491151ec6c9b632fa7f35b247e5904efb56810",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical VectorNode/PersistentVector and source arrays",
+        "retained transient edit-token algorithms/protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:TransientVector:6297",
+      "name": "TransientVector",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6297,
+      "end-line": 6428,
+      "byte-start": 172611,
+      "byte-end": 177284,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "989369e792d663ee0a9728119b5ecfbb7a66af858059b6cf61fc9d887db05e6e",
+      "extracted": "extracted/0153.cljs",
+      "extracted-sha256": "afcbf02f41dc0a87b23f990772ad6f50e1b8a79cf88228f8e88013f8d2b0c06d",
+      "patch": "docs/compatibility/patches/vector-TransientVector.json",
+      "patch-sha256": "7659b8615ce5bcb95be96a953dfa9f2c619dffbe6fa28e06a7bc5224c864e891",
+      "adapted-form-sha256": "040323cadc06f5c47155554f1bdeccb6db7cb8380cc9161ec65b4556aebaaf4e",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical VectorNode/PersistentVector and source arrays",
+        "retained transient edit-token algorithms/protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:transient:3987",
+      "name": "transient",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3987,
+      "end-line": 3990,
+      "byte-start": 104387,
+      "byte-end": 104509,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "111bf8f6ebe0214f2d1c8fde4506aa25469f48d91be96a1aac5a3a0091c2c0f3",
+      "extracted": "extracted/0154.cljs",
+      "extracted-sha256": "92cb3a3ca3850fab4335c2db871bcf635fe1c03a9a8dd1e6038e63a14d8ac249",
+      "patch": "docs/compatibility/patches/vector-transient.json",
+      "patch-sha256": "788d181057694f443f82d62a648201bba7c15a0b78e6027e9da8158a70a3b2a0",
+      "adapted-form-sha256": "8cae5b7f5f7f84c97b4cb364e55e7fadd8c02844335495d74f1c6b3e76fd764b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical VectorNode/PersistentVector and source arrays",
+        "retained transient edit-token algorithms/protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:persistent!:3992",
+      "name": "persistent!",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3992,
+      "end-line": 3997,
+      "byte-start": 104511,
+      "byte-end": 104746,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b7dcbf3c487f81912a7f7ec04f2822a09fd1499b4a072a500b477868742ad2a4",
+      "extracted": "extracted/0155.cljs",
+      "extracted-sha256": "23c0adf766926e8a6b6747c39c0335c2fea64f2e40e46a2912c5b40ba19562a0",
+      "patch": "docs/compatibility/patches/vector-persistent-bang.json",
+      "patch-sha256": "06fb6d94272b816391531de5bb4ae09e9efa36fb463629fd2a28decdfe41d04d",
+      "adapted-form-sha256": "cf1a74c9c9cfa5ff048ace71d783cc12b24fffcb8bb33c3fa2f7be7e3dbed192",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical VectorNode/PersistentVector and source arrays",
+        "retained transient edit-token algorithms/protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
+    },
+    {
+      "id": "runtime:conj!:3999",
+      "name": "conj!",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3999,
+      "end-line": 4010,
+      "byte-start": 104748,
+      "byte-end": 105121,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "7268fae1f200a3f5ce62cd65efeede08eaa95fdc39f663b6ad5a182c23dd713b",
+      "extracted": "extracted/0156.cljs",
+      "extracted-sha256": "50992891ff5bb617a92b1475cd7c21c3f7e3e4957e0ac8fd577095e9c7f91156",
+      "patch": "docs/compatibility/patches/vector-conj-bang.json",
+      "patch-sha256": "da185f4f042a8443e65add839ce5008e8baf01222ecbf52f274d8df6956c7551",
+      "adapted-form-sha256": "6699d3ffdf44dcb8aa52c1614038dd125b93274b68c1e086e5360301205361ee",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "canonical VectorNode/PersistentVector and source arrays",
+        "retained transient edit-token algorithms/protocols"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_vectors.rs"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "b21c596ba1be43ff7140b8630756ce87f9a32d18cf28eb70cbe18774dafb84d4"
+      "sha256": "3d1a2fb81efe06eacfe946f3c838ddb5afd6686829ea58b1f3f65caff613fab3"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "ce6cf05e1a2aa758586908111c34f5580e86c8c1bd51c0aa83e6bb30e451f281"
+      "sha256": "9a366ddbbbcbc324862e06bdab694e5fed62e4e80a2fd7fa8322199c93507f77"
     }
   },
   "files": {
@@ -4303,6 +5129,35 @@
     "extracted/0125.cljs": "6f4100230d825fdf945260b801bb0efe52143b2832688771933a74cc3ac4cb04",
     "extracted/0126.cljs": "f40f297285cfba16d5b8bbfa2e2a42bfc48f9a94d21a99c1729d6718c362f91e",
     "extracted/0127.cljs": "577b46518c0dde714bca023a11ac69e06fd95cde37854838778650c3e449236e",
-    "suss/core.sus": "44a9aa98eee294142d1bf95be5084feb0a01b1e0d2108ce8ada1ed167121efcc"
+    "extracted/0128.cljs": "fb025ae6f5cd118f13a2bec363a50939a60d2ef0cc12c9550253faf2c80aab84",
+    "extracted/0129.cljs": "13840362bda02064e7d5f6439719228b330da62f6798d320ecd411ef4f7e6c86",
+    "extracted/0130.cljs": "bc54fe095044b7929cf4a901a878c75b9c62769e690303d6fbaa64d75f6336f7",
+    "extracted/0131.cljs": "7381b0ca9192ed024dc2e2ab36adb035c02668a0a6bd05a8d51bc78b514b2c5d",
+    "extracted/0132.cljs": "1eb7e4be9b9a80cef6656976209100fe642f109690ce71fbfb6d01ea7f68bb87",
+    "extracted/0133.cljs": "fdccafde53de003c29cc5eb3178d6de9dd3a7b655c0f09db46997cced4fca9a7",
+    "extracted/0134.cljs": "01893847e9fc4cd75d887b6c79706fc23fca1bb6b48754fed9768084093f5fb2",
+    "extracted/0135.cljs": "d3bf28b5b65754f05b77bcfa8c0fd1cfaaacc74e4f8af703f43f0250429f7e75",
+    "extracted/0136.cljs": "7ae027681133df395df8cbe0c1cf0d0bdd656dd10d30925eba27dfd2c6c6a604",
+    "extracted/0137.cljs": "9e49467b22d5e67384fc7225e0a4beeb2968ab9d20f4376c9ac0224c899bde35",
+    "extracted/0138.cljs": "40fa0e3d80aecd46d106eb1de9c7c51ee828f2cccb718b85b395d7850f7441fc",
+    "extracted/0139.cljs": "fd99794a44cbd0fb2bcc3de031f5892c8a6b7f3f17ce80e0d9637c136ac69446",
+    "extracted/0140.cljs": "a0aeffaa06558744866f9505a84aee7e91b84261429ffa5dc4320ea1cc9d2031",
+    "extracted/0141.cljs": "7f246fb35404bebb6df575ea19d2c41478ffb427a78c0cf46d01c8c430c45ec9",
+    "extracted/0142.cljs": "a084c97574a4e1d22d23973be4f9ecb9dc9850e264092917cba5d4fbab44d5e7",
+    "extracted/0143.cljs": "fd8cf77a3bf848d2b9143e307cfd98eff5df5f1eead50ca2e4ab1b9a21404229",
+    "extracted/0144.cljs": "df65369d411cc11d316a87d892bc6328fa80321eff1c78d94b34cca335212de2",
+    "extracted/0145.cljs": "c99d562fa4772c2b4db13594efc68fcee851a7fd7670cc06e747e2e04f64b29e",
+    "extracted/0146.cljs": "886dd5d2a3ceaf1a344304406de022aca870e7e449590adbae796a385121d35d",
+    "extracted/0147.cljs": "039b069d1072c1d861176f0f29d75be949575daab4ab16133a0e3bf426880911",
+    "extracted/0148.cljs": "ca35acd7167feb0492c36fdc304961ee98dee21cdba8d3878d30ba453fe52751",
+    "extracted/0149.cljs": "c5d52f2d31365d67b110e0250b083cf68cfd9fdd1e5afab0cf2d2c5b5039a651",
+    "extracted/0150.cljs": "d77aca23739cc0dd8179609b0d768078f20daed15d08fdb8db3aa3347d1e9d2b",
+    "extracted/0151.cljs": "c10f7bf5cbd35f72aa09d4adc59e26c61cf907d66a50a6162bf9336dfc6c05ce",
+    "extracted/0152.cljs": "d3f7bb72ccdceae80374b5360dc632a3e914e5f28ff45b224f1c8a53d6233f75",
+    "extracted/0153.cljs": "afcbf02f41dc0a87b23f990772ad6f50e1b8a79cf88228f8e88013f8d2b0c06d",
+    "extracted/0154.cljs": "92cb3a3ca3850fab4335c2db871bcf635fe1c03a9a8dd1e6038e63a14d8ac249",
+    "extracted/0155.cljs": "23c0adf766926e8a6b6747c39c0335c2fea64f2e40e46a2912c5b40ba19562a0",
+    "extracted/0156.cljs": "50992891ff5bb617a92b1475cd7c21c3f7e3e4957e0ac8fd577095e9c7f91156",
+    "suss/core.sus": "d24a51ca2a59a941a1bcc09956e69697e00d9a699377930477f20e4dded8e96b"
   }
 }

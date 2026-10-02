@@ -48,10 +48,15 @@ def verify_payload(record, source, loader):
             # Standalone adaptations preserve the form head and target; named
             # declarations are instead checked by core_import.adapt_form.
             originals = Scanner(text).all()
+            original_target = [text[x.start:x.end] for x in originals[0].children[:2]]
+            # Exact pinned compiler property munging for the canonical vector root.
+            # No other target rewriting is permitted by the loader verifier.
+            if original_target == ['set!', '(.-EMPTY-NODE PersistentVector)']:
+                original_target[1] = '(.-EMPTY_NODE PersistentVector)'
             if (len(forms) != 1 or forms[0].kind != 'list'
                     or len(forms[0].children) < 2
                     or [replacement[x.start:x.end] for x in forms[0].children[:2]]
-                    != [text[x.start:x.end] for x in originals[0].children[:2]]):
+                    != original_target):
                 raise ValueError('sequence setup patch must preserve one complete form and target')
             text = replacement
         expected.append(text)

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "fa6f9192c8efbbde4d2fbd668fd40b9b61c54f544f13af457f0e0efdabd23477",
+  "replacement": "(def unchecked-array-for\n  (fn [pv i]\n(if (>= i (tail-off pv))\n      (.-tail pv)\n      (loop [node (.-root pv)\n             level (.-shift pv)]\n        (if (pos? level)\n          (recur (pv-aget node (bit-and (bit-shift-right-zero-fill i level) 0x01f))\n                 (- level 5))\n          (.-arr node))))))",
+  "rationale": "Preserve the complete pinned vector algorithm through explicit defn bootstrap. Private Var visibility and complete compiled macro bootstrap remain unfinished."
+}

@@ -16,3 +16,7 @@
 (def date-from-ms
   (fn [milliseconds]
     (BootstrapDate. (suss.bootstrap/f64-time-clip milliseconds))))
+
+(declare PersistentVector MapEntry TransientVector tv-editable-root tv-editable-tail chunked-seq integer? js-mod)
+
+(declare array-copy tv-ensure-editable tv-push-tail tv-pop-tail unchecked-editable-array-for transient persistent! conj!)

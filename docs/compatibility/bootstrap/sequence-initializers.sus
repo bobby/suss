@@ -27,3 +27,21 @@
     (if (identical? o (root-obj))
       0
       (suss.bootstrap/identity-uid o))))
+
+(set! (.-EMPTY_NODE PersistentVector) (VectorNode. nil (make-array 32)))
+
+(set! (.-EMPTY PersistentVector)
+  (PersistentVector. nil 0 5 (.-EMPTY_NODE PersistentVector) (array) empty-ordered-hash))
+
+(set! (.-fromArray PersistentVector)
+  (fn [xs ^boolean no-clone]
+    (let [l (alength xs)
+          xs (if no-clone xs (aclone xs))]
+      (if (< l 32)
+        (PersistentVector. nil l 5 (.-EMPTY_NODE PersistentVector) xs nil)
+        (let [node (.slice xs 0 32)
+              v (PersistentVector. nil 32 5 (.-EMPTY_NODE PersistentVector) node nil)]
+          (loop [i 32 out (-as-transient v)]
+            (if (< i l)
+              (recur (inc i) (conj! out (aget xs i)))
+              (persistent! out))))))))

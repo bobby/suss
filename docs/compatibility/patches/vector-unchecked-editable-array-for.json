@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b0bc16cb2beb1816daabe909ecd991cfc4092af601f86190331c0ced2c6acb86",
+  "replacement": "(def unchecked-editable-array-for\n  (fn [tv i]\n(if (>= i (tail-off tv))\n    (.-tail tv)\n    (let [root (.-root tv)]\n      (loop [node  root\n             level (.-shift tv)]\n        (if (pos? level)\n          (recur (tv-ensure-editable\n                   (.-edit root)\n                   (pv-aget node\n                            (bit-and (bit-shift-right-zero-fill i level)\n                                     0x01f)))\n                 (- level 5))\n          (.-arr node)))))))",
+  "rationale": "Retain complete pinned transient vector algorithms and edit-token lifetime checks through explicit defn bootstrap. Source Error construction uses typed runtime error adapter. Two known .. field-chain uses lower to nested named property access without repeating receiver evaluation. No source methods or error branches are removed; complete public vector/core acceptance remains unfinished."
+}

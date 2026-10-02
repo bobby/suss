@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c1edb57cf0c05cbdb3d52a608bed7a60a89671aa867a05dcac4734ae498bb8be",
+  "replacement": "(def first-array-for-longvec\n  (fn [pv]\n(loop [node (.-root pv)\n         level (.-shift pv)]\n    (if (pos? level)\n      (recur (pv-aget node 0) (- level 5))\n      (.-arr node)))))",
+  "rationale": "Preserve the complete pinned vector algorithm through explicit defn bootstrap. Private Var visibility and complete compiled macro bootstrap remain unfinished."
+}

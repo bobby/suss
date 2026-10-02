@@ -76,6 +76,13 @@ impl Analyzer<'_> {
                 self.identifier_literal(form, value.namespace.as_deref(), &value.name, true)
             }
             Kind::Nil | Kind::Bool(_) | Kind::Number(_) | Kind::String(_) => self.form(form),
+            Kind::Vector(items) => {
+                let entries = items
+                    .iter()
+                    .map(|item| self.quote_data(item, depth + 1))
+                    .collect::<Result<Vec<_>, _>>()?;
+                self.vector_values(form, entries)
+            }
             Kind::List(items) => {
                 let symbol = suss_reader::Symbol {
                     namespace: Some("suss.core".into()),

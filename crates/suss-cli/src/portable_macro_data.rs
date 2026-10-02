@@ -15,6 +15,8 @@ enum Class {
     Cons,
     IndexedSeq,
     SourceArray,
+    PersistentVector,
+    VectorNode,
 }
 /// Captured canonical class roots remain valid through redefinition and GC.
 /// A reset or another Store invalidates this bridge; construct a new one there.
@@ -33,6 +35,8 @@ impl FormBridge {
             ("EmptyList", Class::EmptyList),
             ("Cons", Class::Cons),
             ("IndexedSeq", Class::IndexedSeq),
+            ("PersistentVector", Class::PersistentVector),
+            ("VectorNode", Class::VectorNode),
         ] {
             let value = session.eval(&format!("suss.core/{name}"))?;
             let id = session.inspect(&value, |mut store, value| {
@@ -288,6 +292,10 @@ fn decode(
                         Kind::Keyword(suss_reader::Keyword { namespace, name })
                     }
                 }
+                Class::PersistentVector => {
+                    Kind::Vector(vector(store, &data, classes, span, depth, budget)?)
+                }
+                Class::VectorNode => return Err(error("Vector trie nodes are not macro syntax")),
                 Class::SourceArray => return Err(error("Raw source arrays are not macro syntax")),
                 Class::List | Class::Cons | Class::EmptyList | Class::IndexedSeq => {
                     Kind::List(sequence(store, value, classes, span, depth, budget)?)
@@ -431,4 +439,94 @@ fn append_indexed(
         }
     }
     Ok(())
+}
+
+fn integer(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<usize> {
+    let data = fields(store, value, 1)?;
+    let [Val::F64(bits)] = data.as_slice() else {
+        return Err(error("Invalid vector integer field"));
+    };
+    let n = f64::from_bits(*bits);
+    if !n.is_finite() || n < 0.0 || n.fract() != 0.0 || n > 4096.0 {
+        return Err(error("Vector integer field exceeds transport bounds"));
+    }
+    Ok(n as usize)
+}
+fn source_elements(
+    store: &mut StoreContextMut<'_, ()>,
+    value: &Val,
+    classes: &BTreeMap<i64, Class>,
+) -> wasmtime::Result<Vec<Val>> {
+    let (class, owner) = object(store, value, classes)?;
+    if !matches!(class, Class::SourceArray) || owner.len() != 1 {
+        return Err(error("Vector needs canonical source array storage"));
+    }
+    array(store, &owner[0])
+}
+fn node_elements(
+    store: &mut StoreContextMut<'_, ()>,
+    value: &Val,
+    classes: &BTreeMap<i64, Class>,
+    budget: &mut Budget,
+) -> wasmtime::Result<Vec<Val>> {
+    spend(budget)?;
+    let (class, data) = object(store, value, classes)?;
+    if !matches!(class, Class::VectorNode) || data.len() != 2 {
+        return Err(error("Invalid persistent vector trie node"));
+    }
+    let items = source_elements(store, &data[1], classes)?;
+    if items.len() != 32 {
+        return Err(error("Invalid vector trie array width"));
+    }
+    Ok(items)
+}
+fn vector(
+    store: &mut StoreContextMut<'_, ()>,
+    data: &[Val],
+    classes: &BTreeMap<i64, Class>,
+    span: &Range<usize>,
+    depth: usize,
+    budget: &mut Budget,
+) -> wasmtime::Result<Vec<Form>> {
+    if data.len() != 6 {
+        return Err(error("Invalid persistent vector layout"));
+    }
+    metadata(store, &data[0])?;
+    let count = integer(store, &data[1])?;
+    let shift = integer(store, &data[2])?;
+    if shift < 5 || shift > 30 || shift % 5 != 0 {
+        return Err(error("Invalid vector trie shift"));
+    }
+    let tail = source_elements(store, &data[4], classes)?;
+    let offset = if count < 32 {
+        0
+    } else {
+        ((count - 1) >> 5) << 5
+    };
+    if tail.len() != count - offset {
+        return Err(error("Vector count disagrees with tail storage"));
+    }
+    // persistent! clears only the root edit token. Descendant nodes may retain
+    // their former token; the pinned persistent trie legitimately shares them.
+    let (_, root_data) = object(store, &data[3], classes)?;
+    if root_data.len() != 2 || !nil(store, &root_data[0])? {
+        return Err(error("Persistent vector root retains an active edit token"));
+    }
+    let root = node_elements(store, &data[3], classes, budget)?;
+    let mut items = Vec::new();
+    for base in (0..offset).step_by(32) {
+        let mut node = root.clone();
+        let mut level = shift;
+        while level > 0 {
+            node = node_elements(store, &node[(base >> level) & 31], classes, budget)?;
+            level -= 5;
+        }
+        for value in node {
+            items.push(decode(store, &value, classes, span, depth + 1, budget)?);
+        }
+    }
+    for value in tail {
+        items.push(decode(store, &value, classes, span, depth + 1, budget)?);
+    }
+    Ok(items)
 }

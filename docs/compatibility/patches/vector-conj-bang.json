@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "7268fae1f200a3f5ce62cd65efeede08eaa95fdc39f663b6ad5a182c23dd713b",
+  "replacement": "(def conj!\n  (fn ([] (transient []))\n([tcoll] tcoll)\n([tcoll val]\n    (-conj! tcoll val))\n([tcoll val & vals]\n    (let [ntcoll (-conj! tcoll val)]\n      (if vals\n        (recur ntcoll (first vals) (next vals))\n        ntcoll)))))",
+  "rationale": "Retain complete pinned transient vector algorithms and edit-token lifetime checks through explicit defn bootstrap. Source Error construction uses typed runtime error adapter. Two known .. field-chain uses lower to nested named property access without repeating receiver evaluation. No source methods or error branches are removed; complete public vector/core acceptance remains unfinished."
+}

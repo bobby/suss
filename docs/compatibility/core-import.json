@@ -643,16 +643,161 @@
       "id": "runtime:symbol-identical?:3516",
       "source-sha256": "93be16b685f7ceedef4aee7cae418547c4d4da7c4685df9aa18b28ed62a71b5a",
       "patch": "docs/compatibility/patches/identifier-symbol-identical-predicate.json"
+    },
+    {
+      "id": "runtime:ILookup:668",
+      "source-sha256": "275ee54cd85042a469f25e31bf748dab6a706fc199209cb15f196dc869d7f240",
+      "patch": null
+    },
+    {
+      "id": "runtime:IAssociative:674",
+      "source-sha256": "3f6870b2db2e5474e432dfe1cf2f84d158ac218c60d8231a35a3049d7add2714",
+      "patch": null
+    },
+    {
+      "id": "runtime:IFind:683",
+      "source-sha256": "c895c1930ab96a50b9bef061e299930168ac5901cefd417aaab752e67a23f123",
+      "patch": null
+    },
+    {
+      "id": "runtime:IVector:715",
+      "source-sha256": "11ba143537d3bff1a6301f2dc615f23821727698d0689a19fcc15629ee30b674",
+      "patch": null
+    },
+    {
+      "id": "runtime:IKVReduce:746",
+      "source-sha256": "49b36177303c37298dc202935b553eb937fa21113e94edc3316c5bcd6b665288",
+      "patch": null
+    },
+    {
+      "id": "runtime:IEditableCollection:830",
+      "source-sha256": "224e74ae2594ed199e6d75284f2c50578243b4721ab906c4e1050ff88025857e",
+      "patch": null
+    },
+    {
+      "id": "runtime:APersistentVector:5710",
+      "source-sha256": "0927a28062024772a4968c5708d8d87bf5030473fc84bb7bbd80ca5ac794ab1e",
+      "patch": null
+    },
+    {
+      "id": "runtime:vector-index-out-of-bounds:5621",
+      "source-sha256": "84de58e5f430f7610e2d90f8009b1f948d396b1300aca911b327036ee47f3970",
+      "patch": "docs/compatibility/patches/vector-vector-index-out-of-bounds.json"
+    },
+    {
+      "id": "runtime:first-array-for-longvec:5624",
+      "source-sha256": "c1edb57cf0c05cbdb3d52a608bed7a60a89671aa867a05dcac4734ae498bb8be",
+      "patch": "docs/compatibility/patches/vector-first-array-for-longvec.json"
+    },
+    {
+      "id": "runtime:unchecked-array-for:5632",
+      "source-sha256": "fa6f9192c8efbbde4d2fbd668fd40b9b61c54f544f13af457f0e0efdabd23477",
+      "patch": "docs/compatibility/patches/vector-unchecked-array-for.json"
+    },
+    {
+      "id": "runtime:array-for:5643",
+      "source-sha256": "a22b7bbd7ff4430cdbe4bdd917a42ff358d56e3ecec5ee9de8e6e8e6bfee3e89",
+      "patch": "docs/compatibility/patches/vector-array-for.json"
+    },
+    {
+      "id": "runtime:RangedIterator:5672",
+      "source-sha256": "5999100e5c119d3ea83a85d5b8ba63fde67dbbc8ecaaecc1f809bb2ec3bf73ce",
+      "patch": null
+    },
+    {
+      "id": "runtime:ranged-iterator:5684",
+      "source-sha256": "7dad60d425d3b2066a2fe72b7ca5d9b5bc0474f556107d179c5dea2d203aac49",
+      "patch": "docs/compatibility/patches/vector-ranged-iterator.json"
+    },
+    {
+      "id": "runtime:pv-reduce:5691",
+      "source-sha256": "9063a0706d9748c73ec75e7d2d31e1e4aae238f01ef16ef2db387a7a7f87fdc9",
+      "patch": "docs/compatibility/patches/vector-pv-reduce.json"
+    },
+    {
+      "id": "runtime:PersistentVector:5713",
+      "source-sha256": "9208b736d82fa1c0a8649147cc1e30cea5d3fad6d733e805a750744242d4a205",
+      "patch": "docs/compatibility/patches/vector-persistent-vector.json"
+    },
+    {
+      "id": "runtime:ITransientCollection:835",
+      "source-sha256": "8da0a1d06ad99fd6f778f1eb5ab53be6a50cb7a9927f286e29fa4c02fcbb4c5d",
+      "patch": null
+    },
+    {
+      "id": "runtime:ITransientAssociative:842",
+      "source-sha256": "4a125d21134326f4d165048296682b8e94d9b99fb5dc3ee7f6bf9170f1a05d60",
+      "patch": null
+    },
+    {
+      "id": "runtime:ITransientVector:853",
+      "source-sha256": "1664c2f3b4eabe68c2ab11e4f0c05ec1d2e343421f489c3551a2fd3b944e704d",
+      "patch": null
+    },
+    {
+      "id": "runtime:array-copy:2303",
+      "source-sha256": "b6c76f02e6732573f4a0918c4d544fcaec8ebb45bc783d85d5eea088122d6ff2",
+      "patch": "docs/compatibility/patches/vector-array-copy.json"
+    },
+    {
+      "id": "runtime:tv-ensure-editable:6242",
+      "source-sha256": "9b87be463c1c6706df6d55ae32607118bb7581a32627483821676b916322170f",
+      "patch": "docs/compatibility/patches/vector-tv-ensure-editable.json"
+    },
+    {
+      "id": "runtime:tv-editable-root:6247",
+      "source-sha256": "3f417959b742f08307129a1f4339d0a2294a579229f1596e81cf477d6e90edc6",
+      "patch": "docs/compatibility/patches/vector-tv-editable-root.json"
+    },
+    {
+      "id": "runtime:tv-editable-tail:6250",
+      "source-sha256": "3513c53ac454dc31f9ee2c958344dcbc43f46e0226181f9db5b5528d305ccd68",
+      "patch": "docs/compatibility/patches/vector-tv-editable-tail.json"
+    },
+    {
+      "id": "runtime:tv-push-tail:6255",
+      "source-sha256": "1a6a840de86c8d89ace73f0a541392d5ae4a367f1e043fb600b23173dc43f838",
+      "patch": "docs/compatibility/patches/vector-tv-push-tail.json"
+    },
+    {
+      "id": "runtime:tv-pop-tail:6267",
+      "source-sha256": "2f1a50a26e919af3b1132735678cab31877750820b19185163d5d4025152a1a0",
+      "patch": "docs/compatibility/patches/vector-tv-pop-tail.json"
+    },
+    {
+      "id": "runtime:unchecked-editable-array-for:6281",
+      "source-sha256": "b0bc16cb2beb1816daabe909ecd991cfc4092af601f86190331c0ced2c6acb86",
+      "patch": "docs/compatibility/patches/vector-unchecked-editable-array-for.json"
+    },
+    {
+      "id": "runtime:TransientVector:6297",
+      "source-sha256": "989369e792d663ee0a9728119b5ecfbb7a66af858059b6cf61fc9d887db05e6e",
+      "patch": "docs/compatibility/patches/vector-TransientVector.json"
+    },
+    {
+      "id": "runtime:transient:3987",
+      "source-sha256": "111bf8f6ebe0214f2d1c8fde4506aa25469f48d91be96a1aac5a3a0091c2c0f3",
+      "patch": "docs/compatibility/patches/vector-transient.json"
+    },
+    {
+      "id": "runtime:persistent!:3992",
+      "source-sha256": "b7dcbf3c487f81912a7f7ec04f2822a09fd1499b4a072a500b477868742ad2a4",
+      "patch": "docs/compatibility/patches/vector-persistent-bang.json"
+    },
+    {
+      "id": "runtime:conj!:3999",
+      "source-sha256": "7268fae1f200a3f5ce62cd65efeede08eaa95fdc39f663b6ad5a182c23dd713b",
+      "patch": "docs/compatibility/patches/vector-conj-bang.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "b21c596ba1be43ff7140b8630756ce87f9a32d18cf28eb70cbe18774dafb84d4"
+      "sha256": "3d1a2fb81efe06eacfe946f3c838ddb5afd6686829ea58b1f3f65caff613fab3"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "ce6cf05e1a2aa758586908111c34f5580e86c8c1bd51c0aa83e6bb30e451f281"
+      "sha256": "9a366ddbbbcbc324862e06bdab694e5fed62e4e80a2fd7fa8322199c93507f77"
     }
   }
 }

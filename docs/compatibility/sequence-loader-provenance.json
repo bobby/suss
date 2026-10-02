@@ -35,6 +35,30 @@
       "sha256": "8e6a532afc21e94a1abf91d7dc055ea532e9bf29112d99802da268808a5a0553",
       "patch": "docs/compatibility/patches/default-identity-hash.json",
       "patch-sha256": "8d61cde8bf28fcd3e0ed22c92099bf9bdc8df171eb295b10f147a044de54a257"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5917,
+      "end-line": 5917,
+      "sha256": "9b910ffbcda31b39ea143e879db98bfc46a9fcac705fac92ffbf87fbc107c857",
+      "patch": "docs/compatibility/patches/vector-empty-node.json",
+      "patch-sha256": "f971e3ba2b61f5d596a60f41e5d38e9ee7b3dec935c2434a913b2a7f58344ad3"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5919,
+      "end-line": 5920,
+      "sha256": "8c2194be6b23e5ad2985fbb4022c8e5c3f9c5f68c57e3257d2e332eb25c5180d",
+      "patch": "docs/compatibility/patches/vector-empty.json",
+      "patch-sha256": "26982a4fee6fd19cd698a7ba8ab0d2e75238bb32e098a69528a9ed93bc276c56"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5922,
+      "end-line": 5933,
+      "sha256": "5935cf83dd3c2359c818b7b5200e8b3c3aaa1df4f02efd7b2768d20c8f29e138",
+      "patch": "docs/compatibility/patches/vector-from-array.json",
+      "patch-sha256": "d10e73dd207825f0e0117a5cbc7e619bcca4a8be66e80ae366b7e0b9ef946697"
     }
   ]
 }

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8c2194be6b23e5ad2985fbb4022c8e5c3f9c5f68c57e3257d2e332eb25c5180d",
+  "replacement": "(set! (.-EMPTY PersistentVector)\n  (PersistentVector. nil 0 5 (.-EMPTY_NODE PersistentVector) (array) empty-ordered-hash))",
+  "rationale": "Preserve canonical empty vector constructor and hash; use emitted EMPTY_NODE spelling."
+}

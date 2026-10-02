@@ -162,9 +162,6 @@ fn small_vector_captures_constructor_and_empty_node_before_entry_redefinition() 
 fn missing_literal_classes_fail_before_initializer_effects_or_publication() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
-        .unwrap();
     session.enter_namespace("user").unwrap();
     session
         .eval("(def literal-effects 0) (def literal-owned 17)")
@@ -178,7 +175,7 @@ fn missing_literal_classes_fail_before_initializer_effects_or_publication() {
     session.collect().unwrap();
     assert!(boolean(
         &mut session,
-        "(and (= literal-effects 0) (= literal-owned 17))"
+        "(and (== literal-effects 0) (== literal-owned 17))"
     ));
 }
 

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "9b87be463c1c6706df6d55ae32607118bb7581a32627483821676b916322170f",
+  "replacement": "(def tv-ensure-editable\n  (fn [edit node]\n(if (identical? edit (.-edit node))\n    node\n    (VectorNode. edit (aclone (.-arr node))))))",
+  "rationale": "Retain complete pinned transient vector algorithms and edit-token lifetime checks through explicit defn bootstrap. Source Error construction uses typed runtime error adapter. Two known .. field-chain uses lower to nested named property access without repeating receiver evaluation. No source methods or error branches are removed; complete public vector/core acceptance remains unfinished."
+}
