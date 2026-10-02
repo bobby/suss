@@ -164,6 +164,7 @@ fn apply_requirement(
             "Required namespace has no supplied declaration; use module graph preparation for source loading",
         ));
     }
+    located(env.record_requirement(phase, namespace, false), requirement.namespace)?;
     if let Some(alias) = requirement.alias {
         located(env.alias(phase, symbol(alias)?, namespace), alias)?;
     }
@@ -358,6 +359,7 @@ pub(crate) fn namespace(
                         requirement.namespace.span.clone(),
                     )?;
                     env.declare_macro_exports(phase, namespace, &exports)?;
+                    located(env.record_requirement(phase, namespace, true), requirement.namespace)?;
                     if let Some(alias) = requirement.alias {
                         located(env.macro_alias(phase, symbol(alias)?, namespace), alias)?;
                     }

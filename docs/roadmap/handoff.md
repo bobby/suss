@@ -11104,3 +11104,50 @@ changes were included. Original full-run failure remains recorded above.
 Commit/push retained set prerequisites next. Portable namespace facts are being
 prepared independently in /private/tmp/suss-m3-namespace-require-facts; original
 M3 &env/bootstrap/cache/scheduler acceptance remains open. No new PR or merge.
+
+
+Isolated next-step worktree /private/tmp/suss-m3-namespace-require-facts at
+9bec866 (branch portable/m3-namespace-require-facts) has a new, unexecuted regression
+in portable_resolution.rs for Runtime/Macro no-alias and aliased require identity
+entries, immutable SourceNamespace capture, phase separation, no caller mutation
+and execution of the validated resulting fragment. Its supplied macro catalog
+host advertises empty namespaces; it is parser/compiler evidence, not macro
+loading acceptance. No implementation change yet. Run the regression before
+repair after the existing set baseline terminates; keep one heavy job at a time.
+Pinned parse-require-spec records library->library alongside optional aliases,
+so existing alias maps can retain those explicit identity entries without adding
+a second dependency catalog. Preserve canonical core alias guards and add focused
+core-require cases if using that approach. Renamed/referral transport still follows.
+
+
+Namespace identity-edge regression executed before implementation and failed on
+missing no-alias empty->empty data (/private/tmp/suss-namespace-require-before.log,
+0/1/0). Original host implementation now records explicit library identity entries
+in the existing ordinary/macro alias maps when source directives are applied,
+after validating the appropriate phase catalog. Canonical target normalization
+is retained and public core alias guards are unchanged. Immutable SourceNamespace
+snapshots carry these entries without inferring runtime initialized status.
+
+First resolution suite passed13/0/0. An additional collision case then exposed
+overwriting an earlier macro alias with a later implicit library identity. Its
+initial harness had an unsupported PreparedFragment Debug bound; after repairing
+the harness, actual execution failed (0/1/0) in
+/private/tmp/suss-namespace-require-conflict-executed-before.log. Added a prior-target
+ambiguity guard, with located source diagnostics and unchanged caller environment.
+Final full resolution suite passed13/0/0 in
+/private/tmp/suss-namespace-require-final-guard-focus.log, including validated
+fragment execution in both phases, core-require identity, guards, snapshot and
+phase separation. Source behavior follows pinned analyzer.cljc parse-require-spec;
+fresh namespace oracle and complete native :uses/:renames/:require-macros/
+:use-macros/:rename-macros transport remain next. This is compiler-fact repair,
+not actual implicit &env acceptance. Integrate with tested sets, then broaden
+module/import checks. No new PR or issue closure.
+
+
+Set prerequisite source committed as d25d7e9 and pushed on the rich branch.
+Alignment with user-merged main produced c3f04b0; origin/main83b24f7 has exactly
+the original PR1471bb6dee tree. The resolved complete merge tree exactly matches
+fully tested d25d7e9 (b77e6e14f17bd8e57c1d080405a46a4ba3a889ab), so no source
+change was hidden by conflict resolution. Namespace repair05543da is now being
+integrated with sets. Its focused resolution suite passed, but the 998 baseline
+predates this namespace repair. Run combined module/import regressions next.

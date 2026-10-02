@@ -594,6 +594,28 @@ impl Environment {
             .insert(global.clone(), Binding::InternalCell(global.clone()));
         global
     }
+    /// Retain the explicit source require edge, including imports without aliases.
+    /// This is a compiler catalog fact; it does not certify initialized code.
+    pub(crate) fn record_requirement(
+        &mut self,
+        phase: Phase,
+        namespace: &str,
+        macros: bool,
+    ) -> Result<(), Diagnostic> {
+        valid_namespace(namespace)?;
+        let target = canonical(namespace);
+        let catalog = if macros { &self.macro_namespaces } else { &self.namespaces };
+        if !catalog.contains(&(phase, target.into())) {
+            return Err(error(format!("Unknown {phase:?} required namespace {namespace}")));
+        }
+        let scope = self.scope_mut(phase);
+        let aliases = if macros { &mut scope.macro_aliases } else { &mut scope.aliases };
+        if aliases.get(namespace).is_some_and(|old| old != target) {
+            return Err(error(format!("Ambiguous required namespace alias {namespace}")));
+        }
+        aliases.insert(namespace.into(), target.into());
+        Ok(())
+    }
     pub fn alias(&mut self, phase: Phase, alias: &str, namespace: &str) -> Result<(), Diagnostic> {
         valid_namespace(alias)?;
         valid_namespace(namespace)?;

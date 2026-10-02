@@ -759,3 +759,72 @@ fn namespace_arithmetic_values_materialize_canonical_phase_cells() {
     assert_eq!(environment.arithmetic_bindings(Phase::Runtime).len(), 4);
     assert_eq!(environment.arithmetic_bindings(Phase::Macro).len(), 4);
 }
+
+#[test]
+fn source_requires_retain_library_identity_without_aliases_in_each_phase() {
+    struct EmptyMacros(Vec<String>);
+    impl portable::ExpansionHost for EmptyMacros {
+        fn supports_macro_imports(&self) -> bool { true }
+        fn load_macro_namespace(&mut self, namespace: &str, _: std::ops::Range<usize>) -> Result<Vec<String>, portable::Diagnostic> {
+            self.0.push(namespace.to_owned());
+            Ok(vec![])
+        }
+        fn expand(&mut self, _: &suss_reader::forms::Form, _: portable::ExpansionContext<'_>) -> Result<Option<suss_reader::forms::Form>, portable::Diagnostic> { Ok(None) }
+    }
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let mut environment = Environment::default();
+        environment.declare_namespace(phase, "empty").unwrap();
+        environment.declare_namespace(phase, "dep").unwrap();
+        let source = "(ns app (:require empty [dep :as d]) (:require-macros tools [other-tools :as t])) 42";
+        let mut host = EmptyMacros(vec![]);
+        let prepared = portable::prepare_fragment_forms_with_expander(
+            suss_reader::forms::read_forms(source).unwrap(), 0..source.len(), &environment, phase, &mut host,
+        ).unwrap();
+        assert_eq!(host.0, ["tools", "other-tools"]);
+        let scope = prepared.environment.namespace_scope(phase);
+        assert_eq!(scope.aliases.get("empty").map(String::as_str), Some("empty"));
+        assert_eq!(scope.aliases.get("dep").map(String::as_str), Some("dep"));
+        assert_eq!(scope.aliases.get("d").map(String::as_str), Some("dep"));
+        assert_eq!(scope.macro_aliases.get("tools").map(String::as_str), Some("tools"));
+        assert_eq!(scope.macro_aliases.get("other-tools").map(String::as_str), Some("other-tools"));
+        assert_eq!(scope.macro_aliases.get("t").map(String::as_str), Some("other-tools"));
+        let snapshot = portable::hir::SourceNamespace::capture(&prepared.environment, phase);
+        assert_eq!(snapshot.aliases, *scope.aliases);
+        assert_eq!(snapshot.macro_aliases, *scope.macro_aliases);
+        assert!(environment.namespace_scope(phase).aliases.is_empty());
+        let other = if phase == Phase::Runtime { Phase::Macro } else { Phase::Runtime };
+        assert!(prepared.environment.namespace_scope(other).aliases.is_empty());
+        assert!(prepared.environment.namespace_scope(other).macro_aliases.is_empty());
+        let engine = support::engine();
+        let mut store = Store::new(&engine, ());
+        let runtime = runtime(&mut store);
+        let mut linker = Linker::new(&engine);
+        linker.instance(&mut store, "suss.runtime", runtime).unwrap();
+        let instance = fragment(&mut store, &linker, prepared.wasm);
+        let result = eval(&mut store, instance);
+        assert_eq!(bits(&mut store, &result), 42.0f64.to_bits());
+        // A later implicit library identity must not overwrite an earlier alias.
+        let conflict = "(ns clash (:require-macros [first :as next] next)) 42";
+        let error = portable::prepare_fragment_forms_with_expander(
+            suss_reader::forms::read_forms(conflict).unwrap(), 0..conflict.len(),
+            &environment, phase, &mut EmptyMacros(vec![]),
+        ).err().expect("Conflicting library identity must fail");
+        assert!(error.message.contains("Ambiguous"), "{error}");
+        assert_eq!(&conflict[error.span], "next");
+        assert!(environment.namespace_scope(phase).macro_aliases.is_empty());
+    }
+}
+
+#[test]
+fn source_core_require_records_identity_without_weakening_core_alias_guards() {
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let environment = Environment::default();
+        let prepared = portable::prepare_fragment("(ns app (:require cljs.core)) 42", &environment, phase).unwrap();
+        assert_eq!(prepared.environment.namespace_scope(phase).aliases.get("cljs.core").map(String::as_str), Some("suss.core"));
+        let mut staged = prepared.environment;
+        staged.declare_namespace(phase, "other").unwrap();
+        assert!(staged.alias(phase, "cljs.core", "other").is_err());
+        assert!(staged.alias(phase, "suss.core", "other").is_err());
+        assert_eq!(staged.namespace_scope(phase).aliases.get("cljs.core").map(String::as_str), Some("suss.core"));
+    }
+}
