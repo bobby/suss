@@ -10131,3 +10131,13 @@ Required full workspace, independent review and exactfinal-headCI remain pending
 See docs/runtime/compiled-macro-hamt-lookup.md. No issue or M3 closure. Remaining
 iterator/reify, rich &env/locations/syntaxquote/bootstrap/cache and real session
 scheduler/cancellation requirements remain the next unblocked work.
+
+
+PR #142 independent review found the documented oracle runner selected the
+nonexistent Cargo suite `compiled_macro_hamt_lookups`. The reviewer corrected it
+to `compiled_macro_hamt_lookup`, verified the real target through locked Cargo
+metadata and checked shell syntax without starting a concurrent native build.
+Independent Python verification passed88 tests; generated import check verified249
+files; review overlay verified345 partial/720 unassessed; the12 pinned lookup
+observations matched exactly. Source/semantic tests were unchanged. Full workspace
+and exact final-head CI remain required; no M3 or issue acceptance claim.

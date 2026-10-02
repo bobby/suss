@@ -10,4 +10,4 @@ clojure -Srepro -M -m cljs.main -co '{:target :nodejs :output-to "out/hamt-looku
 node out/hamt-lookup.js > out/hamt-lookup-observations.json
 python3 "$hamt_lookup_root/scripts/hamt_lookup_oracle.py" compare
 CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" \
-cargo test --manifest-path "$hamt_lookup_root/Cargo.toml" -p suss-cli --test compiled_macro_hamt_lookups --locked -- --test-threads=2
+cargo test --manifest-path "$hamt_lookup_root/Cargo.toml" -p suss-cli --test compiled_macro_hamt_lookup --locked -- --test-threads=2
