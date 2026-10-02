@@ -485,3 +485,13 @@ in both arities, documenting the pinned source variance. Twelve fresh active
 lookup observations preserve omitted undefined versus nil behavior in both phase
 Stores. This remains a partial review with full M3/core acceptance unfinished.
 [Evidence and provenance](../runtime/compiled-macro-hamt-lookup.md).
+
+## Macro environment compiler facts
+
+Actual lexical declarations/initializers/shadows, phase namespace declarations and
+immutable source origins now have focused executing evidence. Eight pinned source
+position observations match native artifacts in both Stores, including metadata
+prefixes and UTF-16 columns. These host inspection fixtures are prerequisites;
+compiled source macros still do not receive rich `&env`. No inventory item or M3
+acceptance criterion is marked complete by this work. See
+[compiler facts](../runtime/compiled-macro-environment-facts.md).

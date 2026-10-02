@@ -10231,3 +10231,30 @@ No native source/tests or skips change. Prior local full954/0/17 proof remains
 applicable, but exact new-head CI must complete successfully before PR readiness.
 Next propagate the reviewed workflow repair to children and inspect complete
 final-head runs; further timeouts remain failures requiring investigation.
+
+
+PR140 reviewer pushed CI budget fixf9087cb, independently reviewed and propagated
+through PR141e929de9 and PR142531ff53; both child reviewers approved exact heads.
+Only workflow timeout60→90/comment and16handoff lines changed; all verifiers/full
+workspace/two-worker limits remain. Exact CI37022116674/37023033025/37024044072
+are in progress, all PRs draft. Issue14 comment5955330508 records incomplete old
+canceled runs and remaining acceptance scope. No merge or readiness claim.
+
+Macro source position continuation: pinned metadata-local probe79057 terminal0
+observed [[3,18],[4,27],[5,38],[6,48]], locating actual variable tokens after plain,
+tagged/chained/map metadata. Initial33663 failed only a misplaced development
+fixture path; corrected primary43377 terminal0 uses the retained fixture/macro.
+SourceOrigin.symbol_position validates actual reader syntax and symbol spelling;
+unknown/generated mismatches remain unknown. Reader spans/metadata are preserved.
+Initial native54220 terminal0:3positions passed; after final assertions/restoring
+incidental formatter output,77206 terminal0:7facts passed (4binding+3position),
+log /private/tmp/suss-m3-metadata-positions-final-focus.log. End-to-end oracle76191
+terminal0 rebuilt both pinned development namespaces, compared all8 exact position
+facts and executed3native tests, log /private/tmp/suss-m3-environment-origin-end-to-end.log.
+All source tests execute real artifacts and independently decode after GC in both
+Stores. No source-level rich &env support is claimed. Only this turn's80 proven
+formatter-only changes were removed; all intended source work remains.
+See docs/runtime/compiled-macro-environment-facts.md. Next full new-branch workspace
+baseline, then genuine function/context/field facts and rich compiled transport.
+Original issues12–15, bootstrap/cache/evaluator removal and scheduler acceptance
+remain open; this local branch is not a published PR.

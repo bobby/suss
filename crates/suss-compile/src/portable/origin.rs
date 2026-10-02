@@ -50,6 +50,26 @@ impl SourceOrigin {
     pub fn path(&self) -> Option<&Path> {
         self.path.as_deref()
     }
+    /// Position of a source symbol token, excluding its metadata prefixes.
+    /// Expansion declarations without matching source syntax remain unknown.
+    pub fn symbol_position(&self, form: &suss_reader::forms::Form) -> Option<SourcePosition> {
+        use suss_reader::forms::{Kind, read_forms, resolve_conditionals};
+        let Kind::Symbol(symbol) = &form.kind else {
+            return None;
+        };
+        let source = self.text.get(form.span.clone())?;
+        let parsed = resolve_conditionals(read_forms(source).ok()?).ok()?;
+        if parsed.len() != 1 || parsed[0].kind != form.kind {
+            return None;
+        }
+        let spelling = symbol.to_string();
+        let end = form.span.start.checked_add(parsed[0].span.end)?;
+        let start = end.checked_sub(spelling.len())?;
+        if self.text.get(start..end)? != spelling {
+            return None;
+        }
+        self.position(start)
+    }
     pub fn position(&self, byte_offset: usize) -> Option<SourcePosition> {
         if !self.text.is_char_boundary(byte_offset) {
             return None;
