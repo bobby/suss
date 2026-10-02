@@ -46,8 +46,11 @@ correctly rejects. Use a valid replacement of a different arity; corrected92753
 passes46 ABI tests, including captured methods across GC, malformed keys/copied
 environments, typed exception tags and recovery.
 
-Full workspace baseline, independent PR review/significant fixes and successful
-exact-final-head CI are still required. No callable PR is ready yet.
+Full workspace baseline7750 completed successfully on reviewed source5367d075:
+931 passed, zero failed and17 existing ignores across88 groups, through final reader
+doctests. Independent PR136 review approved that exact source with no significant
+findings. Final publication changes documentation only; successful exact-final-head
+CI and independent confirmation remain required before readiness. No merge.
 
 ## Remaining M3 acceptance
 

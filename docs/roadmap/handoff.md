@@ -9715,3 +9715,18 @@ Source/core behavior unchanged by fixture repair. Import199/setup12/reviews291pa
 774unassessed remain partial; current artifacts regenerated after evidence overlay.
 Next integrate final metadata17f docs, freeze source and run full baseline, publish
 Refs#14 draft and dispatch required independent review; no ready/merge claim yet.
+
+
+PR136 published draft, Refs#14, source5367d075b34f7da69fc89b1ce4c4039cc6a428f0.
+Independent reviewer136 approved exact5367 with no significant findings; import199,
+review-overlay291/774 and licensed setup12 checks independently pass. ROOT full7750
+terminal0:931passed/0failed/17existingignores/88groups through finalreader doctests,
+/private/tmp/suss-m3-callable-metadata-full.log. Heavy slot released. This publication
+changes docs only; require independent final-head confirmation and exact-final-head
+CI before marking ready. No merge.
+
+PR135 final17f00a3 independently approved, CI36960926070 SUCCESS. Downloaded complete
+/private/tmp/suss-pr135-final-ci.log and verified926/0/17/87groups/Python88/import199/
+setup12/finalreader. Marked ready after exact-head verification; no merge. Original
+M3 issues12–15 remain open. Next unblocked task: retain complete source apply and
+its callable behavior before macro environment/syntaxquote/bootstrap/cache work.
