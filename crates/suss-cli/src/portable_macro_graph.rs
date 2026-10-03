@@ -976,6 +976,102 @@ impl<'a> AnalysisGraph<'a> {
                 .and_then(|source| source.callable.as_ref())
             {
                 fields.push(("suss/source-function", self.callable(callable)?));
+                let declaration = if let Some(origin) = &info.origin {
+                    origin
+                        .macro_form_data(&info.declaration)
+                        .map_err(SessionError::Compile)?
+                } else {
+                    info.declaration.clone()
+                };
+                let metadata =
+                    hir::reader_metadata_pairs(&declaration).map_err(SessionError::Compile)?;
+                let property = |name: &str| {
+                    metadata.chunks_exact(2).find_map(|pair| {
+                        matches!(&pair[0].kind, Kind::Keyword(key)
+                            if key.namespace.is_none() && key.name == name)
+                        .then_some(&pair[1])
+                    })
+                };
+                let macro_flag = property("macro")
+                    .is_some_and(|value| !matches!(value.kind, Kind::Nil | Kind::Bool(false)));
+                fields.push(("fn-var", self.flag(!macro_flag)?));
+                fields.push(("variadic?", self.flag(callable.variadic())?));
+                let fixed = callable.max_fixed_arity().ok_or_else(|| {
+                    SessionError::Host(wasmtime::Error::msg("Invalid source function declaration"))
+                })?;
+                fields.push(("max-fixed-arity", self.number(fixed)?));
+                // Preserve every analyzed source signature, including duplicate
+                // arities. Emitted dispatch methods are a separate contract.
+                let mut methods = Vec::new();
+                for method in &callable.methods {
+                    let parameters = method
+                        .parameters
+                        .iter()
+                        .map(|parameter| self.symbol(&parameter.name))
+                        .collect::<Result<Vec<_>>>()?;
+                    methods.push(self.vector(&parameters)?);
+                }
+                self.charge(0)?;
+                fields.push(("method-params", self.recipe(Recipe::List(methods))?));
+                // The pinned analyzer retains the reader value of :arglists,
+                // including its quote, and maps meta over that value's elements.
+                let arglists = property("arglists");
+                let argument_data = if let Some(form) = arglists {
+                    self.form(form, depth + 1)?
+                } else {
+                    self.scalar(Literal::Nil)?
+                };
+                fields.push(("arglists", argument_data));
+                let mut argument_metadata = Vec::new();
+                if let Some(form) = arglists {
+                    let items = match &form.kind {
+                        Kind::List(items) | Kind::Vector(items) | Kind::Set(items) => {
+                            items.as_slice()
+                        }
+                        // Map sequence entries and UTF-16 character values have
+                        // no metadata, unlike original reader collection items.
+                        Kind::Map(items) => {
+                            for _ in 0..items.len() / 2 {
+                                argument_metadata.push(self.scalar(Literal::Nil)?);
+                            }
+                            &[]
+                        }
+                        Kind::String(units) => {
+                            for _ in units {
+                                argument_metadata.push(self.scalar(Literal::Nil)?);
+                            }
+                            &[]
+                        }
+                        Kind::Nil => &[],
+                        _ => {
+                            return Err(SessionError::Host(wasmtime::Error::msg(
+                                "Function declaration arglists requires seqable reader data",
+                            )));
+                        }
+                    };
+                    for item in items {
+                        let pairs =
+                            hir::reader_metadata_pairs(item).map_err(SessionError::Compile)?;
+                        let value = if pairs.is_empty() {
+                            self.scalar(Literal::Nil)?
+                        } else {
+                            self.form(
+                                &Form {
+                                    span: item.span.clone(),
+                                    metadata: vec![],
+                                    kind: Kind::Map(pairs),
+                                },
+                                depth + 1,
+                            )?
+                        };
+                        argument_metadata.push(value);
+                    }
+                }
+                self.charge(0)?;
+                fields.push((
+                    "arglists-meta",
+                    self.recipe(Recipe::List(argument_metadata))?,
+                ));
             }
         }
         let value = self.map(fields)?;

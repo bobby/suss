@@ -66,8 +66,8 @@ The fresh fixture establishes the following timing for these cases:
   binding records, rather than the symbol vectors in global declarations. The
   fixture preserves exact binding data, positions and present nil parameter tags.
 
-The corpus preserves its original 13 observations and extends it to 21 ordered
-snapshot/catalog observations, two self/local observations and 26 executed results. Its direct
+The corpus preserves its original 13 observations and extends it to 23 ordered
+snapshot/catalog observations, two self/local observations and 31 executed results. Its direct
 parameter-returning functions have no observed return tag. Do not substitute
 `any` or a physical closure type for absent inference facts.
 
@@ -86,8 +86,17 @@ the old transport and passed after the repair. Existing staged syntax queries no
 read `:suss/catalog`. Additional executing queries check shared snapshot identity
 through initializer AST and function declaration environments.
 
-Still unobserved here: declaration argument-list metadata, complete return/union
-inference, namespace reload policy and analyzer options. Observe those boundaries
+The added explicit argument-list fixture preserves the actual quoted reader
+sequence in `:arglists`. `:arglists-meta` maps metadata over that quoted value's
+elements: nil for its `quote` symbol, then the reader metadata of its argument
+sequence, including verified file and exact line/column/end positions. It does
+not map metadata over the individual arity vectors. A separate map-valued
+argument-list fixture is accepted by the pinned analyzer: it preserves the map
+data and gives its single sequence entry nil metadata. The original 21 cases, two
+local observations and 26 executed result prefix remain unchanged.
+
+Still unobserved here: complete return/union inference, namespace reload policy
+and analyzer options. Observe those boundaries
 before extending portable behavior. Next preserve staged source function facts
 before compiler wrappers and build portable declaration metadata/inference with
 native executing comparisons using the reviewed corpus. Actual source implicit

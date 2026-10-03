@@ -12679,3 +12679,90 @@ PR158 final focused80892 TERMINAL0:44pass/0fail/0ignore across6groups
 /private/tmp/suss-pr158-review-final-focused.log. Fullcore remains bounded after
 bothworkguards. Static whitespace/rustfmt2024 pass. Freeze reviewfix source now;
 commit/push then independent exact-head fullworkspacebaseline, final-headCI.
+
+
+## PR #158 reviewed final-head results — 2026-10-03
+
+Independent reviewer pushed 5d15a0d4e42e7c14ecc9be3ecd56fa1eac670a9f.
+Metadata-bearing sets now construct items, then metadata, then one set; duplicate
+reader collection occurrences preserve captured callback counts and independent
+callback-dependent values. Immutable compiler snapshot identities remain sharing
+barriers. Both preliminary DAG traversal and occurrence materialization have
+1,048,576-step bounds, with rejection-before-callback and recovery regressions.
+Original-head regression failed9 instead of18 callbacks; final focused44/0/0.
+
+Required cargo test --workspace --locked -- --test-threads=2, shared target,
+CARGO_BUILD_JOBS=2, no RUSTFLAGS override: reviewer handle62208 TERMINAL exit0,
+1079passed/0failed/17existingignores across116 groups.
+Log: /private/tmp/suss-pr158-review-full-baseline.log. Worktree clean; reviewer
+explicitly released the sole heavy slot. No new commit solely for this result.
+Final-head CI37124594996 remains pending until verified. No merge or issue closure.
+
+Next isolated branch portable/m3-declaration-function-facts begins at that exact
+head. A native executing projection test is drafted against selected pinned
+function declaration fields; it is not yet run. Extended primary argument-list
+metadata fixture and strict expected labels/results are prepared; corpus update
+is pending actual fresh JVM/Node execution. Initial oracle handle91522 is LIVE,
+log /private/tmp/suss-declaration-function-facts-oracle-first.log. Root now owns
+the sole native slot. No native implementation change or acceptance claimed.
+
+Declaration-function oracle follow-up: initial91522 TERMINAL1 after actual JVM
+compilation and29 Node results, as the expected corpus still had26 results.
+Strictly retained all original21 cases,2 local observations and26 result prefix;
+added actual after-arglists observation. Explicit arglists is a quoted sequence;
+arglists-meta is a sequence of nil/reader metadata maps for that quoted form's
+elements, not merely method vectors. Only verified :file fields within that
+metadata may lose the checkout prefix; other values/positions remain exact.
+Second independent fresh oracle65254 TERMINAL0;22 snapshot/catalog observations,
+2 local observations and29 executed results match. Log:
+/private/tmp/suss-declaration-function-facts-oracle-final.log.
+Cleaned only four workspace packages in shared target before switching worktrees,
+then started native regression57904, LIVE, log
+/private/tmp/suss-declaration-function-facts-native-before.log. No production
+source change yet; root retains the sole heavy slot.
+
+Selected function declaration implementation and evidence:
+- Native-before57904 TERMINAL101,0/1: after-fixed lacked all6 portable fields.
+- Added fields from existing immutable source callable methods and reader data,
+  not emitted method dispatch or runtime storage. CLI-only change; compiler
+  fingerprint and bootstrap bytes/manifests remain unchanged.
+- First native/core71453 TERMINAL0:2/0/0 groups (both caller phases), fullcore
+  graph still bounded. Metadata run62537 TERMINAL101: core1pass, new file fixture
+ 1pass/1fail because configurable Session lacked core; setup corrected using
+  the existing retained core fixture, no semantic assertion weakened.
+- Corrected metadata88709 TERMINAL0:2/0/0. Staging72524 TERMINAL0:2/0/0, including
+  old snapshot function facts, provisional absence and scalar replacement.
+- Affected65973 TERMINAL0:48/0/0 across10 groups; Python34766 TERMINAL0:118pass
+  in5.445s. These precede the following map-valued metadata extension.
+- Map primary37749 TERMINAL1 after actual execution, expected old29 results;
+  strict retained22case/29result prefix then appended actual map observation.
+ 23snapshot/catalog,2local,31Node results. Native65721 TERMINAL101 rejects valid
+  map-valued arglists during graph construction. Fixed seqable map/set/string
+  metadata handling without executing source; map entries/UTF16 characters have
+  nil metadata. Native93895 TERMINAL0:2/0/0 in8.69s.
+- Fresh expanded primary17279 LIVE, log
+  /private/tmp/suss-declaration-function-facts-oracle-map-final.log.
+Root retains the sole heavy slot. Require final affected/bounds checks, review,
+full baseline and exact-head CI; no PR published yet, no merge or issue closure.
+
+PR158 CI37124594996/job111207285136 completedSUCCESS at exact reviewed
+5d15a0d4e42e7c14ecc9be3ecd56fa1eac670a9f. PRbody updated and marked ready,
+without merging. Independent review + full1079/0/17 baseline + exact-head CI
+all passed. No milestone issue closure; original M3 acceptance remains open.
+
+Declaration-function final graph62326 TERMINAL0:28/0/0 across4groups, including
+complete core declarations both phases, callback/order/work-limit and new
+function projections. Fresh expanded oracle17279 TERMINAL0:23declaration/2local
+observations and31Node results; first map probe37749's expected-old-corpus failure
+was followed by strict prefix preservation and fresh comparison.
+Bootstrap verifier8478 TERMINAL0: two fresh processes match shipped images,
+actual build-script identity regression and4 executing bootstrap tests pass with
+Java/Node unavailable on verifier PATH (11.62s). Root native jobs all terminal;
+sole heavy slot released for independent review after publication.
+Commands/logs: /private/tmp/suss-declaration-function-facts-{final-graph,
+bootstrap-verifier,oracle-map-final}.log. Source formatting and git diff check
+pass. No dependency/core-source import or compiler fingerprint/image change.
+Publish partial issue14 progress stacked on158, dispatch independent review,
+push significant fixes and require full baseline plus exact final-head CI.
+Next unblocked task: remaining portable declaration field presence/metadata and
+self-local method records, then cache/evaluator/lifecycle acceptance. No merge.

@@ -41,6 +41,12 @@
     ([x y & more] (observe-locals "self-rest-body" [self x y more]) y)))
 (def after-named (observe "after-named" [named]))
 
+(def ^{:arglists '([x] ^{:doc "rest declaration"} [x & more])} annotated
+  (fn ([x] x) ([x & more] x)))
+(def after-arglists (observe "after-arglists" [annotated]))
+(def ^{:arglists {:arity [x]}} mapped-arglists (fn [x] x))
+(def after-mapped-arglists (observe "after-mapped-arglists" [mapped-arglists]))
+
 (defn -main []
   (println (.stringify js/JSON
             #js [initial scalar after-scalar (fixed 11) after-fixed
@@ -49,5 +55,6 @@
                  after-redefinition nested-wrapper nested-first nested-second
                  after-nested after-declare (declared 16) after-declared-definition
                  (duplicate 17) after-duplicate (named 18) (named 18 19 20)
-                 after-named])))
+                 after-named after-arglists (annotated 21) (annotated 22 23)
+                 after-mapped-arglists (mapped-arglists 24)])))
 (set! *main-cli-fn* -main)

@@ -288,3 +288,5 @@ subtrees share data without dropping fields.73 affected tests and23 final bounds
 graph/core checks pass; full baseline, independent review and final-head CI remain
 required. Complete portable schema, source/macro cache and evaluator/lifecycle
 acceptance remain open.
+
+Selected portable function declaration fields now come from immutable source callable facts and reader metadata, with executing fixed/variadic/duplicate/alias/redefinition and file-position projections in both phases. The expanded pinned corpus preserves23 declaration observations,2 local observations and31 executed results. Complete portable schema, cache invalidation, evaluator retirement and original M3 acceptance remain open; independent review/full baseline/final-head CI are required. See [function declaration facts](docs/runtime/compiled-macro-declaration-functions.md).
