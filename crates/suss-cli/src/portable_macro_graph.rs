@@ -924,6 +924,18 @@ impl<'a> AnalysisGraph<'a> {
         ])?;
         Ok(value)
     }
+    // Copyright (c) Rich Hickey. All rights reserved.
+    // The use and distribution terms for this software are covered by the
+    // Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+    // which can be found in the file epl-v10.html at the root of this distribution.
+    // By using this software in any fashion, you are agreeing to be bound by
+    // the terms of this license. You must not remove this notice.
+    // SPDX-License-Identifier: EPL-1.0
+    // Declaration field policy adapts cljs/analyzer.cljc parse :def (2022–2199)
+    // and source-info (745–756), pinned c4295f303100bbf5afac449242d30bca1126f1a1.
+    // Source SHA-256: 297802c627474434f1ef868e31f5f9913c290a4e80c509a40c704dced95bbf47.
+    // Native graph recipes, immutable record identities and provenance checks
+    // are original; no JVM AST or runtime namespace object is fabricated.
     fn declaration(
         &mut self,
         global: &portable::resolve::Global,
@@ -941,14 +953,162 @@ impl<'a> AnalysisGraph<'a> {
             return Ok(*value);
         }
         let name = self.symbol(&format!("{}/{}", global.namespace(), global.name()))?;
-        let ns = self.symbol(global.namespace())?;
-        let mut fields = vec![("name", name), ("ns", ns)];
+        let mut fields = vec![("name", name)];
         if let Some(info) = info {
-            if let Some(tag) = hir::declaration_tag(info)
-                .map_err(|error| SessionError::Host(wasmtime::Error::msg(error.message)))?
-            {
-                fields.push(("tag", self.form(&tag, depth + 1)?));
+            // Preserve the transport guard before requesting reader enrichment.
+            // An oversized metadata value must not reach source snapshots or
+            // guest construction merely because only selected fields are read.
+            validate_form_data(&info.definition_form)?;
+            validate_form_data(&info.declaration)?;
+            let mut declaration = if let Some(origin) = &info.origin {
+                origin
+                    .macro_form_data(&info.declaration)
+                    .map_err(SessionError::Compile)?
+            } else {
+                info.declaration.clone()
+            };
+            // declare adds semantic metadata to an original source symbol. Only
+            // recover positions through the verified original declaration form,
+            // never by trusting a generated symbol's reused byte span alone.
+            if let (Some(origin), Kind::List(items)) = (&info.origin, &info.definition_form.kind) {
+                if items.first().is_some_and(|head| {
+                    matches!(&head.kind, Kind::Symbol(symbol)
+                    if symbol.namespace.is_none() && symbol.name == "declare")
+                }) {
+                    if let Some(original) = items[1..].iter().find(|name| {
+                        name.kind == info.declaration.kind && name.span == info.declaration.span
+                    }) {
+                        let original = origin
+                            .macro_form_data(original)
+                            .map_err(SessionError::Compile)?;
+                        declaration.metadata = original.metadata;
+                        declaration
+                            .metadata
+                            .extend(info.declaration.metadata.clone());
+                    }
+                }
             }
+            let metadata =
+                hir::reader_metadata_pairs(&declaration).map_err(SessionError::Compile)?;
+            let property = |name: &str| {
+                metadata.chunks_exact(2).find_map(|pair| {
+                    matches!(&pair[0].kind, Kind::Keyword(key)
+                    if key.namespace.is_none() && key.name == name)
+                    .then_some(&pair[1])
+                })
+            };
+            let truthy = |form: &Form| !matches!(form.kind, Kind::Nil | Kind::Bool(false));
+            // Namespace declaration records do not have the :ns field of a
+            // resolved var AST. Preserve observed raw metadata in either stage.
+            for field in [
+                "name",
+                "ns",
+                "private",
+                "dynamic",
+                "doc",
+                "declared",
+                "tag",
+                "ret-tag",
+                "fn-var",
+                "variadic?",
+                "max-fixed-arity",
+                "method-params",
+                "arglists",
+                "arglists-meta",
+            ] {
+                if let Some(value) = property(field) {
+                    fields.retain(|(name, _)| *name != field);
+                    fields.push((field, self.form(value, depth + 1)?));
+                }
+            }
+            let provisional = !info.analysis_completed
+                || (info.initializer_form.is_some() && property("declared").is_some_and(truthy));
+            if !provisional {
+                let mut meta = Form {
+                    span: 0..0,
+                    metadata: vec![],
+                    kind: Kind::Map(metadata.chunks_exact(2).filter(|pair| !matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "test")).flat_map(|pair| pair.iter().cloned()).collect()),
+                };
+                if global.namespace() == "suss.core" {
+                    let Kind::Map(items) = &mut meta.kind else {
+                        unreachable!()
+                    };
+                    let mut pairs = items.chunks_exact(2)
+                        .filter(|pair| !matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "file"))
+                        .flat_map(|pair| pair.iter().cloned()).collect::<Vec<_>>();
+                    pairs.extend([
+                        Form {
+                            span: 0..0,
+                            metadata: vec![],
+                            kind: Kind::Keyword(suss_reader::Keyword::new("file")),
+                        },
+                        Form {
+                            span: 0..0,
+                            metadata: vec![],
+                            kind: Kind::String("cljs/core.cljs".encode_utf16().collect()),
+                        },
+                    ]);
+                    *items = pairs;
+                }
+                fields.push(("meta", self.form(&meta, depth + 1)?));
+            } else if let Some(value) = property("meta") {
+                fields.push(("meta", self.form(value, depth + 1)?));
+            }
+            if let Some(origin) = &info.origin {
+                let definition = origin
+                    .macro_form_data(&info.definition_form)
+                    .map_err(SessionError::Compile)?;
+                let position =
+                    hir::reader_metadata_pairs(&definition).map_err(SessionError::Compile)?;
+                for field in ["line", "column", "file"] {
+                    if let Some(value) = position.chunks_exact(2).find_map(|pair| {
+                        matches!(&pair[0].kind, Kind::Keyword(key)
+                            if key.namespace.is_none() && key.name == field)
+                        .then_some(&pair[1])
+                    }) {
+                        fields.push((field, self.form(value, depth + 1)?));
+                    }
+                }
+            }
+            if global.namespace() == "suss.core" {
+                fields.retain(|(name, _)| *name != "file");
+                fields.push((
+                    "file",
+                    self.scalar(Literal::String("cljs/core.cljs".encode_utf16().collect()))?,
+                ));
+            }
+            let source = info
+                .initializer
+                .as_ref()
+                .and_then(|init| init.source.as_ref());
+            let callable = source.and_then(|source| source.callable.as_ref());
+            // parse-def chooses a callable return independently of dynamic
+            // var-reference inference. False hints fall through just like nil.
+            let completed_tag = if provisional {
+                None
+            } else if callable.is_some() {
+                property("tag")
+                    .filter(|tag| truthy(tag))
+                    .cloned()
+                    .or_else(|| {
+                        source
+                            .and_then(|source| source.tags.inferred_return.as_ref())
+                            .and_then(|tag| tag.clone())
+                    })
+            } else if property("tag").is_some_and(|tag| matches!(tag.kind, Kind::Bool(false))) {
+                if property("dynamic").is_some_and(truthy) {
+                    Some(Form {
+                        span: 0..0,
+                        metadata: vec![],
+                        kind: Kind::Symbol(suss_reader::Symbol::new("any")),
+                    })
+                } else {
+                    source.and_then(|source| source.tags.inferred.clone())
+                }
+            } else {
+                hir::declaration_tag(info)
+                    .map_err(|error| SessionError::Host(wasmtime::Error::msg(error.message)))?
+            };
             fields.push((
                 "suss/definition-form",
                 self.form(&info.definition_form, depth + 1)?,
@@ -966,32 +1126,12 @@ impl<'a> AnalysisGraph<'a> {
                 "suss/initializer-recorded",
                 self.flag(info.initializer.is_some())?,
             ));
-            if let Some(doc) = &info.docstring {
+            if !provisional && let Some(doc) = &info.docstring {
+                fields.retain(|(name, _)| *name != "doc");
                 fields.push(("doc", self.scalar(Literal::String(doc.clone()))?));
             }
-            if let Some(callable) = info
-                .initializer
-                .as_ref()
-                .and_then(|init| init.source.as_ref())
-                .and_then(|source| source.callable.as_ref())
-            {
+            if let Some(callable) = callable {
                 fields.push(("suss/source-function", self.callable(callable)?));
-                let declaration = if let Some(origin) = &info.origin {
-                    origin
-                        .macro_form_data(&info.declaration)
-                        .map_err(SessionError::Compile)?
-                } else {
-                    info.declaration.clone()
-                };
-                let metadata =
-                    hir::reader_metadata_pairs(&declaration).map_err(SessionError::Compile)?;
-                let property = |name: &str| {
-                    metadata.chunks_exact(2).find_map(|pair| {
-                        matches!(&pair[0].kind, Kind::Keyword(key)
-                            if key.namespace.is_none() && key.name == name)
-                        .then_some(&pair[1])
-                    })
-                };
                 const FUNCTION_FIELDS: [&str; 6] = [
                     "fn-var",
                     "variadic?",
@@ -1000,16 +1140,12 @@ impl<'a> AnalysisGraph<'a> {
                     "arglists",
                     "arglists-meta",
                 ];
-                let truthy = |form: &Form| !matches!(form.kind, Kind::Nil | Kind::Bool(false));
                 if property("declared").is_some_and(truthy) {
                     // The pinned analyzer leaves this initializer's provisional
                     // symbol metadata in the catalog. Completed source callable
                     // facts above remain a separate Suss extension.
-                    for field in FUNCTION_FIELDS {
-                        if let Some(form) = property(field) {
-                            fields.push((field, self.form(form, depth + 1)?));
-                        }
-                    }
+                    // The raw selected fields were already copied above, even
+                    // without a source callable in a provisional initializer.
                 } else if let Some(top) =
                     property("top-fn").filter(|form| !matches!(form.kind, Kind::Nil))
                 {
@@ -1036,8 +1172,28 @@ impl<'a> AnalysisGraph<'a> {
                         }
                     };
                     let macro_flag = property("macro").is_some_and(truthy);
+                    fields.retain(|(name, _)| *name != "fn-var");
                     fields.push(("fn-var", self.flag(!macro_flag)?));
-                    for field in FUNCTION_FIELDS {
+                    for field in [
+                        "name",
+                        "ns",
+                        "tag",
+                        "ret-tag",
+                        "fn-var",
+                        "variadic?",
+                        "max-fixed-arity",
+                        "method-params",
+                        "arglists",
+                        "arglists-meta",
+                        "private",
+                        "dynamic",
+                        "doc",
+                        "declared",
+                        "line",
+                        "column",
+                        "file",
+                        "meta",
+                    ] {
                         if let Some(form) = pairs.iter().rev().find_map(|(key, value)| {
                             matches!(&key.kind, Kind::Keyword(key)
                                 if key.namespace.is_none() && key.name == field)
@@ -1048,6 +1204,9 @@ impl<'a> AnalysisGraph<'a> {
                         }
                     }
                 } else {
+                    // Normal callable defaults replace the selected raw group.
+                    // Empty top-fn instead leaves its five raw arity fields.
+                    fields.retain(|(name, _)| !FUNCTION_FIELDS.contains(name));
                     let macro_flag = property("macro")
                         .is_some_and(|value| !matches!(value.kind, Kind::Nil | Kind::Bool(false)));
                     fields.push(("fn-var", self.flag(!macro_flag)?));
@@ -1131,6 +1290,51 @@ impl<'a> AnalysisGraph<'a> {
                         self.recipe(Recipe::List(argument_metadata))?,
                     ));
                 }
+            }
+            if !provisional
+                && property("declared").is_some_and(truthy)
+                && let Some(arglists) = property("arglists").filter(|value| truthy(value))
+            {
+                // Fresh forward declaration metadata supplies method data, not
+                // an analyzed initializer or an executable source callable.
+                // Match parse-def's second over the retained reader value.
+                let nil = || Form {
+                    span: 0..0,
+                    metadata: vec![],
+                    kind: Kind::Nil,
+                };
+                let parameters = match &arglists.kind {
+                    Kind::List(items) | Kind::Vector(items) | Kind::Set(items) => {
+                        items.get(1).cloned().unwrap_or_else(nil)
+                    }
+                    Kind::Map(items) => {
+                        items.chunks_exact(2).nth(1).map_or_else(nil, |pair| Form {
+                            span: 0..0,
+                            metadata: vec![],
+                            kind: Kind::Vector(pair.to_vec()),
+                        })
+                    }
+                    Kind::String(units) => units.get(1).map_or_else(nil, |unit| Form {
+                        span: 0..0,
+                        metadata: vec![],
+                        kind: Kind::String(vec![*unit]),
+                    }),
+                    _ => {
+                        return Err(SessionError::Host(wasmtime::Error::msg(
+                            "Declared argument lists require seqable reader data",
+                        )));
+                    }
+                };
+                fields
+                    .retain(|(name, _)| !matches!(*name, "declared" | "fn-var" | "method-params"));
+                fields.push(("declared", self.flag(true)?));
+                fields.push(("fn-var", self.flag(true)?));
+                fields.push(("method-params", self.form(&parameters, depth + 1)?));
+            }
+            if let Some(tag) = completed_tag {
+                let field = if callable.is_some() { "ret-tag" } else { "tag" };
+                fields.retain(|(name, _)| *name != field);
+                fields.push((field, self.form(&tag, depth + 1)?));
             }
         }
         let value = self.map(fields)?;

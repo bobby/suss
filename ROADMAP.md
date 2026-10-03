@@ -289,4 +289,12 @@ graph/core checks pass; full baseline, independent review and final-head CI rema
 required. Complete portable schema, source/macro cache and evaluator/lifecycle
 acceptance remain open.
 
-Selected portable function declaration fields now come from immutable source callable facts and reader metadata, with executing fixed/variadic/duplicate/alias/redefinition and file-position projections in both phases. The expanded pinned corpus preserves27 declaration observations,2 local observations and37 executed results. Complete portable schema, cache invalidation, evaluator retirement and original M3 acceptance remain open; independent review/full baseline/final-head CI are required. See [function declaration facts](docs/runtime/compiled-macro-declaration-functions.md).
+Selected portable function declaration fields now come from immutable source callable facts and reader metadata, with executing fixed/variadic/duplicate/alias/redefinition and file-position projections in both phases. The expanded pinned corpus preserves29 declaration observations,2 local observations and37 executed results. Complete portable schema, cache invalidation, evaluator retirement and original M3 acceptance remain open; independent review/full baseline/final-head CI are required. See [function declaration facts](docs/runtime/compiled-macro-declaration-functions.md).
+
+The unchanged 29-case corpus now has an executing comparison of all 18 selected
+declaration fields, in namespace snapshots and live catalogs, in both caller
+phases after GC. Provisional metadata, completed reader provenance, docstring
+precedence, declaration field presence and known direct-function return tags
+remain distinct from runtime values. See [declaration metadata](docs/runtime/compiled-macro-declaration-metadata.md).
+Independent review, full baseline and final-head CI remain required; complete
+schema/cache/evaluator/lifecycle acceptance and original M3 issues remain open.

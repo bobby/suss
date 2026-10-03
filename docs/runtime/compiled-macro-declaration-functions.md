@@ -9,16 +9,22 @@ reader metadata. Runtime closure storage does not supply these facts.
 Non-nil `:top-fn` merge data replaces the computed arity and argument-list group,
 retaining selected field presence, collection kinds and values; they may also
 replace `:fn-var`. A two-element entry vector can replace `:fn-var`; an empty map or sequence
-leaves the five computed fields absent,
+leaves the five computed fields absent, while retaining any corresponding raw
+symbol metadata,
 while nil uses normal callable facts. Truthy `:declared` metadata retains raw
 symbol metadata for these selected fields instead of publishing completed
-callable facts. This projection does not complete catalog timing or the entire
+callable facts. Fresh no-initializer declarations with truthy `:declared` and argument lists
+supply `:fn-var` and `:method-params` from the argument lists' second element.
+Their method data does not certify an executable source callable.
+This projection does not complete catalog timing or the entire
 portable metadata schema.
 
 Every original signature remains in `:method-params`, including duplicate fixed
 arities; each method is a vector of parameter symbols, with the rest parameter
 retained and `&` omitted. The containing value is a list. Emitted dispatch still
-executes the last duplicate body. A function alias has absent function fields.
+executes the last duplicate body. A function alias has absent function fields by default; explicit symbol
+metadata retains those fields as portable data. Scalars can likewise carry
+explicit function-looking metadata without an actual source callable.
 Old namespace snapshots retain old function declarations during redefinition;
 the provisional catalog entry has no completed function facts. A completed scalar
 replacement removes those fields.

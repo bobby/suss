@@ -155,8 +155,16 @@ fn compiled_source_macro_environment_keeps_snapshot_documents_separate_from_stag
                 let expected: Vec<u16> = if index == 1 { "first" } else { "second" }.encode_utf16().collect();
                 assert!(matches!(&items[1].kind, Kind::String(units) if units == &expected));
             }
-            let expected: Vec<u16> = if index == 0 { "first" } else { "second" }.encode_utf16().collect();
-            assert!(matches!(&items[2].kind, Kind::String(units) if units == &expected));
+            // Pinned parse-def installs raw symbol metadata provisionally;
+            // the explicit docstring is associated only after init analysis.
+            // Independently executed declaration-metadata-review-probe.clj
+            // observes nil during both initializers, then the completed doc.
+            if index < 2 {
+                assert!(matches!(items[2].kind, Kind::Nil));
+            } else {
+                let expected: Vec<u16> = "second".encode_utf16().collect();
+                assert!(matches!(&items[2].kind, Kind::String(units) if units == &expected));
+            }
             assert!(matches!(items[3].kind, Kind::Bool(completed) if completed == (index == 2)));
         }
     }

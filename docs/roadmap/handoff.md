@@ -12811,3 +12811,239 @@ Fresh final oracle55898 TERMINAL exit0:29/2 observations and37 actual Node
 results compare exactly; log /private/tmp/suss-pr159-review-oracle-frozen.log.
 Freeze reviewed source now, push significant fixes, run the exact-head required
 full workspace baseline and require final-head CI. No PR merge or issue closure.
+
+
+## PR159 reviewed final head; remaining declaration metadata — 2026-10-03
+
+Review pushed fcc9c0cf0237d5b887776252ba9580195aa63925 with significant selected
+:top-fn and :declared metadata fixes. Valid map/direct entry vector/empty seqable
+overrides preserve presence/values; actual bare nonempty list/set-of-entry
+fixtures fail the pinned analyzer with Map$Entry errors and remain errors.
+Original prefixes preserved; fresh29declaration/2local observations and37Node
+results match. Focused28/0/0 andPython118 pass.
+Required full baseline reviewer84885 TERMINAL0:1081/0/17existingignores across
+117groups at exact pushed head; /private/tmp/suss-pr159-review-full-baseline.log.
+Independent review has no remaining significant findings; worktree clean;
+reviewer explicitly released sole native slot. No evidence-only commit on159.
+CI37127695188 still pending, requiring exact-head success before readiness.
+
+Root's next isolated branch portable/m3-declaration-metadata starts atfcc9c0c.
+Draft full snapshot/catalog selected18-field comparison executes source macros
+that capture projections while returning42, preserving original source analysis
+timing and reader coordinates. No native implementation changed yet.
+Initial invocation tool script failed to parse before applying any file edits.
+Native13118 TERMINAL101,0/1: helper depended on unported Macro str. Revised
+helper transfers actual identifier Symbols; independent host printing projects
+only observed name/namespace slots, leaving every field's kind/data unchanged.
+Second native51906 LIVE, log
+/private/tmp/suss-declaration-metadata-identifier-projection.log.
+Shared target switched by cleaning only four workspace packages. Root currently
+owns sole heavy slot. Do not promote unknown or failing metadata observations.
+
+CI37127695188 completedSUCCESS at exactfcc9c0cf0237d5b887776252ba9580195aa63925. PR159 body updated and marked ready after independent review/full1081/0/17 baseline/exact-head CI. No merge or milestone closure.
+
+
+## Remaining declaration metadata projection — 2026-10-03
+
+Root owns isolated portable/m3-declaration-metadata at reviewed PR159 fcc9c0c.
+The pinned upstream submodule is now initialized at c4295f3; no oracle fixture,
+corpus, compiler Rust, core source, dependency or bootstrap image was changed.
+CLI projection adapts pinned analyzer parse :def 2022–2199/source-info745–756,
+with EPL notice and exact analyzer source hash adjacent to the implementation.
+It compares all18selected fields of all29original observations, both snapshot
+and catalog, in both Runtime/Macro caller phases after GC. Native canonical file
+provenance is asserted before primary path normalization. Reader collection kind,
+field presence and source analysis timing stay exact. Finite observer fuel100M
+fits up to12record projections of18field vectors; production default unchanged.
+Batches contain at most2observations within unchanged bridge bounds. Temporary
+primitive/loaded helper probes were removed after identifying fuel exhaustion.
+
+All earlier diagnostic jobs are terminal:51906/6379 exit101 before comparisons;
+83455/11484/75708 exit0, each1/0/0 for primitive/direct/loaded helper execution;
+64606/89396 exit101 on six-name observer;41700 exit101 explicitly reports all
+fuel consumed on the same six-name direct helper. This is bounded workload cost,
+not a demonstrated collection implementation defect.80142 exit101: helper1pass,
+whole comparison1fail on scalar-initializer's actual field differences. The
+100M bound executes the complete original observer; no unknown became success.
+Logs /private/tmp/suss-declaration-metadata-{nil-records,helper-probes,
+direct-helper,loaded-helper,env-helper,lookup-helper,long-helper,bounded-budget}.log.
+
+Initial CLI fields21216 TERMINAL101,0/1 after340.57s: test path normalization
+incorrectly required a list for known vector-valued top-fn arglists-meta. Test
+now accepts either kind without converting it. Batched60304 TERMINAL0,1/0/0
+in419.71s: all29cases/all18fields/both phases/GC match exactly. Logs
+/private/tmp/suss-declaration-metadata-{first-fields,batched-fields}.log.
+Then removed duplicate declaration metadata computation in the function field
+projection, added provenance notice and required case count29. Source formatting
+and git diff check pass. Initial final-graph command TERMINAL101 before running
+any native test because the core target was misnamed; corrected42570 LIVE is
+executing metadata/functions/analysis-graph/core-environment/source-tags groups.
+Log /private/tmp/suss-declaration-metadata-final-graph-corrected.log.
+Root retains sole heavy slot; no other native/JVM/Node job runs.
+
+Initial Python114tests/7errors was missing worktree submodule, not source evidence.
+After git submodule update --init --recursive (87805 TERMINAL0), Python45085
+TERMINAL0:118tests in5.074s. Logs /private/tmp/suss-declaration-metadata-python
+and-python-pinned.log. GitHub confirms146/147 merged;154–159 still ready/unmerged.
+Issue14 status comment5970333495 records159 independent fixes/full1081/0/17 and
+exact-head successful CI37127695188. No agent merge or milestone issue closure.
+
+Next: require final focused/full baseline, publish partial Refs #14 PR stacked
+on159, dispatch independent review and push significant fixes, require exact
+final-head CI. Remaining schema/self-local records, source/macro dependency
+cache invalidation, temporary evaluator retirement and original M3 lifecycle
+acceptance stay open. No inventory item is reclassified as complete.
+
+Final graph42570 TERMINAL101: analysis graph10pass/1fail, other targets not run.
+New metadata lookup reached the1MiB source snapshot guard before the existing
+UTF16 transport guard on an oversized nested local definition. Declaration-only
+prevalidation3866 TERMINAL101,0/1 did not cover the nested initializer. Added
+raw definition-form plus declaration validation before reader enrichment;
+61135 TERMINAL0,1/0/0 in5.01s restores the original error category and proves no
+runtime initializer effect, native macro call or guest allocation occurs. Logs
+/private/tmp/suss-declaration-metadata-{guard-order,definition-guard}.log.
+Freeze source for draft publication; all root native jobs terminal at this point.
+Final affected checks/full baseline/independent review/exact-head CI still pending.
+
+Published draft PR160 at7d961d350604df34610fd8777a112f2b8ab6bf9e, stacked on159,
+Refs#14. Root final-frozen25433 TERMINAL0:17/0/0 across5groups (graph11,
+complete core projection1, functions2, full29case/18field/both-phase metadata1,
+source tags2). Complete core projection54.69s; full metadata394.85s after
+metadata lookup deduplication. Log /private/tmp/suss-declaration-metadata-final-frozen.log.
+Initial-head CI37132493529 remains pending; it is not final review evidence.
+Independent reviewer /root/review_pr160 found additional selected metadata
+precedence/override cases outside the original corpus and is responsible for
+executing regressions and significant fixes, followed by required full baseline
+at pushed final head. Root releases the sole native/JVM/Node/Cargo slot now;
+all root native handles are terminal. Reviewer owns this worktree/shared target.
+This handoff evidence is uncommitted for inclusion in the review fix commit.
+No PR merge or issue closure; PR160 remains draft pending review/final checks.
+
+
+## PR160 independent review corrections — 2026-10-03
+
+Pinned parse-def/source-info review found selected-field gaps beyond the retained
+29-case corpus. Actual primary observations show dynamic functions infer return
+number independently of dynamic var-reference any; false declaration hints fall
+through to initializer/return inference. Raw :name overrides default qualified
+name. Provisional :meta retains original presence/data; completed :meta omits
+:test. The canonical suss.core/cljs.core declaration and completed metadata file
+marker is cljs/core.cljs. Non-nil :top-fn overlays all18selected fields, followed
+by computed return-tag association. CLI-only corrections preserve immutable
+record identity, per-form/graph/key/occurrence bounds and callback semantics.
+No compiler/core/reader Rust, dependency, bootstrap image or fingerprint changed.
+
+Independent original development probe is retained at
+ tests/oracle/declaration-metadata-review-probe.clj. From tests/oracle, run
+ CLJ_CONFIG=/tmp/suss-oracle-clojure-config
+ CLJ_CACHE=/tmp/suss-oracle-clojure-cache
+ clojure -Srepro -M declaration-metadata-review-probe.clj
+with both environment assignments on the command. Frozen primary45212 TERMINAL0
+asserts five completed records, provisional :meta and core file marker.
+Log /private/tmp/suss-pr160-review-primary-frozen.log. Original29-case corpus,
+original source coordinates, observations and Node results remain unchanged.
+
+Native focused regression executes all seven policies in both caller phases,
+with GC. 75603 TERMINAL101 missing retained core;64894 TERMINAL101 wrong current
+namespace; corrected original-head49679 TERMINAL101 exposes actual dynamic
+return any versus number. First corrections76095 TERMINAL0,1/0/0 in11.56s.
+6612 TERMINAL101 exposes actual core file nil/nil. 68742 TERMINAL101 used the
+wrong namespace before canonical alias correction. 9470/61909 TERMINAL101
+hit the unchanged65536-node guard because the fixture replayed retained core
+into an already provisioned Macro session. Configurable sessions now import
+core once, like the original whole-corpus test.97120 TERMINAL0,34.81s.
+Removed speculative compiler metadata-map sharing change; final95317 TERMINAL0,
+1/0/0 in34.44s. No bounds were raised, no metadata field omitted and no failure
+was changed to success without executing the corrected artifact.
+Logs /private/tmp/suss-pr160-review-native-*.log. Early primary45694/37281 exit1
+were missing cljs.core macro namespace;56042 exit1 emitted actual five records
+then encountered a trailing script delimiter. Corrected68595 exit0, followed by
+asserting retained frozen probe45212 exit0.
+
+Affected frozen46664 TERMINAL0:30/0/0 across5groups (CLIlib14,graph11,fullcore1,
+function declarations2,source tags2); fullcore54.97s remains bounded in both
+caller phases. /private/tmp/suss-pr160-review-focused.log. Python74958 TERMINAL0:
+118tests5.405s; /private/tmp/suss-pr160-review-python.log. Rustfmt2024 and git diff
+check pass. Review source is frozen now; push significant fixes, then exact-head
+cargo test --workspace --locked -- --test-threads=2 and final-head CI are still
+required. No merge or issue closure. Complete declaration/AST schema, older
+repeated-declare catalog timing, self-local facts, cache/evaluator/lifecycle and
+original M3 acceptance remain open. Reviewer retains sole heavy slot until full
+baseline terminates and explicitly releases it.
+
+
+PR160 first exact-pushed review head657b1f12634b5d08c9d799b63d2a7091a8c0250f:
+required full baseline16790 TERMINAL101,144passed/1failed/0ignored across28groups
+before stopping. Original29case/all18field/bothphase metadata target passed
+2/0/0 in399.06s, including new seven-policy regression. The failed older
+source-environment test expected explicit definition docstrings in provisional
+catalog entries. Pinned parse-def installs only raw symbol metadata there; this
+PR intentionally publishes explicit docstrings after initializer analysis.
+No production-source correction was needed. Log
+/private/tmp/suss-pr160-review-full-baseline.log retains the failure.
+
+Added independent actual pinned snapshot/catalog document observation to retained
+probe:72924 TERMINAL0 asserts [[false nil nil] [true "first" nil]
+[true "second" "second"]]. Log
+/private/tmp/suss-pr160-review-primary-documents-final.log. Earlier23038 reran the
+previous seven-case probe after a path error prevented adding the new cases;
+its exit0 is not snapshot-document proof. Corrected only the stale provisional
+catalog doc expectation; completed/snapshot docs and analysis-completed timing
+remain asserted. Existing unchanged29case corpus already proves provisional
+raw symbol-doc retention and completed explicit-doc precedence.
+Focused source-environment98139 TERMINAL0:3/0/0 in10.20s, both caller phases and
+GC. /private/tmp/suss-pr160-review-source-documents.log. New push requires fresh
+exact-head full baseline and CI. Previous657b1f1 CI37134040734 is not final proof.
+Compiler source/images/fingerprints and graph bounds remain unchanged. No merge,
+issue closure or milestone completion. Reviewer still owns sole heavy slot.
+
+
+PR160 intermediate e009c1e861d4fcc09da445ad23093557e149d93b frozen required
+full91488 TERMINAL exit0:1083passed/0failed/17existingignores across118groups.
+Log /private/tmp/suss-pr160-review-full-final.log. No slot overlap or restart.
+This is intermediate proof: subsequent independent review found two further
+selected-function-metadata gaps, so it is not final readiness evidence.
+
+Pinned parse-def first merges all raw symbol metadata. Explicit six function
+fields must survive scalar and provisional entries. Empty :top-fn supplies no
+computed arity group, so raw five arity/argument fields survive; fn-var defaults
+still override its raw value. Normal source callables replace the six-field
+raw group with computed defaults. Source-callable records remain a distinct
+Suss extension; user-supplied function-looking metadata never creates one or
+changes native callable arity. Primary81481 TERMINAL0 asserts scalar/empty/
+normal/provisional four cases, preserving the upstream stale-function warning.
+Native29070 TERMINAL101,6.40s shows all six scalar fields absent. Fixed18556
+TERMINAL0,1/0/0 in10.89s, both caller phases/GC plus actual scalar7 and arity1
+function calls. Logs /private/tmp/suss-pr160-review-{primary-raw-functions,
+native-raw-before,native-raw-fixed}.log.
+
+Fresh no-initializer declared+arglists records also associate declared=true,
+fn-var=true and method-params=(second arglists), even without a source callable.
+Actual primary64783 TERMINAL0 asserts quoted-list, vector and map-entry values
+with exact method-params kinds, including overriding raw false/old metadata.
+Native91946 TERMINAL101,7.05s confirms the missing computed overlay. CLI-only
+bounded reader-data derivation now applies it to completed records; it stays
+off for initializer-bearing truthy-declared provisional records. Fixed90912
+TERMINAL0,1/0/0 in12.43s, with all three exact data kinds and source-callable
+absence after GC in both phases. No function signatures are fabricated from
+portable metadata. Logs /private/tmp/suss-pr160-review-{primary-declared-functions,
+native-declared-before,native-declared-fixed}.log. Retained development probe
+now asserts the original seven policies, three document observations, four raw
+function metadata cases and three fresh declaration cases. Original29case
+corpus/source coordinates/Node results remain unchanged.
+
+Final affected26999 TERMINAL0:33/0/0 across6groups (CLIlib14,graph11,fullcore1,
+function declarations2,source environment3,source tags2); fullcore56.11s fits
+unchanged limits. Final small metadata filter70929 TERMINAL0:2/0/0 in34.59s;
+1original whole-corpus test excluded by the explicit metadata name filter and
+required unfiltered in next full baseline. These combine35/0/0 across7groups.
+Logs /private/tmp/suss-pr160-review-{final-affected,final-small-metadata}.log.
+Rustfmt2024 changed source/new test only; existing source-environment test kept
+unrelated formatting intact. Git diff check passes. Compiler/core/reader Rust,
+dependencies, images/fingerprints, all form/graph/key/occurrence limits unchanged.
+Freeze source, push significant corrections and require exact-new-head unfiltered
+cargo test --workspace --locked -- --test-threads=2 plus final-head CI. No merge,
+issue closure or milestone completion. Repeated-declare replacement, older
+source-AST inference, arbitrary schema/shapes, self-local facts, cache/evaluator
+retirement and M3 lifecycle acceptance remain separately open. Reviewer retains
+sole heavy slot through final full baseline and explicit release.
