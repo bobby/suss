@@ -41,6 +41,27 @@
     ([x y & more] (observe-locals "self-rest-body" [self x y more]) y)))
 (def after-named (observe "after-named" [named]))
 
+(def ^{:arglists '([x] ^{:doc "rest declaration"} [x & more])} annotated
+  (fn ([x] x) ([x & more] x)))
+(def after-arglists (observe "after-arglists" [annotated]))
+(def ^{:arglists {:arity [x]}} mapped-arglists (fn [x] x))
+(def after-mapped-arglists (observe "after-mapped-arglists" [mapped-arglists]))
+
+(def ^{:top-fn {}} empty-top-fn (fn [x] x))
+(def after-empty-top-fn (observe "after-empty-top-fn" [empty-top-fn]))
+(def ^{:top-fn {:variadic? false :max-fixed-arity 1 :method-params [[override]] :arglists [[override]] :arglists-meta [nil]}} overridden (fn [x] x))
+(def after-overridden (observe "after-overridden" [overridden]))
+(def ^{:declared true :arglists '([given])} declared-meta (fn [x] x))
+(def after-declared-meta (observe "after-declared-meta" [declared-meta]))
+
+(def ^{:top-fn nil} nil-top-fn (fn [x] x))
+(def after-nil-top-fn (observe "after-nil-top-fn" [nil-top-fn]))
+
+(def ^{:top-fn [:fn-var false]} entry-top-fn (fn [x] x))
+(def after-entry-top-fn (observe "after-entry-top-fn" [entry-top-fn]))
+(def ^{:top-fn ()} empty-seq-top-fn (fn [x] x))
+(def after-empty-seq-top-fn (observe "after-empty-seq-top-fn" [empty-seq-top-fn]))
+
 (defn -main []
   (println (.stringify js/JSON
             #js [initial scalar after-scalar (fixed 11) after-fixed
@@ -49,5 +70,6 @@
                  after-redefinition nested-wrapper nested-first nested-second
                  after-nested after-declare (declared 16) after-declared-definition
                  (duplicate 17) after-duplicate (named 18) (named 18 19 20)
-                 after-named])))
+                 after-named after-arglists (annotated 21) (annotated 22 23)
+                 after-mapped-arglists (mapped-arglists 24) after-empty-top-fn after-overridden after-declared-meta after-nil-top-fn after-entry-top-fn after-empty-seq-top-fn])))
 (set! *main-cli-fn* -main)

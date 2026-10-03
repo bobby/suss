@@ -14,12 +14,13 @@ LABELS = ['initial', 'scalar-initializer', 'after-scalar', 'fixed-body',
           'after-multiple', 'after-alias', 'hinted-initializer', 'after-hinted',
           'scalar-redefinition', 'after-redefinition', 'nested-after-first',
           'nested-second-initializer', 'nested-after-second', 'after-nested',
-          'after-declare', 'after-declared-definition', 'after-duplicate', 'after-named']
+          'after-declare', 'after-declared-definition', 'after-duplicate', 'after-named',
+          'after-arglists', 'after-mapped-arglists', 'after-empty-top-fn', 'after-overridden', 'after-declared-meta', 'after-nil-top-fn', 'after-entry-top-fn', 'after-empty-seq-top-fn']
 LOCAL_KEYS = ['name', 'local', 'tag', 'fn-var', 'variadic?', 'max-fixed-arity',
               'method-params', 'arglists']
 LOCAL_LABELS = ['self-fixed-body', 'self-rest-body']
 RESULT = [42, 42, 42, 11, 42, 12, 13, 42, 15, 7, 42, 42, 42, 42,
-          42, 1, 42, 42, 42, 16, 42, 2, 42, 18, 19, 42]
+          42, 1, 42, 42, 42, 16, 42, 2, 42, 18, 19, 42, 42, 21, 22, 42, 24, 42, 42, 42, 42, 42, 42]
 
 
 def parse(text):
@@ -100,6 +101,17 @@ def validate(row, actual=False, local=False):
                     for pair in field[2][1]:
                         if pair[0] == ['keyword', ':file']:
                             pair[1] = normalize_file(pair[1], actual)
+                if key == 'arglists-meta' and field[1]:
+                    if type(field[2]) is not list or field[2][0] not in ('seq', 'vector'):
+                        raise ValueError('expected argument-list metadata sequence or vector')
+                    for metadata in field[2][1]:
+                        if metadata is None:
+                            continue
+                        if type(metadata) is not list or metadata[0] != 'map':
+                            raise ValueError('expected argument-list metadata map')
+                        for pair in metadata[1]:
+                            if pair[0] == ['keyword', ':file']:
+                                pair[1] = normalize_file(pair[1], actual)
         if len(set(current)) != len(current):
             raise ValueError('duplicate declaration name')
         names.append(current)
@@ -130,7 +142,7 @@ def main():
     result = parse((ROOT / 'tests/oracle/out/declaration-environment-result.json').read_text())
     if type(result) is not list or any(type(n) is not int for n in result) or result != RESULT:
         raise ValueError('unexpected declaration oracle execution')
-    print('21 fresh pinned snapshot/catalog and 2 self/local observations; 26 executed results match exactly; complete native schema remains pending')
+    print('29 fresh pinned snapshot/catalog and 2 self/local observations; 37 executed results match exactly; complete native schema remains pending')
 
 
 if __name__ == '__main__':
