@@ -272,3 +272,11 @@ Java/Node unavailable on PATH;66 compiler and83 affected native tests pass.
 Final full baseline, independent PR review and exact-head CI remain required.
 User macro cache invalidation, remaining schema, temporary evaluator removal and
 lifecycle acceptance remain open; this closes neither #14 nor M3.
+
+The working [native module cache](docs/runtime/native-module-cache.md) reuses only
+compiled code with exact Wasm bytes and engine identity. Source analysis, macro
+effects, instance creation and initialization still run normally. Focused and
+affected validation passes70 tests with no failures or ignores; full baseline,
+independent review and final-head CI remain required. Source/macro graph
+cache keys and the other original M3 gates remain open; this is partial issue14
+progress.
