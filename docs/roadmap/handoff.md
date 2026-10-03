@@ -13752,3 +13752,35 @@ Original eight command/display regressions remain unchanged. Rustfmt2024 new
 tests and git diff check pass. Compiler fingerprints unchanged by final CLI-only
 refinement; both regenerated manifests remain current. Next: push review fixes,
 freeze exact pushed head and run required full workspace baseline plus exact CI.
+
+## Independent PR166 review — emitted artifact cache
+
+Reviewed source/effect ordering, IR/key coverage, immutable macro dependency
+snapshots, declaration rollback, unknown provenance, bounds and reset. Original
+four compiler and four native cache regressions remain unchanged. Fixed a small
+rejection-path accounting bug: removing a corrupted sole entry could underflow
+its byte counter after size corruption, and rejecting its runtime ABI left
+entry/byte counts stale. Entries now retain their accounted size and release it
+on either rejection. New unit regression rejects digest-corrupt and ABI-invalid
+sole entries, checks zero counts and executes recovery/reuse.
+
+Compiler focus14829 TERMINAL0:5pass/0fail/0ignored0.01s;
+/private/tmp/suss-pr166-review-unit.log. First native12785 TERMINAL101:1pass/4fail
+0.16s, all failures were the expected stale compiler fingerprint gate before
+regeneration. Regenerated both phase manifests37069 TERMINAL0; emitted bootstrap
+Wasm unchanged. Native14871 TERMINAL0:5pass/0fail/0ignored2.90s;
+/private/tmp/suss-pr166-review-native-final.log. Added executing missing-dependency
+reload discovery failure preserves the old graph/cache hit, then newly available
+dependency changes provenance despite identical expansion, and reset discards
+cache and macro bindings. Original four executing expectations remain intact.
+Java-free57069 TERMINAL0: both phase images reproduced byte-for-byte and current
+compiler identities verified; four bootstrap tests passed (see
+/private/tmp/suss-pr166-review-javafree.log for duration).
+
+Commands used explicit CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and
+CARGO_BUILD_JOBS=2; no RUSTFLAGS. Rustfmt2024 and git diff check pass. This is
+emission reuse, not analysis/expansion caching or published artifact validation.
+Full M3, evaluator retirement, component/AOT and lifecycle gates remain open.
+Next: freeze pushed review head, run cargo test --workspace --locked --
+--test-threads=2 and require exact final-head CI before readiness. No issue closure
+or merge is claimed from focused evidence.

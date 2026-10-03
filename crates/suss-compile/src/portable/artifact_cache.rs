@@ -140,6 +140,46 @@ mod tests {
         assert_eq!(cache.stats().hits, 0);
     }
     #[test]
+    fn source_cache_rejected_single_entry_releases_accounting_and_recovers() {
+        let mut cache = ArtifactCache::default();
+        let function = graph("42");
+        emit(&mut cache, &function, "42", Some(&[]));
+        cache.entries.front_mut().unwrap().wasm.push(0);
+        assert!(
+            cache
+                .emit(
+                    &function,
+                    Phase::Runtime,
+                    &[],
+                    Some(&SourceOrigin::new("42", None)),
+                    Some(&[])
+                )
+                .is_err()
+        );
+        assert_eq!(cache.stats().bytes, 0);
+        assert_eq!(cache.stats().entries, 0);
+        let original = emit(&mut cache, &function, "42", Some(&[]));
+        let entry = cache.entries.front_mut().unwrap();
+        entry.wasm = vec![0];
+        entry.digest = bootstrap::sha256(&entry.wasm);
+        assert!(
+            cache
+                .emit(
+                    &function,
+                    Phase::Runtime,
+                    &[],
+                    Some(&SourceOrigin::new("42", None)),
+                    Some(&[])
+                )
+                .is_err()
+        );
+        assert_eq!(cache.stats().bytes, 0);
+        assert_eq!(cache.stats().entries, 0);
+        assert_eq!(emit(&mut cache, &function, "42", Some(&[])), original);
+        assert_eq!(emit(&mut cache, &function, "42", Some(&[])), original);
+        assert_eq!(cache.stats().hits, 1);
+    }
+    #[test]
     fn source_cache_eviction_keeps_memory_and_entry_counts_bounded() {
         let mut cache = ArtifactCache::default();
         let function = graph("42");
@@ -162,6 +202,7 @@ struct Entry {
     key: [u8; 32],
     digest: String,
     wasm: Vec<u8>,
+    retained_bytes: usize,
 }
 #[derive(Default)]
 pub struct ArtifactCache {
@@ -242,21 +283,24 @@ impl ArtifactCache {
         if let Some(index) = self.entries.iter().position(|entry| entry.key == key) {
             let entry = self.entries.remove(index).unwrap();
             if bootstrap::sha256(&entry.wasm) != entry.digest {
-                self.stats.bytes -= entry.wasm.len();
+                self.stats.bytes -= entry.retained_bytes;
                 self.stats.entries = self.entries.len();
                 return Err(Diagnostic {
                     span: function.span.clone(),
                     message: "Cached source artifact integrity mismatch".into(),
                 });
             }
-            crate::runtime_abi::verify_artifact(
+            if let Err(message) = crate::runtime_abi::verify_artifact(
                 &entry.wasm,
                 &crate::runtime_abi::Manifest::default(),
-            )
-            .map_err(|message| Diagnostic {
-                span: function.span.clone(),
-                message,
-            })?;
+            ) {
+                self.stats.bytes -= entry.retained_bytes;
+                self.stats.entries = self.entries.len();
+                return Err(Diagnostic {
+                    span: function.span.clone(),
+                    message,
+                });
+            }
             let wasm = entry.wasm.clone();
             self.entries.push_back(entry);
             self.stats.hits += 1;
@@ -267,12 +311,13 @@ impl ArtifactCache {
         if wasm.len() <= MAX_BYTES {
             while self.entries.len() >= MAX_ENTRIES || self.stats.bytes + wasm.len() > MAX_BYTES {
                 let old = self.entries.pop_front().unwrap();
-                self.stats.bytes -= old.wasm.len();
+                self.stats.bytes -= old.retained_bytes;
             }
             self.stats.bytes += wasm.len();
             self.entries.push_back(Entry {
                 key,
                 digest: bootstrap::sha256(&wasm),
+                retained_bytes: wasm.len(),
                 wasm: wasm.clone(),
             });
             self.stats.entries = self.entries.len();

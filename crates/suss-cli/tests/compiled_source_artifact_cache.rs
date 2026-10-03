@@ -210,3 +210,55 @@ fn source_artifact_cache_restores_declaration_provenance_after_script_compile_er
     );
     assert_eq!(macros.artifact_cache_stats().hits, before.hits + 1);
 }
+
+#[test]
+fn source_artifact_cache_tracks_new_dependencies_failed_discovery_and_reset() {
+    let project = tempfile::tempdir().unwrap();
+    let source = project.path().join("tools.sus");
+    std::fs::write(&source, "(ns tools) (defmacro answer [] 42)").unwrap();
+    let mut runtime = Session::with_options(SessionOptions {
+        source_paths: vec![project.path().to_owned()],
+        ..Default::default()
+    })
+    .unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    let import = "(ns user (:require-macros [tools :as t]))";
+    let reload = "(ns user (:require-macros ^{:reload :reload-all} [tools :as t]))";
+    runtime.eval_with_macros(import, &mut macros).unwrap();
+    assert_eq!(
+        number(&mut runtime, &mut macros, "(t/answer)"),
+        42.0f64.to_bits()
+    );
+    std::fs::write(
+        &source,
+        "(ns tools (:require [new-helper :as h])) (defmacro answer [] (+ 40 h/bias))",
+    )
+    .unwrap();
+    assert!(runtime.eval_with_macros(reload, &mut macros).is_err());
+    let before = macros.artifact_cache_stats();
+    assert_eq!(
+        number(&mut runtime, &mut macros, "(t/answer)"),
+        42.0f64.to_bits()
+    );
+    assert_eq!(macros.artifact_cache_stats().hits, before.hits + 1);
+    std::fs::write(
+        project.path().join("new_helper.sus"),
+        "(ns new-helper) (def bias 2)",
+    )
+    .unwrap();
+    runtime.eval_with_macros(reload, &mut macros).unwrap();
+    let before = macros.artifact_cache_stats();
+    assert_eq!(
+        number(&mut runtime, &mut macros, "(t/answer)"),
+        42.0f64.to_bits()
+    );
+    assert_eq!(macros.artifact_cache_stats().misses, before.misses + 1);
+    suss_cli::portable_repl::reset_compiled(&mut runtime, &mut macros).unwrap();
+    assert_eq!(macros.artifact_cache_stats(), Default::default());
+    assert!(runtime.eval_with_macros("(t/answer)", &mut macros).is_err());
+    runtime.eval_with_macros(import, &mut macros).unwrap();
+    assert_eq!(
+        number(&mut runtime, &mut macros, "(t/answer)"),
+        42.0f64.to_bits()
+    );
+}
