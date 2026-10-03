@@ -267,6 +267,23 @@ impl Lowerer {
                 Type::Value,
                 hir.span.clone(),
             ),
+            Expression::GlobalOrFallback { global, fallback } => {
+                let condition = self.emit(Operation::GlobalBound(global.clone()), Type::Bool, hir.span.clone());
+                let result = self.value(Type::Value, hir.span.clone());
+                let bound = self.block(Vec::new());
+                let unbound = self.block(Vec::new());
+                let join = self.block(vec![result]);
+                self.function.blocks[self.current].terminator = Terminator::Branch {
+                    condition, consequent: bound, alternative: unbound,
+                };
+                for (block, cell) in [(bound, global), (unbound, fallback)] {
+                    self.current = block;
+                    let value = self.emit(Operation::GlobalRead(cell.clone()), Type::Value, hir.span.clone());
+                    self.function.blocks[self.current].terminator = Terminator::Jump { target: join, arguments: vec![value] };
+                }
+                self.current = join;
+                result
+            }
             Expression::Definition {
                 global,
                 initializer,

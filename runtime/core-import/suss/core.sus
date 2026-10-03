@@ -4492,6 +4492,262 @@
       (if vals
         (recur ntcoll (first vals) (next vals))
         ntcoll)))))
+
+(defprotocol IPending
+  "Protocol for types which can have a deferred realization. Currently only
+  implemented by Delay and LazySeq."
+  (^boolean -realized? [x]
+    "Returns true if a value for x has been produced, false otherwise."))
+
+(deftype LazySeq [meta ^:mutable fn ^:mutable s ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (sval [coll]
+    (if (nil? fn)
+      s
+      (do
+        (set! s (fn))
+        (set! fn nil)
+        s)))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  IPending
+  (-realized? [coll]
+    (not fn))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (LazySeq. new-meta (fn* [] (-seq coll)) nil __hash)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ISeq
+  (-first [coll]
+    (-seq coll)
+    (when-not (nil? s)
+      (first s)))
+  (-rest [coll]
+    (-seq coll)
+    (if-not (nil? s)
+      (rest s)
+      ()))
+
+  INext
+  (-next [coll]
+    (-seq coll)
+    (when-not (nil? s)
+      (next s)))
+
+  ICollection
+  (-conj [coll o] (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll]
+    ;; MAYBE FIXME: :lite-mode testing uncovered a very old bug, empty on seq
+    ;; should discard the metadata, we changed the behavior in false for now
+    ;; to avoid a breaking change
+    (if-not false
+      (-with-meta (.-EMPTY List) meta)
+      (.-EMPTY List)))
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
+
+  ISeqable
+  (-seq [coll]
+    (.sval coll)
+    (when-not (nil? s)
+      (loop [ls s]
+        (if (instance? LazySeq ls)
+          (recur (.sval ls))
+          (do (set! s ls)
+              (seq s))))))
+
+  IReduce
+  (-reduce [coll f] (seq-reduce f coll))
+  (-reduce [coll f start] (seq-reduce f start coll)))
+
+(deftype ChunkedCons [chunk more meta ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (ChunkedCons. chunk more new-meta __hash)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  ISeqable
+  (-seq [coll] coll)
+
+  ASeq
+  ISeq
+  (-first [coll] (-nth chunk 0))
+  (-rest [coll]
+    (if (> (-count chunk) 1)
+      (ChunkedCons. (-drop-first chunk) more nil nil)
+      (if (nil? more)
+        ()
+        more)))
+
+  INext
+  (-next [coll]
+    (if (> (-count chunk) 1)
+      (ChunkedCons. (-drop-first chunk) more nil nil)
+      (when-not (nil? more)
+        (-seq more))))
+
+  IChunkedSeq
+  (-chunked-first [coll] chunk)
+  (-chunked-rest [coll]
+    (if (nil? more)
+      ()
+      more))
+
+  IChunkedNext
+  (-chunked-next [coll]
+    (if (nil? more)
+      nil
+      more))
+
+  ICollection
+  (-conj [this o]
+    (cons o this))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-ordered-coll __hash)))
+
+(def chunk-cons (fn [chunk rest]
+  (if (zero? (-count chunk))
+    rest
+    (ChunkedCons. chunk rest nil nil))))
+
+(def chunk-first (fn [s]
+  (-chunked-first s)))
+
+(def chunk-rest (fn [s]
+  (-chunked-rest s)))
+
+(def chunked-seq?
+  "Return true if x satisfies IChunkedSeq."
+  (fn [x]
+  (if-not false
+    (implements? IChunkedSeq x)
+    false)))
+
+(def concat
+  "Returns a lazy seq representing the concatenation of the elements in the supplied colls."
+  (fn ([] (new LazySeq nil (fn* [] nil) nil nil))
+  ([x] (new LazySeq nil (fn* [] x) nil nil))
+  ([x y]
+    (new LazySeq nil (fn* [] (let [s (seq x)]
+        (if s
+          (if (chunked-seq? s)
+            (chunk-cons (chunk-first s) (concat (chunk-rest s) y))
+            (cons (first s) (concat (rest s) y)))
+          y))) nil nil))
+  ([x y & zs]
+     (let [cat (fn cat [xys zs]
+                 (new LazySeq nil (fn* [] (let [xys (seq xys)]
+                     (if xys
+                       (if (chunked-seq? xys)
+                         (chunk-cons (chunk-first xys)
+                                     (cat (chunk-rest xys) zs))
+                         (cons (first xys) (cat (rest xys) zs)))
+                       (when zs
+                         (cat (first zs) (next zs)))))) nil nil))]
+       (cat (concat x y) zs)))))
+
+(def ^array into-array "Returns an array with components set to the values in aseq. Optional type
+  argument accepted for compatibility with Clojure."
+  (fn ([aseq]
+     (into-array nil aseq))
+  ([type aseq]
+     (reduce (fn [a x] (.push a x) a) (array) aseq))))
+
+(def vec "Creates a new vector containing the contents of coll. JavaScript arrays
+  will be aliased and should not be modified."
+  (fn [coll]
+  (cond
+    (map-entry? coll)
+    [(key coll) (val coll)]
+
+    (vector? coll)
+    (with-meta coll nil)
+
+    (array? coll)
+    (.fromArray PersistentVector coll true)
+
+    :else
+    (-persistent!
+      (reduce -conj!
+        (-as-transient (.-EMPTY PersistentVector))
+        coll)))))
+
+(def hash-map "keyval => key val
+  Returns a new hash map with supplied mappings."
+  (fn [& keyvals]
+  (loop [in (seq keyvals), out (transient (.-EMPTY PersistentHashMap))]
+    (if in
+      (let [in' (next in)]
+        (if (nil? in')
+          (throw (suss.bootstrap/error (str_ "No value supplied for key: " (first in))))
+          (recur (next in') (assoc! out (first in) (first in')) )))
+      (persistent! out)))))
+
+(def array-map "keyval => key val
+  Returns a new array map with supplied mappings."
+  (fn [& keyvals]
+  (let [arr (if (and (instance? IndexedSeq keyvals) (zero? (.-i keyvals)))
+              (.-arr keyvals)
+              (into-array keyvals))]
+    (if (== 1 (bit-and (alength arr) 1))
+      (throw (suss.bootstrap/error (str_ "No value supplied for key: " (aget arr (- (alength arr) 1)))))
+      (.createAsIfByAssoc PersistentArrayMap arr)))))
+
+(def seq? "Return true if s satisfies ISeq"
+  (fn [s]
+  (if (nil? s)
+    false
+    (satisfies? ISeq s))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

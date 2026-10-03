@@ -1,0 +1,1 @@
+(defmacro quoted-vector [x xs] `(quote [~x ~@xs]))

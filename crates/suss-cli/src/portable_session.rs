@@ -588,6 +588,36 @@ impl Session {
         restore_dynamic(&mut scope, self.runtime, &checkpoint)?;
         outcome
     }
+    /// A single fueled operation inside the normal inspection/root/exception
+    /// scope. Compiler-data decoding may call a captured source closure without
+    /// escaping raw references or replenishing fuel per sequence element.
+    pub(crate) fn data_inspect_calls<R>(
+        &mut self,
+        value: &SessionValue,
+        function: &SessionValue,
+        f: impl FnOnce(
+            StoreContextMut<'_, ()>,
+            Val,
+            wasmtime::Func,
+            wasmtime::Func,
+            Val,
+        ) -> wasmtime::Result<R>,
+    ) -> Result<R, SessionError> {
+        self.check(function)?;
+        self.budget()?;
+        let args_new = self
+            .runtime
+            .get_func(&mut self.store, "args-new")
+            .expect("runtime args");
+        let invoke = self
+            .runtime
+            .get_func(&mut self.store, "invoke")
+            .expect("runtime invoke");
+        self.inspect(value, |mut store, value| {
+            let function = Val::AnyRef(Some(function.rooted(&mut store)));
+            f(store, value, args_new, invoke, function)
+        })
+    }
     fn budget(&mut self) -> Result<(), SessionError> {
         self.store
             .set_fuel(self.options.fuel_per_operation)

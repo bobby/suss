@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "36193017fe019b02e21816d32646a7e20ce4a91901abfcddfecdfb9b908cfb22",
+  "replacement": "(def hash-map \"keyval => key val\n  Returns a new hash map with supplied mappings.\"\n  (fn [& keyvals]\n  (loop [in (seq keyvals), out (transient (.-EMPTY PersistentHashMap))]\n    (if in\n      (let [in' (next in)]\n        (if (nil? in')\n          (throw (suss.bootstrap/error (str_ \"No value supplied for key: \" (first in))))\n          (recur (next in') (assoc! out (first in) (first in')) )))\n      (persistent! out)))))",
+  "rationale": "Retain the whole pinned constructor as a compiled syntax quote dependency. Expand defn to def/fn, preserving source name metadata, docstring, signatures and every body branch. This is in-progress source porting, not complete public constructor or M3 acceptance. Replace host Error construction with the existing shared language-error adapter. The source str_ printing dependency is retained and unfinished; missing-value message compatibility is not yet certified."
+}

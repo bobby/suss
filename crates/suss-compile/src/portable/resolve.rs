@@ -129,6 +129,8 @@ pub enum Binding {
     },
     Cell(Global),
     InternalCell(Global),
+    /// Unbound reader reservation sharing a future public definition identity.
+    ReaderCell(Global),
     Arithmetic {
         global: Global,
         operator: Arithmetic,
@@ -153,6 +155,7 @@ impl Binding {
             | Self::Core { global: g, .. }
             | Self::Cell(g)
             | Self::InternalCell(g)
+            | Self::ReaderCell(g)
             | Self::BootstrapLoop(g)
             | Self::BootstrapLet(g)
             | Self::BootstrapFn(g)
@@ -225,6 +228,7 @@ pub struct NamespaceScope<'a> {
 /// Configuration is checked before mutation. Source analysis borrows it immutably.
 #[derive(Debug, Clone)]
 pub struct Environment {
+    pub(crate) reader_state: super::syntax_quote::ReaderState,
     namespaces: BTreeSet<(Phase, String)>,
     bindings: BTreeMap<Global, Binding>,
     definitions: BTreeMap<Global, DefinitionInfo>,
@@ -286,6 +290,7 @@ impl Environment {
     pub fn new(namespace: &str) -> Result<Self, Diagnostic> {
         valid_namespace(namespace)?;
         let mut env = Self {
+            reader_state: super::syntax_quote::ReaderState::default(),
             namespaces: BTreeSet::new(),
             bindings: BTreeMap::new(),
             definitions: BTreeMap::new(),
@@ -486,7 +491,7 @@ impl Environment {
         self.bindings
             .values()
             .filter_map(|binding| match binding {
-                Binding::Cell(global) | Binding::InternalCell(global) => Some(global.clone()),
+                Binding::Cell(global) | Binding::InternalCell(global) | Binding::ReaderCell(global) => Some(global.clone()),
                 _ => None,
             })
             .chain(self.materialized_bootstrap.iter().cloned())
@@ -592,6 +597,21 @@ impl Environment {
             .insert(global.clone(), Binding::Cell(global.clone()));
         self.source_changed();
         Ok(global)
+    }
+    pub(crate) fn is_hidden_cell(&self, phase: Phase, namespace: &str, name: &str) -> bool {
+        let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
+        matches!(self.bindings.get(&global), Some(Binding::ReaderCell(_) | Binding::InternalCell(_)))
+    }
+    pub(crate) fn reader_sequence_cells(&mut self, phase: Phase) -> (Global, Global, bool) {
+        let global = Global { phase, namespace: "suss.core".into(), name: "sequence".into() };
+        let fallback = Global { phase, namespace: "suss.internal.reader".into(), name: "sequence".into() };
+        self.bindings.entry(global.clone()).or_insert_with(|| Binding::ReaderCell(global.clone()));
+        let fresh = !self.bindings.contains_key(&fallback);
+        if fresh {
+            self.bindings.insert(fallback.clone(), Binding::InternalCell(fallback.clone()));
+            self.source_changed();
+        }
+        (global, fallback, fresh)
     }
     pub(crate) fn protocol_key(&mut self, protocol: &Global, method: &str, arity: usize) -> Global {
         let identity = format!(
@@ -1253,7 +1273,7 @@ impl Environment {
         };
         self.bindings
             .get(&global)
-            .filter(|binding| !matches!(binding, Binding::InternalCell(_)))
+            .filter(|binding| !matches!(binding, Binding::InternalCell(_) | Binding::ReaderCell(_)))
             .cloned()
             .ok_or_else(|| Diagnostic {
                 span,

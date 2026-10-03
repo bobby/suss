@@ -2,6 +2,160 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:sequence:4394"
+  {:source-sha256 "748c1e1a78ed4ddfac684f99f973501ceb9366e7fba1cb9074726d27759f8756"
+   :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["seq?/seq" "chunkIteratorSeq/TransformerIterator/iter/map (unported transducer arities)"]
+   :classification :adapted
+   :rationale "Only the pinned one-argument body at core.cljs4403–4406 is adapted as a private compiler bootstrap coercion for generated reader constructors. Public sequence is not registered or selected for core import. The full source declaration and all public transducer arities remain unfinished. This private helper preserves the seq? identity path and nil-to-empty-list behavior without claiming full public sequence compatibility."
+   :status :in-progress
+   :adaptation-path "crates/suss-compile/src/portable/syntax_quote.rs"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_syntax_quote.rs" "crates/suss-compile/src/portable/syntax_quote/tests.rs"]}
+  "runtime:seq?:2340"
+  {:source-sha256 "e7e3b05d641a03c16af4b0870169d35fcd6bad6a1aa22c4e7e10e62268aa86dd"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["nil?" "ISeq/satisfies?"]
+   :classification :adapted
+   :rationale "Retain the whole pinned seq? declaration as the reader sequence coercion dependency. Explicit defn to def/fn preserves the docstring, signature, nil guard and full satisfies? fallback. This does not force a lazy sequence. Complete public sequence transducer arities and compiled bootstrap remain unfinished."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/syntax-quote-seq-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_syntax_quote.rs"]}
+  "runtime:into-array:560"
+  {:source-sha256 "058290cf61995de11c828445499a2b3824587e9039afea842a1b045225dcd266"
+   :visibility :public
+   :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["reduce" "source-array push method"]
+   :classification :adapted
+   :rationale "Retain the whole pinned constructor as a compiled syntax quote dependency. Expand defn to def/fn, preserving source name metadata, docstring, signatures and every body branch. This is in-progress source porting, not complete public constructor or M3 acceptance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/syntax-quote-into-array.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_reader_constructors.rs" "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"]}
+  "runtime:vec:5939"
+  {:source-sha256 "26751902826667f8f0f64adff1bd68945cd36583bf45067233a320a6d766e71a"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["map-entry?/key/val" "vector?/with-meta" "PersistentVector.fromArray/EMPTY" "reduce/-as-transient/-conj!/-persistent!"]
+   :classification :adapted
+   :rationale "Retain the whole pinned constructor as a compiled syntax quote dependency. Expand defn to def/fn, preserving source name metadata, docstring, signatures and every body branch. This is in-progress source porting, not complete public constructor or M3 acceptance."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/syntax-quote-vec.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_reader_constructors.rs" "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"]}
+  "runtime:hash-map:9053"
+  {:source-sha256 "36193017fe019b02e21816d32646a7e20ce4a91901abfcddfecdfb9b908cfb22"
+   :visibility :public
+   :arities {:fixed [] :variadic-min 0}
+   :dependencies ["seq/next/first" "PersistentHashMap.EMPTY" "transient/assoc!/persistent!" "str_ (pending full printing)/language error"]
+   :classification :adapted
+   :rationale "Retain the whole pinned constructor as a compiled syntax quote dependency. Expand defn to def/fn, preserving source name metadata, docstring, signatures and every body branch. This is in-progress source porting, not complete public constructor or M3 acceptance. Replace host Error construction with the existing shared language-error adapter. The source str_ printing dependency is retained and unfinished; missing-value message compatibility is not yet certified."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/syntax-quote-hash-map.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_reader_constructors.rs" "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"]}
+  "runtime:array-map:9065"
+  {:source-sha256 "5fdd1a829eb07b22f5f45817a933dae17a9d126aa6e14703e0f740af29fed484"
+   :visibility :public
+   :arities {:fixed [] :variadic-min 0}
+   :dependencies ["IndexedSeq/zero?" "into-array" "source-array alength/aget" "PersistentArrayMap.createAsIfByAssoc" "str_ (pending full printing)/language error"]
+   :classification :adapted
+   :rationale "Retain the whole pinned constructor as a compiled syntax quote dependency. Expand defn to def/fn, preserving source name metadata, docstring, signatures and every body branch. This is in-progress source porting, not complete public constructor or M3 acceptance. Replace host Error construction with the existing shared language-error adapter. The source str_ printing dependency is retained and unfinished; missing-value message compatibility is not yet certified. Replace odd? on a checked array length with integer parity and last on its known nonempty array with indexed access. These substitutions are confined to actual array storage, preserving every branch without claiming public odd?/last compatibility."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/syntax-quote-array-map.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_reader_constructors.rs" "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"]}
+  "runtime:concat:3949"
+  {:source-sha256 "4f182c362ef3bc51ea6163c5f89fab104b0101a06db431536207516686fa3895"
+   :visibility :public
+   :arities {:fixed [0 1 2] :variadic-min 2}
+   :dependencies ["LazySeq/List/Cons/ChunkedCons" "IChunk/IChunkedSeq/IChunkedNext" "seq/first/rest/next/cons/chunk-first/chunk-rest/chunk-cons" "pending printing and es6 iterable setup"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration as a compiled syntax quote concatenation dependency. All source methods/branches and nominal fields remain present; surrounding printing/es6 iterable setup and full M4 compatibility remain unfinished. Deferred and chunked concatenation must be executed against primary artifacts, not inferred from extraction. Expand defn to def/fn while preserving docstring and every signature/body. Expand each lazy-seq occurrence to the pinned lazy-seq macro constructor shape with special fn* and nil metadata/result/hash fields; preserve deferred captures, chunked and unchunked paths, named cat recursion and all concat arities. The pinned default false LITE_MODE constant replaces its hinted symbol where present, keeping both branches."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/syntax-quote-concat.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_lazy_sequences.rs" "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"]}
+  "runtime:chunked-seq?:2276"
+  {:source-sha256 "147a1f1bef7c8317c1bf08a286a7c8894be7d5c26d29c0d8f449faede099be2d"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["LazySeq/List/Cons/ChunkedCons" "IChunk/IChunkedSeq/IChunkedNext" "seq/first/rest/next/cons/chunk-first/chunk-rest/chunk-cons" "pending printing and es6 iterable setup"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration as a compiled syntax quote concatenation dependency. All source methods/branches and nominal fields remain present; surrounding printing/es6 iterable setup and full M4 compatibility remain unfinished. Deferred and chunked concatenation must be executed against primary artifacts, not inferred from extraction. Expand defn to def/fn while preserving docstring and every signature/body. Expand each lazy-seq occurrence to the pinned lazy-seq macro constructor shape with special fn* and nil metadata/result/hash fields; preserve deferred captures, chunked and unchunked paths, named cat recursion and all concat arities. The pinned default false LITE_MODE constant replaces its hinted symbol where present, keeping both branches."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/syntax-quote-chunked-seqpredicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_lazy_sequences.rs" "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"]}
+  "runtime:chunk-rest:3809"
+  {:source-sha256 "b2787c78dc3bbce059e8caf426dc531170e9edb683215b290fdab89c1ed6efe0"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["LazySeq/List/Cons/ChunkedCons" "IChunk/IChunkedSeq/IChunkedNext" "seq/first/rest/next/cons/chunk-first/chunk-rest/chunk-cons" "pending printing and es6 iterable setup"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration as a compiled syntax quote concatenation dependency. All source methods/branches and nominal fields remain present; surrounding printing/es6 iterable setup and full M4 compatibility remain unfinished. Deferred and chunked concatenation must be executed against primary artifacts, not inferred from extraction. Expand defn to def/fn while preserving docstring and every signature/body. Expand each lazy-seq occurrence to the pinned lazy-seq macro constructor shape with special fn* and nil metadata/result/hash fields; preserve deferred captures, chunked and unchunked paths, named cat recursion and all concat arities. The pinned default false LITE_MODE constant replaces its hinted symbol where present, keeping both branches."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/syntax-quote-chunk-rest.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_lazy_sequences.rs" "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"]}
+  "runtime:chunk-first:3806"
+  {:source-sha256 "d668f3d4c1b613863d3a70b1df8a8e790014a8d68e5c943d0008bb979c6e31cf"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["LazySeq/List/Cons/ChunkedCons" "IChunk/IChunkedSeq/IChunkedNext" "seq/first/rest/next/cons/chunk-first/chunk-rest/chunk-cons" "pending printing and es6 iterable setup"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration as a compiled syntax quote concatenation dependency. All source methods/branches and nominal fields remain present; surrounding printing/es6 iterable setup and full M4 compatibility remain unfinished. Deferred and chunked concatenation must be executed against primary artifacts, not inferred from extraction. Expand defn to def/fn while preserving docstring and every signature/body. Expand each lazy-seq occurrence to the pinned lazy-seq macro constructor shape with special fn* and nil metadata/result/hash fields; preserve deferred captures, chunked and unchunked paths, named cat recursion and all concat arities. The pinned default false LITE_MODE constant replaces its hinted symbol where present, keeping both branches."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/syntax-quote-chunk-first.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_lazy_sequences.rs" "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"]}
+  "runtime:chunk-cons:3795"
+  {:source-sha256 "63783a0a3213dc82374f92a17228afed0f304e9fcda367699addb894a348ccc3"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["LazySeq/List/Cons/ChunkedCons" "IChunk/IChunkedSeq/IChunkedNext" "seq/first/rest/next/cons/chunk-first/chunk-rest/chunk-cons" "pending printing and es6 iterable setup"]
+   :classification :adapted
+   :rationale "Retain the entire pinned declaration as a compiled syntax quote concatenation dependency. All source methods/branches and nominal fields remain present; surrounding printing/es6 iterable setup and full M4 compatibility remain unfinished. Deferred and chunked concatenation must be executed against primary artifacts, not inferred from extraction. Expand defn to def/fn while preserving docstring and every signature/body. Expand each lazy-seq occurrence to the pinned lazy-seq macro constructor shape with special fn* and nil metadata/result/hash fields; preserve deferred captures, chunked and unchunked paths, named cat recursion and all concat arities. The pinned default false LITE_MODE constant replaces its hinted symbol where present, keeping both branches."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/syntax-quote-chunk-cons.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_lazy_sequences.rs" "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"]}
+  "runtime:ChunkedCons:3722"
+  {:source-sha256 "3c8eda64d3dd81f033add510b10560cb57da15e8637fb96d70c4619211f0b0c2"
+   :visibility :public
+   :arities nil
+   :dependencies ["LazySeq/List/Cons/ChunkedCons" "IChunk/IChunkedSeq/IChunkedNext" "seq/first/rest/next/cons/chunk-first/chunk-rest/chunk-cons" "pending printing and es6 iterable setup"]
+   :classification :portable
+   :rationale "Retain the entire pinned declaration as a compiled syntax quote concatenation dependency. All source methods/branches and nominal fields remain present; surrounding printing/es6 iterable setup and full M4 compatibility remain unfinished. Deferred and chunked concatenation must be executed against primary artifacts, not inferred from extraction."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_lazy_sequences.rs" "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"]}
+  "runtime:LazySeq:3584"
+  {:source-sha256 "ec37554b752797e7036784a18eaf322d4ad8491bc90f5148a2f4b8c338f445e4"
+   :visibility :public
+   :arities nil
+   :dependencies ["ISeq/INext/ISeqable/IPending/IMeta/IWithMeta" "List/cons/seq/first/rest/next" "equiv-sequential/hash-ordered-coll/seq-reduce" "pending pr-str* writer printing"]
+   :classification :adapted
+   :rationale "Retain the entire pinned LazySeq declaration, including mutable thunk/result/hash fields, Object methods, realization, metadata, iteration, equality, hash and reduction. Expand the one anonymous-function reader shorthand explicitly without changing its body or captures. Substitute the pinned default false LITE_MODE build constant, preserving both existing conditional branches and standard-mode empty metadata behavior. Shipped code has no host JavaScript interop or Java dependency. This is an in-progress dependency for compiled syntax quote; printing and broader core compatibility are not certified."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/syntax-quote-LazySeq.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_lazy_sequences.rs" "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"]}
+  "runtime:IPending:814"
+  {:source-sha256 "4d95f491cfb78df552974f49b5e9eb8c2ad2756816a0371844f9cc19ed794711"
+   :visibility :public
+   :arities nil
+   :dependencies ["ISeq/INext/ISeqable/IPending/IMeta/IWithMeta" "List/cons/seq/first/rest/next" "equiv-sequential/hash-ordered-coll/seq-reduce" "pending pr-str* writer printing"]
+   :classification :portable
+   :rationale "Retain the complete pinned IPending protocol and boolean -realized? signature for actual deferred LazySeq values needed by compiled syntax quote. This records source provenance only; executing deferred realization, compiled macros and full core compatibility remain separate acceptance checks."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/portable_lazy_sequences.rs" "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"]}
   "runtime:INamed:888"
   {:source-sha256 "ea6bcd1574cbbf54bace6090418e2100ed319543fb2a35d5ffac92999bb42256"
    :visibility :public

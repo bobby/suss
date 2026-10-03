@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "2049ebc98200b1c3ae515ed6a1d5fbebd86a56a47c56d1af35fd4564f73677a1",
-  "reviews-sha256": "dbd1989da33491eff22f800fe79ac0cffa4bfecba626d80a949f105f330b1c53",
+  "recipe-sha256": "79383adb9a2784baac0b8e7650f5ecc23ab1a620c116d42e14b25830c3770485",
+  "reviews-sha256": "8a4ba1796d6bbc2b3adbccb5a914dbf5ff395723ba6fcc741b7a30b9b923ad18",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -7979,6 +7979,418 @@
         "crates/suss-cli/tests/compiled_macro_sets.rs",
         "crates/suss-cli/tests/portable_error_predicate.rs"
       ]
+    },
+    {
+      "id": "runtime:IPending:814",
+      "name": "IPending",
+      "kind": "defprotocol",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 814,
+      "end-line": 818,
+      "byte-start": 24062,
+      "byte-end": 24297,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "4d95f491cfb78df552974f49b5e9eb8c2ad2756816a0371844f9cc19ed794711",
+      "extracted": "extracted/0257.cljs",
+      "extracted-sha256": "ffae34ff20cb175fcf9a79e8414bcf29f2e060952adca8695b1508fc7cf59f86",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "4d95f491cfb78df552974f49b5e9eb8c2ad2756816a0371844f9cc19ed794711",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "ISeq/INext/ISeqable/IPending/IMeta/IWithMeta",
+        "List/cons/seq/first/rest/next",
+        "equiv-sequential/hash-ordered-coll/seq-reduce",
+        "pending pr-str* writer printing"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_lazy_sequences.rs",
+        "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"
+      ]
+    },
+    {
+      "id": "runtime:LazySeq:3584",
+      "name": "LazySeq",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3584,
+      "end-line": 3667,
+      "byte-start": 94833,
+      "byte-end": 96622,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "ec37554b752797e7036784a18eaf322d4ad8491bc90f5148a2f4b8c338f445e4",
+      "extracted": "extracted/0258.cljs",
+      "extracted-sha256": "b407058629649df4ee58817f4c47408176fbff265a05f4d264560e0575218032",
+      "patch": "docs/compatibility/patches/syntax-quote-LazySeq.json",
+      "patch-sha256": "50e5651f6ebfc1e212912565c58e322aba586b19679483efc27ce90d45f0353f",
+      "adapted-form-sha256": "24ef19189e1f2075de37f474656994427611dbf2e7ce4b712cc45e10704cbb6b",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "ISeq/INext/ISeqable/IPending/IMeta/IWithMeta",
+        "List/cons/seq/first/rest/next",
+        "equiv-sequential/hash-ordered-coll/seq-reduce",
+        "pending pr-str* writer printing"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_lazy_sequences.rs",
+        "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"
+      ]
+    },
+    {
+      "id": "runtime:ChunkedCons:3722",
+      "name": "ChunkedCons",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3722,
+      "end-line": 3791,
+      "byte-start": 97689,
+      "byte-end": 99079,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "3c8eda64d3dd81f033add510b10560cb57da15e8637fb96d70c4619211f0b0c2",
+      "extracted": "extracted/0259.cljs",
+      "extracted-sha256": "f142835a032a85b1eb7c6e7bb019bf228ea35076c26186d46d8d1aa54e93bb7b",
+      "patch": null,
+      "patch-sha256": null,
+      "adapted-form-sha256": "3c8eda64d3dd81f033add510b10560cb57da15e8637fb96d70c4619211f0b0c2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":portable",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "LazySeq/List/Cons/ChunkedCons",
+        "IChunk/IChunkedSeq/IChunkedNext",
+        "seq/first/rest/next/cons/chunk-first/chunk-rest/chunk-cons",
+        "pending printing and es6 iterable setup"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_lazy_sequences.rs",
+        "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"
+      ]
+    },
+    {
+      "id": "runtime:chunk-cons:3795",
+      "name": "chunk-cons",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3795,
+      "end-line": 3798,
+      "byte-start": 99109,
+      "byte-end": 99216,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "63783a0a3213dc82374f92a17228afed0f304e9fcda367699addb894a348ccc3",
+      "extracted": "extracted/0260.cljs",
+      "extracted-sha256": "03a2160d9304c0a6aa7f9b0acae6bd7b261207e89d424d8d7a63a5005cac2fb0",
+      "patch": "docs/compatibility/patches/syntax-quote-chunk-cons.json",
+      "patch-sha256": "c09585c8fdb222a79c2912f6ab9c9f4d7e8d12a6e67c69d6c3c172d8f426a7be",
+      "adapted-form-sha256": "4cd67422b96f1506629d5e6d9d2e15d9106f70be6f89ae9f3650822729675845",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "LazySeq/List/Cons/ChunkedCons",
+        "IChunk/IChunkedSeq/IChunkedNext",
+        "seq/first/rest/next/cons/chunk-first/chunk-rest/chunk-cons",
+        "pending printing and es6 iterable setup"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_lazy_sequences.rs",
+        "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"
+      ]
+    },
+    {
+      "id": "runtime:chunk-first:3806",
+      "name": "chunk-first",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3806,
+      "end-line": 3807,
+      "byte-start": 99289,
+      "byte-end": 99332,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "d668f3d4c1b613863d3a70b1df8a8e790014a8d68e5c943d0008bb979c6e31cf",
+      "extracted": "extracted/0261.cljs",
+      "extracted-sha256": "94838594b7eef002957a7f444aae238c35800cd0df7facbda9168ee6cbebb042",
+      "patch": "docs/compatibility/patches/syntax-quote-chunk-first.json",
+      "patch-sha256": "201f5aaed1c8809e54ce2d63e14fe1d7c786d98ebd85b99586e596b459c862e8",
+      "adapted-form-sha256": "d04b050d61869a4fa574f5f6185750e57767822dca8850fa12d381ef9cf959eb",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "LazySeq/List/Cons/ChunkedCons",
+        "IChunk/IChunkedSeq/IChunkedNext",
+        "seq/first/rest/next/cons/chunk-first/chunk-rest/chunk-cons",
+        "pending printing and es6 iterable setup"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_lazy_sequences.rs",
+        "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"
+      ]
+    },
+    {
+      "id": "runtime:chunk-rest:3809",
+      "name": "chunk-rest",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3809,
+      "end-line": 3810,
+      "byte-start": 99334,
+      "byte-end": 99375,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "b2787c78dc3bbce059e8caf426dc531170e9edb683215b290fdab89c1ed6efe0",
+      "extracted": "extracted/0262.cljs",
+      "extracted-sha256": "7036e1cbfe22ac507b94a95a08e4ac8ee770e994e4a3a1e59849ff9b63f11cd2",
+      "patch": "docs/compatibility/patches/syntax-quote-chunk-rest.json",
+      "patch-sha256": "7f1e403e5a115117be244605001c681604dc78d37f04abb841145ca1e7156bdc",
+      "adapted-form-sha256": "21ee802c701730cda4d39d98ded4efb8909a0b4a8bbd00fcc0de52f5147361fe",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "LazySeq/List/Cons/ChunkedCons",
+        "IChunk/IChunkedSeq/IChunkedNext",
+        "seq/first/rest/next/cons/chunk-first/chunk-rest/chunk-cons",
+        "pending printing and es6 iterable setup"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_lazy_sequences.rs",
+        "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"
+      ]
+    },
+    {
+      "id": "runtime:chunked-seq?:2276",
+      "name": "chunked-seq?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2276,
+      "end-line": 2281,
+      "byte-start": 62080,
+      "byte-end": 62221,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "147a1f1bef7c8317c1bf08a286a7c8894be7d5c26d29c0d8f449faede099be2d",
+      "extracted": "extracted/0263.cljs",
+      "extracted-sha256": "7ad7426c89ef814dc7a5c2c6fa97eecb5e028d6c3e861193604ae864fd7e448c",
+      "patch": "docs/compatibility/patches/syntax-quote-chunked-seqpredicate.json",
+      "patch-sha256": "b570ddd76c175eb77fee713974ab16761719d450b601bc08a00f0a4b5df43cc1",
+      "adapted-form-sha256": "5017afd1fb7696e9f062ac6d751d2e45f51cdd9a2f88d1efedd676b2a06a9fb2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "LazySeq/List/Cons/ChunkedCons",
+        "IChunk/IChunkedSeq/IChunkedNext",
+        "seq/first/rest/next/cons/chunk-first/chunk-rest/chunk-cons",
+        "pending printing and es6 iterable setup"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_lazy_sequences.rs",
+        "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"
+      ]
+    },
+    {
+      "id": "runtime:concat:3949",
+      "name": "concat",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 3949,
+      "end-line": 3972,
+      "byte-start": 103158,
+      "byte-end": 104024,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "4f182c362ef3bc51ea6163c5f89fab104b0101a06db431536207516686fa3895",
+      "extracted": "extracted/0264.cljs",
+      "extracted-sha256": "e26159cffdccc9d23f32cc40299634a9e1e50386ff5be6f0252639422808f178",
+      "patch": "docs/compatibility/patches/syntax-quote-concat.json",
+      "patch-sha256": "be8a92fd670f03f5a5193bbaa2c3485848da5094fe1f2e8ad4777e23ec24f020",
+      "adapted-form-sha256": "58632cb3bf09fe359ad873a9d99af77ec4aad298f43c97fd65b0150e1dd84eef",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "LazySeq/List/Cons/ChunkedCons",
+        "IChunk/IChunkedSeq/IChunkedNext",
+        "seq/first/rest/next/cons/chunk-first/chunk-rest/chunk-cons",
+        "pending printing and es6 iterable setup"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_lazy_sequences.rs",
+        "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"
+      ]
+    },
+    {
+      "id": "runtime:into-array:560",
+      "name": "into-array",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 560,
+      "end-line": 566,
+      "byte-start": 15190,
+      "byte-end": 15450,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "058290cf61995de11c828445499a2b3824587e9039afea842a1b045225dcd266",
+      "extracted": "extracted/0265.cljs",
+      "extracted-sha256": "e8fa8d8a6e5259b1c563b8423958a75d3179e5cb6b4d812b9f27833bb820d35c",
+      "patch": "docs/compatibility/patches/syntax-quote-into-array.json",
+      "patch-sha256": "1fabe5bfa54e352c296f916fae00d233caca95277e4be5cf793f8a231cb00b5e",
+      "adapted-form-sha256": "b3b299cf5d8aeb08c72cfa0cd16cc91c3735103e988f1b4cb29081ac5bbafa77",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "reduce",
+        "source-array push method"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_reader_constructors.rs",
+        "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"
+      ]
+    },
+    {
+      "id": "runtime:vec:5939",
+      "name": "vec",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5939,
+      "end-line": 5957,
+      "byte-start": 163093,
+      "byte-end": 163517,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "26751902826667f8f0f64adff1bd68945cd36583bf45067233a320a6d766e71a",
+      "extracted": "extracted/0266.cljs",
+      "extracted-sha256": "b5ba5222052f23a103a7abc3d5b1a92c4f3c80ffa8d785116f92c18efbd89339",
+      "patch": "docs/compatibility/patches/syntax-quote-vec.json",
+      "patch-sha256": "c3753a9e45a13ab8bce4f4f1acc418ef731f35c5f31bdb1ece9b649a73696a4c",
+      "adapted-form-sha256": "712b20c171a9f05ddf0b824fb770a4bb7ee0a9188561d262cd5ca2201b073021",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "map-entry?/key/val",
+        "vector?/with-meta",
+        "PersistentVector.fromArray/EMPTY",
+        "reduce/-as-transient/-conj!/-persistent!"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_reader_constructors.rs",
+        "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"
+      ]
+    },
+    {
+      "id": "runtime:hash-map:9053",
+      "name": "hash-map",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9053,
+      "end-line": 9063,
+      "byte-start": 253108,
+      "byte-end": 253513,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "36193017fe019b02e21816d32646a7e20ce4a91901abfcddfecdfb9b908cfb22",
+      "extracted": "extracted/0267.cljs",
+      "extracted-sha256": "c5eb428571378eeaf54c7b259ffe4b4414b9fdb5939bf72f9d952e36633d8f44",
+      "patch": "docs/compatibility/patches/syntax-quote-hash-map.json",
+      "patch-sha256": "856be97f8bb4f7b082e1e4aa93e255d3178ab41d36f3267d5c07392dad68f9cb",
+      "adapted-form-sha256": "a72bbea7ec212af154c6fd4e9d33bee81389e78228380b57a00d63166e58b4e5",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "seq/next/first",
+        "PersistentHashMap.EMPTY",
+        "transient/assoc!/persistent!",
+        "str_ (pending full printing)/language error"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_reader_constructors.rs",
+        "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"
+      ]
+    },
+    {
+      "id": "runtime:array-map:9065",
+      "name": "array-map",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9065,
+      "end-line": 9074,
+      "byte-start": 253515,
+      "byte-end": 253914,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5fdd1a829eb07b22f5f45817a933dae17a9d126aa6e14703e0f740af29fed484",
+      "extracted": "extracted/0268.cljs",
+      "extracted-sha256": "e8e06c108ba48615b1df252d66bcda82f72229e1d8b34eae7b71578df5398fb5",
+      "patch": "docs/compatibility/patches/syntax-quote-array-map.json",
+      "patch-sha256": "8e5ce4c8229b3790ce9b7e866847875d700f3456acb72c3784c1852cc169c4cf",
+      "adapted-form-sha256": "ce42c1b532866f0ca862cf78114b3bd4c81eb4572211af265efabacf7240d91d",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "IndexedSeq/zero?",
+        "into-array",
+        "source-array alength/aget",
+        "PersistentArrayMap.createAsIfByAssoc",
+        "str_ (pending full printing)/language error"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/portable_reader_constructors.rs",
+        "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"
+      ]
+    },
+    {
+      "id": "runtime:seq?:2340",
+      "name": "seq?",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 2340,
+      "end-line": 2345,
+      "byte-start": 63680,
+      "byte-end": 63783,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "e7e3b05d641a03c16af4b0870169d35fcd6bad6a1aa22c4e7e10e62268aa86dd",
+      "extracted": "extracted/0269.cljs",
+      "extracted-sha256": "fd4ddae696e1e5560ef7b70964892b8ad138bc2539bec694839cdef2e8c30d0d",
+      "patch": "docs/compatibility/patches/syntax-quote-seq-predicate.json",
+      "patch-sha256": "43a5e3a83492e9683c42d048c7b2159ac6d5b67e20bb9206f18bd0471571f7ff",
+      "adapted-form-sha256": "8ef7f26e3e7e9d66bd610a0f5047d8732984901d8fb64fade8812579857017f6",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "nil?",
+        "ISeq/satisfies?"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"
+      ]
     }
   ],
   "loader": {
@@ -8251,6 +8663,19 @@
     "extracted/0254.cljs": "01dcda1ac9a84ffe17946eb018a9f81a7fef2fa5c5beb9666ebfb97c7d0ee615",
     "extracted/0255.cljs": "8e53bd4cf07093623313b99021f0b3d5e4e8302986ffca800b30292adc219a58",
     "extracted/0256.cljs": "f4153e236906151c0b8eb837b71b6b63c69ffcb3c8e1f9ff09cf7bbf6a82f440",
-    "suss/core.sus": "dd17e6c2ac4adf2e9d25610e7a94b5b459860f56fd0eb6f5c2aec41afdb29a30"
+    "extracted/0257.cljs": "ffae34ff20cb175fcf9a79e8414bcf29f2e060952adca8695b1508fc7cf59f86",
+    "extracted/0258.cljs": "b407058629649df4ee58817f4c47408176fbff265a05f4d264560e0575218032",
+    "extracted/0259.cljs": "f142835a032a85b1eb7c6e7bb019bf228ea35076c26186d46d8d1aa54e93bb7b",
+    "extracted/0260.cljs": "03a2160d9304c0a6aa7f9b0acae6bd7b261207e89d424d8d7a63a5005cac2fb0",
+    "extracted/0261.cljs": "94838594b7eef002957a7f444aae238c35800cd0df7facbda9168ee6cbebb042",
+    "extracted/0262.cljs": "7036e1cbfe22ac507b94a95a08e4ac8ee770e994e4a3a1e59849ff9b63f11cd2",
+    "extracted/0263.cljs": "7ad7426c89ef814dc7a5c2c6fa97eecb5e028d6c3e861193604ae864fd7e448c",
+    "extracted/0264.cljs": "e26159cffdccc9d23f32cc40299634a9e1e50386ff5be6f0252639422808f178",
+    "extracted/0265.cljs": "e8fa8d8a6e5259b1c563b8423958a75d3179e5cb6b4d812b9f27833bb820d35c",
+    "extracted/0266.cljs": "b5ba5222052f23a103a7abc3d5b1a92c4f3c80ffa8d785116f92c18efbd89339",
+    "extracted/0267.cljs": "c5eb428571378eeaf54c7b259ffe4b4414b9fdb5939bf72f9d952e36633d8f44",
+    "extracted/0268.cljs": "e8e06c108ba48615b1df252d66bcda82f72229e1d8b34eae7b71578df5398fb5",
+    "extracted/0269.cljs": "fd4ddae696e1e5560ef7b70964892b8ad138bc2539bec694839cdef2e8c30d0d",
+    "suss/core.sus": "858071073477634c6d3a296a50a83a2fe459bc999a8a58c6029afd5e503c74ab"
   }
 }

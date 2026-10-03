@@ -29,6 +29,7 @@ jobs:
           python3 scripts/cljs_inventory.py --check
           python3 scripts/cljs_reviews.py
           python3 scripts/core_import.py --check
+          python3 scripts/reader_core_catalog.py --check
           python3 scripts/apply_bootstrap.py --check
           python3 scripts/sequence_provenance.py
           python3 scripts/bitwise_provenance.py

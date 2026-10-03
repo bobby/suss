@@ -630,3 +630,15 @@ checks108/0. See [reader metadata evidence](../runtime/compiled-macro-reader-met
 These are partial macro prerequisites; no inventory item or M3 acceptance gate
 is reclassified as complete. Full portable schema/inference, bootstrap and
 lifecycle remain open; independent review/full final-head checks are pending.
+
+Retained LazySeq/IPending are an executing dependency for compiled syntax quote.
+The complete pinned type/protocol declarations retain source hashes and EPL
+packaging. Twelve actual pinned/native shared observations cover deferred and
+repeated realization, metadata and failed-thunk retry in both caller Stores.
+Subsequent retained concat/chunked helpers and constructors now have50 fresh
+pinned/native observations. Compiled syntax quote has18 fresh shared execution
+observations, actual reader provenance and staged gensym state. Review inventory
+remains371 in-progress/694 unassessed; no declaration becomes completed from
+these tests. A live-cell coercion edge, full baseline/review/CI and original
+M3/M4 gates remain open; see [reader integration](../runtime/syntax-quote-reader.md)
+and [lazy sequence evidence](../runtime/lazy-sequences.md).

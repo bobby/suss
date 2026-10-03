@@ -29,6 +29,9 @@ enum Class {
     KeySeq,
     PersistentArrayMapSeq,
     ChunkedSeq,
+    LazySeq,
+    ChunkedCons,
+    ArrayChunk,
 }
 /// Captured canonical class roots remain valid through redefinition and GC.
 /// A reset or another Store invalidates this bridge; construct a new one there.
@@ -64,6 +67,9 @@ impl FormBridge {
             ("KeySeq", Class::KeySeq),
             ("PersistentArrayMapSeq", Class::PersistentArrayMapSeq),
             ("ChunkedSeq", Class::ChunkedSeq),
+            ("LazySeq", Class::LazySeq),
+            ("ChunkedCons", Class::ChunkedCons),
+            ("ArrayChunk", Class::ArrayChunk),
         ] {
             let value = session.eval(&format!("suss.core/{name}"))?;
             let id = session.inspect(&value, |mut store, value| {
@@ -113,6 +119,7 @@ impl FormBridge {
             ("empty-map", "(.-EMPTY suss.core/PersistentArrayMap)"),
             ("empty-set", "(.-EMPTY suss.core/PersistentHashSet)"),
             ("empty-list", "(.-EMPTY suss.core/List)"),
+            ("lazy-sval", "(fn* [value] (.sval value))"),
         ] {
             factories.insert(name, session.eval(source)?);
         }
@@ -259,7 +266,7 @@ impl FormBridge {
             if data.len() != if class == Class::Symbol { 5 } else { 4 } {
                 return Err(error("Invalid compiler identifier key layout"));
             }
-            let mut budget = Budget { nodes: 4096, units: 1_048_576 };
+            let mut budget = Budget { nodes: 4096, units: 1_048_576, calls: None };
             Ok(Some((class, text(&mut store, &data[2], &mut budget)?)))
         })
     }
@@ -475,6 +482,7 @@ impl FormBridge {
         let mut budget = Budget {
             nodes: 4096,
             units: 1_048_576,
+            calls: None,
         };
         self.form_value(session, &form, 0, &mut budget)
     }
@@ -624,13 +632,22 @@ impl FormBridge {
     ) -> Result<Form, SessionError> {
         self.check(session)?;
         session
-            .inspect(value, |mut store, value| {
-                let mut budget = Budget {
-                    nodes: 4096,
-                    units: 1_048_576,
-                };
-                decode(&mut store, &value, &self.classes, &span, 0, &mut budget)
-            })
+            .data_inspect_calls(
+                value,
+                &self.factories["lazy-sval"],
+                |mut store, value, args_new, invoke, function| {
+                    let mut budget = Budget {
+                        nodes: 4096,
+                        units: 1_048_576,
+                        calls: Some(ReadCalls {
+                            args_new,
+                            invoke,
+                            function,
+                        }),
+                    };
+                    decode(&mut store, &value, &self.classes, &span, 0, &mut budget)
+                },
+            )
             .map_err(|failure| match failure {
                 SessionError::Host(failure) => SessionError::Compile(Diagnostic {
                     span,
@@ -672,7 +689,7 @@ mod identity_tests {
                 bridge.read(&mut session, &original, 0..1).unwrap();
                 let rejected = session.inspect(&original, |mut store, _| {
                     let value = Val::AnyRef(Some(fake.to_rooted(&mut store)));
-                    Ok(decode(&mut store, &value, &bridge.classes, &(0..1), 0, &mut Budget { nodes: 4096, units: 1_048_576 }).is_err())
+                    Ok(decode(&mut store, &value, &bridge.classes, &(0..1), 0, &mut Budget { nodes: 4096, units: 1_048_576, calls: None }).is_err())
                 }).unwrap();
                 assert!(rejected, "copied descriptor identity accepted for {source}");
             }
@@ -792,7 +809,13 @@ fn absent(store: &StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<bool
     // ABI2 nil (0) and undefined (6) both satisfy the pinned nil? storage test.
     Ok(matches!(sentinel(store, value)?, Some(0 | 6)))
 }
+struct ReadCalls {
+    args_new: wasmtime::Func,
+    invoke: wasmtime::Func,
+    function: Val,
+}
 struct Budget {
+    calls: Option<ReadCalls>,
     nodes: usize,
     units: usize,
 }
@@ -845,7 +868,9 @@ fn decode(
                 | Class::ArrayNodeSeq
                 | Class::List
                 | Class::Cons
-                | Class::EmptyList => Some(0),
+                | Class::EmptyList
+                | Class::LazySeq => Some(0),
+                Class::ChunkedCons => Some(2),
                 Class::IndexedSeq | Class::PersistentArrayMapSeq => Some(2),
                 Class::ChunkedSeq => Some(4),
                 Class::KeySeq => Some(1),
@@ -943,6 +968,10 @@ fn decode(
                         .map(|pair| decode(store, &pair[0], classes, span, depth + 1, budget))
                         .collect::<wasmtime::Result<Vec<_>>>()?)
                 }
+                Class::ArrayChunk => return Err(error("Array chunks are not macro syntax")),
+                Class::LazySeq | Class::ChunkedCons => {
+                    Kind::List(sequence(store, value, classes, span, depth, budget)?)
+                }
                 Class::VectorNode => return Err(error("Vector trie nodes are not macro syntax")),
                 Class::SourceArray => return Err(error("Raw source arrays are not macro syntax")),
                 Class::List | Class::Cons | Class::EmptyList | Class::IndexedSeq => {
@@ -973,12 +1002,84 @@ fn sequence(
     let mut counts = Vec::new();
     let mut first_segment = true;
     loop {
-        if nil(store, &cursor)? {
+        if absent(store, &cursor)? {
             break;
         }
         spend(budget)?;
+        if reference(&cursor)?.as_array(&*store)?.is_some() {
+            for unit in text(store, &cursor, budget)? {
+                spend(budget)?;
+                items.push(Form {
+                    span: span.clone(),
+                    metadata: vec![],
+                    kind: Kind::String(vec![unit]),
+                });
+            }
+            break;
+        }
         let (class, data) = object(store, &cursor, classes)?;
         match class {
+            Class::LazySeq => {
+                if data.len() != 4 {
+                    return Err(error("Invalid lazy sequence field layout"));
+                }
+                if !first_segment {
+                    metadata(store, &data[0], classes, span, depth, budget)?;
+                }
+                // Invoke source sval only for the captured canonical nominal type.
+                // It preserves thunk retry/cache behavior; the host normalizes
+                // its known sequence storage without mutable class-cell lookups.
+                let calls = budget
+                    .calls
+                    .as_ref()
+                    .ok_or_else(|| error("Lazy data needs fueled source realization"))?;
+                let mut args = [Val::null_any_ref()];
+                calls
+                    .args_new
+                    .call(&mut *store, &[Val::I32(1)], &mut args)?;
+                args[0]
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_array(&*store)?
+                    .ok_or_else(|| error("Invalid invocation arguments"))?
+                    .set(&mut *store, 0, cursor.clone())?;
+                let mut result = [Val::null_any_ref()];
+                calls.invoke.call(
+                    &mut *store,
+                    &[calls.function.clone(), args[0].clone()],
+                    &mut result,
+                )?;
+                cursor = result[0].clone();
+            }
+            Class::ChunkedCons => {
+                if data.len() != 4 {
+                    return Err(error("Invalid chunked cons field layout"));
+                }
+                if !first_segment {
+                    metadata(store, &data[2], classes, span, depth, budget)?;
+                }
+                let (class, chunk) = object(store, &data[0], classes)?;
+                if class != Class::ArrayChunk || chunk.len() != 3 {
+                    return Err(error("Chunked cons needs canonical array chunk storage"));
+                }
+                let entries = source_elements(store, &chunk[0], classes)?;
+                let start = integer(store, &chunk[1])?;
+                let end = integer(store, &chunk[2])?;
+                if start >= end || end > entries.len() || end - start > budget.nodes {
+                    return Err(error("Invalid bounded array chunk cursor"));
+                }
+                for entry in &entries[start..end] {
+                    items.push(decode(store, entry, classes, span, depth + 1, budget)?);
+                }
+                cursor = data[1].clone();
+            }
+            Class::PersistentVector => {
+                if !first_segment && !data.is_empty() {
+                    metadata(store, &data[0], classes, span, depth, budget)?;
+                }
+                items.extend(vector(store, &data, classes, span, depth, budget)?);
+                break;
+            }
             Class::EmptyList => {
                 if data.len() != 1 {
                     return Err(error("Invalid empty list layout"));

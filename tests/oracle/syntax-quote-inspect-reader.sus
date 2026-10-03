@@ -1,0 +1,5 @@
+;; Original shared macro: observe the actual reader constructor through &form.
+(defmacro inspect-reader [x]
+  (let [call (second &form)]
+    (list 'quote [(get (meta &form) :line)
+                 (namespace (first call)) (name (first call))])))

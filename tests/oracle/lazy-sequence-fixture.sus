@@ -1,0 +1,60 @@
+;; Original shared execution fixture. Both compilers use their actual core type.
+(def lazy-realize-observations
+  (fn []
+    (def effects 0)
+    (def pending (new cljs.core/LazySeq nil
+      (fn [] (do (set! effects (+ effects 1)) (list 20 22))) nil nil))
+    (list effects
+      (+ (first pending) (first (next pending))) effects
+      (+ (first pending) (first (next pending))) effects)))
+
+(def lazy-meta-retry-observations
+  (fn []
+    (def effects 0)
+    (def fail true)
+    (def pending (new cljs.core/LazySeq nil
+      (fn [] (do (set! effects (+ effects 1))
+        (if fail (throw 7) (list 42)))) nil nil))
+    (def decorated (with-meta pending {:marker 42}))
+    (let [marker (get (meta decorated) :marker)
+          unforced effects
+          caught (try (first decorated) (catch :default e e))
+          attempts effects]
+      (set! fail false)
+      (list marker unforced caught attempts
+        (first decorated) (first pending) effects))))
+
+(def concat-observations
+  (fn []
+    (def effects 0)
+    (def deferred (new cljs.core/LazySeq nil
+      (fn [] (do (set! effects (+ effects 1)) (list 22))) nil nil))
+    (def joined (concat (list 20) deferred))
+    (def chunked (concat [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32] (list 10)))
+    (list (count (concat)) (count (concat nil)) (first (concat (list 42)))
+      (reduce + (concat nil (list 1) [] (list 20 21)))
+      effects (first joined) effects (first (next joined)) effects
+      (count joined) effects
+      (count chunked) (nth chunked 31) (nth chunked 32) (nth chunked 33))))
+
+;; Constructor observations required by the reader's collection expansion.
+(def reader-constructor-observations
+  (fn []
+    (let [source (array 20 21)
+          aliased (vec source)
+          rebuilt (vec (concat [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32] (list 10)))
+          am (array-map :a 20 :a 22 :b 20 nil 42)
+          hm (hash-map :a 20 :a 22 :b 20 nil 42)]
+      (aset source 1 22)
+      (list
+        (count (vec nil)) (reduce + (vec (list 20 22)))
+        (if (nil? (meta (vec (with-meta [42] {:marker 7})))) 1 0)
+        (nth (vec (first {:k 42})) 1) (reduce + aliased)
+        (count rebuilt) (nth rebuilt 31) (nth rebuilt 32) (nth rebuilt 33)
+        (alength (into-array nil (list 20 22))) (aget (into-array [42]) 0)
+        (count (array-map)) (count am) (+ (get am :a) (get am :b))
+        (get am nil) (get (apply array-map (list :answer 42)) :answer)
+        (count (array-map :k0 0 :k1 1 :k2 2 :k3 3 :k4 4 :k5 5 :k6 6 :k7 7 :k8 8 :k9 9 :k10 10 :k11 11 :k12 12 :k13 13 :k14 14 :k15 15 :k16 16 :k17 17))
+        (count (hash-map)) (count hm) (+ (get hm :a) (get hm :b))
+        (get hm nil) (get (apply hash-map (list :answer 42)) :answer)
+        (count (hash-map :k0 0 :k1 1 :k2 2 :k3 3 :k4 4 :k5 5 :k6 6 :k7 7 :k8 8 :k9 9 :k10 10 :k11 11 :k12 12 :k13 13 :k14 14 :k15 15 :k16 16 :k17 17))))))

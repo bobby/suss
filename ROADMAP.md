@@ -252,3 +252,14 @@ located snapshot failures, compile isolation and metadata non-reexecution are
 covered. Independent review and full final-head validation remain required; see
 [reader metadata](docs/runtime/compiled-macro-reader-metadata.md). Original M3
 gates and complete portable schema/inference remain open.
+
+Retained LazySeq/IPending are an executing dependency for compiled syntax quote.
+The complete pinned type/protocol declarations retain source hashes and EPL
+packaging. Twelve actual pinned/native shared observations cover deferred and
+repeated realization, metadata and failed-thunk retry in both caller Stores.
+Subsequent retained concat/chunked helpers and constructors now have50 fresh
+pinned/native observations. Compiled syntax quote has18 fresh shared execution
+observations, actual reader provenance and staged gensym state. A live-cell
+coercion edge, full baseline/review/CI and original M3/M4 gates remain open; see
+[reader integration](docs/runtime/syntax-quote-reader.md) and
+[lazy sequence evidence](docs/runtime/lazy-sequences.md).

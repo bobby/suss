@@ -8,6 +8,7 @@ pub mod modules;
 pub mod resolve;
 mod source;
 mod origin;
+pub mod syntax_quote;
 pub use origin::{SourceOrigin, SourcePosition};
 use std::ops::Range;
 use suss_reader::forms::{read_forms, resolve_conditionals};
