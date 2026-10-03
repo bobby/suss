@@ -54,7 +54,10 @@ An independent review regression covers raw name/provisional metadata, false
 hints, dynamic functions, test omission, core file markers and top-fn merge
 precedence in both native caller phases after GC. Its separate development-only
 [primary probe](../../tests/oracle/declaration-metadata-review-probe.clj) executes
-the pinned analyzer directly; the original 29-case corpus stays unchanged.
+the pinned analyzer directly, including three snapshot/catalog document
+observations. The older staging regression now asserts the observed absence of
+explicit docstrings during initializer analysis while retaining completed and
+snapshot document checks. The original 29-case corpus stays unchanged.
 
 Terminal commands and results are recorded in the handoff. Independent review,
 the full workspace baseline and exact final-head CI are required before the PR

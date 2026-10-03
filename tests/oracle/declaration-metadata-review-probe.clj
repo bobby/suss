@@ -30,3 +30,27 @@
     (let [actual (select-keys (get-in @env/*compiler* [::ana/namespaces 'cljs.core :defs 'core-probe]) [:file :meta])]
       (assert (= actual {:file "cljs/core.cljs" :meta {:file "cljs/core.cljs"}}) (pr-str actual))
       (prn :core actual))))
+
+;; Explicit def docstrings are published only on completion, not in the
+;; provisional record observed during initializer analysis.
+(def document-observations (atom []))
+(defmacro pr160-documents []
+  (let [snapshot (get-in &env [:ns :defs])
+        catalog (:defs (ana/get-namespace 'review))
+        row [(contains? snapshot 'tracked)
+             (:doc (get snapshot 'tracked))
+             (:doc (get catalog 'tracked))]]
+    (swap! document-observations conj row)
+    0))
+(env/with-compiler-env (env/default-compiler-env)
+  (binding [ana/*cljs-ns* 'review]
+    (swap! env/*compiler* assoc-in [::ana/namespaces 'review]
+      {:name 'review :defs {} :use-macros {'pr160-documents 'user}})
+    (doseq [source ["(def tracked \"first\" (pr160-documents))"
+                    "(def tracked \"second\" (pr160-documents))"
+                    "(pr160-documents)"]]
+      (ana/analyze (assoc (ana/empty-env) :ns (ana/get-namespace 'review))
+        (read-string source)))))
+(assert (= @document-observations [[false nil nil] [true "first" nil] [true "second" "second"]])
+  (pr-str @document-observations))
+(prn :documents @document-observations)

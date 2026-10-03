@@ -12970,3 +12970,29 @@ required. No merge or issue closure. Complete declaration/AST schema, older
 repeated-declare catalog timing, self-local facts, cache/evaluator/lifecycle and
 original M3 acceptance remain open. Reviewer retains sole heavy slot until full
 baseline terminates and explicitly releases it.
+
+
+PR160 first exact-pushed review head657b1f12634b5d08c9d799b63d2a7091a8c0250f:
+required full baseline16790 TERMINAL101,144passed/1failed/0ignored across28groups
+before stopping. Original29case/all18field/bothphase metadata target passed
+2/0/0 in399.06s, including new seven-policy regression. The failed older
+source-environment test expected explicit definition docstrings in provisional
+catalog entries. Pinned parse-def installs only raw symbol metadata there; this
+PR intentionally publishes explicit docstrings after initializer analysis.
+No production-source correction was needed. Log
+/private/tmp/suss-pr160-review-full-baseline.log retains the failure.
+
+Added independent actual pinned snapshot/catalog document observation to retained
+probe:72924 TERMINAL0 asserts [[false nil nil] [true "first" nil]
+[true "second" "second"]]. Log
+/private/tmp/suss-pr160-review-primary-documents-final.log. Earlier23038 reran the
+previous seven-case probe after a path error prevented adding the new cases;
+its exit0 is not snapshot-document proof. Corrected only the stale provisional
+catalog doc expectation; completed/snapshot docs and analysis-completed timing
+remain asserted. Existing unchanged29case corpus already proves provisional
+raw symbol-doc retention and completed explicit-doc precedence.
+Focused source-environment98139 TERMINAL0:3/0/0 in10.20s, both caller phases and
+GC. /private/tmp/suss-pr160-review-source-documents.log. New push requires fresh
+exact-head full baseline and CI. Previous657b1f1 CI37134040734 is not final proof.
+Compiler source/images/fingerprints and graph bounds remain unchanged. No merge,
+issue closure or milestone completion. Reviewer still owns sole heavy slot.
