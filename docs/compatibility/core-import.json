@@ -1288,6 +1288,71 @@
       "id": "runtime:disj!:4040",
       "source-sha256": "b9c22b181d6a9e76ceeb9608b3f8e53d1f850a830a5e1125eea753bbde8b8396",
       "patch": "docs/compatibility/patches/hash-set-disjbang.json"
+    },
+    {
+      "id": "runtime:IPending:814",
+      "source-sha256": "4d95f491cfb78df552974f49b5e9eb8c2ad2756816a0371844f9cc19ed794711",
+      "patch": null
+    },
+    {
+      "id": "runtime:LazySeq:3584",
+      "source-sha256": "ec37554b752797e7036784a18eaf322d4ad8491bc90f5148a2f4b8c338f445e4",
+      "patch": "docs/compatibility/patches/syntax-quote-LazySeq.json"
+    },
+    {
+      "id": "runtime:ChunkedCons:3722",
+      "source-sha256": "3c8eda64d3dd81f033add510b10560cb57da15e8637fb96d70c4619211f0b0c2",
+      "patch": null
+    },
+    {
+      "id": "runtime:chunk-cons:3795",
+      "source-sha256": "63783a0a3213dc82374f92a17228afed0f304e9fcda367699addb894a348ccc3",
+      "patch": "docs/compatibility/patches/syntax-quote-chunk-cons.json"
+    },
+    {
+      "id": "runtime:chunk-first:3806",
+      "source-sha256": "d668f3d4c1b613863d3a70b1df8a8e790014a8d68e5c943d0008bb979c6e31cf",
+      "patch": "docs/compatibility/patches/syntax-quote-chunk-first.json"
+    },
+    {
+      "id": "runtime:chunk-rest:3809",
+      "source-sha256": "b2787c78dc3bbce059e8caf426dc531170e9edb683215b290fdab89c1ed6efe0",
+      "patch": "docs/compatibility/patches/syntax-quote-chunk-rest.json"
+    },
+    {
+      "id": "runtime:chunked-seq?:2276",
+      "source-sha256": "147a1f1bef7c8317c1bf08a286a7c8894be7d5c26d29c0d8f449faede099be2d",
+      "patch": "docs/compatibility/patches/syntax-quote-chunked-seqpredicate.json"
+    },
+    {
+      "id": "runtime:concat:3949",
+      "source-sha256": "4f182c362ef3bc51ea6163c5f89fab104b0101a06db431536207516686fa3895",
+      "patch": "docs/compatibility/patches/syntax-quote-concat.json"
+    },
+    {
+      "id": "runtime:into-array:560",
+      "source-sha256": "058290cf61995de11c828445499a2b3824587e9039afea842a1b045225dcd266",
+      "patch": "docs/compatibility/patches/syntax-quote-into-array.json"
+    },
+    {
+      "id": "runtime:vec:5939",
+      "source-sha256": "26751902826667f8f0f64adff1bd68945cd36583bf45067233a320a6d766e71a",
+      "patch": "docs/compatibility/patches/syntax-quote-vec.json"
+    },
+    {
+      "id": "runtime:hash-map:9053",
+      "source-sha256": "36193017fe019b02e21816d32646a7e20ce4a91901abfcddfecdfb9b908cfb22",
+      "patch": "docs/compatibility/patches/syntax-quote-hash-map.json"
+    },
+    {
+      "id": "runtime:array-map:9065",
+      "source-sha256": "5fdd1a829eb07b22f5f45817a933dae17a9d126aa6e14703e0f740af29fed484",
+      "patch": "docs/compatibility/patches/syntax-quote-array-map.json"
+    },
+    {
+      "id": "runtime:seq?:2340",
+      "source-sha256": "e7e3b05d641a03c16af4b0870169d35fcd6bad6a1aa22c4e7e10e62268aa86dd",
+      "patch": "docs/compatibility/patches/syntax-quote-seq-predicate.json"
     }
   ],
   "loader": {

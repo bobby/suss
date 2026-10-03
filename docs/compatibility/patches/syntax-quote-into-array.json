@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "058290cf61995de11c828445499a2b3824587e9039afea842a1b045225dcd266",
+  "replacement": "(def ^array into-array \"Returns an array with components set to the values in aseq. Optional type\n  argument accepted for compatibility with Clojure.\"\n  (fn ([aseq]\n     (into-array nil aseq))\n  ([type aseq]\n     (reduce (fn [a x] (.push a x) a) (array) aseq))))",
+  "rationale": "Retain the whole pinned constructor as a compiled syntax quote dependency. Expand defn to def/fn, preserving source name metadata, docstring, signatures and every body branch. This is in-progress source porting, not complete public constructor or M3 acceptance."
+}

@@ -1,0 +1,16 @@
+;; Original shared execution source for the actual pinned compiler and Suss.
+(def syntax-quote-observations
+  (fn []
+    (def effects 0)
+    (let [doubled (twice (do (set! effects (+ effects 1)) 21))
+          reader ^{:line 50} (inspect-reader `(+ 20 22))]
+      (list (add-one (add-one 40)) (sum-inputs 20 22) (sum-inputs)
+        doubled effects (twice (twice 10.5))
+        (count (get (quoted-data 42) :b))
+        (count (first (get (quoted-data (set! effects 99)) :a))) effects
+        (reduce + (quoted-vector 0 [20 22])) (count (quoted-vector 42 []))
+        (get (meta `^{:marker 7} [42]) :marker)
+        (count `()) (if `nil 0 1) (if `false 0 1)
+        (nth reader 0)
+        (if (= (nth reader 1) "clojure.core") 1 0)
+        (if (= (nth reader 2) "sequence") 1 0)))))

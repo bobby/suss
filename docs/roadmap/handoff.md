@@ -11898,3 +11898,469 @@ or complete macro metadata/portable schema support. Push review fix to PR154,
 then root must run the clean final-head full baseline and require final-head CI.
 All local jobs here terminal; sole heavy slot released after push. No PR merged,
 no issue closed; the complete original M3 gates remain open.
+
+## M3 syntax quote execution regressions prepared
+
+Isolated worktree /private/tmp/suss-m3-syntax-quote, branch
+portable/m3-syntax-quote, starts at reviewed PR154 head
+a4fa3e271a542d0d5f6978a6b57af19d08d99201. New original shared fixtures
+syntax-quote-add-one.sus, syntax-quote-sum-inputs.sus and syntax-quote-twice.sus
+feed compiled_macro_syntax_quote.rs. Two actual compiled-transformer regressions
+cover unquote, empty/nonempty sequence splicing, repeated auto-gensym identity,
+nested expansions, once-only effects and numeric values retained after GC.
+Formatting and diff checks only have run; these are not passing execution evidence.
+No implementation or new PR has been published for this slice.
+
+Pinned source inspection: vendored tools.reader at C429, reader.clj598–753
+contains per-template gensym environments, special symbols, namespace resolution,
+collection/splice lowering and metadata behavior. analyzer.cljc4650–4701 binds
+its own resolve-symbol/alias maps during real source reading; analyzer.cljc1472
+canonicalizes clojure.core to cljs.core. Portable resolve currently canonicalizes
+only cljs.core/suss.core. Existing prototype expand.rs is not implementation
+evidence for compiled portable macros. Preserve source order and upstream
+provenance/license when porting. Inspect and execute the real pinned artifacts
+before choosing a bootstrap adaptation; reader encoding alone is insufficient.
+
+Resource gate: root full PR154 baseline session55866 remains live in
+/private/tmp/suss-m3-form-source-metadata using shared target
+/private/tmp/suss-m3-pr143-target. Its metadata group has terminal10/0/0, but the
+whole process is not terminal. Final-head CI37101260084 remains in_progress at
+a4fa3e2. No second Cargo/JVM/Node job may start until local55866 is terminal;
+clean only the four workspace package artifacts before switching worktrees.
+Next unblocked execution: pinned syntax quote observations and actual failing
+compiled macro tests, then implement the full required semantics and dependencies.
+M3 issues remain open; no completion claim, no PR merged.
+
+Syntax quote next-step probe is now tests/oracle/syntax-quote-reader-probe.clj.
+It calls actual ana/forms-seq* with an isolated pinned compiler environment and
+observes the three shared macro definitions plus scalar/vector/splice/map/set/
+metadata/nested reader cases. No JVM/Node execution has run yet; scanner balance
+checks found three top-level probe forms and one declaration per shared fixture,
+and corrected a surplus binding delimiter. No oracle observation is recorded.
+The pinned reader handles syntax quote while reading all syntax, including data
+inside quote, with a fresh scoped gensym map per template; a macro-call-only
+implementation would be incomplete. Reader collection lowering uses concat/seq
+and sequence; current retained core lacks LazySeq/concat/sequence. Their source
+contracts and dependency closure must be respected rather than replacing lazy
+data with an unverified eager list or inferring support from old prototype code.
+
+Rechecked published issue14 body against accepted design7: syntax quote/gensyms,
+&form/&env, phase dependencies, reproducible Java-free bootstrap, changed-macro
+cache invalidation and removal of the temporary evaluator remain the requirements.
+Updated working acceptance-m3.md's stale macro-data row with actual graph,
+source-inference and reader metadata evidence, separating PR153 final-head success
+from PR154's still-live full validation. No complete environment or M3 claim.
+Pinned submodule in next worktree now initialized at C429 using the existing local
+checkout. No new native/JVM/Node job started while baseline55866 owns the slot.
+
+Prepared syntax quote suite now has three executing tests and five original
+shared macro fixtures: add-one, sum-inputs, twice, quoted-data and quoted-vector.
+New collection assertions run in both Runtime/Macro caller Stores and exercise
+vector splicing (including empty tail), nested maps/sets, and assignment syntax
+substituted under quote that must remain data with effects still zero. Returned
+numeric roots are independently inspected after collect(). No native run yet.
+Pinned reader probe now has twelve ordered cases including these five fixtures;
+no golden has been fabricated or passing results inferred from the source.
+When local baseline55866 is terminal, run the prepared failing-before cargo suite
+only after cleaning four workspace packages on worktree switch, then actual
+primary probe from tests/oracle with CLJ_CONFIG=/tmp/suss-oracle-clojure-config
+CLJ_CACHE=/tmp/suss-oracle-clojure-cache clojure -Srepro -M
+syntax-quote-reader-probe.clj. Record each terminal handle and failures faithfully.
+
+PR154 clean rebuilt full baseline55866 terminal exit0 at a4fa3e2: 1,027 passed,
+0 failed,17 existing ignores,108 result groups. Log
+/private/tmp/suss-pr154-reviewed-rebuilt-full.log. Root worktree clean and exact
+head verified; final-head CI37101260084 remains live. PR body and issue14 comment
+https://github.com/bobby/suss/issues/14#issuecomment-5966294847 record this evidence;
+PR remains draft, no merge. Local heavy slot released when55866 became terminal.
+
+Syntax quote BEFORE35711 terminal exit101:0/3/0, actual compiled transformer
+definitions all reject located Unresolved Macro name syntax-quote. Log
+/private/tmp/suss-syntax-quote-native-before.log. Cleaned only four workspace
+package artifacts before this worktree rebuild, CARGO_BUILD_JOBS=2/no RUSTFLAGS.
+The new suite is a real failing-before boundary; no support is inferred.
+
+Initial reader probe32434 exit0 produced12 projections but the compiler had no
+user namespace catalog, yielding /outer and /inner. It is not accepted oracle
+evidence; /private/tmp/suss-syntax-quote-reader-primary.log retains that attempt.
+Corrected probe calls actual ana/analyze on (ns user) first. Rerun95087 terminal
+exit0 produced12 observations with user/outer and user/inner, and actual stable
+within-template gensym identity. Log
+/private/tmp/suss-syntax-quote-reader-primary-initialized.log. Ordered labels and
+absence of empty symbol namespaces checked; twice has exactly3 occurrences of
+the same actual generated symbol. Raw generated IDs are retained, not fabricated
+or normalized into claimed exact native equality. Recorded actual reader output
+in syntax-quote-reader-observations.json with reader-only scope. No Node execution
+or native passing syntax quote evidence yet. All local heavy jobs now terminal.
+Next: implement the full reader/phase-aware syntax quote contract and dependencies,
+execute the native suite and independent pinned compiled artifacts, then review,
+full baseline and final-head CI on any published PR. Original M3 scope unchanged.
+
+Reader recording initially rejected an extra output line. Inspection established
+the actual pinned warning: user is a single segment namespace at line10. Exact
+warning retained in the observation artifact, not suppressed or treated as a
+semantic failure. Recorder then accepted12 exact labels,3 equal twice gensyms and
+valid user-qualified nested symbols, and wrote the raw actual observations.
+
+## Retained LazySeq prerequisite: executing before/after and primary evidence
+
+Current isolated syntax-quote worktree now selects entire IPending814 and
+LazySeq3584 declarations from pinned C429 core.cljs, with exact extraction hashes
+4d95f491cfb78df552974f49b5e9eb8c2ad2756816a0371844f9cc19ed794711 and
+ec37554b752797e7036784a18eaf322d4ad8491bc90f5148a2f4b8c338f445e4.
+Whole-form patch syntax-quote-LazySeq.json preserves every source method/field,
+expands the anonymous reader fn to special fn* and substitutes pinned default
+false LITE_MODE (core.cljs57–59), preserving both conditional branches. Original
+extracted source/notices and EPL files remain in generated artifact packaging.
+Provenance core_import.py --check verifies263files/259selections; review overlay
+verifies359in-progress/706unassessed. No complete class/core/M3 claim.
+
+BEFORE18100 terminal exit101:0/2/0, actual LazySeq constructor absent.
+/private/tmp/suss-lazy-sequence-native-before.log. First AFTER68354 exit101:0/2/0
+exposed redundant boolean hint on a scalar; fixed whole constant/hint replacement.
+69759 exit101:1/1/0 exposed an eager thunk invocation during metadata copying: fn
+macro was shadowed by actual source thunk field named fn. Reader #() must expand
+to special fn*, not fn.56264 exit101:1/1/0 then exposed test catch syntax missing
+:default; fixture corrected without changing source behavior.71354 exit0:2/0/0
+in both Stores. Logs /private/tmp/suss-lazy-sequence-native-after{,-constant,
+-fnstar,-catch}.log. Source fields/methods never removed to hide these failures.
+
+Fresh force-compiled primary40751 exit0 (cache-analysis false/force true) then
+Node exit0 produced12 scalars using shared lazy-sequence-fixture.sus: realization
+[0,42,1,42,1], metadata/retry[42,0,7,1,42,42,2]. Two intentional global replacement
+warnings retained in /private/tmp/suss-lazy-sequence-primary-compile.log; values
+/private/tmp/suss-lazy-sequence-primary-observations.json recorded as actual
+lazy-sequence-observations.json. Shared native9108 exit0:3/0/0 exactly matches
+all12 after GC in both caller Stores, /private/tmp/suss-lazy-sequence-native-
+primary-match.log. Direct IPending checks then added; affected93274 terminal
+exit0:29/0/0 across metadata10/source-metadata10/interfaces6/lazy3 groups.
+/private/tmp/suss-lazy-sequence-affected.log. No simultaneous heavy job.
+
+Python19848 exit0:108 checks before new comparator. Strict lazy comparator's4
+negative/comparison tests pass; updated full Python command88895 result recorded
+in /private/tmp/suss-lazy-sequence-python-final.log. Reproduction script
+sh scripts/test-lazy-sequence-oracle.sh now generates the shared fixture, forces
+pinned compilation, executes Node, strictly compares actual data then runs native
+tests. Its constituent commands were executed; the whole newly written script
+has not been claimed as a separately executed terminal job.
+
+Syntax quote native0/3 failures remain, intentionally uncommitted on this working
+branch. LazySeq dependency is actual progress, not substituted completion. Next
+unblocked work: whole retained ChunkedCons/chunk-first/rest/cons and chunked-seq?
+plus original all-arity concat with lazy-seq bootstrap expansion, then full scoped
+syntax quote/metadata/ns resolution and bounded lazy macro-result transport.
+Pinned reader12 observations and new native failures guide implementation.
+Complete original M3 bootstrap/cache/evaluator/lifecycle gates remain open.
+PR154 localfull1027/0/17 passed at reviewed a4fa3e2; its final CI37101260084 still
+live last checked. No new PR yet; no PR merged, no issue closed.
+
+Updated full Python88895 terminal exit0:112 tests, /private/tmp/suss-lazy-sequence-python-final.log. All local native/JVM/Node/Python jobs terminal; sole heavy slot free at this checkpoint.
+
+## Retained concat/chunked dependency progress
+
+Added whole pinned ChunkedCons3722, chunk-cons3795, chunk-first3806, chunk-rest3809,
+chunked-seq?2276 and concat3949 with exact source hashes/reviews/extracted notices
+and explicit patches. Unmodified complete ChunkedCons form remains portable.
+Defn-to-def/fn patches preserve docs and all signatures/bodies; LITE_MODE hinted
+symbol uses default false keeping both branches. Concat recursively replaces
+each lazy-seq form with new LazySeq nil (fn* [] body) nil nil, preserving laziness,
+captured arguments, named cat recursion and all chunked/unchunked paths. The
+concat patch explicitly records pinned core.cljc2285–2291 lazy-seq declaration
+hash. No upstream macro registration or bootstrap acceptance claimed.
+
+BEFORE18455 exit101:0/1/0,3filtered, unresolved Runtime concat.
+/private/tmp/suss-concat-native-before.log. AFTER63673 exit0:1/0/0,3filtered,
+in both Stores; /private/tmp/suss-concat-native-after.log. Focus executes empty,
+0/1/2/variadic inputs, deferred tail effect order and31/32 element chunk boundary.
+
+Expanded shared fixture source uses exact same compiled bodies in native and
+primary. Fresh force-compiled pinned primary81956 exit0, Node terminal exit0;
+/private/tmp/suss-concat-primary-compile.log and tests/oracle/out/
+lazy-sequence-observations.json. Three ordered rows now contain27 scalar values;
+first12 exactly unchanged, additional concat15 actual values recorded, not guessed.
+Strict comparator reports27 matches. Native57269 exit0:4/0/0 in19.24s, both
+caller Stores after GC; /private/tmp/suss-concat-native-primary-match.log.
+All local native/JVM/Node jobs terminal. Python68668 is a separate light check
+whose terminal result must still be inspected; do not infer from earlier112.
+Core provenance verifies269files/265 selections, reviews365in-progress/700
+unassessed. No class/es6 iteration/printing or full core completion claim.
+
+Current syntaxquote execution tests still0/3 failing at reader expansion; no new
+PR published yet. Next unblocked work is bounded lazy/ChunkedCons macro-result
+transport and full phase-aware/scoped syntaxquote resolution with metadata and
+nested templates. Original M3 bootstrap/cache/evaluator/lifecycle acceptance
+remains open; issue14 must not close from these dependency results.
+PR154 reviewedhead a4fa3e2 localfull1027/0/17 passed; CI37101260084 remains live.
+
+Concat Python68668 terminal exit0:112 checks. New actual compiled macro output
+regressions27151 terminal exit101:0/2/0,3filtered: retained concat executes but
+FormBridge rejects LazySeq as Unrecognized nominal macro data type. Both
+unchunked (concat (list '+) (list x 1)) and chunked (concat ['+ x] (list 1))
+transformers compile and fail at actual output transport.
+/private/tmp/suss-lazy-macro-transport-before.log. All local jobs terminal, sole
+heavy slot free. Next concrete task: add captured nominal LazySeq/ChunkedCons
+identities and bounded source sequence realization to the rooted FormBridge;
+retain metadata, malformed-data/cycle/traversal/fuel guards. Execute these two
+regressions before returning to original three syntaxquote expansion failures.
+
+## Bounded lazy macro-data transport and PR154 readiness
+
+New private Session.data_inspect_calls feeds runtime args-new/invoke and a captured
+source helper into the existing inspect RootScope/checkpoint/exception cleanup,
+with fuel set once for the whole read rather than replenished per element.
+FormBridge captures canonical LazySeq/ChunkedCons/ArrayChunk roots and compiled
+(fn* [value] (.sval value)) helper. Decoder realizes source thunk cache/retry
+semantics inside its root scope, then reads known canonical sequence, vector and
+UTF16 storage. Existing4096node/1MiBunit/depth64 bounds remain shared, with
+metadata checked before realization and strict ArrayChunk layout/cursor checks.
+No JVM dependency, source printing/reparse or temporary macro evaluator introduced.
+
+Native95258 terminal exit0:2/0/0,3filtered repairs both reproduced lazy concat
+output failures; /private/tmp/suss-lazy-macro-transport-after.log. New guards89349
+exit0:4/0/0,3filtered cover malformed metadata before thunk effects, cycle, bad
+chunk cursor, thrown thunk and next-input recovery/no staged caller publication.
+/private/tmp/suss-lazy-macro-transport-guards.log. Affected76514 exit0:35/0/0
+across5groups(lib6/source-metadata10/forms6/indexed3/metadata10); log
+/private/tmp/suss-lazy-macro-transport-affected.log. Removed unrelated whole-file
+rustfmt noise afterward by restoring untouched source sections; functional
+changes remain121lines in bridge and30 in Session, with diff checks passing.
+
+Undefined-tail BEFORE5166 exit101:0/1/0,7filtered: typed-structure rejection.
+Existing fresh pinned Node artifact independently executes count(concat(undefined))
+and returns0, /private/tmp/suss-lazy-undefined-primary.log (preceding27fixture
+observations retained). Fixed only sequence-tail absence to recognize internal
+undefined as nil, without accepting unknown standalone syntax data.13029 exit0:
+5/0/0,3filtered; /private/tmp/suss-lazy-macro-transport-final.log.
+
+Empty ArrayChunk in directly constructed ChunkedCons BEFORE48346 exit101:0/1/0,
+7filtered, incorrectly accepted as empty output. Cursor start>=end now rejects
+that invalid nonempty-sequence storage. Final94130 is currently live, running
+all5transport tests; /private/tmp/suss-lazy-macro-transport-final-chunk.log.
+Re-poll this exact handle before starting another heavy job; do not infer pass.
+Original3syntaxquote reader-expansion regressions remain failing and unfiltered.
+
+PR154 final-head CI37101260084 terminal SUCCESS at reviewed
+a4fa3e271a542d0d5f6978a6b57af19d08d99201. Downloaded logs
+/private/tmp/suss-pr154-final-head-ci.log independently confirm1027/0/17existing
+ignores,108result groups, matching clean local baseline. PR body updated and
+PR154 marked ready for user review; no merge. These counts certify PR154, not
+the new syntaxquote worktree/transport. Full original M3 remains active.
+Next: terminal94130, scoped phase-aware reader expansion and pinned comparison,
+then remaining bootstrap/cache/evaluator/lifecycle acceptance. No new PR yet.
+
+Final94130 terminal exit0:5/0/0,3filtered in39.48s, including empty-chunk rejection. All local jobs terminal; heavy slot free. Original3reader-expansion failures remain unresolved.
+
+## Syntax quote reader prerequisite — 2026-10-03
+
+User reports #146/#147 merged. GitHub confirms merge commits
+ec247c96c28c7746ed31bba2672b24a16719dc11 and
+83b24f7ec1d5f43e36c112c2a0cd3e9966ed8abb respectively, both on October2.
+Goal remains full M3, not merely the selected macro reader slice.
+
+Working branch portable/m3-syntax-quote now adds an EPL-noticed bounded reader
+pass in portable/syntax_quote.rs plus seven tests. It is exported as a reader
+prerequisite but deliberately not connected to HIR until constructor dependencies,
+complete core resolution and original/expanded provenance are integrated. State
+stages deterministic gensym IDs and commits only successful inputs. Nested
+templates expand inside out with separate maps; quoted data is traversed too.
+Aliases/refers/macro aliases/refers/exclusions use the supplied phase catalog.
+The map constructor threshold is16entries (32flatitems). UTF16/signedzero and
+accepted textual collection order are preserved. Bounds are64depth/65536work/
+1MiBtext; oversized children are checked before eager recursive cloning.
+
+Actual pinned reader corpus12trees now compares against the pass, preserving
+structure/qualification/gensym identity; raw primary IDs remain in observations.
+Only numeric IDs and JSON integer versus portable binary64 representation are
+normalized. Explicit metadata ordering has a precisely asserted accepted textual
+variance, not a blanket unordered comparison. Added source/license documentation
+in docs/runtime/syntax-quote-reader.md. Verified upstream file hash equals retained
+614e857a4d92e22edbaf38e4e87c3f499e8703fb7f930c23e1df136535cc4597.
+
+Commands use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and
+CARGO_BUILD_JOBS=2; no RUSTFLAGS. No worktree switch or overlapping native jobs.
+Initial38638 exit101:5pass/1fail, JSON1.0 vs1 representation; corrected comparison
+to binary64.38707 exit101:5/1 due to wrong metadata fixture pointer; fixed test
+pointer.56139 exit0:6/0,55filtered validates twelve trees.25999 exit0 complete
+compiler lib:62/0/0 after adding seventh scalar/order/text-bound regression.
+New prefix metadata guard64086 exit101:0/1,61filtered reproduces ^:outside `[]
+being left as syntax-quote, /private/tmp/suss-syntax-quote-prefix-meta-before.log.
+Fixed token matching to allow preceding metadata and retain annotation on the
+generated form. Final96465 terminal exit0:62/0/0,0filtered in0.77s;
+/private/tmp/suss-syntax-quote-reader-lib-final-2.log. Focused earlier logs:
+/private/tmp/suss-syntax-quote-reader-native{,-2,-3}.log and
+/private/tmp/suss-syntax-quote-reader-lib-final.log.63522 provenancecheck exit0:
+269files verified. Touched new Rust files formatted; diff check passes.
+
+No new PR, commit, full workspace baseline or syntax quote execution success is
+claimed. Original3execution failures remain; prior5lazytransport passes remain
+separate. All local jobs terminal and heavy slot free. Next wire this pass into
+analysis with transactional Environment counter ownership and verified expanded
+source provenance, supply faithful constructor dependencies, execute original3
+regressions and affected suites, then full baseline/review/final-head CI. Continue
+bootstrap/cache/evaluator/lifecycle gates before declaring M3 complete.
+
+## Syntax quote execution integration — 2026-10-03
+
+The previous reader-only turn made verified progress. This turn connects the
+reader to top-level analysis and executes the formerly failing three syntax
+quote regressions. Goal remains full M3. No new PR/commit/merge yet.
+
+Retained whole vec, into-array, array-map, hash-map and seq? declarations now
+join the dependency recipe, with exact extraction/patch hashes and EPL notices.
+Defn bootstrap keeps docs/name metadata/signatures/all branches. Array-map's
+known checked-length parity and nonempty-array last access use direct integer/
+array operations; host Error uses the existing shared adapter. Original str_
+printing remains pending, so odd-key error-message compatibility is NOT claimed.
+Public sequence is reviewed in-progress separately: only its exact one-argument
+body at core.cljs4403–4406 is used as a private reader bootstrap closure.
+The full source declaration hash is748c1e1a78ed4ddfac684f99f973501ceb9366e7fba1cb9074726d27759f8756.
+Public sequence is not selected/registered; all transducer arities remain open.
+Recipe270 selections/274 generated files; review371in-progress/694unassessed.
+
+New scripts/reader_core_catalog.py derives1081 source name facts from pinned
+runtime declarations, macro declarations, protocol methods and constructors.
+JVM macro helper functions, discarded forms and quoted declarations are not
+runtime name facts. Generated file records both upstream source hashes; lookup
+qualifies core symbols without creating executable bindings. Three Python guards
+pass. Runtime HIR still rejects unloaded names. Existing when bootstrap binding
+is explicitly distinguished in the no-fake-bindings unit test.
+
+Environment now owns staged ReaderState. HIR expands templates before top-level
+lexical analysis, replaying the same initial counter against verified indexing
+data and rejecting divergent counters. Numeric IDs partition Runtime/Macro
+phases; independent-state collision was reproduced and fixed. Reader-only data
+keeps actual clojure.core constructor names. Executable generated calls normalize
+to cljs.core and privately adapt one-arity sequence coercion, preserving quotes.
+Immutable SourceOrigin correspondence maps lowered source back to actual reader
+forms for &form. Metadata and code children are paired independently, synthetic
+helper bodies get no original positions, and base cached source stays unchanged.
+Source wrappers enrich only exact verified original subtrees. No JVM or printing/
+reparse transport is introduced; the private helper parses fixed bootstrap source.
+
+Heavy commands all use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target,
+CARGO_BUILD_JOBS=2 and no RUSTFLAGS; one native/JVM/Node job at a time.
+Terminal evidence:
+
+-27082 exit101:0/2 constructors before, unresolved vec/array-map;
+ /private/tmp/suss-reader-constructors-before.log.39213 exit0:2/0 in10.44s
+ repairs all vec branches and variadic/apply map paths in both Stores.
+-67431 primary compile exit0 was NOT accepted: generation ran from the wrong
+ directory and stale generated input lacked the new function. It warned undeclared
+ reader-constructor-observations; Node exited1. Logs retained in
+ /private/tmp/suss-reader-constructors-primary-compile.log and
+ /private/tmp/suss-reader-constructors-primary-stale-output.log. Corrected generator
+ ran from root;16430 fresh force/cache-analysis-false compile exit0, fresh Node
+ exit0. New actual record50observations keeps original27 byte-value-identical.
+ /private/tmp/suss-reader-constructors-primary-fresh-compile.log.
+-91194 native expanded shared fixture exit101:3/1, actual all-fuel-consumed at
+ default10million, not a value mismatch.88925 exit0:lazy4/0 plus constructors2/0,
+ shared50 match after GC in both Stores using one explicit bounded50million test
+ operation budget. No per-value fuel replenishment. Logs
+ /private/tmp/suss-reader-constructors-primary-native-match{,-2}.log.
+-75909 first integrated compile exit101 at ambiguous integer budget; fixed usize.
+ /private/tmp/suss-syntax-quote-integrated-first.log.44376 exit101:5/3 unresolved
+ cljs.core/sequence due to classifier missing backquote's extended parent span.
+ Fixed generated-head end-span recognition without recognizing ordinary calls.
+81169 exit101:5/3 missing seq?; ported whole source predicate.13046 exit0:8/0,
+64.84s repairs all original three failures. Logs integrated-{2,3,4}.log.
+-22591 phase-collision guard exit101:0/1, both phases emitted value__1__auto__.
+ Numeric phase partition fixes it; counter remains transactional. Log
+ /private/tmp/suss-syntax-quote-phase-gensym-before.log.
+-74817 actual fresh pinned shared six-macro ClojureScript compilation exit0,
+ fresh Node exit0:18execution observations. Source/definitions unchanged across
+ primary/native. /private/tmp/suss-syntax-quote-primary-execution-compile.log.
+74742 exit0:1/0,8filtered,25.88s independently decodes exact18 after GC in both
+ caller Stores, including effects, splicing, nested invocation, metadata and
+ actual reader constructors through &form. Log
+ /private/tmp/suss-syntax-quote-primary-native-match.log. New strict oracle has
+ three shape/pin/duplicate/numeric/signedzero negative Python tests.
+-43713 compiler lib exit101:64/1 due to test incorrectly assuming when had no
+ existing bootstrap binding. Corrected only that assumption; all four genuinely
+ unloaded catalog names remain required errors.9136 terminal exit0:compiler lib
+65/0/0, then affected CLI37/0/0 across four groups: source-metadata10/forms6/
+ metadata10/syntaxquote11. New native guards prove automatic Unicode/CRLF parent
+ line2 and no reader ID consumption after failed input. Logs
+ /private/tmp/suss-syntax-quote-integrated-lib{,-2}.log and
+ /private/tmp/suss-syntax-quote-integrated-affected.log.
+-17750 terminal exit0:274files verified, Python118/0 in4.890s;
+ /private/tmp/suss-syntax-quote-python.log. Reader catalog integrity and shell syntax
+ checks pass. Later59160 detected stale manifest review hash after adding private
+ sequence review; refreshed only the generated manifest, requiring proof that
+ core.sus source bytes remain unchanged.26454 is the exact follow-up handle;
+ re-poll before claiming final provenance verification if still live.
+
+Full workspace29057 is LIVE, writing
+/private/tmp/suss-syntax-quote-full-baseline.log. Exact command:
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2
+No production code/core source changes during this run. Do not restart on an
+observation timeout. The new syntax_quote_live_binding.rs test was added AFTER
+Cargo discovered/compiled this run's targets, so this baseline does not certify
+that guard. All other heavy jobs terminal; native slot belongs to29057.
+
+Known next edge: private coercion currently ignores an explicit user binding of
+cljs.core/sequence. Added a focused guard expecting42 from a redefined sequence,
+but it has NOT run while the full baseline occupies the slot. Next obtain29057
+terminal evidence, execute that guard, and make coercion fall back only when no
+actual live binding exists. Prefer late HIR recognition rather than early reader
+lowering so provisional recursive definitions are respected too. Preserve actual
+reader provenance and rerun focused/shared/affected suites, then final baseline.
+Independent PR review and exact final-head CI remain required before readiness.
+Continue full bootstrap/cache/evaluator removal/namespace policy/lifecycle gates;
+none of issues12–15 or original M3 is complete.
+
+26454 terminal exit0:274files regenerated/verified. Core source SHA256 was checked
+before/after and is byte-identical; only review-manifest metadata required refresh.
+Issue14 progress recorded at https://github.com/bobby/suss/issues/14#issuecomment-5967409109.
+
+Full29057 is now terminal exit0:1054pass/0fail/17existingignores,111result groups.
+This is PRE-live-cell-repair evidence; no new guard was discovered in that run.
+Added reader catalog integrity to CI's existing provenance checks.
+77307 live-cell guard terminal exit101:0/1, returned cljs.core/+ Symbol rather
+than expected42; /private/tmp/suss-syntax-quote-live-binding-before.log.
+Moved private coercion selection out of early reader lowering into live HIR after
+macro expansion, with provenance verification and actual binding precedence.
+First47099 compile failed because hook landed in capture_source_namespace; fixed
+placement in expand_or_analyze.90305 terminal exit0:1/0,8.91s repairs explicit
+core sequence redefinition in both phases;
+/private/tmp/suss-syntax-quote-live-binding-after{,-2}.log.
+
+New old-closure guard83349 terminal exit101:1pass/1fail,10.92s. A closure compiled
+before a later public core sequence definition still retains the private fallback,
+returning cljs.core/+ instead of42. Log
+/private/tmp/suss-syntax-quote-live-binding-old-closure-before.log. This is a real
+M3 live-cell defect, not a skip/unknown-to-success change. Keep the guard failing
+and fix before publication. Likely need a shared canonical cell for default reader
+support, hidden from ordinary source resolution until a real source definition
+promotes it. Existing InternalCell intentionally rejects user declarations, so
+do not repurpose that reservation blindly. Must preserve default one-arity-only
+bootstrap status without falsely advertising public sequence transducer support.
+
+64573 is LIVE running sequential current-head compiler lib and all11 compiled
+syntaxquote tests. Logs /private/tmp/suss-syntax-quote-late-coercion-lib.log and
+/private/tmp/suss-syntax-quote-late-coercion-execution.log. Re-poll exact handle;
+heavy slot belongs to it. Next terminal64573, shared-cell repair/old-closure guard,
+focused/affected/shared execution and new final baseline, then independent PR
+review/final-head CI. No commit/PR/merge. Full original M3 remains active.
+
+64573 terminal exit0:current compiler lib65/0/0 and compiled syntaxquote11/0/0,
+including exact18shared observations, after late coercion. Both logs above
+confirm. All local jobs now terminal; heavy slot free. Separate old-closure guard
+remains1/1failure and must be fixed next, with final full baseline still required.
+
+
+Shared reader-cell repair: original89541 terminal exit0,2/0; expanded23825
+terminal exit101,3/1 because the test placed a trailing ns form after entering
+cljs.core in the same input. Split the namespace inputs as existing tests do.
+70293 terminal exit0,5/0/0,32.47s in both caller phases: explicit and future
+redefinition, fallback privacy/no replay, failed compile, failed initializer and
+reset recovery. Log /private/tmp/suss-syntax-quote-shared-cell-guards-2.log.
+ReaderCell shares canonical suss.core/sequence identity, remains filtered from
+ordinary resolution, and can be promoted by a public source declaration;
+InternalCell reservations stay intact. The private default initializer is
+prepended once to the compiled fragment, not source replay. The fallback is
+only the exact pinned one-argument body; transducer arities remain unported.
+118 Python checks and274 imported files/catalog integrity pass. Final current
+workspace baseline now running, /private/tmp/suss-syntax-quote-shared-cell-full-baseline.log.
+Next: baseline terminal, independent PR review and fixes, final-head CI; then
+continue M3 bootstrap/cache/evaluator/lifecycle acceptance. No issue closure.

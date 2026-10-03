@@ -1,0 +1,1 @@
+(defmacro twice [x] `(let [value# ~x] (+ value# value#)))

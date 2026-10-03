@@ -682,6 +682,25 @@ impl Analyzer<'_> {
                 "Bootstrap analysis expansion limit exceeded",
             ));
         }
+        let previous_origin = self.origin.clone();
+        let reader_form = if self.analysis_depth == 0 && super::syntax_quote::has_template(form)? {
+            let mut reader = self.environment.reader_state.clone();
+            let raw = reader.expand_with_origin(form, &self.environment, self.phase, self.origin.as_ref())?;
+            // Replay the same initial counter against verified indexing data;
+            // this does not allocate another set of observable generated IDs.
+            let mut replay = self.environment.reader_state.clone();
+            let located = if let Some(origin) = &self.origin { origin.reader_tree(form)? } else { form.clone() };
+            let located = replay.expand(&located, &self.environment, self.phase)?;
+            if reader != replay {
+                return Err(fail(form.span.clone(), "Reader provenance generated IDs diverged"));
+            }
+            let lowered = super::syntax_quote::lower_generated(&raw)?;
+            let origin = self.origin.clone().unwrap_or_else(|| super::SourceOrigin::new("", None));
+            self.origin = Some(origin.with_reader_expansion(lowered.clone(), located));
+            self.environment.reader_state = reader;
+            Some(lowered)
+        } else { None };
+        let form = reader_form.as_ref().unwrap_or(form);
         if self.analysis_depth == 0 {
             // The pinned analyzer refreshes &env's namespace between top-level
             // forms, not after each nested def. Keep resolution's live catalog
@@ -695,6 +714,7 @@ impl Analyzer<'_> {
         });
         self.analysis_depth -= 1;
         self.analysis_contexts.pop();
+        self.origin = previous_origin;
         result
     }
     fn expand_or_analyze(
@@ -729,6 +749,29 @@ impl Analyzer<'_> {
                     }
                 }
             }
+        }
+        if let Some(coerced) = super::syntax_quote::reader_sequence_initializer(form, &self.environment, self.phase, self.origin.as_ref())? {
+            let (global, fresh) = self.environment.reader_sequence_cell(self.phase);
+            if fresh {
+                let initializer = self.form(&coerced)?;
+                self.callable_keys.insert(global.clone(), Hir {
+                    source: None, span: form.span.clone(), metadata: Vec::new(), ty: Type::Value,
+                    kind: Expression::Definition {
+                        global: global.clone(), name_metadata: Vec::new(), name_span: form.span.clone(),
+                        docstring: None, initializer: Some(Box::new(initializer)), once: true,
+                    },
+                });
+            }
+            let Kind::List(items) = &form.kind else { unreachable!() };
+            let argument = self.form(&items[1])?;
+            return Ok(Hir {
+                source: None, span: form.span.clone(), metadata: form.metadata.clone(), ty: Type::Value,
+                kind: Expression::Call {
+                    callee: Box::new(Hir { source: None, span: items[0].span.clone(),
+                        metadata: Vec::new(), ty: Type::Value, kind: Expression::Global(global) }),
+                    arguments: vec![argument],
+                },
+            });
         }
         let namespace = self.environment.current_namespace(self.phase).to_owned();
         let scope = self.capture_source_namespace();

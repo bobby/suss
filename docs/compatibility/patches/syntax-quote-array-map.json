@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "5fdd1a829eb07b22f5f45817a933dae17a9d126aa6e14703e0f740af29fed484",
+  "replacement": "(def array-map \"keyval => key val\n  Returns a new array map with supplied mappings.\"\n  (fn [& keyvals]\n  (let [arr (if (and (instance? IndexedSeq keyvals) (zero? (.-i keyvals)))\n              (.-arr keyvals)\n              (into-array keyvals))]\n    (if (== 1 (bit-and (alength arr) 1))\n      (throw (suss.bootstrap/error (str_ \"No value supplied for key: \" (aget arr (- (alength arr) 1)))))\n      (.createAsIfByAssoc PersistentArrayMap arr)))))",
+  "rationale": "Retain the whole pinned constructor as a compiled syntax quote dependency. Expand defn to def/fn, preserving source name metadata, docstring, signatures and every body branch. This is in-progress source porting, not complete public constructor or M3 acceptance. Replace host Error construction with the existing shared language-error adapter. The source str_ printing dependency is retained and unfinished; missing-value message compatibility is not yet certified. Replace odd? on a checked array length with integer parity and last on its known nonempty array with indexed access. These substitutions are confined to actual array storage, preserving every branch without claiming public odd?/last compatibility."
+}

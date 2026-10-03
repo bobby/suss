@@ -13,6 +13,9 @@ pub struct SourceOrigin {
     metadata_forms: Arc<
         OnceLock<Result<(Vec<suss_reader::forms::Form>, Vec<suss_reader::forms::Form>), String>>,
     >,
+    // Private, immutable correspondence installed only by verified reader
+    // expansion/lowering. It never mutates the original cached source snapshot.
+    reader_forms: Option<Arc<(suss_reader::forms::Form, suss_reader::forms::Form)>>,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SourcePosition {
@@ -47,6 +50,7 @@ impl SourceOrigin {
             path,
             line_starts: starts.into(),
             metadata_forms: Arc::new(OnceLock::new()),
+            reader_forms: None,
         }
     }
     pub fn text(&self) -> &str {

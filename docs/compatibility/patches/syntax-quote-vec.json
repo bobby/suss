@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "26751902826667f8f0f64adff1bd68945cd36583bf45067233a320a6d766e71a",
+  "replacement": "(def vec \"Creates a new vector containing the contents of coll. JavaScript arrays\n  will be aliased and should not be modified.\"\n  (fn [coll]\n  (cond\n    (map-entry? coll)\n    [(key coll) (val coll)]\n\n    (vector? coll)\n    (with-meta coll nil)\n\n    (array? coll)\n    (.fromArray PersistentVector coll true)\n\n    :else\n    (-persistent!\n      (reduce -conj!\n        (-as-transient (.-EMPTY PersistentVector))\n        coll)))))",
+  "rationale": "Retain the whole pinned constructor as a compiled syntax quote dependency. Expand defn to def/fn, preserving source name metadata, docstring, signatures and every body branch. This is in-progress source porting, not complete public constructor or M3 acceptance."
+}

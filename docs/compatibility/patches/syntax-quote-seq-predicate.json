@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "e7e3b05d641a03c16af4b0870169d35fcd6bad6a1aa22c4e7e10e62268aa86dd",
+  "replacement": "(def seq? \"Return true if s satisfies ISeq\"\n  (fn [s]\n  (if (nil? s)\n    false\n    (satisfies? ISeq s))))",
+  "rationale": "Retain the whole pinned seq? declaration as the reader sequence coercion dependency. Explicit defn to def/fn preserves the docstring, signature, nil guard and full satisfies? fallback. This does not force a lazy sequence. Complete public sequence transducer arities and compiled bootstrap remain unfinished."
+}

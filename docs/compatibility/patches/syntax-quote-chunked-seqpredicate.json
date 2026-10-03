@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "147a1f1bef7c8317c1bf08a286a7c8894be7d5c26d29c0d8f449faede099be2d",
+  "replacement": "(def chunked-seq?\n  \"Return true if x satisfies IChunkedSeq.\"\n  (fn [x]\n  (if-not false\n    (implements? IChunkedSeq x)\n    false)))",
+  "rationale": "Retain the entire pinned declaration as a compiled syntax quote concatenation dependency. All source methods/branches and nominal fields remain present; surrounding printing/es6 iterable setup and full M4 compatibility remain unfinished. Deferred and chunked concatenation must be executed against primary artifacts, not inferred from extraction. Expand defn to def/fn while preserving docstring and every signature/body. Expand each lazy-seq occurrence to the pinned lazy-seq macro constructor shape with special fn* and nil metadata/result/hash fields; preserve deferred captures, chunked and unchunked paths, named cat recursion and all concat arities. The pinned default false LITE_MODE constant replaces its hinted symbol where present, keeping both branches."
+}
