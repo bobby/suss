@@ -13343,3 +13343,30 @@ new regression and git diff check pass. All root heavy handles are terminal;
 source is frozen for draft publication and dispatched independent review.
 Reviewer must run required exact pushed-head full baseline, fix significant
 findings and obtain final-head CI before readiness. No merge/closure.
+
+## Independent PR162 review — provisional declaration boundary
+
+Reviewed common definition preservation, metadata merge precedence, validation
+before preservation, existing source-function revisions and initializer/runtime
+paths against pinned analyzer2092–2172 and core175–176. No significant production
+finding. Added actual pinned macro observations and native initializer-boundary
+regression in both caller phases. Both captured namespace snapshots and live
+provisional catalog records remain unchanged across a nested declaration; the
+captured namespace predates the fresh definition, while its live record retains
+staged doc and absence of private metadata.
+
+Primary88986 TERMINAL0 initially verified nested provisional preservation.
+Native19328 TERMINAL101 and diagnostic48876 TERMINAL101 exposed an incorrect
+fixture expectation that the captured namespace already included a provisional
+definition, not a production bug. Diagnostic confirms the live catalog does.
+An intermediate edit command used the wrong working directory; primary65940
+TERMINAL0 ran the prior probe without the new macro hook. Corrected actual pinned
+macro-hook primary75207 TERMINAL0 independently asserts both views and unchanged
+selected fields. Log /private/tmp/suss-pr162-review-primary-staged.log.
+Corrected native73358 TERMINAL0 passes the original preservation regression plus
+the new nested boundary in both phases; log
+/private/tmp/suss-pr162-review-focused-final.log. No compiler/core/reader change,
+so bootstrap compiler identities and Wasm are unchanged from root verification.
+Rustfmt2024 and git diff check pass. Review additions will be pushed before the
+required full baseline; source will remain frozen at that exact pushed head.
+Final-head full baseline and CI remain pending; no readiness/merge/closure claim.

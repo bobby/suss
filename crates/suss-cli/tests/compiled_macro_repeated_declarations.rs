@@ -172,6 +172,57 @@ fn repeated_declare_keeps_existing_snapshot_catalog_and_runtime_bindings() {
             snapshot(&mut session, &mut macros, "callable"),
             after_truthy
         );
+        // Expansion inside an initializer observes its provisional record.
+        // A nested declaration must retain that record, not publish its own
+        // metadata, before the enclosing definition completes.
+        let staged = session
+            .eval_with_macros(
+                r#"(def ^{:doc "staged-doc"} staged-observations
+                  (let [before (declaration-snapshot staged-observations)]
+                    (declare ^{:doc "ignored" :private true} staged-observations)
+                    [before (declaration-snapshot staged-observations)]))"#,
+                &mut macros,
+            )
+            .unwrap();
+        let staged = read(&mut session, &staged);
+        let Kind::Vector(observations) = &staged.kind else {
+            panic!("Staged declaration observations")
+        };
+        assert_eq!(observations.len(), 2);
+        assert_eq!(
+            observations[0], observations[1],
+            "{phase:?}: provisional preservation"
+        );
+        let Kind::Vector(groups) = &observations[0].kind else {
+            unreachable!()
+        };
+        let Kind::Vector(captured) = &groups[0].kind else {
+            unreachable!()
+        };
+        let Kind::Vector(catalog) = &groups[1].kind else {
+            unreachable!()
+        };
+        assert_eq!(
+            captured[0].kind,
+            Kind::Bool(false),
+            "Captured namespace predates initializer"
+        );
+        assert_eq!(
+            catalog[0].kind,
+            Kind::Bool(true),
+            "Live catalog contains provisional definition"
+        );
+        let live_catalog = Form {
+            span: 0..0,
+            metadata: vec![],
+            kind: Kind::Vector(vec![groups[1].clone()]),
+        };
+        assert_property(
+            &live_catalog,
+            "doc",
+            Kind::String("staged-doc".encode_utf16().collect()),
+        );
+        assert_selected_property(&live_catalog, "private", false, Kind::Nil);
         let forward = snapshot(&mut session, &mut macros, "forward");
         assert_property(&forward, "declared", Kind::Bool(true));
         session

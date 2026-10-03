@@ -6,8 +6,13 @@
              :arglists :arglists-meta :meta :line :column :file])
 (defn entry [name]
   (select-keys (get-in @env/*compiler* [::ana/namespaces 'declaration-review :defs name]) fields))
+(def staged-observations (atom []))
+(defmacro inspect-staged [name]
+  (swap! staged-observations conj
+    [(select-keys (get-in &env [:ns :defs name]) fields) (entry name)])
+  nil)
 (defn analyze [source]
-  (ana/analyze (assoc (ana/empty-env) :ns (ana/get-namespace 'declaration-review))
+  (ana/analyze (assoc (ana/empty-env) :ns (assoc (ana/get-namespace 'declaration-review) :use-macros {'inspect-staged 'user}))
     (read-string source)))
 (env/with-compiler-env (env/default-compiler-env)
   (binding [ana/*cljs-ns* 'declaration-review ana/*cljs-file* "declaration-review.cljs"]
@@ -36,6 +41,21 @@
       (assert (= forward (entry 'forward)) (pr-str [forward (entry 'forward)]))
       (assert (true? (:declared forward)))
       (prn :forward-unchanged forward))
+    (analyze "(def ^{:doc \"staged-doc\"} nested (let [before (inspect-staged nested)] (def ^{:declared true :doc \"ignored\" :private true} nested) (inspect-staged nested)))")
+    (assert (= 2 (count @staged-observations)))
+    (assert (apply = @staged-observations) (pr-str @staged-observations))
+    (assert (= {} (ffirst @staged-observations)))
+    (assert (= "staged-doc" (:doc (second (first @staged-observations)))))
+    (assert (not (contains? (second (first @staged-observations)) :private)))
+    (prn :staged-macro-observations @staged-observations)
+    ;; A nested declaration also retains the enclosing initializer's staged
+    ;; record. Truthy declared on the outer def leaves that provisional record
+    ;; visible, allowing an independent assertion without a custom macro hook.
+    (analyze "(def ^{:declared :marker :doc \"staged-doc\"} staged (do (def ^{:declared true :doc \"ignored\" :private true} staged) 9))")
+    (assert (= "staged-doc" (:doc (entry 'staged))))
+    (assert (= :marker (:declared (entry 'staged))))
+    (assert (not (contains? (entry 'staged) :private)))
+    (prn :nested-provisional-preserved (entry 'staged))
     (doseq [name '[ordinary false-record nil-record initialized]]
       (analyze (str "(def " name " \"old\" 1)")))
     (analyze "(def ordinary)")

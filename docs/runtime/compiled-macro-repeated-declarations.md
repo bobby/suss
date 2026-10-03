@@ -48,3 +48,11 @@ preparation; current results are recorded in the handoff.
 This is partial progress for #13/#14. Full portable environments/inference,
 source/macro dependency cache invalidation, evaluator retirement and M3 lifecycle
 acceptance remain open.
+
+Independent review additionally executes a declaration inside an enclosing
+initializer. Actual pinned macro observations distinguish the captured namespace
+snapshot (which predates that definition) from its live provisional catalog
+record. Both views remain unchanged across the nested declaration, and the live
+record retains its original doc and absence of private metadata. The native
+regression asserts the same distinction in both phases. No significant
+production finding was found; final-head full baseline and CI are still required.
