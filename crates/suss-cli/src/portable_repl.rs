@@ -268,7 +268,10 @@ pub fn evaluate_script_compiled(
         Runtime(suss_compile::portable::modules::PreparedInput),
         Macro(String),
     }
-    let mut snapshot = runtime.compilation_snapshot();
+    let checkpoint = macros.binding_checkpoint()?;
+    let mut staged_macros = Vec::new();
+    let preparation = (|| -> Result<Vec<Prepared>, SessionError> {
+        let mut snapshot = runtime.compilation_snapshot();
     let mut prepared = Vec::new();
     for mut form in forms {
         let definition = matches!(&form.kind, suss_reader::forms::Kind::List(items)
@@ -283,7 +286,12 @@ pub fn evaluate_script_compiled(
                 namespace: Some("suss.core".into()),
                 name: "defmacro".into(),
             });
-            macros.enter_namespace(snapshot.environment.current_namespace(runtime.phase()))?;
+            let namespace = snapshot.environment.current_namespace(runtime.phase());
+            if let Some(suss_reader::forms::Form { kind: suss_reader::forms::Kind::Symbol(name), .. }) = items.get(1) {
+                let global = suss_compile::portable::resolve::Environment::default().declare_cell(suss_compile::portable::resolve::Phase::Macro, namespace, &name.name).map_err(SessionError::Compile)?;
+                staged_macros.push((macros.binding_checkpoint()?, global));
+            }
+            macros.enter_namespace(namespace)?;
             prepared.push(Prepared::Macro(macros.define_form_display(
                 form,
                 0..source.len(),
@@ -299,6 +307,19 @@ pub fn evaluate_script_compiled(
             prepared.push(Prepared::Runtime(input));
         }
     }
+        Ok(prepared)
+    })();
+    let prepared = match preparation {
+        Ok(prepared) => prepared,
+        Err(error) => {
+            for (before, global) in staged_macros.into_iter().rev() {
+                macros.restore_bindings(before, &[global])?;
+            }
+            macros.restore_bindings(checkpoint, &[])?;
+            return Err(error);
+        }
+    };
+    drop(checkpoint);
     // All runtime compilation succeeds before any input/dependency initializer.
     let mut result = "nil".to_owned();
     let mut display = NativeDisplay::default();

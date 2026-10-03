@@ -12,8 +12,11 @@ initializer. A later runtime compile error therefore leaves existing runtime
 bindings untouched. Successful fragments then execute in textual order in one
 Store, without replaying initializers. Macro declarations execute in the isolated
 phase while later source is prepared, so old compiled expansions retain their
-meaning across macro redefinition. Compilation-time macro effects are not rolled
-back. Ordinary initializer failures retain the existing session contract.
+meaning across macro redefinition. On a preparation error, a declaration journal restores staged macro function
+bindings, catalog/export records and the caller phase namespace. Successfully
+initialized macro dependencies remain loaded; arbitrary expansion-time global
+assignment and reachable object effects are not rolled back. Resident generated
+code may remain until reset. Ordinary initializer failures retain the existing session contract.
 
 Only the final script result is displayed. Discarded lazy values are not forced
 by printing. File macros receive the original filename and reader positions,

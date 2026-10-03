@@ -460,6 +460,18 @@ impl Environment {
             .get_mut(&(phase, namespace))
             .expect("declared current scope")
     }
+    /// Undo staged declaration publication without reverting unrelated macro effects/dependencies.
+    pub fn restore_declarations(&mut self, before: &Self, globals: &[Global], phase: Phase) {
+        for global in globals {
+            match before.bindings.get(global) { Some(value) => { self.bindings.insert(global.clone(), value.clone()); }, None => { self.bindings.remove(global); } }
+            match before.definitions.get(global) { Some(value) => { self.definitions.insert(global.clone(), value.clone()); }, None => { self.definitions.remove(global); } }
+            let export = (phase, global.namespace.clone(), global.name.clone());
+            if before.macro_exports.contains(&export) { self.macro_exports.insert(export); }
+            else { self.macro_exports.remove(&export); }
+        }
+        if let Some(namespace) = before.current.get(&phase) { self.current.insert(phase, namespace.clone()); }
+        self.source_changed();
+    }
     pub fn current_namespace(&self, phase: Phase) -> &str {
         &self.current[&phase]
     }

@@ -176,3 +176,82 @@ fn display_traversal_bound_reports_failure_and_recovers() {
     let value = session.eval("[42]").unwrap();
     assert_eq!(display.display(&mut session, &value).unwrap(), "[42]");
 }
+
+#[test]
+fn review_script_compile_failure_preserves_macro_bindings() {
+    use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
+    let mut session = Session::new_repl().unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    macros.define("(defmacro keep [] 17)").unwrap();
+    macros
+        .define("(defmacro indirect [] (apply keep [nil nil]))")
+        .unwrap();
+    assert!(
+        portable_repl::evaluate_script_compiled(
+            &mut session,
+            &mut macros,
+            "(defmacro keep [] 99) (defmacro fresh [] 42) unresolved",
+            None
+        )
+        .is_err()
+    );
+    session.collect().unwrap();
+    assert_eq!(
+        portable_repl::evaluate_compiled(&mut session, &mut macros, "(keep)").unwrap(),
+        "17"
+    );
+    assert_eq!(
+        portable_repl::evaluate_compiled(&mut session, &mut macros, "(indirect)").unwrap(),
+        "17"
+    );
+    assert!(portable_repl::evaluate_compiled(&mut session, &mut macros, "(fresh)").is_err());
+    macros.define("(defmacro fresh [] 23)").unwrap();
+    assert_eq!(
+        portable_repl::evaluate_compiled(&mut session, &mut macros, "(fresh)").unwrap(),
+        "23"
+    );
+}
+
+#[test]
+fn review_failed_script_preserves_completed_macro_dependencies_and_effects() {
+    use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("tools.sus"), concat!(
+        "(ns tools) (def effects 0) (def object (atom 0)) ",
+        "(defmacro touch [] (do (set! effects (+ effects 1)) (reset! object (+ (deref object) 1)) 42)) ",
+        "(defmacro count [] (+ (* effects 10) (deref object))) ",
+            "(defmacro global-count [] effects) (defmacro object-count [] (deref object))"
+    )).unwrap();
+    let mut session = Session::with_options(suss_cli::portable_session::SessionOptions {
+        source_paths: vec![root.path().to_owned()],
+        ..Default::default()
+    })
+    .unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    assert!(portable_repl::evaluate_script_compiled(&mut session, &mut macros,
+        "(ns user (:require-macros [tools :refer [touch count]])) (touch) (ns tools) (defmacro count [] 99) unresolved", None).is_err());
+    assert_eq!(macros.current_namespace(), "user");
+    assert_eq!(
+        portable_repl::evaluate_script_compiled(
+            &mut session,
+            &mut macros,
+            "(ns user (:require-macros [tools :refer [touch count]])) (count)",
+            None
+        )
+        .unwrap(),
+        "11"
+    );
+    for name in ["global-count", "object-count"] {
+        assert_eq!(
+            portable_repl::evaluate_script_compiled(
+                &mut session,
+                &mut macros,
+                &format!("(ns user (:require-macros [tools :as t])) (t/{name})"),
+                None
+            )
+            .unwrap(),
+            "1",
+            "{name}"
+        );
+    }
+}

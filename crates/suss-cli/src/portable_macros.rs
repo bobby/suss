@@ -62,6 +62,18 @@ impl CompiledMacros {
             definitions: BTreeMap::new(),
         })
     }
+    pub(crate) fn binding_checkpoint(&mut self) -> Result<(crate::portable_session::BindingCheckpoint, BTreeMap<(String, String), SessionValue>), SessionError> {
+        Ok((self.session.binding_checkpoint()?, self.definitions.clone()))
+    }
+    pub(crate) fn restore_bindings(&mut self, checkpoint: (crate::portable_session::BindingCheckpoint, BTreeMap<(String, String), SessionValue>), globals: &[suss_compile::portable::resolve::Global]) -> Result<(), SessionError> {
+        self.session.restore_bindings(checkpoint.0, globals)?;
+        for global in globals {
+            let key = (global.namespace().to_owned(), global.name().to_owned());
+            if let Some(value) = checkpoint.1.get(&key) { self.definitions.insert(key, value.clone()); }
+            else { self.definitions.remove(&key); }
+        }
+        Ok(())
+    }
     pub fn current_namespace(&self) -> &str {
         self.session.current_namespace()
     }

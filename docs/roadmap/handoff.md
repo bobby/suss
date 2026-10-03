@@ -13653,3 +13653,52 @@ reader change; bootstrap identities and bytes unchanged from root verification.
 Push this review evidence/regression, then freeze exact pushed head for required
 full workspace baseline and final-head CI. Both gates remain pending; draft
 readiness, issue closure, merge and full M3 completion are not claimed.
+
+
+## Independent PR165 review — staged macro declaration isolation
+
+Initial head d898e7bfb0e718b48f685960e689122f79163e5c. Executed significant finding:
+review74075 TERMINAL101/5.00s: after existing keep macro17, script redefined it99
+then failed on unresolved runtime source; a subsequent invocation incorrectly
+returned99. Log /private/tmp/suss-pr165-review-macro-before.log. This is binding
+publication, distinct from arbitrary macro effects. Initial broad checkpoint
+focused78289 passed but was refined before publication to avoid reverting
+unrelated global effects or replaying initialized phase dependencies.
+
+Journal now captures each explicit script macro declaration at its actual staging
+point and reverses only its binding/canonical source record/export publication
+on preparation failure. The caller Macro namespace is restored. Existing value
+roots/bound flags are retained across GC, fresh unpublished cells remain unbound
+and reusable under stable identity; resident code may remain until reset.
+Successfully initialized macro dependencies remain provided. Arbitrary unrelated
+global set! and atom/object effects remain live. Runtime execution errors still
+follow the ordinary initializer/effect contract; journal is discarded after
+successful preparation and never wraps runtime execution.
+
+Intermediate compile87197 TERMINAL101 used a nonexistent Global constructor;
+corrected to validated Environment declaration identity. First bootstrap attempt
+exited101 because Diagnostic needed explicit SessionError mapping. Corrected
+bootstrap10741 TERMINAL0 refreshed both compiler fingerprints; Wasm bytes unchanged.
+Focused71195 TERMINAL101:9pass/1fail23.12s. Dependency fixture used a minimal Runtime
+without PersistentVector; replaced the observation with scalar11 encoding both
+effects, without weakening effect assertions. Corrected10885 TERMINAL0:2pass/0fail
+4.70s. Includes retained indirect compiled macro caller, fresh absence/reuse and
+ordinary global plus atom effects surviving completed dependency loading.
+Expanded regression also redefines a just-loaded dependency macro before the
+later failure, proving declaration-point checkpoints retain its previous value.
+Final10-test native entrypoint suite46826 is executing; no final result yet.
+Required exact pushed-head full baseline and CI remain pending. No PR merge,
+issue closure or full M3 completion claim.
+
+PR165 final focus46826 TERMINAL0:10passed/0failed/0ignored23.49s,
+/private/tmp/suss-pr165-review-final-focus.log. Java-free80992 TERMINAL0:
+both phase images reproduced byte-for-byte, compiler identity verified and4
+executing bootstrap tests passed8.61s; /private/tmp/suss-pr165-review-javafree.log.
+Final refinement clears unpublished fresh cell values to nil as well as unbound,
+and separately asserts global-count1 and object-count1 through the imported
+macro alias after failure (aggregate11 assertion also retained). Focus14345
+TERMINAL0:2pass/0fail4.68s; /private/tmp/suss-pr165-review-effects-final.log.
+Original eight command/display regressions remain unchanged. Rustfmt2024 new
+tests and git diff check pass. Compiler fingerprints unchanged by final CLI-only
+refinement; both regenerated manifests remain current. Next: push review fixes,
+freeze exact pushed head and run required full workspace baseline plus exact CI.
