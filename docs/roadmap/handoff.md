@@ -12904,3 +12904,69 @@ runtime initializer effect, native macro call or guest allocation occurs. Logs
 /private/tmp/suss-declaration-metadata-{guard-order,definition-guard}.log.
 Freeze source for draft publication; all root native jobs terminal at this point.
 Final affected checks/full baseline/independent review/exact-head CI still pending.
+
+Published draft PR160 at7d961d350604df34610fd8777a112f2b8ab6bf9e, stacked on159,
+Refs#14. Root final-frozen25433 TERMINAL0:17/0/0 across5groups (graph11,
+complete core projection1, functions2, full29case/18field/both-phase metadata1,
+source tags2). Complete core projection54.69s; full metadata394.85s after
+metadata lookup deduplication. Log /private/tmp/suss-declaration-metadata-final-frozen.log.
+Initial-head CI37132493529 remains pending; it is not final review evidence.
+Independent reviewer /root/review_pr160 found additional selected metadata
+precedence/override cases outside the original corpus and is responsible for
+executing regressions and significant fixes, followed by required full baseline
+at pushed final head. Root releases the sole native/JVM/Node/Cargo slot now;
+all root native handles are terminal. Reviewer owns this worktree/shared target.
+This handoff evidence is uncommitted for inclusion in the review fix commit.
+No PR merge or issue closure; PR160 remains draft pending review/final checks.
+
+
+## PR160 independent review corrections — 2026-10-03
+
+Pinned parse-def/source-info review found selected-field gaps beyond the retained
+29-case corpus. Actual primary observations show dynamic functions infer return
+number independently of dynamic var-reference any; false declaration hints fall
+through to initializer/return inference. Raw :name overrides default qualified
+name. Provisional :meta retains original presence/data; completed :meta omits
+:test. The canonical suss.core/cljs.core declaration and completed metadata file
+marker is cljs/core.cljs. Non-nil :top-fn overlays all18selected fields, followed
+by computed return-tag association. CLI-only corrections preserve immutable
+record identity, per-form/graph/key/occurrence bounds and callback semantics.
+No compiler/core/reader Rust, dependency, bootstrap image or fingerprint changed.
+
+Independent original development probe is retained at
+ tests/oracle/declaration-metadata-review-probe.clj. From tests/oracle, run
+ CLJ_CONFIG=/tmp/suss-oracle-clojure-config
+ CLJ_CACHE=/tmp/suss-oracle-clojure-cache
+ clojure -Srepro -M declaration-metadata-review-probe.clj
+with both environment assignments on the command. Frozen primary45212 TERMINAL0
+asserts five completed records, provisional :meta and core file marker.
+Log /private/tmp/suss-pr160-review-primary-frozen.log. Original29-case corpus,
+original source coordinates, observations and Node results remain unchanged.
+
+Native focused regression executes all seven policies in both caller phases,
+with GC. 75603 TERMINAL101 missing retained core;64894 TERMINAL101 wrong current
+namespace; corrected original-head49679 TERMINAL101 exposes actual dynamic
+return any versus number. First corrections76095 TERMINAL0,1/0/0 in11.56s.
+6612 TERMINAL101 exposes actual core file nil/nil. 68742 TERMINAL101 used the
+wrong namespace before canonical alias correction. 9470/61909 TERMINAL101
+hit the unchanged65536-node guard because the fixture replayed retained core
+into an already provisioned Macro session. Configurable sessions now import
+core once, like the original whole-corpus test.97120 TERMINAL0,34.81s.
+Removed speculative compiler metadata-map sharing change; final95317 TERMINAL0,
+1/0/0 in34.44s. No bounds were raised, no metadata field omitted and no failure
+was changed to success without executing the corrected artifact.
+Logs /private/tmp/suss-pr160-review-native-*.log. Early primary45694/37281 exit1
+were missing cljs.core macro namespace;56042 exit1 emitted actual five records
+then encountered a trailing script delimiter. Corrected68595 exit0, followed by
+asserting retained frozen probe45212 exit0.
+
+Affected frozen46664 TERMINAL0:30/0/0 across5groups (CLIlib14,graph11,fullcore1,
+function declarations2,source tags2); fullcore54.97s remains bounded in both
+caller phases. /private/tmp/suss-pr160-review-focused.log. Python74958 TERMINAL0:
+118tests5.405s; /private/tmp/suss-pr160-review-python.log. Rustfmt2024 and git diff
+check pass. Review source is frozen now; push significant fixes, then exact-head
+cargo test --workspace --locked -- --test-threads=2 and final-head CI are still
+required. No merge or issue closure. Complete declaration/AST schema, older
+repeated-declare catalog timing, self-local facts, cache/evaluator/lifecycle and
+original M3 acceptance remain open. Reviewer retains sole heavy slot until full
+baseline terminates and explicitly releases it.

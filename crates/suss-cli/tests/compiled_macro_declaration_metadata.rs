@@ -42,6 +42,86 @@ const TOOLS: &str = r#"(ns tools)
         rows))))
 "#;
 
+#[test]
+fn declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer() {
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+        session
+            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .unwrap();
+        session.enter_namespace("user").unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        macros
+            .define(
+                r#"(defmacro projection [name]
+          (let [info (get (get (get &env :suss/catalog) :defs) name)]
+            (list 'quote [(get info :name) (get info :tag) (get info :ret-tag)
+                          (get info :private) (get info :doc)
+                          (contains? (get info :meta) :test)
+                          (get (get info :meta) :test)])))"#,
+            )
+            .unwrap();
+        for (source, expected) in [
+            (
+                "(def ^:dynamic f (fn [] 7)) (projection f)",
+                "[user/f nil number nil nil false nil]",
+            ),
+            (
+                "(def ^{:tag false} g (fn [] 7)) (projection g)",
+                "[user/g false number nil nil false nil]",
+            ),
+            (
+                "(def ^{:tag false} scalar 7) (projection scalar)",
+                "[user/scalar number nil nil nil false nil]",
+            ),
+            (
+                "(def ^{:name custom :test true} raw 7) (projection raw)",
+                "[custom number nil nil nil false nil]",
+            ),
+            (
+                "(def ^{:top-fn {:name replaced :private false :doc \"override\" :meta {:test :replacement} :ret-tag wrong}} overlay (fn [] 7)) (projection overlay)",
+                "[replaced nil number false \"override\" true :replacement]",
+            ),
+        ] {
+            let value = session.eval_with_macros(source, &mut macros).unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            session.collect().unwrap();
+            let mut actual = bridge.read(&mut session, &value, 0..1).unwrap();
+            let mut expected = suss_reader::forms::read_forms(expected).unwrap().remove(0);
+            normalize(&mut actual);
+            normalize(&mut expected);
+            assert_eq!(actual, expected, "{phase:?}: {source}");
+        }
+        macros.define("(defmacro raw-meta [name] (list 'quote (get (get (get (get &env :suss/catalog) :defs) name) :meta)))").unwrap();
+        let value = session
+            .eval_with_macros(
+                "(def ^{:meta [:raw]} pending (raw-meta pending)) pending",
+                &mut macros,
+            )
+            .unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        session.collect().unwrap();
+        let mut actual = bridge.read(&mut session, &value, 0..1).unwrap();
+        normalize(&mut actual);
+        assert_eq!(
+            actual.kind,
+            Kind::Vector(vec![form(Kind::Keyword(suss_reader::Keyword::new("raw")))])
+        );
+        macros.define("(defmacro core-file [name] (let [info (get (get (get &env :suss/catalog) :defs) name)] (list 'quote [(get info :file) (get (get info :meta) :file)])))").unwrap();
+        session.enter_namespace("cljs.core").unwrap();
+        let value = session
+            .eval_with_macros(
+                "(def core-probe 7) (user/core-file core-probe)",
+                &mut macros,
+            )
+            .unwrap();
+        let mut actual = bridge.read(&mut session, &value, 0..1).unwrap();
+        normalize(&mut actual);
+        let file = form(Kind::String("cljs/core.cljs".encode_utf16().collect()));
+        assert_eq!(actual.kind, Kind::Vector(vec![file.clone(), file]));
+    }
+}
+
 fn form(kind: Kind) -> Form {
     Form {
         span: 0..0,
