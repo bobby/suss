@@ -13201,3 +13201,43 @@ Rustfmt2024 and git diff check pass. Freeze and push review regression/evidence;
 required full workspace baseline at the exact pushed head and final-head CI
 remain pending. No PR merge, issue closure or M3 completion. Reviewer retains
 sole heavy slot through the full baseline and explicitly releases after terminal.
+
+
+## Stack #163 rebase — 2026-10-03
+
+At the user's request, imported eight-branch GitHub stack163 with
+`gh stack checkout 163` in the existing clean top worktree, then ran
+`gh stack rebase`. Temporarily detached the seven clean lower worktrees to
+release their branches; all were restored after the successful cascade.
+Original and rebased heads are recorded below; each complete tracked tree
+was verified byte-identical before this handoff-only addition:
+
+#154 a4fa3e2 -> e9a7d11; #155 0f3c160 -> 6d3545f; #156 8dbcc67 -> faff982; #157 f528159 -> 5f416de; #158 5d15a0d -> a858954; #159 fcc9c0c -> 05fd7ed; #160 2a4fea7 -> 266ec24; #161 0775317 -> 235134f.
+
+The initial rebase conflicted while replaying already squash-merged prerequisites.
+Verified mainf0594cd and old prerequisite1874372 have identical complete tree
+962e26a2dc32a3e021637b87a6969afc68c5e6e9, and first stack commita0fdde7 directly
+follows1874372. Removed only the67 duplicate prerequisite picks; preserved both
+reader-metadata commits and every later stack commit. `git rebase --skip`
+completed the bottom branch, then `gh stack rebase --continue` rebased all eight
+branches onto main. No source/semantic/inventory/provenance/test change resulted.
+Separate independent reviews were dispatched for every PR154–161; reviewers
+verified exact old/new trees, retained patches and new parent ancestry.
+
+The already-running exact0775317 workspace baseline completed without starting
+a competing heavy build. Independently counted
+/private/tmp/suss-pr161-review-full-final.log through final reader doctests:
+1086passed/0failed/17existingignores/119groups. Its command was
+`cargo test --workspace --locked -- --test-threads=2`, using existing isolated
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and two build jobs, with no
+RUSTFLAGS override. This is existing unchanged-source baseline evidence, not a
+new rebase-triggered test run. No fresh JVM/Node oracle was run for this history-only
+operation. `git diff --check` passed. Prior successful CI on0775317 does not
+certify new commit IDs; fresh final-head CI remains required.
+
+Push with `gh stack push` and verify remote exact heads/fresh CI. No PR merge,
+issue closure or milestone completion is claimed. PR162, branch
+portable/m3-preserve-declarations, is an out-of-stack child of161 and is not
+rewritten by this requested eight-branch operation; restack it before using its
+new-parent PR diff. Next unblocked development remains the original declaration/
+inference compatibility and cache/bootstrap/lifecycle acceptance work; M3 stays open.
