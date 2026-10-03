@@ -62,6 +62,11 @@ fn completed_declaration_hint_boundaries_match_actual_primary_expression_tags() 
         ("function-nil-hint", "nil-callable"),
         ("provisional-nil-var-tag", "nil-provisional"),
         ("provisional-nil-return", "(nil-provisional)"),
+        ("overlay-fn-var-false", "(disabled)"),
+        ("overlay-return-false", "(false-return 32)"),
+        ("overlay-return-nil", "(nil-return 33)"),
+        ("overlay-var-tag-nil", "nil-overlay"),
+        ("nested-nil-tag-return", "(fn [] nil-callable)"),
     ];
     // This file is generated only by the executed pinned primary probe.
     let expected: Value = serde_json::from_str(include_str!(
@@ -100,7 +105,11 @@ fn completed_declaration_hint_boundaries_match_actual_primary_expression_tags() 
           (def ^{:declared true :tag string :ret-tag boolean} provisional (fn [] 26))
           (def ^{:tag nil} nil-scalar 29)
           (def ^{:tag nil} nil-callable (fn [] 30))
-          (def ^{:declared true :tag nil :ret-tag nil} nil-provisional (fn [] 31))"#,
+          (def ^{:declared true :tag nil :ret-tag nil} nil-provisional (fn [] 31))
+          (def ^{:top-fn {:fn-var false}} disabled (fn [] 32))
+          (def ^{:ret-tag string :top-fn {:ret-tag false}} false-return (fn [x] x))
+          (def ^{:ret-tag string :top-fn {:ret-tag nil}} nil-return (fn [x] x))
+          (def ^{:tag string :top-fn {:tag nil}} nil-overlay (fn [] 34))"#,
             )
             .unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
@@ -134,6 +143,10 @@ fn completed_declaration_hint_boundaries_match_actual_primary_expression_tags() 
             ("nil-scalar", 29.0),
             ("(nil-callable)", 30.0),
             ("(nil-provisional)", 31.0),
+            ("(disabled)", 32.0),
+            ("(false-return 32)", 32.0),
+            ("(nil-return 33)", 33.0),
+            ("(nil-overlay)", 34.0),
         ] {
             let value = session.eval(source).unwrap();
             session.collect().unwrap();

@@ -25,16 +25,19 @@ license/notices in the pinned submodule; no Java dependency is added to shipped 
 
 The original `tests/oracle/source-hint-review-probe.clj` executes the actual pinned
 analyzer and writes `source-hint-review-observations.json` (schema1, pinned revision,
-18 rows). Run from `tests/oracle` with
+23 rows, including five independent review boundaries). Run from `tests/oracle` with
 `CLJ_CONFIG=/tmp/suss-oracle-clojure-config CLJ_CACHE=/tmp/suss-oracle-clojure-cache clojure -Srepro -M source-hint-review-probe.clj`.
 It preserves presence and value kinds for selected `:tag` and `:inferred-ret-tag`.
 No expected result was inferred from static inspection or substituted for unknowns.
 
-The native regression executes all 18 expressions and inspects actual compiler
+The native regression executes all 23 expressions and inspects actual compiler
 records through a compiled macro, then independently decodes rooted data after GC
-in both caller phases. Fifteen scalar/function/effect assertions per phase verify
+in both caller phases. Nineteen scalar/function/effect assertions per phase verify
 runtime storage and once-only initializer effects. Before the fix nine rows per
-phase failed; after the fix all18 rows and all runtime assertions pass. Helper and
+phase failed; after the fix all18 original rows and all runtime assertions pass.
+Independent review added top-fn fn-var false and ret-tag false/nil overlays, a nil
+tag override, and nested nil-tag return inference. All five additional primary/native
+rows match in both phases after GC. Helper and
 caller production fuel/graph bounds are unchanged.
 
 Affected suites, Java-free bootstrap reproduction, independent review, required

@@ -19,7 +19,12 @@
    ["scalar-nil-hint" "nil-scalar"]
    ["function-nil-hint" "nil-callable"]
    ["provisional-nil-var-tag" "nil-provisional"]
-   ["provisional-nil-return" "(nil-provisional)"]])
+   ["provisional-nil-return" "(nil-provisional)"]
+   ["overlay-fn-var-false" "(disabled)"]
+   ["overlay-return-false" "(false-return 32)"]
+   ["overlay-return-nil" "(nil-return 33)"]
+   ["overlay-var-tag-nil" "nil-overlay"]
+   ["nested-nil-tag-return" "(fn [] nil-callable)"]])
 (env/with-compiler-env (env/default-compiler-env)
   (binding [ana/*cljs-ns* 'hint-review ana/*cljs-file* "hint-review.cljs"]
     (swap! env/*compiler* assoc-in [::ana/namespaces 'hint-review]
@@ -36,7 +41,11 @@
                       "(def ^{:declared true :tag string :ret-tag boolean} provisional (fn [] 26))"
                       "(def ^{:tag nil} nil-scalar 29)"
                       "(def ^{:tag nil} nil-callable (fn [] 30))"
-                      "(def ^{:declared true :tag nil :ret-tag nil} nil-provisional (fn [] 31))"]]
+                      "(def ^{:declared true :tag nil :ret-tag nil} nil-provisional (fn [] 31))"
+                      "(def ^{:top-fn {:fn-var false}} disabled (fn [] 32))"
+                      "(def ^{:ret-tag string :top-fn {:ret-tag false}} false-return (fn [x] x))"
+                      "(def ^{:ret-tag string :top-fn {:ret-tag nil}} nil-return (fn [x] x))"
+                      "(def ^{:tag string :top-fn {:tag nil}} nil-overlay (fn [] 34))"]]
         (ana/analyze env (read-string source)))
       (let [rows (mapv (fn [[label source]]
                         (let [ast (ana/analyze env (read-string source))]

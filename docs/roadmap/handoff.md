@@ -13521,3 +13521,26 @@ Next: publish a draft stacked source-hint PR (Refs #14), dispatch independent
 review/fixes, then require exact final-head full baseline and CI before readiness.
 Root jobs terminal; sole heavy slot available for the independent reviewer.
 No issue closure, merge, or full M3 completion claim.
+
+
+## Independent PR164 source-hint review — 2026-10-03
+
+PR164 https://github.com/bobby/suss/pull/164 publishes initial375572630e715f4315995f54cbdc8cc45c5abab1
+against portable/m3-preserve-declarations (#162). Reviewer owns sole heavy slot.
+Reviewed pinned def merge, infer-invoke, raw/provisional/published fn-var, dynamic
+scalar versus function behavior, top-fn selected overlays and nil/false presence.
+No significant scoped production finding. Extended actual primary/native probe
+with five consumer boundaries: top-fn fn-var false, false/nil return overlays, nil
+var tag masking a string hint and nested function return inference from a nil-tag
+function var. Original18 rows remain unchanged; generated artifact now23 rows.
+Nineteen actual value/effect checks perphase retain storage semantics.
+
+Initial edit used incorrect relative paths and made no changes; old primary64024
+TERMINAL0 is not expanded evidence. Corrected primary81250 TERMINAL0 generates
+actual23rows, /private/tmp/suss-pr164-review-primary-final.log. Native90832
+TERMINAL0:1passed/0failed/0ignored13.76s, both caller phases/GC;
+/private/tmp/suss-pr164-review-focused.log. Rustfmt2024 passes. No compiler/core/
+reader change; bootstrap identities and bytes unchanged from root verification.
+Push this review evidence/regression, then freeze exact pushed head for required
+full workspace baseline and final-head CI. Both gates remain pending; draft
+readiness, issue closure, merge and full M3 completion are not claimed.
