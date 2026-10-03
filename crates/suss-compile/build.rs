@@ -21,6 +21,10 @@ fn main() {
         root.join("Cargo.toml"),
         root.join("Cargo.lock"),
         crate_root.join("build.rs"),
+        // Executable runtime dependencies are part of the artifact identity,
+        // even when their implementation is supplied as embedded bytes.
+        root.join("runtime/numeric/artifact/numeric.wasm"),
+        root.join("runtime/numeric/artifact/manifest.json"),
     ];
     for name in ["suss-core", "suss-reader", "suss-compile"] {
         let directory = root.join("crates").join(name);

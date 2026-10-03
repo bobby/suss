@@ -90,13 +90,36 @@ fn compiled_bootstrap_catalog_cache_never_shares_guest_state() {
             Phase::Macro => Session::new_macro().unwrap(),
         };
         let mut first = new_session();
+        first.eval("(ns cljs.core)").unwrap();
+        first.eval("(def identity (fn [x] 99))").unwrap();
+        first.eval("(ns user)").unwrap();
+        let value = first.eval("(identity 42)").unwrap();
+        let bridge = FormBridge::new(&mut first).unwrap();
+        assert_eq!(
+            bridge.read(&mut first, &value, 0..1).unwrap().kind,
+            Kind::Number(99.0)
+        );
         first
             .eval("(def bootstrap-owned (atom 41)) (swap! bootstrap-owned inc)")
             .unwrap();
         let mut second = new_session();
         assert!(second.eval("@bootstrap-owned").is_err());
+        let value = second.eval("(identity 42)").unwrap();
+        let bridge = FormBridge::new(&mut second).unwrap();
+        second.collect().unwrap();
+        assert_eq!(
+            bridge.read(&mut second, &value, 0..1).unwrap().kind,
+            Kind::Number(42.0)
+        );
         first.reset().unwrap();
         assert!(first.eval("@bootstrap-owned").is_err());
+        let value = first.eval("(identity 42)").unwrap();
+        let bridge = FormBridge::new(&mut first).unwrap();
+        first.collect().unwrap();
+        assert_eq!(
+            bridge.read(&mut first, &value, 0..1).unwrap().kind,
+            Kind::Number(42.0)
+        );
         let value = second.eval("(get (hash-map :answer 42) :answer)").unwrap();
         let bridge = FormBridge::new(&mut second).unwrap();
         second.collect().unwrap();

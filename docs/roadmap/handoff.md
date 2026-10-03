@@ -12473,3 +12473,28 @@ All current local jobs terminal. Next full workspace baseline on frozen bootstra
 code, draft PR stacked on155/Refs14, independent reviewer fixes and final-head CI.
 PR155 local proof1063/0/17 complete; CI37114173950 stillIN_PROGRESS when rechecked.
 No PR merged, no issue closed. Original complete M3 scope remains unchanged.
+
+PR156 independent review reproduced a missing runtime dependency identity input:
+the actual compiled Cargo build script emitted the same compiler fingerprint
+after a temporary clone's numeric.wasm was changed. The framed input set now
+includes runtime/numeric/artifact/numeric.wasm and its provenance manifest.json.
+scripts/verify_bootstrap_identity.py invokes the actual compiled build script,
+selecting the binary matching the shipped fingerprint, and proves two temporary
+checkout locations produce the same identity; mutation of either runtime asset
+changes it, and restoration recovers it. The restricted-PATH bootstrap verifier
+now runs that regression. Both phase manifests regenerated; Wasm bytes unchanged.
+Store/reset isolation also redefines the ordinary retained core identity cell,
+proves it affects the first Store, and preserves the original in the second Store
+and the first Store after reset, in both phases with forced GC.
+
+Root's obsolete baseline58711 was deliberately terminated exit143 for these
+review fixes, not counted as passing evidence. Reviewer generation68449 terminal
+exit0, log /private/tmp/suss-pr156-review-generation.log. First verifier31574
+terminal101 (3/1): new test incorrectly used two ns directives in one fragment.
+Second verifier97865 terminal101 (3/1): new test tried ordinary inc redefinition
+but direct inc calls correctly use the separately inventoried bootstrap macro.
+Corrected the test to separate namespace inputs and ordinary core identity.
+Third verifier90075 terminalexit0: two fresh outputs match both shipped phases,
+actual build-script identity regression passes, native bootstrap4/0/0 (22.35s).
+Log /private/tmp/suss-pr156-review-verifier-3.log. No production bypass or skip.
+Final-head full baseline and CI remain required; no PR merged/issues closed.

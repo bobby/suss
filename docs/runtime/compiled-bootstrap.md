@@ -17,7 +17,8 @@ implementation SHA256, locked compiler/runtime ABI, Wasm tooling, dependency gra
 SHA256, target, compiler flags, artifact SHA256 and canonical binding identities.
 The current bounded bootstrap has no configurable compiler options, so its flags
 list is empty. Build-time source identity hashes sorted repository-relative paths
-and contents with length framing; checkout location is excluded. Changed identity,
+and contents with length framing, including the embedded numeric runtime executable
+and its provenance manifest; checkout location is excluded. Changed identity,
 missing/unknown manifest fields, corrupted bytes and incompatible phase are
 rejected before installation. Hosts still validate and link the actual Wasm.
 
@@ -30,9 +31,14 @@ scripts/verify-bootstrap.sh
 
 The verifier supplies Cargo/linker tools through a restricted PATH where Java and
 Node are unavailable. Two fresh generator processes must produce identical Wasm
-and manifests, matching the shipped files. Native tests then execute source
+and manifests, matching the shipped files. The verifier also executes the actual
+compiled Cargo build script against two
+temporary checkout locations and mutations of each numeric runtime asset. Both
+asset changes must invalidate the identity, and restoring them must restore it.
+Native tests then execute source
 macros with syntax quote in both caller phases, force GC, test Store/reset
-isolation and reject every changed manifest identity field and corrupted bytes.
+isolation (including a redefined core identity cell) and reject every changed manifest
+identity field and corrupted bytes.
 All four tests pass. The runtime image is1,103,137bytes and the macro image
 1,102,129bytes; both generated from the retained149,419-byte source. This proves
 the bounded bootstrap path runs without Java/Node available; the development
@@ -42,8 +48,11 @@ The initial focused image test failed on the intentionally empty manifest before
 real generation. The generated images then pass exact regeneration/restoration
 and execution. Affected validation passes66 compiler tests and83 tests across eight native
 REPL, phase, macro, metadata and live-cell targets, with no failures or ignores.
-The final workspace baseline, independent PR review and exact-head CI remain
-publication gates.
+Independent PR review found that embedded numeric runtime bytes and provenance
+were omitted from the compiler identity. Both inputs now participate in the build
+fingerprint, with actual compiled-build-script mutation evidence. The strengthened
+Store/reset isolation test and the complete Java/Node-unavailable verifier pass.
+The final workspace baseline and exact-head CI remain publication gates.
 
 A complete cache for user macro dependencies and executing changed-macro/unchanged
 cache tests remains unfinished. The temporary evaluator in the legacy compiler

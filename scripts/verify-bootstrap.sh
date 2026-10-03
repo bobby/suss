@@ -25,4 +25,5 @@ for bootstrap_phase in runtime macro; do
         cmp "$bootstrap_tmp/first/$bootstrap_phase.$bootstrap_suffix" "runtime/bootstrap/$bootstrap_phase.$bootstrap_suffix"
     done
 done
+python3 scripts/verify_bootstrap_identity.py
 CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" cargo test -p suss-cli --locked --test compiled_bootstrap -- --test-threads=2
