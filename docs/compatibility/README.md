@@ -619,6 +619,17 @@ declaration/function/method schema and remaining inference rules stay open; no
 inventory declaration is reclassified as complete. See
 [source inference](../runtime/compiled-macro-source-inference.md).
 
+## Compiled declaration metadata
+
+All 18 selected fields of the unchanged 29-case declaration corpus now have an
+executing snapshot/catalog comparison in both caller phases after GC. The
+projection distinguishes namespace records from resolved-var AST records,
+preserves provisional symbol metadata and completed reader provenance, and
+retains known direct-function return tags. Source paths are independently
+asserted before oracle normalization. No declaration is reclassified as fully
+implemented; complete AST/schema, caches, evaluator retirement and original M3
+acceptance remain open. See [declaration metadata](../runtime/compiled-macro-declaration-metadata.md).
+
 ## Compiled macro reader input metadata
 
 Eight exact pinned reader-metadata projections match executed native source

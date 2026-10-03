@@ -12811,3 +12811,96 @@ Fresh final oracle55898 TERMINAL exit0:29/2 observations and37 actual Node
 results compare exactly; log /private/tmp/suss-pr159-review-oracle-frozen.log.
 Freeze reviewed source now, push significant fixes, run the exact-head required
 full workspace baseline and require final-head CI. No PR merge or issue closure.
+
+
+## PR159 reviewed final head; remaining declaration metadata — 2026-10-03
+
+Review pushed fcc9c0cf0237d5b887776252ba9580195aa63925 with significant selected
+:top-fn and :declared metadata fixes. Valid map/direct entry vector/empty seqable
+overrides preserve presence/values; actual bare nonempty list/set-of-entry
+fixtures fail the pinned analyzer with Map$Entry errors and remain errors.
+Original prefixes preserved; fresh29declaration/2local observations and37Node
+results match. Focused28/0/0 andPython118 pass.
+Required full baseline reviewer84885 TERMINAL0:1081/0/17existingignores across
+117groups at exact pushed head; /private/tmp/suss-pr159-review-full-baseline.log.
+Independent review has no remaining significant findings; worktree clean;
+reviewer explicitly released sole native slot. No evidence-only commit on159.
+CI37127695188 still pending, requiring exact-head success before readiness.
+
+Root's next isolated branch portable/m3-declaration-metadata starts atfcc9c0c.
+Draft full snapshot/catalog selected18-field comparison executes source macros
+that capture projections while returning42, preserving original source analysis
+timing and reader coordinates. No native implementation changed yet.
+Initial invocation tool script failed to parse before applying any file edits.
+Native13118 TERMINAL101,0/1: helper depended on unported Macro str. Revised
+helper transfers actual identifier Symbols; independent host printing projects
+only observed name/namespace slots, leaving every field's kind/data unchanged.
+Second native51906 LIVE, log
+/private/tmp/suss-declaration-metadata-identifier-projection.log.
+Shared target switched by cleaning only four workspace packages. Root currently
+owns sole heavy slot. Do not promote unknown or failing metadata observations.
+
+CI37127695188 completedSUCCESS at exactfcc9c0cf0237d5b887776252ba9580195aa63925. PR159 body updated and marked ready after independent review/full1081/0/17 baseline/exact-head CI. No merge or milestone closure.
+
+
+## Remaining declaration metadata projection — 2026-10-03
+
+Root owns isolated portable/m3-declaration-metadata at reviewed PR159 fcc9c0c.
+The pinned upstream submodule is now initialized at c4295f3; no oracle fixture,
+corpus, compiler Rust, core source, dependency or bootstrap image was changed.
+CLI projection adapts pinned analyzer parse :def 2022–2199/source-info745–756,
+with EPL notice and exact analyzer source hash adjacent to the implementation.
+It compares all18selected fields of all29original observations, both snapshot
+and catalog, in both Runtime/Macro caller phases after GC. Native canonical file
+provenance is asserted before primary path normalization. Reader collection kind,
+field presence and source analysis timing stay exact. Finite observer fuel100M
+fits up to12record projections of18field vectors; production default unchanged.
+Batches contain at most2observations within unchanged bridge bounds. Temporary
+primitive/loaded helper probes were removed after identifying fuel exhaustion.
+
+All earlier diagnostic jobs are terminal:51906/6379 exit101 before comparisons;
+83455/11484/75708 exit0, each1/0/0 for primitive/direct/loaded helper execution;
+64606/89396 exit101 on six-name observer;41700 exit101 explicitly reports all
+fuel consumed on the same six-name direct helper. This is bounded workload cost,
+not a demonstrated collection implementation defect.80142 exit101: helper1pass,
+whole comparison1fail on scalar-initializer's actual field differences. The
+100M bound executes the complete original observer; no unknown became success.
+Logs /private/tmp/suss-declaration-metadata-{nil-records,helper-probes,
+direct-helper,loaded-helper,env-helper,lookup-helper,long-helper,bounded-budget}.log.
+
+Initial CLI fields21216 TERMINAL101,0/1 after340.57s: test path normalization
+incorrectly required a list for known vector-valued top-fn arglists-meta. Test
+now accepts either kind without converting it. Batched60304 TERMINAL0,1/0/0
+in419.71s: all29cases/all18fields/both phases/GC match exactly. Logs
+/private/tmp/suss-declaration-metadata-{first-fields,batched-fields}.log.
+Then removed duplicate declaration metadata computation in the function field
+projection, added provenance notice and required case count29. Source formatting
+and git diff check pass. Initial final-graph command TERMINAL101 before running
+any native test because the core target was misnamed; corrected42570 LIVE is
+executing metadata/functions/analysis-graph/core-environment/source-tags groups.
+Log /private/tmp/suss-declaration-metadata-final-graph-corrected.log.
+Root retains sole heavy slot; no other native/JVM/Node job runs.
+
+Initial Python114tests/7errors was missing worktree submodule, not source evidence.
+After git submodule update --init --recursive (87805 TERMINAL0), Python45085
+TERMINAL0:118tests in5.074s. Logs /private/tmp/suss-declaration-metadata-python
+and-python-pinned.log. GitHub confirms146/147 merged;154–159 still ready/unmerged.
+Issue14 status comment5970333495 records159 independent fixes/full1081/0/17 and
+exact-head successful CI37127695188. No agent merge or milestone issue closure.
+
+Next: require final focused/full baseline, publish partial Refs #14 PR stacked
+on159, dispatch independent review and push significant fixes, require exact
+final-head CI. Remaining schema/self-local records, source/macro dependency
+cache invalidation, temporary evaluator retirement and original M3 lifecycle
+acceptance stay open. No inventory item is reclassified as complete.
+
+Final graph42570 TERMINAL101: analysis graph10pass/1fail, other targets not run.
+New metadata lookup reached the1MiB source snapshot guard before the existing
+UTF16 transport guard on an oversized nested local definition. Declaration-only
+prevalidation3866 TERMINAL101,0/1 did not cover the nested initializer. Added
+raw definition-form plus declaration validation before reader enrichment;
+61135 TERMINAL0,1/0/0 in5.01s restores the original error category and proves no
+runtime initializer effect, native macro call or guest allocation occurs. Logs
+/private/tmp/suss-declaration-metadata-{guard-order,definition-guard}.log.
+Freeze source for draft publication; all root native jobs terminal at this point.
+Final affected checks/full baseline/independent review/exact-head CI still pending.
