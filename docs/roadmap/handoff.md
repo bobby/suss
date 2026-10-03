@@ -12364,3 +12364,47 @@ only the exact pinned one-argument body; transducer arities remain unported.
 workspace baseline now running, /private/tmp/suss-syntax-quote-shared-cell-full-baseline.log.
 Next: baseline terminal, independent PR review and fixes, final-head CI; then
 continue M3 bootstrap/cache/evaluator/lifecycle acceptance. No issue closure.
+
+
+## PR #155 independent review fixes
+
+Review of c2eee6b found two significant defects: a private fallback initialized
+canonical public sequence and suppressed its first source defonce; SourceNamespace
+identities exposed the hidden reader reservation as an ordinary source :defs fact.
+The reviewer changed reader support to two cells: the canonical public reservation
+remains unbound, and compiler-reserved suss.internal.reader/sequence stores the
+once-initialized default. Generated GlobalOrFallback HIR uses the existing runtime
+GlobalBound test and selects the callee before argument effects. Ordinary public
+defonce/declaration/failed initializer semantics and original DefinitionInfo.once
+are retained. Source identity capture excludes ReaderCell and InternalCell while
+linker imports retain both. Old and newly compiled reader calls share selection.
+
+Before-fix83627 terminal exit101:5pass/2fail, log
+/private/tmp/suss-pr155-review-before.log. First source defonce skipped its effect;
+subsequent numeric use of the unchanged quoted Symbol raised a language error.
+An attempted full core-namespace compiled &env probe hit the existing65536-node
+analysis graph bound rather than observing its intended field; it was replaced by
+a focused SourceNamespace capture regression in both phases. This does not claim
+full core-namespace rich environment construction passes that bound.
+Intermediate72539 terminal exit0:6/0, then92956 split-cell guards terminal exit0:7/0.
+
+81390 terminal exit0, sequential commands using shared target
+/private/tmp/suss-m3-pr143-target and CARGO_BUILD_JOBS=2:
+`cargo test -p suss-compile --locked --lib -- --test-threads=2` passes66/0/0;
+`cargo test -p suss-cli --locked --test syntax_quote_live_binding --test compiled_macro_syntax_quote --test portable_lazy_sequences --test portable_reader_constructors -- --test-threads=2`
+passes7live-cell+11syntaxquote+4lazy+2constructor tests, all zero failures/ignores.
+Logs /private/tmp/suss-pr155-review-{lib,focus}.log. These retain the18shared
+syntaxquote and50lazy/constructor recorded primary matches in both caller phases.
+
+17594 terminal exit0 after adding callee-before-unquote redefinition and private
+internal namespace capture guards: compiler66/0/0 and live-cell8/0/0,53.62s.
+Logs /private/tmp/suss-pr155-review-lib-final.log and
+/private/tmp/suss-pr155-review-live-final.log. The failed-first-defonce regression
+covers declaration/unbound state, failed initializer, successful retry and repeated
+defonce with exactly two total initializer effects; the callee guard yields42
+before redefinition and99 afterward with one unquote effect. No further significant
+static findings remain. Final corrected-head full baseline and CI are still pending;
+PR remains draft and no merge/readiness/issue closure is authorized by this review.
+Next run the required full workspace baseline at the pushed reviewer fix head,
+wait for exact-head CI, then continue original M3 bootstrap/cache/evaluator and
+lifecycle acceptance; issues12–15 remain open.

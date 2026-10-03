@@ -47,10 +47,12 @@ independently. Counter replay verifies the correspondence uses the same generate
 IDs as the executable pass.
 
 Executable reader coercion adapts the exact one-argument `sequence` body at
-core.cljs4403–4406 as a private closure in a once-initialized live cell.
-That cell shares the canonical identity of a later public source definition,
-which promotes the binding. Ordinary source resolution cannot access the
-fallback; existing and newly compiled reader calls observe later definitions.
+core.cljs4403–4406 as a private closure in a once-initialized internal cell.
+A separate canonical public cell remains unbound until a source initializer
+successfully writes it. Generated reader calls select the initialized public
+value or that private default, so existing and newly compiled reader closures
+observe later definitions while source defonce and declaration semantics remain
+unchanged. Ordinary source resolution cannot access the hidden fallback.
 Public `sequence` is not registered:
 its full declaration hash is
 `748c1e1a78ed4ddfac684f99f973501ceb9366e7fba1cb9074726d27759f8756`,
@@ -72,14 +74,17 @@ Python validation passes 118 tests. Fifty lazy/constructor observations also
 match fresh pinned execution; the original twenty-seven remain unchanged.
 
 The preliminary workspace baseline passed1054/0 with17 existing ignores, before
-the live-cell repair. The separate guard then reproduced ignored sequence
-redefinition. Coercion selection now occurs in live HIR resolution, and that
-guard passes in both phases. The old-closure guard now passes after shared-cell
-handling replaced literal fallback closures. Five live-cell regressions pass in both caller phases, including privacy,
-no replay, failed compile/initializer recovery and reset. The final workspace
-baseline is running.
-Current-head rechecks pass65 compiler tests and11 syntaxquote/transport tests.
-No new PR, final current-head full
-baseline, independent review or final-head CI is claimed.
-Bootstrap/cache/evaluator-removal/lifecycle and complete portable schema gates
-remain open, along with issues #12–#15.
+the live-cell repair. Separate guards reproduced ignored sequence redefinition
+and old-closure capture; both now pass. Independent review of PR #155 then found
+that the shared fallback incorrectly counted as an initialized public defonce,
+and that a private reader reservation appeared in source namespace identities.
+The split cells described above repair those findings. Source namespace facts
+exclude private reader reservations and internal compiler cells while linkage
+retains them. Eight live-cell regressions now pass in both caller phases,
+including first and repeated defonce, declaration, failed initializer/retry,
+privacy, no replay, reset, and selecting the callee before unquote effects
+redefine its live binding. The compiler library passes66 tests; all eleven
+syntaxquote/transport tests and six lazy/constructor tests remain passing.
+The final corrected-head full baseline and CI are pending; no readiness or
+whole M3 acceptance is claimed. Bootstrap/cache/evaluator-removal/lifecycle and
+complete portable schema gates remain open, along with issues #12–#15.

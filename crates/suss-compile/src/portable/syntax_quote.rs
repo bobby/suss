@@ -513,11 +513,12 @@ pub(crate) fn lower_generated(form: &Form) -> Result<Form, Diagnostic> {
 mod tests;
 
 /// Select the private coercion only after provisional definitions and macro
-/// expansion are visible. Actual core cells always retain ordinary invocation.
+/// expansion are visible. The caller selects an initialized public cell or the
+/// private default without marking the public source binding initialized.
 pub(crate) fn reader_sequence_initializer(
     form: &Form,
-    environment: &Environment,
-    phase: Phase,
+    _environment: &Environment,
+    _phase: Phase,
     origin: Option<&super::SourceOrigin>,
 ) -> Result<Option<Form>, Diagnostic> {
     let Kind::List(items) = &form.kind else {
@@ -533,9 +534,6 @@ pub(crate) fn reader_sequence_initializer(
         || symbol.name != "sequence"
         || head.span.start < form.span.start
         || head.span.end != form.span.end
-        || environment
-            .resolve(phase, symbol, head.span.clone())
-            .is_ok()
     {
         return Ok(None);
     }

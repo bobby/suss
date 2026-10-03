@@ -406,3 +406,22 @@ fn scalar_bits_utf16_and_textual_collection_effect_order_are_preserved() {
             .contains("text bounds")
     );
 }
+
+#[test]
+fn private_reader_cell_is_absent_from_source_namespace_identities_until_promoted() {
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let mut env = Environment::default();
+        env.enter_namespace(phase, "cljs.core").unwrap();
+        let (global, fallback, fresh) = env.reader_sequence_cells(phase);
+        assert!(fresh);
+        // The linker still owns the shared live cell, but &env namespace :defs
+        // must describe source bindings rather than hidden reader support.
+        assert!(env.cells().contains(&global));
+        assert!(!super::super::hir::SourceNamespace::capture(&env, phase).identities.contains(&global));
+        env.enter_namespace(phase, fallback.namespace()).unwrap();
+        assert!(!super::super::hir::SourceNamespace::capture(&env, phase).identities.contains(&fallback));
+        env.enter_namespace(phase, "cljs.core").unwrap();
+        env.declare_cell(phase, "cljs.core", "sequence").unwrap();
+        assert!(super::super::hir::SourceNamespace::capture(&env, phase).identities.contains(&global));
+    }
+}

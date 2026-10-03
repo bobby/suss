@@ -426,7 +426,8 @@ impl SourceNamespace {
             identities: environment
                 .cells()
                 .into_iter()
-                .filter(|global| global.phase() == phase && global.namespace() == scope.namespace)
+                .filter(|global| global.phase() == phase && global.namespace() == scope.namespace
+                    && !environment.is_hidden_cell(phase, global.namespace(), global.name()))
                 .collect(),
         }
     }
@@ -528,6 +529,8 @@ pub enum Expression {
     Local(BindingId),
     /// Read a live cell by resolved language identity, never by a Wasm index.
     Global(Global),
+    /// Reader calls use a live public value only after successful initialization.
+    GlobalOrFallback { global: Global, fallback: Global },
     /// Private cell identity for a captured live protocol fallback.
     GlobalCell(Global),
     Definition {
@@ -751,13 +754,13 @@ impl Analyzer<'_> {
             }
         }
         if let Some(coerced) = super::syntax_quote::reader_sequence_initializer(form, &self.environment, self.phase, self.origin.as_ref())? {
-            let (global, fresh) = self.environment.reader_sequence_cell(self.phase);
+            let (global, fallback, fresh) = self.environment.reader_sequence_cells(self.phase);
             if fresh {
                 let initializer = self.form(&coerced)?;
-                self.callable_keys.insert(global.clone(), Hir {
+                self.callable_keys.insert(fallback.clone(), Hir {
                     source: None, span: form.span.clone(), metadata: Vec::new(), ty: Type::Value,
                     kind: Expression::Definition {
-                        global: global.clone(), name_metadata: Vec::new(), name_span: form.span.clone(),
+                        global: fallback.clone(), name_metadata: Vec::new(), name_span: form.span.clone(),
                         docstring: None, initializer: Some(Box::new(initializer)), once: true,
                     },
                 });
@@ -768,7 +771,7 @@ impl Analyzer<'_> {
                 source: None, span: form.span.clone(), metadata: form.metadata.clone(), ty: Type::Value,
                 kind: Expression::Call {
                     callee: Box::new(Hir { source: None, span: items[0].span.clone(),
-                        metadata: Vec::new(), ty: Type::Value, kind: Expression::Global(global) }),
+                        metadata: Vec::new(), ty: Type::Value, kind: Expression::GlobalOrFallback { global, fallback } }),
                     arguments: vec![argument],
                 },
             });

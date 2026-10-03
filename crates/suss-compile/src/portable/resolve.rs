@@ -129,7 +129,7 @@ pub enum Binding {
     },
     Cell(Global),
     InternalCell(Global),
-    /// Reader fallback sharing the identity of a future source definition.
+    /// Unbound reader reservation sharing a future public definition identity.
     ReaderCell(Global),
     Arithmetic {
         global: Global,
@@ -598,14 +598,20 @@ impl Environment {
         self.source_changed();
         Ok(global)
     }
-    pub(crate) fn reader_sequence_cell(&mut self, phase: Phase) -> (Global, bool) {
+    pub(crate) fn is_hidden_cell(&self, phase: Phase, namespace: &str, name: &str) -> bool {
+        let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
+        matches!(self.bindings.get(&global), Some(Binding::ReaderCell(_) | Binding::InternalCell(_)))
+    }
+    pub(crate) fn reader_sequence_cells(&mut self, phase: Phase) -> (Global, Global, bool) {
         let global = Global { phase, namespace: "suss.core".into(), name: "sequence".into() };
-        let fresh = !self.bindings.contains_key(&global);
+        let fallback = Global { phase, namespace: "suss.internal.reader".into(), name: "sequence".into() };
+        self.bindings.entry(global.clone()).or_insert_with(|| Binding::ReaderCell(global.clone()));
+        let fresh = !self.bindings.contains_key(&fallback);
         if fresh {
-            self.bindings.insert(global.clone(), Binding::ReaderCell(global.clone()));
+            self.bindings.insert(fallback.clone(), Binding::InternalCell(fallback.clone()));
             self.source_changed();
         }
-        (global, fresh)
+        (global, fallback, fresh)
     }
     pub(crate) fn protocol_key(&mut self, protocol: &Global, method: &str, arity: usize) -> Global {
         let identity = format!(

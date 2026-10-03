@@ -782,6 +782,7 @@ impl<'a> AnalysisGraph<'a> {
             Expression::Local(_) => ("local", vec![]),
             Expression::Global(_) => ("global", vec![]),
             Expression::GlobalCell(_) => ("global-cell", vec![]),
+            Expression::GlobalOrFallback { .. } => ("reader-global-fallback", vec![]),
             Expression::Bitwise { arguments, .. }
             | Expression::Comparison { arguments, .. }
             | Expression::Array { arguments, .. }
