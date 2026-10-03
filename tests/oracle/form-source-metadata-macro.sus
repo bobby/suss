@@ -1,0 +1,17 @@
+(defmacro form-source-facts [argument]
+  (let [call (meta &form)
+        head (meta (first &form))
+        arg (meta argument)
+        child (meta (first argument))]
+    (list 'quote
+          [[(get call :line) (get call :column)
+            (get call :end-line) (get call :end-column)
+            (get call :file) (get call :call-mark)]
+           [(get head :line) (get head :column)
+            (get head :end-line) (get head :end-column) (get head :file)]
+           [(get arg :line) (get arg :column)
+            (get arg :end-line) (get arg :end-column)
+            (get arg :file) (get arg :arg-mark)]
+           [(get child :line) (get child :column)
+            (get child :end-line) (get child :end-column)
+            (get child :file) (get child :sym-mark)]])))
