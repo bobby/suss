@@ -338,3 +338,84 @@ fn named_self_and_method_argument_fields_match_the_pinned_local_observations() {
     }
     assert!(differences.is_empty(), "{}", differences.join("\n"));
 }
+
+#[test]
+fn reviewed_self_shadow_and_duplicate_parameters_retain_both_passes_and_body_order() {
+    // Actual pinned analyzer output is asserted by the retained development
+    // probe tests/oracle/self-local-method-review-probe.clj.
+    const REVIEW_TOOLS: &str = r#"(ns review-tools)
+(def observations [])
+(defmacro inspect-self [label parameter]
+  (let [argument (get (get &env :locals) parameter)
+        self-info (if (= parameter 'self) (get argument :shadow)
+                    (get (get &env :locals) 'self))
+        staged (get self-info :method-params)
+        staged-self (get (nth (first staged) 0) :shadow)
+        duplicate-shadow (get (nth (first (rest staged)) 1) :shadow)
+        row [label (get argument :arg-id) (get argument :tag)
+             (get (get argument :shadow) :local)
+             (get (get argument :shadow) :arg-id)
+             (get (get argument :shadow) :fn-var)
+             (get (get argument :env) :context)
+             (get self-info :fn-var) (get self-info :variadic?)
+             (get self-info :max-fixed-arity)
+             (get staged-self :local) (contains? staged-self :fn-var)
+             (get duplicate-shadow :arg-id)]]
+    (set! observations (conj observations row))
+    parameter))
+(defmacro observation [] (list 'quote observations))
+"#;
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("review_tools.sus"), REVIEW_TOOLS).unwrap();
+    std::fs::write(
+        root.path().join("review.sus"),
+        "(ns review (:require-macros [review-tools :refer [inspect-self]]))\n\
+         (def f (fn self ([self] (inspect-self :first self))\n\
+           ([x x & rest] (inspect-self :second x))))",
+    )
+    .unwrap();
+    let mut primary = suss_reader::forms::read_forms(
+        "[[:first 0 nil :fn nil true :expr true true 2 :fn false 0]\n\
+          [:second 1 nil :arg 0 nil :expr true true 2 :fn false 0]]",
+    )
+    .unwrap()
+    .remove(0);
+    normalize(&mut primary);
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let mut session = Session::with_options_in(
+            SessionOptions {
+                source_paths: vec![root.path().to_owned()],
+                ..SessionOptions::default()
+            },
+            phase,
+        )
+        .unwrap();
+        session.set_operation_fuel(100_000_000);
+        session
+            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(100_000_000);
+        session
+            .load_namespace_with_macros("review", &mut macros)
+            .unwrap();
+        let value = session
+            .eval_with_macros("(review-tools/observation)", &mut macros)
+            .unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        session.collect().unwrap();
+        let mut actual = bridge.read(&mut session, &value, 0..1).unwrap();
+        normalize(&mut actual);
+        assert_eq!(
+            actual, primary,
+            "{phase:?} both-pass shadows and expansion order"
+        );
+        for expression in ["(== (review/f 11) 11)", "(== (review/f 12 13 14) 13)"] {
+            let value = session.eval(expression).unwrap();
+            assert_eq!(
+                bridge.read(&mut session, &value, 0..1).unwrap().kind,
+                Kind::Bool(true)
+            );
+        }
+    }
+}

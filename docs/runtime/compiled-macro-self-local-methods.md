@@ -50,3 +50,11 @@ final-head CI remain pending for this branch.
 Complete portable environments/inference, source/macro dependency cache
 invalidation, evaluator retirement and original M3 lifecycle acceptance remain
 open. This is partial progress toward issue #14.
+
+Independent review also executes same-name self and duplicate argument shadows.
+The body parameter shadows completed self callable facts, while the first-pass
+parameter record retains the earlier self record. Both method contexts, maximum
+fixed arity and textual expansion order match the retained actual pinned probe.
+The additional native regression passes in both phases after GC, with actual
+fixed and rest-argument calls. Production source and bootstrap identities are
+unchanged by this review; full baseline and final-head CI remain pending.

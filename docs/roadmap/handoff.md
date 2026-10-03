@@ -13171,3 +13171,33 @@ Python29484 TERMINAL0:118tests4.814s,
 gitdiffcheck pass. Source frozen for draft publication and independent review;
 all root native/JVM/Node handles terminal. No fullbaseline/readiness proof for
 newbranchyet; original M3 gates remain unchanged and open.
+
+## PR161 independent review — 2026-10-03
+
+Reviewer inspected parameter staging against pinned analyzer2208–2352, retained
+binding ownership/memo keys, same-name self shadowing, duplicate argument names,
+multi-method declaration context and source-ordered body expansion. No significant
+production correction was required. Added actual-primary and executing native
+regressions for the pre-enrichment self record inside first-pass method parameters,
+completed self facts shadowed by body parameters, duplicate x shadow arg-id0,
+maximum fixed arity2, expression context and first/second body expansion order.
+Actual fixed/variadic invocation remains asserted after GC in both caller phases.
+
+Retained original development probe tests/oracle/self-local-method-review-probe.clj.
+From tests/oracle run CLJ_CONFIG=/tmp/suss-oracle-clojure-config
+CLJ_CACHE=/tmp/suss-oracle-clojure-cache clojure -Srepro -M
+self-local-method-review-probe.clj, with both assignments on the command.
+Primary20679 TERMINAL0 matches both asserted rows; log
+/private/tmp/suss-pr161-review-primary.log. Initial80912 TERMINAL1 was a missing
+probe file caused by an incorrect relative path, not semantic evidence.
+Native30906 TERMINAL101,21.26s used numeric == on symbols in the review fixture
+and chose the wrong branch. Fixture now uses public =, matching primary.
+Corrected12593 TERMINAL0:1/0/0 in36.87s, both phases, actual native execution/GC
+and function calls; /private/tmp/suss-pr161-review-shadow-fixed-fixture.log.
+Production source, bootstrap images/fingerprints and all existing limits remain
+unchanged from reviewed initial b09e9894dbbeec8ba00329cba626cfbca94b7bf2.
+
+Rustfmt2024 and git diff check pass. Freeze and push review regression/evidence;
+required full workspace baseline at the exact pushed head and final-head CI
+remain pending. No PR merge, issue closure or M3 completion. Reviewer retains
+sole heavy slot through the full baseline and explicitly releases after terminal.
