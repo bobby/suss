@@ -589,3 +589,13 @@ initializer/function environments after GC. See
 [declaration observations](../runtime/compiled-macro-declaration-observations.md).
 Complete declaration schema, AST/inference and actual implicit &env remain open;
 no inventory declaration is reclassified as complete.
+
+Source callable preparation retains actual validated methods before runtime
+wrapping and duplicate-arity elimination, exposed as explicit backend graph
+facts. A focused executing regression checks metadata, signature order, aliases,
+shared identity and invocation in both Stores after GC. A separate development
+oracle records 32 pinned analyzer observations and 11 executed projections,
+showing why portable inferred tags must be independent of runtime storage types.
+See [source records](../runtime/compiled-macro-source-analysis.md). Native portable
+inference and complete function/declaration schemas remain pending; no inventory
+item or milestone gate is reclassified.

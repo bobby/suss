@@ -115,3 +115,14 @@ wrong value tags. This bounded matrix does not certify every number or core API.
 The source corpus additionally checks parsing grammar, whitespace, radix rounding,
 UTF-16 concatenation and dynamic arithmetic. No JVM/Node enters the shipped path.
 See [numeric build provenance](../../runtime/numeric/README.md).
+
+## Analyzer tag observations
+
+`sh scripts/test-analysis-tags-oracle.sh` force-compiles the original
+`analysis_tag_runner.cljs` fixture against the pinned compiler and executes its
+Node artifact. The strict checker compares 32 analyzed source observations and
+11 actual scalar projections, including field presence, union tags, function
+return inference and metadata hints. The fixture deliberately exercises inferred
+`number` with string runtime storage; inference and decoded values are separate
+facts. This is development-only primary evidence, not a native inference pass or
+M3 completion. Java and Node are not shipped dependencies.

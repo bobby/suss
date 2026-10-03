@@ -11367,3 +11367,114 @@ Last source check session18711 terminated exit0 after the identifier-layout guar
 the three other builder tests; their preceding complete7/0/0 result remains
 recorded above. No local heavy job remains. Push reviewer fixes and run the full
 post-fix baseline/CI at the resulting committed head before readiness.
+
+
+Root next-task preparation in /private/tmp/suss-m3-callable-analysis (branch
+portable/m3-callable-analysis, basea9d90da) is UNCOMMITTED and UNVALIDATED. It adds
+SourceCallable/SourceMethod records from actual validated methods before callable
+runtime wrappers and duplicate-arity elimination, preserving parameters and body
+HIR. A per-source-analysis slot stack keeps nested source functions distinct.
+Queued graph transport exposes these explicitly as suss/source-function facts in
+source ASTs and completed catalog declarations; no inferred tag or complete
+portable fn-var schema is claimed. An executing query regression checks fixed,
+variadic, duplicate and alias cases, metadata and canonical shared identity, then
+actual function/effect results. Rustfmt parse-only emit-stdout and diff-check pass,
+but NO cargo/native execution has run for this preparation because PR149 baseline
+13081 still owns the heavy slot. Do not commit/claim success before executing a
+real before/after regression and broadened checks. Reviewer /root/review_pr149
+gets the next heavy slot to validate old-head constructor/identity/catch failures
+and push significant fixes; integrate those PR fixes before next-source testing.
+PR149 current head55c094b (provenance only) and CI37084524183 has passed upstream
+preflight but runtime checks remain in progress. Required local baseline logs
+/private/tmp/suss-declaration-snapshot-full.log and handle13081 are authoritative.
+
+
+Required PR149 snapshot baseline13081 terminated exit0:1002 passed,0 failed,
+17 existing ignores across105 groups; /private/tmp/suss-declaration-snapshot-full.log.
+It covers a9d90da Rust source, unchanged by provenance-only55c094b. Heavy slot
+is now owned by /root/review_pr149 for old-head failing regressions and validated
+constructor/descriptor/catch collision fixes. Root must not launch cargo/JVM
+until reviewer releases it. New callable preparation remains unvalidated here.
+PR149 requires reviewed fix integration, a full post-fix baseline and final-head
+CI before readiness. No issues are closed; no merge authorization is present.
+
+
+Review fixes56415652eb207873824794f13a85aa5cb1b695b4 are now integrated in this
+callable worktree and primary PR worktree. Independent reviewer confirms no
+remaining significant findings for PR149 scope after executing regressions.
+Root owns the heavy slot. Source callable before/after regression and fresh
+inference capture precede the required full post-review PR149 baseline on
+unchanged5641565. Prepared source model patch is saved at
+/private/tmp/suss-callable-source-prepared.patch while the old-head test executes.
+Do not lose that patch or treat this preparation as tested yet.
+
+Source callable continuation now includes actual before/after execution on the
+reviewed prerequisite head5641565. Old-source regression49397 terminated exit101:
+0/1/0, /private/tmp/suss-source-callable-before.log. Repaired focused regression82903
+terminated exit0:1/0/0, /private/tmp/suss-source-callable-first-focus.log. Both Stores
+retain actual source methods, parameter metadata, shared rooted identity after GC
+and real invocation results. A subsequent empty-method guard/diagnostic still
+needs its focused rerun. Changes here remain uncommitted; no PR readiness claimed.
+
+Fresh development inference capture38583 terminated exit0 with32 actual analyzed
+observations and11 executed projections, /private/tmp/suss-analysis-tags-first.log.
+Recorded exact corpus analysis-tag-observations.json; original analyzer helper,
+runner, strict checker and fresh compile script are now prepared. Checker matches
+that first capture;7 focused rejection tests pass. This initial capture is not
+an independent second fresh check, which remains pending until the heavy slot is
+free. Native portable inference is not implemented by this evidence.
+
+Required PR149 post-review full baseline22988 is live on unchanged5641565 in
+/private/tmp/suss-m3-declaration-inference, log /private/tmp/suss-pr149-reviewed-full.log.
+Root owns that heavy slot; do not launch native/JVM work concurrently. PR149 final
+head CI37085679932 is also in progress. Independent review completed with its
+three significant fixes pushed at5641565. Require terminal full baseline and
+final-head CI before readiness. Original M3 acceptance remains open.
+
+Self-inspection additionally found SourceMethod.body still retained the private
+recurrence loop around the actual analyzed body. Retention now removes exactly
+that compiler-owned wrapper, preserving user source loops inside. The executing
+query additionally requires the fixed method's analyzed do body rather than the
+physical loop. This change and the empty-method guard await focused execution
+once22988 releases the slot; the previous1/0/0 must not cover them implicitly.
+All95 Python evidence tests pass; independent second fresh JVM capture remains
+pending. No shipped upstream implementation was copied for these original facts.
+
+PR149 required post-review full baseline22988 terminated exit0 on unchanged clean
+56415652eb207873824794f13a85aa5cb1b695b4:1008 passed,0 failed,17 existing ignores
+across105 groups; /private/tmp/suss-pr149-reviewed-full.log. This covers all reviewer
+source fixes. Final-head GitHub CI37085679932 remains in progress; no readiness
+claim yet. Primary source remains unchanged so its CI head stays exact. Heavy
+slot transfers to callable final focused regression24436 with nested signatures
+and actual do body checks, /private/tmp/suss-source-callable-final-focus.log.
+
+Final strengthened source callable regression24436 terminated exit0:1/0/0,
+/private/tmp/suss-source-callable-final-focus.log. It includes separate outer/inner
+source parameter lists, analyzed do body instead of private recurrence wrapper,
+canonical identity, metadata, alias/duplicate/variadic facts and actual closure
+invocation results in both Stores after GC. Combined graph/context/binding/scope/
+method suite71270 now owns the heavy slot; /private/tmp/suss-source-callable-combined.log.
+No full baseline covers this continuation yet. Prior1008 baseline covers PR149
+5641565 only. No PR for this continuation has been opened or reviewed yet.
+
+Combined native suite71270 terminated exit0:23/0/0 across5 groups; graph10,
+context1, bindings8, scopes2, methodroles2; /private/tmp/suss-source-callable-combined.log.
+Compiler continuation suite42528 terminated exit0:44/0/0 across pipeline, closures
+and definitions; /private/tmp/suss-source-callable-compiler.log. Commands use the
+shared target, CARGO_BUILD_JOBS=2, --locked and --test-threads=2, no RUSTFLAGS.
+Second fresh pinned analyzer capture48516 is now running the strict oracle script,
+/private/tmp/suss-analysis-tags-second.log. Do not treat it as passed until terminal.
+
+Second fresh pinned oracle48516 terminated exit0;32 ordered analyzer observations
+and11 executed projections match exactly. Expected numeric/string warnings are
+preserved in /private/tmp/suss-analysis-tags-second.log. Final Python95/0 passes,
+/private/tmp/suss-callable-python-final.log; git diff --check and parsing-only
+rustfmt checks pass. Native portable inference remains pending; source signatures
+are explicit backend facts, not a complete portable declaration/AST implementation.
+Next publish this bounded continuation with Refs #13/#14, dispatch its independent
+PR reviewer, push significant fixes, then run the required full workspace baseline
+and final-head CI on the reviewed resulting head. No full baseline covers this
+continuation yet. The next implementation task is portable source declaration
+metadata and AST/inference using actual pinned observations, followed by implicit
+source &env/bootstrap and remaining scheduler gates. Do not close M3 issues or
+merge any PR without later user instruction.

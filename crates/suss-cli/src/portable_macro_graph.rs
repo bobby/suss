@@ -38,6 +38,7 @@ enum Task {
     Local(LocalBinding),
     Field(FieldBinding),
     Scope(Arc<FunctionScope>),
+    Callable(Arc<hir::SourceCallable>),
     Ast(Hir),
     Lowering(Hir),
     Environment {
@@ -61,6 +62,7 @@ pub struct AnalysisGraph<'a> {
     locals: BTreeMap<(usize, usize, String), (LocalBinding, Value)>,
     fields: BTreeMap<usize, (FieldBinding, Value)>,
     scopes: BTreeMap<usize, (Arc<FunctionScope>, Value)>,
+    callables: BTreeMap<usize, (Arc<hir::SourceCallable>, Value)>,
     namespaces: BTreeMap<usize, (Arc<SourceNamespace>, Value)>,
     asts: BTreeMap<usize, (Arc<hir::SourceAnalysis>, Value)>,
     recipes: Vec<Option<Recipe>>,
@@ -77,6 +79,7 @@ impl<'a> AnalysisGraph<'a> {
             locals: BTreeMap::new(),
             fields: BTreeMap::new(),
             scopes: BTreeMap::new(),
+            callables: BTreeMap::new(),
             namespaces: BTreeMap::new(),
             asts: BTreeMap::new(),
             recipes: Vec::new(),
@@ -102,6 +105,7 @@ impl<'a> AnalysisGraph<'a> {
                 Task::Local(value) => self.local_record(&value, 0)?,
                 Task::Field(value) => self.field_record(&value, 0)?,
                 Task::Scope(value) => self.scope_record(&value, 0)?,
+                Task::Callable(value) => self.callable_record(&value, 0)?,
                 Task::Ast(value) => self.ast_record(&value, 0)?,
                 Task::Lowering(value) => self.lowering_record(&value, 0)?,
                 Task::Environment {
@@ -493,6 +497,9 @@ impl<'a> AnalysisGraph<'a> {
                 if let Some(doc) = &info.docstring {
                     fields.push(("doc", self.scalar(Literal::String(doc.clone()))?));
                 }
+                if let Some(callable) = info.initializer.as_ref().and_then(|init| init.source.as_ref()).and_then(|source| source.callable.as_ref()) {
+                    fields.push(("suss/source-function", self.callable(callable)?));
+                }
             }
             declarations.push((short, self.map(fields)?));
         }
@@ -697,6 +704,35 @@ impl<'a> AnalysisGraph<'a> {
         self.asts.insert(key, (source.clone(), value));
         Ok(value)
     }
+    fn callable(&mut self, callable: &Arc<hir::SourceCallable>) -> Result<Value> {
+        let key = Arc::as_ptr(callable) as usize;
+        if let Some((_, value)) = self.callables.get(&key) { return Ok(*value); }
+        let value = self.task(Task::Callable(callable.clone()))?;
+        self.callables.insert(key, (callable.clone(), value));
+        Ok(value)
+    }
+    fn callable_record(&mut self, callable: &hir::SourceCallable, depth: usize) -> Result<Value> {
+        let mut methods = Vec::new();
+        for method in &callable.methods {
+            let mut parameters = Vec::new();
+            for parameter in &method.parameters {
+                let form = Form {
+                    span: parameter.span.clone(), metadata: parameter.metadata.clone(),
+                    kind: Kind::Symbol(suss_reader::Symbol { namespace: None, name: parameter.name.clone() }),
+                };
+                parameters.push(self.form(&form, depth + 1)?);
+            }
+            let parameters = self.vector(&parameters)?;
+            let body = self.ast(&method.body, depth + 1)?;
+            let variadic = self.flag(method.variadic)?;
+            methods.push(self.map(vec![("suss/parameters", parameters), ("suss/body", body), ("suss/variadic", variadic)])?);
+        }
+        let methods = self.vector(&methods)?;
+        let variadic = self.flag(callable.variadic())?;
+        let fixed = callable.max_fixed_arity().ok_or_else(|| SessionError::Host(wasmtime::Error::msg("Invalid source callable method or variadic parameter list")))?;
+        let fixed = self.number(fixed)?;
+        self.map(vec![("suss/methods", methods), ("suss/variadic", variadic), ("suss/max-fixed-arity", fixed)])
+    }
     fn ast_record(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
         let source = hir.source.as_ref().expect("source AST task");
         let form = self.form(&source.form, depth + 1)?;
@@ -710,11 +746,15 @@ impl<'a> AnalysisGraph<'a> {
             depth + 1,
         )?;
         let lowering = self.lowering(hir, depth + 1)?;
-        let value = self.map(vec![
+        let mut fields = vec![
             ("form", form),
             ("env", env),
             ("suss/lowering", lowering),
-        ])?;
+        ];
+        if let Some(callable) = &source.callable {
+            fields.push(("suss/source-function", self.callable(callable)?));
+        }
+        let value = self.map(fields)?;
         Ok(value)
     }
     fn lowering(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
