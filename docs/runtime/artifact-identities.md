@@ -13,7 +13,7 @@ Bare IR emission explicitly leaves source, phase and graph unknown.
 The verifier rejects missing/duplicate/malformed records, incompatible compiler
 builds even with the same package version, ABI/profile/flag mismatches, body
 integrity changes and mismatched expected source/phase/macro versions. JSON is
-bounded to1MiB. Unknown provenance cannot satisfy an explicitly requested source
+bounded to 1 MiB. Unknown provenance cannot satisfy an explicitly requested source
 or dependency identity. Metadata does not replace Wasm validation and linking.
 
 Native Session installation verifies every artifact's compiler identity and
@@ -36,7 +36,13 @@ unknown while its expansion effects execute. Six existing source cache tests pas
 
 Affected command/bootstrap/namespace/phase/session validation passed54 tests.
 Both refreshed phase Wasm/JSON assets reproduce byte-for-byte without Java;
-four bootstrap tests and Python118 pass. Independent review, required full
-baseline and final-head CI are still pending. Complete published user dependency-loader policy, component/AOT
+four bootstrap tests and Python118 pass. Independent review found no significant
+scoped production defect. Its additional compiler regression preserves exact
+code and custom-section bytes before and after the identity, checks deterministic
+reannotation, and rejects an appended section against the old body digest.
+Four compiler tests pass. Seven native lifecycle tests pass, including an actual
+valid-digest wrong-phase batch rejection before any staged publication, preservation
+of the old value17, and subsequent loader recovery23. Required final-head full
+baseline and CI are still pending. Complete published user dependency-loader policy, component/AOT
 migration, temporary evaluator retirement and scheduler/lifecycle acceptance
 remain original M3 work. A manifest check alone is not their acceptance proof.

@@ -1378,4 +1378,29 @@ mod tests {
         assert_eq!(bits, 17.0f64.to_bits());
     }
 
+    #[test]
+    fn session_lifecycle_phase_identity_rejects_entire_batch_before_publication() {
+        let mut session = Session::new().unwrap();
+        session.eval("(def keep 17)").unwrap();
+        let prepared = portable::prepare_fragment("(def ghost 7)", &session.environment, Phase::Runtime).unwrap();
+        let wrong_phase = portable::artifact_identity::annotate_source(
+            &prepared.wasm, Phase::Macro,
+            Some(&portable::SourceOrigin::new("(def ghost 7)", None)), Some(&[]),
+        ).unwrap();
+        // These are valid executable bytes with a valid body digest, but belong
+        // to the other isolated phase. Even the preceding valid fragment must
+        // not allocate or publish its staged bindings on this failure.
+        portable::artifact_identity::verify(&wrong_phase, Default::default()).unwrap();
+        let before = session.stats();
+        let result = session.install(&[&prepared.wasm, &wrong_phase], prepared.environment, &prepared.cells);
+        assert!(result.unwrap_err().to_string().contains("phase identity mismatch"));
+        assert_eq!(session.stats(), before);
+        assert!(matches!(session.eval("ghost"), Err(SessionError::Compile(_))));
+        let keep = session.eval("keep").unwrap();
+        assert_eq!(crate::portable_repl::display(&mut session, &keep).unwrap(), "17");
+        // A failed batch must leave the ordinary loader usable.
+        let recovered = session.eval("(def ghost 23)").unwrap();
+        assert_eq!(crate::portable_repl::display(&mut session, &recovered).unwrap(), "23");
+    }
+
 }

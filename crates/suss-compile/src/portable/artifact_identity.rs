@@ -357,6 +357,54 @@ mod tests {
         );
     }
     #[test]
+    fn artifact_identity_preserves_custom_sections_and_code_across_reannotation() {
+        let function = super::super::ir::lower(&super::super::analyze("42").unwrap()).unwrap();
+        let emitted = super::super::emit::emit(&function).unwrap();
+        let mut body = emitted[..8].to_vec();
+        let before = wasm_encoder::CustomSection {
+            name: Cow::Borrowed("review.before"),
+            data: Cow::Borrowed(b"\x00\xffunchanged"),
+        };
+        body.push(before.id());
+        before.encode(&mut body);
+        body.extend_from_slice(&emitted[8..]);
+        let first = annotate_ir(&body).unwrap();
+        let after = wasm_encoder::CustomSection {
+            name: Cow::Borrowed("review.after"),
+            data: Cow::Borrowed(b"\xff\x00unchanged"),
+        };
+        let mut with_after = first;
+        with_after.push(after.id());
+        after.encode(&mut with_after);
+        body.push(after.id());
+        after.encode(&mut body);
+        // A custom section appended after sealing changes the module body too.
+        assert!(
+            verify(&with_after, Expected::default())
+                .unwrap_err()
+                .contains("integrity")
+        );
+        let origin = SourceOrigin::new("42", None);
+        let annotated =
+            annotate_source(&with_after, Phase::Runtime, Some(&origin), Some(&[])).unwrap();
+        assert_eq!(split(&annotated).unwrap().0, body);
+        let repeated =
+            annotate_source(&annotated, Phase::Runtime, Some(&origin), Some(&[])).unwrap();
+        assert_eq!(annotated, repeated);
+        verify(
+            &repeated,
+            Expected {
+                phase: Some(Phase::Runtime),
+                source: Some("42"),
+                macro_dependencies: Some(&[]),
+            },
+        )
+        .unwrap();
+        wasmparser::Validator::new()
+            .validate_all(&repeated)
+            .unwrap();
+    }
+    #[test]
     fn artifact_identity_rejects_missing_duplicate_corrupt_and_malformed_records() {
         let wasm = source();
         let (body, _) = split(&wasm).unwrap();

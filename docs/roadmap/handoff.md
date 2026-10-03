@@ -1,3 +1,25 @@
+## Independent PR167 review — artifact identities
+
+Reviewed section parsing/body preservation, compiler/ABI/phase/target/flag gates,
+known-empty versus unknown provenance, immutable loaded macro graphs and166
+incomplete-load bypass, bootstrap source/core identity and cache rejection accounting.
+No significant scoped production defect found. Original regressions unchanged.
+Added exact byte preservation for custom sections before/after identity, deterministic
+reannotation, old-digest rejection after appended section and final Wasm validation.
+Compiler17567 TERMINAL0:4passed/0failed/0ignored in0.01s;
+/private/tmp/suss-pr167-review-unit.log. Added actual native valid-preceding batch
+rejection of a correctly sealed wrong-phase artifact: unchanged entire SessionStats,
+ghost absent, keep17 retained and recovery23. Lifecycle82096 TERMINAL0:7/0/0 in0.16s;
+/private/tmp/suss-pr167-review-native-gates.log. Compiler test-source fingerprint
+change required both phase Wasm/JSON regeneration78823 TERMINAL0. Java-free52775
+TERMINAL0: both regenerated phase Wasm/JSON byte-exact, compiler identities verified,
+four executing bootstrap tests passed22.92s; /private/tmp/suss-pr167-review-javafree.log.
+Commands use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and CARGO_BUILD_JOBS=2;
+no RUSTFLAGS. Git diff check passed. Next freeze/push reviewed head for required
+cargo test --workspace --locked -- --test-threads=2 and exact-head CI.
+Full baseline/CI pending; no merge/issue closure/full M3 claim. Published user
+artifact loader policy, AOT migration/evaluator retirement and scheduler remain open.
+
 Affected24268 TERMINAL0:54passed/0failed/0ignored across5groups: bootstrap4
 11.95s; nativeentry10 23.34s; phase3 4.65s; namespace4 5.18s; persistence33 0.82s.
 Javafree72196 TERMINAL0: both phase Wasm+JSON exactly reproduced, compiled source
