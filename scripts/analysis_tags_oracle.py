@@ -63,7 +63,7 @@ def main():
               (ROOT / 'tests/oracle/out/analysis-tag-calls.jsonl').read_text().splitlines()]
     result = parse((ROOT / 'tests/oracle/out/analysis-tag-results.json').read_text())
     compare(expected, actual, result)
-    print('32 fresh pinned analyzer observations and 11 executed projections match exactly; native portable inference remains pending')
+    print('32 fresh pinned analyzer observations and 11 executed projections match exactly; native execution evidence is checked separately')
 
 
 if __name__ == '__main__':

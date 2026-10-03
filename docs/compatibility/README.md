@@ -608,3 +608,13 @@ completion remain distinct from runtime initialization. See
 [source invocation](../runtime/compiled-macro-source-environment.md). Complete
 portable AST/declaration/inference and bootstrap/lifecycle acceptance remain open;
 no inventory definition is reclassified as complete.
+
+
+Compiled source macro tag projections now match 32 pinned source observations
+and 11 executed results in both caller Stores after GC. HIR retains source
+inference independently from storage, including unknown return-field presence.
+Quoted union sets now lower as data through existing retained constructors,
+with nested syntax, metadata and size-boundary execution. Complete source AST,
+declaration/function/method schema and remaining inference rules stay open; no
+inventory declaration is reclassified as complete. See
+[source inference](../runtime/compiled-macro-source-inference.md).

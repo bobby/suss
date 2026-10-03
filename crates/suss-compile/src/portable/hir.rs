@@ -12,6 +12,8 @@ mod dynamic;
 mod exceptions;
 mod nominal;
 mod quotes;
+mod source_tags;
+pub use source_tags::{SourceTags, local_tag, declaration_tag};
 use super::{
     Diagnostic,
     resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
@@ -463,6 +465,7 @@ impl SourceCallable {
 }
 #[derive(Debug, Clone)]
 pub struct SourceAnalysis {
+    pub tags: SourceTags,
     pub form: Form,
     pub resolved: Option<SourceBinding>,
     pub name_hint: Option<Form>,
@@ -773,12 +776,14 @@ impl Analyzer<'_> {
         self.source_callables.push(None);
         let result = self.form_inner(form, context, tail, name_hint);
         let callable = self.source_callables.pop().expect("source callable fact slot");
-        result.map(|mut expression| {
+        result.and_then(|mut expression| {
                 // A bootstrap/source expansion may already have returned its actual
                 // analyzed node. Preserve that record instead of attributing the
                 // original macro call to the expanded expression.
                 if expression.source.is_none() {
+                    let tags = source_tags::source_tags(form, resolved.as_ref(), callable.as_deref(), &expression)?;
                     expression.source = Some(std::sync::Arc::new(SourceAnalysis {
+                        tags,
                         form: form.clone(),
                         resolved,
                         name_hint: name_hint.cloned(),
@@ -794,7 +799,7 @@ impl Analyzer<'_> {
                         origin: self.origin.clone(),
                     }));
                 }
-                expression
+                Ok(expression)
             })
     }
     fn form_inner(

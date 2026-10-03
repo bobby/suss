@@ -1,5 +1,10 @@
 # Actual analyzed source records
 
+Current source inference progress is recorded in
+[source inference](compiled-macro-source-inference.md). Its executing corpus
+selects inferred fields; complete source AST/inference acceptance remains open.
+The historical validation notes below retain their original scope.
+
 `Hir::source` retains an immutable `SourceAnalysis` for syntax actually analyzed
 through the source pipeline: the reader or expansion form, three-way analysis
 context, phase, namespace at entry and optional supplied source origin. This is

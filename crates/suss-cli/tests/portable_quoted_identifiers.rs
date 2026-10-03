@@ -197,7 +197,7 @@ fn compiled_macro_prerequisite_quote_errors_are_located_and_preserve_session_sta
         "(def leaked 99) (def keep '^42 replacement)",
         "(def leaked 99) (def keep '^42 [1 2])",
         "(def leaked 99) (def keep '^42 {:x 1})",
-        "(def leaked 99) (def keep '#{1 2})",
+        "(def leaked 99) (def keep '^42 #{1 2})",
     ] {
         let before = session.stats();
         let Err(SessionError::Compile(error)) = session.eval(source) else {

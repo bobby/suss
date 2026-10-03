@@ -119,6 +119,12 @@ impl Analyzer<'_> {
                     .collect::<Result<Vec<_>, _>>()?;
                 self.map_values(form, items, entries)
             }
+            Kind::Set(items) => {
+                let entries = items.iter()
+                    .map(|item| self.quote_data_impl(item, depth + 1, reader_data))
+                    .collect::<Result<Vec<_>, _>>()?;
+                self.set_values(form, items, entries)
+            }
             Kind::List(items) => {
                 let symbol = suss_reader::Symbol {
                     namespace: Some("suss.core".into()),
@@ -149,7 +155,7 @@ impl Analyzer<'_> {
             }
             _ => Err(fail(
                 form.span.clone(),
-                "Quoted vector/map/set data needs persistent collection types, not yet implemented",
+                "Unresolved reader dispatch or prefix data cannot be quoted",
             )),
         }
     }

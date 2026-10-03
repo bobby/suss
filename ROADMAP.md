@@ -88,6 +88,13 @@ any release gate complete.
   Source macros now receive implicit &form/&env in every signature. Three executing regressions inspect lexical init/shadow/context, function scope, and staged namespace snapshots in both phases; three shared fresh pinned projections match native execution. Actual definition forms and analysis completion are retained separately from runtime initialization. Full portable declaration/AST/inference, &form metadata and bootstrap remain open; see [source environments](docs/runtime/compiled-macro-source-environment.md).
 - **M3-04 — Session lifecycle and interruption** (in-progress). Define reset, roots, code residency and cancellation while interactive I/O is pending. Native session reset/owned handles/fuel recovery/residency counters now have executing evidence; interactive cancellation and live heap accounting remain.
 
+Source inference now matches 32 selected pinned observations and 11 executed
+projections in both caller Stores, with once-only initializer effects and
+inferred tags independent of storage. Quoted union sets use the retained set
+constructor/factory; existing set effect/GC tests remain passing. Complete
+AST/declaration/function/method metadata and remaining inference are still open;
+see [source inference](docs/runtime/compiled-macro-source-inference.md).
+
 Retained cached string hashing now matches64 fresh pinned observations over owned GC
 objects, with aliases/live dependencies and40 ABI checks. Public hash/equality and
 persistent collections remain unfinished; see [cached hashing](docs/runtime/cached-string-hashing.md).

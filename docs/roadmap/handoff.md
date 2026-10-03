@@ -11663,3 +11663,75 @@ exit0,7/0/0 across2 groups, /private/tmp/suss-pr152-source-macros-after.log.
 No native process remains live. Clean repaired-head full workspace baseline and
 final-head GitHub CI are still required; the failed full run remains preserved.
 Do not mark PR152 ready or M3 complete from these focused results.
+
+
+## Source inference continuation after reviewed PR152
+
+Parent PR152 reviewed head cb3abef7ae8d3021d5109f52f0b92b865d4879d2 has a
+clean rebuilt full baseline: 1012 passed, 0 failed, 17 existing ignores across
+106 result groups. Session23617 terminated exit0; log
+/private/tmp/suss-pr152-review-fixed-full.log. The previous full90547 failed an
+obsolete &env rejection. Its independent reviewer reproduced0/1/0, pushed
+cb3abef and passed the affected7/0/0. Failed logs remain preserved. Parent CI
+37093325448 oncb remains in progress at the last authoritative check; leave152
+draft until final-head CI passes. PR149/150 were ready; no agent merge.
+
+Next worktree /private/tmp/suss-m3-source-inference, branch
+portable/m3-source-inference, fast-forwarded tocb. SourceAnalysis now retains
+SourceTags independently of physical HIR.Type. AST/local/declaration graph
+records expose selected tags and function inferred-ret-tag presence. The pinned
+analyzer adaptation, source hash and EPL notice are retained in source_tags.rs
+and the source-inference runtime doc. Complete portable AST, declaration/function/
+method metadata, branch refinement and remaining inference are unfinished.
+
+Commands use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target,
+CARGO_BUILD_JOBS=2, cargo test --locked and --test-threads=2. Clear only the four
+workspace package artifacts before switching worktrees to prevent executable
+contamination. No RUSTFLAGS. One native/JVM heavy job at a time; all jobs below
+are terminal at this entry.
+
+Inference BEFORE50203 failed only test canonicalization (row label set mistaken
+for a tagged pair); no semantic evidence claimed. Corrected BEFORE82291 actually
+executes32 macro projections and fails0/1/0 on missing fields; log
+/private/tmp/suss-source-tags-before-corrected.log. Initial AFTER26971 fails on
+unsupported quoted union sets; /private/tmp/suss-source-tags-after.log.
+Separate quoted-set BEFORE2509 fails0/1/0 with a located quote diagnostic.
+Refactored the existing set constructor/factory to accept recursively quoted
+data, preserving literal runtime order. AFTER67154 passes1/0/0: empty/nested
+symbolic/list/vector/map data, metadata and8/9/17-symbol sizes execute in both
+Stores without assignment replay. Logs /private/tmp/suss-quoted-sets-{before,after}.log.
+
+Combined70433 passes8 set tests, then the extra effect fixture fails on an
+unimported public vector helper. First-phase32 tag/11 runtime assertions had
+passed; no both-phase success claimed from that attempt. Changed the generated
+effect form to a vector literal. Final81631 passes1/0/0: actual32 selected tag
+observations,11 runtime projections and once-only initializer effects in both
+Stores afterGC. Log /private/tmp/suss-source-tags-final-focus.log. Inferred
+number remains distinct from executed string a1; no opaque object comparator.
+
+The first affected-macro command named a nonexistent target (no pass). Corrected
+92201 passes41 tests across8 groups, then a legacy quoted-set rejection fails
+(2/1/0 target). Changed only that negative input to invalid quoted-set metadata
+^42, preserving locations, compile atomicity, old values and effects. Final
+33422 passes3/0/0; /private/tmp/suss-source-tags-quoted-identifiers-final.log.
+Other41 passes: analysis context1, graph11, binding records8, function scopes2,
+metadata10, method roles2, source environment3, source macros4. Log
+/private/tmp/suss-source-tags-affected-macros-corrected.log preserves the failure.
+
+Compiler90967 passes44/0/0 across pipeline/closures/definitions3 groups; log
+/private/tmp/suss-source-tags-affected-compiler.log. Python85434 passes101/0;
+/private/tmp/suss-source-tags-python.log. Submodule16120 initialized at pinned
+c4295f303100bbf5afac449242d30bca1126f1a1. Fresh force-compiled primary19728
+terminated exit0:32 observations/11 Node projections match exactly;
+/private/tmp/suss-source-tags-fresh-primary.log. Oracle stdout now states that
+native execution evidence is checked separately. Formatting/diff checks are
+separate from semantic evidence; no full new-source baseline yet.
+
+Next: publish the draft inference PR with Refs13/14; dispatch its independent
+reviewer, push significant fixes, then clean rebuilt full baseline/final-head
+CI before readiness. No Closes: original M3 criteria remain open, including
+complete schema/inference, full&form metadata, namespace policy, syntax quote/
+gensyms, reproducible versioned Java-free bootstrap, cache invalidation/evaluator
+removal, scheduler cancellation/lifecycle and live GC accounting. Never merge
+without a later explicit user instruction. The1012/0/17 full pass belongs only
+to parent152cb, not to this new source.
