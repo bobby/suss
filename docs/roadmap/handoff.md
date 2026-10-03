@@ -11239,3 +11239,26 @@ issue closure is claimed. Next: freshly observe portable declaration metadata
 in actual &env namespace snapshots separately from the live pinned analyzer
 catalog, then implement only the certified schema/timing and execute native
 comparisons. Full source AST/inference and actual implicit &env remain open.
+
+
+Declaration investigation continues in isolated
+/private/tmp/suss-m3-declaration-inference on portable/m3-declaration-inference.
+The genuine local ClojureScript clone is verified at c4295f303100bbf5afac449242d30bca1126f1a1.
+Fresh primary captures exposed the &env namespace snapshot versus live catalog
+difference: current definitions are absent from &env during initializers/body
+analysis; redefinitions retain the previous declaration in &env. Final function
+facts appear afterward. The initial helper projected the wrong key :variadic;
+corrected to actual :variadic? before recording reviewed expected observations.
+First capture log /private/tmp/suss-declaration-environment-first.log; corrected
+capture /private/tmp/suss-declaration-environment-key-corrected.log. A separate
+fresh compile/execution against reviewed expected data terminated exit0, session
+96296, log /private/tmp/suss-declaration-environment-final-primary.log:13 ordered
+snapshot/catalog observations and14 executed results agree exactly. Command
+`scripts/test-declaration-environment-oracle.sh`; primary only, no native comparison
+claimed. Source path normalization is restricted to verified :file fields.
+See docs/runtime/compiled-macro-declaration-observations.md for observed schema
+and unobserved boundaries. No native code was changed by this investigation.
+Next unblocked task: observe nested definitions/top-level snapshot policy and
+self/declared/duplicate-arity function facts before implementing separate portable
+snapshots plus staged callable metadata/inference. Actual source &env, bootstrap,
+cache invalidation, scheduler and complete M3 acceptance remain open.
