@@ -568,3 +568,14 @@ The first native attempt failed on unimported public empty/vec helpers; the fina
 focused corpus invokes the retained -empty method and transports keys directly.
 Those public helpers remain pending. The required workspace baseline for this set prerequisite source passes
 998/0/17 across 105 groups. Original M3 environment/bootstrap acceptance remains open. No declaration is reclassified as fully implemented.
+
+
+Native compiler namespace data now preserves explicit source use/rename roles,
+including unchanged-name and dual-role referrals, required-library identity
+entries and separate macro import maps. Fresh pinned evidence preserves nullable
+shape and field presence across 18 map fields in three source namespaces; native
+compiled queries match the shared expected corpus in both phases after GC. See
+[namespace graph data](../runtime/compiled-macro-namespace-data.md). This does not
+certify default/reload/implicit namespace policy, full declaration/AST/inference
+schema or actual source macro &env invocation. No inventory declaration is
+reclassified and original M3 acceptance remains open.

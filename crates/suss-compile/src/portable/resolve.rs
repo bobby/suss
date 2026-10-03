@@ -168,9 +168,13 @@ struct Scope {
     namespace: String,
     aliases: BTreeMap<String, String>,
     refers: BTreeMap<String, Global>,
+    used_refers: BTreeSet<String>,
+    renamed_refers: BTreeSet<String>,
     excluded_core: BTreeSet<String>,
     macro_aliases: BTreeMap<String, String>,
     macro_refers: BTreeMap<String, (String, String)>,
+    used_macro_refers: BTreeSet<String>,
+    renamed_macro_refers: BTreeSet<String>,
 }
 impl Scope {
     fn new(namespace: &str) -> Self {
@@ -178,9 +182,13 @@ impl Scope {
             namespace: namespace.into(),
             aliases: BTreeMap::new(),
             refers: BTreeMap::new(),
+            used_refers: BTreeSet::new(),
+            renamed_refers: BTreeSet::new(),
             excluded_core: BTreeSet::new(),
             macro_aliases: BTreeMap::new(),
             macro_refers: BTreeMap::new(),
+            used_macro_refers: BTreeSet::new(),
+            renamed_macro_refers: BTreeSet::new(),
         }
     }
 }
@@ -200,9 +208,13 @@ pub struct NamespaceScope<'a> {
     pub namespace: &'a str,
     pub aliases: &'a BTreeMap<String, String>,
     pub refers: &'a BTreeMap<String, Global>,
+    pub used_refers: &'a BTreeSet<String>,
+    pub renamed_refers: &'a BTreeSet<String>,
     pub excluded_core: &'a BTreeSet<String>,
     pub macro_aliases: &'a BTreeMap<String, String>,
     pub macro_refers: &'a BTreeMap<String, (String, String)>,
+    pub used_macro_refers: &'a BTreeSet<String>,
+    pub renamed_macro_refers: &'a BTreeSet<String>,
     pub declarations: Vec<(&'a Global, &'a DefinitionInfo)>,
 }
 /// Explicit input to analysis, shared by future AOT, REPL and macro-session callers.
@@ -447,7 +459,9 @@ impl Environment {
         NamespaceScope {
             namespace: &scope.namespace, aliases: &scope.aliases,
             refers: &scope.refers, excluded_core: &scope.excluded_core,
+            used_refers: &scope.used_refers, renamed_refers: &scope.renamed_refers,
             macro_aliases: &scope.macro_aliases, macro_refers: &scope.macro_refers,
+            used_macro_refers: &scope.used_macro_refers, renamed_macro_refers: &scope.renamed_macro_refers,
             declarations: self.definitions.iter().filter(|(global, _)|
                 global.phase() == phase && global.namespace() == scope.namespace).collect(),
         }
@@ -647,6 +661,16 @@ impl Environment {
         namespace: &str,
         name: &str,
     ) -> Result<(), Diagnostic> {
+        self.refer_with_role(phase, local, namespace, name, local != name)
+    }
+    pub(crate) fn refer_with_role(
+        &mut self,
+        phase: Phase,
+        local: &str,
+        namespace: &str,
+        name: &str,
+        renamed: bool,
+    ) -> Result<(), Diagnostic> {
         valid_name(local)?;
         valid_namespace(namespace)?;
         valid_name(name)?;
@@ -675,7 +699,9 @@ impl Environment {
         {
             return Err(error(format!("Ambiguous binding {local}")));
         }
-        self.scope_mut(phase).refers.insert(local.into(), global);
+        let scope = self.scope_mut(phase);
+        scope.refers.insert(local.into(), global);
+        if renamed { &mut scope.renamed_refers } else { &mut scope.used_refers }.insert(local.into());
         Ok(())
     }
     pub fn exclude_core(&mut self, phase: Phase, name: &str) -> Result<(), Diagnostic> {
@@ -741,6 +767,16 @@ impl Environment {
         namespace: &str,
         name: &str,
     ) -> Result<(), Diagnostic> {
+        self.macro_refer_with_role(phase, local, namespace, name, local != name)
+    }
+    pub(crate) fn macro_refer_with_role(
+        &mut self,
+        phase: Phase,
+        local: &str,
+        namespace: &str,
+        name: &str,
+        renamed: bool,
+    ) -> Result<(), Diagnostic> {
         valid_name(local)?;
         let namespace = canonical(namespace);
         if !self
@@ -759,6 +795,7 @@ impl Environment {
             return Err(error(format!("Ambiguous macro binding {local}")));
         }
         scope.macro_refers.insert(local.into(), target);
+        if renamed { &mut scope.renamed_macro_refers } else { &mut scope.used_macro_refers }.insert(local.into());
         Ok(())
     }
     pub fn resolve_source_macro(&self, phase: Phase, symbol: &Symbol) -> Option<(String, String)> {

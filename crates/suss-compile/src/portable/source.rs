@@ -170,12 +170,9 @@ fn apply_requirement(
     }
     for original in &requirement.referred {
         let name = symbol(original)?;
-        let target = requirement
-            .renamed
-            .iter()
-            .find(|(old, _)| symbol(old).ok() == Some(name))
-            .map_or(*original, |(_, new)| *new);
-        located(env.refer(phase, symbol(target)?, namespace, name), target)?;
+        let rename = requirement.renamed.iter().find(|(old, _)| symbol(old).ok() == Some(name));
+        let target = rename.map_or(*original, |(_, new)| *new);
+        located(env.refer_with_role(phase, symbol(target)?, namespace, name, rename.is_some()), target)?;
     }
     Ok(())
 }
@@ -365,13 +362,10 @@ pub(crate) fn namespace(
                     }
                     for original in &requirement.referred {
                         let name = symbol(original)?;
-                        let target = requirement
-                            .renamed
-                            .iter()
-                            .find(|(old, _)| symbol(old).ok() == Some(name))
-                            .map_or(*original, |(_, new)| *new);
+                        let rename = requirement.renamed.iter().find(|(old, _)| symbol(old).ok() == Some(name));
+                        let target = rename.map_or(*original, |(_, new)| *new);
                         located(
-                            env.macro_refer(phase, symbol(target)?, namespace, name),
+                            env.macro_refer_with_role(phase, symbol(target)?, namespace, name, rename.is_some()),
                             target,
                         )?;
                     }
@@ -389,7 +383,7 @@ pub(crate) fn namespace(
                             for (old, new) in names {
                                 located(env.exclude_core(phase, symbol(old)?), old)?;
                                 located(
-                                    env.refer(phase, symbol(new)?, "suss.core", symbol(old)?),
+                                    env.refer_with_role(phase, symbol(new)?, "suss.core", symbol(old)?, true),
                                     new,
                                 )?;
                             }

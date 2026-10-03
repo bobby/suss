@@ -30,7 +30,7 @@ substitute for the remaining portable `:op`, inference/tag, method metadata,
 namespace and declaration schema. Namespace exclusions now appear under portable
 `:excludes` as canonical persistent sets built through the rooted data bridge. No loaded/initialized status is inferred from declaration records.
 
-Seven executing native regressions cover:
+Eight executing native regressions cover:
 
 * A 96-binding shadow chain, whose final initializer environment and shadow refer
   to the same canonical binding object after forced GC. A compiled function walks
@@ -81,3 +81,11 @@ Before source macro integration, finish the portable schema, staged
 function/declaration metadata and AST inference, then declare/pass actual `&env`
 and compare it with the fresh pinned oracle. No M3 acceptance or source-level
 `&env` completion is claimed.
+
+
+Namespace graph data now carries explicit require/use/rename maps for ordinary
+and macro imports, preserving source roles and nullable map shape. A fresh
+18-field primary corpus matches actual compiled native queries in both phases
+after GC; see [namespace data](compiled-macro-namespace-data.md). This remains
+partial portable schema preparation; declarations, AST/inference and actual
+source macro invocation remain unfinished.

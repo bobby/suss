@@ -12,6 +12,8 @@ struct Inspect {
     query: SessionValue,
     calls: Vec<Form>,
     declaration_metadata: Option<Form>,
+    imports: Option<suss_cli::portable_macros::CompiledMacros>,
+    import_paths: Vec<std::path::PathBuf>,
 }
 impl Inspect {
     fn new(query: &str) -> Self {
@@ -24,10 +26,21 @@ impl Inspect {
             query,
             calls: vec![],
             declaration_metadata: None,
+            imports: None,
+            import_paths: vec![],
         }
     }
 }
 impl ExpansionHost for Inspect {
+    fn supports_macro_imports(&self) -> bool { self.imports.is_some() }
+    fn source_paths(&mut self, paths: &[std::path::PathBuf]) {
+        if let Some(imports) = &mut self.imports {
+            imports.source_paths(if self.import_paths.is_empty() { paths } else { &self.import_paths });
+        }
+    }
+    fn load_macro_namespace(&mut self, namespace: &str, span: std::ops::Range<usize>) -> Result<Vec<String>, Diagnostic> {
+        self.imports.as_mut().expect("configured compiled macro loader").load_macro_namespace(namespace, span)
+    }
     fn expand(
         &mut self,
         form: &Form,
@@ -306,4 +319,63 @@ fn native_analysis_graph_namespace_exclusions_are_canonical_sets() {
     assert!(matches!(values[0].kind, Kind::Bool(true)));
     assert!(matches!(values[1].kind, Kind::Number(1.0)));
     assert!(matches!(values[2].kind, Kind::Bool(true)));
+}
+
+
+#[test]
+fn native_analysis_graph_namespace_maps_preserve_actual_imports_and_renames_in_both_phases() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::create_dir(root.path().join("graph")).unwrap();
+    std::fs::write(root.path().join("graph/empty.sus"), "(ns graph.empty)").unwrap();
+    std::fs::write(root.path().join("graph/lib.sus"), "(ns graph.lib) (def one 1) (def two 2)").unwrap();
+    std::fs::write(root.path().join("graph/macempty.sus"), "(ns graph.macempty)").unwrap();
+    std::fs::write(root.path().join("graph/tools.sus"), "(ns graph.tools) (defmacro one [] 41) (defmacro two [] 42)").unwrap();
+    std::fs::write(root.path().join("graph/blank.sus"), "(ns graph.blank (:require-macros [graph.tools :as m])) (def observed 42)").unwrap();
+    let query = r#"(fn [env] (let [ns (get env :ns)]
+      [(get ns :name) (get ns :requires) (get ns :uses) (get ns :renames)
+       (get ns :require-macros) (get ns :use-macros) (get ns :rename-macros)
+       [(contains? ns :requires) (contains? ns :uses) (contains? ns :renames)
+        (contains? ns :require-macros) (contains? ns :use-macros) (contains? ns :rename-macros)]]))"#;
+    let source = "(ns graph.app (:require graph.empty [graph.lib :as g :refer [one two] :rename {one renamed}] [graph.lib :refer [one] :rename {one one}] [graph.lib :refer [one]]) (:require-macros graph.macempty [graph.tools :as m :refer [one two] :rename {one renamed-macro}] [graph.tools :refer [one] :rename {one one}] [graph.tools :refer [one]])) (inspect-graph)";
+    let sources = [source,
+        "(ns graph.blank (:require-macros [graph.tools :as m])) (inspect-graph)",
+        "(ns graph.nomac (:require graph.blank)) (inspect-graph)"];
+    let expected: serde_json::Value = serde_json::from_str(include_str!("../../../tests/oracle/namespace-environment-observations.json")).unwrap();
+    for phase in [portable::resolve::Phase::Runtime, portable::resolve::Phase::Macro] {
+        let mut session = Session::with_options_in(suss_cli::portable_session::SessionOptions {
+            source_paths: vec![root.path().to_owned()], ..Default::default()
+        }, phase).unwrap();
+        let mut host = Inspect::new(query);
+        host.imports = Some(suss_cli::portable_macros::CompiledMacros::new().unwrap());
+        host.import_paths = vec![root.path().to_owned()];
+        for (index, source) in sources.into_iter().enumerate() {
+            session.eval_with_macros(source, &mut host).unwrap();
+            assert_eq!(host.calls.len(), index + 1);
+            let Kind::Vector(maps) = &host.calls[index].kind else { panic!("namespace maps") };
+            assert_eq!(maps.len(), 8);
+            let Kind::Vector(presence) = &maps[7].kind else { panic!("map presence") };
+            assert_eq!(presence.len(), 6);
+            fn symbol(form: &Form) -> String {
+                let Kind::Symbol(value) = &form.kind else { panic!("namespace symbol: {form:?}") };
+                value.namespace.as_ref().map_or_else(|| value.name.clone(), |ns| format!("{ns}/{}", value.name))
+            }
+            let mut actual_maps = Vec::new();
+            for ((name, map), present) in ["requires", "uses", "renames", "require-macros", "use-macros", "rename-macros"].into_iter().zip(&maps[1..7]).zip(presence) {
+                let Kind::Bool(present) = present.kind else { panic!("map presence") };
+                let entries = match &map.kind {
+                    Kind::Nil => serde_json::Value::Null,
+                    Kind::Map(entries) => {
+                        assert_eq!(entries.len() % 2, 0);
+                        let mut pairs = entries.chunks_exact(2).map(|pair| [symbol(&pair[0]), symbol(&pair[1])]).collect::<Vec<_>>();
+                        pairs.sort();
+                        serde_json::json!(pairs)
+                    }
+                    _ => panic!("{name}: {map:?}"),
+                };
+                actual_maps.push(serde_json::json!([name, present, entries]));
+            }
+            let actual = serde_json::json!({"schema":1, "upstream":"c4295f303100bbf5afac449242d30bca1126f1a1", "namespace":symbol(&maps[0]), "maps":actual_maps});
+            assert_eq!(actual, expected["cases"][index], "{phase:?}: {source}");
+        }
+    }
 }

@@ -401,6 +401,12 @@ impl<'a> AnalysisGraph<'a> {
         self.namespaces.insert(key, (namespace.clone(), value));
         Ok(value)
     }
+    // The pinned namespace contract retains nil for unused ordinary requires,
+    // ordinary uses and macro requires; rename and macro-use maps stay maps.
+    fn nullable_map(&mut self, entries: Vec<(Value, Value)>) -> Result<Value> {
+        self.charge(0)?;
+        self.recipe(if entries.is_empty() { Recipe::Scalar(Literal::Nil) } else { Recipe::Map(entries) })
+    }
     fn namespace_record(
         &mut self,
         namespace: &Arc<SourceNamespace>,
@@ -411,8 +417,7 @@ impl<'a> AnalysisGraph<'a> {
         for (alias, target) in &namespace.aliases {
             aliases.push((self.symbol(alias)?, self.symbol(target)?));
         }
-        self.charge(0)?;
-        let aliases = self.recipe(Recipe::Map(aliases))?;
+        let aliases = self.nullable_map(aliases)?;
         let mut refers = Vec::new();
         for (alias, target) in &namespace.refers {
             refers.push((
@@ -422,6 +427,38 @@ impl<'a> AnalysisGraph<'a> {
         }
         self.charge(0)?;
         let refers = self.recipe(Recipe::Map(refers))?;
+        let mut uses = Vec::new();
+        let mut renames = Vec::new();
+        for (local, target) in &namespace.refers {
+            if namespace.used_refers.contains(local) {
+                uses.push((self.symbol(local)?, self.symbol(target.namespace())?));
+            }
+            if namespace.renamed_refers.contains(local) {
+                renames.push((self.symbol(local)?, self.symbol(&format!("{}/{}", target.namespace(), target.name()))?));
+            }
+        }
+        let uses = self.nullable_map(uses)?;
+        self.charge(0)?;
+        let renames = self.recipe(Recipe::Map(renames))?;
+        let mut macro_aliases = Vec::new();
+        for (alias, target) in &namespace.macro_aliases {
+            macro_aliases.push((self.symbol(alias)?, self.symbol(target)?));
+        }
+        let macro_aliases = self.nullable_map(macro_aliases)?;
+        let mut macro_uses = Vec::new();
+        let mut macro_renames = Vec::new();
+        for (local, (ns, original)) in &namespace.macro_refers {
+            if namespace.used_macro_refers.contains(local) {
+                macro_uses.push((self.symbol(local)?, self.symbol(ns)?));
+            }
+            if namespace.renamed_macro_refers.contains(local) {
+                macro_renames.push((self.symbol(local)?, self.symbol(&format!("{ns}/{original}"))?));
+            }
+        }
+        self.charge(0)?;
+        let macro_uses = self.recipe(Recipe::Map(macro_uses))?;
+        self.charge(0)?;
+        let macro_renames = self.recipe(Recipe::Map(macro_renames))?;
         let exclusions = namespace
             .excluded_core
             .iter()
@@ -457,6 +494,11 @@ impl<'a> AnalysisGraph<'a> {
             ("name", name),
             ("requires", aliases),
             ("suss/refers", refers),
+            ("uses", uses),
+            ("renames", renames),
+            ("require-macros", macro_aliases),
+            ("use-macros", macro_uses),
+            ("rename-macros", macro_renames),
             ("excludes", exclusions),
             ("defs", declarations),
         ])?;

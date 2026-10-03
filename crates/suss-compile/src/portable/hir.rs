@@ -392,9 +392,13 @@ pub struct SourceNamespace {
     pub namespace: String,
     pub aliases: BTreeMap<String, String>,
     pub refers: BTreeMap<String, Global>,
+    pub used_refers: BTreeSet<String>,
+    pub renamed_refers: BTreeSet<String>,
     pub excluded_core: BTreeSet<String>,
     pub macro_aliases: BTreeMap<String, String>,
     pub macro_refers: BTreeMap<String, (String, String)>,
+    pub used_macro_refers: BTreeSet<String>,
+    pub renamed_macro_refers: BTreeSet<String>,
     pub declarations: BTreeMap<Global, std::sync::Arc<super::resolve::DefinitionInfo>>,
     pub identities: Vec<Global>,
 }
@@ -405,9 +409,13 @@ impl SourceNamespace {
             namespace: scope.namespace.into(),
             aliases: scope.aliases.clone(),
             refers: scope.refers.clone(),
+            used_refers: scope.used_refers.clone(),
+            renamed_refers: scope.renamed_refers.clone(),
             excluded_core: scope.excluded_core.clone(),
             macro_aliases: scope.macro_aliases.clone(),
             macro_refers: scope.macro_refers.clone(),
+            used_macro_refers: scope.used_macro_refers.clone(),
+            renamed_macro_refers: scope.renamed_macro_refers.clone(),
             declarations: scope
                 .declarations
                 .into_iter()

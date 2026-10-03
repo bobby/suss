@@ -11167,3 +11167,53 @@ macro require/use/rename), compare fresh pinned namespace observations and execu
 compiled queries through canonical graph data. Complete source AST/inference and
 implicit &env remain required before bootstrap acceptance. No new PR until that
 transport is reviewable; dispatch independent review and require final-head CI.
+
+
+Pending portable namespace maps now retain explicit ordinary/macro use and rename
+roles in Scope, borrowed NamespaceScope and immutable SourceNamespace, including
+unchanged-name renames and dual roles. Graph transport exposes all six import maps.
+Actual macro namespaces are loaded from source by CompiledMacros; native queries
+run in an isolated inspection Store against source Runtime/Macro environments.
+Fixture failures (multiple ns declarations and missing supplied modules) are
+recorded in /private/tmp/suss-namespace-graph-{before,executed-before}.log. After
+fixing the harness, actual missing-map checks failed (0/1/0) in
+/private/tmp/suss-namespace-graph-imports-before.log. First populated native query
+passed1/0/0; combined graph/resolution suites passed21/0/0 before nullable shape
+was added, log /private/tmp/suss-namespace-maps-combined-focus.log.
+
+First fresh populated primary/native corpus passed six maps, then a stronger
+projection retained presence and nullable shape. Its initial expected-data
+mismatch is retained in /private/tmp/suss-namespace-environment-nullable-oracle-before.log:
+unused requires/uses/macro-requires are nil, while renames/macro-use/macro-renames
+are empty maps. Reviewed expected values now preserve those actual primary
+observations for graph.app, graph.blank and graph.nomac (18 fields, three executed
+42 results). Native comparison then failed at graph.blank on empty-map versus nil
+(/private/tmp/suss-namespace-graph-nullable-before.log,0/1/0). Graph nullable-map
+construction was repaired; fresh final primary/native rerun is session93383, log
+/private/tmp/suss-namespace-environment-final-oracle.log. Await terminal status
+before claiming success. No new full baseline, commit, PR or issue closure yet.
+Next: final oracle, broaden graph/resolution and actual imports/reload checks,
+record results and commit/push. Complete default/reload/implicit namespace policy,
+portable declaration/AST/inference and real source &env invocation remain required.
+
+
+Final nullable namespace oracle93383 terminated with exit0:
+18 field shape/presence/entry observations agree exactly with force-compiled
+pinned ClojureScript; three Node results equal42. Native shared-corpus query passes
+1/0/0 in both phases after GC. Log: /private/tmp/suss-namespace-environment-final-oracle.log.
+Import and review gates still pass261files and357reviewed/708unassessed. Broadened
+final graph/resolution/import/reload/session suites are running (session66755;
+see current tool handle and /private/tmp/suss-namespace-maps-final-combined-focus.log).
+Poll the actual returned session handle; do not infer success from this entry.
+
+
+Broadened final namespace suites66755 terminated exit0:37 passed,0 failed,0 ignored
+across five groups (graph8, macro imports5, reload7, namespace4, resolution13).
+Log /private/tmp/suss-namespace-maps-final-combined-focus.log. Native queries compare
+all18 field shapes/presence/entries with the shared fresh primary corpus in both
+phases after GC. No live jobs remain. Commit/push these focused-tested namespace
+maps and then start the required full baseline for the cumulative namespace
+changes; the preceding998 full baseline predates them. Next architecture task:
+portable declaration/function metadata and source AST/inference, followed by actual
+implicit &env and original bootstrap/cache/scheduler gates. Do not reinterpret
+these37 passes as complete M3 acceptance or close issue14.
