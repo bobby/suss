@@ -129,6 +129,20 @@ fn compiler_catch_records_keep_private_payload_and_immutable_source_declarations
 }
 
 #[test]
+fn compiler_catch_private_payload_name_avoids_the_user_catch_alias() {
+    use portable::hir::SourceRole;
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut host = Observe::default();
+        session.eval_with_macros("(try (throw 42) (catch :default $exception0 (checkpoint \"caught\" $exception0)))", &mut host).unwrap();
+        let caught = snapshot(&host, "caught");
+        let SourceRole::CatchBinding { hidden, .. } = &caught["$exception0"].source_role else { panic!("user catch alias") };
+        let Kind::Symbol(name) = &hidden.declaration.kind else { panic!("private payload") };
+        assert_ne!(name.name, "$exception0");
+        assert!(matches!(caught[&name.name].source_role, SourceRole::PrivateCatch { .. }));
+    }
+}
+
+#[test]
 fn compiler_macro_binding_records_preserve_initializer_shadow_scope_and_once_only_effects() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut host = Observe::default();

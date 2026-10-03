@@ -88,6 +88,11 @@ pub struct SessionValue {
     value: OwnedRooted<AnyRef>,
     handles: Arc<AtomicUsize>,
 }
+impl SessionValue {
+    pub(crate) fn rooted(&self, store: &mut wasmtime::StoreContextMut<'_, ()>) -> wasmtime::Rooted<AnyRef> {
+        self.value.to_rooted(store)
+    }
+}
 impl Clone for SessionValue {
     fn clone(&self) -> Self {
         self.handles.fetch_add(1, Ordering::Relaxed);
@@ -955,6 +960,44 @@ impl Session {
             call(&mut scope, self.runtime, function, &[value], self.identity, &self.handles)?
         };
         self.invoke(&constructor, arguments)
+    }
+    pub(crate) fn data_descriptor(&mut self, value: &SessionValue, class: bool) -> Result<SessionValue, SessionError> {
+        self.check(value)?;
+        let mut scope = RootScope::new(&mut self.store);
+        let value = value.value.to_rooted(&mut scope);
+        if class {
+            let function = self.runtime.get_func(&mut scope, "constructor-descriptor").expect("shared runtime class descriptor");
+            call(&mut scope, self.runtime, function, &[Val::AnyRef(Some(value))], self.identity, &self.handles)
+        } else {
+            let object = value.as_struct(&scope)?.expect("canonical compiler object");
+            let descriptor = object.field(&mut scope, 0)?;
+            own(&mut scope, descriptor, self.identity, &self.handles)
+        }
+    }
+    /// Retain the field values of an already checked canonical compiler object.
+    pub(crate) fn data_fields(
+        &mut self,
+        value: &SessionValue,
+    ) -> Result<Vec<SessionValue>, SessionError> {
+        self.check(value)?;
+        let mut scope = RootScope::new(&mut self.store);
+        let value = value.value.to_rooted(&mut scope);
+        let object = value.as_struct(&scope)?.ok_or_else(|| {
+            SessionError::Host(wasmtime::Error::msg("Compiler data needs object storage"))
+        })?;
+        let storage = object
+            .field(&mut scope, 1)?
+            .unwrap_anyref()
+            .unwrap()
+            .as_array(&scope)?
+            .ok_or_else(|| {
+                SessionError::Host(wasmtime::Error::msg("Compiler data needs field storage"))
+            })?;
+        let fields = storage.elems(&mut scope)?.collect::<Vec<_>>();
+        fields
+            .into_iter()
+            .map(|field| own(&mut scope, field, self.identity, &self.handles))
+            .collect()
     }
     pub fn invoke(
         &mut self,

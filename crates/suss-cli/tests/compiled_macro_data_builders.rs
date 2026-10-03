@@ -3,6 +3,111 @@ use suss_compile::portable::hir::Literal;
 use suss_reader::forms::Kind;
 
 #[test]
+fn native_macro_data_construction_keeps_captured_classes_after_core_redefinition() {
+    use suss_reader::forms::read_forms;
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let bridge = FormBridge::new(&mut session).unwrap();
+        session.enter_namespace("suss.core").unwrap();
+        session.eval("(deftype Symbol [ns name str hash meta]) (deftype List [meta first rest count hash]) (deftype PersistentVector [meta cnt shift root tail hash]) (deftype PersistentArrayMap [meta cnt arr hash]) (deftype PersistentHashMap [meta cnt root has-nil nil-val hash]) (deftype VectorNode [edit arr]) (deftype BitmapIndexedNode [edit bitmap arr]) (deftype HashCollisionNode [edit collision-hash cnt arr])").unwrap();
+        session.enter_namespace("user").unwrap();
+        let vector = format!(
+            "^{{:doc 7}} [{}]",
+            (0..65).map(|n| n.to_string()).collect::<Vec<_>>().join(" ")
+        );
+        let map = format!(
+            "^{{:doc 7}} {{{}}}",
+            (0..33)
+                .map(|n| format!("{n} {n}"))
+                .collect::<Vec<_>>()
+                .join(" ")
+        );
+        for source in [
+            "^{:doc 7} original".to_owned(),
+            "^{:doc 7} (1 2)".to_owned(),
+            "^{:doc 7} {:a 1 :a 2}".to_owned(),
+            "^{:doc 7} {same 1 same 2}".to_owned(),
+            "^{:doc 7} {1 10 2147483648 20 2 2 3 3 4 4 5 5 6 6 7 7 8 8}".to_owned(),
+            vector,
+            map,
+        ] {
+            let input = read_forms(&source).unwrap().remove(0);
+            let value = bridge
+                .quote(&mut session, input)
+                .unwrap_or_else(|error| panic!("{source}: {error}"));
+            session.collect().unwrap();
+            let decoded = bridge
+                .read(&mut session, &value, 0..1)
+                .unwrap_or_else(|error| panic!("{source}: {error}"));
+            assert_eq!(decoded.metadata.len(), 1, "{source}");
+            if source.contains("same") || source.contains(":a 1") {
+                assert!(matches!(decoded.kind, Kind::Map(ref pairs) if pairs.len() == 2), "{source}");
+            }
+        }
+    }
+}
+
+#[test]
+fn native_macro_maps_preserve_collisions_deep_hash_paths_and_utf16_keys() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let lookup = session.eval("(fn [m k] (get m k))").unwrap();
+        let keys = [0.0, -0.0, 1.0, 2147483648.0, 33.0, 1025.0, 32769.0, 1048577.0, 33554433.0, 1073741825.0];
+        let mut entries = keys.iter().enumerate().map(|(index, key)| (
+            bridge.scalar(&mut session, &Literal::Number(*key)).unwrap(),
+            bridge.scalar(&mut session, &Literal::Number(index as f64)).unwrap(),
+        )).collect::<Vec<_>>();
+        for units in [vec![0xd800], vec![0xd83d, 0xde00], vec![0, 65], vec![0xd800]] {
+            let key = bridge.scalar(&mut session, &Literal::String(units)).unwrap();
+            let value = bridge.scalar(&mut session, &Literal::Number(entries.len() as f64)).unwrap();
+            entries.push((key, value));
+        }
+        let map = bridge.map_values(&mut session, &entries).unwrap();
+        session.collect().unwrap();
+        let decoded = bridge.read(&mut session, &map, 0..1).unwrap();
+        assert!(matches!(decoded.kind, Kind::Map(ref pairs) if pairs.len() == 24));
+        for (index, (key, _)) in entries.iter().enumerate() {
+            let value = session.invoke(&lookup, &[&map, key]).unwrap();
+            let expected = if index <= 1 { 1 } else if index == 10 { 13 } else { index };
+            assert!(matches!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(value) if value == expected as f64), "key {index}");
+        }
+        // Array-map insertion order includes nil at its original position.
+        let nil = bridge.scalar(&mut session, &Literal::Nil).unwrap();
+        let map = bridge.map_values(&mut session, &[(nil.clone(), entries[0].1.clone()), entries[2].clone(), (nil, entries[1].1.clone())]).unwrap();
+        let Kind::Map(pairs) = bridge.read(&mut session, &map, 0..1).unwrap().kind else { panic!("array map") };
+        assert!(matches!(pairs[0].kind, Kind::Nil));
+        assert!(matches!(pairs[1].kind, Kind::Number(1.0)));
+    }
+}
+
+#[test]
+fn native_macro_maps_keep_custom_hash_coercion_and_array_map_hash_effects() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval("(def hash-effects 0) (deftype ReviewHashKey [id code] IHash (-hash [_] (do (set! hash-effects (+ hash-effects 1)) code)) IEquiv (-equiv [_ other] (if (instance? ReviewHashKey other) (== id (.-id other)) false)))").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let lookup = session.eval("(fn [map key] (get map key))").unwrap();
+        let mut entries = Vec::new();
+        for (id, code) in ["4294967297", "-4294967295", "##NaN", "##Inf", "##-Inf", "-0.0", "1.9", "-1.9", "2147483648"].iter().enumerate() {
+            let key = session.eval(&format!("(ReviewHashKey. {id} {code})")).unwrap();
+            let value = bridge.scalar(&mut session, &Literal::Number(id as f64)).unwrap();
+            entries.push((key, value));
+        }
+        let small = bridge.map_values(&mut session, &entries[..8]).unwrap();
+        session.collect().unwrap();
+        let effects = session.eval("hash-effects").unwrap();
+        assert!(matches!(bridge.read(&mut session, &effects, 0..1).unwrap().kind, Kind::Number(0.0)));
+        drop(small);
+        let large = bridge.map_values(&mut session, &entries).unwrap();
+        session.collect().unwrap();
+        let effects = session.eval("hash-effects").unwrap();
+        assert!(matches!(bridge.read(&mut session, &effects, 0..1).unwrap().kind, Kind::Number(9.0)));
+        for (index, (key, _)) in entries.iter().enumerate() {
+            let value = session.invoke(&lookup, &[&large, key]).unwrap();
+            assert!(matches!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(value) if value == index as f64), "custom key {index}");
+        }
+    }
+}
+
+#[test]
 fn native_macro_data_builders_preserve_bits_utf16_canonical_classes_and_shared_roots() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let bridge = FormBridge::new(&mut session).unwrap();

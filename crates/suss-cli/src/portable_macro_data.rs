@@ -34,7 +34,7 @@ enum Class {
 /// A reset or another Store invalidates this bridge; construct a new one there.
 pub struct FormBridge {
     roots: Vec<SessionValue>,
-    classes: BTreeMap<i64, Class>,
+    classes: BTreeMap<i64, (Class, SessionValue)>,
     constructors: BTreeMap<Class, usize>,
     factories: BTreeMap<&'static str, SessionValue>,
 }
@@ -79,7 +79,8 @@ impl FormBridge {
                     _ => Err(error("Invalid class descriptor identity")),
                 }
             })?;
-            if classes.insert(id, class).is_some() {
+            let descriptor = session.data_descriptor(&value, true)?;
+            if classes.insert(id, (class, descriptor)).is_some() {
                 return Err(SessionError::Host(error(
                     "Duplicate macro data class identity",
                 )));
@@ -98,7 +99,8 @@ impl FormBridge {
                 _ => Err(error("Invalid source array descriptor identity")),
             }
         })?;
-        if classes.insert(id, Class::SourceArray).is_some() {
+        let descriptor = session.data_descriptor(&value, false)?;
+        if classes.insert(id, (Class::SourceArray, descriptor)).is_some() {
             return Err(SessionError::Host(error(
                 "Duplicate macro data array identity",
             )));
@@ -106,16 +108,11 @@ impl FormBridge {
         roots.push(value);
         let mut factories = BTreeMap::new();
         for (name, source) in [
-            (
-                "array-map",
-                "(.-createAsIfByAssoc suss.core/PersistentArrayMap)",
-            ),
-            ("vector", "(.-fromArray suss.core/PersistentVector)"),
-            ("hash-map", "(.-fromArrays suss.core/PersistentHashMap)"),
+            ("hash", "suss.core/hash"),
+            ("key-test", "suss.core/key-test"),
             ("empty-map", "(.-EMPTY suss.core/PersistentArrayMap)"),
             ("empty-set", "(.-EMPTY suss.core/PersistentHashSet)"),
             ("empty-list", "(.-EMPTY suss.core/List)"),
-            ("with-meta", "suss.core/with-meta"),
         ] {
             factories.insert(name, session.eval(source)?);
         }
@@ -148,24 +145,180 @@ impl FormBridge {
         entries: &[(SessionValue, SessionValue)],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
+        if entries.len() > 65_536 {
+            return Err(SessionError::Host(error("Compiler map construction exceeds 65536 entries")));
+        }
         if entries.is_empty() {
             return Ok(self.factories["empty-map"].clone());
         }
+        // Bulk construction is original host code. Retained factories resolve
+        // public class cells dynamically, so capturing their closures alone is
+        // insufficient to keep compiler data canonical after core redefinition.
+        let nil = self.scalar(session, &suss_compile::portable::hir::Literal::Nil)?;
+        let mut pairs: Vec<(u32, SessionValue, SessionValue)> = Vec::new();
+        let mut hashes: BTreeMap<u32, Vec<usize>> = BTreeMap::new();
+        let mut nil_value = None;
+        let mut nil_index = 0;
+        let mut comparisons = 1_048_576usize;
+        for (key, value) in entries {
+            session.inspect(value, |_, _| Ok(()))?;
+            let is_nil = session.inspect(key, |store, key| Ok(absent(&store, &key)?))?;
+            if is_nil {
+                if nil_value.is_none() {
+                    nil_index = pairs.len();
+                }
+                nil_value = Some(value.clone());
+                continue;
+            }
+            // Array maps compare keys directly and do not call their hash
+            // protocols. Preserve that observable behavior at the threshold.
+            let hash = if entries.len() <= 8 { 0 } else {
+                let hash = session.invoke(&self.factories["hash"], &[key])?;
+                session.inspect(&hash, |mut store, hash| {
+                    let data = fields(&mut store, &hash, 1)?;
+                    let [Val::F64(bits)] = data.as_slice() else {
+                        return Err(error("Compiler map hash requires a numeric scalar"));
+                    };
+                    let value = f64::from_bits(*bits);
+                    // ECMAScript ToUint32: truncation followed by modulo 2^32,
+                    // with nonfinite numbers and signed zero mapped to zero.
+                    Ok(if value.is_finite() { value.trunc().rem_euclid(4_294_967_296.0) as u32 } else { 0 })
+                })?
+            };
+            let mut existing = None;
+            for index in hashes.entry(hash).or_default().iter().copied() {
+                comparisons = comparisons.checked_sub(1).ok_or_else(|| {
+                    SessionError::Host(error("Compiler map key comparisons exceed bound"))
+                })?;
+                let equal = if let Some(identifier) = self.identifier_key(session, key)? {
+                    self.identifier_key(session, &pairs[index].1)?.is_some_and(|other| other == identifier)
+                } else {
+                    let equal = session.invoke(&self.factories["key-test"], &[key, &pairs[index].1])?;
+                    session.inspect(&equal, |store, value| Ok(sentinel(&store, &value)? == Some(4)))?
+                };
+                if equal {
+                    existing = Some(index);
+                    break;
+                }
+            }
+            if let Some(index) = existing {
+                pairs[index].2 = value.clone();
+            } else {
+                hashes.get_mut(&hash).unwrap().push(pairs.len());
+                pairs.push((hash, key.clone(), value.clone()));
+            }
+        }
+        let count = pairs.len() + usize::from(nil_value.is_some());
+        let count = self.scalar(
+            session,
+            &suss_compile::portable::hir::Literal::Number(count as f64),
+        )?;
         if entries.len() <= 8 {
-            let arguments: Vec<_> = entries
+            let mut data = pairs
                 .iter()
-                .flat_map(|(key, value)| [key, value])
-                .collect();
-            let array = session.data_array(&arguments)?;
-            session.invoke(&self.factories["array-map"], &[&array])
+                .flat_map(|(_, key, value)| [key, value])
+                .collect::<Vec<_>>();
+            if let Some(value) = &nil_value {
+                data.splice(nil_index * 2..nil_index * 2, [&nil, value]);
+            }
+            let array = session.data_array(&data)?;
+            session.data_construct(
+                &self.roots[self.constructors[&Class::PersistentArrayMap]],
+                &[&nil, &count, &array, &nil],
+            )
         } else {
-            let keys: Vec<_> = entries.iter().map(|(key, _)| key).collect();
-            let values: Vec<_> = entries.iter().map(|(_, value)| value).collect();
-            let keys = session.data_array(&keys)?;
-            let values = session.data_array(&values)?;
-            session.invoke(&self.factories["hash-map"], &[&keys, &values])
+            let root = self.map_node(session, &pairs, 0, &nil)?;
+            let has_nil = self.scalar(
+                session,
+                &suss_compile::portable::hir::Literal::Bool(nil_value.is_some()),
+            )?;
+            session.data_construct(
+                &self.roots[self.constructors[&Class::PersistentHashMap]],
+                &[
+                    &nil,
+                    &count,
+                    &root,
+                    &has_nil,
+                    nil_value.as_ref().unwrap_or(&nil),
+                    &nil,
+                ],
+            )
         }
     }
+    // Identifier equality is independent of metadata and live constructor
+    // globals. Other user values retain the captured observable key-test path.
+    fn identifier_key(&self, session: &mut Session, value: &SessionValue) -> Result<Option<(Class, Vec<u16>)>, SessionError> {
+        session.inspect(value, |mut store, value| {
+            let Some(structure) = reference(&value)?.as_struct(&store)? else { return Ok(None); };
+            let storage = structure.fields(&mut store)?.collect::<Vec<_>>();
+            if storage.len() != 4 { return Ok(None); }
+            let descriptor = fields(&mut store, &storage[0], 5)?;
+            let Val::I64(id) = descriptor[0] else { return Ok(None); };
+            if !self.classes.get(&id).is_some_and(|(class, _)| matches!(class, Class::Symbol | Class::Keyword)) { return Ok(None); }
+            let (class, data) = object(&mut store, &value, &self.classes)?;
+            if data.len() != if class == Class::Symbol { 5 } else { 4 } {
+                return Err(error("Invalid compiler identifier key layout"));
+            }
+            let mut budget = Budget { nodes: 4096, units: 1_048_576 };
+            Ok(Some((class, text(&mut store, &data[2], &mut budget)?)))
+        })
+    }
+    fn map_node(
+        &self,
+        session: &mut Session,
+        pairs: &[(u32, SessionValue, SessionValue)],
+        shift: u32,
+        nil: &SessionValue,
+    ) -> Result<SessionValue, SessionError> {
+        use suss_compile::portable::hir::Literal;
+        if pairs.is_empty() {
+            return Ok(nil.clone());
+        }
+        if pairs.len() > 1 && pairs.iter().all(|pair| pair.0 == pairs[0].0) {
+            let hash = self.scalar(session, &Literal::Number(pairs[0].0 as i32 as f64))?;
+            let count = self.scalar(session, &Literal::Number(pairs.len() as f64))?;
+            let items = pairs
+                .iter()
+                .flat_map(|(_, key, value)| [key, value])
+                .collect::<Vec<_>>();
+            let array = session.data_array(&items)?;
+            return session.data_construct(
+                &self.roots[self.constructors[&Class::HashCollisionNode]],
+                &[nil, &hash, &count, &array],
+            );
+        }
+        if shift > 30 {
+            return Err(SessionError::Host(error(
+                "Compiler map hash path exceeds 32 bits",
+            )));
+        }
+        let mut groups: BTreeMap<u32, Vec<(u32, SessionValue, SessionValue)>> = BTreeMap::new();
+        for pair in pairs {
+            groups
+                .entry((pair.0 >> shift) & 31)
+                .or_default()
+                .push(pair.clone());
+        }
+        let mut bitmap = 0u32;
+        let mut items = Vec::new();
+        for (bit, group) in groups {
+            bitmap |= 1u32 << bit;
+            if group.len() == 1 {
+                items.push(group[0].1.clone());
+                items.push(group[0].2.clone());
+            } else {
+                items.push(nil.clone());
+                items.push(self.map_node(session, &group, shift + 5, nil)?);
+            }
+        }
+        let bitmap = self.scalar(session, &Literal::Number(bitmap as i32 as f64))?;
+        let array = session.data_array(&items.iter().collect::<Vec<_>>())?;
+        session.data_construct(
+            &self.roots[self.constructors[&Class::BitmapIndexedNode]],
+            &[nil, &bitmap, &array],
+        )
+    }
+
     pub fn set_values(
         &self,
         session: &mut Session,
@@ -197,11 +350,53 @@ impl FormBridge {
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
-        let arguments: Vec<_> = items.iter().collect();
-        let array = session.data_array(&arguments)?;
-        let owned = self.scalar(session, &suss_compile::portable::hir::Literal::Bool(true))?;
-        session.invoke(&self.factories["vector"], &[&array, &owned])
+        if items.len() > 65_536 {
+            return Err(SessionError::Host(error("Compiler vector construction exceeds 65536 entries")));
+        }
+        use suss_compile::portable::hir::Literal;
+        let nil = self.scalar(session, &Literal::Nil)?;
+        let tail_offset = if items.is_empty() {
+            0
+        } else {
+            ((items.len() - 1) / 32) * 32
+        };
+        let tail = session.data_array(&items[tail_offset..].iter().collect::<Vec<_>>())?;
+        let mut shift = 5u32;
+        while (tail_offset / 32) > (1usize << shift) {
+            shift += 5;
+        }
+        let root = self.vector_node(session, &items[..tail_offset], shift, &nil)?;
+        let count = self.scalar(session, &Literal::Number(items.len() as f64))?;
+        let shift = self.scalar(session, &Literal::Number(shift as f64))?;
+        session.data_construct(
+            &self.roots[self.constructors[&Class::PersistentVector]],
+            &[&nil, &count, &shift, &root, &tail, &nil],
+        )
     }
+    fn vector_node(
+        &self,
+        session: &mut Session,
+        items: &[SessionValue],
+        shift: u32,
+        nil: &SessionValue,
+    ) -> Result<SessionValue, SessionError> {
+        let mut fields = vec![nil.clone(); 32];
+        if shift == 0 {
+            for (field, value) in fields.iter_mut().zip(items) {
+                *field = value.clone();
+            }
+        } else {
+            for (index, chunk) in items.chunks(1usize << shift).enumerate() {
+                fields[index] = self.vector_node(session, chunk, shift - 5, nil)?;
+            }
+        }
+        let array = session.data_array(&fields.iter().collect::<Vec<_>>())?;
+        session.data_construct(
+            &self.roots[self.constructors[&Class::VectorNode]],
+            &[nil, &array],
+        )
+    }
+
     pub fn list_values(
         &self,
         session: &mut Session,
@@ -402,7 +597,21 @@ impl FormBridge {
         if let Some(items) = set_items {
             self.set_with_metadata(session, &items, &metadata)
         } else {
-            session.invoke(&self.factories["with-meta"], &[&value, &metadata])
+            let class = match form.kind {
+                Kind::Symbol(_) => Class::Symbol,
+                Kind::List(ref items) if items.is_empty() => Class::EmptyList,
+                Kind::List(_) => Class::List,
+                Kind::Vector(_) => Class::PersistentVector,
+                Kind::Map(ref items) if items.len() <= 16 => Class::PersistentArrayMap,
+                Kind::Map(_) => Class::PersistentHashMap,
+                _ => unreachable!("metadata-bearing data checked above"),
+            };
+            let mut fields = session.data_fields(&value)?;
+            fields[if class == Class::Symbol { 4 } else { 0 }] = metadata;
+            session.data_construct(
+                &self.roots[self.constructors[&class]],
+                &fields.iter().collect::<Vec<_>>(),
+            )
         }
     }
     /// Original result locations are not encoded in runtime values. Attribute
@@ -433,6 +642,42 @@ impl FormBridge {
 }
 fn error(message: &str) -> wasmtime::Error {
     wasmtime::Error::msg(message.to_owned())
+}
+
+#[cfg(test)]
+mod identity_tests {
+    use super::*;
+
+    #[test]
+    fn macro_data_rejects_copied_descriptor_ids_after_gc() {
+        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            let bridge = FormBridge::new(&mut session).unwrap();
+            for source in ["#{1 2}", "(keys {1 10 2 20})", "'symbol", "[1 2]", "{:a 1}", "'(1 2)"] {
+                let original = session.eval(source).unwrap();
+                let fake = session.inspect(&original, |mut store, value| {
+                    let object = reference(&value)?.as_struct(&store)?.unwrap();
+                    let mut object_fields = object.fields(&mut store)?.collect::<Vec<_>>();
+                    let descriptor = reference(&object_fields[0])?.as_struct(&store)?.unwrap();
+                    let descriptor_fields = descriptor.fields(&mut store)?.collect::<Vec<_>>();
+                    let ty = descriptor.ty(&store)?;
+                    let allocator = wasmtime::StructRefPre::new(&mut store, ty);
+                    let copied = wasmtime::StructRef::new(&mut store, &allocator, &descriptor_fields)?;
+                    object_fields[0] = Val::AnyRef(Some(copied.to_anyref()));
+                    let ty = object.ty(&store)?;
+                    let allocator = wasmtime::StructRefPre::new(&mut store, ty);
+                    let fake = wasmtime::StructRef::new(&mut store, &allocator, &object_fields)?;
+                    fake.to_anyref().to_owned_rooted(&mut store)
+                }).unwrap();
+                session.collect().unwrap();
+                bridge.read(&mut session, &original, 0..1).unwrap();
+                let rejected = session.inspect(&original, |mut store, _| {
+                    let value = Val::AnyRef(Some(fake.to_rooted(&mut store)));
+                    Ok(decode(&mut store, &value, &bridge.classes, &(0..1), 0, &mut Budget { nodes: 4096, units: 1_048_576 }).is_err())
+                }).unwrap();
+                assert!(rejected, "copied descriptor identity accepted for {source}");
+            }
+        }
+    }
 }
 fn reference(value: &Val) -> wasmtime::Result<&Rooted<AnyRef>> {
     value
@@ -474,7 +719,7 @@ fn nil(store: &StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<bool> {
 fn metadata(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, Class>,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -528,18 +773,20 @@ fn name(
 fn object(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, Class>,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
 ) -> wasmtime::Result<(Class, Vec<Val>)> {
     let storage = fields(store, value, 4)?;
     let descriptor = fields(store, &storage[0], 5)?;
     let Val::I64(id) = descriptor[0] else {
         return Err(error("Invalid nominal descriptor identity"));
     };
-    let class = classes
-        .get(&id)
-        .copied()
+    let (class, canonical) = classes.get(&id)
         .ok_or_else(|| error("Unrecognized nominal macro data type"))?;
-    Ok((class, array(store, &storage[1])?))
+    let expected = canonical.rooted(store);
+    if !Rooted::ref_eq(&*store, reference(&storage[0])?, &expected)? {
+        return Err(error("Macro data descriptor is not the captured canonical identity"));
+    }
+    Ok((*class, array(store, &storage[1])?))
 }
 fn absent(store: &StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<bool> {
     // ABI2 nil (0) and undefined (6) both satisfy the pinned nil? storage test.
@@ -559,7 +806,7 @@ fn spend(budget: &mut Budget) -> wasmtime::Result<()> {
 fn decode(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, Class>,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -713,7 +960,7 @@ fn decode(
 fn sequence(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, Class>,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -920,7 +1167,7 @@ fn sequence(
 fn append_indexed(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
-    classes: &BTreeMap<i64, Class>,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -1006,7 +1253,7 @@ fn integer(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result
 fn source_elements(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, Class>,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
 ) -> wasmtime::Result<Vec<Val>> {
     let (class, owner) = object(store, value, classes)?;
     if !matches!(class, Class::SourceArray) || owner.len() != 1 {
@@ -1017,7 +1264,7 @@ fn source_elements(
 fn node_elements(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, Class>,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
     spend(budget)?;
@@ -1034,7 +1281,7 @@ fn node_elements(
 fn vector(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
-    classes: &BTreeMap<i64, Class>,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -1087,7 +1334,7 @@ fn vector_leaf(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
     index: usize,
-    classes: &BTreeMap<i64, Class>,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
     let count = integer(store, &data[1])?;
@@ -1126,7 +1373,7 @@ fn vector_leaf(
 fn hash_map(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
-    classes: &BTreeMap<i64, Class>,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -1145,7 +1392,7 @@ fn hash_map(
 fn hash_map_pairs(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
-    classes: &BTreeMap<i64, Class>,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
     if data.len() != 6 {
@@ -1182,7 +1429,7 @@ fn hash_map_pairs(
 fn map_sequence_pairs(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, Class>,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
     cursor_depth: usize,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
@@ -1262,7 +1509,7 @@ fn bitmap(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<
 fn hash_node(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, Class>,
+    classes: &BTreeMap<i64, (Class, SessionValue)>,
     level: usize,
     budget: &mut Budget,
     pairs: &mut Vec<Val>,

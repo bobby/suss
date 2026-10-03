@@ -124,7 +124,9 @@ impl Analyzer<'_> {
             let id = BindingId(self.next);
             self.next += 1;
             let mut hidden_name = format!("$exception{}", id.0);
-            while self.locals.contains_key(&hidden_name) {
+            while self.locals.contains_key(&hidden_name)
+                || self.fields.contains_key(&hidden_name)
+                || catches.iter().any(|(_, items, _)| matches!(&items[1].kind, Kind::Symbol(name) if name.name == hidden_name)) {
                 hidden_name.push('$');
             }
             let parameter = Parameter {

@@ -11314,3 +11314,56 @@ and license verification. Source initializers/runtime Rust are unchanged. Focuse
 provenance6/0 and full Python88/0 pass;21 complete licensed setup forms verified.
 All other CI preflight inventory/review/import/apply/bitwise/WIT/numeric/roadmap
 checks pass. No CI pass, PR readiness or milestone completion is claimed yet.
+
+Independent PR #149 review reproduced three significant failures against its
+original Rust head: metadata-bearing Symbol construction after core descriptor
+redefinition (0/1/0, /private/tmp/suss-pr149-canonical-construction-before.log),
+acceptance of a copied persistent-set descriptor with the same numeric ID after
+GC (0/1/0, /private/tmp/suss-pr149-descriptor-identity-before.log), and collision of
+private catch payload name with the user $exception0 alias (0/1/0,
+/private/tmp/suss-pr149-catch-alias-before.log). Review uses its own isolated
+/private/tmp/suss-review-pr149 worktree and integrates provenance-only PR head
+55c094bd94e84960d5550191e3968412ea7a1c07 before fixes.
+
+Repairs keep captured canonical constructors throughout metadata reconstruction,
+vector trie construction and original bounded bulk map construction. Retained
+hash/key-test helpers preserve user key semantics; identifier equality remains
+independent of metadata and live constructor globals. Array maps do not call hash
+protocols; HAMT hash conversion uses finite truncation modulo2^32 and rejects
+nonnumeric scalar storage explicitly. Entry counts are bounded to65,536, collision
+comparisons to1,048,576, and hash recursion to the32-bit path. All accepted nominal
+macro data descriptors now require actual captured reference identity after the
+ID lookup, including Set/KeySeq, symbols, lists, vectors and maps. Private catch
+names avoid locals, fields and every user catch alias.
+
+The first repaired compile attempt stopped with E0308 because Wasmtime
+unwrap_f64 already returns f64; corrected before executing repaired tests.
+Final builder suite session46472 terminated exit0:7/0/0, log
+/private/tmp/suss-pr149-canonical-builders-final.log. It executes constructor
+redefinition, both vector trie levels, collision/deep HAMT paths, signed-zero and
+lone-surrogate/astral UTF16 key equality, nil insertion order, and custom IHash
+results4294967297/-4294967295/NaN/infinities/fractions with observable hash-call
+counts at the array-map threshold. Final source combined suite session1418
+terminated exit0:31/0/0 across lib6, graph9, binding8, set-oracle1 and set7; log
+/private/tmp/suss-pr149-review-final-source-focus.log. Both phases execute after GC;
+existing Store/reset, rooted sharing and resident-code/handle checks remain green.
+Commands use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target,
+CARGO_BUILD_JOBS=2, cargo test -p suss-cli --locked with focused --lib/--test targets,
+and -- --test-threads=2. No RUSTFLAGS override. A stronger constructor regression
+also redefines VectorNode/BitmapIndexedNode/HashCollisionNode and constructs a
+real collision map; session80627 terminated exit0 with1/0/0, log
+/private/tmp/suss-pr149-canonical-nodes-final.log. A final identifier-layout guard
+rejects malformed canonical storage before indexing it.
+
+The prior1002/0/17 full baseline predates these Rust repairs. Next require the
+full workspace post-fix baseline and successful final-head CI before PR readiness.
+Review repairs do not complete portable declaration/AST/inference, implicit source
+&env, reproducible Java-free bootstrap, complete cache invalidation, scheduler
+cancellation or M3 acceptance; issues #13/#14 and the original M3 scope remain open.
+
+Last source check session18711 terminated exit0 after the identifier-layout guard:
+5/0/0 (copied-descriptor regression1, canonical builders4), log
+/private/tmp/suss-pr149-review-last-check.log. This filter intentionally excludes
+the three other builder tests; their preceding complete7/0/0 result remains
+recorded above. No local heavy job remains. Push reviewer fixes and run the full
+post-fix baseline/CI at the resulting committed head before readiness.
