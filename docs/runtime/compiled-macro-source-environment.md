@@ -4,7 +4,7 @@
 multiple and variadic source macro signature. Macro bodies execute in the isolated
 compiled Macro Store. The environment is canonical rooted data constructed from
 the actual caller `ExpansionContext` through `AnalysisGraph`. It carries immutable
-lexical records, function scopes, context, phase and namespace snapshots alongside
+lexical records, function scopes, context and namespace snapshots alongside
 explicit backend facts. Building it does not execute caller initializers.
 
 Namespace `:ns` retains the enclosing top-level snapshot. The explicit backend

@@ -11638,3 +11638,28 @@ draft PR with Refs #13/#14 and required independent review; final full/final-hea
 CI remain required. Full portable declaration/AST/inference, &form metadata,
 namespace policy, syntaxquote/gensym, Java-free bootstrap/cache, obsolete evaluator
 removal and scheduler/lifecycle gates all remain open. No issue closed or PRmerged.
+
+
+PR152 independent review follow-up: exact-head full baseline90547 terminated
+exit101 on the pre-existing compiled_source_macros test asserting that a macro
+using &env cannot compile. The earlier21 definition/import/reload/REPL tests did
+not include this suite; they do not prove it passes. Reviewer reproduced the
+focused failure after cleaning only the four workspace packages:
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-cli --locked --test compiled_source_macros
+compiled_source_macros_pass_real_form_and_preserve_quote_and_failures
+-- --test-threads=2; session14258 exit101,0/1/0,
+/private/tmp/suss-pr152-source-macros-before.log.
+
+Replaced the obsolete rejection with an executed macro projecting the count of
+actual caller lexical bindings from &env. Unknown nominal result rejection,
+compile atomicity and recursive expansion failure assertions remain intact.
+Corrected documentation to avoid claiming a top-level phase field in &env.
+Both compiled_source_macros and compiled_macro_source_environment then passed:
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-cli --locked --test compiled_source_macros
+--test compiled_macro_source_environment -- --test-threads=2; session33606
+exit0,7/0/0 across2 groups, /private/tmp/suss-pr152-source-macros-after.log.
+No native process remains live. Clean repaired-head full workspace baseline and
+final-head GitHub CI are still required; the failed full run remains preserved.
+Do not mark PR152 ready or M3 complete from these focused results.

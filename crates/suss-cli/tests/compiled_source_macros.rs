@@ -94,7 +94,14 @@ fn compiled_source_macros_pass_real_form_and_preserve_quote_and_failures() {
         runtime.eval_with_macros("(forever)", &mut macros),
         Err(SessionError::Compile(_))
     ));
-    assert!(macros.define("(defmacro needs-env [] &env)").is_err());
+    macros
+        .define("(defmacro needs-env [] (count (get &env :locals)))")
+        .unwrap();
+    assert_eq!(
+        number(&mut runtime, "(let [x 40 y 2] (needs-env))", &mut macros),
+        2f64.to_bits(),
+        "Implicit environment contains the actual caller's lexical bindings"
+    );
     assert_eq!(
         number(&mut runtime, "(+ 20 22)", &mut macros),
         42f64.to_bits()
