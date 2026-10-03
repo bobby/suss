@@ -644,6 +644,28 @@ fn build_module() -> Vec<u8> {
         RefCastNonNull(HeapType::Concrete(STRING)), I32Const(0), RefI31,
         I32Const(0), RefI31, I32Const(0), RefI31, StructNew(8),
     ]);
+    // Native Error adapters use rooted descriptor identity. A structurally
+    // identical payload with another descriptor is not a language Error.
+    let mut error_test = vec![
+        LocalGet(0), RefTestNonNull(HeapType::Concrete(8)),
+        If(BlockType::Result(ValType::I32)), I32Const(0),
+    ];
+    for descriptor in (0..numeric::ERROR_GLOBALS).chain([nominal::ERROR_GLOBAL]) {
+        error_test.extend([
+            LocalGet(0), RefCastNonNull(HeapType::Concrete(8)),
+            StructGet { struct_type_index: 8, field_index: 0 },
+            GlobalGet(descriptor), RefEq, I32Or,
+        ]);
+    }
+    error_test.extend([
+        Else, LocalGet(0), RefTestNonNull(HeapType::Concrete(7)),
+        If(BlockType::Result(ValType::I32)),
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(7)),
+        StructGet { struct_type_index: 7, field_index: 0 },
+        GlobalGet(exception_info::DESCRIPTOR_GLOBAL), RefEq,
+        Else, I32Const(0), End, End,
+    ]);
+    b.function("language-error-is", &[VALUE], &[ValType::I32], &error_test);
     native_objects::functions(&mut b);
     native_object_properties::primitives(&mut b);
     native_object_properties::functions(&mut b);

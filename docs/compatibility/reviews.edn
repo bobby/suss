@@ -3350,4 +3350,77 @@
    :classification :adapted :rationale "Complete pinned public collection dependency retained with only explicit defn bootstrap. All source arities, metadata, nil/transient/metadata branches and transducer completion remain present. Focused executing proof and full collection/M3 acceptance remain required."
    :status :in-progress :adaptation-path "docs/compatibility/patches/hamt-sequence-into.json" :alternative nil
    :tests ["crates/suss-cli/tests/compiled_macro_hamt_sequences.rs" "tests/oracle/hamt-sequence-cases.json"]}
+
+  "runtime:ISet:700"
+  {:source-sha256 "fc214ee9f3f4fca4632116e9f28e3d51a2f540c2acceecf8d63f0e4ea7845e6d" :visibility :public :arities nil
+   :dependencies ["retained canonical HAMT/map/sequence and transient protocols" "rooted native Error predicate; pending generic ES6 helpers"]
+   :classification :portable :rationale "Retained pinned set/KeySeq prerequisites with explicit bootstrap adapters; all acceptance remains in-progress until executing regressions and primary comparison pass."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_sets.rs" "crates/suss-cli/tests/portable_error_predicate.rs"]}
+  "runtime:ITransientSet:860"
+  {:source-sha256 "ccae9ee350c3e7bbb71d98b0af1b5736d4f0a2cff9f9bf0a90e964175786d2e1" :visibility :public :arities nil
+   :dependencies ["retained canonical HAMT/map/sequence and transient protocols" "rooted native Error predicate; pending generic ES6 helpers"]
+   :classification :portable :rationale "Retained pinned set/KeySeq prerequisites with explicit bootstrap adapters; all acceptance remains in-progress until executing regressions and primary comparison pass."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_sets.rs" "crates/suss-cli/tests/portable_error_predicate.rs"]}
+  "runtime:KeySeq:9107"
+  {:source-sha256 "14c23f92f53ef1429618b287af6ccd72a8e313d45c284dfa5c96d9943759fa7d" :visibility :public :arities nil
+   :dependencies ["retained canonical HAMT/map/sequence and transient protocols" "rooted native Error predicate; pending generic ES6 helpers"]
+   :classification :portable :rationale "Retained pinned set/KeySeq prerequisites with explicit bootstrap adapters; all acceptance remains in-progress until executing regressions and primary comparison pass."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_sets.rs" "crates/suss-cli/tests/portable_error_predicate.rs"]}
+  "runtime:keys:9175"
+  {:source-sha256 "c4d97d8eb33f33da3e2d54f524b14a08e32dec9dad6797aa26d57ef733a7b0e9" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["retained canonical HAMT/map/sequence and transient protocols" "rooted native Error predicate; pending generic ES6 helpers"]
+   :classification :adapted :rationale "Retained pinned set/KeySeq prerequisites with explicit bootstrap adapters; all acceptance remains in-progress until executing regressions and primary comparison pass."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hash-set-keys.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_sets.rs" "crates/suss-cli/tests/portable_error_predicate.rs"]}
+  "runtime:set?:2231"
+  {:source-sha256 "d97c196e3627687ce08a51ad074df3c49630f949f46984905b871474eb7af6b5" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["retained canonical HAMT/map/sequence and transient protocols" "rooted native Error predicate; pending generic ES6 helpers"]
+   :classification :adapted :rationale "Retained pinned set/KeySeq prerequisites with explicit bootstrap adapters; all acceptance remains in-progress until executing regressions and primary comparison pass."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hash-set-setpredicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_sets.rs" "crates/suss-cli/tests/portable_error_predicate.rs"]}
+  "runtime:HashSetIter:9307"
+  {:source-sha256 "7a3b478e51bf5267327f225f8f4fb411c105243a9ef89e4554aaf43b391cc085" :visibility :public :arities nil
+   :dependencies ["retained canonical HAMT/map/sequence and transient protocols" "rooted native Error predicate; pending generic ES6 helpers"]
+   :classification :adapted :rationale "Retained pinned set/KeySeq prerequisites with explicit bootstrap adapters; all acceptance remains in-progress until executing regressions and primary comparison pass."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hash-set-HashSetIter.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_sets.rs" "crates/suss-cli/tests/portable_error_predicate.rs"]}
+  "runtime:PersistentHashSet:9317"
+  {:source-sha256 "223ce116c5b9eb5ff3fa294781d76e048edec6215cb6bc467177ece4ac86dfe5" :visibility :public :arities nil
+   :dependencies ["retained canonical HAMT/map/sequence and transient protocols" "rooted native Error predicate; pending generic ES6 helpers"]
+   :classification :adapted :rationale "Retained pinned set/KeySeq prerequisites with explicit bootstrap adapters; all acceptance remains in-progress until executing regressions and primary comparison pass."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hash-set-PersistentHashSet.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_sets.rs" "crates/suss-cli/tests/portable_error_predicate.rs"]}
+  "runtime:TransientHashSet:9445"
+  {:source-sha256 "5f3d2b88ceb343ed24e5087e8763b2d64849fd7dcb3de835e1184abae8a8663a" :visibility :public :arities nil
+   :dependencies ["retained canonical HAMT/map/sequence and transient protocols" "rooted native Error predicate; pending generic ES6 helpers"]
+   :classification :portable :rationale "Retained pinned set/KeySeq prerequisites with explicit bootstrap adapters; all acceptance remains in-progress until executing regressions and primary comparison pass."
+   :status :in-progress :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_sets.rs" "crates/suss-cli/tests/portable_error_predicate.rs"]}
+  "runtime:set:9593"
+  {:source-sha256 "669f3fa354e60fd6df1c75d7b55b42e7037769ffbf14efed3ffd279e88657e7d" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["retained canonical HAMT/map/sequence and transient protocols" "rooted native Error predicate; pending generic ES6 helpers"]
+   :classification :adapted :rationale "Retained pinned set/KeySeq prerequisites with explicit bootstrap adapters; all acceptance remains in-progress until executing regressions and primary comparison pass."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hash-set-set.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_sets.rs" "crates/suss-cli/tests/portable_error_predicate.rs"]}
+  "runtime:hash-set:9612"
+  {:source-sha256 "14c2afd4a49fa0c089e0d030fd8e0a4a185a2f5883622148a6c4bfe7aa6fcd2f" :visibility :public :arities {:fixed [0] :variadic-min 0}
+   :dependencies ["retained canonical HAMT/map/sequence and transient protocols" "rooted native Error predicate; pending generic ES6 helpers"]
+   :classification :adapted :rationale "Retained pinned set/KeySeq prerequisites with explicit bootstrap adapters; all acceptance remains in-progress until executing regressions and primary comparison pass."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hash-set-hash-set.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_sets.rs" "crates/suss-cli/tests/portable_error_predicate.rs"]}
+  "runtime:disj:2196"
+  {:source-sha256 "e02df8819ade280a6cb218595af4ff0806065805458e0af587be319675157d42" :visibility :public :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["retained canonical HAMT/map/sequence and transient protocols" "rooted native Error predicate; pending generic ES6 helpers"]
+   :classification :adapted :rationale "Retained pinned set/KeySeq prerequisites with explicit bootstrap adapters; all acceptance remains in-progress until executing regressions and primary comparison pass."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hash-set-disj.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_sets.rs" "crates/suss-cli/tests/portable_error_predicate.rs"]}
+  "runtime:disj!:4040"
+  {:source-sha256 "b9c22b181d6a9e76ceeb9608b3f8e53d1f850a830a5e1125eea753bbde8b8396" :visibility :public :arities {:fixed [2] :variadic-min 2}
+   :dependencies ["retained canonical HAMT/map/sequence and transient protocols" "rooted native Error predicate; pending generic ES6 helpers"]
+   :classification :adapted :rationale "Retained pinned set/KeySeq prerequisites with explicit bootstrap adapters; all acceptance remains in-progress until executing regressions and primary comparison pass."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/hash-set-disjbang.json" :alternative nil
+   :tests ["crates/suss-cli/tests/compiled_macro_sets.rs" "crates/suss-cli/tests/portable_error_predicate.rs"]}
 }}

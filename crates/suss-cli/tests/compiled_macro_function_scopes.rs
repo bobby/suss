@@ -44,10 +44,11 @@ impl portable::ExpansionHost for Observe {
         locals.sort();
         self.calls
             .push(serde_json::json!({"label": label, "names": names, "locals": locals}));
-        assert!(self
-            .scopes
-            .insert(label.clone(), context.function_scopes.to_vec())
-            .is_none());
+        assert!(
+            self.scopes
+                .insert(label.clone(), context.function_scopes.to_vec())
+                .is_none()
+        );
         self.locals.insert(label, context.locals.clone());
         Ok(Some(Form {
             span: form.span.clone(),
@@ -96,11 +97,24 @@ fn genuine_function_scopes_match_pinned_names_and_do_not_invent_hint_bindings() 
         assert_eq!(local.kind, LocalKind::FunctionName);
         assert_eq!(local.id, host.locals["named"]["n"].id);
         assert_eq!(&source[explicit.declaration.span.clone()], "n");
+        assert_eq!(explicit.phase, session.phase());
+        assert_eq!(explicit.scope.namespace, explicit.namespace);
+        assert!(!explicit.locals.contains_key("n"));
+        assert!(Arc::ptr_eq(
+            &local.identity,
+            &host.locals["named"]["n"].identity
+        ));
         assert!(host.scopes["anonymous"].is_empty());
         assert!(host.scopes["outside"].is_empty());
         let nested = &host.scopes["nested"];
         assert_eq!(nested.len(), 2);
         assert!(Arc::ptr_eq(&nested[1].parents[0], &nested[0]));
+        assert!(!nested[0].locals.contains_key("outer"));
+        assert!(!nested[1].locals.contains_key("inner"));
+        assert!(Arc::ptr_eq(
+            &nested[1].locals["outer"].identity,
+            &host.locals["nested"]["outer"].identity
+        ));
         assert_eq!(
             nested[1].self_binding.as_ref().unwrap().id,
             host.locals["nested"]["inner"].id
@@ -115,6 +129,10 @@ fn genuine_function_scopes_match_pinned_names_and_do_not_invent_hint_bindings() 
             Expression::Literal(_)
         ));
         assert_ne!(shadow.id, shadowed.self_binding.as_ref().unwrap().id);
+        assert!(Arc::ptr_eq(
+            &shadowed.locals["n"].identity,
+            &shadow.identity
+        ));
         assert_eq!(
             shadowed
                 .self_binding
@@ -179,9 +197,11 @@ fn genuine_function_scopes_match_pinned_names_and_do_not_invent_hint_bindings() 
             assert_eq!(serde_json::json!(names), *expected);
         }
         // Failed analysis never publishes its partial scope into a later fragment.
-        assert!(session
-            .eval_with_macros("(def failed (fn doomed [] missing))", &mut host)
-            .is_err());
+        assert!(
+            session
+                .eval_with_macros("(def failed (fn doomed [] missing))", &mut host)
+                .is_err()
+        );
         let mut recovered = Observe::default();
         session
             .eval_with_macros("(scope \"recovered\")", &mut recovered)
@@ -255,24 +275,28 @@ fn function_hints_follow_expansion_without_leaking_into_operands_or_fabricating_
         assert!(hinted.self_binding.is_none());
         assert!(!host.observed.locals["expanded"].contains_key("hinted"));
         assert_eq!(hinted.namespace, "user");
-        assert!(hinted
-            .origin
-            .as_ref()
-            .unwrap()
-            .symbol_position(&hinted.declaration)
-            .is_some());
+        assert!(
+            hinted
+                .origin
+                .as_ref()
+                .unwrap()
+                .symbol_position(&hinted.declaration)
+                .is_some()
+        );
         let explicit = &host.observed.scopes["self"][0];
         assert_eq!(name(explicit), "actual");
         assert_eq!(
             explicit.self_binding.as_ref().unwrap().id,
             host.observed.locals["self"]["actual"].id
         );
-        assert!(explicit
-            .origin
-            .as_ref()
-            .unwrap()
-            .symbol_position(&explicit.declaration)
-            .is_none());
+        assert!(
+            explicit
+                .origin
+                .as_ref()
+                .unwrap()
+                .symbol_position(&explicit.declaration)
+                .is_none()
+        );
         assert!(host.observed.scopes["wrapped"].is_empty());
         assert!(host.observed.scopes["after"].is_empty());
         let bridge = FormBridge::new(&mut session).unwrap();

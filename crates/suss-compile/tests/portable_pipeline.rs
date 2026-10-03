@@ -511,6 +511,7 @@ fn verifier_rejects_undefined_non_dominating_wrong_type_and_arity_values() {
 fn malformed_hir_returns_a_located_lowering_diagnostic() {
     use portable::hir::{BindingId, Expression, Hir, Type};
     let hir = Hir {
+        source: None,
         span: 3..9,
         metadata: Vec::new(),
         ty: Type::Number,
@@ -710,6 +711,7 @@ fn lexical_bindings_hide_the_bootstrap_let_macro() {
 fn public_hir_negation_executes_and_malformed_arithmetic_is_rejected() {
     use portable::hir::{Arithmetic, Expression, Hir, Literal, Type};
     let make = |operator, count| Hir {
+        source: None,
         span: 4..12,
         metadata: Vec::new(),
         ty: Type::Number,
@@ -717,6 +719,7 @@ fn public_hir_negation_executes_and_malformed_arithmetic_is_rejected() {
             operator,
             arguments: (0..count)
                 .map(|_| Hir {
+                    source: None,
                     span: 7..8,
                     metadata: Vec::new(),
                     ty: Type::Number,
@@ -775,6 +778,7 @@ fn recurrence_rejects_non_tail_wrong_arity_and_cross_function_targets_with_spans
 fn malformed_public_hir_cannot_recur_from_operands_or_to_outer_targets() {
     use portable::hir::{Expression, Hir, LoopId, Type};
     let recur = Hir {
+        source: None,
         span: 8..15,
         metadata: vec![],
         ty: Type::Value,
@@ -784,6 +788,7 @@ fn malformed_public_hir_cannot_recur_from_operands_or_to_outer_targets() {
         },
     };
     let mut root = Hir {
+        source: None,
         span: 0..20,
         metadata: vec![],
         ty: Type::Value,
@@ -797,6 +802,7 @@ fn malformed_public_hir_cannot_recur_from_operands_or_to_outer_targets() {
     portable::ir::verify(&graph).unwrap();
     if let Expression::Loop { body, .. } = &mut root.kind {
         *body = Box::new(Hir {
+            source: None,
             span: 8..18,
             metadata: vec![],
             ty: Type::Value,
@@ -811,6 +817,7 @@ fn malformed_public_hir_cannot_recur_from_operands_or_to_outer_targets() {
     );
     if let Expression::Loop { body, .. } = &mut root.kind {
         *body = Box::new(Hir {
+            source: None,
             span: 8..18,
             metadata: vec![],
             ty: Type::Value,

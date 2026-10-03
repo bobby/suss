@@ -5,6 +5,7 @@ use crate::portable::resolve::{NominalForm, ProtocolMethod};
 impl Analyzer<'_> {
     pub(super) fn nominal(&self, form: &Form, operation: Nominal, arguments: Vec<Hir>) -> Hir {
         Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: operation.result(),
@@ -16,6 +17,7 @@ impl Analyzer<'_> {
     }
     pub(super) fn local(&self, form: &Form, id: BindingId) -> Hir {
         Hir {
+            source: None,
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
@@ -24,6 +26,7 @@ impl Analyzer<'_> {
     }
     pub(super) fn literal_form(&self, form: &Form, literal: Literal) -> Hir {
         Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: literal.ty(),
@@ -69,6 +72,7 @@ impl Analyzer<'_> {
         let global = self.environment.protocol_key(protocol, method, arity);
         let descriptor = self.nominal(form, Nominal::Descriptor, schema);
         let initialize = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
@@ -82,6 +86,7 @@ impl Analyzer<'_> {
             },
         };
         let read = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
@@ -133,6 +138,7 @@ impl Analyzer<'_> {
             vec![self.local(form, callee.id), key],
         );
         let body = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
@@ -143,6 +149,7 @@ impl Analyzer<'_> {
             },
         };
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
@@ -165,12 +172,12 @@ impl Analyzer<'_> {
                 self.stable_key(form, &protocol, "-invoke", arity, schema)
             }).collect();
             let keys = self.nominal(form, Nominal::Array, keys);
-            let definition = Hir { span: form.span.clone(), metadata: vec![], ty: Type::Value,
+            let definition = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
                 kind: Expression::Definition { global: table.clone(), name_metadata: vec![], name_span: form.span.clone(), docstring: None,
                     initializer: Some(Box::new(keys)), once: true } };
             self.callable_keys.insert(table.clone(), definition);
         }
-        let keys = Hir { span: form.span.clone(), metadata: vec![], ty: Type::Value, kind: Expression::Global(table) };
+        let keys = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value, kind: Expression::Global(table) };
         Ok(self.nominal(form, Nominal::CallableGet, vec![owner, name, keys]))
     }
     fn named_global(&self, name: &Form) -> Result<Global, Diagnostic> {
@@ -188,6 +195,7 @@ impl Analyzer<'_> {
     }
     fn do_hir(&self, form: &Form, items: Vec<Hir>) -> Hir {
         Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: items.last().map_or(Type::Nil, |item| item.ty),
@@ -244,6 +252,7 @@ impl Analyzer<'_> {
                 let value = self.local(&args[1], binding.id);
                 let condition = self.nominal(form, Nominal::Satisfies, vec![marker, value.clone()]);
                 let protocol_value = Hir {
+                    source: None,
                     span: args[0].span.clone(),
                     metadata: args[0].metadata.clone(),
                     ty: Type::Value,
@@ -255,11 +264,13 @@ impl Analyzer<'_> {
                 };
                 let (callee, ty) = self.global_value(&symbol, form.span.clone())?;
                 let alternative = Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
                     kind: Expression::Call {
                         callee: Box::new(Hir {
+                            source: None,
                             span: form.span.clone(),
                             metadata: Vec::new(),
                             ty,
@@ -269,6 +280,7 @@ impl Analyzer<'_> {
                     },
                 };
                 let body = Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: Type::Value,
@@ -279,6 +291,7 @@ impl Analyzer<'_> {
                     },
                 };
                 Ok(Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: Type::Value,
@@ -318,6 +331,7 @@ impl Analyzer<'_> {
                 }
                 let body = self.do_hir(form, effects);
                 Ok(Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: body.ty,
@@ -465,6 +479,7 @@ impl Analyzer<'_> {
         effects.push(class_value);
         let body = self.do_hir(form, effects);
         let initialization = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
@@ -486,6 +501,7 @@ impl Analyzer<'_> {
         *target = Some(Box::new(class_value.clone()));
         let mut parameters = Vec::new();
         let mut arguments = vec![Hir {
+            source: None,
             span: args[0].span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
@@ -506,6 +522,7 @@ impl Analyzer<'_> {
             arguments.push(self.local(field, id));
         }
         let arrow = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Closure(parameters.len()),
@@ -518,6 +535,7 @@ impl Analyzer<'_> {
         let arrow = self.nominal_definition(form, &arrow_name, arrow)?;
         let body = self.do_hir(form, vec![definition, arrow, class_value]);
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
@@ -630,6 +648,7 @@ impl Analyzer<'_> {
                     self.environment
                         .declare_cell(self.phase, &namespace, &symbol.name)?;
                 let cell = Hir {
+                    source: None,
                     span: method_name.span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
@@ -681,6 +700,7 @@ impl Analyzer<'_> {
                     variadic: false,
                     parameters: wrapper_params,
                     body: Box::new(Hir {
+                        source: None,
                         span: declaration.span.clone(),
                         metadata: Vec::new(),
                         ty: Type::Value,
@@ -700,6 +720,7 @@ impl Analyzer<'_> {
                 ));
             }
             let function = Hir {
+                source: None,
                 span: declaration.span.clone(),
                 metadata: declaration.metadata.clone(),
                 ty: Type::Value,
@@ -747,6 +768,7 @@ impl Analyzer<'_> {
         effects.push(self.literal_form(form, Literal::Undefined));
         let body = self.do_hir(form, effects);
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
@@ -780,6 +802,7 @@ impl Analyzer<'_> {
                     )
                 })?;
             let protocol = Hir {
+                source: None,
                 span: protocol_name.span.clone(),
                 metadata: protocol_name.metadata.clone(),
                 ty: Type::Value,
@@ -882,6 +905,7 @@ impl Analyzer<'_> {
                 let (method_value, ty) =
                     self.global_value(&method_symbol, method_name.span.clone())?;
                 let method_value = Hir {
+                    source: None,
                     span: method_name.span.clone(),
                     metadata: Vec::new(),
                     ty,
@@ -1033,6 +1057,7 @@ impl Analyzer<'_> {
                         }
                     };
                     let implementation = Hir {
+                        source: None,
                         span: method_name.span.clone(),
                         metadata: method_name.metadata.clone(),
                         ty: Type::Value,
@@ -1061,6 +1086,7 @@ impl Analyzer<'_> {
                     )
                 })?;
             let protocol = Hir {
+                source: None,
                 span: protocol_name.span.clone(),
                 metadata: protocol_name.metadata.clone(),
                 ty: Type::Value,

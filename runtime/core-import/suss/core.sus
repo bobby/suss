@@ -49,6 +49,8 @@
  NodeSeq ArrayNodeSeq HashMapIter TransientHashMap create-inode-seq create-array-node-seq
  create-node array-to-transient-hash-map array->transient-hash-map pack-array-node
  inode-kv-reduce nil-iter equiv-map every? reduce-kv)
+
+(declare KeySeq keys ISet ITransientSet PersistentHashSet TransientHashSet HashSetIter set set? hash-set disj disj! es6-set-entries-iterator)
 (def identity (fn [x] x))
 
 (def not (fn [x] (if x false true)))
@@ -4219,6 +4221,277 @@
                   ([coll v] (conj! coll v)))]
          (transduce xform rf (transient to) from))
        (transduce xform conj to from)))))
+
+(defprotocol ISet
+  "Protocol for adding set functionality to a collection."
+  (^clj -disjoin [coll v]
+    "Returns a new collection of coll that does not contain v."))
+
+(defprotocol ITransientSet
+  "Protocol for adding set functionality to a transient collection."
+  (^clj -disjoin! [tcoll v]
+    "Returns tcoll without v."))
+
+(deftype KeySeq [^not-native mseq _meta]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  IMeta
+  (-meta [coll] _meta)
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta _meta)
+      coll
+      (KeySeq. mseq new-meta)))
+
+  ISeqable
+  (-seq [coll] coll)
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  ICollection
+  (-conj [coll o]
+    (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
+
+  IHash
+  (-hash [coll] (hash-ordered-coll coll))
+
+  ISeq
+  (-first [coll]
+    (let [^not-native me (-first mseq)]
+      (-key me)))
+
+  (-rest [coll]
+    (let [nseq (if (satisfies? INext mseq)
+                 (-next mseq)
+                 (next mseq))]
+      (if-not (nil? nseq)
+        (KeySeq. nseq nil)
+        ())))
+
+  INext
+  (-next [coll]
+    (let [nseq (if (satisfies? INext mseq)
+                 (-next mseq)
+                 (next mseq))]
+      (when-not (nil? nseq)
+        (KeySeq. nseq nil))))
+
+  IReduce
+  (-reduce [coll f] (seq-reduce f coll))
+  (-reduce [coll f start] (seq-reduce f start coll)))
+
+(def keys
+ "Returns a sequence of the map's keys, in the same order as (seq map)."
+(fn [map]
+  (let [mseq (seq map)] (when mseq (KeySeq. mseq nil)))))
+
+(def set?
+ "Returns true if x satisfies ISet"
+(fn [x]
+  (if (nil? x)
+    false
+    (satisfies? ISet x))))
+
+(deftype HashSetIter [iter]
+  Object
+  (hasNext [_]
+    (.hasNext iter))
+  (next [_]
+    (if ^boolean (.hasNext iter)
+      (.-key (.next iter))
+      (throw (suss.bootstrap/error "No such element"))))
+  (remove [_] (suss.bootstrap/error "Unsupported operation")))
+
+(deftype PersistentHashSet [meta hash-map ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (keys [coll]
+    (es6-iterator (seq coll)))
+  (entries [coll]
+    (es6-set-entries-iterator (seq coll)))
+  (values [coll]
+    (es6-iterator (seq coll)))
+  (has [coll k]
+    (contains? coll k))
+  (forEach [coll f]
+    (loop [entries (seq coll)] (when entries (let [entry (first entries) k (nth entry 0 nil) v (nth entry 1 nil)] (f v k)) (recur (next entries)))))
+
+  ICloneable
+  (-clone [_] (PersistentHashSet. meta hash-map __hash))
+
+  IIterable
+  (-iterator [coll]
+    (HashSetIter. (-iterator hash-map)))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (PersistentHashSet. new-meta hash-map __hash)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ICollection
+  (-conj [coll o]
+    (let [m (-assoc hash-map o nil)]
+      (if (identical? m hash-map)
+        coll
+        (PersistentHashSet. meta m nil))))
+
+  IEmptyableCollection
+  (-empty [coll] (-with-meta (.-EMPTY PersistentHashSet) meta))
+
+  IEquiv
+  (-equiv [coll other]
+    (and
+     (set? other)
+     (== (count coll) (count other))
+     ^boolean
+     (try
+       (reduce-kv
+         (fn [ret key value] (or (contains? other key) (reduced false)))
+         true hash-map)
+       (catch :default ex (if (suss.bootstrap/error? ex) false (throw ex))))))
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-unordered-coll __hash))
+
+  ISeqable
+  (-seq [coll] (keys hash-map))
+
+  ICounted
+  (-count [coll] (-count hash-map))
+
+  ILookup
+  (-lookup [coll v]
+    (-lookup coll v nil))
+  (-lookup [coll v not-found]
+    (let [entry (-find hash-map v)] (if entry (key entry) not-found)))
+
+  ISet
+  (-disjoin [coll v]
+    (let [m (-dissoc hash-map v)]
+      (if (identical? m hash-map)
+        coll
+        (PersistentHashSet. meta m nil))))
+
+  IFn
+  (-invoke [coll k]
+    (-lookup coll k))
+  (-invoke [coll k not-found]
+    (-lookup coll k not-found))
+
+  IEditableCollection
+  (-as-transient [coll] (TransientHashSet. (-as-transient hash-map))))
+
+(deftype TransientHashSet [^:mutable transient-map]
+  ITransientCollection
+  (-conj! [tcoll o]
+    (set! transient-map (assoc! transient-map o nil))
+    tcoll)
+
+  (-persistent! [tcoll]
+    (PersistentHashSet. nil (persistent! transient-map) nil))
+
+  ITransientSet
+  (-disjoin! [tcoll v]
+    (set! transient-map (dissoc! transient-map v))
+    tcoll)
+
+  ICounted
+  (-count [tcoll] (count transient-map))
+
+  ILookup
+  (-lookup [tcoll v]
+    (-lookup tcoll v nil))
+
+  (-lookup [tcoll v not-found]
+    (if (identical? (-lookup transient-map v lookup-sentinel) lookup-sentinel)
+      not-found
+      v))
+
+  IFn
+  (-invoke [tcoll k]
+    (if (identical? (-lookup transient-map k lookup-sentinel) lookup-sentinel)
+      nil
+      k))
+
+  (-invoke [tcoll k not-found]
+    (if (identical? (-lookup transient-map k lookup-sentinel) lookup-sentinel)
+      not-found
+      k)))
+
+(def set
+ "Returns a set of the distinct elements of coll."
+(fn [coll]
+  (if (set? coll)
+    (with-meta coll nil)
+    (let [in (seq coll)]
+      (cond
+        (nil? in) #{}
+
+        (and (instance? IndexedSeq in) (zero? (.-i in)))
+        (.createAsIfByAssoc PersistentHashSet (.-arr in))
+
+        :else
+        (loop [^not-native in  in
+               ^not-native out (-as-transient #{})]
+          (if-not (nil? in)
+            (recur (next in) (-conj! out (-first in)))
+            (persistent! out))))))))
+
+(def hash-set
+ "Returns a new hash set with supplied keys.  Any equal keys are
+  handled as if by repeated uses of conj."
+(fn ([] #{})
+  ([& keys] (set keys))))
+
+(def disj
+ "disj[oin]. Returns a new set of the same (hashed/sorted) type, that
+  does not contain key(s)."
+(fn ([coll] coll)
+  ([coll k]
+    (when-not (nil? coll)
+      (-disjoin coll k)))
+  ([coll k & ks]
+    (when-not (nil? coll)
+      (let [ret (disj coll k)]
+        (if ks
+          (recur ret (first ks) (next ks))
+          ret))))))
+
+(def disj!
+ "disj[oin]. Returns a transient set of the same (hashed/sorted) type, that
+  does not contain key(s)."
+(fn ([tcoll val]
+    (-disjoin! tcoll val))
+  ([tcoll val & vals]
+    (let [ntcoll (-disjoin! tcoll val)]
+      (if vals
+        (recur ntcoll (first vals) (next vals))
+        ntcoll)))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
@@ -4349,3 +4622,43 @@
             (throw (suss.bootstrap/error (str_ "Duplicate key: " (aget arr i))))
             (recur (+ i 2)))))
       (-persistent! ret))))
+
+;; Pinned core.cljs PersistentHashSet static initializers, EPL-1.0.
+;; Explicit dotimes/Error/threshold adapters; all branches retained.
+(set! (.-EMPTY PersistentHashSet)
+  (PersistentHashSet. nil (.-EMPTY PersistentArrayMap) empty-unordered-hash))
+
+(set! (.-fromArray PersistentHashSet)
+  (fn [items ^boolean no-clone]
+    (let [len (alength items)]
+      (if (<= len (.-HASHMAP_THRESHOLD PersistentArrayMap))
+        (let [arr (if no-clone items (aclone items))]
+          (loop [i 0
+                 out (transient (.-EMPTY PersistentArrayMap))]
+            (if (< i len)
+              (recur (inc i) (-assoc! out (aget items i) nil))
+              (PersistentHashSet. nil (-persistent! out) nil))))
+       (loop [i 0
+              out (transient (.-EMPTY PersistentHashSet))]
+         (if (< i len)
+           (recur (inc i) (-conj! out (aget items i)))
+           (-persistent! out)))))))
+
+(set! (.-createWithCheck PersistentHashSet)
+      (fn [items]
+        (let [len (alength items)
+              t (-as-transient (.-EMPTY PersistentHashSet))]
+          (loop [i 0]
+            (when (< i len)
+              (-conj! t (aget items i))
+              (when-not (= (count t) (inc i))
+                (throw (suss.bootstrap/error (str_ "Duplicate key: " (aget items i)))))
+              (recur (inc i))))
+          (-persistent! t))))
+
+(set! (.-createAsIfByAssoc PersistentHashSet)
+      (fn [items]
+        (let [len (alength items)
+              t (-as-transient (.-EMPTY PersistentHashSet))]
+          (loop [i 0] (when (< i len) (-conj! t (aget items i)) (recur (inc i))))
+          (-persistent! t))))

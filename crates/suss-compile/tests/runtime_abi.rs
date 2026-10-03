@@ -3988,3 +3988,31 @@ fn runtime_abi_apply_callbacks_reject_foreign_environments_and_empty_push_buffer
     let bits = value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().fields(&mut store).unwrap().collect::<Vec<_>>();
     assert!(matches!(bits.as_slice(), [Val::F64(bits)] if *bits == 0.0f64.to_bits()));
 }
+
+
+#[test]
+fn runtime_abi_language_error_predicate_uses_rooted_descriptor_identity_after_gc() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let message = nominal_value(&mut store, runtime, "string-new", &[Val::I32(0)]);
+    let error = nominal_value(&mut store, runtime, "language-error-new", &[message]);
+    let payload = error.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+    let mut payload_fields = payload.fields(&mut store).unwrap().collect::<Vec<_>>();
+    let descriptor = payload_fields[0].unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+    let fields = descriptor.fields(&mut store).unwrap().collect::<Vec<_>>();
+    let ty = descriptor.ty(&store).unwrap();
+    let allocator = wasmtime::StructRefPre::new(&mut store, ty);
+    let fake_descriptor = wasmtime::StructRef::new(&mut store, &allocator, &fields).unwrap();
+    payload_fields[0] = Val::AnyRef(Some(fake_descriptor.to_anyref()));
+    let ty = payload.ty(&store).unwrap();
+    let allocator = wasmtime::StructRefPre::new(&mut store, ty);
+    let fake = wasmtime::StructRef::new(&mut store, &allocator, &payload_fields).unwrap();
+    store.gc(None).unwrap();
+    let predicate = runtime.get_func(&mut store, "language-error-is").unwrap();
+    for (value, expected) in [(error, 1), (Val::AnyRef(Some(fake.to_anyref())), 0), (Val::null_any_ref(), 0)] {
+        let mut result = [Val::I32(-1)];
+        predicate.call(&mut store, &[value], &mut result).unwrap();
+        assert_eq!(result[0].unwrap_i32(), expected);
+    }
+}

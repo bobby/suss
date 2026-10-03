@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "e02df8819ade280a6cb218595af4ff0806065805458e0af587be319675157d42",
+  "replacement": "(def disj\n \"disj[oin]. Returns a new set of the same (hashed/sorted) type, that\n  does not contain key(s).\"\n(fn ([coll] coll)\n  ([coll k]\n    (when-not (nil? coll)\n      (-disjoin coll k)))\n  ([coll k & ks]\n    (when-not (nil? coll)\n      (let [ret (disj coll k)]\n        (if ks\n          (recur ret (first ks) (next ks))\n          ret))))))",
+  "rationale": "Complete pinned set/KeySeq declaration retained. Explicit defn/when-let/if-let and known nonchunked set forEach adapters preserve order and branches. The reduce-kv callback accepts its real three native operands; unused arguments remain unused. Typed Error catching uses rooted native Error identity and rethrows other payloads. Error constructors use the existing typed adapter. Full native execution, fresh pinned comparison, generic ES6 interfaces and M3 acceptance remain pending."
+}

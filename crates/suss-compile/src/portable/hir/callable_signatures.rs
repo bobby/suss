@@ -15,12 +15,14 @@ impl Analyzer<'_> {
         };
         let (kind, ty) = self.global_value(&symbol, form.span.clone())?;
         let callee = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             kind,
             ty,
         };
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
@@ -68,6 +70,7 @@ impl Analyzer<'_> {
             let mut captures = BTreeSet::new();
             free_bindings(&method.body, &bound, &mut captures);
             let delegate = Hir {
+                source: None,
                 span: form.span.clone(),
                 metadata: vec![],
                 ty: Type::Closure(method.parameters.len()),
@@ -138,6 +141,7 @@ impl Analyzer<'_> {
             };
             arguments.push(rest);
             let call = Hir {
+                source: None,
                 span: form.span.clone(),
                 metadata: vec![],
                 ty: Type::Value,
@@ -147,6 +151,7 @@ impl Analyzer<'_> {
                 },
             };
             let body = Box::new(Hir {
+                source: None,
                 span: form.span.clone(),
                 metadata: vec![],
                 ty: Type::Value,
@@ -158,6 +163,7 @@ impl Analyzer<'_> {
             let mut captures = BTreeSet::new();
             free_bindings(&body, &BTreeSet::from([parameter.id]), &mut captures);
             let callback = Hir {
+                source: None,
                 span: form.span.clone(),
                 metadata: vec![],
                 ty: Type::Closure(1),
@@ -179,12 +185,14 @@ impl Analyzer<'_> {
         }
         effects.push(self.local(form, owner.id));
         let body = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
             kind: Expression::Do(effects),
         };
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,

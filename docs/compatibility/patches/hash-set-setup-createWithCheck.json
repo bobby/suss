@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "f4de239ea6ebb545603ffe9951572ebbadb520b5e7ca466b98310e5398da5629",
+  "replacement": "(set! (.-createWithCheck PersistentHashSet)\n      (fn [items]\n        (let [len (alength items)\n              t (-as-transient (.-EMPTY PersistentHashSet))]\n          (loop [i 0]\n            (when (< i len)\n              (-conj! t (aget items i))\n              (when-not (= (count t) (inc i))\n                (throw (suss.bootstrap/error (str_ \"Duplicate key: \" (aget items i)))))\n              (recur (inc i))))\n          (-persistent! t))))",
+  "rationale": "Retain complete duplicate checking; expand dotimes into ordered loop/recur and adapt JavaScript Error to the typed native bootstrap error. Exact duplicate-key message composition remains limited by pending str_ support."
+}

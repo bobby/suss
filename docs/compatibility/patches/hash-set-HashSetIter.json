@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "7a3b478e51bf5267327f225f8f4fb411c105243a9ef89e4554aaf43b391cc085",
+  "replacement": "(deftype HashSetIter [iter]\n  Object\n  (hasNext [_]\n    (.hasNext iter))\n  (next [_]\n    (if ^boolean (.hasNext iter)\n      (.-key (.next iter))\n      (throw (suss.bootstrap/error \"No such element\"))))\n  (remove [_] (suss.bootstrap/error \"Unsupported operation\")))",
+  "rationale": "Complete pinned set/KeySeq declaration retained. Explicit defn/when-let/if-let and known nonchunked set forEach adapters preserve order and branches. The reduce-kv callback accepts its real three native operands; unused arguments remain unused. Typed Error catching uses rooted native Error identity and rethrows other payloads. Error constructors use the existing typed adapter. Full native execution, fresh pinned comparison, generic ES6 interfaces and M3 acceptance remain pending."
+}

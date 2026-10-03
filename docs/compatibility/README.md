@@ -516,3 +516,76 @@ pinned observations and four executed results cover receiver/argument/field
 shadows and nested scope restoration in both Stores. This is compiler-fact
 preparation, not source-level rich `&env` completion; see
 [method binding roles](../runtime/compiled-macro-method-roles.md).
+
+Actual analyzed syntax is now retained alongside HIR for rich environment
+preparation: [source analysis records](../runtime/compiled-macro-source-analysis.md).
+The records retain reader/expansion forms and actual context/phase/origin;
+compiler-only lowering nodes have no source record. Executing focused evidence
+passes 9 native macro and 38 compiler tests. This does not certify a complete
+source AST, inference, rich source-level `&env`, bootstrap or M3 acceptance.
+
+Source records now preserve immutable lexical/namespace snapshots and resolved
+declarations. Native bounded form construction preserves canonical data, sharing,
+metadata normalization, exact scalar storage and Store identity without compiling
+transport fragments. Sixteen focused native tests pass; a separate fresh upstream
+rich environment oracle checks sixteen observations and thirteen executed results.
+The required full workspace baseline passes 981 tests with zero failures and
+17 existing ignores across 101 groups, including all 47 runtime ABI tests.
+Source macro `&env`, memoized environment graph construction, complete AST/inference,
+original M3 acceptance remain unestablished. Subsequent focused set transport
+evidence is recorded below; it does not establish the complete environment schema. No
+inventory declaration is reclassified on this preparatory evidence.
+
+Queued native graph transport has three executing regressions for shared binding
+identity, a 96-binding chain, declaration environments, bounds and once-only
+effects. The native representation keeps explicit backend facts; it does not
+establish the portable source `&env` schema, AST inference or invocation contract.
+See [analysis graph](../runtime/compiled-macro-analysis-graph.md). Original M3
+acceptance remains open and no inventory declaration is reclassified.
+
+Staged declaration preparation now retains actual definition initializer syntax
+before body analysis and actual named function syntax before method expansion.
+An executing native graph query inspects both fixed and variadic bodies and then
+executes both signatures in each Store; it fails with the prior graph transport.
+This does not certify portable function metadata, inference or source `&env`.
+
+
+Retained set prerequisites now include pinned ISet/ITransientSet,
+PersistentHashSet/TransientHashSet, HashSetIter and KeySeq/keys selections with
+explicit source adaptations and retained EPL notices. Import verification covers
+261 files; each new review remains in-progress. Native construction and decoding
+retain canonical Store descriptor identity, metadata and bounded HAMT traversal.
+Namespace `:excludes` now carries a real persistent set. Literal sets above eight
+entries use the retained HAMT factory, while source effects preserve textual
+order (the accepted variance from pinned reader hash iteration).
+
+Expanded focused execution passes 18 tests: seven graph, four existing HAMT
+sequence, six set and one Error predicate regression. A separate ABI test rejects
+copied descriptor identity after GC. Generic ES6/printing helpers, exact duplicate
+error messages and arbitrary custom KeySeq cursors remain pending. A fresh force-compiled pinned ClojureScript corpus matches 39 observations
+exactly, and independently decoded native results agree in both Stores after GC.
+The first native attempt failed on unimported public empty/vec helpers; the final
+focused corpus invokes the retained -empty method and transports keys directly.
+Those public helpers remain pending. The required workspace baseline for this set prerequisite source passes
+998/0/17 across 105 groups. Original M3 environment/bootstrap acceptance remains open. No declaration is reclassified as fully implemented.
+
+
+Native compiler namespace data now preserves explicit source use/rename roles,
+including unchanged-name and dual-role referrals, required-library identity
+entries and separate macro import maps. Fresh pinned evidence preserves nullable
+shape and field presence across 18 map fields in three source namespaces; native
+compiled queries match the shared expected corpus in both phases after GC. See
+[namespace graph data](../runtime/compiled-macro-namespace-data.md). This does not
+certify default/reload/implicit namespace policy, full declaration/AST/inference
+schema or actual source macro &env invocation. No inventory declaration is
+reclassified and original M3 acceptance remains open.
+
+
+Macro graph namespace timing now preserves the enclosing top-level snapshot
+separately from the live resolution catalog. Fresh primary observations retain
+nested/redefinition timing, staged function metadata and exact named self binding
+records; executing native queries verify snapshot visibility and identity through
+initializer/function environments after GC. See
+[declaration observations](../runtime/compiled-macro-declaration-observations.md).
+Complete declaration schema, AST/inference and actual implicit &env remain open;
+no inventory declaration is reclassified as complete.

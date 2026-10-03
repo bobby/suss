@@ -128,3 +128,43 @@
             (throw (suss.bootstrap/error (str_ "Duplicate key: " (aget arr i))))
             (recur (+ i 2)))))
       (-persistent! ret))))
+
+;; Pinned core.cljs PersistentHashSet static initializers, EPL-1.0.
+;; Explicit dotimes/Error/threshold adapters; all branches retained.
+(set! (.-EMPTY PersistentHashSet)
+  (PersistentHashSet. nil (.-EMPTY PersistentArrayMap) empty-unordered-hash))
+
+(set! (.-fromArray PersistentHashSet)
+  (fn [items ^boolean no-clone]
+    (let [len (alength items)]
+      (if (<= len (.-HASHMAP_THRESHOLD PersistentArrayMap))
+        (let [arr (if no-clone items (aclone items))]
+          (loop [i 0
+                 out (transient (.-EMPTY PersistentArrayMap))]
+            (if (< i len)
+              (recur (inc i) (-assoc! out (aget items i) nil))
+              (PersistentHashSet. nil (-persistent! out) nil))))
+       (loop [i 0
+              out (transient (.-EMPTY PersistentHashSet))]
+         (if (< i len)
+           (recur (inc i) (-conj! out (aget items i)))
+           (-persistent! out)))))))
+
+(set! (.-createWithCheck PersistentHashSet)
+      (fn [items]
+        (let [len (alength items)
+              t (-as-transient (.-EMPTY PersistentHashSet))]
+          (loop [i 0]
+            (when (< i len)
+              (-conj! t (aget items i))
+              (when-not (= (count t) (inc i))
+                (throw (suss.bootstrap/error (str_ "Duplicate key: " (aget items i)))))
+              (recur (inc i))))
+          (-persistent! t))))
+
+(set! (.-createAsIfByAssoc PersistentHashSet)
+      (fn [items]
+        (let [len (alength items)
+              t (-as-transient (.-EMPTY PersistentHashSet))]
+          (loop [i 0] (when (< i len) (-conj! t (aget items i)) (recur (inc i))))
+          (-persistent! t))))

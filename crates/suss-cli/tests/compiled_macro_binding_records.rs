@@ -26,6 +26,11 @@ impl portable::ExpansionHost for Observe {
         let Kind::List(items) = &form.kind else {
             return Ok(None);
         };
+        if matches!(&items[0].kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "expanded-initializer") {
+            return Ok(Some(Form {
+                span: form.span.clone(), metadata: vec![], kind: Kind::Number(41.0),
+            }));
+        }
         if !matches!(&items[0].kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "checkpoint")
         {
             return Ok(None);
@@ -76,6 +81,68 @@ fn scalar(session: &mut Session, source: &str) -> f64 {
 }
 
 #[test]
+fn compiler_catch_records_keep_private_payload_and_immutable_source_declarations() {
+    use portable::hir::{SourceBinding, SourceRole};
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut host = Observe::default();
+        let source = r#"(def prior 40)
+(def result (let [$exception2 7 x prior]
+  (try (throw 42) (catch :default problem (checkpoint "caught" problem)))
+  (checkpoint "outside" x)))
+(def prior 41)"#;
+        session.eval_with_macros(source, &mut host).unwrap();
+        assert_eq!(scalar(&mut session, "result"), 40.0);
+        assert_eq!(scalar(&mut session, "prior"), 41.0);
+        let caught = snapshot(&host, "caught");
+        let problem = &caught["problem"];
+        assert_eq!(problem.kind, LocalKind::Catch);
+        assert_eq!(problem.source_kind(), LocalKind::Let);
+        let SourceRole::CatchBinding { hidden, access } = &problem.source_role else { panic!("source catch alias") };
+        let Kind::Symbol(name) = &hidden.declaration.kind else { panic!("private catch symbol") };
+        assert_eq!(name.name, "$exception2$");
+        assert!(caught.contains_key(&name.name));
+        assert!(caught.contains_key("$exception2"));
+        assert_eq!(hidden.id, problem.id);
+        assert_ne!(hidden.id, caught["$exception2"].id);
+        assert_eq!(hidden.kind, LocalKind::Catch);
+        assert!(hidden.initializer.is_none());
+        assert!(matches!(access.kind, Expression::Local(id) if id == hidden.id));
+        assert!(access.source.is_none());
+        let SourceRole::PrivateCatch { anchor } = &hidden.source_role else { panic!("private payload role") };
+        assert!(source[anchor.clone()].starts_with("(try "));
+        let outside = snapshot(&host, "outside");
+        assert!(!outside.contains_key(&name.name));
+        assert!(!outside.contains_key("problem"));
+        assert_eq!(outside["$exception2"].id, caught["$exception2"].id);
+        let original = caught["x"].initializer.as_ref().unwrap().source.as_ref().unwrap();
+        assert_eq!(original.context, portable::AnalysisContext::Expression);
+        assert!(original.locals.contains_key("$exception2"));
+        assert!(!original.locals.contains_key("x"));
+        assert!(!original.locals.contains_key(&name.name));
+        let Some(SourceBinding::Global { global, declaration: Some(info) }) = &original.resolved else { panic!("actual resolved declaration") };
+        assert_eq!(global.name(), "prior");
+        assert!(matches!(info.initializer.as_ref().unwrap().kind, Expression::Literal(portable::hir::Literal::Number(40.0))));
+        let catalog = &original.scope.declarations[global];
+        assert!(matches!(catalog.initializer.as_ref().unwrap().kind, Expression::Literal(portable::hir::Literal::Number(40.0))));
+        assert_eq!(original.origin.as_ref().unwrap().text(), source);
+    }
+}
+
+#[test]
+fn compiler_catch_private_payload_name_avoids_the_user_catch_alias() {
+    use portable::hir::SourceRole;
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut host = Observe::default();
+        session.eval_with_macros("(try (throw 42) (catch :default $exception0 (checkpoint \"caught\" $exception0)))", &mut host).unwrap();
+        let caught = snapshot(&host, "caught");
+        let SourceRole::CatchBinding { hidden, .. } = &caught["$exception0"].source_role else { panic!("user catch alias") };
+        let Kind::Symbol(name) = &hidden.declaration.kind else { panic!("private payload") };
+        assert_ne!(name.name, "$exception0");
+        assert!(matches!(caught[&name.name].source_role, SourceRole::PrivateCatch { .. }));
+    }
+}
+
+#[test]
 fn compiler_macro_binding_records_preserve_initializer_shadow_scope_and_once_only_effects() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut host = Observe::default();
@@ -99,6 +166,19 @@ fn compiler_macro_binding_records_preserve_initializer_shadow_scope_and_once_onl
         assert_eq!(restored.id, outer.id);
         assert_eq!(&source[outer.declaration.span.clone()], "^:private x");
         assert!(inner.initializer.is_some());
+        let analyzed = outer.initializer.as_ref().unwrap().source.as_ref().unwrap();
+        assert_eq!(analyzed.context, portable::AnalysisContext::Expression);
+        assert_eq!(analyzed.phase, session.phase());
+        assert_eq!(analyzed.namespace, "user");
+        assert_eq!(analyzed.origin.as_ref().unwrap().text(), source);
+        assert_eq!(&source[analyzed.form.span.clone()], "(do (.push effects 1) 41)");
+        let Kind::List(parts) = &analyzed.form.kind else { panic!("actual do syntax") };
+        assert!(matches!(&parts[0].kind, Kind::Symbol(name) if name.name == "do"));
+        let Expression::Do(children) = &outer.initializer.as_ref().unwrap().kind else { unreachable!() };
+        assert!(children.iter().all(|child| child.source.is_some()));
+        let inner_source = inner.initializer.as_ref().unwrap().source.as_ref().unwrap();
+        assert_eq!(&source[inner_source.form.span.clone()], "(+ x 1)");
+        assert!(matches!(inner.initializer.as_ref().unwrap().kind, Expression::Arithmetic { .. }));
     }
 }
 
@@ -350,5 +430,39 @@ fn compiler_macro_nested_definitions_keep_each_declaration_and_initializer_toget
             Expression::Do(_)
         ));
         assert_eq!(&source[outer.declaration.span.clone()], "tracked");
+    }
+}
+
+#[test]
+fn compiler_source_analysis_keeps_actual_expansion_instead_of_relabeling_the_macro_call() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut host = Observe::default();
+        let source = r#"(def result (let [x (expanded-initializer)] (checkpoint "expanded" x)))"#;
+        session.eval_with_macros(source, &mut host).unwrap();
+        session.collect().unwrap();
+        assert_eq!(scalar(&mut session, "result"), 41.0);
+        let init = snapshot(&host, "expanded")["x"].initializer.as_ref().unwrap();
+        let analyzed = init.source.as_ref().unwrap();
+        assert!(matches!(analyzed.form.kind, Kind::Number(41.0)));
+        // The original text contains a call, not a numeric source token. The
+        // record retains actual expansion syntax and only call-site provenance.
+        assert_eq!(&source[analyzed.form.span.clone()], "(expanded-initializer)");
+        assert_eq!(analyzed.context, portable::AnalysisContext::Expression);
+        assert_eq!(analyzed.phase, session.phase());
+        assert_eq!(analyzed.origin.as_ref().unwrap().text(), source);
+        assert!(matches!(init.kind, Expression::Literal(portable::hir::Literal::Number(41.0))));
+    }
+    let source = r#"(let [x 41] (checkpoint "owned" x))"#;
+    for phase in [portable::resolve::Phase::Runtime, portable::resolve::Phase::Macro] {
+        let mut host = Observe::default();
+        portable::prepare_fragment_forms_with_expander(
+            suss_reader::forms::read_forms(source).unwrap(), 0..source.len(),
+            &portable::resolve::Environment::default(), phase, &mut host,
+        ).unwrap();
+        let init = snapshot(&host, "owned")["x"].initializer.as_ref().unwrap();
+        let analyzed = init.source.as_ref().unwrap();
+        assert!(analyzed.origin.is_none());
+        assert_eq!(analyzed.phase, phase);
+        assert!(matches!(analyzed.form.kind, Kind::Number(41.0)));
     }
 }

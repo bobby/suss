@@ -38,3 +38,5 @@
  NodeSeq ArrayNodeSeq HashMapIter TransientHashMap create-inode-seq create-array-node-seq
  create-node array-to-transient-hash-map array->transient-hash-map pack-array-node
  inode-kv-reduce nil-iter equiv-map every? reduce-kv)
+
+(declare KeySeq keys ISet ITransientSet PersistentHashSet TransientHashSet HashSetIter set set? hash-set disj disj! es6-set-entries-iterator)

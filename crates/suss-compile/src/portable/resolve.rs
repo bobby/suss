@@ -168,9 +168,13 @@ struct Scope {
     namespace: String,
     aliases: BTreeMap<String, String>,
     refers: BTreeMap<String, Global>,
+    used_refers: BTreeSet<String>,
+    renamed_refers: BTreeSet<String>,
     excluded_core: BTreeSet<String>,
     macro_aliases: BTreeMap<String, String>,
     macro_refers: BTreeMap<String, (String, String)>,
+    used_macro_refers: BTreeSet<String>,
+    renamed_macro_refers: BTreeSet<String>,
 }
 impl Scope {
     fn new(namespace: &str) -> Self {
@@ -178,9 +182,13 @@ impl Scope {
             namespace: namespace.into(),
             aliases: BTreeMap::new(),
             refers: BTreeMap::new(),
+            used_refers: BTreeSet::new(),
+            renamed_refers: BTreeSet::new(),
             excluded_core: BTreeSet::new(),
             macro_aliases: BTreeMap::new(),
             macro_refers: BTreeMap::new(),
+            used_macro_refers: BTreeSet::new(),
+            renamed_macro_refers: BTreeSet::new(),
         }
     }
 }
@@ -190,6 +198,8 @@ pub struct DefinitionInfo {
     pub declaration: suss_reader::forms::Form,
     pub docstring: Option<Vec<u16>>,
     pub origin: Option<super::SourceOrigin>,
+    /// Actual initializer syntax, available before its body is analyzed.
+    pub initializer_form: Option<suss_reader::forms::Form>,
     pub initializer: Option<std::sync::Arc<super::hir::Hir>>,
     pub once: bool,
 }
@@ -198,9 +208,13 @@ pub struct NamespaceScope<'a> {
     pub namespace: &'a str,
     pub aliases: &'a BTreeMap<String, String>,
     pub refers: &'a BTreeMap<String, Global>,
+    pub used_refers: &'a BTreeSet<String>,
+    pub renamed_refers: &'a BTreeSet<String>,
     pub excluded_core: &'a BTreeSet<String>,
     pub macro_aliases: &'a BTreeMap<String, String>,
     pub macro_refers: &'a BTreeMap<String, (String, String)>,
+    pub used_macro_refers: &'a BTreeSet<String>,
+    pub renamed_macro_refers: &'a BTreeSet<String>,
     pub declarations: Vec<(&'a Global, &'a DefinitionInfo)>,
 }
 /// Explicit input to analysis, shared by future AOT, REPL and macro-session callers.
@@ -210,6 +224,7 @@ pub struct Environment {
     namespaces: BTreeSet<(Phase, String)>,
     bindings: BTreeMap<Global, Binding>,
     definitions: BTreeMap<Global, DefinitionInfo>,
+    source_generation: u64,
     scopes: BTreeMap<(Phase, String), Scope>,
     current: BTreeMap<Phase, String>,
     materialized_bootstrap: BTreeSet<Global>,
@@ -270,6 +285,7 @@ impl Environment {
             namespaces: BTreeSet::new(),
             bindings: BTreeMap::new(),
             definitions: BTreeMap::new(),
+            source_generation: 0,
             scopes: BTreeMap::new(),
             current: BTreeMap::new(),
             materialized_bootstrap: BTreeSet::new(),
@@ -424,7 +440,12 @@ impl Environment {
     fn scope(&self, phase: Phase) -> &Scope {
         &self.scopes[&(phase, self.current[&phase].clone())]
     }
+    fn source_changed(&mut self) {
+        self.source_generation = self.source_generation.checked_add(1).expect("compiler source generation exhausted");
+    }
+    pub(crate) fn source_generation(&self) -> u64 { self.source_generation }
     fn scope_mut(&mut self, phase: Phase) -> &mut Scope {
+        self.source_changed();
         let namespace = self.current[&phase].clone();
         self.scopes
             .get_mut(&(phase, namespace))
@@ -438,12 +459,18 @@ impl Environment {
         NamespaceScope {
             namespace: &scope.namespace, aliases: &scope.aliases,
             refers: &scope.refers, excluded_core: &scope.excluded_core,
+            used_refers: &scope.used_refers, renamed_refers: &scope.renamed_refers,
             macro_aliases: &scope.macro_aliases, macro_refers: &scope.macro_refers,
+            used_macro_refers: &scope.used_macro_refers, renamed_macro_refers: &scope.renamed_macro_refers,
             declarations: self.definitions.iter().filter(|(global, _)|
                 global.phase() == phase && global.namespace() == scope.namespace).collect(),
         }
     }
+    pub fn definition_info(&self, global: &Global) -> Option<&DefinitionInfo> {
+        self.definitions.get(global)
+    }
     pub(crate) fn record_definition(&mut self, global: Global, info: DefinitionInfo) {
+        self.source_changed();
         self.definitions.insert(global, info);
     }
     /// Explicit declarations, not evidence that any source file has loaded.
@@ -464,7 +491,7 @@ impl Environment {
             .collect()
     }
     pub(crate) fn materialize_bootstrap(&mut self, global: Global) {
-        self.materialized_bootstrap.insert(global);
+        if self.materialized_bootstrap.insert(global) { self.source_changed(); }
     }
     /// Bootstrap cell initializers for native hosts; source values share these
     /// canonical identities and later declarations may replace their contents.
@@ -512,6 +539,7 @@ impl Environment {
             .entry((phase, namespace.into()))
             .or_insert_with(|| Scope::new(namespace));
         self.current.insert(phase, namespace.into());
+        self.source_changed();
         Ok(())
     }
     /// An ns declaration replaces imports; entering a REPL namespace preserves them.
@@ -524,6 +552,7 @@ impl Environment {
         let namespace = self.current[&phase].clone();
         self.scopes
             .insert((phase, namespace.clone()), Scope::new(&namespace));
+        self.source_changed();
         Ok(())
     }
     pub fn declare_cell(
@@ -557,6 +586,7 @@ impl Environment {
         self.declare_namespace(phase, &global.namespace)?;
         self.bindings
             .insert(global.clone(), Binding::Cell(global.clone()));
+        self.source_changed();
         Ok(global)
     }
     pub(crate) fn protocol_key(&mut self, protocol: &Global, method: &str, arity: usize) -> Global {
@@ -577,6 +607,28 @@ impl Environment {
         self.bindings
             .insert(global.clone(), Binding::InternalCell(global.clone()));
         global
+    }
+    /// Retain the explicit source require edge, including imports without aliases.
+    /// This is a compiler catalog fact; it does not certify initialized code.
+    pub(crate) fn record_requirement(
+        &mut self,
+        phase: Phase,
+        namespace: &str,
+        macros: bool,
+    ) -> Result<(), Diagnostic> {
+        valid_namespace(namespace)?;
+        let target = canonical(namespace);
+        let catalog = if macros { &self.macro_namespaces } else { &self.namespaces };
+        if !catalog.contains(&(phase, target.into())) {
+            return Err(error(format!("Unknown {phase:?} required namespace {namespace}")));
+        }
+        let scope = self.scope_mut(phase);
+        let aliases = if macros { &mut scope.macro_aliases } else { &mut scope.aliases };
+        if aliases.get(namespace).is_some_and(|old| old != target) {
+            return Err(error(format!("Ambiguous required namespace alias {namespace}")));
+        }
+        aliases.insert(namespace.into(), target.into());
+        Ok(())
     }
     pub fn alias(&mut self, phase: Phase, alias: &str, namespace: &str) -> Result<(), Diagnostic> {
         valid_namespace(alias)?;
@@ -609,6 +661,16 @@ impl Environment {
         namespace: &str,
         name: &str,
     ) -> Result<(), Diagnostic> {
+        self.refer_with_role(phase, local, namespace, name, local != name)
+    }
+    pub(crate) fn refer_with_role(
+        &mut self,
+        phase: Phase,
+        local: &str,
+        namespace: &str,
+        name: &str,
+        renamed: bool,
+    ) -> Result<(), Diagnostic> {
         valid_name(local)?;
         valid_namespace(namespace)?;
         valid_name(name)?;
@@ -637,7 +699,9 @@ impl Environment {
         {
             return Err(error(format!("Ambiguous binding {local}")));
         }
-        self.scope_mut(phase).refers.insert(local.into(), global);
+        let scope = self.scope_mut(phase);
+        scope.refers.insert(local.into(), global);
+        if renamed { &mut scope.renamed_refers } else { &mut scope.used_refers }.insert(local.into());
         Ok(())
     }
     pub fn exclude_core(&mut self, phase: Phase, name: &str) -> Result<(), Diagnostic> {
@@ -703,6 +767,16 @@ impl Environment {
         namespace: &str,
         name: &str,
     ) -> Result<(), Diagnostic> {
+        self.macro_refer_with_role(phase, local, namespace, name, local != name)
+    }
+    pub(crate) fn macro_refer_with_role(
+        &mut self,
+        phase: Phase,
+        local: &str,
+        namespace: &str,
+        name: &str,
+        renamed: bool,
+    ) -> Result<(), Diagnostic> {
         valid_name(local)?;
         let namespace = canonical(namespace);
         if !self
@@ -721,6 +795,7 @@ impl Environment {
             return Err(error(format!("Ambiguous macro binding {local}")));
         }
         scope.macro_refers.insert(local.into(), target);
+        if renamed { &mut scope.renamed_macro_refers } else { &mut scope.used_macro_refers }.insert(local.into());
         Ok(())
     }
     pub fn resolve_source_macro(&self, phase: Phase, symbol: &Symbol) -> Option<(String, String)> {

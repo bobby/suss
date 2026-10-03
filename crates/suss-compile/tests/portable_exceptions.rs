@@ -33,12 +33,14 @@ fn handler_regions_require_fixed_shapes_and_throw_edges_require_defined_values()
     assert!(portable::compile_ir(&malformed).is_err());
 
     let nil = Hir {
+        source: None,
         span: 1..5,
         metadata: vec![],
         ty: Type::Nil,
         kind: Expression::Literal(Literal::Nil),
     };
     let malformed = Hir {
+        source: None,
         span: 0..9,
         metadata: vec![],
         ty: Type::Value,
@@ -71,6 +73,7 @@ fn public_hir_cannot_recur_across_a_handler_region() {
     body.kind = Expression::Recur {
         target,
         arguments: vec![Hir {
+            source: None,
             span: 1..5,
             metadata: vec![],
             ty: Type::Number,

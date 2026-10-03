@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "2cc8c47c3534765c679f8948fdd7fa6170da12d2fc22aaa59fe15a9955aa7e6d",
+  "replacement": "(set! (.-fromArray PersistentHashSet)\n  (fn [items ^boolean no-clone]\n    (let [len (alength items)]\n      (if (<= len (.-HASHMAP_THRESHOLD PersistentArrayMap))\n        (let [arr (if no-clone items (aclone items))]\n          (loop [i 0\n                 out (transient (.-EMPTY PersistentArrayMap))]\n            (if (< i len)\n              (recur (inc i) (-assoc! out (aget items i) nil))\n              (PersistentHashSet. nil (-persistent! out) nil))))\n       (loop [i 0\n              out (transient (.-EMPTY PersistentHashSet))]\n         (if (< i len)\n           (recur (inc i) (-conj! out (aget items i)))\n           (-persistent! out)))))))",
+  "rationale": "Retain all source branches; expand dotimes into ordered loop/recur and adapt the canonical HASHMAP_THRESHOLD property spelling. Existing transient map/set operations preserve duplicate and nil-value behavior."
+}

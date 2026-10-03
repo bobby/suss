@@ -114,6 +114,7 @@ fn source_method_roles_match_pinned_arguments_receiver_and_shadow_facts_without_
                 type_declaration,
                 argument,
                 access,
+                protocol_receiver,
                 ..
             } = &receiver.source_role
             else {
@@ -131,6 +132,7 @@ fn source_method_roles_match_pinned_arguments_receiver_and_shadow_facts_without_
             assert_eq!(receiver.origin.as_ref().unwrap().text(), source);
             assert!(matches!(access.kind, Expression::Local(id) if id == receiver.id));
             assert_eq!(argument.is_some(), protocol);
+            assert_eq!(*protocol_receiver, protocol);
             if let Some(argument) = argument {
                 assert_eq!(argument.id, receiver.id);
                 assert_eq!(
@@ -208,24 +210,61 @@ fn repeated_receiver_names_keep_this_as_role_and_the_actual_argument_shadow() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut host = Observe::default();
         session.eval_with_macros(source, &mut host).unwrap();
-        assert_eq!(serde_json::json!(host.calls), serde_json::json!([
-            ["protocol-duplicate", [["arbitrary", ["let", null, false], ["arg", 1, false]]]],
-            ["object-duplicate", [["arbitrary", ["let", null, false], ["arg", 0, false]]]],
-            ["object-triple", [["arbitrary", ["let", null, false], ["arg", 1, false]]]]
-        ]));
-        for (label, expected_index) in [("protocol-duplicate", 1), ("object-duplicate", 0), ("object-triple", 1)] {
+        assert_eq!(
+            serde_json::json!(host.calls),
+            serde_json::json!([
+                [
+                    "protocol-duplicate",
+                    [["arbitrary", ["let", null, false], ["arg", 1, false]]]
+                ],
+                [
+                    "object-duplicate",
+                    [["arbitrary", ["let", null, false], ["arg", 0, false]]]
+                ],
+                [
+                    "object-triple",
+                    [["arbitrary", ["let", null, false], ["arg", 1, false]]]
+                ]
+            ])
+        );
+        for (label, expected_index) in [
+            ("protocol-duplicate", 1),
+            ("object-duplicate", 0),
+            ("object-triple", 1),
+        ] {
             let receiver = &host.locals[label]["arbitrary"];
-            let SourceRole::MethodThis { receiver_declaration, argument: Some(argument), access, .. } = &receiver.source_role else {
+            let SourceRole::MethodThis {
+                receiver_declaration,
+                argument: Some(argument),
+                access,
+                ..
+            } = &receiver.source_role
+            else {
                 panic!("this-as shadows the actual same-named user argument");
             };
-            assert_eq!(argument.source_kind(), LocalKind::Argument { index: expected_index, rest: false });
+            assert_eq!(
+                argument.source_kind(),
+                LocalKind::Argument {
+                    index: expected_index,
+                    rest: false
+                }
+            );
             assert_ne!(argument.id, receiver.id);
             if label == "object-duplicate" {
-                assert!(argument.shadow.is_none(), "implicit Object receiver is not a source formal");
+                assert!(
+                    argument.shadow.is_none(),
+                    "implicit Object receiver is not a source formal"
+                );
             }
             if label == "object-triple" {
                 let previous = argument.shadow.as_ref().unwrap();
-                assert_eq!(previous.source_kind(), LocalKind::Argument { index: 0, rest: false });
+                assert_eq!(
+                    previous.source_kind(),
+                    LocalKind::Argument {
+                        index: 0,
+                        rest: false
+                    }
+                );
                 assert!(previous.shadow.is_none());
                 assert_ne!(previous.id, argument.id);
                 assert_ne!(previous.id, receiver.id);
@@ -236,15 +275,28 @@ fn repeated_receiver_names_keep_this_as_role_and_the_actual_argument_shadow() {
             assert_eq!(receiver.declaration.span, argument.declaration.span);
         }
         session.collect().unwrap();
-        for call in ["(duplicate-probe (DuplicateRole.) 7)", "(.method (DuplicateRole.) 7)", "(.method (TripleRole.) 7 8)"] {
+        for call in [
+            "(duplicate-probe (DuplicateRole.) 7)",
+            "(.method (DuplicateRole.) 7)",
+            "(.method (TripleRole.) 7 8)",
+        ] {
             let value = session.eval(call).unwrap();
             session.collect().unwrap();
-            session.inspect(&value, |mut store, value| {
-                let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap()
-                    .fields(&mut store)?.next().unwrap().unwrap_f64();
-                assert_eq!(number.to_bits(), 1.0f64.to_bits());
-                Ok(())
-            }).unwrap();
+            session
+                .inspect(&value, |mut store, value| {
+                    let number = value
+                        .unwrap_anyref()
+                        .unwrap()
+                        .as_struct(&store)?
+                        .unwrap()
+                        .fields(&mut store)?
+                        .next()
+                        .unwrap()
+                        .unwrap_f64();
+                    assert_eq!(number.to_bits(), 1.0f64.to_bits());
+                    Ok(())
+                })
+                .unwrap();
         }
     }
 }

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c4d97d8eb33f33da3e2d54f524b14a08e32dec9dad6797aa26d57ef733a7b0e9",
+  "replacement": "(def keys\n \"Returns a sequence of the map's keys, in the same order as (seq map).\"\n(fn [map]\n  (let [mseq (seq map)] (when mseq (KeySeq. mseq nil)))))",
+  "rationale": "Complete pinned set/KeySeq declaration retained. Explicit defn/when-let/if-let and known nonchunked set forEach adapters preserve order and branches. The reduce-kv callback accepts its real three native operands; unused arguments remain unused. Typed Error catching uses rooted native Error identity and rethrows other payloads. Error constructors use the existing typed adapter. Full native execution, fresh pinned comparison, generic ES6 interfaces and M3 acceptance remain pending."
+}

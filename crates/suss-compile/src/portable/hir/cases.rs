@@ -105,6 +105,7 @@ impl Analyzer<'_> {
             for (syntax, value) in group.into_iter().rev() {
                 let comparison = if primitive {
                     Hir {
+                        source: None,
                         span: syntax.span.clone(),
                         metadata: syntax.metadata.clone(),
                         ty: Type::Bool,
@@ -126,6 +127,7 @@ impl Analyzer<'_> {
                     };
                     let callee = self.form(&symbol)?;
                     Hir {
+                        source: None,
                         span: syntax.span.clone(),
                         metadata: syntax.metadata.clone(),
                         ty: Type::Value,
@@ -145,6 +147,7 @@ impl Analyzer<'_> {
             body = self.control_if(form, condition, result, body);
         }
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: body.ty,

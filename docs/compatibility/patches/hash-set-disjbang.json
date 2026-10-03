@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b9c22b181d6a9e76ceeb9608b3f8e53d1f850a830a5e1125eea753bbde8b8396",
+  "replacement": "(def disj!\n \"disj[oin]. Returns a transient set of the same (hashed/sorted) type, that\n  does not contain key(s).\"\n(fn ([tcoll val]\n    (-disjoin! tcoll val))\n  ([tcoll val & vals]\n    (let [ntcoll (-disjoin! tcoll val)]\n      (if vals\n        (recur ntcoll (first vals) (next vals))\n        ntcoll)))))",
+  "rationale": "Complete pinned set/KeySeq declaration retained. Explicit defn/when-let/if-let and known nonchunked set forEach adapters preserve order and branches. The reduce-kv callback accepts its real three native operands; unused arguments remain unused. Typed Error catching uses rooted native Error identity and rethrows other payloads. Error constructors use the existing typed adapter. Full native execution, fresh pinned comparison, generic ES6 interfaces and M3 acceptance remain pending."
+}

@@ -13,6 +13,7 @@ use suss_compile::{
 #[test]
 fn nominal_public_hir_and_ir_reject_bad_shapes_before_emission() {
     let value = Hir {
+        source: None,
         span: 2..5,
         metadata: vec![],
         ty: Type::Nil,
@@ -34,6 +35,7 @@ fn nominal_public_hir_and_ir_reject_bad_shapes_before_emission() {
         Nominal::Satisfies,
     ] {
         let invalid = Hir {
+            source: None,
             span: 1..9,
             metadata: vec![],
             ty: operation.result(),
@@ -45,6 +47,7 @@ fn nominal_public_hir_and_ir_reject_bad_shapes_before_emission() {
         assert!(ir::lower(&invalid).is_err(), "{operation:?}");
     }
     let invalid_descriptor = Hir {
+        source: None,
         span: 1..9,
         metadata: vec![],
         ty: Type::Value,
@@ -55,6 +58,7 @@ fn nominal_public_hir_and_ir_reject_bad_shapes_before_emission() {
     };
     assert!(ir::lower(&invalid_descriptor).is_err());
     let valid = Hir {
+        source: None,
         span: 1..9,
         metadata: vec![],
         ty: Type::Value,
@@ -136,6 +140,7 @@ fn live_protocol_cell_reference_rejects_forged_hir_and_ir_result_types() {
         .declare_cell(Phase::Runtime, "user", "read")
         .unwrap();
     let mut hir = Hir {
+        source: None,
         span: 1..4,
         metadata: vec![],
         ty: Type::Number,

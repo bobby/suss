@@ -34,6 +34,7 @@ impl Analyzer<'_> {
         };
         let (kind, ty) = self.global_value(&symbol, form.span.clone())?;
         let constructor = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             ty,
@@ -125,6 +126,7 @@ impl Analyzer<'_> {
                 };
                 let (kind, ty) = self.global_value(&symbol, form.span.clone())?;
                 let callee = Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: vec![],
                     ty,
@@ -135,6 +137,7 @@ impl Analyzer<'_> {
                     .map(|value| self.quote_data_impl(value, depth + 1, reader_data))
                     .collect::<Result<Vec<_>, _>>()?;
                 Ok(Hir {
+                    source: None,
                     span: form.span.clone(),
                     metadata: vec![],
                     ty: Type::Value,
@@ -162,12 +165,14 @@ impl Analyzer<'_> {
         };
         let (kind, ty) = self.global_value(&symbol, form.span.clone())?;
         let callee = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             kind,
             ty,
         };
         Ok(Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
@@ -230,6 +235,7 @@ impl Analyzer<'_> {
             return Ok(value);
         }
         let result = Hir {
+            source: None,
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
@@ -244,6 +250,11 @@ impl Analyzer<'_> {
 
 // Pinned tools.reader/read-meta (reader.clj386) merges inner metadata before
 // outer metadata. Do this before constructing or evaluating any value.
+/// Normalize reader metadata as data, using the same bounded key comparison
+/// and prefix precedence as compiled quote-form lowering.
+pub fn reader_metadata_pairs(form: &Form) -> Result<Vec<Form>, Diagnostic> {
+    merged_metadata_pairs(form, true)
+}
 fn merged_metadata_pairs(form: &Form, reader_data: bool) -> Result<Vec<Form>, Diagnostic> {
     let mut entries: Vec<(Form, Form, (usize, usize))> = Vec::new();
     let mut comparisons = 1_048_576;
@@ -451,7 +462,8 @@ fn metadata_pairs(prefix: &Form) -> Result<Vec<Form>, Diagnostic> {
 
 // Keep the pinned literal hash independent of redefinitions of public hash cells.
 // The prototype's xxHash constant helpers have a different contract and are unused.
-fn identifier_hash(namespace: Option<&str>, name: &str, keyword: bool) -> i32 {
+/// The compiler's pinned identifier hash, also used by native form transport.
+pub fn identifier_hash(namespace: Option<&str>, name: &str, keyword: bool) -> i32 {
     fn mix_word(word: u32) -> u32 {
         word.wrapping_mul(0xcc9e2d51)
             .rotate_left(15)
