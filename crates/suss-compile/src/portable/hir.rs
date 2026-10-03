@@ -438,6 +438,29 @@ pub enum SourceBinding {
         declaration: Option<std::sync::Arc<super::resolve::DefinitionInfo>>,
     },
 }
+/// Actual analyzed source methods, before runtime signature wrappers or duplicate
+/// arity elimination. These are compiler facts, not portable inferred tags.
+#[derive(Debug, Clone)]
+pub struct SourceCallable {
+    pub methods: Vec<SourceMethod>,
+}
+#[derive(Debug, Clone)]
+pub struct SourceMethod {
+    pub parameters: Vec<Parameter>,
+    pub variadic: bool,
+    pub body: std::sync::Arc<Hir>,
+}
+impl SourceCallable {
+    pub fn variadic(&self) -> bool {
+        self.methods.iter().any(|method| method.variadic)
+    }
+    pub fn max_fixed_arity(&self) -> Option<usize> {
+        if self.methods.is_empty() { return None; }
+        self.methods.iter().try_fold(0, |maximum, method| {
+            method.parameters.len().checked_sub(usize::from(method.variadic)).map(|arity| maximum.max(arity))
+        })
+    }
+}
 #[derive(Debug, Clone)]
 pub struct SourceAnalysis {
     pub form: Form,
@@ -447,6 +470,7 @@ pub struct SourceAnalysis {
     pub scope: std::sync::Arc<SourceNamespace>,
     /// Namespace supplied to macro &env at enclosing top-level form entry.
     pub namespace_snapshot: std::sync::Arc<SourceNamespace>,
+    pub callable: Option<std::sync::Arc<SourceCallable>>,
     pub locals: std::sync::Arc<HashMap<String, LocalBinding>>,
     pub fields: std::sync::Arc<HashMap<String, FieldBinding>>,
     pub function_scopes: std::sync::Arc<[std::sync::Arc<FunctionScope>]>,
@@ -571,6 +595,7 @@ struct Analyzer<'a> {
     analysis_contexts: Vec<super::AnalysisContext>,
     source_namespace: Option<(u64, Phase, String, std::sync::Arc<SourceNamespace>)>,
     namespace_snapshot: Option<std::sync::Arc<SourceNamespace>>,
+    source_callables: Vec<Option<std::sync::Arc<SourceCallable>>>,
     callable_keys: BTreeMap<Global, Hir>,
     target: Option<(LoopId, usize)>,
 }
@@ -743,8 +768,12 @@ impl Analyzer<'_> {
                     }
                 })
         });
-        self.form_inner(form, context, tail, name_hint)
-            .map(|mut expression| {
+        // A nested source function gets its own fact slot. Compiler-only
+        // wrappers never become the evidence for a source function's methods.
+        self.source_callables.push(None);
+        let result = self.form_inner(form, context, tail, name_hint);
+        let callable = self.source_callables.pop().expect("source callable fact slot");
+        result.map(|mut expression| {
                 // A bootstrap/source expansion may already have returned its actual
                 // analyzed node. Preserve that record instead of attributing the
                 // original macro call to the expanded expression.
@@ -755,6 +784,7 @@ impl Analyzer<'_> {
                         name_hint: name_hint.cloned(),
                         scope,
                         namespace_snapshot: self.namespace_snapshot.as_ref().expect("top-level source snapshot").clone(),
+                        callable,
                         locals,
                         fields,
                         function_scopes,
@@ -1047,7 +1077,12 @@ impl Analyzer<'_> {
                 if !names.iter().any(|name| matches!(&name.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "&"))))
         {
             self.enter_function_scope(form, name_hint, None);
-            return self.fixed_function(form, args, bootstrap_macro);
+            let function = self.fixed_function(form, args, bootstrap_macro)?;
+            let Expression::Function { parameters, body, .. } = &function.kind else { unreachable!("analyzed fixed function") };
+            *self.source_callables.last_mut().expect("source function fact slot") = Some(std::sync::Arc::new(SourceCallable {
+                methods: vec![Self::source_method(parameters, false, body)],
+            }));
+            return Ok(function);
         }
         let outer = self.locals.clone();
         let (self_binding, signatures) = if let Some(Form {
@@ -1121,6 +1156,9 @@ impl Analyzer<'_> {
                 methods.push(method);
             }
         }
+        let source_methods = methods.iter().map(|method| {
+            Self::source_method(&method.parameters, method.variadic, &method.body)
+        }).collect();
         // The pinned compiler warns on duplicate fixed arities and executes the last body.
         methods.reverse();
         let mut arities = BTreeSet::new();
@@ -1190,7 +1228,21 @@ impl Analyzer<'_> {
                 rest_class,
             },
         };
-        self.attach_callable_signatures(form, function)
+        let function = self.attach_callable_signatures(form, function)?;
+        *self.source_callables.last_mut().expect("source function fact slot") = Some(std::sync::Arc::new(SourceCallable { methods: source_methods }));
+        Ok(function)
+    }
+    fn source_method(parameters: &[Parameter], variadic: bool, physical_body: &Hir) -> SourceMethod {
+        // fixed_function_fields adds exactly one compiler-owned recurrence loop.
+        // Retain its analyzed body, leaving any actual source loop inside intact.
+        let Expression::Loop { body, .. } = &physical_body.kind else {
+            unreachable!("analyzed function recurrence wrapper")
+        };
+        SourceMethod {
+            parameters: parameters.to_vec(),
+            variadic,
+            body: std::sync::Arc::new((**body).clone()),
+        }
     }
     fn general_method(
         &mut self,
@@ -1273,7 +1325,7 @@ impl Analyzer<'_> {
         let Kind::Vector(names) = &params.kind else {
             return Err(fail(
                 params.span.clone(),
-                "Named/multiple-arity functions are not lowered yet; expected parameter vector",
+                "Function signature requires a parameter vector",
             ));
         };
         if object_method && names.is_empty() {
@@ -2122,6 +2174,7 @@ pub(crate) fn prepare_with_origin(
         analysis_contexts: Vec::new(),
         source_namespace: None,
         namespace_snapshot: None,
+        source_callables: Vec::new(),
         callable_keys: BTreeMap::new(),
         target: None,
     };

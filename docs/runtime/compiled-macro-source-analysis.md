@@ -100,3 +100,31 @@ canonical environment graph construction, complete source
 AST/inference, declaring/passing source `&env`, and all original M3 acceptance
 remain unfinished. Keep this implementation branch together until transport is
 reviewable; independent PR review and successful final-head CI are still required.
+
+Source function facts now retain the actual validated methods before runtime
+wrapper generation and duplicate fixed-arity elimination. Each method retains
+its source parameter names, reader metadata and spans, variadic flag, and analyzed
+body. Nested source functions have separate records. Queued native graph transport
+shares one rooted `:suss/source-function` record between source ASTs and completed
+catalog declarations; aliases do not acquire source function records merely
+because their runtime value is callable. These fields are explicit compiler
+extensions, not a completed portable `:fn-var` or method AST schema.
+
+The focused executing regression checks fixed, variadic, duplicate-arity and
+alias declarations, parameter hints, identity after GC, and actual invocation
+results in both Stores. It fails on the reviewed prerequisite head and passes
+with source method retention. Full validation of this continuation is pending.
+
+The development-only `sh scripts/test-analysis-tags-oracle.sh` forces pinned
+ClojureScript analysis, runs the Node artifact, and compares 32 observations and
+11 executed scalar projections. The recorded corpus preserves field presence,
+including present nil `:inferred-ret-tag`, distinct from absent fields. Arithmetic
+`(+ "a" 1)` has inferred tag `number` while executing to the string `"a1"`.
+A literal false condition still has a union result tag in the pinned analyzer,
+and a caught value does not contribute to the observed `try` body tag. A function
+var can have no tag; unknown invocation has `any`; a hinted local keeps its hint
+when runtime storage differs. Portable inference must follow these observed
+source rules rather than substitute physical HIR types. This reference evidence
+does not certify native portable inference, full source ASTs, implicit `&env`,
+bootstrap, or M3 acceptance. Helpers are original repository code; the development
+compiler uses the existing pinned source and retained EPL notices.

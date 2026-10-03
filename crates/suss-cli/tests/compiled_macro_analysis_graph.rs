@@ -100,6 +100,73 @@ impl ExpansionHost for Inspect {
 }
 
 #[test]
+fn native_analysis_graph_retains_source_methods_before_wrappers_and_duplicate_arity_elimination() {
+    let query = r#"(fn [env]
+      (let [defs (get (get env :ns) :defs)
+            catalog (get (get env :suss/catalog) :defs)
+            fixed (get (get defs 'fixed) :suss/source-function)
+            multiple (get (get defs 'multiple) :suss/source-function)
+            duplicate (get (get defs 'duplicate) :suss/source-function)
+            nested (get (get defs 'nested) :suss/source-function)
+            nested-method (nth (get nested :suss/methods) 0)
+            inner-ast (nth (get (get nested-method :suss/body) :suss/children) 0)
+            inner-method (nth (get (get inner-ast :suss/source-function) :suss/methods) 0)
+            fixed-methods (get fixed :suss/methods)
+            multiple-methods (get multiple :suss/methods)
+            duplicate-methods (get duplicate :suss/methods)]
+        [(get fixed :suss/variadic)
+         (get fixed :suss/max-fixed-arity)
+         (get (nth fixed-methods 0) :suss/parameters)
+         (get (meta (nth (get (nth fixed-methods 0) :suss/parameters) 0)) :tag)
+         (get multiple :suss/variadic)
+         (get multiple :suss/max-fixed-arity)
+         (get (nth multiple-methods 0) :suss/parameters)
+         (get (nth multiple-methods 1) :suss/parameters)
+         (get duplicate :suss/max-fixed-arity)
+         (get (nth duplicate-methods 0) :suss/parameters)
+         (get (nth duplicate-methods 1) :suss/parameters)
+         (get (get defs 'alias) :suss/source-function)
+         (identical? multiple (get (get catalog 'multiple) :suss/source-function))
+         (get (get (nth fixed-methods 0) :suss/body) :suss/operation)
+         (get nested-method :suss/parameters)
+         (get inner-method :suss/parameters)]))"#;
+    let source = r#"
+      (def effects 0)
+      (def fixed (fn [^number x] (set! effects (+ effects 1)) x))
+      (def multiple (fn self ([x] x) ([x y & more] y)))
+      (def duplicate (fn ([x] 1) ([y] 2)))
+      (def alias fixed)
+      (def nested (fn [outer] (fn [inner] (+ outer inner))))
+      (inspect-graph)"#;
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut host = Inspect::new(query);
+        session.eval_with_macros(source, &mut host).unwrap();
+        assert_eq!(host.calls.len(), 1);
+        let Kind::Vector(values) = &host.calls[0].kind else { panic!("executed source methods query") };
+        assert_eq!(values.len(), 16);
+        assert!(matches!(values[0].kind, Kind::Bool(false)));
+        assert!(matches!(values[1].kind, Kind::Number(1.0)));
+        assert!(matches!(&values[3].kind, Kind::Symbol(name) if name.name == "number"));
+        assert!(matches!(values[4].kind, Kind::Bool(true)));
+        assert!(matches!(values[5].kind, Kind::Number(2.0)));
+        assert!(matches!(values[8].kind, Kind::Number(1.0)));
+        for (index, expected) in [(2, vec!["x"]), (6, vec!["x"]), (7, vec!["x", "y", "more"]), (9, vec!["x"]), (10, vec!["y"]), (14, vec!["outer"]), (15, vec!["inner"])] {
+            let Kind::Vector(parameters) = &values[index].kind else { panic!("actual source parameters") };
+            assert_eq!(parameters.len(), expected.len());
+            for (actual, expected) in parameters.iter().zip(expected) {
+                assert!(matches!(&actual.kind, Kind::Symbol(name) if name.name == expected));
+            }
+        }
+        assert!(matches!(values[11].kind, Kind::Nil));
+        assert!(matches!(values[12].kind, Kind::Bool(true)));
+        assert!(matches!(&values[13].kind, Kind::Keyword(name) if name.name == "do"));
+        let result = session.eval("(+ (fixed 11) (multiple 12) (multiple 12 13 14) (duplicate 17) ((nested 20) 22) effects)").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        assert!(matches!(bridge.read(&mut session, &result, 0..1).unwrap().kind, Kind::Number(81.0)));
+    }
+}
+
+#[test]
 fn native_analysis_graph_separates_top_level_namespace_snapshot_from_live_catalog() {
     let query = r#"(fn [env]
       (let [snapshot (get (get env :ns) :defs)
