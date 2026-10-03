@@ -12766,3 +12766,48 @@ Publish partial issue14 progress stacked on158, dispatch independent review,
 push significant fixes and require full baseline plus exact final-head CI.
 Next unblocked task: remaining portable declaration field presence/metadata and
 self-local method records, then cache/evaluator/lifecycle acceptance. No merge.
+
+
+## PR #159 independent review corrections — 2026-10-03
+
+Review found selected portable function fields overwrote accepted reader metadata
+policies. Actual pinned analyzer observations show non-nil :top-fn replaces the
+computed arity/arglist group, preserving presence and data kinds. Empty map/list
+removes those five fields; nil uses computed facts. A direct entry vector can
+also override :fn-var. Truthy :declared retains selected raw symbol metadata in
+the provisional catalog, while Suss source callable facts remain separate.
+Bounded CLI projection now handles these cases without evaluating source again.
+No compiler/core/reader Rust or runtime image/fingerprint change.
+
+Development corpus extends 23 to 29 declaration observations and 31 to 37 real
+Node results, preserving every original prefix and both self/local observations.
+New fixtures cover empty/populated/nil/entry/empty-sequence overrides and explicit
+declared metadata in both native caller phases. Full portable schema/catalog
+semantics, cache/evaluator/lifecycle and original M3 acceptance remain open.
+
+Review terminal evidence (all paths /private/tmp/suss-pr159-review-*):
+- oracle-before31262 and extended58664 exit1 after actual compilation/execution
+  because strict corpus/metadata shape validation still expected the old cases.
+  Validator retains exact sequence/vector kind and corpus equality.
+- native-before3196 exit101: setup corpus lacked new labels; not semantic proof.
+- native-regression23241 exit101, 0/1: empty top-fn incorrectly emitted five
+  computed fields instead of absence. Focused corrected20722 exit0:14/0/0.
+- oracle-final43202 exit0:27/2 observations and35 Node results, before extra
+  entry/empty-sequence fixtures. Python17247 exit0:118 tests.
+- oracle-sequence15127 exit1: actual bare list of entry vectors is rejected by
+  pinned analyzer with PersistentVector-to-Map$Entry ClassCastException; no quote
+  wrapper was involved. oracle-entry2014 exit1 only because corpus expected the
+  previous result count; actual entry/empty-list observations and Node ran.
+- native-entry-before15027 exit101, 0/1: tentative map-only guard rejected valid
+  direct entry vector. Guard corrected to actual mergeable reader shapes.
+- final-focused20599 exit0:28/0/0 across4 groups (host14, graph11, fullcore1,
+  declarations2), including both caller phases and GC/order/work limits. Python
+ 28592 exit0:118 tests in5.034s; formatting and git diff check pass.
+- bare-set probe27884 wrapper exit0, actual primary compile exit1 with the same
+  Map$Entry cast failure; source restored in finally. Failed primary shapes are
+  recorded, not hidden as native acceptance.
+
+Fresh final oracle55898 TERMINAL exit0:29/2 observations and37 actual Node
+results compare exactly; log /private/tmp/suss-pr159-review-oracle-frozen.log.
+Freeze reviewed source now, push significant fixes, run the exact-head required
+full workspace baseline and require final-head CI. No PR merge or issue closure.

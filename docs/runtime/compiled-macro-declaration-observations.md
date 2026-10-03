@@ -66,8 +66,8 @@ The fresh fixture establishes the following timing for these cases:
   binding records, rather than the symbol vectors in global declarations. The
   fixture preserves exact binding data, positions and present nil parameter tags.
 
-The corpus preserves its original 13 observations and extends it to 23 ordered
-snapshot/catalog observations, two self/local observations and 31 executed results. Its direct
+The corpus preserves its original 13 observations and extends it to 29 ordered
+snapshot/catalog observations, two self/local observations and 37 executed results. Its direct
 parameter-returning functions have no observed return tag. Do not substitute
 `any` or a physical closure type for absent inference facts.
 

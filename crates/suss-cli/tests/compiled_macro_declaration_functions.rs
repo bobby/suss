@@ -223,7 +223,7 @@ fn compiled_function_declarations_match_primary_presence_and_parameter_shapes() 
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
         macros.define(DEFINITION).unwrap();
-        session.eval_with_macros("(def fixed (fn [x] x)) (def multiple (fn self ([x] x) ([x y & more] y))) (def alias fixed) (def duplicate (fn ([x] 1) ([y] 2))) (declare declared) (def declared (fn [x] x)) (def ^{:arglists {:arity [x]}} mapped-arglists (fn [x] x))", &mut macros).unwrap();
+        session.eval_with_macros("(def fixed (fn [x] x)) (def multiple (fn self ([x] x) ([x y & more] y))) (def alias fixed) (def duplicate (fn ([x] 1) ([y] 2))) (declare declared) (def declared (fn [x] x)) (def ^{:arglists {:arity [x]}} mapped-arglists (fn [x] x)) (def ^{:top-fn {}} empty-top-fn (fn [x] x)) (def ^{:top-fn {:variadic? false :max-fixed-arity 1 :method-params [[override]] :arglists [[override]] :arglists-meta [nil]}} overridden (fn [x] x)) (def ^{:declared true :arglists '([given])} declared-meta (fn [x] x)) (def ^{:top-fn nil} nil-top-fn (fn [x] x)) (def ^{:top-fn [:fn-var false]} entry-top-fn (fn [x] x)) (def ^{:top-fn ()} empty-seq-top-fn (fn [x] x))", &mut macros).unwrap();
         for (label, name) in [
             ("after-fixed", "fixed"),
             ("after-multiple", "multiple"),
@@ -231,6 +231,12 @@ fn compiled_function_declarations_match_primary_presence_and_parameter_shapes() 
             ("after-duplicate", "duplicate"),
             ("after-declared-definition", "declared"),
             ("after-mapped-arglists", "mapped-arglists"),
+            ("after-empty-top-fn", "empty-top-fn"),
+            ("after-overridden", "overridden"),
+            ("after-declared-meta", "declared-meta"),
+            ("after-nil-top-fn", "nil-top-fn"),
+            ("after-entry-top-fn", "entry-top-fn"),
+            ("after-empty-seq-top-fn", "empty-seq-top-fn"),
         ] {
             let value = session
                 .eval_with_macros(&format!("(function-facts {name})"), &mut macros)

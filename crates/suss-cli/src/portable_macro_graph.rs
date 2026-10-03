@@ -992,86 +992,145 @@ impl<'a> AnalysisGraph<'a> {
                         .then_some(&pair[1])
                     })
                 };
-                let macro_flag = property("macro")
-                    .is_some_and(|value| !matches!(value.kind, Kind::Nil | Kind::Bool(false)));
-                fields.push(("fn-var", self.flag(!macro_flag)?));
-                fields.push(("variadic?", self.flag(callable.variadic())?));
-                let fixed = callable.max_fixed_arity().ok_or_else(|| {
-                    SessionError::Host(wasmtime::Error::msg("Invalid source function declaration"))
-                })?;
-                fields.push(("max-fixed-arity", self.number(fixed)?));
-                // Preserve every analyzed source signature, including duplicate
-                // arities. Emitted dispatch methods are a separate contract.
-                let mut methods = Vec::new();
-                for method in &callable.methods {
-                    let parameters = method
-                        .parameters
-                        .iter()
-                        .map(|parameter| self.symbol(&parameter.name))
-                        .collect::<Result<Vec<_>>>()?;
-                    methods.push(self.vector(&parameters)?);
-                }
-                self.charge(0)?;
-                fields.push(("method-params", self.recipe(Recipe::List(methods))?));
-                // The pinned analyzer retains the reader value of :arglists,
-                // including its quote, and maps meta over that value's elements.
-                let arglists = property("arglists");
-                let argument_data = if let Some(form) = arglists {
-                    self.form(form, depth + 1)?
-                } else {
-                    self.scalar(Literal::Nil)?
-                };
-                fields.push(("arglists", argument_data));
-                let mut argument_metadata = Vec::new();
-                if let Some(form) = arglists {
-                    let items = match &form.kind {
-                        Kind::List(items) | Kind::Vector(items) | Kind::Set(items) => {
-                            items.as_slice()
+                const FUNCTION_FIELDS: [&str; 6] = [
+                    "fn-var",
+                    "variadic?",
+                    "max-fixed-arity",
+                    "method-params",
+                    "arglists",
+                    "arglists-meta",
+                ];
+                let truthy = |form: &Form| !matches!(form.kind, Kind::Nil | Kind::Bool(false));
+                if property("declared").is_some_and(truthy) {
+                    // The pinned analyzer leaves this initializer's provisional
+                    // symbol metadata in the catalog. Completed source callable
+                    // facts above remain a separate Suss extension.
+                    for field in FUNCTION_FIELDS {
+                        if let Some(form) = property(field) {
+                            fields.push((field, self.form(form, depth + 1)?));
                         }
-                        // Map sequence entries and UTF-16 character values have
-                        // no metadata, unlike original reader collection items.
-                        Kind::Map(items) => {
-                            for _ in 0..items.len() / 2 {
-                                argument_metadata.push(self.scalar(Literal::Nil)?);
-                            }
-                            &[]
+                    }
+                } else if let Some(top) =
+                    property("top-fn").filter(|form| !matches!(form.kind, Kind::Nil))
+                {
+                    // if-some distinguishes nil from an empty map. The map
+                    // replaces the computed arity/arglist group and can also
+                    // override fn-var; retain selected field presence and data.
+                    let pairs: Vec<(&Form, &Form)> = match &top.kind {
+                        Kind::Map(items) => items
+                            .chunks_exact(2)
+                            .map(|pair| (&pair[0], &pair[1]))
+                            .collect(),
+                        // Pinned merge conjoins a direct vector as one entry.
+                        Kind::Vector(items) if items.len() == 2 => {
+                            vec![(&items[0], &items[1])]
                         }
-                        Kind::String(units) => {
-                            for _ in units {
-                                argument_metadata.push(self.scalar(Literal::Nil)?);
-                            }
-                            &[]
-                        }
-                        Kind::Nil => &[],
+                        // Empty seqable values conjoin no entries. Nonempty
+                        // reader sequences cannot contain JVM Map$Entry values.
+                        Kind::List(items) | Kind::Set(items) if items.is_empty() => vec![],
+                        Kind::String(units) if units.is_empty() => vec![],
                         _ => {
                             return Err(SessionError::Host(wasmtime::Error::msg(
-                                "Function declaration arglists requires seqable reader data",
+                                "Function declaration top-fn requires mergeable reader data",
                             )));
                         }
                     };
-                    for item in items {
-                        let pairs =
-                            hir::reader_metadata_pairs(item).map_err(SessionError::Compile)?;
-                        let value = if pairs.is_empty() {
-                            self.scalar(Literal::Nil)?
-                        } else {
-                            self.form(
-                                &Form {
-                                    span: item.span.clone(),
-                                    metadata: vec![],
-                                    kind: Kind::Map(pairs),
-                                },
-                                depth + 1,
-                            )?
-                        };
-                        argument_metadata.push(value);
+                    let macro_flag = property("macro").is_some_and(truthy);
+                    fields.push(("fn-var", self.flag(!macro_flag)?));
+                    for field in FUNCTION_FIELDS {
+                        if let Some(form) = pairs.iter().rev().find_map(|(key, value)| {
+                            matches!(&key.kind, Kind::Keyword(key)
+                                if key.namespace.is_none() && key.name == field)
+                            .then_some(*value)
+                        }) {
+                            fields.retain(|(name, _)| *name != field);
+                            fields.push((field, self.form(form, depth + 1)?));
+                        }
                     }
+                } else {
+                    let macro_flag = property("macro")
+                        .is_some_and(|value| !matches!(value.kind, Kind::Nil | Kind::Bool(false)));
+                    fields.push(("fn-var", self.flag(!macro_flag)?));
+                    fields.push(("variadic?", self.flag(callable.variadic())?));
+                    let fixed = callable.max_fixed_arity().ok_or_else(|| {
+                        SessionError::Host(wasmtime::Error::msg(
+                            "Invalid source function declaration",
+                        ))
+                    })?;
+                    fields.push(("max-fixed-arity", self.number(fixed)?));
+                    // Preserve every analyzed source signature, including duplicate
+                    // arities. Emitted dispatch methods are a separate contract.
+                    let mut methods = Vec::new();
+                    for method in &callable.methods {
+                        let parameters = method
+                            .parameters
+                            .iter()
+                            .map(|parameter| self.symbol(&parameter.name))
+                            .collect::<Result<Vec<_>>>()?;
+                        methods.push(self.vector(&parameters)?);
+                    }
+                    self.charge(0)?;
+                    fields.push(("method-params", self.recipe(Recipe::List(methods))?));
+                    // The pinned analyzer retains the reader value of :arglists,
+                    // including its quote, and maps meta over that value's elements.
+                    let arglists = property("arglists");
+                    let argument_data = if let Some(form) = arglists {
+                        self.form(form, depth + 1)?
+                    } else {
+                        self.scalar(Literal::Nil)?
+                    };
+                    fields.push(("arglists", argument_data));
+                    let mut argument_metadata = Vec::new();
+                    if let Some(form) = arglists {
+                        let items = match &form.kind {
+                            Kind::List(items) | Kind::Vector(items) | Kind::Set(items) => {
+                                items.as_slice()
+                            }
+                            // Map sequence entries and UTF-16 character values have
+                            // no metadata, unlike original reader collection items.
+                            Kind::Map(items) => {
+                                for _ in 0..items.len() / 2 {
+                                    argument_metadata.push(self.scalar(Literal::Nil)?);
+                                }
+                                &[]
+                            }
+                            Kind::String(units) => {
+                                for _ in units {
+                                    argument_metadata.push(self.scalar(Literal::Nil)?);
+                                }
+                                &[]
+                            }
+                            Kind::Nil => &[],
+                            _ => {
+                                return Err(SessionError::Host(wasmtime::Error::msg(
+                                    "Function declaration arglists requires seqable reader data",
+                                )));
+                            }
+                        };
+                        for item in items {
+                            let pairs =
+                                hir::reader_metadata_pairs(item).map_err(SessionError::Compile)?;
+                            let value = if pairs.is_empty() {
+                                self.scalar(Literal::Nil)?
+                            } else {
+                                self.form(
+                                    &Form {
+                                        span: item.span.clone(),
+                                        metadata: vec![],
+                                        kind: Kind::Map(pairs),
+                                    },
+                                    depth + 1,
+                                )?
+                            };
+                            argument_metadata.push(value);
+                        }
+                    }
+                    self.charge(0)?;
+                    fields.push((
+                        "arglists-meta",
+                        self.recipe(Recipe::List(argument_metadata))?,
+                    ));
                 }
-                self.charge(0)?;
-                fields.push((
-                    "arglists-meta",
-                    self.recipe(Recipe::List(argument_metadata))?,
-                ));
             }
         }
         let value = self.map(fields)?;

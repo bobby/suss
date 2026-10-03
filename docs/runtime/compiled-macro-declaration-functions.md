@@ -1,10 +1,19 @@
 # Compiled function declaration facts
 
-Completed direct source function initializers now expose six selected portable
+Direct source function declarations now project six selected portable
 declaration fields to compiled macros: `:fn-var`, `:variadic?`,
 `:max-fixed-arity`, `:method-params`, `:arglists` and `:arglists-meta`.
-Their values come from immutable analyzed source callable facts and verified
+Their default values come from immutable analyzed source callable facts and verified
 reader metadata. Runtime closure storage does not supply these facts.
+
+Non-nil `:top-fn` merge data replaces the computed arity and argument-list group,
+retaining selected field presence, collection kinds and values; they may also
+replace `:fn-var`. A two-element entry vector can replace `:fn-var`; an empty map or sequence
+leaves the five computed fields absent,
+while nil uses normal callable facts. Truthy `:declared` metadata retains raw
+symbol metadata for these selected fields instead of publishing completed
+callable facts. This projection does not complete catalog timing or the entire
+portable metadata schema.
 
 Every original signature remains in `:method-params`, including duplicate fixed
 arities; each method is a vector of parameter symbols, with the rest parameter
@@ -23,8 +32,8 @@ has nil metadata for its map entry. Source provenance enriches only verified
 original reader data. It never evaluates the initializer again.
 
 The development-only pinned analyzer helper is original test code. Its corpus
-now retains 23 snapshot/catalog observations, two self/local observations and
-31 actual Node results from ClojureScript
+now retains 29 snapshot/catalog observations, two self/local observations and
+37 actual Node results from ClojureScript
 `c4295f303100bbf5afac449242d30bca1126f1a1`. The original 21 observations and
 26 executed result prefix remain unchanged. No upstream analyzer implementation
 or additional dependency is copied into shipped code.
