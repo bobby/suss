@@ -2,7 +2,7 @@
   "format_version": 1,
   "phase": "macro",
   "source_sha256": "858071073477634c6d3a296a50a83a2fe459bc999a8a58c6029afd5e503c74ab",
-  "compiler_source_sha256": "3fd68d94cfd1f1f53d03042fcb53910ba0882f59e84ef19b65d30e2312b115d3",
+  "compiler_source_sha256": "66dd1fe7ff4485e7cb57e4895179457d84ec5b41111020cc904844ac12f5020f",
   "dependency_graph_sha256": "e629b309646d8f89e377c57a77f90621dbd8746f1e32bee17eb6d4e0e1a80964",
   "runtime_abi": 2,
   "compiler": "0.1.0+portable.2",

@@ -13047,3 +13047,127 @@ issue closure or milestone completion. Repeated-declare replacement, older
 source-AST inference, arbitrary schema/shapes, self-local facts, cache/evaluator
 retirement and M3 lifecycle acceptance remain separately open. Reviewer retains
 sole heavy slot through final full baseline and explicit release.
+
+
+## Next isolated self-local regression preparation — 2026-10-03
+
+Root branch portable/m3-self-local-method-facts, worktree
+/private/tmp/suss-m3-self-local-method-facts, currently based on PR160 e009c1e.
+Modified handoff plus untracked
+crates/suss-cli/tests/compiled_macro_self_local_methods.rs; no production changes.
+The test has been formatted and git diff --check passes, but it has NOT EXECUTED.
+It captures both unchanged pinned self-local observations, all8local fields,
+12selected method-binding fields,3binding-env fields and2binding-info fields.
+Reader coordinates38–41, presence/data kinds, Runtime/Macro phases, GC and actual
+fixed/variadic function calls are retained. Field diagnostics aggregate exact
+mismatches across both phases; structural errors still fail immediately.
+
+Static pinned analyzer.cljc2208–2352 inspection shows a parameter-only pass for
+all named methods before any body expansion. Self :method-params references
+first-pass records; body parameters see the subsequently enriched self binding.
+Suss currently analyzes each signature/body before the next signature and
+SourceRole::FunctionName retains only variadic. Unknown argument :tag/:shadow
+must be present nil, with selected :env/:info data. Any correction must retain
+actual compiler-generated binding identities, pre-enrichment shadow chains,
+source-ordered body expansion and cache distinctions between pre/post-enrichment
+self records. These are static findings, not an executing semantic result.
+
+PR160 reviewer /root/review_pr160 owns the sole native/JVM/Node/Cargo slot and
+/private/tmp/suss-m3-declaration-metadata. Root has launched no heavy job since
+releasing its earlier25433. Reviewer full91488 TERMINAL0 at exact e009c1e:
+1083passed/0failed/17existingignores across118groups. Required command:
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2.
+Log /private/tmp/suss-pr160-review-full-final.log. Earlier657b1f1 full16790 failed
+on the stale provisional-document expectation; actualprimary72924 and native
+source-doc98139 (3/0/0) justify the correction included in e009c1e.
+CI37135054556 remains live on the latest poll; inventory and reproducible
+Java-free bootstrap steps passed, full workspace step remains running.
+
+Further raw callable metadata finding: primary81481 TERMINAL0; native29070
+TERMINAL101 exposed six missing scalar fields; corrected18556 TERMINAL0,
+1/0/0 in10.89s, four cases/both phases/GC and scalar7/actual arity1 calls.
+CLI-only fix keeps :suss/source-function separate from user metadata and does
+not change compiler/images/bounds. Reviewer is also assigned fresh no-initializer
+:declared/:arglists selected fn-var/method-params verification/correction before
+final push/checks. PR160 remains draft; e009 success alone cannot certify this
+unpublished correction. Repeated-declare lowerer preservation and older compiler
+false/dynamic inference remain separately tracked. Issue14 progress:
+https://github.com/bobby/suss/issues/14#issuecomment-5971010764 .
+
+Next: reviewer finishes significant fixes/docs/push and exact-head checks, then
+explicitly releases slot. Rebase this branch onto that reviewed head, initialize
+pinned submodule as needed, clean only four workspace packages when switching
+the shared target, execute focused self-local regression BEFORE production fixes.
+Compiler changes require regenerating both bootstrap manifests using --profile
+test and executing verifier. Do not set RUSTFLAGS or overlap heavy jobs.
+
+Full M3 remains open. GitHub issues12–15 retain original acceptance. Static
+frontend audit confirms legacy Compiler entrypoints in main.rs, MacroEvaluator
+in expand.rs, and exact-Wasm/Engine-only cache rather than source/macro cache.
+GC capacity is explicitly not a live-object/leak counter. Existing tests contain
+real persistence/atom/GC/reload/error assertions, but this inspection is not new
+acceptance execution. Complete portable environments/inference, source/macro
+cache invalidation, temporary evaluator retirement and pending-I/O cancellation/
+cleanup/live-heap acceptance remain required. No issue closed or PR merged.
+
+PR160 final reviewed2a4fea7e634c56973f70067f41d9334f5ce6bb18:
+required unfiltered full32247 TERMINAL0,1084passed/0failed/17existingignores
+across118groups. Metadata3/0/0 in428.46s includes unchanged29cases/all18fields
+bothphases/GC and both review regressions; fullcore57.78s within unchangedlimits.
+Log /private/tmp/suss-pr160-review-full-frozen.log. Independent reviewer reports
+no remaining significant scoped findings, all fixes pushed and tree clean, and
+explicitly released sole heavy slot. Root verified exact-head CI37137786067
+COMPLETEDsuccess on2a4fea7, including Java-free bootstrap and full baseline.
+Intermediate e009CI37135054556 canceled and not finalproof. Root now owns slot.
+Next regression branch rebased onto final2a4fea7, preserving untracked regression.
+
+Root focused before30199 TERMINAL101:1failed/0passed in57.94s. Both phases
+execute and both actual fixed/variadic calls succeed;24field observations differ
+(12perphase): self fn-var/variadic?/max-fixed-arity/method-params in both methods,
+and absent argument :tag versus presentnil. Log
+/private/tmp/suss-self-local-methods-before.log. Regression preceded production
+changes. Initial staged correction55314 TERMINAL101 at protected bootstrap
+identity, before semantic comparison; compiler source fingerprint changed.
+Regeneration29339 TERMINAL0 using --profiletest produced both updated JSON
+identities; no tracked Wasm byte difference. New source parameter staging
+records real first-pass parameter identities before body expansion, separate
+from second-pass body arguments. The graph retains pre/post self distinctions
+and presentnil argument fields plus selected env/info, within unchangedlimits.
+Next semantic focused run uses regenerated manifests; no passing result yet.
+PR160 marked ready (unmerged); final proof recorded on issue14 comment5972356070.
+
+Regenerated semantic run57858 TERMINAL101: observation retrieval exhausted
+caller defaultfuel (18.66s), before comparison. Macro helper already had100M
+finitefuel; the caller now explicitly has the same finite fixturebudget for
+retained quoted map/list construction. Production defaults and all graph/form
+bounds remain unchanged. Caller-budget run5808 LIVE; no passing result yet.
+Initial Python identity verification omitted custom CARGO_TARGET_DIR and failed
+to locate a build script; corrected command with sharedtarget passes exact
+both-asset compiler identity. No bootstrap Wasm byte change after regeneration.
+
+Caller-budget5808 TERMINAL0:1/0/0 in70.15s. Both original local observations
+match all8fields and selected12field method-binding/3field env/2field info views
+in both callerphases afterGC. Actual fixed/variadic calls remain correct. Logs
+/private/tmp/suss-self-local-methods-caller-fuel.log; no field was omitted or
+unknown replaced with success. Affected native groups now running (graph/scopes/
+method roles/core projection/source tags/source env/declaration functions/
+persistent session). Source Rust is frozen for this job; no full baseline or
+independent review/readiness proof exists for the new branch yet.
+
+Affected44934 TERMINAL0:56/0/0 across8groups (graph11,coreprojection1,
+declarationfunctions2,functionscopes2,methodroles2,sourceenv3,sourcetags2,
+persistentsession33). Fullcore60.54s within unchangedbounds.
+/private/tmp/suss-self-local-methods-affected.log. Java-free bootstrap verifier
+28771 TERMINAL0: deterministicbothphasegeneration twice, unchanged Wasmbytes/
+newcompilerfingerprints, exact identity,4/0/0 executingbootstraptests11.87s.
+/private/tmp/suss-self-local-bootstrap-verify.log. Submodule init57193 TERMINAL0
+at pinnedc4295f3; Python checks running. No native job remains live now. Prepare
+draft Ref14 PR stackedon160, dispatch independentreview with significantfixes
+and required final-head fullbaseline/CI; no readiness claim for thisbranchyet.
+
+Python29484 TERMINAL0:118tests4.814s,
+/private/tmp/suss-self-local-python.log. Rustfmt2024 newmodule/newtest and
+gitdiffcheck pass. Source frozen for draft publication and independent review;
+all root native/JVM/Node handles terminal. No fullbaseline/readiness proof for
+newbranchyet; original M3 gates remain unchanged and open.

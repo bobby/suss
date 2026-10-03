@@ -1347,7 +1347,10 @@ impl<'a> AnalysisGraph<'a> {
         // IDs. Keep that adaptation in the key; retain the identity owner.
         let role = match &binding.source_role {
             SourceRole::Plain => "plain".into(),
-            SourceRole::FunctionName { variadic } => format!("function:{variadic}"),
+            SourceRole::FunctionName { variadic, methods } => format!(
+                "function:{variadic}:{}",
+                methods.as_ref().map_or(0, |methods| Arc::as_ptr(methods) as usize)
+            ),
             SourceRole::PrivateCatch { .. } => "private-catch".into(),
             SourceRole::CatchBinding { .. } => "catch-alias".into(),
             SourceRole::MethodArgument { index, rest } => format!("method-arg:{index}:{rest}"),
@@ -1381,6 +1384,8 @@ impl<'a> AnalysisGraph<'a> {
             .map_err(|error| SessionError::Host(wasmtime::Error::msg(error.message)))?
         {
             entries.push(("tag", self.form(&tag, depth + 1)?));
+        } else if matches!(binding.source_kind(), hir::LocalKind::Argument { .. }) {
+            entries.push(("tag", self.scalar(Literal::Nil)?));
         }
         if !matches!(binding.source_role, SourceRole::PrivateCatch { .. }) {
             entries.push(("op", self.keyword("binding")?));
@@ -1398,8 +1403,21 @@ impl<'a> AnalysisGraph<'a> {
             entries.push(("arg-id", self.number(index)?));
             entries.push(("suss/rest-parameter", self.flag(rest)?));
         }
-        if let SourceRole::FunctionName { variadic } = binding.source_role {
-            entries.push(("suss/variadic", self.flag(variadic)?));
+        if let SourceRole::FunctionName { variadic, methods } = &binding.source_role {
+            entries.push(("suss/variadic", self.flag(*variadic)?));
+            if let Some(methods) = methods {
+                entries.push(("fn-var", self.flag(true)?));
+                entries.push(("variadic?", self.flag(*variadic)?));
+                entries.push(("max-fixed-arity", self.number(methods.max_fixed_arity())?));
+                let mut parameters = Vec::new();
+                for method in &methods.methods {
+                    let bindings = method.parameters.iter()
+                        .map(|parameter| self.local(parameter, depth + 1))
+                        .collect::<Result<Vec<_>>>()?;
+                    parameters.push(self.vector(&bindings)?);
+                }
+                entries.push(("method-params", self.recipe(Recipe::List(parameters))?));
+            }
         }
         if let Some(initializer) = &binding.initializer {
             entries.push(("init", self.ast(initializer, depth + 1)?));
@@ -1408,6 +1426,24 @@ impl<'a> AnalysisGraph<'a> {
             entries.push(("shadow", self.local(shadow, depth + 1)?));
         } else if let Some(field) = &binding.shadow_field {
             entries.push(("shadow", self.field(field, depth + 1)?));
+        }
+        if matches!(binding.source_kind(), hir::LocalKind::Argument { .. }) {
+            let shadow = if let Some((_, shadow)) = entries.iter().find(|(key, _)| *key == "shadow") {
+                *shadow
+            } else {
+                let nil = self.scalar(Literal::Nil)?;
+                entries.push(("shadow", nil));
+                nil
+            };
+            let mut env = vec![("context", self.context(binding.declaration_context)?)];
+            for key in ["line", "column"] {
+                if let Some((_, value)) = entries.iter().find(|(name, _)| *name == key) {
+                    env.push((key, *value));
+                }
+            }
+            let info = self.map(vec![("name", entries[0].1), ("shadow", shadow)])?;
+            entries.push(("env", self.map(env)?));
+            entries.push(("info", info));
         }
         if let SourceRole::MethodThis {
             type_declaration,

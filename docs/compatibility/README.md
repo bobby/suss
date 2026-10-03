@@ -630,6 +630,15 @@ asserted before oracle normalization. No declaration is reclassified as fully
 implemented; complete AST/schema, caches, evaluator retirement and original M3
 acceptance remain open. See [declaration metadata](../runtime/compiled-macro-declaration-metadata.md).
 
+## Named function local method records
+
+Both unchanged pinned named-self observations now match all eight selected local
+fields in both caller phases after GC. Actual staged parameter bindings supply
+self callable flags, arity and method parameters; argument records retain unknown
+tags as present nil. Fixed/variadic calls execute correctly. The selected binding
+view does not certify whole ASTs or complete portable environments, and original
+M3 acceptance remains open. See [self-local method evidence](../runtime/compiled-macro-self-local-methods.md).
+
 ## Compiled macro reader input metadata
 
 Eight exact pinned reader-metadata projections match executed native source

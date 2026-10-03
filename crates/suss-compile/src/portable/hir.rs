@@ -2,6 +2,8 @@
 mod arrays;
 mod local_bindings;
 pub use local_bindings::{FieldBinding, FunctionScope, LocalBinding, LocalKind, SourceRole};
+mod function_parameters;
+pub use function_parameters::{SourceFunctionParameters, SourceParameterMethod};
 mod bitwise;
 mod callable_signatures;
 mod cases;
@@ -1177,7 +1179,7 @@ impl Analyzer<'_> {
                 signatures.iter().any(|signature| matches!(&signature.kind, Kind::List(parts) if matches!(parts.first().map(|part| &part.kind), Some(Kind::Vector(names)) if names.iter().any(|name| matches!(&name.kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "&")))))
             };
             self.locals.get_mut(&parameter.name).unwrap().source_role =
-                SourceRole::FunctionName { variadic };
+                SourceRole::FunctionName { variadic, methods: None };
         }
         let declaration = if self_binding.is_some() {
             args.first()
@@ -1188,6 +1190,12 @@ impl Analyzer<'_> {
             .as_ref()
             .map(|binding| self.locals[&binding.name].clone());
         self.enter_function_scope(form, declaration, local);
+        if let Some(parameter) = &self_binding {
+            let staged = std::sync::Arc::new(self.stage_function_parameters(form, signatures)?);
+            let variadic = staged.methods.iter().any(|method| method.variadic);
+            self.locals.get_mut(&parameter.name).expect("self binding").source_role =
+                SourceRole::FunctionName { variadic, methods: Some(staged) };
+        }
         let mut methods = Vec::new();
         let mut captures = BTreeSet::new();
         if signatures
@@ -1205,7 +1213,11 @@ impl Analyzer<'_> {
                         "Function signature requires a parameter vector and body",
                     ));
                 };
-                let (method, free) = self.general_method(signature, items, bootstrap_macro)?;
+                let multi = signatures.len() > 1;
+                if multi { self.analysis_contexts.push(super::AnalysisContext::Expression); }
+                let result = self.general_method(signature, items, bootstrap_macro);
+                if multi { self.analysis_contexts.pop(); }
+                let (method, free) = result?;
                 captures.extend(free);
                 methods.push(method);
             }
@@ -1304,29 +1316,7 @@ impl Analyzer<'_> {
         args: &[Form],
         bootstrap_macro: bool,
     ) -> Result<(Method, Vec<BindingId>), Diagnostic> {
-        let mut args = args.to_vec();
-        let Some(Form {
-            kind: Kind::Vector(names),
-            ..
-        }) = args.first_mut()
-        else {
-            return Err(fail(
-                form.span.clone(),
-                "Function requires a parameter vector",
-            ));
-        };
-        let markers: Vec<_> = names.iter().enumerate().filter_map(|(index, name)|
-            matches!(&name.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "&").then_some(index)).collect();
-        let variadic = !markers.is_empty();
-        if let Some(&index) = markers.first() {
-            if markers.len() != 1 || index + 2 != names.len() {
-                return Err(fail(
-                    form.span.clone(),
-                    "Variadic signature requires exactly one trailing rest parameter",
-                ));
-            }
-            names.remove(index);
-        }
+        let (args, variadic, rest_parameter) = Self::normalize_function_method(form, args)?;
         let method = self.fixed_function_fields(
             form,
             &args,
@@ -1334,7 +1324,7 @@ impl Analyzer<'_> {
             &[],
             false,
             false,
-            markers.first().copied(),
+            rest_parameter,
             None,
         )?;
         let Expression::Function {
@@ -1409,45 +1399,7 @@ impl Analyzer<'_> {
         }
         let outer = self.locals.clone();
         let outer_fields = self.fields.clone();
-        let mut parameters = Vec::new();
-        for (index, name) in names.iter().enumerate() {
-            let Kind::Symbol(symbol) = &name.kind else {
-                return Err(fail(
-                    name.span.clone(),
-                    "Parameter destructuring is not lowered yet",
-                ));
-            };
-            if symbol.namespace.is_some() || symbol.name == "&" {
-                return Err(fail(
-                    name.span.clone(),
-                    "Parameters must be unqualified; variadic rest sequences are not lowered yet",
-                ));
-            }
-            let id = BindingId(self.next);
-            self.next += 1;
-            self.insert_local(
-                name,
-                id,
-                Type::Value,
-                LocalKind::Argument {
-                    index,
-                    rest: rest_parameter == Some(index),
-                },
-                None,
-            );
-            if receiver_type.is_some() {
-                self.locals
-                    .get_mut(&symbol.name)
-                    .unwrap()
-                    .declaration_context = super::AnalysisContext::Expression;
-            }
-            parameters.push(Parameter {
-                id,
-                name: symbol.name.clone(),
-                metadata: name.metadata.clone(),
-                span: name.span.clone(),
-            });
-        }
+        let (parameters, _) = self.allocate_function_parameters(names, rest_parameter, receiver_type.is_some())?;
         let target = LoopId(self.next_loop);
         self.next_loop += 1;
         let outer_target = self
