@@ -18,12 +18,21 @@ pub(super) type Carets = HashMap<(usize, usize), (usize, usize)>;
 
 pub(super) struct Positions {
     starts: Vec<usize>,
+    // Byte overhead relative to UTF-16, recorded only after non-ASCII scalars.
+    // Position lookup must not rescan an arbitrarily long source line.
+    utf16_overhead: Vec<(usize, usize)>,
 }
 impl Positions {
     pub(super) fn new(source: &str) -> Self {
         let mut starts = vec![0];
+        let mut utf16_overhead = vec![];
+        let mut overhead = 0;
         let mut chars = source.char_indices().peekable();
         while let Some((offset, ch)) = chars.next() {
+            if !ch.is_ascii() {
+                overhead += ch.len_utf8() - ch.len_utf16();
+                utf16_overhead.push((offset + ch.len_utf8(), overhead));
+            }
             match ch {
                 '\r' => {
                     let mut end = offset + 1;
@@ -37,13 +46,25 @@ impl Positions {
                 _ => (),
             }
         }
-        Self { starts }
+        Self {
+            starts,
+            utf16_overhead,
+        }
     }
-    pub(super) fn position(&self, source: &str, offset: usize) -> (usize, usize) {
+    fn utf16_offset(&self, offset: usize) -> usize {
+        let index = self
+            .utf16_overhead
+            .partition_point(|(end, _)| *end <= offset);
+        offset
+            - index
+                .checked_sub(1)
+                .map_or(0, |index| self.utf16_overhead[index].1)
+    }
+    pub(super) fn position(&self, _source: &str, offset: usize) -> (usize, usize) {
         let line = self.starts.partition_point(|start| *start <= offset) - 1;
         (
             line + 1,
-            source[self.starts[line]..offset].encode_utf16().count() + 1,
+            self.utf16_offset(offset) - self.utf16_offset(self.starts[line]) + 1,
         )
     }
 }
@@ -136,6 +157,41 @@ pub(super) fn list_prefixes(forms: &mut [Form], carets: &Carets) {
                 list_prefixes(items, carets)
             }
             _ => (),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Positions;
+
+    #[test]
+    fn indexed_positions_match_utf16_at_every_boundary_with_mixed_newlines() {
+        let source = "a😀é\r\nβ\r𐀀\nx";
+        let positions = Positions::new(source);
+        for offset in (0..=source.len()).filter(|offset| source.is_char_boundary(*offset)) {
+            let line = positions.starts.partition_point(|start| *start <= offset) - 1;
+            assert_eq!(
+                positions.position(source, offset),
+                (
+                    line + 1,
+                    source[positions.starts[line]..offset]
+                        .encode_utf16()
+                        .count()
+                        + 1
+                )
+            );
+        }
+    }
+
+    #[test]
+    fn long_ascii_line_uses_constant_space_column_index() {
+        let source = "x ".repeat(524_288);
+        let positions = Positions::new(&source);
+        assert_eq!(positions.starts.len(), 1);
+        assert!(positions.utf16_overhead.is_empty());
+        for offset in (0..=source.len()).step_by(2) {
+            assert_eq!(positions.position(&source, offset), (1, offset + 1));
         }
     }
 }

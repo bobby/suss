@@ -11853,3 +11853,48 @@ it ready. Full original M3 remains: portable schema/inference, automatic expansi
 metadata, namespace policy, syntax quote/gensyms, reproducible versioned Java-free
 bootstrap/cache/evaluator removal, interactive cancellation/lifecycle/live memory.
 No issue closed or PR merged; never merge without later explicit user instruction.
+
+## PR154 independent review: bound reader position work
+
+Independent review of PR154 at a0fdde7f92f1bb951add70fd6d5495debddfe7df in
+/private/tmp/suss-review-pr154 reproduced quadratic UTF-16 column computation:
+every located symbol rescanned its entire source line. A temporary actual opt-in
+reader probe with 8,192/16,384/32,768 short symbols took respectively
+1.870/7.415/29.583 seconds (session26084 exit0), despite the 1 MiB snapshot bound.
+Log /private/tmp/suss-pr154-positions-before.log. The temporary probe was removed;
+these are observed timings, not portable timing acceptance thresholds.
+
+Repaired Positions with a sparse cumulative index of byte overhead relative to
+UTF-16 at non-ASCII scalar boundaries. Source indexing is linear; column lookup
+uses binary search rather than scanning line prefixes. ASCII requires no
+per-character column storage; non-ASCII storage remains linear in source length.
+CRLF/lone CR/LF and one-based/exclusive positions retain their existing behavior.
+The identical reader probe now took 23/46/94 milliseconds (session53389 exit0),
+/private/tmp/suss-pr154-positions-after.log. Deterministic regressions compare
+all valid boundaries in mixed BMP/astral/newline source and query the entire
+1 MiB ASCII index without a flaky elapsed-time assertion.
+
+Cleaned only suss-cli/suss-compile/suss-reader/suss-core artifacts before the
+isolated review rebuild; shared target /private/tmp/suss-m3-pr143-target,
+CARGO_BUILD_JOBS=2, no RUSTFLAGS, no concurrent native/JVM job. Initial reader
+4072 exit0 passed30/0/0. Repaired reader1066 exit0 passed32/0/0 across two groups:
+CARGO_TARGET_DIR=... CARGO_BUILD_JOBS=2 cargo test -p suss-reader --locked
+-- --test-threads=2; /private/tmp/suss-pr154-review-reader-after.log.
+Native metadata16176 exit0 passed10/0/0 in106.25s:
+CARGO_TARGET_DIR=... CARGO_BUILD_JOBS=2 cargo test -p suss-cli --locked
+--test compiled_macro_form_source_metadata -- --test-threads=2;
+/private/tmp/suss-pr154-review-native.log. Actual both-Store macro execution
+retains nested positions, explicit overrides, conditional/prefix/tag metadata,
+canonical files, generated absence, assignment-as-data and failure recovery.
+Committed Unicode fixture bytes independently verified: three CRLF sequences,
+no standalone LF, astral U+1D11E retained. Formatting/diff checks also passed.
+
+Reviewed provenance matching/cache/error propagation, immutable snapshot syntax,
+spans and float-bit comparison, implicit/user argument transport, prefix order,
+reader conditional selection and upstream EPL/source-hash evidence. No remaining
+reproduced significant finding. Existing source/traversal/FormBridge bounds
+remain; this repair removes repeated line scanning, not a claim of zero allocation
+or complete macro metadata/portable schema support. Push review fix to PR154,
+then root must run the clean final-head full baseline and require final-head CI.
+All local jobs here terminal; sole heavy slot released after push. No PR merged,
+no issue closed; the complete original M3 gates remain open.

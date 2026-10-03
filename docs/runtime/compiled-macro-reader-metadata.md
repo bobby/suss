@@ -38,7 +38,10 @@ source environments, source macros and macro metadata. The reader suite passes
 syntax, explicit metadata, spans and binary64 bits, including NaN. Reader failures,
 non-Unicode paths and a missing located counterpart are errors. Current bounds
 are a 1 MiB source snapshot and 1,048,576 provenance traversal nodes; the existing
-FormBridge data limits remain. An executed bound-failure test verifies a located
+FormBridge data limits remain. Reader columns use a sparse index of non-ASCII
+byte overhead relative to UTF-16, so token positions do not repeatedly scan long
+lines. Index construction is linear in source length, position lookup is
+logarithmic, and ASCII columns need no per-character storage. An executed bound-failure test verifies a located
 compile error preserves old bindings and performs no initializer effects, then
 successfully evaluates the next macro input. Assignment syntax returned from
 metadata remains data and leaves the observed global unchanged in both Stores.
