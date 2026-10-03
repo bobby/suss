@@ -11,6 +11,7 @@ mod origin;
 pub mod syntax_quote;
 pub mod bootstrap;
 pub mod artifact_cache;
+pub mod artifact_identity;
 pub use origin::{SourceOrigin, SourcePosition};
 use std::ops::Range;
 use suss_reader::forms::{read_forms, resolve_conditionals};
@@ -55,6 +56,9 @@ pub enum MacroReload {
     ReloadAll,
 }
 pub trait ExpansionHost {
+    /// Immutable selected macro source identities; None means unverified/unknown.
+    fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> { None }
+
     /// Analysis and macro execution have already happened. Hosts may reuse only
     /// emission bytes; staged catalogs and cells always come from this analysis.
     fn emit_fragment(
@@ -100,6 +104,8 @@ pub trait ExpansionHost {
 }
 pub(crate) struct NoExpansion;
 impl ExpansionHost for NoExpansion {
+    fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> { Some(vec![]) }
+
     fn expand(
         &mut self,
         _: &suss_reader::forms::Form,
@@ -146,12 +152,15 @@ pub fn compile_in(
 ) -> Result<Vec<u8>, Diagnostic> {
     let hir = analyze_in(source, environment, phase)?;
     let ir = ir::lower(&hir)?;
-    compile_ir(&ir)
+    let wasm = compile_ir(&ir)?;
+    artifact_identity::annotate_source(&wasm, phase, Some(&SourceOrigin::new(source, None)), Some(&[]))
+        .map_err(|message| Diagnostic { span: 0..source.len(), message })
 }
 
 /// Emit a normalized function only after graph/type verification and Wasm validation.
 pub fn compile_ir(function: &ir::Function) -> Result<Vec<u8>, Diagnostic> {
-    emit::emit(function)
+    let wasm = emit::emit(function)?;
+    artifact_identity::annotate_ir(&wasm).map_err(|message| Diagnostic { span: function.span.clone(), message })
 }
 
 /// A validated fragment and staged compiler state. Install cells in one shared
@@ -234,6 +243,9 @@ pub(crate) fn prepare_selected_fragment_with_origin(
     let analyzed = analyze_selected_fragment(forms.clone(), span, environment, phase, expander, origin)?;
     let function = ir::lower(&analyzed.hir)?;
     let wasm = expander.emit_fragment(&function, phase, &forms, origin)?;
+    let dependencies = expander.artifact_dependencies();
+    let wasm = artifact_identity::annotate_source(&wasm, phase, origin, dependencies.as_deref())
+        .map_err(|message| Diagnostic { span: function.span.clone(), message })?;
     Ok(PreparedFragment { wasm, environment: analyzed.environment,
         cells: analyzed.cells, namespace_directive: analyzed.namespace_directive })
 }

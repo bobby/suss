@@ -333,10 +333,15 @@ impl ExpansionHost for CompiledMacros {
         phase: suss_compile::portable::resolve::Phase, forms: &[Form],
         origin: Option<&suss_compile::portable::SourceOrigin>,
     ) -> Result<Vec<u8>, Diagnostic> {
+        let dependencies = self.artifact_dependencies();
+        self.artifact_cache.emit(function, phase, forms, origin, dependencies.as_deref())
+    }
+    fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> {
+        if !self.incomplete_sources.is_empty() { return None; }
         let mut dependencies = vec![("bootstrap".into(), suss_compile::portable::bootstrap::sha256(suss_compile::portable::bootstrap::SOURCE.as_bytes()))];
         dependencies.extend(self.loaded_sources.iter().map(|(name, source)| (format!("module:{name}"), source.clone())));
         dependencies.extend(self.declaration_sources.iter().map(|((namespace, name), source)| (format!("macro:{namespace}/{name}"), source.clone())));
-        self.artifact_cache.emit(function, phase, forms, origin, self.incomplete_sources.is_empty().then_some(dependencies.as_slice()))
+        Some(dependencies)
     }
 
     fn supports_macro_imports(&self) -> bool {

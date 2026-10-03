@@ -293,7 +293,10 @@ impl ArtifactCache {
             if let Err(message) = crate::runtime_abi::verify_artifact(
                 &entry.wasm,
                 &crate::runtime_abi::Manifest::default(),
-            ) {
+            )
+            .and_then(|_| {
+                super::artifact_identity::verify(&entry.wasm, Default::default()).map(|_| ())
+            }) {
                 self.stats.bytes -= entry.retained_bytes;
                 self.stats.entries = self.entries.len();
                 return Err(Diagnostic {

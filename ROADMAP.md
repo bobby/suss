@@ -325,3 +325,11 @@ effects, explicit reload, old captures and failed-declaration provenance. See
 [source artifact cache](docs/runtime/source-artifact-cache.md). Review, full
 baseline and final-head CI remain pending; published artifact, evaluator and
 lifecycle gates and original issues12–15 remain open.
+
+Portable artifacts now record compiler build/ABI/target identity and selected
+source/macro versions. Native loaders reject incompatible compiler builds before
+allocating cells, and bootstrap restoration checks its actual source graph.
+Regression-first and focused/54affected tests pass; review/full/final CI remain
+required. See [artifact identities](docs/runtime/artifact-identities.md). Complete
+published dependency loading, component/AOT, evaluator retirement and scheduler
+criteria remain open original M3 work.
