@@ -12561,3 +12561,87 @@ Pure Python suite49118 TERMINAL exit0:118 tests pass,4.913s;
 rustfmt checks pass. No inventory status/dependency/build identity changes.
 All root jobs terminal; root heavy slot available for independent reviewer after
 publishing. PR156 exact-head CI37117694147 remains pending; do not mark ready.
+
+Next isolated graph-bound regression branch: /private/tmp/suss-m3-shared-
+declaration-graphs, portable/m3-shared-declaration-graphs, based on PR157f528159.
+Root added compiler snapshot identity/revision regression and one actual full
+core-namespace compiled macro declaration projection in both caller phases. NO
+production fix or Cargo run on this branch yet. Existing source/manifests remain
+unchanged. Intended diagnosis: Environment snapshots repeatedly allocate fresh
+Arc<DefinitionInfo> for unchanged facts, and graph namespace records repeat full
+declaration fields/forms across retained historical snapshots. Proposed preserve
+immutable declaration Arc identities, memo declaration records owning identity
+Arcs and intern compiler-created symbols; do NOT raise graph bounds, omit fields
+or weaken unknown/failing records. First run these regressions against old code
+after reviewer157 baseline11373 terminal and explicit slot release; root currently
+only lightweight work. Compiler src changes invalidate bootstrap manifest build
+identity: regenerate BOTH images/manifests before Session validation. Acceptance
+matrix updated for observed terminal PR154/155/156 evidence; CI156 still pending,
+157 review/full/CI pending; M3/issues12–15 open. Issue14 progress comment
+https://github.com/bobby/suss/issues/14#issuecomment-5968715322 records currentproof.
+
+Graph-bound branch actual sequence/results (single heavy slot; no RUSTFLAGS):
+PR157 reviewer11373 TERMINAL exit0 atf528159a:1072pass/0fail/17existingignores/
+115groups. No significant findings or edits; explicit slot release. Final-head
+CI37119275510 succeeded and157 marked ready, not merged. PR156 CI37117694147
+succeeded at8dbcc679; full1067/0/17 and review already pass, marked ready, not
+merged. PR155 also ready; original M3/issues12–15 stay open.
+Root cleaned ONLY4workspace packages (729files3.0GiB) before graph target switch.
+Before wrapper2408 terminal0, with both Cargo commands exit101: compiler snapshot
+identity0/1 and actual core-namespace macro projection0/1 at65536-node failure.
+Logs /private/tmp/suss-shared-declaration-graphs-{identity-before,core-before}.log.
+Environment now stores immutable Arc<DefinitionInfo> revisions; source namespace
+and global facts share them, while reanalysis installs a new revision. Per-graph
+declaration memo owns revision Arcs and keys by global+revision identity. Compiler
+focused43950 terminal0:1/0/0, identity-fixed.log. Generator47708 terminal0;
+generation.log. Both manifests regenerated for changed compiler sources; ONLY
+compiler_source_sha256 changed; both real Wasm images remain byte-identical.
+Initial declaration sharing alone88853 still failed0/1 atnode bound (core-fixed).
+Temporary diagnostic84153 confirmed duplicated reader trees; diagnostic removed.
+Whole-form memo35591 still0/1 (core-form-memo). DAG form recipes31688 still0/1
+(core-dag). Reader data identity excludes bare spans that native transport does
+not carry; actual metadata/source-position fields stay exact.38938 still0/1
+(core-data-identity). Temporary DAG diagnostic50525 identified repeated environment
+and lowering work; removed. Immediate immutable environment records plus exact
+ordered map/vector memo28484 still0/1 (core-shared-records). Exact scalar/data
+sharing28794 finally1/0/0 in both caller phases with fresh defonce projection,
+33.73s (core-shared-scalars). No raised graph limits or omitted fields/skip.
+Reader data keys are tagged/length-framed and preserve number.to_bits, UTF16,
+identifier namespaces, metadata and textual order. Forms build canonical subtree
+recipes, metadata uses the same captured source classes and set constructor path.
+Standalone per-form validation retains4096 logical nodes including normalized
+metadata and64 reader depth,1MiB UTF16. Graph remains65536 nodes/1MiB owned units;
+reader key retention adds explicit32MiB byte bound.
+Sharing22055 terminal0:2private tests pass; accompanying integration target was
+filtered by sharing_tests and ran0, NOT counted as core proof. Bounds/metadata/
+number/order and old-vs-new canonical transport after GC pass, including surrogate
+andNaN payload data. First affected command exit101 because guessed test target
+compiled_macro_source_inference does not exist; corrected actual targets from rg
+files (compiled_macro_source_tags/form_source_metadata). Corrected88446 terminal0:
+73pass/0fail/0ignore across12groups; affected-corrected.log. Final bound checks
+77198 terminal0:host11+analysis graph11+core1 =23/0/0; final-bounds.log, core
+projection34.97s. Metadata logical-width guard also added so interning cannot
+bypass standalone form limits; reader key cache byte limit checked before storage.
+New graph/test Rustfmt and bridge-helper-only formatting plus diff check pass;
+compiler src bytes unchanged by formatting, manifest fingerprint stays current.
+58876 nowLIVE compiler lib+portable_resolution final focused; compiler-final.log.
+Re-poll same handle, root owns single heavy slot. Next terminal compiler, Java-
+unavailable bootstrap verifier, Python/static checks, draft PR stacked157/Refs14,
+independent subagent significant fixes, frozen final-head full baseline and CI.
+Complete source/macro graph cache keys, full portable schema, evaluator removal
+and lifecycle gates remain open. No issue closure or merge.
+
+Compiler58876 TERMINAL exit0:66lib+14resolution =80/0/0; compiler-final.log.
+Java/Node-unavailable verifier50256 TERMINAL exit0:two fresh image/manifest
+generations match shipped; actual build-script input/location regression passes;
+compiled bootstrap4/0/0 (11.72s). bootstrap-verifier.log. Python98322 TERMINAL
+exit0:118 tests,5.033s; python.log. All root jobs terminal and heavy slot free.
+Final graph planning additionally validates canonical logical per-form work before
+sharing, including normalized metadata (tagged1024-symbol vector cannot bypass
+4096-node cap). Exact raw key traversal keeps65536-node guard; retained key bytes
+32MiB. Pure metadata/value sharing preserves standalonetransport semantics.
+Next publish draft stacked157/Refs14; independent reviewer owns final-head full
+baseline and any significant fixes. No further source edits by root during review.
+Original complete portable schema, source/macro cache, evaluator and lifecycle
+acceptance still open. Current ready PRs155,156,157 have successful exact-head CI
+and independent final full baselines; no merge and no issue closure.

@@ -12,6 +12,51 @@ use wasmtime::{
     Func, Global, GlobalType, Instance, Linker, Module, Mutability, RefType, Store, Val, ValType,
 };
 
+#[test]
+fn source_namespace_snapshots_share_unchanged_declarations_and_keep_old_revisions() {
+    use portable::hir::SourceNamespace;
+    use std::sync::Arc;
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let prepared =
+            portable::prepare_fragment("(def owned 1)", &Environment::default(), phase).unwrap();
+        let first = SourceNamespace::capture(&prepared.environment, phase);
+        let same = SourceNamespace::capture(&prepared.environment.clone(), phase);
+        let global = first
+            .identities
+            .iter()
+            .find(|global| global.name() == "owned")
+            .unwrap();
+        assert!(Arc::ptr_eq(
+            &first.declarations[global],
+            &same.declarations[global]
+        ));
+        let next =
+            portable::prepare_fragment("(def other 2)", &prepared.environment, phase).unwrap();
+        let unrelated = SourceNamespace::capture(&next.environment, phase);
+        assert!(Arc::ptr_eq(
+            &first.declarations[global],
+            &unrelated.declarations[global]
+        ));
+        let next =
+            portable::prepare_fragment("(defonce owned 3)", &next.environment, phase).unwrap();
+        let changed = SourceNamespace::capture(&next.environment, phase);
+        assert!(!Arc::ptr_eq(
+            &first.declarations[global],
+            &changed.declarations[global]
+        ));
+        assert!(!first.declarations[global].once);
+        assert!(changed.declarations[global].once);
+        assert!(matches!(
+            first.declarations[global]
+                .initializer_form
+                .as_ref()
+                .unwrap()
+                .kind,
+            suss_reader::forms::Kind::Number(1.0)
+        ));
+    }
+}
+
 fn runtime<T>(store: &mut Store<T>) -> Instance {
     let module = Module::new(store.engine(), runtime_abi::module()).unwrap();
     Instance::new(store, &module, &[]).unwrap()

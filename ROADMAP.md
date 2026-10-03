@@ -280,3 +280,11 @@ affected validation passes70 tests with no failures or ignores; full baseline,
 independent review and final-head CI remain required. Source/macro graph
 cache keys and the other original M3 gates remain open; this is partial issue14
 progress.
+
+The working [shared declaration graphs](docs/runtime/shared-declaration-graphs.md)
+now execute a full retained core-namespace macro declaration projection in both
+phases within the original graph limits. Immutable revisions and canonical reader
+subtrees share data without dropping fields.73 affected tests and23 final bounds/
+graph/core checks pass; full baseline, independent review and final-head CI remain
+required. Complete portable schema, source/macro cache and evaluator/lifecycle
+acceptance remain open.

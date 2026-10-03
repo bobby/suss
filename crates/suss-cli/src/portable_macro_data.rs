@@ -33,6 +33,14 @@ enum Class {
     ChunkedCons,
     ArrayChunk,
 }
+#[derive(Clone, Copy)]
+pub(crate) enum MetadataShape {
+    Symbol,
+    List { empty: bool },
+    Vector,
+    Map { large: bool },
+    Set,
+}
 /// Captured canonical class roots remain valid through redefinition and GC.
 /// A reset or another Store invalidates this bridge; construct a new one there.
 pub struct FormBridge {
@@ -42,6 +50,31 @@ pub struct FormBridge {
     factories: BTreeMap<&'static str, SessionValue>,
 }
 impl FormBridge {
+    pub(crate) fn with_form_metadata(
+        &self,
+        session: &mut Session,
+        shape: MetadataShape,
+        value: &SessionValue,
+        metadata: &SessionValue,
+        set_items: &[SessionValue],
+    ) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        let class = match shape {
+            MetadataShape::Set => return self.set_with_metadata(session, set_items, metadata),
+            MetadataShape::Symbol => Class::Symbol,
+            MetadataShape::List { empty: true } => Class::EmptyList,
+            MetadataShape::List { empty: false } => Class::List,
+            MetadataShape::Vector => Class::PersistentVector,
+            MetadataShape::Map { large: false } => Class::PersistentArrayMap,
+            MetadataShape::Map { large: true } => Class::PersistentHashMap,
+        };
+        let mut fields = session.data_fields(value)?;
+        fields[if class == Class::Symbol { 4 } else { 0 }] = metadata.clone();
+        session.data_construct(
+            &self.roots[self.constructors[&class]],
+            &fields.iter().collect::<Vec<_>>(),
+        )
+    }
     pub fn new(session: &mut Session) -> Result<Self, SessionError> {
         let mut roots = Vec::new();
         let mut classes = BTreeMap::new();
