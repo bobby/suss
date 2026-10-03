@@ -12498,3 +12498,66 @@ Third verifier90075 terminalexit0: two fresh outputs match both shipped phases,
 actual build-script identity regression passes, native bootstrap4/0/0 (22.35s).
 Log /private/tmp/suss-pr156-review-verifier-3.log. No production bypass or skip.
 Final-head full baseline and CI remain required; no PR merged/issues closed.
+
+
+Next M3 native code-cache working branch: /private/tmp/suss-m3-native-module-cache,
+portable/m3-native-module-cache, based on reviewed bootstrap8dbcc679. Root edited
+only CLI host code/tests and documentation; shipped bootstrap inputs/manifests are
+unchanged. Exact Wasm bytes plus Engine::same select immutable Module handles;
+64entry/32MiB retained-input LRU bounds, oversized bypass, failed compilation does
+not evict, no guest Store/instance/global/root cached. Artifact ABI verification
+remains before cache lookup. Both runtime and fragment installation use the cache.
+Private native tests cover identity/engine/eviction/failure/bypass; two executing
+regressions cover initializers/defonce/Store/reset and effectful compiled macros
+with identical output plus changed definition. Rustfmt on new files and diff check
+pass. NO Cargo tests/typecheck have run on this branch yet. Reviewer156 still owns
+single heavy slot with exact-head baseline8915, log
+/private/tmp/suss-pr156-review-full-baseline.log; do not clean/switch target until
+terminal and explicit release. CI15537114173950 and CI15637117694147 still live;
+156 Java-unavailable bootstrap step passed. No readiness/merge/issue closure.
+Source-level cache keys including source/compiler+ABI/macro dependency graph/
+target/flags, portable schema, tree evaluator removal and lifecycle gates remain
+open. Next: terminal reviewer/release, clean ONLY4packages when switching shared
+target, focused native cache tests first, affected/full baseline, publish draft
+Refs14 with independent reviewer and final-head CI.
+
+Pinned submodule setup initially used an incorrect reference/clojurescript
+path and failed exit1 with pathspec not tracked. Read .gitmodules and corrected to
+clojurescript; local-reference initialization succeeded at c4295f303100bbf5afac449
+242d30bca1126f1a1. No external source version changed. Native cache now also has
+a production-function Module::same regression (three private tests total);
+Store/macro tests decode actual Number GC fields directly rather than constructing
+a FormBridge in minimal Runtime sessions that lack the retained nominal catalog.
+No native test execution yet; reviewer156 baseline8915 still owns heavy slot.
+
+PR155 exact-head CI37114173950 is TERMINAL success at0f3c160. Combined with
+independent fixes/review and full1063/0/17 proof, description updated and PR
+marked ready for user review via gh pr ready; not merged. PR156 reviewer baseline
+8915 TERMINAL exit0 at8dbcc679:1067pass/0fail/17existingignores/114groups; no
+remaining significant findings, tree clean and all reviewer jobs terminal. Heavy
+slot explicitly released. CI15637117694147 remains live, so156 stays draft.
+Root cleaned ONLY4workspace packages (730files3.0GiB) before switching target.
+Cache focused96908 TERMINAL exit0:9private host+2new executing tests, no ignores;
+/private/tmp/suss-native-module-cache-focused.log. Temporary production cache
+bypass makes Module::same reuse assertion fail (0/1, exit101), negative66518
+TERMINAL wrapper0 with expected Cargo101; /private/tmp/suss-native-module-cache-
+negative.log. Exact source restored in finally before follow-up tests. Affected
+51359 now LIVE: host lib, compiled_module_cache/bootstrap/phase/source_macros/
+macro_reload/persistent_session/syntax_quote_live_binding;
+/private/tmp/suss-native-module-cache-affected.log. Root owns single heavy slot;
+no other native jobs. Re-poll51359. Final full/review/CI still required for new
+cache branch; original M3/issues12–15 unchanged and open.
+
+Affected51359 TERMINAL exit0 on restored code:70pass/0fail/0ignored across
+8groups (host9, bootstrap4, macro reload7, code-cache2, phases3, source macros4,
+persistent session33, reader live cells8). No overlapping native job. Log above.
+Next publish draft Refs14 stacked on156, dispatch independent PR reviewer, push
+significant fixes, require frozen final-head full baseline and CI. No bootstrap
+manifest regeneration necessary: only CLI source and docs changed; fingerprint
+inputs untouched. Source/macro analysis cache and original M3 gates remain open.
+
+Pure Python suite49118 TERMINAL exit0:118 tests pass,4.913s;
+/private/tmp/suss-native-module-cache-python.log. Static whitespace and new-file
+rustfmt checks pass. No inventory status/dependency/build identity changes.
+All root jobs terminal; root heavy slot available for independent reviewer after
+publishing. PR156 exact-head CI37117694147 remains pending; do not mark ready.

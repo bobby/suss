@@ -20,7 +20,7 @@ use suss_compile::{
 };
 use wasmtime::{
     AnyRef, AsContextMut, Config, Engine, Func, Global, GlobalType, Instance, Linker, Memory,
-    Module, Mutability, OwnedRooted, RefType, RootScope, Store, StoreContextMut, Tag, Val, ValType,
+    Mutability, OwnedRooted, RefType, RootScope, Store, StoreContextMut, Tag, Val, ValType,
 };
 
 #[derive(Clone, Debug)]
@@ -360,7 +360,11 @@ impl Session {
         let runtime_bytes = runtime_abi::module();
         runtime_abi::verify_artifact(&runtime_bytes, &runtime_abi::Manifest::default())
             .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
-        let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_bytes)?, &[])?;
+        let runtime = Instance::new(
+            &mut store,
+            &crate::portable_module_cache::compile(&engine, &runtime_bytes)?,
+            &[],
+        )?;
         let numeric_memory = runtime
             .get_memory(&mut store, "numeric-scratch-memory")
             .ok_or_else(|| wasmtime::Error::msg("Missing numeric scratch memory"))?;
@@ -637,7 +641,7 @@ impl Session {
         for bytes in bytes {
             runtime_abi::verify_artifact(bytes, &runtime_abi::Manifest::default())
                 .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
-            compiled.push(Module::new(&self.engine, bytes)?);
+            compiled.push(crate::portable_module_cache::compile(&self.engine, bytes)?);
         }
         let mut linker = self.linker.clone();
         let mut staged = BTreeMap::new();

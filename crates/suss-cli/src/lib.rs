@@ -1,5 +1,7 @@
 //! Native embedding host for the portable compiler and shared runtime.
 #[cfg(not(target_family = "wasm"))]
+mod portable_module_cache;
+#[cfg(not(target_family = "wasm"))]
 pub mod portable_macro_data;
 #[cfg(not(target_family = "wasm"))]
 pub mod portable_macro_graph;
