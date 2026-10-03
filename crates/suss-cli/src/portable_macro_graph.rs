@@ -1001,7 +1001,20 @@ impl<'a> AnalysisGraph<'a> {
             // Namespace declaration records do not have the :ns field of a
             // resolved var AST. Preserve observed raw metadata in either stage.
             for field in [
-                "name", "ns", "private", "dynamic", "doc", "declared", "tag", "ret-tag",
+                "name",
+                "ns",
+                "private",
+                "dynamic",
+                "doc",
+                "declared",
+                "tag",
+                "ret-tag",
+                "fn-var",
+                "variadic?",
+                "max-fixed-arity",
+                "method-params",
+                "arglists",
+                "arglists-meta",
             ] {
                 if let Some(value) = property(field) {
                     fields.retain(|(name, _)| *name != field);
@@ -1131,11 +1144,8 @@ impl<'a> AnalysisGraph<'a> {
                     // The pinned analyzer leaves this initializer's provisional
                     // symbol metadata in the catalog. Completed source callable
                     // facts above remain a separate Suss extension.
-                    for field in FUNCTION_FIELDS {
-                        if let Some(form) = property(field) {
-                            fields.push((field, self.form(form, depth + 1)?));
-                        }
-                    }
+                    // The raw selected fields were already copied above, even
+                    // without a source callable in a provisional initializer.
                 } else if let Some(top) =
                     property("top-fn").filter(|form| !matches!(form.kind, Kind::Nil))
                 {
@@ -1162,6 +1172,7 @@ impl<'a> AnalysisGraph<'a> {
                         }
                     };
                     let macro_flag = property("macro").is_some_and(truthy);
+                    fields.retain(|(name, _)| *name != "fn-var");
                     fields.push(("fn-var", self.flag(!macro_flag)?));
                     for field in [
                         "name",
@@ -1193,6 +1204,9 @@ impl<'a> AnalysisGraph<'a> {
                         }
                     }
                 } else {
+                    // Normal callable defaults replace the selected raw group.
+                    // Empty top-fn instead leaves its five raw arity fields.
+                    fields.retain(|(name, _)| !FUNCTION_FIELDS.contains(name));
                     let macro_flag = property("macro")
                         .is_some_and(|value| !matches!(value.kind, Kind::Nil | Kind::Bool(false)));
                     fields.push(("fn-var", self.flag(!macro_flag)?));
@@ -1276,6 +1290,46 @@ impl<'a> AnalysisGraph<'a> {
                         self.recipe(Recipe::List(argument_metadata))?,
                     ));
                 }
+            }
+            if !provisional
+                && property("declared").is_some_and(truthy)
+                && let Some(arglists) = property("arglists").filter(|value| truthy(value))
+            {
+                // Fresh forward declaration metadata supplies method data, not
+                // an analyzed initializer or an executable source callable.
+                // Match parse-def's second over the retained reader value.
+                let nil = || Form {
+                    span: 0..0,
+                    metadata: vec![],
+                    kind: Kind::Nil,
+                };
+                let parameters = match &arglists.kind {
+                    Kind::List(items) | Kind::Vector(items) | Kind::Set(items) => {
+                        items.get(1).cloned().unwrap_or_else(nil)
+                    }
+                    Kind::Map(items) => {
+                        items.chunks_exact(2).nth(1).map_or_else(nil, |pair| Form {
+                            span: 0..0,
+                            metadata: vec![],
+                            kind: Kind::Vector(pair.to_vec()),
+                        })
+                    }
+                    Kind::String(units) => units.get(1).map_or_else(nil, |unit| Form {
+                        span: 0..0,
+                        metadata: vec![],
+                        kind: Kind::String(vec![*unit]),
+                    }),
+                    _ => {
+                        return Err(SessionError::Host(wasmtime::Error::msg(
+                            "Declared argument lists require seqable reader data",
+                        )));
+                    }
+                };
+                fields
+                    .retain(|(name, _)| !matches!(*name, "declared" | "fn-var" | "method-params"));
+                fields.push(("declared", self.flag(true)?));
+                fields.push(("fn-var", self.flag(true)?));
+                fields.push(("method-params", self.form(&parameters, depth + 1)?));
             }
             if let Some(tag) = completed_tag {
                 let field = if callable.is_some() { "ret-tag" } else { "tag" };

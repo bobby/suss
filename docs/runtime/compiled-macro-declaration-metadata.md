@@ -4,7 +4,9 @@ The declaration projection distinguishes namespace declaration records from
 resolved-var AST records. Namespace entries default to qualified `:name`; explicit `:name` metadata can
 override that field, as in the pinned analyzer. They do not
 receive a default `:ns`. Explicit symbol metadata for the selected portable
-fields retains its presence and original data.
+fields retains its presence and original data, including the six function fields
+on scalar and provisional records. Those fields do not imply that a source
+callable exists.
 
 An initializer's provisional catalog entry carries symbol metadata and source
 coordinates, while its namespace snapshot retains the previous completed entry.
@@ -30,7 +32,12 @@ tag is known; unknown return information stays absent unless explicitly supplied
 by metadata. Dynamic function declarations infer their returns independently of
 dynamic var-reference tags; false type hints fall through to inference. Non-nil
 `:top-fn` merge data overlays all 18 selected fields, followed by the computed
-return tag. Function arity and
+return tag. An empty override leaves raw symbol arity metadata present while
+supplying no computed arity group. Normal source callables replace raw function
+fields with their computed defaults. Fresh no-initializer declarations with
+truthy `:declared` and argument lists add portable `:fn-var` and `:method-params`
+from the argument lists' second element; the original data kind stays intact,
+and no `:suss/source-function` is invented. Function arity and
 argument metadata retain the policies described in
 [function declaration facts](compiled-macro-declaration-functions.md).
 
@@ -55,7 +62,8 @@ hints, dynamic functions, test omission, core file markers and top-fn merge
 precedence in both native caller phases after GC. Its separate development-only
 [primary probe](../../tests/oracle/declaration-metadata-review-probe.clj) executes
 the pinned analyzer directly, including three snapshot/catalog document
-observations. The older staging regression now asserts the observed absence of
+observations plus scalar/provisional/raw function metadata and fresh forward
+declaration argument-list projections. The older staging regression now asserts the observed absence of
 explicit docstrings during initializer analysis while retaining completed and
 snapshot document checks. The original 29-case corpus stays unchanged.
 

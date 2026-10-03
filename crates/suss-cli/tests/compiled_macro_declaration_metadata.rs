@@ -129,6 +129,108 @@ fn form(kind: Kind) -> Form {
         kind,
     }
 }
+
+#[test]
+fn raw_function_metadata_is_preserved_before_completed_callable_overlays() {
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+        session
+            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .unwrap();
+        session.enter_namespace("user").unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        macros
+            .define(
+                r#"(defmacro raw-fields [name]
+          (let [info (get (get (get &env :suss/catalog) :defs) name)]
+            (list 'quote [[(contains? info :fn-var) (get info :fn-var)]
+                          [(contains? info :variadic?) (get info :variadic?)]
+                          [(contains? info :max-fixed-arity) (get info :max-fixed-arity)]
+                          [(contains? info :method-params) (get info :method-params)]
+                          [(contains? info :arglists) (get info :arglists)]
+                          [(contains? info :arglists-meta) (get info :arglists-meta)]
+                          (contains? info :suss/source-function)])))"#,
+            )
+            .unwrap();
+        for (source, expected) in [
+            (
+                "(def ^{:fn-var true :variadic? true :max-fixed-arity 9 :method-params [[given]] :arglists [[given]] :arglists-meta [nil]} raw-scalar 7) (raw-fields raw-scalar)",
+                "[[true true] [true true] [true 9] [true [[given]]] [true [[given]]] [true [nil]] false]",
+            ),
+            (
+                "(def ^{:fn-var false :variadic? true :max-fixed-arity 9 :method-params [[given]] :arglists [[given]] :arglists-meta [nil] :top-fn {}} raw-function (fn [x] x)) (raw-fields raw-function)",
+                "[[true true] [true true] [true 9] [true [[given]]] [true [[given]]] [true [nil]] true]",
+            ),
+            (
+                "(def ^{:fn-var false :variadic? true :max-fixed-arity 9 :method-params [[given]] :arglists-meta [nil]} normal-function (fn [x] x)) (raw-fields normal-function)",
+                "[[true true] [true false] [true 1] [true ([x])] [true nil] [true ()] true]",
+            ),
+            (
+                "(def ^{:fn-var true :variadic? true :max-fixed-arity 9 :method-params [[given]] :arglists [[given]] :arglists-meta [nil]} staged (fn [x] (raw-fields staged))) (staged 31)",
+                "[[true true] [true true] [true 9] [true [[given]]] [true [[given]]] [true [nil]] false]",
+            ),
+        ] {
+            let value = session.eval_with_macros(source, &mut macros).unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            session.collect().unwrap();
+            let mut actual = bridge.read(&mut session, &value, 0..1).unwrap();
+            let mut expected = suss_reader::forms::read_forms(expected).unwrap().remove(0);
+            normalize(&mut actual);
+            normalize(&mut expected);
+            assert_eq!(actual, expected, "{phase:?}: {source}");
+        }
+        // Portable metadata does not create a callable or alter native arity.
+        let bridge = FormBridge::new(&mut session).unwrap();
+        for (source, number) in [
+            ("raw-scalar", 7.0),
+            ("(raw-function 23)", 23.0),
+            ("(normal-function 29)", 29.0),
+        ] {
+            let value = session.eval(source).unwrap();
+            session.collect().unwrap();
+            assert_eq!(
+                bridge.read(&mut session, &value, 0..1).unwrap().kind,
+                Kind::Number(number)
+            );
+        }
+        macros.define("(defmacro declared-flag [name] (list 'quote (get (get (get (get &env :suss/catalog) :defs) name) :declared)))").unwrap();
+        for (source, name, expected) in [
+            (
+                "(def ^{:declared :marker :fn-var false :method-params [[old]] :arglists '([given])} typed)",
+                "typed",
+                "[[true true] [false nil] [false nil] [true ([given])] [true (quote ([given]))] [false nil] false]",
+            ),
+            (
+                "(def ^{:declared true :arglists [[given] [more]]} typed-vector)",
+                "typed-vector",
+                "[[true true] [false nil] [false nil] [true [more]] [true [[given] [more]]] [false nil] false]",
+            ),
+            (
+                "(def ^{:declared true :arglists {:a [x] :b [y]}} typed-map)",
+                "typed-map",
+                "[[true true] [false nil] [false nil] [true [:b [y]]] [true {:a [x] :b [y]}] [false nil] false]",
+            ),
+        ] {
+            session.eval(source).unwrap();
+            let value = session
+                .eval_with_macros(&format!("(raw-fields {name})"), &mut macros)
+                .unwrap();
+            session.collect().unwrap();
+            let mut actual = bridge.read(&mut session, &value, 0..1).unwrap();
+            let mut expected = suss_reader::forms::read_forms(expected).unwrap().remove(0);
+            normalize(&mut actual);
+            normalize(&mut expected);
+            assert_eq!(actual, expected, "{phase:?}: {source}");
+            let value = session
+                .eval_with_macros(&format!("(declared-flag {name})"), &mut macros)
+                .unwrap();
+            assert_eq!(
+                bridge.read(&mut session, &value, 0..1).unwrap().kind,
+                Kind::Bool(true)
+            );
+        }
+    }
+}
 fn plain(values: impl IntoIterator<Item = Form>) -> Form {
     form(Kind::Vector(values.into_iter().collect()))
 }

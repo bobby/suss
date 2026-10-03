@@ -54,3 +54,50 @@
 (assert (= @document-observations [[false nil nil] [true "first" nil] [true "second" "second"]])
   (pr-str @document-observations))
 (prn :documents @document-observations)
+
+;; Raw function-looking metadata remains data on a scalar. Empty top-fn
+;; contributes no computed arity group, leaving existing symbol metadata.
+(def function-field-keys [:fn-var :variadic? :max-fixed-arity :method-params :arglists :arglists-meta])
+(def function-observations (atom []))
+(defn function-fields [info]
+  (mapv (fn [key] [(contains? info key) (get info key)]) function-field-keys))
+(defmacro pr160-function-fields [name]
+  (let [row (function-fields (get-in @env/*compiler* [::ana/namespaces 'review :defs name]))]
+    (swap! function-observations conj row)
+    0))
+(env/with-compiler-env (env/default-compiler-env)
+  (binding [ana/*cljs-ns* 'review]
+    (doseq [source ["(def ^{:fn-var true :variadic? true :max-fixed-arity 9 :method-params [[given]] :arglists [[given]] :arglists-meta [nil]} raw-scalar 7)"
+                    "(def ^{:fn-var false :variadic? true :max-fixed-arity 9 :method-params [[given]] :arglists [[given]] :arglists-meta [nil] :top-fn {}} raw-function (fn [x] x))"
+                    "(def ^{:fn-var false :variadic? true :max-fixed-arity 9 :method-params [[given]] :arglists-meta [nil]} normal-function (fn [x] x))"]]
+      (let [form (read-string source)]
+        (ana/analyze (assoc (ana/empty-env) :ns {:name 'review :defs {}}) form)
+        (let [actual (function-fields (get-in @env/*compiler* [::ana/namespaces 'review :defs (second form)]))
+              expected (if (= (second form) 'normal-function)
+                         '[[true true] [true false] [true 1] [true ([x])] [true nil] [true ()]]
+                         '[[true true] [true true] [true 9] [true [[given]]] [true [[given]]] [true [nil]]])]
+          (assert (= actual expected) (pr-str [source actual expected]))
+          (prn :function-fields source actual))))
+    (ana/analyze (assoc (ana/empty-env) :ns {:name 'review :defs {} :use-macros {'pr160-function-fields 'user}})
+      (read-string "(def ^{:fn-var true :variadic? true :max-fixed-arity 9 :method-params [[given]] :arglists [[given]] :arglists-meta [nil]} staged (fn [x] (pr160-function-fields staged)))"))))
+(assert (= @function-observations '[[[true true] [true true] [true 9] [true [[given]]] [true [[given]]] [true [nil]]]])
+  (pr-str @function-observations))
+(prn :provisional-function-fields @function-observations)
+
+;; Fresh forward declarations derive portable method parameters from arglists,
+;; while still having no source initializer or source callable.
+(env/with-compiler-env (env/default-compiler-env)
+  (binding [ana/*cljs-ns* 'review]
+    (doseq [[source expected] [["(def ^{:declared :marker :fn-var false :method-params [[old]] :arglists '([given])} typed)"
+                               '[[true true] [false nil] [false nil] [true ([given])] [true (quote ([given]))] [false nil]]]
+                              ["(def ^{:declared true :arglists [[given] [more]]} typed-vector)"
+                               '[[true true] [false nil] [false nil] [true [more]] [true [[given] [more]]] [false nil]]]
+                              ["(def ^{:declared true :arglists {:a [x] :b [y]}} typed-map)"
+                               '[[true true] [false nil] [false nil] [true [:b [y]]] [true {:a [x] :b [y]}] [false nil]]]]]
+      (let [form (read-string source)]
+        (ana/analyze (assoc (ana/empty-env) :ns {:name 'review :defs {}}) form)
+        (let [info (get-in @env/*compiler* [::ana/namespaces 'review :defs (second form)])
+              actual (function-fields info)]
+          (assert (= actual expected) (pr-str [source actual expected]))
+          (assert (true? (:declared info)) (pr-str info))
+          (prn :declared-function-fields source actual (:declared info)))))))

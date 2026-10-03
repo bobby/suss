@@ -12996,3 +12996,54 @@ GC. /private/tmp/suss-pr160-review-source-documents.log. New push requires fresh
 exact-head full baseline and CI. Previous657b1f1 CI37134040734 is not final proof.
 Compiler source/images/fingerprints and graph bounds remain unchanged. No merge,
 issue closure or milestone completion. Reviewer still owns sole heavy slot.
+
+
+PR160 intermediate e009c1e861d4fcc09da445ad23093557e149d93b frozen required
+full91488 TERMINAL exit0:1083passed/0failed/17existingignores across118groups.
+Log /private/tmp/suss-pr160-review-full-final.log. No slot overlap or restart.
+This is intermediate proof: subsequent independent review found two further
+selected-function-metadata gaps, so it is not final readiness evidence.
+
+Pinned parse-def first merges all raw symbol metadata. Explicit six function
+fields must survive scalar and provisional entries. Empty :top-fn supplies no
+computed arity group, so raw five arity/argument fields survive; fn-var defaults
+still override its raw value. Normal source callables replace the six-field
+raw group with computed defaults. Source-callable records remain a distinct
+Suss extension; user-supplied function-looking metadata never creates one or
+changes native callable arity. Primary81481 TERMINAL0 asserts scalar/empty/
+normal/provisional four cases, preserving the upstream stale-function warning.
+Native29070 TERMINAL101,6.40s shows all six scalar fields absent. Fixed18556
+TERMINAL0,1/0/0 in10.89s, both caller phases/GC plus actual scalar7 and arity1
+function calls. Logs /private/tmp/suss-pr160-review-{primary-raw-functions,
+native-raw-before,native-raw-fixed}.log.
+
+Fresh no-initializer declared+arglists records also associate declared=true,
+fn-var=true and method-params=(second arglists), even without a source callable.
+Actual primary64783 TERMINAL0 asserts quoted-list, vector and map-entry values
+with exact method-params kinds, including overriding raw false/old metadata.
+Native91946 TERMINAL101,7.05s confirms the missing computed overlay. CLI-only
+bounded reader-data derivation now applies it to completed records; it stays
+off for initializer-bearing truthy-declared provisional records. Fixed90912
+TERMINAL0,1/0/0 in12.43s, with all three exact data kinds and source-callable
+absence after GC in both phases. No function signatures are fabricated from
+portable metadata. Logs /private/tmp/suss-pr160-review-{primary-declared-functions,
+native-declared-before,native-declared-fixed}.log. Retained development probe
+now asserts the original seven policies, three document observations, four raw
+function metadata cases and three fresh declaration cases. Original29case
+corpus/source coordinates/Node results remain unchanged.
+
+Final affected26999 TERMINAL0:33/0/0 across6groups (CLIlib14,graph11,fullcore1,
+function declarations2,source environment3,source tags2); fullcore56.11s fits
+unchanged limits. Final small metadata filter70929 TERMINAL0:2/0/0 in34.59s;
+1original whole-corpus test excluded by the explicit metadata name filter and
+required unfiltered in next full baseline. These combine35/0/0 across7groups.
+Logs /private/tmp/suss-pr160-review-{final-affected,final-small-metadata}.log.
+Rustfmt2024 changed source/new test only; existing source-environment test kept
+unrelated formatting intact. Git diff check passes. Compiler/core/reader Rust,
+dependencies, images/fingerprints, all form/graph/key/occurrence limits unchanged.
+Freeze source, push significant corrections and require exact-new-head unfiltered
+cargo test --workspace --locked -- --test-threads=2 plus final-head CI. No merge,
+issue closure or milestone completion. Repeated-declare replacement, older
+source-AST inference, arbitrary schema/shapes, self-local facts, cache/evaluator
+retirement and M3 lifecycle acceptance remain separately open. Reviewer retains
+sole heavy slot through final full baseline and explicit release.
