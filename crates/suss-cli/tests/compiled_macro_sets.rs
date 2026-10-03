@@ -28,6 +28,33 @@ fn compiled_sets_keep_canonical_lookup_metadata_and_persistent_versions_in_both_
 }
 
 #[test]
+fn compiled_quoted_sets_keep_symbols_nested_syntax_metadata_and_factory_boundaries() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval("(def touched 0) (def quoted '#{alpha (set! touched 1) [1 2] {:word 3}})").unwrap();
+        truth(&mut session, "(and (set? quoted) (== (count quoted) 4) (contains? quoted 'alpha) (contains? quoted '(set! touched 1)) (contains? quoted [1 2]) (contains? quoted {:word 3}) (== touched 0))");
+        truth(&mut session, "(and (set? '#{}) (== (count '#{}) 0))");
+        truth(&mut session, "(== (:doc (meta '^{:doc 7} #{1 2})) 7)");
+        for size in [8, 9, 17] {
+            let syntax = format!("'#{{{}}}", (0..size).map(|i| format!("symbol{i}")).collect::<Vec<_>>().join(" "));
+            let value = session.eval(&syntax).unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            session.collect().unwrap();
+            let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
+            let Kind::Set(items) = decoded.kind else { panic!("quoted set artifact") };
+            let mut names = items.iter().map(|item| {
+                let Kind::Symbol(symbol) = &item.kind else { panic!("symbol datum") };
+                assert_eq!(symbol.namespace, None);
+                symbol.name.clone()
+            }).collect::<Vec<_>>();
+            names.sort();
+            let mut expected = (0..size).map(|i| format!("symbol{i}")).collect::<Vec<_>>();
+            expected.sort();
+            assert_eq!(names, expected);
+        }
+    }
+}
+
+#[test]
 fn compiled_set_transients_reject_all_operations_after_persistence() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.eval("(def t (transient #{1 2})) (conj! t 3) (disj! t 1)").unwrap();

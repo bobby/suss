@@ -485,6 +485,9 @@ impl<'a> AnalysisGraph<'a> {
             let ns = self.symbol(global.namespace())?;
             let mut fields = vec![("name", name), ("ns", ns)];
             if let Some(info) = namespace.declarations.get(global) {
+                if let Some(tag) = hir::declaration_tag(info).map_err(|error| SessionError::Host(wasmtime::Error::msg(error.message)))? {
+                    fields.push(("tag", self.form(&tag, depth + 1)?));
+                }
                 fields.push(("suss/definition-form", self.form(&info.definition_form, depth + 1)?));
                 fields.push(("suss/analysis-completed", self.flag(info.analysis_completed)?));
                 fields.push(("suss/declaration", self.form(&info.declaration, depth + 1)?));
@@ -557,6 +560,9 @@ impl<'a> AnalysisGraph<'a> {
             ("local", kind),
             ("suss/id", id),
         ];
+        if let Some(tag) = hir::local_tag(binding).map_err(|error| SessionError::Host(wasmtime::Error::msg(error.message)))? {
+            entries.push(("tag", self.form(&tag, depth + 1)?));
+        }
         if !matches!(binding.source_role, SourceRole::PrivateCatch { .. }) {
             entries.push(("op", self.keyword("binding")?));
             entries.push(("binding-form?", self.flag(true)?));
@@ -753,6 +759,13 @@ impl<'a> AnalysisGraph<'a> {
             ("env", env),
             ("suss/lowering", lowering),
         ];
+        if let Some(tag) = &source.tags.tag {
+            fields.push(("tag", self.form(tag, depth + 1)?));
+        }
+        if let Some(tag) = &source.tags.inferred_return {
+            let value = if let Some(tag) = tag { self.form(tag, depth + 1)? } else { self.scalar(Literal::Nil)? };
+            fields.push(("inferred-ret-tag", value));
+        }
         if let Some(callable) = &source.callable {
             fields.push(("suss/source-function", self.callable(callable)?));
         }

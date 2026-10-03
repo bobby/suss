@@ -196,15 +196,18 @@ impl Analyzer<'_> {
     }
 
     pub(super) fn set_literal(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
+        let entries = items.iter().map(|item| self.form(item)).collect::<Result<Vec<_>, _>>()?;
+        self.set_values(form, items, entries)
+    }
+
+    /// Entries have already been analyzed as expressions or lowered as quoted
+    /// data. Both paths use the same constructor/factory and runtime ordering.
+    pub(super) fn set_values(&mut self, form: &Form, items: &[Form], values: Vec<Hir>) -> Result<Hir, Diagnostic> {
         if items.is_empty() {
             return self.collection_property(form, "PersistentHashSet", "EMPTY");
         }
         if items.len() > 8 || !distinct_constants(&items.iter().collect::<Vec<_>>()) {
-            let mut entries = Vec::new();
-            for item in items {
-                entries.push(self.form(item)?);
-            }
-            let array = self.collection_array(form, entries);
+            let array = self.collection_array(form, values);
             return self.collection_method(
                 form,
                 "PersistentHashSet",
@@ -217,8 +220,8 @@ impl Analyzer<'_> {
         let nil = self.literal_form(form, Literal::Nil);
         let count = self.literal_form(form, Literal::Number(items.len() as f64));
         let mut entries = Vec::new();
-        for item in items {
-            entries.push(self.form(item)?);
+        for value in values {
+            entries.push(value);
             entries.push(nil.clone());
         }
         let array = self.collection_array(form, entries);
