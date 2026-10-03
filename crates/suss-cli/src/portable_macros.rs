@@ -4,7 +4,7 @@ use crate::{
     portable_macro_graph::AnalysisGraph,
     portable_session::{Session, SessionError, SessionValue},
 };
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use suss_compile::portable::{Diagnostic, ExpansionContext, ExpansionHost};
 use suss_reader::forms::{Form, Kind, read_forms};
 pub struct CompiledMacros {
@@ -13,6 +13,7 @@ pub struct CompiledMacros {
     definitions: BTreeMap<(String, String), SessionValue>,
     declaration_sources: BTreeMap<(String, String), String>,
     loaded_sources: BTreeMap<String, String>,
+    incomplete_sources: BTreeSet<String>,
     artifact_cache: suss_compile::portable::artifact_cache::ArtifactCache,
 }
 fn symbol(name: &str, span: std::ops::Range<usize>) -> Form {
@@ -65,6 +66,7 @@ impl CompiledMacros {
             definitions: BTreeMap::new(),
             declaration_sources: BTreeMap::new(),
             loaded_sources: BTreeMap::new(),
+            incomplete_sources: BTreeSet::new(),
             artifact_cache: Default::default(),
         })
     }
@@ -143,6 +145,10 @@ impl CompiledMacros {
         .map_err(SessionError::Module)?;
         // Discovery errors preserve previous loaded identities. Once execution
         // starts, each selected phase unit must initialize before being loaded again.
+        // A selected unit may publish cells before its initializer fails. Its old
+        // immutable identity no longer establishes the complete live graph, so
+        // emission reuse stays disabled until all selected units finish loading.
+        self.incomplete_sources.extend(graph.iter().map(|unit| unit.identity.namespace().to_owned()));
         self.session.invalidate_source_modules(
             &graph
                 .iter()
@@ -183,6 +189,7 @@ impl CompiledMacros {
                 self.session
                     .initialized_source_namespace(unit.identity.namespace())?;
                 self.loaded_sources.insert(unit.identity.namespace().to_owned(), source_identity);
+                self.incomplete_sources.remove(unit.identity.namespace());
             }
             Ok(self
                 .definitions
@@ -206,6 +213,7 @@ impl CompiledMacros {
             definitions: BTreeMap::new(),
             declaration_sources: BTreeMap::new(),
             loaded_sources: BTreeMap::new(),
+            incomplete_sources: BTreeSet::new(),
             artifact_cache: Default::default(),
         })
     }
@@ -328,7 +336,7 @@ impl ExpansionHost for CompiledMacros {
         let mut dependencies = vec![("bootstrap".into(), suss_compile::portable::bootstrap::sha256(suss_compile::portable::bootstrap::SOURCE.as_bytes()))];
         dependencies.extend(self.loaded_sources.iter().map(|(name, source)| (format!("module:{name}"), source.clone())));
         dependencies.extend(self.declaration_sources.iter().map(|((namespace, name), source)| (format!("macro:{namespace}/{name}"), source.clone())));
-        self.artifact_cache.emit(function, phase, forms, origin, Some(&dependencies))
+        self.artifact_cache.emit(function, phase, forms, origin, self.incomplete_sources.is_empty().then_some(dependencies.as_slice()))
     }
 
     fn supports_macro_imports(&self) -> bool {

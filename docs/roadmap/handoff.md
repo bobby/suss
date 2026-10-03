@@ -13784,3 +13784,27 @@ Full M3, evaluator retirement, component/AOT and lifecycle gates remain open.
 Next: freeze pushed review head, run cargo test --workspace --locked --
 --test-threads=2 and require exact final-head CI before readiness. No issue closure
 or merge is claimed from focused evidence.
+
+PR166 continued review found a significant incomplete-load provenance gap:
+a selected source unit could publish cells/macros then fail its initializer,
+leaving its previous completed identity in the dependency ledger. Actual IR
+prevented incorrect byte reuse but did not establish a complete known graph.
+Stopped exact full46757 intentionally (TERMINAL143) for this finding, after
+identifying/stopping only its cargo84418 and native child92417. That partial run
+is not full acceptance. New regression32370 TERMINAL101:0pass/1fail2.81s with the
+provenance bypass disabled, /private/tmp/suss-pr166-review-partial-before.log:
+usable partially published macro emitted unchanged42 but bypass counter stayed0
+instead of1. Original cache tests/expectations remain unchanged.
+
+Selected graph units now become incomplete before execution, each cleared only
+after successful initialization records its immutable identity. Emission bypasses
+while any selected unit remains incomplete. Discovery failure before execution
+preserves prior known identity/cache hits. Failed unit effects/publications are
+not rolled back; successful dependencies retain their identities. Explicit
+successful reload restores known provenance/reuse, and reset starts a clean host.
+Six native cache tests28118 TERMINAL0:6pass/0fail/0ignored3.31s,
+/private/tmp/suss-pr166-review-partial-load.log. After the controlled before probe,
+restored the fix and reran all six (6188, log
+/private/tmp/suss-pr166-review-native-complete.log). CLI-only continuation leaves
+both previously reproduced compiler identities/Wasm unchanged. Next push/freeze
+new exact review head and run one required unfiltered full plus final-head CI.

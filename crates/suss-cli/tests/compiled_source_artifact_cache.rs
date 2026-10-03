@@ -262,3 +262,53 @@ fn source_artifact_cache_tracks_new_dependencies_failed_discovery_and_reset() {
         42.0f64.to_bits()
     );
 }
+
+#[test]
+fn source_artifact_cache_bypasses_partial_load_until_successful_reload() {
+    let project = tempfile::tempdir().unwrap();
+    let source = project.path().join("tools.sus");
+    std::fs::write(&source, "(ns tools) (defmacro answer [] 42)").unwrap();
+    let mut runtime = Session::with_options(SessionOptions {
+        source_paths: vec![project.path().to_owned()],
+        ..Default::default()
+    })
+    .unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    let import = "(ns user (:require-macros [tools :as t]))";
+    let reload = "(ns user (:require-macros ^{:reload :reload} [tools :as t]))";
+    runtime.eval_with_macros(import, &mut macros).unwrap();
+    assert_eq!(
+        number(&mut runtime, &mut macros, "(t/answer)"),
+        42.0f64.to_bits()
+    );
+    std::fs::write(
+        &source,
+        "(ns tools) (def partial 17) (defmacro answer [] 42) (throw \"broken initializer\")",
+    )
+    .unwrap();
+    assert!(runtime.eval_with_macros(reload, &mut macros).is_err());
+    // The partially published macro still executes. Its unchanged expansion
+    // cannot turn an incompletely loaded dependency graph into known provenance.
+    let before = macros.artifact_cache_stats();
+    assert_eq!(
+        number(&mut runtime, &mut macros, "(t/answer)"),
+        42.0f64.to_bits()
+    );
+    let after = macros.artifact_cache_stats();
+    assert_eq!(after.bypasses, before.bypasses + 1);
+    assert_eq!(after.hits, before.hits);
+    assert_eq!(after.misses, before.misses);
+    std::fs::write(&source, "(ns tools) (defmacro answer [] 42)").unwrap();
+    runtime.eval_with_macros(reload, &mut macros).unwrap();
+    let before = macros.artifact_cache_stats();
+    assert_eq!(
+        number(&mut runtime, &mut macros, "(t/answer)"),
+        42.0f64.to_bits()
+    );
+    assert_eq!(
+        number(&mut runtime, &mut macros, "(t/answer)"),
+        42.0f64.to_bits()
+    );
+    assert_eq!(macros.artifact_cache_stats().hits, before.hits + 2);
+    assert_eq!(macros.artifact_cache_stats().bypasses, before.bypasses);
+}

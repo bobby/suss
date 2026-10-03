@@ -15,7 +15,11 @@ Changing dependency source invalidates reuse even if the resulting expansion is
 identical. File edits alone do not change identities of already-loaded modules;
 explicit reload selects new immutable snapshots. Dependencies include their
 canonical namespace edges and source paths. Declaration rollback restores only
-its own provenance, preserving successfully loaded dependencies.
+its own provenance, preserving successfully loaded dependencies. Discovery failures
+before execution retain the known graph. Selected modules are marked incomplete
+before execution; if initialization fails after publishing effects or declarations,
+all emission reuse bypasses until successful loading establishes every selected
+module identity. Actual IR alone does not establish unknown graph provenance.
 
 IR verification precedes every lookup. A hit verifies the retained Wasm digest
 and runtime ABI before installation; the ordinary host validation/linking gates
