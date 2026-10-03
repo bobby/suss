@@ -195,6 +195,10 @@ impl Scope {
 /// Compiler declaration facts, distinct from initialized runtime cell metadata.
 #[derive(Debug, Clone)]
 pub struct DefinitionInfo {
+    /// Actual definition syntax, retained before initializer analysis.
+    pub definition_form: suss_reader::forms::Form,
+    /// Analysis completion is distinct from presence or runtime evaluation of an initializer.
+    pub analysis_completed: bool,
     pub declaration: suss_reader::forms::Form,
     pub docstring: Option<Vec<u16>>,
     pub origin: Option<super::SourceOrigin>,

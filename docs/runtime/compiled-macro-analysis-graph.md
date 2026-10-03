@@ -2,9 +2,10 @@
 
 `AnalysisGraph` transports actual retained compiler records into canonical values
 in a supplied compiled session. It is an original native host implementation and
-adds no shipped Java or JavaScript dependency. It is preparation for source-level
-`&env`; it does not yet provide the complete ClojureScript environment schema or
-change source macro signatures.
+adds no shipped Java or JavaScript dependency. Compiled source macro invocation
+now passes this rooted graph as implicit `&env`, after `&form` and before user
+arguments. It does not yet provide the complete ClojureScript environment schema;
+see [source environments](compiled-macro-source-environment.md).
 
 Local and field records retain shared declaration identity tokens across snapshot
 clones. Physical ID remapping and receiver/argument adaptations remain separate
@@ -86,7 +87,7 @@ all five tests. The initial edge harness had a Rust borrow lifetime error, corre
 before executing it. Full final-head verification remains required before a PR.
 
 Before source macro integration, finish the portable schema, staged
-function/declaration metadata and AST inference, then declare/pass actual `&env`
+function/declaration metadata and AST inference; actual `&env` is now passed
 and compare it with the fresh pinned oracle. No M3 acceptance or source-level
 `&env` completion is claimed.
 
@@ -96,4 +97,4 @@ and macro imports, preserving source roles and nullable map shape. A fresh
 18-field primary corpus matches actual compiled native queries in both phases
 after GC; see [namespace data](compiled-macro-namespace-data.md). This remains
 partial portable schema preparation; declarations, AST/inference and actual
-source macro invocation remain unfinished.
+the complete source environment contract remains unfinished.
