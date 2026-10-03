@@ -95,6 +95,13 @@ constructor/factory; existing set effect/GC tests remain passing. Complete
 AST/declaration/function/method metadata and remaining inference are still open;
 see [source inference](docs/runtime/compiled-macro-source-inference.md).
 
+Named self locals now retain actual parameter-only first-pass declarations before
+method bodies expand, including future methods. Both original pinned observations
+match all eight selected local fields and the explicit portable binding view in
+both caller phases after GC; actual fixed/variadic calls remain correct. Full
+portable environments/inference and original M3 acceptance remain open; see
+[self-local method evidence](docs/runtime/compiled-macro-self-local-methods.md).
+
 Retained cached string hashing now matches64 fresh pinned observations over owned GC
 objects, with aliases/live dependencies and40 ABI checks. Public hash/equality and
 persistent collections remain unfinished; see [cached hashing](docs/runtime/cached-string-hashing.md).

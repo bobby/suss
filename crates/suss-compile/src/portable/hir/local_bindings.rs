@@ -19,6 +19,8 @@ pub enum SourceRole {
     Plain,
     FunctionName {
         variadic: bool,
+        /// Absent on the initial self binding; present only after parameter staging.
+        methods: Option<Arc<SourceFunctionParameters>>,
     },
     PrivateCatch {
         anchor: std::ops::Range<usize>,
