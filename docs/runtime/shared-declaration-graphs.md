@@ -19,11 +19,23 @@ sharing preserves those metadata values. Ordered maps/vectors, primitive values
 and immutable environment records also share identical data within the build.
 Compiled macro bodies still execute for every invocation.
 
+Compiler declaration/namespace records deliberately share immutable snapshot
+identities. Reader collection occurrences use a separate execution policy:
+maps/sets and their reader ancestors reconstruct per occurrence because captured
+hash/key-test callbacks may have effects or return different values. Each
+occurrence retains its own child results. Metadata-bearing sets realize their
+items, then metadata, then construct the set once, matching canonical transport.
+Pure reader leaves can still share. Compiler snapshot records are explicit sharing
+barriers; this does not replay unchanged declaration snapshots merely to preserve
+old host allocation counts.
+
 The graph retains its 65,536-node and 1,048,576-UTF-16-unit limits. Independent
 per-form validation preserves 4,096 logical transport nodes, including normalized
 metadata, and 64 reader levels. Stored reader keys additionally have a 32 MiB
 byte limit. Limits are checked before graph materialization or macro invocation.
-No exported field is omitted to fit the core graph.
+The preliminary DAG walk and occurrence execution each have an independent
+1,048,576-step work bound, charged before callbacks. No exported field is omitted
+to fit the core graph.
 
 The actual full core-namespace declaration projection passes in both caller
 phases, before and after a new `defonce`. Snapshot identity/revision tests pass.

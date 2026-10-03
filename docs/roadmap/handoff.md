@@ -12645,3 +12645,37 @@ baseline and any significant fixes. No further source edits by root during revie
 Original complete portable schema, source/macro cache, evaluator and lifecycle
 acceptance still open. Current ready PRs155,156,157 have successful exact-head CI
 and independent final full baselines; no merge and no issue closure.
+
+Independent PR158 review found two observable reader-data regressions. A metadata
+set was built before metadata and rebuilt afterward: actual counted replacement
+hash observed18calls versus canonical9. Original-head duplicate set sharing also
+observed9calls versus canonical18 (review reproduction16086 TERMINAL101).
+Fixed reader collection occurrences use occurrence-local child results; maps/sets
+and their reader ancestors execute each occurrence. Immutable compiler declaration
+and namespace records deliberately remain snapshot-sharing barriers. Metadata
+sets now realize items, then metadata, then build once. No arbitrary user callback
+purity assumption. Compact recipe/node/key bounds retained; preliminary DAG walk
+and occurrence execution each bound1,048,576steps before callbacks. Focused small
+budget tests reject before effects and recover in the sameStore. Callback-dependent
+HAMT bitmap probes distinguish both occurrence results, with vector/list ancestors,
+GC, nested item-before-metadata effects and exact canonical decoded parity.
+Review intermediate fixture failures retained in logs: qualified def in another
+namespace, unsupported unmunged property syntax and unsuccessful field lookup.
+Corrected fixtures use actual namespace and independently inspect nominal fields.
+Rustfmt2021 rejected existing2024 let-chain syntax; actualworkspaceedition2024
+formatter succeeds. No compiler/reader/core source changed, so shipped bootstrap
+identities remain valid. review-focused66283 TERMINAL0:original2 tests.
+hash-before5014 TERMINAL101 invalidfixture; corrected18887 TERMINAL101 observed
+18vs9. Fixed63864/5565/32012 TERMINAL0; occurrence69454 TERMINAL0. Initial duplicate
+probes20029/33541 TERMINAL101 fixtureerrors; corrected41348 TERMINAL0:4/0/0.
+Work-bound13892 TERMINAL0:5/0/0,2.75s. Core42398 TERMINAL0:11graph tests10.68s+
+fullcore1test35.87s in bothcaller phases. Logs /private/tmp/suss-pr158-review-*.log.
+Final focused80892 pending, then frozen review-fix headfullbaseline and exact-head
+CI required. Complete portable schema/cache/evaluator/lifecycle gates remain open;
+no issue closure or PRmerge. Reviewer owns singleheavy slot until explicitrelease.
+
+PR158 final focused80892 TERMINAL0:44pass/0fail/0ignore across6groups
+(CLIlib14,analysisgraph11,fullcore1,data builders7,sets8,sourceenv3); log
+/private/tmp/suss-pr158-review-final-focused.log. Fullcore remains bounded after
+bothworkguards. Static whitespace/rustfmt2024 pass. Freeze reviewfix source now;
+commit/push then independent exact-head fullworkspacebaseline, final-headCI.

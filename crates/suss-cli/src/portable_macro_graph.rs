@@ -66,7 +66,7 @@ fn validate_form_data(form: &Form) -> Result<()> {
             Kind::Conditional(_) | Kind::Discard(_) | Kind::Prefix { .. } => {
                 return Err(SessionError::Host(wasmtime::Error::msg(
                     "Native macro data requires resolved reader prefixes",
-                )))
+                )));
             }
             _ => {}
         }
@@ -218,6 +218,9 @@ enum Recipe {
     },
     Form(Form),
     List(Vec<Value>),
+    ReaderMap(Vec<(Value, Value)>),
+    ReaderVector(Vec<Value>),
+    ReaderSet(Vec<Value>),
     Metadata {
         shape: MetadataShape,
         value: Value,
@@ -302,6 +305,22 @@ impl<'a> AnalysisGraph<'a> {
         Ok(id)
     }
     fn materialize(&mut self, root: Value) -> Result<SessionValue> {
+        self.materialize_with_work(root, 1_048_576, 1_048_576)
+    }
+    fn materialize_with_work(
+        &mut self,
+        root: Value,
+        mut graph_work: usize,
+        mut work: usize,
+    ) -> Result<SessionValue> {
+        fn spend(work: &mut usize) -> Result<()> {
+            *work = work.checked_sub(1).ok_or_else(|| {
+                SessionError::Host(wasmtime::Error::msg(
+                    "Analysis graph exceeds materialization work bound",
+                ))
+            })?;
+            Ok(())
+        }
         while let Some((id, task)) = self.jobs.pop_front() {
             let result = match task {
                 Task::Namespace(value) => self.namespace_record(&value, 0)?,
@@ -314,12 +333,38 @@ impl<'a> AnalysisGraph<'a> {
             };
             self.recipes[id] = Some(Recipe::Alias(result));
         }
-        // Reader syntax has its own 64-level bound. Analysis dependency depth
-        // instead follows the bounded DAG and uses no recursive Rust calls.
+        fn dependencies(recipe: &Recipe) -> Vec<Value> {
+            match recipe {
+                Recipe::Alias(value) => vec![*value],
+                Recipe::List(values)
+                | Recipe::Vector(values)
+                | Recipe::Set(values)
+                | Recipe::ReaderVector(values)
+                | Recipe::ReaderSet(values) => values.clone(),
+                Recipe::Metadata {
+                    value,
+                    metadata,
+                    set_items,
+                    ..
+                } => std::iter::once(*value)
+                    .chain(set_items.iter().copied())
+                    .chain(std::iter::once(*metadata))
+                    .collect(),
+                Recipe::Map(entries) | Recipe::ReaderMap(entries) => entries
+                    .iter()
+                    .flat_map(|(key, value)| [*key, *value])
+                    .collect(),
+                _ => vec![],
+            }
+        }
+        // Check the compact DAG once. Compiler record recipes intentionally
+        // share immutable snapshots. Reader maps/sets can invoke captured user
+        // callbacks: each occurrence and its reader ancestors must execute.
         let mut state = vec![0u8; self.recipes.len()];
-        let mut values: Vec<Option<SessionValue>> = vec![None; self.recipes.len()];
+        let mut repeat = vec![false; self.recipes.len()];
         let mut stack = vec![(root, false)];
         while let Some((id, finish)) = stack.pop() {
+            spend(&mut graph_work)?;
             if state[id] == 2 {
                 continue;
             }
@@ -332,31 +377,77 @@ impl<'a> AnalysisGraph<'a> {
                 }
                 state[id] = 1;
                 stack.push((id, true));
-                let dependencies: Vec<_> = match recipe {
-                    Recipe::Alias(value) => vec![*value],
-                    Recipe::List(values) | Recipe::Vector(values) | Recipe::Set(values) => {
-                        values.clone()
-                    }
-                    Recipe::Metadata {
-                        value,
-                        metadata,
-                        set_items,
-                        ..
-                    } => std::iter::once(*value)
-                        .chain(std::iter::once(*metadata))
-                        .chain(set_items.iter().copied())
-                        .collect(),
-                    Recipe::Map(entries) => entries
-                        .iter()
-                        .flat_map(|(key, value)| [*key, *value])
-                        .collect(),
-                    _ => vec![],
-                };
-                for dependency in dependencies.into_iter().rev() {
+                for dependency in dependencies(recipe).into_iter().rev() {
+                    spend(&mut graph_work)?;
                     stack.push((dependency, false));
+                }
+            } else {
+                repeat[id] = match recipe {
+                    Recipe::ReaderMap(_) | Recipe::ReaderSet(_) => true,
+                    Recipe::List(_) | Recipe::ReaderVector(_) | Recipe::Metadata { .. } => {
+                        matches!(
+                            recipe,
+                            Recipe::Metadata {
+                                shape: MetadataShape::Set,
+                                ..
+                            }
+                        ) || dependencies(recipe).iter().any(|id| repeat[*id])
+                    }
+                    // Immutable compiler record/namespace identities are sharing
+                    // barriers, distinct from occurrences inside reader data.
+                    _ => false,
+                };
+                state[id] = 2;
+            }
+        }
+        struct Frame {
+            id: Value,
+            dependencies: Vec<Value>,
+            next: usize,
+            inputs: Vec<SessionValue>,
+        }
+        impl Frame {
+            fn new(id: Value, recipe: &Recipe) -> Self {
+                Self {
+                    id,
+                    dependencies: dependencies(recipe),
+                    next: 0,
+                    inputs: vec![],
+                }
+            }
+        }
+        let mut cached: Vec<Option<SessionValue>> = vec![None; self.recipes.len()];
+        let mut frames = vec![Frame::new(root, self.recipes[root].as_ref().unwrap())];
+        // DAG storage remains bounded independently of occurrence execution.
+        // Charge before descending or invoking callbacks; diamonds cannot expand
+        // into unbounded work even when the distinct recipe count is small.
+        while !frames.is_empty() {
+            let frame = frames.last_mut().unwrap();
+            if frame.next < frame.dependencies.len() {
+                work = work.checked_sub(1).ok_or_else(|| {
+                    SessionError::Host(wasmtime::Error::msg(
+                        "Analysis graph exceeds materialization work bound",
+                    ))
+                })?;
+                let id = frame.dependencies[frame.next];
+                frame.next += 1;
+                if !repeat[id]
+                    && let Some(value) = &cached[id]
+                {
+                    frame.inputs.push(value.clone());
+                } else {
+                    frames.push(Frame::new(id, self.recipes[id].as_ref().unwrap()));
                 }
                 continue;
             }
+            let frame = frames.pop().unwrap();
+            work = work.checked_sub(1).ok_or_else(|| {
+                SessionError::Host(wasmtime::Error::msg(
+                    "Analysis graph exceeds materialization work bound",
+                ))
+            })?;
+            let recipe = self.recipes[frame.id].as_ref().unwrap();
+            let inputs = frame.inputs;
             let value = match recipe {
                 Recipe::Scalar(value) => self.bridge.scalar(self.session, value)?,
                 Recipe::Identifier {
@@ -371,63 +462,41 @@ impl<'a> AnalysisGraph<'a> {
                     None,
                 )?,
                 Recipe::Form(form) => self.bridge.quote(self.session, form.clone())?,
-                Recipe::Alias(value) => values[*value]
-                    .as_ref()
-                    .expect("ordered alias dependency")
-                    .clone(),
-                Recipe::List(items) | Recipe::Vector(items) | Recipe::Set(items) => {
-                    let items = items
-                        .iter()
-                        .map(|id| {
-                            values[*id]
-                                .as_ref()
-                                .expect("ordered vector dependency")
-                                .clone()
-                        })
-                        .collect::<Vec<_>>();
-                    if matches!(recipe, Recipe::List(_)) {
-                        self.bridge.list_values(self.session, &items)?
-                    } else if matches!(recipe, Recipe::Set(_)) {
-                        self.bridge.set_values(self.session, &items)?
-                    } else {
-                        self.bridge.vector_values(self.session, &items)?
-                    }
+                Recipe::Alias(_) => inputs[0].clone(),
+                Recipe::List(_) => self.bridge.list_values(self.session, &inputs)?,
+                Recipe::Vector(_) | Recipe::ReaderVector(_) => {
+                    self.bridge.vector_values(self.session, &inputs)?
                 }
-                Recipe::Map(entries) => {
-                    let entries = entries
-                        .iter()
-                        .map(|(key, value)| {
-                            (
-                                values[*key].as_ref().expect("ordered map key").clone(),
-                                values[*value].as_ref().expect("ordered map value").clone(),
-                            )
-                        })
-                        .collect::<Vec<_>>();
-                    self.bridge.map_values(self.session, &entries)?
+                Recipe::Set(_) | Recipe::ReaderSet(_) => {
+                    self.bridge.set_values(self.session, &inputs)?
                 }
+                Recipe::Map(_) | Recipe::ReaderMap(_) => self.bridge.map_values(
+                    self.session,
+                    &inputs
+                        .chunks_exact(2)
+                        .map(|pair| (pair[0].clone(), pair[1].clone()))
+                        .collect::<Vec<_>>(),
+                )?,
                 Recipe::Metadata {
-                    shape,
-                    value,
-                    metadata,
-                    set_items,
-                } => {
-                    let items = set_items
-                        .iter()
-                        .map(|id| values[*id].as_ref().expect("ordered set item").clone())
-                        .collect::<Vec<_>>();
-                    self.bridge.with_form_metadata(
-                        self.session,
-                        *shape,
-                        values[*value].as_ref().expect("ordered form data"),
-                        values[*metadata].as_ref().expect("ordered form metadata"),
-                        &items,
-                    )?
-                }
+                    shape, set_items, ..
+                } => self.bridge.with_form_metadata(
+                    self.session,
+                    *shape,
+                    &inputs[0],
+                    inputs.last().unwrap(),
+                    &inputs[1..1 + set_items.len()],
+                )?,
             };
-            values[id] = Some(value);
-            state[id] = 2;
+            if !repeat[frame.id] {
+                cached[frame.id] = Some(value.clone());
+            }
+            if let Some(parent) = frames.last_mut() {
+                parent.inputs.push(value);
+            } else {
+                return Ok(value);
+            }
         }
-        Ok(values[root].take().expect("materialized graph root"))
+        unreachable!("graph has a root")
     }
     fn charge(&mut self, units: usize) -> Result<()> {
         self.nodes = self.nodes.checked_sub(1).ok_or_else(|| {
@@ -601,10 +670,16 @@ impl<'a> AnalysisGraph<'a> {
                     .collect::<Result<Vec<_>>>()?;
                 match &form.kind {
                     Kind::List(_) => Recipe::List(items),
-                    Kind::Vector(_) => Recipe::Vector(items),
+                    Kind::Vector(_) => Recipe::ReaderVector(items),
                     Kind::Set(_) => {
-                        set_items = items.clone();
-                        Recipe::Set(items)
+                        if form.metadata.is_empty() {
+                            Recipe::ReaderSet(items)
+                        } else {
+                            // Match FormBridge: realize items, then metadata, and
+                            // construct the set once. Hash callbacks are observable.
+                            set_items = items;
+                            Recipe::Scalar(Literal::Nil)
+                        }
                     }
                     _ => unreachable!(),
                 }
@@ -624,12 +699,12 @@ impl<'a> AnalysisGraph<'a> {
                         ))
                     })
                     .collect::<Result<Vec<_>>>()?;
-                Recipe::Map(pairs)
+                Recipe::ReaderMap(pairs)
             }
             Kind::Conditional(_) | Kind::Discard(_) | Kind::Prefix { .. } => {
                 return Err(SessionError::Host(wasmtime::Error::msg(
                     "Native macro data requires resolved reader prefixes",
-                )))
+                )));
             }
             _ => {
                 let mut data = form.clone();
@@ -652,7 +727,7 @@ impl<'a> AnalysisGraph<'a> {
                 _ => {
                     return Err(SessionError::Host(wasmtime::Error::msg(
                         "Metadata requires a symbol or collection",
-                    )))
+                    )));
                 }
             };
             let pairs = hir::reader_metadata_pairs(form).map_err(SessionError::Compile)?;
@@ -1332,10 +1407,12 @@ mod sharing_tests {
             metadata: vec![],
             kind: Kind::Vector(vec![number(0); 4096]),
         };
-        assert!(validate_form_data(&wide)
-            .unwrap_err()
-            .to_string()
-            .contains("4096 nodes"));
+        assert!(
+            validate_form_data(&wide)
+                .unwrap_err()
+                .to_string()
+                .contains("4096 nodes")
+        );
         let tagged = suss_reader::forms::read_forms("^:private x")
             .unwrap()
             .remove(0);
@@ -1344,10 +1421,12 @@ mod sharing_tests {
             metadata: vec![],
             kind: Kind::Vector(vec![tagged; 1024]),
         };
-        assert!(validate_form_data(&normalized_wide)
-            .unwrap_err()
-            .to_string()
-            .contains("4096 nodes"));
+        assert!(
+            validate_form_data(&normalized_wide)
+                .unwrap_err()
+                .to_string()
+                .contains("4096 nodes")
+        );
     }
     #[test]
     fn shared_reader_data_matches_existing_canonical_transport_after_gc() {
@@ -1373,5 +1452,157 @@ mod sharing_tests {
             let actual = bridge.read(&mut session, &actual, 0..1).unwrap();
             assert_eq!(form_key(&actual).unwrap(), form_key(&expected).unwrap());
         }
+    }
+    #[test]
+    fn metadata_set_preserves_canonical_hash_callback_count_and_order() {
+        let mut session = Session::new_macro().unwrap();
+        session.enter_namespace("cljs.core").unwrap();
+        session.eval("(def review-hash-effects 0) (def review-first-hash nil) (def review-original-hash suss.core/hash) (def hash (fn [key] (do (if (== review-hash-effects 0) (set! review-first-hash key) nil) (set! review-hash-effects (+ review-hash-effects 1)) (review-original-hash key))))").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        for (source, calls, first) in [
+            ("^:private #{1 2 3 4 5 6 7 8 9}", 9.0, 1.0),
+            (
+                "^{:nested #{101 102 103 104 105 106 107 108 109}} #{1 2 3 4 5 6 7 8 9}",
+                18.0,
+                101.0,
+            ),
+            (
+                "^{:nested #{101 102 103 104 105 106 107 108 109}} #{{201 1 202 2 203 3 204 4 205 5 206 6 207 7 208 8 209 9}}",
+                18.0,
+                201.0,
+            ),
+        ] {
+            session.eval("(set! review-hash-effects 0)").unwrap();
+            let form = suss_reader::forms::read_forms(source).unwrap().remove(0);
+            let expected = bridge.quote(&mut session, form.clone()).unwrap();
+            let count = session.eval("review-hash-effects").unwrap();
+            assert_eq!(
+                bridge.read(&mut session, &count, 0..1).unwrap().kind,
+                Kind::Number(calls)
+            );
+            let first_key = session.eval("review-first-hash").unwrap();
+            assert_eq!(
+                bridge.read(&mut session, &first_key, 0..1).unwrap().kind,
+                Kind::Number(first)
+            );
+            session.eval("(set! review-hash-effects 0)").unwrap();
+            let actual = {
+                let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                let root = graph.form(&form, 0).unwrap();
+                graph.materialize(root).unwrap()
+            };
+            session.collect().unwrap();
+            let count = session.eval("review-hash-effects").unwrap();
+            assert_eq!(
+                bridge.read(&mut session, &count, 0..1).unwrap().kind,
+                Kind::Number(calls)
+            );
+            let first_key = session.eval("review-first-hash").unwrap();
+            assert_eq!(
+                bridge.read(&mut session, &first_key, 0..1).unwrap().kind,
+                Kind::Number(first)
+            );
+            assert_eq!(
+                form_key(&bridge.read(&mut session, &actual, 0..1).unwrap()).unwrap(),
+                form_key(&bridge.read(&mut session, &expected, 0..1).unwrap()).unwrap()
+            );
+        }
+    }
+    #[test]
+    fn duplicate_reader_collections_preserve_effects_and_occurrence_results() {
+        let mut session = Session::new_macro().unwrap();
+        session.enter_namespace("cljs.core").unwrap();
+        session.eval("(def review-hash-effects 0) (def hash (fn [key] (do (set! review-hash-effects (+ review-hash-effects 1)) review-hash-effects)))").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let probe = session
+            .eval("(fn [value index] (nth (nth value index) 0))")
+            .unwrap();
+        fn bitmaps(
+            session: &mut Session,
+            bridge: &FormBridge,
+            probe: &SessionValue,
+            value: &SessionValue,
+        ) -> Vec<u64> {
+            (0..2)
+                .map(|index| {
+                    let index = bridge
+                        .scalar(session, &Literal::Number(index as f64))
+                        .unwrap();
+                    let set = session.invoke(probe, &[value, &index]).unwrap();
+                    let map = session.data_fields(&set).unwrap()[1].clone();
+                    let root = session.data_fields(&map).unwrap()[2].clone();
+                    let bitmap = session.data_fields(&root).unwrap()[1].clone();
+                    let Kind::Number(bitmap) = bridge.read(session, &bitmap, 0..1).unwrap().kind
+                    else {
+                        panic!("bitmap scalar");
+                    };
+                    bitmap.to_bits()
+                })
+                .collect()
+        }
+        for source in [
+            "[[#{1 2 3 4 5 6 7 8 9}] [#{1 2 3 4 5 6 7 8 9}]]",
+            "([#{1 2 3 4 5 6 7 8 9}] [#{1 2 3 4 5 6 7 8 9}])",
+        ] {
+            session.eval("(set! review-hash-effects 0)").unwrap();
+            let form = suss_reader::forms::read_forms(source).unwrap().remove(0);
+            let expected = bridge.quote(&mut session, form.clone()).unwrap();
+            let expected_probe = bitmaps(&mut session, &bridge, &probe, &expected);
+            assert_ne!(expected_probe[0], expected_probe[1]);
+            session.eval("(set! review-hash-effects 0)").unwrap();
+            let actual = {
+                let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                let root = graph.form(&form, 0).unwrap();
+                graph.materialize(root).unwrap()
+            };
+            session.collect().unwrap();
+            let count = session.eval("review-hash-effects").unwrap();
+            assert_eq!(
+                bridge.read(&mut session, &count, 0..1).unwrap().kind,
+                Kind::Number(18.0)
+            );
+            let actual_probe = bitmaps(&mut session, &bridge, &probe, &actual);
+            assert_eq!(actual_probe, expected_probe);
+        }
+    }
+    #[test]
+    fn reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery() {
+        let mut session = Session::new_macro().unwrap();
+        session.enter_namespace("cljs.core").unwrap();
+        session.eval("(def review-hash-effects 0) (def hash (fn [key] (do (set! review-hash-effects (+ review-hash-effects 1)) key)))").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let form = suss_reader::forms::read_forms("[#{1 2 3 4 5 6 7 8 9} #{1 2 3 4 5 6 7 8 9}]")
+            .unwrap()
+            .remove(0);
+        for (graph_work, occurrence_work) in [(1, 1_048_576), (1_048_576, 1)] {
+            let error = {
+                let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                let root = graph.form(&form, 0).unwrap();
+                graph
+                    .materialize_with_work(root, graph_work, occurrence_work)
+                    .unwrap_err()
+            };
+            assert!(error.to_string().contains("materialization work bound"));
+            let count = session.eval("review-hash-effects").unwrap();
+            assert_eq!(
+                bridge.read(&mut session, &count, 0..1).unwrap().kind,
+                Kind::Number(0.0)
+            );
+        }
+        let value = {
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let root = graph.form(&form, 0).unwrap();
+            graph.materialize(root).unwrap()
+        };
+        session.collect().unwrap();
+        let count = session.eval("review-hash-effects").unwrap();
+        assert_eq!(
+            bridge.read(&mut session, &count, 0..1).unwrap().kind,
+            Kind::Number(18.0)
+        );
+        assert!(matches!(
+            bridge.read(&mut session, &value, 0..1).unwrap().kind,
+            Kind::Vector(_)
+        ));
     }
 }
