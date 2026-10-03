@@ -317,3 +317,11 @@ pipeline, with original source origins, staged runtime compilation and bounded
 canonical result display. Focused execution covers macro redefinition, lexical
 environments, file positions and late compile-error isolation; full validation
 and original M3 gates remain open. See [native entry points](docs/runtime/compiled-native-entrypoints.md).
+
+Native compiled macro hosts now reuse bounded emitted artifacts after executing
+analysis and macros. Keys include immutable source/macro graph snapshots,
+compiler/ABI/phase/target identity and actual lowered IR; executing tests preserve
+effects, explicit reload, old captures and failed-declaration provenance. See
+[source artifact cache](docs/runtime/source-artifact-cache.md). Review, full
+baseline and final-head CI remain pending; published artifact, evaluator and
+lifecycle gates and original issues12–15 remain open.

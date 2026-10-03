@@ -1,3 +1,53 @@
+Java-free11653 TERMINAL0: refreshed bootstrap identities reproduced byte-for-byte,
+identity verified, four bootstrap tests passed11.79s. Python42450 TERMINAL0:
+118tests in5.066s. Root diff --check passed. No Wasm/core source content change;
+both JSON compiler fingerprints refreshed because new compiler Rust changed.
+All root heavy jobs terminal. Cache branch focused compiler4+native4 and
+26affected tests pass; still requires independent review/fixes, exact-head full
+baseline and CI before readiness. Root about to publish draft Refs #14 stacked
+on165, then transfer sole heavy slot to its reviewer. Original M3 scope unchanged.
+
+Affected46734 TERMINAL0:26passed/0failed/0ignored across4groups;
+macro reload7 in6.39s, native entries10 in22.50s, phase3 in4.62s, REPLmacro6 in18.76s.
+Native final27082 TERMINAL0:4/0/0 in2.85s, adding executing distinct NaN payloads,
+actual hit and unknown-host bypass; no encoding-only semantic claim.
+Java-free11653 LIVE and Python42450 LIVE, each own log under
+/private/tmp/suss-source-artifact-cache-{javafree,python}.log. Root retains sole
+heavy slot until verifier terminal. Source frozen except repository evidence docs.
+
+Root next-task branch portable/m3-source-artifact-cache in
+/private/tmp/suss-m3-source-artifact-cache is based on PR165 exact8b8903.
+PR165 independent full65850 TERMINAL0:1098passed/0failed/17existingignores,
+122groups, /private/tmp/suss-pr165-review-full-final.log; reviewer released sole
+heavy slot. Root owns slot. ExactCI37158510889 still LIVE at8b8903; PR165 draft.
+Root updated its PR body with authoritative aggregate, no merge/closure.
+
+New cache prepares all analysis/compiled macro effects before emitted-Wasm lookup;
+fresh staged catalog/cells remain authoritative. Keys include source/path/forms,
+compiler/ABI/phase/fixed target profile/flags, loaded macro source graph and
+published declaration provenance, actual IR including binary64 payload bits.
+Unknown external host provenance bypasses cache. Digest/ABI verification on hit,
+64entry/32MiB retention, old-source-until-explicit-reload and declaration rollback
+are explicit. No source core algorithm port or shipped Java dependency.
+
+Initial regeneration25021 TERMINAL101: E0382 moved journal key; corrected ownership.
+Regeneration23728 TERMINAL0 refreshed both bootstrap compiler identities; Wasm
+images unchanged. Focus27057 TERMINAL0: compiler4/0/0 in0.01s, native3/0/0 in2.88s;
+/private/tmp/suss-source-artifact-cache-unit.log and
+/private/tmp/suss-source-artifact-cache-native.log. Executing native evidence
+preserves macro/runtime effects on a hit, explicit reload-all through changed
+transitive sources (including unchanged expansion), old captures, and rollback.
+No inference from encoding-only success or changed unknown to success.
+
+Affected46734 LIVE for native entrypoints, macro reload, compiled REPL macros and
+compiled phase sessions; /private/tmp/suss-source-artifact-cache-affected.log.
+Do not edit source or start another heavy job until terminal. Next inspect this
+same handle; then Java-free reproduction, Python checks, review final diff,
+commit/push/open draft Refs #14, and dispatch independent reviewer with sole
+heavy slot. This branch has no full/CI/review yet; no ready claim. Published user
+artifact manifests, component/AOT, evaluator retirement and scheduler/lifecycle
+remain unfulfilled original M3 criteria; keep issues12–15 and goal active.
+
 # Implementation handoff — 2026-09-29
 
 Root next-task worktree `/private/tmp/suss-m3-unified-native-entrypoints` is based

@@ -674,3 +674,10 @@ remain open. See [native entry points](../runtime/compiled-native-entrypoints.md
 
 
 Selected source tag/return observations now distinguish false/nil metadata, dynamic scalar/function records and provisional/completed invocation information. Actual pinned/native before/after evidence and remaining limits are in [source hint boundaries](../runtime/compiled-macro-source-hint-boundaries.md). Full portable environments/inference remain open.
+
+The [source artifact cache](../runtime/source-artifact-cache.md) has four focused
+compiler checks and four executing native tests. Macro expansion effects run
+before every lookup; loaded source versions remain stable until explicit reload.
+The binary64 test executes two distinct NaN payloads and a real cache hit.
+This cache evidence does not certify published user artifact manifests, evaluator
+retirement or complete M3; independent review/full baseline/final CI are pending.
