@@ -263,3 +263,12 @@ observations, actual reader provenance and staged gensym state. A live-cell
 coercion edge, full baseline/review/CI and original M3/M4 gates remain open; see
 [reader integration](docs/runtime/syntax-quote-reader.md) and
 [lazy sequence evidence](docs/runtime/lazy-sequences.md).
+
+
+The working [versioned compiled bootstrap](docs/runtime/compiled-bootstrap.md)
+uses phase-specific shipped Wasm images and immutable compiler facts. Its verifier
+reproduces both images in fresh processes and executes four regressions with
+Java/Node unavailable on PATH;66 compiler and83 affected native tests pass.
+Final full baseline, independent PR review and exact-head CI remain required.
+User macro cache invalidation, remaining schema, temporary evaluator removal and
+lifecycle acceptance remain open; this closes neither #14 nor M3.

@@ -16,14 +16,18 @@ wit-component = { workspace = true }
 thiserror = { workspace = true }
 stacker = "=0.1.22"
 xxhash-rust = { version = "0.8.15", features = ["xxh32"] }
+sha2 = "=0.10.9"
+serde_json = "1"
+serde = { version = "1", features = ["derive"] }
+
+[build-dependencies]
+sha2 = "=0.10.9"
 
 [dev-dependencies]
 wasmtime = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }
 criterion = { version = "0.5", features = ["html_reports"] }
-serde_json = "1"
-serde = "1"
 
 [[bench]]
 name = "performance"

@@ -12408,3 +12408,68 @@ PR remains draft and no merge/readiness/issue closure is authorized by this revi
 Next run the required full workspace baseline at the pushed reviewer fix head,
 wait for exact-head CI, then continue original M3 bootstrap/cache/evaluator and
 lifecycle acceptance; issues12–15 remain open.
+
+
+Versioned bootstrap working branch started from reviewed PR155 head0f3c160 in
+/private/tmp/suss-m3-versioned-bootstrap, branch portable/m3-versioned-bootstrap.
+Root has no native jobs. Reviewer owns single heavy slot with exact-head PR155
+full baseline1021, /private/tmp/suss-pr155-review-full-baseline.log; do not switch
+shared target until reviewer explicitly releases slot. CI37114173950 also live.
+Previous root full3861 was intentionally stopped exit143 due confirmed review
+fixes; never count it as passing evidence.
+
+Uncommitted next branch separates source catalog analysis from Wasm emission,
+adds phase-specific bootstrap manifests + SHA256 source/compiler/dependency
+identity, and routes fresh Store provisioning through immutable shipped images.
+No guest roots/state are cached. Build fingerprint hashes sorted compiler/reader/
+core Rust sources, Cargo manifests/lock and build script with length framing.
+Development suss-bootstrap generator and scripts/verify-bootstrap.sh compare two
+fresh generation processes and shipped artifacts, then execute macro/bootstrap
+regressions with Java/Node unavailable on restricted PATH. Script syntax and
+whitespace checks pass; pinned development submodule initialized locally.
+IMPORTANT runtime/bootstrap/*.wasm currently are intentional8-byte placeholder
+headers and *.json={} while native slot is occupied. They are NOT valid shipped
+bootstrap proof, have not been committed and MUST be generated/validated/executed
+before publishing. No Rust typecheck or native tests run on this branch yet.
+Next: reviewer terminal/release, clean ONLY4workspace packages on switching target,
+focused before regression, generate real phase images, deterministic comparison,
+manifest-negative and executing phase/reset/macro checks, Java-unavailable verifier,
+affected/full baseline then independent PR review/exact-head CI. Complete user
+macro-cache invalidation, remaining portable schema, evaluator removal and
+lifecycle cancellation/live accounting remain unimplemented; M3/issues12–15 open.
+
+
+PR155 reviewer full1021 is TERMINAL exit0 at exact0f3c160:1063pass/0fail/
+17existingignores across112result groups, log above. Reviewer tree clean,
+all review native jobs terminal and heavy slot released. Exact-head CI37114173950
+remainsIN_PROGRESS when checked; keep PR155 draft until success, no merges.
+Root switched target to bootstrap worktree by cleaning ONLY4workspace packages
+(697files2.8GiB) and started focused before check10676, log
+/private/tmp/suss-versioned-bootstrap-before.log. Re-poll samehandle; do not launch
+another native job before terminal. Generation will use cargo run --profile test
+for bounded dependency reuse. No real image/generated acceptance yet.
+
+
+Bootstrap10676 terminal exit101:0/1, missing manifest format_version as expected
+before real images; Rust typecheck succeeded.53432 generation terminal exit0 via
+cargo run --profile test; wrote real runtime1,103,137-byte and macro1,102,129-byte
+images + manifests (total2,271,130bytes), retained source149,419bytes. No placeholder
+images remain.89739 focused terminal exit0:4/0/0,20.77s.67772 Java/Node-unavailable
+PATH verifier terminal exit0:two fresh identical generator outputs match shipped
+files, then4/0/0 native tests20.82s. Logs /private/tmp/suss-versioned-bootstrap-
+{before,generation,focused,java-unavailable}.log. Core images execute rather than
+encoding-only checks; cached compiler facts contain no guest state.
+97896 now LIVE sequential compiler lib and eight affected REPL/phase/source macro/
+syntaxquote/source metadata/live-cell targets. Logs /private/tmp/suss-versioned-
+bootstrap-{compiler,affected}.log. Re-poll same handle, root owns heavy slot.
+CI workflow now invokes Java-unavailable bootstrap verifier before full baseline.
+Next terminal97896 then full baseline, independent PR review and final-head CI;
+complete user macro cache, schema/evaluator/lifecycle work remains open.
+
+97896 TERMINAL exit0:compiler66/0/0 and eight affected groups83/0/0
+(source metadata10, syntaxquote11, phases3, REPL macros6, source macros4,
+persistent command8, persistent session33, live-cell8). Both logs above are final.
+All current local jobs terminal. Next full workspace baseline on frozen bootstrap
+code, draft PR stacked on155/Refs14, independent reviewer fixes and final-head CI.
+PR155 local proof1063/0/17 complete; CI37114173950 stillIN_PROGRESS when rechecked.
+No PR merged, no issue closed. Original complete M3 scope remains unchanged.

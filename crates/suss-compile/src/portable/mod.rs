@@ -9,6 +9,7 @@ pub mod resolve;
 mod source;
 mod origin;
 pub mod syntax_quote;
+pub mod bootstrap;
 pub use origin::{SourceOrigin, SourcePosition};
 use std::ops::Range;
 use suss_reader::forms::{read_forms, resolve_conditionals};
@@ -145,6 +146,7 @@ pub fn compile_ir(function: &ir::Function) -> Result<Vec<u8>, Diagnostic> {
 /// A validated fragment and staged compiler state. Install cells in one shared
 /// runtime before execution; reuse existing cells by Global identity. A compiler
 /// error never changes the supplied Environment. This does not load source files.
+#[derive(Clone)]
 pub struct PreparedFragment {
     pub wasm: Vec<u8>,
     pub environment: resolve::Environment,
@@ -214,23 +216,36 @@ pub(crate) fn prepare_selected_fragment_with_expander(
     prepare_selected_fragment_with_origin(forms, span, environment, phase, expander, None)
 }
 pub(crate) fn prepare_selected_fragment_with_origin(
-    mut forms: Vec<suss_reader::forms::Form>, span: Range<usize>,
+    forms: Vec<suss_reader::forms::Form>, span: Range<usize>,
     environment: &resolve::Environment, phase: resolve::Phase,
     expander: &mut dyn ExpansionHost, origin: Option<&SourceOrigin>,
 ) -> Result<PreparedFragment, Diagnostic> {
+    let analyzed = analyze_selected_fragment(forms, span, environment, phase, expander, origin)?;
+    let wasm = compile_ir(&ir::lower(&analyzed.hir)?)?;
+    Ok(PreparedFragment { wasm, environment: analyzed.environment,
+        cells: analyzed.cells, namespace_directive: analyzed.namespace_directive })
+}
+
+pub(crate) struct AnalyzedFragment {
+    pub hir: hir::Hir,
+    pub environment: resolve::Environment,
+    pub cells: Vec<resolve::Global>,
+    pub namespace_directive: Option<suss_reader::forms::Form>,
+}
+pub(crate) fn analyze_selected_fragment(
+    mut forms: Vec<suss_reader::forms::Form>, span: Range<usize>,
+    environment: &resolve::Environment, phase: resolve::Phase,
+    expander: &mut dyn ExpansionHost, origin: Option<&SourceOrigin>,
+) -> Result<AnalyzedFragment, Diagnostic> {
     let mut snapshot = environment.clone();
     let namespace_directive = source::namespace(&mut forms, &mut snapshot, phase, expander)?;
     let (hir, environment) = hir::prepare_with_origin(&forms, span, &snapshot, phase, expander, origin)?;
-    let wasm = compile_ir(&ir::lower(&hir)?)?;
     let cells = environment
         .cells()
         .into_iter()
         .filter(|cell| cell.phase() == phase)
         .collect();
-    Ok(PreparedFragment {
-        wasm,
-        environment,
-        cells,
-        namespace_directive,
+    Ok(AnalyzedFragment {
+        hir, environment, cells, namespace_directive,
     })
 }
