@@ -13370,3 +13370,16 @@ so bootstrap compiler identities and Wasm are unchanged from root verification.
 Rustfmt2024 and git diff check pass. Review additions will be pushed before the
 required full baseline; source will remain frozen at that exact pushed head.
 Final-head full baseline and CI remain pending; no readiness/merge/closure claim.
+
+PR162 review full8882 TERMINAL101 at9a0760e: partial baseline921passed/1failed/
+15existing ignores across99groups. Unfiltered declaration metadata3 passed461.84s;
+repeated declaration1 passed14.47s. Failure portable_definitions::reviewed_declaration_preserves_source_metadata_and_phase_identity
+asserted original raw prefix at index0/generated map last, contradicting this
+PR's intentional corrected outer-prefix precedence. Independent actual primary
+and native semantic precedence tests pass. Updated that structural regression to
+assert merged generated declared:true plus retained original keyword:true, while
+keeping symbol spans/phase/cell identity/no initializer checks. No production
+changes. Focused75849 TERMINAL0:13passed/0failed/0ignored1.17s;
+/private/tmp/suss-pr162-review-definitions-fixed.log. Full failure log
+/private/tmp/suss-pr162-review-full-final.log remains retained. The updated
+review head must receive a fresh exact-head full baseline and CI before readiness.
