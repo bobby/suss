@@ -579,3 +579,13 @@ compiled queries match the shared expected corpus in both phases after GC. See
 certify default/reload/implicit namespace policy, full declaration/AST/inference
 schema or actual source macro &env invocation. No inventory declaration is
 reclassified and original M3 acceptance remains open.
+
+
+Macro graph namespace timing now preserves the enclosing top-level snapshot
+separately from the live resolution catalog. Fresh primary observations retain
+nested/redefinition timing, staged function metadata and exact named self binding
+records; executing native queries verify snapshot visibility and identity through
+initializer/function environments after GC. See
+[declaration observations](../runtime/compiled-macro-declaration-observations.md).
+Complete declaration schema, AST/inference and actual implicit &env remain open;
+no inventory declaration is reclassified as complete.

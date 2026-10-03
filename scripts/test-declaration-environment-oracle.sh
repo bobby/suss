@@ -6,6 +6,7 @@ test "$(git -C "$declaration_root/clojurescript" rev-parse HEAD)" = c4295f303100
 cd "$declaration_root/tests/oracle"
 mkdir -p out
 : > out/declaration-environment-calls.jsonl
+: > out/declaration-local-calls.jsonl
 CLJ_CONFIG=/tmp/suss-oracle-clojure-config CLJ_CACHE=/tmp/suss-oracle-clojure-cache \
 clojure -Srepro -M -m cljs.main -co '{:force true :cache-analysis false :target :nodejs :output-to "out/declaration-environment.js" :output-dir "out/declaration-environment-cljs" :optimizations :none :source-map false}' -c suss-oracle.declaration-runner
 node out/declaration-environment.js > out/declaration-environment-result.json

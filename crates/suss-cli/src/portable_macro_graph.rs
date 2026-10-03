@@ -42,6 +42,7 @@ enum Task {
     Lowering(Hir),
     Environment {
         namespace: Arc<SourceNamespace>,
+        catalog: Arc<SourceNamespace>,
         locals: Arc<HashMap<String, LocalBinding>>,
         fields: Arc<HashMap<String, FieldBinding>>,
         scopes: Arc<[Arc<FunctionScope>]>,
@@ -105,11 +106,12 @@ impl<'a> AnalysisGraph<'a> {
                 Task::Lowering(value) => self.lowering_record(&value, 0)?,
                 Task::Environment {
                     namespace,
+                    catalog,
                     locals,
                     fields,
                     scopes,
                     context,
-                } => self.environment_record(&namespace, &locals, &fields, &scopes, context, 0)?,
+                } => self.environment_record(&namespace, &catalog, &locals, &fields, &scopes, context, 0)?,
             };
             self.recipes[id] = Some(Recipe::Alias(result));
         }
@@ -326,9 +328,10 @@ impl<'a> AnalysisGraph<'a> {
         })
     }
     pub fn expansion(&mut self, context: portable::ExpansionContext<'_>) -> Result<SessionValue> {
-        let namespace = Arc::new(SourceNamespace::capture(context.environment, context.phase));
+        let catalog = Arc::new(SourceNamespace::capture(context.environment, context.phase));
         let root = self.environment(
-            &namespace,
+            context.namespace_snapshot,
+            &catalog,
             context.locals,
             context.fields,
             context.function_scopes,
@@ -340,6 +343,7 @@ impl<'a> AnalysisGraph<'a> {
     fn environment(
         &mut self,
         namespace: &Arc<SourceNamespace>,
+        catalog: &Arc<SourceNamespace>,
         locals: &HashMap<String, LocalBinding>,
         fields: &HashMap<String, FieldBinding>,
         scopes: &[Arc<FunctionScope>],
@@ -348,6 +352,7 @@ impl<'a> AnalysisGraph<'a> {
     ) -> Result<Value> {
         self.task(Task::Environment {
             namespace: namespace.clone(),
+            catalog: catalog.clone(),
             locals: Arc::new(locals.clone()),
             fields: Arc::new(fields.clone()),
             scopes: scopes.to_vec().into(),
@@ -357,6 +362,7 @@ impl<'a> AnalysisGraph<'a> {
     fn environment_record(
         &mut self,
         namespace: &Arc<SourceNamespace>,
+        catalog: &Arc<SourceNamespace>,
         locals: &HashMap<String, LocalBinding>,
         fields: &HashMap<String, FieldBinding>,
         scopes: &[Arc<FunctionScope>],
@@ -366,6 +372,7 @@ impl<'a> AnalysisGraph<'a> {
         Self::depth(depth)?;
         let context = self.context(context)?;
         let namespace = self.namespace(namespace, depth + 1)?;
+        let catalog = self.namespace(catalog, depth + 1)?;
         let mut entries = BTreeMap::new();
         for (name, field) in fields.iter().collect::<BTreeMap<_, _>>() {
             entries.insert(name.clone(), self.field(field, depth + 1)?);
@@ -387,6 +394,7 @@ impl<'a> AnalysisGraph<'a> {
         self.map(vec![
             ("context", context),
             ("ns", namespace),
+            ("suss/catalog", catalog),
             ("locals", locals),
             ("fn-scope", scopes),
         ])
@@ -643,6 +651,7 @@ impl<'a> AnalysisGraph<'a> {
             .collect::<Result<Vec<_>>>()?;
         let parents = self.vector(&parents)?;
         let env = self.environment(
+            &scope.namespace_snapshot,
             &scope.scope,
             &scope.locals,
             &scope.fields,
@@ -692,6 +701,7 @@ impl<'a> AnalysisGraph<'a> {
         let source = hir.source.as_ref().expect("source AST task");
         let form = self.form(&source.form, depth + 1)?;
         let env = self.environment(
+            &source.namespace_snapshot,
             &source.scope,
             &source.locals,
             &source.fields,

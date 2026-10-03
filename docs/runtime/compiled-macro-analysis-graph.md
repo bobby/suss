@@ -30,7 +30,7 @@ substitute for the remaining portable `:op`, inference/tag, method metadata,
 namespace and declaration schema. Namespace exclusions now appear under portable
 `:excludes` as canonical persistent sets built through the rooted data bridge. No loaded/initialized status is inferred from declaration records.
 
-Eight executing native regressions cover:
+Nine executing native regressions cover:
 
 * A 96-binding shadow chain, whose final initializer environment and shadow refer
   to the same canonical binding object after forced GC. A compiled function walks
@@ -49,7 +49,7 @@ Eight executing native regressions cover:
   independently of analysis record depth. This does not claim equivalent nesting
   support for an enclosing source-reader fixture.
 
-* Staged definition and function syntax visible in both fixed and variadic method
+* Staged definition and function syntax in the explicit `:suss/catalog`, visible in both fixed and variadic method
   bodies while the initializer HIR is still absent, followed by actual execution
   of both signatures in each Store. The prior transport returns nil for this
   syntax and fails the regression.
@@ -60,6 +60,14 @@ these as explicit native `suss/initializer-form` and `suss/function-form` facts.
 They preserve source declarations rather than inferring initialized runtime
 status or fabricating portable method metadata. Syntax and analyzed initializer
 HIR remain distinct facts.
+
+The environment's `:ns` now uses the immutable namespace at entry to its enclosing
+top-level source form, separately from resolution's provisional live catalog.
+Nested definitions keep that snapshot, and redefinitions retain the previous
+declaration until the next top-level form. Initializer ASTs and function scope
+environments share the retained snapshot identity. Declaration record contents,
+function facts and inference remain an incomplete portable schema. See
+[fresh declaration observations](compiled-macro-declaration-observations.md).
 
 Construction and inspection leave resident fragment/byte and external handle
 counts unchanged. Those counters do not establish live GC memory accounting.

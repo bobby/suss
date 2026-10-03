@@ -1,6 +1,6 @@
 # Pinned declaration environment observations
 
-These are development-only primary observations for M3 issue #14. They do not
+These are primary observations and a native snapshot timing repair for M3 issue #14. They do not
 establish native portable declaration transport, source AST inference, implicit
 `&env`, Java-free bootstrap or milestone completion.
 
@@ -16,8 +16,9 @@ Run `scripts/test-declaration-environment-oracle.sh`. The script checks the actu
 upstream checkout, clears the call log, force-compiles with analysis caching
 disabled, executes Node and compares exact observations with
 `tests/oracle/declaration-environment-observations.json`. This primary-only script
-does not run a native comparison. The existing native graph's backend declaration
-facts must not be interpreted as the certified portable schema.
+does not run a native comparison. The native graph test below separately executes
+the observed snapshot timing. Backend declaration facts must not be interpreted
+as the complete portable schema.
 
 Each observation contains a label, namespace identity, selected declarations
 from `&env`'s namespace snapshot and the same selected declarations from the live
@@ -52,15 +53,42 @@ The fresh fixture establishes the following timing for these cases:
   replaced. Both have the new declaration after analysis completes.
 * Selected declaration records do not have a `:ns` field. Resolution information
   may have a namespace; that is a different schema.
+* Nested definitions update the live catalog while the enclosing top-level
+  definition keeps its original namespace snapshot. The next top-level form sees
+  the completed nested declarations.
+* `declare` publishes `:declared true`; replacing that declaration with a direct
+  function publishes its analyzed function facts afterward.
+* Duplicate fixed arities emit a primary warning and execute the last body, but
+  declaration `:method-params` retains both source parameter lists. Deduplicated
+  emitted methods are insufficient evidence for declaration method metadata.
+* Named self locals have `:fn-var`, `:variadic?`, `:max-fixed-arity` and
+  `:method-params` within their bodies. These method parameters are analyzed
+  binding records, rather than the symbol vectors in global declarations. The
+  fixture preserves exact binding data, positions and present nil parameter tags.
 
-The corpus preserves 13 ordered observations and 14 executed results. Its direct
+The corpus preserves its original 13 observations and extends it to 21 ordered
+snapshot/catalog observations, two self/local observations and 26 executed results. Its direct
 parameter-returning functions have no observed return tag. Do not substitute
 `any` or a physical closure type for absent inference facts.
 
-Still unobserved here: nested definitions within a single top-level form,
-declaration macros and their argument-list metadata, duplicate arity methods,
-named self-binding metadata, complete return/union inference, namespace reload
-policy and analyzer options. Observe those boundaries before extending portable
-behavior. Next implement separate immutable portable namespace snapshots and
-live resolution facts, preserve staged source function facts before compiler
-wrappers, and add native executing comparisons using the reviewed corpus.
+The native analyzer now retains a separate immutable namespace snapshot at entry
+to each top-level source form. Resolution still uses the live environment. Source
+analysis records and named function declaration scopes carry both facts. Queued
+graph transport exposes the snapshot under `:ns` and the live catalog under the
+explicit backend extension `:suss/catalog`. Initializer syntax and pending HIR
+facts belong to that backend catalog; they do not imply initialized runtime vars.
+The declaration record contents still need complete portable schema work.
+
+`native_analysis_graph_separates_top_level_namespace_snapshot_from_live_catalog`
+executes initial definition, redefinition and nested definition queries in both
+Stores after GC, then executes the resulting runtime values. It failed against
+the old transport and passed after the repair. Existing staged syntax queries now
+read `:suss/catalog`. Additional executing queries check shared snapshot identity
+through initializer AST and function declaration environments.
+
+Still unobserved here: declaration argument-list metadata, complete return/union
+inference, namespace reload policy and analyzer options. Observe those boundaries
+before extending portable behavior. Next preserve staged source function facts
+before compiler wrappers and build portable declaration metadata/inference with
+native executing comparisons using the reviewed corpus. Actual source implicit
+`&env` invocation remains unfinished.

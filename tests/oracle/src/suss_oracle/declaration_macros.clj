@@ -29,11 +29,13 @@
     (vector? value) (str "[" (str/join "," (map json value)) "]")
     :else (throw (ex-info "Unsupported JSON projection" {:value value}))))
 
-(defn declarations [defs names]
+(defn declarations
+  ([defs names] (declarations defs names fields))
+  ([defs names selected-fields]
   (mapv (fn [sym]
           [(str sym) (contains? defs sym)
            (mapv (fn [key] [(name key) (contains? (get defs sym) key)
-                           (data (get-in defs [sym key]))]) fields)]) names))
+                           (data (get-in defs [sym key]))]) selected-fields)]) names)))
 
 (defmacro observe [label names]
   (when-not (and (string? label) (vector? names) (every? symbol? names))
@@ -45,3 +47,13 @@
                       (declarations (:defs ns) names)
                       (declarations (:defs catalog) names)]) "\n") :append true)
     42))
+
+(defmacro observe-locals [label names]
+  (when-not (and (string? label) (vector? names) (every? symbol? names))
+    (throw (ex-info "Expected a label and literal local symbols" {:form &form})))
+  (spit "out/declaration-local-calls.jsonl"
+        (str (json [label (str (get-in &env [:ns :name]))
+                    (declarations (:locals &env) names
+                      [:name :local :tag :fn-var :variadic? :max-fixed-arity
+                       :method-params :arglists])]) "\n") :append true)
+  42)

@@ -11262,3 +11262,34 @@ Next unblocked task: observe nested definitions/top-level snapshot policy and
 self/declared/duplicate-arity function facts before implementing separate portable
 snapshots plus staged callable metadata/inference. Actual source &env, bootstrap,
 cache invalidation, scheduler and complete M3 acceptance remain open.
+
+
+Expanded declaration oracle preserves the original13 exact observations and
+adds nested definitions, declare, duplicate arity and named self binding facts:
+21 ordered namespace snapshot/catalog observations,2 self/local observations and
+26 executed results. Fresh independent rerun22398 terminated exit0; log
+/private/tmp/suss-declaration-nested-final-primary.log. Duplicate fixed arities
+emit a pinned warning and execute the last body, while metadata retains both
+parameter lists; self-local method-params contain actual analyzed binding records.
+Nested declarations mutate the live catalog without changing enclosing &env.ns.
+
+Native compiler now retains a separate top-level immutable namespace snapshot in
+ExpansionContext, SourceAnalysis and FunctionScope. Live resolution/provisional
+definitions remain distinct; graph :ns uses the snapshot and :suss/catalog
+exposes explicit native declaration facts. The initial executing regression failed
+0/1/0 on the old graph (/private/tmp/suss-declaration-snapshot-before.log), then
+passed1/0/0 in both Stores after repair. Combined affected graph/binding/function
+scope/method-role/context/source-position suites79584 terminated exit0:24/0/0
+across6 groups; /private/tmp/suss-declaration-snapshot-combined.log. Stronger graph
+queries additionally preserve identical snapshot objects through initializer AST
+and function declaration env after GC; finalgraph53849 terminated exit0:9/0/0,
+/private/tmp/suss-declaration-snapshot-sharing-final.log. All commands used shared
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target, CARGO_BUILD_JOBS=2, locked and
+--test-threads=2. This snapshot repair is not covered by the prior1001 baseline.
+
+Next: preserve actual source callable signatures before runtime wrapper/dedup
+lowering, then portable declaration metadata and full AST/inference. Snapshot
+record contents still have native extensions/incomplete portable fields. Actual
+source implicit &env, Java-free bootstrap/cache gates and scheduler remain open.
+Prepare a prerequisite PR with Refs #13/#14, independent review and required
+full/final-head CI; do not close issues or merge it.

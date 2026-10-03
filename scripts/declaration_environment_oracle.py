@@ -12,8 +12,14 @@ KEYS = ['name', 'ns', 'tag', 'ret-tag', 'fn-var', 'variadic?', 'max-fixed-arity'
 LABELS = ['initial', 'scalar-initializer', 'after-scalar', 'fixed-body',
           'after-fixed', 'multiple-fixed-body', 'multiple-rest-body',
           'after-multiple', 'after-alias', 'hinted-initializer', 'after-hinted',
-          'scalar-redefinition', 'after-redefinition']
-RESULT = [42, 42, 42, 11, 42, 12, 13, 42, 15, 7, 42, 42, 42, 42]
+          'scalar-redefinition', 'after-redefinition', 'nested-after-first',
+          'nested-second-initializer', 'nested-after-second', 'after-nested',
+          'after-declare', 'after-declared-definition', 'after-duplicate', 'after-named']
+LOCAL_KEYS = ['name', 'local', 'tag', 'fn-var', 'variadic?', 'max-fixed-arity',
+              'method-params', 'arglists']
+LOCAL_LABELS = ['self-fixed-body', 'self-rest-body']
+RESULT = [42, 42, 42, 11, 42, 12, 13, 42, 15, 7, 42, 42, 42, 42,
+          42, 1, 42, 42, 42, 16, 42, 2, 42, 18, 19, 42]
 
 
 def parse(text):
@@ -62,8 +68,9 @@ def normalize_file(value, actual):
     return SOURCE
 
 
-def validate(row, actual=False):
-    if type(row) is not list or len(row) != 4 or row[0] not in LABELS or row[1] != 'suss-oracle.declaration-runner':
+def validate(row, actual=False, local=False):
+    keys, labels = (LOCAL_KEYS, LOCAL_LABELS) if local else (KEYS, LABELS)
+    if type(row) is not list or len(row) != (3 if local else 4) or row[0] not in labels or row[1] != 'suss-oracle.declaration-runner':
         raise ValueError('invalid declaration observation identity')
     names = []
     for declarations in row[2:]:
@@ -77,9 +84,9 @@ def validate(row, actual=False):
             if type(name) is not str or not name or type(present) is not bool:
                 raise ValueError('invalid declaration name or presence')
             current.append(name)
-            if type(properties) is not list or len(properties) != len(KEYS):
+            if type(properties) is not list or len(properties) != len(keys):
                 raise ValueError('missing declaration fields')
-            for key, field in zip(KEYS, properties):
+            for key, field in zip(keys, properties):
                 if type(field) is not list or len(field) != 3 or field[0] != key or type(field[1]) is not bool:
                     raise ValueError('invalid declaration field')
                 if (not present and field[1]) or (not field[1] and field[2] is not None):
@@ -88,7 +95,7 @@ def validate(row, actual=False):
                 if key == 'file' and field[1]:
                     field[2] = normalize_file(field[2], actual)
                 if key == 'meta' and field[1]:
-                    if field[2][0] != 'map':
+                    if type(field[2]) is not list or field[2][0] != 'map':
                         raise ValueError('expected symbol metadata map')
                     for pair in field[2][1]:
                         if pair[0] == ['keyword', ':file']:
@@ -96,14 +103,14 @@ def validate(row, actual=False):
         if len(set(current)) != len(current):
             raise ValueError('duplicate declaration name')
         names.append(current)
-    if names[0] != names[1]:
+    if not local and names[0] != names[1]:
         raise ValueError('snapshot and catalog declarations differ')
     return row
 
 
 def main():
     expected = parse((ROOT / 'tests/oracle/declaration-environment-observations.json').read_text())
-    fields(expected, 'schema upstream cases result')
+    fields(expected, 'schema upstream cases locals result')
     if type(expected['schema']) is not int or expected['schema'] != 1 or expected['upstream'] != PIN:
         raise ValueError('invalid declaration corpus schema or pin')
     if type(expected['cases']) is not list or expected['result'] != RESULT:
@@ -113,10 +120,17 @@ def main():
               (ROOT / 'tests/oracle/out/declaration-environment-calls.jsonl').read_text().splitlines()]
     if [row[0] for row in cases] != LABELS or actual != cases:
         raise ValueError('fresh pinned declaration observations differ')
+    if type(expected['locals']) is not list:
+        raise ValueError('invalid local corpus')
+    locals_expected = [validate(row, local=True) for row in expected['locals']]
+    locals_actual = [validate(parse(line), actual=True, local=True) for line in
+                     (ROOT / 'tests/oracle/out/declaration-local-calls.jsonl').read_text().splitlines()]
+    if [row[0] for row in locals_expected] != LOCAL_LABELS or locals_actual != locals_expected:
+        raise ValueError('fresh pinned self/local observations differ')
     result = parse((ROOT / 'tests/oracle/out/declaration-environment-result.json').read_text())
     if type(result) is not list or any(type(n) is not int for n in result) or result != RESULT:
         raise ValueError('unexpected declaration oracle execution')
-    print('13 fresh pinned snapshot/catalog observations and 14 executed results match exactly; native schema remains pending')
+    print('21 fresh pinned snapshot/catalog and 2 self/local observations; 26 executed results match exactly; complete native schema remains pending')
 
 
 if __name__ == '__main__':

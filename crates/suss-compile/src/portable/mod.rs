@@ -35,6 +35,9 @@ impl AnalysisContext {
 /// Expansion executes in a host's isolated compiled session, not the compiler.
 pub struct ExpansionContext<'a> {
     pub environment: &'a resolve::Environment,
+    /// Immutable namespace at entry to the enclosing top-level source form.
+    /// Resolution uses the live environment above, including provisional defs.
+    pub namespace_snapshot: &'a std::sync::Arc<hir::SourceNamespace>,
     pub origin: Option<&'a SourceOrigin>,
     pub phase: resolve::Phase,
     pub context: AnalysisContext,

@@ -55,6 +55,7 @@ pub struct FunctionScope {
     pub declaration_context: super::super::AnalysisContext,
     /// Actual declaration environment, before the new self name is installed.
     pub scope: Arc<SourceNamespace>,
+    pub namespace_snapshot: Arc<SourceNamespace>,
     pub locals: Arc<HashMap<String, LocalBinding>>,
     pub fields: Arc<HashMap<String, FieldBinding>>,
     pub phase: Phase,
@@ -238,6 +239,7 @@ impl Analyzer<'_> {
                 .copied()
                 .expect("source analysis context"),
             scope,
+            namespace_snapshot: self.namespace_snapshot.as_ref().expect("top-level source snapshot").clone(),
             locals: Arc::new(locals),
             fields: Arc::new(self.fields.clone()),
             phase: self.phase,

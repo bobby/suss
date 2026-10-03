@@ -443,7 +443,10 @@ pub struct SourceAnalysis {
     pub form: Form,
     pub resolved: Option<SourceBinding>,
     pub name_hint: Option<Form>,
+    /// Live resolution catalog at the time this source node was entered.
     pub scope: std::sync::Arc<SourceNamespace>,
+    /// Namespace supplied to macro &env at enclosing top-level form entry.
+    pub namespace_snapshot: std::sync::Arc<SourceNamespace>,
     pub locals: std::sync::Arc<HashMap<String, LocalBinding>>,
     pub fields: std::sync::Arc<HashMap<String, FieldBinding>>,
     pub function_scopes: std::sync::Arc<[std::sync::Arc<FunctionScope>]>,
@@ -567,6 +570,7 @@ struct Analyzer<'a> {
     analysis_depth: usize,
     analysis_contexts: Vec<super::AnalysisContext>,
     source_namespace: Option<(u64, Phase, String, std::sync::Arc<SourceNamespace>)>,
+    namespace_snapshot: Option<std::sync::Arc<SourceNamespace>>,
     callable_keys: BTreeMap<Global, Hir>,
     target: Option<(LoopId, usize)>,
 }
@@ -650,6 +654,12 @@ impl Analyzer<'_> {
                 "Bootstrap analysis expansion limit exceeded",
             ));
         }
+        if self.analysis_depth == 0 {
+            // The pinned analyzer refreshes &env's namespace between top-level
+            // forms, not after each nested def. Keep resolution's live catalog
+            // separate so recursive definitions still resolve provisionally.
+            self.namespace_snapshot = Some(self.capture_source_namespace());
+        }
         self.analysis_depth += 1;
         self.analysis_contexts.push(context);
         let result = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
@@ -678,6 +688,7 @@ impl Analyzer<'_> {
                 if !shadowed {
                     let expansion_context = super::ExpansionContext {
                         environment: &self.environment,
+                        namespace_snapshot: self.namespace_snapshot.as_ref().expect("top-level source snapshot"),
                         origin: self.origin.as_ref(),
                         phase: self.phase,
                         context,
@@ -743,6 +754,7 @@ impl Analyzer<'_> {
                         resolved,
                         name_hint: name_hint.cloned(),
                         scope,
+                        namespace_snapshot: self.namespace_snapshot.as_ref().expect("top-level source snapshot").clone(),
                         locals,
                         fields,
                         function_scopes,
@@ -2109,6 +2121,7 @@ pub(crate) fn prepare_with_origin(
         analysis_depth: 0,
         analysis_contexts: Vec::new(),
         source_namespace: None,
+        namespace_snapshot: None,
         callable_keys: BTreeMap::new(),
         target: None,
     };

@@ -100,6 +100,65 @@ impl ExpansionHost for Inspect {
 }
 
 #[test]
+fn native_analysis_graph_separates_top_level_namespace_snapshot_from_live_catalog() {
+    let query = r#"(fn [env]
+      (let [snapshot (get (get env :ns) :defs)
+            catalog (get (get env :suss/catalog) :defs)]
+        [(contains? snapshot 'scalar)
+         (get (get snapshot 'scalar) :doc)
+         (contains? snapshot 'nested-first)
+         (contains? snapshot 'nested-second)
+         (contains? snapshot 'nested-wrapper)
+         (contains? catalog 'scalar)
+         (contains? catalog 'nested-first)
+         (contains? catalog 'nested-second)
+         (contains? catalog 'nested-wrapper)]))"#;
+    let source = r#"
+      (def scalar "old documentation" (inspect-graph))
+      (inspect-graph)
+      (def scalar (inspect-graph))
+      (inspect-graph)
+      (def nested-wrapper
+        (do (def nested-first 1)
+            (inspect-graph)
+            (def nested-second (inspect-graph))
+            (inspect-graph)))
+      (inspect-graph)"#;
+    // Fresh primary observations in declaration-environment-observations.json
+    // establish this timing. Full portable metadata schema remains separate.
+    let expected = [
+        (false, None, [false, false, false], [true, false, false, false]),
+        (true, Some("old documentation"), [false, false, false], [true, false, false, false]),
+        (true, Some("old documentation"), [false, false, false], [true, false, false, false]),
+        (true, None, [false, false, false], [true, false, false, false]),
+        (true, None, [false, false, false], [true, true, false, true]),
+        (true, None, [false, false, false], [true, true, true, true]),
+        (true, None, [false, false, false], [true, true, true, true]),
+        (true, None, [true, true, true], [true, true, true, true]),
+    ];
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut host = Inspect::new(query);
+        session.eval_with_macros(source, &mut host).unwrap();
+        assert_eq!(host.calls.len(), expected.len());
+        for (index, (actual, (scalar, doc, nested, catalog))) in host.calls.iter().zip(expected).enumerate() {
+            let Kind::Vector(values) = &actual.kind else { panic!("executed snapshot query") };
+            assert_eq!(values.len(), 9);
+            assert!(matches!(values[0].kind, Kind::Bool(value) if value == scalar), "snapshot {index}");
+            match doc {
+                Some(doc) => assert!(matches!(&values[1].kind, Kind::String(units) if String::from_utf16(units).unwrap() == doc), "old declaration {index}"),
+                None => assert!(matches!(values[1].kind, Kind::Nil), "absent document {index}"),
+            }
+            for (value, expected) in values[2..5].iter().zip(nested).chain(values[5..9].iter().zip(catalog)) {
+                assert!(matches!(value.kind, Kind::Bool(value) if value == expected), "catalog/snapshot visibility {index}");
+            }
+        }
+        let value = session.eval("(+ scalar nested-first nested-second nested-wrapper)").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        assert!(matches!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(127.0)));
+    }
+}
+
+#[test]
 fn native_analysis_graph_preserves_deep_shared_initializer_scopes_without_source_execution() {
     let query = r#"(fn [env]
       (let [binding (get (get env :locals) 'x)
@@ -111,7 +170,8 @@ fn native_analysis_graph_preserves_deep_shared_initializer_scopes_without_source
            (if (get binding :shadow)
              (recur (get binding :shadow) (+ n 1)) n))
          (get init :form)
-         (get (get init :suss/lowering) :suss/native-operator)]))"#;
+         (get (get init :suss/lowering) :suss/native-operator)
+         (identical? (get env :ns) (get (get init :env) :ns))]))"#;
     let mut bindings = "x (do (set! effects (+ effects 1)) 0)".to_owned();
     for _ in 0..96 {
         bindings.push_str(" x (+ x 1)");
@@ -135,6 +195,7 @@ fn native_analysis_graph_preserves_deep_shared_initializer_scopes_without_source
         assert!(
             matches!(&values[3].kind, Kind::String(text) if String::from_utf16(text).unwrap() == "Add")
         );
+        assert!(matches!(values[4].kind, Kind::Bool(true)));
         let effects = session.eval("effects").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         assert!(matches!(
@@ -276,11 +337,14 @@ fn native_analysis_graph_reader_depth_is_independent_of_record_depth() {
 #[test]
 fn native_analysis_graph_retains_staged_definition_and_function_syntax() {
     let query = r#"(fn [env]
-      (let [definition (get (get (get env :ns) :defs) 'staged)
+      (let [definition (get (get (get env :suss/catalog) :defs) 'staged)
             scope (nth (get env :fn-scope) 0)]
         [(get definition :suss/initializer-recorded)
          (get definition :suss/initializer-form)
-         (get (get scope :info) :suss/function-form)]))"#;
+         (get (get scope :info) :suss/function-form)
+         (contains? (get (get (get scope :env) :ns) :defs) 'staged)
+         (contains? (get (get (get scope :env) :suss/catalog) :defs) 'staged)
+         (identical? (get env :ns) (get (get scope :env) :ns))]))"#;
     let function = "(fn staged ([x] (inspect-graph)) ([x & xs] (inspect-graph)))";
     let expected = suss_reader::forms::read_forms(function).unwrap().remove(0);
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
@@ -300,10 +364,13 @@ fn native_analysis_graph_retains_staged_definition_and_function_syntax() {
                 }
             }
             let mut expected = expected.clone(); erase_span(&mut expected);
-            for actual in &values[1..] {
+            for actual in &values[1..3] {
                 let mut actual = actual.clone(); erase_span(&mut actual);
                 assert_eq!(actual, expected);
             }
+            assert!(matches!(values[3].kind, Kind::Bool(false)));
+            assert!(matches!(values[4].kind, Kind::Bool(true)));
+            assert!(matches!(values[5].kind, Kind::Bool(true)));
         }
         let result = session.eval("(== (+ (staged 1) (staged 1 2 3)) 84)").unwrap();
         assert_eq!(session.inspect(&result, |store, value| Ok(value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32())).unwrap(), 4);
