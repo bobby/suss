@@ -485,6 +485,8 @@ impl<'a> AnalysisGraph<'a> {
             let ns = self.symbol(global.namespace())?;
             let mut fields = vec![("name", name), ("ns", ns)];
             if let Some(info) = namespace.declarations.get(global) {
+                fields.push(("suss/definition-form", self.form(&info.definition_form, depth + 1)?));
+                fields.push(("suss/analysis-completed", self.flag(info.analysis_completed)?));
                 fields.push(("suss/declaration", self.form(&info.declaration, depth + 1)?));
                 fields.push(("suss/defonce", self.flag(info.once)?));
                 if let Some(form) = &info.initializer_form {

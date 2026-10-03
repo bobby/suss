@@ -402,6 +402,54 @@ fn native_analysis_graph_reader_depth_is_independent_of_record_depth() {
 }
 
 #[test]
+fn native_analysis_graph_preserves_actual_definition_forms_through_staging_and_redefinition() {
+    let query = r#"(fn [env]
+      (let [defs (get (get env :suss/catalog) :defs)
+            info (get defs 'tracked)
+            pending (get defs 'pending)]
+        [(get info :suss/definition-form) (get info :suss/analysis-completed)
+         (get pending :suss/analysis-completed) (get pending :suss/initializer-recorded)]))"#;
+    let first = "(def ^{:private true} tracked \"first documentation\" (do (inspect-graph) 7))";
+    let second = "(def tracked (do (inspect-graph) 8))";
+    let source = format!("{first}\n{second}\n(def pending)\n(inspect-graph)");
+    fn erase_spans(form: &mut Form) {
+        form.span = 0..0;
+        for metadata in &mut form.metadata { erase_spans(metadata); }
+        if let Kind::List(items) | Kind::Vector(items) | Kind::Map(items) | Kind::Set(items) = &mut form.kind {
+            for item in items { erase_spans(item); }
+        }
+    }
+    let expected: Vec<_> = [first, second, second].into_iter().map(|source| {
+        let mut form = suss_reader::forms::read_forms(source).unwrap().remove(0);
+        erase_spans(&mut form);
+        form
+    }).collect();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut host = Inspect::new(query);
+        session.eval_with_macros(&source, &mut host).unwrap();
+        assert_eq!(host.calls.len(), 3);
+        for (index, (actual, expected)) in host.calls.iter().zip(&expected).enumerate() {
+            let Kind::Vector(values) = &actual.kind else { panic!("definition staging facts") };
+            assert_eq!(values.len(), 4);
+            assert!(matches!(values[1].kind, Kind::Bool(completed) if completed == (index == 2)));
+            if index == 2 {
+                assert!(matches!(values[2].kind, Kind::Bool(true)));
+                assert!(matches!(values[3].kind, Kind::Bool(false)));
+            } else {
+                assert!(matches!(values[2].kind, Kind::Nil));
+                assert!(matches!(values[3].kind, Kind::Nil));
+            }
+            let mut actual = values[0].clone();
+            erase_spans(&mut actual);
+            assert_eq!(&actual, expected, "actual definition syntax, including source metadata and explicit docstring");
+        }
+        let value = session.eval("tracked").unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        assert!(matches!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(8.0)));
+    }
+}
+
+#[test]
 fn native_analysis_graph_retains_staged_definition_and_function_syntax() {
     let query = r#"(fn [env]
       (let [definition (get (get (get env :suss/catalog) :defs) 'staged)

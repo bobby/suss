@@ -126,3 +126,14 @@ return inference and metadata hints. The fixture deliberately exercises inferred
 `number` with string runtime storage; inference and decoded values are separate
 facts. This is development-only primary evidence, not a native inference pass or
 M3 completion. Java and Node are not shipped dependencies.
+
+## Source macro environment invocation
+
+`sh scripts/test-source-environment-oracle.sh` force-compiles the original
+source macro fixture and executes its Node artifact. Three compiler observations
+project actual `&form`/`&env` lexical and function-scope facts; four executed scalar
+results check initializer effects and returned fact vectors. Native compiled
+source macros match the shared projected corpus in both caller phases after GC.
+The projection omits symbol metadata and spans. It is not complete portable
+AST/inference, metadata or M3 acceptance. The development-only helper adds no
+shipped Java/Node dependency.

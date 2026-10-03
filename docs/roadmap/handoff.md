@@ -11478,3 +11478,163 @@ continuation yet. The next implementation task is portable source declaration
 metadata and AST/inference using actual pinned observations, followed by implicit
 source &env/bootstrap and remaining scheduler gates. Do not close M3 issues or
 merge any PR without later user instruction.
+
+Source callable continuation committed and pushed970bbb830ddf057cd8d06ff38a6682c54897b90c.
+Draft PR150 https://github.com/bobby/suss/pull/150 bases on PR149 branch and uses
+Refs #13/#14. Independent /root/review_pr150 is dispatched in isolated
+/private/tmp/suss-review-pr150, with heavy slot for its executing review checks.
+It must reproduce significant findings, push fixes to portable/m3-callable-analysis,
+then release the slot. Root must integrate fixes and run full post-review baseline
+plus final-head CI before readiness. Do not merge or close issues. Issue14 progress
+comment5962913437 now records PR149 full1008 baseline, PR150 focused67 native/compiler
+passes and95 Python checks, fresh32+11 oracle and all acceptance limitations.
+
+Next isolated preparation /private/tmp/suss-m3-declaration-records (branch
+portable/m3-declaration-records) begins at970bbb8. No architecture/source change or
+native/JVM job here yet. DefinitionInfo retains name/initializer but lacks the
+actual definition form needed for head vs name source positions. Before claiming
+portable declaration metadata, retain actual syntax and validate observed primary
+field presence/source provenance rather than guess from symbol positions. Native
+inference remains absent; use recorded primary tag observations and source methods
+without inventing JS AST from native lowering. PR149 finalhead5641565 GitHubCI
+37085679932 still pending at last read; local1008/0/17 and independent review pass.
+
+Independent PR150 reviewer completed at970bbb8 with no significant findings and
+no fixes required. Independent native23/0/0, Python7/0, extra fn*/user-source-loop/
+failure-recovery execution1/0/0 passed; /private/tmp/suss-pr150-review-native.log
+and /private/tmp/suss-pr150-review-loop-probe.log. Reviewer released heavy slot.
+PR150 required full baseline is now running on clean unchanged970bbb8 in
+/private/tmp/suss-m3-callable-analysis, log /private/tmp/suss-pr150-reviewed-full.log.
+Poll actual returned handle; do not run concurrent native/JVM work. Final-head
+CI for PR14937085679932 and PR15037087534594 remains pending at last check.
+
+Definition syntax regression25355 terminated exit101:0/1/0 before retention,
+/private/tmp/suss-definition-form-before.log. Original source implementation now
+retains actual definition_form before initializer analysis in DefinitionInfo,
+exposed as bounded explicit :suss/definition-form graph data. This fixes loss of
+head syntax needed for declaration metadata/provenance. Focus5137 terminated
+exit0:1/0/0, /private/tmp/suss-definition-form-after.log, verifies staging and
+redefinition, explicit symbol metadata and documentation, then actual resulting
+binding8 in both Stores after GC. No portable declaration metadata/inference
+schema completion is claimed. Changes here uncommitted; do not count PR150 full
+baseline as covering this next worktree. Next derive exact source head provenance
+and portable declaration fields from primary observations; integrate later review
+fixes if any before committing.
+
+VALIDATION CORRECTION: inspected PR149 full log and found source callable graph
+regression absent from actual5641565 source; inspected PR150 full log and found
+new definition-form test absent from actual970bbb8. Shared Cargo target reused
+cross-worktree test executables despite compiling crate libraries. Prior claimed
+PR1491008/0/17 is WITHDRAWN as final-head local certification. PR15014339 stopped
+via Ctrl-C with terminalexit130; its incomplete output is not a pass. Preserve
+both logs for diagnosis, do not count either run as exact-head acceptance.
+
+Root now owns full PR149 rebuilt baseline16288 in unchanged primary5641565:
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target cargo clean -p suss-cli
+-p suss-compile -p suss-reader -p suss-core, then CARGO_BUILD_JOBS=2 cargo test
+--workspace --locked -- --test-threads=2; log
+/private/tmp/suss-pr149-reviewed-rebuilt-full.log. Clean only local workspace crate
+artifacts; retained dependency cache/unrelated files remain. Before each later
+full baseline after changing worktrees clear these package artifacts again to
+force exact source test binaries. No concurrent native/JVM job permitted. PR149
+body and issue14 progress corrected immediately; final-head CI independently
+remains pending. Do not mark either PR ready until rebuilt full baseline and
+actual final-head CI pass. The uncommitted declaration syntax change focused
+before25355 and after5137 had actual expected missing-form failure then retained
+form success; subsequently added completion flag remains unexecuted here.
+
+Rebuilt PR149 graph executable --list now matches actual9 source tests and excludes
+all later callable/definition-form regressions. Full16288 remains live; actual
+handle authoritative. Workspace package clean removed740 files/2.7GiB, retained
+external dependency artifacts. Next worktree additionally records explicit
+analysis_completed false while staging and true after analysis, independently
+of initializer presence or runtime evaluation. Prepared graph regression now
+also checks a completed def without initializer; latest flag/expanded assertions
+remain unexecuted while rebuilt baseline owns heavy slot. Do not count earlier
+1/0/0 as covering these subsequent changes.
+
+
+Rebuilt PR149 baseline16288 terminated exit101 on an actual StorageFull stdout
+write/listing error during compiled_macro_metadata; no pass is claimed. Log
+/private/tmp/suss-pr149-reviewed-rebuilt-full.log preserved. Disk inspection found
+4.6GiB current target and2.2GiB historical Suss review target; no unrelated files
+were deleted. Available volume space recovered authoritatively from1.8GiB to47GiB
+without cleanup. Current package binaries still match primary9 graph tests and
+no other native job ran after rebuilding. Rerunning complete exact-head baseline
+on unchanged5641565 in same primary, log
+/private/tmp/suss-pr149-reviewed-rebuilt-retry-full.log; poll returned live handle.
+Do not silently convert the StorageFull attempt into success or call it a semantic
+failure. Subsequent implicit &env and analysis-completed tests remain queued until
+slot release; no new graph binary has overwritten primary artifacts.
+
+
+PR149 final-head GitHub CI37085679932 has passed55m35s at reviewed5641565.
+Clean rebuilt local full retry39625 still live, so PR remains draft pending its
+terminal result. PR150 final-headCI37087534594 pending. Root no concurrentheavy.
+Next &env fixtures prepared and source invocation regression not executed yet.
+
+
+Implicit &env invocation implementation is now PREPARED/UNVALIDATED in the next
+worktree only. Both implicit &form,&env enter every fixed/multiple/variadic macro
+signature in that order. Real expansion roots quoted caller form, bounded native
+AnalysisGraph of actual ExpansionContext, then quoted user arguments in the
+isolated Macro Store and calls the compiled function. No runtime initializer is
+executed to construct env. Patch saved /private/tmp/suss-source-environment-prepared.patch;
+first restore only portable_macros.rs to970bbb8 before old regression execution,
+then reapply patch for after execution. Do not count parsing-only rustfmt as
+semantic verification. Pending portable schema/inference are still explicit;
+existing backend fields are not complete upstream ASTs. Fullretry39625 owns slot.
+
+
+PR149 rebuilt full retry39625 terminated exit0 on unchanged clean5641565:
+1007 passed,0 failed,17 existing ignores across105 groups,
+/private/tmp/suss-pr149-reviewed-rebuilt-retry-full.log. Actual final-head CI log
+/private/tmp/suss-pr149-final-head-ci.log reports the identical1007/0/17 and excludes
+both later source-callable and definition-form tests; CI37085679932 exacthead564
+success. This supersedes withdrawn1008 and StorageFull16288 attempts, which remain
+preserved. Independent review fixes564 accepted; PR149 now marked ready, not
+merged. Issue13/14 original acceptance remains open.
+
+Root restored only portable_macros.rs from970bbb8 in this next worktree to execute
+the source &env before regression; prepared patch remains safe in
+/private/tmp/suss-source-environment-prepared.patch. Workspace package clean forces
+current source executable after switching worktrees. Source-env before37551 now
+owns heavy slot; /private/tmp/suss-source-environment-before.log. Wait for terminal,
+then reapply prepared patch. All other next source changes/tests retained; no new
+PR yet. PR150 full clean post-review baseline still queued, CI pending lastread.
+
+
+Actual source &env before37551 terminated exit101:0/3/0, each source defmacro
+fails with Unresolved Macro name &env; /private/tmp/suss-source-environment-before.log.
+Reapplied prepared invocation patch; after16129 terminated exit0:3/0/0,
+/private/tmp/suss-source-environment-after.log. Completion/form finalfocus48241
+terminated exit0:1/0/0, /private/tmp/suss-definition-staging-final-focus.log.
+Shared fresh primary/native source-env fixtures use identical caller namespace;
+final native29848 terminated exit0:3/0/0,
+/private/tmp/suss-source-environment-shared-focus.log. Source macro return decoding
+occurs after GC in both caller phases. Projection deliberately omits metadata and
+spans, matching primary serializer; no full metadata or AST inference claim.
+
+Broadened existing source macro definition/import/reload/REPL suites14709 terminated
+exit0:21/0/0 across4 groups; /private/tmp/suss-source-environment-existing-macros.log.
+Python evidence101/0 passes; /private/tmp/suss-source-environment-python.log.
+Fresh pinned compile/Node capture1858 terminated exit0; three observed projected
+source macro results and4 runtime results recorded exactly. Second fresh strict
+oracle25716 terminated exit0; /private/tmp/suss-source-environment-oracle-second.log.
+Six rejection checks pass, including missing/duplicate calls, changed contexts,
+malformed values, pins, unknown fields and Boolean/integer confusion. Runtime
+initializer effects remain1; no replay is used to build environment.
+
+PR150 final-head CI37087534594 at970bbb8 succeeded36m24s, real log
+/private/tmp/suss-pr150-final-head-ci.log:1008/0/17 across105 groups, no later
+next-worktree definition-form test. Root cleared current workspace package
+artifacts before clean post-review full150 baseline10064 in unchanged clean
+/private/tmp/suss-m3-callable-analysis; log
+/private/tmp/suss-pr150-reviewed-rebuilt-full.log. Executable --list verified
+actual10 source graph tests; no definition-form/source-env tests present. Local
+full150 is authoritative live10064, so leave150 draft pending terminal. No native
+or JVM job may overlap now. Root source invocation continuation is ready for a
+draft PR with Refs #13/#14 and required independent review; final full/final-head
+CI remain required. Full portable declaration/AST/inference, &form metadata,
+namespace policy, syntaxquote/gensym, Java-free bootstrap/cache, obsolete evaluator
+removal and scheduler/lifecycle gates all remain open. No issue closed or PRmerged.

@@ -998,6 +998,8 @@ impl Analyzer<'_> {
             args.get(1)
         };
         let mut definition = super::resolve::DefinitionInfo {
+            definition_form: form.clone(),
+            analysis_completed: false,
             declaration: args[0].clone(),
             docstring: if args.len() == 3 {
                 match &args[1].kind {
@@ -1028,6 +1030,7 @@ impl Analyzer<'_> {
         // A nested initializer can declare this same global. Publish the outer
         // declaration and its initializer together when its analysis completes.
         definition.initializer = initializer.as_deref().cloned().map(std::sync::Arc::new);
+        definition.analysis_completed = true;
         self.environment
             .record_definition(global.clone(), definition);
         Ok(Hir {

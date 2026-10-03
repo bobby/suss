@@ -1,6 +1,7 @@
 //! Source macro functions execute in a separate compiled phase Store.
 use crate::{
     portable_macro_data::FormBridge,
+    portable_macro_graph::AnalysisGraph,
     portable_session::{Session, SessionError, SessionValue},
 };
 use std::collections::BTreeMap;
@@ -41,6 +42,7 @@ fn add_implicit_arguments(parts: &[Form], form: &Form) -> Result<Vec<Form>, Sess
         return Err(failure(form, "Macro signature requires a body"));
     }
     let mut names = names.clone();
+    names.insert(0, symbol("&env", form.span.clone()));
     names.insert(0, symbol("&form", form.span.clone()));
     let mut result = vec![Form {
         span: parameters.span.clone(),
@@ -370,7 +372,10 @@ impl ExpansionHost for CompiledMacros {
             return Ok(None);
         };
         let result = (|| -> Result<Form, SessionError> {
-            let mut arguments = vec![self.bridge.quote(&mut self.session, form.clone())?];
+            let caller_form = self.bridge.quote(&mut self.session, form.clone())?;
+            let caller_environment = AnalysisGraph::new(&self.bridge, &mut self.session)
+                .expansion(context)?;
+            let mut arguments = vec![caller_form, caller_environment];
             for argument in &items[1..] {
                 arguments.push(self.bridge.quote(&mut self.session, argument.clone())?);
             }

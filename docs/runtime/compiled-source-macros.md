@@ -8,7 +8,10 @@ and compiler special forms retain priority. Expansion returns forms to the same
 HIR/verified IR/Wasm pipeline. Dependency artifacts use the same host before any
 runtime publication. Macro bodies execute in Wasm, never in a native tree walker.
 
-Arguments and &form are actual GC-owned data. The host captures definition roots,
+Arguments, &form and &env are actual GC-owned data. Every source macro signature
+receives implicit &form and &env before its user parameters. The environment is
+a bounded rooted graph of the actual caller compiler context; constructing it
+does not execute caller initializers. The host captures definition roots,
 so failed replacement preserves the prior macro. A successful replacement affects
 future expansion; previously compiled runtime artifacts retain their original
 expansion. Expansion recursion uses the existing bounded analysis-depth diagnostic.
@@ -30,15 +33,17 @@ Privacy/const/macro/export attributes retain explicit compiler errors. Namespace
 registration retains independent function roots. Macro bodies use the same
 lexical expansion host against an immutable compiler snapshot, then install in
 the original Macro Store; successful prior expansions in compiled bodies stay
-stable after macro replacement. Runtime macro marker/Var metadata, &env, full
-&form metadata and complete namespace reload/privacy policy remain unfinished. Bare &env
-is an explicit unresolved compile error; no placeholder nil environment is passed.
+stable after macro replacement. Runtime macro marker/Var metadata, the complete
+portable environment/declaration/AST/inference schema, full &form metadata and
+complete namespace reload/privacy policy remain unfinished. Source &env invocation
+has executing lexical, function-scope and snapshot evidence; see
+[source environments](compiled-macro-source-environment.md).
 
 Syntaxquote/unquote/splicing, deterministic gensyms, persistent metadata/collection/
 complete sequence transport, full macro phase reload/cache policy, Java-free reproducible
 versioned bootstrap, complete cache keys/invalidation and evaluator removal remain
-required by #14. This host exposes real analyzed local binding context for future
-&env integration but does not claim its runtime map representation exists. #15
+required by #14. This host passes real analyzed context as canonical runtime maps,
+but the remaining portable schema and inference still need implementation. #15
 cancellation/pending interactive I/O/live GC accounting remains unfinished. M3
 stays open, and the legacy evaluator remains until bootstrap acceptance passes.
 

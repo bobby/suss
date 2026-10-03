@@ -599,3 +599,12 @@ showing why portable inferred tags must be independent of runtime storage types.
 See [source records](../runtime/compiled-macro-source-analysis.md). Native portable
 inference and complete function/declaration schemas remain pending; no inventory
 item or milestone gate is reclassified.
+
+Compiled source macros now receive actual rooted compiler graphs as implicit
+`&env` after `&form`. Executing lexical/function/snapshot regressions pass in both
+caller phases; a second fresh pinned source-macro fixture matches three shared
+projections and four runtime results. Actual definition syntax and analysis
+completion remain distinct from runtime initialization. See
+[source invocation](../runtime/compiled-macro-source-environment.md). Complete
+portable AST/declaration/inference and bootstrap/lifecycle acceptance remain open;
+no inventory definition is reclassified as complete.
