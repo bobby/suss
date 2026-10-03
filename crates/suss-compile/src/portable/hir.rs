@@ -421,7 +421,8 @@ impl SourceNamespace {
             declarations: scope
                 .declarations
                 .into_iter()
-                .map(|(global, info)| (global.clone(), std::sync::Arc::new(info.clone())))
+                .map(|(global, _)| (global.clone(), environment.shared_definition_info(global)
+                    .expect("captured declaration revision").clone()))
                 .collect(),
             identities: environment
                 .cells()
@@ -808,9 +809,8 @@ impl Analyzer<'_> {
                     let global = binding.global().clone();
                     let declaration = self
                         .environment
-                        .definition_info(&global)
-                        .cloned()
-                        .map(std::sync::Arc::new);
+                        .shared_definition_info(&global)
+                        .cloned();
                     SourceBinding::Global {
                         global,
                         declaration,

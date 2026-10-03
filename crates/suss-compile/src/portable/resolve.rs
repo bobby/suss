@@ -231,7 +231,7 @@ pub struct Environment {
     pub(crate) reader_state: super::syntax_quote::ReaderState,
     namespaces: BTreeSet<(Phase, String)>,
     bindings: BTreeMap<Global, Binding>,
-    definitions: BTreeMap<Global, DefinitionInfo>,
+    definitions: BTreeMap<Global, std::sync::Arc<DefinitionInfo>>,
     source_generation: u64,
     scopes: BTreeMap<(Phase, String), Scope>,
     current: BTreeMap<Phase, String>,
@@ -472,15 +472,21 @@ impl Environment {
             macro_aliases: &scope.macro_aliases, macro_refers: &scope.macro_refers,
             used_macro_refers: &scope.used_macro_refers, renamed_macro_refers: &scope.renamed_macro_refers,
             declarations: self.definitions.iter().filter(|(global, _)|
-                global.phase() == phase && global.namespace() == scope.namespace).collect(),
+                global.phase() == phase && global.namespace() == scope.namespace)
+                .map(|(global, info)| (global, info.as_ref())).collect(),
         }
     }
     pub fn definition_info(&self, global: &Global) -> Option<&DefinitionInfo> {
+        self.definitions.get(global).map(std::sync::Arc::as_ref)
+    }
+    /// Immutable declaration revisions retain identity through Environment clones
+    /// and source snapshots. Reanalysis installs a fresh revision instead.
+    pub(crate) fn shared_definition_info(&self, global: &Global) -> Option<&std::sync::Arc<DefinitionInfo>> {
         self.definitions.get(global)
     }
     pub(crate) fn record_definition(&mut self, global: Global, info: DefinitionInfo) {
         self.source_changed();
-        self.definitions.insert(global, info);
+        self.definitions.insert(global, std::sync::Arc::new(info));
     }
     /// Explicit declarations, not evidence that any source file has loaded.
     pub fn has_namespace(&self, phase: Phase, namespace: &str) -> bool {
