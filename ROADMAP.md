@@ -308,3 +308,6 @@ schema/cache/evaluator/lifecycle acceptance and original M3 issues remain open.
 
 
 Repeated declarations now preserve existing source records for no-initializer truthy `:declared` forms, including completed functions and forward declarations. An actual pinned analyzer probe and a before/after native regression establish the bounded policy; full validation and original M3 gates remain open. See [declaration preservation](docs/runtime/compiled-macro-repeated-declarations.md).
+
+
+Completed scalar/function references and invocations now distinguish raw tag presence from inferred values and provisional records. An actual 18-row pinned/native before/after regression matches both caller phases after GC, with 15 executed storage/effect checks per phase. Full validation and original M3 gates remain open. See [source hint boundaries](docs/runtime/compiled-macro-source-hint-boundaries.md).
