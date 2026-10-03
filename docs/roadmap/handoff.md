@@ -11735,3 +11735,49 @@ gensyms, reproducible versioned Java-free bootstrap, cache invalidation/evaluato
 removal, scheduler cancellation/lifecycle and live GC accounting. Never merge
 without a later explicit user instruction. The1012/0/17 full pass belongs only
 to parent152cb, not to this new source.
+
+
+## PR153 independent review: source invocation inference
+
+Reviewed draft PR153 at bbb9575f4ae0ba558e75b8fac934c061b1f2755f in isolated
+/private/tmp/suss-review-pr153. Parent PR152 repaired head cb3abef now has
+terminal final-head CI 37093325448 success: the independently decoded CI log
+reports 1012/0/17 across 106 groups, matching its clean local baseline. Root marked
+PR152 ready, not merged. Those full results belong to parent #152, not #153.
+
+A direct pinned analyzer probe, /private/tmp/suss-pr153-primary-probe.clj,
+executed actual fn*/let* analysis after requiring cljs.core. Session 8530 exit 0;
+/private/tmp/suss-pr153-primary-probe.log records global mixed-arity calls both
+as any, local matching calls as number/string and a direct source function call
+as number. Earlier probe attempts 82427/88949 failed because cljs.core macro
+namespace was not loaded; they are not successful oracle evidence.
+
+New executed macro regression compiled_source_invocation_tags_distinguish_global_aggregate_and_local_methods
+reproduced the mismatch before repair: session 18646 exit 101, 0/1/0,
+/private/tmp/suss-pr153-invoke-before.log. Global calls incorrectly exposed
+number/string by selecting initializer methods; direct multi-method function
+invocation lost its source callable through private IFn dispatch and exposed any.
+The repair uses aggregate return information for global declarations and retains
+per-method inference for local/direct functions. It inspects the actual callee
+initializer retained in the exact private IsClosure/BindCallable wrapper shape;
+no physical HIR.Type is used and no source record is manufactured for a wrapper.
+
+An initial repair that copied source records onto dispatch wrappers failed with
+Cyclic compiler analysis graph (98271, 0/2/0) and was withdrawn. An intermediate
+helper attempt 98120 failed to compile due to a Binding field name; no pass claimed.
+Final helper 95598 exited 0, 2/0/0 for both source-tag tests, including 32 original
+observations and 11 runtime projections and the new invocation regression in both
+Stores after GC; /private/tmp/suss-pr153-invoke-after-final.log. The exact dispatch
+shape guard was then strengthened for final graph/set/tag verification.
+
+Final independent verification session 63248 terminated exit 0: 21 passed,
+0 failed, 0 ignored across three groups (graph 11, sets 8, tags 2). Command:
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-cli --locked --test compiled_macro_source_tags
+--test compiled_macro_analysis_graph --test compiled_macro_sets
+-- --test-threads=2. Log /private/tmp/suss-pr153-review-final-focus.log.
+Workspace package artifacts were cleaned before this isolated review rebuild;
+no concurrent native or JVM job ran. No temporary probes were added to the repo.
+No remaining reproduced significant review finding; push these fixes to PR153,
+then root must clean and run its full baseline and require final-head CI before
+readiness. No PR merged; complete AST/inference and original M3 gates remain open.

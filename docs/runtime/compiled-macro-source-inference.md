@@ -22,6 +22,17 @@ information remains present nil. The comparison selects tag fields only:
 native operation/child representations are not fabricated JavaScript ASTs.
 This is evidence for those source rules, not complete inference or AST acceptance.
 
+Independent review added an executing invocation regression beyond that corpus.
+The pinned analyzer infers `any` for both calls to a global function whose
+zero-argument method returns a number and one-argument method returns a string:
+global declarations retain aggregate return information. Local and direct
+functions retain individual method tags, yielding `number` and `string` for the
+matching methods. The regression reproduced incorrect global method selection
+and lost direct-function facts. Inference now distinguishes those cases and
+reads the actual callee initializer retained by private callable dispatch;
+compiler-only wrapper nodes remain without source records. Executed calls still
+return `1` and `"s"`, in both Stores after GC.
+
 The corpus exposed missing quoted-set lowering when a macro returned a quoted
 union tag. Quoted sets now share the existing set constructor/factory path with
 literal sets, while recursively lowering their entries as data. The independent

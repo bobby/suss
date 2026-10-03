@@ -197,3 +197,29 @@ fn compiled_source_inference_matches_pinned_tags_without_changing_executed_stora
         );
     }
 }
+
+#[test]
+fn compiled_source_invocation_tags_distinguish_global_aggregate_and_local_methods() {
+    // Pinned analyzer.cljc retains aggregate :ret-tag on global function vars;
+    // direct and local source functions retain individual method tags instead.
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define(r#"(defmacro invocation-tag [name]
+          (list 'quote (get (get (get (get &env :locals) name) :init) :tag)))"#).unwrap();
+        let value = session.eval_with_macros(r#"
+          (def mixed (fn ([] 1) ([x] "s")))
+          [(let [observed (mixed)] (invocation-tag observed))
+           (let [observed (mixed 2)] (invocation-tag observed))
+           (let [f (fn ([] 1) ([x] "s")) observed (f)] (invocation-tag observed))
+           (let [f (fn ([] 1) ([x] "s")) observed (f 2)] (invocation-tag observed))
+           (let [observed ((fn ([] 1) ([x] "s")))] (invocation-tag observed))
+           (mixed) (mixed 2)]"#, &mut macros).unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        session.collect().unwrap();
+        let value = bridge.read(&mut session, &value, 0..1).unwrap();
+        assert_eq!(data(&value), canonical(json!(["vector", [
+            ["symbol", "any"], ["symbol", "any"], ["symbol", "number"],
+            ["symbol", "string"], ["symbol", "number"], 1, "s"
+        ]])));
+    }
+}

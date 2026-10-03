@@ -86,6 +86,28 @@ fn constant(form: &Form) -> Option<Form> {
 fn callable(hir: &Hir) -> Option<&SourceCallable> {
     hir.source.as_ref()?.callable.as_deref()
 }
+/// prepare_source_callee may put the actual analyzed callee in a private
+/// binding to perform IFn dispatch once. Inspect that retained initializer,
+/// without attributing source facts to the compiler-only wrapper itself.
+fn callable_before_dispatch(hir: &Hir) -> Option<&SourceCallable> {
+    if let Some(methods) = callable(hir) {
+        return Some(methods);
+    }
+    if hir.source.is_none() {
+        if let Expression::Let { bindings, body } = &hir.kind {
+            if bindings.len() == 1 {
+                if let Expression::If { condition, alternative, .. } = &body.kind {
+                    if matches!(condition.kind, Expression::Nominal { operation: Nominal::IsClosure, .. })
+                        && matches!(alternative.kind, Expression::Nominal { operation: Nominal::BindCallable, .. })
+                    {
+                        return callable(&bindings[0].value);
+                    }
+                }
+            }
+        }
+    }
+    None
+}
 fn truthy_constant(form: &Form) -> bool {
     match &form.kind {
         Kind::Number(_) | Kind::String(_) | Kind::Keyword(_) | Kind::Bool(true) => true,
@@ -143,10 +165,6 @@ fn resolved_tag(binding: Option<&SourceBinding>) -> Result<Option<Form>, Diagnos
 fn resolved_callable(binding: Option<&SourceBinding>) -> Option<&SourceCallable> {
     match binding {
         Some(SourceBinding::Local(binding)) => callable(binding.initializer.as_ref()?),
-        Some(SourceBinding::Global {
-            declaration: Some(info),
-            ..
-        }) => callable(info.initializer.as_ref()?),
         _ => None,
     }
 }
@@ -308,17 +326,30 @@ pub(super) fn source_tags(
                     .map_or(Ok(None), |init| inferred(init, 0))?,
                 Expression::Assign { value, .. } => inferred(value, 0)?,
                 Expression::Call { callee, arguments } => {
-                    let methods = callable(callee).or_else(|| resolved_callable(resolved));
+                    let methods = callable_before_dispatch(callee).or_else(|| resolved_callable(resolved));
                     let method = methods.and_then(|methods| {
                         methods.methods.iter().find(|method| {
                             method.variadic || method.parameters.len() == arguments.len()
                         })
                     });
-                    method
+                    let method_tag = method
                         .map(|method| inferred(&method.body, 0))
                         .transpose()?
-                        .flatten()
-                        .or(Some(named("any")))
+                        .flatten();
+                    // Global vars retain an aggregate return tag, not their
+                    // initializer's individual methods (analyzer def parse).
+                    // Local/direct functions retain per-method information.
+                    let global_tag = match resolved {
+                        Some(SourceBinding::Global { declaration: Some(info), .. }) => {
+                            if let Some(methods) = info.initializer.as_ref().and_then(|init| callable(init)) {
+                                hint(&info.declaration)?.or(return_tag(methods)?)
+                            } else {
+                                None
+                            }
+                        }
+                        _ => None,
+                    };
+                    method_tag.or(global_tag).or(Some(named("any")))
                 }
                 _ => None,
             },
