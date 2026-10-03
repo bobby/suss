@@ -11293,3 +11293,24 @@ record contents still have native extensions/incomplete portable fields. Actual
 source implicit &env, Java-free bootstrap/cache gates and scheduler remain open.
 Prepare a prerequisite PR with Refs #13/#14, independent review and required
 full/final-head CI; do not close issues or merge it.
+
+
+Draft PR149 now carries the graph/set/namespace/snapshot prerequisites and
+Refs #13/#14: https://github.com/bobby/suss/pull/149. Independent reviewer
+/root/review_pr149 works in /private/tmp/suss-review-pr149 and must push significant
+fixes, then review final head. Full required Rust baseline13081 is live for
+a9d90da, log /private/tmp/suss-declaration-snapshot-full.log; poll actual handle.
+Do not infer success or start concurrent heavy native/JVM jobs. Reviewer is
+investigating bridge factories that still read mutable constructor globals and
+canonical copied-descriptor identity. Root prepared unvalidated source callable
+facts in separate /private/tmp/suss-m3-callable-analysis; no tests or commit there
+yet. Keep that next work separate from baseline/reviewer source.
+
+PR149 first CI37083830514 failed in Python provenance verification: loader had
+four appended PersistentHashSet static statements missing from the sequence
+provenance record. Added exact complete pinned form bounds/hashes and three
+explicit standalone adaptation patch records, preserving strict loader equality
+and license verification. Source initializers/runtime Rust are unchanged. Focused
+provenance6/0 and full Python88/0 pass;21 complete licensed setup forms verified.
+All other CI preflight inventory/review/import/apply/bitwise/WIT/numeric/roadmap
+checks pass. No CI pass, PR readiness or milestone completion is claimed yet.

@@ -119,6 +119,36 @@
       "sha256": "1221f1a0c84fd78f55f135ae6b9f59b28850f2ef4f24eaa7b1fbc0e7fc4de7c6",
       "patch": "docs/compatibility/patches/hamt-setup-8188.json",
       "patch-sha256": "3e3e465b488708a92438b449c7421b5647537aac7f13e920467ececf5ed75e97"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9407,
+      "end-line": 9408,
+      "sha256": "c445b37bd419c0784489bc941c0c24cf6b57934b0a469e3f1456c11808a8f009"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9410,
+      "end-line": 9424,
+      "sha256": "2cc8c47c3534765c679f8948fdd7fa6170da12d2fc22aaa59fe15a9955aa7e6d",
+      "patch": "docs/compatibility/patches/hash-set-setup-fromArray.json",
+      "patch-sha256": "c864cfaf7aa2d0378147ab0142353f00e16377f53c6afe42b1981722b218fe45"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9426,
+      "end-line": 9434,
+      "sha256": "f4de239ea6ebb545603ffe9951572ebbadb520b5e7ca466b98310e5398da5629",
+      "patch": "docs/compatibility/patches/hash-set-setup-createWithCheck.json",
+      "patch-sha256": "706f4852054490f12cb78352da7560b166086fbe655e3c6566dd3c0024fbcb47"
+    },
+    {
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 9436,
+      "end-line": 9441,
+      "sha256": "1c560ff1a65fecd35d337dc13fb9b4ad01160d72abd98a43aab57f138f908c53",
+      "patch": "docs/compatibility/patches/hash-set-setup-createAsIfByAssoc.json",
+      "patch-sha256": "b50bf97b13439853205dbbb56183e62798fb36290ed0d65ba5f70a91c6fcda77"
     }
   ]
 }

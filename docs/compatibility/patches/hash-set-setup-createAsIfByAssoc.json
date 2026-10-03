@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "1c560ff1a65fecd35d337dc13fb9b4ad01160d72abd98a43aab57f138f908c53",
+  "replacement": "(set! (.-createAsIfByAssoc PersistentHashSet)\n      (fn [items]\n        (let [len (alength items)\n              t (-as-transient (.-EMPTY PersistentHashSet))]\n          (loop [i 0] (when (< i len) (-conj! t (aget items i)) (recur (inc i))))\n          (-persistent! t))))",
+  "rationale": "Retain complete assoc-style set construction; expand dotimes into ordered loop/recur while preserving item order and transient lifecycle."
+}
