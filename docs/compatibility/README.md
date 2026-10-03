@@ -662,3 +662,6 @@ remains371 in-progress/694 unassessed; no declaration becomes completed from
 these tests. A live-cell coercion edge, full baseline/review/CI and original
 M3/M4 gates remain open; see [reader integration](../runtime/syntax-quote-reader.md)
 and [lazy sequence evidence](../runtime/lazy-sequences.md).
+
+
+Repeated declarations preserve selected source declaration records without replacing completed callable facts. Actual pinned/native evidence and remaining limits are recorded in [declaration preservation](../runtime/compiled-macro-repeated-declarations.md). This does not complete portable environments or M3 acceptance.

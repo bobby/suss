@@ -13241,3 +13241,105 @@ portable/m3-preserve-declarations, is an out-of-stack child of161 and is not
 rewritten by this requested eight-branch operation; restack it before using its
 new-parent PR diff. Next unblocked development remains the original declaration/
 inference compatibility and cache/bootstrap/lifecycle acceptance work; M3 stays open.
+## Next isolated repeated-declaration regression — 2026-10-03
+
+Root created portable/m3-preserve-declarations in
+/private/tmp/suss-m3-repeated-declarations, based on reviewed PR161
+07753174f7ab09072468aa9c01cb30676997aeac. No production source changed.
+Prepared untracked compiled_macro_repeated_declarations.rs and original
+tests/oracle/repeated-declaration-review-probe.clj. The native regression
+compares all18selected fields (presence/value/data kinds) in both source
+namespace snapshots and live catalogs before/after mixed fresh/existing declare.
+It includes changed declaration metadata, repeated forward declare, known
+private/doc/callable/declared assertions, actual current/captured function calls,
+scalar values and once-only initializer effects in both caller phases afterGC.
+A finite100M helper/caller budget is explicit; production defaults unchanged.
+The primary probe analyzes the exact no-initializer def expansion specified by
+pinned core.cljc175–176 declare and asserts unchanged selected records. Neither
+new native test nor primary probe has EXECUTED; only rustfmt/diff checks ran.
+
+Static pinned analyzer2117–2172 preserves existing records for no-initializer
+truthy-declared forms; Suss ControlForm::Declare currently calls definition for
+each name and unconditionally records fresh facts. Inspect existing namespace
+data before any fix, preserve validated qualified-name/errors and initialization
+semantics. No source-only inspection establishes the semantic bug yet.
+
+PR161 independent review added actual pinned/native same-name self/duplicate
+argument shadow and source-order evidence: primary20679 exit0; initial native
+30906 exit101 used numeric == on symbols, corrected12593 exit0/1pass36.87s.
+No significant production findings. Reviewer pushed0775317 with test/probe/docs
+and owns sole heavy slot. Required full73225 LIVE at exact0775317; log
+/private/tmp/suss-pr161-review-full-final.log. Final-headCI37147259708 LIVE;
+initial-headCI37146885767 canceled, not finalproof. Root has launched no heavy
+job and has not edited reviewer worktree.
+
+Next after review final baseline/slot release: rebase onto any later reviewed
+head, initialize pinned submodule, clean only four workspace packages when
+switching sharedtarget, execute actual primary and native failing regression
+BEFORE compiler corrections. Regenerate both bootstrap identities after Rust
+changes using --profiletest and run Java-free verifier. No RUSTFLAGS.
+
+All original M3 criteria remain open beyond these partial slices: full portable
+environments/inference, source/macro dependency cache invalidation, temporary
+evaluator retirement, pending-I/O cancellation/cleanup and live-heap accounting.
+No issue closed or PR merged by agent. PR161 publication/progress is recorded at
+https://github.com/bobby/suss/issues/14#issuecomment-5972582131 .
+
+PR161 independent review full73225 TERMINAL0 at exact07753174f7ab09072468aa9c01cb30676997aeac:
+1086passed/0failed/17existingignores across119groups.
+/private/tmp/suss-pr161-review-full-final.log. Reviewer released sole heavy slot
+and clean worktree; no significant scoped production findings remain.
+Final-head CI37147259708 remains in progress; do not mark ready until success.
+
+Repeated-declaration primary64308 TERMINAL0 asserts unchanged completed and
+forward records against the pinned analyzer; log
+/private/tmp/suss-repeated-declarations-primary.log. Initial submodule command
+used incorrect reference/clojurescript path and exited1; corrected clojurescript
+initialization succeeded at pinnedc4295f3. Four-package shared-target clean20946
+TERMINAL0 removed only workspace artifacts. Native before-fix regression52911
+is LIVE, source frozen; no semantic result or compiler fix yet.
+
+Repeated-declaration native before52911 TERMINAL101:0/1/0 in15.37s,
+completed scalar/callable and forward mismatches in both phases; actual runtime
+checks passed. /private/tmp/suss-repeated-declarations-before.log.
+Common definition now preserves existing immutable data only for no-initializer
+truthy-declared forms after validation. Bootstrap regeneration93205 TERMINAL0;
+both compiler fingerprints refreshed, Wasm unchanged. Original fixed85857
+TERMINAL0:1/0/0 in12.35s; /private/tmp/suss-repeated-declarations-fixed.log.
+Expanded primary89558 TERMINAL1 exposed an incorrect fixture expectation for
+initializer-bearing truthy-declared docstrings, not a production finding.
+Corrected38845 TERMINAL0 asserts absent doc on the new provisional record.
+An earlier edit command used an incorrect relative path and old primary47832
+ran successfully without new boundaries. Expanded native/affected88768 LIVE;
+source Rust frozen. No full baseline/review/CI proof for this branch yet.
+
+Expanded affected88768 TERMINAL0:40passed/0failed/0ignored across4groups:
+declarationfunctions2, repeateddeclarations1, namespace4, persistent33.
+Java-free bootstrap56758 TERMINAL0:deterministic bothphase generations, identity
+check and4executingtests11.13s. Python94653 TERMINAL0:118checks5.505s.
+
+Generated declared metadata precedence native71445 TERMINAL101:8.19s
+completed callable record changed because user :declared false overrode generated
+true; log/private/tmp/suss-repeated-declarations-precedence-before.log.
+ControlForm::Declare now places generated metadata in the outermost prefix,
+matching pinned vary-meta/assoc precedence. Bootstrap55009 TERMINAL0 regenerated
+both identities. Final affected45202 TERMINAL0:40pass/0fail/0ignore across
+4groups; /private/tmp/suss-repeated-declarations-affected-final.log.
+Final primary and Java-free verifier still needed for new precedence source.
+No full baseline or independent review proof for the new branch yet.
+
+Next unblocked work after declaration review: audit remaining portable analyzer
+fields/inference against actual pinned artifacts, then source/macro cache keys
+and evaluator retirement. CLI main.rs84/405/442/475/505/546 still uses legacy
+Compiler; source-only inventory is not evidence those frontend gates pass.
+Pending-I/O cancellation and live-heap accounting remain original M3 gates.
+
+Final primary87036 TERMINAL0 verifies vary-meta/assoc-generated true and all
+replacement boundaries. /private/tmp/suss-repeated-declarations-primary-final.log.
+Final Java-free bootstrap22541 TERMINAL0 verifies deterministic generations,
+identity and4executingtests at the final compiler source;
+/private/tmp/suss-repeated-declarations-bootstrap-final-verify.log. Rustfmt2024
+new regression and git diff check pass. All root heavy handles are terminal;
+source is frozen for draft publication and dispatched independent review.
+Reviewer must run required exact pushed-head full baseline, fix significant
+findings and obtain final-head CI before readiness. No merge/closure.

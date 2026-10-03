@@ -305,3 +305,6 @@ precedence, declaration field presence and known direct-function return tags
 remain distinct from runtime values. See [declaration metadata](docs/runtime/compiled-macro-declaration-metadata.md).
 Independent review, full baseline and final-head CI remain required; complete
 schema/cache/evaluator/lifecycle acceptance and original M3 issues remain open.
+
+
+Repeated declarations now preserve existing source records for no-initializer truthy `:declared` forms, including completed functions and forward declarations. An actual pinned analyzer probe and a before/after native regression establish the bounded policy; full validation and original M3 gates remain open. See [declaration preservation](docs/runtime/compiled-macro-repeated-declarations.md).
