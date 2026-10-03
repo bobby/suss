@@ -330,7 +330,9 @@ impl Session {
     }
     fn provision_core(&mut self) -> Result<(), SessionError> {
         let namespace = self.current_namespace().to_owned();
-        self.eval(include_str!("../../../runtime/core-import/suss/core.sus"))?;
+        let fragment = portable::bootstrap::shipped(self.phase)
+            .map_err(SessionError::Compile)?.clone();
+        self.eval_prepared(portable::modules::PreparedInput { modules: Vec::new(), fragment })?;
         self.enter_namespace(&namespace)?;
         self.bootstrap_core = true;
         Ok(())
