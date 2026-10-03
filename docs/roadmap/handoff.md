@@ -11217,3 +11217,25 @@ changes; the preceding998 full baseline predates them. Next architecture task:
 portable declaration/function metadata and source AST/inference, followed by actual
 implicit &env and original bootstrap/cache/scheduler gates. Do not reinterpret
 these37 passes as complete M3 acceptance or close issue14.
+
+
+Portable namespace maps committed and pushed as7c55216 on the rich branch.
+Required cumulative full baseline started for7c55216, log
+/private/tmp/suss-namespace-maps-full.log. Use its actual returned process handle
+and authoritative terminal status; do not restart on observation timeout or claim
+a full result before completion. Keep one heavy job at a time, CARGO_BUILD_JOBS=2,
+no RUSTFLAGS override. Root source stays fixed during the run.
+
+Cumulative namespace full baseline process handle is session28104; poll that exact handle.
+
+
+Cumulative namespace source7c55216 full baseline28104 terminated exit0:1001 passed,
+0 failed,17 existing ignores across105 groups. Command:
+`CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+--workspace --locked -- --test-threads=2`; log
+/private/tmp/suss-namespace-maps-full.log. The baseline source remained unchanged
+while declaration investigation used an isolated worktree. No M3 completion or
+issue closure is claimed. Next: freshly observe portable declaration metadata
+in actual &env namespace snapshots separately from the live pinned analyzer
+catalog, then implement only the certified schema/timing and execute native
+comparisons. Full source AST/inference and actual implicit &env remain open.
