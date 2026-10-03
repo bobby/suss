@@ -1,5 +1,114 @@
 # Implementation handoff — 2026-09-29
 
+Root next-task worktree `/private/tmp/suss-m3-unified-native-entrypoints` is based
+on reviewed PR164 head2cb66f3541e6c9740f9f527862835cff5fe2807c. Static inspection
+confirms native `main.rs::run_eval_wasm` and file execution still route through
+the prototype Compiler, whereas native REPL uses persistent compiled phase
+sessions. Three command regressions are prepared in compiled_native_entrypoints.rs
+for macro redefinition/captured expansions/once-only effects in eval and file
+commands, actual lexical &env in eval, and original filename/line/column in a
+file macro call. They are UNEXECUTED; no production
+change or success claim. rustfmt2024 and diff --check pass.
+Reviewer retains sole heavy slot: authoritative full35403 LIVE at2cb66f3;
+CI37154557374 independently verified LIVE at the same head. Do not run root
+Cargo/JVM/Node/native commands before explicit terminal/release. Next: execute
+the prepared regressions before correcting the common native command pipeline;
+preserve source provenance and errors, and audit component/AOT legacy paths as
+remaining work. Full original M3 scope remains open; no merge or issue closure.
+
+Continuation is a verified wait: independent reviewer authoritatively polled
+the same full35403 live repeatedly at frozen2cb66f3, currently in the unchanged
+unfiltered metadata snapshot/catalog case; both companion tests passed. Root
+independently rechecked CI37154557374 at the exact head: inventory and Java-free
+bootstrap passed, full baseline still in progress. No observation timeout was
+treated as termination; no restart/skip/root heavy job or production edit.
+Keep PR164 draft until terminal successful full and exact-head CI. Root next
+action remains execute the prepared command regression BEFORE any correction
+once reviewer explicitly releases the sole heavy slot.
+
+PR164 independent requiredfull35403 TERMINAL0 at exact2cb66f3:
+1088passed/0failed/17existingignores across121groups; log
+/private/tmp/suss-pr164-review-full-final.log, metadata3passed469.26s. Reviewer
+explicitly released heavy slot to root; finalCI37154557374 still pending at same
+head. Root updated draft PR body with actual23 observations/19runtime checks per
+phase and pending CI; no merge or readiness claim yet.
+
+Root four-package clean terminal0 removed3.2GiB; native command BEFORE68121
+TERMINAL101:0/3/0 in1.26s. Actual failures: prototype macro evaluator undefined
+&env/meta, and prototype set! rejects ordinary global assignment. Log
+/private/tmp/suss-native-entrypoints-before.log. Root correction routes native
+eval/file through one Runtime/Macro session pair with full-source parsed forms
+and SourceOrigin; removes the old native eval/GC-print/component probe helpers.
+REPL existing batch preparation stays intact; component/AOT paths remain pending.
+
+First corrected native72582 TERMINAL101:1passed/2failed/0ignored in12.07s;
+/private/tmp/suss-native-entrypoints-fixed.log. Actual lexical &env now passes.
+Both vector-output tests reach portable execution but fail bounded native
+display's unsupported runtime-object guard. Do not replace vector expectations
+with scalar-only tests to claim command acceptance. Next: implement appropriate
+portable result display with focused value/GC/numeric/UTF16/bounds evidence,
+preserving original vector/file-position assertions and avoiding per-result
+module/state replay or discarded-value formatting effects. New command change
+is uncommitted, unreviewed and lacks full/CI proof. All root heavy handles are
+terminal; root owns sole slot. Full original M3 remains active.
+
+Native display and transaction follow-up (uncommitted branch): reusable
+NativeDisplay retains canonical roots per native REPL/script context, uses the
+runtime numeric formatter, preserves UTF16 and omits print metadata without
+relaxing strict macro transport. Script forms retain full source origins; only
+final results print. Runtime fragments are now all prepared before any runtime
+initializer. No compiler/reader/core bytes changed, so bootstrap identities are
+unchanged; explicit shared-target identity verification passes (the initial
+no-target invocation could not find a compiled build script).
+
+Actual focused progression: display68902 TERMINAL0:3/0/0 in13.09s. Data guards
+19178 TERMINAL0:6/0/0 in20.83s. Affected28661 TERMINAL101:34passed/1failed,
+sixgroups; sole failure was existing raw-array error wording. Preserved its
+explicit unsupported-object guard, without fabricating array output. Added late
+compile failure regression:84084 TERMINAL101, actual keep99 versus expected17
+in4.99s. Changed script driver to stage all runtime fragments;65785 TERMINAL0:
+new7/0/0 in21.24s and existing REPL8/0/0 in23.94s.
+
+Display-bound fixture8707 TERMINAL101: construction exhausted ordinary fuel,
+not a display result.94904 TERMINAL101: construction-only fixture fuel100M,
+restored ordinary10M before display; actual valid4097-item vector is rejected by
+the integer-field transport bound, before the node budget. Corrected the fixture
+assertion to that actual guard rather than claiming a different error. Production
+fuel and all transport/graph guards are unchanged. Added stats equality to the
+runtime compile-failure regression.
+
+Final focused/affected73639 TERMINAL0:43passed/0failed/0ignored across seven
+suites, including new8/0/0 in20.88s and REPL8/0/0 in24.01s; log
+/private/tmp/suss-native-entrypoints-final-focus.log. Actual large-value guard
+and subsequent small-value recovery pass. Tests retain original vector results,
+file positions and effects, plus GC, numeric/UTF16, reuse/reset, metadata and
+discarded lazy values. Python initial run failed7 missing-submodule errors;
+initialized exactc4295f3 from local reference, then16536 TERMINAL0:118tests pass
+in5.195s; /private/tmp/suss-native-entrypoints-python-fixed.log. No skips added.
+
+Java-free verifier1718 LIVE at current frozen source;
+/private/tmp/suss-native-entrypoints-javafree.log. Root owns sole heavy slot.
+PR164 CI lookup54977 TERMINAL1 HTTP503, not a CI result; subsequent actual GH
+read recovered and verifies exact2cb/run37154557374 still in_progress. PR164
+remains draft despite successful reviewed full1088/0/17/121. New command branch
+still uncommitted; needs publication, independent review/fixes, required final
+full baseline and exact-head CI. Next after terminal verifier: commit/push/open
+draft with Refs #12/#13/#14 and dispatch its independent reviewer. Do not merge
+or close any original M3 issue. Remaining component/AOT migration, macro effects,
+full printing/source schema/cache/evaluator/lifecycle gates remain explicit.
+
+Java-free verifier1718 TERMINAL0: both bootstrap images reproduced byte-for-byte,
+compiled identity verified, four bootstrap tests pass in11.74s; no asset changes.
+Final root diff --check passes. New branch focused43/0/0 and Python118 pass;
+independent review/full/final CI remain pending for this branch.
+
+PR164 exact final-headCI37154557374 COMPLETEDsuccess at2cb66f3541e6c9740f9f527862835cff5fe2807c,
+independently verified root gh pr view (completed22:15:17Z). Root updated body and
+marked READY at unchanged head, with final proof
+https://github.com/bobby/suss/issues/14#issuecomment-5974031233 . No merge or closure.
+All root heavy/network handles are terminal. Next publish command branch stacked
+on164, dispatch independent review and explicitly transfer the sole heavy slot.
+
 ## Start here
 
 The requested design and roadmap are now repository artifacts:

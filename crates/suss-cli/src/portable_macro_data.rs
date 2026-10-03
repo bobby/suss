@@ -299,7 +299,7 @@ impl FormBridge {
             if data.len() != if class == Class::Symbol { 5 } else { 4 } {
                 return Err(error("Invalid compiler identifier key layout"));
             }
-            let mut budget = Budget { nodes: 4096, units: 1_048_576, calls: None };
+            let mut budget = Budget { include_metadata: true, nodes: 4096, units: 1_048_576, calls: None };
             Ok(Some((class, text(&mut store, &data[2], &mut budget)?)))
         })
     }
@@ -513,6 +513,7 @@ impl FormBridge {
     pub fn quote(&self, session: &mut Session, form: Form) -> Result<SessionValue, SessionError> {
         self.check(session)?;
         let mut budget = Budget {
+            include_metadata: true,
             nodes: 4096,
             units: 1_048_576,
             calls: None,
@@ -663,6 +664,22 @@ impl FormBridge {
         value: &SessionValue,
         span: Range<usize>,
     ) -> Result<Form, SessionError> {
+        self.read_with_metadata(session, value, span, true)
+    }
+    pub(crate) fn read_for_display(
+        &self,
+        session: &mut Session,
+        value: &SessionValue,
+    ) -> Result<Form, SessionError> {
+        self.read_with_metadata(session, value, 0..0, false)
+    }
+    fn read_with_metadata(
+        &self,
+        session: &mut Session,
+        value: &SessionValue,
+        span: Range<usize>,
+        include_metadata: bool,
+    ) -> Result<Form, SessionError> {
         self.check(session)?;
         session
             .data_inspect_calls(
@@ -670,6 +687,7 @@ impl FormBridge {
                 &self.factories["lazy-sval"],
                 |mut store, value, args_new, invoke, function| {
                     let mut budget = Budget {
+                        include_metadata,
                         nodes: 4096,
                         units: 1_048_576,
                         calls: Some(ReadCalls {
@@ -684,7 +702,7 @@ impl FormBridge {
             .map_err(|failure| match failure {
                 SessionError::Host(failure) => SessionError::Compile(Diagnostic {
                     span,
-                    message: format!("Invalid or unsupported compiled macro data: {failure}"),
+                    message: if include_metadata { format!("Invalid or unsupported compiled macro data: {failure}") } else { format!("Invalid or unsupported value display: {failure}") },
                 }),
                 failure => failure,
             })
@@ -722,7 +740,7 @@ mod identity_tests {
                 bridge.read(&mut session, &original, 0..1).unwrap();
                 let rejected = session.inspect(&original, |mut store, _| {
                     let value = Val::AnyRef(Some(fake.to_rooted(&mut store)));
-                    Ok(decode(&mut store, &value, &bridge.classes, &(0..1), 0, &mut Budget { nodes: 4096, units: 1_048_576, calls: None }).is_err())
+                    Ok(decode(&mut store, &value, &bridge.classes, &(0..1), 0, &mut Budget { include_metadata: true, nodes: 4096, units: 1_048_576, calls: None }).is_err())
                 }).unwrap();
                 assert!(rejected, "copied descriptor identity accepted for {source}");
             }
@@ -774,6 +792,7 @@ fn metadata(
     depth: usize,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Form>> {
+    if !budget.include_metadata { return Ok(vec![]); }
     if nil(store, value)? {
         return Ok(vec![]);
     }
@@ -848,6 +867,7 @@ struct ReadCalls {
     function: Val,
 }
 struct Budget {
+    include_metadata: bool,
     calls: Option<ReadCalls>,
     nodes: usize,
     units: usize,
