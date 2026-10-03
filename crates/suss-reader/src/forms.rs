@@ -43,16 +43,40 @@ pub enum Kind {
 /// Unsupported dispatch/numeric syntax fails explicitly, including ratios and
 /// arbitrary-precision suffixes. Empty/comment-only sources yield no forms.
 pub fn read_forms(source: &str) -> Result<Vec<Form>, ParseError> {
+    read_forms_internal(source, None).map(|(forms, _)| forms)
+}
+
+/// Indexing-reader data for compiled macro input. Ordinary compiler forms keep
+/// explicit reader metadata only; this opt-in path adds source metadata as data.
+pub fn read_forms_with_source_metadata(
+    source: &str,
+    file: Option<&str>,
+) -> Result<Vec<Form>, ParseError> {
+    let (forms, carets) = read_forms_internal(source, Some(file))?;
+    let mut forms = resolve_conditionals(forms)?;
+    source_metadata::list_prefixes(&mut forms, &carets);
+    Ok(forms)
+}
+
+mod source_metadata;
+
+fn read_forms_internal(
+    source: &str,
+    locations: Option<Option<&str>>,
+) -> Result<(Vec<Form>, source_metadata::Carets), ParseError> {
     let mut reader = Reader {
         source,
         offset: 0,
         depth: 0,
+        locations,
+        carets: source_metadata::Carets::new(),
+        source_positions: locations.map(|_| source_metadata::Positions::new(source)),
     };
     let mut forms = Vec::new();
     loop {
         reader.padding();
         if reader.peek().is_none() {
-            return Ok(forms);
+            return Ok((forms, reader.carets));
         }
         if let Some(form) = reader.form()? {
             forms.push(form);
@@ -253,6 +277,9 @@ struct Reader<'a> {
     source: &'a str,
     offset: usize,
     depth: usize,
+    locations: Option<Option<&'a str>>,
+    carets: source_metadata::Carets,
+    source_positions: Option<source_metadata::Positions>,
 }
 impl Reader<'_> {
     fn peek(&self) -> Option<char> {
@@ -339,6 +366,15 @@ impl Reader<'_> {
             '\\' => Kind::String(vec![self.character(start)?]),
             '^' => {
                 let metadata = self.required()?;
+                if self.locations.is_some() {
+                    self.carets.insert(
+                        (metadata.span.start, metadata.span.end),
+                        self.source_positions
+                            .as_ref()
+                            .unwrap()
+                            .position(self.source, start),
+                    );
+                }
                 if !matches!(
                     metadata.kind,
                     Kind::Keyword(_) | Kind::Symbol(_) | Kind::String(_) | Kind::Map(_)
@@ -472,11 +508,20 @@ impl Reader<'_> {
                 }
             }
         };
-        Ok(Some(Form {
+        let mut form = Form {
             span: start..self.offset,
             metadata: Vec::new(),
             kind,
-        }))
+        };
+        if let Some(file) = self.locations {
+            source_metadata::attach(
+                self.source,
+                self.source_positions.as_ref().unwrap(),
+                file,
+                &mut form,
+            );
+        }
+        Ok(Some(form))
     }
     fn wrapper(&mut self, start: usize, name: &str) -> Result<Kind, ParseError> {
         let prefix = Form {
@@ -499,7 +544,9 @@ impl Reader<'_> {
                     return Ok(items);
                 }
                 None => {
-                    return Err(self.incomplete(start, format!("Unclosed collection; expected {end}")));
+                    return Err(
+                        self.incomplete(start, format!("Unclosed collection; expected {end}"))
+                    );
                 }
                 _ => {
                     if let Some(form) = self.form()? {

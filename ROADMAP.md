@@ -244,3 +244,11 @@ once-only initializers/defonce, old function captures, compile/runtime recovery,
 multiline input, exact scalar display and reset. Atoms, namespace command/reload
 policy, compiled macro bootstrap, interruption and live heap acceptance remain
 open; see [compiled REPL frontend](docs/runtime/compiled-repl.md).
+
+Compiled macro reader input now has focused source-location evidence: eight
+exact pinned projections match after GC in both Stores, with a separate canonical
+loaded-file assertion. Conditional/prefix/tag metadata, generated-syntax absence,
+located snapshot failures, compile isolation and metadata non-reexecution are
+covered. Independent review and full final-head validation remain required; see
+[reader metadata](docs/runtime/compiled-macro-reader-metadata.md). Original M3
+gates and complete portable schema/inference remain open.

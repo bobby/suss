@@ -11781,3 +11781,120 @@ no concurrent native or JVM job ran. No temporary probes were added to the repo.
 No remaining reproduced significant review finding; push these fixes to PR153,
 then root must clean and run its full baseline and require final-head CI before
 readiness. No PR merged; complete AST/inference and original M3 gates remain open.
+
+
+## Compiled macro reader metadata continuation
+
+Parent PR153 reviewed head1874372cd7ed88b0646ff5c976ce46ba865f099e has terminal
+clean full baseline58693 exit0:1015/0/17 across107 groups;
+/private/tmp/suss-pr153-reviewed-rebuilt-full.log. Final-head CI37097305223
+remains live at the last check, so153 stays draft. Parent152 reviewed-head CI
+37093325448 passed1012/0/17 and it is ready, not merged.
+
+Current worktree /private/tmp/suss-m3-form-source-metadata, branch
+portable/m3-form-source-metadata from1874372. Added opt-in indexing-reader data,
+immutable source-provenance snapshots and implicit &form/user argument transport.
+Ordinary compiler reading is unchanged. Original syntax/spans/metadata/float bits
+must match before enrichment; generated syntax remains unlocated. Reader errors,
+non-Unicode filenames and missing located counterparts yield located errors.
+Source snapshot bound1MiB/traversal bound1,048,576; existing data bounds remain.
+Reader adaptation retains pinned source/hash/EPL notice; see
+../runtime/compiled-macro-reader-metadata.md for scope and provenance.
+
+Resource protocol: one local native/JVM job at a time; shared target
+/private/tmp/suss-m3-pr143-target, CARGO_BUILD_JOBS=2, no RUSTFLAGS.
+Clean only the four workspace packages before switching worktrees. All jobs below
+are terminal; no local native/JVM process remains live at this entry.
+
+Primary8890 exit0 produced5 observations. Expanded86240 exit0 produced9:
+nested, unicode-crlf, overrides, file, generated, conditional, chained, slash,
+tag. First5 unchanged; actual output validated and recorded in
+form-source-metadata-observations.json. Logs
+/private/tmp/suss-form-source-metadata-primary-{before,expanded}.log.
+Command in tests/oracle: CLJ_CONFIG=/tmp/suss-oracle-clojure-config
+CLJ_CACHE=/tmp/suss-oracle-clojure-cache clojure -Srepro -M
+form-source-metadata-probe.clj. Eight exact native projections match; the primary
+synthetic file reader is separate from native canonical module-path assertions.
+The oracle verifier now has7 negative/comparison checks; all108 Python tests pass
+(session64749 exit0), /private/tmp/suss-form-source-metadata-python.log.
+
+Native BEFORE71755 exit101,1/3/0: missing nested positions, missing head positions
+in the override case, missing loaded file metadata. Generated absence passed.
+/private/tmp/suss-form-source-metadata-native-before.log. Initial AFTER80180
+exit101,3/1/0 exposed only expected path alias /var versus canonical /private/var;
+corrected fixture uses app.canonicalize(), with exact path comparison retained.
+AFTER61101 exit0,4/0/0 in both Stores;
+/private/tmp/suss-form-source-metadata-native-after{,-path}.log.
+
+Snapshot BEFORE64985 exit101,0/2/0 reproduced erased parse failure and lossy file
+replacement. /private/tmp/suss-form-source-metadata-snapshot-before.log.
+Repaired snapshot caching propagates errors. Expanded42395 exit101,3/5/0 because
+the test helper still required only5 corpus identities; no semantic success
+claimed from that attempt. Corrected54533 exit0,8/0/0;
+/private/tmp/suss-form-source-metadata-expanded-after{,-corrected}.log.
+
+Final affected47142 exit0,27/0/0 across4 groups: metadata10, prior macro metadata10,
+source environments3, source macros4. Command: CARGO_TARGET_DIR=... CARGO_BUILD_JOBS=2
+cargo test -p suss-cli --locked --test compiled_macro_form_source_metadata
+--test compiled_macro_source_environment --test compiled_source_macros
+--test compiled_macro_metadata -- --test-threads=2.
+/private/tmp/suss-form-source-metadata-affected.log. The two added execution guards
+show metadata assignment syntax remains data and source-bound compile failure
+preserves old bindings/effects and allows next-input recovery in both Stores.
+Reader21803 exit0,30/0/0 across3 groups: cargo test -p suss-reader --locked
+-- --test-threads=2; /private/tmp/suss-form-source-metadata-reader.log.
+rustfmt/diff checks are separate from execution evidence. No full baseline on
+this new reader/CLI change yet; parent153 counts cannot certify this branch.
+
+Next: commit/push/open draft with Refs13/14, dispatch independent review and push
+significant fixes. Then clean rebuilt final-head full workspace baseline and CI
+before readiness. Verify parent153 CI on its exact reviewed head before marking
+it ready. Full original M3 remains: portable schema/inference, automatic expansion
+metadata, namespace policy, syntax quote/gensyms, reproducible versioned Java-free
+bootstrap/cache/evaluator removal, interactive cancellation/lifecycle/live memory.
+No issue closed or PR merged; never merge without later explicit user instruction.
+
+## PR154 independent review: bound reader position work
+
+Independent review of PR154 at a0fdde7f92f1bb951add70fd6d5495debddfe7df in
+/private/tmp/suss-review-pr154 reproduced quadratic UTF-16 column computation:
+every located symbol rescanned its entire source line. A temporary actual opt-in
+reader probe with 8,192/16,384/32,768 short symbols took respectively
+1.870/7.415/29.583 seconds (session26084 exit0), despite the 1 MiB snapshot bound.
+Log /private/tmp/suss-pr154-positions-before.log. The temporary probe was removed;
+these are observed timings, not portable timing acceptance thresholds.
+
+Repaired Positions with a sparse cumulative index of byte overhead relative to
+UTF-16 at non-ASCII scalar boundaries. Source indexing is linear; column lookup
+uses binary search rather than scanning line prefixes. ASCII requires no
+per-character column storage; non-ASCII storage remains linear in source length.
+CRLF/lone CR/LF and one-based/exclusive positions retain their existing behavior.
+The identical reader probe now took 23/46/94 milliseconds (session53389 exit0),
+/private/tmp/suss-pr154-positions-after.log. Deterministic regressions compare
+all valid boundaries in mixed BMP/astral/newline source and query the entire
+1 MiB ASCII index without a flaky elapsed-time assertion.
+
+Cleaned only suss-cli/suss-compile/suss-reader/suss-core artifacts before the
+isolated review rebuild; shared target /private/tmp/suss-m3-pr143-target,
+CARGO_BUILD_JOBS=2, no RUSTFLAGS, no concurrent native/JVM job. Initial reader
+4072 exit0 passed30/0/0. Repaired reader1066 exit0 passed32/0/0 across two groups:
+CARGO_TARGET_DIR=... CARGO_BUILD_JOBS=2 cargo test -p suss-reader --locked
+-- --test-threads=2; /private/tmp/suss-pr154-review-reader-after.log.
+Native metadata16176 exit0 passed10/0/0 in106.25s:
+CARGO_TARGET_DIR=... CARGO_BUILD_JOBS=2 cargo test -p suss-cli --locked
+--test compiled_macro_form_source_metadata -- --test-threads=2;
+/private/tmp/suss-pr154-review-native.log. Actual both-Store macro execution
+retains nested positions, explicit overrides, conditional/prefix/tag metadata,
+canonical files, generated absence, assignment-as-data and failure recovery.
+Committed Unicode fixture bytes independently verified: three CRLF sequences,
+no standalone LF, astral U+1D11E retained. Formatting/diff checks also passed.
+
+Reviewed provenance matching/cache/error propagation, immutable snapshot syntax,
+spans and float-bit comparison, implicit/user argument transport, prefix order,
+reader conditional selection and upstream EPL/source-hash evidence. No remaining
+reproduced significant finding. Existing source/traversal/FormBridge bounds
+remain; this repair removes repeated line scanning, not a claim of zero allocation
+or complete macro metadata/portable schema support. Push review fix to PR154,
+then root must run the clean final-head full baseline and require final-head CI.
+All local jobs here terminal; sole heavy slot released after push. No PR merged,
+no issue closed; the complete original M3 gates remain open.

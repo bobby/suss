@@ -372,11 +372,14 @@ impl ExpansionHost for CompiledMacros {
             return Ok(None);
         };
         let result = (|| -> Result<Form, SessionError> {
-            let caller_form = self.bridge.quote(&mut self.session, form.clone())?;
+            let caller_data = context.origin.map_or_else(|| Ok(form.clone()), |origin| origin.macro_form_data(form))
+                .map_err(SessionError::Compile)?;
+            let caller_form = self.bridge.quote(&mut self.session, caller_data.clone())?;
             let caller_environment = AnalysisGraph::new(&self.bridge, &mut self.session)
                 .expansion(context)?;
             let mut arguments = vec![caller_form, caller_environment];
-            for argument in &items[1..] {
+            let Kind::List(caller_items) = &caller_data.kind else { unreachable!("matched macro call") };
+            for argument in &caller_items[1..] {
                 arguments.push(self.bridge.quote(&mut self.session, argument.clone())?);
             }
             let arguments = arguments.iter().collect::<Vec<_>>();

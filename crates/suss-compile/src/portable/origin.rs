@@ -1,14 +1,18 @@
 //! Immutable source provenance for compiler and compiled macro facts.
 use std::{
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, OnceLock},
 };
+mod form_metadata;
 
 #[derive(Debug, Clone)]
 pub struct SourceOrigin {
     text: Arc<str>,
     path: Option<PathBuf>,
     line_starts: Arc<[usize]>,
+    metadata_forms: Arc<
+        OnceLock<Result<(Vec<suss_reader::forms::Form>, Vec<suss_reader::forms::Form>), String>>,
+    >,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SourcePosition {
@@ -42,6 +46,7 @@ impl SourceOrigin {
             text,
             path,
             line_starts: starts.into(),
+            metadata_forms: Arc::new(OnceLock::new()),
         }
     }
     pub fn text(&self) -> &str {
@@ -53,7 +58,7 @@ impl SourceOrigin {
     /// Position of a source symbol token, excluding its metadata prefixes.
     /// Expansion declarations without matching source syntax remain unknown.
     pub fn symbol_position(&self, form: &suss_reader::forms::Form) -> Option<SourcePosition> {
-        use suss_reader::forms::{Kind, read_forms, resolve_conditionals};
+        use suss_reader::forms::{read_forms, resolve_conditionals, Kind};
         let Kind::Symbol(symbol) = &form.kind else {
             return None;
         };

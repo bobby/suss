@@ -1,0 +1,7 @@
+(defmacro form-tag-facts []
+  (let [tag (get (meta &form) :tag)
+        positions (meta tag)]
+    (list 'quote [(name tag)
+                  (get positions :line) (get positions :column)
+                  (get positions :end-line) (get positions :end-column)
+                  (get positions :file)])))

@@ -618,3 +618,15 @@ with nested syntax, metadata and size-boundary execution. Complete source AST,
 declaration/function/method schema and remaining inference rules stay open; no
 inventory declaration is reclassified as complete. See
 [source inference](../runtime/compiled-macro-source-inference.md).
+
+## Compiled macro reader input metadata
+
+Eight exact pinned reader-metadata projections match executed native source
+macros in both Stores after GC, with a separate loaded-file provenance assertion.
+Ten focused tests cover location/prefix/conditional/tag behavior, absence on
+expanded syntax, snapshot errors, compile isolation and metadata expressions
+remaining data. Affected suites pass27/0/0; the reader passes30/0/0 and Python
+checks108/0. See [reader metadata evidence](../runtime/compiled-macro-reader-metadata.md).
+These are partial macro prerequisites; no inventory item or M3 acceptance gate
+is reclassified as complete. Full portable schema/inference, bootstrap and
+lifecycle remain open; independent review/full final-head checks are pending.
