@@ -10,6 +10,7 @@ mod source;
 mod origin;
 pub mod syntax_quote;
 pub mod bootstrap;
+pub mod artifact_cache;
 pub use origin::{SourceOrigin, SourcePosition};
 use std::ops::Range;
 use suss_reader::forms::{read_forms, resolve_conditionals};
@@ -54,6 +55,16 @@ pub enum MacroReload {
     ReloadAll,
 }
 pub trait ExpansionHost {
+    /// Analysis and macro execution have already happened. Hosts may reuse only
+    /// emission bytes; staged catalogs and cells always come from this analysis.
+    fn emit_fragment(
+        &mut self, function: &ir::Function, phase: resolve::Phase,
+        forms: &[suss_reader::forms::Form], origin: Option<&SourceOrigin>,
+    ) -> Result<Vec<u8>, Diagnostic> {
+        let _ = (phase, forms, origin);
+        compile_ir(function)
+    }
+
     fn supports_macro_imports(&self) -> bool {
         false
     }
@@ -220,8 +231,9 @@ pub(crate) fn prepare_selected_fragment_with_origin(
     environment: &resolve::Environment, phase: resolve::Phase,
     expander: &mut dyn ExpansionHost, origin: Option<&SourceOrigin>,
 ) -> Result<PreparedFragment, Diagnostic> {
-    let analyzed = analyze_selected_fragment(forms, span, environment, phase, expander, origin)?;
-    let wasm = compile_ir(&ir::lower(&analyzed.hir)?)?;
+    let analyzed = analyze_selected_fragment(forms.clone(), span, environment, phase, expander, origin)?;
+    let function = ir::lower(&analyzed.hir)?;
+    let wasm = expander.emit_fragment(&function, phase, &forms, origin)?;
     Ok(PreparedFragment { wasm, environment: analyzed.environment,
         cells: analyzed.cells, namespace_directive: analyzed.namespace_directive })
 }

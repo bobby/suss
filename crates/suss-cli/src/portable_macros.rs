@@ -4,13 +4,17 @@ use crate::{
     portable_macro_graph::AnalysisGraph,
     portable_session::{Session, SessionError, SessionValue},
 };
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use suss_compile::portable::{Diagnostic, ExpansionContext, ExpansionHost};
 use suss_reader::forms::{Form, Kind, read_forms};
 pub struct CompiledMacros {
     session: Session,
     bridge: FormBridge,
     definitions: BTreeMap<(String, String), SessionValue>,
+    declaration_sources: BTreeMap<(String, String), String>,
+    loaded_sources: BTreeMap<String, String>,
+    incomplete_sources: BTreeSet<String>,
+    artifact_cache: suss_compile::portable::artifact_cache::ArtifactCache,
 }
 fn symbol(name: &str, span: std::ops::Range<usize>) -> Form {
     Form {
@@ -60,17 +64,23 @@ impl CompiledMacros {
             session,
             bridge,
             definitions: BTreeMap::new(),
+            declaration_sources: BTreeMap::new(),
+            loaded_sources: BTreeMap::new(),
+            incomplete_sources: BTreeSet::new(),
+            artifact_cache: Default::default(),
         })
     }
-    pub(crate) fn binding_checkpoint(&mut self) -> Result<(crate::portable_session::BindingCheckpoint, BTreeMap<(String, String), SessionValue>), SessionError> {
-        Ok((self.session.binding_checkpoint()?, self.definitions.clone()))
+    pub(crate) fn binding_checkpoint(&mut self) -> Result<(crate::portable_session::BindingCheckpoint, BTreeMap<(String, String), SessionValue>, BTreeMap<(String, String), String>), SessionError> {
+        Ok((self.session.binding_checkpoint()?, self.definitions.clone(), self.declaration_sources.clone()))
     }
-    pub(crate) fn restore_bindings(&mut self, checkpoint: (crate::portable_session::BindingCheckpoint, BTreeMap<(String, String), SessionValue>), globals: &[suss_compile::portable::resolve::Global]) -> Result<(), SessionError> {
+    pub(crate) fn restore_bindings(&mut self, checkpoint: (crate::portable_session::BindingCheckpoint, BTreeMap<(String, String), SessionValue>, BTreeMap<(String, String), String>), globals: &[suss_compile::portable::resolve::Global]) -> Result<(), SessionError> {
         self.session.restore_bindings(checkpoint.0, globals)?;
         for global in globals {
             let key = (global.namespace().to_owned(), global.name().to_owned());
-            if let Some(value) = checkpoint.1.get(&key) { self.definitions.insert(key, value.clone()); }
+            if let Some(value) = checkpoint.1.get(&key) { self.definitions.insert(key.clone(), value.clone()); }
             else { self.definitions.remove(&key); }
+            if let Some(source) = checkpoint.2.get(&key) { self.declaration_sources.insert(key, source.clone()); }
+            else { self.declaration_sources.remove(&key); }
         }
         Ok(())
     }
@@ -135,6 +145,10 @@ impl CompiledMacros {
         .map_err(SessionError::Module)?;
         // Discovery errors preserve previous loaded identities. Once execution
         // starts, each selected phase unit must initialize before being loaded again.
+        // A selected unit may publish cells before its initializer fails. Its old
+        // immutable identity no longer establishes the complete live graph, so
+        // emission reuse stays disabled until all selected units finish loading.
+        self.incomplete_sources.extend(graph.iter().map(|unit| unit.identity.namespace().to_owned()));
         self.session.invalidate_source_modules(
             &graph
                 .iter()
@@ -144,6 +158,8 @@ impl CompiledMacros {
         let caller = self.session.current_namespace().to_owned();
         let result = (|| {
             for unit in graph {
+                let source_identity = suss_compile::portable::bootstrap::sha256(
+                    format!("{:?}:{:?}:{}", unit.path, unit.dependencies, unit.source).as_bytes());
                 let origin = suss_compile::portable::SourceOrigin::new(unit.source.as_str(), Some(unit.path.clone()));
                 // Source snapshots are already selected and dependency-first. Each
                 // form executes once in Macro phase; definitions compile to the
@@ -172,6 +188,8 @@ impl CompiledMacros {
                 }
                 self.session
                     .initialized_source_namespace(unit.identity.namespace())?;
+                self.loaded_sources.insert(unit.identity.namespace().to_owned(), source_identity);
+                self.incomplete_sources.remove(unit.identity.namespace());
             }
             Ok(self
                 .definitions
@@ -193,6 +211,10 @@ impl CompiledMacros {
             session,
             bridge,
             definitions: BTreeMap::new(),
+            declaration_sources: BTreeMap::new(),
+            loaded_sources: BTreeMap::new(),
+            incomplete_sources: BTreeSet::new(),
+            artifact_cache: Default::default(),
         })
     }
     pub(crate) fn define_form_display(
@@ -288,6 +310,8 @@ impl CompiledMacros {
         let namespace = self.session.current_namespace().to_owned();
         self.definitions
             .insert((namespace.clone(), name.name.clone()), value.clone());
+        let provenance = format!("{form:?}:{}:{:?}", origin.map_or("", |origin| origin.text()), origin.and_then(|origin| origin.path()));
+        self.declaration_sources.insert((namespace.clone(), name.name.clone()), suss_compile::portable::bootstrap::sha256(provenance.as_bytes()));
         let exports = self
             .definitions
             .keys()
@@ -298,7 +322,23 @@ impl CompiledMacros {
         Ok(value)
     }
 }
+impl CompiledMacros {
+    pub fn artifact_cache_stats(&self) -> suss_compile::portable::artifact_cache::CacheStats {
+        self.artifact_cache.stats()
+    }
+}
 impl ExpansionHost for CompiledMacros {
+    fn emit_fragment(
+        &mut self, function: &suss_compile::portable::ir::Function,
+        phase: suss_compile::portable::resolve::Phase, forms: &[Form],
+        origin: Option<&suss_compile::portable::SourceOrigin>,
+    ) -> Result<Vec<u8>, Diagnostic> {
+        let mut dependencies = vec![("bootstrap".into(), suss_compile::portable::bootstrap::sha256(suss_compile::portable::bootstrap::SOURCE.as_bytes()))];
+        dependencies.extend(self.loaded_sources.iter().map(|(name, source)| (format!("module:{name}"), source.clone())));
+        dependencies.extend(self.declaration_sources.iter().map(|((namespace, name), source)| (format!("macro:{namespace}/{name}"), source.clone())));
+        self.artifact_cache.emit(function, phase, forms, origin, self.incomplete_sources.is_empty().then_some(dependencies.as_slice()))
+    }
+
     fn supports_macro_imports(&self) -> bool {
         true
     }
