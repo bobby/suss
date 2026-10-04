@@ -150,3 +150,10 @@ Four compiler checks cover all three contexts in both phases. Three executing
 native collection checks pass, including empty-do context/constant/value presence
 and nil after GC in both Stores. Graph/context checks also pass; both bootstrap
 pairs reproduce without Java. Full baseline and exact final-head CI remain gates.
+
+The first review baseline also exposed stale scalar/local negative assertions
+that expected invocation operations to be absent. Those regressions now require
+`:invoke` with genuine `[:fn :args]` children while preserving absent scalar data
+and local binding fields on the invocation. The local callee retains canonical
+shared declaration identity; actual result and once-only effects remain exact.
+All three scalar and two local tests pass. Their raw pinned corpora are unchanged.

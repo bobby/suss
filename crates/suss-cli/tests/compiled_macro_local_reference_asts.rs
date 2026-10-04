@@ -96,12 +96,23 @@ fn retained_local_declarations_supply_reference_ast_fields_without_reexecution()
         );
         // A local callee is a reference within an invocation. The invocation
         // initializer itself must not acquire the callee's local AST fields.
+        macros
+            .define(
+                r#"(defmacro observe-invocation [binding]
+          (let [ast (get (get (get &env :locals) binding) :init)
+                callee (get ast :fn) args (get ast :args)]
+            (list 'quote [(get ast :children) (get callee :op) (get callee :local)
+                          (= 'f (get callee :form))
+                          (identical? (get callee :info) (get (get &env :locals) 'f))
+                          (vector? args) (count args)])))"#,
+            )
+            .unwrap();
         let value = session
             .eval_with_macros(
                 r#"(def call-effects 0)
           (let [f (fn [] (do (set! call-effects (+ call-effects 1)) 42))
                 copy (f)]
-            [(observe-reference "invoke" copy) copy call-effects])"#,
+            [(observe-reference "invoke" copy) (observe-invocation copy) copy call-effects])"#,
                 &mut macros,
             )
             .unwrap();
@@ -110,20 +121,33 @@ fn retained_local_declarations_supply_reference_ast_fields_without_reexecution()
         assert_eq!(
             actual[0][1],
             json!([
-                ["op", false, null],
+                ["op", true, ["keyword", ":invoke"]],
                 ["local", false, null],
                 ["arg-id", false, null],
                 ["variadic?", false, null]
             ]),
-            "invocation schema is still unfinished; do not classify a list as its local head"
+            "source invocation must not acquire its local callee binding fields"
         );
         assert_eq!(
             actual[0][2][4],
             json!(false),
             "no fabricated constant value"
         );
-        assert_eq!(actual[1], json!(42.0));
-        assert_eq!(actual[2], json!(1.0), "invocation executes exactly once");
+        assert_eq!(
+            actual[1],
+            json!([
+                [["keyword", ":fn"], ["keyword", ":args"]],
+                ["keyword", ":local"],
+                ["keyword", ":let"],
+                true,
+                true,
+                true,
+                0.0
+            ]),
+            "invocation retains its actual canonical local callee and empty args"
+        );
+        assert_eq!(actual[2], json!(42.0));
+        assert_eq!(actual[3], json!(1.0), "invocation executes exactly once");
     }
 }
 

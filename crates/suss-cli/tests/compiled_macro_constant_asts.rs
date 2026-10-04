@@ -170,7 +170,10 @@ fn reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_c
           (let [init (get (get (get &env :locals) name) :init)]
             (list 'quote [(contains? init :op) (get init :op)
                           (contains? init :val) (get init :val)
-                          (get init :form) (contains? init :suss/lowering)])))"#,
+                          (get init :form) (contains? init :suss/lowering)
+                          (get init :children) (get (get init :fn) :form)
+                          (get (first (get init :args)) :form)
+                          (get (first (next (get init :args))) :form)])))"#,
             )
             .unwrap();
         let value = session
@@ -228,8 +231,22 @@ fn reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_c
                 assert!(matches!(&fields[1].kind, Kind::Keyword(k)
                     if k.namespace.is_none() && k.name == "local"));
             } else {
-                assert!(matches!(fields[0].kind, Kind::Bool(false)));
-                assert!(matches!(fields[1].kind, Kind::Nil));
+                assert!(matches!(fields[0].kind, Kind::Bool(true)));
+                assert!(matches!(&fields[1].kind, Kind::Keyword(k)
+                    if k.namespace.is_none() && k.name == "invoke"));
+                let Kind::Vector(children) = &fields[6].kind else {
+                    panic!("source invocation children")
+                };
+                assert_eq!(children.len(), 2);
+                for (child, name) in children.iter().zip(["fn", "args"]) {
+                    assert!(matches!(&child.kind, Kind::Keyword(k)
+                        if k.namespace.is_none() && k.name == name));
+                }
+                assert!(matches!(&fields[7].kind, Kind::Symbol(s)
+                    if s.namespace.is_none() && s.name == "+"));
+                assert!(matches!(&fields[8].kind, Kind::Symbol(s)
+                    if s.namespace.is_none() && s.name == "observed"));
+                assert!(matches!(fields[9].kind, Kind::Number(0.0)));
             }
             assert!(
                 matches!(fields[2].kind, Kind::Bool(false)),

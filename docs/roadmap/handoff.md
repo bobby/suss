@@ -17301,3 +17301,27 @@ cargo test --workspace --locked -- --test-threads=2 through all four doctests on
 that head. Reviewer retains sole Cargo/JVM/Node slot until actual terminal result
 and explicit release. Exact final-head CI remains a separate root gate. No PR
 readiness, merge, issue closure or M3 completion is claimed here.
+
+### PR #191 full baseline exposed stale nonconstant operation assertions
+
+Review full98416 on2307c12 reached actual terminal101 at scalar source AST tests:
+2passed/1failed in12.06s. Log preserved as
+/private/tmp/suss-pr191-review-full-first.log. The negative scalar regression
+expected arithmetic :op absent, but this PR intentionally exposes genuine source
+:invoke. Updated it to require :invoke, declared [:fn :args], the exact source
++ callee/local-read/numeric argument forms, while retaining absent scalar :val
+and separately present lowering. Scalar30667 terminal0:3pass/0fail/0ignored/
+0measured/0filtered in12.28s, /private/tmp/suss-pr191-review-scalars.log.
+
+Inspected other absence assertions and reproduced the analogous unchanged local
+invocation regression33511 terminal101:0pass/1fail/1filtered in5.62s, log
+/private/tmp/suss-pr191-review-local-parent.log. Its new expectation requires
+:invoke while all local/arg-id/variadic fields remain absent on the invocation.
+Additional projection asserts genuine :local/:let callee with canonical shared
+info identity and present empty args; independently executed result42/effects1
+remain exact. The six pinned local-reference rows are unchanged. Local50643
+terminal0:2pass/0fail/0ignored/0measured/0filtered in10.59s, log
+/private/tmp/suss-pr191-review-locals.log. No production/compiler input changed;
+regenerated/reproduced images remain current. Next push the aligned regressions,
+freeze a new head and repeat the entire unfiltered baseline through all doctests.
+No partial baseline, ignored test or weakened assertion supplies acceptance.
