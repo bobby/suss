@@ -396,3 +396,11 @@ GC; quoted effects stay unexecuted. Both phase image pairs regenerate and
 reproduce without Java. Independent review/full baseline/final-head CI and
 remaining original M3 requirements stay open; see
 [quote AST evidence](docs/runtime/compiled-macro-quote-asts.md).
+
+
+Source field references now preserve actual lexical AST/info identity and raw
+nullable mutability flags/hints with original declaration positions. Nine fresh
+pinned observations match both native caller phases after GC; complete source
+schemas and original M3 acceptance remain open. Independent review, unfiltered
+baseline and final-head CI are required. See
+[field reference facts](docs/runtime/compiled-macro-field-reference-asts.md).
