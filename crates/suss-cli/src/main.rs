@@ -46,8 +46,8 @@ fn run_command(cmd: args::Command) {
             #[cfg(not(all(feature = "component", target_family = "wasm")))]
             run_file(&path);
         }
-        args::Command::CompileFile { source, world_wit, output, optimize } => {
-            compile_file(&source, &world_wit, &output, optimize);
+        args::Command::CompileFile { source, world_wit, wit_world, src_paths, exports, output, optimize } => {
+            compile_file(&source, &world_wit, wit_world.as_deref(), &src_paths, &exports, &output, optimize);
         }
         args::Command::CompileMain { source, namespace, output, optimize } => {
             compile_main(&source, &namespace, &output, optimize);
@@ -58,8 +58,8 @@ fn run_command(cmd: args::Command) {
         args::Command::CompileProject { world, config_path, optimize } => {
             compile_project(world.as_deref(), config_path.as_deref(), optimize);
         }
-        args::Command::Run { component_path, invoke, args } => {
-            run_component(&component_path, &invoke, &args);
+        args::Command::Run { component_path, invoke, command_mode, args } => {
+            run_component(&component_path, &invoke, command_mode, &args);
         }
         args::Command::Help => args::print_help(),
         args::Command::Version => println!("suss {}", env!("CARGO_PKG_VERSION")),
@@ -138,25 +138,70 @@ fn run_wasm_opt(path: &str) -> Result<(), String> {
 }
 
 /// Compile a Suss file to a WASM component (file mode)
-fn compile_file(source_path: &str, wit_path: &str, output_path: &str, optimize: bool) {
-    let mut compiler = suss_compile::Compiler::new();
-
-    match compiler.compile_files(source_path, wit_path) {
+fn compile_file(
+    source_path: &str,
+    wit_path: &str,
+    wit_world: Option<&str>,
+    source_paths: &[String],
+    exports: &[String],
+    output_path: &str,
+    optimize: bool,
+) {
+    #[cfg(not(target_family = "wasm"))]
+    let result = (|| -> Result<Vec<u8>, String> {
+        use std::path::{Path, PathBuf};
+        use suss_reader::Symbol;
+        let mappings = exports
+            .iter()
+            .map(|mapping| {
+                let (path, var) = mapping.split_once('=').ok_or_else(|| {
+                    format!("Invalid export mapping {mapping:?}; expected WIT-PATH=SUSS-VAR")
+                })?;
+                if path.is_empty()
+                    || var.is_empty()
+                    || var.contains('=')
+                    || var.chars().any(char::is_whitespace)
+                    || (var != "/" && var.split('/').any(str::is_empty))
+                    || var.matches('/').count() > 1
+                {
+                    return Err(format!(
+                        "Invalid export mapping {mapping:?}; expected WIT-PATH=SUSS-VAR"
+                    ));
+                }
+                Ok((path.to_owned(), Symbol::parse(var)))
+            })
+            .collect::<Result<Vec<_>, String>>()?;
+        let source_paths = source_paths.iter().map(PathBuf::from).collect::<Vec<_>>();
+        suss_cli::portable_aot::compile_file(
+            Path::new(source_path),
+            Path::new(wit_path),
+            wit_world,
+            &source_paths,
+            &mappings,
+        )
+    })();
+    #[cfg(target_family = "wasm")]
+    let result: Result<Vec<u8>, String> =
+        Err("Portable file compilation in the component-host target remains unimplemented".into());
+    match result {
         Ok(wasm) => {
-            if let Err(e) = std::fs::write(output_path, &wasm) {
-                eprintln!("Error writing output file '{}': {}", output_path, e);
+            if let Err(error) = std::fs::write(output_path, &wasm) {
+                eprintln!("Error writing output file '{output_path}': {error}");
                 std::process::exit(1);
             }
-            println!("Compiled {} -> {} ({} bytes)", source_path, output_path, wasm.len());
+            println!(
+                "Compiled {source_path} -> {output_path} ({} bytes)",
+                wasm.len()
+            );
             if optimize {
-                if let Err(e) = run_wasm_opt(output_path) {
-                    eprintln!("Optimization error: {}", e);
+                if let Err(error) = run_wasm_opt(output_path) {
+                    eprintln!("Optimization error: {error}");
                     std::process::exit(1);
                 }
             }
         }
-        Err(e) => {
-            eprintln!("Compilation error: {}", e);
+        Err(error) => {
+            eprintln!("Compilation error: {error}");
             std::process::exit(1);
         }
     }
@@ -297,8 +342,8 @@ fn compile_project(world: Option<&str>, config_path: Option<&str>, optimize: boo
 
 /// Run a compiled WASM component with WASI support
 #[cfg(not(all(feature = "component", target_family = "wasm")))]
-fn run_component(path: &str, invoke: &str, args: &[String]) {
-    match run_component_impl(path, invoke, args) {
+fn run_component(path: &str, invoke: &str, command_mode: bool, args: &[String]) {
+    match run_component_impl(path, invoke, command_mode, args) {
         Ok(()) => {}
         Err(e) => {
             eprintln!("Error: {}", e);
@@ -309,9 +354,14 @@ fn run_component(path: &str, invoke: &str, args: &[String]) {
 
 /// Implementation of component runner with wasmtime
 #[cfg(not(all(feature = "component", target_family = "wasm")))]
-fn run_component_impl(path: &str, invoke: &str, args: &[String]) -> Result<(), String> {
-    use wasmtime::{Config, Engine, Store};
+fn run_component_impl(
+    path: &str,
+    invoke: &str,
+    command_mode: bool,
+    args: &[String],
+) -> Result<(), String> {
     use wasmtime::component::{Component, Linker, ResourceTable, Val};
+    use wasmtime::{Config, Engine, Store};
     use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
 
     // State for the component store - implements WasiView
@@ -334,22 +384,58 @@ fn run_component_impl(path: &str, invoke: &str, args: &[String]) -> Result<(), S
     config.wasm_component_model(true);
     config.wasm_component_model_implements(true);
     config.wasm_gc(true);
-    let engine = Engine::new(&config)
-        .map_err(|e| format!("Failed to create engine: {}", e))?;
+    config.wasm_function_references(true);
+    config.wasm_tail_call(true);
+    config.wasm_exceptions(true);
+    let engine = Engine::new(&config).map_err(|e| format!("Failed to create engine: {}", e))?;
 
     // Load component from file
     let component = Component::from_file(&engine, path)
         .map_err(|e| format!("Failed to load component '{}': {}", path, e))?;
 
+    // Reject invalid selection and typed inputs before any guest initializer
+    // can run. Component export types are available without a Store/instance.
+    // Resolve the exact public path, including versioned interface instances.
+    let (item, export) = if let Some((interface, function)) = invoke.split_once('#') {
+        let interface = component
+            .get_export_index(None, interface)
+            .ok_or_else(|| format!("Interface in {invoke:?} not found in component"))?;
+        component.get_export(Some(&interface), function)
+    } else {
+        component.get_export(None, invoke)
+    }
+    .ok_or_else(|| format!("Function {invoke:?} not found in component"))?;
+    let wasmtime::component::types::ComponentItem::ComponentFunc(func_ty) = item else {
+        return Err(format!("Export {invoke:?} is not a function"));
+    };
+    if func_ty.async_() {
+        return Err("Async component invocation remains unimplemented".into());
+    }
+    let parameters = func_ty.params().collect::<Vec<_>>();
+    let supplied = if command_mode { &[][..] } else { args };
+    if parameters.len() != supplied.len() {
+        return Err(format!(
+            "Function {invoke:?} expects {} arguments, got {}",
+            parameters.len(),
+            supplied.len()
+        ));
+    }
+    let func_args = parameters
+        .iter()
+        .zip(supplied)
+        .map(|((name, ty), value)| {
+            parse_component_argument(ty, value)
+                .map_err(|error| format!("Parameter {name:?}: {error}"))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
     // Create WASI context
-    // For "run" (WASI CLI entry point), pass extra args as WASI argv
-    // so the guest can read them via wasi:cli/environment#get-arguments.
-    // For other functions, args are passed as function parameters instead.
-    let is_run = invoke == "run";
+    // Default command invocation supplies WASI argv. Explicit invocation
+    // parses parameters against the selected component function type.
     let mut wasi_builder = WasiCtxBuilder::new();
     wasi_builder.inherit_stdio();
     wasi_builder.inherit_env();
-    if is_run && !args.is_empty() {
+    if command_mode && !args.is_empty() {
         // Prepend the component path as argv[0], then the user args
         let mut argv: Vec<String> = vec![path.to_string()];
         argv.extend(args.iter().cloned());
@@ -372,28 +458,15 @@ fn run_component_impl(path: &str, invoke: &str, args: &[String]) -> Result<(), S
         .map_err(|e| format!("Failed to add WASI to linker: {}", e))?;
 
     // Instantiate component
-    let instance = linker.instantiate(&mut store, &component)
+    let instance = linker
+        .instantiate(&mut store, &component)
         .map_err(|e| format!("Failed to instantiate component: {}", e))?;
 
-    // Get exported function
-    let func = instance.get_func(&mut store, invoke)
-        .ok_or_else(|| format!("Function '{}' not found in component", invoke))?;
-
-    // For "run", the WASI CLI entry point takes no parameters.
-    // For other functions, parse args as i32 values.
-    let func_args: Vec<Val> = if is_run {
-        Vec::new()
-    } else {
-        args.iter()
-            .map(|s| {
-                let v: i32 = s.parse().unwrap_or(0);
-                Val::S32(v)
-            })
-            .collect()
-    };
+    let func = instance
+        .get_func(&mut store, &export)
+        .ok_or_else(|| format!("Export {invoke:?} is not a function"))?;
 
     // Prepare results buffer based on function type
-    let func_ty = func.ty(&store);
     let results_len = func_ty.results().len();
     let mut results = vec![Val::S32(0); results_len];
 
@@ -406,6 +479,10 @@ fn run_component_impl(path: &str, invoke: &str, args: &[String]) -> Result<(), S
         // No return value
     } else if results.len() == 1 {
         match &results[0] {
+            Val::S8(v) => println!("{}", v),
+            Val::U8(v) => println!("{}", v),
+            Val::S16(v) => println!("{}", v),
+            Val::U16(v) => println!("{}", v),
             Val::S32(v) => println!("{}", v),
             Val::S64(v) => println!("{}", v),
             Val::U32(v) => println!("{}", v),
@@ -424,6 +501,49 @@ fn run_component_impl(path: &str, invoke: &str, args: &[String]) -> Result<(), S
     }
 
     Ok(())
+}
+
+/// Parse against the component's declared parameter type, with no fallback value.
+#[cfg(not(all(feature = "component", target_family = "wasm")))]
+fn parse_component_argument(
+    ty: &wasmtime::component::Type,
+    value: &str,
+) -> Result<wasmtime::component::Val, String> {
+    use wasmtime::component::{Type, Val};
+    macro_rules! parsed {
+        ($ty:ty, $variant:ident, $name:literal) => {
+            value
+                .parse::<$ty>()
+                .map(Val::$variant)
+                .map_err(|_| format!("Invalid {} argument {value:?}", $name))
+        };
+    }
+    match ty {
+        Type::Bool => parsed!(bool, Bool, "bool"),
+        Type::S8 => parsed!(i8, S8, "s8"),
+        Type::U8 => parsed!(u8, U8, "u8"),
+        Type::S16 => parsed!(i16, S16, "s16"),
+        Type::U16 => parsed!(u16, U16, "u16"),
+        Type::S32 => parsed!(i32, S32, "s32"),
+        Type::U32 => parsed!(u32, U32, "u32"),
+        Type::S64 => parsed!(i64, S64, "s64"),
+        Type::U64 => parsed!(u64, U64, "u64"),
+        Type::Float32 => parsed!(f32, Float32, "f32"),
+        Type::Float64 => parsed!(f64, Float64, "f64"),
+        Type::String => Ok(Val::String(value.to_owned())),
+        Type::Char => {
+            let mut chars = value.chars();
+            match (chars.next(), chars.next()) {
+                (Some(character), None) => Ok(Val::Char(character)),
+                _ => Err(format!(
+                    "Invalid char argument {value:?}; expected one Unicode scalar"
+                )),
+            }
+        }
+        _ => {
+            Err("This component parameter type is not supported by command-line invocation".into())
+        }
+    }
 }
 
 /// Run each input in the same Store using independently compiled fragments.

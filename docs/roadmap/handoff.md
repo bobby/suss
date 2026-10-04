@@ -1,3 +1,38 @@
+## Independent PR177 review — typed invocation before guest initialization
+
+Reviewed native file/WIT selection and explicit mappings, shared compiled source/
+macro staging, scalar parsing/result handling, exact nested export invocation,
+command-mode separation and documented remaining frontend modes at855d281.
+Significant finding: runner instantiated components before validating requested
+function/arity/scalar inputs. Actual before7232 TERMINAL101:0pass/1fail5.47s,
+/private/tmp/suss-pr177-review-before.log; malformed s32"oops" ran initializer
+throw17 and failed instantiation instead of producing its argument diagnostic.
+
+Runner now uses Component::get_export and uninstantiated ComponentFunc metadata
+to validate selection, function/async type, arity and parsed inputs before Store/
+WASI setup or guest instantiation. Valid inputs still instantiate normally.
+Original three command tests/assertions remain intact. New executing regression
+checks malformed/out-of-range/missing arguments, missing function, qualified
+nested function, selecting an interface as function and using a function as an
+interface; all reject before throwing Runtime initializer. Valid input still
+reports initializer failure. First fixed38276 TERMINAL0:4/0/0 in41.40s.
+Strengthened43942 TERMINAL101:3pass/1fail26.77s from new fixture's bare group
+mapping; WIT canonically names test:preflight/group. Corrected only new fixture
+paths. Final30673 TERMINAL0:4passed/0failed/0ignored37.20s,
+/private/tmp/suss-pr177-review-focused-final2.log. No original assertion weakened.
+
+CLI-only changes do not change compiler/bootstrap fingerprints or images; root's
+Java-free byte-exact/bootstrap4/Python118 evidence remains prior unchanged-source
+proof, not a new review run. Wasmtime49 performs post-return cleanup automatically;
+absence of its deprecated no-op post_return method is not a finding.
+Commands use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and
+CARGO_BUILD_JOBS=2, no RUSTFLAGS. Git diff check passes. Next commit/push/freeze
+then required unfiltered cargo test --workspace --locked -- --test-threads=2
+and exact final-head CI. No merge/issue closure/full M3 acceptance claim.
+Remaining namespace/project/main/component-host frontend migration, full selected
+WIT/command workflow, evaluator retirement, dependency policy and scheduler/
+cancellation/live-heap gates remain open.
+
 ## Independent PR170 review — portable scalar AOT assembly
 
 Reviewed exact273ecbfe801c3ccbd71ce061b6b5234e191eadde against169 repair8651246:
@@ -14902,3 +14937,144 @@ terminal. A successful exact repaired-head CI remains a separate gate. Refs #14
 is partial progress; interface types/external IDs/imports, complete selected-WIT,
 frontends/evaluator retirement/published dependencies and scheduler/cancellation/
 live heap acceptance remain open. No merge or M3 completion is authorized.
+
+
+## Native file-compile frontend: isolated unvalidated continuation
+
+PR176 reviewer froze tests/docs-only head
+`662958638bfb9dcd449074ee228b6863fd03f4e7`, after all12 compiler AOT tests
+passed (1.77s). Its added regression executes heterogeneous interface functions,
+live redefinition, void effects/shared count112 and independently decoded
+`api#bad` boundary payload in fresh Stores after GC. All11 original compiler
+and4 source tests remain intact; no significant scoped production finding.
+Reviewer owns the sole heavy slot through actual unfiltered full process96846
+(`/private/tmp/suss-pr176-review-full-final.log`) terminal status. Exact-head CI
+37175420161 remains required. Root must not launch native/Cargo/JVM/Node meanwhile.
+
+The corrected stack174 remains main ->173 ->169 ->170 ->171 ->175 ->176.
+173 is ready with exact5fc CI success and1117/0/17 full evidence. Root marked169,
+170 and171 ready only after independent rebase audits and successful exact-head
+CI37172515173/37172623509/37172637506 respectively.169's downloaded actual CI
+full passed1121/0/17/125groups, bootstrap4 andPython118.171's downloaded actual
+full passed1132/0/17/128groups. Production/tests/bootstrap rebase bytes remain
+identical to their reviewed sources.175 local frozenb840 full passed1134/0/17;
+its exact CI37173594997 remains pending. No PR merge or issue closure.
+Latest issue14 progress: https://github.com/bobby/suss/issues/14#issuecomment-5976365343.
+
+Created `/private/tmp/suss-m3-aot-cli-file`, branch
+`portable/m3-aot-cli-file`, then rebased its uncommitted draft onto reviewed176
+6629586 with autostash. Only CLI files are changed; compiler/ABI fingerprints and
+bootstrap images remain at the parent source. Draft `portable_aot::compile_file`
+uses upstream Resolve::push_path/select_world, prepares source in isolated
+compiled phases, and assembles the selected component without host Runtime
+initialization. Native CLI file mode now drafts repeatable `--export PATH=VAR`,
+`--wit-world WORLD`, and `--src DIR` arguments. Source vars are parsed as qualified
+symbols; malformed mappings and flags in unmigrated modes are explicit errors.
+Output is written only after successful compilation. Component-host file mode,
+namespace/project/main migration, ^:export shorthand and typed generic invocation
+remain unfinished. No legacy fallback is used for the drafted native file path.
+
+Two UNRUN command/artifact regressions are drafted in compiled_aot_command.rs:
+actual CLI compilation with compiled macros, source dependency, selected world,
+versioned WIT dependency directory and explicit qualified interface mappings,
+then typed calls/effects/fresh Stores/GC; and exact selection/mapping failures
+that preserve prior output, followed by successful compilation of Runtime throw
+whose actual instantiation independently decodes first17 instead of later99.
+Only rustfmt/diff checks ran. Rustfmt initially traversed main's child modules;
+root restored all unrelated child files and unrelated main formatting from HEAD,
+retaining only intended edits. Pinned development reference submodule was
+initialized at exact c4295f303100bbf5afac449242d30bca1126f1a1.
+
+After reviewer176 explicitly releases the heavy slot: clean only four Suss
+packages in shared target, save/restore prior CLI source for a controlled positive
+command regression, restore the new source, run both new command/artifact tests
+and relevant source/native command suites. Fixed source copies are saved under
+`/private/tmp/suss-aot-cli-file-fixed-{args.rs,main.rs,portable_aot.rs}`.
+Use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and CARGO_BUILD_JOBS=2,
+never RUSTFLAGS. CLI-only edits should not require image regeneration, but verify
+existing phase images byte-for-byte without Java. Then update evidence/inventory,
+commit/push/open draft with Refs #14, dispatch independent review/fixes, freeze
+head, run required unfiltered full baseline and require exact-head CI. Original
+M3 acceptance is unchanged: full selected WIT/frontend/evaluator retirement,
+published dependency policy, rich macro environments and scheduler/cancel/live
+heap remain open. Do not merge, close issues or mark M3 complete.
+
+
+PR176 subsequent review finding invalidates its initial pending final gates:
+root inspected pinned wit-component encoding.rs997 and wit-parser
+Resolve::implements_value at resolve/mod.rs1557. Named interface aliases require
+an implements annotation; the initial adapter emits only the name. Function
+external-id annotations also must not be silently discarded. Root dispatched
+these significant findings to the independent reviewer with authority to fix,
+add parsed binary/executing regressions, regenerate both phase images and rerun
+validation. Reviewer authoritatively stopped full96846 with exit130; this is a
+cancelled run, not a full pass. Reviewer retains the heavy slot. Current CLI
+worktree/source copies are still based on the prior reviewed6629586 and must
+rebase onto the repaired source/bootstrap head before any native validation.
+Old176 CI37175420161 cannot supply repaired-head final proof, even if successful.
+No production edit in this CLI draft has been executed or validated.
+
+
+CLI draft rebased onto repaired PR176 head
+8ac5cb3c887d802cb7f664bd55c8ac5470dc9c9e, preserving its runner implements flag,
+annotation fixes, thirteen compiler tests and regenerated images. Autostash9a585ca
+conflicted only at the handoff append; root kept the repaired parent handoff and
+all isolated CLI draft evidence. Refreshed all three saved fixed CLI source copies
+AFTER this rebase, so restoring the draft cannot erase the new runner capability.
+Reviewer176 owns repaired full75546 at /private/tmp/suss-pr176-annotations-full-final.log;
+initial full96846 cancellation remains130. Root has still run no native test on
+the CLI draft. Wait for explicit reviewer release before sharedtarget cleanup.
+
+
+The CLI draft now also removes the generic runner's hardcoded s32/zero-fallback
+argument path. Draft explicit invocation resolves exact interface#function paths,
+reflects declared component parameter types, checks arity and parses typed scalar
+arguments with explicit errors. Default command argv mode is kept distinct from
+explicit invocation of a function named run; no numeric return is used as an
+implicit exit status. The native engine explicitly enables required GC/function
+reference/tail-call/exception/implements capabilities. Complete command-world3.1,
+async/composite invocation and main-mode migration remain unfinished.
+Command regression drafts now invoke the produced component through the actual
+CLI for versioned u32 calls, f64 results, mixed bool/f32/s16 inputs and explicit
+s32 run with a negative argument. Malformed/out-of-range values, wrong arity and
+missing functions must fail with exact errors rather than zero fallback. These
+are UNRUN: reviewer176 still owns full75546. Fixed CLI copies were refreshed
+again after these intended edits; no native job has run in this worktree.
+
+
+## Native CLI file increment — actual focused evidence
+
+The earlier UNRUN draft entries above are superseded by these actual results on
+parent176 repaired8ac. All root handles are terminal; root owns the sole heavy
+slot until independent review transfer. Controlled prior CLI75191 terminal101
+rejects --wit-world; controlled prior runner37760 terminal101 demonstrates that
+malformed s32 input succeeds and prints0. Fixed CLI21181 terminal0: all three
+compiled_aot_command tests pass (25.10s), retaining those regression assertions.
+Actual emitted components cover isolated compiled macros, WIT dependency
+directories, selected worlds, exact interface mappings, mixed scalar arguments,
+negative explicit run parameters, initializer effects/fresh Stores/GC and decoded
+first Runtime throw17. Invalid selections/mappings preserve existing output.
+
+Commands use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and
+CARGO_BUILD_JOBS=2, never RUSTFLAGS:
+- cargo test -p suss-cli --locked --test compiled_aot_command -- --test-threads=2
+- cargo test -p suss-cli --locked --test aot_source_preparation --test compiled_aot --test compiled_native_entrypoints -- --test-threads=2
+- sh scripts/verify-bootstrap.sh
+- python3 -m unittest discover -s scripts -p 'test_*.py'
+
+Affected CLI60928 terminal0:15/0/0 (4 source,1 AOT,10 native entrypoint).
+Java-free9364 terminal0: both existing phase Wasm/JSON reproduce byte-exact twice
+with current compiler identity; bootstrap4/0/0 in12.02s. No regeneration needed
+for CLI-only changes. Python76891 terminal0:118/0 in5.795s. Logs:
+/private/tmp/suss-aot-cli-file-{final-focus,native,javafree,python}.log and
+/private/tmp/suss-aot-cli-{file-before,arguments-before}.log. Final formatting
+was restricted to changed runner functions; help/docs now describe native file
+selection/mappings and exact typed invocation. git diff --check passes.
+
+Next: commit/push/open draft stacked on176 with Refs #14, dispatch independent
+review with significant fixes authorized, then freeze head for required unfiltered
+cargo test --workspace --locked -- --test-threads=2 and exact-head CI. Root has
+not run that full baseline on this increment. No merge/issue closure/M3 completion.
+Next implementation remains remaining frontend migration/evaluator retirement;
+rich macro environments, published dependency policy and scheduler/cancellation/
+live heap acceptance remain open.

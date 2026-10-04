@@ -18,6 +18,9 @@ pub enum Command {
     CompileFile {
         source: String,
         world_wit: String,
+        wit_world: Option<String>,
+        src_paths: Vec<String>,
+        exports: Vec<String>,
         output: String,
         optimize: bool,
     },
@@ -54,6 +57,9 @@ pub enum Command {
         component_path: String,
         /// Function to invoke
         invoke: String,
+        /// Default command invocation sends arguments to WASI; explicit calls
+        /// parse them against the selected function's component types.
+        command_mode: bool,
         /// Arguments to pass to the function
         args: Vec<String>,
     },
@@ -113,6 +119,8 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
     let mut world_target: Option<String> = None;
     let mut config_path: Option<String> = None;
     let mut optimize = false;
+    let mut wit_world = None;
+    let mut exports = Vec::new();
 
     while let Some(arg) = parser.next()? {
         match arg {
@@ -136,6 +144,8 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
                 // --world for world name in project mode
                 world_target = Some(parser.value()?.string()?);
             }
+            Long("wit-world") => wit_world = Some(parser.value()?.string()?),
+            Long("export") => exports.push(parser.value()?.string()?),
             Short('o') | Long("output") => {
                 output = Some(parser.value()?.string()?);
             }
@@ -152,6 +162,13 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
         }
     }
 
+    if (wit_world.is_some() || !exports.is_empty())
+        && !(source.is_some() && world_wit.is_some() && entry_ns.is_none() && main_ns.is_none())
+    {
+        return Err(lexopt::Error::Custom(
+            "--wit-world and --export currently require file mode with -w/--wit".into(),
+        ));
+    }
     // Determine mode based on arguments
     if entry_ns.is_some() && world_wit.is_some() {
         // Namespace mode: compile from entry namespace with multi-file support
@@ -193,6 +210,9 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
         Ok(Command::CompileFile {
             source,
             world_wit: world_wit.unwrap(),
+            wit_world,
+            src_paths,
+            exports,
             output,
             optimize,
         })
@@ -248,11 +268,13 @@ fn parse_run(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
     })?;
 
     // Default to "run" (WASI CLI entry point) when --invoke is not specified
+    let command_mode = invoke.is_none();
     let invoke = invoke.unwrap_or_else(|| "run".to_string());
 
     Ok(Command::Run {
         component_path,
         invoke,
+        command_mode,
         args,
     })
 }
@@ -266,7 +288,7 @@ Suss - A Clojure dialect for WASM
 USAGE:
     suss [OPTIONS] [FILE]
     suss compile [OPTIONS]                              (project mode)
-    suss compile <FILE> -w <WORLD.wit> -o <OUTPUT.wasm> (file mode)
+    suss compile <FILE> -w <WIT> --export <PATH=VAR> -o <OUTPUT.wasm>
     suss compile -n <NS> -w <WORLD.wit> [--src <DIR>]   (namespace mode)
     suss run <COMPONENT.wasm> [ARGS...]                  (run CLI command)
     suss run <COMPONENT.wasm> --invoke <FUNC> [ARGS...]  (run specific function)
@@ -289,7 +311,10 @@ COMMANDS:
         -O, --optimize       Run wasm-opt on output (requires wasm-opt in PATH)
 
     compile - File mode (single file compilation):
-        -w, --wit <FILE>     WIT world definition file
+        -w, --wit <PATH>     WIT file or package directory (including deps)
+        --wit-world <WORLD>  Select a world (required if the WIT package is ambiguous)
+        --export <PATH=VAR>  Explicit WIT export path to Suss var (repeatable)
+        --src <DIR>         Source dependency directory (repeatable)
         -o, --output <FILE>  Output WASM file path
 
     compile - Namespace mode (multi-file with dependency resolution):
@@ -299,8 +324,8 @@ COMMANDS:
         -o, --output <FILE>  Output WASM file path
 
     run - Execute a WASM component:
-        --invoke <FUNC>      Function to invoke (required)
-        [ARGS...]            Arguments to pass to the function
+        --invoke <FUNC>      Function or INTERFACE#FUNCTION to invoke
+        [ARGS...]            Scalar parameters; use -- before negative values
 
 EXAMPLES:
     suss                           Start the REPL
@@ -308,7 +333,7 @@ EXAMPLES:
     suss script.sus                Run a file
     suss compile                   Compile all worlds from deps.sus
     suss compile --world :app/v1   Compile specific world from deps.sus
-    suss compile src.sus -w world.wit -o out.wasm  (file mode)
+    suss compile src.sus -w world.wit --export add=app/add -o out.wasm
     suss compile -n myapp.core -w world.wit         (namespace mode)
     suss run app.wasm hello world                   (run CLI command with args)
     suss run out.wasm --invoke add 3 5              (run specific function)

@@ -40,7 +40,44 @@ phase records1. All values are called after GC in the assembled component. The
 original two tests remain intact. Required full baseline and exact final-head CI
 remain acceptance gates.
 
-The source staging code is original Rust. Existing CLI compile commands remain
-legacy. Complete selected-WIT boundaries, frontend migration, evaluator retirement,
+The source staging code is original Rust. Native CLI file compilation now uses
+this source preparation and component assembly. Namespace, project, main and
+component-host compilation remain legacy. Complete selected-WIT boundaries,
+remaining frontend migration, evaluator retirement,
 published dependency policy and scheduler/cancellation/live heap acceptance remain
 open original M3 work. This API and its focused results do not complete M3.
+
+## Native file compilation and typed invocation
+
+`suss compile app.sus -w wit --wit-world api-world --src src
+--export 'test:app/api@1.2.3#calculate=app/calculate' -o app.wasm`
+resolves a WIT file or package directory, including dependencies, selects its
+world, prepares source with isolated compiled macros and assembles the component.
+Each function needs an explicit `--export PATH=VAR` mapping; `^:export` shorthand
+is unfinished. Ambiguous world selection and invalid mappings fail before output
+is replaced. Runtime initializers execute at component instantiation, including
+language exceptions; the compiler host does not execute them.
+
+`suss run app.wasm --invoke 'test:app/api@1.2.3#calculate' -- 19` resolves
+the exact interface path and parses arguments against the component signature.
+Malformed or out-of-range scalar arguments, wrong arity and missing functions
+fail explicitly. Selection, function type, arity and scalar input validation use
+the component's uninstantiated export metadata before creating guest instances;
+invalid requests therefore cannot run Runtime initializers. With valid requests,
+initializer failures still fail the command. Explicit invocation of a function named `run` accepts typed
+parameters; ordinary numeric results print and are not process exit statuses.
+Default command argv remains a separate path. Async/composite invocation and the
+official command-world workflow remain unfinished. Scalar argument parsing also
+works for externally supplied components; this does not extend the AOT adapter's
+supported WIT types.
+
+Three command/artifact regressions pass. Actual CLI compilation and invocation
+cover compiled macros, dependencies, versioned interfaces, mixed scalar values,
+once-only initializers, fresh Stores and GC. Selection/mapping failures preserve
+prior output; Runtime throw compiles successfully and instantiation preserves
+first payload17. Against the previous runner, malformed s32 input actually
+succeeded and printed zero; the new runner rejects it. Fifteen affected existing
+CLI tests, Python118 and Java-free byte-exact image reproduction/bootstrap4 pass.
+CLI-only changes leave compiler fingerprints and bootstrap images unchanged.
+Independent review, required unfiltered baseline and final-head CI are still
+pending for this increment. This does not complete M3 or retire the evaluator.

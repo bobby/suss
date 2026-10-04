@@ -8,8 +8,9 @@ pure bool, u8/s8/u16/s16/u32/s32 and f32/f64 functions, plus void
 results using direct canonical
 signatures (at most16 scalar parameters). Larger signatures need indirect-memory
 lowering and currently fail component validation. Other WIT boundary
-shapes return explicit unimplemented diagnostics. Existing CLI compile commands
-still use the legacy pipeline; this API does not complete their migration.
+shapes return explicit unimplemented diagnostics. Native CLI file compilation
+uses this pipeline through `portable_aot::compile_file`; namespace, project, main
+and component-host compilation still require migration.
 
 Functions may be freestanding world exports or members of exported interfaces.
 An interface mapping uses the exact resolved world key followed by `#` and the

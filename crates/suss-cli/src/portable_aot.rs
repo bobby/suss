@@ -4,8 +4,36 @@ use crate::{
     portable_repl::{prepare_script_compiled, read_script_forms, PreparedScript},
     portable_session::{CompilationSnapshot, SessionError},
 };
-use std::{collections::BTreeSet, path::PathBuf};
+use std::{
+    collections::BTreeSet,
+    path::{Path, PathBuf},
+};
 use suss_compile::portable::{self, modules::ModuleIdentity, resolve::Phase, PreparedFragment};
+use suss_reader::Symbol;
+
+/// Resolve the selected WIT graph and compile source through isolated compiled
+/// macros, without executing any Runtime initializer in the compiler host.
+pub fn compile_file(
+    source_path: &Path,
+    wit_path: &Path,
+    wit_world: Option<&str>,
+    source_paths: &[PathBuf],
+    mappings: &[(String, Symbol)],
+) -> Result<Vec<u8>, String> {
+    let mut resolve = portable::aot::Resolve::new();
+    let (package, _) = resolve
+        .push_path(wit_path)
+        .map_err(|error| format!("Failed to resolve WIT {}: {error:#}", wit_path.display()))?;
+    let world = resolve
+        .select_world(&[package], wit_world)
+        .map_err(|error| format!("Failed to select WIT world: {error:#}"))?;
+    let source = std::fs::read_to_string(source_path)
+        .map_err(|error| format!("Failed to read {}: {error}", source_path.display()))?;
+    let fragments = prepare_source(&source, Some(source_path.to_owned()), source_paths)
+        .map_err(|error| error.to_string())?;
+    portable::aot::component(&fragments, &resolve, world, mappings)
+        .map_err(|error| error.to_string())
+}
 
 /// Prepare a complete source input and its Runtime dependencies without running
 /// any Runtime initializer. Only compiled Macro-phase code executes in the host.
