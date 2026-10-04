@@ -109,7 +109,7 @@ fn native_analysis_graph_retains_source_methods_before_wrappers_and_duplicate_ar
             duplicate (get (get defs 'duplicate) :suss/source-function)
             nested (get (get defs 'nested) :suss/source-function)
             nested-method (nth (get nested :suss/methods) 0)
-            inner-ast (nth (get (get nested-method :suss/body) :suss/children) 0)
+            inner-ast (get (get nested-method :suss/body) :ret)
             inner-method (nth (get (get inner-ast :suss/source-function) :suss/methods) 0)
             fixed-methods (get fixed :suss/methods)
             multiple-methods (get multiple :suss/methods)
@@ -127,9 +127,12 @@ fn native_analysis_graph_retains_source_methods_before_wrappers_and_duplicate_ar
          (get (nth duplicate-methods 1) :suss/parameters)
          (get (get defs 'alias) :suss/source-function)
          (identical? multiple (get (get catalog 'multiple) :suss/source-function))
-         (get (get (nth fixed-methods 0) :suss/body) :suss/operation)
+         (get (get (nth fixed-methods 0) :suss/body) :op)
          (get nested-method :suss/parameters)
-         (get inner-method :suss/parameters)]))"#;
+         (get inner-method :suss/parameters)
+         (get (get (get nested-method :suss/body) :suss/lowering) :suss/operation)
+         (get (get nested-method :suss/body) :children)
+         (get inner-ast :op)]))"#;
     let source = r#"
       (def effects 0)
       (def fixed (fn [^number x] (set! effects (+ effects 1)) x))
@@ -143,7 +146,7 @@ fn native_analysis_graph_retains_source_methods_before_wrappers_and_duplicate_ar
         session.eval_with_macros(source, &mut host).unwrap();
         assert_eq!(host.calls.len(), 1);
         let Kind::Vector(values) = &host.calls[0].kind else { panic!("executed source methods query") };
-        assert_eq!(values.len(), 16);
+        assert_eq!(values.len(), 19);
         assert!(matches!(values[0].kind, Kind::Bool(false)));
         assert!(matches!(values[1].kind, Kind::Number(1.0)));
         assert!(matches!(&values[3].kind, Kind::Symbol(name) if name.name == "number"));
@@ -160,6 +163,13 @@ fn native_analysis_graph_retains_source_methods_before_wrappers_and_duplicate_ar
         assert!(matches!(values[11].kind, Kind::Nil));
         assert!(matches!(values[12].kind, Kind::Bool(true)));
         assert!(matches!(&values[13].kind, Kind::Keyword(name) if name.name == "do"));
+        assert!(matches!(&values[16].kind, Kind::Keyword(name) if name.name == "do"));
+        let Kind::Vector(children) = &values[17].kind else { panic!("actual source do children") };
+        assert_eq!(children.len(), 2);
+        for (child, expected) in children.iter().zip(["statements", "ret"]) {
+            assert!(matches!(&child.kind, Kind::Keyword(name) if name.namespace.is_none() && name.name == expected));
+        }
+        assert!(matches!(&values[18].kind, Kind::Keyword(name) if name.name == "fn"));
         let result = session.eval("(+ (fixed 11) (multiple 12) (multiple 12 13 14) (duplicate 17) ((nested 20) 22) effects)").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         assert!(matches!(bridge.read(&mut session, &result, 0..1).unwrap().kind, Kind::Number(81.0)));

@@ -17487,3 +17487,42 @@ remain #15 requirements; fuel traps are not cancellation. Issues12–15 remain o
 Next independent review/full acceptance for this PR, then complete genuine method
 and remaining source schemas and integrate/retire the public old compiler/evaluator,
 followed by original lifecycle acceptance. Do not mark future work complete.
+
+### PR #192 independent control source review
+
+Independent reviewer isolated /private/tmp/suss-pr192-review at initial6564099,
+base reviewed1621ea3. Read accepted design, roadmap/inventory/current handoff;
+reviewed genuine pre-lowering source operands, primitive expansion/stack guards,
+method forms/declaration identity, synthetic try regions and catch aliases,
+nullable binding tags, graph charging/GC, and exact private alpha boundaries.
+Pinned parse-try/method/let sources agree with the selected control facts. No
+significant scoped production defect found; full method/environment/schema,
+public compiler/evaluator migration and original lifecycle gates remain open.
+
+Affected native27331 reached actual terminal101: graph10passed/1failed in17.46s,
+/private/tmp/suss-pr192-review-native.log. Existing nested-method query incorrectly
+traversed compiler-only :suss/children on a body now carrying genuine source :do.
+Aligned and strengthened it to traverse source :ret, require source do/fn ops and
+[:statements :ret], and independently require the physical lowering remain do.
+All original method parameters/metadata, duplicate arities, shared catalog identity
+and actual executed81 assertions remain. No raw corpus or projection is removed.
+
+Corrected native65289 terminal0:4groups23pass/0fail/0ignored/0measured/0filtered,
+graph11/binding8/control3/primitive1, log
+/private/tmp/suss-pr192-review-native-corrected.log. Compiler83277 terminal0:
+4groups18pass/0fail/0ignored/0measured/0filtered, control9/exceptions2/dynamic2/
+nominal5, log /private/tmp/suss-pr192-review-compiler-corrected.log. An initial
+compiler invocation named nonexistent portable_dynamic and failed before tests;
+corrected target portable_dynamic_bindings supplies actual results. Strict Python
+checker11pass in0.079s (/private/tmp/suss-pr192-review-python.log). Reviewer also
+reran the strict checker against root's freshly executed traces: analyzer/Node15
+agree raw, effects2, with only the checked recorded-corpus private correspondence.
+Raw fifteen-case observations remain unchanged. No compiler inputs changed during
+review, so root's newest BOTH phase image regeneration/Java-free proof remains
+current; native bootstrap acceptance executes those actual images.
+
+Next freeze/push this regression alignment, execute the exact unfiltered
+cargo test --workspace --locked -- --test-threads=2 through actual terminal and
+all four doctest suites, and gate readiness on exact final reviewed-head CI.
+Reviewer retains the sole local Cargo/JVM/Node slot until explicit terminal
+release. No PR readiness, merge, issue closure or M3 completion is claimed.
