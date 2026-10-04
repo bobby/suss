@@ -33,8 +33,12 @@ Twenty-four existing AOT/native entrypoint, macro, phase and namespace tests pas
 including compile-failure rollback of macro bindings and preservation of completed
 dependencies/effects. Both bootstrap images reproduce byte-for-byte without Java,
 bootstrap4 and Python118 pass. This CLI-only change leaves the compiler-source
-fingerprint and shared ABI layout unchanged. Independent review, required full
-baseline and exact final-head CI remain acceptance gates.
+fingerprint and shared ABI layout unchanged. Independent review added a third executing check: a diamond dependency graph
+remains deduplicated across repeated source namespace imports, dependency-first
+initializer observations are112 with intermediate11/111, and the isolated Macro
+phase records1. All values are called after GC in the assembled component. The
+original two tests remain intact. Required full baseline and exact final-head CI
+remain acceptance gates.
 
 The source staging code is original Rust. Existing CLI compile commands remain
 legacy. Complete selected-WIT boundaries, frontend migration, evaluator retirement,

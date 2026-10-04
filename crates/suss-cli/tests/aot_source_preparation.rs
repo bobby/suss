@@ -49,21 +49,25 @@ fn source_macro_and_runtime_dependency_feed_the_same_component_pipeline() {
         .iter()
         .map(|fragment| portable::artifact_identity::read(&fragment.wasm).unwrap())
         .collect::<Vec<_>>();
-    assert!(identities
-        .iter()
-        .any(|identity| identity.source_path.as_deref() == path.to_str()
+    assert!(identities.iter().any(|identity| {
+        identity.source_path.as_deref() == path.to_str()
             && identity
                 .macro_dependencies
                 .as_ref()
-                .is_some_and(|graph| graph.iter().any(|(name, _)| name == "macro:app/twice"))));
-    assert!(identities
-        .iter()
-        .any(
+                .is_some_and(|graph| graph.iter().any(|(name, _)| name == "macro:app/twice"))
+    }));
+    assert!(
+        identities.iter().any(
             |identity| identity.source_path.as_deref() == math_path.to_str()
                 && identity.source_sha256.as_deref()
                     == Some(portable::bootstrap::sha256(math_source.as_bytes()).as_str())
-        ));
-    let component = component(&fragments, "package test:source; world api { export calculate: func(x: f64) -> f64; export effects: func() -> f64; }", &["calculate", "effects"]);
+        )
+    );
+    let component = component(
+        &fragments,
+        "package test:source; world api { export calculate: func(x: f64) -> f64; export effects: func() -> f64; }",
+        &["calculate", "effects"],
+    );
     let engine = engine();
     let mut store = Store::new(&engine, ());
     store.set_fuel(100_000_000).unwrap();
@@ -96,9 +100,11 @@ fn source_preparation_defers_runtime_throw_until_component_instantiation() {
     let engine = engine();
     let mut store = Store::new(&engine, ());
     store.set_fuel(100_000_000).unwrap();
-    assert!(Linker::new(&engine)
-        .instantiate(&mut store, &component)
-        .is_err());
+    assert!(
+        Linker::new(&engine)
+            .instantiate(&mut store, &component)
+            .is_err()
+    );
     let exception = store
         .as_context_mut()
         .take_pending_exception()
@@ -115,4 +121,73 @@ fn source_preparation_defers_runtime_throw_until_component_instantiation() {
         payload.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
         17.0_f64.to_bits()
     );
+}
+
+#[test]
+fn source_preparation_deduplicates_diamond_dependencies_and_isolates_macro_state() {
+    let root = tempfile::tempdir().unwrap();
+    for (name, source) in [
+        (
+            "common",
+            "(ns common) (def calls 0) (set! calls (+ calls 1))",
+        ),
+        (
+            "left",
+            "(ns left (:require [common :as c])) (set! c/calls (+ c/calls 10)) (def first c/calls)",
+        ),
+        (
+            "right",
+            "(ns right (:require [common :as c])) (set! c/calls (+ c/calls 100)) (def first c/calls)",
+        ),
+        (
+            "tools",
+            "(ns tools (:require [common :as c])) (defmacro observed [] c/calls)",
+        ),
+    ] {
+        std::fs::write(root.path().join(format!("{name}.sus")), source).unwrap();
+    }
+    let source = "(ns app (:require [left :as l] [right :as r] [common :as c]) (:require-macros [tools :as t])) (set! c/calls (+ c/calls 1)) (ns app (:require [left :as l] [right :as r] [common :as c]) (:require-macros [tools :as t])) (def effects (fn [] c/calls)) (def phase-value (fn [] (t/observed))) (def left-value (fn [] l/first)) (def right-value (fn [] r/first))";
+    let fragments = prepare_source(source, None, &[root.path().to_owned()]).unwrap();
+    let module_paths = fragments
+        .iter()
+        .filter_map(|fragment| {
+            portable::artifact_identity::read(&fragment.wasm)
+                .unwrap()
+                .source_path
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        module_paths,
+        ["common", "left", "right"].map(|name| root
+            .path()
+            .join(format!("{name}.sus"))
+            .canonicalize()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_owned())
+    );
+    let component = component(
+        &fragments,
+        "package test:diamond; world api { export effects: func() -> f64; export phase-value: func() -> f64; export left-value: func() -> f64; export right-value: func() -> f64; }",
+        &["effects", "phase-value", "left-value", "right-value"],
+    );
+    let mut store = Store::new(&engine(), ());
+    store.set_fuel(100_000_000).unwrap();
+    let instance = Linker::new(&engine())
+        .instantiate(&mut store, &component)
+        .unwrap();
+    store.gc(None).unwrap();
+    for (name, expected) in [
+        ("effects", 112.0),
+        ("phase-value", 1.0),
+        ("left-value", 11.0),
+        ("right-value", 111.0),
+    ] {
+        let function = instance
+            .get_typed_func::<(), (f64,)>(&mut store, name)
+            .unwrap();
+        assert_eq!(function.call(&mut store, ()).unwrap().0, expected, "{name}");
+        function.post_return(&mut store).unwrap();
+    }
 }

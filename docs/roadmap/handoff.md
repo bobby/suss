@@ -14507,3 +14507,36 @@ Then continue complete target adapters/frontend migration and evaluator retireme
 with published dependency and scheduler/lifecycle acceptance still original M3
 scope. No source or test success was inferred from prior comments or encoding;
 no merge, issue closure or milestone completion claim.
+
+## Independent PR171 review — shared source preparation
+
+Reviewed clean initial701ca089830d19e8685aa9186377d39165a8c793 against reviewed
+PR170 b1f91bd: reader/staging extraction retains script ordering, located source
+origins and declaration-point rollback; AOT preparation constructs no Runtime
+Store and returns owned artifacts after the isolated Macro host is dropped.
+Dependency module fragments preserve their source/phase identity while their
+staged catalog/cell union supplies the shared component binding module. No
+significant scoped production finding; original two executing assertions retained.
+
+Added actual diamond dependency/phase-isolation regression. Runtime common is
+required by left/right and root, then required again by a second source ns;
+immutable dependency artifacts occur exactly once and in common/left/right order.
+Component instantiation after Macro host disposal proves Runtime initializer
+order/count112, intermediate captures11/111 and independent Macro snapshot1,
+all called after GC. Initial reviewer fixture14179 TERMINAL101:2pass/1fail5.23s
+because the second ns deliberately replaced aliases, leaving t/observed unresolved.
+Corrected only the new fixture to explicitly re-require all aliases/macros; no
+original expectation or production namespace behavior changed. Final92005
+TERMINAL0:3pass/0fail/0ignored6.58s;
+/private/tmp/suss-pr171-review-focused-final.log. Initial failure log:
+/private/tmp/suss-pr171-review-focused.log.
+
+Command: cargo test -p suss-cli --locked --test aot_source_preparation --
+--test-threads=2; CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target,
+CARGO_BUILD_JOBS=2, no RUSTFLAGS. Rustfmt2024 and git diff check pass. Review
+changes are tests/docs only; compiler/bootstrap bytes and identities are unchanged
+from root Java-free verification. Next push/freeze this review evidence, run
+cargo test --workspace --locked -- --test-threads=2 and require exact final-head
+CI before readiness. Legacy compile commands, complete WIT adapters/frontend and
+evaluator migration, published dependencies and scheduler/lifecycle remain open.
+No issue closure, merge or M3 completion is claimed by this preparation slice.
