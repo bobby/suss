@@ -771,3 +771,14 @@ output preservation and deferred exceptions. Affected CLI37, configuration4,
 Java-free reproduction/bootstrap4 and Python118 pass. Compiler module/phase14 and final image reproduction/bootstrap4 pass;
 independent review/full baseline/final-head CI remain pending. No core declaration
 or original M3 acceptance gate is reclassified.
+
+
+[Asynchronous scalar AOT exports](../runtime/compiled-aot-async-exports.md) now
+execute canonical callback completion over ordinary compiled source bodies. New
+compiler2 and native CLI2 tests pass, alongside existing compiler AOT13 and affected
+CLI24. Both phase bootstrap pairs reproduce without Java; bootstrap4 and Python118
+pass. Public async type flags, zero hidden imports, GC/fresh Stores, captured/live
+cells, scalar bits and independently decoded language errors are checked. Review,
+unfiltered full baseline and final-head CI remain pending. Suspension, official
+command arguments/bindings, evaluator retirement and M3 acceptance remain open.
+No inventory declaration is reclassified.

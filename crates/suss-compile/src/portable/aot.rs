@@ -15,6 +15,7 @@ struct Export {
     global: super::resolve::Global,
     params: Vec<(String, Scalar)>,
     result: Option<Scalar>,
+    asynchronous: bool,
 }
 enum PublicExport {
     Function {
@@ -262,9 +263,12 @@ pub fn component(
                     "Portable AOT function external-id adapters remain unimplemented",
                 ));
             }
-            if function.kind != FunctionKind::Freestanding {
+            if !matches!(
+                function.kind,
+                FunctionKind::Freestanding | FunctionKind::AsyncFreestanding
+            ) {
                 return Err(error(
-                    "Portable AOT async/resource function adapters remain unimplemented",
+                    "Portable AOT resource function adapters remain unimplemented",
                 ));
             }
             let matching = mappings
@@ -292,6 +296,7 @@ pub fn component(
                     .map(|param| Ok((param.name.clone(), scalar(resolve, param.ty)?)))
                     .collect::<Result<_, Diagnostic>>()?,
                 result: function.result.map(|ty| scalar(resolve, ty)).transpose()?,
+                asynchronous: function.kind == FunctionKind::AsyncFreestanding,
             });
             Ok(index)
         };
@@ -356,6 +361,10 @@ pub fn component(
         .collect::<Vec<_>>();
     let bindings = core_bindings::compile_with_cells(Phase::Runtime, &cells)?;
     let adapter = adapter(&exports, fragments.len())?;
+    let asynchronous = exports
+        .iter()
+        .filter(|export| export.asynchronous)
+        .collect::<Vec<_>>();
     let mut component = Component::new();
     let modules = std::iter::once(runtime_abi::module())
         .chain(std::iter::once(bindings.wasm))
@@ -365,6 +374,13 @@ pub fn component(
         component.section(&RawSection {
             id: ComponentSectionId::CoreModule.into(),
             data: &module,
+        });
+    }
+    if !asynchronous.is_empty() {
+        let bridge = async_adapter(&asynchronous);
+        component.section(&RawSection {
+            id: ComponentSectionId::CoreModule.into(),
+            data: &bridge,
         });
     }
     let mut instances = InstanceSection::new();
@@ -392,19 +408,11 @@ pub fn component(
     let adapter_instance = 2 + fragments.len() as u32;
     instances.instantiate(adapter_instance, args);
     component.section(&instances);
-    let mut aliases = ComponentAliasSection::new();
     let mut types = ComponentTypeSection::new();
-    let mut canonical = CanonicalFunctionSection::new();
-    let mut public = ComponentExportSection::new();
-    let mut exported_instances = ComponentInstanceSection::new();
-    for (index, export) in exports.iter().enumerate() {
-        aliases.alias(Alias::CoreInstanceExport {
-            instance: adapter_instance,
-            kind: ExportKind::Func,
-            name: &export.name,
-        });
+    for export in &exports {
         types
             .function()
+            .async_(export.asynchronous)
             .params(
                 export
                     .params
@@ -412,11 +420,78 @@ pub fn component(
                     .map(|(name, ty)| (name.as_str(), ty.component())),
             )
             .result(export.result.map(Scalar::component));
-        canonical.lift(
-            index as u32,
-            index as u32,
-            std::iter::empty::<CanonicalOption>(),
+    }
+    component.section(&types);
+    // Task-return builtins precede bridge instantiation, so the bridge can call
+    // the canonical completion operation directly without a mutable shim.
+    let mut completion = CanonicalFunctionSection::new();
+    for export in &asynchronous {
+        completion.task_return(export.result.map(Scalar::component), []);
+    }
+    let bridge_instance = if asynchronous.is_empty() {
+        None
+    } else {
+        component.section(&completion);
+        let mut bridge_instances = InstanceSection::new();
+        bridge_instances.export_items(
+            asynchronous
+                .iter()
+                .enumerate()
+                .map(|(index, export)| (export.name.as_str(), ExportKind::Func, index as u32)),
         );
+        bridge_instances.instantiate(
+            3 + fragments.len() as u32,
+            [
+                ("suss.aot", ModuleArg::Instance(adapter_instance)),
+                ("suss.completion", ModuleArg::Instance(adapter_instance + 1)),
+            ],
+        );
+        component.section(&bridge_instances);
+        Some(adapter_instance + 2)
+    };
+    let mut aliases = ComponentAliasSection::new();
+    let mut canonical = CanonicalFunctionSection::new();
+    let mut public = ComponentExportSection::new();
+    let mut exported_instances = ComponentInstanceSection::new();
+    let mut core_function = asynchronous.len() as u32;
+    let callback = bridge_instance.map(|instance| {
+        aliases.alias(Alias::CoreInstanceExport {
+            instance,
+            kind: ExportKind::Func,
+            name: "callback",
+        });
+        let index = core_function;
+        core_function += 1;
+        index
+    });
+    let mut asynchronous_index = 0;
+    for (index, export) in exports.iter().enumerate() {
+        let entry_name = if export.asynchronous {
+            let name = format!("entry.{asynchronous_index}");
+            asynchronous_index += 1;
+            name
+        } else {
+            export.name.clone()
+        };
+        aliases.alias(Alias::CoreInstanceExport {
+            instance: if export.asynchronous {
+                bridge_instance.unwrap()
+            } else {
+                adapter_instance
+            },
+            kind: ExportKind::Func,
+            name: &entry_name,
+        });
+        let options = if export.asynchronous {
+            vec![
+                CanonicalOption::Async,
+                CanonicalOption::Callback(callback.unwrap()),
+            ]
+        } else {
+            vec![]
+        };
+        canonical.lift(core_function, index as u32, options);
+        core_function += 1;
     }
     for export in public_exports {
         match export {
@@ -450,7 +525,6 @@ pub fn component(
     }
     component
         .section(&aliases)
-        .section(&types)
         .section(&canonical)
         .section(&exported_instances)
         .section(&public);
@@ -459,6 +533,73 @@ pub fn component(
         .validate_all(&bytes)
         .map_err(|failure| error(format!("Invalid portable AOT component: {failure}")))?;
     Ok(bytes)
+}
+
+/// Canonical callback entrypoints for non-suspending source functions. They
+/// complete the task exactly once, then report EXIT. No continuation exists:
+/// suspension points must use the future rooted-continuation lowering instead.
+fn async_adapter(exports: &[&Export]) -> Vec<u8> {
+    let mut types = TypeSection::new();
+    let mut imports = ImportSection::new();
+    for (index, export) in exports.iter().enumerate() {
+        types.ty().function(
+            export.params.iter().map(|(_, ty)| ty.core()),
+            export.result.map(Scalar::core),
+        );
+        types.ty().function(export.result.map(Scalar::core), []);
+        imports.import(
+            "suss.aot",
+            &export.name,
+            EntityType::Function(2 * index as u32),
+        );
+        imports.import(
+            "suss.completion",
+            &export.name,
+            EntityType::Function(2 * index as u32 + 1),
+        );
+    }
+    let imported = 2 * exports.len() as u32;
+    let mut functions = FunctionSection::new();
+    let mut public = ExportSection::new();
+    let mut code = CodeSection::new();
+    for (index, export) in exports.iter().enumerate() {
+        types.ty().function(
+            export.params.iter().map(|(_, ty)| ty.core()),
+            [ValType::I32],
+        );
+        functions.function(imported + index as u32);
+        public.export(
+            &format!("entry.{index}"),
+            ExportKind::Func,
+            imported + index as u32,
+        );
+        let mut body = Function::new([]);
+        for parameter in 0..export.params.len() {
+            body.instruction(&Instruction::LocalGet(parameter as u32));
+        }
+        body.instruction(&Instruction::Call(2 * index as u32))
+            .instruction(&Instruction::Call(2 * index as u32 + 1))
+            .instruction(&Instruction::I32Const(0))
+            .instruction(&Instruction::End);
+        code.function(&body);
+    }
+    let callback_type = imported + exports.len() as u32;
+    types.ty().function([ValType::I32; 3], [ValType::I32]);
+    functions.function(callback_type);
+    public.export("callback", ExportKind::Func, callback_type);
+    let mut callback = Function::new([]);
+    callback
+        .instruction(&Instruction::Unreachable)
+        .instruction(&Instruction::End);
+    code.function(&callback);
+    let mut module = Module::new();
+    module
+        .section(&types)
+        .section(&imports)
+        .section(&functions)
+        .section(&public)
+        .section(&code);
+    module.finish()
 }
 
 fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnostic> {

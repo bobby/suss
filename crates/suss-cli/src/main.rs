@@ -368,6 +368,7 @@ fn run_component_impl(
     let mut config = Config::new();
     config.wasm_component_model(true);
     config.wasm_component_model_implements(true);
+    config.wasm_component_model_async(true);
     config.wasm_gc(true);
     config.wasm_function_references(true);
     config.wasm_tail_call(true);
@@ -393,9 +394,7 @@ fn run_component_impl(
     let wasmtime::component::types::ComponentItem::ComponentFunc(func_ty) = item else {
         return Err(format!("Export {invoke:?} is not a function"));
     };
-    if func_ty.async_() {
-        return Err("Async component invocation remains unimplemented".into());
-    }
+    let asynchronous = func_ty.async_();
     let parameters = func_ty.params().collect::<Vec<_>>();
     let supplied = if command_mode { &[][..] } else { args };
     if parameters.len() != supplied.len() {
@@ -441,11 +440,26 @@ fn run_component_impl(
     let mut linker: Linker<ComponentState> = Linker::new(&engine);
     wasmtime_wasi::p2::add_to_linker_sync(&mut linker)
         .map_err(|e| format!("Failed to add WASI to linker: {}", e))?;
+    wasmtime_wasi::p3::add_to_linker(&mut linker)
+        .map_err(|e| format!("Failed to add asynchronous WASI to linker: {e}"))?;
 
     // Instantiate component
-    let instance = linker
-        .instantiate(&mut store, &component)
-        .map_err(|e| format!("Failed to instantiate component: {}", e))?;
+    let runtime = if asynchronous {
+        Some(
+            tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .map_err(|e| format!("Failed to create asynchronous component runtime: {e}"))?,
+        )
+    } else {
+        None
+    };
+    let instance = if let Some(runtime) = &runtime {
+        runtime.block_on(linker.instantiate_async(&mut store, &component))
+    } else {
+        linker.instantiate(&mut store, &component)
+    }
+    .map_err(|e| format!("Failed to instantiate component: {e}"))?;
 
     let func = instance
         .get_func(&mut store, &export)
@@ -456,8 +470,12 @@ fn run_component_impl(
     let mut results = vec![Val::S32(0); results_len];
 
     // Call the function
-    func.call(&mut store, &func_args, &mut results)
-        .map_err(|e| format!("Failed to call '{}': {}", invoke, e))?;
+    if let Some(runtime) = &runtime {
+        runtime.block_on(func.call_async(&mut store, &func_args, &mut results))
+    } else {
+        func.call(&mut store, &func_args, &mut results)
+    }
+    .map_err(|e| format!("Failed to call '{invoke}': {e}"))?;
 
     // Print result
     if results.is_empty() {
