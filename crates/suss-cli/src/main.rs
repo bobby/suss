@@ -270,10 +270,13 @@ fn compile_project(world: Option<&str>, config_path: Option<&str>, optimize: boo
         }
     };
 
-    let mut compiler = suss_compile::Compiler::new();
-
-    // Compile project
-    match compiler.compile_project(&config, world) {
+    #[cfg(not(target_family = "wasm"))]
+    let result = suss_cli::portable_project::compile_project(&config, world);
+    #[cfg(target_family = "wasm")]
+    let result: Result<std::collections::BTreeMap<String, Vec<u8>>, String> = Err(
+        "Portable project compilation in the component-host target remains unimplemented".into(),
+    );
+    match result {
         Ok(results) => {
             for (world_name, wasm) in &results {
                 // Get the output path from config

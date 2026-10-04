@@ -237,6 +237,11 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
         })
     } else if source.is_none() || world_wit.is_none() {
         // Project mode: no source file, or source without -w/-m
+        if world_wit.is_some() || !src_paths.is_empty() || output.is_some() {
+            return Err(lexopt::Error::Custom(
+                "Project mode takes WIT, source paths and outputs from configuration; -w/--wit, --src and -o/--output require file or namespace mode".into(),
+            ));
+        }
         if source.is_some() && config_path.is_none() {
             // Treat the positional arg as config path if no -c specified
             config_path = source;

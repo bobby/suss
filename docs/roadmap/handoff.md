@@ -15405,3 +15405,113 @@ is claimed. Next work proceeds only after the review baseline releases the slot.
 Python review handle 46855 exited 0: all 118 script tests pass (4.954s),
 `/private/tmp/suss-pr179-review-python.log`. Focused native log:
 `/private/tmp/suss-pr179-review-focused.log`.
+
+
+## Project frontend continuation — focused validation
+
+Worktree: /private/tmp/suss-m3-aot-cli-project; branch portable/m3-aot-cli-project.
+Draft rebased cleanly onto reviewed PR179 head
+3646ba8eb951a87ae00c4f2fa4c00cfe70f273a0 (autostash58b3c89). The parent review
+record and all draft source/tests were preserved. PR178 is ready after root verified
+exact-head CI37181080872 and matching local/CI 1147/0/17 across130 groups. No merge.
+PR179 independent review repaired explicit mapping precedence, pushed3646ba8;
+required full41804 terminated successfully:1152/0/17 existing ignores/131 groups,
+unfiltered through reader doctests. Exact CI37183558860 remains pending. Reviewer
+released the sole heavy slot to root before project validation started.
+
+Native project compilation now calls portable_project::compile_project instead
+of the prototype Compiler. Configuration adds :namespace (symbol/string),
+:wit-world (string), and :exports (WIT-path string -> qualified source symbol map).
+Existing gen-world groups remain supported. Source/dependency preparation and
+project selection share one validated namespace grammar; gen-world is an inert
+retained target fact. Discovery sorts canonical files, accepts .sus/.cljs/.cljc,
+deduplicates physical roots and handles directory symlink cycles. Explicit entries
+use ordinary namespace lookup and reject conflicting target declarations. Nonempty
+:deps explicitly fails until published dependency loading exists; it is never
+silently ignored. Project-only CLI options cannot silently discard WIT/source/output
+settings. Selected world results are ordered and fully compiled before output writes.
+
+Each world uses an isolated compiled Macro session and one completed Runtime
+snapshot across selected sources. Roots already prepared as dependencies are not
+replayed. Imported selected-source text is compared with the immutable selection
+snapshot and changes fail before output. Runtime initializers remain deferred to
+component instantiation. Ordinary file/script preparation retains its prior API
+and binding rollback. No shared GC ABI/layout change or upstream source form port.
+
+Controlled before94390 TERMINAL101: retained parent code ignores configured entry
+namespace and reports No source files found with (gen-world :a-good);0passed,
+1failed,3filtered in0.86s. Eight changed production files were saved under
+/private/tmp/suss-project-fixed and restored after terminal. Log:
+/private/tmp/suss-project-before.log. New test assertions were retained.
+
+All commands use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target,
+CARGO_BUILD_JOBS=2; never RUSTFLAGS:
+
+- cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+- sh scripts/verify-bootstrap.sh
+- cargo test -p suss-cli --locked --test compiled_aot_project_command -- --test-threads=2
+- cargo test -p suss-cli --locked --test compiled_repl_macros --test compiled_native_entrypoints --test compiled_aot_command --test compiled_aot_namespace_command --test compiled_export_metadata --test aot_source_preparation --test namespace_session -- --test-threads=2
+- python3 -m unittest discover -s scripts -p 'test_*.py'
+
+Pinned dev reference initialized50965 TERMINAL0 atc4295f303100bbf5afac449242d30bca1126f1a1.
+Regeneration78779 TERMINAL0 refreshed BOTH phase Wasm/JSON. Javafree33205 TERMINAL0:
+both pairs byte-exact twice/current identities; bootstrap4/0/0 in12.26s.
+Focused88242 TERMINAL0:4passed/0failed/0ignored in11.66s. Actual configured namespace,
+relative config paths, selected WIT/interface explicit mapping plus shorthand,
+compiled both-phase counter1 and live effects1->3 execute typed42/6 after GC in two
+fresh Stores. Three grouped roots (.cljs/.cljc/.sus), repeated canonical roots and
+Unix symlink cycle execute shared dependency once and later root effect11, typed42/12,
+GC/two Stores. Namespace/config/target/selection/ambiguity errors preserve existing
+outputs; a later invalid selected world preserves all prior outputs. Runtime throw
+compiles and instantiation independently decodes first17 rather than99 in two Stores.
+Logs /private/tmp/suss-project-{regenerate,javafree,focused}.log.
+
+Affected52430 LIVE in seven CLI integration modules; Python84474 terminal status
+pending. Root owns sole heavy slot; production frozen until actual terminal.
+Compiler source/module/phase/config focused checks remain to run. Then update evidence,
+commit/push/open partial PR with Refs#13/#14, dispatch independent review with
+significant fixes authorized, and require exact-head unfiltered baseline plus CI.
+Do not claim readiness from focused evidence. No issue closure or M3 completion.
+Next unblocked implementation: native main/official command and component-host
+migration, then evaluator retirement. Rich portable environments, published dependency
+policy, pending-I/O scheduler/cancellation and live-value accounting remain original
+M3 scope. Do not replace those gates with fuel recovery or heap capacity.
+
+
+Affected52430 TERMINAL0:37passed/0failed/0ignored across7groups: source4 7.55s,
+file4 36.93s, namespace4 5.85s, exports5 35.53s, native10 22.56s, macro6 18.86s,
+namespace-session4 5.27s. Python84474 TERMINAL0:118/0 in5.609s. Configuration53624
+TERMINAL0:4/0/0,71 filtered in0.00s (focused unit filter, not full baseline).
+Compiler43976 TERMINAL0:14/0/0 across modules11 and phase3.
+
+Self-inspection found bootstrap core in snapshot.provided wrongly suppressed an
+explicit selected core source. New actual regression87569 TERMINAL101:0pass/1fail/
+4filtered4.11s; missing calculate mapping because source never prepared. Added
+prepared_sources set covering only batch roots/imported modules, distinct from
+bootstrap provisioning. Final65553 TERMINAL0:17/0/0 across source4 7.28s,file4 37.08s,
+namespace4 5.75s, project5 15.62s. Original assertions unchanged; new project and
+namespace explicit core artifacts execute42/24 afterGC in2freshStores each.
+Logs /private/tmp/suss-project-{affected,python,config,compiler,core-before,core-fixed}.log.
+CLI-only core fix does not change compiler/images. Updated inaccurate config
+source-root Rust comment, which DOES change compiler fingerprint; final BOTH
+regeneration/reproduction now required before publication. Root retains soleheavy.
+Do not use earlier image proof as final byte identity evidence. Next finalimage
+check/bootstrap4 and finalprojectfocus, then commit/push/open partial PR/review/full/CI.
+
+
+Final regeneration88352 TERMINAL0 refreshes BOTH phase Wasm/JSON at updated compiler
+identity. Javafree76646 TERMINAL0: both pairs reproduced byte-exact twice, compiler
+identity verified, bootstrap4/0/0 in12.93s. Final project focus56219 LIVE against
+these images; /private/tmp/suss-project-focused-final.log. Root retains sole heavy
+slot until actual terminal. No further production changes planned before publication.
+Final logs /private/tmp/suss-project-{regenerate-final,javafree-final}.log. Exact
+PR179 CI37183558860 rechecked in_progress at3646; keep draft. No merge/closure.
+
+
+Final focus56219 TERMINAL0:5passed/0failed/0ignored against final regenerated images;
+log /private/tmp/suss-project-focused-final.log. All root native/JVM/Python/clone
+handles are terminal. Restricted formatting and git diff --check pass. Root now
+commits/pushes and opens draft stacked179 with Refs#13/#14, then transfers exclusive
+worktree and sole heavy slot to reviewer166 for independent review, significant
+fixes, exact unfiltered full baseline and final-head CI. No full-baseline/review/CI
+claim for this increment yet; no merge/issue closure/original M3 completion.

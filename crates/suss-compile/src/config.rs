@@ -19,7 +19,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use suss_core::Edn;
+use suss_core::{Edn, Symbol};
 use suss_reader::ParserState;
 
 use crate::error::{CompileError, CompileResult};
@@ -29,7 +29,7 @@ use crate::error::{CompileError, CompileResult};
 pub struct SussConfig {
     /// World definitions (world-name -> world config)
     pub worlds: HashMap<String, WorldConfig>,
-    /// Source paths to scan for .sus files
+    /// Source roots, resolved relative to the configuration directory.
     pub src_paths: Vec<PathBuf>,
     /// Dependencies (package-name -> version)
     pub deps: HashMap<String, String>,
@@ -44,6 +44,12 @@ pub struct WorldConfig {
     pub wit: PathBuf,
     /// Output path for compiled component (relative to base_dir)
     pub output: PathBuf,
+    /// Explicit entry namespace; absent retains gen-world source discovery.
+    pub namespace: Option<String>,
+    /// Selected world within the resolved WIT package graph.
+    pub wit_world: Option<String>,
+    /// Exact exported WIT path to qualified source var mappings.
+    pub exports: Vec<(String, Symbol)>,
 }
 
 impl SussConfig {
@@ -146,6 +152,9 @@ impl SussConfig {
 
         let mut wit: Option<PathBuf> = None;
         let mut output: Option<PathBuf> = None;
+        let mut namespace = None;
+        let mut wit_world = None;
+        let mut exports = Vec::new();
 
         for (key, val) in map {
             match key {
@@ -155,6 +164,33 @@ impl SussConfig {
                     }
                     "output" => {
                         output = Some(Self::parse_path(val)?);
+                    }
+                    "namespace" => {
+                        namespace = Some(match val {
+                            Edn::Symbol(name) if name.namespace.is_none() => name.name.clone(),
+                            Edn::String(name) => name.clone(),
+                            _ => return Err(CompileError::Config("World :namespace must be a namespace symbol or string".into())),
+                        });
+                    }
+                    "wit-world" => {
+                        let Edn::String(name) = val else {
+                            return Err(CompileError::Config("World :wit-world must be a string".into()));
+                        };
+                        wit_world = Some(name.clone());
+                    }
+                    "exports" => {
+                        let Edn::Map(pairs) = val else {
+                            return Err(CompileError::Config("World :exports must be a map".into()));
+                        };
+                        for (path, var) in pairs {
+                            let (Edn::String(path), Edn::Symbol(var)) = (path, var) else {
+                                return Err(CompileError::Config("World :exports maps WIT path strings to qualified source symbols".into()));
+                            };
+                            if path.is_empty() || var.namespace.is_none() {
+                                return Err(CompileError::Config("World :exports needs nonempty paths and qualified source symbols".into()));
+                            }
+                            exports.push((path.clone(), var.clone()));
+                        }
                     }
                     _ => {}
                 },
@@ -166,6 +202,9 @@ impl SussConfig {
             wit: wit.ok_or_else(|| CompileError::Config("World config missing :wit".into()))?,
             output: output
                 .ok_or_else(|| CompileError::Config("World config missing :output".into()))?,
+            namespace,
+            wit_world,
+            exports,
         })
     }
 

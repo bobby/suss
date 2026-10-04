@@ -14,3 +14,5 @@ pub mod portable_session;
 
 #[cfg(not(target_family = "wasm"))]
 pub mod portable_aot;
+#[cfg(not(target_family = "wasm"))]
+pub mod portable_project;

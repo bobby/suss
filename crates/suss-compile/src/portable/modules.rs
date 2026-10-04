@@ -43,6 +43,14 @@ pub fn validate_namespace_source(
     let (declared, span, _) = source::phase_dependencies(forms, phase)?;
     validate_declared_namespace(&identity, &declared, span)
 }
+/// Validated leading namespace and optional retained project world target.
+/// This shares the dependency/source header grammar and performs no effects.
+pub fn project_namespace_source(
+    forms: &[suss_reader::forms::Form],
+) -> Result<Option<(String, Option<String>)>, Diagnostic> {
+    source::project_declaration(forms)
+}
+
 fn validate_declared_namespace(
     identity: &ModuleIdentity,
     declared: &str,

@@ -762,3 +762,12 @@ shorthand selects only unambiguous freestanding functions; interface mappings st
 explicit. Raw macro namespace metadata remains separate from target export names.
 Both images reproduce without Java; bootstrap4 passes. Affected28 and Python118 pass; review/full
 baseline/final-head CI remain pending. No declaration or M3 gate is reclassified.
+
+
+[Native project compilation](../runtime/compiled-aot-projects.md) now shares staged
+compiled source preparation and selected-WIT assembly. Five actual command/artifact
+tests pass for configured entries/mappings, explicit core source, retained target groups/shared roots,
+output preservation and deferred exceptions. Affected CLI37, configuration4,
+Java-free reproduction/bootstrap4 and Python118 pass. Compiler module/phase14 and final image reproduction/bootstrap4 pass;
+independent review/full baseline/final-head CI remain pending. No core declaration
+or original M3 acceptance gate is reclassified.
