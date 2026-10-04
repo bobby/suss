@@ -1,15 +1,15 @@
 {
   "format_version": 1,
   "phase": "runtime",
-  "source_sha256": "858071073477634c6d3a296a50a83a2fe459bc999a8a58c6029afd5e503c74ab",
+  "source_sha256": "951f10ae94c559496026e687476d4902e483b958fdbdc2c4e7e993c37431565a",
   "compiler_source_sha256": "1886a65f1a1e0f0ea46b43600de446ce486a4992edaef64187eb8febc3061ae5",
-  "dependency_graph_sha256": "e629b309646d8f89e377c57a77f90621dbd8746f1e32bee17eb6d4e0e1a80964",
+  "dependency_graph_sha256": "3177bf3092064fb68262c7c47ea780b88cc9d6f53ac822a9cb2784bc427fb26b",
   "runtime_abi": 2,
   "compiler": "0.1.0+portable.2",
   "wasm_tools": "0.258.0",
   "target": "portable-wasm-gc-shared-abi",
   "flags": [],
-  "wasm_sha256": "b74c5045e33ce53935de393c495c24a772ddbd481ff9da54280cec70f501bc0f",
+  "wasm_sha256": "075ba6f0f56d7091cf7ee90058d2cd6dcc9305ea7a4b164e17c4543b7590c431",
   "cells": [
     "suss.bindings.runtime:suss.core/->ArrayChunk",
     "suss.bindings.runtime:suss.core/->ArrayNode",

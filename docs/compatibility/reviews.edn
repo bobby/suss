@@ -1196,11 +1196,11 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies []
    :classification :adapted
-   :rationale "The pinned single-arity body is retained through an explicit defn-to-def/fn bootstrap patch. Extracted source, docstring and EPL notice remain packaged. Full compiled macro/core bootstrap and metadata APIs are not established by this foundation import."
+   :rationale "The pinned single-arity body is retained through an explicit defn-to-def/fn bootstrap patch. The patched compiled declaration now retains the docstring as well as the body; extracted source and EPL notice remain packaged. Full compiled macro/core bootstrap and metadata APIs are not established by this foundation import."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/identity.json"
    :alternative nil
-   :tests ["crates/suss-cli/tests/core_import.rs" "scripts/test_core_import.py"]}
+   :tests ["crates/suss-cli/tests/core_import.rs" "scripts/test_core_import.py" "crates/suss-cli/tests/compiled_macro_global_reference_asts.rs"]}
   "runtime:+:2724"
   {:source-sha256 "0d082f92b029008bb9b5572120ade90cbe49376dbb6d758cb6e634e81c465431" :visibility :public
    :arities {:fixed [0 1 2] :variadic-min 2}

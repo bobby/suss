@@ -1678,7 +1678,52 @@ impl<'a> AnalysisGraph<'a> {
                 }
             }
         }
-        if let Some(tag) = &source.tags.tag {
+        let resolved_var = if matches!(&source.form.kind, Kind::Symbol(_))
+            && let Some(hir::SourceBinding::Global {
+                global,
+                declaration,
+            }) = &source.resolved
+        {
+            // Pinned resolve-var copies the captured declaration revision and
+            // overrides these resolved identity fields. The catalog stays
+            // untouched, including any raw :name/:ns metadata in that record.
+            let declaration = self.declaration(global, declaration.as_ref(), depth + 1)?;
+            let Some(Recipe::Map(entries)) = self.recipes.get(declaration).and_then(Option::as_ref)
+            else {
+                return Err(SessionError::Host(wasmtime::Error::msg(
+                    "Missing resolved declaration graph recipe",
+                )));
+            };
+            let mut entries = entries.clone();
+            let op_key = self.keyword("op")?;
+            let name_key = self.keyword("name")?;
+            let ns_key = self.keyword("ns")?;
+            let tag_key = self.keyword("tag")?;
+            let tag = entries
+                .iter()
+                .find(|(key, _)| *key == tag_key)
+                .map(|(_, value)| *value);
+            let operation = self.keyword("var")?;
+            let name = self.symbol(&format!("{}/{}", global.namespace(), global.name()))?;
+            let namespace = self.symbol(global.namespace())?;
+            entries.retain(|(key, _)| ![op_key, name_key, ns_key].contains(key));
+            entries.extend([(op_key, operation), (name_key, name), (ns_key, namespace)]);
+            fields.extend([
+                ("op", operation),
+                ("name", name),
+                ("ns", namespace),
+                ("info", self.map_values(entries)?),
+            ]);
+            // Global AST tags are selected from resolved info, unlike local
+            // reference inference. Preserve actual presence, including false.
+            if let Some(tag) = tag {
+                fields.push(("tag", tag));
+            }
+            true
+        } else {
+            false
+        };
+        if !resolved_var && let Some(tag) = &source.tags.tag {
             fields.push(("tag", self.form(tag, depth + 1)?));
         }
         if let Some(tag) = &source.tags.inferred_return {
