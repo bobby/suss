@@ -869,7 +869,9 @@ Fifteen selected pinned control AST observations have independently decoded
 compiled macro evidence in both caller phases after GC. Original source operands,
 binding/method declarations and analyzed synthetic bodies are retained before
 lowering. The raw reference corpus is unchanged; compiler-private catch names
-have one explicit, bounded alpha correspondence. This does not establish complete
+have one explicit, bounded alpha correspondence. Seven additional shared method
+observations check entry context, body markers and accepted own-target recurrence
+in both phases after GC, with separately executed42 results. This does not establish complete
 AST schemas/inference or classify additional inventory entries. Public compiler
 migration, evaluator retirement and the original M3 gates remain required. See
 [control source AST evidence](../runtime/compiled-macro-control-source-asts.md).

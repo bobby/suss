@@ -17526,3 +17526,65 @@ cargo test --workspace --locked -- --test-threads=2 through actual terminal and
 all four doctest suites, and gate readiness on exact final reviewed-head CI.
 Reviewer retains the sole local Cargo/JVM/Node slot until explicit terminal
 release. No PR readiness, merge, issue closure or M3 completion is claimed.
+
+
+## M3 method source facts (2026-10-04)
+
+Refs #14. Actual method-entry namespace/catalog, locals, fields, function scopes
+and context are captured before parameter allocation. Generated analyzed bodies
+retain present true body?; ordinary operands and handler roots retain absence.
+Method recurs is present nullable nil/true and records only accepted edges to its
+own target, independently of nested loops/functions and runtime selection.
+Physical control flow and the source/macro64-frame bounds remain unchanged.
+
+Independent PR #192 review pushed e35276e597c40c85a2346a0d0834dd2aa52fbf36
+(tree012a2545100f8542943c22c334ea709513624ba5). Reviewer full16818 terminal0:
+148groups/1213pass/0fail/17existing ignored/0measured/0filtered/all4doctests.
+Root independently checked complete log /private/tmp/suss-pr192-review-full-final.log
+and the clean frozen head. Exact CI37240247637 still pending; root nonheavy watcher
+79359 observes it. No readiness, merge or closure claimed. Reviewer explicitly
+released sole local heavy slot; all its Cargo/JVM/Node handles are terminal.
+
+Serial root commands, CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target,
+CARGO_BUILD_JOBS=2, never RUSTFLAGS:
+
+- Fresh sh scripts/probe-method-recurrence.sh5296 terminal0; log
+  /private/tmp/suss-method-facts-primary-first.log. Inspected actual seven raw
+  analyzer rows/eight methods and Node projections: exact equality, all seven
+  runtime functions return42. Froze only that actual Node output in
+  tests/oracle/method-recurrence-observations.json. Strict checker passes; no
+  generated-name normalization. Native test consumes this same shared corpus.
+- First parent79194 terminal101 was a root wrong-working-directory harness error:
+  module/file missing, fixture absent. Retained /private/tmp/suss-method-facts-native-parent.log;
+  this is NOT semantic gap evidence. Corrected parent66415 terminal101: plain fn
+  still returns42 but lacks recurrence/body-marker/environment fields. Log
+  /private/tmp/suss-method-facts-native-parent-corrected.log. No skipped case.
+- Focused compiler83305 terminal0:11pass/0fail/0ignore/0filter, both phases,
+  identity/shadow, entry versus return context, accepted and invalid recurrence,
+  method forms, binding/try/finally markers and existing bounds. Log
+  /private/tmp/suss-method-facts-compiler-first.log.
+- Both bootstrap phase pairs regenerated49803 terminal0, then Java-free
+  verification38650 terminal0: byte equality and bootstrap4pass13.09s.
+  Logs /private/tmp/suss-method-facts-bootstrap-{generate,verify}.log.
+- Native59918 terminal0:6groups29pass/0fail/0ignore/0filter: graph11, bindings8,
+  control4 (all15existing cases plus7new method cases afterGC in both phases),
+  scopes2, selflocals2 (74.52s), tags2. Log
+  /private/tmp/suss-method-facts-native-first.log. Existing metadata, private alpha,
+  declaration identity and executed storage/effect checks remain active.
+- Full Python suite168pass5.680s /private/tmp/suss-method-facts-python.log,
+  including7positive/negative synthetic transport checks; these do not substitute
+  for upstream/native execution. Inventory1065verified; overlay371reviewed and
+  694unassessed unchanged. Touched test formatting, shell syntax and diff checks pass.
+
+No new upstream forms are copied; original projection informed by pinned
+analyzer.cljc2241–2277. Selected observations do not establish every environment
+field, type annotations, named fn children, full AST schemas/inference or evaluator
+retirement. Current native frontend uses compiled phases; public Compiler still
+uses expand_all/MacroEvaluator and component target imports evaluator. Public API
+migration must avoid compiler→CLI dependency cycles and have executed evidence.
+Original #15 pending-I/O/cancellation/rooted continuation/live-heap acceptance
+also remains required. M3 issues12–15 are open/in-progress, not complete.
+Next: dispatch independent review for this follow-up PR, push significant fixes,
+run exact unfiltered workspace baseline and require final reviewed-head CI. Keep
+PR #192 draft until its exact-head CI completes. Then continue full source schemas,
+public frontend/evaluator retirement and original lifecycle acceptance. No merge.

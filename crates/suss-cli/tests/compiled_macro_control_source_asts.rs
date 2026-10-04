@@ -294,3 +294,94 @@ fn catch_alpha_view_rejects_inconsistent_or_non_private_payload_names() {
     non_private[1][2][1][2][1][0][2][2][1][1][1][1] = json!(["symbol", "error"]);
     assert!(std::panic::catch_unwind(|| native_catch_expected(reference, &non_private)).is_err());
 }
+
+#[test]
+fn method_recurrence_flags_survive_gc_in_both_caller_phases() {
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../tests/oracle/method-recurrence-observations.json");
+    let corpus: Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    assert_eq!(corpus["schema"], 1);
+    assert_eq!(
+        corpus["upstream"],
+        "c4295f303100bbf5afac449242d30bca1126f1a1"
+    );
+    let reference = corpus["cases"].as_array().unwrap();
+    assert_eq!(reference.len(), 7);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros
+            .define(
+                r#"(defmacro inspect-recurrence [binding]
+          (let [methods (get (get (get (get &env :locals) binding) :init) :methods)
+                rows (loop [methods (seq methods) rows []]
+                  (if methods
+                    (let [method (first methods)]
+                      (recur (next methods)
+                        (conj rows [(contains? method :recurs) (get method :recurs)
+                                    (contains? (get method :body) :body?) (get (get method :body) :body?)
+                                    (if (get (get method :env) :context)
+                                      (name (get (get method :env) :context)) nil)
+                                    (contains? (get (get method :env) :locals) 'x)])))
+                    rows))]
+            (list 'quote rows)))"#,
+            )
+            .unwrap();
+        for (index, (label, function, call)) in [
+            ("plain", "(fn* [x] x)", "(copy 42)"),
+            (
+                "method-recur",
+                "(fn* [x] (if x (recur nil) 42))",
+                "(copy 1)",
+            ),
+            (
+                "nested-loop",
+                "(fn* [x] (loop [y x] (if y (recur nil) 42)))",
+                "(copy 1)",
+            ),
+            (
+                "nested-function",
+                "(fn* [x] (fn* [y] (if y (recur nil) x)))",
+                "((copy 42) 1)",
+            ),
+            (
+                "multiple-methods",
+                "(fn* ([x] (if x (recur nil) 42)) ([x y] y))",
+                "(copy 1 42)",
+            ),
+            (
+                "variadic",
+                "(fn* [x & xs] (if x (recur nil xs) 42))",
+                "(copy 1 2)",
+            ),
+            (
+                "unselected-recur",
+                "(fn* [x] (if false (recur x) 42))",
+                "(copy 1)",
+            ),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let expected = &reference[index];
+            assert_eq!(expected[0][0], label);
+            let source = format!("(let [copy {function}] [(inspect-recurrence copy) {call}])");
+            let value = session.eval_with_macros(&source, &mut macros).unwrap();
+            session.collect().unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let actual = bridge.read(&mut session, &value, 0..source.len()).unwrap();
+            let rows = expected[0][1]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|fields| json!(["vector", fields]))
+                .collect::<Vec<_>>();
+            let mut result = expected[1].clone();
+            language_numbers(&mut result);
+            assert_eq!(
+                datum(&actual),
+                json!(["vector", [["vector", rows], result]]),
+                "{function}"
+            );
+        }
+    }
+}

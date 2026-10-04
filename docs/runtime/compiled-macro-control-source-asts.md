@@ -31,8 +31,9 @@ parameter declaration identities and variadic syntax before runtime normalizatio
 The actual source body is captured before its compiler-owned recurrence wrapper;
 it is not recovered from that wrapper. Source methods include duplicate arities
 before runtime elimination. Metadata keeps separate wrapper and inner function
-edges. Function method environment, body markers, recurrence/type fields and
-broader inference policy still need complete acceptance evidence.
+edges. The follow-up evidence below covers selected method entry-environment fields,
+body markers and accepted recurrence facts. Method type annotations, complete
+environment schemas and broader inference policy remain open.
 
 `loop`/`recur` execution continues to use IR jumps and Wasm branches, without
 recursive stack growth. Tail position and arity are checked; all replacements
@@ -109,3 +110,57 @@ The unfiltered workspace baseline, independent PR review and final reviewed-head
 CI remain mandatory before readiness. No issue or milestone is closed by this
 bounded corpus. Public frontend/evaluator retirement and session pending-I/O,
 cancellation and live-memory acceptance remain open.
+
+
+## Method entry environment and recurrence facts
+
+Method records now capture their actual entry environment before allocating
+parameters: enclosing locals, fields, namespace/catalog, function scopes and
+analysis context. The body retains its own return context and parameter identities.
+A shadowing parameter does not replace the enclosing local in the method entry
+snapshot. Multiple methods retain expression context even when the enclosing
+function is analyzed as a statement. These are captured facts, not environments
+reconstructed from body locals.
+
+The actual analyzed synthetic body is marked with present true `:body?`;
+ordinary operands and generated handler roots keep that field absent. The existing
+body-analysis helper marks function, binding, try and finally regions before
+physical closure/control lowering. Compiler regressions distinguish these roles.
+
+A method's present nullable `:recurs` records accepted recurrence to its own
+analysis target. An inner loop or inner function does not mark the enclosing
+method. Unselected branches still contribute analysis facts. Arity and tail
+position errors remain errors; this record changes no runtime control flow.
+
+Seven fresh pinned analyzer observations, containing eight method records, equal
+raw executed Node output exactly. All seven functions execute to42. The shared
+`method-recurrence-observations.json` is frozen from that actual output. Native
+compiled macros compare the same corpus in both caller phases after GC and execute
+the same functions. The selected projection checks recurrence field presence/value,
+body marker presence/value, entry context and absence of the not-yet-allocated x
+parameter. Separate compiler regressions check the actual outer-local/parameter
+shadow identities and statement versus multiple-method contexts.
+
+```sh
+sh scripts/test-method-recurrence-oracle.sh
+python3 -m unittest discover -s scripts -p 'test_method_recurrence_oracle.py'
+cargo test -p suss-compile --locked --test portable_control_source_analysis -- --test-threads=2
+cargo test -p suss-cli --locked --test compiled_macro_control_source_asts -- --test-threads=2
+```
+
+The original probe follows pinned `analyzer.cljc`2241–2277; no analyzer code or
+new core forms are copied. Its strict checker rejects false instead of nullable
+recurrence, missing fields/cases, raw analyzer/Node disagreement, nonnumeric
+execution results and corpus variance. Seven transport checker tests pass; they are
+separate from upstream/native semantic evidence. The parent native regression
+returned42 but failed for absent recurrence/body markers and method environment.
+The implementation passes11 compiler checks and the four-test native control
+suite, including the shared corpus and previous fifteen-case observations.
+Both bootstrap phase pairs reproduce byte-for-byte without Java; all four bootstrap
+tests pass. The complete168-test Python suite passes; inventory1065 and overlay
+371reviewed/694unassessed remain unchanged.
+
+This selected corpus does not establish every method environment field, method
+type annotation, named function child schema, inference or evaluator retirement.
+Independent review, unfiltered workspace baseline and final reviewed-head CI are
+still required for this follow-up. M3 issues12–15 remain open.

@@ -450,12 +450,25 @@ pub enum SourceBinding {
 pub struct SourceCallable {
     pub methods: Vec<SourceMethod>,
 }
+/// Actual method-entry environment, captured before parameter allocation.
+#[derive(Debug, Clone)]
+pub struct SourceMethodEnvironment {
+    pub scope: std::sync::Arc<SourceNamespace>,
+    pub namespace_snapshot: std::sync::Arc<SourceNamespace>,
+    pub locals: std::sync::Arc<HashMap<String, LocalBinding>>,
+    pub fields: std::sync::Arc<HashMap<String, FieldBinding>>,
+    pub function_scopes: std::sync::Arc<[std::sync::Arc<FunctionScope>]>,
+    pub context: super::AnalysisContext,
+}
 #[derive(Debug, Clone)]
 pub struct SourceMethod {
     pub form: Form,
+    pub environment: SourceMethodEnvironment,
     pub declarations: Vec<LocalBinding>,
     pub parameters: Vec<Parameter>,
     pub variadic: bool,
+    /// Whether analysis accepted a recur targeting this method (nil otherwise).
+    pub recurs: Option<bool>,
     pub body: std::sync::Arc<Hir>,
 }
 impl SourceCallable {
@@ -505,6 +518,8 @@ pub enum SourceNode {
 }
 #[derive(Debug, Clone)]
 pub struct SourceAnalysis {
+    /// Set only for analyzer-generated body regions, before runtime lowering.
+    pub is_body: bool,
     pub tags: SourceTags,
     pub form: Form,
     pub resolved: Option<SourceBinding>,
@@ -646,6 +661,7 @@ struct Analyzer<'a> {
     callable_keys: BTreeMap<Global, Hir>,
     catch_aliases: Vec<(Form, std::sync::Arc<LocalBinding>)>,
     target: Option<(LoopId, usize)>,
+    method_recurrence: Vec<(LoopId, bool)>,
 }
 impl Analyzer<'_> {
     fn capture_source_namespace(&mut self) -> std::sync::Arc<SourceNamespace> {
@@ -724,7 +740,11 @@ impl Analyzer<'_> {
             self.expand_or_analyze(&body_form, context, tail, None)
         });
         self.analysis_contexts.pop();
-        result
+        result.map(|mut body| {
+            let source = body.source.as_mut().expect("analyzed source body");
+            std::sync::Arc::make_mut(source).is_body = true;
+            body
+        })
     }
     fn form_in(
         &mut self,
@@ -916,6 +936,7 @@ impl Analyzer<'_> {
                 if expression.source.is_none() {
                     let tags = source_tags::source_tags(form, resolved.as_ref(), callable.as_deref(), &expression)?;
                     let mut source = SourceAnalysis {
+                        is_body: false,
                         tags,
                         form: form.clone(),
                         resolved,
@@ -1515,6 +1536,14 @@ impl Analyzer<'_> {
                 }
             }
         }
+        let method_environment = SourceMethodEnvironment {
+            scope: self.capture_source_namespace(),
+            namespace_snapshot: self.namespace_snapshot.as_ref().expect("top-level source snapshot").clone(),
+            locals: std::sync::Arc::new(self.locals.clone()),
+            fields: std::sync::Arc::new(self.fields.clone()),
+            function_scopes: self.function_scopes.clone().into(),
+            context: *self.analysis_contexts.last().expect("method analysis context"),
+        };
         let outer = self.locals.clone();
         let outer_fields = self.fields.clone();
         let (parameters, declarations) = self.allocate_function_parameters(names, rest_parameter, receiver_type.is_some())?;
@@ -1617,15 +1646,20 @@ impl Analyzer<'_> {
         }
         // Field reads occur at the original use, including in nested closures;
         // unreferenced fields must not introduce checks or effects before a body.
+        self.method_recurrence.push((target, false));
         let inner_body = self.analyzed_body(
             &args[1..],
             form.span.clone(),
             super::AnalysisContext::Return,
             true,
         )?;
+        let (method_target, recurred) = self.method_recurrence.pop().expect("method recurrence frame");
+        debug_assert_eq!(method_target, target);
         let source_method = SourceMethod {
+            environment: method_environment,
             form: Form { kind: Kind::List(args.to_vec()), span: form.span.clone(), metadata: vec![] },
             declarations, parameters: parameters.clone(), variadic: rest_parameter.is_some(),
+            recurs: recurred.then_some(true),
             body: std::sync::Arc::new(inner_body.clone()),
         };
         self.target = outer_target;
@@ -1986,6 +2020,9 @@ impl Analyzer<'_> {
                 .iter()
                 .map(|arg| self.form(arg))
                 .collect::<Result<Vec<_>, _>>()?;
+            if let Some((_, recurred)) = self.method_recurrence.iter_mut().rev().find(|(id, _)| *id == target) {
+                *recurred = true;
+            }
             *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Recur(arguments.clone().into())));
             return Ok(Hir {
                 source: None,
@@ -2345,6 +2382,7 @@ pub(crate) fn prepare_with_origin(
         callable_keys: BTreeMap::new(),
         catch_aliases: Vec::new(),
         target: None,
+        method_recurrence: Vec::new(),
     };
     let mut hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
     if !analyzer.callable_keys.is_empty() {
