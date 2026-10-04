@@ -17588,3 +17588,42 @@ Next: dispatch independent review for this follow-up PR, push significant fixes,
 run exact unfiltered workspace baseline and require final reviewed-head CI. Keep
 PR #192 draft until its exact-head CI completes. Then continue full source schemas,
 public frontend/evaluator retirement and original lifecycle acceptance. No merge.
+
+
+## Independent PR193 scoped review (2026-10-04)
+
+Reviewed initial 4fac7370b7674b68bf9dcdd8cb47a0c86e0112a1 in isolated
+/private/tmp/suss-pr193-review against PR192 e35276e. Read accepted design,
+roadmap, inventory and current handoff; compared method entry timing/body and
+nullable recurrence facts with pinned analyzer.cljc2240–2282. No significant
+production defect found in this scope. Checked pre-parameter snapshot/shadow
+identity, own-target versus nested loop/function recurrence, rejected recurrence,
+once-only genuine analyzed bodies, copy-on-write body marking, metadata edges,
+bounded graph allocation and GC-rooted exported facts. Full schemas/type
+annotations/named-function children/public compiler retirement/lifecycle remain
+open; seven cases do not establish whole M3 acceptance.
+
+Independent serial reviewer gates, shared target /private/tmp/suss-m3-pr143-target,
+CARGO_BUILD_JOBS=2, no RUSTFLAGS:
+
+- cargo test -p suss-compile --locked --test portable_control_source_analysis
+  -- --test-threads=2: handle4366 actual terminal0,11passed/0failed/0ignored/
+  0measured/0filtered, .02s. /private/tmp/suss-pr193-review-compiler.log.
+- cargo test -p suss-cli --locked --test compiled_macro_control_source_asts
+  --test compiled_macro_analysis_graph --test compiled_macro_binding_records
+  -- --test-threads=2: handle38050 actual terminal0,3groups23passed/0failed/
+  0ignored/0measured/0filtered (graph11,bindings8,control4).
+  /private/tmp/suss-pr193-review-native.log.
+- python3 -m unittest discover -s scripts -p test_method_recurrence_oracle.py:
+  7passed, .001s, terminal0. /private/tmp/suss-pr193-review-python.log.
+  Independently reran strict checker against existing fresh raw root oracle
+  files: all7 analyzer rows equal raw Node and frozen corpus, all7 executions42.
+  This rerun validates recorded executed data; it is not a fresh JVM invocation.
+- git diff --check passed. Compiler/bootstrap inputs unchanged by review, so
+  previously regenerated phase pairs and Java-free evidence remain applicable.
+
+Freeze this review documentation before the exact unfiltered command
+cargo test --workspace --locked -- --test-threads=2, capture actual terminal
+result and all four doctest suites, then require exact final-head CI. Reviewer
+retains sole local Cargo/JVM/Node slot until explicit terminal release. Full
+baseline and CI remain pending here; no readiness, merge or closure is claimed.
