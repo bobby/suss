@@ -4,7 +4,9 @@
 executable component using the same shared runtime and compiled core/source
 binding initializer as native sessions. The caller supplies a resolved WIT world
 and explicit export-to-source-var mappings. This development increment supports
-pure freestanding bool/f32/f64 functions and void results. Other WIT boundary
+pure freestanding bool/f32/f64 functions and void results using direct canonical
+signatures (at most16 scalar parameters). Larger signatures need indirect-memory
+lowering and currently fail component validation. Other WIT boundary
 shapes return explicit unimplemented diagnostics. Existing CLI compile commands
 still use the legacy pipeline; this API does not complete their migration.
 
@@ -39,7 +41,12 @@ The fixture originally had a redundant manifest unwrap and inherited the core
 namespace while defining its macro in user; correcting the helper and making
 (ns user) explicit preserved every effect and payload assertion. Both refreshed
 bootstrap images reproduce byte-for-byte without Java, bootstrap4 and Python118
-pass. Independent review, full baseline and final-head CI remain required.
+pass. Independent review found no significant scoped production defect and
+added two executing regressions: an early initializer language throw independently
+decodes its original17 payload instead of the later99, and mixed f32/bool/f64
+arguments preserve positions and f32 promotion through both branches. Signed
+NaNs remain NaN across f64-to-f32 after GC. All seven compiler AOT tests pass;
+original expectations remain unchanged. Full baseline and final-head CI remain required.
 
 This is original Rust and ports no upstream forms. Shared GC layout and ABI2
 remain unchanged. Complete selected-WIT adapters and published artifact policy,

@@ -47,7 +47,9 @@ fn two_wit_exports_can_share_one_live_source_cell() {
         Phase::Runtime,
     )
     .unwrap();
-    let (resolve, selected) = world("package test:aliases; world api { export first: func(x: f64) -> f64; export second: func(x: f64) -> f64; }");
+    let (resolve, selected) = world(
+        "package test:aliases; world api { export first: func(x: f64) -> f64; export second: func(x: f64) -> f64; }",
+    );
     let bytes = portable::aot::component(
         &[fragment],
         &resolve,
@@ -84,7 +86,9 @@ fn portable_component_keeps_source_order_old_captures_live_cells_and_scalar_valu
         "(def f (fn [x] (+ x 100))) (def old-call (fn [x] (old x))) (def current (fn [x] (f x))) (def seen (fn [] effects)) (def echo (fn [x] x)) (def echo32 (fn [x] x)) (def round (fn [x] x)) (def invert (fn [x] (if x false true))) (def bump (fn [] (set! effects (+ effects 10)))) (set! effects (+ effects 1))",
         &first.environment, Phase::Runtime,
     ).unwrap();
-    let (resolve, selected) = world("package test:portable; world api { export old-call: func(x: f64) -> f64; export current: func(x: f64) -> f64; export seen: func() -> f64; export echo: func(x: f64) -> f64; export echo32: func(x: f32) -> f32; export round: func(x: f64) -> f32; export invert: func(x: bool) -> bool; export bump: func(); }");
+    let (resolve, selected) = world(
+        "package test:portable; world api { export old-call: func(x: f64) -> f64; export current: func(x: f64) -> f64; export seen: func() -> f64; export echo: func(x: f64) -> f64; export echo32: func(x: f32) -> f32; export round: func(x: f64) -> f32; export invert: func(x: bool) -> bool; export bump: func(); }",
+    );
     let bytes = portable::aot::component(
         &[first, second],
         &resolve,
@@ -282,6 +286,99 @@ fn portable_component_boundary_rejects_wrong_result_with_language_payload() {
 }
 
 #[test]
+fn portable_component_initialization_preserves_first_language_throw_payload() {
+    let first = portable::prepare_fragment(
+        "(def f (fn [] 42)) (throw 17)",
+        &Environment::default(),
+        Phase::Runtime,
+    )
+    .unwrap();
+    let second =
+        portable::prepare_fragment("(throw 99)", &first.environment, Phase::Runtime).unwrap();
+    let (resolve, selected) =
+        world("package test:initializers; world api { export f: func() -> f64; }");
+    let bytes =
+        portable::aot::component(&[first, second], &resolve, selected, &mappings(&["f"])).unwrap();
+    let engine = engine();
+    let component = Component::new(&engine, bytes).unwrap();
+    let mut store = Store::new(&engine, ());
+    store.set_fuel(20_000_000).unwrap();
+    assert!(
+        Linker::new(&engine)
+            .instantiate(&mut store, &component)
+            .is_err()
+    );
+    // Inspect the actual Wasm exception instead of accepting an arbitrary trap.
+    // If the later initializer ran first, its independently decoded payload
+    // would be99 instead of the original source exception17.
+    let exception = store
+        .as_context_mut()
+        .take_pending_exception()
+        .expect("source language exception");
+    let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
+    assert_eq!(fields.len(), 1);
+    let payload = fields[0]
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        payload.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
+        17.0_f64.to_bits()
+    );
+}
+
+#[test]
+fn portable_component_preserves_mixed_scalar_argument_order_and_nan_values() {
+    let fragment = portable::prepare_fragment(
+        "(def choose (fn [x flag y] (if flag (+ x y) (- x y)))) (def echo (fn [x] x))",
+        &Environment::default(),
+        Phase::Runtime,
+    )
+    .unwrap();
+    let (resolve, selected) = world(
+        "package test:mixed; world api { export choose: func(x: f32, flag: bool, y: f64) -> f64; export echo: func(x: f64) -> f32; }",
+    );
+    let bytes = portable::aot::component(
+        &[fragment],
+        &resolve,
+        selected,
+        &mappings(&["choose", "echo"]),
+    )
+    .unwrap();
+    let engine = engine();
+    let component = Component::new(&engine, bytes).unwrap();
+    let mut store = Store::new(&engine, ());
+    store.set_fuel(20_000_000).unwrap();
+    let instance = Linker::new(&engine)
+        .instantiate(&mut store, &component)
+        .unwrap();
+    let choose = instance
+        .get_typed_func::<(f32, bool, f64), (f64,)>(&mut store, "choose")
+        .unwrap();
+    for (flag, expected) in [(false, 0.1_f32 as f64 - 3.0), (true, 0.1_f32 as f64 + 3.0)] {
+        assert_eq!(
+            choose
+                .call(&mut store, (0.1, flag, 3.0))
+                .unwrap()
+                .0
+                .to_bits(),
+            expected.to_bits()
+        );
+        choose.post_return(&mut store).unwrap();
+    }
+    store.gc(None).unwrap();
+    let echo = instance
+        .get_typed_func::<(f64,), (f32,)>(&mut store, "echo")
+        .unwrap();
+    for value in [f64::NAN, f64::from_bits(0xfff8_0000_0000_0123)] {
+        assert!(echo.call(&mut store, (value,)).unwrap().0.is_nan());
+        echo.post_return(&mut store).unwrap();
+    }
+}
+
+#[test]
 fn portable_component_rejects_macro_phase_artifact_before_assembly() {
     let runtime = portable::prepare_fragment(
         "(def f (fn [x] x))",
@@ -317,35 +414,41 @@ fn portable_component_rejects_missing_duplicate_unknown_and_unsupported_mappings
     let (resolve, selected) =
         world("package test:mapping; world api { export f: func(x: f64) -> f64; }");
     for mapping in [vec![], mappings(&["f", "f"]), mappings(&["f", "extra"])] {
-        assert!(portable::aot::component(
-            std::slice::from_ref(&fragment),
-            &resolve,
-            selected,
-            &mapping
-        )
-        .is_err());
+        assert!(
+            portable::aot::component(
+                std::slice::from_ref(&fragment),
+                &resolve,
+                selected,
+                &mapping
+            )
+            .is_err()
+        );
     }
     let (resolve, selected) =
         world("package test:unsupported; world api { export f: func(x: string) -> string; }");
-    assert!(portable::aot::component(
-        std::slice::from_ref(&fragment),
-        &resolve,
-        selected,
-        &mappings(&["f"])
-    )
-    .unwrap_err()
-    .message
-    .contains("bool/f32/f64"));
+    assert!(
+        portable::aot::component(
+            std::slice::from_ref(&fragment),
+            &resolve,
+            selected,
+            &mappings(&["f"])
+        )
+        .unwrap_err()
+        .message
+        .contains("bool/f32/f64")
+    );
     let (resolve, selected) = world(
         "package test:imports; world api { import host: func(); export f: func(x: f64) -> f64; }",
     );
-    assert!(portable::aot::component(
-        std::slice::from_ref(&fragment),
-        &resolve,
-        selected,
-        &mappings(&["f"])
-    )
-    .unwrap_err()
-    .message
-    .contains("imported WIT"));
+    assert!(
+        portable::aot::component(
+            std::slice::from_ref(&fragment),
+            &resolve,
+            selected,
+            &mappings(&["f"])
+        )
+        .unwrap_err()
+        .message
+        .contains("imported WIT")
+    );
 }

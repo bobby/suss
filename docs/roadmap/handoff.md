@@ -1,3 +1,24 @@
+## Independent PR170 review — portable scalar AOT assembly
+
+Reviewed exact273ecbfe801c3ccbd71ce061b6b5234e191eadde against169 repair8651246:
+actual component assembly, prepared-artifact compiler/phase guards, unique live
+cell mappings, start initializer source order, mixed scalar conversion and
+language exception payloads. No significant scoped production defect found.
+Original five compiler assertions retained. Added two actual component regressions:
+first initializer throws17 before later99, with independently decoded original
+exception payload; mixed f32/bool/f64 argument order and binary64 promotion in
+both branches, signed NaNs through f64->f32 afterGC. Focus16420 TERMINAL0:
+7passed/0failed/0ignored in0.79s, /private/tmp/suss-pr170-review-focused.log.
+Changes only integration tests/docs, so compiler source fingerprints/bootstrap
+remain unchanged from root's Java-free reproduction. Rustfmt2024/diffcheck pass.
+Current direct canonical signatures are limited to16scalar parameters; larger
+signatures still require indirect-memory lowering and fail validation. Complete
+WIT/frontend migration, evaluator retirement and original M3 lifecycle/scheduler
+remain open. Next push/freeze review head then run exact required full command:
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2. No RUSTFLAGS.
+Full baseline/exact-head CI pending, no issue closure/merge/M3 completion claim.
+
 ## Independent PR167 review — artifact identities
 
 Reviewed section parsing/body preservation, compiler/ABI/phase/target/flag gates,
