@@ -5,9 +5,14 @@ Store, shared production runtime, compiler Environment, binding cells, initializ
 module identities and resident fragment instances. It uses the portable pipeline;
 it does not rebuild state by replaying source. The native command REPL now uses
 this host for bounded compiled input and scalar display; see
-[frontend evidence and limits](compiled-repl.md). The REPL core profile now supports [persistent atom storage](atoms.md). Other
-command/AOT frontends, complete atoms/macros and M3 acceptance remain unfinished. Older progress notes
-below retain the API's development history.
+[frontend evidence and limits](compiled-repl.md). The REPL core profile now supports [persistent atom storage](atoms.md). The
+native eval/file and namespace/project/main AOT command routes now use compiled
+source preparation, with executing component evidence. The public legacy compiler
+and component evaluator still need retirement under #14. Issue-specific persistence
+and namespace evidence is mapped in [the acceptance audit](m3-session-acceptance.md).
+Complete core/macros and M3 lifecycle acceptance remain unfinished. Older progress
+notes below retain the API's development history; their old counts and pending
+frontend statements do not supersede the current acceptance audit.
 
 ## Execution and recovery
 
