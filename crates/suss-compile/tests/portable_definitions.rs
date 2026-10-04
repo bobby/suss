@@ -636,18 +636,25 @@ fn reviewed_declaration_preserves_source_metadata_and_phase_identity() {
             assert!(source[name_span.clone()].ends_with(expected_name));
             assert_eq!(name_metadata.len(), if index == 0 { 2 } else { 1 });
             if index == 0 {
-                assert!(
-                    matches!(&name_metadata[0].kind, Kind::Keyword(key) if key.name == "retained")
-                );
+                assert!(name_metadata.iter().any(|metadata|
+                    matches!(&metadata.kind, Kind::Keyword(key) if key.name == "retained")));
             }
-            let Kind::Map(entries) = &name_metadata.last().unwrap().kind else {
-                panic!()
+            // Prefix storage order is not the declaration contract. Assert the
+            // merged reader data, including both generated and original keys.
+            let declaration = suss_reader::forms::Form {
+                span: name_span.clone(),
+                metadata: name_metadata.clone(),
+                kind: Kind::Symbol(suss_reader::Symbol::new(expected_name)),
             };
-            assert_eq!(entries.len(), 2);
-            assert!(
-                matches!(&entries[0].kind, Kind::Keyword(key) if key.name == "declared" && key.namespace.is_none())
-            );
-            assert!(matches!(entries[1].kind, Kind::Bool(true)));
+            let merged = portable::hir::reader_metadata_pairs(&declaration).unwrap();
+            assert!(merged.chunks_exact(2).any(|pair|
+                matches!(&pair[0].kind, Kind::Keyword(key) if key.name == "declared" && key.namespace.is_none())
+                && matches!(pair[1].kind, Kind::Bool(true))));
+            if index == 0 {
+                assert!(merged.chunks_exact(2).any(|pair|
+                    matches!(&pair[0].kind, Kind::Keyword(key) if key.name == "retained" && key.namespace.is_none())
+                    && matches!(pair[1].kind, Kind::Bool(true))));
+            }
         }
         // Analysis uses a snapshot even on successful declaration expansion.
         assert!(environment

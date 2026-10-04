@@ -662,3 +662,29 @@ remains371 in-progress/694 unassessed; no declaration becomes completed from
 these tests. A live-cell coercion edge, full baseline/review/CI and original
 M3/M4 gates remain open; see [reader integration](../runtime/syntax-quote-reader.md)
 and [lazy sequence evidence](../runtime/lazy-sequences.md).
+
+
+Repeated declarations preserve selected source declaration records without replacing completed callable facts. Actual pinned/native evidence and remaining limits are recorded in [declaration preservation](../runtime/compiled-macro-repeated-declarations.md). This does not complete portable environments or M3 acceptance.
+
+Native expression/file execution and bounded canonical value display now have
+focused before/after evidence for compiled macro phases, GC data and runtime
+compile-error isolation. No declaration is reclassified as fully implemented;
+full printing, remaining frontend/evaluator migration and original M3 acceptance
+remain open. See [native entry points](../runtime/compiled-native-entrypoints.md).
+
+
+Selected source tag/return observations now distinguish false/nil metadata, dynamic scalar/function records and provisional/completed invocation information. Actual pinned/native before/after evidence and remaining limits are in [source hint boundaries](../runtime/compiled-macro-source-hint-boundaries.md). Full portable environments/inference remain open.
+
+The [source artifact cache](../runtime/source-artifact-cache.md) has four focused
+compiler checks and four executing native tests. Macro expansion effects run
+before every lookup; loaded source versions remain stable until explicit reload.
+The binary64 test executes two distinct NaN payloads and a real cache hit.
+This cache evidence does not certify published user artifact manifests, evaluator
+retirement or complete M3; independent review/full baseline/final CI are pending.
+
+[Artifact identity evidence](../runtime/artifact-identities.md) includes the
+actual before-fix acceptance of an incompatible compiler build, then rejection
+before bindings change, independently decoded old17, actual macro version
+records and compiled execution. Compiler3, native2+cache6, lifecycle6 and
+affected54 pass; Java-free bootstrap4 and Python118 pass. Review/full/final CI
+remain pending. This does not certify full published dependency loading or M3.

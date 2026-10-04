@@ -1050,6 +1050,18 @@ impl Analyzer<'_> {
         } else {
             args.get(1)
         };
+        // Pinned ClojureScript analyzer.cljc2092–2172 (c4295f3) preserves
+        // existing declaration data for a truthy :declared def without an
+        // initializer. Initializer-bearing defs still publish their new
+        // provisional record before analysis. This original implementation
+        // retains the existing immutable revision, including source functions.
+        let preserve_declaration = init.is_none()
+            && self.environment.definition_info(&global).is_some()
+            && reader_metadata_pairs(&args[0])?.chunks_exact(2).any(|pair| {
+                matches!(&pair[0].kind, Kind::Keyword(key)
+                    if key.namespace.is_none() && key.name == "declared")
+                    && !matches!(pair[1].kind, Kind::Nil | Kind::Bool(false))
+            });
         let mut definition = super::resolve::DefinitionInfo {
             definition_form: form.clone(),
             analysis_completed: false,
@@ -1067,8 +1079,10 @@ impl Analyzer<'_> {
             initializer: None,
             once,
         };
-        self.environment
-            .record_definition(global.clone(), definition.clone());
+        if !preserve_declaration {
+            self.environment
+                .record_definition(global.clone(), definition.clone());
+        }
         let initializer = init
             .map(|init| {
                 self.form_in_named(
@@ -1084,8 +1098,10 @@ impl Analyzer<'_> {
         // declaration and its initializer together when its analysis completes.
         definition.initializer = initializer.as_deref().cloned().map(std::sync::Arc::new);
         definition.analysis_completed = true;
-        self.environment
-            .record_definition(global.clone(), definition);
+        if !preserve_declaration {
+            self.environment
+                .record_definition(global.clone(), definition);
+        }
         Ok(Hir {
             source: None,
             span: form.span.clone(),

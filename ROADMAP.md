@@ -305,3 +305,31 @@ precedence, declaration field presence and known direct-function return tags
 remain distinct from runtime values. See [declaration metadata](docs/runtime/compiled-macro-declaration-metadata.md).
 Independent review, full baseline and final-head CI remain required; complete
 schema/cache/evaluator/lifecycle acceptance and original M3 issues remain open.
+
+
+Repeated declarations now preserve existing source records for no-initializer truthy `:declared` forms, including completed functions and forward declarations. An actual pinned analyzer probe and a before/after native regression establish the bounded policy; full validation and original M3 gates remain open. See [declaration preservation](docs/runtime/compiled-macro-repeated-declarations.md).
+
+
+Completed scalar/function references and invocations now distinguish raw tag presence from inferred values and provisional records. An actual 18-row pinned/native before/after regression matches both caller phases after GC, with 15 executed storage/effect checks per phase. Full validation and original M3 gates remain open. See [source hint boundaries](docs/runtime/compiled-macro-source-hint-boundaries.md).
+
+Native expression and file entry points are moving onto the shared compiled phase
+pipeline, with original source origins, staged runtime compilation and bounded
+canonical result display. Focused execution covers macro redefinition, lexical
+environments, file positions and late compile-error isolation; full validation
+and original M3 gates remain open. See [native entry points](docs/runtime/compiled-native-entrypoints.md).
+
+Native compiled macro hosts now reuse bounded emitted artifacts after executing
+analysis and macros. Keys include immutable source/macro graph snapshots,
+compiler/ABI/phase/target identity and actual lowered IR; executing tests preserve
+effects, explicit reload, old captures and failed-declaration provenance. See
+[source artifact cache](docs/runtime/source-artifact-cache.md). Review, full
+baseline and final-head CI remain pending; published artifact, evaluator and
+lifecycle gates and original issues12–15 remain open.
+
+Portable artifacts now record compiler build/ABI/target identity and selected
+source/macro versions. Native loaders reject incompatible compiler builds before
+allocating cells, and bootstrap restoration checks its actual source graph.
+Regression-first and focused/54affected tests pass; review/full/final CI remain
+required. See [artifact identities](docs/runtime/artifact-identities.md). Complete
+published dependency loading, component/AOT, evaluator retirement and scheduler
+criteria remain open original M3 work.
