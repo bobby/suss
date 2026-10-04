@@ -67,3 +67,12 @@ continuations, pending-I/O cancellation, component-host migration, evaluator
 retirement and original M3 acceptance remain unfinished. Independent review,
 unfiltered final-head baseline and final-head CI are required before readiness.
 No core inventory declaration or milestone is reclassified.
+
+Independent review adds executing coverage for a named versioned interface alias
+with nine mixed scalar parameter positions, all six integer extrema and high
+unsigned bits, both branches, async void live-function replacement after GC,
+shared synchronous effect reads and two independent Stores. Compiler AOT13 plus
+async3 pass; every original expectation remains intact. No significant defect
+was found in this non-suspending bridge scope. Source-level futures, rooted
+suspension, scheduling and cancellation remain the original unimplemented gates.
+The final reviewed-head full baseline and exact-head CI still need to pass.

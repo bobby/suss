@@ -15632,3 +15632,42 @@ no issue closure or merge. Next implement command argument memory/bindings and
 normal/exception/explicit exit policies, then continue frontend/evaluator retirement
 and original lifecycle gates. Do not replace these with unsupported diagnostics,
 fuel recovery or heap capacity counters.
+
+## PR181 independent async scalar bridge review
+
+Reviewed initial829215e40442def804b5806d802a333958b55936 against reviewed
+PR180b66860496d301f21f6b4c4409716d9f9b214512e. Read accepted design, roadmap,
+inventory and current handoff. Audit covered task.return/core function indexes,
+private entry/callback name isolation, flattened mixed sync/async export order,
+interface-instance indexes and implements annotations, ordinary checked scalar
+wrappers/live source cells, current-thread Tokio host invocation and typed input
+validation before guest initialization. No significant scoped defect found.
+Registering p3/p2 alone does not certify WASI interoperability, future-value
+semantics, suspension, scheduler/cancellation or any original M3 acceptance gate.
+
+Added actual typed component regression for named versioned async alias and empty
+instance alongside synchronous export, nine heterogeneous parameter positions,
+six integer extrema/high unsigned bit, both branches, async void redefinition of
+the live function, forced GC, exact effect113 and two fresh Stores. Original13
+compiler and2async assertions retained. Reviewer74460 TERMINAL0:13/0/0 in1.81s,
+async3/0/0 in0.45s, /private/tmp/suss-pr181-review-focused.log. Command uses
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-compile --locked --test portable_aot_async --test portable_aot
+-- --test-threads=2, no RUSTFLAGS. Only tests/docs change, so root's BOTH-phase
+regeneration and Java-free fingerprint/byte-exact proof remain unchanged.
+No heavy worktree switch occurred since root validated this same source worktree.
+
+Independent CLI92111 TERMINAL0:26/0/0 across6groups(source4/async2/file4/
+namespace4/project7/metadata5), /private/tmp/suss-pr181-review-cli.log. Command
+cargo test -p suss-cli --locked --test compiled_aot_async_command --test
+compiled_aot_command --test compiled_aot_namespace_command --test
+compiled_aot_project_command --test aot_source_preparation --test
+compiled_export_metadata -- --test-threads=2 with same sharedtarget/jobs2.
+Restricted rustfmt and git diff --check pass; every original assertion preserved.
+
+Next freeze/push review head, run exact unfiltered
+cargo test --workspace --locked -- --test-threads=2 and retain actual handle until
+terminal, then explicitly release sole heavy slot. Final-head CI remains required.
+No merge or issue14/15 closure. Official command/main and canonical argument
+memory, complete imports/frontends/evaluator retirement/published dependencies,
+rich portable environments and rooted pending-I/O/lifecycle work remain open.

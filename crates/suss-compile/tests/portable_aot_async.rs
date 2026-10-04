@@ -243,3 +243,85 @@ fn async_errors_preserve_boundary_and_source_language_payloads() {
         }
     }
 }
+
+#[test]
+fn reviewed_async_aliases_preserve_integer_extrema_mixed_positions_and_live_redefinition() {
+    let fragment = portable::prepare_fragment(
+        "(ns app) (def effects 1) (def mixed (fn [a b c d e f flag small wide] (do (set! effects (+ effects 1)) (if flag (+ a b c d e f small wide) -1)))) (def replace (fn [] (do (set! effects (+ effects 10)) (set! mixed (fn [a b c d e f flag small wide] (do (set! effects (+ effects 100)) e)))))) (def seen (fn [] effects))",
+        &Environment::default(), Phase::Runtime,
+    ).unwrap();
+    let mut resolve = portable::aot::Resolve::new();
+    let package = resolve.push_str("api.wit", "package test:review-async@1.2.3; interface api { mixed: async func(a: u8, b: s8, c: u16, d: s16, e: u32, f: s32, flag: bool, small: f32, wide: f64) -> f64; replace: async func(); } world selected { export seen: func() -> u32; export renamed: api; export empty: interface {} }").unwrap();
+    let world = resolve.select_world(&[package], Some("selected")).unwrap();
+    let mappings = [
+        ("seen", "seen"),
+        ("renamed#mixed", "mixed"),
+        ("renamed#replace", "replace"),
+    ]
+    .map(|(path, var)| (path.to_owned(), Symbol::namespaced("app", var)));
+    let bytes = portable::aot::component(&[fragment], &resolve, world, &mappings).unwrap();
+    let engine = engine();
+    let component = Component::new(&engine, bytes).unwrap();
+    for _ in 0..2 {
+        let mut store = Store::new(&engine, ());
+        store.set_fuel(20_000_000).unwrap();
+        let instance = Linker::new(&engine)
+            .instantiate(&mut store, &component)
+            .unwrap();
+        let interface = instance
+            .get_export_index(&mut store, None, "renamed")
+            .unwrap();
+        let mixed_index = instance
+            .get_export_index(&mut store, Some(&interface), "mixed")
+            .unwrap();
+        let replace_index = instance
+            .get_export_index(&mut store, Some(&interface), "replace")
+            .unwrap();
+        let mixed = instance
+            .get_typed_func::<(u8, i8, u16, i16, u32, i32, bool, f32, f64), (f64,)>(
+                &mut store,
+                &mixed_index,
+            )
+            .unwrap();
+        let replace = instance
+            .get_typed_func::<(), ()>(&mut store, &replace_index)
+            .unwrap();
+        let seen = instance
+            .get_typed_func::<(), (u32,)>(&mut store, "seen")
+            .unwrap();
+        let args = (
+            255,
+            -128,
+            65535,
+            -32768,
+            u32::MAX,
+            i32::MIN,
+            true,
+            0.5,
+            0.25,
+        );
+        let expected =
+            255.0 - 128.0 + 65535.0 - 32768.0 + u32::MAX as f64 + i32::MIN as f64 + 0.5 + 0.25;
+        assert_eq!(
+            block_on(mixed.call_async(&mut store, args))
+                .unwrap()
+                .0
+                .to_bits(),
+            expected.to_bits()
+        );
+        assert_eq!(
+            block_on(mixed.call_async(&mut store, (0, 0, 0, 0, 0, 0, false, 0.0, 0.0)))
+                .unwrap()
+                .0,
+            -1.0
+        );
+        block_on(replace.call_async(&mut store, ())).unwrap();
+        store.gc(None).unwrap();
+        assert_eq!(
+            block_on(mixed.call_async(&mut store, args)).unwrap().0,
+            u32::MAX as f64
+        );
+        assert_eq!(seen.call(&mut store, ()).unwrap().0, 113);
+        seen.post_return(&mut store).unwrap();
+    }
+}
