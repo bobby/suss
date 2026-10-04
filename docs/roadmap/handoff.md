@@ -13950,3 +13950,25 @@ milestone completion is claimed. Original M3 dependency-loader/component/AOT/
 evaluator-retirement/cache and scheduler/cancellation/live-heap gates remain open.
 Next unblocked validation task: finish the existing required full baseline and
 check the freshly pushed CI; then continue the published artifact/dependency policy.
+
+## Merged stack integration into main — preparation
+
+GitHub reports PR162/164/165/166/167 merged into their prior stack branch names;
+fetched main remains8d83fa0 (PR161). These merges did not put the continuation
+on main. Root created portable/m3-merged-stack-integration at reviewed167768a1e0
+and locally reconciled origin/main, without merging a GitHub PR. All conflicts
+were old-main versions of later-reviewed metadata/cache/identity code, bootstrap
+images and appended evidence. Preserved the independently reviewed167 versions.
+After resolving, git write-tree was exactly aabf1b90fbdd7f1533a422e9c5aaab3257926edc,
+the ENTIRE reviewed167 file tree; main documentation is a subset of that tree
+(ROADMAP28 additions/0 removals, inventory26/0, handoff709/0). This appended
+integration record is the sole subsequent file change. No production/test/image
+bytes or compiler identity changed.
+
+Existing167 full baseline1117/0/17/124 and exact-head CI37163816000 at768a1e0
+are prior-source evidence, not this integration head's CI. Open a draft PR to
+main, dispatch independent reconciliation review, freeze its final head and
+require final-head unfiltered baseline/CI before readiness. Reviewer166 still
+owns the sole local heavy slot running PR171 full78568 at70fc; do not interfere.
+Root small-integer child is drafted/unvalidated separately and has run no heavy
+job. Refs12/13/14/15 and stack168; no issue closure, merge or M3 completion.
