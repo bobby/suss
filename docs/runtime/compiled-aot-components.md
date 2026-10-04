@@ -4,12 +4,20 @@
 executable component using the same shared runtime and compiled core/source
 binding initializer as native sessions. The caller supplies a resolved WIT world
 and explicit export-to-source-var mappings. This development increment supports
-pure freestanding bool, u8/s8/u16/s16/u32/s32 and f32/f64 functions, plus void
+pure bool, u8/s8/u16/s16/u32/s32 and f32/f64 functions, plus void
 results using direct canonical
 signatures (at most16 scalar parameters). Larger signatures need indirect-memory
 lowering and currently fail component validation. Other WIT boundary
 shapes return explicit unimplemented diagnostics. Existing CLI compile commands
 still use the legacy pipeline; this API does not complete their migration.
+
+Functions may be freestanding world exports or members of exported interfaces.
+An interface mapping uses the exact resolved world key followed by `#` and the
+function name, for example `test:interfaces/math@1.2.3#calc` or `alias#calc`.
+The emitted component preserves versioned package names and selected aliases,
+including named aliases of an existing interface. Functions stay inside their
+public interface instance; empty interfaces are preserved. Interface type exports
+and external-id annotations currently return explicit unimplemented diagnostics.
 
 The component links every fragment before a private adapter start function calls
 their initializers once in supplied source order. Export wrappers load live cells
@@ -68,10 +76,44 @@ passes with the implementation. Initial redundant-unwrap and iterator-borrow
 errors in the new test helper were corrected without relaxing assertions.
 Both regenerated phase Wasm/JSON reproduce byte-for-byte without Java; bootstrap4
 and Python118 pass. Affected CLI60 and compiler binding/module15 pass.
-Independent review, required full baseline and final-head CI for this increment
-remain pending.
+Independent review added a ninth test covering mixed scalar parameter positions,
+high unsigned bits, both branches and GC. The unfiltered local baseline passed
+1,134 tests with zero failures and 17 existing ignores. Final-head CI remains
+required for this parent increment.
 The pinned canonical engine locks a Store after a failed lifted component call;
 these failure fixtures use fresh Stores and do not certify trap recovery.
+
+The exported-interface increment passes all eleven compiler AOT tests, retaining
+the nine parent tests. Its typed component calls exercise versioned names,
+inline and named aliases, an empty interface, a freestanding export, shared live
+cells, fresh instances and GC. The component has zero host imports. Exact mapping
+errors and unsupported interface type exports are checked separately. Against the
+prior adapter, the positive regression fails with the unsupported-interface
+diagnostic. All four CLI source-preparation tests pass, including a compiled macro
+whose emitted component exposes a versioned interface, initializes once, retains
+its effect counter across calls and GC, and works in independent fresh Stores.
+Both regenerated bootstrap images reproduce byte-for-byte without Java;
+bootstrap4 and Python118 pass. Independent review, full baseline and final-head
+CI for this interface increment remain required.
+
+Initial interface review added a twelfth compiler test. Heterogeneous interface functions
+preserve bool/u32/void signatures and shared cells; a void export redefines the
+live bool function, and calls after GC observe that replacement. Exactly112
+counter effects are visible through both interface and freestanding exports in
+two independent Stores. A failing u8 interface result independently decodes the
+language boundary payload with its exact `api#bad` mapping path. That initial twelve-test focus passed, preserving the original eleven expectations.
+Further review found that named aliases lost their resolved `implements` annotation,
+and function `@external-id` annotations were silently discarded. The repair preserves
+`Resolve::implements_value` on named interface exports and explicitly rejects
+function external IDs, including interface functions, before emitting an artifact.
+Parsed binary assertions check the canonical versioned annotation independently;
+typed alias calls execute against the repaired component. All thirteen compiler
+AOT tests pass. Hosts loading named aliases must enable
+`Config::wasm_component_model_implements(true)` with the pinned Wasmtime;
+the CLI component runner and AOT test engines enable it. Both bootstrap images
+were regenerated for the changed compiler fingerprint. The old full run was
+cancelled for this repair and supplies no final baseline proof. A new reviewed-head
+full baseline and exact final-head CI remain required.
 
 This is original Rust and ports no upstream forms. Shared GC layout and ABI2
 remain unchanged. Complete selected-WIT adapters and published artifact policy,

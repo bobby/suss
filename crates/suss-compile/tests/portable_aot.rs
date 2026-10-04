@@ -20,6 +20,7 @@ fn engine() -> Engine {
                 .wasm_tail_call(true)
                 .wasm_exceptions(true)
                 .wasm_component_model(true)
+                .wasm_component_model_implements(true)
                 .consume_fuel(true)
                 .cranelift_opt_level(wasmtime::OptLevel::None);
             Engine::new(&config).unwrap()
@@ -705,4 +706,306 @@ fn small_integer_parameters_keep_mixed_scalar_positions_and_once_only_calls() {
         .unwrap();
     assert_eq!(seen.call(&mut store, ()).unwrap().0, 2.0);
     seen.post_return(&mut store).unwrap();
+}
+
+#[test]
+fn exported_interfaces_keep_names_versions_shared_cells_and_source_effects() {
+    let fragment = portable::prepare_fragment(
+        "(def count 0) (def calc (fn [x] (do (set! count (+ count 1)) (+ x 1)))) (def seen (fn [] count))",
+        &Environment::default(), Phase::Runtime,
+    ).unwrap();
+    let (resolve, selected) = world(
+        "package test:interfaces@1.2.3; interface math { calc: func(x: u32) -> u32; } world api { export math; export renamed: math; export alias: interface { calc: func(x: s16) -> s16; } export empty: interface {} export seen: func() -> f64; }",
+    );
+    let bytes = portable::aot::component(
+        &[fragment],
+        &resolve,
+        selected,
+        &[
+            (
+                "test:interfaces/math@1.2.3#calc".into(),
+                Symbol::new("calc"),
+            ),
+            ("alias#calc".into(), Symbol::new("calc")),
+            ("renamed#calc".into(), Symbol::new("calc")),
+            ("seen".into(), Symbol::new("seen")),
+        ],
+    )
+    .unwrap();
+    let mut implements = std::collections::BTreeMap::new();
+    for payload in wasmparser::Parser::new(0).parse_all(&bytes) {
+        if let wasmparser::Payload::ComponentExportSection(section) = payload.unwrap() {
+            for export in section {
+                let export = export.unwrap();
+                implements.insert(
+                    export.name.name.to_owned(),
+                    export.name.implements.map(str::to_owned),
+                );
+            }
+        }
+    }
+    assert_eq!(
+        implements["renamed"].as_deref(),
+        Some("test:interfaces/math@1.2.3")
+    );
+    assert_eq!(implements["test:interfaces/math@1.2.3"], None);
+    assert_eq!(implements["alias"], None);
+    assert_eq!(implements["empty"], None);
+    let mut imports = 0;
+    for payload in wasmparser::Parser::new(0).parse_all(&bytes) {
+        if let wasmparser::Payload::ComponentImportSection(section) = payload.unwrap() {
+            imports += section.count();
+        }
+    }
+    assert_eq!(imports, 0);
+    let engine = engine();
+    let component = Component::new(&engine, bytes).unwrap();
+    let math = component
+        .get_export_index(None, "test:interfaces/math@1.2.3")
+        .unwrap();
+    let math_calc = component.get_export_index(Some(&math), "calc").unwrap();
+    let alias = component.get_export_index(None, "alias").unwrap();
+    let alias_calc = component.get_export_index(Some(&alias), "calc").unwrap();
+    let renamed = component.get_export_index(None, "renamed").unwrap();
+    let renamed_calc = component.get_export_index(Some(&renamed), "calc").unwrap();
+    assert!(component.get_export_index(None, "empty").is_some());
+    assert!(component.get_export_index(None, "calc").is_none());
+    for _ in 0..2 {
+        let mut store = Store::new(&engine, ());
+        store.set_fuel(20_000_000).unwrap();
+        let instance = Linker::new(&engine)
+            .instantiate(&mut store, &component)
+            .unwrap();
+        let math_calc = instance
+            .get_typed_func::<(u32,), (u32,)>(&mut store, &math_calc)
+            .unwrap();
+        let alias_calc = instance
+            .get_typed_func::<(i16,), (i16,)>(&mut store, &alias_calc)
+            .unwrap();
+        let renamed_calc = instance
+            .get_typed_func::<(u32,), (u32,)>(&mut store, &renamed_calc)
+            .unwrap();
+        let seen = instance
+            .get_typed_func::<(), (f64,)>(&mut store, "seen")
+            .unwrap();
+        assert_eq!(
+            seen.call(&mut store, ()).unwrap().0.to_bits(),
+            0.0_f64.to_bits()
+        );
+        seen.post_return(&mut store).unwrap();
+        assert_eq!(
+            math_calc.call(&mut store, (2147483647,)).unwrap().0,
+            2147483648
+        );
+        math_calc.post_return(&mut store).unwrap();
+        store.gc(None).unwrap();
+        assert_eq!(alias_calc.call(&mut store, (-8,)).unwrap().0, -7);
+        alias_calc.post_return(&mut store).unwrap();
+        assert_eq!(renamed_calc.call(&mut store, (41,)).unwrap().0, 42);
+        renamed_calc.post_return(&mut store).unwrap();
+        assert_eq!(
+            seen.call(&mut store, ()).unwrap().0.to_bits(),
+            3.0_f64.to_bits()
+        );
+        seen.post_return(&mut store).unwrap();
+    }
+}
+
+#[test]
+fn exported_interface_mapping_paths_are_exact_and_types_remain_explicitly_unsupported() {
+    let fragment = portable::prepare_fragment(
+        "(def calc (fn [x] x))",
+        &Environment::default(),
+        Phase::Runtime,
+    )
+    .unwrap();
+    let (resolve, selected) = world(
+        "package test:mapping; world api { export api: interface { calc: func(x: f64) -> f64; } }",
+    );
+    for mapping in [
+        vec![],
+        vec![("calc".into(), Symbol::new("calc"))],
+        vec![
+            ("api#calc".into(), Symbol::new("calc")),
+            ("api#calc".into(), Symbol::new("calc")),
+        ],
+    ] {
+        let error = portable::aot::component(
+            std::slice::from_ref(&fragment),
+            &resolve,
+            selected,
+            &mapping,
+        )
+        .unwrap_err();
+        assert_eq!(
+            error.message,
+            "WIT export api#calc needs exactly one explicit Suss var mapping"
+        );
+    }
+    let error = portable::aot::component(
+        std::slice::from_ref(&fragment),
+        &resolve,
+        selected,
+        &[
+            ("api#calc".into(), Symbol::new("calc")),
+            ("calc".into(), Symbol::new("calc")),
+        ],
+    )
+    .unwrap_err();
+    assert_eq!(error.message, "Unknown WIT export mapping");
+    let (resolve, selected) = world(
+        "package test:types; interface api { type scalar = f64; calc: func(x: scalar) -> scalar; } world api-world { export api; }",
+    );
+    let error = portable::aot::component(
+        &[fragment],
+        &resolve,
+        selected,
+        &[("test:types/api#calc".into(), Symbol::new("calc"))],
+    )
+    .unwrap_err();
+    assert_eq!(
+        error.message,
+        "Portable AOT interface type exports remain unimplemented"
+    );
+}
+
+#[test]
+fn reviewed_interface_wrappers_preserve_live_cells_void_effects_and_boundary_payloads() {
+    let fragment = portable::prepare_fragment(
+        "(def effects 1) (def flip (fn [x] (do (set! effects (+ effects 1)) (if x false true)))) (def replace-flip (fn [] (do (set! effects (+ effects 10)) (set! flip (fn [x] (do (set! effects (+ effects 100)) false)))))) (def count-effects (fn [] effects)) (def bad (fn [] 300))",
+        &Environment::default(), Phase::Runtime,
+    ).unwrap();
+    let (resolve, selected) = world(
+        "package test:review-interface; world api-world { export api: interface { count: func() -> u32; flip: func(x: bool) -> bool; replace: func(); bad: func() -> u8; } export seen: func() -> u32; }",
+    );
+    let bytes = portable::aot::component(
+        &[fragment],
+        &resolve,
+        selected,
+        &[
+            ("api#count".into(), Symbol::new("count-effects")),
+            ("api#flip".into(), Symbol::new("flip")),
+            ("api#replace".into(), Symbol::new("replace-flip")),
+            ("api#bad".into(), Symbol::new("bad")),
+            ("seen".into(), Symbol::new("count-effects")),
+        ],
+    )
+    .unwrap();
+    let engine = engine();
+    let component = Component::new(&engine, bytes).unwrap();
+    let api = component.get_export_index(None, "api").unwrap();
+    let count = component.get_export_index(Some(&api), "count").unwrap();
+    let flip = component.get_export_index(Some(&api), "flip").unwrap();
+    let replace = component.get_export_index(Some(&api), "replace").unwrap();
+    let bad = component.get_export_index(Some(&api), "bad").unwrap();
+    for _ in 0..2 {
+        let mut store = Store::new(&engine, ());
+        store.set_fuel(20_000_000).unwrap();
+        let instance = Linker::new(&engine)
+            .instantiate(&mut store, &component)
+            .unwrap();
+        let count = instance
+            .get_typed_func::<(), (u32,)>(&mut store, &count)
+            .unwrap();
+        let seen = instance
+            .get_typed_func::<(), (u32,)>(&mut store, "seen")
+            .unwrap();
+        let flip = instance
+            .get_typed_func::<(bool,), (bool,)>(&mut store, &flip)
+            .unwrap();
+        let replace = instance
+            .get_typed_func::<(), ()>(&mut store, &replace)
+            .unwrap();
+        assert_eq!(count.call(&mut store, ()).unwrap().0, 1);
+        count.post_return(&mut store).unwrap();
+        assert!(flip.call(&mut store, (false,)).unwrap().0);
+        flip.post_return(&mut store).unwrap();
+        replace.call(&mut store, ()).unwrap();
+        replace.post_return(&mut store).unwrap();
+        store.gc(None).unwrap();
+        assert!(!flip.call(&mut store, (false,)).unwrap().0);
+        flip.post_return(&mut store).unwrap();
+        assert_eq!(seen.call(&mut store, ()).unwrap().0, 112);
+        seen.post_return(&mut store).unwrap();
+        assert_eq!(count.call(&mut store, ()).unwrap().0, 112);
+        count.post_return(&mut store).unwrap();
+        assert!(
+            instance
+                .get_typed_func::<(), (u8,)>(&mut store, &bad)
+                .unwrap()
+                .call(&mut store, ())
+                .is_err()
+        );
+        let exception = store
+            .as_context_mut()
+            .take_pending_exception()
+            .expect("interface boundary language payload");
+        let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
+        assert_eq!(fields.len(), 1);
+        let payload = fields[0]
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap();
+        let message = payload.field(&mut store, 1).unwrap();
+        let array = message
+            .unwrap_anyref()
+            .unwrap()
+            .as_array(&store)
+            .unwrap()
+            .unwrap();
+        let units = array
+            .elems(&mut store)
+            .unwrap()
+            .map(|unit| unit.unwrap_i32() as u16)
+            .collect::<Vec<_>>();
+        assert_eq!(
+            String::from_utf16(&units).unwrap(),
+            "WIT export api#bad returned an incompatible scalar value"
+        );
+    }
+}
+
+#[test]
+fn exported_function_external_ids_are_rejected_without_silent_loss() {
+    let fragment =
+        portable::prepare_fragment("(def f (fn [] 1))", &Environment::default(), Phase::Runtime)
+            .unwrap();
+    for (wit, path) in [
+        (
+            "package test:annotations; world api { @external-id(\"urn:test:f\") export f: func() -> u32; }",
+            "f",
+        ),
+        (
+            "package test:annotations; world api { export api: interface { @external-id(\"urn:test:f\") f: func() -> u32; } }",
+            "api#f",
+        ),
+    ] {
+        let (resolve, selected) = world(wit);
+        let annotated = resolve.worlds[selected]
+            .exports
+            .values()
+            .find_map(|item| match item {
+                wit_parser::WorldItem::Function(function) => function.external_id.as_deref(),
+                wit_parser::WorldItem::Interface { id, .. } => {
+                    resolve.interfaces[*id].functions["f"]
+                        .external_id
+                        .as_deref()
+                }
+                _ => None,
+            });
+        assert_eq!(annotated, Some("urn:test:f"));
+        let error = portable::aot::component(
+            std::slice::from_ref(&fragment),
+            &resolve,
+            selected,
+            &[(path.into(), Symbol::new("f"))],
+        )
+        .unwrap_err();
+        assert_eq!(
+            error.message,
+            "Portable AOT function external-id adapters remain unimplemented"
+        );
+    }
 }

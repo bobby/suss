@@ -718,3 +718,21 @@ language errors. All8 compiler AOT tests pass, including old scalar expectations
 and exactly66 source calls after GC. Java-free reproduction/bootstrap4, Python118 and affected CLI60/compiler15 pass;
 full baseline/review/final CI remain pending. No upstream forms or shared GC layout changed; complete WIT/frontends
 and M3 acceptance remain open. See [AOT components](../runtime/compiled-aot-components.md).
+
+The scalar AOT adapter now preserves exported interface instances, including
+versioned package names and inline/named aliases. All11 compiler AOT and4 CLI
+source-preparation tests pass; the new source fixture executes a real compiled
+macro through a versioned interface. Empty instances, shared cells, initializer
+effects, fresh Stores and GC have executing evidence. Java-free reproduction,
+bootstrap4 and Python118 pass. Independent review/full baseline/final-head CI
+remain required. Interface types/external-id, complete WIT/frontends and M3
+acceptance remain open; no core declaration is reclassified. See
+[AOT components](../runtime/compiled-aot-components.md).
+
+Independent exported-interface review repaired named-alias `implements` metadata
+and rejects function external IDs instead of silently dropping them. All thirteen
+compiler AOT tests pass, including parsed-binary canonical-version assertions and
+actual alias execution. Named aliases require Wasmtime's component-model implements
+feature; the CLI component runner enables it. Full baseline and repaired-head CI
+remain pending. Interface types, external IDs, imports and complete M3 acceptance
+remain open; see [AOT components](../runtime/compiled-aot-components.md).

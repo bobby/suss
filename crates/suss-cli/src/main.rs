@@ -332,6 +332,7 @@ fn run_component_impl(path: &str, invoke: &str, args: &[String]) -> Result<(), S
     // Enable component model and GC
     let mut config = Config::new();
     config.wasm_component_model(true);
+    config.wasm_component_model_implements(true);
     config.wasm_gc(true);
     let engine = Engine::new(&config)
         .map_err(|e| format!("Failed to create engine: {}", e))?;
