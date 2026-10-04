@@ -96,6 +96,17 @@ Both regenerated bootstrap images reproduce byte-for-byte without Java;
 bootstrap4 and Python118 pass. Independent review, full baseline and final-head
 CI for this interface increment remain required.
 
+Independent interface review found no significant production defect in this
+bounded scope and added a twelfth compiler test. Heterogeneous interface functions
+preserve bool/u32/void signatures and shared cells; a void export redefines the
+live bool function, and calls after GC observe that replacement. Exactly112
+counter effects are visible through both interface and freestanding exports in
+two independent Stores. A failing u8 interface result independently decodes the
+language boundary payload with its exact `api#bad` mapping path. All twelve
+compiler tests pass; original eleven expectations remain intact. Review changes
+only tests/docs, leaving compiler fingerprints and bootstrap images unchanged.
+The reviewed-head full baseline and exact final-head CI remain pending.
+
 This is original Rust and ports no upstream forms. Shared GC layout and ABI2
 remain unchanged. Complete selected-WIT adapters and published artifact policy,
 AOT frontend migration, evaluator retirement and scheduler/cancellation/live heap

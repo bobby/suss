@@ -848,3 +848,101 @@ fn exported_interface_mapping_paths_are_exact_and_types_remain_explicitly_unsupp
         "Portable AOT interface type exports remain unimplemented"
     );
 }
+
+#[test]
+fn reviewed_interface_wrappers_preserve_live_cells_void_effects_and_boundary_payloads() {
+    let fragment = portable::prepare_fragment(
+        "(def effects 1) (def flip (fn [x] (do (set! effects (+ effects 1)) (if x false true)))) (def replace-flip (fn [] (do (set! effects (+ effects 10)) (set! flip (fn [x] (do (set! effects (+ effects 100)) false)))))) (def count-effects (fn [] effects)) (def bad (fn [] 300))",
+        &Environment::default(), Phase::Runtime,
+    ).unwrap();
+    let (resolve, selected) = world(
+        "package test:review-interface; world api-world { export api: interface { count: func() -> u32; flip: func(x: bool) -> bool; replace: func(); bad: func() -> u8; } export seen: func() -> u32; }",
+    );
+    let bytes = portable::aot::component(
+        &[fragment],
+        &resolve,
+        selected,
+        &[
+            ("api#count".into(), Symbol::new("count-effects")),
+            ("api#flip".into(), Symbol::new("flip")),
+            ("api#replace".into(), Symbol::new("replace-flip")),
+            ("api#bad".into(), Symbol::new("bad")),
+            ("seen".into(), Symbol::new("count-effects")),
+        ],
+    )
+    .unwrap();
+    let engine = engine();
+    let component = Component::new(&engine, bytes).unwrap();
+    let api = component.get_export_index(None, "api").unwrap();
+    let count = component.get_export_index(Some(&api), "count").unwrap();
+    let flip = component.get_export_index(Some(&api), "flip").unwrap();
+    let replace = component.get_export_index(Some(&api), "replace").unwrap();
+    let bad = component.get_export_index(Some(&api), "bad").unwrap();
+    for _ in 0..2 {
+        let mut store = Store::new(&engine, ());
+        store.set_fuel(20_000_000).unwrap();
+        let instance = Linker::new(&engine)
+            .instantiate(&mut store, &component)
+            .unwrap();
+        let count = instance
+            .get_typed_func::<(), (u32,)>(&mut store, &count)
+            .unwrap();
+        let seen = instance
+            .get_typed_func::<(), (u32,)>(&mut store, "seen")
+            .unwrap();
+        let flip = instance
+            .get_typed_func::<(bool,), (bool,)>(&mut store, &flip)
+            .unwrap();
+        let replace = instance
+            .get_typed_func::<(), ()>(&mut store, &replace)
+            .unwrap();
+        assert_eq!(count.call(&mut store, ()).unwrap().0, 1);
+        count.post_return(&mut store).unwrap();
+        assert!(flip.call(&mut store, (false,)).unwrap().0);
+        flip.post_return(&mut store).unwrap();
+        replace.call(&mut store, ()).unwrap();
+        replace.post_return(&mut store).unwrap();
+        store.gc(None).unwrap();
+        assert!(!flip.call(&mut store, (false,)).unwrap().0);
+        flip.post_return(&mut store).unwrap();
+        assert_eq!(seen.call(&mut store, ()).unwrap().0, 112);
+        seen.post_return(&mut store).unwrap();
+        assert_eq!(count.call(&mut store, ()).unwrap().0, 112);
+        count.post_return(&mut store).unwrap();
+        assert!(
+            instance
+                .get_typed_func::<(), (u8,)>(&mut store, &bad)
+                .unwrap()
+                .call(&mut store, ())
+                .is_err()
+        );
+        let exception = store
+            .as_context_mut()
+            .take_pending_exception()
+            .expect("interface boundary language payload");
+        let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
+        assert_eq!(fields.len(), 1);
+        let payload = fields[0]
+            .unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap();
+        let message = payload.field(&mut store, 1).unwrap();
+        let array = message
+            .unwrap_anyref()
+            .unwrap()
+            .as_array(&store)
+            .unwrap()
+            .unwrap();
+        let units = array
+            .elems(&mut store)
+            .unwrap()
+            .map(|unit| unit.unwrap_i32() as u16)
+            .collect::<Vec<_>>();
+        assert_eq!(
+            String::from_utf16(&units).unwrap(),
+            "WIT export api#bad returned an incompatible scalar value"
+        );
+    }
+}

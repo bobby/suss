@@ -14811,3 +14811,41 @@ exact final-head CI. Do not merge. This is original Rust, with no upstream forms
 ported and no ABI/layout change. Refs #14 is partial progress, not issue closure. Complete selected-WIT adapters, CLI/frontend migration, evaluator removal,
 published dependency policy, rich macro environments, scheduler/cancellation and
 live heap acceptance remain open under the original M3 goal.
+
+
+## PR176 independent exported-interface review — 2026-10-04
+
+Independent review at original10bad9fbcacc75c7425c97b7483f8793fead9cf0
+checked exact resolved version/alias mapping, flattened function indexes versus
+exported-instance indexes, shared source-cell imports, once-only source init,
+void effects, live redefinition and independently decoded scalar failures. No
+significant production defect found within the explicit scalar-interface scope.
+Original compiler11 and CLI4 assertions remain intact. Added an actual executing
+review regression for heterogeneous interface bool/u32/void functions, shared
+interface/freestanding counter exports, live bool-function replacement after GC,
+counter112 and boundary error payload with exact api#bad path in two fresh Stores.
+
+Focused82455 TERMINAL0:12pass/0fail/0ignored in1.77s;
+/private/tmp/suss-pr176-review-focused.log. Command
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-compile --locked --test portable_aot -- --test-threads=2. Root had already
+validated this exact worktree/source and released all jobs before review; no
+heavy worktree switch or additional package clean was needed. No RUSTFLAGS.
+Rustfmt2024 and git diff --check pass. Only tests/docs change in review, so
+compiler fingerprint and BOTH shipped bootstrap Wasm/JSON remain unchanged from
+root's byte-exact Java-free reproduction; no regeneration needed.
+
+Parallel LIGHTWEIGHT GH monitoring confirmed rebased169 CI37172515173 TERMINAL
+SUCCESS at exactcd649fe89540e8c2315e7a0cb8c90ad5cc7fa54c. Its rebase preserves
+all source/test/image bytes from8651246, changing only55 inherited handoff lines.
+Integration173 exact5fc645 CI37171995245 also succeeded, actual unfiltered log
+1117/0/17 across124groups; Python118 and Java-free bootstrap4 passed.
+No source changes or heavy jobs were launched for those content-only reconciliations.
+
+Next push/freeze this review evidence and run the required unfiltered
+cargo test --workspace --locked -- --test-threads=2 once at the resulting head,
+poll its actual handle until terminal and release sole heavy slot explicitly.
+Full and new exact-head CI remain pending at this record. No readiness, merge,
+issue closure or M3 completion is claimed. Interface types/external-id/imports,
+full selected-WIT/frontends/evaluator/published-loader and scheduler/cancellation/
+live-heap acceptance remain original open scope.
