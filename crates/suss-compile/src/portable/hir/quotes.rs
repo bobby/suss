@@ -98,7 +98,14 @@ impl Analyzer<'_> {
             Kind::Keyword(value) => {
                 self.identifier_literal(form, value.namespace.as_deref(), &value.name, true)
             }
-            Kind::Nil | Kind::Bool(_) | Kind::Number(_) | Kind::String(_) => self.form(form),
+            // These are private literal operands of quotation, not ordinary
+            // analyzed source expressions. Calling form() here would attach
+            // the datum's source record and prevent the enclosing quote from
+            // retaining its own genuine syntax and source inference facts.
+            Kind::Nil => Ok(self.literal_form(form, Literal::Nil)),
+            Kind::Bool(value) => Ok(self.literal_form(form, Literal::Bool(*value))),
+            Kind::Number(value) => Ok(self.literal_form(form, Literal::Number(*value))),
+            Kind::String(value) => Ok(self.literal_form(form, Literal::String(value.clone()))),
             Kind::Vector(items) => {
                 let entries = items
                     .iter()
