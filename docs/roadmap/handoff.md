@@ -16139,3 +16139,218 @@ issue closure. Global/field references, quotes/compound/logical children and
 complete declaration/function/method/inference schema, evaluator retirement,
 target/dependency integration and rooted pending-I/O cancellation/live-heap
 requirements remain original open M3 gates.
+
+## Global-reference AST oracle prepared (unverified)
+
+Root prepared separate /private/tmp/suss-m3-global-reference-asts branch
+portable/m3-global-reference-asts from reviewed/frozen PR184 head
+c0cca867fa19becaf7d58494f7fb28fb97ac356b. PR184 reviewer166 exclusively owns
+its tree and sole heavy slot; required full98577 LIVE. Root owns no live
+Cargo/JVM/Node handle. PR183 reviewer150 light CI watch only, no heavy job.
+
+Re-read accepted design5–7, canonical core namespace contract, roadmap/inventory,
+M3 audit and handoff. Pinned analyze-symbol4149–4165 selects op/name/ns/tag from
+resolved var info; resolve-var/default overrides actual op/name/ns on a copied
+captured declaration. Do not mutate the namespace catalog to add these fields.
+Retained SourceBinding::Global captures the real declaration revision; native
+runtime values/reexecution cannot substitute for source facts.
+
+Prepared original development trace/artifact helpers and candidate11case corpus
+for scalar/qualified/hinted/dynamic/function/declared/raw metadata/core aliases
+and before/after declaration revisions. The candidate is UNVERIFIED, not an
+observed success. Root must run forced pinned compilation and actual Node
+artifact after explicit heavy-slot release, then native before/after regression.
+No production code or bootstrap inputs changed yet. Complete macro AST schema,
+evaluator retirement, target/dependency integration, rooted pending-I/O and
+live-heap accounting remain original M3 requirements. No closure/merge/completion.
+
+Prepared native eleven-case source-global regression in both caller Stores with
+GC, exact canonical suss.core name/ns adaptation for only the two core cases,
+old declaration revision versus live redefinition and effect-once assertions.
+Added strict observation checker with five corruption regressions: numeric1
+cannot replace true metadata, absence cannot hide a value, missing field/case
+cannot count as a complete observation. Focused checker TERMINAL0:5passed;
+full Python53460 TERMINAL0:123passed5.040s, command
+PYTHONPYCACHEPREFIX=/private/tmp/suss-global-reference-python-cache python3
+-m unittest discover -s scripts -p 'test_*.py'. Logs
+/private/tmp/suss-global-reference-{checker-tests,python}.log. These establish
+checker behavior, not actual upstream/native source-global acceptance.
+
+Root prepared an UNCOMPILED/UNEXECUTED production graph candidate in its separate
+owned tree. Source symbols with captured Global resolution copy the existing
+canonical declaration Recipe::Map and override op/name/ns in the copy. Global
+AST tag presence/value comes from that resolved info, including false; lexical
+source inference is unchanged. No HIR/runtime-value classification or source
+reexecution. Raw catalog metadata stays untouched. Native list heads remain
+invocation syntax. Compiler/core/reader/build/lock/bootstrap bytes unchanged.
+Restricted rustfmt edition2024 and diff checks pass, but no native test result
+is claimed. No new PR opened for this unvalidated increment.
+
+For actual before/after evidence once reviewer166 releases the sole heavy slot:
+1. Run CARGO_BUILD_JOBS=2 sh scripts/test-global-reference-asts-oracle.sh to actual
+terminal. Inspect genuine trace/artifact if the candidate corpus differs; do not
+weaken original assertions or manufacture success.
+2. Preserve /private/tmp/suss-global-reference-candidate-graph.rs; restore ONLY
+this root-owned tree's graph from /private/tmp/suss-global-reference-parent-graph.rs
+and run focused compiled_macro_global_reference_asts against parent behavior to
+actual terminal. No reviewer tree mutation or parallel Cargo/JVM/Node job.
+3. Reapply candidate only after that parent run is terminal, execute focused and
+affected source graph/binding/tag/local/scalar/environment/syntax-quote suites.
+Complete required fixes/evidence before opening any new PR. Dispatch independent
+review, push significant fixes, require unfiltered full baseline and exact
+final-head CI. PR183 e315 CI37196801835 and PR184 c0cca CI37198953826 last verified
+LIVE, both draft; PR184 full98577 actual LIVE, reviewer owns heavy slot.
+No milestone completion, issue closure or merge. Full source AST/constant-expression
+policy, evaluator retirement, dependency/target integration, rooted pending-I/O
+cancellation and code/live-heap accounting remain original M3 requirements.
+
+## Source-global executed evidence and bootstrap repair
+
+Reviewer166 full98577 actualTERMINAL0 at frozen c0cca867fa19becaf7d58494f7fb28fb97ac356b:
+1183/0/17existing ignores/0filtered across138groups through readerdoctests.
+Root independently counted complete local log and exactCI37198953826 workspace
+step with identical counts/required command; GH success/head verified, body updated,
+PR184 markedready and remainsopen. PR183 exacte315 CI37196801835 also succeeded;
+root counted only workspace step137/1181/0/17/0 (separatebootstrap4 is not fullsuite
+count), verifiedhead/open, updatedbody/markedready. Issue14 readiness comment
+https://github.com/bobby/suss/issues/14#issuecomment-5979801720. No merge/closure.
+
+Root global oracle33687 TERMINAL0:11fresh pinned traces/11actualNode projections.
+Initial native30250 TERMINAL1010/1/0/0 5.06s stopped at unimplemented publicsymbol
+helper, so did NOT prove missingvarfields. Passing unqualified catalog key as raw
+macroargument revalidated all11oracle observations82627 TERMINAL0. Native29036
+TERMINAL1010/1/0/0 4.98s then stopped at unimplemented mapv helper. Replaced only
+new projection helper with explicit same-field selections in BOTH versions; no
+expected field/value/presence removed. Fresh force/cache-disabled oracle13451
+TERMINAL0 again confirms all11traces/all11Node rows and effectonce/liveScalar.
+Logs /private/tmp/suss-global-reference-{oracle,oracle-fixed,oracle-projection}.log.
+Publicsymbol/mapv support remains unfinished, not claimed by this bounded fixture.
+
+Parent graph restored from owned backup for native57694 TERMINAL101:
+0passed/1failed/0ignored/0filtered; actual rows reveal absent var op/name/ns/info.
+/private/tmp/suss-global-reference-before-projection.log. Candidate reapplication
+native82146 TERMINAL1010/1/0/0 7.12s: first7cases pass, core identity doc field
+fails. Actual imported identity patch discarded upstream docstring. Repaired the
+provenance-tracked identity adaptation to retain original docstring/body; kept
+review status in-progress, extended evidence path, regenerated all274core import
+files/manifest (84257TERMINAL0). Imported byte changes require BOTH phase image
+pairs; generation88664 TERMINAL0 and Java-free reproduction99106 TERMINAL0 agree
+with current fingerprint, plus compiled-bootstrap4passed12.68s. Logs
+/private/tmp/suss-global-reference-{after,bootstrap,java-free}.log. Upstream source
+SHA4997a405f43df040b92909ac831f031385fd1ac86948cb1be06dd3529323504e and EPL
+notice/license preserved; generatedmanifest records new patch/adapted/profile hashes.
+
+Final affected15061 TERMINAL0:58passed/0failed/0ignored/0filtered across9groups
+(graph11/bindings8/scalars3/globals1/locals2/env3/tags2/syntaxquote11/core-import17).
+New11global projections execute in Runtime/Macrocaller Stores afterGC; namespace
+catalog rawmetadata staysoriginal, source revision stayscaptured and live values
+observe redefinition with initializationeffectonce. Added negative globalcallee
+invocation check; focused46997 TERMINAL0:1/0/0/0 11.33s, bothcaller phases afterGC,
+no falsevaridentity/constantvalue and call executesonce. Logs
+/private/tmp/suss-global-reference-{affected,invocation}.log. Full Python92195
+TERMINAL0:123passed5.271s; reviewoverlay371reviewed/694unassessed verified and
+core_import --check37760 TERMINAL0 all274filesverified. All currentroot heavy
+handles terminal. Restricted rustfmt2024 and gitdiffcheck pass; unrelated graph
+bytes unchanged outsideast_record.
+
+Next open draftglobalreference PR on184, Refs#14, dispatch independent review with
+fix/push/full/final-headCI responsibility. Root explicitly releases sole heavy slot
+on dispatch, no live rootCargo/JVM/Node job. Genuine field/quote/compound/invocation/
+children/constexpr and complete source declaration/function/method/inference
+schema remainopen, alongside evaluatorretirement, dependency/target policy and
+rootedpendingIO/cancel/code-liveheap originalM3 gates. No issueclosure/merge/goalcomplete.
+
+PR185 independent review: initial a7f794a8e5742f17cb93ae4854fa4def37347368,
+base184 c0cca867fa19becaf7d58494f7fb28fb97ac356b. Required fresh pinned script
+53632 TERMINAL0 revalidated all11 traces and all11 executing Node projections
+(/private/tmp/suss-pr185-review-oracle.log). Found a significant shallow-merge
+identity mismatch: resolved :info maps were structurally interned, but nested
+:meta was rematerialized instead of shared with the captured declaration revision.
+Fresh independent pinned identity22997 TERMINAL0 established exact outer-map
+freshness and nested sharing; its current asserted probe64564 TERMINAL0 confirms
+ordinary and top-fn-overlay rows. Original development probe is
+ tests/oracle/global-reference-identity-review-probe.clj; JVM remains oracle-only.
+
+Actual exact-expectation red83216 TERMINAL101:0/1/0/1filtered5.34s against initial
+production graph. It returned identical outer maps and nonidentical nested metadata.
+An initial new fixture expectation for current &env freshness was corrected only
+from the fresh pinned observation: its namespace snapshot retains the old record
+inside the enclosing let even though the runtime var changes. All original eleven
+projection cases and existing assertions remain intact. Additional top-fn overlay
+red76311 TERMINAL101:0/1/0/1filtered5.42s proved an early metadata barrier missed
+the final overlay. The final scoped repair allocates a fresh resolved outer map,
+shares final declaration :meta after overlays, and charges each new recipe against
+the aggregate graph node budget. It does not broaden general reader/value freshness.
+Logs /private/tmp/suss-pr185-review-{identity-exact-before,overlay-before}.log.
+
+Affected25954 TERMINAL0:63/0/0/0 across11 groups, including original metadata suites.
+After the final overlay repair, focused77290 TERMINAL0:globals2/hint-boundaries1
+all pass12.00s/14.54s; graph-unit72739 TERMINAL0:5/0/0/11filtered2.82s preserves
+reader callback count/order, occurrence effects and work-bound failure/recovery.
+Java-free70166 TERMINAL0 reproduces BOTH phase Wasm+JSON pairs byte-for-byte twice
+and executing bootstrap4 pass12.86s. CLI graph-only repair does not change compiler
+source identity; no reviewer regeneration required. Python77672 TERMINAL0:123pass
+4.984s; core_import --check verifies all274files; restricted rustfmt/diffcheck pass.
+Logs /private/tmp/suss-pr185-review-{affected-final,identity-final,graph-final,
+javafree,python,core-import,identity-oracle-final}.log. All these handles terminal.
+
+Freeze/push this review repair before the required exact unfiltered
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2. Full and exact final-head CI
+remain pending at this evidence commit; root must record their actual terminal
+counts and CI provenance before readiness. No merge/issue closure/M3 completion.
+Next unblocked task is faithful quote initializer AST records with fresh pinned
+projections and actual execution; complete field/compound/invocation/children AST
+schema, constexpr policy, evaluator retirement, dependency/target policy, rooted
+pending-I/O cancellation and live heap/code accounting remain open original gates.
+
+PR185 first review repair frozen003f6fad39cf237217a6ffbc2fc7e0929b691ebb passed
+actual unfiltered full32822 TERMINAL0 through readerdoctests:1185/0/17existingignored/
+0filtered across139groups (/private/tmp/suss-pr185-review-full-final.log). Its
+exactCI37203902681 was still workspace-running when a further significant actual
+cross-invocation identity defect was established; neither full nor that CI certifies
+the forthcoming repair head. Root fresh primary/Node2339 confirmed all4 original
+metadata rows [true,true,false,false], docs before/before/after/after and live17;
+root native47289 failed unchanged-revision identity. Independent native50071
+TERMINAL101 reproduced it against unchanged003f:0/1/0/0 in5.11s. Independent fresh
+forced/cache-disabled primary/Node48261 TERMINAL0 confirmed all4; expanded fresh
+primary28875 TERMINAL0 additionally confirms fresh outer-info identities across
+calls [true,false,false,false]. Scripts/test-global-reference-identity-oracle.sh
+is development-only; original4 row expectations and all existing assertions remain.
+Logs /private/tmp/suss-pr185-review-{cross-before,cross-oracle,cross-oracle-final}.log.
+
+Second scoped repair retains only final declaration metadata in its owning compiled
+Macro Store, keyed by actual Global plus DefinitionInfo Arc revision. Weak source
+owners prune expired revisions and prevent recycled identities; new/reset macro
+Stores start empty. No artifact cache identity or structural equality substitutes
+for a captured revision, and fresh outer :info maps never persist. Every source form
+and graph recipe is still constructed/validated/charged, and a bounded cold logical
+materialization-work preflight prevents warmed roots relaxing occurrence work limits.
+Sharing still respects independent reader callback construction/order elsewhere.
+No compiler/core/bootstrap-input change or shipped JVM dependency.
+
+Focused62990 TERMINAL0:22/0/0/0 across6groups (graph11/cross-call1/globals2/hints1/
+phase3/namespace4). Additional lifecycle92415 TERMINAL0:bindings8/repl6 all pass,
+including successful and failed two-Store reset. Final strengthened cross-call55108
+TERMINAL0:1/0/0/0 in12.03s, all four unchanged metadata rows in Runtime/Macrocaller
+Stores, old metadata after redefinition/callerGC, fresh outer info across calls,
+and sharing after reset. Graph unit83438 TERMINAL0:6/0/0/11filtered2.83s, all
+original5 assertions plus actual MacroStore GC, warm node/UTF16/work-bound failures,
+equal-data distinct revision identity, dead-owner pruning and recovery. Javafree34604
+TERMINAL0 reproduces BOTH phase Wasm+JSON pairs byteexact twice and bootstrap4pass
+12.70s; CLI-only source leaves compileridentity unchanged. Python21885 TERMINAL0:
+127pass4.801s; core-import check verifies274files. All focused handles terminal.
+Logs /private/tmp/suss-pr185-review-{retention-focused,retention-lifecycle,cross-final,
+retention-graph-final,retention-javafree,retention-python,retention-core-import}.log.
+
+Freeze/push this second review repair before rerunning the required unfiltered
+cargo test --workspace --locked -- --test-threads=2 with sharedtarget/jobs2. Exact
+new-head full and CI remain pending at this evidence commit; root records actual
+terminal counts before readiness. No PR merge, issue closure or M3 completion.
+Next quote-AST increment remains blocked on this repaired parent and its own fresh
+pinned/native regressions. Complete AST/children/constexpr, source declarations,
+evaluator retirement, dependency/target policies, rooted pending-I/O cancellation
+and live heap/code accounting remain open original M3 requirements.
+Final Python89611 TERMINAL0 reran127checks4.673s after the strengthened oracle
+helper; /private/tmp/suss-pr185-review-retention-python-final.log. Restricted
+rustfmt applies only the new regression/unit block, with diffcheck clean.

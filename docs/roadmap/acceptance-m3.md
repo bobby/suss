@@ -102,3 +102,12 @@ fresh pinned observations and both caller-phase native execution. This narrows
 the unfinished reference schema; global/field references and full portable AST
 schema remain open. It does not change any original M3 acceptance requirement.
 See [scope/evidence](../runtime/compiled-macro-local-reference-asts.md).
+
+Resolved global-symbol ASTs now retain genuine operation/name/namespace/info from
+captured declaration revisions, with eleven exact fresh pinned/executed projections
+and native GC/effect evidence in both caller phases. This narrows the unfinished
+reference schema; field/quote/compound/invocation/children and complete portable
+source records remain open. The identity docstring mismatch was repaired in the
+provenance-tracked source adaptation, with both phase images regenerated. Full
+review/baseline/final CI remain required for this new increment. No original M3
+gate is removed; see [scope/evidence](../runtime/compiled-macro-global-reference-asts.md).

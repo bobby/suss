@@ -820,3 +820,13 @@ initializer replay. [Scope and provenance](../runtime/compiled-macro-local-refer
 remain partial: global/field/quote/compound/invocation/children and complete source
 AST acceptance are open, as are the other original M3 gates. Independent review,
 full workspace baseline and final-head CI are required for the new increment.
+
+[Global source ASTs](../runtime/compiled-macro-global-reference-asts.md) now copy
+captured resolved declaration revisions into `:var` identity/info records without
+changing namespace catalog metadata. Eleven fresh pinned and executed projections
+match native queries in both caller phases after GC, including core aliases,
+raw metadata overrides and old/new declarations. The actual identity patch now
+retains its upstream docstring; both bootstrap phase pairs were regenerated and
+reproduced without Java. All58affected native and123Python checks pass; independent
+review, unfiltered full baseline and exact final-head CI remain required. Complete
+AST/constant-expression policy and all original M3 requirements remain open.

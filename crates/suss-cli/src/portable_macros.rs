@@ -1,7 +1,7 @@
 //! Source macro functions execute in a separate compiled phase Store.
 use crate::{
     portable_macro_data::FormBridge,
-    portable_macro_graph::AnalysisGraph,
+    portable_macro_graph::{AnalysisGraph, DeclarationValues},
     portable_session::{Session, SessionError, SessionValue},
 };
 use std::collections::{BTreeMap, BTreeSet};
@@ -10,6 +10,7 @@ use suss_reader::forms::{Form, Kind, read_forms};
 pub struct CompiledMacros {
     session: Session,
     bridge: FormBridge,
+    declaration_values: DeclarationValues,
     definitions: BTreeMap<(String, String), SessionValue>,
     declaration_sources: BTreeMap<(String, String), String>,
     loaded_sources: BTreeMap<String, String>,
@@ -63,6 +64,7 @@ impl CompiledMacros {
         Ok(Self {
             session,
             bridge,
+            declaration_values: Default::default(),
             definitions: BTreeMap::new(),
             declaration_sources: BTreeMap::new(),
             loaded_sources: BTreeMap::new(),
@@ -210,6 +212,7 @@ impl CompiledMacros {
         Ok(Self {
             session,
             bridge,
+            declaration_values: Default::default(),
             definitions: BTreeMap::new(),
             declaration_sources: BTreeMap::new(),
             loaded_sources: BTreeMap::new(),
@@ -432,8 +435,9 @@ impl ExpansionHost for CompiledMacros {
             let caller_data = context.origin.map_or_else(|| Ok(form.clone()), |origin| origin.macro_form_data(form))
                 .map_err(SessionError::Compile)?;
             let caller_form = self.bridge.quote(&mut self.session, caller_data.clone())?;
-            let caller_environment = AnalysisGraph::new(&self.bridge, &mut self.session)
-                .expansion(context)?;
+            let caller_environment = AnalysisGraph::with_declaration_values(
+                &self.bridge, &mut self.session, &mut self.declaration_values,
+            ).expansion(context)?;
             let mut arguments = vec![caller_form, caller_environment];
             let Kind::List(caller_items) = &caller_data.kind else { unreachable!("matched macro call") };
             for argument in &caller_items[1..] {

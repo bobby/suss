@@ -9,7 +9,7 @@
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
   "recipe-sha256": "79383adb9a2784baac0b8e7650f5ecc23ab1a620c116d42e14b25830c3770485",
-  "reviews-sha256": "8a4ba1796d6bbc2b3adbccb5a914dbf5ff395723ba6fcc741b7a30b9b923ad18",
+  "reviews-sha256": "46a83a4a83a6064406b493fd392b6d5029bdf94c0b39e76c113da893618e8c1e",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -28,15 +28,16 @@
       "extracted": "extracted/0000.cljs",
       "extracted-sha256": "fe594689bf27c99c119f86d1ecf12f5a7de68d754e7490e114e71239ab877fb0",
       "patch": "docs/compatibility/patches/identity.json",
-      "patch-sha256": "6be6400fbac59ecf88e31c181e5de4a9759f58568e459eb862effbfa2013aa3c",
-      "adapted-form-sha256": "aa3bfc2605eb14e5f01919c04c1048f54d91b456acba3db2831faceeff9f351d",
+      "patch-sha256": "34d2e00c514cef0c72a767ff3e80ab1ca81291c7c123cc2953f642ac4031e2e4",
+      "adapted-form-sha256": "7fa2aa4be69f3e64b67d14cefd126249e177bafdec7fc50e6afeb766a73b75d5",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
       "dependencies": [],
       "semantic-tests": [
         "crates/suss-cli/tests/core_import.rs",
-        "scripts/test_core_import.py"
+        "scripts/test_core_import.py",
+        "crates/suss-cli/tests/compiled_macro_global_reference_asts.rs"
       ]
     },
     {
@@ -8676,6 +8677,6 @@
     "extracted/0267.cljs": "c5eb428571378eeaf54c7b259ffe4b4414b9fdb5939bf72f9d952e36633d8f44",
     "extracted/0268.cljs": "e8e06c108ba48615b1df252d66bcda82f72229e1d8b34eae7b71578df5398fb5",
     "extracted/0269.cljs": "fd4ddae696e1e5560ef7b70964892b8ad138bc2539bec694839cdef2e8c30d0d",
-    "suss/core.sus": "858071073477634c6d3a296a50a83a2fe459bc999a8a58c6029afd5e503c74ab"
+    "suss/core.sus": "951f10ae94c559496026e687476d4902e483b958fdbdc2c4e7e993c37431565a"
   }
 }
