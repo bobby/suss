@@ -728,3 +728,11 @@ bootstrap4 and Python118 pass. Independent review/full baseline/final-head CI
 remain required. Interface types/external-id, complete WIT/frontends and M3
 acceptance remain open; no core declaration is reclassified. See
 [AOT components](../runtime/compiled-aot-components.md).
+
+Independent exported-interface review repaired named-alias `implements` metadata
+and rejects function external IDs instead of silently dropping them. All thirteen
+compiler AOT tests pass, including parsed-binary canonical-version assertions and
+actual alias execution. Named aliases require Wasmtime's component-model implements
+feature; the CLI component runner enables it. Full baseline and repaired-head CI
+remain pending. Interface types, external IDs, imports and complete M3 acceptance
+remain open; see [AOT components](../runtime/compiled-aot-components.md).

@@ -23,6 +23,7 @@ enum PublicExport {
     },
     Interface {
         name: String,
+        implements: Option<String>,
         functions: Vec<(String, u32)>,
     },
 }
@@ -130,6 +131,11 @@ pub fn component(
     let mut used = std::collections::BTreeSet::new();
     let mut add_function =
         |name: String, function: &wit_parser::Function| -> Result<u32, Diagnostic> {
+            if function.external_id.is_some() {
+                return Err(error(
+                    "Portable AOT function external-id adapters remain unimplemented",
+                ));
+            }
             if function.kind != FunctionKind::Freestanding {
                 return Err(error(
                     "Portable AOT async/resource function adapters remain unimplemented",
@@ -191,7 +197,11 @@ pub fn component(
                     let index = add_function(format!("{name}#{function_name}"), function)?;
                     functions.push((function_name.clone(), index));
                 }
-                public_exports.push(PublicExport::Interface { name, functions });
+                public_exports.push(PublicExport::Interface {
+                    name,
+                    implements: resolve.implements_value(key, item),
+                    functions,
+                });
             }
             WorldItem::Type { .. } => {
                 return Err(error("Portable AOT type exports remain unimplemented"));
@@ -287,14 +297,28 @@ pub fn component(
             PublicExport::Function { name, index } => {
                 public.export(&name, ComponentExportKind::Func, index, None);
             }
-            PublicExport::Interface { name, functions } => {
+            PublicExport::Interface {
+                name,
+                implements,
+                functions,
+            } => {
                 let index = exported_instances.len();
                 exported_instances.export_items(
                     functions.iter().map(|(name, function)| {
                         (name.as_str(), ComponentExportKind::Func, *function)
                     }),
                 );
-                public.export(&name, ComponentExportKind::Instance, index, None);
+                public.export(
+                    ComponentExternName {
+                        name: name.as_str().into(),
+                        implements: implements.as_deref().map(Into::into),
+                        version_suffix: None,
+                        external_id: None,
+                    },
+                    ComponentExportKind::Instance,
+                    index,
+                    None,
+                );
             }
         }
     }

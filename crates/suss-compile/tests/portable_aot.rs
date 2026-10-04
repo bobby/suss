@@ -20,6 +20,7 @@ fn engine() -> Engine {
                 .wasm_tail_call(true)
                 .wasm_exceptions(true)
                 .wasm_component_model(true)
+                .wasm_component_model_implements(true)
                 .consume_fuel(true)
                 .cranelift_opt_level(wasmtime::OptLevel::None);
             Engine::new(&config).unwrap()
@@ -731,6 +732,25 @@ fn exported_interfaces_keep_names_versions_shared_cells_and_source_effects() {
         ],
     )
     .unwrap();
+    let mut implements = std::collections::BTreeMap::new();
+    for payload in wasmparser::Parser::new(0).parse_all(&bytes) {
+        if let wasmparser::Payload::ComponentExportSection(section) = payload.unwrap() {
+            for export in section {
+                let export = export.unwrap();
+                implements.insert(
+                    export.name.name.to_owned(),
+                    export.name.implements.map(str::to_owned),
+                );
+            }
+        }
+    }
+    assert_eq!(
+        implements["renamed"].as_deref(),
+        Some("test:interfaces/math@1.2.3")
+    );
+    assert_eq!(implements["test:interfaces/math@1.2.3"], None);
+    assert_eq!(implements["alias"], None);
+    assert_eq!(implements["empty"], None);
     let mut imports = 0;
     for payload in wasmparser::Parser::new(0).parse_all(&bytes) {
         if let wasmparser::Payload::ComponentImportSection(section) = payload.unwrap() {
@@ -943,6 +963,49 @@ fn reviewed_interface_wrappers_preserve_live_cells_void_effects_and_boundary_pay
         assert_eq!(
             String::from_utf16(&units).unwrap(),
             "WIT export api#bad returned an incompatible scalar value"
+        );
+    }
+}
+
+#[test]
+fn exported_function_external_ids_are_rejected_without_silent_loss() {
+    let fragment =
+        portable::prepare_fragment("(def f (fn [] 1))", &Environment::default(), Phase::Runtime)
+            .unwrap();
+    for (wit, path) in [
+        (
+            "package test:annotations; world api { @external-id(\"urn:test:f\") export f: func() -> u32; }",
+            "f",
+        ),
+        (
+            "package test:annotations; world api { export api: interface { @external-id(\"urn:test:f\") f: func() -> u32; } }",
+            "api#f",
+        ),
+    ] {
+        let (resolve, selected) = world(wit);
+        let annotated = resolve.worlds[selected]
+            .exports
+            .values()
+            .find_map(|item| match item {
+                wit_parser::WorldItem::Function(function) => function.external_id.as_deref(),
+                wit_parser::WorldItem::Interface { id, .. } => {
+                    resolve.interfaces[*id].functions["f"]
+                        .external_id
+                        .as_deref()
+                }
+                _ => None,
+            });
+        assert_eq!(annotated, Some("urn:test:f"));
+        let error = portable::aot::component(
+            std::slice::from_ref(&fragment),
+            &resolve,
+            selected,
+            &[(path.into(), Symbol::new("f"))],
+        )
+        .unwrap_err();
+        assert_eq!(
+            error.message,
+            "Portable AOT function external-id adapters remain unimplemented"
         );
     }
 }

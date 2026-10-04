@@ -45,6 +45,7 @@ fn compiled_macro_source_expands_into_an_executable_component_without_replay() {
         .wasm_tail_call(true)
         .wasm_exceptions(true)
         .wasm_component_model(true)
+        .wasm_component_model_implements(true)
         .consume_fuel(true)
         .cranelift_opt_level(wasmtime::OptLevel::None);
     let engine = Engine::new(&config).unwrap();

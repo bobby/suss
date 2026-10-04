@@ -14849,3 +14849,56 @@ Full and new exact-head CI remain pending at this record. No readiness, merge,
 issue closure or M3 completion is claimed. Interface types/external-id/imports,
 full selected-WIT/frontends/evaluator/published-loader and scheduler/cancellation/
 live-heap acceptance remain original open scope.
+
+## PR176 reopened review: preserve WIT annotation semantics
+
+Further independent review supersedes the initial no-finding assessment above.
+Pinned wit-parser0.258 Resolve::implements_value and wit-component0.258 encoding
+show that named interface aliases carry their canonical interface ID as an
+implements annotation. The emitter dropped it. It also silently dropped actual
+pinned-parser @external-id annotations on functions. Controlled20313 TERMINAL101
+(/private/tmp/suss-pr176-annotations-before.log):1passed/2failed; binary alias
+annotation was None instead of test:interfaces/math@1.2.3, and an annotated
+freestanding function incorrectly returned an artifact. All parent assertions
+remain intact. The first misplaced assertion attempt53826 ran only the unchanged
+interface case and passed; it is not before-failure evidence.
+
+Required full96846 was authoritatively cancelled TERMINAL130 for this production
+repair. It is incomplete and supplies no final-head baseline proof. The old6629586
+CI is likewise old-source evidence only. No merge or readiness is claimed.
+
+Original Rust repair preserves Resolve::implements_value in ComponentExternName
+for named aliases and explicitly rejects function external IDs in both standalone
+and interface locations before emission. Parsed binary checks independently
+assert the exact versioned implements value and absence on canonical/inline/empty
+exports; original typed alias calls execute. Both actual pinned annotation fixtures
+confirm the parser retained external-id before checking the explicit diagnostic.
+No upstream core forms are ported; shared ABI/GC layout remains unchanged.
+
+Repair23233 TERMINAL101:12pass/1fail exposed Wasmtime's default-disabled
+cm-implements capability. Enable Config::wasm_component_model_implements(true)
+in the actual CLI component runner and AOT test engines; expectations were not
+weakened. Repair50160 TERMINAL0:all13compiler tests pass1.85s.
+Command: CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test -p suss-compile --locked --test portable_aot -- --test-threads=2.
+Logs /private/tmp/suss-pr176-annotations-fixed{,-engine}.log.
+
+Both bootstrap Wasm/JSON regenerated68363 TERMINAL0 using cargo run --profile test
+-p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap. Earlier70907 also
+terminated0 before a requested interruption; the focused final source was regenerated
+again after removing incidental recursive CLI rustfmt changes. Java-free55069
+TERMINAL0 with checkout-independent compiled identity, byte-exact regeneration
+of both phases twice and bootstrap4/0/0 in12.85s. Command sh scripts/verify-bootstrap.sh
+with the same shared target/jobs2, never RUSTFLAGS.
+CLI22852 TERMINAL0:61/0/0 across4/1/10/3/6/4/33groups, using the same seven root
+CLI suites listed above. Compiler96225 TERMINAL0:binding4/module11, unchanged
+assertions. Logs /private/tmp/suss-pr176-annotations-{regen-final,javafree,cli,bindings}.log.
+Python12542 TERMINAL0:118tests in4.973s, /private/tmp/suss-pr176-annotations-python.log.
+Target source worktree stayed exclusive throughout; no heavy worktree switch.
+
+Next freeze/push repaired source, run the required unfiltered
+cargo test --workspace --locked -- --test-threads=2 and poll its actual handle to
+terminal. A successful exact repaired-head CI remains a separate gate. Refs #14
+is partial progress; interface types/external IDs/imports, complete selected-WIT,
+frontends/evaluator retirement/published dependencies and scheduler/cancellation/
+live heap acceptance remain open. No merge or M3 completion is authorized.

@@ -17,6 +17,7 @@ fn engine() -> Engine {
                 .wasm_tail_call(true)
                 .wasm_exceptions(true)
                 .wasm_component_model(true)
+                .wasm_component_model_implements(true)
                 .consume_fuel(true)
                 .cranelift_opt_level(wasmtime::OptLevel::None);
             Engine::new(&config).unwrap()
