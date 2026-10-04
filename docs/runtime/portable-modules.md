@@ -5,8 +5,11 @@ discovers and compiles an immutable source dependency graph. It returns a
 dependency-first `ModulePlan` with validated Wasm, exact source snapshots, paths,
 phase-qualified module identities, dependencies, staged declarations and cell
 identities. It executes no initializer and never mutates the supplied Environment.
-This compiler API is groundwork for persistent compiled clients; the native [session host](portable-session.md) now consumes these plans; production
-command/AOT/REPL frontends still need migration.
+The native [session host](portable-session.md), command REPL and native source
+AOT routes consume these plans. See [the persistence/namespace acceptance
+audit](m3-session-acceptance.md) for current executing evidence. Historical
+progress notes below preserve earlier implementation boundaries; complete macro
+evaluator retirement and lifecycle work remain open.
 
 ## Discovery and compilation
 

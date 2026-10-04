@@ -16355,6 +16355,7 @@ Final Python89611 TERMINAL0 reran127checks4.673s after the strengthened oracle
 helper; /private/tmp/suss-pr185-review-retention-python-final.log. Restricted
 rustfmt applies only the new regression/unit block, with diffcheck clean.
 
+
 ## Quote source AST preparation while PR185 is reviewed
 
 Global increment committed a7f794a8e5742f17cb93ae4854fa4def37347368, draftPR185
@@ -16826,3 +16827,168 @@ review head, then run the exact unfiltered cargo test --workspace --locked
 -- --test-threads=2 through reader doctests and verify exact final-head CI.
 Those terminal results are not claimed here. PR187 stays draft; no merge,
 issue closure or original M3 completion.
+
+
+## Issue12/13 consolidated acceptance audit, isolated draft
+
+Created portable/m3-session-acceptance at merged main1f724f0 in
+/private/tmp/suss-m3-session-acceptance. No implementation or architecture change.
+`git diff --quiet fdcfa45af13cade8a56ddd09da4e0b7dd41c2e4d
+1f724f02fccfd2e18506b1c754d34ffece5ac886` returned0, confirming exact reviewed tree
+identity. `gh run view 37207313040 --repo bobby/suss --json headSha,status,conclusion`
+returned completed/success at fdcfa. Inspected complete saved full log individual
+persistence/namespace/module/phase/AOT results, not just totals. Added acceptance
+matrix docs/runtime/m3-session-acceptance.md and corrected stale top-level
+portable-session/module frontend descriptions. Historical evidence remains intact.
+
+Mapped explicit issue12/13 criteria and referenced design namespace contract to
+actual executed atom/closure/initializer/ABI/reload/failure/diagnostic/source-path/
+alias/refers/renames/exclusions/phase/qualified access tests. Discovery and source
+environment observations are distinguished from actual execution. Current main
+fulfills these mapped criteria in the reviewed baseline, but this draft still
+needs focused final-candidate acceptance, independent PR review/full/finalCI
+before a closure PR is ready. No issues closed or roadmap completion marked.
+
+Reviewer187 owns exclusive field tree and sole heavy slot: fresh oracle72913
+terminal0, focused66526 terminal0(7passes/fivegroups), checkpoint c0665d9 pushed,
+required full25885 confirmed live. Root starts no competing Cargo/JVM/Node job.
+PR186 CI37215760647 still in_progress at cb8441c (bootstrap step succeeded),
+so no readiness or merge. Next continue acceptance preparation or next source AST
+oracle while review runs, then execute focused issue commands when slot releases.
+Full M3 remains active, including #14/#15 original evaluator/cache/schema/
+pendingIO/cancellation/liveheap requirements.
+
+
+### Cross-frontend namespace acceptance regression prepared, unexecuted
+
+Added original compiled_namespace_acceptance.rs. Identical .cljs/.sus/.cljc files
+run via shipped REPL and native namespace AOT, with actual component instantiation
+and calls before/after GC. Combined Runtime/Macro alias d, refers/renames in both
+phases and within macro source, excluded + overridden by user code, canonical core
+alias and first textual matching conditional branch require exact53/57 results.
+This is a new unexecuted coverage candidate, not proof of a defect or success.
+No Cargo/JVM/Node run while reviewer187 owns full25885. Next run this candidate and
+issue-specific filters after explicit heavy-slot release, fix significant observed
+failures, and update acceptance/docs/issueclosure judgment from actual results.
+
+
+### Acceptance audit correction: public legacy namespace path remains
+
+Inspected actual merged source beyond native command tests. Public
+Compiler::compile_with_namespaces uses DependencyResolver and expand::expand_all;
+Namespace::ns_to_path searches only .sus and returns first existing root candidate.
+This differs from design3 extension/ambiguity policy. Existing native .cljs/.cljc/
+ambiguity successes do not prove this public entry point. Added explicit remaining
+path to acceptance record: no full #13 closure claim until migration/retirement and
+actual boundary acceptance. Public compiler core/expression/WIT/file/project/main
+methods also call production MacroEvaluator through expand::expand_all. Optional
+wasm component CLI imports evaluator WIT; build/runtime viability is unexecuted,
+not inferred from source. Do not relabel these paths as test-only or retired.
+
+Next execute prepared native cross-frontend candidate after review slot releases,
+then continue required public entry-point migration/evaluator retirement with the
+same portable resolver and isolated compiled expansion host. Source paths alone
+cannot be claimed as acceptance or bypassed by deleting tests. The original M3
+scope remains intact; native explicit criterion evidence and outstanding broader
+public interface contract are recorded separately.
+
+
+### PR186 final exact CI verified
+
+Exact CI37215760647 completed/success at unchanged reviewed cb8441c. Downloaded
+complete log /private/tmp/suss-pr186-ci-complete.log and isolated workspace step
+/private/tmp/suss-pr186-ci-workspace.log. Root verified141groups/1190passed/0failed/
+17ignored/0filtered/0measured, exact unfiltered command and all four doctest groups
+through reader. Initial doctest-header matcher failed because GH renders ANSI as
+literal ^[[...m; inspected raw headers and stripped only those formatting sequences
+for matching. Counts were correct before and after. No test/log content altered.
+Local reviewer full16793 independently matched same counts; finalhead unchanged.
+PRbody updated and ready transition authorized; no merge or issue closure.
+
+
+### Legacy Compiler caller census
+
+`rg -l 'Compiler::new\(|compile_with_namespaces\(|compile_expr_cached\('
+crates --glob '*.rs'` identifies compile_expr/component/conformance/oracle/
+toolchain_profile integration tests, compile unit/docs, performance benchmark,
+examples/test_compile.rs and CLI session.rs (test-only via main's cfg(test)).
+This scoped search is a caller map, not an exhaustive runtime reachability proof.
+Benchmark/example callers also need consideration during public API migration;
+no tests can be hidden/skipped or old semantic/failure observations weakened to
+claim evaluator retirement. Acceptance audit now records this boundary explicitly.
+Reviewer187 still owns full25885, now portable sequence groups; root no heavy job.
+Prepared native namespace regression remains pending actual execution.
+
+
+### Namespace combination executes; field full baseline independently verified
+
+Reviewer187 full25885 actual terminal0 released sole slot after all doctests.
+Root independently parsed complete log:142groups/1191passed/0failed/17ignored/
+0measured/0filtered, all four doctest headers. Exact CI37218388969 remains pending
+on c0665d9; no readiness or merge. Root then ran
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-cli --locked --test compiled_namespace_acceptance -- --test-threads=2.
+Handle79455 actual terminal0:1passed/0failed/0ignored/0filtered in10.86s,
+log /private/tmp/suss-m3-namespace-acceptance-initial.log. Same .cljs/.sus/.cljc
+namespace source executes53/57 via native prompt and actual AOT component, including
+post-GC call; combined alias/refers/rename/exclusion/phase/conditional decisions
+are executed rather than inferred from shared code. No production source change.
+Public legacy .sus-first-match API/evaluator gap remains, so no #13 closure.
+Next issue-specific focused filters and review/full/CI for a partial acceptance
+PR; source collection primary probe runs separately only after this handle ended.
+
+
+### Issue-specific focused acceptance commands terminated
+
+Persistent82486 actual terminal0:29passed/0failed/0ignored/0measured/494filtered
+in104groups from cargo test -p suss-cli --locked persistent_session --
+--test-threads=2. Namespace88675 actual terminal0:19passed/0failed/
+0ignored/0measured/504filtered in104groups from the corresponding
+namespace_session filter. Logs /private/tmp/suss-m3-persistent-acceptance-focused.log
+and /private/tmp/suss-m3-namespace-acceptance-focused.log. These are explicitly
+focused, not unfiltered baseline totals; private ABI/module/AOT checks are mapped
+separately. All root Cargo handles terminal. New combined REPL/AOT test also passed.
+No public legacy migration or issue closure is inferred from these native successes.
+Next commit/open partial acceptance PR with Refs#12/#13, independent review/full/
+exactCI; original broader namespace and evaluator requirements remain outstanding.
+
+### Persistence and namespace acceptance PR preparation
+
+Acceptance branch portable/m3-session-acceptance is stacked on reviewed PR187
+c0665d97d1ec86d9b7be5d53c1bc9e851b582945. Preserved both upstream quote/field
+evidence and this acceptance audit when resolving the append-only handoff conflict.
+Post-rebase compiled_namespace_acceptance handle18382 terminated0: one passed,
+zero failed/ignored/filtered in10.39s; full log
+/private/tmp/suss-m3-namespace-acceptance-rebased.log. Earlier focused acceptance
+commands passed29 persistence and19 namespace tests; these remain filtered results,
+not an unfiltered baseline. This partial PR uses Refs#12/#13 and does not close
+either issue or claim the public legacy resolver/evaluator has migrated. Next
+independent review, significant fixes, complete unfiltered baseline and final-head CI.
+
+Collection source AST parent probe31078 terminated101. The new macro projection
+fixture fails compilation with Unresolved Macro name vector, before its semantic
+assertions execute; this is not evidence of the anticipated collection AST defect.
+Log /private/tmp/suss-collection-ast-native-parent.log is retained. Next repair the
+fixture using supported constructs without changing verified oracle observations,
+then obtain actual parent semantic failure before implementing source-child capture.
+
+MLIR investigation is filed separately as issue188 in M4. No compiler-framework
+migration or M3 acceptance change is authorized by that evaluation issue.
+
+
+### PR189 independent review checkpoint
+
+Exclusive review worktree /private/tmp/suss-pr189-review at d48af03 checked the
+actual combined regression, issue12/13 bodies, accepted design3/7 and legacy
+Compiler resolver/expander call sites. No significant scoped finding. Corrected
+one audit attribution: the .sus-only first-match resolver is Compiler::ns_to_path,
+not Namespace::ns_to_path. The remaining public resolver/evaluator gap is retained;
+Refs only, no issue closure or milestone completion. No production/bootstrap changes.
+
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-cli --locked --test compiled_namespace_acceptance -- --test-threads=2
+handle2979 reached actual terminal0:1passed/0failed/0ignored/0measured/0filtered,
+10.40s. Log /private/tmp/suss-pr189-review-focused.log. Next freeze/push the review
+head, execute required cargo test --workspace --locked -- --test-threads=2 through
+all doctests and independently verify exact final-head CI. Reviewer retains sole
+heavy slot until explicit release. No merge or readiness claimed here.
