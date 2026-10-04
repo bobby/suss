@@ -213,7 +213,18 @@ fn compiler_macro_binding_records_preserve_parameter_roles_catches_and_lowered_l
         assert!(i.initializer.is_some());
         let caught = &snapshot(&host, "catch")["x"];
         assert_eq!(caught.kind, LocalKind::Catch);
-        assert!(caught.initializer.is_none());
+        let initializer = caught.initializer.as_ref().expect("actual catch payload initializer");
+        let source = initializer.source.as_ref().expect("original analyzed private local");
+        let portable::hir::SourceBinding::Local(payload) = source.resolved.as_ref().unwrap() else {
+            panic!("catch payload local required")
+        };
+        let portable::hir::SourceRole::CatchBinding { hidden, .. } = &caught.source_role else {
+            panic!("source catch alias required")
+        };
+        assert!(std::sync::Arc::ptr_eq(&payload.identity, &hidden.identity));
+        assert_eq!(payload.id, caught.id);
+        assert!(matches!(initializer.kind, Expression::Local(id) if id == hidden.id));
+        assert_eq!(source.context, portable::AnalysisContext::Expression);
         assert_eq!(
             caught.shadow.as_ref().unwrap().id,
             snapshot(&host, "restored")["x"].id

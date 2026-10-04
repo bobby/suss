@@ -86,6 +86,12 @@ any release gate complete.
   Retained persistent/transient set and KeySeq prerequisites now have 39 fresh pinned observations agreeing with independently decoded native values in both Stores. Canonical namespace `:excludes` sets, textual literal order, HAMT size thresholds and captured set reconstruction after class redefinition have executing regressions. Public empty/vec helpers, generic ES6/printing, full portable environment schema remain pending; the set prerequisite full baseline passes998/0/17; no issue is complete.
   Compiler namespace graphs now preserve the six ordinary/macro require, use and rename maps, including explicit unchanged-name and dual-role referrals. Fresh pinned observations preserve nullable shape and presence for18 fields; independently decoded native queries match in both phases after GC. Default/reload/implicit namespace policy and full portable declaration/AST/inference remain open; source invocation passes this namespace data as &env ([namespace data](docs/runtime/compiled-macro-namespace-data.md)).
   Source macros now receive implicit &form/&env in every signature. Three executing regressions inspect lexical init/shadow/context, function scope, and staged namespace snapshots in both phases; three shared fresh pinned projections match native execution. Actual definition forms and analysis completion are retained separately from runtime initialization. Full portable declaration/AST/inference, &form metadata and bootstrap remain open; see [source environments](docs/runtime/compiled-macro-source-environment.md).
+  Genuine control source analysis now retains conditional/recur/throw operands,
+  binding declarations and analyzed function/try bodies before lowering. Fifteen
+  selected primary/native cases pass in both caller phases after GC, with an
+  explicit compiler-private catch-name correspondence. Full schemas/inference,
+  evaluator retirement and milestone acceptance remain open; see
+  [control source ASTs](docs/runtime/compiled-macro-control-source-asts.md).
 - **M3-04 — Session lifecycle and interruption** (in-progress). Define reset, roots, code residency and cancellation while interactive I/O is pending. Native session reset/owned handles/fuel recovery/residency counters now have executing evidence; interactive cancellation and live heap accounting remain.
 
 Source inference now matches 32 selected pinned observations and 11 executed

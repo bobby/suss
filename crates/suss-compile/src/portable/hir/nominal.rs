@@ -1008,7 +1008,7 @@ impl Analyzer<'_> {
                     for signature in signatures {
                         // Pinned core.cljc adapt-obj-params anchors this-as outside
                         // the loop, with only user parameters replaced by recur.
-                        let implementation = self.fixed_function_fields(
+                        let (implementation, _) = self.fixed_function_fields(
                             method_form,
                             signature,
                             true,
@@ -1168,7 +1168,7 @@ impl Analyzer<'_> {
                                 "Extension arity is not declared by this protocol",
                             )
                         })?;
-                    let implementation = self.fixed_function_fields(
+                    let (implementation, _) = self.fixed_function_fields(
                         method_form,
                         signature,
                         true,

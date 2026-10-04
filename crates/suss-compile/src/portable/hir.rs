@@ -452,6 +452,8 @@ pub struct SourceCallable {
 }
 #[derive(Debug, Clone)]
 pub struct SourceMethod {
+    pub form: Form,
+    pub declarations: Vec<LocalBinding>,
     pub parameters: Vec<Parameter>,
     pub variadic: bool,
     pub body: std::sync::Arc<Hir>,
@@ -467,7 +469,7 @@ impl SourceCallable {
         })
     }
 }
-/// Original collection entries retained before constructor/factory lowering.
+/// Original analyzed operands and declarations retained before lowering.
 /// Quoted data constructors do not create expression child records.
 #[derive(Debug, Clone)]
 pub enum SourceNode {
@@ -475,6 +477,24 @@ pub enum SourceNode {
     Map(std::sync::Arc<[Hir]>),
     Set(std::sync::Arc<[Hir]>),
     Do { statements: std::sync::Arc<[Hir]>, result: std::sync::Arc<Hir> },
+    If {
+        condition: std::sync::Arc<Hir>,
+        consequent: std::sync::Arc<Hir>,
+        alternative: std::sync::Arc<Hir>,
+    },
+    Bindings {
+        is_loop: bool,
+        bindings: std::sync::Arc<[LocalBinding]>,
+        body: std::sync::Arc<Hir>,
+    },
+    Recur(std::sync::Arc<[Hir]>),
+    Throw(std::sync::Arc<Hir>),
+    Try {
+        body: std::sync::Arc<Hir>,
+        handler: std::sync::Arc<Hir>,
+        cleanup: Option<std::sync::Arc<Hir>>,
+        payload: Option<std::sync::Arc<LocalBinding>>,
+    },
     Assign { target: std::sync::Arc<Hir>, value: std::sync::Arc<Hir> },
     Invoke { callee: std::sync::Arc<Hir>, arguments: std::sync::Arc<[Hir]> },
     WithMeta {
@@ -624,6 +644,7 @@ struct Analyzer<'a> {
     source_callables: Vec<Option<std::sync::Arc<SourceCallable>>>,
     source_nodes: Vec<Option<std::sync::Arc<SourceNode>>>,
     callable_keys: BTreeMap<Global, Hir>,
+    catch_aliases: Vec<(Form, std::sync::Arc<LocalBinding>)>,
     target: Option<(LoopId, usize)>,
 }
 impl Analyzer<'_> {
@@ -681,6 +702,29 @@ impl Analyzer<'_> {
     }
     fn form(&mut self, form: &Form) -> Result<Hir, Diagnostic> {
         self.form_in(form, super::AnalysisContext::Expression, false)
+    }
+    fn analyzed_body(
+        &mut self,
+        forms: &[Form],
+        span: Range<usize>,
+        context: super::AnalysisContext,
+        tail: bool,
+    ) -> Result<Hir, Diagnostic> {
+        // Analyzer-generated do syntax has genuine source facts and context,
+        // while its children retain their ordinary bounded analysis frames.
+        // Do not charge an additional source nesting level for this wrapper.
+        let mut body_forms = vec![Form {
+            kind: Kind::Symbol(suss_reader::Symbol { namespace: None, name: "do".into() }),
+            span: span.clone(), metadata: vec![],
+        }];
+        body_forms.extend_from_slice(forms);
+        let body_form = Form { kind: Kind::List(body_forms), span, metadata: vec![] };
+        self.analysis_contexts.push(context);
+        let result = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+            self.expand_or_analyze(&body_form, context, tail, None)
+        });
+        self.analysis_contexts.pop();
+        result
     }
     fn form_in(
         &mut self,
@@ -770,6 +814,27 @@ impl Analyzer<'_> {
                     };
                     if let Some(expanded) = self.expander.expand(form, expansion_context)? {
                         return self.form_in_named(&expanded, context, tail, name_hint);
+                    }
+                    // Original bounded bootstrap for simple binding vectors.
+                    // Pinned EPL-1.0 core.cljc772–813 expands let/loop to their
+                    // primitive forms. Analyze that actual expansion before
+                    // recording source facts; lexical callees stay untouched.
+                    let primitive = match self.environment.resolve_bootstrap_macro(self.phase, symbol) {
+                        Some(ResolvedBinding::BootstrapLet(_)) => Some("let*"),
+                        Some(ResolvedBinding::BootstrapLoop(_)) => Some("loop*"),
+                        _ => None,
+                    };
+                    if let Some(primitive) = primitive {
+                        let mut expanded = form.clone();
+                        let Kind::List(items) = &mut expanded.kind else { unreachable!() };
+                        items[0].kind = Kind::Symbol(suss_reader::Symbol {
+                            namespace: None, name: primitive.into(),
+                        });
+                        // The fixed primitive rewrite is analyzed in this
+                        // frame; it cannot form a recursive bootstrap chain.
+                        return stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+                            self.expand_or_analyze(&expanded, context, tail, name_hint)
+                        });
                     }
                 }
             }
@@ -1192,10 +1257,9 @@ impl Analyzer<'_> {
                 if !names.iter().any(|name| matches!(&name.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "&"))))
         {
             self.enter_function_scope(form, name_hint, None);
-            let function = self.fixed_function(form, args, bootstrap_macro)?;
-            let Expression::Function { parameters, body, .. } = &function.kind else { unreachable!("analyzed fixed function") };
+            let (function, source_method) = self.fixed_function(form, args, bootstrap_macro)?;
             *self.source_callables.last_mut().expect("source function fact slot") = Some(std::sync::Arc::new(SourceCallable {
-                methods: vec![Self::source_method(parameters, false, body)],
+                methods: vec![source_method],
             }));
             return Ok(function);
         }
@@ -1256,12 +1320,14 @@ impl Analyzer<'_> {
                 SourceRole::FunctionName { variadic, methods: Some(staged) };
         }
         let mut methods = Vec::new();
+        let mut source_methods = Vec::new();
         let mut captures = BTreeSet::new();
         if signatures
             .first()
             .is_some_and(|arg| matches!(arg.kind, Kind::Vector(_)))
         {
-            let (method, free) = self.general_method(form, signatures, bootstrap_macro)?;
+            let (method, free, source_method) = self.general_method(form, signatures, bootstrap_macro)?;
+            source_methods.push(source_method);
             captures.extend(free);
             methods.push(method);
         } else {
@@ -1276,14 +1342,12 @@ impl Analyzer<'_> {
                 if multi { self.analysis_contexts.push(super::AnalysisContext::Expression); }
                 let result = self.general_method(signature, items, bootstrap_macro);
                 if multi { self.analysis_contexts.pop(); }
-                let (method, free) = result?;
+                let (method, free, source_method) = result?;
+                source_methods.push(source_method);
                 captures.extend(free);
                 methods.push(method);
             }
         }
-        let source_methods = methods.iter().map(|method| {
-            Self::source_method(&method.parameters, method.variadic, &method.body)
-        }).collect();
         // The pinned compiler warns on duplicate fixed arities and executes the last body.
         methods.reverse();
         let mut arities = BTreeSet::new();
@@ -1357,26 +1421,18 @@ impl Analyzer<'_> {
         *self.source_callables.last_mut().expect("source function fact slot") = Some(std::sync::Arc::new(SourceCallable { methods: source_methods }));
         Ok(function)
     }
-    fn source_method(parameters: &[Parameter], variadic: bool, physical_body: &Hir) -> SourceMethod {
-        // fixed_function_fields adds exactly one compiler-owned recurrence loop.
-        // Retain its analyzed body, leaving any actual source loop inside intact.
-        let Expression::Loop { body, .. } = &physical_body.kind else {
-            unreachable!("analyzed function recurrence wrapper")
-        };
-        SourceMethod {
-            parameters: parameters.to_vec(),
-            variadic,
-            body: std::sync::Arc::new((**body).clone()),
-        }
-    }
     fn general_method(
         &mut self,
         form: &Form,
         args: &[Form],
         bootstrap_macro: bool,
-    ) -> Result<(Method, Vec<BindingId>), Diagnostic> {
+    ) -> Result<(Method, Vec<BindingId>, SourceMethod), Diagnostic> {
+        let method_form = if matches!(&form.kind, Kind::List(parts)
+            if matches!(parts.first().map(|part| &part.kind), Some(Kind::Vector(_)))) {
+            form.clone()
+        } else { Form { kind: Kind::List(args.to_vec()), span: form.span.clone(), metadata: vec![] } };
         let (args, variadic, rest_parameter) = Self::normalize_function_method(form, args)?;
-        let method = self.fixed_function_fields(
+        let (method, mut source_method) = self.fixed_function_fields(
             form,
             &args,
             bootstrap_macro,
@@ -1386,6 +1442,8 @@ impl Analyzer<'_> {
             rest_parameter,
             None,
         )?;
+        source_method.form = method_form;
+        source_method.variadic = variadic;
         let Expression::Function {
             parameters,
             body,
@@ -1401,6 +1459,7 @@ impl Analyzer<'_> {
                 variadic,
             },
             captures,
+            source_method,
         ))
     }
     fn fixed_function(
@@ -1408,7 +1467,7 @@ impl Analyzer<'_> {
         form: &Form,
         args: &[Form],
         bootstrap_macro: bool,
-    ) -> Result<Hir, Diagnostic> {
+    ) -> Result<(Hir, SourceMethod), Diagnostic> {
         self.fixed_function_fields(form, args, bootstrap_macro, &[], false, false, None, None)
     }
     fn fixed_function_fields(
@@ -1421,7 +1480,7 @@ impl Analyzer<'_> {
         object_method: bool,
         rest_parameter: Option<usize>,
         receiver_type: Option<&Form>,
-    ) -> Result<Hir, Diagnostic> {
+    ) -> Result<(Hir, SourceMethod), Diagnostic> {
         let Some(params) = args.first() else {
             return Err(fail(form.span.clone(), "fn requires a parameter vector"));
         };
@@ -1458,7 +1517,7 @@ impl Analyzer<'_> {
         }
         let outer = self.locals.clone();
         let outer_fields = self.fields.clone();
-        let (parameters, _) = self.allocate_function_parameters(names, rest_parameter, receiver_type.is_some())?;
+        let (parameters, declarations) = self.allocate_function_parameters(names, rest_parameter, receiver_type.is_some())?;
         let target = LoopId(self.next_loop);
         self.next_loop += 1;
         let outer_target = self
@@ -1558,12 +1617,17 @@ impl Analyzer<'_> {
         }
         // Field reads occur at the original use, including in nested closures;
         // unreferenced fields must not introduce checks or effects before a body.
-        let inner_body = self.body(
+        let inner_body = self.analyzed_body(
             &args[1..],
             form.span.clone(),
             super::AnalysisContext::Return,
             true,
         )?;
+        let source_method = SourceMethod {
+            form: Form { kind: Kind::List(args.to_vec()), span: form.span.clone(), metadata: vec![] },
+            declarations, parameters: parameters.clone(), variadic: rest_parameter.is_some(),
+            body: std::sync::Arc::new(inner_body.clone()),
+        };
         self.target = outer_target;
         let body = Box::new(Hir {
             source: None,
@@ -1581,7 +1645,7 @@ impl Analyzer<'_> {
         let bound = parameters.iter().map(|parameter| parameter.id).collect();
         let mut captures = BTreeSet::new();
         free_bindings(&body, &bound, &mut captures);
-        Ok(Hir {
+        Ok((Hir {
             source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
@@ -1591,7 +1655,7 @@ impl Analyzer<'_> {
                 captures: captures.into_iter().collect(),
                 body,
             },
-        })
+        }, source_method))
     }
     fn property_name(form: &Form, operator: &str) -> Result<String, Diagnostic> {
         let name = &operator[2..];
@@ -1768,7 +1832,7 @@ impl Analyzer<'_> {
         let resolved = if bare
             && matches!(
                 symbol.name.as_str(),
-                "if" | "do" | "fn*" | "def" | "loop*" | "recur" | "throw" | "try" | "set!"
+                "if" | "do" | "fn*" | "def" | "let*" | "loop*" | "recur" | "throw" | "try" | "set!"
             ) {
             None
         } else {
@@ -1886,12 +1950,14 @@ impl Analyzer<'_> {
                     "throw requires exactly one operand",
                 ));
             }
+            let exception = self.form(&args[0])?;
+            *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Throw(std::sync::Arc::new(exception.clone()))));
             return Ok(Hir {
                 source: None,
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: Type::Value,
-                kind: Expression::Throw(Box::new(self.form(&args[0])?)),
+                kind: Expression::Throw(Box::new(exception)),
             });
         }
         if bare && symbol.name == "try" {
@@ -1920,6 +1986,7 @@ impl Analyzer<'_> {
                 .iter()
                 .map(|arg| self.form(arg))
                 .collect::<Result<Vec<_>, _>>()?;
+            *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Recur(arguments.clone().into())));
             return Ok(Hir {
                 source: None,
                 span: form.span.clone(),
@@ -1975,19 +2042,19 @@ impl Analyzer<'_> {
                 let alternative = Box::new(if args.len() == 3 {
                     self.form_in(&args[2], context, tail)?
                 } else {
-                    Hir {
-                        source: None,
-                        span: form.span.clone(),
-                        metadata: Vec::new(),
-                        ty: Type::Nil,
-                        kind: Expression::Literal(Literal::Nil),
-                    }
+                    let nil = Form { kind: Kind::Nil, span: form.span.clone(), metadata: vec![] };
+                    self.form_in(&nil, context, tail)?
                 });
                 let ty = if consequent.ty == alternative.ty {
                     consequent.ty
                 } else {
                     Type::Value
                 };
+                *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::If {
+                    condition: std::sync::Arc::new(condition.as_ref().clone()),
+                    consequent: std::sync::Arc::new(consequent.as_ref().clone()),
+                    alternative: std::sync::Arc::new(alternative.as_ref().clone()),
+                }));
                 (
                     Expression::If {
                         condition,
@@ -1997,14 +2064,9 @@ impl Analyzer<'_> {
                     ty,
                 )
             }
-            _ if (bare && symbol.name == "loop*")
-                || matches!(
-                    resolved,
-                    Some(ResolvedBinding::BootstrapLet(_) | ResolvedBinding::BootstrapLoop(_))
-                ) =>
+            _ if bare && matches!(symbol.name.as_str(), "let*" | "loop*") =>
             {
-                let is_loop = (bare && symbol.name == "loop*")
-                    || matches!(resolved, Some(ResolvedBinding::BootstrapLoop(_)));
+                let is_loop = symbol.name == "loop*";
                 if args.is_empty() {
                     return Err(fail(form.span.clone(), "let requires a binding vector"));
                 }
@@ -2016,6 +2078,7 @@ impl Analyzer<'_> {
                 }
                 let outer = self.locals.clone();
                 let mut bindings = Vec::new();
+                let mut source_bindings = Vec::new();
                 for pair in entries.chunks_exact(2) {
                     let Kind::Symbol(name) = &pair[0].kind else {
                         return Err(fail(
@@ -2029,27 +2092,44 @@ impl Analyzer<'_> {
                             "Binding name must be unqualified",
                         ));
                     }
+                    // Only the pending compiler-generated catch alias may share
+                    // its physical payload ID. Consume the original declaration
+                    // before entering the body; ordinary nested lets stay distinct.
+                    let alias = if !is_loop {
+                        self.catch_aliases.iter().position(|(declaration, hidden)| {
+                            declaration == &pair[0] && pair[1].kind == hidden.declaration.kind
+                        }).map(|index| self.catch_aliases.remove(index).1)
+                    } else { None };
                     let value = self.form(&pair[1])?;
-                    let id = BindingId(self.next);
-                    self.next += 1;
+                    let id = if let Some(hidden) = &alias { hidden.id } else {
+                        let id = BindingId(self.next); self.next += 1; id
+                    };
                     self.insert_local(
                         &pair[0],
                         id,
                         if is_loop { Type::Value } else { value.ty },
-                        if is_loop {
+                        if alias.is_some() {
+                            LocalKind::Catch
+                        } else if is_loop {
                             LocalKind::Loop
                         } else {
                             LocalKind::Let
                         },
                         Some(value.clone()),
                     );
-                    bindings.push(Binding {
+                    if let Some(hidden) = &alias {
+                        self.locals.get_mut(&name.name).expect("catch alias").source_role = SourceRole::CatchBinding {
+                            hidden: hidden.clone(), access: self.local(&pair[1], hidden.id),
+                        };
+                    }
+                    source_bindings.push(self.locals[&name.name].clone());
+                    if alias.is_none() { bindings.push(Binding {
                         id,
                         name: name.name.clone(),
                         metadata: pair[0].metadata.clone(),
                         span: pair[0].span.clone(),
                         value,
-                    });
+                    }); }
                 }
                 let target = LoopId(self.next_loop);
                 let outer_target = self.target;
@@ -2057,12 +2137,13 @@ impl Analyzer<'_> {
                     self.next_loop += 1;
                     self.target = Some((target, bindings.len()));
                 }
-                let body = Box::new(self.body(
-                    &args[1..],
-                    form.span.clone(),
-                    context.returning(),
-                    is_loop || tail,
-                )?);
+                // Pinned analyze-let-body explicitly analyzes a synthetic do
+                // in this lexical scope. This is its genuine source analysis,
+                // not a body reconstructed from the physical Do expression.
+                let body = Box::new(self.analyzed_body(&args[1..], form.span.clone(), context.returning(), is_loop || tail)?);
+                *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Bindings {
+                    is_loop, bindings: source_bindings.into(), body: std::sync::Arc::new(body.as_ref().clone()),
+                }));
                 self.target = outer_target;
                 self.locals = outer;
                 let ty = body.ty;
@@ -2262,6 +2343,7 @@ pub(crate) fn prepare_with_origin(
         source_callables: Vec::new(),
         source_nodes: Vec::new(),
         callable_keys: BTreeMap::new(),
+        catch_aliases: Vec::new(),
         target: None,
     };
     let mut hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
