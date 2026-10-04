@@ -16974,3 +16974,21 @@ then obtain actual parent semantic failure before implementing source-child capt
 
 MLIR investigation is filed separately as issue188 in M4. No compiler-framework
 migration or M3 acceptance change is authorized by that evaluation issue.
+
+
+### PR189 independent review checkpoint
+
+Exclusive review worktree /private/tmp/suss-pr189-review at d48af03 checked the
+actual combined regression, issue12/13 bodies, accepted design3/7 and legacy
+Compiler resolver/expander call sites. No significant scoped finding. Corrected
+one audit attribution: the .sus-only first-match resolver is Compiler::ns_to_path,
+not Namespace::ns_to_path. The remaining public resolver/evaluator gap is retained;
+Refs only, no issue closure or milestone completion. No production/bootstrap changes.
+
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-cli --locked --test compiled_namespace_acceptance -- --test-threads=2
+handle2979 reached actual terminal0:1passed/0failed/0ignored/0measured/0filtered,
+10.40s. Log /private/tmp/suss-pr189-review-focused.log. Next freeze/push the review
+head, execute required cargo test --workspace --locked -- --test-threads=2 through
+all doctests and independently verify exact final-head CI. Reviewer retains sole
+heavy slot until explicit release. No merge or readiness claimed here.

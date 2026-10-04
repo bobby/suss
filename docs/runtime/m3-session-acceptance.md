@@ -66,7 +66,7 @@ actual isolated phase execution is established by `compiled_phase_session` and
 
 The public `suss_compile::Compiler::compile_with_namespaces` still discovers
 sources through `DependencyResolver` and calls `expand::expand_all` before the
-prototype backend. Its `Namespace::ns_to_path` searches only `.sus` files and
+prototype backend. Its `Compiler::ns_to_path` searches only `.sus` files and
 returns the first existing candidate across roots. This does not implement the
 design section3 contract to accept `.cljs`/`.cljc` and reject ambiguous namespace
 sources. Native command success does not prove that public API's behavior.
@@ -138,3 +138,14 @@ No M3 completion or PR merge is claimed.
 The combined regression was re-executed after stacking on independently reviewed
 PR #187 (`c0665d9`): one test passed, zero failures/ignored/filtered in 10.39
 seconds. No compiler, runtime or bootstrap inputs changed in this acceptance PR.
+
+## Independent PR #189 review
+
+Independent review at candidate `d48af03` checked the new executing regression,
+issue #12/#13 criteria, design sections 3 and 7, and the remaining public resolver
+and evaluator call sites. No significant scoped test or implementation finding
+was identified. Corrected the resolver method attribution to `Compiler::ns_to_path`;
+the unresolved public-contract gap remains explicit. The focused regression passed
+one test, with zero failed/ignored/filtered, in 10.40 seconds. Review log:
+`/private/tmp/suss-pr189-review-focused.log`. Complete final-head baseline and CI
+remain required; this focused result does not establish them.
