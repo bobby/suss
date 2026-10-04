@@ -370,3 +370,12 @@ macro feeding a versioned interface. Java-free reproduction/bootstrap4 and
 Python118 pass. Independent review, full baseline and final-head CI remain
 required. Interface types/external-id and complete WIT/frontend/M3 acceptance
 remain open. See [AOT components](docs/runtime/compiled-aot-components.md).
+
+Native CLI file compilation now uses isolated compiled source preparation and
+portable component assembly, with WIT package/world selection and explicit
+export mappings. Three actual command/artifact regressions pass, including typed
+interface invocation and rejection of malformed inputs previously coerced to zero.
+Affected CLI15, Python118 and Java-free reproduction/bootstrap4 pass. Independent
+review, unfiltered full baseline and final-head CI remain pending. Namespace,
+project, main and component-host migration, evaluator retirement and original M3
+acceptance remain open. See [native file compilation](docs/runtime/compiled-aot-source-preparation.md).
