@@ -16641,6 +16641,7 @@ newquotePRstillrequiresindependentreview/significantfixes/unfilteredfull/exactCI
 Current3sourcefixesand4phaseassetsowned/validatedfocusedonly; noM3gateclosure.
 
 
+
 ## PR186 independent review checkpoint
 
 Independent review compared the scoped quote graph, scalar literal source capture
@@ -16669,3 +16670,159 @@ cargo test --workspace --locked -- --test-threads=2` on the pushed review head,
 followed by independent exact-head CI verification with workspace counts separate
 from Python/bootstrap. Those results are not yet claimed here. Keep PR186 draft
 until they finish; no merge, issue closure or original M3 gate completion.
+
+## M3 issue12/13 acceptance audit — 2026-10-04
+
+Read current GitHub issue bodies with `gh issue view 12/13 --repo bobby/suss
+--json title,body,state,url`; both remain OPEN. Re-read accepted design sections3,
+6–7, ROADMAP, compatibility inventory and current handoff. Inspected actual
+persistent_session, persistent_repl, portable_atoms and namespace_session tests
+and Session::install rather than treating test names or encoding as acceptance.
+
+All explicitly listed issue12 criteria have direct executing regressions: old
+atoms/closures/values after rebinding and GC, once-only initializers and nil/false
+defonce, and actual linked fragments against the shared Store/runtime. Private
+artifact/import rejection tests gate installation before publication. All listed
+issue13 criteria have direct namespace_session regressions for live globals,
+stable captures, compile failure, failed initializer preservation and repeatable
+namespace errors; reload-all also checks reachable dependency/effect order.
+This audit is a source/evidence mapping, not a new test run or closure claim.
+
+Namespace-command tests additionally execute .cljs/.cljc source, macro/runtime
+aliases and ambiguous-source rejection. Command macro tests cover canonical core
+aliases, conditional features and exclusions. Complete cross-frontend mapping of
+refers/renames/privacy remains to be checked against actual execution evidence.
+Do not keep issue12/13 open solely because unrelated issue14/15 work remains,
+and do not close them from this incomplete audit alone.
+
+Audit tracking comments: issue12#issuecomment-5982118041 and
+issue13#issuecomment-5982118448. Detailed temporary acceptance map is
+/private/tmp/suss-m3-acceptance-audit-12-13.md. No issue closed or PR merged.
+
+`gh run view 37215760647 --repo bobby/suss --json status,conclusion,headSha,jobs`
+returned in_progress at exact cb8441c1c868d095a4507b4e013555770a3a3411;
+Java-free bootstrap CI step succeeded, workspace step remained live. Reviewer186
+reported the same full16793 live through macro/frontend groups into core import
+execution. Root ran no competing Cargo/JVM/Node process and makes no terminal
+baseline/readiness claim. Next finish the namespace mapping, then run focused
+issue12/13 acceptance after reviewer releases the heavy slot; field AST oracle
+preparation remains the next implementation task. Original M3 scope stays active.
+
+
+### Field reference primary projection prepared, unexecuted
+
+Added original development-only field_reference_asts.clj and
+field_reference_ast_runner.cljs. Nine candidate observations inspect the actual
+already-analyzed initializer, raw field mutable/unsynchronized/volatile/tag/shadow
+presence, source positions and equality/identity with the lexical record. Cases
+include plain/three mutable flags, false mutable, number/nil/false hints and a
+local shadow. These are candidate inputs, not an expected-results corpus; no JVM,
+Node or native execution occurred. Fresh primary output must establish accepted
+cases and all exact expectations before any production repair. No fallback or
+success is inferred for the deliberately uncertain hints.
+
+Reviewer186 same full16793 reported live through runtime into compiler/conformance
+suites. Root still owns no heavy process. Next run these candidate primary probes
+once the slot is actually released, preserve failures/positions/identity evidence,
+and only then implement the actual field AST record repair and native regressions.
+
+
+
+### Fresh field primary evidence and PR186 local completion
+
+Reviewer186 full16793 reached actual terminal exit0 on frozen cb8441c:
+141 groups/1190 passed/0 failed/17 existing ignored/0 filtered/0 measured through
+all four doctest groups. Root independently parsed the complete local log and
+verified these totals and final reader doctests. Exact CI37215760647 remained
+in_progress on that head; PR186 stays draft. Reviewer explicitly released the
+sole heavy slot, all reviewer handles terminal.
+
+Root stashed owned field draft, rebased onto cb8441c, restored it and resolved
+only the append-only handoff conflict by retaining both evidence sections.
+Backup stash remains. Shared development checkout cloned from quote tree and
+verified at c4295f303100bbf5afac449242d30bca1126f1a1.
+
+Fresh forced/cache-disabled cljs.main compile85872 terminated0, producing nine
+trace rows, but Node terminated1 due to the fixture name Volatile colliding with
+cljs.core/Volatile. Preserved initial trace at
+/private/tmp/suss-field-ast-initial-trace.jsonl and compiler log at
+/private/tmp/suss-field-ast-primary-compile.log. Renamed all fixture types with
+FieldAst prefix, preserving labels/projections; fresh compile33166 terminated0
+(log /private/tmp/suss-field-ast-primary-renamed-compile.log), Node terminated0.
+All nine analyzer rows exactly equal nine executed Node projections; frozen
+field-reference-ast-observations.json records those actual results.
+
+Plain field AST has op local/local field and no top tag; field info retains
+present nil mutable/unsynchronized/volatile/tag/shadow fields. False mutable
+remains false, nil hint leaves top tag absent, false hint keeps top tag false.
+Actual initializer info is identical to lexical field info. Local shadow preserves
+the original field record. Source positions are actual pinned values, not guessed.
+Strict field checker and forced runner added; native before/after comparison and
+checker negative tests still required. No production fix, field PR, issue closure,
+merge or M3 completion claim. Next add native projection against the unchanged
+parent, record the semantic failure, then repair actual field AST/info facts.
+
+
+### Field AST repair — focused evidence before independent review
+
+Native parent27850 actual terminal101: first plain field lacks op/local/info,
+0 passed/1 failed/0 ignored/0 filtered in5.70s
+(/private/tmp/suss-field-ast-native-parent.log). Source graph now classifies only
+actual resolved field symbols as local ASTs, sharing the genuine field info.
+Field records derive nullable flags/tags from reader metadata and positions from
+SourceOrigin; the combined physical mutable boolean is not exposed as a raw flag.
+Unique source fields retain nil shadow; duplicate fields remain rejected.
+
+Native after98414 actual terminal0:1/0/0/0 in8.64s, all nine exact observations
+in both caller phases afterGC (/private/tmp/suss-field-ast-native-after.log).
+Affected46397 actual terminal0:20/0/0/0 across six integration groups: field
+records/reference ASTs, local ASTs, mutable fields, source graph and positions
+(/private/tmp/suss-field-ast-affected.log). Fresh runner34019 actual terminal0:
+all nine analyzer traces equal executed Node projections and frozen corpus
+(/private/tmp/suss-field-ast-primary-final.log). Python56561 actual terminal0:
+141 tests in5.167s, including seven strict field-oracle negative/positive tests
+(/private/tmp/suss-field-ast-python.log). Graph77716 actual terminal0; details in
+/private/tmp/suss-field-ast-graph-bounds.log. All root handles terminal.
+
+Only native host graph inputs changed; compiler/core/reader/WIT/bootstrap bytes
+are unchanged, so no new image regeneration is implied. Existing reviewed quote
+bootstrap pairs are inherited intact. Full unfiltered baseline is not claimed
+for the field increment; commit/push/open a draft Refs#14 PR and dispatch its
+independent review/significant fixes/full final-head baseline/CI next. PR186 CI
+remains live, so do not mark it ready or merge. M3 stays active; issue12/13 audit
+is preserved alongside the field work rather than claiming closure.
+
+
+## PR187 independent review checkpoint
+
+Independent review compared field_record and source-field AST classification
+against pinned analyzer.cljc parse-type3622 and analyze-symbol4099–4120. Raw
+nullable flags/tags use canonical merged reader metadata, source positions use
+the retained declaration token, and actual distinct-field validation justifies
+nil shadow for supported fields. Existing field identity memoization preserves
+initializer info/lexical identity within the source graph. The test projection
+removes only private diagnostic keys in this bounded corpus; all observed
+portable keys, false/nil presence, shadow data and identity assertions remain.
+No significant scoped defect was found. Cross-invocation field identity and
+complete AST/bootstrap/lifecycle acceptance remain open.
+
+Fresh sh scripts/test-field-reference-asts-oracle.sh reached terminal exit0:
+all nine forced cache-disabled pinned traces and all nine executed Node rows
+match the frozen corpus (/private/tmp/suss-pr187-review-oracle.log). Focused
+cargo test -p suss-cli --locked --test compiled_macro_field_reference_asts
+--test compiled_macro_field_records --test compiled_macro_analysis_context
+--test compiled_macro_local_reference_asts --test portable_mutable_fields
+-- --test-threads=2 with CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target
+and CARGO_BUILD_JOBS=2 reached terminal exit0:7 passed/0 failed/0 ignored/
+0 filtered across five groups, both caller phases covered by the field AST
+regression (/private/tmp/suss-pr187-review-focused-final.log). An initial
+selection failed before execution because mutable_fields was misspelled; its
+terminal101 log is preserved at /private/tmp/suss-pr187-review-focused.log.
+No assertions changed. Seven field-oracle Python checks passed in0.004s.
+
+This checkpoint changes documentation only; compiler/bootstrap inputs and
+both inherited quote image pairs remain unchanged. Next freeze and push the
+review head, then run the exact unfiltered cargo test --workspace --locked
+-- --test-threads=2 through reader doctests and verify exact final-head CI.
+Those terminal results are not claimed here. PR187 stays draft; no merge,
+issue closure or original M3 completion.

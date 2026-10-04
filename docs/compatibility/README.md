@@ -840,3 +840,11 @@ without Java. See [quote AST evidence](../runtime/compiled-macro-quote-asts.md).
 Outer metadata wrappers and complete source schemas/constant-expression policy
 remain open. Independent review, full baseline and final-head CI are pending;
 no declaration, issue or M3 gate is reclassified.
+
+
+Source field references now retain local AST/info facts, raw nullable field flags,
+source hints/positions and shared lexical identity. Nine freshly compiled and
+executed pinned observations match native projections in both caller phases after
+GC. Complete portable AST schemas and original issue #14 acceptance remain open;
+full baseline/review/final-head CI are pending. See
+[field reference facts](../runtime/compiled-macro-field-reference-asts.md).

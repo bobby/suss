@@ -1566,18 +1566,42 @@ impl<'a> AnalysisGraph<'a> {
         let name = self.form(&field.declaration, depth + 1)?;
         let kind = self.keyword("field")?;
         let is_field = self.flag(true)?;
-        let mutable = self.flag(field.mutable)?;
         let index = self.number(field.index)?;
         let access = self.lowering(&field.access, depth + 1)?;
-        let value = self.map(vec![
+        let mut entries = vec![
             ("name", name),
             ("local", kind),
             ("field", is_field),
-            ("mutable", mutable),
             ("suss/index", index),
             ("suss/access", access),
-        ])?;
-        Ok(value)
+        ];
+        // Pinned parse-type retains raw nullable flags, independently of the
+        // lowered mutability boolean. Unique source fields have no shadow;
+        // duplicate declarations are rejected by the compiler before this path.
+        let metadata = hir::reader_metadata_pairs(&field.declaration)
+            .map_err(SessionError::Compile)?;
+        for key in ["mutable", "unsynchronized-mutable", "volatile-mutable", "tag"] {
+            let value = metadata.chunks_exact(2).find_map(|pair| {
+                matches!(&pair[0].kind, Kind::Keyword(k) if k.namespace.is_none() && k.name == key)
+                    .then_some(&pair[1])
+            });
+            let value = if let Some(value) = value {
+                self.form(value, depth + 1)?
+            } else {
+                self.scalar(Literal::Nil)?
+            };
+            entries.push((key, value));
+        }
+        entries.push(("shadow", self.scalar(Literal::Nil)?));
+        if let Some(position) = field
+            .origin
+            .as_ref()
+            .and_then(|origin| origin.symbol_position(&field.declaration))
+        {
+            entries.push(("line", self.number(position.line)?));
+            entries.push(("column", self.number(position.column)?));
+        }
+        self.map(entries)
     }
     fn scope(&mut self, scope: &Arc<FunctionScope>, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
@@ -1818,6 +1842,14 @@ impl<'a> AnalysisGraph<'a> {
                     fields.push(("init", self.ast(initializer, depth + 1)?));
                 }
             }
+        }
+        if matches!(&source.form.kind, Kind::Symbol(_))
+            && let Some(hir::SourceBinding::Field(binding)) = &source.resolved
+        {
+            fields.push(("op", self.keyword("local")?));
+            fields.push(("local", self.keyword("field")?));
+            fields.push(("info", self.field(binding, depth + 1)?));
+            fields.push(("name", self.form(&binding.declaration, depth + 1)?));
         }
         let resolved_var = if matches!(&source.form.kind, Kind::Symbol(_))
             && let Some(hir::SourceBinding::Global {
