@@ -157,3 +157,10 @@ that expected invocation operations to be absent. Those regressions now require
 and local binding fields on the invocation. The local callee retains canonical
 shared declaration identity; actual result and once-only effects remain exact.
 All three scalar and two local tests pass. Their raw pinned corpora are unchanged.
+
+Analyzing the intrinsic source callee also materializes its canonical core identity
+in the preparation catalog. The core-cell regression now distinguishes initialized
+canonical `+` from unbound user definitions, asserting all exact identities and
+bound states. Deduplication, cross-fragment live closures and GC execution remain
+checked. All 59 affected compiler catalog/pipeline checks pass. Source-only facts
+do not create unused physical Wasm global imports.

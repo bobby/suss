@@ -19,6 +19,17 @@ fn emitted_source_cells_initialize_once_and_keep_live_closures_across_fragments(
             phase,
         )
         .unwrap();
+        // Retained arithmetic source-callee analysis materializes canonical +
+        // alongside the two source definitions. Only source cells start unbound.
+        assert_eq!(
+            first
+                .cells
+                .iter()
+                .map(|cell| (cell.namespace(), cell.name()))
+                .collect::<Vec<_>>(),
+            vec![("suss.core", "+"), ("user", "f"), ("user", "visits")]
+        );
+        assert!(first.cells.iter().all(|cell| cell.phase() == phase));
         let emitted = portable::core_bindings::compile_with_cells(phase, &first.cells).unwrap();
         // Repeated requests cannot create duplicate exports or cells.
         let repeated = first
@@ -70,7 +81,12 @@ fn emitted_source_cells_initialize_once_and_keep_live_closures_across_fragments(
                         .unwrap()
                         .unwrap()
                         .get_i32(),
-                    2
+                    if cell.namespace() == "suss.core" {
+                        4
+                    } else {
+                        2
+                    },
+                    "canonical core is initialized; source definitions remain unbound: {cell:?}"
                 );
             }
         }
@@ -244,9 +260,11 @@ fn emitted_core_cells_execute_in_both_phases_and_survive_gc() {
         let wasm =
             portable::compile_in("(let [sum +] (sum 19 23))", &Environment::default(), other)
                 .unwrap();
-        assert!(linker
-            .instantiate(&mut store, &Module::new(&engine, wasm).unwrap())
-            .is_err());
+        assert!(
+            linker
+                .instantiate(&mut store, &Module::new(&engine, wasm).unwrap())
+                .is_err()
+        );
     }
 }
 

@@ -17325,3 +17325,24 @@ terminal0:2pass/0fail/0ignored/0measured/0filtered in10.59s, log
 regenerated/reproduced images remain current. Next push the aligned regressions,
 freeze a new head and repeat the entire unfiltered baseline through all doctests.
 No partial baseline, ignored test or weakened assertion supplies acceptance.
+
+### PR #191 canonical intrinsic catalog regression aligned
+
+Repeated full62325 on5915fb4 reached actual terminal101 in compiled_core_bindings:
+3pass/1fail in0.54s, after native groups and legacy compiler320pass/12existing
+ignores. Log preserved /private/tmp/suss-pr191-review-full-second.log. Preparation
+now genuinely analyzes the arithmetic source callee, materializing canonical +
+alongside user f/visits. The old regression wrongly treated every preparation
+catalog cell as an unbound user definition. Emitter still collects only physical
+IR globals; this source fact does not add an unused runtime global import.
+
+Aligned the test to assert the exact three phase-qualified identities and bound
+states: canonical core + initialized4, user f/visits unbound2. It retains repeated
+cell deduplication and actual first1/second2 closure execution across fragments/GC.
+No source cell is filtered away and no runtime initialization check is omitted.
+Affected compiler62745 terminal0:5groups59pass/0fail/0ignored/0measured/0filtered,
+core4/definitions13/modules11/pipeline17/resolution14, log
+/private/tmp/suss-pr191-review-cell-catalog.log. No production/compiler input
+change; both reproduced bootstrap pairs remain current. Freeze/push this stronger
+catalog assertion and repeat the exact full baseline on the resulting head before
+any readiness claim. Reviewer continues to own the sole local heavy slot.
