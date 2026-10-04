@@ -703,3 +703,10 @@ cells, GC, phase guards and independently decoded boundary exceptions. A shared
 source-var export regression fails on the old duplicate import and passes after
 import sharing. This is a development scalar boundary; full selected-WIT adapters,
 CLI compile migration, evaluator retirement and original M3 acceptance remain open.
+
+[Shared script/AOT source preparation](../runtime/compiled-aot-source-preparation.md)
+has two executing source-to-component regressions for inline compiled macros,
+Runtime dependencies, provenance, effects/GC and deferred language throws.
+Twenty-four existing native tests pass, including script macro rollback and
+completed dependency preservation. This is focused preparation evidence; complete
+frontend/WIT and original M3 acceptance remain open. No declaration is reclassified.

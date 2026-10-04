@@ -348,3 +348,10 @@ compiler tests pass, including a reproduced duplicate import followed by shared
 cell import repair. See [AOT components](docs/runtime/compiled-aot-components.md).
 This development API does not migrate existing compile commands or certify full
 selected-WIT adapters, evaluator retirement, published dependency policy or M3.
+
+Native scripts and AOT source preparation now share reader and staged compilation,
+including source macro definitions and Runtime dependency catalogs. Two actual
+source-to-component tests and24 affected native tests pass; Java-free bootstrap4
+and Python118 pass. See [shared source preparation](docs/runtime/compiled-aot-source-preparation.md).
+Review/full baseline/final CI remain required. Existing compile commands, full
+selected-WIT adapters, evaluator retirement and original M3 criteria remain open.

@@ -159,6 +159,17 @@ pub(crate) struct CompilationSnapshot {
     pub(crate) provided: BTreeSet<ModuleIdentity>,
 }
 impl CompilationSnapshot {
+    pub(crate) fn new(
+        environment: Environment,
+        phase: Phase,
+        source_paths: Vec<PathBuf>,
+        provided: BTreeSet<ModuleIdentity>,
+    ) -> Self {
+        Self { environment, phase, source_paths, provided }
+    }
+    pub(crate) fn phase(&self) -> Phase {
+        self.phase
+    }
     pub(crate) fn prepare_with_origin(
         &self, forms: Vec<suss_reader::forms::Form>, span: std::ops::Range<usize>,
         expander: &mut dyn portable::ExpansionHost, origin: Option<&portable::SourceOrigin>,

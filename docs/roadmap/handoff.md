@@ -14402,3 +14402,108 @@ cargo test -p suss-compile --locked --test compiled_core_bindings --test
 portable_modules -- --test-threads=2, shared target/jobs2, no RUSTFLAGS.
 All root native/Cargo handles are terminal. Frozen-source full baseline and
 independent review/exact-head CI for this new AOT change remain pending.
+
+## Shared script/AOT source preparation — unvalidated working branch
+
+Created /private/tmp/suss-m3-aot-source-preparation on branch
+portable/m3-aot-source-preparation from PR170 original273ecbf. Reviewer exclusively
+owns the separate AOT assembly worktree and heavy slot; its review tests/docs
+pushed newb1f91bd, with unfiltered full15973 and exact-head CI37168667054 live.
+Prior273 CI37168501710 is cancelled, not final proof. Reviewer reports seven
+focused compiler execution tests passing, original five retained, adding early
+initializer throw payload/order and mixed scalar/NaN conversions. It explicitly
+documents direct canonical scalar arity16 and indirect-memory lowering unfinished.
+PR169 exact8651246 CI37166794686 remains live; its repaired full1121/0/17 passed.
+Neither PR is ready yet; no merge, issue closure or M3 completion claim.
+
+Draft original CLI-only portable_aot::prepare_source parses a complete source
+input, then creates an isolated compiled Macro session and compiler snapshot from
+the shipped Runtime catalog. It uses the extracted existing script preparation
+stage: source namespace/dependency parsing, ordered top-level compiled macro
+definitions, actual macro expansion, source provenance and declaration rollback
+are shared with evaluate_script_compiled. No Runtime Session is constructed and
+no Runtime initializer executes in the compiler host. Prepared module Wasm keeps
+its original source/phase identity; emitted module fragments carry the staged
+compiler catalog and source cells before component assembly. This is compiler
+preparation, not reconstruction or publication of raw-Wasm catalogs.
+
+Two unrun CLI executing regressions are prepared: inline source macro plus real
+Runtime source dependency/alias, macro graph and path provenance, once-only input
+effects and calls after GC; and a Runtime throw that preparation must defer until
+actual component instantiation, preserving independently decoded first17 rather
+than later99. Refactor initially misplaced the helper inside the script function;
+read-only inspection corrected it before any compile/test. Shipped bootstrap
+returns a borrowed static fragment, so the new host explicitly clones its catalog
+before entering user namespace. No acceptance assertion was removed or relaxed.
+Rustfmt of new module/tests and extracted helper, plus git diff --check pass.
+No Cargo/native/JVM/Node job has run on this branch. All edits are CLI-only, so
+compiler-source fingerprint and bootstrap images are unchanged at this stage.
+
+Next after reviewer releases the slot: rebase this continuation onto PR170's
+final review head, preserve both handoff records, clean only four Suss packages
+from shared target, run cargo test -p suss-cli --locked --test aot_source_preparation
+-- --test-threads=2 first, then affected native script/macro/namespace suites and
+Java-free bootstrap verification. Never set RUSTFLAGS; use shared target and
+jobs2. Test actual artifacts before claiming the helper works or migrating any
+compile command. Complete selected-WIT adapters, AOT command migration, evaluator
+retirement, published dependency policy and scheduler/cancellation/live heap
+acceptance remain open original M3 scope. Do not freeze future work as complete.
+
+### Shared preparation continuation onto independent review head
+
+Rebased this isolated branch cleanly onto PR170 reviewedb1f91bd. Source/code in
+the reviewer's worktree remains frozen and untouched. Native script and AOT
+source preparation now also share read_script_forms, preserving the existing
+reader conditional selection and located diagnostic mapping. All new preparation
+and native-refactor execution checks remain unrun; only formatting/diff checks
+have run here. Reviewer polled actual full15973 live through metadata3 passed
+419.58s and later macro/native/retained-runtime suites, with no failure reported.
+CI17037168667054 remains the required final-head gate; prior273 CI was cancelled.
+PR170 body records seven independent executing checks, direct canonical arity16
+limit and full/CI pending. PR169 repaired CI37166794686 remains pending at8651246.
+No root heavy job, merge, issue closure or M3 completion. Next action remains
+focused aot_source_preparation execution after explicit reviewer release, then
+existing script/macro/namespace acceptance checks before any publication.
+
+## Shared source preparation actual validation — 2026-10-03
+
+PR170 reviewer full15973 terminated0 at unchanged cleanb1f91bd:1129 passed,
+0 failed,17 existing ignores across127groups, with final reader doctests complete.
+Sole heavy slot explicitly released; reviewed-source exactCI37168667054 remains
+pending, so PR170 stayed draft. PR169 current8651246 CI37166794686 independently
+verified completed/success; with independent repair review and full1121/0/17,
+root marked169 ready and updated its body. No PR was merged.
+
+Root cleaned only four Suss packages (3.6GiB) before this worktree switch.
+Source focus16975 TERMINAL101:1/1/0 in4.44s;
+/private/tmp/suss-aot-source-preparation.log. Deferred Runtime throw already
+passed; dependency provenance assertion failed because the test used a lexical
+temp path while locate_source deliberately canonicalizes filesystem dependencies.
+Inspected the actual lookup contract, corrected only this test expectation and
+strengthened exact dependency source-hash checking. Retry48938 TERMINAL0:2/0/0
+in5.07s, /private/tmp/suss-aot-source-preparation-path.log. Command: cargo test
+-p suss-cli --locked --test aot_source_preparation -- --test-threads=2. Original
+effect/macro graph/path/GC and first17-not99 language assertions remain intact.
+
+Affected65788 TERMINAL0:24/0/0 across5groups1/10/3/6/4, respectively4.43/23.41/
+4.66/18.76/5.26s, /private/tmp/suss-aot-source-affected.log. Command: cargo test
+-p suss-cli --locked --test compiled_native_entrypoints --test compiled_repl_macros
+--test compiled_phase_session --test namespace_session --test compiled_aot --
+--test-threads=2. Includes actual script macro rollback/dependency preservation.
+Java-free82933 TERMINAL0: both phase Wasm/JSON reproduce byte-exactly twice and
+match existing shipped images; bootstrap4/0/0 in13.05s,
+/private/tmp/suss-aot-source-javafree.log, sh scripts/verify-bootstrap.sh. This
+CLI-only change needs no compiler fingerprint/image regeneration; verified rather
+than assumed. Initialized local development submodule at exactc4295f3;
+Python45954 TERMINAL0:118/0 in5.419s, /private/tmp/suss-aot-source-python.log,
+python3 -m unittest discover -s scripts -p 'test_*.py'. All Rust commands use
+shared target /private/tmp/suss-m3-pr143-target, jobs2, no RUSTFLAGS.
+
+Updated ROADMAP/inventory/docs/runtime/compiled-aot-source-preparation.md with
+focused evidence and limits. All root heavy/Cargo handles terminal. Next: push a
+reviewable draft linked Refs12/14, dispatch independent review/fixes, freeze final
+head and require the unfiltered full baseline plus exact-head CI before readiness.
+Then continue complete target adapters/frontend migration and evaluator retirement,
+with published dependency and scheduler/lifecycle acceptance still original M3
+scope. No source or test success was inferred from prior comments or encoding;
+no merge, issue closure or milestone completion claim.
