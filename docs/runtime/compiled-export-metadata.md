@@ -5,7 +5,10 @@ attribute, not a new runtime metadata or JavaScript interoperability promise.
 Native file and namespace compilation may fill missing **freestanding** selected
 WIT function mappings from marked Runtime vars. `^:export` uses the source var's
 name; a string or unqualified symbol can name a different freestanding function.
-Explicit `--export PATH=namespace/var` mappings take precedence. Multiple marked
+Explicit `--export PATH=namespace/var` mappings take precedence. Their resolved
+Runtime vars are excluded from shorthand inference, including when other
+freestanding functions still need inferred mappings. Unsupported markers on
+explicitly selected vars therefore do not prevent the selected mapping. Multiple marked
 vars for one function fail before replacing an output artifact. Interface
 functions always require explicit mappings, as required by design section 10.
 False/nil markers do not select exports. Missing mappings retain the assembler's

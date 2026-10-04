@@ -227,3 +227,35 @@ fn duplicate_freestanding_markers_require_an_explicit_authoritative_mapping() {
         .unwrap();
     assert_eq!(calculate.call(&mut store, (17,)).unwrap().0, 37);
 }
+
+#[test]
+fn partial_explicit_mapping_overrides_unsupported_metadata() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("api.wit"), "package test:precedence; world api-world { export chosen: func() -> u32; export inferred: func() -> u32; }").unwrap();
+    for (marker, mapping) in [("other/custom", "chosen=app/chosen"), ("17", "chosen=chosen"), ("\"\"", "chosen=app/chosen")] {
+        std::fs::write(root.path().join("app.sus"), format!("(ns app) (def ^{{:export {marker}}} chosen (fn [] 31)) (def ^:export inferred (fn [] 42))")).unwrap();
+        std::fs::write(root.path().join("app.wasm"), b"prior artifact").unwrap();
+        let unmapped = compile(root.path(), &[]);
+        assert!(!unmapped.status.success(), "marker {marker}");
+        assert_eq!(std::fs::read(root.path().join("app.wasm")).unwrap(), b"prior artifact");
+        let output = compile(root.path(), &["--export", mapping]);
+        assert!(
+            output.status.success(),
+            "marker {marker}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let engine = engine();
+        let component = Component::from_file(&engine, root.path().join("app.wasm")).unwrap();
+        let mut store = Store::new(&engine, ());
+        store.set_fuel(40_000_000).unwrap();
+        let instance = Linker::<()>::new(&engine)
+            .instantiate(&mut store, &component)
+            .unwrap();
+        for (name, expected) in [("chosen", 31), ("inferred", 42)] {
+            let function = instance
+                .get_typed_func::<(), (u32,)>(&mut store, name)
+                .unwrap();
+            assert_eq!(function.call(&mut store, ()).unwrap().0, expected);
+        }
+    }
+}

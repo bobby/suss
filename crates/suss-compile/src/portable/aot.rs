@@ -134,12 +134,26 @@ pub fn source_export_mappings(
         }
     }
     missing.retain(|(path, _)| !explicit.iter().any(|(mapped, _)| mapped == path));
+    let explicit_vars = explicit
+        .iter()
+        .map(|(_, symbol)| {
+            last.environment
+                .resolve(Phase::Runtime, symbol, 0..0)
+                .map(|binding| binding.global().clone())
+        })
+        .collect::<Result<std::collections::BTreeSet<_>, _>>()?;
     let mut candidates = std::collections::BTreeMap::<String, Vec<Symbol>>::new();
     for global in last.environment.cells() {
         if missing.is_empty() {
             break;
         }
         if global.phase() != Phase::Runtime {
+            continue;
+        }
+        // Explicitly selected vars do not participate in shorthand inference.
+        // Their reader markers may be unsupported by WIT selection; the explicit
+        // path still receives all of the assembler's normal validation.
+        if explicit_vars.contains(&global) {
             continue;
         }
         let Some(info) = last.environment.definition_info(&global) else {

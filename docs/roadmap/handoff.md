@@ -15377,3 +15377,31 @@ exclusiveworktree/soleheavy once wrapperterminal. Require final-head unfiltered
 cargo test --workspace --locked -- --test-threads=2 and exactCI before readiness.
 All source/bootstrap/focused checks pass; no full/review/CI claim for this increment.
 Original M3 issues12–15 remainopen; no merge. PR178 localfull1147 passes, CIpending.
+
+Independent PR179 review found and repaired partial explicit mapping precedence.
+With `chosen=app/chosen` supplied and another freestanding function inferred,
+custom qualified export metadata on `chosen` incorrectly produced "needs an
+explicit mapping". Actual regression handle 63662 exited 101: 0 passed, 1 failed,
+4 filtered in 3.88s (`/private/tmp/suss-pr179-review-before.log`). Explicit mappings
+now resolve to Runtime var identities before shorthand scanning; explicitly
+selected vars do not participate in inference. Assembly retains mapping/type
+validation. The regression executes both exports for qualified-symbol, number
+and empty-string metadata, including an unqualified explicit var name, and
+checks unmapped rejection preserves the prior artifact. Original tests remain.
+
+Root's pinned export oracle wrapper 1444 exited 0 with all seven exact rows;
+implementation commit 2930d420 opened draft PR179. Independent reviewer owns
+`/private/tmp/suss-m3-aot-export-metadata` and the sole heavy slot through the
+required full baseline. Initial CI37183176478 at 2930d420 is superseded by the
+review fix. Final compiler regeneration 68317 exited 0, updating BOTH phase
+Wasm/JSON images. Java-free reproduction 21015 exited 0: both image pairs match
+twice and the checkout, compiler identities match, and all four executing
+bootstrap tests pass (12.79s). Logs `/private/tmp/suss-pr179-review-regenerate-final.log`
+and `/private/tmp/suss-pr179-review-javafree-final.log`. Focused metadata tests handle 40076 exited 0: 5 passed, 0 failed, 0 ignored,
+0 filtered (37.26s), including all original tests and the mixed mapping regression.
+Frozen-head unfiltered baseline and replacement exact-head CI are pending.
+No rich macro-environment, full WIT/frontend, evaluator or scheduler completion
+is claimed. Next work proceeds only after the review baseline releases the slot.
+Python review handle 46855 exited 0: all 118 script tests pass (4.954s),
+`/private/tmp/suss-pr179-review-python.log`. Focused native log:
+`/private/tmp/suss-pr179-review-focused.log`.
