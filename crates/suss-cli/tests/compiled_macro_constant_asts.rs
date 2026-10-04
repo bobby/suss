@@ -1,5 +1,5 @@
 //! Executed source-macro projections of genuine scalar initializer AST facts.
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
 };
@@ -157,5 +157,80 @@ fn scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inferenc
             unreachable!()
         };
         assert!(matches!(&fields[2].kind, Kind::String(units) if units == &[0xd800, 0x78, 0xdc00]));
+    }
+}
+
+#[test]
+fn reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_constants() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros
+            .define(
+                r#"(defmacro inspect-source [name]
+          (let [init (get (get (get &env :locals) name) :init)]
+            (list 'quote [(contains? init :op) (get init :op)
+                          (contains? init :val) (get init :val)
+                          (get init :form) (contains? init :suss/lowering)])))"#,
+            )
+            .unwrap();
+        let value = session
+            .eval_with_macros(
+                r#"[
+          (let [observed true] (inspect-source observed))
+          (let [observed :app/word] (inspect-source observed))
+          (let [observed "a\n\"b"] (inspect-source observed))
+          (let [observed false copy observed] (inspect-source copy))
+          (let [observed 42 copy (+ observed 0)] (inspect-source copy))]"#,
+                &mut macros,
+            )
+            .unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        session.collect().unwrap();
+        let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
+        let Kind::Vector(rows) = decoded.kind else {
+            panic!("source AST rows")
+        };
+        assert_eq!(rows.len(), 5);
+        for row in &rows[..3] {
+            let Kind::Vector(fields) = &row.kind else {
+                panic!("source fields")
+            };
+            assert!(matches!(fields[0].kind, Kind::Bool(true)));
+            assert!(
+                matches!(&fields[1].kind, Kind::Keyword(k) if k.namespace.is_none() && k.name == "const")
+            );
+            assert!(matches!(fields[2].kind, Kind::Bool(true)));
+            assert_eq!(
+                fields[3].kind, fields[4].kind,
+                "val retains the source form rather than physical lowering"
+            );
+            assert!(
+                matches!(fields[5].kind, Kind::Bool(true)),
+                "native lowering remains separately present"
+            );
+        }
+        let Kind::Vector(fields) = &rows[1].kind else {
+            unreachable!()
+        };
+        assert!(
+            matches!(&fields[3].kind, Kind::Keyword(k) if k.namespace.as_deref() == Some("app") && k.name == "word")
+        );
+        let Kind::Vector(fields) = &rows[2].kind else {
+            unreachable!()
+        };
+        assert!(matches!(&fields[3].kind, Kind::String(s) if s == &[0x61, 10, 0x22, 0x62]));
+        for row in &rows[3..] {
+            let Kind::Vector(fields) = &row.kind else {
+                panic!("nonconstant fields")
+            };
+            assert!(matches!(fields[0].kind, Kind::Bool(false)));
+            assert!(matches!(fields[1].kind, Kind::Nil));
+            assert!(
+                matches!(fields[2].kind, Kind::Bool(false)),
+                "a scalar runtime result does not fabricate a source constant"
+            );
+            assert!(matches!(fields[3].kind, Kind::Nil));
+            assert!(matches!(fields[5].kind, Kind::Bool(true)));
+        }
     }
 }

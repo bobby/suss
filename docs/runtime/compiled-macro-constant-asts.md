@@ -40,3 +40,13 @@ locked inputs and bootstrap bytes are unchanged. Independent review, the
 unfiltered full workspace baseline and exact final-head CI are still required
 for this new PR. See [the M3 audit](../roadmap/acceptance-m3.md) for the remaining
 original requirements, including evaluator retirement and pending-I/O lifecycle.
+
+Independent review preserves both original tests and adds executed checks for true,
+a qualified keyword and escaped UTF-16 data, exact `:val`/`:form` agreement and
+separate `:suss/lowering` presence. Local reads and arithmetic expressions yielding
+scalar runtime results retain absent operation/value fields; this partial increment
+does not invent their portable AST schema. All 38 affected native tests pass,
+including the three constant tests in both caller phases after GC. An independent
+fresh pinned run retains all 32 earlier observations and 11 executed projections,
+plus the five scalar AST observations. No scoped significant defect was found.
+Full reviewed-head baseline and exact final-head CI remain required.

@@ -15997,3 +15997,43 @@ portable compound/quote/variable/invocation/children/function/method/declaration
 inference schema, evaluator retirement, target/dependency integration and rooted
 pending-I/O cancellation/live-heap accounting keep full M3 open. No issue closure,
 PR merge or goal completion. Root owns sole heavy slot with no live handle.
+
+## PR183 independent primitive AST review
+
+Reviewed initial96a0bf52a887549760d63739138cc917496af081 against
+383d2062b80973135d767cc68a3398147ae46692. Required design/roadmap/inventory/handoff
+and pinned analyzer.cljc analyze-keyword/analyze-form inspected. Source SHA256
+independently agrees297802c627474434f1ef868e31f5f9913c290a4e80c509a40c704dced95bbf47;
+primitive const nodes expose actual source op/val/form without children. Metadata
+wrappers and compound/quoted/variable/invocation AST schema remain unfinished.
+No significant scoped production defect found; earlier M3 audit remains intact.
+
+Added executed review regression for true, qualified keyword, escaped UTF16
+string, exact val/form agreement and separate suss/lowering presence in Runtime
+and Macro caller Stores after GC. A local-read initializer and arithmetic result
+must retain absent op/val rather than derive a fabricated constant from runtime
+values. All original assertions retained.
+
+Reviewer57897 TERMINAL0:38passed/0failed/0ignored across6groups (graph11/bindings8/
+constants3/environment3/tags2/syntaxquote11). /private/tmp/suss-pr183-review-focused.log.
+Command CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo
+ test -p suss-cli --locked --test compiled_macro_constant_asts --test
+compiled_macro_source_environment --test compiled_macro_source_tags --test
+compiled_macro_analysis_graph --test compiled_macro_binding_records --test
+compiled_macro_syntax_quote -- --test-threads=2. No RUSTFLAGS.
+Independent fresh oracle36923 TERMINAL0: CARGO_BUILD_JOBS=2 sh
+scripts/test-analysis-tags-oracle.sh; actual force/cache-disabled pinned JVM/Node
+execution passes unchanged32facts/11executed and additional5scalar AST traces,
+with3expectednumeric inference warnings retained. /private/tmp/suss-pr183-review-oracle.log.
+Only tests/docs changed in review. Compiler/core/reader/build/locked fingerprint
+inputs and BOTH phase bootstrap pairs remain unchanged; no regeneration required.
+No heavy worktree switch since root validated this same source worktree.
+Restricted rustfmt edition2024 and git diff --check pass.
+
+Next freeze/push review evidence and run exact unfiltered
+cargo test --workspace --locked -- --test-threads=2, polling actual handle to
+terminal and explicitly releasing sole heavy slot. Exact final-head CI is required.
+No merge, issue closure or M3 completion. Next genuine compound/quote/variable/
+invocation/child/function/declaration AST schema still needs fresh native/pinned
+execution; evaluator retirement, target/dependency integration and rooted pending-I/O
+cancellation/live-heap gates remain accepted requirements, not exclusions.
