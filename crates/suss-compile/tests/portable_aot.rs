@@ -706,3 +706,145 @@ fn small_integer_parameters_keep_mixed_scalar_positions_and_once_only_calls() {
     assert_eq!(seen.call(&mut store, ()).unwrap().0, 2.0);
     seen.post_return(&mut store).unwrap();
 }
+
+#[test]
+fn exported_interfaces_keep_names_versions_shared_cells_and_source_effects() {
+    let fragment = portable::prepare_fragment(
+        "(def count 0) (def calc (fn [x] (do (set! count (+ count 1)) (+ x 1)))) (def seen (fn [] count))",
+        &Environment::default(), Phase::Runtime,
+    ).unwrap();
+    let (resolve, selected) = world(
+        "package test:interfaces@1.2.3; interface math { calc: func(x: u32) -> u32; } world api { export math; export renamed: math; export alias: interface { calc: func(x: s16) -> s16; } export empty: interface {} export seen: func() -> f64; }",
+    );
+    let bytes = portable::aot::component(
+        &[fragment],
+        &resolve,
+        selected,
+        &[
+            (
+                "test:interfaces/math@1.2.3#calc".into(),
+                Symbol::new("calc"),
+            ),
+            ("alias#calc".into(), Symbol::new("calc")),
+            ("renamed#calc".into(), Symbol::new("calc")),
+            ("seen".into(), Symbol::new("seen")),
+        ],
+    )
+    .unwrap();
+    let mut imports = 0;
+    for payload in wasmparser::Parser::new(0).parse_all(&bytes) {
+        if let wasmparser::Payload::ComponentImportSection(section) = payload.unwrap() {
+            imports += section.count();
+        }
+    }
+    assert_eq!(imports, 0);
+    let engine = engine();
+    let component = Component::new(&engine, bytes).unwrap();
+    let math = component
+        .get_export_index(None, "test:interfaces/math@1.2.3")
+        .unwrap();
+    let math_calc = component.get_export_index(Some(&math), "calc").unwrap();
+    let alias = component.get_export_index(None, "alias").unwrap();
+    let alias_calc = component.get_export_index(Some(&alias), "calc").unwrap();
+    let renamed = component.get_export_index(None, "renamed").unwrap();
+    let renamed_calc = component.get_export_index(Some(&renamed), "calc").unwrap();
+    assert!(component.get_export_index(None, "empty").is_some());
+    assert!(component.get_export_index(None, "calc").is_none());
+    for _ in 0..2 {
+        let mut store = Store::new(&engine, ());
+        store.set_fuel(20_000_000).unwrap();
+        let instance = Linker::new(&engine)
+            .instantiate(&mut store, &component)
+            .unwrap();
+        let math_calc = instance
+            .get_typed_func::<(u32,), (u32,)>(&mut store, &math_calc)
+            .unwrap();
+        let alias_calc = instance
+            .get_typed_func::<(i16,), (i16,)>(&mut store, &alias_calc)
+            .unwrap();
+        let renamed_calc = instance
+            .get_typed_func::<(u32,), (u32,)>(&mut store, &renamed_calc)
+            .unwrap();
+        let seen = instance
+            .get_typed_func::<(), (f64,)>(&mut store, "seen")
+            .unwrap();
+        assert_eq!(
+            seen.call(&mut store, ()).unwrap().0.to_bits(),
+            0.0_f64.to_bits()
+        );
+        seen.post_return(&mut store).unwrap();
+        assert_eq!(
+            math_calc.call(&mut store, (2147483647,)).unwrap().0,
+            2147483648
+        );
+        math_calc.post_return(&mut store).unwrap();
+        store.gc(None).unwrap();
+        assert_eq!(alias_calc.call(&mut store, (-8,)).unwrap().0, -7);
+        alias_calc.post_return(&mut store).unwrap();
+        assert_eq!(renamed_calc.call(&mut store, (41,)).unwrap().0, 42);
+        renamed_calc.post_return(&mut store).unwrap();
+        assert_eq!(
+            seen.call(&mut store, ()).unwrap().0.to_bits(),
+            3.0_f64.to_bits()
+        );
+        seen.post_return(&mut store).unwrap();
+    }
+}
+
+#[test]
+fn exported_interface_mapping_paths_are_exact_and_types_remain_explicitly_unsupported() {
+    let fragment = portable::prepare_fragment(
+        "(def calc (fn [x] x))",
+        &Environment::default(),
+        Phase::Runtime,
+    )
+    .unwrap();
+    let (resolve, selected) = world(
+        "package test:mapping; world api { export api: interface { calc: func(x: f64) -> f64; } }",
+    );
+    for mapping in [
+        vec![],
+        vec![("calc".into(), Symbol::new("calc"))],
+        vec![
+            ("api#calc".into(), Symbol::new("calc")),
+            ("api#calc".into(), Symbol::new("calc")),
+        ],
+    ] {
+        let error = portable::aot::component(
+            std::slice::from_ref(&fragment),
+            &resolve,
+            selected,
+            &mapping,
+        )
+        .unwrap_err();
+        assert_eq!(
+            error.message,
+            "WIT export api#calc needs exactly one explicit Suss var mapping"
+        );
+    }
+    let error = portable::aot::component(
+        std::slice::from_ref(&fragment),
+        &resolve,
+        selected,
+        &[
+            ("api#calc".into(), Symbol::new("calc")),
+            ("calc".into(), Symbol::new("calc")),
+        ],
+    )
+    .unwrap_err();
+    assert_eq!(error.message, "Unknown WIT export mapping");
+    let (resolve, selected) = world(
+        "package test:types; interface api { type scalar = f64; calc: func(x: scalar) -> scalar; } world api-world { export api; }",
+    );
+    let error = portable::aot::component(
+        &[fragment],
+        &resolve,
+        selected,
+        &[("test:types/api#calc".into(), Symbol::new("calc"))],
+    )
+    .unwrap_err();
+    assert_eq!(
+        error.message,
+        "Portable AOT interface type exports remain unimplemented"
+    );
+}

@@ -14701,3 +14701,113 @@ root. PR171 retained source70fc->ebfa differs only inherited handoff; its local
 still pending. Full WIT/imports/interfaces/memory/indirect scalar parameters,
 actual frontend migration/evaluator removal/published dependency and scheduler/
 lifecycle gates remain original open goal. No merge, issue closure or M3 completion.
+
+## Exported scalar WIT interface adapters — unvalidated isolated continuation
+
+PR175 root79d747f dispatched independentreview166 with soleheavy slot after
+all rootjobs terminal. Reviewer found no significant scoped production defect,
+retained originals8 includingcounter66, added actual mixed all6integer/bool/f32/
+f64 weighted positions/high unsigned/GC/sourcecount2. Focus43174 TERMINAL0:
+9/0/0 in4.11s; tests/docs-only push46916 TERMINAL0 at frozenb84064eb1d38eb8e
+156875e8570669380a4e3345. Compiler/bootstrap bytes unchanged fromrootJavafree.
+Required unfiltered full90496 LIVE at b840, log
+/private/tmp/suss-pr175-review-full-final.log; exactCI37173594997 LIVE.
+Earlier79d CI37173417245 cancelled, not finalproof. Reviewer retains soleheavy
+slot; root has launched no concurrent Cargo/native/JVM/Node.
+
+Independent integration reviewer150 downloaded actual173 final5fc CI37171995245
+log: required exact unfiltered cmd completed1117/0/17/124groups throughfinalreader
+doctests, Python118 andJavafree byteexact/bootstrap4 passed. Root independently
+verified GHcurrenthead5fc plus CIcompleted/successsamehead, updatedbody andmarked
+173ready withoutmerging. All169/170/171 corrected-head CI remain pending.
+Native stack174 now173->169->170->171->175; no GitHub PRmerge orissueclosure.
+
+Created /private/tmp/suss-m3-aot-exported-interfaces branch
+portable/m3-aot-exported-interfaces initially79d, rebased clean onto175 reviewed
+b840 before editing. Draft originalRust extends the selected resolvedworld walk
+to pure exported scalar interfaces, including emptyinterfaces. Upstream
+Resolve::name_world_key preserves the selected alias/package/interface/version;
+interface mappingpaths use exact world-key#function, and emitted public component
+instances contain only their named functions. Wrappers keep existing live-cell
+imports and source initialization order; same functionname in different
+interfaces has distinct path and may intentionally mapone shared sourcecell.
+Standalone function mappings remain unchanged. Interface types/external-id and
+other imports/resource/async/memory shapes remain explicit unfinished diagnostics.
+This working increment does not certify completeWITsupport orM3acceptance.
+
+Added two unrun compiler regressions: actual versionedinterface+inlinealias+empty
+instance+freestandingseen typedhost calls, high unsigned/signed values, shared
+cell/effectcounts, freshinstances/GC andexactzero componentimports; and exact
+missing/unqualified/duplicate/unknown mappingerrors plus explicit typeexport
+rejection. Inspected pinned official wit-parser/wasm-encoder/Wasmtime source APIs
+and actual inlineinterface fixtures to derive graphnames/binaryinstance encoding
+and nested export lookup. Rustfmt/diffcheckpass; NO Rustartifact has been
+validated/executed here. Prior adapter savedbyteexact at
+/private/tmp/suss-aot-before-exported-interfaces.rs for controlledbeforeregression.
+After reviewer175 full90496 authoritative terminal/explicitrelease: cleanONLY
+4Susspackages insharedtarget, controlledbefore/after focus, fixactualfailures,
+regenBOTHbootstrapWasM/JSON --profiletest, Javafreeverification, affected source
+prep/nativephase/tests, publishdraft+dispatchindependentreview, freezefull/CI.
+Never RUSTFLAGS. OriginalfullselectedWIT/frontend/evaluator/publishedpolicy,
+richportableenvironments andscheduler/cancel/liveheapremainopen originalscope.
+
+Exported-interface continuation also adds an UNRUN CLI source-to-component test:
+real isolated compiled macro:app/twice metadata, source Runtime initializer1,
+versioned exportedinterfaceapi, typed u32calls42/6 and effectcount1->2->3 acrossGC,
+and two independent freshStores afterMacrohost disposal. Existing source tests3
+and allparentcompiler tests9 remainintact. This newRust code changes compiler
+fingerprint, so aftercontrolledcompilerbefore/after and before ANYCLItest,
+regen BOTHbootstrapimages with --profiletest. Parent175 oldshippedimages cannot
+be asserted compatible with this currentunvalidatedsource. Only format/diffcheck
+ranhere;175reviewerretainssoleheavy90496. No newnativejob, merge orscopeclosure.
+
+
+## Exported scalar interfaces: focused execution verified
+
+The isolated continuation is based on PR175's reviewed head
+`b84064eb1d38eb8e156875e8570669380a4e3345`. Its reviewer released the
+sole heavy slot after actual process 90496 exited successfully: the required
+unfiltered baseline passed 1,134 tests, zero failures, 17 existing ignores and
+128 groups through the final reader doctests. Its exact-head CI remains required.
+
+Root then cleaned only the four Suss packages in the shared test target.
+Controlled prior-adapter process 95811 exited 101: the positive interface
+regression failed with `Portable AOT interface/type exports remain unimplemented`.
+After restoring the new adapter, process 45223 exited 0: all eleven compiler
+AOT tests passed (1.74s), retaining the nine parent tests. The new cases exercise
+versioned interface names, named and inline aliases, empty interfaces, a
+freestanding export, shared cells, initializer/call effects, fresh Stores, GC,
+zero component imports and exact mapping diagnostics. Interface type exports
+remain explicitly rejected; external-id annotations and complete boundary
+support remain unfinished.
+
+Commands used, all from `/private/tmp/suss-m3-aot-exported-interfaces`:
+
+- `CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test -p suss-compile --locked --test portable_aot -- --test-threads=2`
+- `CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`
+- `CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 sh scripts/verify-bootstrap.sh`
+- `CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test -p suss-cli --locked --test aot_source_preparation --test compiled_aot --test compiled_native_entrypoints --test compiled_repl_macros --test compiled_phase_session --test namespace_session --test persistent_session -- --test-threads=2`
+- `CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test -p suss-compile --locked --test compiled_core_bindings --test portable_modules -- --test-threads=2`
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`
+
+Regeneration 94654 exited 0. Both phase Wasm/JSON images were regenerated for
+the changed compiler fingerprint; Java-free verification 15983 exited 0 with
+byte-exact reproduction twice, matching build-script identity and bootstrap4
+(13.83s). CLI process 94383 exited 0: 61 tests across groups 4/1/10/3/6/4/33.
+The new source-preparation test actually executes an isolated compiled macro,
+then a versioned exported interface with effect counts 1 -> 2 -> 3 across GC
+and independent fresh Stores. Compiler process 45770 exited 0: binding4/module11.
+Python initially failed because this new worktree lacked the pinned development
+reference submodule (114 tests, seven prerequisite errors). After initializing
+exact ClojureScript commit c4295f303100bbf5afac449242d30bca1126f1a1, process 72875
+exited 0 with all118 tests (4.975s); no assertions were skipped or weakened.
+All root native processes are terminal. Evidence logs use
+`/private/tmp/suss-aot-exported-interfaces-*.log`.
+
+Next publish this branch as a draft continuation of PR175, dispatch independent
+review with authority to push significant fixes, freeze the reviewed head, run
+`cargo test --workspace --locked -- --test-threads=2` unfiltered and require
+exact final-head CI. Do not merge. This is original Rust, with no upstream forms
+ported and no ABI/layout change. Refs #14 is partial progress, not issue closure. Complete selected-WIT adapters, CLI/frontend migration, evaluator removal,
+published dependency policy, rich macro environments, scheduler/cancellation and
+live heap acceptance remain open under the original M3 goal.

@@ -362,3 +362,11 @@ exactly-once source calls. All8 compiler AOT tests pass; Java-free reproduction/
 affected CLI60 and compiler15 pass. Full baseline and independent review/final
 CI remain pending. This supports frontend
 migration prerequisites; no M3 issue is complete. See [AOT components](docs/runtime/compiled-aot-components.md).
+
+Exported scalar WIT interfaces now have focused executing evidence for preserved
+versioned names, inline and named aliases, empty interfaces, shared cells and GC.
+All11 compiler AOT and4 source-preparation tests pass, including a real compiled
+macro feeding a versioned interface. Java-free reproduction/bootstrap4 and
+Python118 pass. Independent review, full baseline and final-head CI remain
+required. Interface types/external-id and complete WIT/frontend/M3 acceptance
+remain open. See [AOT components](docs/runtime/compiled-aot-components.md).

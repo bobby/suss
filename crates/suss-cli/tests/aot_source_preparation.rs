@@ -191,3 +191,75 @@ fn source_preparation_deduplicates_diamond_dependencies_and_isolates_macro_state
         function.post_return(&mut store).unwrap();
     }
 }
+
+#[test]
+fn compiled_source_macro_executes_through_a_versioned_exported_interface() {
+    let source = "(ns app) (def seen 0) (defmacro twice [x] `(+ ~x ~x)) (def calculate (fn [x] (do (set! seen (+ seen 1)) (twice x)))) (def effects (fn [] seen)) (set! seen (+ seen 1))";
+    let fragments = prepare_source(source, None, &[]).unwrap();
+    assert!(fragments.iter().any(|fragment| {
+        portable::artifact_identity::read(&fragment.wasm)
+            .unwrap()
+            .macro_dependencies
+            .as_ref()
+            .is_some_and(|graph| graph.iter().any(|(name, _)| name == "macro:app/twice"))
+    }));
+    let mut resolve = portable::aot::Resolve::new();
+    let package = resolve.push_str("api.wit", "package test:source-interface@0.2.0; interface api { calculate: func(x: u32) -> u32; effects: func() -> f64; } world api-world { export api; }").unwrap();
+    let world = *resolve.packages[package].worlds.values().next().unwrap();
+    let bytes = portable::aot::component(
+        &fragments,
+        &resolve,
+        world,
+        &[
+            (
+                "test:source-interface/api@0.2.0#calculate".into(),
+                Symbol::new("calculate"),
+            ),
+            (
+                "test:source-interface/api@0.2.0#effects".into(),
+                Symbol::new("effects"),
+            ),
+        ],
+    )
+    .unwrap();
+    let engine = engine();
+    let component = Component::new(&engine, bytes).unwrap();
+    let api = component
+        .get_export_index(None, "test:source-interface/api@0.2.0")
+        .unwrap();
+    let calculate = component.get_export_index(Some(&api), "calculate").unwrap();
+    let effects = component.get_export_index(Some(&api), "effects").unwrap();
+    for _ in 0..2 {
+        let mut store = Store::new(&engine, ());
+        store.set_fuel(100_000_000).unwrap();
+        let instance = Linker::new(&engine)
+            .instantiate(&mut store, &component)
+            .unwrap();
+        let calculate = instance
+            .get_typed_func::<(u32,), (u32,)>(&mut store, &calculate)
+            .unwrap();
+        let effects = instance
+            .get_typed_func::<(), (f64,)>(&mut store, &effects)
+            .unwrap();
+        assert_eq!(
+            effects.call(&mut store, ()).unwrap().0.to_bits(),
+            1.0_f64.to_bits()
+        );
+        effects.post_return(&mut store).unwrap();
+        assert_eq!(calculate.call(&mut store, (21,)).unwrap().0, 42);
+        calculate.post_return(&mut store).unwrap();
+        assert_eq!(
+            effects.call(&mut store, ()).unwrap().0.to_bits(),
+            2.0_f64.to_bits()
+        );
+        effects.post_return(&mut store).unwrap();
+        store.gc(None).unwrap();
+        assert_eq!(calculate.call(&mut store, (3,)).unwrap().0, 6);
+        calculate.post_return(&mut store).unwrap();
+        assert_eq!(
+            effects.call(&mut store, ()).unwrap().0.to_bits(),
+            3.0_f64.to_bits()
+        );
+        effects.post_return(&mut store).unwrap();
+    }
+}

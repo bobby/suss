@@ -1,10 +1,10 @@
 //! Original target assembly for already prepared portable source fragments.
-//! This development boundary currently supports pure freestanding scalar exports.
+//! This development boundary supports scalar function exports, including interfaces.
 use super::{Diagnostic, PreparedFragment, artifact_identity, core_bindings, resolve::Phase};
 use crate::runtime_abi;
 use suss_reader::Symbol;
 use wasm_encoder::*;
-use wit_parser::{FunctionKind, Type, WorldItem, WorldKey};
+use wit_parser::{FunctionKind, Type, WorldItem};
 pub use wit_parser::{Resolve, WorldId};
 
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
@@ -15,6 +15,16 @@ struct Export {
     global: super::resolve::Global,
     params: Vec<(String, Scalar)>,
     result: Option<Scalar>,
+}
+enum PublicExport {
+    Function {
+        name: String,
+        index: u32,
+    },
+    Interface {
+        name: String,
+        functions: Vec<(String, u32)>,
+    },
 }
 #[derive(Clone, Copy)]
 enum Scalar {
@@ -116,43 +126,77 @@ pub fn component(
         ));
     }
     let mut exports = Vec::new();
+    let mut public_exports = Vec::new();
     let mut used = std::collections::BTreeSet::new();
-    for (key, item) in &selected.exports {
-        let (WorldKey::Name(name), WorldItem::Function(function)) = (key, item) else {
-            return Err(error(
-                "Portable AOT interface/type exports remain unimplemented",
-            ));
-        };
-        if function.kind != FunctionKind::Freestanding {
-            return Err(error(
-                "Portable AOT async/resource function adapters remain unimplemented",
-            ));
-        }
-        let matching = mappings
-            .iter()
-            .filter(|(export, _)| export == name)
-            .collect::<Vec<_>>();
-        if matching.len() != 1 {
-            return Err(error(format!(
-                "WIT export {name} needs exactly one explicit Suss var mapping"
-            )));
-        }
-        used.insert(name.clone());
-        let global = last
-            .environment
-            .resolve(Phase::Runtime, &matching[0].1, 0..0)?
-            .global()
-            .clone();
-        exports.push(Export {
-            name: name.clone(),
-            global,
-            params: function
-                .params
+    let mut add_function =
+        |name: String, function: &wit_parser::Function| -> Result<u32, Diagnostic> {
+            if function.kind != FunctionKind::Freestanding {
+                return Err(error(
+                    "Portable AOT async/resource function adapters remain unimplemented",
+                ));
+            }
+            let matching = mappings
                 .iter()
-                .map(|param| Ok((param.name.clone(), scalar(resolve, param.ty)?)))
-                .collect::<Result<_, Diagnostic>>()?,
-            result: function.result.map(|ty| scalar(resolve, ty)).transpose()?,
-        });
+                .filter(|(export, _)| export == &name)
+                .collect::<Vec<_>>();
+            if matching.len() != 1 {
+                return Err(error(format!(
+                    "WIT export {name} needs exactly one explicit Suss var mapping"
+                )));
+            }
+            used.insert(name.clone());
+            let global = last
+                .environment
+                .resolve(Phase::Runtime, &matching[0].1, 0..0)?
+                .global()
+                .clone();
+            let index = exports.len() as u32;
+            exports.push(Export {
+                name,
+                global,
+                params: function
+                    .params
+                    .iter()
+                    .map(|param| Ok((param.name.clone(), scalar(resolve, param.ty)?)))
+                    .collect::<Result<_, Diagnostic>>()?,
+                result: function.result.map(|ty| scalar(resolve, ty)).transpose()?,
+            });
+            Ok(index)
+        };
+    for (key, item) in &selected.exports {
+        // Upstream resolution supplies the exact selected alias or package /
+        // interface / version; never reconstruct it from unqualified names.
+        let name = resolve.name_world_key(key);
+        match item {
+            WorldItem::Function(function) => {
+                let index = add_function(name.clone(), function)?;
+                public_exports.push(PublicExport::Function { name, index });
+            }
+            WorldItem::Interface {
+                id, external_id, ..
+            } => {
+                if external_id.is_some() {
+                    return Err(error(
+                        "Portable AOT interface external-id adapters remain unimplemented",
+                    ));
+                }
+                let interface = &resolve.interfaces[*id];
+                if !interface.types.is_empty() {
+                    return Err(error(
+                        "Portable AOT interface type exports remain unimplemented",
+                    ));
+                }
+                let mut functions = Vec::new();
+                for (function_name, function) in &interface.functions {
+                    let index = add_function(format!("{name}#{function_name}"), function)?;
+                    functions.push((function_name.clone(), index));
+                }
+                public_exports.push(PublicExport::Interface { name, functions });
+            }
+            WorldItem::Type { .. } => {
+                return Err(error("Portable AOT type exports remain unimplemented"));
+            }
+        }
     }
     if mappings.iter().any(|(name, _)| !used.contains(name)) {
         return Err(error("Unknown WIT export mapping"));
@@ -216,6 +260,7 @@ pub fn component(
     let mut types = ComponentTypeSection::new();
     let mut canonical = CanonicalFunctionSection::new();
     let mut public = ComponentExportSection::new();
+    let mut exported_instances = ComponentInstanceSection::new();
     for (index, export) in exports.iter().enumerate() {
         aliases.alias(Alias::CoreInstanceExport {
             instance: adapter_instance,
@@ -236,12 +281,28 @@ pub fn component(
             index as u32,
             std::iter::empty::<CanonicalOption>(),
         );
-        public.export(&export.name, ComponentExportKind::Func, index as u32, None);
+    }
+    for export in public_exports {
+        match export {
+            PublicExport::Function { name, index } => {
+                public.export(&name, ComponentExportKind::Func, index, None);
+            }
+            PublicExport::Interface { name, functions } => {
+                let index = exported_instances.len();
+                exported_instances.export_items(
+                    functions.iter().map(|(name, function)| {
+                        (name.as_str(), ComponentExportKind::Func, *function)
+                    }),
+                );
+                public.export(&name, ComponentExportKind::Instance, index, None);
+            }
+        }
     }
     component
         .section(&aliases)
         .section(&types)
         .section(&canonical)
+        .section(&exported_instances)
         .section(&public);
     let bytes = component.finish();
     wasmparser::Validator::new_with_features(wasmparser::WasmFeatures::all())
