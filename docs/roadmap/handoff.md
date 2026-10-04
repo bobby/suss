@@ -15905,3 +15905,135 @@ remain a separate foundation. Neither is completed by this command increment.
 Full WIT capabilities, rich environments, component-host migration, evaluator
 retirement, published dependencies and original lifecycle gates remain open.
 No merge, issue closure or M3 completion is claimed.
+
+
+### Next scalar initializer AST regression preparation
+
+Root prepared /private/tmp/suss-m3-macro-constant-asts on
+portable/m3-macro-constant-asts, based on reviewed/frozen PR #182 repair
+383d2062b80973135d767cc68a3398147ae46692. Reviewer167 exclusively owns the PR #182
+worktree and sole heavy slot; its required unfiltered full40117 is still live,
+with exact CI37194347191 also running. Neither is called passing before terminal.
+
+This next worktree has uncommitted regression/oracle preparation only. No
+production AST transport changed yet. New compiled_macro_constant_asts projects
+real scalar initializer :op/:val/:children presence and values through executed
+source macros in Runtime and Macro Stores after GC, plus once-only effect guard.
+The new five-case expected sidecar is a candidate expectation, not fresh oracle
+success. Existing 32 tag observations and 11 runtime assertions remain unchanged;
+a separate additional trace is emitted for the five scalar cases. Run the actual
+fresh pinned oracle and native before regression after the reviewer releases the
+slot, record both actual terminals, then implement the smallest genuine source
+fact repair. Do not fabricate JavaScript operations or infer constants from final
+runtime/physical values. Compound/quote/metadata/child/declaration AST schema and
+all original M3 acceptance remain open.
+
+Light tooling check terminal0: PYTHONPYCACHEPREFIX=/private/tmp/suss-m3-macro-constant-python-cache
+python3 -m unittest discover -s scripts -p 'test_*.py':118 tests in5.061s,0 failures.
+Initial py_compile failed because the environment's Python cache prefix pointed
+outside writable roots; task-specific cache prefix repaired it and py_compile
+terminated0. This is syntax/tooling evidence only, not executed source acceptance.
+Pinned local development checkout is c4295f303100bbf5afac449242d30bca1126f1a1.
+No new PR/merge/issue closure or M3 completion. No root heavy job started.
+
+
+### Scalar source initializer AST repair, ready for independent review
+
+Parent PR #182 is reviewed/frozen at383d2062b80973135d767cc68a3398147ae46692.
+Reviewer167's actual full40117 terminated0:1178 passed/0 failed/17 existing
+ignores/0 filtered across136 groups through reader doctests. Root independently
+counted the exact complete local log. The sole heavy slot was explicitly released.
+Final-head CI37194347191 is still being checked; no ready/merge claim yet.
+
+Root /private/tmp/suss-m3-macro-constant-asts now repairs metadata-free scalar
+source AST records with :op :const and a present :val from retained source forms.
+It does not derive these from a lowered runtime result, execute an initializer,
+change tags/native lowering or fabricate compound/quoted/metadata ASTs. Negative
+zero, nonfinite numbers and UTF16 units retain their original bits. Source contract
+provenance, hash and distributed EPL license are documented. Compiler/runtime,
+locked inputs and bootstrap bytes are unchanged: no regeneration is needed for
+this native host-only increment. Earlier acceptance-m3 evidence was preserved
+verbatim and a current requirement matrix appended, not replaced.
+
+All root jobs below are authoritatively terminal, no live root job remains:
+- Before28776 terminal101:0 passed/2 failed/0 ignored/0 filtered in5.30s. Command
+  CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+  -p suss-cli --locked --test compiled_macro_constant_asts -- --test-threads=2.
+  Actual source macro rows lack op/val, including false/nil presence and numeric/
+  UTF16 edge fields. /private/tmp/suss-macro-constant-asts-before.log.
+- Fresh oracle45694 terminal1: all original32 tag facts and11 executed projections
+  pass; new checker rejects candidate keyword spelling because real declaration
+  data uses :const/:word with colon. Corrected fixture serialization, retaining
+  every original assertion. /private/tmp/suss-macro-constant-asts-oracle.log.
+- Fixed fresh oracle25540 terminal0: CARGO_BUILD_JOBS=2 sh
+  scripts/test-analysis-tags-oracle.sh, same pinned checkout. Force/cache-disabled
+  JVM compile and actual Node execution retain32/11 and all additional5 scalar
+  op/val/children-presence observations match exactly. Three expected numeric
+  inference warnings are retained. /private/tmp/suss-macro-constant-asts-oracle-fixed.log.
+- After11609 terminal0:2/0/0/0 filtered in7.77s; same native command as before.
+  Both Runtime and Macro caller Stores execute the primary projections after GC;
+  exact negativezero/Inf/-Inf/NaN and surrogate units pass; effectful initializer
+  runs once and does not become a fabricated constant. /private/tmp/suss-macro-constant-asts-after.log.
+- Affected95335 terminal0:37/0/0/0 filtered in6 groups. Same shared target/jobs;
+  cargo test -p suss-cli --locked --test compiled_macro_constant_asts
+  --test compiled_macro_source_environment --test compiled_macro_source_tags
+  --test compiled_macro_analysis_graph --test compiled_macro_binding_records
+  --test compiled_macro_syntax_quote -- --test-threads=2.
+  /private/tmp/suss-macro-constant-asts-affected.log. All preexisting assertions intact.
+- Python tooling terminal0: PYTHONPYCACHEPREFIX=/private/tmp/suss-m3-macro-constant-python-cache
+  python3 -m unittest discover -s scripts -p 'test_*.py';118 tests,0 failures in4.900s.
+  /private/tmp/suss-macro-constant-asts-python.log. Earlier cache-path failure and
+  corrected syntax check are retained above; no permission blocker remains.
+- Initial restricted rustfmt failed because edition2021 rejects existing let
+  chains. Corrected edition2024 matches Cargo.toml and terminates0, preserving
+  unrelated graph formatting outside ast_record. New test is formatted.
+  No RUSTFLAGS set or unrelated cleanup performed.
+
+Next commit/push/open a draft based on #182 with Refs #14, link stack174 and
+explicitly dispatch independent review with significant fixes pushed. Require
+unfiltered cargo test --workspace --locked -- --test-threads=2 and exact final-head
+CI for this new PR. Parent acceptance does not certify child code. Remaining
+portable compound/quote/variable/invocation/children/function/method/declaration/
+inference schema, evaluator retirement, target/dependency integration and rooted
+pending-I/O cancellation/live-heap accounting keep full M3 open. No issue closure,
+PR merge or goal completion. Root owns sole heavy slot with no live handle.
+
+## PR183 independent primitive AST review
+
+Reviewed initial96a0bf52a887549760d63739138cc917496af081 against
+383d2062b80973135d767cc68a3398147ae46692. Required design/roadmap/inventory/handoff
+and pinned analyzer.cljc analyze-keyword/analyze-form inspected. Source SHA256
+independently agrees297802c627474434f1ef868e31f5f9913c290a4e80c509a40c704dced95bbf47;
+primitive const nodes expose actual source op/val/form without children. Metadata
+wrappers and compound/quoted/variable/invocation AST schema remain unfinished.
+No significant scoped production defect found; earlier M3 audit remains intact.
+
+Added executed review regression for true, qualified keyword, escaped UTF16
+string, exact val/form agreement and separate suss/lowering presence in Runtime
+and Macro caller Stores after GC. A local-read initializer and arithmetic result
+must retain absent op/val rather than derive a fabricated constant from runtime
+values. All original assertions retained.
+
+Reviewer57897 TERMINAL0:38passed/0failed/0ignored across6groups (graph11/bindings8/
+constants3/environment3/tags2/syntaxquote11). /private/tmp/suss-pr183-review-focused.log.
+Command CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo
+ test -p suss-cli --locked --test compiled_macro_constant_asts --test
+compiled_macro_source_environment --test compiled_macro_source_tags --test
+compiled_macro_analysis_graph --test compiled_macro_binding_records --test
+compiled_macro_syntax_quote -- --test-threads=2. No RUSTFLAGS.
+Independent fresh oracle36923 TERMINAL0: CARGO_BUILD_JOBS=2 sh
+scripts/test-analysis-tags-oracle.sh; actual force/cache-disabled pinned JVM/Node
+execution passes unchanged32facts/11executed and additional5scalar AST traces,
+with3expectednumeric inference warnings retained. /private/tmp/suss-pr183-review-oracle.log.
+Only tests/docs changed in review. Compiler/core/reader/build/locked fingerprint
+inputs and BOTH phase bootstrap pairs remain unchanged; no regeneration required.
+No heavy worktree switch since root validated this same source worktree.
+Restricted rustfmt edition2024 and git diff --check pass.
+
+Next freeze/push review evidence and run exact unfiltered
+cargo test --workspace --locked -- --test-threads=2, polling actual handle to
+terminal and explicitly releasing sole heavy slot. Exact final-head CI is required.
+No merge, issue closure or M3 completion. Next genuine compound/quote/variable/
+invocation/child/function/declaration AST schema still needs fresh native/pinned
+execution; evaluator retirement, target/dependency integration and rooted pending-I/O
+cancellation/live-heap gates remain accepted requirements, not exclusions.

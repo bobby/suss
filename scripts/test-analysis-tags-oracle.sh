@@ -6,7 +6,9 @@ test "$(git -C "$analysis_root/clojurescript" rev-parse HEAD)" = c4295f303100bbf
 cd "$analysis_root/tests/oracle"
 mkdir -p out
 : > out/analysis-tag-calls.jsonl
+: > out/constant-ast-calls.jsonl
 CLJ_CONFIG=/tmp/suss-oracle-clojure-config CLJ_CACHE=/tmp/suss-oracle-clojure-cache \
 clojure -Srepro -M -m cljs.main -co '{:force true :cache-analysis false :target :nodejs :output-to "out/analysis-tags.js" :output-dir "out/analysis-tags-cljs" :optimizations :none :source-map false}' -c suss-oracle.analysis-tag-runner
 node out/analysis-tags.js > out/analysis-tag-results.json
 python3 "$analysis_root/scripts/analysis_tags_oracle.py"
+python3 "$analysis_root/scripts/constant_ast_oracle.py"

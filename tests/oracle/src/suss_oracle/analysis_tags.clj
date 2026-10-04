@@ -14,6 +14,14 @@
                              (declaration/data (get ast key))]) selected)
              (declaration/data (ana/get-tag ast))
              (declaration/data (ana/infer-tag &env ast))]]
+    ;; Additional original projection; preserve every existing tag observation.
+    (when (contains? #{"nil" "boolean" "number" "string" "keyword"} label)
+      (spit "out/constant-ast-calls.jsonl"
+            (str (declaration/json
+                   [label
+                    (mapv (fn [key] [(name key) (contains? ast key)
+                                     (declaration/data (get ast key))])
+                          [:op :val :children])]) "\n") :append true))
     (spit "out/analysis-tag-calls.jsonl"
           (str (declaration/json row) "\n") :append true)
     expression))
