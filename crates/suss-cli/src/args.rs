@@ -169,6 +169,16 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             "--namespace cannot be combined with a source file or --main".into(),
         ));
     }
+    if entry_ns.is_some() && world_wit.is_none() {
+        return Err(lexopt::Error::Custom(
+            "--namespace requires -w/--wit".into(),
+        ));
+    }
+    if entry_ns.is_some() && (world_target.is_some() || config_path.is_some()) {
+        return Err(lexopt::Error::Custom(
+            "--namespace cannot be combined with project --world or --config".into(),
+        ));
+    }
     if (wit_world.is_some() || !exports.is_empty())
         && !(world_wit.is_some() && main_ns.is_none() && (source.is_some() || entry_ns.is_some()))
     {

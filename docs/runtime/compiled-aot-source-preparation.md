@@ -106,3 +106,9 @@ been regenerated for the compiler helper and reproduce byte-for-byte without
 Java; bootstrap4 passes. Independent review, unfiltered full baseline and exact
 final-head CI remain pending for this increment. Explicit export mappings remain
 required; project/main/component-host migration and evaluator retirement are open.
+
+Independent namespace review also rejects missing `--wit` before project routing
+and rejects project-only `--world`/`--config` options in namespace mode. Actual
+before regressions exposed legacy project fallback and ignored selection options;
+all four namespace checks and four parent file checks pass after the guards.
+Required full baseline and exact final-head CI remain pending.

@@ -133,8 +133,10 @@ fn namespace_command_rejects_wrong_missing_or_ambiguous_source_without_replacing
     for flags in [&["unused.sus"][..], &["--main", "app.core"][..]] {
         let output = compile(root.path(), "app.core", flags);
         assert!(!output.status.success());
-        assert!(String::from_utf8_lossy(&output.stderr)
-            .contains("--namespace cannot be combined with a source file or --main"));
+        assert!(
+            String::from_utf8_lossy(&output.stderr)
+                .contains("--namespace cannot be combined with a source file or --main")
+        );
         assert_eq!(std::fs::read(&output_path).unwrap(), b"prior artifact");
     }
     std::fs::write(root.path().join("src/app/core.sus"), "(ns app.core)").unwrap();
@@ -175,9 +177,11 @@ fn namespace_command_defers_runtime_throw_until_component_instantiation() {
     for _ in 0..2 {
         let mut store = Store::new(&engine, ());
         store.set_fuel(40_000_000).unwrap();
-        assert!(Linker::<()>::new(&engine)
-            .instantiate(&mut store, &component)
-            .is_err());
+        assert!(
+            Linker::<()>::new(&engine)
+                .instantiate(&mut store, &component)
+                .is_err()
+        );
         let exception = store.as_context_mut().take_pending_exception().unwrap();
         let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
         assert_eq!(fields.len(), 1);
@@ -191,5 +195,48 @@ fn namespace_command_defers_runtime_throw_until_component_instantiation() {
             payload.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
             17.0_f64.to_bits()
         );
+    }
+}
+
+#[test]
+fn namespace_command_rejects_missing_wit_and_project_options_before_routing() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::create_dir_all(root.path().join("src/app")).unwrap();
+    std::fs::write(
+        root.path().join("src/app/core.sus"),
+        "(ns app.core) (def calculate (fn [x] x)) (def effects (fn [] 1))",
+    )
+    .unwrap();
+    wit(root.path());
+    let artifact = root.path().join("app.wasm");
+    std::fs::write(&artifact, b"prior artifact").unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_suss"))
+        .current_dir(root.path())
+        .args(["compile", "--namespace", "app.core", "-o", "app.wasm"])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("--namespace requires -w/--wit"),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(std::fs::read(&artifact).unwrap(), b"prior artifact");
+    for flags in [
+        &["--world", "ignored"][..],
+        &["--config", "ignored.sus"][..],
+    ] {
+        let output = compile(root.path(), "app.core", flags);
+        assert!(
+            !output.status.success(),
+            "Project options must not be silently ignored"
+        );
+        assert!(
+            String::from_utf8_lossy(&output.stderr)
+                .contains("--namespace cannot be combined with project --world or --config"),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(std::fs::read(&artifact).unwrap(), b"prior artifact");
     }
 }

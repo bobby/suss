@@ -15218,3 +15218,40 @@ pending; no ready claim/merge. Remaining implementation is export attributes and
 project/main/component-host migration/evaluator retirement, rich macro environment
 acceptance, published dependency policy and pending-I/O scheduler/cancellation/
 live-value accounting. Original M3 scope remains open; no issue closure.
+
+## Independent PR178 review — namespace mode routing
+
+Reviewed clean396000a2860c386ff6c48d52282b5d7f1d81cd67 against177c0c948d:
+shared immutable text/forms, pure namespace-header validation, source paths,
+phase-separated compiled Macro dependencies, Runtime initializer deferral and
+shared file/namespace WIT mappings/output handling. Significant routing finding:
+--namespace without -w fell through to the legacy project/config compiler;
+--namespace with --world/--config silently ignored project selection options.
+
+New actual process regression30483 TERMINAL101:0pass/1fail/3filtered0.80s;
+/private/tmp/suss-pr178-review-routing-before.log. Missing-WIT namespace command
+incorrectly attempted deps.sus loading. Namespace parser now explicitly requires
+-w/--wit and rejects project --world/--config before any source/WIT/phase effects.
+Controlled project-guard-only bypass53581 TERMINAL101:0pass/1fail/3filtered4.11s;
+/private/tmp/suss-pr178-review-project-flags-before.log: supplied --world was
+silently ignored and compilation succeeded. Restored both guards afterward.
+Every original namespace assertion and all parent file tests remain intact.
+
+Focused75382 TERMINAL0:8pass/0fail across file4/namespace4, respectively37.66s/
+5.74s, /private/tmp/suss-pr178-review-routing-fixed.log. Final restored namespace
+27362 TERMINAL0:4/0/0 in6.36s, /private/tmp/suss-pr178-review-final-focus.log.
+Both invalid project flags, missing-WIT routing and original source errors preserve
+an existing output artifact. Original compiled macro/dependency42/6 and effect1/3,
+GC/twoStores and independently decoded first17 rather than99 remain unchanged.
+Commands cargo test -p suss-cli --locked --test compiled_aot_namespace_command
+--test compiled_aot_command -- --test-threads=2, then final namespace-only test;
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target, CARGO_BUILD_JOBS=2, no RUSTFLAGS.
+Rustfmt2024 new test and git diff check pass. Fix is CLI-only; compiler source,
+both already reproduced phase images/fingerprints and shared GC ABI unchanged.
+
+Next push fixes/evidence, freeze final head, run required unfiltered
+cargo test --workspace --locked -- --test-threads=2 and require final-head CI
+before readiness. Reviewer retains sole heavy slot until actual full terminal.
+Main/project/component-host and shorthand/evaluator retirement, complete WIT,
+rich macro environment/published dependencies and scheduler/lifecycle remain open
+original M3 scope. No merge, issue closure or milestone completion is claimed.
