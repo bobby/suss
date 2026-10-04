@@ -16791,3 +16791,38 @@ for the field increment; commit/push/open a draft Refs#14 PR and dispatch its
 independent review/significant fixes/full final-head baseline/CI next. PR186 CI
 remains live, so do not mark it ready or merge. M3 stays active; issue12/13 audit
 is preserved alongside the field work rather than claiming closure.
+
+
+## PR187 independent review checkpoint
+
+Independent review compared field_record and source-field AST classification
+against pinned analyzer.cljc parse-type3622 and analyze-symbol4099–4120. Raw
+nullable flags/tags use canonical merged reader metadata, source positions use
+the retained declaration token, and actual distinct-field validation justifies
+nil shadow for supported fields. Existing field identity memoization preserves
+initializer info/lexical identity within the source graph. The test projection
+removes only private diagnostic keys in this bounded corpus; all observed
+portable keys, false/nil presence, shadow data and identity assertions remain.
+No significant scoped defect was found. Cross-invocation field identity and
+complete AST/bootstrap/lifecycle acceptance remain open.
+
+Fresh sh scripts/test-field-reference-asts-oracle.sh reached terminal exit0:
+all nine forced cache-disabled pinned traces and all nine executed Node rows
+match the frozen corpus (/private/tmp/suss-pr187-review-oracle.log). Focused
+cargo test -p suss-cli --locked --test compiled_macro_field_reference_asts
+--test compiled_macro_field_records --test compiled_macro_analysis_context
+--test compiled_macro_local_reference_asts --test portable_mutable_fields
+-- --test-threads=2 with CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target
+and CARGO_BUILD_JOBS=2 reached terminal exit0:7 passed/0 failed/0 ignored/
+0 filtered across five groups, both caller phases covered by the field AST
+regression (/private/tmp/suss-pr187-review-focused-final.log). An initial
+selection failed before execution because mutable_fields was misspelled; its
+terminal101 log is preserved at /private/tmp/suss-pr187-review-focused.log.
+No assertions changed. Seven field-oracle Python checks passed in0.004s.
+
+This checkpoint changes documentation only; compiler/bootstrap inputs and
+both inherited quote image pairs remain unchanged. Next freeze and push the
+review head, then run the exact unfiltered cargo test --workspace --locked
+-- --test-threads=2 through reader doctests and verify exact final-head CI.
+Those terminal results are not claimed here. PR187 stays draft; no merge,
+issue closure or original M3 completion.
