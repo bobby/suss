@@ -696,3 +696,10 @@ tests,7 lifecycle guards and Java-free bootstrap4 pass. Independent review/full
 baseline/final CI remain pending; no declaration or M3 acceptance gate is
 reclassified. Existing retained-source provenance and
 upstream license obligations remain unchanged.
+
+[Portable AOT component assembly](../runtime/compiled-aot-components.md) now has
+five executing compiler tests for scalar component exports, source ordering/live
+cells, GC, phase guards and independently decoded boundary exceptions. A shared
+source-var export regression fails on the old duplicate import and passes after
+import sharing. This is a development scalar boundary; full selected-WIT adapters,
+CLI compile migration, evaluator retirement and original M3 acceptance remain open.

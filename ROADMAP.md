@@ -341,3 +341,10 @@ direct compiler tests,72 affected native tests,7 lifecycle guards and Java-free
 bootstrap4 pass. Independent review/full baseline/final CI remain pending; this does not migrate AOT
 commands or remove the legacy evaluator. See
 [core binding initialization](docs/runtime/compiled-core-bindings.md).
+
+Portable prepared Runtime artifacts now assemble into actual scalar WIT components
+with explicit source-var mappings and ordered initialization. Five executing
+compiler tests pass, including a reproduced duplicate import followed by shared
+cell import repair. See [AOT components](docs/runtime/compiled-aot-components.md).
+This development API does not migrate existing compile commands or certify full
+selected-WIT adapters, evaluator retirement, published dependency policy or M3.
