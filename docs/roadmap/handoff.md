@@ -16303,3 +16303,54 @@ Next unblocked task is faithful quote initializer AST records with fresh pinned
 projections and actual execution; complete field/compound/invocation/children AST
 schema, constexpr policy, evaluator retirement, dependency/target policy, rooted
 pending-I/O cancellation and live heap/code accounting remain open original gates.
+
+PR185 first review repair frozen003f6fad39cf237217a6ffbc2fc7e0929b691ebb passed
+actual unfiltered full32822 TERMINAL0 through readerdoctests:1185/0/17existingignored/
+0filtered across139groups (/private/tmp/suss-pr185-review-full-final.log). Its
+exactCI37203902681 was still workspace-running when a further significant actual
+cross-invocation identity defect was established; neither full nor that CI certifies
+the forthcoming repair head. Root fresh primary/Node2339 confirmed all4 original
+metadata rows [true,true,false,false], docs before/before/after/after and live17;
+root native47289 failed unchanged-revision identity. Independent native50071
+TERMINAL101 reproduced it against unchanged003f:0/1/0/0 in5.11s. Independent fresh
+forced/cache-disabled primary/Node48261 TERMINAL0 confirmed all4; expanded fresh
+primary28875 TERMINAL0 additionally confirms fresh outer-info identities across
+calls [true,false,false,false]. Scripts/test-global-reference-identity-oracle.sh
+is development-only; original4 row expectations and all existing assertions remain.
+Logs /private/tmp/suss-pr185-review-{cross-before,cross-oracle,cross-oracle-final}.log.
+
+Second scoped repair retains only final declaration metadata in its owning compiled
+Macro Store, keyed by actual Global plus DefinitionInfo Arc revision. Weak source
+owners prune expired revisions and prevent recycled identities; new/reset macro
+Stores start empty. No artifact cache identity or structural equality substitutes
+for a captured revision, and fresh outer :info maps never persist. Every source form
+and graph recipe is still constructed/validated/charged, and a bounded cold logical
+materialization-work preflight prevents warmed roots relaxing occurrence work limits.
+Sharing still respects independent reader callback construction/order elsewhere.
+No compiler/core/bootstrap-input change or shipped JVM dependency.
+
+Focused62990 TERMINAL0:22/0/0/0 across6groups (graph11/cross-call1/globals2/hints1/
+phase3/namespace4). Additional lifecycle92415 TERMINAL0:bindings8/repl6 all pass,
+including successful and failed two-Store reset. Final strengthened cross-call55108
+TERMINAL0:1/0/0/0 in12.03s, all four unchanged metadata rows in Runtime/Macrocaller
+Stores, old metadata after redefinition/callerGC, fresh outer info across calls,
+and sharing after reset. Graph unit83438 TERMINAL0:6/0/0/11filtered2.83s, all
+original5 assertions plus actual MacroStore GC, warm node/UTF16/work-bound failures,
+equal-data distinct revision identity, dead-owner pruning and recovery. Javafree34604
+TERMINAL0 reproduces BOTH phase Wasm+JSON pairs byteexact twice and bootstrap4pass
+12.70s; CLI-only source leaves compileridentity unchanged. Python21885 TERMINAL0:
+127pass4.801s; core-import check verifies274files. All focused handles terminal.
+Logs /private/tmp/suss-pr185-review-{retention-focused,retention-lifecycle,cross-final,
+retention-graph-final,retention-javafree,retention-python,retention-core-import}.log.
+
+Freeze/push this second review repair before rerunning the required unfiltered
+cargo test --workspace --locked -- --test-threads=2 with sharedtarget/jobs2. Exact
+new-head full and CI remain pending at this evidence commit; root records actual
+terminal counts before readiness. No PR merge, issue closure or M3 completion.
+Next quote-AST increment remains blocked on this repaired parent and its own fresh
+pinned/native regressions. Complete AST/children/constexpr, source declarations,
+evaluator retirement, dependency/target policies, rooted pending-I/O cancellation
+and live heap/code accounting remain open original M3 requirements.
+Final Python89611 TERMINAL0 reran127checks4.673s after the strengthened oracle
+helper; /private/tmp/suss-pr185-review-retention-python-final.log. Restricted
+rustfmt applies only the new regression/unit block, with diffcheck clean.

@@ -6,7 +6,13 @@ qualified `:name`, canonical `:ns`, and `:info` copied from the captured
 override raw declaration metadata in this copy. Each resolution has a fresh outer
 `:info` map and shares the captured declaration revision's final nested `:meta`
 value, including function `:top-fn` metadata overlays. This preserves the pinned
-shallow merge identity without changing reader occurrence construction elsewhere. The namespace catalog retains
+shallow merge identity without changing reader occurrence construction elsewhere. The
+owning compiled macro Store retains final metadata roots by genuine captured
+`DefinitionInfo` revision identity across calls. Weak source owners prune dead
+revisions, replacement Stores start empty, and equal data from distinct revisions
+remain distinct. Outer resolved `:info` maps are never retained. Every graph still
+builds and validates its source data, node/UTF-16 limits and cold logical
+materialization work before retained metadata reuse. The namespace catalog retains
 its original record, including raw metadata overrides. Global AST tag presence
 and value come from resolved info, including false; lexical inference is unchanged.
 Runtime values, physical HIR and source reexecution do not determine these facts.
@@ -50,6 +56,15 @@ Identity source SHA-256:
 [EPL license](../../runtime/core-import/epl-v10.html) remain distributed.
 Native graph transport and observation helpers are original code; JVM/Node remain
 development oracles with no shipped dependency.
+
+Fresh forced/cache-disabled primary analysis and actual Node execution also
+establish four cross-call metadata identities `[true true false false]`, with
+before/before/after/after documents and live value17. Native execution preserves
+all four observations in both caller phases after GC, keeps the old metadata
+accessible after redefinition, confirms outer info is fresh across calls, and
+rechecks unchanged-revision sharing after reset. A Macro Store graph regression
+forces GC, rejects warmed node/UTF-16/work budgets, distinguishes equal metadata
+from different revision identities, prunes dead source owners and recovers.
 
 Field/quote/compound/invocation/children ASTs, constant-expression policy, complete
 source declaration/function/method/inference schema and evaluator retirement remain

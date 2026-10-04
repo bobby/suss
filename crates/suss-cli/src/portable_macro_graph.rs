@@ -6,7 +6,7 @@ use crate::{
 };
 use std::{
     collections::{BTreeMap, HashMap, VecDeque},
-    sync::Arc,
+    sync::{Arc, Weak},
 };
 use suss_compile::portable::{
     self,
@@ -19,6 +19,20 @@ use suss_reader::forms::{Form, Kind};
 
 type Value = usize;
 type Result<T> = std::result::Result<T, SessionError>;
+type DeclarationKey = (portable::resolve::Global, usize);
+
+/// Same-Store declaration metadata roots, owned by one compiled macro session.
+/// Weak source owners prevent dead revisions from accumulating or address reuse
+/// from mistaking a new declaration for an old one. Never an artifact cache.
+#[derive(Default)]
+pub(crate) struct DeclarationValues {
+    metadata: BTreeMap<DeclarationKey, (Weak<portable::resolve::DefinitionInfo>, SessionValue)>,
+}
+impl DeclarationValues {
+    fn prune(&mut self) {
+        self.metadata.retain(|_, (source, _)| source.strong_count() != 0);
+    }
+}
 
 // Match the existing bridge's logical per-form budget, including normalized
 // metadata. Sharing must not make an oversized transport form acceptable.
@@ -243,13 +257,16 @@ enum Task {
 }
 
 /// Memo tables own their source identities as well as the resulting GC roots.
-/// They live for one graph build; no pointer or generation is an artifact cache key.
+/// Graph memo tables live for one build. Only final declaration metadata roots
+/// may outlive it in the owning macro Store; no pointer is an artifact cache key.
 pub struct AnalysisGraph<'a> {
     bridge: &'a FormBridge,
     session: &'a mut Session,
     nodes: usize,
     units: usize,
     reader_key_bytes: usize,
+    retained: Option<&'a mut DeclarationValues>,
+    metadata_roots: Vec<(Value, DeclarationKey, Arc<portable::resolve::DefinitionInfo>)>,
     keys: BTreeMap<String, Value>,
     symbols: BTreeMap<String, Value>,
     forms: BTreeMap<Vec<u8>, Value>,
@@ -276,6 +293,8 @@ impl<'a> AnalysisGraph<'a> {
             nodes: 65_536,
             units: 1_048_576,
             reader_key_bytes: 32 * 1024 * 1024,
+            retained: None,
+            metadata_roots: vec![],
             keys: BTreeMap::new(),
             symbols: BTreeMap::new(),
             forms: BTreeMap::new(),
@@ -291,6 +310,16 @@ impl<'a> AnalysisGraph<'a> {
             recipes: Vec::new(),
             jobs: VecDeque::new(),
         }
+    }
+    pub(crate) fn with_declaration_values(
+        bridge: &'a FormBridge,
+        session: &'a mut Session,
+        retained: &'a mut DeclarationValues,
+    ) -> Self {
+        retained.prune();
+        let mut graph = Self::new(bridge, session);
+        graph.retained = Some(retained);
+        graph
     }
     fn recipe(&mut self, recipe: Recipe) -> Result<Value> {
         let id = self.recipes.len();
@@ -416,7 +445,38 @@ impl<'a> AnalysisGraph<'a> {
                 }
             }
         }
+        // Validate the same logical work as a cold graph before callbacks or
+        // retained-root reuse. Persistence must not turn an oversized graph into
+        // acceptable input; compiler sharing within this build still applies.
+        let mut logical_work = work;
+        let mut logical_cached = vec![false; self.recipes.len()];
+        let mut planned = vec![Frame::new(root, self.recipes[root].as_ref().unwrap())];
+        while let Some(frame) = planned.last_mut() {
+            if frame.next < frame.dependencies.len() {
+                spend(&mut logical_work)?;
+                let id = frame.dependencies[frame.next];
+                frame.next += 1;
+                if repeat[id] || !logical_cached[id] {
+                    planned.push(Frame::new(id, self.recipes[id].as_ref().unwrap()));
+                }
+            } else {
+                spend(&mut logical_work)?;
+                let frame = planned.pop().unwrap();
+                if !repeat[frame.id] {
+                    logical_cached[frame.id] = true;
+                }
+            }
+        }
         let mut cached: Vec<Option<SessionValue>> = vec![None; self.recipes.len()];
+        if let Some(retained) = &self.retained {
+            for (id, key, source) in &self.metadata_roots {
+                if let Some((owner, value)) = retained.metadata.get(key)
+                    && owner.upgrade().is_some_and(|owner| Arc::ptr_eq(&owner, source))
+                {
+                    cached[*id] = Some(value.clone());
+                }
+            }
+        }
         let mut frames = vec![Frame::new(root, self.recipes[root].as_ref().unwrap())];
         // DAG storage remains bounded independently of occurrence execution.
         // Charge before descending or invoking callbacks; diamonds cannot expand
@@ -493,6 +553,13 @@ impl<'a> AnalysisGraph<'a> {
             if let Some(parent) = frames.last_mut() {
                 parent.inputs.push(value);
             } else {
+                if let Some(retained) = &mut self.retained {
+                    for (id, key, source) in &self.metadata_roots {
+                        if let Some(value) = &cached[*id] {
+                            retained.metadata.insert(key.clone(), (Arc::downgrade(source), value.clone()));
+                        }
+                    }
+                }
                 return Ok(value);
             }
         }
@@ -1344,6 +1411,9 @@ impl<'a> AnalysisGraph<'a> {
         if let Some((_, meta)) = fields.iter_mut().find(|(name, _)| *name == "meta") {
             self.charge(0)?;
             *meta = self.recipe(Recipe::Alias(*meta))?;
+            if let Some(info) = info {
+                self.metadata_roots.push((*meta, key.clone(), info.clone()));
+            }
         }
         let value = self.map(fields)?;
         self.declarations.insert(key, (info.cloned(), value));
@@ -1876,6 +1946,90 @@ mod sharing_tests {
             metadata: vec![],
             kind: Kind::Number(f64::from_bits(bits)),
         }
+    }
+    #[test]
+    fn retained_declaration_metadata_keeps_cold_budgets_and_releases_dead_revisions() {
+        let mut session = Session::new_macro().unwrap();
+        session
+            .eval("(def ^{:doc \"retained\"} review-retained 17)")
+            .unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let snapshot = session.compilation_snapshot();
+        let namespace =
+            SourceNamespace::capture(&snapshot.environment, portable::resolve::Phase::Macro);
+        let (global, source) = namespace
+            .declarations
+            .iter()
+            .find(|(global, _)| global.name() == "review-retained")
+            .map(|(global, source)| (global.clone(), source.clone()))
+            .unwrap();
+        let mut retained = DeclarationValues::default();
+        {
+            let mut graph =
+                AnalysisGraph::with_declaration_values(&bridge, &mut session, &mut retained);
+            let root = graph.declaration(&global, Some(&source), 0).unwrap();
+            graph.materialize(root).unwrap();
+        }
+        assert_eq!(retained.metadata.len(), 1);
+        session.collect().unwrap();
+        for (nodes, units, expected) in [
+            (0, 1_048_576, "65536 nodes"),
+            (65_536, 0, "UTF-16 storage bound"),
+        ] {
+            let mut graph =
+                AnalysisGraph::with_declaration_values(&bridge, &mut session, &mut retained);
+            graph.nodes = nodes;
+            graph.units = units;
+            let error = graph.declaration(&global, Some(&source), 0).unwrap_err();
+            assert!(error.to_string().contains(expected));
+        }
+        {
+            let mut graph =
+                AnalysisGraph::with_declaration_values(&bridge, &mut session, &mut retained);
+            let root = graph.declaration(&global, Some(&source), 0).unwrap();
+            assert!(
+                graph
+                    .materialize_with_work(root, 1_048_576, 1)
+                    .unwrap_err()
+                    .to_string()
+                    .contains("materialization work bound")
+            );
+        }
+        // Equal source data in a distinct Arc is still a separate revision.
+        let other = Arc::new(source.as_ref().clone());
+        {
+            let mut graph =
+                AnalysisGraph::with_declaration_values(&bridge, &mut session, &mut retained);
+            let root = graph.declaration(&global, Some(&other), 0).unwrap();
+            graph.materialize(root).unwrap();
+        }
+        assert_eq!(retained.metadata.len(), 2);
+        let compare = session.eval("(fn [a b] (identical? a b))").unwrap();
+        let left = retained.metadata[&(global.clone(), Arc::as_ptr(&source) as usize)]
+            .1
+            .clone();
+        let right = retained.metadata[&(global.clone(), Arc::as_ptr(&other) as usize)]
+            .1
+            .clone();
+        let result = session.invoke(&compare, &[&left, &right]).unwrap();
+        assert_eq!(
+            bridge.read(&mut session, &result, 0..1).unwrap().kind,
+            Kind::Bool(false)
+        );
+        drop(other);
+        retained.prune();
+        assert_eq!(retained.metadata.len(), 1);
+        {
+            let mut graph =
+                AnalysisGraph::with_declaration_values(&bridge, &mut session, &mut retained);
+            let root = graph.declaration(&global, Some(&source), 0).unwrap();
+            graph.materialize(root).unwrap();
+        }
+        let value = session.eval("review-retained").unwrap();
+        assert_eq!(
+            bridge.read(&mut session, &value, 0..1).unwrap().kind,
+            Kind::Number(17.0)
+        );
     }
     #[test]
     fn reader_data_identity_preserves_number_bits_metadata_and_order() {
