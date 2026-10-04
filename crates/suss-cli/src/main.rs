@@ -69,7 +69,7 @@ fn run_command(cmd: args::Command) {
 /// Evaluate a single expression using WASM compilation and wasmtime
 #[cfg(not(all(feature = "component", target_family = "wasm")))]
 fn run_eval(expr: &str) {
-    match run_eval_wasm(expr) {
+    match run_eval_compiled(expr, None) {
         Ok(()) => {}
         Err(e) => {
             eprintln!("Error: {}", e);
@@ -78,314 +78,15 @@ fn run_eval(expr: &str) {
     }
 }
 
-/// Run expression via WASM compilation + wasmtime
-///
-/// Automatically detects WASI calls and uses component model when needed.
-fn run_eval_wasm(expr: &str) -> Result<(), String> {
-    // Inject *ns* binding for consistency with REPL
-    let full_expr = format!("(def *ns* 'user)\n{}", expr);
-
-    // First check if expression uses WASI (component model)
-    let mut compiler = suss_compile::Compiler::new();
-    let probe = compiler.compile_expr_with_info(&full_expr)
-        .map_err(|e| format!("{}", e))?;
-
-    if probe.is_component {
-        // WASI expression - use component model runtime (can't use pr-str with WIT types)
-        run_eval_component(&probe.wasm)
-    } else {
-        // Try to wrap in pr-str for pretty printing
-        // This fails if expr contains definitions (defn/def inside pr-str)
-        let wrapped_expr = format!("(def *ns* 'user)\n(pr-str {})", expr);
-        let mut compiler2 = suss_compile::Compiler::new();
-        match compiler2.compile_expr_with_info(&wrapped_expr) {
-            Ok(compiled) => {
-                // pr-str compilation succeeded - print as string
-                run_eval_core_module_string(&compiled.wasm)
-            }
-            Err(_) => {
-                // pr-str failed (likely has definitions) - run directly
-                run_eval_core_module(&probe.wasm)
-            }
-        }
-    }
-}
-
-/// GC sentinel values for decoding i31refs
-mod gc_sentinels {
-    pub const NIL_SENTINEL: i32 = 0;
-    pub const FALSE_SENTINEL: i32 = 2;
-    pub const TRUE_SENTINEL: i32 = 4;
-
-    pub fn decode_i31(raw: i32) -> i64 {
-        (raw >> 1) as i64
-    }
-}
-
-/// Run a compiled core module (no WASI)
-fn run_eval_core_module(wasm_bytes: &[u8]) -> Result<(), String> {
-    use wasmtime::{Config, Engine, Linker, Module, Store, Val};
-
-    // Create wasmtime engine with GC and related features enabled
-    let mut config = Config::new();
-    config.wasm_gc(true);
-    config.wasm_function_references(true);
-    config.wasm_tail_call(true);
-    config.wasm_exceptions(true);
-    let engine = Engine::new(&config)
-        .map_err(|e| format!("Engine creation error: {}", e))?;
-
-    let module = Module::new(&engine, wasm_bytes)
-        .map_err(|e| format!("WASM module error: {}", e))?;
-
-    // Create store (no WASI context needed for pure expressions)
-    let mut store = Store::new(&engine, ());
-
-    // Create linker with print_str support
-    let mut linker: Linker<()> = Linker::new(&engine);
-    linker.func_wrap("suss", "print_str", |mut caller: wasmtime::Caller<'_, ()>, ptr: i32, len: i32| {
-        if let Some(memory) = caller.get_export("memory").and_then(|e| e.into_memory()) {
-            let mut buf = vec![0u8; len as usize];
-            if memory.read(&caller, ptr as usize, &mut buf).is_ok() {
-                use std::io::Write;
-                let _ = std::io::stdout().write_all(&buf);
-                let _ = std::io::stdout().flush();
-            }
-        }
-    }).map_err(|e| format!("Linker error: {}", e))?;
-
-    // Instantiate via linker
-    let instance = linker.instantiate(&mut store, &module)
-        .map_err(|e| format!("Instantiation error: {}", e))?;
-
-    // Get the eval function
-    let eval_fn = instance.get_func(&mut store, "eval")
-        .ok_or_else(|| "eval function not found".to_string())?;
-
-    // Call the function with eqref result
-    let mut results = vec![Val::null_any_ref()];
-    eval_fn.call(&mut store, &[], &mut results)
-        .map_err(|e| format!("Call error: {}", e))?;
-
-    // Print result based on GC type
-    match &results[0] {
-        Val::AnyRef(Some(anyref)) => {
-            // Try to extract as i31
-            match anyref.as_i31(&store) {
-                Ok(Some(i31)) => {
-                    let raw = i31.get_i32();
-                    match raw {
-                        gc_sentinels::NIL_SENTINEL => println!("nil"),
-                        gc_sentinels::FALSE_SENTINEL => println!("false"),
-                        gc_sentinels::TRUE_SENTINEL => println!("true"),
-                        _ => {
-                            // Small integer
-                            let val = gc_sentinels::decode_i31(raw);
-                            println!("{}", val);
-                        }
-                    }
-                }
-                Ok(None) => {
-                    // Struct or array - try to extract as FLOAT struct
-                    match anyref.as_struct(&store) {
-                        Ok(Some(struct_ref)) => {
-                            // GC type 1 is FLOAT (single f64 field)
-                            // Try to read field 0 as f64
-                            match struct_ref.field(&mut store, 0) {
-                                Ok(wasmtime::Val::F64(bits)) => {
-                                    let f = f64::from_bits(bits);
-                                    if f.fract() == 0.0 {
-                                        println!("{}.0", f as i64);
-                                    } else {
-                                        println!("{}", f);
-                                    }
-                                }
-                                Ok(wasmtime::Val::I64(v)) => {
-                                    // LARGE_INT struct (type 0)
-                                    println!("{}", v);
-                                }
-                                _ => println!("<gc-struct>"),
-                            }
-                        }
-                        Ok(None) => {
-                            // Array - could be STRING (type 2)
-                            println!("<gc-array>");
-                        }
-                        Err(_) => println!("<gc-object>"),
-                    }
-                }
-                Err(e) => return Err(format!("Error extracting i31: {}", e)),
-            }
-        }
-        Val::AnyRef(None) => println!("nil"),
-        _ => println!("{:?}", results[0]),
-    }
-
-    Ok(())
-}
-
-/// Run a compiled core module that returns a STRING array (from pr-str)
-fn run_eval_core_module_string(wasm_bytes: &[u8]) -> Result<(), String> {
-    use wasmtime::{Config, Engine, Linker, Module, Store, Val};
-
-    // Create wasmtime engine with GC and related features enabled
-    let mut config = Config::new();
-    config.wasm_gc(true);
-    config.wasm_function_references(true);
-    config.wasm_tail_call(true);
-    config.wasm_exceptions(true);
-    let engine = Engine::new(&config)
-        .map_err(|e| format!("Engine creation error: {}", e))?;
-
-    let module = Module::new(&engine, wasm_bytes)
-        .map_err(|e| format!("WASM module error: {}", e))?;
-
-    // Create store (no WASI context needed for pure expressions)
-    let mut store = Store::new(&engine, ());
-
-    // Create linker with print_str support
-    let mut linker: Linker<()> = Linker::new(&engine);
-    linker.func_wrap("suss", "print_str", |mut caller: wasmtime::Caller<'_, ()>, ptr: i32, len: i32| {
-        if let Some(memory) = caller.get_export("memory").and_then(|e| e.into_memory()) {
-            let mut buf = vec![0u8; len as usize];
-            if memory.read(&caller, ptr as usize, &mut buf).is_ok() {
-                use std::io::Write;
-                let _ = std::io::stdout().write_all(&buf);
-                let _ = std::io::stdout().flush();
-            }
-        }
-    }).map_err(|e| format!("Linker error: {}", e))?;
-
-    // Instantiate via linker
-    let instance = linker.instantiate(&mut store, &module)
-        .map_err(|e| format!("Instantiation error: {}", e))?;
-
-    // Get the eval function
-    let eval_fn = instance.get_func(&mut store, "eval")
-        .ok_or_else(|| "eval function not found".to_string())?;
-
-    // Call the function with eqref result
-    let mut results = vec![Val::null_any_ref()];
-    eval_fn.call(&mut store, &[], &mut results)
-        .map_err(|e| format!("Call error: {}", e))?;
-
-    // Result should be a STRING array (array<i8>)
-    match &results[0] {
-        Val::AnyRef(Some(anyref)) => {
-            // Try to get as array
-            match anyref.as_array(&store) {
-                Ok(Some(array_ref)) => {
-                    let len = array_ref.len(&store)
-                        .map_err(|e| format!("Error getting array length: {}", e))?;
-                    let mut bytes = Vec::with_capacity(len as usize);
-                    for i in 0..len {
-                        match array_ref.get(&mut store, i) {
-                            Ok(Val::I32(b)) => bytes.push(b as u8),
-                            _ => return Err("Invalid string array element".to_string()),
-                        }
-                    }
-                    // Print as UTF-8 string
-                    match String::from_utf8(bytes) {
-                        Ok(s) => println!("{}", s),
-                        Err(e) => return Err(format!("Invalid UTF-8: {}", e)),
-                    }
-                }
-                Ok(None) => println!("nil"),
-                Err(e) => return Err(format!("Error extracting array: {}", e)),
-            }
-        }
-        Val::AnyRef(None) => println!("nil"),
-        _ => return Err(format!("Unexpected result type: {:?}", results[0])),
-    }
-
-    Ok(())
-}
-
-/// Run a compiled component with WASI support (for expressions using wasi.*)
-fn run_eval_component(wasm_bytes: &[u8]) -> Result<(), String> {
-    use wasmtime::{Config, Engine, Store};
-    use wasmtime::component::{Component, Linker, ResourceTable, Val};
-    use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
-
-    // State for the component store - implements WasiView
-    struct EvalState {
-        wasi: WasiCtx,
-        table: ResourceTable,
-    }
-
-    impl WasiView for EvalState {
-        fn ctx(&mut self) -> WasiCtxView<'_> {
-            WasiCtxView {
-                ctx: &mut self.wasi,
-                table: &mut self.table,
-            }
-        }
-    }
-
-    // Enable component model
-    let mut config = Config::new();
-    config.wasm_component_model(true);
-    let engine = Engine::new(&config)
-        .map_err(|e| format!("Failed to create engine: {}", e))?;
-
-    // Load component
-    let component = Component::new(&engine, wasm_bytes)
-        .map_err(|e| format!("Failed to load component: {}", e))?;
-
-    // Create WASI context
-    let state = EvalState {
-        wasi: WasiCtxBuilder::new()
-            .inherit_stdio()
-            .inherit_env()
-            .build(),
-        table: ResourceTable::new(),
-    };
-
-    // Create store with WASI state
-    let mut store = Store::new(&engine, state);
-
-    // Create linker and add WASI
-    let mut linker: Linker<EvalState> = Linker::new(&engine);
-    wasmtime_wasi::p2::add_to_linker_sync(&mut linker)
-        .map_err(|e| format!("Failed to add WASI to linker: {}", e))?;
-
-    // Instantiate component
-    let instance = linker.instantiate(&mut store, &component)
-        .map_err(|e| format!("Failed to instantiate component: {}", e))?;
-
-    // Get eval function
-    let eval_fn = instance.get_func(&mut store, "eval")
-        .ok_or_else(|| "eval function not found in component".to_string())?;
-
-    // Call with no args
-    let func_ty = eval_fn.ty(&store);
-    let results_len = func_ty.results().len();
-    let mut results = vec![Val::S32(0); results_len];
-
-    eval_fn.call(&mut store, &[], &mut results)
-        .map_err(|e| format!("Call error: {}", e))?;
-
-    // Print result
-    if results.is_empty() {
-        println!("nil");
-    } else if results.len() == 1 {
-        match &results[0] {
-            Val::S32(v) => println!("{}", v),
-            Val::S64(v) => println!("{}", v),
-            Val::U32(v) => println!("{}", v),
-            Val::U64(v) => println!("{}", v),
-            Val::Float32(v) => println!("{}", v),
-            Val::Float64(v) => println!("{}", v),
-            Val::Bool(v) => println!("{}", v),
-            Val::Char(v) => println!("{}", v),
-            Val::String(v) => println!("\"{}\"", v),
-            _ => println!("{:?}", results[0]),
-        }
-    } else {
-        let parts: Vec<String> = results.iter().map(|v| format!("{:?}", v)).collect();
-        println!("({})", parts.join(", "));
-    }
-
+/// Execute native source with the same isolated compiled phases as the REPL.
+#[cfg(not(all(feature = "component", target_family = "wasm")))]
+fn run_eval_compiled(source: &str, path: Option<std::path::PathBuf>) -> Result<(), String> {
+    use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
+    let mut runtime = Session::new_repl().map_err(|error| error.to_string())?;
+    let mut macros = CompiledMacros::new().map_err(|error| error.to_string())?;
+    let result = portable_repl::evaluate_script_compiled(&mut runtime, &mut macros, source, path)
+        .map_err(|error| portable_repl::error_display(&mut runtime, &error))?;
+    println!("{result}");
     Ok(())
 }
 
@@ -400,9 +101,8 @@ fn run_file(path: &str) {
         }
     };
 
-    // Compile entire file as a single expression
-    // This allows deftype and other definitions to be visible to later expressions
-    if let Err(e) = run_eval_wasm(&contents) {
+    // Each source form imports the same persistent runtime and compiled macro phase.
+    if let Err(e) = run_eval_compiled(&contents, Some(std::path::PathBuf::from(path))) {
         eprintln!("Error: {}", e);
         std::process::exit(1);
     }
@@ -745,6 +445,7 @@ fn run_repl() {
             return;
         }
     };
+    let mut display = portable_repl::NativeDisplay::default();
     let interactive = io::stdin().is_terminal();
     let mut editor = if interactive {
         println!("Suss v{} - compiled REPL", env!("CARGO_PKG_VERSION"));
@@ -801,7 +502,7 @@ fn run_repl() {
                 ":quit" => break,
                 ":reset" => {
                     match portable_repl::reset_compiled(&mut session, &mut macros) {
-                        Ok(()) => println!("nil"),
+                        Ok(()) => { display.clear(); println!("nil"); },
                         Err(error) => eprintln!("Error: {error}"),
                     };
                     continue;
@@ -850,7 +551,7 @@ fn run_repl() {
             Err(error) if error.expected.iter().any(|hint| hint == "more input") => continue,
             _ => {}
         }
-        match portable_repl::evaluate_compiled(&mut session, &mut macros, &input) {
+        match portable_repl::evaluate_compiled_with_display(&mut session, &mut macros, &input, &mut display) {
             Ok(text) => println!("{text}"),
             Err(error) => eprintln!(
                 "Error: {}",
@@ -861,7 +562,7 @@ fn run_repl() {
     }
     if !input.is_empty() {
         // Incomplete EOF is a located compilation failure, never a partial eval.
-        if let Err(error) = portable_repl::evaluate_compiled(&mut session, &mut macros, &input) {
+        if let Err(error) = portable_repl::evaluate_compiled_with_display(&mut session, &mut macros, &input, &mut display) {
             eprintln!(
                 "Error: {}",
                 portable_repl::error_display(&mut session, &error)

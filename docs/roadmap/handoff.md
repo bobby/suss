@@ -1,4 +1,265 @@
+## Independent PR167 review — artifact identities
+
+Reviewed section parsing/body preservation, compiler/ABI/phase/target/flag gates,
+known-empty versus unknown provenance, immutable loaded macro graphs and166
+incomplete-load bypass, bootstrap source/core identity and cache rejection accounting.
+No significant scoped production defect found. Original regressions unchanged.
+Added exact byte preservation for custom sections before/after identity, deterministic
+reannotation, old-digest rejection after appended section and final Wasm validation.
+Compiler17567 TERMINAL0:4passed/0failed/0ignored in0.01s;
+/private/tmp/suss-pr167-review-unit.log. Added actual native valid-preceding batch
+rejection of a correctly sealed wrong-phase artifact: unchanged entire SessionStats,
+ghost absent, keep17 retained and recovery23. Lifecycle82096 TERMINAL0:7/0/0 in0.16s;
+/private/tmp/suss-pr167-review-native-gates.log. Compiler test-source fingerprint
+change required both phase Wasm/JSON regeneration78823 TERMINAL0. Java-free52775
+TERMINAL0: both regenerated phase Wasm/JSON byte-exact, compiler identities verified,
+four executing bootstrap tests passed22.92s; /private/tmp/suss-pr167-review-javafree.log.
+Commands use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and CARGO_BUILD_JOBS=2;
+no RUSTFLAGS. Git diff check passed. Next freeze/push reviewed head for required
+cargo test --workspace --locked -- --test-threads=2 and exact-head CI.
+Full baseline/CI pending; no merge/issue closure/full M3 claim. Published user
+artifact loader policy, AOT migration/evaluator retirement and scheduler remain open.
+
+Affected24268 TERMINAL0:54passed/0failed/0ignored across5groups: bootstrap4
+11.95s; nativeentry10 23.34s; phase3 4.65s; namespace4 5.18s; persistence33 0.82s.
+Javafree72196 TERMINAL0: both phase Wasm+JSON exactly reproduced, compiled source
+identity verified, bootstrap4/0/0 in12.67s; Python16633 TERMINAL0:118 in4.955s.
+Logs /private/tmp/suss-artifact-identity-{affected,javafree,python}.log.
+Root diff --check passes; all heavy jobs terminal. Root next: commit/push/open
+artifact identity draft stacked on166; dispatch independent review/fixes and
+transfer sole heavy slot, requiring exact final-head full baseline and CI.
+No merge/issue closure/full gate claim. Pending166 CI still authoritativeLIVE.
+
+PR165 exact-headCI37158510889 COMPLETEDSUCCESS at reviewed8b8903; root verified
+unchanged open head, updated body, marked ready without merge, and recorded proof
+https://github.com/bobby/suss/issues/14#issuecomment-5974635669 . Required reviewed
+full1098/0/17/122groups passed. PR166 required full68021 TERMINAL0 at c525:
+1109passed/0failed/17existingignores/123groups; reviewer released heavy slot,
+root updated body. Its exactCI37160738097 still LIVE; remains draft.
+
+Artifact branch root now owns sole heavy slot. Four-packageclean terminal0
+removed3.8GiB. Regeneration30328 TERMINAL101: pinned wasmparser offsets areu64,
+notusize; corrected checked conversions/get bounds. Regeneration83515 TERMINAL0
+refreshed BOTH phase Wasm+JSON with source identity records and compiler hash.
+BEFORE5299 TERMINAL101: actual stale tagged artifact accepted/instantiated,
+0pass/1fail in0.14s; /private/tmp/suss-artifact-identity-before.log.
+Wired native identity/phase guard before allocation; focus66213 TERMINAL0:
+compileridentity3/0/0 in0.01s; exactnativegate1/0/0 in0.16s; nativeidentity2/0/0
+in2.63s and cache6/0/0 in2.94s. All original assertions retained.
+Strengthened native gate adds preceding valid artifact and independently reads
+old17; lifecycle47228 TERMINAL0:6/0/0 in0.16s. Logs under
+/private/tmp/suss-artifact-identity-{unit,fixed,native,session-gates}.log.
+
+Affected24268 LIVE, /private/tmp/suss-artifact-identity-affected.log, command
+cargo test -p suss-cli --locked --test compiled_native_entrypoints
+--test compiled_bootstrap --test namespace_session --test compiled_phase_session
+--test persistent_session -- --test-threads=2, sharedtarget/jobs2. Root source
+frozen while job live. Next same-handle terminal inspection, Java-free verifier,
+Python118/pinned inventory, final diff/evidence, commit/push/draft stacked166,
+independent reviewer fixes and exact final-head full+CI. No AOT/dependency-loader,
+evaluator-retirement, scheduler or full-M3 success claim. Issues12–15 remain open.
+
+Root next-task worktree /private/tmp/suss-m3-artifact-identities, branch
+portable/m3-artifact-identities, based on reviewed cache c525c192f77e7a9a146cd5292f33ec64f3912b7b.
+Reviewer owns sole heavy slot: required cache full68021 LIVE, log
+/private/tmp/suss-pr166-review-full-final2.log; prior46757 cancelled143 for the
+significant incomplete-provenance fix, never acceptance. Latest authoritative
+metadata3/0/0 in415.92s and later sourceform10/0/0 in19.84s, now later suites;
+no failures so far. Exact cacheCI37160738097 LIVE. PR165 exactCI37158510889 LIVE,
+independent full1098/0/17/122groups terminal0. Both remain draft, no merge/closure.
+Root updated PR166 body and issue14 with pushed significant fixes and live gates.
+
+New artifact identity code is PREPARED/UNEXECUTED. Original Rust module
+portable/artifact_identity.rs records compiler-source/ABI/target/profile/flags,
+source/path/phase and optional macro source graph, plus Wasm body integrity.
+None is explicit unknown, not empty graph. Generic external hosts remain unknown;
+compiled host ledger uses166 incomplete-source bypass. Common portable source
+and bare IR emission attach identities; bootstrap generation records actual
+phase/source/core-import manifest. Wasm body bytes outside the identity section
+are preserved. Prepared three compiler and two native checks are UNEXECUTED.
+Native install guard is DELIBERATELY NOT WIRED yet: added real Session::install
+regression expects incompatible same-package compiler bytes rejected before any
+cells/catalog/residency change; it must execute and fail before gate correction.
+No semantic support/evidence promotion and no success claims.
+
+NEXT once reviewer explicitly releases slot: four-package sharedtarget clean
+only (CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target, CARGO_BUILD_JOBS=2,
+never RUSTFLAGS); regenerate BOTH bootstrap Wasm+JSON with cargo run --profile
+test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap (new compiler
+identity code changes both Wasm images, not just JSON). Execute BEFORE regression:
+cargo test -p suss-cli --locked --lib
+session_lifecycle_compiler_build_identity_is_checked_before_any_cells --
+--test-threads=2. Confirm actual old native gate accepts stale tagged artifact,
+then wire artifact_identity::verify with Expected phase before allocation in
+Session::install. Run focused compiler artifact_identity tests, native
+compiled_artifact_identities and this exact gate case; affected compiled cache,
+bootstrap/phase/namespace/session suites. Verify Java-free reproduction/Python,
+document actual failures/results, then commit/push/open draft and dispatch
+independent reviewer requiring fixes, final-head full and CI. Keep original M3
+scope: complete user dependency-loader comparison, component/AOT and evaluator
+retirement, scheduler/cancellation/live heap criteria remain unfulfilled. No
+published AOT or full-M3 claim from metadata/manifest-only proof.
+
+Java-free11653 TERMINAL0: refreshed bootstrap identities reproduced byte-for-byte,
+identity verified, four bootstrap tests passed11.79s. Python42450 TERMINAL0:
+118tests in5.066s. Root diff --check passed. No Wasm/core source content change;
+both JSON compiler fingerprints refreshed because new compiler Rust changed.
+All root heavy jobs terminal. Cache branch focused compiler4+native4 and
+26affected tests pass; still requires independent review/fixes, exact-head full
+baseline and CI before readiness. Root about to publish draft Refs #14 stacked
+on165, then transfer sole heavy slot to its reviewer. Original M3 scope unchanged.
+
+Affected46734 TERMINAL0:26passed/0failed/0ignored across4groups;
+macro reload7 in6.39s, native entries10 in22.50s, phase3 in4.62s, REPLmacro6 in18.76s.
+Native final27082 TERMINAL0:4/0/0 in2.85s, adding executing distinct NaN payloads,
+actual hit and unknown-host bypass; no encoding-only semantic claim.
+Java-free11653 LIVE and Python42450 LIVE, each own log under
+/private/tmp/suss-source-artifact-cache-{javafree,python}.log. Root retains sole
+heavy slot until verifier terminal. Source frozen except repository evidence docs.
+
+Root next-task branch portable/m3-source-artifact-cache in
+/private/tmp/suss-m3-source-artifact-cache is based on PR165 exact8b8903.
+PR165 independent full65850 TERMINAL0:1098passed/0failed/17existingignores,
+122groups, /private/tmp/suss-pr165-review-full-final.log; reviewer released sole
+heavy slot. Root owns slot. ExactCI37158510889 still LIVE at8b8903; PR165 draft.
+Root updated its PR body with authoritative aggregate, no merge/closure.
+
+New cache prepares all analysis/compiled macro effects before emitted-Wasm lookup;
+fresh staged catalog/cells remain authoritative. Keys include source/path/forms,
+compiler/ABI/phase/fixed target profile/flags, loaded macro source graph and
+published declaration provenance, actual IR including binary64 payload bits.
+Unknown external host provenance bypasses cache. Digest/ABI verification on hit,
+64entry/32MiB retention, old-source-until-explicit-reload and declaration rollback
+are explicit. No source core algorithm port or shipped Java dependency.
+
+Initial regeneration25021 TERMINAL101: E0382 moved journal key; corrected ownership.
+Regeneration23728 TERMINAL0 refreshed both bootstrap compiler identities; Wasm
+images unchanged. Focus27057 TERMINAL0: compiler4/0/0 in0.01s, native3/0/0 in2.88s;
+/private/tmp/suss-source-artifact-cache-unit.log and
+/private/tmp/suss-source-artifact-cache-native.log. Executing native evidence
+preserves macro/runtime effects on a hit, explicit reload-all through changed
+transitive sources (including unchanged expansion), old captures, and rollback.
+No inference from encoding-only success or changed unknown to success.
+
+Affected46734 LIVE for native entrypoints, macro reload, compiled REPL macros and
+compiled phase sessions; /private/tmp/suss-source-artifact-cache-affected.log.
+Do not edit source or start another heavy job until terminal. Next inspect this
+same handle; then Java-free reproduction, Python checks, review final diff,
+commit/push/open draft Refs #14, and dispatch independent reviewer with sole
+heavy slot. This branch has no full/CI/review yet; no ready claim. Published user
+artifact manifests, component/AOT, evaluator retirement and scheduler/lifecycle
+remain unfulfilled original M3 criteria; keep issues12–15 and goal active.
+
 # Implementation handoff — 2026-09-29
+
+Root next-task worktree `/private/tmp/suss-m3-unified-native-entrypoints` is based
+on reviewed PR164 head2cb66f3541e6c9740f9f527862835cff5fe2807c. Static inspection
+confirms native `main.rs::run_eval_wasm` and file execution still route through
+the prototype Compiler, whereas native REPL uses persistent compiled phase
+sessions. Three command regressions are prepared in compiled_native_entrypoints.rs
+for macro redefinition/captured expansions/once-only effects in eval and file
+commands, actual lexical &env in eval, and original filename/line/column in a
+file macro call. They are UNEXECUTED; no production
+change or success claim. rustfmt2024 and diff --check pass.
+Reviewer retains sole heavy slot: authoritative full35403 LIVE at2cb66f3;
+CI37154557374 independently verified LIVE at the same head. Do not run root
+Cargo/JVM/Node/native commands before explicit terminal/release. Next: execute
+the prepared regressions before correcting the common native command pipeline;
+preserve source provenance and errors, and audit component/AOT legacy paths as
+remaining work. Full original M3 scope remains open; no merge or issue closure.
+
+Continuation is a verified wait: independent reviewer authoritatively polled
+the same full35403 live repeatedly at frozen2cb66f3, currently in the unchanged
+unfiltered metadata snapshot/catalog case; both companion tests passed. Root
+independently rechecked CI37154557374 at the exact head: inventory and Java-free
+bootstrap passed, full baseline still in progress. No observation timeout was
+treated as termination; no restart/skip/root heavy job or production edit.
+Keep PR164 draft until terminal successful full and exact-head CI. Root next
+action remains execute the prepared command regression BEFORE any correction
+once reviewer explicitly releases the sole heavy slot.
+
+PR164 independent requiredfull35403 TERMINAL0 at exact2cb66f3:
+1088passed/0failed/17existingignores across121groups; log
+/private/tmp/suss-pr164-review-full-final.log, metadata3passed469.26s. Reviewer
+explicitly released heavy slot to root; finalCI37154557374 still pending at same
+head. Root updated draft PR body with actual23 observations/19runtime checks per
+phase and pending CI; no merge or readiness claim yet.
+
+Root four-package clean terminal0 removed3.2GiB; native command BEFORE68121
+TERMINAL101:0/3/0 in1.26s. Actual failures: prototype macro evaluator undefined
+&env/meta, and prototype set! rejects ordinary global assignment. Log
+/private/tmp/suss-native-entrypoints-before.log. Root correction routes native
+eval/file through one Runtime/Macro session pair with full-source parsed forms
+and SourceOrigin; removes the old native eval/GC-print/component probe helpers.
+REPL existing batch preparation stays intact; component/AOT paths remain pending.
+
+First corrected native72582 TERMINAL101:1passed/2failed/0ignored in12.07s;
+/private/tmp/suss-native-entrypoints-fixed.log. Actual lexical &env now passes.
+Both vector-output tests reach portable execution but fail bounded native
+display's unsupported runtime-object guard. Do not replace vector expectations
+with scalar-only tests to claim command acceptance. Next: implement appropriate
+portable result display with focused value/GC/numeric/UTF16/bounds evidence,
+preserving original vector/file-position assertions and avoiding per-result
+module/state replay or discarded-value formatting effects. New command change
+is uncommitted, unreviewed and lacks full/CI proof. All root heavy handles are
+terminal; root owns sole slot. Full original M3 remains active.
+
+Native display and transaction follow-up (uncommitted branch): reusable
+NativeDisplay retains canonical roots per native REPL/script context, uses the
+runtime numeric formatter, preserves UTF16 and omits print metadata without
+relaxing strict macro transport. Script forms retain full source origins; only
+final results print. Runtime fragments are now all prepared before any runtime
+initializer. No compiler/reader/core bytes changed, so bootstrap identities are
+unchanged; explicit shared-target identity verification passes (the initial
+no-target invocation could not find a compiled build script).
+
+Actual focused progression: display68902 TERMINAL0:3/0/0 in13.09s. Data guards
+19178 TERMINAL0:6/0/0 in20.83s. Affected28661 TERMINAL101:34passed/1failed,
+sixgroups; sole failure was existing raw-array error wording. Preserved its
+explicit unsupported-object guard, without fabricating array output. Added late
+compile failure regression:84084 TERMINAL101, actual keep99 versus expected17
+in4.99s. Changed script driver to stage all runtime fragments;65785 TERMINAL0:
+new7/0/0 in21.24s and existing REPL8/0/0 in23.94s.
+
+Display-bound fixture8707 TERMINAL101: construction exhausted ordinary fuel,
+not a display result.94904 TERMINAL101: construction-only fixture fuel100M,
+restored ordinary10M before display; actual valid4097-item vector is rejected by
+the integer-field transport bound, before the node budget. Corrected the fixture
+assertion to that actual guard rather than claiming a different error. Production
+fuel and all transport/graph guards are unchanged. Added stats equality to the
+runtime compile-failure regression.
+
+Final focused/affected73639 TERMINAL0:43passed/0failed/0ignored across seven
+suites, including new8/0/0 in20.88s and REPL8/0/0 in24.01s; log
+/private/tmp/suss-native-entrypoints-final-focus.log. Actual large-value guard
+and subsequent small-value recovery pass. Tests retain original vector results,
+file positions and effects, plus GC, numeric/UTF16, reuse/reset, metadata and
+discarded lazy values. Python initial run failed7 missing-submodule errors;
+initialized exactc4295f3 from local reference, then16536 TERMINAL0:118tests pass
+in5.195s; /private/tmp/suss-native-entrypoints-python-fixed.log. No skips added.
+
+Java-free verifier1718 LIVE at current frozen source;
+/private/tmp/suss-native-entrypoints-javafree.log. Root owns sole heavy slot.
+PR164 CI lookup54977 TERMINAL1 HTTP503, not a CI result; subsequent actual GH
+read recovered and verifies exact2cb/run37154557374 still in_progress. PR164
+remains draft despite successful reviewed full1088/0/17/121. New command branch
+still uncommitted; needs publication, independent review/fixes, required final
+full baseline and exact-head CI. Next after terminal verifier: commit/push/open
+draft with Refs #12/#13/#14 and dispatch its independent reviewer. Do not merge
+or close any original M3 issue. Remaining component/AOT migration, macro effects,
+full printing/source schema/cache/evaluator/lifecycle gates remain explicit.
+
+Java-free verifier1718 TERMINAL0: both bootstrap images reproduced byte-for-byte,
+compiled identity verified, four bootstrap tests pass in11.74s; no asset changes.
+Final root diff --check passes. New branch focused43/0/0 and Python118 pass;
+independent review/full/final CI remain pending for this branch.
+
+PR164 exact final-headCI37154557374 COMPLETEDsuccess at2cb66f3541e6c9740f9f527862835cff5fe2807c,
+independently verified root gh pr view (completed22:15:17Z). Root updated body and
+marked READY at unchanged head, with final proof
+https://github.com/bobby/suss/issues/14#issuecomment-5974031233 . No merge or closure.
+All root heavy/network handles are terminal. Next publish command branch stacked
+on164, dispatch independent review and explicitly transfer the sole heavy slot.
 
 ## Start here
 
@@ -13241,3 +13502,506 @@ portable/m3-preserve-declarations, is an out-of-stack child of161 and is not
 rewritten by this requested eight-branch operation; restack it before using its
 new-parent PR diff. Next unblocked development remains the original declaration/
 inference compatibility and cache/bootstrap/lifecycle acceptance work; M3 stays open.
+## Next isolated repeated-declaration regression — 2026-10-03
+
+Root created portable/m3-preserve-declarations in
+/private/tmp/suss-m3-repeated-declarations, based on reviewed PR161
+07753174f7ab09072468aa9c01cb30676997aeac. No production source changed.
+Prepared untracked compiled_macro_repeated_declarations.rs and original
+tests/oracle/repeated-declaration-review-probe.clj. The native regression
+compares all18selected fields (presence/value/data kinds) in both source
+namespace snapshots and live catalogs before/after mixed fresh/existing declare.
+It includes changed declaration metadata, repeated forward declare, known
+private/doc/callable/declared assertions, actual current/captured function calls,
+scalar values and once-only initializer effects in both caller phases afterGC.
+A finite100M helper/caller budget is explicit; production defaults unchanged.
+The primary probe analyzes the exact no-initializer def expansion specified by
+pinned core.cljc175–176 declare and asserts unchanged selected records. Neither
+new native test nor primary probe has EXECUTED; only rustfmt/diff checks ran.
+
+Static pinned analyzer2117–2172 preserves existing records for no-initializer
+truthy-declared forms; Suss ControlForm::Declare currently calls definition for
+each name and unconditionally records fresh facts. Inspect existing namespace
+data before any fix, preserve validated qualified-name/errors and initialization
+semantics. No source-only inspection establishes the semantic bug yet.
+
+PR161 independent review added actual pinned/native same-name self/duplicate
+argument shadow and source-order evidence: primary20679 exit0; initial native
+30906 exit101 used numeric == on symbols, corrected12593 exit0/1pass36.87s.
+No significant production findings. Reviewer pushed0775317 with test/probe/docs
+and owns sole heavy slot. Required full73225 LIVE at exact0775317; log
+/private/tmp/suss-pr161-review-full-final.log. Final-headCI37147259708 LIVE;
+initial-headCI37146885767 canceled, not finalproof. Root has launched no heavy
+job and has not edited reviewer worktree.
+
+Next after review final baseline/slot release: rebase onto any later reviewed
+head, initialize pinned submodule, clean only four workspace packages when
+switching sharedtarget, execute actual primary and native failing regression
+BEFORE compiler corrections. Regenerate both bootstrap identities after Rust
+changes using --profiletest and run Java-free verifier. No RUSTFLAGS.
+
+All original M3 criteria remain open beyond these partial slices: full portable
+environments/inference, source/macro dependency cache invalidation, temporary
+evaluator retirement, pending-I/O cancellation/cleanup and live-heap accounting.
+No issue closed or PR merged by agent. PR161 publication/progress is recorded at
+https://github.com/bobby/suss/issues/14#issuecomment-5972582131 .
+
+PR161 independent review full73225 TERMINAL0 at exact07753174f7ab09072468aa9c01cb30676997aeac:
+1086passed/0failed/17existingignores across119groups.
+/private/tmp/suss-pr161-review-full-final.log. Reviewer released sole heavy slot
+and clean worktree; no significant scoped production findings remain.
+Final-head CI37147259708 remains in progress; do not mark ready until success.
+
+Repeated-declaration primary64308 TERMINAL0 asserts unchanged completed and
+forward records against the pinned analyzer; log
+/private/tmp/suss-repeated-declarations-primary.log. Initial submodule command
+used incorrect reference/clojurescript path and exited1; corrected clojurescript
+initialization succeeded at pinnedc4295f3. Four-package shared-target clean20946
+TERMINAL0 removed only workspace artifacts. Native before-fix regression52911
+is LIVE, source frozen; no semantic result or compiler fix yet.
+
+Repeated-declaration native before52911 TERMINAL101:0/1/0 in15.37s,
+completed scalar/callable and forward mismatches in both phases; actual runtime
+checks passed. /private/tmp/suss-repeated-declarations-before.log.
+Common definition now preserves existing immutable data only for no-initializer
+truthy-declared forms after validation. Bootstrap regeneration93205 TERMINAL0;
+both compiler fingerprints refreshed, Wasm unchanged. Original fixed85857
+TERMINAL0:1/0/0 in12.35s; /private/tmp/suss-repeated-declarations-fixed.log.
+Expanded primary89558 TERMINAL1 exposed an incorrect fixture expectation for
+initializer-bearing truthy-declared docstrings, not a production finding.
+Corrected38845 TERMINAL0 asserts absent doc on the new provisional record.
+An earlier edit command used an incorrect relative path and old primary47832
+ran successfully without new boundaries. Expanded native/affected88768 LIVE;
+source Rust frozen. No full baseline/review/CI proof for this branch yet.
+
+Expanded affected88768 TERMINAL0:40passed/0failed/0ignored across4groups:
+declarationfunctions2, repeateddeclarations1, namespace4, persistent33.
+Java-free bootstrap56758 TERMINAL0:deterministic bothphase generations, identity
+check and4executingtests11.13s. Python94653 TERMINAL0:118checks5.505s.
+
+Generated declared metadata precedence native71445 TERMINAL101:8.19s
+completed callable record changed because user :declared false overrode generated
+true; log/private/tmp/suss-repeated-declarations-precedence-before.log.
+ControlForm::Declare now places generated metadata in the outermost prefix,
+matching pinned vary-meta/assoc precedence. Bootstrap55009 TERMINAL0 regenerated
+both identities. Final affected45202 TERMINAL0:40pass/0fail/0ignore across
+4groups; /private/tmp/suss-repeated-declarations-affected-final.log.
+Final primary and Java-free verifier still needed for new precedence source.
+No full baseline or independent review proof for the new branch yet.
+
+Next unblocked work after declaration review: audit remaining portable analyzer
+fields/inference against actual pinned artifacts, then source/macro cache keys
+and evaluator retirement. CLI main.rs84/405/442/475/505/546 still uses legacy
+Compiler; source-only inventory is not evidence those frontend gates pass.
+Pending-I/O cancellation and live-heap accounting remain original M3 gates.
+
+Final primary87036 TERMINAL0 verifies vary-meta/assoc-generated true and all
+replacement boundaries. /private/tmp/suss-repeated-declarations-primary-final.log.
+Final Java-free bootstrap22541 TERMINAL0 verifies deterministic generations,
+identity and4executingtests at the final compiler source;
+/private/tmp/suss-repeated-declarations-bootstrap-final-verify.log. Rustfmt2024
+new regression and git diff check pass. All root heavy handles are terminal;
+source is frozen for draft publication and dispatched independent review.
+Reviewer must run required exact pushed-head full baseline, fix significant
+findings and obtain final-head CI before readiness. No merge/closure.
+
+## Independent PR162 review — provisional declaration boundary
+
+Reviewed common definition preservation, metadata merge precedence, validation
+before preservation, existing source-function revisions and initializer/runtime
+paths against pinned analyzer2092–2172 and core175–176. No significant production
+finding. Added actual pinned macro observations and native initializer-boundary
+regression in both caller phases. Both captured namespace snapshots and live
+provisional catalog records remain unchanged across a nested declaration; the
+captured namespace predates the fresh definition, while its live record retains
+staged doc and absence of private metadata.
+
+Primary88986 TERMINAL0 initially verified nested provisional preservation.
+Native19328 TERMINAL101 and diagnostic48876 TERMINAL101 exposed an incorrect
+fixture expectation that the captured namespace already included a provisional
+definition, not a production bug. Diagnostic confirms the live catalog does.
+An intermediate edit command used the wrong working directory; primary65940
+TERMINAL0 ran the prior probe without the new macro hook. Corrected actual pinned
+macro-hook primary75207 TERMINAL0 independently asserts both views and unchanged
+selected fields. Log /private/tmp/suss-pr162-review-primary-staged.log.
+Corrected native73358 TERMINAL0 passes the original preservation regression plus
+the new nested boundary in both phases; log
+/private/tmp/suss-pr162-review-focused-final.log. No compiler/core/reader change,
+so bootstrap compiler identities and Wasm are unchanged from root verification.
+Rustfmt2024 and git diff check pass. Review additions will be pushed before the
+required full baseline; source will remain frozen at that exact pushed head.
+Final-head full baseline and CI remain pending; no readiness/merge/closure claim.
+
+PR162 review full8882 TERMINAL101 at9a0760e: partial baseline921passed/1failed/
+15existing ignores across99groups. Unfiltered declaration metadata3 passed461.84s;
+repeated declaration1 passed14.47s. Failure portable_definitions::reviewed_declaration_preserves_source_metadata_and_phase_identity
+asserted original raw prefix at index0/generated map last, contradicting this
+PR's intentional corrected outer-prefix precedence. Independent actual primary
+and native semantic precedence tests pass. Updated that structural regression to
+assert merged generated declared:true plus retained original keyword:true, while
+keeping symbol spans/phase/cell identity/no initializer checks. No production
+changes. Focused75849 TERMINAL0:13passed/0failed/0ignored1.17s;
+/private/tmp/suss-pr162-review-definitions-fixed.log. Full failure log
+/private/tmp/suss-pr162-review-full-final.log remains retained. The updated
+review head must receive a fresh exact-head full baseline and CI before readiness.
+
+## Next isolated source-hint regression — 2026-10-03
+
+Root prepared portable/m3-truthy-source-hints in
+/private/tmp/suss-m3-truthy-source-hints from PR162 reviewed1d4beb3.
+Original source-hint-review-probe.clj is prepared but UNEXECUTED. It inspects
+actual selected :tag/:inferred-ret-tag presence and values for false metadata,
+dynamic scalar/functions, invocation and local/parameter hints. No observations
+file generated, no native/primary job or production fix yet.
+PR162 reviewer owns sole heavy slot and its worktree. Root may prepare tests
+and inspect source, but must not execute Cargo/JVM/Node until explicit release.
+Static source_tags.rs declaration_tag currently applies hint before inferred
+scalar/dynamic/function policy; pinned def parse raw metadata and computed
+fields have different precedence. Actual primary/native evidence is required
+before claiming/fixing a bug. Rebase onto final reviewed162 head before work.
+
+PR162 reviewer pushed9a0760e5d1c77ab00eb8f6099b2794eadbae86fc with an actual
+pinned macro-hook/native staged regression; no significant production findings.
+Primary75207 exit0; correctednative73358 exit0/1pass15.80s. Full8882 LIVE
+at exact9a0760e, /private/tmp/suss-pr162-review-full-final.log; reviewer retains
+sole heavy slot. Root rebased this prepared branch onto9a0760e; no execution.
+
+Prepared compiled_macro_source_hint_boundaries.rs with18 selected primary
+expression-tag rows and15 executing scalar/function/effect assertions perphase.
+The expected source-hint-review-observations.json does not exist yet: include
+is deliberately unresolved until the actual pinned probe executes and generates
+it. No fabricated expected observations and no native compile/result claimed.
+Rustfmt2024 and diff check pass; next branch source is test/probe/docs only.
+
+PR162 final-head CI37149802693 LIVE exact9a0760e; initial-headCI37149411305
+cancelled. Full8882 retains reviewer-owned sole heavy slot; metadata group live.
+Issue progress https://github.com/bobby/suss/issues/14#issuecomment-5972949098 .
+PR161 still awaits exact final-headCI37147259708; its independent review/full
+1086/0/17 already passed. Do not mark either draft ready from live CI status.
+
+Prepared probe also distinguishes raw return metadata, computed-return overlays
+and initializer-bearing truthy-declared provisional facts. Still UNEXECUTED.
+
+Authoritative PR162 full8882 progress: unfiltered declaration metadata3 passed
+461.84s at frozen9a0760e, preserving unchanged29cases/all18fields/bothphases/GC.
+HAMT sequence execution is underway; full still LIVE and reviewer owns slot.
+No source edit, terminal counts, or readiness claim yet.
+
+Prepared source-hint probe includes nil metadata presence separately from
+absence, for completed scalar/function and provisional definitions. All18rows
+remain UNEXECUTED; no expected results fabricated.
+
+PR161 exact final-headCI37147259708 COMPLETEDsuccess at
+07753174f7ab09072468aa9c01cb30676997aeac, verified by root GH API. Independent
+review and exact full1086/0/17/119groups already passed. Update PR161 description
+with final proof and mark ready without changing its head; no merge/closure.
+
+Root updated PR161 body and gh pr ready successfully at unchanged0775317;
+final issue proof https://github.com/bobby/suss/issues/14#issuecomment-5973101086 .
+PR161 is READY, unmerged. PR162 full8882 and finalCI37149802693 remain LIVE
+at9a0760e; reviewer retains sole heavy slot.
+
+PR162 full8882 TERMINAL101 at9a0760e: partial921passed/1failed/15existing
+ignores across99groups. Failure portable_definitions639 asserted generated
+metadata prefix position, not merged metadata. Reviewer corrected structural
+assertion to retained source keyword/merged declared:true/retained:true, keeping
+spans/phase/cell/initializer checks. Focused75849 TERMINAL0:13/0/0 in1.17s.
+Pushed final reviewhead1d4beb351a7c358b288f106a36fcee4182a24c40; production
+unchanged. Required full1210 LIVE at frozen1d4beb3, log
+/private/tmp/suss-pr162-review-full-corrected.log. Reviewer retains sole heavy
+slot. Root rebased prepared/unexecuted18-case inference branch onto1d4beb3.
+No readiness from prior partial baseline or old-head CI; exact newhead required.
+
+PR162 corrected final-headCI37151481978 LIVE exact1d4beb3; both earlier PR162
+CI heads cancelled, not proof. Root updated PR162 body and issue correction
+https://github.com/bobby/suss/issues/14#issuecomment-5973185338 .
+Corrected full1210 LIVE at1d4beb3; bootstrap4/analysisgraph11 passed and binding
+records underway. Reviewer sole heavy ownership remains; do not start root
+primary/native jobs until explicit terminal/release. Poll same full1210 through
+reviewer. PR161 READY/unmerged; PR162 DRAFT pending exact full/finalCI.
+
+Next after successful review baseline and explicit release: clean only four
+workspace packages on sharedtarget worktree switch, execute actual prepared
+18-row pinned source-hint probe (generates missing JSON), then execute new
+native regression BEFORE any production correction. Retain any fixture errors
+and actual mismatches separately. Preserve explicit nil presence, raw metadata
+versus completed/provisional overlays and actual runtime storage/effects.
+No goal completion, issue closure, PR merge, or source-only success claim.
+
+Continuation verified same corrected full1210 LIVE at1d4beb3 by independent
+reviewer authoritative poll. Metadata precedence/raw-function companion tests
+passed; unchanged unfiltered snapshot/catalog case still executing. Exact CI
+37151481978 remains live. Root has run no heavy job or production edit.
+Previous goal turn made progress (published162, review fix pushed,161ready);
+this continuation is a verified wait, not a blocker or completion claim.
+
+PR162 corrected full1210 TERMINAL0 at exact1d4beb351a7c358b288f106a36fcee4182a24c40:
+1087passed/0failed/17existingignores across120groups.
+/private/tmp/suss-pr162-review-full-corrected.log. Unfiltered metadata3passed
+505.60s, repeateddeclaration1passed14.72s, correcteddefinitions13passed.
+Independent reviewer released sole heavy slot; no remaining production finding.
+Final-headCI37151481978 still LIVE; inventory and Java-free bootstrap steps pass.
+PR162 stays draft pending exact CI. Root now owns heavy slot and starts actual
+prepared source-hint primary; no production corrections yet.
+
+PR162 exact final-headCI37151481978 COMPLETEDsuccess at1d4beb3, independently
+confirmed root GH view. Root updated body and marked READY without head change.
+Issue final proof https://github.com/bobby/suss/issues/14#issuecomment-5973437080 .
+No merge or issue closure. Independent reviewer finished; all heavy ownership
+now root.
+
+Source-hint primary53144 TERMINAL0 generated actual18row artifact;
+/private/tmp/suss-source-hints-primary.log. Four-package clean36281 exit0.
+Native before69825 TERMINAL101:0/1/0 in11.62s,18actual field mismatches across
+bothphases (nine perphase): scalar false/dynamic false, dynamicfunction var,
+falsehint invocation, rawreturn, provisionalreturn, nilfunction/provisionalnil
+var presence, provisionalnil invocation. Runtime storage/effect assertions pass.
+/private/tmp/suss-source-hints-before.log. No expected value substituted.
+
+Compiler source facts now distinguish raw tag presence from inferred types and
+completed callable facts from provisional/rawfn-var records. False/nil metadata
+falls through only where pinned def parse/infer-invoke requires it; local/parameter
+false tags stay intact. Top-fn selected tag/fn-var/ret-tag overlays are retained.
+First bootstrap36967 exit0; nil-inference refinement then bootstrap20743 exit0.
+Both identities regenerated; production fuel/graph bounds unchanged. Focused
+fixed native job is LIVE at current source, which is frozen for execution.
+No full baseline, independent review or CI proof for this new branch yet.
+
+Source-hint fixed34442 TERMINAL0:1/0/0 in12.94s, actual18pinned rows/bothphases
+afterGC and15runtime/storage/effect assertions perphase pass.
+/private/tmp/suss-source-hints-fixed.log. Affected native8096 LIVE:coreprojection,
+declarationfunctions, repeateddeclarations, sourceenvironment and sourcetags.
+Source Rust frozen for this job. No fullbaseline/review/CI proof yet for newbranch.
+
+Affected native8096 TERMINAL0:9passed/0failed/0ignored across five suites.
+Java-free verifier97302 TERMINAL0: both bootstrap images reproduced byte-for-byte,
+identity checked, compiled_bootstrap4/0/0 in8.79s. Log
+/private/tmp/suss-source-hints-javafree.log. Python58917 TERMINAL0:118tests pass
+in5.591s; /private/tmp/suss-source-hints-python.log. Git diff --check passes.
+Next: publish a draft stacked source-hint PR (Refs #14), dispatch independent
+review/fixes, then require exact final-head full baseline and CI before readiness.
+Root jobs terminal; sole heavy slot available for the independent reviewer.
+No issue closure, merge, or full M3 completion claim.
+
+
+## Independent PR164 source-hint review — 2026-10-03
+
+PR164 https://github.com/bobby/suss/pull/164 publishes initial375572630e715f4315995f54cbdc8cc45c5abab1
+against portable/m3-preserve-declarations (#162). Reviewer owns sole heavy slot.
+Reviewed pinned def merge, infer-invoke, raw/provisional/published fn-var, dynamic
+scalar versus function behavior, top-fn selected overlays and nil/false presence.
+No significant scoped production finding. Extended actual primary/native probe
+with five consumer boundaries: top-fn fn-var false, false/nil return overlays, nil
+var tag masking a string hint and nested function return inference from a nil-tag
+function var. Original18 rows remain unchanged; generated artifact now23 rows.
+Nineteen actual value/effect checks perphase retain storage semantics.
+
+Initial edit used incorrect relative paths and made no changes; old primary64024
+TERMINAL0 is not expanded evidence. Corrected primary81250 TERMINAL0 generates
+actual23rows, /private/tmp/suss-pr164-review-primary-final.log. Native90832
+TERMINAL0:1passed/0failed/0ignored13.76s, both caller phases/GC;
+/private/tmp/suss-pr164-review-focused.log. Rustfmt2024 passes. No compiler/core/
+reader change; bootstrap identities and bytes unchanged from root verification.
+Push this review evidence/regression, then freeze exact pushed head for required
+full workspace baseline and final-head CI. Both gates remain pending; draft
+readiness, issue closure, merge and full M3 completion are not claimed.
+
+
+## Independent PR165 review — staged macro declaration isolation
+
+Initial head d898e7bfb0e718b48f685960e689122f79163e5c. Executed significant finding:
+review74075 TERMINAL101/5.00s: after existing keep macro17, script redefined it99
+then failed on unresolved runtime source; a subsequent invocation incorrectly
+returned99. Log /private/tmp/suss-pr165-review-macro-before.log. This is binding
+publication, distinct from arbitrary macro effects. Initial broad checkpoint
+focused78289 passed but was refined before publication to avoid reverting
+unrelated global effects or replaying initialized phase dependencies.
+
+Journal now captures each explicit script macro declaration at its actual staging
+point and reverses only its binding/canonical source record/export publication
+on preparation failure. The caller Macro namespace is restored. Existing value
+roots/bound flags are retained across GC, fresh unpublished cells remain unbound
+and reusable under stable identity; resident code may remain until reset.
+Successfully initialized macro dependencies remain provided. Arbitrary unrelated
+global set! and atom/object effects remain live. Runtime execution errors still
+follow the ordinary initializer/effect contract; journal is discarded after
+successful preparation and never wraps runtime execution.
+
+Intermediate compile87197 TERMINAL101 used a nonexistent Global constructor;
+corrected to validated Environment declaration identity. First bootstrap attempt
+exited101 because Diagnostic needed explicit SessionError mapping. Corrected
+bootstrap10741 TERMINAL0 refreshed both compiler fingerprints; Wasm bytes unchanged.
+Focused71195 TERMINAL101:9pass/1fail23.12s. Dependency fixture used a minimal Runtime
+without PersistentVector; replaced the observation with scalar11 encoding both
+effects, without weakening effect assertions. Corrected10885 TERMINAL0:2pass/0fail
+4.70s. Includes retained indirect compiled macro caller, fresh absence/reuse and
+ordinary global plus atom effects surviving completed dependency loading.
+Expanded regression also redefines a just-loaded dependency macro before the
+later failure, proving declaration-point checkpoints retain its previous value.
+Final10-test native entrypoint suite46826 is executing; no final result yet.
+Required exact pushed-head full baseline and CI remain pending. No PR merge,
+issue closure or full M3 completion claim.
+
+PR165 final focus46826 TERMINAL0:10passed/0failed/0ignored23.49s,
+/private/tmp/suss-pr165-review-final-focus.log. Java-free80992 TERMINAL0:
+both phase images reproduced byte-for-byte, compiler identity verified and4
+executing bootstrap tests passed8.61s; /private/tmp/suss-pr165-review-javafree.log.
+Final refinement clears unpublished fresh cell values to nil as well as unbound,
+and separately asserts global-count1 and object-count1 through the imported
+macro alias after failure (aggregate11 assertion also retained). Focus14345
+TERMINAL0:2pass/0fail4.68s; /private/tmp/suss-pr165-review-effects-final.log.
+Original eight command/display regressions remain unchanged. Rustfmt2024 new
+tests and git diff check pass. Compiler fingerprints unchanged by final CLI-only
+refinement; both regenerated manifests remain current. Next: push review fixes,
+freeze exact pushed head and run required full workspace baseline plus exact CI.
+
+## Independent PR166 review — emitted artifact cache
+
+Reviewed source/effect ordering, IR/key coverage, immutable macro dependency
+snapshots, declaration rollback, unknown provenance, bounds and reset. Original
+four compiler and four native cache regressions remain unchanged. Fixed a small
+rejection-path accounting bug: removing a corrupted sole entry could underflow
+its byte counter after size corruption, and rejecting its runtime ABI left
+entry/byte counts stale. Entries now retain their accounted size and release it
+on either rejection. New unit regression rejects digest-corrupt and ABI-invalid
+sole entries, checks zero counts and executes recovery/reuse.
+
+Compiler focus14829 TERMINAL0:5pass/0fail/0ignored0.01s;
+/private/tmp/suss-pr166-review-unit.log. First native12785 TERMINAL101:1pass/4fail
+0.16s, all failures were the expected stale compiler fingerprint gate before
+regeneration. Regenerated both phase manifests37069 TERMINAL0; emitted bootstrap
+Wasm unchanged. Native14871 TERMINAL0:5pass/0fail/0ignored2.90s;
+/private/tmp/suss-pr166-review-native-final.log. Added executing missing-dependency
+reload discovery failure preserves the old graph/cache hit, then newly available
+dependency changes provenance despite identical expansion, and reset discards
+cache and macro bindings. Original four executing expectations remain intact.
+Java-free57069 TERMINAL0: both phase images reproduced byte-for-byte and current
+compiler identities verified; four bootstrap tests passed (see
+/private/tmp/suss-pr166-review-javafree.log for duration).
+
+Commands used explicit CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and
+CARGO_BUILD_JOBS=2; no RUSTFLAGS. Rustfmt2024 and git diff check pass. This is
+emission reuse, not analysis/expansion caching or published artifact validation.
+Full M3, evaluator retirement, component/AOT and lifecycle gates remain open.
+Next: freeze pushed review head, run cargo test --workspace --locked --
+--test-threads=2 and require exact final-head CI before readiness. No issue closure
+or merge is claimed from focused evidence.
+
+PR166 continued review found a significant incomplete-load provenance gap:
+a selected source unit could publish cells/macros then fail its initializer,
+leaving its previous completed identity in the dependency ledger. Actual IR
+prevented incorrect byte reuse but did not establish a complete known graph.
+Stopped exact full46757 intentionally (TERMINAL143) for this finding, after
+identifying/stopping only its cargo84418 and native child92417. That partial run
+is not full acceptance. New regression32370 TERMINAL101:0pass/1fail2.81s with the
+provenance bypass disabled, /private/tmp/suss-pr166-review-partial-before.log:
+usable partially published macro emitted unchanged42 but bypass counter stayed0
+instead of1. Original cache tests/expectations remain unchanged.
+
+Selected graph units now become incomplete before execution, each cleared only
+after successful initialization records its immutable identity. Emission bypasses
+while any selected unit remains incomplete. Discovery failure before execution
+preserves prior known identity/cache hits. Failed unit effects/publications are
+not rolled back; successful dependencies retain their identities. Explicit
+successful reload restores known provenance/reuse, and reset starts a clean host.
+Six native cache tests28118 TERMINAL0:6pass/0fail/0ignored3.31s,
+/private/tmp/suss-pr166-review-partial-load.log. After the controlled before probe,
+restored the fix and reran all six (6188, log
+/private/tmp/suss-pr166-review-native-complete.log). CLI-only continuation leaves
+both previously reproduced compiler identities/Wasm unchanged. Next push/freeze
+new exact review head and run one required unfiltered full plus final-head CI.
+
+
+## Stack #168 rebase — 2026-10-03
+
+At the user's request, ran `gh stack checkout 168`, `gh stack rebase` and
+`gh stack rebase --continue` in the existing worktrees. gh-stack0.2 migration
+initially rejected divergent legacy catalog definitions for stacks137/163.
+Backed up the stale suss1 catalog to
+/private/tmp/suss-stack168-catalog-backup.json, then reconciled only its duplicate
+entries with the recorded successful137/163 worktree catalogs. No branch content
+was changed by this tracking repair. Checkout imported the five-branch stack and
+selected the existing /private/tmp/suss-m3-artifact-identities worktree.
+
+Stack168's configured trunk is portable/m3-self-local-method-facts d60b852,
+whose complete tree matches current main8d83fa0. The first conflict replayed
+67already-merged prerequisite commits. Verified old0775317 and trunkd60b852
+differ only by40added handoff lines; all source/tests/artifacts are identical,
+and first stack commit1b00a6c directly follows0775317. Omitted only duplicate
+prerequisite picks, retained every stack-specific commit, and resolved the one
+remaining handoff append conflict by preserving both entries. Cascading rebase
+completed in the branches' existing worktrees.
+
+#162 1d4beb3 -> 5b2e899; #164 2cb66f3 -> 74d7a33; #165 8b89031 -> e5916c7; #166 c525c19 -> c10192b; #167 71b1511 -> 3cab86d.
+
+All five non-handoff trees exactly match their original heads. Before this new
+record, each handoff diff only inherited the stack163 record (38added lines after
+blank-line overlap). Independent reviews were dispatched individually for
+PR162/164/165/166/167 to verify retained patches, content and parent ancestry.
+`git diff --check` passed. No new semantic regression or source fix was needed.
+No fresh native/JVM/Node run was launched for this history-only change; the
+required exact71b1511 full baseline was already running in
+/private/tmp/suss-pr167-review-full-final.log. Its pending status is not a passing
+full-baseline claim, and earlier CI does not certify new commit IDs.
+
+Push with `gh stack push`, verify all five remote exact heads and fresh CI, and
+require passing final-head CI before readiness. No PR merge, issue closure or
+milestone completion is claimed. Original M3 dependency-loader/component/AOT/
+evaluator-retirement/cache and scheduler/cancellation/live-heap gates remain open.
+Next unblocked validation task: finish the existing required full baseline and
+check the freshly pushed CI; then continue the published artifact/dependency policy.
+
+## Merged stack integration into main — preparation
+
+GitHub reports PR162/164/165/166/167 merged into their prior stack branch names;
+fetched main remains8d83fa0 (PR161). These merges did not put the continuation
+on main. Root created portable/m3-merged-stack-integration at reviewed167768a1e0
+and locally reconciled origin/main, without merging a GitHub PR. All conflicts
+were old-main versions of later-reviewed metadata/cache/identity code, bootstrap
+images and appended evidence. Preserved the independently reviewed167 versions.
+After resolving, git write-tree was exactly aabf1b90fbdd7f1533a422e9c5aaab3257926edc,
+the ENTIRE reviewed167 file tree; main documentation is a subset of that tree
+(ROADMAP28 additions/0 removals, inventory26/0, handoff709/0). This appended
+integration record is the sole subsequent file change. No production/test/image
+bytes or compiler identity changed.
+
+Existing167 full baseline1117/0/17/124 and exact-head CI37163816000 at768a1e0
+are prior-source evidence, not this integration head's CI. Open a draft PR to
+main, dispatch independent reconciliation review, freeze its final head and
+require final-head unfiltered baseline/CI before readiness. Reviewer166 still
+owns the sole local heavy slot running PR171 full78568 at70fc; do not interfere.
+Root small-integer child is drafted/unvalidated separately and has run no heavy
+job. Refs12/13/14/15 and stack168; no issue closure, merge or M3 completion.
+
+
+## PR173 independent integration reconciliation audit — 2026-10-04
+
+Independent reviewer verified initial integration335e304c0b8035f8798b0ad45a79aa6c55151595
+against reviewed167768a1e09cf6258c2fc2f45205fe89a0b6eaf902f and actual
+GitHub main8d83fa0d8136c890d03f868f1a86953f32852cb0. Recursive git entry
+comparison found ONLY docs/roadmap/handoff.md differs from reviewed167. Every
+current-main path is retained; ROADMAP/inventory/handoff preserve all earlier
+lines with28/26/709 additions respectively before the integration append.
+All five reviewed heads5b2e899/74d7a33/e5916c7/c10192b/768a1e0 and actual
+main are ancestors of the integration merge. GH independently confirms the
+five PRs were merged into stack branches, not main. No significant reconciliation
+defect found; no production code, original tests, bootstrap images, license/source
+provenance, inventory classifications or stable issue IDs changed from reviewed167.
+
+Read-only git diff --check passes. An attempted standalone
+python3 scripts/verify_bootstrap_identity.py failed explicitly with
+'no compiled build script matches the shipped compiler identity': the command
+used the default worktree target, which has no matching build-script executable.
+This is failed prerequisite validation, not a bootstrap pass. Do not hide it or
+use prior167 acceptance as the final-head gate. No Cargo/native/JVM/Node job
+was started while reviewer166 owns the sole heavy slot for PR171 full78568.
+
+Next after explicit root slot transfer: clean only the four Suss packages from
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target, use CARGO_BUILD_JOBS=2,
+run focused Java-free bootstrap validation, then the required unfiltered
+cargo test --workspace --locked -- --test-threads=2 once at the frozen review
+head. Poll its actual handle until terminal and release the heavy slot explicitly.
+No RUSTFLAGS override. Require exact final-head CI before readiness; no merge,
+issue closure or M3 completion is claimed. The integration includes only user-merged
+162/164/165/166/167; later core initialization/component continuations and original
+M3 published-loader/frontend/evaluator/scheduler/live-heap gates remain separate.

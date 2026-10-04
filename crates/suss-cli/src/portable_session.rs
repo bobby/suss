@@ -141,6 +141,11 @@ pub struct Session {
     artifact_bytes: usize,
     bootstrap_core: bool,
 }
+/// Binding/catalog transaction only: reachable object effects and resident code are retained.
+pub(crate) struct BindingCheckpoint {
+    environment: Environment,
+    values: BTreeMap<CellIdentity, (OwnedRooted<AnyRef>, i32)>,
+}
 /// Owned compiler inputs permit macro expansion to execute in this same phase
 /// Store while preparation reads an immutable namespace/module snapshot.
 pub(crate) struct CompilationSnapshot {
@@ -641,6 +646,9 @@ impl Session {
         for bytes in bytes {
             runtime_abi::verify_artifact(bytes, &runtime_abi::Manifest::default())
                 .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
+            portable::artifact_identity::verify(bytes, portable::artifact_identity::Expected {
+                phase: Some(self.phase), ..Default::default()
+            }).map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
             compiled.push(crate::portable_module_cache::compile(&self.engine, bytes)?);
         }
         let mut linker = self.linker.clone();
@@ -741,6 +749,39 @@ impl Session {
     ) -> Result<(), SessionError> {
         self.provided
             .insert(ModuleIdentity::new(self.phase, namespace).map_err(SessionError::Compile)?);
+        Ok(())
+    }
+    pub(crate) fn binding_checkpoint(&mut self) -> Result<BindingCheckpoint, SessionError> {
+        let mut values = BTreeMap::new();
+        let mut scope = RootScope::new(&mut self.store);
+        for (identity, global) in &self.cells {
+            let cell = global.get(&mut scope).unwrap_anyref().unwrap().as_struct(&scope)?.unwrap();
+            let value = cell.field(&mut scope, 0)?.unwrap_anyref().unwrap().to_owned_rooted(&mut scope)?;
+            let bound = cell.field(&mut scope, 1)?.unwrap_i32();
+            values.insert(identity.clone(), (value, bound));
+        }
+        Ok(BindingCheckpoint { environment: self.environment.clone(),
+            values })
+    }
+    pub(crate) fn restore_bindings(&mut self, checkpoint: BindingCheckpoint, globals: &[CellIdentity]) -> Result<(), SessionError> {
+        let mut scope = RootScope::new(&mut self.store);
+        for identity in globals {
+            if let Some(global) = self.cells.get(identity) {
+                let cell = global.get(&mut scope).unwrap_anyref().unwrap().as_struct(&scope)?.unwrap();
+                if let Some((value, bound)) = checkpoint.values.get(identity) {
+                    let value = Val::AnyRef(Some(value.to_rooted(&mut scope)));
+                    cell.set_field(&mut scope, 0, value)?;
+                    cell.set_field(&mut scope, 1, Val::I32(*bound))?;
+                } else {
+                    let nil = AnyRef::from_i31(&mut scope, wasmtime::I31::new_u32(0).unwrap());
+                    cell.set_field(&mut scope, 0, Val::AnyRef(Some(nil)))?;
+                    cell.set_field(&mut scope, 1, Val::I32(0))?;
+                }
+            }
+        }
+        self.environment.restore_declarations(&checkpoint.environment, globals, self.phase);
+        // Keep initialized dependency cells/modules and resident code. Unpublished
+        // fresh cells remain unbound and reusable under their stable identity.
         Ok(())
     }
     pub(crate) fn compilation_snapshot(&self) -> CompilationSnapshot {
@@ -1258,4 +1299,108 @@ mod tests {
             Err(SessionError::Compile(_))
         ));
     }
+    #[test]
+    fn session_lifecycle_compiler_build_identity_is_checked_before_any_cells() {
+        fn read_uleb(bytes: &[u8], offset: &mut usize) -> usize {
+            let mut value = 0usize;
+            let mut shift = 0;
+            loop {
+                let byte = bytes[*offset]; *offset += 1;
+                value |= ((byte & 127) as usize) << shift;
+                if byte & 128 == 0 { return value; }
+                shift += 7;
+            }
+        }
+        fn write_uleb(mut value: usize, bytes: &mut Vec<u8>) {
+            loop {
+                let mut byte = (value & 127) as u8; value >>= 7;
+                if value != 0 { byte |= 128; }
+                bytes.push(byte);
+                if value == 0 { break; }
+            }
+        }
+        let mut session = Session::new().unwrap();
+        session.eval("(def keep 17)").unwrap();
+        let prepared = portable::prepare_fragment("(def ghost 7)", &session.environment, Phase::Runtime).unwrap();
+        // Remove the source identity section if emitted, keeping every other
+        // byte intact. This fixture runs before and after the production gate.
+        let mut wasm = prepared.wasm[..8].to_vec();
+        let mut offset = 8;
+        while offset < prepared.wasm.len() {
+            let start = offset;
+            let id = prepared.wasm[offset]; offset += 1;
+            let length = read_uleb(&prepared.wasm, &mut offset);
+            let end = offset + length;
+            let skip = if id == 0 {
+                let mut name_offset = offset;
+                let name_length = read_uleb(&prepared.wasm, &mut name_offset);
+                &prepared.wasm[name_offset..name_offset + name_length] == b"suss.source-artifact"
+            } else { false };
+            if !skip { wasm.extend_from_slice(&prepared.wasm[start..end]); }
+            offset = end;
+        }
+        let abi = runtime_abi::Manifest::default();
+        let manifest = serde_json::json!({
+            "format_version": 1,
+            "compiler_source_sha256": "0".repeat(64),
+            "runtime_abi": abi.runtime_abi,
+            "compiler": abi.compiler,
+            "wasm_tools": abi.wasm_tools,
+            "target": "portable-wasm-gc-shared-abi",
+            "profile": "default",
+            "flags": [],
+            "phase": "runtime",
+            "source_sha256": portable::bootstrap::sha256(b"(def ghost 7)"),
+            "source_path": null,
+            "macro_dependencies": null,
+            "wasm_sha256": portable::bootstrap::sha256(&wasm)
+        });
+        let mut data = Vec::new();
+        write_uleb(b"suss.source-artifact".len(), &mut data);
+        data.extend_from_slice(b"suss.source-artifact");
+        data.extend_from_slice(&serde_json::to_vec(&manifest).unwrap());
+        wasm.push(0);
+        write_uleb(data.len(), &mut wasm);
+        wasm.extend_from_slice(&data);
+        let before = session.stats();
+        let result = session.install(&[&prepared.wasm, &wasm], prepared.environment, &prepared.cells);
+        let error = result.expect_err("same package version with incompatible compiler bytes must be rejected");
+        assert!(error.to_string().contains("compiler build identity"), "{error}");
+        assert_eq!(session.stats(), before);
+        assert!(matches!(session.eval("ghost"), Err(SessionError::Compile(_))));
+        let keep = session.eval("keep").unwrap();
+        let bits = session.inspect(&keep, |mut store, value| {
+            let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let fields = number.fields(&mut store)?.collect::<Vec<_>>();
+            let [Val::F64(bits)] = fields.as_slice() else { panic!("Expected ordinary number") };
+            Ok(*bits)
+        }).unwrap();
+        assert_eq!(bits, 17.0f64.to_bits());
+    }
+
+    #[test]
+    fn session_lifecycle_phase_identity_rejects_entire_batch_before_publication() {
+        let mut session = Session::new().unwrap();
+        session.eval("(def keep 17)").unwrap();
+        let prepared = portable::prepare_fragment("(def ghost 7)", &session.environment, Phase::Runtime).unwrap();
+        let wrong_phase = portable::artifact_identity::annotate_source(
+            &prepared.wasm, Phase::Macro,
+            Some(&portable::SourceOrigin::new("(def ghost 7)", None)), Some(&[]),
+        ).unwrap();
+        // These are valid executable bytes with a valid body digest, but belong
+        // to the other isolated phase. Even the preceding valid fragment must
+        // not allocate or publish its staged bindings on this failure.
+        portable::artifact_identity::verify(&wrong_phase, Default::default()).unwrap();
+        let before = session.stats();
+        let result = session.install(&[&prepared.wasm, &wrong_phase], prepared.environment, &prepared.cells);
+        assert!(result.unwrap_err().to_string().contains("phase identity mismatch"));
+        assert_eq!(session.stats(), before);
+        assert!(matches!(session.eval("ghost"), Err(SessionError::Compile(_))));
+        let keep = session.eval("keep").unwrap();
+        assert_eq!(crate::portable_repl::display(&mut session, &keep).unwrap(), "17");
+        // A failed batch must leave the ordinary loader usable.
+        let recovered = session.eval("(def ghost 23)").unwrap();
+        assert_eq!(crate::portable_repl::display(&mut session, &recovered).unwrap(), "23");
+    }
+
 }

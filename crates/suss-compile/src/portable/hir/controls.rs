@@ -314,7 +314,10 @@ impl Analyzer<'_> {
                         metadata: Vec::new(),
                         kind,
                     };
-                    declared.metadata.push(syntax(Kind::Map(vec![
+                    // Pinned declare uses vary-meta/assoc: generated true must
+                    // override an existing false/nil :declared. The reader
+                    // merges outer metadata prefixes last, so put it first.
+                    declared.metadata.insert(0, syntax(Kind::Map(vec![
                         syntax(Kind::Keyword(suss_reader::Keyword::new("declared"))),
                         syntax(Kind::Bool(true)),
                     ])));

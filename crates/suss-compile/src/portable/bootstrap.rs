@@ -87,6 +87,10 @@ fn catalog(phase: Phase) -> Result<super::AnalyzedFragment, Diagnostic> {
 pub fn generate(phase: Phase) -> Result<(Vec<u8>, Manifest), Diagnostic> {
     let analyzed = catalog(phase)?;
     let wasm = super::compile_ir(&super::ir::lower(&analyzed.hir)?)?;
+    let dependencies = vec![("core-import-manifest".into(), sha256(DEPENDENCIES))];
+    let wasm = super::artifact_identity::annotate_source(
+        &wasm, phase, Some(&super::SourceOrigin::new(SOURCE, None)), Some(&dependencies),
+    ).map_err(error)?;
     let manifest = manifest(phase, &wasm, &analyzed.cells);
     Ok((wasm, manifest))
 }
@@ -111,6 +115,10 @@ pub fn restore(phase: Phase, wasm: &[u8], json: &[u8]) -> Result<PreparedFragmen
         return Err(error("Bootstrap binding catalog mismatch"));
     }
     runtime_abi::verify_artifact(wasm, &runtime_abi::Manifest::default()).map_err(error)?;
+    let dependencies = vec![("core-import-manifest".into(), sha256(DEPENDENCIES))];
+    super::artifact_identity::verify(wasm, super::artifact_identity::Expected {
+        phase: Some(phase), source: Some(SOURCE), macro_dependencies: Some(&dependencies),
+    }).map_err(error)?;
     wasmparser::Validator::new()
         .validate_all(wasm)
         .map_err(|failure| error(format!("Invalid bootstrap Wasm: {failure}")))?;
