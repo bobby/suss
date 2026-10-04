@@ -300,12 +300,24 @@ pub(crate) enum PreparedScript {
     Macro(String),
 }
 pub(crate) fn prepare_script_compiled(
-    mut snapshot: crate::portable_session::CompilationSnapshot,
+    snapshot: crate::portable_session::CompilationSnapshot,
     macros: &mut crate::portable_macros::CompiledMacros,
     forms: Vec<suss_reader::forms::Form>,
     source_len: usize,
     origin: &suss_compile::portable::SourceOrigin,
 ) -> Result<Vec<PreparedScript>, SessionError> {
+    prepare_script_compiled_batch(snapshot, macros, forms, source_len, origin)
+        .map(|(prepared, _)| prepared)
+}
+/// Return the completed immutable input snapshot for multi-source AOT batches.
+/// The ordinary script entrypoint retains its existing result and transaction.
+pub(crate) fn prepare_script_compiled_batch(
+    mut snapshot: crate::portable_session::CompilationSnapshot,
+    macros: &mut crate::portable_macros::CompiledMacros,
+    forms: Vec<suss_reader::forms::Form>,
+    source_len: usize,
+    origin: &suss_compile::portable::SourceOrigin,
+) -> Result<(Vec<PreparedScript>, crate::portable_session::CompilationSnapshot), SessionError> {
     let checkpoint = macros.binding_checkpoint()?;
     let mut staged_macros = Vec::new();
     let preparation = (|| -> Result<Vec<PreparedScript>, SessionError> {
@@ -371,7 +383,7 @@ pub(crate) fn prepare_script_compiled(
         }
     };
     drop(checkpoint);
-    Ok(prepared)
+    Ok((prepared, snapshot))
 }
 
 fn evaluate_forms_compiled(

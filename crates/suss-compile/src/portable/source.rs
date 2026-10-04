@@ -209,6 +209,7 @@ enum Clause<'a> {
     Require(Vec<Requirement<'a>>),
     Macros(Vec<Requirement<'a>>),
     Core(Vec<CoreOption<'a>>),
+    World(&'a Form),
 }
 struct Header<'a> {
     name: &'a Form,
@@ -248,11 +249,24 @@ fn header_with_phases(form: &Form, macro_imports: bool) -> Result<Option<Header<
         let Some(head) = items.first() else {
             return Err(error(clause, "Namespace clause is empty"));
         };
-        let key = keyword(head)?;
+        // Retained project target directive. All ordinary portable clauses still
+        // use keyword heads; this directive is a target fact, never an effect.
+        let key = if matches!(&head.kind, Kind::Symbol(name)
+            if name.namespace.is_none() && name.name == "gen-world") {
+            "gen-world"
+        } else {
+            keyword(head)?
+        };
         if !seen.insert(key) {
             return Err(error(clause, "Duplicate namespace clause"));
         }
         clauses.push(match key {
+            "gen-world" => {
+                if items.len() != 2 || !matches!(items[1].kind, Kind::Keyword(_)) {
+                    return Err(error(clause, "gen-world requires exactly one world keyword"));
+                }
+                Clause::World(&items[1])
+            }
             "require" => Clause::Require(items[1..].iter().map(|spec| requirement(spec, false)).collect::<Result<_, _>>()?),
             "refer-clojure" => Clause::Core(core_options(&items[1..], clause)?),
             "require-macros" if macro_imports => Clause::Macros(items[1..].iter().map(|spec| requirement(spec, true)).collect::<Result<_, _>>()?),
@@ -262,6 +276,27 @@ fn header_with_phases(form: &Form, macro_imports: bool) -> Result<Option<Header<
     }
     Ok(Some(Header { name, clauses }))
 }
+/// Project selection reads the same validated header used by ordinary source
+/// preparation and dependency discovery. It never expands or executes forms.
+pub(crate) fn project_declaration(
+    forms: &[Form],
+) -> Result<Option<(String, Option<String>)>, Diagnostic> {
+    let Some(first) = forms.first() else {
+        return Ok(None);
+    };
+    let Some(header) = header_with_phases(first, true)? else {
+        return Ok(None);
+    };
+    let world = header.clauses.iter().find_map(|clause| match clause {
+        Clause::World(form) => match &form.kind {
+            Kind::Keyword(key) => Some(key.to_string()),
+            _ => unreachable!(),
+        },
+        _ => None,
+    });
+    Ok(Some((symbol(header.name)?.into(), world)))
+}
+
 /// A loader and ordinary source preparation share exactly the same header grammar.
 pub(crate) fn input_header(
     forms: &[Form],
@@ -342,6 +377,7 @@ pub(crate) fn namespace(
     )?;
     for clause in &header.clauses {
         match clause {
+            Clause::World(_) => {}
             Clause::Require(requirements) => {
                 for requirement in requirements {
                     apply_requirement(env, phase, requirement)?;
@@ -423,7 +459,7 @@ pub(crate) fn phase_dependencies(
         let (target_phase, requirements) = match clause {
             Clause::Require(requirements) => (phase, requirements),
             Clause::Macros(requirements) => (Phase::Macro, requirements),
-            Clause::Core(_) => continue,
+            Clause::Core(_) | Clause::World(_) => continue,
         };
         for requirement in requirements {
             let name = symbol(requirement.namespace)?;

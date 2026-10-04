@@ -1,15 +1,23 @@
 //! Source files use the same staged compilation as scripts before AOT assembly.
 use crate::{
     portable_macros::CompiledMacros,
-    portable_repl::{prepare_script_compiled, read_script_forms, PreparedScript},
+    portable_repl::{PreparedScript, prepare_script_compiled_batch, read_script_forms},
     portable_session::{CompilationSnapshot, SessionError},
 };
 use std::{
     collections::BTreeSet,
     path::{Path, PathBuf},
 };
-use suss_compile::portable::{self, modules::ModuleIdentity, resolve::Phase, PreparedFragment};
+use suss_compile::portable::{self, PreparedFragment, modules::ModuleIdentity, resolve::Phase};
 use suss_reader::Symbol;
+
+/// An immutable, already selected and validated project input.
+pub(crate) struct SourceInput {
+    pub(crate) source: String,
+    pub(crate) path: Option<PathBuf>,
+    pub(crate) forms: Vec<suss_reader::forms::Form>,
+    pub(crate) namespace: Option<String>,
+}
 
 /// Resolve the selected WIT graph and compile source through isolated compiled
 /// macros, without executing any Runtime initializer in the compiler host.
@@ -59,13 +67,6 @@ fn compile_input(
     mappings: &[(String, Symbol)],
     namespace: Option<&str>,
 ) -> Result<Vec<u8>, String> {
-    let mut resolve = portable::aot::Resolve::new();
-    let (package, _) = resolve
-        .push_path(wit_path)
-        .map_err(|error| format!("Failed to resolve WIT {}: {error:#}", wit_path.display()))?;
-    let world = resolve
-        .select_world(&[package], wit_world)
-        .map_err(|error| format!("Failed to select WIT world: {error:#}"))?;
     let source = std::fs::read_to_string(source_path)
         .map_err(|error| format!("Failed to read {}: {error}", source_path.display()))?;
     let forms = read_script_forms(&source).map_err(|error| error.to_string())?;
@@ -73,8 +74,35 @@ fn compile_input(
         portable::modules::validate_namespace_source(namespace, &forms, Phase::Runtime)
             .map_err(|error| error.to_string())?;
     }
-    let fragments = prepare_forms(&source, Some(source_path.to_owned()), source_paths, forms)
-        .map_err(|error| error.to_string())?;
+    compile_inputs(
+        &[SourceInput {
+            source,
+            path: Some(source_path.to_owned()),
+            forms,
+            namespace: namespace.map(str::to_owned),
+        }],
+        wit_path,
+        wit_world,
+        source_paths,
+        mappings,
+    )
+}
+
+pub(crate) fn compile_inputs(
+    inputs: &[SourceInput],
+    wit_path: &Path,
+    wit_world: Option<&str>,
+    source_paths: &[PathBuf],
+    mappings: &[(String, Symbol)],
+) -> Result<Vec<u8>, String> {
+    let mut resolve = portable::aot::Resolve::new();
+    let (package, _) = resolve
+        .push_path(wit_path)
+        .map_err(|error| format!("Failed to resolve WIT {}: {error:#}", wit_path.display()))?;
+    let world = resolve
+        .select_world(&[package], wit_world)
+        .map_err(|error| format!("Failed to select WIT world: {error:#}"))?;
+    let fragments = prepare_inputs(inputs, source_paths).map_err(|error| error.to_string())?;
     let mappings = portable::aot::source_export_mappings(&fragments, &resolve, world, mappings)
         .map_err(|error| error.to_string())?;
     portable::aot::component(&fragments, &resolve, world, &mappings)
@@ -89,7 +117,7 @@ pub fn prepare_source(
     path: Option<PathBuf>,
     source_paths: &[PathBuf],
 ) -> Result<Vec<PreparedFragment>, SessionError> {
-    // Parse the entire input before constructing the effectful Macro session.
+    // Parse the complete input before constructing the effectful Macro session.
     let forms = read_script_forms(source)?;
     prepare_forms(source, path, source_paths, forms)
 }
@@ -100,13 +128,28 @@ fn prepare_forms(
     source_paths: &[PathBuf],
     forms: Vec<suss_reader::forms::Form>,
 ) -> Result<Vec<PreparedFragment>, SessionError> {
+    prepare_inputs(
+        &[SourceInput {
+            source: source.into(),
+            path,
+            forms,
+            namespace: None,
+        }],
+        source_paths,
+    )
+}
+
+fn prepare_inputs(
+    inputs: &[SourceInput],
+    source_paths: &[PathBuf],
+) -> Result<Vec<PreparedFragment>, SessionError> {
     let mut core = portable::bootstrap::shipped(Phase::Runtime)
         .map_err(SessionError::Compile)?
         .clone();
     core.environment
         .enter_namespace(Phase::Runtime, "user")
         .map_err(SessionError::Compile)?;
-    let snapshot = CompilationSnapshot::new(
+    let mut snapshot = CompilationSnapshot::new(
         core.environment.clone(),
         Phase::Runtime,
         source_paths.to_vec(),
@@ -114,25 +157,67 @@ fn prepare_forms(
             ModuleIdentity::new(Phase::Runtime, "suss.core").map_err(SessionError::Compile)?
         ]),
     );
-    let origin = portable::SourceOrigin::new(source, path);
     let mut macros = CompiledMacros::new()?;
-    let prepared = prepare_script_compiled(snapshot, &mut macros, forms, source.len(), &origin)?;
     let mut fragments = vec![core];
-    for input in prepared {
-        let PreparedScript::Runtime(input) = input else {
+    // Only sources prepared during this batch suppress a later selected root.
+    // Bootstrap provisioning does not mean an explicitly selected file ran.
+    let mut prepared_sources = BTreeSet::new();
+    for source in inputs {
+        let identity = source
+            .namespace
+            .as_deref()
+            .map(|namespace| {
+                ModuleIdentity::new(Phase::Runtime, namespace).map_err(SessionError::Compile)
+            })
+            .transpose()?;
+        if identity
+            .as_ref()
+            .is_some_and(|identity| prepared_sources.contains(identity))
+        {
             continue;
-        };
-        // All declarations are already staged by the common source pipeline.
-        // Module artifacts retain their own immutable source/phase identities.
-        for module in input.modules {
-            fragments.push(PreparedFragment {
-                wasm: module.wasm,
-                environment: input.fragment.environment.clone(),
-                cells: input.fragment.cells.clone(),
-                namespace_directive: None,
-            });
         }
-        fragments.push(input.fragment);
+        let origin = portable::SourceOrigin::new(source.source.as_str(), source.path.clone());
+        let (prepared, completed) = prepare_script_compiled_batch(
+            snapshot,
+            &mut macros,
+            source.forms.clone(),
+            source.source.len(),
+            &origin,
+        )?;
+        snapshot = completed;
+        if let Some(identity) = identity {
+            snapshot.provided.insert(identity.clone());
+            prepared_sources.insert(identity);
+        }
+        for input in prepared {
+            let PreparedScript::Runtime(input) = input else {
+                continue;
+            };
+            // All declarations are already staged by the common source pipeline.
+            // Module artifacts retain their own immutable source/phase identities.
+            for module in input.modules {
+                if inputs.iter().any(|selected| {
+                    selected.path.as_ref() == Some(&module.source_path)
+                        && selected.source != module.source
+                }) {
+                    return Err(SessionError::Compile(portable::Diagnostic {
+                        span: 0..0,
+                        message: format!(
+                            "Selected project source changed during compilation: {}",
+                            module.source_path.display()
+                        ),
+                    }));
+                }
+                prepared_sources.insert(module.identity.clone());
+                fragments.push(PreparedFragment {
+                    wasm: module.wasm,
+                    environment: input.fragment.environment.clone(),
+                    cells: input.fragment.cells.clone(),
+                    namespace_directive: None,
+                });
+            }
+            fragments.push(input.fragment);
+        }
     }
     Ok(fragments)
 }
