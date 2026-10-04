@@ -1,3 +1,38 @@
+## Independent PR177 review — typed invocation before guest initialization
+
+Reviewed native file/WIT selection and explicit mappings, shared compiled source/
+macro staging, scalar parsing/result handling, exact nested export invocation,
+command-mode separation and documented remaining frontend modes at855d281.
+Significant finding: runner instantiated components before validating requested
+function/arity/scalar inputs. Actual before7232 TERMINAL101:0pass/1fail5.47s,
+/private/tmp/suss-pr177-review-before.log; malformed s32"oops" ran initializer
+throw17 and failed instantiation instead of producing its argument diagnostic.
+
+Runner now uses Component::get_export and uninstantiated ComponentFunc metadata
+to validate selection, function/async type, arity and parsed inputs before Store/
+WASI setup or guest instantiation. Valid inputs still instantiate normally.
+Original three command tests/assertions remain intact. New executing regression
+checks malformed/out-of-range/missing arguments, missing function, qualified
+nested function, selecting an interface as function and using a function as an
+interface; all reject before throwing Runtime initializer. Valid input still
+reports initializer failure. First fixed38276 TERMINAL0:4/0/0 in41.40s.
+Strengthened43942 TERMINAL101:3pass/1fail26.77s from new fixture's bare group
+mapping; WIT canonically names test:preflight/group. Corrected only new fixture
+paths. Final30673 TERMINAL0:4passed/0failed/0ignored37.20s,
+/private/tmp/suss-pr177-review-focused-final2.log. No original assertion weakened.
+
+CLI-only changes do not change compiler/bootstrap fingerprints or images; root's
+Java-free byte-exact/bootstrap4/Python118 evidence remains prior unchanged-source
+proof, not a new review run. Wasmtime49 performs post-return cleanup automatically;
+absence of its deprecated no-op post_return method is not a finding.
+Commands use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and
+CARGO_BUILD_JOBS=2, no RUSTFLAGS. Git diff check passes. Next commit/push/freeze
+then required unfiltered cargo test --workspace --locked -- --test-threads=2
+and exact final-head CI. No merge/issue closure/full M3 acceptance claim.
+Remaining namespace/project/main/component-host frontend migration, full selected
+WIT/command workflow, evaluator retirement, dependency policy and scheduler/
+cancellation/live-heap gates remain open.
+
 ## Independent PR170 review — portable scalar AOT assembly
 
 Reviewed exact273ecbfe801c3ccbd71ce061b6b5234e191eadde against169 repair8651246:

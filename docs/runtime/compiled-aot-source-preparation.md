@@ -61,7 +61,10 @@ language exceptions; the compiler host does not execute them.
 `suss run app.wasm --invoke 'test:app/api@1.2.3#calculate' -- 19` resolves
 the exact interface path and parses arguments against the component signature.
 Malformed or out-of-range scalar arguments, wrong arity and missing functions
-fail explicitly. Explicit invocation of a function named `run` accepts typed
+fail explicitly. Selection, function type, arity and scalar input validation use
+the component's uninstantiated export metadata before creating guest instances;
+invalid requests therefore cannot run Runtime initializers. With valid requests,
+initializer failures still fail the command. Explicit invocation of a function named `run` accepts typed
 parameters; ordinary numeric results print and are not process exit statuses.
 Default command argv remains a separate path. Async/composite invocation and the
 official command-world workflow remain unfinished. Scalar argument parsing also

@@ -254,9 +254,11 @@ fn compile_file_defers_runtime_throw_and_preserves_output_on_invalid_selection_o
     let component = Component::from_file(&engine, root.path().join("app.wasm")).unwrap();
     let mut store = Store::new(&engine, ());
     store.set_fuel(100_000_000).unwrap();
-    assert!(Linker::new(&engine)
-        .instantiate(&mut store, &component)
-        .is_err());
+    assert!(
+        Linker::new(&engine)
+            .instantiate(&mut store, &component)
+            .is_err()
+    );
     let exception = store.as_context_mut().take_pending_exception().unwrap();
     let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
     assert_eq!(fields.len(), 1);
@@ -270,6 +272,59 @@ fn compile_file_defers_runtime_throw_and_preserves_output_on_invalid_selection_o
         payload.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
         17.0_f64.to_bits()
     );
+}
+
+#[test]
+fn typed_invocation_validates_selection_and_arguments_before_guest_initializers() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(
+        root.path().join("app.sus"),
+        "(ns app) (def echo (fn [x] x)) (throw 17)",
+    )
+    .unwrap();
+    std::fs::write(root.path().join("api.wit"), "package test:preflight; interface group { echo: func(x: s32) -> s32; } world api { export echo: func(x: s32) -> s32; export group; }").unwrap();
+    let output = compile(
+        root.path(),
+        &[
+            "--export",
+            "echo=app/echo",
+            "--export",
+            "test:preflight/group#echo=app/echo",
+        ],
+    );
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    for (export, arguments, expected) in [
+        ("echo", vec!["oops"], "Invalid s32 argument"),
+        ("echo", vec!["2147483648"], "Invalid s32 argument"),
+        ("echo", vec![], "expects 1 arguments, got 0"),
+        ("missing", vec!["7"], "not found in component"),
+        ("test:preflight/group#echo", vec!["oops"], "Invalid s32 argument"),
+        ("test:preflight/group", vec![], "is not a function"),
+        ("echo#missing", vec![], "not found in component"),
+    ] {
+        let output = invoke(root.path(), export, &arguments);
+        assert!(!output.status.success());
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains(expected),
+            "{export} {arguments:?}: {stderr}"
+        );
+        assert!(
+            !stderr.contains("Failed to instantiate"),
+            "guest initialization ran before input rejection: {stderr}"
+        );
+        assert!(output.stdout.is_empty());
+    }
+    // With valid inputs initialization still runs, and its language throw fails
+    // the command rather than being silently discarded by preflight validation.
+    let valid = invoke(root.path(), "echo", &["7"]);
+    assert!(!valid.status.success());
+    assert!(String::from_utf8_lossy(&valid.stderr).contains("Failed to instantiate"));
+    assert!(valid.stdout.is_empty());
 }
 
 #[test]

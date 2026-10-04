@@ -393,6 +393,42 @@ fn run_component_impl(
     let component = Component::from_file(&engine, path)
         .map_err(|e| format!("Failed to load component '{}': {}", path, e))?;
 
+    // Reject invalid selection and typed inputs before any guest initializer
+    // can run. Component export types are available without a Store/instance.
+    // Resolve the exact public path, including versioned interface instances.
+    let (item, export) = if let Some((interface, function)) = invoke.split_once('#') {
+        let interface = component
+            .get_export_index(None, interface)
+            .ok_or_else(|| format!("Interface in {invoke:?} not found in component"))?;
+        component.get_export(Some(&interface), function)
+    } else {
+        component.get_export(None, invoke)
+    }
+    .ok_or_else(|| format!("Function {invoke:?} not found in component"))?;
+    let wasmtime::component::types::ComponentItem::ComponentFunc(func_ty) = item else {
+        return Err(format!("Export {invoke:?} is not a function"));
+    };
+    if func_ty.async_() {
+        return Err("Async component invocation remains unimplemented".into());
+    }
+    let parameters = func_ty.params().collect::<Vec<_>>();
+    let supplied = if command_mode { &[][..] } else { args };
+    if parameters.len() != supplied.len() {
+        return Err(format!(
+            "Function {invoke:?} expects {} arguments, got {}",
+            parameters.len(),
+            supplied.len()
+        ));
+    }
+    let func_args = parameters
+        .iter()
+        .zip(supplied)
+        .map(|((name, ty), value)| {
+            parse_component_argument(ty, value)
+                .map_err(|error| format!("Parameter {name:?}: {error}"))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
     // Create WASI context
     // Default command invocation supplies WASI argv. Explicit invocation
     // parses parameters against the selected component function type.
@@ -426,40 +462,9 @@ fn run_component_impl(
         .instantiate(&mut store, &component)
         .map_err(|e| format!("Failed to instantiate component: {}", e))?;
 
-    // Resolve the exact public path, including versioned interface instances.
-    let export = if let Some((interface, function)) = invoke.split_once('#') {
-        let interface = component
-            .get_export_index(None, interface)
-            .ok_or_else(|| format!("Interface in {invoke:?} not found in component"))?;
-        component.get_export_index(Some(&interface), function)
-    } else {
-        component.get_export_index(None, invoke)
-    }
-    .ok_or_else(|| format!("Function {invoke:?} not found in component"))?;
     let func = instance
         .get_func(&mut store, &export)
         .ok_or_else(|| format!("Export {invoke:?} is not a function"))?;
-    let func_ty = func.ty(&store);
-    if func_ty.async_() {
-        return Err("Async component invocation remains unimplemented".into());
-    }
-    let parameters = func_ty.params().collect::<Vec<_>>();
-    let supplied = if command_mode { &[][..] } else { args };
-    if parameters.len() != supplied.len() {
-        return Err(format!(
-            "Function {invoke:?} expects {} arguments, got {}",
-            parameters.len(),
-            supplied.len()
-        ));
-    }
-    let func_args = parameters
-        .iter()
-        .zip(supplied)
-        .map(|((name, ty), value)| {
-            parse_component_argument(ty, value)
-                .map_err(|error| format!("Parameter {name:?}: {error}"))
-        })
-        .collect::<Result<Vec<_>, _>>()?;
 
     // Prepare results buffer based on function type
     let results_len = func_ty.results().len();
