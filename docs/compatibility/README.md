@@ -795,3 +795,17 @@ Runtime capability. Complete capabilities, evaluator retirement,
 source suspension and original M3 lifecycle gates remain open. Independent review,
 unfiltered full baseline and final-head CI are pending for this draft. No declaration
 or milestone acceptance gate is reclassified.
+
+
+Compiled source metadata-free scalar initializer AST increment: retained nil/boolean/number/
+UTF-16/keyword forms expose `:op :const` and present `:val`, preserving nil/false
+and absent-field distinctions. The parent fails both new executed native macro
+regressions; after repair both pass in Runtime/Macro caller Stores after GC,
+including exact negative zero/nonfinite/UTF-16 data and once-only effect checks.
+Five fresh pinned scalar operation/value/children-presence observations match;
+all original32 tag observations and11 executed oracle projections remain intact.
+See [scalar source ASTs](../runtime/compiled-macro-constant-asts.md) and the
+[M3 audit](../roadmap/acceptance-m3.md). Metadata wrappers, compound/quote/variable/
+invocation/child AST schema, evaluator retirement and pending-I/O/live-heap
+lifecycle acceptance remain open. Independent review/full baseline/final CI are
+pending for this increment; no declaration, issue or milestone is closed.

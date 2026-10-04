@@ -98,3 +98,11 @@ and macro imports, preserving source roles and nullable map shape. A fresh
 after GC; see [namespace data](compiled-macro-namespace-data.md). This remains
 partial portable schema preparation; declarations, AST/inference and actual
 the complete source environment contract remains unfinished.
+
+
+Actual metadata-free scalar source initializer ASTs now expose the portable
+`:op :const` and present `:val` fields through the retained source data, alongside
+existing native lowering. Five fresh primary observations and two new executed
+native regressions cover this increment; [scalar source ASTs](compiled-macro-constant-asts.md)
+record scope and failure/fix evidence. Complete operation/children/schema and M3
+acceptance remain open.

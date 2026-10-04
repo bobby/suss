@@ -1632,6 +1632,19 @@ impl<'a> AnalysisGraph<'a> {
         )?;
         let lowering = self.lowering(hir, depth + 1)?;
         let mut fields = vec![("form", form), ("env", env), ("suss/lowering", lowering)];
+        // Genuine scalar source constants follow pinned analyzer.cljc's
+        // analyze-keyword/analyze-form contract, not the physical HIR value.
+        // Metadata wrappers, quotes and compound source ASTs need their own
+        // source records; do not fabricate those from a lowered result.
+        if source.form.metadata.is_empty()
+            && matches!(
+                &source.form.kind,
+                Kind::Nil | Kind::Bool(_) | Kind::Number(_) | Kind::String(_) | Kind::Keyword(_)
+            )
+        {
+            fields.push(("op", self.keyword("const")?));
+            fields.push(("val", form));
+        }
         if let Some(tag) = &source.tags.tag {
             fields.push(("tag", self.form(tag, depth + 1)?));
         }
