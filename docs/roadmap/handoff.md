@@ -14149,3 +14149,42 @@ AOT/component commands, evaluator retirement and scheduler/cancellation/live hea
 acceptance remain open. Next unblocked action: freeze/push review documentation,
 run cargo test --workspace --locked -- --test-threads=2 once, poll its exact
 process handle until terminal, then release the heavy slot explicitly.
+
+
+## PR169 component import review repair — 2026-10-03
+
+Root's separate AOT validation found that distinct unsigned-shift cells imported
+the same runtime factory twice. Standalone core validation allowed this, but
+component embedding rejected it. Independent reviewer added an actual embedding
+and instantiation regression;6044 TERMINAL101:0/1/0,
+/private/tmp/suss-pr169-component-before.log, reproduces duplicate import name
+suss.runtime:primitive-unsigned-bit-shift-right-function on the prior source.
+The previous frozen9bb4826 full1120/0/17 result remains old-source evidence only.
+
+Original Rust now deduplicates factory imports and maps each cell's initialization
+call to the correct factory function index. All distinct canonical cells and
+factory invocation counts, class-first initialization and bound-nil self-cell
+setup remain intact. Both shift aliases execute2147483647 and retain separate
+closure identities. No original assertion was removed or relaxed. Compiler96177
+TERMINAL0:4/0/0 in0.63s, /private/tmp/suss-pr169-component-fixed.log.
+Regeneration90854 TERMINAL0 refreshed BOTH runtime/macro Wasm and JSON using
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked --
+runtime/bootstrap; /private/tmp/suss-pr169-component-regenerate.log.
+Java-free79102 TERMINAL0: both phase assets reproduce byte-exactly twice and
+match shipped files; bootstrap4/0/0 in12.70s,
+/private/tmp/suss-pr169-component-javafree.log, sh scripts/verify-bootstrap.sh.
+Affected native69118 TERMINAL0:68/0/0 across6groups10/3/4/33/6/12;
+/private/tmp/suss-pr169-component-native.log. Python9447 TERMINAL0:118/0,
+/private/tmp/suss-pr169-component-python.log. Commands use shared
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and CARGO_BUILD_JOBS=2,
+locked Rust tests and --test-threads=2, no RUSTFLAGS. Before worktree switch
+validation, cleaned only the four Suss packages from that target.
+
+Push/freeze this significant review fix, run the required unfiltered full
+workspace baseline once on the resulting head and require new exact-head CI.
+Both are still pending at this record. Sole heavy slot remains assigned to the
+reviewer until authoritative terminal full status and explicit release. No PR
+readiness, merge, issue closure or M3 completion is claimed. Full component/AOT
+commands, published dependency policy, evaluator retirement and scheduler/
+cancellation/live heap acceptance remain open; root will rebase its isolated
+component continuation onto this fix before retrying its separate validation.

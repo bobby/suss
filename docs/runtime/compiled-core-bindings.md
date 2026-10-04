@@ -7,6 +7,9 @@ execution passes; AOT commands and evaluator retirement remain incomplete.
 
 The module imports factory functions only from `suss.runtime`, exports cells by
 phase-qualified language identity, and initializes them in its start function.
+Runtime factory imports are deduplicated by export name so the module can be
+embedded in a component. Distinct language cells retain separate initialization
+calls and closure values even when they use the same factory.
 The ExceptionInfo class is initialized before factories capture its binding cell.
 The ex-info and four variadic bitwise factories receive their own bound nil cell
 before the constructed closure is installed. Ordinary source initialization still
@@ -30,7 +33,10 @@ The direct executing test performs instantiation, bound-flag checks, forced GC,
 all four self-cell bitwise operations, arithmetic closures and descriptor-backed
 ExceptionInfo in both phases. A second test installs source cells and two actual
 fragments, preserving an incrementing closure without replaying its initializer;
-a third rejects foreign-phase cells. All three compiler tests pass. Seventy-two
+a third rejects foreign-phase cells. The first component embedding regression failed on duplicate imports for the two
+unsigned-shift cells; the repaired module now embeds and instantiates in both
+phases. All four compiler tests pass, including independently executing both
+shift aliases and preserving their distinct closures. Seventy-two
 affected native bootstrap, session, namespace, phase, command, bitwise and
 ExceptionInfo tests pass, plus seven native lifecycle guards. Both phase Wasm/JSON
 assets reproduce byte-for-byte without Java; four bootstrap tests and Python118

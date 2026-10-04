@@ -190,6 +190,18 @@ fn emitted_core_cells_execute_in_both_phases_and_survive_gc() {
         store.gc(None).unwrap();
         for (source, expected) in [
             ("(let [sum +] (sum 19 23))", 42.0_f64),
+            (
+                "(let [shift unsigned-bit-shift-right] (shift -1 1))",
+                2147483647.0,
+            ),
+            (
+                "(let [shift bit-shift-right-zero-fill] (shift -1 1))",
+                2147483647.0,
+            ),
+            (
+                "(if (identical? unsigned-bit-shift-right bit-shift-right-zero-fill) 1 2)",
+                2.0,
+            ),
             ("(let [bits bit-and] (bits 15 7 3))", 3.0),
             ("(let [bits bit-or] (bits 1 2 4))", 7.0),
             ("(let [bits bit-xor] (bits 1 3 7))", 5.0),
@@ -235,5 +247,31 @@ fn emitted_core_cells_execute_in_both_phases_and_survive_gc() {
         assert!(linker
             .instantiate(&mut store, &Module::new(&engine, wasm).unwrap())
             .is_err());
+    }
+}
+
+#[test]
+fn emitted_core_cells_embed_and_initialize_in_components() {
+    use wasm_encoder::{ComponentSectionId, InstanceSection, ModuleArg, RawSection};
+    let engine = support::engine();
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let emitted = portable::core_bindings::compile(phase).unwrap();
+        let mut component = wasm_encoder::Component::new();
+        for bytes in [runtime_abi::module(), emitted.wasm] {
+            component.section(&RawSection {
+                id: ComponentSectionId::CoreModule.into(),
+                data: &bytes,
+            });
+        }
+        let mut instances = InstanceSection::new();
+        instances.instantiate(0, std::iter::empty::<(&str, ModuleArg)>());
+        instances.instantiate(1, [("suss.runtime", ModuleArg::Instance(0))]);
+        component.section(&instances);
+        let component = wasmtime::component::Component::new(&engine, component.finish()).unwrap();
+        let mut store = Store::new(&engine, ());
+        wasmtime::component::Linker::new(&engine)
+            .instantiate(&mut store, &component)
+            .unwrap();
+        store.gc(None).unwrap();
     }
 }

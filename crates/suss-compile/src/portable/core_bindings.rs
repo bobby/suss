@@ -62,7 +62,16 @@ pub fn compile_with_cells(
         "binding-set",
         EntityType::Function(runtime_abi::TYPE_COUNT),
     );
-    for (index, (_, export)) in bindings.iter().enumerate() {
+    // Distinct language cells can use the same runtime factory. Core modules
+    // embedded in components must not repeat an import module/name pair.
+    let mut factories = std::collections::BTreeMap::new();
+    let mut factory_indices = Vec::with_capacity(bindings.len());
+    for (_, export) in &bindings {
+        if let Some(index) = factories.get(export) {
+            factory_indices.push(*index);
+            continue;
+        }
+        let index = 1 + factories.len() as u32;
         let mut parameters = vec![];
         if export.starts_with("core-") && export != "core-exception-info-class" {
             parameters.push(VALUE);
@@ -74,10 +83,12 @@ pub fn compile_with_cells(
         imports.import(
             "suss.runtime",
             export,
-            EntityType::Function(runtime_abi::TYPE_COUNT + 1 + index as u32),
+            EntityType::Function(runtime_abi::TYPE_COUNT + index),
         );
+        factories.insert(export.clone(), index);
+        factory_indices.push(index);
     }
-    let start_type = runtime_abi::TYPE_COUNT + 1 + bindings.len() as u32;
+    let start_type = runtime_abi::TYPE_COUNT + 1 + factories.len() as u32;
     types.ty().function([], []);
     let mut globals = GlobalSection::new();
     let mut exports = ExportSection::new();
@@ -131,7 +142,7 @@ pub fn compile_with_cells(
             start.instruction(&Instruction::GlobalGet(index as u32));
         }
         start
-            .instruction(&Instruction::Call(1 + index as u32))
+            .instruction(&Instruction::Call(factory_indices[index]))
             .instruction(&Instruction::Call(0));
     }
     start.instruction(&Instruction::End);
@@ -147,7 +158,7 @@ pub fn compile_with_cells(
         .section(&globals)
         .section(&exports)
         .section(&StartSection {
-            function_index: 1 + bindings.len() as u32,
+            function_index: 1 + factories.len() as u32,
         })
         .section(&code)
         .section(&runtime_abi::Manifest::default().section());
