@@ -782,3 +782,16 @@ cells, scalar bits and independently decoded language errors are checked. Review
 unfiltered full baseline and final-head CI remain pending. Suspension, official
 command arguments/bindings, evaluator retirement and M3 acceptance remain open.
 No inventory declaration is reclassified.
+
+[Official command compilation](../runtime/compiled-official-command.md) now has
+focused executing draft evidence for the exact `wasi:cli/run@0.3.1` async result,
+ordered string arguments, normal completion and uncaught source failure. Compiler3
+and native command5 pass, including Unicode retained in source cells across buffer
+reuse, GC and fresh Stores, compiled macros/source dependencies and output guards.
+Affected CLI31, allocator/core4, Java-free image reproduction/bootstrap4 and
+Python118 pass. Explicit exit status0/73/255 and initializer19 execute; invalid status
+values raise catchable language errors, and the compiled Macro phase rejects this
+Runtime capability. Complete capabilities, evaluator retirement,
+source suspension and original M3 lifecycle gates remain open. Independent review,
+unfiltered full baseline and final-head CI are pending for this draft. No declaration
+or milestone acceptance gate is reclassified.

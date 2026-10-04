@@ -49,8 +49,14 @@ fn run_command(cmd: args::Command) {
         args::Command::CompileFile { source, world_wit, wit_world, src_paths, exports, output, optimize } => {
             compile_source(Some(&source), None, &world_wit, wit_world.as_deref(), &src_paths, &exports, &output, optimize);
         }
-        args::Command::CompileMain { source, namespace, output, optimize } => {
-            compile_main(&source, &namespace, &output, optimize);
+        args::Command::CompileMain {
+            source,
+            namespace,
+            src_paths,
+            output,
+            optimize,
+        } => {
+            compile_main(&source, &namespace, &src_paths, &output, optimize);
         }
         args::Command::CompileNamespace { namespace, src_paths, world_wit, wit_world, exports, output, optimize } => {
             compile_source(None, Some(&namespace), &world_wit, wit_world.as_deref(), &src_paths, &exports, &output, optimize);
@@ -222,25 +228,40 @@ fn compile_source(
 }
 
 /// Compile a Suss file with -main function to a CLI command component
-fn compile_main(source_path: &str, namespace: &str, output_path: &str, optimize: bool) {
-    let source = match std::fs::read_to_string(source_path) {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("Error reading file '{}': {}", source_path, e);
-            std::process::exit(1);
-        }
-    };
-
-    let mut compiler = suss_compile::Compiler::new();
-
-    match compiler.compile_for_main(&source, namespace) {
+fn compile_main(
+    source_path: &str,
+    namespace: &str,
+    source_paths: &[String],
+    output_path: &str,
+    optimize: bool,
+) {
+    #[cfg(not(target_family = "wasm"))]
+    let result = suss_cli::portable_aot::compile_main(
+        std::path::Path::new(source_path),
+        namespace,
+        &source_paths
+            .iter()
+            .map(std::path::PathBuf::from)
+            .collect::<Vec<_>>(),
+    );
+    #[cfg(target_family = "wasm")]
+    let result: Result<Vec<u8>, String> = Err(
+        "Portable official command compilation in the component-host target remains unimplemented"
+            .into(),
+    );
+    match result {
         Ok(wasm) => {
             if let Err(e) = std::fs::write(output_path, &wasm) {
                 eprintln!("Error writing output file '{}': {}", output_path, e);
                 std::process::exit(1);
             }
-            println!("Compiled {} -> {} ({} bytes)", source_path, output_path, wasm.len());
-            println!("Run with: suss run {} --invoke run", output_path);
+            println!(
+                "Compiled {} -> {} ({} bytes)",
+                source_path,
+                output_path,
+                wasm.len()
+            );
+            println!("Run with: suss run {}", output_path);
             if optimize {
                 if let Err(e) = run_wasm_opt(output_path) {
                     eprintln!("Optimization error: {}", e);
@@ -379,6 +400,18 @@ fn run_component_impl(
     let component = Component::from_file(&engine, path)
         .map_err(|e| format!("Failed to load component '{}': {}", path, e))?;
 
+    let official_command = component
+        .get_export_index(None, "wasi:cli/run@0.3.1")
+        .is_some()
+        && (command_mode
+            || invoke == "wasi:cli/run@0.3.1#run"
+            || (invoke == "run" && component.get_export_index(None, "run").is_none()));
+    let invoke = if official_command {
+        "wasi:cli/run@0.3.1#run"
+    } else {
+        invoke
+    };
+
     // Reject invalid selection and typed inputs before any guest initializer
     // can run. Component export types are available without a Store/instance.
     // Resolve the exact public path, including versioned interface instances.
@@ -396,7 +429,19 @@ fn run_component_impl(
     };
     let asynchronous = func_ty.async_();
     let parameters = func_ty.params().collect::<Vec<_>>();
-    let supplied = if command_mode { &[][..] } else { args };
+    if official_command {
+        let results = func_ty.results().collect::<Vec<_>>();
+        let valid_result = matches!(results.as_slice(), [wasmtime::component::Type::Result(result)]
+            if result.ok().is_none() && result.err().is_none());
+        if !asynchronous || !parameters.is_empty() || !valid_result {
+            return Err("Official command requires async func() -> result".into());
+        }
+    }
+    let supplied = if command_mode || official_command {
+        &[][..]
+    } else {
+        args
+    };
     if parameters.len() != supplied.len() {
         return Err(format!(
             "Function {invoke:?} expects {} arguments, got {}",
@@ -419,7 +464,7 @@ fn run_component_impl(
     let mut wasi_builder = WasiCtxBuilder::new();
     wasi_builder.inherit_stdio();
     wasi_builder.inherit_env();
-    if command_mode && !args.is_empty() {
+    if command_mode || official_command {
         // Prepend the component path as argv[0], then the user args
         let mut argv: Vec<String> = vec![path.to_string()];
         argv.extend(args.iter().cloned());
@@ -459,7 +504,14 @@ fn run_component_impl(
     } else {
         linker.instantiate(&mut store, &component)
     }
-    .map_err(|e| format!("Failed to instantiate component: {e}"))?;
+    .map_err(|e| {
+        if official_command {
+            if let Some(exit) = e.downcast_ref::<wasmtime_wasi::I32Exit>() {
+                std::process::exit(exit.0);
+            }
+        }
+        format!("Failed to instantiate component: {e}")
+    })?;
 
     let func = instance
         .get_func(&mut store, &export)
@@ -475,7 +527,22 @@ fn run_component_impl(
     } else {
         func.call(&mut store, &func_args, &mut results)
     }
-    .map_err(|e| format!("Failed to call '{invoke}': {e}"))?;
+    .map_err(|e| {
+        if official_command {
+            if let Some(exit) = e.downcast_ref::<wasmtime_wasi::I32Exit>() {
+                std::process::exit(exit.0);
+            }
+        }
+        format!("Failed to call '{invoke}': {e}")
+    })?;
+
+    if official_command {
+        return match results.as_slice() {
+            [Val::Result(Ok(None))] => Ok(()),
+            [Val::Result(Err(None))] => Err("Command completed with failure".into()),
+            _ => Err("Official command returned an incompatible completion result".into()),
+        };
+    }
 
     // Print result
     if results.is_empty() {

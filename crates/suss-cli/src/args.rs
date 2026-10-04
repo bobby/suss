@@ -28,6 +28,7 @@ pub enum Command {
     CompileMain {
         source: String,
         namespace: String,
+        src_paths: Vec<String>,
         output: String,
         optimize: bool,
     },
@@ -169,6 +170,14 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             "--namespace cannot be combined with a source file or --main".into(),
         ));
     }
+    if source.is_some()
+        && main_ns.is_some()
+        && (world_wit.is_some() || world_target.is_some() || config_path.is_some())
+    {
+        return Err(lexopt::Error::Custom(
+            "--main uses the official command world and cannot be combined with --wit, --world or --config".into(),
+        ));
+    }
     if entry_ns.is_some() && world_wit.is_none() {
         return Err(lexopt::Error::Custom(
             "--namespace requires -w/--wit".into(),
@@ -219,6 +228,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
         Ok(Command::CompileMain {
             source,
             namespace: main_ns.unwrap(),
+            src_paths,
             output,
             optimize,
         })
