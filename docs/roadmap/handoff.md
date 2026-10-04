@@ -16639,3 +16639,33 @@ checks, notunfilteredbaseline. Python45329 actualTERMINAL0:134pass5.469s;
 core_import--check actualTERMINAL0:274verifiedfiles. AllROOTlocalhandles terminal;
 newquotePRstillrequiresindependentreview/significantfixes/unfilteredfull/exactCI.
 Current3sourcefixesand4phaseassetsowned/validatedfocusedonly; noM3gateclosure.
+
+
+## PR186 independent review checkpoint
+
+Independent review compared the scoped quote graph, scalar literal source capture
+and separately retained quoted-child tags against pinned analyzer.cljc 2630–2655
+and 4444–4465 and the existing source-inference rules. No significant scoped
+code defect was found. All fourteen original cases and field/identity assertions
+remain intact; outer metadata wrappers and complete AST schemas remain open.
+
+Fresh `sh scripts/test-quote-asts-oracle.sh` reached terminal exit0: all fourteen
+forced, cache-disabled analyzer traces and fourteen executed Node projections
+match (log `/private/tmp/suss-pr186-review-oracle.log`).
+`CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-compile --locked quoted_tag_tests -- --test-threads=2` reached terminal
+exit0: 2 source/tag checks passed, 79 filtered in its unit group; the remaining
+compiler groups were filtered (log `/private/tmp/suss-pr186-review-focused-compiler.log`).
+`CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-cli --locked --test compiled_macro_quote_asts -- --test-threads=2` reached
+terminal exit0: 1 passed, 0 failed/ignored/filtered, 9.07 seconds, all fourteen
+observations in both caller phases after GC with zero quoted effects
+(log `/private/tmp/suss-pr186-review-focused-native.log`).
+
+This checkpoint changes documentation only; both validated bootstrap pairs and
+production inputs remain unchanged. The next unblocked step is the exact required
+unfiltered `CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2` on the pushed review head,
+followed by independent exact-head CI verification with workspace counts separate
+from Python/bootstrap. Those results are not yet claimed here. Keep PR186 draft
+until they finish; no merge, issue closure or original M3 gate completion.
