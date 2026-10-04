@@ -4,7 +4,8 @@
 executable component using the same shared runtime and compiled core/source
 binding initializer as native sessions. The caller supplies a resolved WIT world
 and explicit export-to-source-var mappings. This development increment supports
-pure freestanding bool/f32/f64 functions and void results using direct canonical
+pure freestanding bool, u8/s8/u16/s16/u32/s32 and f32/f64 functions, plus void
+results using direct canonical
 signatures (at most16 scalar parameters). Larger signatures need indirect-memory
 lowering and currently fail component validation. Other WIT boundary
 shapes return explicit unimplemented diagnostics. Existing CLI compile commands
@@ -21,12 +22,17 @@ phase before assembly. This API requires prepared compiler catalogs; it does not
 reconstruct catalogs or validate a complete dependency policy from raw Wasm.
 
 Bool inputs map to the language's false/true values. Numeric inputs box binary64
-values, promoting f32 first. Outputs require actual booleans or boxed numbers;
+values, promoting f32 first and preserving signed/unsigned integer meaning.
+All supported integer inputs fit exactly in binary64. Integer outputs require
+boxed finite integral numbers within the selected type range before conversion;
+fractions, NaNs, infinities and out-of-range values throw the same boundary
+language exception. Negative zero converts to integer zero. Outputs require actual
+booleans or boxed numbers;
 f32 output demotes the binary64 value. Incompatible values throw the shared
 language exception with a boundary-specific message rather than a raw cast trap.
 Pure worlds gain no hidden host imports. Void results discard the source value.
 
-The executing compiler suite passes five tests. Typed component calls cover
+The initial executing compiler suite passed five tests. Typed component calls cover
 initializer order, old function captures versus redefined live cells, independent
 fresh instances, forced GC, binary64 edge bits, f32 conversion, boolean and void
 results, missing/duplicate/unknown mappings, unsupported boundaries and Macro
@@ -46,7 +52,26 @@ added two executing regressions: an early initializer language throw independent
 decodes its original17 payload instead of the later99, and mixed f32/bool/f64
 arguments preserve positions and f32 promotion through both branches. Signed
 NaNs remain NaN across f64-to-f32 after GC. All seven compiler AOT tests pass;
-original expectations remain unchanged. Full baseline and final-head CI remain required.
+original expectations remain unchanged. Their full baseline passed1129/0/17 and
+CI passed at the original reviewed head; the integration rebase changes only
+handoff text and requires replacement final-head CI.
+
+The checked small integer working increment passes all eight compiler AOT tests.
+Its new typed component regression round-trips all six integer types at extrema,
+including unsigned values above the signed range, forces GC, accepts negative
+zero as zero, and checks exactly66 source calls. Fresh invalid-result instances
+independently decode language boundary messages for bounds, fractions, subnormals,
+NaNs and infinities. Existing wrong-result tests also cover nonnumeric integer
+values while retaining every boolean/float assertion. A controlled prior-adapter
+run fails with the original unsupported-type diagnostic, then the same regression
+passes with the implementation. Initial redundant-unwrap and iterator-borrow
+errors in the new test helper were corrected without relaxing assertions.
+Both regenerated phase Wasm/JSON reproduce byte-for-byte without Java; bootstrap4
+and Python118 pass. Affected CLI60 and compiler binding/module15 pass.
+Independent review, required full baseline and final-head CI for this increment
+remain pending.
+The pinned canonical engine locks a Store after a failed lifted component call;
+these failure fixtures use fresh Stores and do not certify trap recovery.
 
 This is original Rust and ports no upstream forms. Shared GC layout and ABI2
 remain unchanged. Complete selected-WIT adapters and published artifact policy,

@@ -14540,3 +14540,164 @@ cargo test --workspace --locked -- --test-threads=2 and require exact final-head
 CI before readiness. Legacy compile commands, complete WIT adapters/frontend and
 evaluator migration, published dependencies and scheduler/lifecycle remain open.
 No issue closure, merge or M3 completion is claimed by this preparation slice.
+
+## Checked small integer AOT adapters — working branch, unvalidated
+
+Root independently verified PR170 exactb1f91bd CI37168667054 completed/success,
+updated its review/full1129/0/17/127 evidence and marked170 ready without merging.
+PR169 is already ready after repaired865 full1121/0/17 and exact CI success.
+Issue14 progress comment5975818697 records both proofs and PR171 pending gates.
+User reports146/147 merged; GitHub confirms both MERGED. No root merge performed.
+
+Created /private/tmp/suss-m3-aot-indirect-scalars from PR171 review70fc387,
+renamed its branch portable/m3-aot-small-integers. Root drafted original Rust
+u8/s8/u16/s16/u32/s32 adapters. Signed/unsigned core i32 inputs box into exact
+binary64 language numbers; results require a boxed finite integral number in
+the selected type range before signed/unsigned truncation. Reuses actual language
+boundary exception. Shared GC ABI unchanged. Existing tests retained; new typed
+round trips cover extrema/high unsigned bits/GC/signed zero; fresh-instance invalid
+results decode boundary messages for bounds/fractions/NaN/infinities. Extended
+nonnumeric cases preserve the existing boolean/float assertions. The pinned
+Wasmtime component engine locks a Store after a failed lifted call; this boundary
+fixture explicitly uses fresh Stores and does not claim component trap recovery.
+
+No native/Cargo/JVM/Node job has run on this child; code and tests are unvalidated.
+Reviewer166 retains the sole heavy slot running PR171 full78568 at frozen70fc;
+exact CI37171032132 remains pending. Root has not edited its source or polled
+child handles. Only rustfmt/diff check pass here. Before-adapter file is saved
+at /private/tmp/suss-aot-before-small-integers.rs for a controlled regression.
+After explicit release: clean ONLY four Suss packages, save the fixed draft,
+restore that prior file, run the new focused integer test to capture the actual
+unsupported diagnostic, restore draft and run all portable_aot tests. Compiler
+Rust changes require both phase bootstrap Wasm/JSON regeneration (--profile test),
+Java-free verification, affected suites, Python, independent PR review, frozen
+unfiltered full baseline and exact-head CI. No RUSTFLAGS.
+
+16-flat-parameter indirect allocation, complete selected-WIT adapters/frontend
+migration, evaluator retirement, published dependency policy, scheduler/cancel
+and live heap acceptance remain open original scope. No issue/milestone closure.
+
+### Integer working branch: lightweight verification and integration dependency
+
+While reviewer166 retains PR171 sole heavy slot, root initialized this worktree's
+ClojureScript development submodule from the existing local checkout at exact
+c4295f303100bbf5afac449242d30bca1126f1a1. Python68530 TERMINAL0:
+118 tests/0 failures in5.578s; /private/tmp/suss-aot-small-integers-python.log.
+Command python3 -m unittest discover -s scripts -p 'test_*.py'. This does not
+validate the new Rust adapter. Rustfmt/diff check pass; no Cargo/native job here.
+New integer test also asserts source call count66 after all successful typed
+round trips/GC and rejects smallest positive/negative subnormals with decoded
+language messages, retaining all earlier cases.
+
+Opened draft integration PR173 because already-merged162/164/165/166/167 targeted
+prior stack branches and have not reached fetchedmain8d83fa0. Root merge335e304
+had exact reviewed167 tree before sole appendedhandoff. Independent reviewer150
+verified this, found no significant loss, and pushed handoff-only final5fc64560
+b773f00c84de1b4355d84cd2cfd6b44e (production/tests/bootstrap exactly167).
+Final-head CI37171995245 live. Reviewer150 is read-only pending explicit heavy
+transfer after166 full78568 authoritative terminal/release. Integration173 full
+validation precedes root integer focus; do not race sharedtarget. PR169 current
+base remains previously merged artifact-identities branch; after173 final gates
+and user merge, reconcile/retarget the remaining169/170/171 continuation with
+main, preserving source/test/image identity and requiring resulting final CI.
+No GitHub PR merge, issue closure or M3 completion.
+
+## Integer adapter controlled before/after — actual root execution
+
+PR171 reviewer explicitly released sole heavy slot after full78568 TERMINAL0:
+1132/0/17existing ignores/128groups at frozen70fc. Root owns the slot now.
+Root corrected continuation history:169865->cd649fe,170b1f->d9509b,17170fc->ebfa39e;
+all three differ ONLY55inherited integration handofflines, preserving every
+production/test/bootstrap byte. Independent reviewers150/167/166 verified each.
+Direct169baseedit rejected native stack; firstlinkprepend rejected top-only rule.
+Verified actual GraphQL stack172, removed only its grouping via ghstackunstack172,
+then ghstacklink --base main173169170171 created174 and corrected169base to173.
+All PRs draft pending NEW exactCI:1735fc37171995245,169cd64937172515173,
+170d95037172623509,171ebfa37172637506. Previous passes remain prior-head only.
+173 exactCI already passed inventory/Javafree and runs unfilteredfull; its required
+new-head baseline is this CI, avoiding duplicate source-identical localheavy runs.
+No merge or issue closure.
+
+Private integer draft committed9cc193c then cleanly rebased from70fc ontoebfa;
+not yet published. Cleaned ONLY four Suss packages, removing3.5GiB. Saved fixed
+adapter /private/tmp/suss-aot-small-integers-fixed.rs and restored byte-exact
+prior adapter /private/tmp/suss-aot-before-small-integers.rs for controlled test.
+First41226 TERMINAL101: new helper had a redundantunwrap on actualVal, repeated
+across6 macro cases; /private/tmp/suss-aot-small-integers-before.log. Corrected
+helper then directcmd TERMINAL101: chainedfields iterator borrow overlappedstore
+inspection; /private/tmp/suss-aot-small-integers-before-helper.log. Corrected
+onlyhelper by collecting actualfields first, also preserving one-field assertion.
+Before89595 TERMINAL101:0pass/1fail/0ignored7filtered0.01s, actual old diagnostic
+'Portable AOT adapter currently supports bool/f32/f64 only';
+/private/tmp/suss-aot-small-integers-before-borrow.log. Command cargo test -p
+suss-compile --locked --test portable_aot
+small_integer_boundaries_round_trip_and_check_numeric_results -- --test-threads=2.
+Restored fixedadapter. All-focus38754 TERMINAL0:8/0/0 in1.55s;
+/private/tmp/suss-aot-small-integers-fixed.log, cargo test -p suss-compile
+--locked --test portable_aot -- --test-threads=2. Typed extrema/GC/signedzero,
+66exactsourcecalls and independently decoded wrongresultcases execute.
+All Rust commands sharedtarget/jobs2, noRUSTFLAGS. Current soleheavy35804LIVE
+regenerates both phase Wasm/JSON using cargo run --profile test -p suss-cli
+--bin suss-bootstrap --locked -- runtime/bootstrap;
+/private/tmp/suss-aot-small-integers-regenerate.log. Poll actualhandle, then
+Javafree/affected sourceprep+compiledAOT/nativephase/session tests. Required
+independent review, finalheadfull/CI remain pending for this new source change.
+
+### Integer adapter root publication validation complete
+
+Regeneration35804 TERMINAL0 refreshed both phase Wasm/JSON; compiler source
+fingerprint changes identity only, images retain unchanged executable source
+semantics and size. Javafree97549 TERMINAL0: both phase assets reproduce
+byte-exactly twice and match shipped files, checkout-independent build identity
+verified, bootstrap4/0/0 in12.68s;
+/private/tmp/suss-aot-small-integers-javafree.log, sh scripts/verify-bootstrap.sh.
+Affected CLI31840 TERMINAL0:60/0/0 across7groups3/1/10/3/6/4/33, respectively
+6.28/4.36/23.42/3.95/18.80/5.17/0.84s;
+/private/tmp/suss-aot-small-integers-native.log. Command cargo test -p suss-cli
+--locked --test aot_source_preparation --test compiled_aot --test
+compiled_native_entrypoints --test compiled_repl_macros --test
+compiled_phase_session --test namespace_session --test persistent_session
+-- --test-threads=2. Original namespace/macro/firstthrow/effects/GC/recovery
+assertions preserved. Compiler50003 TERMINAL0:15/0/0 across4binding/11module
+tests, /private/tmp/suss-aot-small-integers-compiler.log; cargo test -p
+suss-compile --locked --test compiled_core_bindings --test portable_modules
+-- --test-threads=2. Prior Python68530 passed118/0 in5.578s. Allrootheavyhandles
+terminal; Rustfmt newtest anddiffcheckpass. NoRUSTFLAGS, sharedtarget/jobs2.
+
+Next consolidate unpublished working commits, push draft integer PR stackedon171,
+link Refs12/14/15, dispatch independent review/fixes and transfer soleheavy slot
+for focused review plus required unfiltered full baseline at frozen finalsource.
+Require exact final-head CI before readiness. Then continue interface/memory
+adapters and actualfrontend migration/evaluator retirement. Rich environments,
+published dependencies and scheduler/cancel/liveheap remain original open scope.
+No GitHub merge, issue closure or M3 completion claim.
+
+## Independent PR175 review — checked integer WIT boundaries
+
+Reviewed clean79d747fdd82d6afa096a2fed1ad0c1cbdb927402 against171ebfa39e:
+parameter width/sign normalization and unsigned u32 widening, complete integer
+return bounds/integrality/nonfinite checks before truncation, binary64 storage,
+local layouts and language-exception ordering. No significant scoped production
+finding. Every original eight compiler AOT tests and root integer assertions,
+including sourcecalls66 and independently decoded invalid-result payloads, remain.
+
+Added actual mixed boundary regression with all six integer types interleaved
+with bool/f32/f64. Distinct positional weights expose reordering/sign/width errors;
+u32::MAX and i32::MIN preserve high bits, branch calls before/after GC match exact
+binary64 observations, and source counter2 proves one invocation per call.
+Focused43174 TERMINAL0:9pass/0fail/0ignored4.11s;
+/private/tmp/suss-pr175-review-focused.log. Command cargo test -p suss-compile
+--locked --test portable_aot -- --test-threads=2; target
+/private/tmp/suss-m3-pr143-target, CARGO_BUILD_JOBS=2, no RUSTFLAGS.
+Rustfmt2024 and git diff check pass. Review modifies only tests/docs; compiler
+production source and both root-reproduced bootstrap fingerprints/images remain
+unchanged. No new bootstrap regeneration or heavy worktree switch is needed.
+
+Next push this executing evidence, freeze final head and run required unfiltered
+cargo test --workspace --locked -- --test-threads=2, then verify exact final-head
+CI. Reviewer retains sole heavy slot through terminal and explicitly releases to
+root. PR171 retained source70fc->ebfa differs only inherited handoff; its local
+1132/0/17 full result is unchanged-source provenance, with fresh37172637506 CI
+still pending. Full WIT/imports/interfaces/memory/indirect scalar parameters,
+actual frontend migration/evaluator removal/published dependency and scheduler/
+lifecycle gates remain original open goal. No merge, issue closure or M3 completion.
