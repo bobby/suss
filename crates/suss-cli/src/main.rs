@@ -47,13 +47,13 @@ fn run_command(cmd: args::Command) {
             run_file(&path);
         }
         args::Command::CompileFile { source, world_wit, wit_world, src_paths, exports, output, optimize } => {
-            compile_file(&source, &world_wit, wit_world.as_deref(), &src_paths, &exports, &output, optimize);
+            compile_source(Some(&source), None, &world_wit, wit_world.as_deref(), &src_paths, &exports, &output, optimize);
         }
         args::Command::CompileMain { source, namespace, output, optimize } => {
             compile_main(&source, &namespace, &output, optimize);
         }
-        args::Command::CompileNamespace { namespace, src_paths, world_wit, output, optimize } => {
-            compile_namespace(&namespace, &src_paths, &world_wit, &output, optimize);
+        args::Command::CompileNamespace { namespace, src_paths, world_wit, wit_world, exports, output, optimize } => {
+            compile_source(None, Some(&namespace), &world_wit, wit_world.as_deref(), &src_paths, &exports, &output, optimize);
         }
         args::Command::CompileProject { world, config_path, optimize } => {
             compile_project(world.as_deref(), config_path.as_deref(), optimize);
@@ -137,9 +137,10 @@ fn run_wasm_opt(path: &str) -> Result<(), String> {
     }
 }
 
-/// Compile a Suss file to a WASM component (file mode)
-fn compile_file(
-    source_path: &str,
+/// Compile native file or namespace input through the shared portable pipeline.
+fn compile_source(
+    source_path: Option<&str>,
+    namespace: Option<&str>,
     wit_path: &str,
     wit_world: Option<&str>,
     source_paths: &[String],
@@ -172,17 +173,29 @@ fn compile_file(
             })
             .collect::<Result<Vec<_>, String>>()?;
         let source_paths = source_paths.iter().map(PathBuf::from).collect::<Vec<_>>();
-        suss_cli::portable_aot::compile_file(
-            Path::new(source_path),
-            Path::new(wit_path),
-            wit_world,
-            &source_paths,
-            &mappings,
-        )
+        if let Some(namespace) = namespace {
+            suss_cli::portable_aot::compile_namespace(
+                namespace,
+                Path::new(wit_path),
+                wit_world,
+                &source_paths,
+                &mappings,
+            )
+        } else {
+            suss_cli::portable_aot::compile_file(
+                Path::new(source_path.expect("file input")),
+                Path::new(wit_path),
+                wit_world,
+                &source_paths,
+                &mappings,
+            )
+        }
     })();
     #[cfg(target_family = "wasm")]
-    let result: Result<Vec<u8>, String> =
-        Err("Portable file compilation in the component-host target remains unimplemented".into());
+    let result: Result<Vec<u8>, String> = Err(
+        "Portable file/namespace compilation in the component-host target remains unimplemented"
+            .into(),
+    );
     match result {
         Ok(wasm) => {
             if let Err(error) = std::fs::write(output_path, &wasm) {
@@ -190,7 +203,8 @@ fn compile_file(
                 std::process::exit(1);
             }
             println!(
-                "Compiled {source_path} -> {output_path} ({} bytes)",
+                "Compiled {} -> {output_path} ({} bytes)",
+                namespace.or(source_path).expect("source input"),
                 wasm.len()
             );
             if optimize {
@@ -227,38 +241,6 @@ fn compile_main(source_path: &str, namespace: &str, output_path: &str, optimize:
             }
             println!("Compiled {} -> {} ({} bytes)", source_path, output_path, wasm.len());
             println!("Run with: suss run {} --invoke run", output_path);
-            if optimize {
-                if let Err(e) = run_wasm_opt(output_path) {
-                    eprintln!("Optimization error: {}", e);
-                    std::process::exit(1);
-                }
-            }
-        }
-        Err(e) => {
-            eprintln!("Compilation error: {}", e);
-            std::process::exit(1);
-        }
-    }
-}
-
-/// Compile from an entry namespace with multi-file support
-fn compile_namespace(entry_ns: &str, src_paths: &[String], wit_path: &str, output_path: &str, optimize: bool) {
-    use std::path::PathBuf;
-
-    let src_path_bufs: Vec<PathBuf> = src_paths.iter().map(PathBuf::from).collect();
-
-    let mut compiler = suss_compile::Compiler::new();
-
-    match compiler.compile_with_namespaces(entry_ns, &src_path_bufs, wit_path) {
-        Ok(wasm) => {
-            if let Err(e) = std::fs::write(output_path, &wasm) {
-                eprintln!("Error writing output file '{}': {}", output_path, e);
-                std::process::exit(1);
-            }
-            println!(
-                "Compiled namespace {} -> {} ({} bytes)",
-                entry_ns, output_path, wasm.len()
-            );
             if optimize {
                 if let Err(e) = run_wasm_opt(output_path) {
                     eprintln!("Optimization error: {}", e);

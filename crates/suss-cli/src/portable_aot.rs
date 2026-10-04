@@ -20,6 +20,45 @@ pub fn compile_file(
     source_paths: &[PathBuf],
     mappings: &[(String, Symbol)],
 ) -> Result<Vec<u8>, String> {
+    compile_input(
+        source_path,
+        wit_path,
+        wit_world,
+        source_paths,
+        mappings,
+        None,
+    )
+}
+
+/// Resolve one namespace source and validate its declaration before constructing
+/// a Macro session. The exact validated text is also the compiled input.
+pub fn compile_namespace(
+    namespace: &str,
+    wit_path: &Path,
+    wit_world: Option<&str>,
+    source_paths: &[PathBuf],
+    mappings: &[(String, Symbol)],
+) -> Result<Vec<u8>, String> {
+    let path = portable::resolve::locate_source(namespace, source_paths, 0..0)
+        .map_err(|error| error.to_string())?;
+    compile_input(
+        &path,
+        wit_path,
+        wit_world,
+        source_paths,
+        mappings,
+        Some(namespace),
+    )
+}
+
+fn compile_input(
+    source_path: &Path,
+    wit_path: &Path,
+    wit_world: Option<&str>,
+    source_paths: &[PathBuf],
+    mappings: &[(String, Symbol)],
+    namespace: Option<&str>,
+) -> Result<Vec<u8>, String> {
     let mut resolve = portable::aot::Resolve::new();
     let (package, _) = resolve
         .push_path(wit_path)
@@ -29,7 +68,12 @@ pub fn compile_file(
         .map_err(|error| format!("Failed to select WIT world: {error:#}"))?;
     let source = std::fs::read_to_string(source_path)
         .map_err(|error| format!("Failed to read {}: {error}", source_path.display()))?;
-    let fragments = prepare_source(&source, Some(source_path.to_owned()), source_paths)
+    let forms = read_script_forms(&source).map_err(|error| error.to_string())?;
+    if let Some(namespace) = namespace {
+        portable::modules::validate_namespace_source(namespace, &forms, Phase::Runtime)
+            .map_err(|error| error.to_string())?;
+    }
+    let fragments = prepare_forms(&source, Some(source_path.to_owned()), source_paths, forms)
         .map_err(|error| error.to_string())?;
     portable::aot::component(&fragments, &resolve, world, mappings)
         .map_err(|error| error.to_string())
@@ -45,6 +89,15 @@ pub fn prepare_source(
 ) -> Result<Vec<PreparedFragment>, SessionError> {
     // Parse the entire input before constructing the effectful Macro session.
     let forms = read_script_forms(source)?;
+    prepare_forms(source, path, source_paths, forms)
+}
+
+fn prepare_forms(
+    source: &str,
+    path: Option<PathBuf>,
+    source_paths: &[PathBuf],
+    forms: Vec<suss_reader::forms::Form>,
+) -> Result<Vec<PreparedFragment>, SessionError> {
     let mut core = portable::bootstrap::shipped(Phase::Runtime)
         .map_err(SessionError::Compile)?
         .clone();

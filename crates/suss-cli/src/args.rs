@@ -39,6 +39,8 @@ pub enum Command {
         src_paths: Vec<String>,
         /// WIT world definition file
         world_wit: String,
+        wit_world: Option<String>,
+        exports: Vec<String>,
         /// Output path
         output: String,
         optimize: bool,
@@ -162,11 +164,16 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
         }
     }
 
+    if entry_ns.is_some() && (source.is_some() || main_ns.is_some()) {
+        return Err(lexopt::Error::Custom(
+            "--namespace cannot be combined with a source file or --main".into(),
+        ));
+    }
     if (wit_world.is_some() || !exports.is_empty())
-        && !(source.is_some() && world_wit.is_some() && entry_ns.is_none() && main_ns.is_none())
+        && !(world_wit.is_some() && main_ns.is_none() && (source.is_some() || entry_ns.is_some()))
     {
         return Err(lexopt::Error::Custom(
-            "--wit-world and --export currently require file mode with -w/--wit".into(),
+            "--wit-world and --export require file or namespace mode with -w/--wit".into(),
         ));
     }
     // Determine mode based on arguments
@@ -190,6 +197,8 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             namespace,
             src_paths,
             world_wit,
+            wit_world,
+            exports,
             output,
             optimize,
         })
@@ -320,7 +329,9 @@ COMMANDS:
     compile - Namespace mode (multi-file with dependency resolution):
         -n, --namespace <NS> Entry namespace (e.g., myapp.core)
         --src, --src-path <DIR>  Source directory (default: src, repeatable)
-        -w, --wit <FILE>     WIT world definition file
+        -w, --wit <PATH>     WIT file or package directory (including deps)
+        --wit-world <WORLD>  Select a world
+        --export <PATH=VAR>  Explicit WIT export path to Suss var (repeatable)
         -o, --output <FILE>  Output WASM file path
 
     run - Execute a WASM component:
@@ -334,7 +345,7 @@ EXAMPLES:
     suss compile                   Compile all worlds from deps.sus
     suss compile --world :app/v1   Compile specific world from deps.sus
     suss compile src.sus -w world.wit --export add=app/add -o out.wasm
-    suss compile -n myapp.core -w world.wit         (namespace mode)
+    suss compile -n myapp.core -w world.wit --export add=myapp.core/add
     suss run app.wasm hello world                   (run CLI command with args)
     suss run out.wasm --invoke add 3 5              (run specific function)
 "

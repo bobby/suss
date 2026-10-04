@@ -40,9 +40,9 @@ phase records1. All values are called after GC in the assembled component. The
 original two tests remain intact. Required full baseline and exact final-head CI
 remain acceptance gates.
 
-The source staging code is original Rust. Native CLI file compilation now uses
-this source preparation and component assembly. Namespace, project, main and
-component-host compilation remain legacy. Complete selected-WIT boundaries,
+The source staging code is original Rust. Native CLI file and namespace compilation now use
+this source preparation and component assembly. Project, main and component-host
+compilation remain legacy. Complete selected-WIT boundaries,
 remaining frontend migration, evaluator retirement,
 published dependency policy and scheduler/cancellation/live heap acceptance remain
 open original M3 work. This API and its focused results do not complete M3.
@@ -81,3 +81,28 @@ CLI tests, Python118 and Java-free byte-exact image reproduction/bootstrap4 pass
 CLI-only changes leave compiler fingerprints and bootstrap images unchanged.
 Independent review, required unfiltered baseline and final-head CI are still
 pending for this increment. This does not complete M3 or retire the evaluator.
+
+## Namespace entrypoints
+
+`suss compile -n app.core -w wit --wit-world api-world --src src
+--export 'test:app/api@1.2.3#calculate=app.core/calculate' -o app.wasm`
+uses canonical namespace lookup across `.sus`, `.cljs` and `.cljc` files. The
+default source directory is `src`; repeated roots naming the same physical file
+are deduplicated, while distinct matching sources fail as ambiguous. Source
+conditional selection follows the portable ClojureScript branch. The leading
+namespace must match the requested identity before a Macro session is created.
+Validation and compilation consume the same immutable text and selected forms,
+using the dependency loader's header grammar and declaration matching. Combining
+`--namespace` with a positional file or `--main` is an explicit error.
+
+Three executing command/component regressions pass. A macro imported from a
+separate namespace and a dependency shared across Macro and Runtime phases
+preserve once-only effects. Typed interface calls remain correct after GC in two
+fresh Stores. Missing/wrong declarations, missing/ambiguous source and conflicting
+entry modes preserve prior output. Runtime throw compiles successfully; actual
+instantiation independently decodes first17 rather than later99 in fresh Stores.
+The controlled previous-code namespace regression fails. Both phase images have
+been regenerated for the compiler helper and reproduce byte-for-byte without
+Java; bootstrap4 passes. Independent review, unfiltered full baseline and exact
+final-head CI remain pending for this increment. Explicit export mappings remain
+required; project/main/component-host migration and evaluator retirement are open.
