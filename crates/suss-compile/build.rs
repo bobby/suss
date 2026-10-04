@@ -25,6 +25,14 @@ fn main() {
         // even when their implementation is supplied as embedded bytes.
         root.join("runtime/numeric/artifact/numeric.wasm"),
         root.join("runtime/numeric/artifact/manifest.json"),
+        // The shipped command embeds upstream WIT, so changed source/lock bytes
+        // must invalidate compiled artifacts even without a Rust source edit.
+        root.join("docs/roadmap/wasi-wit-lock.json"),
+        root.join("vendor/wasi/wasi-wit-0.3.1/cli/cli.wit"),
+        root.join("vendor/wasi/wasi-wit-0.3.1/cli/deps/clocks.wit"),
+        root.join("vendor/wasi/wasi-wit-0.3.1/cli/deps/filesystem.wit"),
+        root.join("vendor/wasi/wasi-wit-0.3.1/cli/deps/random.wit"),
+        root.join("vendor/wasi/wasi-wit-0.3.1/cli/deps/sockets.wit"),
     ];
     for name in ["suss-core", "suss-reader", "suss-compile"] {
         let directory = root.join("crates").join(name);

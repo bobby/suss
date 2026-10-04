@@ -39,6 +39,7 @@ pub(crate) const NUMBER: u32 = 0;
 const STRING: u32 = 1;
 pub(crate) const ARGS: u32 = 2;
 pub(crate) const INVOKE: u32 = 3;
+pub(crate) const CLOSURE: u32 = 4;
 pub(crate) const BINDING: u32 = 5;
 const DESCRIPTOR: u32 = 6;
 pub(crate) const TYPE_COUNT: u32 = 10;

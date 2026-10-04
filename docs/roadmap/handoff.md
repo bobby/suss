@@ -15671,3 +15671,191 @@ terminal, then explicitly release sole heavy slot. Final-head CI remains require
 No merge or issue14/15 closure. Official command/main and canonical argument
 memory, complete imports/frontends/evaluator retirement/published dependencies,
 rich portable environments and rooted pending-I/O/lifecycle work remain open.
+
+## Official command migration draft after PR181
+
+The next branch, portable/m3-official-command, starts at reviewed PR181 head
+b3ba99d29c0f1028e005abdc94abf2ef63a46898. The user reports #146 and #147 merged;
+GitHub confirms both are merged on October 2 and already included in this stack.
+
+Current uncommitted draft embeds the pinned CLI WIT dependency graph and checks
+each embedded source against wasi-wit-lock.json before resolving the official
+command world. Build fingerprint inputs include the lock and embedded WIT files.
+The assembled component now uses resolved reachable argument/result types,
+canonical UTF16 lowering, owned argument conversion and async task.return.
+Native compile --main uses shared compiled source preparation and validates the
+entry namespace before Macro effects; --src is retained. Default native run selects
+the exact official interface and supplies argv[0] even without user arguments.
+An independent Python SHA-256 check of the five embedded CLI files passes 5/5
+against the lock. This verifies source bytes only, not graph resolution or ABI.
+The graph regression checks versioned interfaces and argument/result shapes.
+The separate native artifact regressions require the official async result export,
+successful ordinary numeric completion, ordered user strings including empty and
+Unicode arguments, and failed completion on an uncaught source exception.
+
+PR181's original required full baseline1184 is terminal0: 1,164 passed, 0 failed,
+17 existing ignores, 0 filtered across 134 groups through reader doctests. Root
+independently counted its final log. The reviewer explicitly released the sole
+heavy slot; root then claimed it for this next worktree. PR181 exact final-head
+CI37189093402 remains pending. PR180 exact final-head CI37186671054 passes at
+b66860496d301f21f6b4c4409716d9f9b214512e; root independently confirmed its workspace
+log has 1,159 passed, 0 failed, 17 ignored, 0 filtered across 132 groups, updated
+the PR evidence, marked #180 ready and verified the unchanged head/open state.
+Issue #13/#14 evidence comments5978315040/5978315396 record partial progress only.
+
+The draft now also emits an original separate canonical memory module. Its
+allocator validates ownership and power-of-two alignment, checks memory32 size
+arithmetic in i64, checks memory.grow failure before publishing a block, copies
+the preserved prefix before releasing an old allocation, and reuses freed block
+capacity. Three execution regressions cover alignment/copy/growth/shrink,
+1000 repeated free/reuse cycles with stable page count, malformed ownership and
+overflow, and allocation failure retaining the original block and contents.
+The separate command adapter now copies canonical UTF16 arguments into rooted
+GC strings before freeing every canonical argument buffer, excludes argv[0],
+invokes the live source -main cell and completes with ok/err according to ordinary
+completion/source exceptions. Its core signature comes from resolved WIT ABI.
+Reachable value type encoding also follows the resolved graph. Actual compiler
+and native artifact tests now execute the assembled command. Explicit exit binding was still open at this earlier test point; the follow-up
+below executes it. Complete capabilities and original M3 lifecycle/suspension
+gates remain open.
+
+Actual root evidence, all handles terminal, shared target and jobs=2:
+- Focus5827 terminal0: allocator3/0/0, 75 filtered in0.01s. Command:
+  CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+  -p suss-compile --locked --lib portable::command::memory::tests -- --test-threads=2.
+  /private/tmp/suss-official-command-memory.log.
+- Graph19585 terminal0:1/0/0, 0 filtered; cargo test -p suss-compile --locked
+  --test portable_command -- --test-threads=2 with the same target/jobs.
+  /private/tmp/suss-official-command-graph.log.
+- Native parent-main15003 terminal101:0/2/0, 0 filtered in1.11s. Main handler is
+  unchanged parent code; one regression fails on zero-argument -main compilation,
+  the other on an unresolved generated print interface during component encoding.
+  cargo test -p suss-cli --locked --test compiled_official_command
+  -- --test-threads=2, same target/jobs. /private/tmp/suss-official-command-before.log.
+- Adapter/core38320 terminal101 on Catch name shadowing; fixed with the qualified
+  wasm_encoder::Catch enum. Final11841 terminal0:4/0/0, 75 filtered in0.02s,
+  all allocator execution tests plus command core validation. cargo test
+  -p suss-compile --locked --lib portable::command -- --test-threads=2,
+  same target/jobs. /private/tmp/suss-official-command-core.log.
+- An initial allocator invocation21969 mistakenly omitted the shared target/jobs
+  and was explicitly interrupted, actual terminal130, before starting5827.
+  It is not acceptance evidence. No RUSTFLAGS command was used.
+Further actual root evidence, all handles terminal:
+- Compiler56955 terminal0: graph and actual async completion2/0/0 in0.27s, repeated
+  normal/exception calls, forced GC and two fresh Stores per source. Added retained
+  Unicode argument regression28335 terminal0:3/0/0 in2.00s. Final shared-engine
+  regression57102 terminal0:3/0/0 in1.83s. Commands cargo test -p suss-compile
+  --locked --test portable_command -- --test-threads=2, same target/jobs.
+  /private/tmp/suss-official-command-artifact{,-final,-shared}.log. The retained
+  source cell still contains the original Unicode string after canonical buffers
+  are reused for changed arguments and GC; wrong later input gives actual err.
+- BOTH phase regeneration85747 terminal0: cargo run --profile test -p suss-cli
+  --bin suss-bootstrap --locked -- runtime/bootstrap, same target/jobs.
+  /private/tmp/suss-official-command-regenerate.log.
+- Java-free verification13023 terminal1 exposed missing newly embedded WIT inputs
+  in the temporary checkout fixture. Fixed fixture preserves existing numeric
+  asset checks and verifies every embedded WIT/lock input invalidates identity.
+  Fixed40917 terminal0: sh scripts/verify-bootstrap.sh, same target/jobs;
+  byte-identical images twice, checkout-independent identity, all input mutation
+  checks and bootstrap4/0/0 in12.85s pass. /private/tmp/suss-official-command-javafree{,-fixed}.log.
+- Native77092 terminal0: original command2/0/0 in8.04s. Expanded affected5948
+  terminal101: original project routing assertion caught changed missing-source
+  diagnostic priority after four preceding groups passed. Narrowed new conflict
+  guard to file mode; every original project assertion retained. Fixed92098
+  terminal0:29/0/0/0 filtered across7 groups (source4, async2, file4, namespace4,
+  project7, metadata5, official command3). The new third command test executes
+  compiled macros and a dependency selected through --src and preserves outputs
+  on invalid entry namespace or conflicting profile options. Command cargo test
+  -p suss-cli --locked --test compiled_official_command --test compiled_aot_async_command
+  --test compiled_aot_command --test compiled_aot_namespace_command
+  --test compiled_aot_project_command --test aot_source_preparation
+  --test compiled_export_metadata -- --test-threads=2, same target/jobs.
+  /private/tmp/suss-official-command-{cli,affected-cli,affected-cli-fixed}.log.
+- Initial Python check terminal1 had114 tests/7 missing-source errors because the
+  new worktree lacked the pinned development checkout. Local no-hardlinks clone
+  from the reviewed parent has exact gitlink c4295f303100bbf5afac449242d30bca1126f1a1.
+  Fixed30990 terminal0: python3 -m unittest discover -s scripts -p 'test_*.py',
+  118/0 in5.065s. /private/tmp/suss-official-command-python{,-fixed}.log.
+- Restricted rustfmt/git diff --check pass. Unrelated main.rs formatting outside
+  the three changed regions was restored to exact parent bytes. Shared runtime
+  ABI/layout is unchanged. Docs/inventory record actual partial draft evidence.
+
+Next implement explicit exit status bindings/policy, with actual status-code and
+invalid-status regressions, then execute affected artifacts at the final compiler
+identity. Preserve parent failures and every original assertion. Regenerate BOTH
+phase pairs for subsequent compiler changes and repeat Java-free proof. Before a
+PR is ready, dispatch independent review with significant fixes authorized, run
+the exact unfiltered workspace baseline and require exact final-head CI. This
+branch is uncommitted and unpublished; no new PR, merge, issue closure or M3
+completion is claimed. Remaining component-host/evaluator retirement, rich
+portable environments, published dependencies and original lifecycle gates keep
+the full objective active. Root owns sole heavy slot with no live handle now.
+
+
+### Official command explicit exit and invocation follow-up
+
+Parent PR #181 is now ready at reviewed b3ba99d29c0f1028e005abdc94abf2ef63a46898.
+Independent reviewer full1184 terminated0 with1164 passed/0 failed/17 existing
+ignores/0 filtered in134 groups. Exact final-head CI37189093402 completed success;
+root independently counted the matching full test step and verified unchanged
+head/open/ready state. No merge or M3 issue closure occurred.
+
+The official command now supplies Runtime-only wasi.cli/exit-with-code through
+an explicitly mapped shared cell. Its signature comes from pinned official WIT.
+The original bridge checks language number/integer domain0..255 before calling
+the host; invalid values throw the shared language exception. Runtime initializer
+exits and -main exits preserve the host I32Exit status. Macro preparation never
+gets this capability. Naming the existing closure type index does not change
+the shared runtime ABI or layout. Both phase pairs were regenerated and proved
+at the current compiler identity; later CLI-only invocation fixes do not change
+that identity. Every preexisting test assertion was preserved.
+
+All following root handles actually terminated. Commands use
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2; no RUSTFLAGS.
+- Exit-before91078 terminal101:0/1/0,3 filtered,3.24s; native regression exposed
+  unresolved Runtime exit capability. /private/tmp/suss-official-command-exit-before.log.
+- Core56911 terminal0:4/0/0,75 filtered,.02s; cargo test -p suss-compile --locked
+  --lib portable::command -- --test-threads=2.
+  /private/tmp/suss-official-command-exit-core.log.
+- Regeneration40341 terminal0: cargo run --profile test -p suss-cli --bin
+  suss-bootstrap --locked -- runtime/bootstrap; BOTH phase pairs.
+  /private/tmp/suss-official-command-exit-regenerate.log.
+- Java-free12176 terminal0: sh scripts/verify-bootstrap.sh; both pairs reproduced
+  identically twice, checkout-independent identity and every numeric/WIT/lock
+  mutation check pass; bootstrap4/0/0/0 filtered in12.65s.
+  /private/tmp/suss-official-command-exit-javafree.log.
+- Native92785 terminal0:5/0/0/0 filtered in52.86s; cargo test -p suss-cli --locked
+  --test compiled_official_command -- --test-threads=2. Executes status0/73/255,
+  Runtime initializer19 via require alias, invalid negative/out-of-range/fractional/
+  nonfinite/nil/boolean statuses as catchable errors, and Macro capability denial
+  preserving prior artifact bytes. /private/tmp/suss-official-command-exit-cli.log.
+- Compiler86489 terminal0:19/0/0/0 filtered in3 groups; cargo test -p suss-compile
+  --locked --test portable_command --test portable_aot --test portable_aot_async
+  -- --test-threads=2. /private/tmp/suss-official-command-exit-compiler.log.
+- Affected CLI26159 terminal0:31/0/0/0 filtered in7 groups; cargo test -p suss-cli
+  --locked --test compiled_official_command --test compiled_aot_async_command
+  --test compiled_aot_command --test compiled_aot_namespace_command
+  --test compiled_aot_project_command --test aot_source_preparation
+  --test compiled_export_metadata -- --test-threads=2.
+  /private/tmp/suss-official-command-exit-affected.log.
+- Python6109 terminal0:118 tests in5.600s; python3 -m unittest discover -s scripts
+  -p 'test_*.py'. /private/tmp/suss-official-command-exit-python.log.
+- Explicit-invoke67328 terminal101:0/1/0,4 filtered,6.53s. Added regression exposed
+  official command arguments being validated as typed WIT parameters. Both full
+  interface invocation and unambiguous run alias now select official command
+  arguments; generic exports keep typed parameter validation.
+  /private/tmp/suss-official-command-explicit-before.log.
+- Final78631 terminal0:11/0/0/0 filtered in3 groups; cargo test -p suss-cli --locked
+  --test compiled_official_command --test compiled_aot_async_command
+  --test compiled_aot_command -- --test-threads=2. Ordinary73/false/nil/NaN all
+  succeed; all three invocation routes preserve empty/Unicode/ordered arguments.
+  Existing scalar typed-parameter regressions pass.
+  /private/tmp/suss-official-command-explicit-final.log.
+
+Next publish this change as a draft against #181, link partial progress with
+Refs #14/#15, dispatch independent review and push significant fixes. Require
+cargo test --workspace --locked -- --test-threads=2 unfiltered and exact final-head
+CI before ready. Neither full baseline nor CI at this new head is claimed yet.
+The full M3 objective remains active: component-host migration/evaluator retirement,
+rich portable environments, published dependencies, source continuations and
+pending-I/O lifecycle acceptance remain open. No merge or milestone closure.

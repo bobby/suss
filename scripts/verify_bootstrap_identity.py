@@ -10,7 +10,14 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 PREFIX = "cargo:rustc-env=SUSS_COMPILER_SOURCE_SHA256="
-ASSETS = ("runtime/numeric/artifact/numeric.wasm", "runtime/numeric/artifact/manifest.json")
+ASSETS = (
+    "runtime/numeric/artifact/numeric.wasm", "runtime/numeric/artifact/manifest.json",
+    "docs/roadmap/wasi-wit-lock.json",
+    *(f"vendor/wasi/wasi-wit-0.3.1/{path}" for path in (
+        "cli/cli.wit", "cli/deps/clocks.wit", "cli/deps/filesystem.wit",
+        "cli/deps/random.wit", "cli/deps/sockets.wit",
+    )),
+)
 
 
 def fingerprint(builder, root):
@@ -65,7 +72,7 @@ def main():
             asset.write_bytes(original)
         if fingerprint(builder, first) != expected:
             raise RuntimeError("restoring runtime assets did not restore identity")
-    print("compiled build-script identity: checkout-independent; both runtime assets invalidate")
+    print("compiled build-script identity: checkout-independent; numeric assets and pinned command WIT graph invalidate")
 
 
 if __name__ == "__main__":

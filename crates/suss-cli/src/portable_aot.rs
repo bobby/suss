@@ -38,6 +38,36 @@ pub fn compile_file(
     )
 }
 
+/// Compile a validated entry namespace to the pinned official command profile.
+pub fn compile_main(
+    source_path: &Path,
+    namespace: &str,
+    source_paths: &[PathBuf],
+) -> Result<Vec<u8>, String> {
+    let source = std::fs::read_to_string(source_path)
+        .map_err(|error| format!("Failed to read {}: {error}", source_path.display()))?;
+    let forms = read_script_forms(&source).map_err(|error| error.to_string())?;
+    portable::modules::validate_namespace_source(namespace, &forms, Phase::Runtime)
+        .map_err(|error| error.to_string())?;
+    let fragments = prepare_inputs_with_command(
+        &[SourceInput {
+            source,
+            path: Some(source_path.to_owned()),
+            forms,
+            namespace: Some(namespace.to_owned()),
+        }],
+        source_paths,
+        true,
+    )
+    .map_err(|error| error.to_string())?;
+    portable::command::component_with_exit(
+        &fragments,
+        &Symbol::namespaced(namespace, "-main"),
+        &Symbol::namespaced("wasi.cli", "exit-with-code"),
+    )
+    .map_err(|error| error.to_string())
+}
+
 /// Resolve one namespace source and validate its declaration before constructing
 /// a Macro session. The exact validated text is also the compiled input.
 pub fn compile_namespace(
@@ -143,12 +173,27 @@ fn prepare_inputs(
     inputs: &[SourceInput],
     source_paths: &[PathBuf],
 ) -> Result<Vec<PreparedFragment>, SessionError> {
+    prepare_inputs_with_command(inputs, source_paths, false)
+}
+
+fn prepare_inputs_with_command(
+    inputs: &[SourceInput],
+    source_paths: &[PathBuf],
+    command: bool,
+) -> Result<Vec<PreparedFragment>, SessionError> {
     let mut core = portable::bootstrap::shipped(Phase::Runtime)
         .map_err(SessionError::Compile)?
         .clone();
     core.environment
         .enter_namespace(Phase::Runtime, "user")
         .map_err(SessionError::Compile)?;
+    if command {
+        let exit = core
+            .environment
+            .declare_cell(Phase::Runtime, "wasi.cli", "exit-with-code")
+            .map_err(SessionError::Compile)?;
+        core.cells.push(exit);
+    }
     let mut snapshot = CompilationSnapshot::new(
         core.environment.clone(),
         Phase::Runtime,
@@ -158,6 +203,11 @@ fn prepare_inputs(
         ]),
     );
     let mut macros = CompiledMacros::new()?;
+    if command {
+        snapshot.provided.insert(
+            ModuleIdentity::new(Phase::Runtime, "wasi.cli").map_err(SessionError::Compile)?,
+        );
+    }
     let mut fragments = vec![core];
     // Only sources prepared during this batch suppress a later selected root.
     // Bootstrap provisioning does not mean an explicitly selected file ran.
