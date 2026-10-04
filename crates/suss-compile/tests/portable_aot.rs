@@ -214,6 +214,12 @@ fn portable_component_boundary_rejects_wrong_result_with_language_payload() {
         ("bool", "1"),
         ("f32", "false"),
         ("f64", "nil"),
+        ("u8", "false"),
+        ("s8", "nil"),
+        ("u16", "false"),
+        ("s16", "nil"),
+        ("u32", "false"),
+        ("s32", "nil"),
     ] {
         let fragment = portable::prepare_fragment(
             &format!("(def bad (fn [] {value}))"),
@@ -251,6 +257,60 @@ fn portable_component_boundary_rejects_wrong_result_with_language_payload() {
                     .get_typed_func::<(), (f64,)>(&mut store, "bad")
                     .unwrap();
                 assert!(bad.call(&mut store, ()).is_err());
+            }
+            "u8" => {
+                assert!(
+                    instance
+                        .get_typed_func::<(), (u8,)>(&mut store, "bad")
+                        .unwrap()
+                        .call(&mut store, ())
+                        .is_err()
+                );
+            }
+            "s8" => {
+                assert!(
+                    instance
+                        .get_typed_func::<(), (i8,)>(&mut store, "bad")
+                        .unwrap()
+                        .call(&mut store, ())
+                        .is_err()
+                );
+            }
+            "u16" => {
+                assert!(
+                    instance
+                        .get_typed_func::<(), (u16,)>(&mut store, "bad")
+                        .unwrap()
+                        .call(&mut store, ())
+                        .is_err()
+                );
+            }
+            "s16" => {
+                assert!(
+                    instance
+                        .get_typed_func::<(), (i16,)>(&mut store, "bad")
+                        .unwrap()
+                        .call(&mut store, ())
+                        .is_err()
+                );
+            }
+            "u32" => {
+                assert!(
+                    instance
+                        .get_typed_func::<(), (u32,)>(&mut store, "bad")
+                        .unwrap()
+                        .call(&mut store, ())
+                        .is_err()
+                );
+            }
+            "s32" => {
+                assert!(
+                    instance
+                        .get_typed_func::<(), (i32,)>(&mut store, "bad")
+                        .unwrap()
+                        .call(&mut store, ())
+                        .is_err()
+                );
             }
             _ => unreachable!(),
         }
@@ -451,4 +511,125 @@ fn portable_component_rejects_missing_duplicate_unknown_and_unsupported_mappings
         .message
         .contains("imported WIT")
     );
+}
+
+#[test]
+fn small_integer_boundaries_round_trip_and_check_numeric_results() {
+    let fragment = portable::prepare_fragment(
+        "(def calls 0) (def echo (fn [x] (do (set! calls (+ calls 1)) x))) (def seen (fn [] calls))",
+        &Environment::default(),
+        Phase::Runtime,
+    )
+    .unwrap();
+    let kinds = ["u8", "s8", "u16", "s16", "u32", "s32"];
+    let declarations = kinds.iter().map(|kind| format!("export echo-{kind}: func(x: {kind}) -> {kind}; export check-{kind}: func(x: f64) -> {kind};")).collect::<String>();
+    let (resolve, selected) = world(&format!(
+        "package test:integers; world api {{ export seen: func() -> f64; {declarations} }}"
+    ));
+    let mut mappings = kinds
+        .iter()
+        .flat_map(|kind| [format!("echo-{kind}"), format!("check-{kind}")])
+        .map(|name| (name, Symbol::new("echo")))
+        .collect::<Vec<_>>();
+    mappings.push(("seen".into(), Symbol::new("seen")));
+    let bytes = portable::aot::component(&[fragment], &resolve, selected, &mappings).unwrap();
+    let engine = engine();
+    let component = Component::new(&engine, bytes).unwrap();
+    let mut store = Store::new(&engine, ());
+    store.set_fuel(50_000_000).unwrap();
+    let instance = Linker::new(&engine)
+        .instantiate(&mut store, &component)
+        .unwrap();
+    macro_rules! check {
+        ($kind:literal, $ty:ty, $values:expr) => {{
+            let echo = instance
+                .get_typed_func::<($ty,), ($ty,)>(&mut store, concat!("echo-", $kind))
+                .unwrap();
+            let checked = instance
+                .get_typed_func::<(f64,), ($ty,)>(&mut store, concat!("check-", $kind))
+                .unwrap();
+            for value in $values {
+                assert_eq!(echo.call(&mut store, (value,)).unwrap().0, value);
+                echo.post_return(&mut store).unwrap();
+                assert_eq!(checked.call(&mut store, (value as f64,)).unwrap().0, value);
+                checked.post_return(&mut store).unwrap();
+            }
+            store.gc(None).unwrap();
+            assert_eq!(checked.call(&mut store, (-0.0,)).unwrap().0, 0);
+            checked.post_return(&mut store).unwrap();
+            for value in [
+                <$ty>::MIN as f64 - 1.0,
+                <$ty>::MAX as f64 + 1.0,
+                0.5,
+                -0.5,
+                f64::from_bits(1),
+                -f64::from_bits(1),
+                f64::NAN,
+                f64::INFINITY,
+                f64::NEG_INFINITY,
+            ] {
+                // A failed lifted component call locks its Store in the pinned
+                // canonical engine. Decode each failure in a fresh instance.
+                let mut store = Store::new(&engine, ());
+                store.set_fuel(20_000_000).unwrap();
+                let instance = Linker::new(&engine)
+                    .instantiate(&mut store, &component)
+                    .unwrap();
+                let checked = instance
+                    .get_typed_func::<(f64,), ($ty,)>(&mut store, concat!("check-", $kind))
+                    .unwrap();
+                assert!(
+                    checked.call(&mut store, (value,)).is_err(),
+                    "{} accepted {value}",
+                    $kind
+                );
+                let exception = store
+                    .as_context_mut()
+                    .take_pending_exception()
+                    .expect("integer failure must carry a language exception");
+                let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
+                assert_eq!(fields.len(), 1);
+                let payload = fields[0]
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_struct(&store)
+                    .unwrap()
+                    .unwrap();
+                let message = payload.field(&mut store, 1).unwrap();
+                let array = message
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_array(&store)
+                    .unwrap()
+                    .unwrap();
+                let units = array
+                    .elems(&mut store)
+                    .unwrap()
+                    .map(|unit| unit.unwrap_i32() as u16)
+                    .collect::<Vec<_>>();
+                assert_eq!(
+                    String::from_utf16(&units).unwrap(),
+                    concat!(
+                        "WIT export check-",
+                        $kind,
+                        " returned an incompatible scalar value"
+                    )
+                );
+            }
+        }};
+    }
+    check!("u8", u8, [0, 1, 127, 128, u8::MAX]);
+    check!("s8", i8, [i8::MIN, -1, 0, 1, i8::MAX]);
+    check!("u16", u16, [0, 1, 32767, 32768, u16::MAX]);
+    check!("s16", i16, [i16::MIN, -1, 0, 1, i16::MAX]);
+    check!("u32", u32, [0, 1, 2147483647, 2147483648, u32::MAX]);
+    check!("s32", i32, [i32::MIN, -1, 0, 1, i32::MAX]);
+    let seen = instance
+        .get_typed_func::<(), (f64,)>(&mut store, "seen")
+        .unwrap();
+    assert_eq!(
+        seen.call(&mut store, ()).unwrap().0.to_bits(),
+        66.0_f64.to_bits()
+    );
+    seen.post_return(&mut store).unwrap();
 }

@@ -1,6 +1,6 @@
 //! Original target assembly for already prepared portable source fragments.
 //! This development boundary currently supports pure freestanding scalar exports.
-use super::{artifact_identity, core_bindings, resolve::Phase, Diagnostic, PreparedFragment};
+use super::{Diagnostic, PreparedFragment, artifact_identity, core_bindings, resolve::Phase};
 use crate::runtime_abi;
 use suss_reader::Symbol;
 use wasm_encoder::*;
@@ -21,14 +21,33 @@ enum Scalar {
     Bool,
     F32,
     F64,
+    U8,
+    S8,
+    U16,
+    S16,
+    U32,
+    S32,
 }
 impl Scalar {
     fn core(self) -> ValType {
         match self {
-            Self::Bool => ValType::I32,
+            Self::Bool | Self::U8 | Self::S8 | Self::U16 | Self::S16 | Self::U32 | Self::S32 => {
+                ValType::I32
+            }
             Self::F32 => ValType::F32,
             Self::F64 => ValType::F64,
         }
+    }
+    fn integer_bounds(self) -> Option<(f64, f64, bool)> {
+        Some(match self {
+            Self::U8 => (0.0, u8::MAX as f64, false),
+            Self::S8 => (i8::MIN as f64, i8::MAX as f64, true),
+            Self::U16 => (0.0, u16::MAX as f64, false),
+            Self::S16 => (i16::MIN as f64, i16::MAX as f64, true),
+            Self::U32 => (0.0, u32::MAX as f64, false),
+            Self::S32 => (i32::MIN as f64, i32::MAX as f64, true),
+            _ => return None,
+        })
     }
     fn component(self) -> ComponentValType {
         PrimitiveValType::from(self).into()
@@ -40,6 +59,12 @@ impl From<Scalar> for PrimitiveValType {
             Scalar::Bool => Self::Bool,
             Scalar::F32 => Self::F32,
             Scalar::F64 => Self::F64,
+            Scalar::U8 => Self::U8,
+            Scalar::S8 => Self::S8,
+            Scalar::U16 => Self::U16,
+            Scalar::S16 => Self::S16,
+            Scalar::U32 => Self::U32,
+            Scalar::S32 => Self::S32,
         }
     }
 }
@@ -49,6 +74,12 @@ fn scalar(resolve: &Resolve, mut ty: Type) -> Result<Scalar, Diagnostic> {
             Type::Bool => Ok(Scalar::Bool),
             Type::F32 => Ok(Scalar::F32),
             Type::F64 => Ok(Scalar::F64),
+            Type::U8 => Ok(Scalar::U8),
+            Type::S8 => Ok(Scalar::S8),
+            Type::U16 => Ok(Scalar::U16),
+            Type::S16 => Ok(Scalar::S16),
+            Type::U32 => Ok(Scalar::U32),
+            Type::S32 => Ok(Scalar::S32),
             Type::Id(id) => match &resolve.types[id].kind {
                 wit_parser::TypeDefKind::Type(next) => {
                     ty = *next;
@@ -59,7 +90,7 @@ fn scalar(resolve: &Resolve, mut ty: Type) -> Result<Scalar, Diagnostic> {
                 )),
             },
             _ => Err(error(
-                "Portable AOT adapter currently supports bool/f32/f64 only",
+                "Portable AOT adapter currently supports bool/f32/f64 and small integers only",
             )),
         };
     }
@@ -291,7 +322,8 @@ fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnos
         public.export(&export.name, ExportKind::Func, imported + index as u32);
         let result = export.params.len() as u32;
         let integer = result + 1;
-        let mut body = Function::new([(1, VALUE), (1, ValType::I32)]);
+        let number = integer + 1;
+        let mut body = Function::new([(1, VALUE), (1, ValType::I32), (1, ValType::F64)]);
         body.instruction(&Instruction::GlobalGet(global_indices[&export.global]))
             .instruction(&Instruction::Call(0));
         for (parameter, (_, ty)) in export.params.iter().enumerate() {
@@ -310,6 +342,33 @@ fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnos
                 }
                 Scalar::F64 => {
                     body.instruction(&Instruction::Call(1));
+                }
+                Scalar::U8 | Scalar::S8 | Scalar::U16 | Scalar::S16 | Scalar::U32 | Scalar::S32 => {
+                    // Normalize canonical subword bits before widening to the
+                    // ordinary binary64 language number; u32 must stay unsigned.
+                    match ty {
+                        Scalar::U8 => {
+                            body.instruction(&Instruction::I32Const(255))
+                                .instruction(&Instruction::I32And);
+                        }
+                        Scalar::S8 => {
+                            body.instruction(&Instruction::I32Extend8S);
+                        }
+                        Scalar::U16 => {
+                            body.instruction(&Instruction::I32Const(65535))
+                                .instruction(&Instruction::I32And);
+                        }
+                        Scalar::S16 => {
+                            body.instruction(&Instruction::I32Extend16S);
+                        }
+                        _ => {}
+                    }
+                    body.instruction(&if ty.integer_bounds().unwrap().2 {
+                        Instruction::F64ConvertI32S
+                    } else {
+                        Instruction::F64ConvertI32U
+                    })
+                    .instruction(&Instruction::Call(1));
                 }
             }
         }
@@ -346,7 +405,7 @@ fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnos
                     .instruction(&Instruction::I32Const(4))
                     .instruction(&Instruction::I32Eq);
             }
-            Some(Scalar::F32 | Scalar::F64) => {
+            Some(scalar) => {
                 body.instruction(&Instruction::LocalGet(result))
                     .instruction(&Instruction::RefTestNonNull(HeapType::Concrete(
                         runtime_abi::NUMBER,
@@ -363,7 +422,33 @@ fn adapter(exports: &[Export], fragment_count: usize) -> Result<Vec<u8>, Diagnos
                         struct_type_index: runtime_abi::NUMBER,
                         field_index: 0,
                     });
-                if matches!(export.result, Some(Scalar::F32)) {
+                if let Some((min, max, signed)) = scalar.integer_bounds() {
+                    // Validate before truncation: NaN fails the integral test,
+                    // infinities fail bounds, and no invalid result reaches a
+                    // trapping numeric conversion instead of a language error.
+                    body.instruction(&Instruction::LocalSet(number))
+                        .instruction(&Instruction::LocalGet(number))
+                        .instruction(&Instruction::F64Const(min.into()))
+                        .instruction(&Instruction::F64Lt)
+                        .instruction(&Instruction::LocalGet(number))
+                        .instruction(&Instruction::F64Const(max.into()))
+                        .instruction(&Instruction::F64Gt)
+                        .instruction(&Instruction::I32Or)
+                        .instruction(&Instruction::LocalGet(number))
+                        .instruction(&Instruction::LocalGet(number))
+                        .instruction(&Instruction::F64Trunc)
+                        .instruction(&Instruction::F64Ne)
+                        .instruction(&Instruction::I32Or)
+                        .instruction(&Instruction::If(BlockType::Empty));
+                    boundary_error(&mut body, result, &export.name);
+                    body.instruction(&Instruction::End)
+                        .instruction(&Instruction::LocalGet(number))
+                        .instruction(&if signed {
+                            Instruction::I32TruncF64S
+                        } else {
+                            Instruction::I32TruncF64U
+                        });
+                } else if matches!(scalar, Scalar::F32) {
                     body.instruction(&Instruction::F32DemoteF64);
                 }
             }

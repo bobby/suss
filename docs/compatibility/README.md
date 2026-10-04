@@ -710,3 +710,11 @@ Runtime dependencies, provenance, effects/GC and deferred language throws.
 Twenty-four existing native tests pass, including script macro rollback and
 completed dependency preservation. This is focused preparation evidence; complete
 frontend/WIT and original M3 acceptance remain open. No declaration is reclassified.
+
+The original Rust AOT adapter now has focused executing small integer boundary
+evidence: six signed/unsigned types round-trip extrema through ordinary binary64
+values; fractional/nonfinite/out-of-range/nonnumeric results decode as boundary
+language errors. All8 compiler AOT tests pass, including old scalar expectations
+and exactly66 source calls after GC. Java-free reproduction/bootstrap4, Python118 and affected CLI60/compiler15 pass;
+full baseline/review/final CI remain pending. No upstream forms or shared GC layout changed; complete WIT/frontends
+and M3 acceptance remain open. See [AOT components](../runtime/compiled-aot-components.md).

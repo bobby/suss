@@ -355,3 +355,10 @@ source-to-component tests and24 affected native tests pass; Java-free bootstrap4
 and Python118 pass. See [shared source preparation](docs/runtime/compiled-aot-source-preparation.md).
 Review/full baseline/final CI remain required. Existing compile commands, full
 selected-WIT adapters, evaluator retirement and original M3 criteria remain open.
+
+Checked small integer AOT adapters now have focused executing evidence for all
+six u8/s8/u16/s16/u32/s32 boundaries, finite integral result checks, GC and
+exactly-once source calls. All8 compiler AOT tests pass; Java-free reproduction/bootstrap4, Python118,
+affected CLI60 and compiler15 pass. Full baseline and independent review/final
+CI remain pending. This supports frontend
+migration prerequisites; no M3 issue is complete. See [AOT components](docs/runtime/compiled-aot-components.md).
