@@ -311,3 +311,9 @@ Repeated declarations now preserve existing source records for no-initializer tr
 
 
 Completed scalar/function references and invocations now distinguish raw tag presence from inferred values and provisional records. An actual 18-row pinned/native before/after regression matches both caller phases after GC, with 15 executed storage/effect checks per phase. Full validation and original M3 gates remain open. See [source hint boundaries](docs/runtime/compiled-macro-source-hint-boundaries.md).
+
+Native expression and file entry points are moving onto the shared compiled phase
+pipeline, with original source origins, staged runtime compilation and bounded
+canonical result display. Focused execution covers macro redefinition, lexical
+environments, file positions and late compile-error isolation; full validation
+and original M3 gates remain open. See [native entry points](docs/runtime/compiled-native-entrypoints.md).

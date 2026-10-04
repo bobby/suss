@@ -141,6 +141,11 @@ pub struct Session {
     artifact_bytes: usize,
     bootstrap_core: bool,
 }
+/// Binding/catalog transaction only: reachable object effects and resident code are retained.
+pub(crate) struct BindingCheckpoint {
+    environment: Environment,
+    values: BTreeMap<CellIdentity, (OwnedRooted<AnyRef>, i32)>,
+}
 /// Owned compiler inputs permit macro expansion to execute in this same phase
 /// Store while preparation reads an immutable namespace/module snapshot.
 pub(crate) struct CompilationSnapshot {
@@ -741,6 +746,39 @@ impl Session {
     ) -> Result<(), SessionError> {
         self.provided
             .insert(ModuleIdentity::new(self.phase, namespace).map_err(SessionError::Compile)?);
+        Ok(())
+    }
+    pub(crate) fn binding_checkpoint(&mut self) -> Result<BindingCheckpoint, SessionError> {
+        let mut values = BTreeMap::new();
+        let mut scope = RootScope::new(&mut self.store);
+        for (identity, global) in &self.cells {
+            let cell = global.get(&mut scope).unwrap_anyref().unwrap().as_struct(&scope)?.unwrap();
+            let value = cell.field(&mut scope, 0)?.unwrap_anyref().unwrap().to_owned_rooted(&mut scope)?;
+            let bound = cell.field(&mut scope, 1)?.unwrap_i32();
+            values.insert(identity.clone(), (value, bound));
+        }
+        Ok(BindingCheckpoint { environment: self.environment.clone(),
+            values })
+    }
+    pub(crate) fn restore_bindings(&mut self, checkpoint: BindingCheckpoint, globals: &[CellIdentity]) -> Result<(), SessionError> {
+        let mut scope = RootScope::new(&mut self.store);
+        for identity in globals {
+            if let Some(global) = self.cells.get(identity) {
+                let cell = global.get(&mut scope).unwrap_anyref().unwrap().as_struct(&scope)?.unwrap();
+                if let Some((value, bound)) = checkpoint.values.get(identity) {
+                    let value = Val::AnyRef(Some(value.to_rooted(&mut scope)));
+                    cell.set_field(&mut scope, 0, value)?;
+                    cell.set_field(&mut scope, 1, Val::I32(*bound))?;
+                } else {
+                    let nil = AnyRef::from_i31(&mut scope, wasmtime::I31::new_u32(0).unwrap());
+                    cell.set_field(&mut scope, 0, Val::AnyRef(Some(nil)))?;
+                    cell.set_field(&mut scope, 1, Val::I32(0))?;
+                }
+            }
+        }
+        self.environment.restore_declarations(&checkpoint.environment, globals, self.phase);
+        // Keep initialized dependency cells/modules and resident code. Unpublished
+        // fresh cells remain unbound and reusable under their stable identity.
         Ok(())
     }
     pub(crate) fn compilation_snapshot(&self) -> CompilationSnapshot {

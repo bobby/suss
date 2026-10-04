@@ -666,5 +666,11 @@ and [lazy sequence evidence](../runtime/lazy-sequences.md).
 
 Repeated declarations preserve selected source declaration records without replacing completed callable facts. Actual pinned/native evidence and remaining limits are recorded in [declaration preservation](../runtime/compiled-macro-repeated-declarations.md). This does not complete portable environments or M3 acceptance.
 
+Native expression/file execution and bounded canonical value display now have
+focused before/after evidence for compiled macro phases, GC data and runtime
+compile-error isolation. No declaration is reclassified as fully implemented;
+full printing, remaining frontend/evaluator migration and original M3 acceptance
+remain open. See [native entry points](../runtime/compiled-native-entrypoints.md).
+
 
 Selected source tag/return observations now distinguish false/nil metadata, dynamic scalar/function records and provisional/completed invocation information. Actual pinned/native before/after evidence and remaining limits are in [source hint boundaries](../runtime/compiled-macro-source-hint-boundaries.md). Full portable environments/inference remain open.
