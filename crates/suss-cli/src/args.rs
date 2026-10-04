@@ -237,6 +237,16 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
         })
     } else if source.is_none() || world_wit.is_none() {
         // Project mode: no source file, or source without -w/-m
+        if main_ns.is_some() {
+            return Err(lexopt::Error::Custom(
+                "--main requires a source file".into(),
+            ));
+        }
+        if source.is_some() && config_path.is_some() {
+            return Err(lexopt::Error::Custom(
+                "Project mode cannot combine a positional configuration with --config".into(),
+            ));
+        }
         if world_wit.is_some() || !src_paths.is_empty() || output.is_some() {
             return Err(lexopt::Error::Custom(
                 "Project mode takes WIT, source paths and outputs from configuration; -w/--wit, --src and -o/--output require file or namespace mode".into(),

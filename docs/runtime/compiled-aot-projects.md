@@ -70,3 +70,11 @@ unfiltered baseline and final-head CI remain required. Native main/official comm
 component-host migration and evaluator retirement are still open. This does not
 complete rich portable environments, published dependencies, pending-I/O cancellation,
 live-value accounting or M3. The scalar AOT boundary is still a development subset.
+
+Independent review reproduced selected worlds silently overwriting a shared output,
+then added preflight rejection for lexical and symlink output aliases, including
+absent targets. The executing regression preserves prior artifacts and validates
+the allowed single-world selection with typed calls after GC in two fresh Stores.
+It also reproduced project routing silently ignoring `--main` without source and
+a positional configuration alongside `--config`; explicit errors now preserve
+outputs. All original project assertions remain in place. These are CLI-only fixes.

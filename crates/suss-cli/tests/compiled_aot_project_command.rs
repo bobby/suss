@@ -343,3 +343,122 @@ fn explicitly_selected_core_source_is_not_skipped_as_bootstrap_initialization() 
         }
     }
 }
+
+#[test]
+fn selected_project_worlds_reject_output_aliases_before_replacing_artifacts() {
+    let root = fixture();
+    write(
+        root.path(),
+        "src/app/core.sus",
+        "(ns app.core) (def ^:export answer (fn [] 42))",
+    );
+    write(
+        root.path(),
+        "api.wit",
+        "package test:output-alias; world api { export answer: func() -> u32; }",
+    );
+    write(root.path(), "app.wasm", "prior artifact");
+    #[cfg(unix)]
+    std::os::unix::fs::symlink("app.wasm", root.path().join("project/alias.wasm")).unwrap();
+    let mut aliases = vec!["app.wasm", "./app.wasm", "new/../app.wasm"];
+    #[cfg(unix)]
+    aliases.push("alias.wasm");
+    for alias in aliases {
+        write(
+            root.path(),
+            "deps.sus",
+            &format!(
+                "{{:worlds {{:first {{:namespace app.core :wit \"api.wit\" :output \"app.wasm\"}} :second {{:namespace app.core :wit \"api.wit\" :output \"{alias}\"}}}}}}"
+            ),
+        );
+        let output = command(root.path(), &[]);
+        assert!(
+            !output.status.success(),
+            "Both worlds silently overwrote one artifact"
+        );
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains("share output"),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(
+            std::fs::read(root.path().join("project/app.wasm")).unwrap(),
+            b"prior artifact"
+        );
+        // Unselected worlds do not impose output constraints on a valid selection.
+        success(&command(root.path(), &["--world", ":first"]));
+        let engine = engine();
+        let component =
+            Component::from_file(&engine, root.path().join("project/app.wasm")).unwrap();
+        for _ in 0..2 {
+            let mut store = Store::new(&engine, ());
+            store.set_fuel(40_000_000).unwrap();
+            let instance = Linker::<()>::new(&engine)
+                .instantiate(&mut store, &component)
+                .unwrap();
+            let answer = instance
+                .get_typed_func::<(), (u32,)>(&mut store, "answer")
+                .unwrap();
+            assert_eq!(answer.call(&mut store, ()).unwrap().0, 42);
+            store.gc(None).unwrap();
+            assert_eq!(answer.call(&mut store, ()).unwrap().0, 42);
+        }
+        write(root.path(), "app.wasm", "prior artifact");
+    }
+    #[cfg(unix)]
+    {
+        std::os::unix::fs::symlink("future.wasm", root.path().join("project/future-alias.wasm"))
+            .unwrap();
+        write(
+            root.path(),
+            "deps.sus",
+            "{:worlds {:first {:namespace app.core :wit \"api.wit\" :output \"future.wasm\"} :second {:namespace app.core :wit \"api.wit\" :output \"future-alias.wasm\"}}}",
+        );
+        let output = command(root.path(), &[]);
+        assert!(
+            !output.status.success(),
+            "Dangling symlink outputs silently collided"
+        );
+        assert!(String::from_utf8_lossy(&output.stderr).contains("share output"));
+        assert!(!root.path().join("project/future.wasm").exists());
+    }
+}
+
+#[test]
+fn project_command_rejects_ignored_main_and_conflicting_configuration_selection() {
+    let root = fixture();
+    write(root.path(), "src/app/core.sus", "(ns app.core)");
+    write(
+        root.path(),
+        "api.wit",
+        "package test:selection; world api {}",
+    );
+    write(
+        root.path(),
+        "deps.sus",
+        "{:worlds {:bundle {:namespace app.core :wit \"api.wit\" :output \"app.wasm\"}}}",
+    );
+    for (flags, expected) in [
+        (vec!["--main", "app.core"], "--main requires a source file"),
+        (
+            vec!["other/deps.sus"],
+            "cannot combine a positional configuration with --config",
+        ),
+    ] {
+        write(root.path(), "app.wasm", "prior artifact");
+        let output = command(root.path(), &flags);
+        assert!(
+            !output.status.success(),
+            "Project routing silently ignored {flags:?}"
+        );
+        assert!(
+            String::from_utf8_lossy(&output.stderr).contains(expected),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(
+            std::fs::read(root.path().join("project/app.wasm")).unwrap(),
+            b"prior artifact"
+        );
+    }
+}

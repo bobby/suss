@@ -63,6 +63,51 @@ fn collect(
     Ok(())
 }
 
+// Resolve existing symlinks and lexical aliases even when an output or its
+// parent directories do not exist yet. This is a preflight identity only;
+// publication continues to use the configured path.
+fn output_identity(path: &Path) -> Result<PathBuf, String> {
+    output_identity_with_links(path, 0)
+}
+fn output_identity_with_links(path: &Path, links: usize) -> Result<PathBuf, String> {
+    if links >= 40 {
+        return Err(format!("Too many output symlinks: {}", path.display()));
+    }
+    let absolute = std::env::current_dir()
+        .map_err(|error| format!("Failed to resolve output directory: {error}"))?
+        .join(path);
+    let mut resolved = PathBuf::new();
+    for component in absolute.components() {
+        match component {
+            std::path::Component::CurDir => {}
+            std::path::Component::ParentDir => {
+                resolved.pop();
+            }
+            component => {
+                resolved.push(component.as_os_str());
+                match std::fs::canonicalize(&resolved) {
+                    Ok(path) => resolved = path,
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                        // canonicalize cannot follow a link whose target is not
+                        // present yet, although publication would follow it.
+                        if let Ok(target) = std::fs::read_link(&resolved) {
+                            let target = resolved.parent().unwrap_or(Path::new("/")).join(target);
+                            resolved = output_identity_with_links(&target, links + 1)?;
+                        }
+                    }
+                    Err(error) => {
+                        return Err(format!(
+                            "Failed to resolve output {}: {error}",
+                            resolved.display()
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    Ok(resolved)
+}
+
 /// Compile all selected worlds before the caller replaces any output artifact.
 /// Each world has an isolated compiled Macro session and one staged Runtime
 /// catalog. Source targets, explicit entries and dependencies share header rules.
@@ -87,6 +132,19 @@ pub fn compile_project(
             .map(|(name, world)| (name.clone(), world))
             .collect()
     };
+    let mut outputs = BTreeMap::new();
+    for name in worlds.keys() {
+        let path = config
+            .output_path(name)
+            .map_err(|error| error.to_string())?;
+        let identity = output_identity(&path)?;
+        if let Some(previous) = outputs.insert(identity, name) {
+            return Err(format!(
+                "Project worlds {previous} and {name} share output {}",
+                path.display()
+            ));
+        }
+    }
     let mut discovered = BTreeMap::<String, Vec<SourceInput>>::new();
     if worlds.values().any(|world| world.namespace.is_none()) {
         let mut files = BTreeSet::new();

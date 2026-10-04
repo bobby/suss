@@ -15515,3 +15515,50 @@ commits/pushes and opens draft stacked179 with Refs#13/#14, then transfers exclu
 worktree and sole heavy slot to reviewer166 for independent review, significant
 fixes, exact unfiltered full baseline and final-head CI. No full-baseline/review/CI
 claim for this increment yet; no merge/issue closure/original M3 completion.
+
+## PR180 independent review — project selection and output identity
+
+Published draft PR180 started at45fe19b90871f8d6679e4139e52360b8bf237639,
+stacked on reviewed PR1793646ba8. Reviewer166 exclusively owns
+/private/tmp/suss-m3-aot-cli-project and the sole heavy slot until the final
+unfiltered baseline actually terminates. Initial CI37186270536 is superseded
+by the review fix; exact final-head CI remains required. No merge or closure.
+
+Actual command regression49469 TERMINAL101: two selected worlds targeting the
+same output silently overwrite one another while reporting success;0passed,
+1failed,5filtered in4.00s. Preflight now rejects colliding selected outputs
+before source/macro preparation, resolving lexical aliases, existing symlinks
+and missing parent paths. Unselected worlds do not constrain a valid selection.
+Regression2456 TERMINAL0:6/0/0 in33.30s including all original five project tests,
+prior-artifact preservation and valid selected-world typed42 afterGC in two Stores.
+A strengthened dangling-symlink case34720 TERMINAL101 (0/1/6filtered,21.46s)
+showed canonicalize alone cannot resolve absent targets; bounded link resolution
+now also covers these output aliases before any new file is created.
+
+Actual routing regression73601 TERMINAL101 (0/1/6filtered,3.98s) showed --main
+without a source silently compiled the configured project. After only that guard,
+36806 TERMINAL101 (0/1/6filtered,3.96s) showed a positional configuration was
+silently ignored alongside --config. Both combinations now fail explicitly and
+preserve existing artifacts. Every original test/assertion remains intact.
+
+Commands use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and
+CARGO_BUILD_JOBS=2, never RUSTFLAGS:
+
+- cargo test -p suss-cli --locked --test compiled_aot_project_command selected_project_worlds_reject_output_aliases -- --test-threads=2
+- cargo test -p suss-cli --locked --test compiled_aot_project_command project_command_rejects_ignored -- --test-threads=2
+- cargo test -p suss-cli --locked --test compiled_aot_project_command --test compiled_aot_command --test compiled_aot_namespace_command --test aot_source_preparation -- --test-threads=2
+- cargo test -p suss-cli --locked --test compiled_aot_project_command -- --test-threads=2
+
+Affected8763 TERMINAL0:19/0/0 across source4,file4,namespace4,project7;
+project7 finished31.40s. Final dangling-link correction is CLI-only, as are all
+review production fixes; compiler/core/reader/build and both phase images remain
+byte-identical to root's final Java-free proof. Final project33727 TERMINAL0:7/0/0 in32.50s, including the absent-target
+link regression and all original five project tests. Logs /private/tmp/suss-pr180-review-
+{output-before,output-fixed,selection-before,config-before,dangling-before,focused-final,project-final}.log.
+
+Next push/freeze the review head and run exactly
+cargo test --workspace --locked -- --test-threads=2 unfiltered, then require
+successful exact-head CI before readiness. Native main/official command and
+component-host migration, evaluator retirement, rich portable environments,
+published dependency policy, pending-I/O scheduler/cancellation and live-value
+accounting remain original open M3 work; this review completes none of those gates.
