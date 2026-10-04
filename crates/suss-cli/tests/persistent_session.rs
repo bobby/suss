@@ -250,6 +250,8 @@ fn persistent_session_compile_failure_is_atomic_and_language_failure_recovers() 
 #[test]
 fn session_lifecycle_reset_rejects_old_values_and_distinguishes_code_from_roots() {
     let mut session = Session::new().unwrap();
+    let base_code = session.stats().base_runtime_artifact_bytes;
+    assert!(base_code > 0);
     let bootstrap_cells = session.stats().binding_cells;
     assert_eq!(
         bootstrap_cells, 45,
@@ -261,6 +263,8 @@ fn session_lifecycle_reset_rejects_old_values_and_distinguishes_code_from_roots(
     drop(clone);
     assert_eq!(session.stats().external_value_handles, 1);
     let before = session.stats();
+    assert_eq!(before.base_runtime_artifact_bytes, base_code);
+    assert!(before.resident_artifact_bytes > 0);
     session.collect().unwrap();
     assert_eq!(
         session.stats().resident_fragments,
@@ -268,6 +272,8 @@ fn session_lifecycle_reset_rejects_old_values_and_distinguishes_code_from_roots(
     );
     session.reset().unwrap();
     assert_eq!(session.stats().resident_fragments, 0);
+    assert_eq!(session.stats().resident_artifact_bytes, 0);
+    assert_eq!(session.stats().base_runtime_artifact_bytes, base_code);
     assert_eq!(session.stats().binding_cells, bootstrap_cells);
     assert_eq!(session.stats().external_value_handles, 0);
     assert!(matches!(
