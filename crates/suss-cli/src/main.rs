@@ -429,6 +429,14 @@ fn run_component_impl(
     };
     let asynchronous = func_ty.async_();
     let parameters = func_ty.params().collect::<Vec<_>>();
+    if official_command {
+        let results = func_ty.results().collect::<Vec<_>>();
+        let valid_result = matches!(results.as_slice(), [wasmtime::component::Type::Result(result)]
+            if result.ok().is_none() && result.err().is_none());
+        if !asynchronous || !parameters.is_empty() || !valid_result {
+            return Err("Official command requires async func() -> result".into());
+        }
+    }
     let supplied = if command_mode || official_command {
         &[][..]
     } else {

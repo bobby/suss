@@ -270,3 +270,54 @@ fn runtime_exit_capability_is_unavailable_to_compiled_macro_phase() {
         artifact
     );
 }
+
+#[test]
+fn invalid_official_command_shape_is_rejected_before_guest_initialization() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(
+        root.path().join("app.sus"),
+        "(ns app) (def run (fn [] 73)) (throw 17)",
+    )
+    .unwrap();
+    for declaration in ["func() -> u32", "async func() -> u32"] {
+        std::fs::write(root.path().join("api.wit"), format!("package wasi:cli@0.3.1; interface run {{ run: {declaration}; }} world selected {{ export run; }}")).unwrap();
+        let compiled = Command::new(env!("CARGO_BIN_EXE_suss"))
+            .current_dir(root.path())
+            .args([
+                "compile",
+                "app.sus",
+                "-w",
+                "api.wit",
+                "--export",
+                "wasi:cli/run@0.3.1#run=app/run",
+                "-o",
+                "app.wasm",
+            ])
+            .output()
+            .unwrap();
+        assert!(
+            compiled.status.success(),
+            "{}",
+            String::from_utf8_lossy(&compiled.stderr)
+        );
+        for invoke in [None, Some("run"), Some("wasi:cli/run@0.3.1#run")] {
+            let mut command = Command::new(env!("CARGO_BIN_EXE_suss"));
+            command.current_dir(root.path()).args(["run", "app.wasm"]);
+            if let Some(invoke) = invoke {
+                command.args(["--invoke", invoke]);
+            }
+            let output = command.output().unwrap();
+            assert!(!output.status.success());
+            let error = String::from_utf8_lossy(&output.stderr);
+            assert!(
+                error.contains("Official command requires async func() -> result"),
+                "{declaration}: {error}"
+            );
+            assert!(
+                !error.contains("instantiate"),
+                "guest initializer must not run: {error}"
+            );
+            assert!(output.stdout.is_empty());
+        }
+    }
+}

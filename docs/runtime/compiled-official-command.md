@@ -11,7 +11,9 @@ The component exports `wasi:cli/run@0.3.1#run` with the official asynchronous
 interface. Explicit `--invoke wasi:cli/run@0.3.1#run` and the `run` alias
 select the same command when there is no freestanding `run` export. The host supplies the artifact path as argv[0], including when no
 user arguments are supplied. The adapter excludes argv[0] and passes the remaining
-strings, in order, to the live source `-main` function. Empty strings and Unicode
+strings, in order, to the live source `-main` function. The native runner
+validates the exact async, zero-parameter, payload-free result command signature
+before guest initialization. Empty strings and Unicode
 are preserved. Ordinary completion succeeds regardless of the returned value;
 an uncaught source exception fails. A returned number is not a process exit code.
 

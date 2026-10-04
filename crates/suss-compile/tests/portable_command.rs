@@ -216,3 +216,56 @@ fn embedded_official_command_resolves_argument_and_status_types() {
             .any(|name| name == "wasi:sockets/types@0.3.1")
     );
 }
+
+#[test]
+fn command_uses_live_main_and_initializes_fragments_once_in_order() {
+    use portable::resolve::Phase;
+    use suss_reader::Symbol;
+    use wasmtime::{
+        Store,
+        component::{Component, Linker},
+    };
+    let core = portable::bootstrap::shipped(Phase::Runtime)
+        .unwrap()
+        .clone();
+    let first = portable::prepare_fragment(
+        "(ns app) (def seen 0) (def -main (fn [x] (throw 99))) (set! seen (+ seen 1))",
+        &core.environment,
+        Phase::Runtime,
+    )
+    .unwrap();
+    let second = portable::prepare_fragment("(ns app) (def -main (fn [x] (let [first (= seen 11)] (set! seen (+ seen 1)) (if (= x (if first \"first\" \"later\")) 73 (throw 17))))) (set! seen (+ seen 10))", &first.environment, Phase::Runtime).unwrap();
+    let bytes =
+        portable::command::component(&[core, first, second], &Symbol::namespaced("app", "-main"))
+            .unwrap();
+    let engine = engine();
+    let component = Component::new(&engine, bytes).unwrap();
+    let mut linker = Linker::<Vec<String>>::new(&engine);
+    linker
+        .instance("wasi:cli/environment@0.3.1")
+        .unwrap()
+        .func_wrap("get-arguments", |store, ()| Ok((store.data().clone(),)))
+        .unwrap();
+    for _ in 0..2 {
+        let mut store = Store::new(&engine, vec!["artifact".to_owned(), "first".to_owned()]);
+        store.set_fuel(20_000_000).unwrap();
+        let instance = linker.instantiate(&mut store, &component).unwrap();
+        let interface = instance
+            .get_export_index(&mut store, None, "wasi:cli/run@0.3.1")
+            .unwrap();
+        let run = instance
+            .get_export_index(&mut store, Some(&interface), "run")
+            .unwrap();
+        let run = instance
+            .get_typed_func::<(), (Result<(), ()>,)>(&mut store, &run)
+            .unwrap();
+        assert_eq!(block_on(run.call_async(&mut store, ())).unwrap().0, Ok(()));
+        store.gc(None).unwrap();
+        // Initializers must not reset seen to 11 on repeated command calls.
+        assert_eq!(block_on(run.call_async(&mut store, ())).unwrap().0, Err(()));
+        store.gc(None).unwrap();
+        store.data_mut()[1] = "later".to_owned();
+        assert_eq!(block_on(run.call_async(&mut store, ())).unwrap().0, Ok(()));
+        store.gc(None).unwrap();
+    }
+}

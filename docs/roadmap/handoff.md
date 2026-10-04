@@ -15859,3 +15859,49 @@ CI before ready. Neither full baseline nor CI at this new head is claimed yet.
 The full M3 objective remains active: component-host migration/evaluator retirement,
 rich portable environments, published dependencies, source continuations and
 pending-I/O lifecycle acceptance remain open. No merge or milestone closure.
+
+### Independent PR182 official-command review
+
+Reviewed draft PR182 from 37d336942aadf8baed38f051b4c877292b370999 against
+reviewed parent #181 b3ba99d29c0f1028e005abdc94abf2ef63a46898. Found a significant
+runner preflight gap: the official interface name selected command mode, but an
+incompatible completion signature was rejected only after guest initialization.
+An actual selected-WIT fixture with `wasi:cli/run@0.3.1` and scalar `run` executed
+a throwing initializer instead of rejecting the command shape. Before handle
+54610 exited101:0 passed/1 failed/0 ignored/5 filtered in5.21s,
+`/private/tmp/suss-pr182-review-before.log`.
+
+The native runner now checks the pinned command shape (async, no parameters,
+exactly one payload-free result) before creating/instantiating the guest. Added
+actual malformed sync/async scalar artifacts and exercised default, full-interface
+and alias invocation routes; they reject before initializers. Original assertions
+remain unchanged. Added an independent compiler regression with ordered source
+fragments, redefined live -main, once-only initialization, success/error/recovery
+and GC in two fresh Stores. This is Rust-original validation, no upstream source
+port. ABI and compiler source identity are unchanged by CLI/integration-test fixes;
+no unnecessary bootstrap regeneration is claimed.
+
+Commands use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and
+CARGO_BUILD_JOBS=2, no RUSTFLAGS. Focused21621 exited0: cargo test -p suss-cli
+--locked --test compiled_official_command --test compiled_aot_async_command
+--test compiled_aot_command -- --test-threads=2;12/0/0/0 filtered in3 groups
+(official6 in61.04s, async2 in17.36s, typed4 in35.98s).
+`/private/tmp/suss-pr182-review-focused.log`. Compiler63653 exited0: cargo test
+-p suss-compile --locked --test portable_command -- --test-threads=2;4/0/0/0
+filtered in3.13s, `/private/tmp/suss-pr182-review-compiler.log`.
+Java-free50953 exited0: sh scripts/verify-bootstrap.sh; BOTH phase pairs
+reproduced byte-exact twice and against checkout, source/WIT/lock identities
+verified, bootstrap4/0/0/0 filtered in12.84s.
+`/private/tmp/suss-pr182-review-javafree.log`. Python12037 exited0: all118 checks
+pass in4.822s, `/private/tmp/suss-pr182-review-python.log`. Final frozen-head
+unfiltered baseline and replacement exact-head CI remain pending.
+Initial CI37193851620 at37d3369 is superseded by this review fix.
+
+Next concrete unblocked M3 task is actual primitive initializer AST `:op`/`:val`
+from retained source records, compared with fresh pinned scalar projections and
+without fabricated JavaScript operations. Preserve `suss/lowering`; the complete
+portable operation/value/child schema remains separate and unfinished. Source rooted continuations and cancellation
+remain a separate foundation. Neither is completed by this command increment.
+Full WIT capabilities, rich environments, component-host migration, evaluator
+retirement, published dependencies and original lifecycle gates remain open.
+No merge, issue closure or M3 completion is claimed.
