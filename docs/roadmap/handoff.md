@@ -1,3 +1,24 @@
+## Independent PR170 review — portable scalar AOT assembly
+
+Reviewed exact273ecbfe801c3ccbd71ce061b6b5234e191eadde against169 repair8651246:
+actual component assembly, prepared-artifact compiler/phase guards, unique live
+cell mappings, start initializer source order, mixed scalar conversion and
+language exception payloads. No significant scoped production defect found.
+Original five compiler assertions retained. Added two actual component regressions:
+first initializer throws17 before later99, with independently decoded original
+exception payload; mixed f32/bool/f64 argument order and binary64 promotion in
+both branches, signed NaNs through f64->f32 afterGC. Focus16420 TERMINAL0:
+7passed/0failed/0ignored in0.79s, /private/tmp/suss-pr170-review-focused.log.
+Changes only integration tests/docs, so compiler source fingerprints/bootstrap
+remain unchanged from root's Java-free reproduction. Rustfmt2024/diffcheck pass.
+Current direct canonical signatures are limited to16scalar parameters; larger
+signatures still require indirect-memory lowering and fail validation. Complete
+WIT/frontend migration, evaluator retirement and original M3 lifecycle/scheduler
+remain open. Next push/freeze review head then run exact required full command:
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2. No RUSTFLAGS.
+Full baseline/exact-head CI pending, no issue closure/merge/M3 completion claim.
+
 ## Independent PR167 review — artifact identities
 
 Reviewed section parsing/body preservation, compiler/ABI/phase/target/flag gates,
@@ -14188,3 +14209,196 @@ readiness, merge, issue closure or M3 completion is claimed. Full component/AOT
 commands, published dependency policy, evaluator retirement and scheduler/
 cancellation/live heap acceptance remain open; root will rebase its isolated
 component continuation onto this fix before retrying its separate validation.
+## Portable AOT component assembly preparation — unvalidated working branch
+
+Created /private/tmp/suss-m3-aot-bindings on portable/m3-aot-bindings from PR169's
+reviewed9bb4826d0dbb71ed5e06df4105a9e6aa068ee7b5. New original portable/aot.rs
+assembles already prepared Runtime fragments with the same runtime and canonical
+core/source cell module. Its private adapter runs source eval functions once in
+fragment order at instantiation and maps explicit selected WIT exports to live
+cells through universal invocation. Initial supported boundary shapes are pure
+freestanding bool/f32/f64 functions, including void results and scalar aliases;
+imports/interfaces/resources/composites/other scalars/async return explicit
+unimplemented development diagnostics. Existing compile commands remain legacy;
+this does not claim their migration or evaluator retirement.
+
+Four unrun executing tests are prepared: three compiler tests for actual typed
+component calls, effect ordering/old captures/live redefinition, fresh instances,
+GC, finite binary64 bits and f32 rounding/bool conversion, no hidden world imports,
+wrong-result language exception payload, and missing/duplicate/unknown/unsupported
+mappings; one CLI test expands an actual compiled source macro against the shipped
+core catalog then packages/executes its Runtime artifacts as a component, checking
+macro version records, effects before/after calls and GC. The compiler reexports
+its pinned Resolve/WorldId types, so no new CLI dependency or lock change is needed.
+Rustfmt of new files and git diff --check pass. No native/Cargo job ran here.
+
+PR169 independent reviewer /root/review_pr150 exclusively owns its source worktree
+and sole local heavy slot. Its compiler3/0/0 and Java-free byte-exact bootstrap4
+pass; required unfiltered full78630 remains live at frozen9bb4826 with no observed
+failure. Do not poll its handle, edit its source, or start another heavy job until
+explicit terminal/release. CI16937165044185, CI16637163815939 atc101 and
+CI16737163816000 at768a remain exact-head validation gates. PR166/167 original
+local baselines passed; their user-requested history-only rebase preserves every
+non-handoff source/test/artifact byte, with accurate launch/completion provenance.
+
+Next after reviewer releases slot: clean ONLY four Suss packages in shared target
+/private/tmp/suss-m3-pr143-target, run cargo test -p suss-compile --locked --test
+portable_aot -- --test-threads=2 first, repair actual build/validation/execution
+failures without changing expectations to success. Regenerate BOTH bootstrap
+Wasm/JSON with --profile test because compiler source changed, then run the new
+CLI compiled_aot test, Java-free verification and appropriate affected suites.
+Use CARGO_BUILD_JOBS=2, never RUSTFLAGS. Test unsupported/public metadata policies
+before any AOT frontend migration; complete selected-WIT adapters and one source
+pipeline, then remove obsolete evaluator only with associated acceptance tests.
+All original M3 issues, published dependency loading and scheduler/cancellation/
+live heap criteria remain open; no merge, closure or completion claim.
+
+### AOT execution attempt and component import finding
+
+Focused compiler attempt42372 terminated101 with a test-helper type error:
+Symbol::new received &&str. Dereferencing the helper input fixed compilation
+without changing assertions. Retry8298 terminated101: one passed, two failed
+in /private/tmp/suss-aot-compiler-fixed.log. The negative mapping/unsupported
+boundary test passed; both executing fixtures failed component validation because
+the generated core initializer duplicated the runtime factory import named
+primitive-unsigned-bit-shift-right-function. Standalone module acceptance was
+insufficient evidence for component packaging. No component execution success is
+claimed and the CLI compiled_aot test remains unrun.
+
+Returned the significant finding to PR169's independent reviewer, who reproduced
+it with an actual component regression before repairing factory import sharing.
+The reviewer exclusively owns the heavy slot for regenerated assets, affected
+validation and a new frozen-source full baseline. The prior 9bb4826 baseline
+passed 1120 tests with zero failures and 17 existing ignored, but cannot certify
+the repaired compiler source. PR169 remains draft; its body records this finding.
+Root has no live Cargo/native job and will rebase this unpublished AOT work onto
+the repair after it is pushed. A fourth compiler regression is now prepared for
+two distinct WIT exports mapping the same live source cell; it is unrun and the
+adapter currently imports per export, so that likely packaging defect must be
+reproduced and fixed in this AOT branch. Existing acceptance assertions remain.
+
+### Repaired base and current validation gates
+
+Rebased the unpublished AOT checkpoint onto PR169 repair8651246; only appended
+handoff text conflicted and both records were preserved. Local AOT checkpoint
+78a26eb remains unpublished and its four compiler/one CLI tests have not been
+rerun against the repaired base. PR169's new unfiltered full25664 is still live
+at clean8651246; repaired exact-head CI37166794686 remains pending. Reviewer
+owns the sole heavy slot. Root must wait for terminal status and explicit release
+before cleaning the four Suss packages and retrying AOT execution.
+
+Independent reviewers completed the authorized history-only re-review of PR166
+and PR167. Root independently verified PR heads against terminal successful CI:
+166 c10192b951f938bae41b38966640226ced29f477/run37163815939 and
+167 768a1e09cf6258c2fc2f45205fe89a0b6eaf902f/run37163816000. Their prior full
+baselines remain source-equivalent evidence (1109/0/17 and1117/0/17 respectively),
+with precise launch/completion provenance above. Both PRs were marked ready for
+review and their bodies updated; neither was merged. Issue14 progress comment:
+https://github.com/bobby/suss/issues/14#issuecomment-5975234495 . PR169 remains
+draft and no M3 issue acceptance criterion or milestone is declared complete.
+
+### AOT continuation while repaired baseline runs
+
+Authoritative remote inspection confirms PR169 remains draft at8651246 and
+CI37166794686 is in progress at that exact head. The reviewer polled actual
+full25664 and confirmed it remains live in metadata snapshot/catalog acceptance;
+root launched no heavy job. The prior goal turn made progress through repair
+publication, AOT rebase and successful final-head CI readiness for166/167.
+
+Expanded the existing wrong-result component regression without removing its
+language exception payload assertion: bool nil exercises invalid i31 sentinel,
+bool number exercises the non-i31 guard, and f32 false/f64 nil exercise numeric
+result type guards. Each case uses a fresh actual component instance. These
+expanded assertions are unrun. Rustfmt and git diff --check pass. Next action
+remains retrying focused portable_aot only after reviewer terminal/release, with
+shared target cleanup limited to the four Suss packages. The original milestone
+scope and all pending M3 acceptance criteria remain unchanged.
+
+### AOT repeated export cell import repair prepared
+
+Static inspection of adapter assembly confirms that two WIT exports mapping one
+Global emitted duplicate module/name global imports. Prepared original Rust
+repair records deterministic first-occurrence global indexes and reuses that
+import across separate wrappers. Wrappers still load the live cell on every call;
+source initializer ordering and exported function indexes are unchanged. The
+existing two-export/shared-var regression remains unchanged and unrun.
+
+This repair is unvalidated. Before accepting it, save the patched aot.rs, restore
+that file from local checkpoint3e6fe3d, and run only the shared-var regression to
+observe the actual component validation failure against prior source; restore
+the repair and run the complete focused portable_aot suite. Preserve original
+failure output and all assertions. Both compiler fingerprints then differ from
+shipped bootstrap identities; regenerate BOTH phase Wasm/JSON only after final
+source is fixed, before CLI compiled_aot and Java-free verification. Do not run
+Cargo while PR169 reviewer owns full25664's heavy slot. No new PR is published.
+
+### AOT phase guard regression prepared
+
+Added a fifth compiler regression using genuinely compiled Macro and Runtime
+fragments. The final Runtime catalog resolves the WIT export; the preceding
+Macro artifact must then be rejected with the phase identity diagnostic before
+component assembly. This keeps AOT phase separation aligned with native loading.
+The test is unrun; no success claim. Rustfmt and git diff --check pass.
+
+PR169 reviewer polled full25664 live after the metadata suite completed3/0/0
+in517.17s and subsequent forms/indexed-data suites passed. Exact repaired-head
+CI37166794686 remained in progress on authoritative remote inspection. Root
+launched no heavy job; the sole slot still belongs to the reviewer. The next
+unblocked action remains the shared-export regression against prior aot.rs,
+then restored repair plus full portable_aot focus after terminal/release.
+
+## Portable AOT component actual validation — 2026-10-03
+
+PR169 repaired-source full25664 terminated0 at clean8651246:1121 passed,
+0 failed,17 existing ignored across125groups. Independent reviewer reports no
+remaining significant scoped findings and explicitly released the heavy slot.
+Exact-head CI37166794686 remained pending; PR169 stayed draft. Recorded repaired
+full proof: https://github.com/bobby/suss/issues/14#issuecomment-5975399999 . Root
+took the sole heavy slot and cleaned only four Suss packages (3.5GiB).
+
+AOT controlled before19910 TERMINAL101:0/1/0,4filtered,0.01s;
+/private/tmp/suss-aot-shared-cell-before.log. Saved final aot.rs and restored
+that file from3e6fe3d while retaining the same shared-var test. Actual component
+validation rejected duplicate suss.bindings.runtime:user/shared import. Restored
+the import-sharing repair; complete focus87283 TERMINAL0:5/0/0,0.64s;
+/private/tmp/suss-aot-shared-cell-fixed.log. Command: cargo test -p suss-compile
+--locked --test portable_aot -- --test-threads=2. All five actual component and
+phase/mapping regressions pass; no acceptance assertion was relaxed.
+
+Both bootstrap Wasm/JSON regenerated81410 TERMINAL0 with cargo run --profile test
+-p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap;
+/private/tmp/suss-aot-regenerate.log. CLI first92127 TERMINAL101: test helper
+incorrectly unwrapped the manifest twice, corrected without assertions changing.
+Retry77141 TERMINAL101: actual source preparation could not resolve user/twice
+because the fragment inherited suss.core from bootstrap. The fixture now supplies
+explicit (ns user), keeping all macro identity/effect/GC assertions. Retry81420
+TERMINAL0:1/0/0 in4.41s, /private/tmp/suss-aot-compiled-macro-namespace.log.
+Earlier errors remain in /private/tmp/suss-aot-compiled-macro.log and
+/private/tmp/suss-aot-compiled-macro-fixed.log; they are not execution passes.
+Command: cargo test -p suss-cli --locked --test compiled_aot -- --test-threads=2.
+
+Java-free39926 TERMINAL0: both phase Wasm/JSON reproduce byte-exactly twice and
+match shipped files, bootstrap4/0/0 in12.78s;
+/private/tmp/suss-aot-javafree.log, sh scripts/verify-bootstrap.sh. Initialized
+the development submodule from the existing local clone at exactc4295f3; no
+floating dependency. Python72852 TERMINAL0:118/0 in4.931s,
+/private/tmp/suss-aot-python.log, python3 -m unittest discover -s scripts -p
+'test_*.py'. All Rust commands use shared target /private/tmp/suss-m3-pr143-target,
+CARGO_BUILD_JOBS=2 and no RUSTFLAGS. Root's next affected core-binding/module
+suite remains pending at this record; no concurrent native/JVM/Node build runs.
+
+Updated ROADMAP, compatibility inventory and docs/runtime/compiled-aot-components.md
+with actual focused evidence and limitations. Existing CLI compile commands
+remain legacy; full selected-WIT boundaries, published dependency loading,
+evaluator retirement, scheduler/cancellation/live heap acceptance remain original
+M3 scope. No merge, issue closure or milestone completion. Next after affected
+suite: freeze/push a draft linked Refs12/14/15, dispatch independent PR review,
+push significant fixes and require one final-source full baseline plus exact-head
+CI before readiness. Then continue complete AOT/frontend work, preserving scope.
+
+Affected compiler7432 TERMINAL0: core binding4/0/0 in0.61s and source modules
+11/0/0 in1.16s (15 passed total), /private/tmp/suss-aot-affected.log. Command:
+cargo test -p suss-compile --locked --test compiled_core_bindings --test
+portable_modules -- --test-threads=2, shared target/jobs2, no RUSTFLAGS.
+All root native/Cargo handles are terminal. Frozen-source full baseline and
+independent review/exact-head CI for this new AOT change remain pending.
