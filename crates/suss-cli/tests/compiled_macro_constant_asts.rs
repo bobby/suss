@@ -219,12 +219,18 @@ fn reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_c
             unreachable!()
         };
         assert!(matches!(&fields[3].kind, Kind::String(s) if s == &[0x61, 10, 0x22, 0x62]));
-        for row in &rows[3..] {
+        for (index, row) in rows[3..].iter().enumerate() {
             let Kind::Vector(fields) = &row.kind else {
                 panic!("nonconstant fields")
             };
-            assert!(matches!(fields[0].kind, Kind::Bool(false)));
-            assert!(matches!(fields[1].kind, Kind::Nil));
+            if index == 0 {
+                assert!(matches!(fields[0].kind, Kind::Bool(true)));
+                assert!(matches!(&fields[1].kind, Kind::Keyword(k)
+                    if k.namespace.is_none() && k.name == "local"));
+            } else {
+                assert!(matches!(fields[0].kind, Kind::Bool(false)));
+                assert!(matches!(fields[1].kind, Kind::Nil));
+            }
             assert!(
                 matches!(fields[2].kind, Kind::Bool(false)),
                 "a scalar runtime result does not fabricate a source constant"

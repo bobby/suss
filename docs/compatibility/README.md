@@ -809,3 +809,14 @@ See [scalar source ASTs](../runtime/compiled-macro-constant-asts.md) and the
 invocation/child AST schema, evaluator retirement and pending-I/O/live-heap
 lifecycle acceptance remain open. Independent review/full baseline/final CI are
 pending for this increment; no declaration, issue or milestone is closed.
+
+Source-local initializer ASTs now derive `:op :local`, declaration `:info` and
+selected binding fields from retained symbol resolution. Six fresh pinned
+projections (let/shadow/loop/fixed argument/rest argument/named self) agree with
+actual compiled macro execution in both caller phases, including GC and shared
+declaration/initializer identity. The parent native regression failed; the
+repair passes all39affected tests across7groups. No runtime value inference or
+initializer replay. [Scope and provenance](../runtime/compiled-macro-local-reference-asts.md)
+remain partial: global/field/quote/compound/invocation/children and complete source
+AST acceptance are open, as are the other original M3 gates. Independent review,
+full workspace baseline and final-head CI are required for the new increment.

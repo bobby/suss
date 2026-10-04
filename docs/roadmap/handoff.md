@@ -16037,3 +16037,105 @@ No merge, issue closure or M3 completion. Next genuine compound/quote/variable/
 invocation/child/function/declaration AST schema still needs fresh native/pinned
 execution; evaluator retirement, target/dependency integration and rooted pending-I/O
 cancellation/live-heap gates remain accepted requirements, not exclusions.
+
+## Next source-local reference AST increment prepared
+
+Root isolated /private/tmp/suss-m3-source-ast-records on
+portable/m3-source-ast-records, parent reviewed PR183 head
+e315372dc4fd7d6f24cda34be3b3299cd2754f37. Required design, roadmap, inventory and
+handoff reread; M2 remains completed and M3 remains in progress. Pinned
+analyzer.cljc analyze-symbol4100–4120 copies actual local declaration info and
+selects name/local/arg-id/variadic?/init, independent of runtime value. The
+retained SourceAnalysis.resolved local declaration provides the corresponding
+native source identity; no HIR operation inference or source reexecution needed.
+
+Prepared six-case development oracle and matching executed native regression:
+let, shadowing, loop, fixed/rest argument and named function self-reference.
+Candidate observations are UNVERIFIED until fresh pinned compilation/execution.
+No production repair or acceptance claim yet. Native before-run and pinned
+oracle await explicit release of PR183 reviewer's sole heavy slot. Root owns no
+live Cargo/JVM/Node handle. PR183 review full97943 and exact-head CI37196801835
+remain live; do not restart on observation timeouts or mutate its exclusive tree.
+No issue closure, PR merge, or M3 completion.
+
+Fresh pinned local-reference oracle97275 TERMINAL0:
+CARGO_BUILD_JOBS=2 sh scripts/test-local-reference-asts-oracle.sh. Actual forced,
+cache-disabled JVM compilation and Node execution agree with all6candidate
+observations, including declaration/initializer identity and field presence.
+/private/tmp/suss-local-reference-oracle.log. Parent native78304 TERMINAL101:
+0passed/1failed/0ignored/0filtered5.54s; op/local/info absent on each genuine
+reference. /private/tmp/suss-local-reference-before.log. Repaired native graph
+from retained source symbol/local resolution, sharing canonical local and
+initializer recipes. Updated earlier scalar test's local-read expectation to
+:local while preserving all absence-of-constant-value and native-lowering checks;
+arithmetic remains unclassified. Affected7group run34453 currently LIVE:
+/private/tmp/suss-local-reference-after.log. Root holds sole heavy slot; do not
+start another heavy job until this actual handle is terminal.
+
+PR183 reviewer150 explicitly released slot after actual full97943 TERMINAL0.
+Root independently counted complete log:137groups/1181passed/0failed/17existing
+ignores/0filtered, through final readerdoctests. Parent head stays frozene315;
+exact CI37196801835 still live. This does not certify the new source-local code.
+
+Source-local affected34453 TERMINAL0:39passed/0failed/0ignored/0filtered across
+7groups, including unchanged graph11/bindings8/scalars3/env3/tags2/syntaxquote11
+and newreferences1. /private/tmp/suss-local-reference-after.log. Added negative
+local-callee invocation/effect-once check, then focused56867 TERMINAL0:
+1passed/0failed/0ignored/0filtered8.34s in both caller phases after GC.
+/private/tmp/suss-local-reference-invocation.log. Python28047 TERMINAL0:
+118passed4.867s, PYTHONPYCACHEPREFIX=/private/tmp/suss-m3-local-reference-python-cache
+python3 -m unittest discover -s scripts -p 'test_*.py'.
+/private/tmp/suss-local-reference-python.log. Restricted rustfmt edition2024 and
+git diff --check pass; unrelated graph bytes preserved outside ast_record.
+
+Only CLI host transport/tests/docs/development projections changed; compiler,
+core, reader, locked/build inputs and BOTH phase bootstrap bytes are unchanged.
+No image regeneration needed. Root has no live heavy handle, explicitly releases
+slot for the independently dispatched new PR reviewer. New full baseline and
+exact final-head CI remain REQUIRED; parent PR183 acceptance is not child proof.
+Next unblocked work after review is genuine global-reference source AST facts,
+then quote/compound/children and all remaining original M3 requirements. No merge,
+issue closure or milestone completion.
+
+## PR184 independent source-local AST review
+
+Reviewed initial6eff0bd69e064daa17d7255dcf2d7301888c75a8 against frozen
+PR183e315372dc4fd7d6f24cda34be3b3299cd2754f37. Required design/roadmap/inventory/
+handoff and pinned analyze-symbol/source binding construction inspected. No
+significant scoped production defect found. Source symbols use retained resolved
+local identities; invocation lists remain unclassified rather than inheriting
+callee local facts. Original scalar nonconstant-value assertions remain intact.
+
+Independent fresh oracle75621 TERMINAL0: CARGO_BUILD_JOBS=2 sh
+scripts/test-local-reference-asts-oracle.sh; forced cache-disabled pinned JVM
+compilation plus actual Node execution agree with all six exact observations
+and all six artifact projections. /private/tmp/suss-pr184-review-oracle.log.
+Added native review regression checks an initializer's declaration identity in
+its own environment after a later same-name shadow, separate declaration versus
+reference metadata, variadic named self-reference and catch-alias source locals.
+Both Runtime and Macro callers execute these graph queries after GC. Original
+six-case corpus, invocation effects and scalar/binding/source-tag checks remain.
+
+Initial new-fixture run89388 TERMINAL101: references1passed/1failed in8.46s;
+new catch syntax omitted :default and the compiler correctly rejected it. Only
+that new fixture was corrected to accepted ClojureScript catch syntax; no
+production behavior or existing expectation changed. Final72396 TERMINAL0:
+15passed/0failed/0ignored across4groups (bindings8/scalars3/references2/tags2).
+References2 finished10.64s; source-tags2 finished13.64s. Command:
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-cli --locked --test compiled_macro_local_reference_asts
+--test compiled_macro_constant_asts --test compiled_macro_binding_records
+--test compiled_macro_source_tags -- --test-threads=2.
+Logs /private/tmp/suss-pr184-review-{focused,focused-fixed}.log.
+
+Only test/evidence bytes changed during review; compiler/reader/core/build/lock
+fingerprints and BOTH phase images remain unchanged. Restricted rustfmt2024 and
+git diff --check pass; unrelated graph bytes preserved. Reviewer owns sole heavy
+slot until actual required full terminal. Next freeze/push and run exactly
+cargo test --workspace --locked -- --test-threads=2 unfiltered, polling the same
+actual handle rather than restarting on observation timeout. Exact final-head
+CI remains required; parent proof cannot certify this increment. No merge or
+issue closure. Global/field references, quotes/compound/logical children and
+complete declaration/function/method/inference schema, evaluator retirement,
+target/dependency integration and rooted pending-I/O cancellation/live-heap
+requirements remain original open M3 gates.

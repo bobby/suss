@@ -50,3 +50,10 @@ including the three constant tests in both caller phases after GC. An independen
 fresh pinned run retains all 32 earlier observations and 11 executed projections,
 plus the five scalar AST observations. No scoped significant defect was found.
 Full reviewed-head baseline and exact final-head CI remain required.
+
+The subsequent [local reference increment](compiled-macro-local-reference-asts.md)
+adds genuine `:local` operation/declaration fields for resolved lexical symbols.
+The earlier local-read test now checks that operation while retaining absent
+constant-value and separate native-lowering assertions; arithmetic remains
+unclassified. This supersedes only the earlier partial absence-of-operation
+expectation for lexical reads.

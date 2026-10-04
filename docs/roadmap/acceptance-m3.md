@@ -95,3 +95,10 @@ then audit and retire the remaining evaluator paths and implement rooted
 continuations/pending-I/O cancellation plus live memory accounting. Keep this
 matrix aligned with implementation, inventory and actual terminal evidence;
 do not turn outstanding requirements into exclusions to make M3 complete.
+
+The subsequent source-local reference increment adds actual `:local` operation,
+selected binding fields and shared declaration/initializer identity, with six
+fresh pinned observations and both caller-phase native execution. This narrows
+the unfinished reference schema; global/field references and full portable AST
+schema remain open. It does not change any original M3 acceptance requirement.
+See [scope/evidence](../runtime/compiled-macro-local-reference-asts.md).

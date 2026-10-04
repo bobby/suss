@@ -1645,6 +1645,39 @@ impl<'a> AnalysisGraph<'a> {
             fields.push(("op", self.keyword("const")?));
             fields.push(("val", form));
         }
+        // Only a genuine resolved source symbol is a local reference. A list
+        // head may resolve to a local too, but its AST is an invocation, not a
+        // reference. Share canonical declaration/initializer graph recipes.
+        if matches!(&source.form.kind, Kind::Symbol(_)) {
+            if let Some(hir::SourceBinding::Local(binding)) = &source.resolved {
+                fields.push(("op", self.keyword("local")?));
+                fields.push(("info", self.local(binding, depth + 1)?));
+                fields.push(("name", self.form(&binding.declaration, depth + 1)?));
+                fields.push((
+                    "local",
+                    self.keyword(match binding.source_kind() {
+                        hir::LocalKind::Let => "let",
+                        hir::LocalKind::Loop => "loop",
+                        hir::LocalKind::Argument { .. } => "arg",
+                        hir::LocalKind::FunctionName => "fn",
+                        hir::LocalKind::Catch => "catch",
+                    })?,
+                ));
+                if let hir::LocalKind::Argument { index, .. } = binding.source_kind() {
+                    fields.push(("arg-id", self.number(index)?));
+                }
+                if let SourceRole::FunctionName {
+                    variadic,
+                    methods: Some(_),
+                } = &binding.source_role
+                {
+                    fields.push(("variadic?", self.flag(*variadic)?));
+                }
+                if let Some(initializer) = &binding.initializer {
+                    fields.push(("init", self.ast(initializer, depth + 1)?));
+                }
+            }
+        }
         if let Some(tag) = &source.tags.tag {
             fields.push(("tag", self.form(tag, depth + 1)?));
         }
