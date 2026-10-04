@@ -681,3 +681,10 @@ before every lookup; loaded source versions remain stable until explicit reload.
 The binary64 test executes two distinct NaN payloads and a real cache hit.
 This cache evidence does not certify published user artifact manifests, evaluator
 retirement or complete M3; independent review/full baseline/final CI are pending.
+
+[Artifact identity evidence](../runtime/artifact-identities.md) includes the
+actual before-fix acceptance of an incompatible compiler build, then rejection
+before bindings change, independently decoded old17, actual macro version
+records and compiled execution. Compiler3, native2+cache6, lifecycle6 and
+affected54 pass; Java-free bootstrap4 and Python118 pass. Review/full/final CI
+remain pending. This does not certify full published dependency loading or M3.

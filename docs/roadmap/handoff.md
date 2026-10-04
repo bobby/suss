@@ -1,3 +1,105 @@
+## Independent PR167 review — artifact identities
+
+Reviewed section parsing/body preservation, compiler/ABI/phase/target/flag gates,
+known-empty versus unknown provenance, immutable loaded macro graphs and166
+incomplete-load bypass, bootstrap source/core identity and cache rejection accounting.
+No significant scoped production defect found. Original regressions unchanged.
+Added exact byte preservation for custom sections before/after identity, deterministic
+reannotation, old-digest rejection after appended section and final Wasm validation.
+Compiler17567 TERMINAL0:4passed/0failed/0ignored in0.01s;
+/private/tmp/suss-pr167-review-unit.log. Added actual native valid-preceding batch
+rejection of a correctly sealed wrong-phase artifact: unchanged entire SessionStats,
+ghost absent, keep17 retained and recovery23. Lifecycle82096 TERMINAL0:7/0/0 in0.16s;
+/private/tmp/suss-pr167-review-native-gates.log. Compiler test-source fingerprint
+change required both phase Wasm/JSON regeneration78823 TERMINAL0. Java-free52775
+TERMINAL0: both regenerated phase Wasm/JSON byte-exact, compiler identities verified,
+four executing bootstrap tests passed22.92s; /private/tmp/suss-pr167-review-javafree.log.
+Commands use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and CARGO_BUILD_JOBS=2;
+no RUSTFLAGS. Git diff check passed. Next freeze/push reviewed head for required
+cargo test --workspace --locked -- --test-threads=2 and exact-head CI.
+Full baseline/CI pending; no merge/issue closure/full M3 claim. Published user
+artifact loader policy, AOT migration/evaluator retirement and scheduler remain open.
+
+Affected24268 TERMINAL0:54passed/0failed/0ignored across5groups: bootstrap4
+11.95s; nativeentry10 23.34s; phase3 4.65s; namespace4 5.18s; persistence33 0.82s.
+Javafree72196 TERMINAL0: both phase Wasm+JSON exactly reproduced, compiled source
+identity verified, bootstrap4/0/0 in12.67s; Python16633 TERMINAL0:118 in4.955s.
+Logs /private/tmp/suss-artifact-identity-{affected,javafree,python}.log.
+Root diff --check passes; all heavy jobs terminal. Root next: commit/push/open
+artifact identity draft stacked on166; dispatch independent review/fixes and
+transfer sole heavy slot, requiring exact final-head full baseline and CI.
+No merge/issue closure/full gate claim. Pending166 CI still authoritativeLIVE.
+
+PR165 exact-headCI37158510889 COMPLETEDSUCCESS at reviewed8b8903; root verified
+unchanged open head, updated body, marked ready without merge, and recorded proof
+https://github.com/bobby/suss/issues/14#issuecomment-5974635669 . Required reviewed
+full1098/0/17/122groups passed. PR166 required full68021 TERMINAL0 at c525:
+1109passed/0failed/17existingignores/123groups; reviewer released heavy slot,
+root updated body. Its exactCI37160738097 still LIVE; remains draft.
+
+Artifact branch root now owns sole heavy slot. Four-packageclean terminal0
+removed3.8GiB. Regeneration30328 TERMINAL101: pinned wasmparser offsets areu64,
+notusize; corrected checked conversions/get bounds. Regeneration83515 TERMINAL0
+refreshed BOTH phase Wasm+JSON with source identity records and compiler hash.
+BEFORE5299 TERMINAL101: actual stale tagged artifact accepted/instantiated,
+0pass/1fail in0.14s; /private/tmp/suss-artifact-identity-before.log.
+Wired native identity/phase guard before allocation; focus66213 TERMINAL0:
+compileridentity3/0/0 in0.01s; exactnativegate1/0/0 in0.16s; nativeidentity2/0/0
+in2.63s and cache6/0/0 in2.94s. All original assertions retained.
+Strengthened native gate adds preceding valid artifact and independently reads
+old17; lifecycle47228 TERMINAL0:6/0/0 in0.16s. Logs under
+/private/tmp/suss-artifact-identity-{unit,fixed,native,session-gates}.log.
+
+Affected24268 LIVE, /private/tmp/suss-artifact-identity-affected.log, command
+cargo test -p suss-cli --locked --test compiled_native_entrypoints
+--test compiled_bootstrap --test namespace_session --test compiled_phase_session
+--test persistent_session -- --test-threads=2, sharedtarget/jobs2. Root source
+frozen while job live. Next same-handle terminal inspection, Java-free verifier,
+Python118/pinned inventory, final diff/evidence, commit/push/draft stacked166,
+independent reviewer fixes and exact final-head full+CI. No AOT/dependency-loader,
+evaluator-retirement, scheduler or full-M3 success claim. Issues12–15 remain open.
+
+Root next-task worktree /private/tmp/suss-m3-artifact-identities, branch
+portable/m3-artifact-identities, based on reviewed cache c525c192f77e7a9a146cd5292f33ec64f3912b7b.
+Reviewer owns sole heavy slot: required cache full68021 LIVE, log
+/private/tmp/suss-pr166-review-full-final2.log; prior46757 cancelled143 for the
+significant incomplete-provenance fix, never acceptance. Latest authoritative
+metadata3/0/0 in415.92s and later sourceform10/0/0 in19.84s, now later suites;
+no failures so far. Exact cacheCI37160738097 LIVE. PR165 exactCI37158510889 LIVE,
+independent full1098/0/17/122groups terminal0. Both remain draft, no merge/closure.
+Root updated PR166 body and issue14 with pushed significant fixes and live gates.
+
+New artifact identity code is PREPARED/UNEXECUTED. Original Rust module
+portable/artifact_identity.rs records compiler-source/ABI/target/profile/flags,
+source/path/phase and optional macro source graph, plus Wasm body integrity.
+None is explicit unknown, not empty graph. Generic external hosts remain unknown;
+compiled host ledger uses166 incomplete-source bypass. Common portable source
+and bare IR emission attach identities; bootstrap generation records actual
+phase/source/core-import manifest. Wasm body bytes outside the identity section
+are preserved. Prepared three compiler and two native checks are UNEXECUTED.
+Native install guard is DELIBERATELY NOT WIRED yet: added real Session::install
+regression expects incompatible same-package compiler bytes rejected before any
+cells/catalog/residency change; it must execute and fail before gate correction.
+No semantic support/evidence promotion and no success claims.
+
+NEXT once reviewer explicitly releases slot: four-package sharedtarget clean
+only (CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target, CARGO_BUILD_JOBS=2,
+never RUSTFLAGS); regenerate BOTH bootstrap Wasm+JSON with cargo run --profile
+test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap (new compiler
+identity code changes both Wasm images, not just JSON). Execute BEFORE regression:
+cargo test -p suss-cli --locked --lib
+session_lifecycle_compiler_build_identity_is_checked_before_any_cells --
+--test-threads=2. Confirm actual old native gate accepts stale tagged artifact,
+then wire artifact_identity::verify with Expected phase before allocation in
+Session::install. Run focused compiler artifact_identity tests, native
+compiled_artifact_identities and this exact gate case; affected compiled cache,
+bootstrap/phase/namespace/session suites. Verify Java-free reproduction/Python,
+document actual failures/results, then commit/push/open draft and dispatch
+independent reviewer requiring fixes, final-head full and CI. Keep original M3
+scope: complete user dependency-loader comparison, component/AOT and evaluator
+retirement, scheduler/cancellation/live heap criteria remain unfulfilled. No
+published AOT or full-M3 claim from metadata/manifest-only proof.
+
 Java-free11653 TERMINAL0: refreshed bootstrap identities reproduced byte-for-byte,
 identity verified, four bootstrap tests passed11.79s. Python42450 TERMINAL0:
 118tests in5.066s. Root diff --check passed. No Wasm/core source content change;
@@ -13808,3 +13910,43 @@ restored the fix and reran all six (6188, log
 /private/tmp/suss-pr166-review-native-complete.log). CLI-only continuation leaves
 both previously reproduced compiler identities/Wasm unchanged. Next push/freeze
 new exact review head and run one required unfiltered full plus final-head CI.
+
+
+## Stack #168 rebase — 2026-10-03
+
+At the user's request, ran `gh stack checkout 168`, `gh stack rebase` and
+`gh stack rebase --continue` in the existing worktrees. gh-stack0.2 migration
+initially rejected divergent legacy catalog definitions for stacks137/163.
+Backed up the stale suss1 catalog to
+/private/tmp/suss-stack168-catalog-backup.json, then reconciled only its duplicate
+entries with the recorded successful137/163 worktree catalogs. No branch content
+was changed by this tracking repair. Checkout imported the five-branch stack and
+selected the existing /private/tmp/suss-m3-artifact-identities worktree.
+
+Stack168's configured trunk is portable/m3-self-local-method-facts d60b852,
+whose complete tree matches current main8d83fa0. The first conflict replayed
+67already-merged prerequisite commits. Verified old0775317 and trunkd60b852
+differ only by40added handoff lines; all source/tests/artifacts are identical,
+and first stack commit1b00a6c directly follows0775317. Omitted only duplicate
+prerequisite picks, retained every stack-specific commit, and resolved the one
+remaining handoff append conflict by preserving both entries. Cascading rebase
+completed in the branches' existing worktrees.
+
+#162 1d4beb3 -> 5b2e899; #164 2cb66f3 -> 74d7a33; #165 8b89031 -> e5916c7; #166 c525c19 -> c10192b; #167 71b1511 -> 3cab86d.
+
+All five non-handoff trees exactly match their original heads. Before this new
+record, each handoff diff only inherited the stack163 record (38added lines after
+blank-line overlap). Independent reviews were dispatched individually for
+PR162/164/165/166/167 to verify retained patches, content and parent ancestry.
+`git diff --check` passed. No new semantic regression or source fix was needed.
+No fresh native/JVM/Node run was launched for this history-only change; the
+required exact71b1511 full baseline was already running in
+/private/tmp/suss-pr167-review-full-final.log. Its pending status is not a passing
+full-baseline claim, and earlier CI does not certify new commit IDs.
+
+Push with `gh stack push`, verify all five remote exact heads and fresh CI, and
+require passing final-head CI before readiness. No PR merge, issue closure or
+milestone completion is claimed. Original M3 dependency-loader/component/AOT/
+evaluator-retirement/cache and scheduler/cancellation/live-heap gates remain open.
+Next unblocked validation task: finish the existing required full baseline and
+check the freshly pushed CI; then continue the published artifact/dependency policy.
