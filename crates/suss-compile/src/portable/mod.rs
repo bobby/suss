@@ -13,6 +13,7 @@ pub mod bootstrap;
 pub mod artifact_cache;
 pub mod artifact_identity;
 pub mod core_bindings;
+pub mod aot;
 pub use origin::{SourceOrigin, SourcePosition};
 use std::ops::Range;
 use suss_reader::forms::{read_forms, resolve_conditionals};
