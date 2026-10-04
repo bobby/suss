@@ -16259,3 +16259,47 @@ on dispatch, no live rootCargo/JVM/Node job. Genuine field/quote/compound/invoca
 children/constexpr and complete source declaration/function/method/inference
 schema remainopen, alongside evaluatorretirement, dependency/target policy and
 rootedpendingIO/cancel/code-liveheap originalM3 gates. No issueclosure/merge/goalcomplete.
+
+PR185 independent review: initial a7f794a8e5742f17cb93ae4854fa4def37347368,
+base184 c0cca867fa19becaf7d58494f7fb28fb97ac356b. Required fresh pinned script
+53632 TERMINAL0 revalidated all11 traces and all11 executing Node projections
+(/private/tmp/suss-pr185-review-oracle.log). Found a significant shallow-merge
+identity mismatch: resolved :info maps were structurally interned, but nested
+:meta was rematerialized instead of shared with the captured declaration revision.
+Fresh independent pinned identity22997 TERMINAL0 established exact outer-map
+freshness and nested sharing; its current asserted probe64564 TERMINAL0 confirms
+ordinary and top-fn-overlay rows. Original development probe is
+ tests/oracle/global-reference-identity-review-probe.clj; JVM remains oracle-only.
+
+Actual exact-expectation red83216 TERMINAL101:0/1/0/1filtered5.34s against initial
+production graph. It returned identical outer maps and nonidentical nested metadata.
+An initial new fixture expectation for current &env freshness was corrected only
+from the fresh pinned observation: its namespace snapshot retains the old record
+inside the enclosing let even though the runtime var changes. All original eleven
+projection cases and existing assertions remain intact. Additional top-fn overlay
+red76311 TERMINAL101:0/1/0/1filtered5.42s proved an early metadata barrier missed
+the final overlay. The final scoped repair allocates a fresh resolved outer map,
+shares final declaration :meta after overlays, and charges each new recipe against
+the aggregate graph node budget. It does not broaden general reader/value freshness.
+Logs /private/tmp/suss-pr185-review-{identity-exact-before,overlay-before}.log.
+
+Affected25954 TERMINAL0:63/0/0/0 across11 groups, including original metadata suites.
+After the final overlay repair, focused77290 TERMINAL0:globals2/hint-boundaries1
+all pass12.00s/14.54s; graph-unit72739 TERMINAL0:5/0/0/11filtered2.82s preserves
+reader callback count/order, occurrence effects and work-bound failure/recovery.
+Java-free70166 TERMINAL0 reproduces BOTH phase Wasm+JSON pairs byte-for-byte twice
+and executing bootstrap4 pass12.86s. CLI graph-only repair does not change compiler
+source identity; no reviewer regeneration required. Python77672 TERMINAL0:123pass
+4.984s; core_import --check verifies all274files; restricted rustfmt/diffcheck pass.
+Logs /private/tmp/suss-pr185-review-{affected-final,identity-final,graph-final,
+javafree,python,core-import,identity-oracle-final}.log. All these handles terminal.
+
+Freeze/push this review repair before the required exact unfiltered
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2. Full and exact final-head CI
+remain pending at this evidence commit; root must record their actual terminal
+counts and CI provenance before readiness. No merge/issue closure/M3 completion.
+Next unblocked task is faithful quote initializer AST records with fresh pinned
+projections and actual execution; complete field/compound/invocation/children AST
+schema, constexpr policy, evaluator retirement, dependency/target policy, rooted
+pending-I/O cancellation and live heap/code accounting remain open original gates.

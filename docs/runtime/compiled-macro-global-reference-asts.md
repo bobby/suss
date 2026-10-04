@@ -3,7 +3,10 @@
 Initializer records for genuine resolved global symbols expose `:op :var`,
 qualified `:name`, canonical `:ns`, and `:info` copied from the captured
 `SourceBinding::Global` declaration revision. Resolved operation/name/namespace
-override raw declaration metadata in this copy. The namespace catalog retains
+override raw declaration metadata in this copy. Each resolution has a fresh outer
+`:info` map and shares the captured declaration revision's final nested `:meta`
+value, including function `:top-fn` metadata overlays. This preserves the pinned
+shallow merge identity without changing reader occurrence construction elsewhere. The namespace catalog retains
 its original record, including raw metadata overrides. Global AST tag presence
 and value come from resolved info, including false; lexical inference is unchanged.
 Runtime values, physical HIR and source reexecution do not determine these facts.

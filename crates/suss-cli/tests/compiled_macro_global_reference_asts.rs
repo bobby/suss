@@ -147,3 +147,74 @@ fn captured_global_declarations_supply_var_ast_fields_without_catalog_mutation()
         assert_eq!(actual[2], json!(1.0), "global call executes exactly once");
     }
 }
+
+#[test]
+fn resolved_info_copies_identity_fields_and_shares_captured_nested_metadata() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        session.enter_namespace("review-global").unwrap();
+        macros.enter_namespace("review-global").unwrap();
+        macros
+            .define(
+                r#"(defmacro inspect-copy [a b]
+          (let [left (get (get (get &env :locals) a) :init)
+                right (get (get (get &env :locals) b) :init)
+                info (get left :info)
+                old (get (get (get (get left :env) :ns) :defs) 'value)
+                current (get (get (get &env :ns) :defs) 'value)]
+            (list 'quote [(identical? info (get right :info))
+              (identical? info old)
+              (identical? (get info :meta) (get old :meta))
+              (identical? (get info :meta) (get current :meta))
+              (get info :doc) (get old :ns) (get current :doc)
+              (= (get info :name) 'review-global/value)
+              (= (get info :ns) 'review-global)
+              (contains? old :op)])))"#,
+            )
+            .unwrap();
+        let value = session
+            .eval_with_macros(
+                r#"
+          (def ^{:doc "before" :ns raw} value 17)
+          (let [a value b value changed (def ^{:doc "after"} value false)]
+            [(inspect-copy a b) value])"#,
+                &mut macros,
+            )
+            .unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        session.collect().unwrap();
+        assert_eq!(
+            data(&bridge.read(&mut session, &value, 0..1).unwrap()),
+            json!([
+                [
+                    false,
+                    false,
+                    true,
+                    true,
+                    "before",
+                    ["symbol", "raw"],
+                    "before",
+                    true,
+                    true,
+                    false
+                ],
+                false
+            ])
+        );
+        let overlaid = session
+            .eval_with_macros(
+                r#"(def ^{:top-fn {:meta {:custom true}}} value (fn [] 17))
+                    (let [a value b value] (inspect-copy a b))"#,
+                &mut macros,
+            )
+            .unwrap();
+        session.collect().unwrap();
+        assert_eq!(
+            data(&bridge.read(&mut session, &overlaid, 0..1).unwrap()),
+            json!([
+                false, false, true, true, null, null, null, true, true, false
+            ]),
+            "resolved copies share the final top-fn metadata overlay"
+        );
+    }
+}

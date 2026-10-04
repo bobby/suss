@@ -1338,6 +1338,13 @@ impl<'a> AnalysisGraph<'a> {
                 fields.push((field, self.form(&tag, depth + 1)?));
             }
         }
+        // Share the final metadata value of this captured declaration revision,
+        // including a top-fn overlay. Reader occurrences remain independently
+        // constructed elsewhere; resolved var copies reuse this catalog value.
+        if let Some((_, meta)) = fields.iter_mut().find(|(name, _)| *name == "meta") {
+            self.charge(0)?;
+            *meta = self.recipe(Recipe::Alias(*meta))?;
+        }
         let value = self.map(fields)?;
         self.declarations.insert(key, (info.cloned(), value));
         Ok(value)
@@ -1708,11 +1715,16 @@ impl<'a> AnalysisGraph<'a> {
             let namespace = self.symbol(global.namespace())?;
             entries.retain(|(key, _)| ![op_key, name_key, ns_key].contains(key));
             entries.extend([(op_key, operation), (name_key, name), (ns_key, namespace)]);
+            self.charge(0)?;
+            let info = self.recipe(Recipe::Map(entries))?;
             fields.extend([
                 ("op", operation),
                 ("name", name),
                 ("ns", namespace),
-                ("info", self.map_values(entries)?),
+                // Each resolution makes a fresh outer map, while reusing the
+                // captured declaration's nested values. Structural interning
+                // would incorrectly make two distinct references identical.
+                ("info", info),
             ]);
             // Global AST tags are selected from resolved info, unlike local
             // reference inference. Preserve actual presence, including false.
