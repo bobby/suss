@@ -688,3 +688,11 @@ before bindings change, independently decoded old17, actual macro version
 records and compiled execution. Compiler3, native2+cache6, lifecycle6 and
 affected54 pass; Java-free bootstrap4 and Python118 pass. Review/full/final CI
 remain pending. This does not certify full published dependency loading or M3.
+
+[Core binding artifact preparation](../runtime/compiled-core-bindings.md) moves
+canonical bootstrap cell initialization into Wasm and includes unbound source
+cells for AOT assembly. Its three direct compiler tests,72 affected native
+tests,7 lifecycle guards and Java-free bootstrap4 pass. Independent review/full
+baseline/final CI remain pending; no declaration or M3 acceptance gate is
+reclassified. Existing retained-source provenance and
+upstream license obligations remain unchanged.

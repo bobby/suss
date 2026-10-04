@@ -160,3 +160,15 @@ leave the prompt usable. [Nominal source support](nominal.md) remains bounded; t
 command frontend and full M3/M2-04 acceptance are still incomplete.
 
 Ten additional [source exception regressions](exceptions.md) execute exact payloads, handler captures/GC, ordered cleanup, divergent operands and failed publication. Together with private4 and existing integration33, the current native session gates total47 passing tests. ExceptionInfo/core error surfaces, dynamic binding and asynchronous interruption remain unfinished.
+
+## Core initialization artifact preparation
+
+The native host now instantiates the portable compiler's core binding
+artifact instead of manually creating the initial cells through Rust calls.
+The emitted module supplies the same phase-qualified cells, initializes the
+ExceptionInfo class before captured functions, and provisions self-cell closures.
+Focused execution passes; independent review/full baseline/final CI remain
+required. See [the artifact boundary and remaining AOT
+work](compiled-core-bindings.md). Base runtime/initializer input byte sizes are
+reported separately from installed user fragment artifact bytes. Neither counter
+is a JIT-memory or live-GC measurement.

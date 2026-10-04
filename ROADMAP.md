@@ -333,3 +333,11 @@ Regression-first and focused/54affected tests pass; review/full/final CI remain
 required. See [artifact identities](docs/runtime/artifact-identities.md). Complete
 published dependency loading, component/AOT, evaluator retirement and scheduler
 criteria remain open original M3 work.
+
+Core cell initialization now executes as a reusable shared-ABI artifact for
+native and AOT hosts. The compiler includes phase-checked unbound source cells,
+while native code accounting separates base runtime and user fragments. Three
+direct compiler tests,72 affected native tests,7 lifecycle guards and Java-free
+bootstrap4 pass. Independent review/full baseline/final CI remain pending; this does not migrate AOT
+commands or remove the legacy evaluator. See
+[core binding initialization](docs/runtime/compiled-core-bindings.md).

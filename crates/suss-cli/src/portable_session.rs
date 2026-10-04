@@ -111,6 +111,9 @@ impl Drop for SessionValue {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SessionStats {
     pub resident_fragments: usize,
+    /// Input sizes of the shared runtime and its core binding initializer,
+    /// separate from subsequently installed fragments; not native JIT memory.
+    pub base_runtime_artifact_bytes: usize,
     /// Sum of input artifact sizes for resident instances, not retained raw Wasm
     /// or actual JIT memory usage.
     pub resident_artifact_bytes: usize,
@@ -138,6 +141,7 @@ pub struct Session {
     cells: BTreeMap<CellIdentity, Global>,
     provided: BTreeSet<ModuleIdentity>,
     resident: Vec<Instance>,
+    base_runtime_artifact_bytes: usize,
     artifact_bytes: usize,
     bootstrap_core: bool,
 }
@@ -377,95 +381,18 @@ impl Session {
         linker.instance(&mut store, "suss.runtime", runtime)?;
         let environment = Environment::default();
         let mut cells = BTreeMap::new();
-        let mut initializers = environment
-            .core_bindings(phase)
-            .into_iter()
-            .map(|(global, export)| (global, export.to_string()))
-            .collect::<Vec<_>>();
-        for (identity, operator) in environment.arithmetic_bindings(phase) {
-            use suss_compile::portable::hir::Arithmetic;
-            let name = match operator {
-                Arithmetic::Add => "add",
-                Arithmetic::Subtract => "subtract",
-                Arithmetic::Multiply => "multiply",
-                Arithmetic::Divide => "divide",
-                Arithmetic::Negate => unreachable!("no negate source binding"),
-            };
-            initializers.push((identity, format!("arithmetic-{name}")));
-        }
-        let mut exception_class_cell: Option<Global> = None;
-        for (identity, export) in initializers {
-            let mut scope = RootScope::new(&mut store);
-            let mut value = [Val::null_any_ref()];
-            let mut cell = [Val::null_any_ref()];
-            let self_cell_initializer = export == "core-ex-info"
-                || matches!(
-                    export.as_str(),
-                    "primitive-bit-and-function"
-                        | "primitive-bit-or-function"
-                        | "primitive-bit-xor-function"
-                        | "primitive-bit-and-not-function"
-                );
-            if self_cell_initializer {
-                runtime
-                    .get_func(&mut scope, "nil")
-                    .unwrap()
-                    .call(&mut scope, &[], &mut value)?;
-                runtime
-                    .get_func(&mut scope, "binding-new")
-                    .unwrap()
-                    .call(&mut scope, &value, &mut cell)?;
-            }
-            let mut arguments =
-                if export.starts_with("core-") && export != "core-exception-info-class" {
-                    vec![exception_class_cell
-                        .expect("class initialized first")
-                        .get(&mut scope)]
-                } else {
-                    vec![]
-                };
-            if self_cell_initializer {
-                arguments.push(cell[0].clone());
-            }
-            runtime
-                .get_func(&mut scope, &export)
-                .unwrap()
-                .call(&mut scope, &arguments, &mut value)?;
-            if self_cell_initializer {
-                runtime.get_func(&mut scope, "binding-set").unwrap().call(
-                    &mut scope,
-                    &[cell[0].clone(), value[0].clone()],
-                    &mut [],
-                )?;
-            } else {
-                runtime
-                    .get_func(&mut scope, "binding-new")
-                    .unwrap()
-                    .call(&mut scope, &value, &mut cell)?;
-            }
-            let ty = cell[0]
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&scope)?
-                .unwrap()
-                .ty(&scope)?;
-            let global = Global::new(
-                &mut scope,
-                GlobalType::new(
-                    ValType::Ref(RefType::new(false, ty.into())),
-                    Mutability::Const,
-                ),
-                cell[0].clone(),
-            )?;
-            if export == "core-exception-info-class" {
-                exception_class_cell = Some(global);
-            }
-            linker.define(
-                &scope,
-                identity.import_module(),
-                &identity.import_name(),
-                global,
-            )?;
+        let bindings = portable::core_bindings::compile(phase).map_err(SessionError::Compile)?;
+        runtime_abi::verify_artifact(&bindings.wasm, &runtime_abi::Manifest::default())
+            .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
+        portable::artifact_identity::verify(&bindings.wasm, portable::artifact_identity::Expected {
+            phase: Some(phase), macro_dependencies: Some(&[]), ..Default::default()
+        }).map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
+        let module = crate::portable_module_cache::compile(&engine, &bindings.wasm)?;
+        let initialized = linker.instantiate(&mut store, &module)?;
+        for identity in bindings.cells {
+            let global = initialized.get_global(&mut store, &identity.import_name())
+                .ok_or_else(|| wasmtime::Error::msg("Missing compiled core binding"))?;
+            linker.define(&store, identity.import_module(), &identity.import_name(), global)?;
             cells.insert(identity, global);
         }
         let provided = BTreeSet::from([
@@ -485,6 +412,7 @@ impl Session {
             cells,
             provided,
             resident: Vec::new(),
+            base_runtime_artifact_bytes: runtime_bytes.len() + bindings.wasm.len(),
             artifact_bytes: 0,
             bootstrap_core: false,
         })
@@ -533,6 +461,7 @@ impl Session {
     pub fn stats(&self) -> SessionStats {
         SessionStats {
             resident_fragments: self.resident.len(),
+            base_runtime_artifact_bytes: self.base_runtime_artifact_bytes,
             resident_artifact_bytes: self.artifact_bytes,
             binding_cells: self.cells.len(),
             loaded_modules: self.provided.len() - 1,

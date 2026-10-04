@@ -14005,3 +14005,118 @@ No RUSTFLAGS override. Require exact final-head CI before readiness; no merge,
 issue closure or M3 completion is claimed. The integration includes only user-merged
 162/164/165/166/167; later core initialization/component continuations and original
 M3 published-loader/frontend/evaluator/scheduler/live-heap gates remain separate.
+
+## M3 core binding artifact preparation — unvalidated working branch
+
+Prepared an isolated continuation at /private/tmp/suss-m3-compiled-core-bindings,
+branch portable/m3-compiled-core-bindings, based on reviewed PR167 head
+71b151143ae4b23b11bcaefc2e46ba2b17c5c2c4. New original Rust emits phase-qualified
+canonical core binding globals plus a Wasm start function calling the existing
+shared runtime factories. The exception class is initialized first; self-cell
+factories receive a bound nil cell before their closure is installed. Native
+Session creation uses this artifact instead of manually constructing core cells
+through Rust. This is an AOT initialization prerequisite, not migrated component
+commands, WIT adapters or tree-walking evaluator removal.
+
+Added a direct compiler integration test that instantiates only the shared runtime
+and emitted core cells, checks all bound flags, forces GC, executes arithmetic and
+all four variadic self-cell bitwise closures in both phases, and rejects cross-phase
+linking. No Cargo/native test has run on this working branch yet: independent
+PR167 reviewer owns the sole heavy slot for the required frozen final-head full
+baseline. Rustfmt of new files and git diff --check pass. Do not claim execution
+success or publish this branch until focused and affected tests pass.
+
+Next after reviewer explicitly releases the heavy slot: clean only the four Suss
+packages in /private/tmp/suss-m3-pr143-target, then run the new compiler test with
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and CARGO_BUILD_JOBS=2. Fix any
+build/validation/execution failure; regenerate both bootstrap Wasm/JSON artifacts
+with cargo run --profile test -p suss-cli --bin suss-bootstrap --locked, then
+verify-bootstrap.sh without Java and run affected native sessions, macros, phases
+and entrypoints. Never set RUSTFLAGS. Update inventory/roadmap/evidence, publish
+Refs #12/#14, dispatch independent review and require exact final-head unfiltered
+cargo test --workspace --locked -- --test-threads=2 plus CI before readiness.
+PR166 required local full passed1109/0/17; exact c525 CI37160738097 remains running.
+PR167 review added regressions without a significant production finding; focused
+compiler4/native lifecycle7/Java-free bootstrap4 pass, full63477 and exact final
+head CI37163062701 remain running. Earlier cancelled root-head CI is not proof.
+Original M3 issues remain open; no merge is authorized.
+
+Preparation continuation: compile_with_cells now emits deduplicated unbound
+source declaration cells as well as base cells, rejecting foreign phases. Three
+unrun direct compiler tests cover both phase initialization/GC/ExceptionInfo,
+actual source closure persistence across two fragments without replay, and
+foreign-phase rejection. Native stats now separately record base runtime plus
+initializer input artifact bytes; existing reset regression checks retained base
+bytes versus cleared user fragment bytes. Documentation is explicitly marked
+validation pending at docs/runtime/compiled-core-bindings.md. No heavy job started.
+
+PR166 final exact-head CI37160738097 completed successfully at c525, independently
+revalidated by root against current PR head. Root published review/full/CI proof
+at https://github.com/bobby/suss/issues/14#issuecomment-5974838382 and marked #166
+ready. No merge. PR167 full63477 remains live with metadata3 passed428.38s and
+later macro suites progressing; reviewer retains the heavy slot.
+
+Lightweight Python run first failed (114 tests,7 errors) because the isolated
+worktree had no initialized pinned clojurescript submodule; failure is preserved
+in /private/tmp/suss-core-bindings-python.log. Initialized from the existing
+local checkout at the exact pinned c4295f303100bbf5afac449242d30bca1126f1a1
+using git submodule update --init. Corrected run17629 TERMINAL0:118 tests pass
+in10.833s, /private/tmp/suss-core-bindings-python-fixed.log. This is source/provenance
+validation only; compiler/native execution remains unrun pending reviewer slot.
+
+
+The isolated working commit was rebased onto the user-requested updated stack
+head768a1e0. Resolved the handoff append conflict by preserving both the full
+new stack rebase record and all working implementation/validation notes. No
+source conflict or behavior change was introduced by this history adjustment.
+Prior PR166 c525 readiness was revoked to draft pending replacement exact c101
+CI37163815939; previous passing CI remains prior-head evidence.
+
+## M3 emitted core/source binding initialization — focused execution
+
+After PR167 reviewer released the heavy slot following terminal full63477,
+root cleaned only suss-cli/suss-compile/suss-reader/suss-core (3.9GiB) in the
+shared target. All following jobs used CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target
+and CARGO_BUILD_JOBS=2; no RUSTFLAGS or additional concurrent native job.
+
+* Compiler57426 TERMINAL0: cargo test -p suss-compile --locked --test
+  compiled_core_bindings -- --test-threads=2;3pass/0fail/0ignore0.45s;
+  /private/tmp/suss-core-bindings-compiler.log. Actual emitted modules validate,
+  link and execute in both phases; all45 base cells are bound, forced GC preserves
+  arithmetic/bitwise/ExceptionInfo closures, and cross-phase linking fails.
+  Unbound source cells initialize once and preserve incrementing closure effects1
+  then2 across two fragments; repeated cell requests deduplicate byte-exactly.
+  Preparation carries the complete catalog, not only newly declared cells; the
+  second-fragment regression correctly asserts the unchanged catalog.
+* Regeneration46542 TERMINAL0: cargo run --profile test -p suss-cli --bin
+  suss-bootstrap --locked -- runtime/bootstrap; both phase Wasm/JSON refreshed;
+  /private/tmp/suss-core-bindings-regenerate.log. New compiler fingerprint changes
+  identity metadata only; shared GC ABI2/layout and language forms are unchanged.
+* Native88876 TERMINAL0: cargo test -p suss-cli --locked --test compiled_bootstrap
+  --test compiled_phase_session --test namespace_session --test
+  compiled_native_entrypoints --test persistent_session --test
+  portable_exception_info --test portable_bitwise_hash -- --test-threads=2;
+  72pass/0fail/0ignore across7groups:4/10/3/4/33/6/12, durations
+  12.37/27.96/4.71/5.23/0.85/3.37/0.22s;
+  /private/tmp/suss-core-bindings-native.log. Original expectations preserved.
+* Lifecycle12797 TERMINAL0: cargo test -p suss-cli --locked --lib
+  portable_session:: -- --test-threads=2;7pass/0fail/0ignore0.17s;
+  /private/tmp/suss-core-bindings-lifecycle.log. Compiler/phase batch guards,
+  old values, dynamic scope and native callback recovery remain intact.
+* Java-free7467 TERMINAL0: sh scripts/verify-bootstrap.sh; both phase Wasm/JSON
+  assets reproduce byte-for-byte twice and match shipped files, compiler identities
+  verified, bootstrap4/0/0 in13.81s; /private/tmp/suss-core-bindings-javafree.log.
+  Prior Python17629 passed118 in10.833s after initializing the exact pinned source.
+
+Native Session initialization now instantiates the generated core cell module
+instead of manually constructing cells in Rust. Base runtime plus initializer
+artifact bytes are tracked separately from resident user fragment input bytes;
+reset regression checks retained base and cleared user-code counts. Neither is
+JIT-memory or live-GC accounting. This original Rust ports no upstream forms.
+
+Next publish this focused change stacked on current #167, with Refs #12/#14/#15,
+dispatch independent review, push significant fixes, run the required unfiltered
+full baseline and require exact final-head CI. Continue component/AOT target
+adapters and actual command migration; legacy evaluator retirement, published
+user dependency-loading policy, scheduler/cancellation/live heap criteria and
+all original M3 issues remain open. No merge or milestone closure is claimed.
