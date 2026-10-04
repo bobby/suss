@@ -210,6 +210,43 @@ pub struct DefinitionInfo {
     pub initializer: Option<std::sync::Arc<super::hir::Hir>>,
     pub once: bool,
 }
+impl DefinitionInfo {
+    /// Normalized def-AST export name for target selection, distinct from the raw
+    /// :export metadata in namespace declaration records. The pinned def rule keeps
+    /// false/nil absent, maps true to the qualified var, and retains other values.
+    /// Reference: cljs/analyzer.cljc def export-as at c4295f303100bbf5afac449242d30bca1126f1a1.
+    pub fn export_as(
+        &self,
+        global: &Global,
+    ) -> Result<Option<suss_reader::forms::Form>, Diagnostic> {
+        use suss_reader::forms::{Form, Kind};
+        let pairs = super::hir::reader_metadata_pairs(&self.declaration)?;
+        let Some(value) = pairs.chunks_exact(2).find_map(|pair| {
+            matches!(&pair[0].kind, Kind::Keyword(key)
+                if key.namespace.is_none() && key.name == "export")
+            .then(|| pair[1].clone())
+        }) else {
+            return Ok(None);
+        };
+        Ok(match value.kind {
+            Kind::Nil | Kind::Bool(false) => None,
+            Kind::Bool(true) => Some(Form {
+                span: value.span,
+                metadata: vec![],
+                kind: Kind::Symbol(Symbol {
+                    namespace: Some(if global.namespace() == "suss.core" {
+                        "cljs.core".to_owned()
+                    } else {
+                        global.namespace().to_owned()
+                    }),
+                    name: global.name().to_owned(),
+                }),
+            }),
+            _ => Some(value),
+        })
+    }
+}
+
 /// Borrowed phase-specific source scope. Catalog entries do not certify loading.
 pub struct NamespaceScope<'a> {
     pub namespace: &'a str,

@@ -108,6 +108,118 @@ fn scalar(resolve: &Resolve, mut ty: Type) -> Result<Scalar, Diagnostic> {
     Err(error("WIT scalar alias nesting exceeds 64"))
 }
 
+/// Fill missing selected-world mappings from retained source declaration export
+/// facts for freestanding functions only (accepted design section 10). Interface
+/// functions require explicit mappings; assembly still validates every mapping.
+pub fn source_export_mappings(
+    fragments: &[PreparedFragment],
+    resolve: &Resolve,
+    world: WorldId,
+    explicit: &[(String, Symbol)],
+) -> Result<Vec<(String, Symbol)>, Diagnostic> {
+    use suss_reader::forms::Kind;
+    let last = fragments
+        .last()
+        .ok_or_else(|| error("AOT needs a prepared source fragment"))?;
+    let selected = &resolve.worlds[world];
+    if !selected.imports.is_empty() {
+        return Ok(explicit.to_vec());
+    }
+    let mut missing = Vec::new();
+    for (key, item) in &selected.exports {
+        let name = resolve.name_world_key(key);
+        match item {
+            WorldItem::Function(function) => missing.push((name, function.name.clone())),
+            WorldItem::Interface { .. } | WorldItem::Type { .. } => {}
+        }
+    }
+    missing.retain(|(path, _)| !explicit.iter().any(|(mapped, _)| mapped == path));
+    let mut candidates = std::collections::BTreeMap::<String, Vec<Symbol>>::new();
+    for global in last.environment.cells() {
+        if missing.is_empty() {
+            break;
+        }
+        if global.phase() != Phase::Runtime {
+            continue;
+        }
+        let Some(info) = last.environment.definition_info(&global) else {
+            continue;
+        };
+        let Some(export) = info.export_as(&global)? else {
+            continue;
+        };
+        let (name, exact) = match &export.kind {
+            Kind::Symbol(symbol) => {
+                let source_namespace = if global.namespace() == "suss.core" {
+                    "cljs.core"
+                } else {
+                    global.namespace()
+                };
+                if symbol.namespace.is_some()
+                    && (symbol.namespace.as_deref() != Some(source_namespace)
+                        || symbol.name != global.name())
+                {
+                    return Err(error(format!(
+                        "Qualified WIT export metadata for {} needs an explicit mapping",
+                        global.import_name()
+                    )));
+                }
+                (symbol.name.clone(), false)
+            }
+            Kind::String(units) => {
+                let name = String::from_utf16(units).map_err(|_| {
+                    error(format!(
+                        "WIT export metadata for {} contains an invalid Unicode string",
+                        global.import_name()
+                    ))
+                })?;
+                if name.is_empty() {
+                    return Err(error("WIT export metadata needs a nonempty name"));
+                }
+                let exact = name.contains('#');
+                (name, exact)
+            }
+            _ => {
+                return Err(error(format!(
+                    "Unsupported WIT export metadata for {}; use an explicit export mapping",
+                    global.import_name()
+                )));
+            }
+        };
+        let matched = missing
+            .iter()
+            .filter(|(path, short)| if exact { *path == name } else { *short == name })
+            .collect::<Vec<_>>();
+        if matched.len() > 1 {
+            return Err(error(format!(
+                "Ambiguous WIT export metadata for {} matches {}; use explicit export mappings",
+                global.import_name(),
+                matched
+                    .iter()
+                    .map(|(path, _)| path.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )));
+        }
+        if let Some((path, _)) = matched.first() {
+            candidates.entry(path.clone()).or_default().push(Symbol {
+                namespace: Some(global.namespace().to_owned()),
+                name: global.name().to_owned(),
+            });
+        }
+    }
+    let mut mappings = explicit.to_vec();
+    for (path, vars) in candidates {
+        if vars.len() != 1 {
+            return Err(error(format!(
+                "Ambiguous WIT export mapping for {path}; use an explicit export mapping"
+            )));
+        }
+        mappings.push((path, vars.into_iter().next().unwrap()));
+    }
+    Ok(mappings)
+}
+
 /// Assemble prepared source in order, with explicit WIT export-to-var mappings.
 /// Source compilation and macro execution use the ordinary portable pipeline;
 /// this function never evaluates user source in the compiler host.

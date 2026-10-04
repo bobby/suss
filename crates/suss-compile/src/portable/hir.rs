@@ -1009,7 +1009,7 @@ impl Analyzer<'_> {
         for metadata in &args[0].metadata {
             let unsupported = |form: &Form| {
                 matches!(&form.kind, Kind::Keyword(key)
-                if key.namespace.is_none() && matches!(key.name.as_str(), "const" | "macro" | "export"))
+                if key.namespace.is_none() && matches!(key.name.as_str(), "const" | "macro"))
             };
             if unsupported(metadata)
                 || matches!(&metadata.kind, Kind::Map(entries)
@@ -1017,7 +1017,7 @@ impl Analyzer<'_> {
             {
                 return Err(fail(
                     args[0].span.clone(),
-                    "Definition const/macro/export attributes are not implemented yet",
+                    "Definition const/macro attributes are not implemented yet",
                 ));
             }
         }

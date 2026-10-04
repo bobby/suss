@@ -15255,3 +15255,125 @@ before readiness. Reviewer retains sole heavy slot until actual full terminal.
 Main/project/component-host and shorthand/evaluator retirement, complete WIT,
 rich macro environment/published dependencies and scheduler/lifecycle remain open
 original M3 scope. No merge, issue closure or milestone completion is claimed.
+
+
+## Export metadata continuation — unvalidated draft
+
+Root isolated /private/tmp/suss-m3-aot-export-metadata branch
+portable/m3-aot-export-metadata, rebased clean onto reviewed178 d07c7a9.
+Reviewer166 exclusively owns178 source and sole heavy slot; full51094 and
+exactCI37181080872 live. No root native job or178 mutation. Root verified177
+exactc0cCI37179064284 completed success1143/0/17/129groups and marked ready
+without merge.
+
+Pinned analyzer.cljc def rule at commitc4295f..., lines2108–2110, normalizes
+truthy export metadata: true becomes qualified var-name, other values remain;
+false/nil are absent. Shared reader_metadata_pairs already handles outer metadata
+precedence. Draft portable analysis now accepts export attributes while const/
+macro remain unsupported, DefinitionInfo::export_as computes the declaration
+fact, and compiled environment graphs distinguish raw provisional metadata from
+normalized completed export facts. Native/WIT auto-selection is NOT implemented
+yet; explicit mappings remain required. No runtime export effects are inferred
+from metadata acceptance alone. This is UNRUN, no tests/results claimed.
+Next draft executing metadata/phase/GC regressions and complete unambiguous WIT
+selection, then wait for178 heavy release before controlled failures, BOTH image
+regeneration and Java-free/focused validation. Original M3 goal remains intact.
+
+
+Export draft now includes source_export_mappings over the resolved selected WIT
+world and final Runtime declaration facts. Explicit paths retain precedence;
+missing functions may select true/unqualified-name/string metadata. Exact
+interface#function strings retain version/alias spelling. Ambiguous source vars
+or short names across multiple missing interface exports fail before output
+replacement. Qualified custom source symbols are not silently stripped; require
+explicit mapping. Assembly retains its existing explicit mapping validation and
+unsupported WIT diagnostics. CLI file/namespace invoke this common mapping step.
+
+Three new tests are drafted but UNRUN in compiled_export_metadata.rs: actual file
+and namespace CLI metadata selection then typed effects/GC/two Stores; compiled
+raw provisional versus qualified completed export facts in both caller phases,
+including outer false precedence; actual ambiguous interface metadata preserves
+output and explicit mappings select both actual typed exports. No new source/
+artifact/test success is claimed. Restricted rustfmt and diff checks pass. Root
+images are still parent178 images, STALE for changed compiler source.
+Reviewer178 retains full51094 (metadata3 passed416.00s; later groups live) and
+sole heavy slot; exactCI37181080872 live with scanner/Java-free steps passed.
+Next controlled regressions, fresh pinned metadata oracle, BOTH phase image
+regeneration/Java-free and focused affected suites only after explicit release.
+No PR/issue closure/M3 completion; full original objective remains active.
+
+
+Root resumed after user146/147 merge notification: GitHub confirms both already
+merged October2; current native continuation stack includes them. No stack or
+issue state changed. Fresh accepted-design read caught the UNRUN export draft
+violating section10: ^:export shorthand is only for unambiguous freestanding
+functions. Corrected draft inference to exclude all interface exports; interfaces
+retain explicit mappings. Positive draft now executes freestanding functions;
+interface negative requires explicit mappings and preserves output. This corrects
+the prior draft description; no interface inference support/result is claimed.
+Prepared original pinned export-metadata probe capturing both macro &env snapshot
+and current analyzer catalog, direct versus nested initializer, true/false/nil/
+custom-string facts. Probe and native tests remain UNRUN; both images remain stale.
+Reviewer178 still owns sole heavy slot and full51094. Exactd07 CI37181080872
+verified in_progress. No readiness/merge/issue closure/fullM3 claim.
+
+
+Fresh pinned oracle86104 TERMINAL0 after restricted-network dependency failure
+(exit1, not semantic evidence). Seven observations in
+/private/tmp/suss-export-metadata-oracle.log show direct/nested initializer &env
+omits its new def, while catalog has rawtrue/metaabsent. Completed snapshot and
+catalog retain rawtrue/metatrue, false/metafalse, nil/metanil, customstring. Qualified
+normalization belongs to def AST, NOT namespace declaration (analyzer2120–2176).
+Corrected UNRUN draft: macro graph publishes rawexport via existing field
+precedence; export_as normalizes target-selection only. Native expectations now
+match primary evidence before first native run; prior normalized catalog draft
+claim withdrawn. Probe has seven exact assertions, rerun pending. Clone56385
+terminal0 atc4295f. Reviewer178 full51094 terminal0:1147/0/17/130groups and
+explicitly released soleheavy to root. CI pending; PRbody updated. Initial edit
+attempt used oracle cwd and failed before edits; corrected cwd. Oracle8525 repeats
+old count-only probe terminal status recorded separately. BOTH images stillstale.
+Next controlled parent-source regression, restore draft, regenerate and verify.
+
+
+Export exact asserted oracle17561 TERMINAL0: all seven fresh pinned snapshot/
+catalog rows match; /private/tmp/suss-export-metadata-oracle-final.log. Earlier
+8525 count-only repeat also terminal0. Added pin-checking repeatable dev script
+scripts/test-export-metadata-oracle.sh (not yet run as wrapper). No Node execution
+claimed for this compiler-fact oracle. Controlled parent-source85387 TERMINAL101:
+freestanding actualCLI regression fails because ^:export rejected,0pass/1fail/
+2filtered4.05s; /private/tmp/suss-export-metadata-before.log. All five fixedsource
+files saved /private/tmp/suss-export-metadata-fixed and restored before bootstrap.
+Regeneration95264 LIVE, /private/tmp/suss-export-metadata-regenerate.log; root
+owns soleheavy, no concurrent native/JVM job. Wait actualterminal; then Javafree
+and all3 executing native regressions. No source/native success claimed yet.
+
+
+Export regeneration95264 TERMINAL0 refreshes BOTH phase Wasm/JSON. Javafree30985
+TERMINAL0 reproduces both byte-exact twice/current identity; bootstrap4/0/0 in15.36s.
+Focused83636 TERMINAL0:4passed/0failed/0ignored in38.76s. All new native assertions
+match the fresh pinned oracle, including missing initializer snapshot, completed
+rawtrue/metatrue andfalse/metafalse in both caller phases. Duplicate-marker output
+preservation and explicit secondchoice37 execute; interface inference rejection
+and explicit twoalias17 execute. Source/namespace effects1->3, scalar42/6, GC and
+2freshStores each pass. Logs /private/tmp/suss-export-metadata-{regenerate,javafree,focused}.log.
+Affected15506 LIVE, /private/tmp/suss-export-metadata-affected.log,6integration
+modules (declaration metadata/functions, analysis graph, file/ns commands, sourceprep).
+Root owns soleheavy; freeze production until actualterminal. New evidence doc and
+inventory entry record focused support only. Next Python118 and oracle wrapper,
+then commit/push/open partial Refs#14 on178, independent review/significant fixes,
+unfiltered full baseline and exactfinalheadCI. No issue closure/merge/M3 completion.
+Next implementation is project/main/component-host migration and evaluator retirement;
+original rich&env, dependencyloader, pendingIOscheduler/lifecycle gates remainopen.
+
+
+Affected15506 TERMINAL0:28passed/0failed/0ignored across6modules: source4 8.38s,
+file4 39.31s,namespace4 5.87s,graph11 16.54s,functions2 20.31s,metadata3 427.49s.
+Python31546 TERMINAL0:118/0 in5.651s. Exact oracle wrapper1444 terminal status
+checked separately; seven asserted rows remainprimary evidence. Root source/diff
+checks pass; no original test weakened. Logs /private/tmp/suss-export-metadata-
+{affected,python,oracle-wrapper}.log. Next commit/push/open draft partial Refs#14
+on178 and dispatch independent reviewer167 with significant-fix authorization,
+exclusiveworktree/soleheavy once wrapperterminal. Require final-head unfiltered
+cargo test --workspace --locked -- --test-threads=2 and exactCI before readiness.
+All source/bootstrap/focused checks pass; no full/review/CI claim for this increment.
+Original M3 issues12–15 remainopen; no merge. PR178 localfull1147 passes, CIpending.

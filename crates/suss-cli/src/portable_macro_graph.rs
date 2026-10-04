@@ -1015,6 +1015,7 @@ impl<'a> AnalysisGraph<'a> {
                 "method-params",
                 "arglists",
                 "arglists-meta",
+                "export",
             ] {
                 if let Some(value) = property(field) {
                     fields.retain(|(name, _)| *name != field);
