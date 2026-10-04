@@ -388,3 +388,11 @@ Both regenerated bootstrap images reproduce without Java; bootstrap4 passes.
 Independent review/full baseline/exact-head CI remain pending. Explicit export
 mappings are required; project/main/component-host migration, evaluator retirement
 and original M3 acceptance remain open. See [namespace entrypoints](docs/runtime/compiled-aot-source-preparation.md).
+
+Selected quote records now expose genuine quote syntax, a literal const child,
+shared datum/environment identity and distinct nullable child tags. Fourteen
+fresh pinned observations match native execution in both caller phases after
+GC; quoted effects stay unexecuted. Both phase image pairs regenerate and
+reproduce without Java. Independent review/full baseline/final-head CI and
+remaining original M3 requirements stay open; see
+[quote AST evidence](docs/runtime/compiled-macro-quote-asts.md).

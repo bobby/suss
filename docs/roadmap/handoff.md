@@ -16354,3 +16354,318 @@ and live heap/code accounting remain open original M3 requirements.
 Final Python89611 TERMINAL0 reran127checks4.673s after the strengthened oracle
 helper; /private/tmp/suss-pr185-review-retention-python-final.log. Restricted
 rustfmt applies only the new regression/unit block, with diffcheck clean.
+
+## Quote source AST preparation while PR185 is reviewed
+
+Global increment committed a7f794a8e5742f17cb93ae4854fa4def37347368, draftPR185
+https://github.com/bobby/suss/pull/185 on184, Refs#14, linkedstack174. Root verified
+pushedhead/draft/open and CI37202332706 running. Independentreviewer167 dispatched
+exclusive /private/tmp/suss-m3-global-reference-asts with sole heavy Cargo/JVM/Node
+slot. All rootheavyhandles alreadyterminal; no rootheavyjob during this ownership.
+PR183/184ready/full/exactCI previouslyrootverified; no merge or issueclosure.
+Issue14 update https://github.com/bobby/suss/issues/14#issuecomment-5979941896.
+
+Root separate /private/tmp/suss-m3-quote-ast-records branch
+portable/m3-quote-ast-records parenta7f794a prepares genuine quote/const-child source
+records from retained sourceform/environment/tags. No physicalHIR classifier or
+source reexecution. Fourteen expected candidate rows retain all projected fields,
+presence/data kinds, unresolved symbols, quoted collections, metadata and quoted
+effectful-looking syntax. Primary helper inspects actual already-analyzed init;
+native independently decodes sameprojection in bothcaller Stores afterGC.
+Compiler/core/reader/build/lock/bootstrap inputs unchanged by this preparation.
+Pinned analyzercljc2630–2655 and original source-inference provenance recorded in
+docs/runtime/compiled-macro-quote-asts.md. Whole newtest/restrictedast_record
+rustfmtedition2024 and gitdiffcheck pass. Shared pinned checkoutprepared by git
+clone--shared and exactc4295f3checkout, no JVM/Node jobstarted.
+
+PYTHONPYCACHEPREFIX=/private/tmp/suss-quote-python-cache python3 -m unittest
+discover -s scripts -p 'test_quote_asts_oracle.py' actualTERMINAL0:6passed0.006s.
+This proves strict checker behavior only, NOT actual native or pinnedobservations.
+No native compilation/oracleexecution performed and no nextPRopened yet.
+Next once reviewer167 explicitly releases sole heavy slot after actualfullterminal:
+rebase nextbranch on reviewed185finalhead first; fresh forced/cache-disabled pinned
+quoteoracle to actualterminal; parent/candidate beforeafter scopednativeevidence;
+repair real failures with originalassertions retained; affectedsuites/Python/docs;
+commit/push/draft/independentreview/full/exactCI. Do not mutate reviewer185tree or
+start rootCargo/JVM/Node before slotrelease. Full schema/evaluatorretirement/
+original M3 lifecycle/cancellation/code-liveheap gates remainopen.
+
+Root quote preparation Python full80205 actualTERMINAL0:129passed4.764s,
+PYTHONPYCACHEPREFIX=/private/tmp/suss-quote-python-cache python3 -m unittest discover
+-s scripts -p 'test_*.py'; complete /private/tmp/suss-quote-python-preparation.log.
+Root independently GHverified184 OPEN/isDraftfalse/c0cca unchanged.185 stilldraft
+initiala7f794a and CI37202332706 running; reviewer167 freshoracle53632terminal0
+all11traces/Node projections and affected83491terminal0 58/0/0/9groups reported,
+new independent regression22375 live. Root does not inferterminal/full/ready from
+this intermediate evidence; no rootheavyjob and no reviewerworktree mutation.
+
+Reviewer167 fresh pinned identity22997 actualTERMINAL0 reports significant185
+mismatch: distinct resolved references have distinct outer info maps, but their
+nested declaration metadata shares old AST namespace and &env catalog identity.
+New native22375 actualTERMINAL101 currently interns outer info and reconstructs
+metadata separately. Original11expected assertions retained. Newfixture's unsupported
+assumption that top-level namespace doc changes to after was independently disproved
+upstream (snapshotremainsbefore), so only that newassumption will be corrected.
+Reviewer owns scoped repair/regression; no final185head/full/CI/ready claimed.
+All original M3 requirements remainopen; rootquote remainsuncompiled/unexecuted.
+
+Root continuing quote preparation adds explicit datum identity expectations without
+removing originalfields/assertions: child's form/val and parentform's second element
+must share the genuine quoted datum. Candidate validates whole retained form before
+bounded construction, shares datum via chargedAlias barrier, constructs actualquote
+list from retainedhead/datum and gives each logicalconst child a freshchargedMap.
+This avoids inheriting reader occurrence reconstruction or unrelated map interning
+as sourceAST identity. All changes stillUNCOMPILED/UNEXECUTED; pinned/native evidence
+must confirm thesecandidate assertions before publication. Seven focused Python
+corruptiontests actualTERMINAL0 0.007s; latest full29700 actualTERMINAL0:
+130passed5.050s, log/private/tmp/suss-quote-python-identity-preparation.log.
+Restrictedgraph/newtest rustfmt2024/diffcheck pass. No rootheavyjob; reviewer185
+stillowns sole slot. Reviewer reports significant185identity repair scoped17lines,
+focused8285terminal0 globals2+hintboundaries1, exactparent83216terminal101 and
+broadened25954LIVE (rootdoesnotpollchildhandle or claim fullterminal).
+
+Root alsoinspected pinnedWasmtime49.0.1 Storegcimplementation to resolve #15next
+accounting dependency. Store::gc_heap_capacity publiconlyreportscapacity; actual
+last_post_gc_allocated_bytes livesinternalGcStore and private do_gc diagnostics.
+No Susslivecounter or live runtime result exists. Issue15 authoritativeaudit recorded
+https://github.com/bobby/suss/issues/15#issuecomment-5980077584. Obtain supported
+collector telemetry, then realretain/drop/collect/reset evidence; capacity/handle/
+allocatorpages/inputWasmbytes doNOTsubstitute. PendingIO/rootedcontinuations stillopen.
+
+PR185 independent review continues (not yet frozen/pushed): root inspected actual
+scopedidentity diff and found new Recipe::Alias/Map additions bypassed map_values'
+aggregate node charge. Requested self.charge(0) before each newrecord, retaining
+65,536-node enforcement. Reviewer corrected charging and located final declaration
+metadata barrier AFTER top-fn overlays. Fresh overlayoracle15170TERMINAL0 proves
+shared finalmeta; partialbarrier native76311TERMINAL101 reproducesmissingidentity.
+Finalnative77290TERMINAL0 globals2/hintboundaries1 pass. Previousbroadened25954
+actualTERMINAL0 63/0/0/0filtered across11groups, originalassertions intact.
+Root also requested existing graphcallback/workbound unitcoverage; reviewer72739
+TERMINAL0 5/0/0/11filtered (focusedselectiononly), no expectationrelaxation.
+ReviewerPython77672TERMINAL0 123pass/core_import--checkterminal0. Javafree70166
+reported actualLIVE, soleheavy stillreviewer; fullbaselinehasNOTstarted.
+Initial185GH CI37202332706 stillIN_PROGRESS at initiala7f, which cannotcertify
+futurefixhead. No ready/full/finalCIclaim. Root quote uncompiled/oracleunexecuted
+and no rootheavyjob; next waitactualfullterminal/release thenrebase reviewed185head.
+
+Review185 fixes frozen/pushed003f6fad39cf237217a6ffbc2fc7e0929b691ebb,
+reviewerfull32822 actualLIVE (unfilteredrequiredcommand), soleheavyslot retained.
+GHrootverified exact003f draft/open and finalCI37203902681 actualIN_PROGRESS;
+initiala7CIcancelled/superseded, notfinalacceptance. Rootread complete focusedlog
+counts63/0/0/0filtered across11groups, Javafree4passed12.86s/Python123passed4.984s
+and freshidentityfinalprobe ordinary/top-fn rows; allcorrespondinghandles reported
+terminal by reviewer. No full/finalCI/readyclaim whilethosejobsstilllive.
+Issue14 verifiedreviewupdate https://github.com/bobby/suss/issues/14#issuecomment-5980206758.
+
+Root own quote changes preserved instash8a6a7fb373bf9237c65971d470d79e03ad47d32a
+then rebaseactual0 onto003f. Stashapplyreturned1 foronlyhandoffappend conflict;
+resolved by taking ENTIREreviewedHEAD handoff thenappendingallquote-owned suffix
+fromstashrelativea7 (assertedoriginalprefixunchanged). Bothhistoryentriespreserved,
+backupstashretained; no reviewerworktree mutation. Scopedquotegraphautomerged;
+rootassertedbyteidenticalto003f OUTSIDEast_record and reviewedchargedfreshvarInfo
+remainsinside. Resolveddocs/graphleftunstaged; restricted rustfmt/diffcheckpass.
+LatestquotePython30575 actualTERMINAL0:130passed5.633s
+/private/tmp/suss-quote-python-rebased.log. StillNOrootCargo/JVM/Nodejob, quote
+Rust/native/oracleUNEXECUTED. Waitactual32822terminalandexplicitrelease BEFORE
+newrootheavyjob, thenfreshquoteoracle and parent/candidatefailure/repair evidence.
+
+Additional identity investigation is prepared but UNEXECUTED in root's isolated
+quote tree: tests/oracle/src/suss_oracle/global_reference_identity_probe{,_runner}
+and compiled_macro_cross_invocation_identity_probe.rs. A macro retains declaration
+metadata in its own phase global through defonce, then compares actual identity at
+two unchanged-reference invocations and two invocations after redefinition, also
+checking docs/live17. Candidate expectations are NOT verified upstream/native.
+AnalysisGraph::new occurs per invocation (portable_macros.rs435), memo tableslive
+one build; this raises an inference about cross-invocation identity, not a confirmed
+bug. Reviewer185 will report within-build scope and keep full32822 frozen, no restart.
+Once slotreleased, fresh forced/cache-disabled pinned probe +actual Node projection
+and nativeparent003f evidence should triage whether an additional185blocker or a
+pre-existing rich-catalog gap exists. Do not claimfailure/success from the candidate,
+do not silently weaken assertions, do not include unverified probefiles in a ready
+PR/full acceptance. Keep/move task-owned investigation files separately as needed.
+Current185full passed declarationmetadata3/0/0/0 in456.84s and advanced intosourceform
+metadata, stillactualLIVE. ExactCI37203902681 polled actualIN_PROGRESS003f; inventory
+and Javafree steps succeeded, workspace step7 running. RootNOheavyjob, no slotrelease.
+
+PR185 reviewed head003f full32822 reached actual terminal exit0: root independently
+counted139 groups,1185 passed,0 failed,17 existing ignored,0 filtered, including
+final reader doctests. Exact003f CI37203902681 remains live; no ready claim.
+Root then executed cross-invocation identity investigation: fresh pinned2339
+terminal0 verifies true,true,false,false across unchanged/changed revisions;
+native47289 terminal101 reports same-revision false (Runtime caller failed
+before Macro caller was reached). This is a confirmed significant defect.
+Independent reviewer167 was dispatched to repair it in185; PR remains draft.
+Root explicitly released sole heavy slot after all root jobs became terminal.
+Reviewer independently reproduced003f red50071 terminal101 and fresh primary
+48261 terminal0; CLI-only retention repair and graph-bound regressions are being
+validated in the reviewer's exclusive tree. Future head needs its own unfiltered
+full baseline and exact CI;003f results cannot certify those later changes.
+
+Quote fresh forced/cache-disabled compile plus Node69527 produced all14 traces
+and14 projections, then checker exited1 because previously UNVERIFIED metadata
+expectations were wrong. Root compared actual trace/Node data and corrected only
+that case's top-tag any, child-tag presentnil, tag-agreement false. Strict checker
+then terminal0, all original14 cases and field/identity assertions preserved.
+Quote parent native37001 terminal101 (0pass/1fail/0ignore/0filtered,5.11s) is NOT
+yet intended schema red: helper second(false) throws at boolean span96..120.
+Both primary/native helpers now guard seq? before second, preserving assertions;
+these edits remain unexecuted pending fresh primary and parent native validation.
+Quote actual production graph is currently parent003f ONLY; own candidate backup
+/private/tmp/suss-quote-candidate-after185.rs preserved. Proposed child-source-tag
+repair is TEMPORARY /private/tmp/suss-quote-source-tags-candidate.rs and companion
+/private/tmp/suss-quote-graph-tag-candidate.rs, not applied/compiled/accepted.
+Compiler input repair requires BOTH phase image regeneration/Javafree validation
+before native acceptance. Rebase quote onto reviewer final185 before acceptance;
+do not restore whole stale graph and lose review changes. Root owns no heavy job
+while reviewer167 owns slot. No quote PR/commit/merge/issue closure/M3 gate claim.
+
+PR185 second review repair pushed/frozenfdcfa45af13cade8a56ddd09da4e0b7dd41c2e4d;
+root authoritativeGH verifies exactnewhead/draft/CI37207313040 IN_PROGRESS.
+Required unfiltered full24425 LIVE soleheavyreviewer167, logfile
+/private/tmp/suss-pr185-review-retention-full-final.log. Previous003f CI cancelled/
+superseded, notfinalacceptance. Expandedfreshprimary28875terminal0 verifies
+original4 metadata rows/Node17 plus freshouterinfo true,false,false,false.
+Expandednative55108terminal0 12.03s bothcallerphases, oldmeta survives source
+redefinition/callerGC, unchangedrevisionidentity repeats after reset. Review
+focused62990 terminal0 22/0/0/0 sixgroups; lifecycle92415 terminal0 bindings8/
+compiledrepl6; Javafree34604 terminal0 bothpairs/bootstrap4; Python21885 terminal0
+127passed. No full/finalCI/readyclaim until actualterminal atfdcfa.
+Root quote branch rebasedfdcfa after preserving original3 investigativeuntracked
+files outside tree in/private/tmp/suss-quote-investigation-before-retention185;
+reviewed inherited files now retained. Stashf5c25ebf67ea5216d683b42a692ca769bf67e8f8
+keptbackup; apply1 append-onlyhandoffconflict resolved preservingENTIREhead
+handoff andENTIREownsuffix relative003f. All ownchangesunstaged/diffcheckpass.
+Actual quote graph still exactfdcfa parent. Backups/candidates now refreshed
+/private/tmp/suss-quote-parent-fdcfa-graph.rs,
+/private/tmp/suss-quote-candidate-fdcfa-before-tag-fix.rs,
+/private/tmp/suss-quote-candidate-fdcfa-with-tag-fix.rs; byteoutsideast_record
+assertedidenticalfdcfa. Do not restore old003f wholegraph or lose review retention.
+No rootheavyjob until reviewerexplicitterminalrelease. Next fresh guarded quote
+primary; guardedparentnative intendedred; originalcandidate metadatared; compiler
+retainedchildtagrepair focusedunitcases thenBOTHbootstrapregen/Javafree; corrected
+quote native/affected acceptance and onlythen newdraft/independentreview/full/CI.
+
+Root continuation revalidatedfdcfa quoteHEAD/currentdraft185 exactCI37207313040
+IN_PROGRESS, then reviewerauthoritativelypolled SAMEfull24425 LIVE into
+compiled_macro_core_environment, including passing cross-call integration.
+No restart/terminal inference from tail; reviewersoleheavy remains. Rootlight
+Python83767 actualTERMINAL0 full134passed5.437s
+/private/tmp/suss-quote-fdcfa-python.log. This validates checker behavior only;
+guardedquote primary/native and compilerproposal still not executed.
+
+Retirement audit while reviewerfull24425 remainsauthoritativelyLIVE (samehandle,
+long declarationmetadata thirdtest; first2/cross-call pass) rechecked actual
+production sources, not old comments/encoding tests: accepteddesign6 requires
+removal of tree-walking macro evaluator after compiled bootstrap passes.
+Compiler public paths still invoke expand::expand_all at lib.rs254 cachedexpr,
+468 exprinfo,1265 compile/WIT,1325 compilefiles,1441 namespaces,1531 main,
+2217 projectworld; ensure_core_loaded at195 also expands old prototypecore.
+expand.rs12/51/61 imports/owns/constructs MacroEvaluator from eval.rs.
+The component-host path component.rs imports suss::lang::evaluator and executes
+eval_to_string; wit/cli/cli.wit8 still imports suss:lang/evaluator. Native
+main.rs cfg(test) oldsession/repl/completer do not eliminate those production
+paths. Remaining retirement must replace actual public/frontend compilation and
+component-host behavior with compiled phase/session artifacts, preserving
+executed ABI/target/macro semantics. Deleting prototype test fixtures or changing
+only native dispatch cannot certify retirement. No architecture/support claim
+from this source audit; no audit acceptance gate closed.
+
+CURRENT ROOT IMPLEMENTATION: quote graph and quoted-childSourceTags repair now
+applied in root-owned tree (UNCOMPILED/UNACCEPTED). Source audit found genuine
+scalarquote source-loss path: quotes.rs scalar arm calls Analyzer::form, attaching
+inner datum SourceAnalysis; hir.rs833 preserves existing source and therefore
+loses enclosing quote. Scalar arm now uses private literal_form for nil/bool/
+number/string, leaving outer form_context to retain actual quote syntax. Added
+focused sourcecapture regression for4 scalars in bothphases plus11 metadata-tag
+cases, still unexecuted. Compiler input HAS changed; current embedded images
+remainfdcfa and MUST regenerate BOTHpairs/Javafree before candidateCLIacceptance.
+No rootheavyjob; reviewerfull24425 stillauthoritativelyLIVE, advancedpastmacro
+suites into compiled_native_entrypoints after declarationmetadata3/0/0/0 in446.53s.
+Actualparent backups: /private/tmp/suss-quote-parent-fdcfa-{graph,source-tags,quotes}.rs.
+Candidate backups: /private/tmp/suss-quote-candidate-fdcfa-with-tag-fix.rs,
+/private/tmp/suss-quote-source-tags-candidate.rs,/private/tmp/suss-quote-quotes-candidate.rs.
+Alloutsideast_record graphbytes assertedsamefdcfa; ownchangesonly, reviewed
+Store metadata retention preserved. Next AFTERactualfullterminal/explicitrelease:
+fresh guarded primary14; temporarilyrestoreONLYown3productionfiles exactparent
+for intendednativeRED (retainnewfixture/assertions); thenreapply3candidates,
+focusedcompiler quoted_tag_tests, BOTHbootstrapregen/Javafree, native14/bothphases
+and affectedtests. Old pre-tag-fixcandidate maynotreachmetadata while scalar
+source-loss remains; no extra intermediate regeneration/redrun is required.
+Do not inferbefore/after success until actualterminal. No quotePR/commit yet.
+
+PR185 review is COMPLETE: reviewerfull24425 actualTERMINAL0 throughreaderdoctests,
+root independentlycounted local/CIworkspaceONLY140groups1187/0/17/0 andverified
+requiredcommand/all4doctestgroups. CI ANSI is renderedliteral^[[…m; firstmatching
+assertionsfailed onformattingonly, rawheaders inspected and strippedonlyfor
+matching. ExactGH37207313040 COMPLETED/SUCCESS atfdcfa, currentheadunchanged.
+Rootmarked185READY/isDraftfalse/OPEN andupdatedbodyfullreviewfix/evidence, no
+merge. Issue14readyupdate5981769415, #14stillOPEN. Allreviewerhandles terminal
+andexplicitheavyslotrelease received. ROOTsoleheavyNOW.
+
+Quote guarded freshprimary87014 actualTERMINAL0 verifiesall14trace/Nodeprojections
+includingmetadata childtagpresentnil/topany andallidentityfacts/effect0.
+TemporarilyrestoredONLYown3productionfiles exactfdcfa; guardedparentnative94102
+actualTERMINAL101 (0/1/0/0,5.85s): intendednilrow assertion showsactual:opconst/
+formnil andabsentliteral/exprchildren versusactualpinned:opquote/form(quote nil)/
+constchild. Runtimecallerfailedfirst; Macrocaller not yetexecutedbefore. This
+confirmssemantic-source/schema regression, unlike oldhelperexception37001.
+Reappliedown3candidatefiles preservingreviewretention; compiler78809actual
+TERMINAL0:2source/tagtests/79filtered (focusedonly), four scalarquotekinds inboth
+phases and11metadatacases. BOTHbootstrapregen81521actualTERMINAL0, bothimage
+pairsupdated. Javafreeverify46020actualTERMINAL0: exacttwo-processreproduction/
+4bootstrapexecutiontests passed13.18s. No staleimageCLIacceptance.
+Quote repairednative88053LIVE soleheavy /private/tmp/suss-quote-native-after.log.
+Nopassingnativeclaim untilactualterminal. Rootactualgraph/source_tags/quotes
+nowcorrectedcandidate, notparent; backupsstillavailable. NoquotePR/commit yet.
+
+User merged stack174 through185. Rootverified endpoints173/185MERGED and
+fetchedmain1f724f02fccfd2e18506b1c754d34ffece5ac886. Its tree is byteidentical
+to reviewedfdcfa (gitdiffempty). Rootstash679b0a067ab90591f2d9946146ff79f19191b02c
+retainedallownchanges/images. Plainrebase attemptedreplay63alreadysquashedstack
+commits; safelyaborted BEFOREresolution, then explicit--ontoorigin/mainfdcfa
+rebaseactual0 succeeded; stashapplyactual0 restoresallownwork withnoconflict.
+QuoteHEADnowactualmain1f724f0, nootherbranchworktree changes.
+
+Quote repairednative88053 actualTERMINAL0 (1/0/0/0,9.30s), all14casesinboth
+callerphases afterGC/sharedidentity/metadata/effect0. Post-rebase affected93583
+actualTERMINAL0:36/0/0/0 across10integrationgroups (constant/local/global/cross-
+invocation/source-tags/environment/syntaxquote/livebindings/quotedidentifiers/
+quote). Graph90676 actualTERMINAL0:6/0/0/11filtered focusedtests preservecold
+budgets/callbackcount-order/occurrencework/GC/deadrevisionbehavior. Sourcecontext
+78506 actualTERMINAL0:36/0/0/0 across6groups (analysisgraph/context/formsource
+metadata/sourcepositions/hintboundaries/metadatatransport), noassertionrelaxation.
+Total72affectedintegrationpasses16groups; graph6 andcompiler2 areseparatefocused
+checks, notunfilteredbaseline. Python45329 actualTERMINAL0:134pass5.469s;
+core_import--check actualTERMINAL0:274verifiedfiles. AllROOTlocalhandles terminal;
+newquotePRstillrequiresindependentreview/significantfixes/unfilteredfull/exactCI.
+Current3sourcefixesand4phaseassetsowned/validatedfocusedonly; noM3gateclosure.
+
+
+## PR186 independent review checkpoint
+
+Independent review compared the scoped quote graph, scalar literal source capture
+and separately retained quoted-child tags against pinned analyzer.cljc 2630–2655
+and 4444–4465 and the existing source-inference rules. No significant scoped
+code defect was found. All fourteen original cases and field/identity assertions
+remain intact; outer metadata wrappers and complete AST schemas remain open.
+
+Fresh `sh scripts/test-quote-asts-oracle.sh` reached terminal exit0: all fourteen
+forced, cache-disabled analyzer traces and fourteen executed Node projections
+match (log `/private/tmp/suss-pr186-review-oracle.log`).
+`CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-compile --locked quoted_tag_tests -- --test-threads=2` reached terminal
+exit0: 2 source/tag checks passed, 79 filtered in its unit group; the remaining
+compiler groups were filtered (log `/private/tmp/suss-pr186-review-focused-compiler.log`).
+`CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-cli --locked --test compiled_macro_quote_asts -- --test-threads=2` reached
+terminal exit0: 1 passed, 0 failed/ignored/filtered, 9.07 seconds, all fourteen
+observations in both caller phases after GC with zero quoted effects
+(log `/private/tmp/suss-pr186-review-focused-native.log`).
+
+This checkpoint changes documentation only; both validated bootstrap pairs and
+production inputs remain unchanged. The next unblocked step is the exact required
+unfiltered `CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test --workspace --locked -- --test-threads=2` on the pushed review head,
+followed by independent exact-head CI verification with workspace counts separate
+from Python/bootstrap. Those results are not yet claimed here. Keep PR186 draft
+until they finish; no merge, issue closure or original M3 gate completion.

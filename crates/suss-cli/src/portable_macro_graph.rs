@@ -1697,7 +1697,31 @@ impl<'a> AnalysisGraph<'a> {
     }
     fn ast_record(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
         let source = hir.source.as_ref().expect("source AST task");
-        let form = self.form(&source.form, depth + 1)?;
+        let quote = if source.form.metadata.is_empty()
+            && let Kind::List(items) = &source.form.kind
+            && items.len() == 2
+            && matches!(&items[0].kind, Kind::Symbol(head)
+                if head.namespace.is_none() && head.name == "quote")
+        {
+            Some(items)
+        } else {
+            None
+        };
+        let (form, quoted_datum) = if let Some(items) = quote {
+            // One actual quoted datum is shared by the source form and the
+            // const child's form/val, even when reader construction repeats
+            // ordinary map/set occurrences elsewhere in the analysis graph.
+            validate_form_data(&source.form)?;
+            let datum = self.form(&items[1], depth + 1)?;
+            self.charge(0)?;
+            let datum = self.recipe(Recipe::Alias(datum))?;
+            let head = self.form(&items[0], depth + 1)?;
+            self.charge(0)?;
+            let form = self.recipe(Recipe::List(vec![head, datum]))?;
+            (form, Some(datum))
+        } else {
+            (self.form(&source.form, depth + 1)?, None)
+        };
         let env = self.environment(
             &source.namespace_snapshot,
             &source.scope,
@@ -1721,6 +1745,46 @@ impl<'a> AnalysisGraph<'a> {
         {
             fields.push(("op", self.keyword("const")?));
             fields.push(("val", form));
+        }
+        // Pinned analyzer.cljc2630–2655 retains quote syntax separately
+        // from its literal const child. Use the actual retained source datum;
+        // quoted collection constructor HIR is not a source child AST.
+        if let Some(datum) = quoted_datum {
+            let literal = self.flag(true)?;
+            let mut constant = vec![
+                ("op", self.keyword("const")?),
+                ("env", env),
+                ("literal?", literal),
+                ("val", datum),
+                ("form", datum),
+            ];
+            if let Some(tag) = &source.tags.quoted_const_tag {
+                let tag = match tag {
+                    Some(tag) => self.form(tag, depth + 1)?,
+                    None => self.form(
+                        &Form {
+                            kind: Kind::Nil,
+                            span: 0..0,
+                            metadata: vec![],
+                        },
+                        depth + 1,
+                    )?,
+                };
+                constant.push(("tag", tag));
+            }
+            let constant = constant
+                .into_iter()
+                .map(|(key, value)| Ok((self.keyword(key)?, value)))
+                .collect::<Result<Vec<_>>>()?;
+            self.charge(0)?;
+            let expr = self.recipe(Recipe::Map(constant))?;
+            let expr_key = self.keyword("expr")?;
+            fields.extend([
+                ("op", self.keyword("quote")?),
+                ("literal?", literal),
+                ("expr", expr),
+                ("children", self.vector(&[expr_key])?),
+            ]);
         }
         // Only a genuine resolved source symbol is a local reference. A list
         // head may resolve to a local too, but its AST is an invocation, not a

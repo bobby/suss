@@ -9,7 +9,8 @@
 //
 // Source inference adaptation of cljs/analyzer.cljc get-tag, infer-if,
 // infer-invoke, infer-tag and fn inferred-ret-tag, and canonicalize-type, pinned
-// at c4295f303100bbf5afac449242d30bca1126f1a1 (1529–1659, 1008–1022, 2359–2364).
+// at c4295f303100bbf5afac449242d30bca1126f1a1 (1529–1659, 1008–1022, 2359–2364,
+// 2630–2655 and 4444–4465).
 // Upstream analyzer.cljc SHA-256:
 // 297802c627474434f1ef868e31f5f9913c290a4e80c509a40c704dced95bbf47.
 // The native operation representation is original. No JS AST is fabricated and
@@ -20,6 +21,9 @@ use super::*;
 pub struct SourceTags {
     /// Absence is distinct from a known portable tag (including any).
     pub tag: Option<Form>,
+    /// Genuine quoted const child: outer None means unsupported/not a quote;
+    /// inner None retains the analyzer's present nil child tag.
+    pub quoted_const_tag: Option<Option<Form>>,
     /// None: field absent. Some(None): field present, unknown return tag.
     pub inferred_return: Option<Option<Form>>,
     /// Supported source inference result, after metadata's get-tag precedence.
@@ -82,6 +86,21 @@ fn constant(form: &Form) -> Option<Form> {
         Kind::List(_) => "cljs.core/IList",
         _ => return None,
     }))
+}
+// analyze-const reads the tag after quoted analysis, including with-meta.
+// Reader/analyzer bookkeeping alone does not create that wrapper. A meaningful
+// metadata wrapper has no inferred tag unless get-tag supplies a non-nil hint.
+fn quoted_constant_tag(form: &Form) -> Result<Option<Option<Form>>, Diagnostic> {
+    let Some(tag) = constant(form) else {
+        return Ok(None);
+    };
+    let meaningful = reader_metadata_pairs(form)?.chunks_exact(2).any(|pair| {
+        !matches!(&pair[0].kind, Kind::Keyword(key)
+            if (key.namespace.is_none()
+                && matches!(key.name.as_str(), "file" | "line" | "column" | "end-column" | "end-line" | "source"))
+            || (key.namespace.as_deref() == Some("cljs.analyzer") && key.name == "analyzed"))
+    });
+    Ok(Some(if meaningful { hint(form)? } else { Some(tag) }))
 }
 fn callable(hir: &Hir) -> Option<&SourceCallable> {
     hir.source.as_ref()?.callable.as_deref()
@@ -321,6 +340,15 @@ pub(super) fn source_tags(
     methods: Option<&SourceCallable>,
     hir: &Hir,
 ) -> Result<SourceTags, Diagnostic> {
+    let quoted_const_tag = if let Kind::List(items) = &form.kind
+        && items.len() == 2
+        && matches!(&items[0].kind, Kind::Symbol(head)
+            if head.namespace.is_none() && head.name == "quote")
+    {
+        quoted_constant_tag(&items[1])?
+    } else {
+        None
+    };
     let inferred_return = methods.map(return_tag).transpose()?;
     let tag = if methods.is_some() {
         Some(named("function"))
@@ -340,7 +368,7 @@ pub(super) fn source_tags(
                 if matches!(items.first().map(|head| &head.kind), Some(Kind::Symbol(head)) if head.namespace.is_none() && head.name == "quote")
                     && items.len() == 2 =>
             {
-                constant(&items[1])
+                quoted_const_tag.as_ref().map(|tag| tag.clone().unwrap_or_else(|| named("any")))
             }
             _ => match &hir.kind {
                 Expression::Arithmetic { .. } | Expression::Bitwise { .. } => Some(named("number")),
@@ -402,7 +430,65 @@ pub(super) fn source_tags(
     let inferred = hint(form)?.or_else(|| tag.clone().filter(|tag| !matches!(tag.kind, Kind::Nil)));
     Ok(SourceTags {
         tag,
+        quoted_const_tag,
         inferred_return,
         inferred,
     })
+}
+
+#[cfg(test)]
+mod quoted_tag_tests {
+    use super::*;
+
+    #[test]
+    fn scalar_quote_preserves_outer_source_instead_of_private_literal_source() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            for source in ["(quote nil)", "(quote false)", "(quote 42)", "(quote \"hello\")"] {
+                let hir = crate::portable::analyze_in(source, &Environment::default(), phase).unwrap();
+                let Expression::Do(forms) = &hir.kind else { panic!("fragment source forms") };
+                assert_eq!(forms.len(), 1);
+                assert!(matches!(&forms[0].kind, Expression::Literal(_)));
+                let retained = forms[0].source.as_ref().expect("actual quoted source record");
+                let expected = suss_reader::forms::read_forms(source).unwrap().remove(0);
+                assert_eq!(retained.form, expected, "enclosing source quote in {phase:?}");
+                assert!(retained.tags.quoted_const_tag.is_some());
+            }
+        }
+    }
+
+    #[test]
+    fn quoted_child_tag_retains_nil_false_hints_and_elides_only_bookkeeping() {
+        for (source, expected) in [
+            ("word", Some(named("cljs.core/Symbol"))),
+            ("^{:purpose :kept} word", None),
+            ("^{:tag nil} word", None),
+            (
+                "^{:tag false} word",
+                Some(Form {
+                    kind: Kind::Bool(false),
+                    span: 0..0,
+                    metadata: vec![],
+                }),
+            ),
+            ("^number word", Some(named("number"))),
+            (
+                "^{:line 1 :column 2 :file \"probe.sus\" :end-column 3 :end-line 1 :source \"word\" :cljs.analyzer/analyzed true} word",
+                Some(named("cljs.core/Symbol")),
+            ),
+            ("^{:purpose :kept} [word]", None),
+            ("^{:purpose :kept} (word)", None),
+            ("^{:purpose :kept} {:a word}", None),
+            ("^{:purpose :kept} #{word}", None),
+            ("^{:line 1 :other/analyzed true} word", None),
+        ] {
+            let form = suss_reader::forms::read_forms(source).unwrap().remove(0);
+            let actual = quoted_constant_tag(&form)
+                .unwrap()
+                .expect("supported source constant");
+            assert!(
+                same(&actual, &expected),
+                "quoted datum {source}: {actual:?}"
+            );
+        }
+    }
 }

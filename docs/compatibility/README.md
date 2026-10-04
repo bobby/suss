@@ -830,3 +830,13 @@ retains its upstream docstring; both bootstrap phase pairs were regenerated and
 reproduced without Java. All58affected native and123Python checks pass; independent
 review, unfiltered full baseline and exact final-head CI remain required. Complete
 AST/constant-expression policy and all original M3 requirements remain open.
+
+Selected quote AST fields now have focused executing evidence: fourteen fresh
+pinned observations and Node projections match independently decoded native
+results in both caller phases after GC, with shared datum identity, metadata,
+nullable child tags and zero quoted effects. Quoted scalar lowering retains the
+enclosing source quote; both phase bootstrap pairs regenerate and reproduce
+without Java. See [quote AST evidence](../runtime/compiled-macro-quote-asts.md).
+Outer metadata wrappers and complete source schemas/constant-expression policy
+remain open. Independent review, full baseline and final-head CI are pending;
+no declaration, issue or M3 gate is reclassified.
