@@ -290,7 +290,8 @@ fn unordered_literal_ast_edges_and_runtime_effects_preserve_textual_order() {
                 )
                 .unwrap();
             session.collect().unwrap();
-            let observation = FormBridge::new(&mut session).unwrap()
+            let observation = FormBridge::new(&mut session)
+                .unwrap()
                 .read(&mut session, &value, 0..1)
                 .unwrap();
             let rows = |offset| {
@@ -310,7 +311,8 @@ fn unordered_literal_ast_edges_and_runtime_effects_preserve_textual_order() {
             assert_eq!(datum(&observation), expected);
             let effects = session.eval("ordered-effects").unwrap();
             session.collect().unwrap();
-            let effects = FormBridge::new(&mut session).unwrap()
+            let effects = FormBridge::new(&mut session)
+                .unwrap()
                 .read(&mut session, &effects, 0..1)
                 .unwrap();
             assert_eq!(
@@ -322,6 +324,60 @@ fn unordered_literal_ast_edges_and_runtime_effects_preserve_textual_order() {
                         .collect::<Vec<_>>()
                 ]),
                 "every entry runs once in textual order"
+            );
+        }
+    }
+}
+
+#[test]
+fn empty_do_source_return_retains_context_and_nil_after_gc() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros
+            .define(
+                r#"(defmacro empty-source [binding]
+          (let [outer (get (get (get &env :locals) binding) :init)
+                ast (if (seq (get outer :statements)) (first (get outer :statements)) outer)
+                ret (get ast :ret)]
+            (list 'quote [(get ast :op) (get (get ast :env) :context)
+                         (get ast :tag) (get ret :op) (get (get ret :env) :context)
+                         (get ret :tag) (contains? ret :val) (get ret :val)])))"#,
+            )
+            .unwrap();
+        for (initializer, context) in [("(do)", ":expr"), ("(do (do) nil)", ":statement")] {
+            let value = session
+                .eval_with_macros(
+                    &format!("(let [copy {initializer}] [copy (empty-source copy)])"),
+                    &mut macros,
+                )
+                .unwrap();
+            session.collect().unwrap();
+            let form = FormBridge::new(&mut session)
+                .unwrap()
+                .read(&mut session, &value, 0..1)
+                .unwrap();
+            assert_eq!(
+                datum(&form),
+                json!([
+                    "vector",
+                    [
+                        null,
+                        [
+                            "vector",
+                            [
+                                ["keyword", ":do"],
+                                ["keyword", context],
+                                ["symbol", "clj-nil"],
+                                ["keyword", ":const"],
+                                ["keyword", context],
+                                ["symbol", "clj-nil"],
+                                true,
+                                null
+                            ]
+                        ]
+                    ]
+                ]),
+                "empty do context and executed nil for {initializer}"
             );
         }
     }

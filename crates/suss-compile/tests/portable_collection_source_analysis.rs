@@ -272,3 +272,62 @@ fn effectful_collection_child_retains_analyzed_operands_without_reexpansion() {
         }
     }
 }
+
+#[test]
+fn empty_do_return_keeps_the_enclosing_source_context() {
+    use portable::AnalysisContext::{Expression, Return, Statement};
+    for phase in [Phase::Runtime, Phase::Macro] {
+        for (initializer, context) in [
+            ("(do)", Expression),
+            ("(do (do) 1)", Statement),
+            ("(fn* [] (do))", Return),
+        ] {
+            let source = format!("(let [copy {initializer}] (inspect copy))");
+            let mut host = Observe::default();
+            portable::prepare_fragment_forms_with_expander(
+                read_forms(&source).unwrap(),
+                0..source.len(),
+                &Environment::default(),
+                phase,
+                &mut host,
+            )
+            .unwrap();
+            let source = host.initializer.unwrap();
+            let empty = match context {
+                Expression => source.clone(),
+                Statement => {
+                    let hir::SourceNode::Do { statements, .. } = source.node.as_deref().unwrap()
+                    else {
+                        panic!("outer do required")
+                    };
+                    statements[0].source.clone().unwrap()
+                }
+                Return => {
+                    let callable = source.callable.as_ref().unwrap();
+                    let hir::Expression::Do(items) = &callable.methods[0].body.kind else {
+                        panic!("method body required")
+                    };
+                    items[0].source.clone().unwrap()
+                }
+            };
+            assert_eq!(empty.context, context);
+            let hir::SourceNode::Do { statements, result } = empty.node.as_deref().unwrap() else {
+                panic!("empty do required")
+            };
+            assert!(statements.is_empty());
+            let nil = result.source.as_ref().unwrap();
+            assert_eq!(nil.form.kind, Kind::Nil);
+            assert_eq!(
+                nil.context, context,
+                "implicit nil keeps empty do context in {initializer}"
+            );
+            assert_eq!(nil.phase, phase);
+            for tags in [&empty.tags, &nil.tags] {
+                let clj_nil = read_forms("clj-nil").unwrap().remove(0);
+                assert_eq!(tags.tag.as_ref().unwrap().kind, clj_nil.kind);
+                assert_eq!(tags.inferred.as_ref().unwrap().kind, clj_nil.kind);
+            }
+            assert!(Arc::ptr_eq(&nil.scope, &empty.scope));
+        }
+    }
+}

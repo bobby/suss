@@ -139,3 +139,14 @@ strict checker rejects silent edge reordering. The additional executing unordere
 literal test checks nine effectful set entries and nine effectful map pairs,
 requiring source AST edge order and once-only textual runtime effects in both
 phases. This test passed in both phases in the28-test affected run.
+
+## Independent empty-do review correction
+
+Review of PR #191 found that the implicit nil return of `(do)` used expression
+context even inside a statement or function return. Pinned `parse-do` preserves
+its enclosing context for empty/single-form bodies. The source capture now uses
+that same context; empty do and its nil child both retain `clj-nil` source tags.
+Four compiler checks cover all three contexts in both phases. Three executing
+native collection checks pass, including empty-do context/constant/value presence
+and nil after GC in both Stores. Graph/context checks also pass; both bootstrap
+pairs reproduce without Java. Full baseline and exact final-head CI remain gates.

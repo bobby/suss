@@ -17263,3 +17263,41 @@ handoff (including resolver attribution correction) plus every new collection
 section. Backup stash is retained. Final stacked native verification95601 is live
 at this checkpoint, log /private/tmp/suss-collection-ast-native-stacked.log. No
 terminal result is inferred. Draft/review/full/finalCI are the next gates.
+
+### PR #191 independent source-node review and empty-do correction
+
+Independent reviewer uses detached /private/tmp/suss-pr191-review, base reviewed
+#189 0ac036d, initial #191 1150381. Reviewed collection source capture before
+constructor/factory lowering, metadata expression/map/function records, explicit
+do/global assignment/invocation operands, source tag boundaries, graph identity/
+bounds/GC, strict raw corpus and the documented textual-order/JS correspondences.
+No other significant scoped defect found. Complete portable schemas, evaluator
+retirement and original M3 acceptance remain open.
+
+Found a genuine empty-do context defect: its synthetic nil :ret was analyzed
+as Expression even when the source do was Statement or Return. Pinned analyzer
+parse-do2450 preserves the enclosing context for zero/one forms; infer-tag1642
+uses the analyzed :ret. New compiler regression first failed at the semantic
+Statement assertion (95605 terminal101, 0pass/1fail/3filtered), log
+/private/tmp/suss-pr191-review-empty-do-parent.log. Repair uses form_in with the
+actual enclosing context/tail flag. Both empty do and nil retain clj-nil raw and
+inferred tags, genuine source scope and phase in all three contexts/both phases.
+This is original Rust code with pinned semantic references, no upstream copy.
+
+Focused compiler97873 terminal0:4pass/0fail/0ignored/0measured/0filtered in0.02s,
+/private/tmp/suss-pr191-review-compiler.log. Both bootstrap phase pairs regenerated
+72003 terminal0; Java-free16886 terminal0 reproduced both pairs and bootstrap4
+passed in12.74s, logs /private/tmp/suss-pr191-review-bootstrap-{generate,verify}.log.
+Native6686 terminal0:three groups15pass/0fail/0ignored/0measured/0filtered;
+context1 in5.19s, graph11 in18.18s, collection3 in66.56s, log
+/private/tmp/suss-pr191-review-native.log. New executing empty-do projections check
+Expression/Statement contexts, nil/tag/const/val presence in both Stores after GC;
+Return context is independently covered by actual function-method compiler
+analysis. Strict collection Python checker9pass in0.018s, log
+/private/tmp/suss-pr191-review-python.log. Original14 corpus is unchanged.
+
+Next freeze and push this review fix, then run the required unfiltered
+cargo test --workspace --locked -- --test-threads=2 through all four doctests on
+that head. Reviewer retains sole Cargo/JVM/Node slot until actual terminal result
+and explicit release. Exact final-head CI remains a separate root gate. No PR
+readiness, merge, issue closure or M3 completion is claimed here.

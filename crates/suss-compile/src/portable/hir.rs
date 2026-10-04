@@ -1959,7 +1959,7 @@ impl Analyzer<'_> {
                     (statements.to_vec(), result.clone())
                 } else {
                     let nil = Form { kind: Kind::Nil, span: form.span.clone(), metadata: vec![] };
-                    (vec![], self.form(&nil)?)
+                    (vec![], self.form_in(&nil, context, tail)?)
                 };
                 *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Do {
                     statements: statements.into(), result: std::sync::Arc::new(result),
