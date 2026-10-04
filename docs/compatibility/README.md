@@ -754,3 +754,11 @@ Both regenerated bootstrap images reproduce without Java; bootstrap4 passes.
 Independent review/full baseline/exact-head CI remain pending. Explicit export
 mappings are required; project/main/component-host migration, evaluator retirement
 and original M3 acceptance remain open. See [namespace entrypoints](../runtime/compiled-aot-source-preparation.md).
+
+
+[Compiled export metadata](../runtime/compiled-export-metadata.md) has four executing
+native regressions and seven fresh pinned analyzer observations. File/namespace
+shorthand selects only unambiguous freestanding functions; interface mappings stay
+explicit. Raw macro namespace metadata remains separate from target export names.
+Both images reproduce without Java; bootstrap4 passes. Affected28 and Python118 pass; review/full
+baseline/final-head CI remain pending. No declaration or M3 gate is reclassified.

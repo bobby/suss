@@ -75,7 +75,9 @@ fn compile_input(
     }
     let fragments = prepare_forms(&source, Some(source_path.to_owned()), source_paths, forms)
         .map_err(|error| error.to_string())?;
-    portable::aot::component(&fragments, &resolve, world, mappings)
+    let mappings = portable::aot::source_export_mappings(&fragments, &resolve, world, mappings)
+        .map_err(|error| error.to_string())?;
+    portable::aot::component(&fragments, &resolve, world, &mappings)
         .map_err(|error| error.to_string())
 }
 
