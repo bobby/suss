@@ -467,6 +467,22 @@ impl SourceCallable {
         })
     }
 }
+/// Original collection entries retained before constructor/factory lowering.
+/// Quoted data constructors do not create expression child records.
+#[derive(Debug, Clone)]
+pub enum SourceNode {
+    Vector(std::sync::Arc<[Hir]>),
+    Map(std::sync::Arc<[Hir]>),
+    Set(std::sync::Arc<[Hir]>),
+    Do { statements: std::sync::Arc<[Hir]>, result: std::sync::Arc<Hir> },
+    Assign { target: std::sync::Arc<Hir>, value: std::sync::Arc<Hir> },
+    Invoke { callee: std::sync::Arc<Hir>, arguments: std::sync::Arc<[Hir]> },
+    WithMeta {
+        expression: std::sync::Arc<Hir>,
+        metadata: std::sync::Arc<Hir>,
+        inner: Option<std::sync::Arc<SourceNode>>,
+    },
+}
 #[derive(Debug, Clone)]
 pub struct SourceAnalysis {
     pub tags: SourceTags,
@@ -478,6 +494,7 @@ pub struct SourceAnalysis {
     /// Namespace supplied to macro &env at enclosing top-level form entry.
     pub namespace_snapshot: std::sync::Arc<SourceNamespace>,
     pub callable: Option<std::sync::Arc<SourceCallable>>,
+    pub node: Option<std::sync::Arc<SourceNode>>,
     pub locals: std::sync::Arc<HashMap<String, LocalBinding>>,
     pub fields: std::sync::Arc<HashMap<String, FieldBinding>>,
     pub function_scopes: std::sync::Arc<[std::sync::Arc<FunctionScope>]>,
@@ -605,6 +622,7 @@ struct Analyzer<'a> {
     source_namespace: Option<(u64, Phase, String, std::sync::Arc<SourceNamespace>)>,
     namespace_snapshot: Option<std::sync::Arc<SourceNamespace>>,
     source_callables: Vec<Option<std::sync::Arc<SourceCallable>>>,
+    source_nodes: Vec<Option<std::sync::Arc<SourceNode>>>,
     callable_keys: BTreeMap<Global, Hir>,
     target: Option<(LoopId, usize)>,
 }
@@ -822,15 +840,17 @@ impl Analyzer<'_> {
         // A nested source function gets its own fact slot. Compiler-only
         // wrappers never become the evidence for a source function's methods.
         self.source_callables.push(None);
+        self.source_nodes.push(None);
         let result = self.form_inner(form, context, tail, name_hint);
         let callable = self.source_callables.pop().expect("source callable fact slot");
+        let node = self.source_nodes.pop().expect("source node fact slot");
         result.and_then(|mut expression| {
                 // A bootstrap/source expansion may already have returned its actual
                 // analyzed node. Preserve that record instead of attributing the
                 // original macro call to the expanded expression.
                 if expression.source.is_none() {
                     let tags = source_tags::source_tags(form, resolved.as_ref(), callable.as_deref(), &expression)?;
-                    expression.source = Some(std::sync::Arc::new(SourceAnalysis {
+                    let mut source = SourceAnalysis {
                         tags,
                         form: form.clone(),
                         resolved,
@@ -838,6 +858,7 @@ impl Analyzer<'_> {
                         scope,
                         namespace_snapshot: self.namespace_snapshot.as_ref().expect("top-level source snapshot").clone(),
                         callable,
+                        node,
                         locals,
                         fields,
                         function_scopes,
@@ -845,7 +866,25 @@ impl Analyzer<'_> {
                         phase: self.phase,
                         namespace,
                         origin: self.origin.clone(),
-                    }));
+                    };
+                    if let Some(node) = &source.node
+                        && let SourceNode::WithMeta { expression: value, metadata, inner } = node.as_ref()
+                    {
+                        // The child uses the original entry snapshot and form,
+                        // but the expression context of analyze-wrap-meta.
+                        let mut value = value.as_ref().clone();
+                        let mut child = source.clone();
+                        child.context = super::AnalysisContext::Expression;
+                        child.node = inner.clone();
+                        value.source = Some(std::sync::Arc::new(child));
+                        source.tags = source_tags::metadata_wrapper_tags(form)?;
+                        source.node = Some(std::sync::Arc::new(SourceNode::WithMeta {
+                            expression: std::sync::Arc::new(value),
+                            metadata: metadata.clone(),
+                            inner: inner.clone(),
+                        }));
+                    }
+                    expression.source = Some(std::sync::Arc::new(source));
                 }
                 Ok(expression)
             })
@@ -978,6 +1017,10 @@ impl Analyzer<'_> {
                 ));
             }
         }
+        *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Invoke {
+            callee: std::sync::Arc::new(callee.as_ref().clone()),
+            arguments: arguments.clone().into(),
+        }));
         Ok(Hir {
             source: None,
             span: form.span.clone(),
@@ -1816,6 +1859,12 @@ impl Analyzer<'_> {
                 }
             }
             let global = self.assignment_target(&args[0])?;
+            let target = self.form(&args[0])?;
+            let value = self.form(&args[1])?;
+            *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Assign {
+                target: std::sync::Arc::new(target),
+                value: std::sync::Arc::new(value.clone()),
+            }));
             return Ok(Hir {
                 source: None,
                 span: form.span.clone(),
@@ -1823,7 +1872,7 @@ impl Analyzer<'_> {
                 ty: Type::Value,
                 kind: Expression::Assign {
                     global,
-                    value: Box::new(self.form(&args[1])?),
+                    value: Box::new(value),
                 },
             });
         }
@@ -1905,6 +1954,16 @@ impl Analyzer<'_> {
         let (kind, ty) = match (bare, symbol.name.as_str()) {
             (true, "do") => {
                 let body = self.body(args, form.span.clone(), context, tail)?;
+                let Expression::Do(children) = &body.kind else { unreachable!() };
+                let (statements, result) = if let Some((result, statements)) = children.split_last() {
+                    (statements.to_vec(), result.clone())
+                } else {
+                    let nil = Form { kind: Kind::Nil, span: form.span.clone(), metadata: vec![] };
+                    (vec![], self.form(&nil)?)
+                };
+                *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Do {
+                    statements: statements.into(), result: std::sync::Arc::new(result),
+                }));
                 (body.kind, body.ty)
             }
             (true, "if") => {
@@ -2031,10 +2090,14 @@ impl Analyzer<'_> {
                         "Arithmetic call requires at least one argument",
                     ));
                 }
+                let callee = self.form(&items[0])?;
                 let arguments = args
                     .iter()
                     .map(|arg| self.form(arg))
                     .collect::<Result<Vec<_>, _>>()?;
+                *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Invoke {
+                    callee: std::sync::Arc::new(callee), arguments: arguments.clone().into(),
+                }));
                 let types = arguments.iter().map(|arg| arg.ty).collect::<Vec<_>>();
                 let ty = arithmetic_type(operator, &types).ok_or_else(|| {
                     let operand = arguments
@@ -2197,6 +2260,7 @@ pub(crate) fn prepare_with_origin(
         source_namespace: None,
         namespace_snapshot: None,
         source_callables: Vec::new(),
+        source_nodes: Vec::new(),
         callable_keys: BTreeMap::new(),
         target: None,
     };
