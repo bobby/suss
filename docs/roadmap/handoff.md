@@ -14120,3 +14120,32 @@ full baseline and require exact final-head CI. Continue component/AOT target
 adapters and actual command migration; legacy evaluator retirement, published
 user dependency-loading policy, scheduler/cancellation/live heap criteria and
 all original M3 issues remain open. No merge or milestone closure is claimed.
+
+
+## PR169 independent review — 2026-10-03
+
+Independent reviewer checked original head496d9f216a1fe568790215a08a924fc2ea8773da
+in the exclusively owned /private/tmp/suss-m3-compiled-core-bindings worktree.
+No significant production defect was found within this prerequisite scope.
+Reviewed phase-qualified imports/exports, complete source catalog deduplication,
+ABI-unbound source cell flags, ExceptionInfo class initialization before capture,
+bound nil self cells before closure installation, GC ownership and native reset
+plus base/user artifact accounting. No original assertion was removed or changed.
+
+Independent compiler97226 TERMINAL0:3/0/0 in0.82s,
+/private/tmp/suss-pr169-review-compiler.log. Command: cargo test -p suss-compile
+--locked --test compiled_core_bindings -- --test-threads=2. Java-free10072
+TERMINAL0: both phase Wasm/JSON reproduce byte-exactly twice and match shipped
+assets; bootstrap4/0/0 in13.33s, /private/tmp/suss-pr169-review-javafree.log.
+Command: sh scripts/verify-bootstrap.sh. Both use shared
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target and CARGO_BUILD_JOBS=2,
+without RUSTFLAGS. No compiler source changed, so no artifact regeneration
+was needed. Sole heavy slot remains owned by the reviewer for the required
+unfiltered full baseline at the frozen review head following this record.
+
+The full baseline and exact final-head CI remain pending. No PR readiness, issue
+closure, M3 completion or merge is claimed. Complete published dependency loading,
+AOT/component commands, evaluator retirement and scheduler/cancellation/live heap
+acceptance remain open. Next unblocked action: freeze/push review documentation,
+run cargo test --workspace --locked -- --test-threads=2 once, poll its exact
+process handle until terminal, then release the heavy slot explicitly.
