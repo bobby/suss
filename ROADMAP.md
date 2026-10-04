@@ -379,3 +379,12 @@ Affected CLI15, Python118 and Java-free reproduction/bootstrap4 pass. Independen
 review, unfiltered full baseline and final-head CI remain pending. Namespace,
 project, main and component-host migration, evaluator retirement and original M3
 acceptance remain open. See [native file compilation](docs/runtime/compiled-aot-source-preparation.md).
+
+Native namespace compilation now shares portable file-mode source preparation
+and component assembly. Three executing regressions pass for canonical source
+lookup, portable conditionals, imported compiled macros, separate phase effects,
+GC/fresh Stores, pre-effect declaration errors and deferred Runtime exceptions.
+Both regenerated bootstrap images reproduce without Java; bootstrap4 passes.
+Independent review/full baseline/exact-head CI remain pending. Explicit export
+mappings are required; project/main/component-host migration, evaluator retirement
+and original M3 acceptance remain open. See [namespace entrypoints](docs/runtime/compiled-aot-source-preparation.md).

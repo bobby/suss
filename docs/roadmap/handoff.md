@@ -15078,3 +15078,180 @@ not run that full baseline on this increment. No merge/issue closure/M3 completi
 Next implementation remains remaining frontend migration/evaluator retirement;
 rich macro environments, published dependency policy and scheduler/cancellation/
 live heap acceptance remain open.
+
+
+## Namespace frontend continuation — unvalidated isolated draft
+
+Previous goal turn made authoritative progress: CLI PR177 opened at855d281,
+linked to stack174 and Refs #14; independent reviewer167 owns that worktree and
+sole heavy slot. Root does not mutate it or start another native job. Reviewer
+found actual malformed arguments execute guest initialization before diagnostics,
+reproduced throw17, and is fixing preflight against uninstantiated Component
+metadata. Root's next isolated draft is /private/tmp/suss-m3-aot-cli-namespace,
+branch portable/m3-aot-cli-namespace, initially based on177855d281. Rebase onto
+reviewed repaired177 before execution.
+
+Draft namespace mode now resolves source roots with existing canonical namespace
+lookup, validates the leading declaration using the shared compiler header
+grammar, then compiles the SAME immutable selected text/forms through existing
+compiled source preparation and portable assembly. File/namespace modes share
+WIT selection, explicit mappings and output handling. Pure compiler API
+modules::validate_namespace_source shares declaration matching with dependency
+discovery. It has no source reads or Macro/Runtime effects. No ad hoc ns parser.
+Project/main/component-host remain unfinished. The helper changes compiler
+fingerprint: BOTH phase Wasm/JSON must be regenerated --profile test and
+Java-free verified before CLI tests. Current images are STILL PARENT IMAGES.
+
+Three UNRUN executing namespace command tests cover default src lookup, .cljs/.cljc
+portable conditional selection, compiled macros, dependency order, interface
+calls after GC and two fresh Stores; wrong declaration before a throwing macro,
+missing declaration, missing source and ambiguous extensions preserve existing
+output. Custom repeated canonical source roots also prepare a Runtime throw
+successfully, with instantiation decoding first17 rather than later99 in two
+fresh Stores. Only restricted rustfmt and git diff --check ran. No native test result,
+image verification, full baseline or PR readiness is claimed for this draft.
+Next: obtain explicit heavy release after177 reviewed full terminates, rebase
+this draft onto its repaired head, controlled prior-code regression, regenerate
+both images, Java-free check and focused new/existing namespace/AOT tests. Then
+update docs/inventory/evidence, open partial PR and dispatch independent review,
+full baseline and exact CI. Original M3 scope/acceptance remains intact.
+
+Namespace draft successfully rebased with autostash5fedacc onto reviewed177
+c0c948dd4d76138bf260105614baec5a0b11319c. All draft source/test edits retained,
+including the parent's pre-instantiation argument validation. No conflict and
+no native job. Original177 CI37178726952 cancelled; repairedCI37179064284 live.
+Reviewer167 owns required full42512 at /private/tmp/suss-pr177-review-full-final.log
+and sole heavy slot. Namespace compiler helper still requires both image
+regenerations before any CLI validation. PR176 exact8ac CI37176532542 completed
+success with1139/0/17 across128 groups, Python118 and Java-free checks; root
+verified current head, updated PR body and marked ready without merge.
+
+Draft review also found the old parser silently ignores a positional file when
+namespace mode is selected. Namespace+file and namespace+main now draft explicit
+mutually-exclusive-mode errors; the actual command regression checks each error
+and unchanged prior output. Namespace help includes world selection and explicit
+mappings. Still UNRUN; reviewer177 full42512 and repairedCI37179064284 confirmed
+live. No second heavy job or readiness claim.
+
+
+Verified next frontend dependency while177 full42512 remains live: legacy project
+Compiler::compile_project collects source files, groups them by gen-world, then
+compile_world calls expand::expand_all. That expander constructs MacroEvaluator;
+project migration cannot be claimed from the file/namespace helper alone. Its
+WorldConfig currently specifies only wit/output, so explicit source/namespace
+and export selection must be implemented coherently with source directives and
+the shared compiled pipeline before retiring this path. Main mode and component
+host/session.rs also still reference Compiler. No prototype evaluation path is
+being declared removed. Namespace draft remains scoped to its actual entrypoint;
+project/main/evaluator replacement is subsequent required M3 work. Original
+issues13/15 were inspected: deterministic namespace errors, stable bindings and
+pending-I/O cancellation/cleanup/live-value versus code accounting remain explicit
+acceptance requirements. Neither narrower AOT evidence nor fuel recovery completes
+those public contracts. Current177 exactCI37179064284 still in progress, scanner
+and Java-free bootstrap steps pass, workspace step live.
+
+Export-shorthand dependency verified in current source, not inferred from comments:
+portable/hir.rs definition rejects metadata keys const/macro/export before
+declaration construction. DefinitionInfo already retains actual declaration and
+definition forms, and public hir::reader_metadata_pairs provides the shared
+metadata grammar. Prototype analyze.rs maps ^:export to the short source name;
+portable AOT currently requires exactly one explicit mapping per resolved WIT
+function and rejects unknown mappings. A complete shorthand increment must first
+support the declaration attribute in portable analysis and then derive exact
+WIT paths with ambiguity diagnostics from staged source facts. Do not merely
+suppress the analyzer error or discard metadata; interface/version/alias mappings
+need the same explicit selection contract. This is a concrete prerequisite to
+preserving project export selection while deleting temporary evaluator use.
+Namespace draft keeps explicit mappings and makes no shorthand support claim.
+PR177 local42512 and repaired-headCI37179064284 are still live; source frozen.
+
+Strengthened the UNRUN namespace positive fixture: tools.cljs supplies imported
+compiled macro twice, requiring dep.cljs in Macro phase; app/core.cljc requires
+the SAME physical dependency in Runtime and imports tools via require-macros.
+Macro expansion incorporates dep/counter-1, and effects includes100*(Runtime
+dep/counter-1). Expected42/6 and1/3 therefore require once-only initializers in
+both separate phases; all prior scalar/GC/fresh-Store assertions remain. This is
+a queued regression, not evidence of success. Current177 full42512 has progressed
+through persistence/numeric/hash groups and remains authoritatively live.
+
+
+## Namespace frontend — actual focused validation
+
+Reviewer177 released sole heavy slot after required full42512 TERMINAL0 at
+c0c948dd4d76138bf260105614baec5a0b11319c:1143/0/17existing ignores/129groups,
+unfiltered through final reader doctests. Root namespace tests then ran in the
+isolated worktree, preserving all original assertions. Saved four fixed source
+files under /private/tmp/suss-aot-cli-namespace-fixed-{args.rs,main.rs,portable_aot.rs,modules.rs},
+restored exact parent source and cleaned only the four Suss packages (3.5GiB).
+Controlled prior-code75495 TERMINAL101: positive namespace command rejects new
+namespace world/export flags;0passed/1failed/2filtered in0.84s. Restored all fixed
+source before regeneration. Never RUSTFLAGS. Commands use
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2:
+
+- cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+- sh scripts/verify-bootstrap.sh
+- cargo test -p suss-cli --locked --test compiled_aot_namespace_command -- --test-threads=2
+- cargo test -p suss-cli --locked --test compiled_aot_command --test aot_source_preparation --test compiled_aot --test compiled_native_entrypoints --test namespace_session -- --test-threads=2
+- cargo test -p suss-compile --locked --test portable_modules --test portable_phase_modules --test portable_aot -- --test-threads=2
+- python3 -m unittest discover -s scripts -p 'test_*.py'
+
+Regeneration56756 TERMINAL0 updates BOTH phase Wasm/JSON for changed compiler
+helper. Java-free58749 TERMINAL0: both images/manifests reproduce byte-exact twice
+and compiler identity verifies; bootstrap4/0/0 in13.01s. New namespace47816
+TERMINAL0:3/0/0 in6.85s, imported compiled Macro/Runtime dependency counter
+assertions42/6 and1/3 intact after GC/two fresh Stores; errors preserve output;
+Runtime throw compiles and actual instantiation decodes first17 rather than99.
+Affected36742 TERMINAL0:23/0/0 across5groups (4source,1AOT,4filecommands,10native,
+4namespace). Compiler93871 TERMINAL0:27/0/0 (13AOT,11modules,3phasegraph).
+Python27700 TERMINAL0:118/0 in4.916s. Logs
+/private/tmp/suss-aot-cli-namespace-{before,regenerate,javafree,fixed,affected,compiler,python}.log.
+Pinned development reference initialized11093 TERMINAL0 at exact
+c4295f303100bbf5afac449242d30bca1126f1a1 before full acceptance.
+Restricted formatting/diff checks pass; no ABI/layout or upstream forms ported.
+
+Root has NOT run the full baseline on this increment. Next commit/push/open draft
+stacked on177 with Refs #13/#14, dispatch independent review with significant
+fixes authorized, transfer exclusive worktree/sole heavy slot, freeze final head
+for exact unfiltered cargo test --workspace --locked -- --test-threads=2 and
+exact-head CI. All root handles are terminal. PR177 exactc0cCI37179064284 remains
+pending; no ready claim/merge. Remaining implementation is export attributes and
+project/main/component-host migration/evaluator retirement, rich macro environment
+acceptance, published dependency policy and pending-I/O scheduler/cancellation/
+live-value accounting. Original M3 scope remains open; no issue closure.
+
+## Independent PR178 review — namespace mode routing
+
+Reviewed clean396000a2860c386ff6c48d52282b5d7f1d81cd67 against177c0c948d:
+shared immutable text/forms, pure namespace-header validation, source paths,
+phase-separated compiled Macro dependencies, Runtime initializer deferral and
+shared file/namespace WIT mappings/output handling. Significant routing finding:
+--namespace without -w fell through to the legacy project/config compiler;
+--namespace with --world/--config silently ignored project selection options.
+
+New actual process regression30483 TERMINAL101:0pass/1fail/3filtered0.80s;
+/private/tmp/suss-pr178-review-routing-before.log. Missing-WIT namespace command
+incorrectly attempted deps.sus loading. Namespace parser now explicitly requires
+-w/--wit and rejects project --world/--config before any source/WIT/phase effects.
+Controlled project-guard-only bypass53581 TERMINAL101:0pass/1fail/3filtered4.11s;
+/private/tmp/suss-pr178-review-project-flags-before.log: supplied --world was
+silently ignored and compilation succeeded. Restored both guards afterward.
+Every original namespace assertion and all parent file tests remain intact.
+
+Focused75382 TERMINAL0:8pass/0fail across file4/namespace4, respectively37.66s/
+5.74s, /private/tmp/suss-pr178-review-routing-fixed.log. Final restored namespace
+27362 TERMINAL0:4/0/0 in6.36s, /private/tmp/suss-pr178-review-final-focus.log.
+Both invalid project flags, missing-WIT routing and original source errors preserve
+an existing output artifact. Original compiled macro/dependency42/6 and effect1/3,
+GC/twoStores and independently decoded first17 rather than99 remain unchanged.
+Commands cargo test -p suss-cli --locked --test compiled_aot_namespace_command
+--test compiled_aot_command -- --test-threads=2, then final namespace-only test;
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target, CARGO_BUILD_JOBS=2, no RUSTFLAGS.
+Rustfmt2024 new test and git diff check pass. Fix is CLI-only; compiler source,
+both already reproduced phase images/fingerprints and shared GC ABI unchanged.
+
+Next push fixes/evidence, freeze final head, run required unfiltered
+cargo test --workspace --locked -- --test-threads=2 and require final-head CI
+before readiness. Reviewer retains sole heavy slot until actual full terminal.
+Main/project/component-host and shorthand/evaluator retirement, complete WIT,
+rich macro environment/published dependencies and scheduler/lifecycle remain open
+original M3 scope. No merge, issue closure or milestone completion is claimed.

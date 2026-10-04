@@ -31,6 +31,34 @@ impl ModuleIdentity {
         &self.namespace
     }
 }
+/// Validate a selected source module's leading namespace against its requested
+/// identity using the same phase-aware header grammar as dependency discovery.
+/// This performs no filesystem reads, compilation or macro/Runtime effects.
+pub fn validate_namespace_source(
+    namespace: &str,
+    forms: &[suss_reader::forms::Form],
+    phase: Phase,
+) -> Result<(), Diagnostic> {
+    let identity = ModuleIdentity::new(phase, namespace)?;
+    let (declared, span, _) = source::phase_dependencies(forms, phase)?;
+    validate_declared_namespace(&identity, &declared, span)
+}
+fn validate_declared_namespace(
+    identity: &ModuleIdentity,
+    declared: &str,
+    span: Range<usize>,
+) -> Result<(), Diagnostic> {
+    if resolve::canonical(declared) != identity.namespace {
+        return Err(Diagnostic {
+            span,
+            message: format!(
+                "Declared namespace {declared} does not match requested {}",
+                identity.namespace
+            ),
+        });
+    }
+    Ok(())
+}
 #[derive(Debug, thiserror::Error)]
 #[error("{namespace} ({source_path:?}): {message} at bytes {span:?}")]
 pub struct ModuleDiagnostic {
@@ -184,19 +212,8 @@ impl<P: AsRef<Path>> Discovery<'_, P> {
                 })
         }
         .map_err(|error| located(&identity, Some(&path), error))?;
-        if resolve::canonical(&declared) != identity.namespace {
-            return Err(located(
-                &identity,
-                Some(&path),
-                Diagnostic {
-                    span: declared_span,
-                    message: format!(
-                        "Declared namespace {declared} does not match requested {}",
-                        identity.namespace
-                    ),
-                },
-            ));
-        }
+        validate_declared_namespace(&identity, &declared, declared_span)
+            .map_err(|error| located(&identity, Some(&path), error))?;
         self.active.push(identity.clone());
         let mut ordered = Vec::new();
         let mut seen = BTreeSet::new();
