@@ -633,3 +633,76 @@ fn small_integer_boundaries_round_trip_and_check_numeric_results() {
     );
     seen.post_return(&mut store).unwrap();
 }
+
+#[test]
+fn small_integer_parameters_keep_mixed_scalar_positions_and_once_only_calls() {
+    let fragment = portable::prepare_fragment(
+        "(def calls 0) (def mixed (fn [a b c d e f flag tiny wide] (do (set! calls (+ calls 1)) (if flag (+ a (* b 2) (* c 4) (* d 8) (* e 16) (* f 32) tiny wide) (- a (* b 2) (* c 4) (* d 8) (* e 16) (* f 32) tiny wide))))) (def seen (fn [] calls))",
+        &Environment::default(), Phase::Runtime,
+    ).unwrap();
+    let (resolve, selected) = world(
+        "package test:mixed-integers; world api { export mixed: func(a: u8, b: s8, c: u16, d: s16, e: u32, f: s32, flag: bool, tiny: f32, wide: f64) -> f64; export seen: func() -> f64; }",
+    );
+    let bytes = portable::aot::component(
+        &[fragment],
+        &resolve,
+        selected,
+        &mappings(&["mixed", "seen"]),
+    )
+    .unwrap();
+    let engine = engine();
+    let component = Component::new(&engine, bytes).unwrap();
+    let mut store = Store::new(&engine, ());
+    store.set_fuel(20_000_000).unwrap();
+    let instance = Linker::new(&engine)
+        .instantiate(&mut store, &component)
+        .unwrap();
+    let mixed = instance
+        .get_typed_func::<(u8, i8, u16, i16, u32, i32, bool, f32, f64), (f64,)>(&mut store, "mixed")
+        .unwrap();
+    let terms = [
+        255.0,
+        -128.0 * 2.0,
+        65535.0 * 4.0,
+        -32768.0 * 8.0,
+        u32::MAX as f64 * 16.0,
+        i32::MIN as f64 * 32.0,
+        0.5,
+        -0.25,
+    ];
+    for flag in [true, false] {
+        let expected =
+            terms[1..].iter().fold(
+                terms[0],
+                |value, next| if flag { value + next } else { value - next },
+            );
+        assert_eq!(
+            mixed
+                .call(
+                    &mut store,
+                    (
+                        255,
+                        -128,
+                        65535,
+                        -32768,
+                        u32::MAX,
+                        i32::MIN,
+                        flag,
+                        0.5,
+                        -0.25
+                    )
+                )
+                .unwrap()
+                .0
+                .to_bits(),
+            expected.to_bits()
+        );
+        mixed.post_return(&mut store).unwrap();
+        store.gc(None).unwrap();
+    }
+    let seen = instance
+        .get_typed_func::<(), (f64,)>(&mut store, "seen")
+        .unwrap();
+    assert_eq!(seen.call(&mut store, ()).unwrap().0, 2.0);
+    seen.post_return(&mut store).unwrap();
+}

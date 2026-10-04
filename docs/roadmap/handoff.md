@@ -14671,3 +14671,33 @@ Require exact final-head CI before readiness. Then continue interface/memory
 adapters and actualfrontend migration/evaluator retirement. Rich environments,
 published dependencies and scheduler/cancel/liveheap remain original open scope.
 No GitHub merge, issue closure or M3 completion claim.
+
+## Independent PR175 review — checked integer WIT boundaries
+
+Reviewed clean79d747fdd82d6afa096a2fed1ad0c1cbdb927402 against171ebfa39e:
+parameter width/sign normalization and unsigned u32 widening, complete integer
+return bounds/integrality/nonfinite checks before truncation, binary64 storage,
+local layouts and language-exception ordering. No significant scoped production
+finding. Every original eight compiler AOT tests and root integer assertions,
+including sourcecalls66 and independently decoded invalid-result payloads, remain.
+
+Added actual mixed boundary regression with all six integer types interleaved
+with bool/f32/f64. Distinct positional weights expose reordering/sign/width errors;
+u32::MAX and i32::MIN preserve high bits, branch calls before/after GC match exact
+binary64 observations, and source counter2 proves one invocation per call.
+Focused43174 TERMINAL0:9pass/0fail/0ignored4.11s;
+/private/tmp/suss-pr175-review-focused.log. Command cargo test -p suss-compile
+--locked --test portable_aot -- --test-threads=2; target
+/private/tmp/suss-m3-pr143-target, CARGO_BUILD_JOBS=2, no RUSTFLAGS.
+Rustfmt2024 and git diff check pass. Review modifies only tests/docs; compiler
+production source and both root-reproduced bootstrap fingerprints/images remain
+unchanged. No new bootstrap regeneration or heavy worktree switch is needed.
+
+Next push this executing evidence, freeze final head and run required unfiltered
+cargo test --workspace --locked -- --test-threads=2, then verify exact final-head
+CI. Reviewer retains sole heavy slot through terminal and explicitly releases to
+root. PR171 retained source70fc->ebfa differs only inherited handoff; its local
+1132/0/17 full result is unchanged-source provenance, with fresh37172637506 CI
+still pending. Full WIT/imports/interfaces/memory/indirect scalar parameters,
+actual frontend migration/evaluator removal/published dependency and scheduler/
+lifecycle gates remain original open goal. No merge, issue closure or M3 completion.
