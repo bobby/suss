@@ -15562,3 +15562,112 @@ successful exact-head CI before readiness. Native main/official command and
 component-host migration, evaluator retirement, rich portable environments,
 published dependency policy, pending-I/O scheduler/cancellation and live-value
 accounting remain original open M3 work; this review completes none of those gates.
+
+
+## M3 asynchronous AOT exports — 2026-10-04
+
+Root worktree: /private/tmp/suss-m3-aot-command. Base is PR180 reviewed frozen
+b66860496d301f21f6b4c4409716d9f9b214512e. Reviewer166's full58058 is now terminal0:
+1159 passed, zero failed, 17 existing ignores across132 groups through reader
+doctests. Significant project output/routing fixes are pushed; no unresolved
+significant finding. Reviewer released every heavy handle and the sole slot to
+ROOT before the first root native job. Exact b668 CI37186671054 remains pending;
+keep PR180 draft. Root updated its PR body with review/full evidence.
+
+PR179 is ready without merging at3646ba8, matching local and actual exact CI1152/
+0/17/0 filtered/131 groups. Bootstrap4 and Python118 separately pass. Issue14:
+https://github.com/bobby/suss/issues/14#issuecomment-5977847315 . No issue closed.
+Root re-read current GitHub issue12/13/14/15 acceptance; all remain open.
+
+Portable assembly now supports async scalar exports in freestanding/interface
+positions. A separate private core bridge uses canonical task.return and callback
+lift, completes once and reports EXIT over non-suspending compiled source bodies.
+Private indexed entry labels cannot collide with public callback names. Native
+runner validates inputs before initialization and uses current-thread Tokio with
+pinned WASI p3/p2 registration. Direct native Tokio1.53.1 was already in Cargo.lock.
+No shared GC layout or upstream core form port changed. Original Rust implementation.
+
+Actual commands/results, shared target /private/tmp/suss-m3-pr143-target,
+CARGO_BUILD_JOBS=2, never RUSTFLAGS; heavy jobs strictly sequential:
+
+- Pinned development reference initialization86504 terminal0 atc4295f303100bbf5afac449242d30bca1126f1a1.
+- Controlled assembler before5389 terminal101: exact HEAD aot.rs plus new tests;
+  both fail on unsupported async adapters, 0/2/0/0 filtered in0.01s. Fixed source
+  restored only after terminal. /private/tmp/suss-aot-async-before.log.
+- `cargo test -p suss-compile --locked --test portable_aot_async --test portable_aot -- --test-threads=2`,
+  98495 terminal0: existing13 in1.75s, new2 in0.33s. Actual GC/two Stores, live cells/
+  captures, f32 bits and decoded boundary/source17 payloads pass. Added explicit
+  public async flags and zero component imports; final new2 rerun22370 terminal0
+  in0.38s. Compiler source unchanged by assertion additions, so image identity
+  remains final. Logs /private/tmp/suss-aot-async-compiler{,-final}.log.
+- `cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`,
+  13064 terminal0, regenerates BOTH phase Wasm/JSON.
+- `sh scripts/verify-bootstrap.sh`, 82578 terminal0: both pairs reproduced byte-exact
+  twice/current compiler identity; bootstrap4 in12.71s. Java-free proof precedes CLI.
+  Logs /private/tmp/suss-aot-async-{regenerate,javafree}.log.
+- Controlled runner before29724 terminal101: exact HEAD main.rs, fixed compiler/
+  images and both new CLI tests. Both fail on explicit async invocation rejection,
+  0/2/0/0 filtered in6.32s. Fixed runner restored only after terminal.
+  /private/tmp/suss-aot-async-host-before.log.
+- `cargo test -p suss-cli --locked --test compiled_aot_async_command --test compiled_aot_command --test compiled_aot_namespace_command --test compiled_aot_project_command --test aot_source_preparation --test compiled_export_metadata -- --test-threads=2`,
+  93806 terminal0:26/0/0 across6 groups: source4 7.29s, async2 16.67s, file4 36.14s,
+  namespace4 5.75s, project7 32.40s, exports5 36.35s. Actual compiled macros/typed calls,
+  malformed inputs and pre-initialization guards pass. Original assertions retained.
+  /private/tmp/suss-aot-async-cli.log.
+- Python118, 72129 terminal0 in4.969s; /private/tmp/suss-aot-async-python.log.
+  Restricted rustfmt/git diff checks pass. Recursive formatting side effects on
+  untouched CLI modules were restored to exact HEAD. Use skip_children=true.
+
+All root heavy handles are terminal. Root now records evidence, commits/pushes and
+opens a partial draft with Refs#14/#15, dispatches independent review with significant
+fixes authorized and transfers sole heavy slot for required exact unfiltered full
+baseline and final-head CI. No readiness claim from focused tests.
+
+Scope still unfinished: ordinary source suspension/rooted continuations, imported
+WIT I/O, canonical strings/lists for main arguments, official async command and
+component-host migration, evaluator retirement, complete portable macro environments,
+published dependency policy, pending-I/O cancellation and live-value/code accounting.
+Registration alone proves no WASI capability interoperability. M3 remains active;
+no issue closure or merge. Next implement command argument memory/bindings and
+normal/exception/explicit exit policies, then continue frontend/evaluator retirement
+and original lifecycle gates. Do not replace these with unsupported diagnostics,
+fuel recovery or heap capacity counters.
+
+## PR181 independent async scalar bridge review
+
+Reviewed initial829215e40442def804b5806d802a333958b55936 against reviewed
+PR180b66860496d301f21f6b4c4409716d9f9b214512e. Read accepted design, roadmap,
+inventory and current handoff. Audit covered task.return/core function indexes,
+private entry/callback name isolation, flattened mixed sync/async export order,
+interface-instance indexes and implements annotations, ordinary checked scalar
+wrappers/live source cells, current-thread Tokio host invocation and typed input
+validation before guest initialization. No significant scoped defect found.
+Registering p3/p2 alone does not certify WASI interoperability, future-value
+semantics, suspension, scheduler/cancellation or any original M3 acceptance gate.
+
+Added actual typed component regression for named versioned async alias and empty
+instance alongside synchronous export, nine heterogeneous parameter positions,
+six integer extrema/high unsigned bit, both branches, async void redefinition of
+the live function, forced GC, exact effect113 and two fresh Stores. Original13
+compiler and2async assertions retained. Reviewer74460 TERMINAL0:13/0/0 in1.81s,
+async3/0/0 in0.45s, /private/tmp/suss-pr181-review-focused.log. Command uses
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-compile --locked --test portable_aot_async --test portable_aot
+-- --test-threads=2, no RUSTFLAGS. Only tests/docs change, so root's BOTH-phase
+regeneration and Java-free fingerprint/byte-exact proof remain unchanged.
+No heavy worktree switch occurred since root validated this same source worktree.
+
+Independent CLI92111 TERMINAL0:26/0/0 across6groups(source4/async2/file4/
+namespace4/project7/metadata5), /private/tmp/suss-pr181-review-cli.log. Command
+cargo test -p suss-cli --locked --test compiled_aot_async_command --test
+compiled_aot_command --test compiled_aot_namespace_command --test
+compiled_aot_project_command --test aot_source_preparation --test
+compiled_export_metadata -- --test-threads=2 with same sharedtarget/jobs2.
+Restricted rustfmt and git diff --check pass; every original assertion preserved.
+
+Next freeze/push review head, run exact unfiltered
+cargo test --workspace --locked -- --test-threads=2 and retain actual handle until
+terminal, then explicitly release sole heavy slot. Final-head CI remains required.
+No merge or issue14/15 closure. Official command/main and canonical argument
+memory, complete imports/frontends/evaluator retirement/published dependencies,
+rich portable environments and rooted pending-I/O/lifecycle work remain open.

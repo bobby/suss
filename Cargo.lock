@@ -1825,6 +1825,7 @@ dependencies = [
  "suss-compile",
  "suss-reader",
  "tempfile",
+ "tokio",
  "wasmtime",
  "wasmtime-wasi",
  "wit-bindgen 0.61.1",
