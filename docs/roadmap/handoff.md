@@ -13383,3 +13383,164 @@ changes. Focused75849 TERMINAL0:13passed/0failed/0ignored1.17s;
 /private/tmp/suss-pr162-review-definitions-fixed.log. Full failure log
 /private/tmp/suss-pr162-review-full-final.log remains retained. The updated
 review head must receive a fresh exact-head full baseline and CI before readiness.
+
+## Next isolated source-hint regression — 2026-10-03
+
+Root prepared portable/m3-truthy-source-hints in
+/private/tmp/suss-m3-truthy-source-hints from PR162 reviewed1d4beb3.
+Original source-hint-review-probe.clj is prepared but UNEXECUTED. It inspects
+actual selected :tag/:inferred-ret-tag presence and values for false metadata,
+dynamic scalar/functions, invocation and local/parameter hints. No observations
+file generated, no native/primary job or production fix yet.
+PR162 reviewer owns sole heavy slot and its worktree. Root may prepare tests
+and inspect source, but must not execute Cargo/JVM/Node until explicit release.
+Static source_tags.rs declaration_tag currently applies hint before inferred
+scalar/dynamic/function policy; pinned def parse raw metadata and computed
+fields have different precedence. Actual primary/native evidence is required
+before claiming/fixing a bug. Rebase onto final reviewed162 head before work.
+
+PR162 reviewer pushed9a0760e5d1c77ab00eb8f6099b2794eadbae86fc with an actual
+pinned macro-hook/native staged regression; no significant production findings.
+Primary75207 exit0; correctednative73358 exit0/1pass15.80s. Full8882 LIVE
+at exact9a0760e, /private/tmp/suss-pr162-review-full-final.log; reviewer retains
+sole heavy slot. Root rebased this prepared branch onto9a0760e; no execution.
+
+Prepared compiled_macro_source_hint_boundaries.rs with18 selected primary
+expression-tag rows and15 executing scalar/function/effect assertions perphase.
+The expected source-hint-review-observations.json does not exist yet: include
+is deliberately unresolved until the actual pinned probe executes and generates
+it. No fabricated expected observations and no native compile/result claimed.
+Rustfmt2024 and diff check pass; next branch source is test/probe/docs only.
+
+PR162 final-head CI37149802693 LIVE exact9a0760e; initial-headCI37149411305
+cancelled. Full8882 retains reviewer-owned sole heavy slot; metadata group live.
+Issue progress https://github.com/bobby/suss/issues/14#issuecomment-5972949098 .
+PR161 still awaits exact final-headCI37147259708; its independent review/full
+1086/0/17 already passed. Do not mark either draft ready from live CI status.
+
+Prepared probe also distinguishes raw return metadata, computed-return overlays
+and initializer-bearing truthy-declared provisional facts. Still UNEXECUTED.
+
+Authoritative PR162 full8882 progress: unfiltered declaration metadata3 passed
+461.84s at frozen9a0760e, preserving unchanged29cases/all18fields/bothphases/GC.
+HAMT sequence execution is underway; full still LIVE and reviewer owns slot.
+No source edit, terminal counts, or readiness claim yet.
+
+Prepared source-hint probe includes nil metadata presence separately from
+absence, for completed scalar/function and provisional definitions. All18rows
+remain UNEXECUTED; no expected results fabricated.
+
+PR161 exact final-headCI37147259708 COMPLETEDsuccess at
+07753174f7ab09072468aa9c01cb30676997aeac, verified by root GH API. Independent
+review and exact full1086/0/17/119groups already passed. Update PR161 description
+with final proof and mark ready without changing its head; no merge/closure.
+
+Root updated PR161 body and gh pr ready successfully at unchanged0775317;
+final issue proof https://github.com/bobby/suss/issues/14#issuecomment-5973101086 .
+PR161 is READY, unmerged. PR162 full8882 and finalCI37149802693 remain LIVE
+at9a0760e; reviewer retains sole heavy slot.
+
+PR162 full8882 TERMINAL101 at9a0760e: partial921passed/1failed/15existing
+ignores across99groups. Failure portable_definitions639 asserted generated
+metadata prefix position, not merged metadata. Reviewer corrected structural
+assertion to retained source keyword/merged declared:true/retained:true, keeping
+spans/phase/cell/initializer checks. Focused75849 TERMINAL0:13/0/0 in1.17s.
+Pushed final reviewhead1d4beb351a7c358b288f106a36fcee4182a24c40; production
+unchanged. Required full1210 LIVE at frozen1d4beb3, log
+/private/tmp/suss-pr162-review-full-corrected.log. Reviewer retains sole heavy
+slot. Root rebased prepared/unexecuted18-case inference branch onto1d4beb3.
+No readiness from prior partial baseline or old-head CI; exact newhead required.
+
+PR162 corrected final-headCI37151481978 LIVE exact1d4beb3; both earlier PR162
+CI heads cancelled, not proof. Root updated PR162 body and issue correction
+https://github.com/bobby/suss/issues/14#issuecomment-5973185338 .
+Corrected full1210 LIVE at1d4beb3; bootstrap4/analysisgraph11 passed and binding
+records underway. Reviewer sole heavy ownership remains; do not start root
+primary/native jobs until explicit terminal/release. Poll same full1210 through
+reviewer. PR161 READY/unmerged; PR162 DRAFT pending exact full/finalCI.
+
+Next after successful review baseline and explicit release: clean only four
+workspace packages on sharedtarget worktree switch, execute actual prepared
+18-row pinned source-hint probe (generates missing JSON), then execute new
+native regression BEFORE any production correction. Retain any fixture errors
+and actual mismatches separately. Preserve explicit nil presence, raw metadata
+versus completed/provisional overlays and actual runtime storage/effects.
+No goal completion, issue closure, PR merge, or source-only success claim.
+
+Continuation verified same corrected full1210 LIVE at1d4beb3 by independent
+reviewer authoritative poll. Metadata precedence/raw-function companion tests
+passed; unchanged unfiltered snapshot/catalog case still executing. Exact CI
+37151481978 remains live. Root has run no heavy job or production edit.
+Previous goal turn made progress (published162, review fix pushed,161ready);
+this continuation is a verified wait, not a blocker or completion claim.
+
+PR162 corrected full1210 TERMINAL0 at exact1d4beb351a7c358b288f106a36fcee4182a24c40:
+1087passed/0failed/17existingignores across120groups.
+/private/tmp/suss-pr162-review-full-corrected.log. Unfiltered metadata3passed
+505.60s, repeateddeclaration1passed14.72s, correcteddefinitions13passed.
+Independent reviewer released sole heavy slot; no remaining production finding.
+Final-headCI37151481978 still LIVE; inventory and Java-free bootstrap steps pass.
+PR162 stays draft pending exact CI. Root now owns heavy slot and starts actual
+prepared source-hint primary; no production corrections yet.
+
+PR162 exact final-headCI37151481978 COMPLETEDsuccess at1d4beb3, independently
+confirmed root GH view. Root updated body and marked READY without head change.
+Issue final proof https://github.com/bobby/suss/issues/14#issuecomment-5973437080 .
+No merge or issue closure. Independent reviewer finished; all heavy ownership
+now root.
+
+Source-hint primary53144 TERMINAL0 generated actual18row artifact;
+/private/tmp/suss-source-hints-primary.log. Four-package clean36281 exit0.
+Native before69825 TERMINAL101:0/1/0 in11.62s,18actual field mismatches across
+bothphases (nine perphase): scalar false/dynamic false, dynamicfunction var,
+falsehint invocation, rawreturn, provisionalreturn, nilfunction/provisionalnil
+var presence, provisionalnil invocation. Runtime storage/effect assertions pass.
+/private/tmp/suss-source-hints-before.log. No expected value substituted.
+
+Compiler source facts now distinguish raw tag presence from inferred types and
+completed callable facts from provisional/rawfn-var records. False/nil metadata
+falls through only where pinned def parse/infer-invoke requires it; local/parameter
+false tags stay intact. Top-fn selected tag/fn-var/ret-tag overlays are retained.
+First bootstrap36967 exit0; nil-inference refinement then bootstrap20743 exit0.
+Both identities regenerated; production fuel/graph bounds unchanged. Focused
+fixed native job is LIVE at current source, which is frozen for execution.
+No full baseline, independent review or CI proof for this new branch yet.
+
+Source-hint fixed34442 TERMINAL0:1/0/0 in12.94s, actual18pinned rows/bothphases
+afterGC and15runtime/storage/effect assertions perphase pass.
+/private/tmp/suss-source-hints-fixed.log. Affected native8096 LIVE:coreprojection,
+declarationfunctions, repeateddeclarations, sourceenvironment and sourcetags.
+Source Rust frozen for this job. No fullbaseline/review/CI proof yet for newbranch.
+
+Affected native8096 TERMINAL0:9passed/0failed/0ignored across five suites.
+Java-free verifier97302 TERMINAL0: both bootstrap images reproduced byte-for-byte,
+identity checked, compiled_bootstrap4/0/0 in8.79s. Log
+/private/tmp/suss-source-hints-javafree.log. Python58917 TERMINAL0:118tests pass
+in5.591s; /private/tmp/suss-source-hints-python.log. Git diff --check passes.
+Next: publish a draft stacked source-hint PR (Refs #14), dispatch independent
+review/fixes, then require exact final-head full baseline and CI before readiness.
+Root jobs terminal; sole heavy slot available for the independent reviewer.
+No issue closure, merge, or full M3 completion claim.
+
+
+## Independent PR164 source-hint review — 2026-10-03
+
+PR164 https://github.com/bobby/suss/pull/164 publishes initial375572630e715f4315995f54cbdc8cc45c5abab1
+against portable/m3-preserve-declarations (#162). Reviewer owns sole heavy slot.
+Reviewed pinned def merge, infer-invoke, raw/provisional/published fn-var, dynamic
+scalar versus function behavior, top-fn selected overlays and nil/false presence.
+No significant scoped production finding. Extended actual primary/native probe
+with five consumer boundaries: top-fn fn-var false, false/nil return overlays, nil
+var tag masking a string hint and nested function return inference from a nil-tag
+function var. Original18 rows remain unchanged; generated artifact now23 rows.
+Nineteen actual value/effect checks perphase retain storage semantics.
+
+Initial edit used incorrect relative paths and made no changes; old primary64024
+TERMINAL0 is not expanded evidence. Corrected primary81250 TERMINAL0 generates
+actual23rows, /private/tmp/suss-pr164-review-primary-final.log. Native90832
+TERMINAL0:1passed/0failed/0ignored13.76s, both caller phases/GC;
+/private/tmp/suss-pr164-review-focused.log. Rustfmt2024 passes. No compiler/core/
+reader change; bootstrap identities and bytes unchanged from root verification.
+Push this review evidence/regression, then freeze exact pushed head for required
+full workspace baseline and final-head CI. Both gates remain pending; draft
+readiness, issue closure, merge and full M3 completion are not claimed.

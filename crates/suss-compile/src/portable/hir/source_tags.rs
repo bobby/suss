@@ -130,26 +130,72 @@ pub fn local_tag(binding: &LocalBinding) -> Result<Option<Form>, Diagnostic> {
         .as_ref()
         .map_or(Ok(None), |init| inferred(init, 0))
 }
+fn truthy(form: &Form) -> bool {
+    !matches!(form.kind, Kind::Nil | Kind::Bool(false))
+}
+fn provisional(info: &super::super::resolve::DefinitionInfo) -> Result<bool, Diagnostic> {
+    Ok(!info.analysis_completed || (info.initializer_form.is_some()
+        && metadata(&info.declaration, "declared")?.as_ref().is_some_and(truthy)))
+}
+fn completed_callable(info: &super::super::resolve::DefinitionInfo) -> Result<Option<&SourceCallable>, Diagnostic> {
+    Ok(if provisional(info)? { None } else {
+        info.initializer.as_ref().and_then(|init| callable(init))
+    })
+}
+// Pinned analyzer.cljc2092–2175 merges raw metadata before callable top-fn
+// overlays and computed return fields. Original Rust policy; never treat a
+// provisional initializer as a published callable declaration.
+fn top_function_property(info: &super::super::resolve::DefinitionInfo, name: &str) -> Result<Option<Form>, Diagnostic> {
+    let Some(top) = metadata(&info.declaration, "top-fn")? else { return Ok(None) };
+    let pairs = match &top.kind {
+        Kind::Nil => return Ok(None),
+        Kind::Map(items) => items,
+        Kind::Vector(items) if items.len() == 2 => items,
+        Kind::List(items) | Kind::Set(items) if items.is_empty() => return Ok(None),
+        Kind::String(units) if units.is_empty() => return Ok(None),
+        _ => return Err(fail(top.span.clone(), "Function declaration top-fn requires mergeable reader data")),
+    };
+    Ok(pairs.chunks_exact(2).rev().find_map(|pair| {
+        matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == name)
+            .then(|| pair[1].clone())
+    }))
+}
 pub fn declaration_tag(
     info: &super::super::resolve::DefinitionInfo,
 ) -> Result<Option<Form>, Diagnostic> {
-    if let Some(tag) = hint(&info.declaration)? {
-        return Ok(Some(tag));
+    let raw = metadata(&info.declaration, "tag")?;
+    if provisional(info)? { return Ok(raw) }
+    // Function vars retain their raw/overlaid tag, including present nil and
+    // false. Dynamic affects scalar inference, not function var-reference tags.
+    if completed_callable(info)?.is_some() {
+        return Ok(top_function_property(info, "tag")?.or(raw));
     }
-    if metadata(&info.declaration, "dynamic")?
-        .is_some_and(|value| !matches!(value.kind, Kind::Nil | Kind::Bool(false)))
-    {
+    if raw.as_ref().is_some_and(truthy) { return Ok(raw) }
+    if metadata(&info.declaration, "dynamic")?.as_ref().is_some_and(truthy) {
         return Ok(Some(named("any")));
     }
-    let Some(init) = &info.initializer else {
-        return Ok(None);
+    let computed = info.initializer.as_ref().map(|init| inferred(init, 0)).transpose()?.flatten();
+    Ok(computed.or(raw))
+}
+fn declaration_return_tag(info: &super::super::resolve::DefinitionInfo) -> Result<Option<Form>, Diagnostic> {
+    let methods = completed_callable(info)?;
+    let fn_var = if methods.is_some() {
+        top_function_property(info, "fn-var")?.as_ref().map_or(
+            !metadata(&info.declaration, "macro")?.as_ref().is_some_and(truthy), truthy)
+    } else {
+        metadata(&info.declaration, "fn-var")?.as_ref().is_some_and(truthy)
+            || (!provisional(info)?
+                && metadata(&info.declaration, "declared")?.as_ref().is_some_and(truthy)
+                && metadata(&info.declaration, "arglists")?.as_ref().is_some_and(truthy))
     };
-    // Function declarations carry return information independently; their var
-    // reference does not inherit the initializer's `function` tag.
-    if callable(init).is_some() {
-        return Ok(None);
-    }
-    inferred(init, 0)
+    if !fn_var { return Ok(None) }
+    let raw = metadata(&info.declaration, "ret-tag")?;
+    let tag = if let Some(methods) = methods {
+        let computed = metadata(&info.declaration, "tag")?.filter(truthy).or(return_tag(methods)?);
+        computed.or(top_function_property(info, "ret-tag")?).or(raw)
+    } else { raw };
+    // infer-invoke uses if-some, preserving false but falling through nil.
+    Ok(tag.filter(|tag| !matches!(tag.kind, Kind::Nil)))
 }
 fn resolved_tag(binding: Option<&SourceBinding>) -> Result<Option<Form>, Diagnostic> {
     match binding {
@@ -341,11 +387,7 @@ pub(super) fn source_tags(
                     // Local/direct functions retain per-method information.
                     let global_tag = match resolved {
                         Some(SourceBinding::Global { declaration: Some(info), .. }) => {
-                            if let Some(methods) = info.initializer.as_ref().and_then(|init| callable(init)) {
-                                hint(&info.declaration)?.or(return_tag(methods)?)
-                            } else {
-                                None
-                            }
+                            declaration_return_tag(info)?
                         }
                         _ => None,
                     };
@@ -355,7 +397,9 @@ pub(super) fn source_tags(
             },
         }
     };
-    let inferred = hint(form)?.or_else(|| tag.clone());
+    // get-tag/infer-tag use if-some. A present nil AST tag remains present
+    // in the source view, but does not become an inferred return type.
+    let inferred = hint(form)?.or_else(|| tag.clone().filter(|tag| !matches!(tag.kind, Kind::Nil)));
     Ok(SourceTags {
         tag,
         inferred_return,
