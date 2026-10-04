@@ -13972,3 +13972,36 @@ require final-head unfiltered baseline/CI before readiness. Reviewer166 still
 owns the sole local heavy slot running PR171 full78568 at70fc; do not interfere.
 Root small-integer child is drafted/unvalidated separately and has run no heavy
 job. Refs12/13/14/15 and stack168; no issue closure, merge or M3 completion.
+
+
+## PR173 independent integration reconciliation audit — 2026-10-04
+
+Independent reviewer verified initial integration335e304c0b8035f8798b0ad45a79aa6c55151595
+against reviewed167768a1e09cf6258c2fc2f45205fe89a0b6eaf902f and actual
+GitHub main8d83fa0d8136c890d03f868f1a86953f32852cb0. Recursive git entry
+comparison found ONLY docs/roadmap/handoff.md differs from reviewed167. Every
+current-main path is retained; ROADMAP/inventory/handoff preserve all earlier
+lines with28/26/709 additions respectively before the integration append.
+All five reviewed heads5b2e899/74d7a33/e5916c7/c10192b/768a1e0 and actual
+main are ancestors of the integration merge. GH independently confirms the
+five PRs were merged into stack branches, not main. No significant reconciliation
+defect found; no production code, original tests, bootstrap images, license/source
+provenance, inventory classifications or stable issue IDs changed from reviewed167.
+
+Read-only git diff --check passes. An attempted standalone
+python3 scripts/verify_bootstrap_identity.py failed explicitly with
+'no compiled build script matches the shipped compiler identity': the command
+used the default worktree target, which has no matching build-script executable.
+This is failed prerequisite validation, not a bootstrap pass. Do not hide it or
+use prior167 acceptance as the final-head gate. No Cargo/native/JVM/Node job
+was started while reviewer166 owns the sole heavy slot for PR171 full78568.
+
+Next after explicit root slot transfer: clean only the four Suss packages from
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target, use CARGO_BUILD_JOBS=2,
+run focused Java-free bootstrap validation, then the required unfiltered
+cargo test --workspace --locked -- --test-threads=2 once at the frozen review
+head. Poll its actual handle until terminal and release the heavy slot explicitly.
+No RUSTFLAGS override. Require exact final-head CI before readiness; no merge,
+issue closure or M3 completion is claimed. The integration includes only user-merged
+162/164/165/166/167; later core initialization/component continuations and original
+M3 published-loader/frontend/evaluator/scheduler/live-heap gates remain separate.
