@@ -255,58 +255,109 @@ pub fn evaluate_script_compiled(
     source: &str,
     path: Option<std::path::PathBuf>,
 ) -> Result<String, SessionError> {
-    let forms = suss_reader::forms::read_forms(source)
+    let forms = read_script_forms(source)?;
+    let origin = suss_compile::portable::SourceOrigin::new(source, path);
+    let prepared = prepare_script_compiled(
+        runtime.compilation_snapshot(), macros, forms, source.len(), &origin,
+    )?;
+    // All runtime compilation succeeds before any input/dependency initializer.
+    let mut result = "nil".to_owned();
+    let mut display = NativeDisplay::default();
+    let mut prepared = prepared.into_iter().peekable();
+    while let Some(input) = prepared.next() {
+        let final_form = prepared.peek().is_none();
+        match input {
+            PreparedScript::Macro(value) if final_form => result = value,
+            PreparedScript::Macro(_) => {}
+            PreparedScript::Runtime(input) => {
+                let value = runtime.eval_prepared(input)?;
+                if final_form {
+                    result = display.display(runtime, &value)?;
+                }
+            }
+        }
+    }
+    Ok(result)
+}
+
+pub(crate) fn read_script_forms(
+    source: &str,
+) -> Result<Vec<suss_reader::forms::Form>, SessionError> {
+    suss_reader::forms::read_forms(source)
         .and_then(suss_reader::forms::resolve_conditionals)
         .map_err(|error| {
             SessionError::Compile(suss_compile::portable::Diagnostic {
                 span: error.span,
                 message: error.message,
             })
-        })?;
-    let origin = suss_compile::portable::SourceOrigin::new(source, path);
-    enum Prepared {
-        Runtime(suss_compile::portable::modules::PreparedInput),
-        Macro(String),
-    }
+        })
+}
+
+/// Shared staged source preparation: compiler facts and compiled macro effects,
+/// with no Runtime execution or Store requirement.
+pub(crate) enum PreparedScript {
+    Runtime(suss_compile::portable::modules::PreparedInput),
+    Macro(String),
+}
+pub(crate) fn prepare_script_compiled(
+    mut snapshot: crate::portable_session::CompilationSnapshot,
+    macros: &mut crate::portable_macros::CompiledMacros,
+    forms: Vec<suss_reader::forms::Form>,
+    source_len: usize,
+    origin: &suss_compile::portable::SourceOrigin,
+) -> Result<Vec<PreparedScript>, SessionError> {
     let checkpoint = macros.binding_checkpoint()?;
     let mut staged_macros = Vec::new();
-    let preparation = (|| -> Result<Vec<Prepared>, SessionError> {
-        let mut snapshot = runtime.compilation_snapshot();
-    let mut prepared = Vec::new();
-    for mut form in forms {
-        let definition = matches!(&form.kind, suss_reader::forms::Kind::List(items)
+    let preparation = (|| -> Result<Vec<PreparedScript>, SessionError> {
+        let mut prepared = Vec::new();
+        for mut form in forms {
+            let definition = matches!(&form.kind, suss_reader::forms::Kind::List(items)
             if matches!(items.first().map(|head| &head.kind),
                 Some(suss_reader::forms::Kind::Symbol(symbol))
-                if snapshot.environment.resolves_bootstrap_name(runtime.phase(), symbol, "defmacro")));
-        if definition {
-            let suss_reader::forms::Kind::List(items) = &mut form.kind else {
-                unreachable!()
-            };
-            items[0].kind = suss_reader::forms::Kind::Symbol(suss_reader::Symbol {
-                namespace: Some("suss.core".into()),
-                name: "defmacro".into(),
-            });
-            let namespace = snapshot.environment.current_namespace(runtime.phase());
-            if let Some(suss_reader::forms::Form { kind: suss_reader::forms::Kind::Symbol(name), .. }) = items.get(1) {
-                let global = suss_compile::portable::resolve::Environment::default().declare_cell(suss_compile::portable::resolve::Phase::Macro, namespace, &name.name).map_err(SessionError::Compile)?;
-                staged_macros.push((macros.binding_checkpoint()?, global));
+                if snapshot.environment.resolves_bootstrap_name(snapshot.phase(), symbol, "defmacro")));
+            if definition {
+                let suss_reader::forms::Kind::List(items) = &mut form.kind else {
+                    unreachable!()
+                };
+                items[0].kind = suss_reader::forms::Kind::Symbol(suss_reader::Symbol {
+                    namespace: Some("suss.core".into()),
+                    name: "defmacro".into(),
+                });
+                let namespace = snapshot.environment.current_namespace(snapshot.phase());
+                if let Some(suss_reader::forms::Form {
+                    kind: suss_reader::forms::Kind::Symbol(name),
+                    ..
+                }) = items.get(1)
+                {
+                    let global = suss_compile::portable::resolve::Environment::default()
+                        .declare_cell(
+                            suss_compile::portable::resolve::Phase::Macro,
+                            namespace,
+                            &name.name,
+                        )
+                        .map_err(SessionError::Compile)?;
+                    staged_macros.push((macros.binding_checkpoint()?, global));
+                }
+                macros.enter_namespace(namespace)?;
+                prepared.push(PreparedScript::Macro(macros.define_form_display(
+                    form,
+                    0..source_len,
+                    Some(origin),
+                )?));
+            } else {
+                let input = snapshot.prepare_with_origin(
+                    vec![form],
+                    0..source_len,
+                    macros,
+                    Some(origin),
+                )?;
+                snapshot.environment = input.fragment.environment.clone();
+                snapshot
+                    .provided
+                    .extend(input.modules.iter().map(|module| module.identity.clone()));
+                prepared.push(PreparedScript::Runtime(input));
             }
-            macros.enter_namespace(namespace)?;
-            prepared.push(Prepared::Macro(macros.define_form_display(
-                form,
-                0..source.len(),
-                Some(&origin),
-            )?));
-        } else {
-            let input =
-                snapshot.prepare_with_origin(vec![form], 0..source.len(), macros, Some(&origin))?;
-            snapshot.environment = input.fragment.environment.clone();
-            snapshot
-                .provided
-                .extend(input.modules.iter().map(|module| module.identity.clone()));
-            prepared.push(Prepared::Runtime(input));
         }
-    }
         Ok(prepared)
     })();
     let prepared = match preparation {
@@ -320,24 +371,7 @@ pub fn evaluate_script_compiled(
         }
     };
     drop(checkpoint);
-    // All runtime compilation succeeds before any input/dependency initializer.
-    let mut result = "nil".to_owned();
-    let mut display = NativeDisplay::default();
-    let mut prepared = prepared.into_iter().peekable();
-    while let Some(input) = prepared.next() {
-        let final_form = prepared.peek().is_none();
-        match input {
-            Prepared::Macro(value) if final_form => result = value,
-            Prepared::Macro(_) => {}
-            Prepared::Runtime(input) => {
-                let value = runtime.eval_prepared(input)?;
-                if final_form {
-                    result = display.display(runtime, &value)?;
-                }
-            }
-        }
-    }
-    Ok(result)
+    Ok(prepared)
 }
 
 fn evaluate_forms_compiled(
