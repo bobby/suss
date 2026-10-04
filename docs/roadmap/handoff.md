@@ -13910,3 +13910,43 @@ restored the fix and reran all six (6188, log
 /private/tmp/suss-pr166-review-native-complete.log). CLI-only continuation leaves
 both previously reproduced compiler identities/Wasm unchanged. Next push/freeze
 new exact review head and run one required unfiltered full plus final-head CI.
+
+
+## Stack #168 rebase — 2026-10-03
+
+At the user's request, ran `gh stack checkout 168`, `gh stack rebase` and
+`gh stack rebase --continue` in the existing worktrees. gh-stack0.2 migration
+initially rejected divergent legacy catalog definitions for stacks137/163.
+Backed up the stale suss1 catalog to
+/private/tmp/suss-stack168-catalog-backup.json, then reconciled only its duplicate
+entries with the recorded successful137/163 worktree catalogs. No branch content
+was changed by this tracking repair. Checkout imported the five-branch stack and
+selected the existing /private/tmp/suss-m3-artifact-identities worktree.
+
+Stack168's configured trunk is portable/m3-self-local-method-facts d60b852,
+whose complete tree matches current main8d83fa0. The first conflict replayed
+67already-merged prerequisite commits. Verified old0775317 and trunkd60b852
+differ only by40added handoff lines; all source/tests/artifacts are identical,
+and first stack commit1b00a6c directly follows0775317. Omitted only duplicate
+prerequisite picks, retained every stack-specific commit, and resolved the one
+remaining handoff append conflict by preserving both entries. Cascading rebase
+completed in the branches' existing worktrees.
+
+#162 1d4beb3 -> 5b2e899; #164 2cb66f3 -> 74d7a33; #165 8b89031 -> e5916c7; #166 c525c19 -> c10192b; #167 71b1511 -> 3cab86d.
+
+All five non-handoff trees exactly match their original heads. Before this new
+record, each handoff diff only inherited the stack163 record (38added lines after
+blank-line overlap). Independent reviews were dispatched individually for
+PR162/164/165/166/167 to verify retained patches, content and parent ancestry.
+`git diff --check` passed. No new semantic regression or source fix was needed.
+No fresh native/JVM/Node run was launched for this history-only change; the
+required exact71b1511 full baseline was already running in
+/private/tmp/suss-pr167-review-full-final.log. Its pending status is not a passing
+full-baseline claim, and earlier CI does not certify new commit IDs.
+
+Push with `gh stack push`, verify all five remote exact heads and fresh CI, and
+require passing final-head CI before readiness. No PR merge, issue closure or
+milestone completion is claimed. Original M3 dependency-loader/component/AOT/
+evaluator-retirement/cache and scheduler/cancellation/live-heap gates remain open.
+Next unblocked validation task: finish the existing required full baseline and
+check the freshly pushed CI; then continue the published artifact/dependency policy.
