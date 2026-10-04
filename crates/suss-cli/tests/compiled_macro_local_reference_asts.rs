@@ -126,3 +126,86 @@ fn retained_local_declarations_supply_reference_ast_fields_without_reexecution()
         assert_eq!(actual[2], json!(1.0), "invocation executes exactly once");
     }
 }
+
+#[test]
+fn reference_asts_keep_initializer_scope_metadata_and_variadic_self_identity() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros
+            .define(
+                r#"(defmacro inspect-reference [binding]
+          (let [ast (get (get &env :locals) binding :missing)
+                ast (get ast :init)
+                info (get ast :info)
+                original (get (get (get ast :env) :locals) (get ast :form))
+                current (get (get &env :locals) (get ast :form))]
+            (list 'quote [(get ast :op) (get ast :local)
+              (identical? info original) (identical? info current)
+              (get (meta (get ast :name)) :review)
+              (get (meta (get ast :form)) :review)
+              (get (get ast :init) :val)
+              (get ast :variadic?)
+              (identical? (get ast :init) (get info :init))])))"#,
+            )
+            .unwrap();
+        let value = session
+            .eval_with_macros(
+                r#"[
+          (let [^{:review "declaration"} x 17
+                copy ^{:review "reference"} x
+                x false]
+            (inspect-reference copy))
+          ((fn self [x & rest]
+             (let [copy self] (inspect-reference copy))) 1 2)
+          (try (throw 42) (catch :default thrown
+             (let [copy thrown] (inspect-reference copy))))]"#,
+                &mut macros,
+            )
+            .unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        session.collect().unwrap();
+        let actual = data(&bridge.read(&mut session, &value, 0..1).unwrap());
+        assert_eq!(
+            actual[0],
+            json!([
+                ["keyword", ":local"],
+                ["keyword", ":let"],
+                true,
+                false,
+                "declaration",
+                "reference",
+                17.0,
+                null,
+                true
+            ])
+        );
+        assert_eq!(
+            actual[1],
+            json!([
+                ["keyword", ":local"],
+                ["keyword", ":fn"],
+                true,
+                true,
+                null,
+                null,
+                null,
+                true,
+                true
+            ])
+        );
+        assert_eq!(
+            actual[2],
+            json!([
+                ["keyword", ":local"],
+                ["keyword", ":let"],
+                true,
+                true,
+                null,
+                null,
+                null,
+                null,
+                true
+            ])
+        );
+    }
+}

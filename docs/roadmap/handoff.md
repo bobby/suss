@@ -16096,3 +16096,46 @@ exact final-head CI remain REQUIRED; parent PR183 acceptance is not child proof.
 Next unblocked work after review is genuine global-reference source AST facts,
 then quote/compound/children and all remaining original M3 requirements. No merge,
 issue closure or milestone completion.
+
+## PR184 independent source-local AST review
+
+Reviewed initial6eff0bd69e064daa17d7255dcf2d7301888c75a8 against frozen
+PR183e315372dc4fd7d6f24cda34be3b3299cd2754f37. Required design/roadmap/inventory/
+handoff and pinned analyze-symbol/source binding construction inspected. No
+significant scoped production defect found. Source symbols use retained resolved
+local identities; invocation lists remain unclassified rather than inheriting
+callee local facts. Original scalar nonconstant-value assertions remain intact.
+
+Independent fresh oracle75621 TERMINAL0: CARGO_BUILD_JOBS=2 sh
+scripts/test-local-reference-asts-oracle.sh; forced cache-disabled pinned JVM
+compilation plus actual Node execution agree with all six exact observations
+and all six artifact projections. /private/tmp/suss-pr184-review-oracle.log.
+Added native review regression checks an initializer's declaration identity in
+its own environment after a later same-name shadow, separate declaration versus
+reference metadata, variadic named self-reference and catch-alias source locals.
+Both Runtime and Macro callers execute these graph queries after GC. Original
+six-case corpus, invocation effects and scalar/binding/source-tag checks remain.
+
+Initial new-fixture run89388 TERMINAL101: references1passed/1failed in8.46s;
+new catch syntax omitted :default and the compiler correctly rejected it. Only
+that new fixture was corrected to accepted ClojureScript catch syntax; no
+production behavior or existing expectation changed. Final72396 TERMINAL0:
+15passed/0failed/0ignored across4groups (bindings8/scalars3/references2/tags2).
+References2 finished10.64s; source-tags2 finished13.64s. Command:
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-cli --locked --test compiled_macro_local_reference_asts
+--test compiled_macro_constant_asts --test compiled_macro_binding_records
+--test compiled_macro_source_tags -- --test-threads=2.
+Logs /private/tmp/suss-pr184-review-{focused,focused-fixed}.log.
+
+Only test/evidence bytes changed during review; compiler/reader/core/build/lock
+fingerprints and BOTH phase images remain unchanged. Restricted rustfmt2024 and
+git diff --check pass; unrelated graph bytes preserved. Reviewer owns sole heavy
+slot until actual required full terminal. Next freeze/push and run exactly
+cargo test --workspace --locked -- --test-threads=2 unfiltered, polling the same
+actual handle rather than restarting on observation timeout. Exact final-head
+CI remains required; parent proof cannot certify this increment. No merge or
+issue closure. Global/field references, quotes/compound/logical children and
+complete declaration/function/method/inference schema, evaluator retirement,
+target/dependency integration and rooted pending-I/O cancellation/live-heap
+requirements remain original open M3 gates.

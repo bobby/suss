@@ -35,3 +35,10 @@ complete declaration/function/method/inference schema and evaluator retirement
 remain unfinished. This is partial progress for issue14, not complete `&env`
 or M3 acceptance. Full reviewed-head baseline and exact final-head CI are
 required before this increment is ready.
+
+Independent review reruns the unchanged six-case pinned oracle and adds executing
+queries for initializer-scope identity after later shadowing, distinct declaration
+and reference metadata, variadic named self-reference and catch-alias locals.
+Both caller phases pass after GC, together with existing scalar/binding/source-tag
+checks. No production repair was needed in this scoped review; complete source
+AST and original M3 requirements remain open.
