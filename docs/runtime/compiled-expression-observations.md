@@ -135,3 +135,22 @@ execute in each integration binary importing the observer. Actual scratch JSON
 contains all 201 passing observations with every original catalog input and
 expectation unchanged. Final-head full CI remains required before readiness;
 public compiler migration and original M3 requirements remain unfinished.
+
+
+The first full CI run after those repairs failed the unchanged complete-core
+namespace acceptance test: the compact compiler graph reached its validation
+work bound before guest construction. Its 61,891 recipes had 514,310 dependency
+edges. Validation charged each queued edge and then charged an additional visit
+even when its shared target was already fully validated. The repair skips that
+redundant validation charge while retaining edge charges and unique-node entry/
+finish charges. Both fixed work limits, all records and the separate cold reader
+occurrence accounting remain unchanged.
+
+A new tight-budget shared-DAG test first failed with the original algorithm and
+now passes. All seven sharing tests pass, including unchanged reader callback
+counts/order, cold retained-metadata budgets, pre-callback failures and recovery.
+The original complete-core namespace test passes unchanged in both caller phases
+in 71.44 seconds. Both phase pairs regenerate and reproduce twice byte-exact
+without Java/Node; all four executing bootstrap checks pass. The failed full CI
+log remains evidence of a failure, not an accepted baseline. A passing exact
+final-head full run and CI are still required before readiness.

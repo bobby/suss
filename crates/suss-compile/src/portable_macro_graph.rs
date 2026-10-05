@@ -393,10 +393,13 @@ impl<'a> AnalysisGraph<'a> {
         let mut repeat = vec![false; self.recipes.len()];
         let mut stack = vec![(root, false)];
         while let Some((id, finish)) = stack.pop() {
-            spend(&mut graph_work)?;
             if state[id] == 2 {
+                // Its incoming edge was already charged when queued. A shared
+                // node that is fully checked needs no second validation visit;
+                // reader occurrences retain their separate cold work budget.
                 continue;
             }
+            spend(&mut graph_work)?;
             let recipe = self.recipes[id].as_ref().expect("all graph tasks filled");
             if !finish {
                 if state[id] == 1 {
@@ -2207,6 +2210,27 @@ mod sharing_tests {
             metadata: vec![],
             kind: Kind::Number(f64::from_bits(bits)),
         }
+    }
+    #[test]
+    fn shared_dag_validation_charges_each_dependency_edge_once() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let value = {
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let scalar = graph.scalar(Literal::Number(42.0)).unwrap();
+            let root = graph.vector(&[scalar, scalar]).unwrap();
+            // Two unique nodes require entry/finish charges (4), and both
+            // dependency edges require a charge (2). The second scalar edge
+            // must not revalidate the already-checked node. Occurrence work
+            // still charges both edges plus the two actual constructions (4).
+            graph.materialize_with_work(root, 6, 4).unwrap()
+        };
+        session.collect().unwrap();
+        let Kind::Vector(values) = bridge.read(&mut session, &value, 0..1).unwrap().kind else {
+            panic!("Expected shared scalar vector");
+        };
+        assert_eq!(values.len(), 2);
+        assert!(values.iter().all(|value| value.kind == Kind::Number(42.0)));
     }
     #[test]
     fn retained_declaration_metadata_keeps_cold_budgets_and_releases_dead_revisions() {

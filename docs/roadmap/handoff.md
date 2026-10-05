@@ -19848,3 +19848,52 @@ expected-head lease. Exact final-head full cargo test --workspace --locked --
 issue/milestone closure. Next shared resource window belongs to root for separate
 public expression/cache compiler migration after reviewer release; complete M3
 schemas, evaluator retirement and pending-I/O scheduler/lifecycle gates remain open.
+
+
+## PR #207 actual full-CI graph failure and repair
+
+Final1436bfd CI37375708301 ACTUALfailure: exact full step ended101 at
+compiled_macro_core_namespace_keeps_complete_declaration_records with analysis
+materialization-work bound. Independent raw audit:19groups78pass1fail0ignore/
+filter, NOdocs; exact mandated full command present. Preserved
+/private/tmp/suss-pr207-review-final-ci-37375708301.log and
+/private/tmp/suss-pr207-review-failed-ci-audit.json. This was a real acceptance
+regression, not infrastructure; no rerun, skip or expected-value change.
+
+Reviewer claimed sole local heavy after root explicitly released. Temporary
+instrumentation first55159 terminal101 hit the expected fingerprint mismatch,
+not the graph failure; BOTH artifacts regenerated54703 terminal0. Actual
+instrumented2463 terminal101 then reproduced the graph validation failure before
+occurrence validation/guest callbacks:61,891 recipes/21,784 aliases/514,310 edges.
+Log /private/tmp/suss-pr207-review-core-env-instrumented-after-bootstrap.log.
+All tracing removed. New shared-DAG regression first64457 terminal101:
+0pass1fail103filtered, actual work-bound error, after same-source BOTH pair
+regeneration97944 terminal0. A harmless earlier preparation command46144
+completed0 without adding the regression after a path-match script error;
+it is not regression evidence.
+
+Production fix moves graph charging after the already-validated-node fast path.
+Every dependency edge still charges when queued, unique node entry/finish still
+charge, both1,048,576 limits unchanged; cold occurrence planning/materialization,
+reader repetition, quote sharing barriers and complete source records unchanged.
+No alias rewrite or bound increase. BOTHphase regeneration60098 ACTUALterminal0.
+Graph sharing58718 ACTUALterminal0:7pass0fail0ignore97filtered, covering new DAG
+regression plus existing duplicate reader effects, metadata hash order/count,
+pre-callback bounds/recovery, cold retained-metadata budgets and post-GC data.
+Original complete-core namespace6293 ACTUALterminal0:1pass0fail0ignore0filter
+71.44s; both Runtime/Macro callers and original complete declaration assertions
+retained. Logs /private/tmp/suss-pr207-review-dag-sharing-after.log and
+/private/tmp/suss-pr207-review-core-env-after.log.
+
+Verifier18710 ACTUALterminal0: Java/Node absent, TWO fresh BOTHphase Wasm/JSON
+pairs byte-exact against tracked assets, identity/invalidation and bootstrap
+ALL4pass0fail0ignore0filter16.14s. Log /private/tmp/suss-pr207-review-dag-verify.log.
+Pinned1.98.0, shared target/jobs2, no RUSTFLAGS. Significant graph repair and new
+fingerprint-bound phase artifacts will be reviewer-pushed with explicit1436bfd
+lease, then reviewer transfers heavy to root for its separate public expression
+compiler branch. Earlier85/201 observer evidence is at1436bfd; the new source
+fix has the focused graph/core/bootstrap evidence above. Exact new final-head
+full workspace test and CI remain pending, PR stays draft/unmerged, all original
+M3 gates and issues remain open. Next: inherit/rebase this source repair, verify
+public expression/cache consumer migration; no async/scheduler or source-schema
+completion is inferred from these counts.
