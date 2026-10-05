@@ -46,13 +46,25 @@ pub fn compile_main(
 ) -> Result<Vec<u8>, String> {
     let source = std::fs::read_to_string(source_path)
         .map_err(|error| format!("Failed to read {}: {error}", source_path.display()))?;
-    let forms = read_script_forms(&source).map_err(|error| error.to_string())?;
+    compile_main_source(&source, Some(source_path.to_owned()), namespace, source_paths)
+}
+
+/// Compile source text to the same official command profile as file mode.
+/// Namespace validation precedes effectful Macro-session preparation; Runtime
+/// initialization remains deferred to the resulting command artifact.
+pub(crate) fn compile_main_source(
+    source: &str,
+    path: Option<PathBuf>,
+    namespace: &str,
+    source_paths: &[PathBuf],
+) -> Result<Vec<u8>, String> {
+    let forms = read_script_forms(source).map_err(|error| error.to_string())?;
     portable::modules::validate_namespace_source(namespace, &forms, Phase::Runtime)
         .map_err(|error| error.to_string())?;
     let fragments = prepare_inputs_with_command(
         &[SourceInput {
-            source,
-            path: Some(source_path.to_owned()),
+            source: source.to_owned(),
+            path,
             forms,
             namespace: Some(namespace.to_owned()),
         }],

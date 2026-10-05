@@ -1,4 +1,4 @@
-# Suss resurrection specification
+# Suss 0.3.1 specification
 
 Status: accepted target design, 2026-09-29. **This describes the intended system,
 not features already implemented.** Implementation evidence lives in
@@ -101,7 +101,9 @@ an external encoding, not the internal indexing contract.
 Only nil and false are falsey. Evaluate the callee, arguments, collection entries,
 conditions and bindings exactly once in source order. Short circuiting must avoid
 unselected operands. `recur` is tail-position checked and evaluates all replacement
-bindings before assignment. Wrong arity, unsupported forms and unresolved names
+bindings before assignment. Both `loop` recurrence and function-level `recur`
+reuse the recurrence frame without growing the call stack. Wrong arity,
+unsupported forms and unresolved names
 are errors with source locations, never nil, `Unknown`, invalid Wasm or a trap
 used in place of a language diagnostic.
 
@@ -360,6 +362,17 @@ iteration order or change equality/hash semantics. Differential evidence must
 retain exact, separately asserted Suss and pinned results for these variances;
 they are not compatibility matches or skipped cases. See
 [collection literal evidence](../runtime/collection-literals.md).
+
+2026-10-05 recurrence clarification: explicit `recur` to an enclosing `loop` or
+function guarantees constant call-stack usage. Evaluate replacement operands
+exactly once in source order into temporaries before assigning any recurrence
+binding, then transfer control back to that recurrence target. This makes the
+portable ClojureScript requirement explicit: the pinned compiler's `:recur`
+emitter in `clojurescript/src/main/clojure/cljs/compiler.cljc` evaluates temporaries,
+assigns the frame parameters and emits `continue`. The existing tail-position and
+arity diagnostics remain required. General optimization of ordinary recursive
+calls is not added by this clarification. Executing evidence and validation gates
+belong in the runtime docs and handoff; this entry does not claim M3 complete.
 
 ## Primary references
 

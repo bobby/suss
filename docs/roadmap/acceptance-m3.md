@@ -111,3 +111,30 @@ source records remain open. The identity docstring mismatch was repaired in the
 provenance-tracked source adaptation, with both phase images regenerated. Full
 review/baseline/final CI remain required for this new increment. No original M3
 gate is removed; see [scope/evidence](../runtime/compiled-macro-global-reference-asts.md).
+
+## Production entry-point audit, 2026-10-05
+
+The original GitHub issues #12–#15 were reread and remain open with their
+published acceptance criteria. This inspection uses the reviewed PR197 repair
+`a853b14070a994fa91e56cf8d65652de24f94ee2` plus the uncommitted public command
+migration. It supersedes earlier source ownership references, not the original
+requirements or historical test results. PR195 is ready and unmerged after its
+independent review and audited exact-head CI37249501965: all149 local/CI result
+tuples match,1220 passed/0 failed/17 existing ignores/0 filtered, with all four
+doctest suites. PR197's full workspace baseline and exact-head CI remain pending.
+
+| Production path | Current inspected state | Required acceptance |
+| --- | --- | --- |
+| Native REPL, expression and file execution | `suss-cli/src/main.rs` uses `suss-compile`'s compiled Runtime/Macro hosts through CLI reexports. Host ownership moved into the compiler crate in PR195. | Final integrated persistence, namespace and lifecycle acceptance; remaining core/schema requirements are unchanged. |
+| Native CLI file/namespace/project/main AOT | Source preparation uses compiled macro sessions and portable artifact assembly. Existing command tests validate and execute the supported boundary profiles. | Preserve dependency, phase, source-origin and initialization behavior through the remaining public API migration. Unsupported later-milestone WIT shapes remain diagnosed, not claimed implemented. |
+| Native public `Compiler::compile` | PR197 routes selected-WIT source through the shared compiled pipeline. Its reviewer repaired reset discarding the compiled `defn` macro; public12/profile8/bootstrap4 and macro-import5/REPL-macro6 checks pass. | PR197 exact unfiltered baseline and reviewed-head CI, then final integrated acceptance. Other methods are not implicitly migrated. |
+| Public `Compiler::compile_for_main` | The current uncommitted change routes source through shared official command preparation and validates the requested namespace before Macro effects. Its main-only prototype extractor is deleted. | Seven new executing regressions pass on the replacement; six fail on the unchanged parent. Both typed compiler command6 and CLI public command5 groups pass, with zero failures/ignores/filters, as do the existing official CLI command6. Both bootstrap pairs are regenerated and reproduce without Java/Node; bootstrap4 passes. Independent review, unfiltered baseline and final-head CI remain required. |
+| Public expression/cache/file/namespace/project methods | `ensure_core_loaded`, `compile_expr_cached`, `compile_expr_with_info`, `compile_files`, `compile_with_namespaces` and `compile_project` still reach `expand::expand_all`; `compile_expr` delegates to the legacy expression method. | Migrate or retire these active production paths with actual artifact/value regressions. Do not infer semantics from encoding-only prototype tests. |
+| Tree-walking macro evaluator | `suss-compile/src/expand.rs` still owns `eval::MacroEvaluator`, reached by those public methods. | Remove this production evaluator after replacement entry-point/bootstrap acceptance. A compiled native CLI alone does not prove removal. |
+| Component-target CLI evaluator | `suss-cli/src/component.rs` still imports reader/evaluator WIT bindings and invokes `evaluator::eval_to_string`. `main.rs` selects this path under the component feature on Wasm targets. | This remains an actual unfinished route. Native migration does not certify the component-target frontend or permit calling it retired. |
+| Session lifecycle/accounting | `Session` now lives in `suss-compile/src/portable_session.rs`; CLI reexports retain embedding paths. Existing lifecycle tests cover roots/reset, numeric capacity and trap recovery. `SessionStats::gc_heap_capacity` explicitly is not live-object accounting. | Rooted source continuations and pending-I/O cancellation/cleanup, at-most-once transitions, finally/dynamic scope, races/fairness and live GC versus resident generated-code accounting remain unimplemented acceptance work. |
+
+The next executable gate is the unchanged public command regressions against the
+parent and replacement once the current reviewer releases the bounded local test
+slot. Static Rust syntax/diff checks have passed and establish no runtime behavior.
+No issue is closed, no PR is merged, and M3 is not complete.

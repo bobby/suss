@@ -269,3 +269,143 @@ fn command_uses_live_main_and_initializes_fragments_once_in_order() {
         store.gc(None).unwrap();
     }
 }
+
+#[test]
+#[cfg(not(target_family = "wasm"))]
+fn public_command_retains_values_and_does_not_replay_initializers_across_calls_and_gc() {
+    use suss_compile::Compiler;
+    use wasmtime::{
+        Store,
+        component::{Component, Linker},
+    };
+
+    let source = r#"
+        (ns app)
+        (def kept nil)
+        (def seen (atom 0))
+        (swap! seen inc)
+        (defn -main [x]
+          (let [count (swap! seen inc)]
+            (if kept
+              (if (= kept "λ雪🦊")
+                (if (= x "second") (if (> count 2) 73 (throw 17)) (throw 17))
+                (throw 17))
+              (if (= count 2) (do (set! kept x) 73) (throw 17)))))
+    "#;
+    let bytes = Compiler::new().compile_for_main(source, "app").unwrap();
+    let engine = engine();
+    let component = Component::new(&engine, bytes).unwrap();
+    let imports = component
+        .component_type()
+        .imports(&engine)
+        .map(|(name, _)| name.to_owned())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        imports.len(),
+        2,
+        "no hidden language printing import: {imports:?}"
+    );
+    assert!(
+        imports
+            .iter()
+            .any(|name| name == "wasi:cli/environment@0.3.1")
+    );
+    assert!(imports.iter().any(|name| name == "wasi:cli/exit@0.3.1"));
+    let mut linker = Linker::<Vec<String>>::new(&engine);
+    linker
+        .instance("wasi:cli/environment@0.3.1")
+        .unwrap()
+        .func_wrap("get-arguments", |store, ()| Ok((store.data().clone(),)))
+        .unwrap();
+    linker
+        .instance("wasi:cli/exit@0.3.1")
+        .unwrap()
+        .func_wrap(
+            "exit-with-code",
+            |_, (_status,): (u8,)| -> wasmtime::Result<()> {
+                Err(wasmtime::Error::msg("Unexpected explicit exit"))
+            },
+        )
+        .unwrap();
+    for _ in 0..2 {
+        let mut store = Store::new(&engine, vec!["artifact".to_owned(), "λ雪🦊".to_owned()]);
+        store.set_fuel(100_000_000).unwrap();
+        let instance = linker.instantiate(&mut store, &component).unwrap();
+        let interface = instance
+            .get_export_index(&mut store, None, "wasi:cli/run@0.3.1")
+            .unwrap();
+        let run = instance
+            .get_export_index(&mut store, Some(&interface), "run")
+            .unwrap();
+        let run = instance
+            .get_typed_func::<(), (Result<(), ()>,)>(&mut store, &run)
+            .unwrap();
+        assert!(run.func().ty(&store).async_());
+        assert_eq!(block_on(run.call_async(&mut store, ())).unwrap().0, Ok(()));
+        store.gc(None).unwrap();
+        store.data_mut()[1] = "second".to_owned();
+        for _ in 0..3 {
+            assert_eq!(block_on(run.call_async(&mut store, ())).unwrap().0, Ok(()));
+            store.gc(None).unwrap();
+        }
+        store.data_mut()[1] = "wrong".to_owned();
+        assert_eq!(block_on(run.call_async(&mut store, ())).unwrap().0, Err(()));
+        store.gc(None).unwrap();
+        store.data_mut()[1] = "second".to_owned();
+        assert_eq!(block_on(run.call_async(&mut store, ())).unwrap().0, Ok(()));
+    }
+}
+
+#[test]
+#[cfg(not(target_family = "wasm"))]
+fn public_command_initializer_failure_preserves_the_actual_language_payload() {
+    use suss_compile::Compiler;
+    use wasmtime::{
+        AsContextMut, Store,
+        component::{Component, Linker},
+    };
+
+    let bytes = Compiler::new()
+        .compile_for_main(
+            "(ns app) (defmacro payload [] 42) (throw (payload)) (defn -main [] 73)",
+            "app",
+        )
+        .unwrap();
+    let engine = engine();
+    let component = Component::new(&engine, bytes).unwrap();
+    let mut linker = Linker::<()>::new(&engine);
+    linker
+        .instance("wasi:cli/environment@0.3.1")
+        .unwrap()
+        .func_wrap("get-arguments", |_, ()| Ok((vec!["artifact".to_owned()],)))
+        .unwrap();
+    linker
+        .instance("wasi:cli/exit@0.3.1")
+        .unwrap()
+        .func_wrap(
+            "exit-with-code",
+            |_, (_status,): (u8,)| -> wasmtime::Result<()> {
+                Err(wasmtime::Error::msg("Unexpected explicit exit"))
+            },
+        )
+        .unwrap();
+    let mut store = Store::new(&engine, ());
+    store.set_fuel(100_000_000).unwrap();
+    assert!(linker.instantiate(&mut store, &component).is_err());
+    let exception = store
+        .as_context_mut()
+        .take_pending_exception()
+        .expect("language exception, not a host linking or validation failure");
+    let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
+    assert_eq!(fields.len(), 1);
+    let payload = fields[0]
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&store)
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        payload.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
+        42.0_f64.to_bits()
+    );
+}

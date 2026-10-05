@@ -18069,3 +18069,68 @@ on the final reviewed head and reach all four doctest suites; prior full failure
 and superseded CI are not acceptance. Temporarily release the sole local heavy
 slot to root for the next bounded implementation checks before coordinating
 reviewer full restart. No PR readiness, merge, closure or M3 completion.
+
+
+## Public command compiler migration (2026-10-05)
+
+Isolated /private/tmp/suss-m3-public-command-compiler, branch
+portable/m3-public-command-compiler now based on reviewed PR197 repair25cb06d.
+Public Compiler::compile_for_main now shares compiled official command preparation
+with native CLI file mode. Requested namespace validates before Macro effects;
+file mode retains its source path through a crate-private helper. Runtime
+initializers remain deferred. Deleted the sole-use prototype main extractor.
+Other public compiler methods and production evaluators are not yet retired.
+See docs/runtime/public-compiled-compiler.md and the updated acceptance-m3 audit.
+
+Regressions were added first, then unchanged tests copied to a detached parent
+/private/tmp/suss-public-command-before at25cb06d. Sequential bounded execution
+uses shared /private/tmp/suss-m3-pr143-target, jobs2, no RUSTFLAGS. ALL root heavy
+handles below ACTUAL TERMINAL:
+- ParentCLI11447 exit101:1passed/4failed/0ignored/0filtered,0.44s; parenthost30519
+  exit101:4passed/2failed/0ignored/0filtered,3.21s. Six new regressions expose hidden
+  print imports, missing state/lexical macro data and namespace preflight ordering;
+  the phase-isolation regression and four preexisting typed fixtures already pass.
+  Logs /private/tmp/suss-public-command-parent-{cli,host}.log.
+- Both phase bootstrap Wasm/JSON pairs regenerated59327 exit0; compilerbuild5.65s.
+  Log /private/tmp/suss-public-command-bootstrap-generate.log.
+- Replacementhost17349 exit0:6passed/0failed/0ignored/0filtered,8.35s; CLI99352
+  exit0:5passed/0failed/0ignored/0filtered,48.83s. Actual typed async calls in2fresh
+  Stores repeatedly survive forced GC/retained Unicode and atom state, once-only
+  initialization, exact imports, wrong-argument Err and later recovery. Independent
+  exception decoder asserts initializer f64 payload42 bits. CLI executes lexical
+  macros, empty/Unicode argument ordering, normal completion, uncaught failures,
+  checked explicit exit and7invalid statuses caught before exit73. Logs
+  /private/tmp/suss-public-command-fixed-{host,cli}.log.
+- Existing officialCLI17909 exit0:6passed/0failed/0ignored/0filtered,69.64s,
+  preserving original paths/dependencies, phase isolation and exit behavior.
+  Log /private/tmp/suss-public-command-official-cli.log.
+- Java/Node-free85102 exit0: BOTH pairs byte-exact against two fresh generations,
+  checkout-independent identity and bootstrap4passed/0failed/0ignored/0filtered,
+  13.53s. Log /private/tmp/suss-public-command-bootstrap-verify.log.
+- Rust syntax/touched test formatting and git diff --check pass. No unfiltered
+  workspace baseline has run at this new command head; review/full/final CI pending.
+
+Design section4 now explicitly guarantees constant stack use for loop/function
+recur. Dated2026-10-05 clarification retains source-order/temporary assignment and
+arity/tail diagnostics, grounded in pinned compiler.cljc:1156 c4295f3 emission.
+PR197 focused100000-iteration tests already execute under2MiB Wasm stack limits.
+General ordinary-call TCO is unpromised; no milestone completion follows.
+
+PR197 first full63838 TERMINAL101:58groups239passed/1failed/noignored/nofiltered,
+no doctests. Bootstrap-source-cache reset defect repaired without dropping Store
+roots/code. Reviewer generation/verifier/public12/profile8/cache6/REPL6 pass and
+clean frozen25cb06d pushed. Root explicitly returned sole heavy slot after all
+above handles terminal; reviewer replacement exact full47430 ACTUALLY LIVE,
+/private/tmp/suss-pr197-review-full-final-retry.log. Root may not compete.
+New final-head CI37257364671 watcher63455 LIVE. Supersededa853 CI37255544458
+CANCELLED, watcher52282 terminal1; never acceptance of the repaired head.
+
+PR195 b6870b7 CI37249501965 SUCCESS, raw/local149tuple audit1220/0/17/all4docs.
+Ready and unmerged. Original issues12–15 remain open. Publish command increment
+as a draft stacked on197; dispatch independent review with no competing heavy
+commands until reviewer197 actual terminal/all4docs audit/release. Significant
+fixes, exact unfiltered full baseline and final reviewed-head CI still required.
+Use Refs12/13/14 only. No merge/issue closure/M3 completion. Next migrate remaining
+public file/namespace/project/expression/cache and component-target evaluator
+routes, complete source schemas and original pending-I/O/rooted continuation/
+cancellation/live-GC versus resident-code acceptance without narrowing scope.
