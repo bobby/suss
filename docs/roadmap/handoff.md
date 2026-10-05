@@ -18462,3 +18462,214 @@ handoff evidence sections are retained. This is reviewed-source equivalence,
 not a new-head local baseline. Root retains the sole heavy slot for list work;
 reviewer runs no Cargo/JVM/Node during this integration. Replacement final-head
 CI remains mandatory before readiness. No merge, issue closure or M3 completion.
+
+
+## Prepared list boundary prerequisite — 2026-10-05
+
+Previous goal turn made verified progress: draftPR200 at330127a opened with actual
+string11 and existing scalar13/async3/option16 plus byte-exact bootstrap evidence.
+Independent reviewer /root/review_pr200 focus23281 terminal0:43passed/0failed/
+0ignored/0filtered. Exact unfiltered full50870 remains actually live at frozen
+330127a, currently later public compiler groups; no final-doc/terminal audit yet.
+Reviewer retains sole local heavy slot. Root watcher53805 revalidated actually
+live for PR199 CI37265512292 at14137b70; no CI readiness or merge claim.
+
+New isolated /private/tmp/suss-m3-list-adapters, branchportable/m3-list-adapters,
+bases clean330127a. TEN actual-component regressions are prepared, UNEXECUTED,
+byte-identical in unchanged /private/tmp/suss-list-before at330127a. They preserve
+typed scalar bits/ranges, real vector trie boundaries0/1/31/32/33/1024/1056/1057/
+2048, owned atoms/GC, subvector views, Unicode/nested string buffers, repeated
+sync/async cleanup under128KiB transfer bound, resolved aliases/protocol use,
+malformed vector/node storage/ranges/element diagnostics, core redefinition,
+eight-list flat limit and >16-field rejection before macro effects.
+
+Prepared backend Source, still UNEXECUTED/UNTYPECHECKED: bounded scalar/string
+list element resolution; canonical pointer/length layout; shared owned allocator;
+GC source-array copies and private nominal PersistentVector/VectorNode construction;
+full trie layers and Subvec views; captured primitives/classes before users;
+physical tail/node array checks; complete element validation before output
+allocation; nested buffer release before outer storage, sync post-return and
+non-suspending async task-return cleanup. Private schema supports source-array
+capacity1000000 and view-depth64 development bounds with explicit diagnostics;
+these do not redefine full compatibility. No ABI layout/new upstream core forms.
+Rustfmt and diff checks pass; inventory Scanner sees one lexical source form only,
+which does NOT prove Suss parsing, analysis, validation or execution.
+
+Existing negative AOT unsupported fixture now selects still-unsupported nested
+list<list<string>>, retaining its assertion and mapping/typed scalar checks.
+Source changes invalidate BOTH bootstrap phase pairs, which remain STALE.
+Do not run root Cargo/JVM/Node while reviewer200 owns actual50870.
+Next after explicit release: run identical parent10 with
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test -p suss-compile --locked --test portable_aot_lists -- --test-threads=2;
+regenerate both phase pairs using cargo run --profile test -p suss-cli --bin
+suss-bootstrap --locked -- runtime/bootstrap; run replacement lists10/strings11/
+options16/scalar13/async3, fix actual failures, reproduce via
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+sh scripts/verify-bootstrap.sh; then draft/review/full/final-head CI. Lists have
+NO support claim or PR yet; no merge. Held public file/project migration, exact64,
+public expression/component host evaluator retirement, complete source schemas,
+rooted continuations/pending-I/O cancellation/live heap acceptance remain open.
+All original M3 #12/#13/#14/#15 requirements remain intact; no issue closes.
+
+
+2026-10-05 current checkpoint: PR199's exact reviewed-head CI37265512292
+terminated cancelled at the bounded90-minute allowance, not with an assertion
+failure. Independent raw-log audit matched137 completed local groups
+(1102passed/0failed/15existingignores), then found cancellation in portable_pipeline;
+15remaining groups/all four doctest suites were not completed by that run.
+Reviewer pushed workflow-only90→120-minute allowance repair5a15d3a; source,
+bootstrap and tests are byte-identical to reviewed14137b70. Replacement final-head
+CI37273014852 is confirmed in progress. The old full baseline79823 remains
+source evidence, not a newly executed local-head baseline. PR199 remains draft.
+
+PR200 independent review completed without significant scoped findings at330127a:
+focus23281 terminal0,43passed/0failed/0ignored/0filtered; exact unfiltered
+full50870 terminal0,153groups1266passed/0failed/17unchangedignores/0filtered and
+all four doctest suites. Reviewer rebased only workflow/handoff onto1995a15d3a,
+pushed8feaa0c1 and updated PR body. Compiler/tests/bootstrap are byte-identical
+to reviewed330127a. Replacement final-head CI37273792377 is confirmed in progress;
+old330127a CI is cancelled and cannot certify the new head. PR200 remains draft.
+
+List boundary work remains uncommitted/unpublished. Initial actual parent97293
+terminal101 (0/10); replacement23742 terminal101 (1/9) exposed missing retained
+Subvec and a WIT type-alias import check. Retained complete pinned Subvec/
+build-subvec/subvec declarations with strict source hashes, EPL extraction and
+explicit patches; reviews remain in-progress (374reviewed/691unassessed).
+Bootstrap5039 failed unresolved lazy-seq,25781 failed Rust type-import variant;
+corrected explicit LazySeq thunk and resolved WorldItem syntax, then98270 and
+13314 terminal0 rebuilt BOTH phase pairs. Replacement59887 and17506 both
+terminal101 (6passed/4failed/0ignored/0filtered): remaining four failed finite
+fuel, not value/cleanup assertions. Removed repeated per-element normalization.
+Measured one1057-element call at199101049fuel, startup1393964fuel; independent
+500millionfuel-per-large-call test budget preserves all inputs, value checks,
+GC, repeated calls and128KiB canonical transfer bound. Replacement45984 terminal0:
+10passed/0failed/0ignored/0filtered in49.71s. Python44916 terminal0:177pass.
+Final byte-identical parent86081 is running; bootstrap byte-exact verifier,
+existing focus, independent PR review/full/final-head CI remain required.
+No list readiness or M3 completion claim. Original issues12–15, public file/
+project/compiler/component host migration, exact64, production evaluator
+retirement, complete source schemas and rooted continuations/pending-I/O
+cancellation/live-heap acceptance remain open. Next complete list provenance/
+bootstrap/focus gates, publish a linked draft, review/fix/full/CI; then unblock
+held public file/project migration. No PR merged or issue closed.
+
+
+## List adapter focused validation — 2026-10-05
+
+Final identical parent86081 ACTUAL TERMINAL101:0passed/10failed/0ignored/0filtered,
+all explicit unsupported boundary diagnostics; cmp confirms byte-identical test.
+Replacement45984 ACTUAL TERMINAL0:10passed/0failed/0ignored/0filtered in49.71s.
+Existing scalar13/async3/options16/strings11 focus16745 ACTUAL TERMINAL0:43passed,
+zero failures/ignores/filters. Pinned assert diagnostic text was subsequently
+preserved exactly in the Subvec adaptation without changing positive semantics;
+both image pairs regenerated89883 terminal0. Java/Node-free verifier62553
+ACTUAL TERMINAL0:both Runtime/Macro Wasm/JSON byte-exact with two fresh builds and
+tracked images, build-identity verification and bootstrap4passed/0failed/0ignored.
+Logs /private/tmp/suss-list-{parent-final,focused-4,existing-focus,bootstrap-final,
+bootstrap-verify}.log. Strict core-import277files/review374declarations checks
+88234 terminal0;177 Python tests passed44916. No new ignore or source ABI layout.
+
+Publish this prerequisite draft on updated PR2008feaa0c1, dispatch independent
+review with authorization to push significant fixes, run the exact unfiltered
+cargo test --workspace --locked -- --test-threads=2 and require final-head CI.
+Root currently owns the sole local heavy slot and has no live heavy process.
+PR1995a15d3a CI37273014852 and PR2008feaa0c1 CI37273792377 were confirmed actually
+in_progress; no readiness or merge. Full M3 issues12–15 remain open. Next after
+list gates implement exact64 to unblock held public file/project fixtures, then
+resume full source schemas/evaluator retirement/rooted lifecycle acceptance.
+
+## PR #201 independent list adapter review — 2026-10-05
+
+Independent review of 0be602fe found a malformed nested-view acceptance: a
+one-element outer Subvec hid an inner end beyond its backing vector's count.
+The executing negative regression failed as expected (77136 terminal101,
+0passed/1failed/9filtered). Private normalization now validates each full
+intermediate view against its immediate backing collection as well as the
+requested output slice. Regressions cover invalid backing-vector and intermediate
+view ranges, and a valid nested view returns exactly [2]. The scalar-list
+round-trip test additionally executes canonical u8/s8/u16/s16/f32 layouts with
+integer extrema and floating-point bits; no semantic/cleanup assertions removed.
+
+Original complete focus69766 terminal0:53passed/0failed/0ignored/0filtered.
+Python/provenance38514 terminal0:177 Python tests,1065 inventory declarations,
+374 reviewed/691 unassessed and277 generated import files. A formatting-only
+workspace incident was independently checked:107 unrelated files each equaled
+rustfmt(HEAD) byte-for-byte, then restored; none is included in this fix. Results
+from that transient formatted tree are supplemental, not final-head evidence.
+Restored-source regenerate/focus/verifier8067 terminal0:both phase pairs rebuilt,
+53passed/0failed/0ignored/0filtered; Java/Node absent verifier reproduced both
+Wasm/JSON pairs twice byte-exact with tracked assets and bootstrap4passed/0failed.
+Logs /private/tmp/suss-pr201-review-{nested-red,python,final-regenerate,
+final-focused,final-bootstrap}.log. Expanded narrow-width list assertions have
+an additional unfiltered ten-test run4311 terminal0:10passed/0failed/0ignored/
+0filtered in60.00s (/private/tmp/suss-pr201-review-final-lists.log).
+
+Review worktree /private/tmp/suss-pr201-review owns the sole local heavy slot.
+Use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2;
+focused command cargo test -p suss-compile --locked --test portable_aot_lists
+--test portable_aot --test portable_aot_async --test portable_aot_options
+--test portable_aot_strings -- --test-threads=2; verifier sh scripts/verify-bootstrap.sh.
+Required next: freeze repaired head and run exact unfiltered cargo test --workspace
+--locked -- --test-threads=2, audit all four doctest suites and unchanged17 ignores,
+and require final-head CI before readiness. PR remains draft/unmerged; M3 issues
+12–15 stay open. Exact64, held public file/project migration, production evaluator
+retirement, full portable source schemas and rooted pending-I/O lifecycle remain.
+
+## PR #201 outer list diagnostic repair — 2026-10-05
+
+The exact frozen-head b5ba2d4 full baseline6745 terminated101 after142 completed
+groups:1165passed/2failed/15existingignores/0filtered, with zero doctest suites
+reached. Its two public_compiled_pipeline failures require the full outer
+list<map<string, u32>> diagnostic, while list payload resolution reported only
+map<string, u32>. This was a diagnostic regression; the two exact assertions and
+throw99 pre-macro fixtures remain unchanged. Audit and full log retained at
+/private/tmp/suss-pr201-review-full-audit.json and
+/private/tmp/suss-pr201-review-full.log.
+
+Independent reviewer repaired only list resolution's unsupported diagnostic to
+render the whole resolved outer boundary type. Root executed regeneration60990
+terminal0, focus93512 terminal0 (public12+AOT13+list10=35passed/0failed/0ignored/
+0filtered), and verifier46143 terminal0. Reviewer independently inspected all
+three logs and the source diff: both Runtime/Macro Wasm/JSON pairs reproduced
+byte-exact with two fresh builds and tracked assets while Java/Node were absent;
+compiler identity checks and all4 bootstrap cases passed. Logs:
+/private/tmp/suss-pr201-diagnostic-{bootstrap,focus,verify}.log. Commands retain
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2, no RUSTFLAGS;
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap;
+cargo test -p suss-compile --locked --test public_compiled_pipeline
+--test portable_aot --test portable_aot_lists -- --test-threads=2;
+sh scripts/verify-bootstrap.sh.
+
+Reviewer commits/pushes this significant finding fix and both regenerated phase
+pairs. The replacement exact unfiltered cargo test --workspace --locked --
+--test-threads=2 and final-head CI remain required; the failed prior run is not
+acceptance evidence and this PR remains draft/unmerged. Root owns the sole local
+heavy slot and will first execute prepared exact64 focus, then explicitly transfer
+the slot for the repaired list full baseline. No reviewer heavy process is live.
+Original M3 issues12–15 remain open; full source schemas, public/compiler evaluator
+retirement, exact64 and rooted pending-I/O lifecycle acceptance remain incomplete.
+
+## Stack #202 conflict repair — 2026-10-05
+
+Ran `gh stack checkout 202` and `gh stack rebase` using the existing stack
+worktrees. Checkout identified `/private/tmp/suss-m3-list-adapters`; the first
+rebase conflicted while replaying already-merged PR191–195 ancestors onto
+main d55f8e8. Preserved the merged collection/control/method/function/host fixes,
+including source-order regressions and tracked bootstrap pairs. Reconciled
+handoff appendices and restored the remote PR200 independent-review section
+missing from its stale local branch. No source/test/asset changes were needed.
+
+Rebased trees are byte-identical to the original remote tips: PR197 da468e8
+versus25cb06d; PR198 0c4256c versus e35fdce; PR199 d960073 versus5a15d3a;
+PR200 21a39ff versus8feaa0c; PR201 67b4b18 versus330e750. Independent reviews
+were dispatched for each PR. `git diff --check` passes. These comparisons
+preserve prior evidence provenance; no fresh Cargo baseline is claimed.
+`python3 scripts/verify_bootstrap_identity.py` could not verify local compiled
+identity: the default target lacks a compiled build-script matching the shipped
+compiler identity. This is not recorded as a successful bootstrap check.
+
+Push with `gh stack push`, then verify remote heads and final-head CI. New-head
+CI remains required before readiness; no PR is merged or issue closed. Next
+unblocked action is to inspect those CI results, retaining all existing M3
+acceptance limitations and the prior exact64/file-project continuation.

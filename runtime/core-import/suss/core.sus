@@ -51,6 +51,9 @@
  inode-kv-reduce nil-iter equiv-map every? reduce-kv)
 
 (declare KeySeq keys ISet ITransientSet PersistentHashSet TransientHashSet HashSetIter set set? hash-set disj disj! es6-set-entries-iterator)
+
+;; Original declarations for retained subvector mutual references.
+(declare Subvec build-subvec subvec seq-iter)
 (def identity "Returns its argument." (fn [x] x))
 
 (def not (fn [x] (if x false true)))
@@ -4748,6 +4751,164 @@
   (if (nil? s)
     false
     (satisfies? ISeq s))))
+
+(deftype Subvec [meta v start end ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  ICloneable
+  (-clone [_] (Subvec. meta v start end __hash))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (build-subvec new-meta v start end __hash)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  IStack
+  (-peek [coll]
+    (when-not (== start end)
+      (-nth v (dec end))))
+  (-pop [coll]
+    (if (== start end)
+      (throw (suss.bootstrap/error "Can't pop empty vector"))
+      (build-subvec meta v start (dec end) nil)))
+
+  ICollection
+  (-conj [coll o]
+    (build-subvec meta (-assoc-n v end o) start (inc end) nil))
+
+  IEmptyableCollection
+  (-empty [coll] (-with-meta (.-EMPTY PersistentVector) meta))
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
+
+  ISeqable
+  (-seq [coll]
+    (let [subvec-seq (fn subvec-seq [i]
+                       (when-not (== i end)
+                         (cons (-nth v i)
+                               (LazySeq. nil (fn* [] (subvec-seq (inc i))) nil nil))))]
+      (subvec-seq start)))
+
+  IReversible
+  (-rseq [coll]
+    (if-not (== start end)
+      (RSeq. coll (dec (- end start)) nil)))
+
+  ICounted
+  (-count [coll] (- end start))
+
+  IIndexed
+  (-nth [coll n]
+    (if (or (neg? n) (<= end (+ start n)))
+      (vector-index-out-of-bounds n (- end start))
+      (-nth v (+ start n))))
+  (-nth [coll n not-found]
+    (if (or (neg? n) (<= end (+ start n)))
+      not-found
+      (-nth v (+ start n) not-found)))
+
+  ILookup
+  (-lookup [coll k] (-lookup coll k nil))
+  (-lookup [coll k not-found] (if (number? k)
+                                (-nth coll k not-found)
+                                not-found))
+
+  IAssociative
+  (-assoc [coll key val]
+    (if (number? key)
+      (-assoc-n coll key val)
+      (throw (suss.bootstrap/error "Subvec's key for assoc must be a number."))))
+  (-contains-key? [coll key]
+    (if (integer? key)
+      (and (<= 0 key) (< key (- end start)))
+      false))
+
+  IFind
+  (-find [coll n]
+    (when-not (neg? n)
+      (let [idx (+ start n)]
+        (when (< idx end)
+          (MapEntry. n (-lookup v idx) nil)))))
+
+  IVector
+  (-assoc-n [coll n val]
+    (let [v-pos (+ start n)]
+      (if (or (neg? n) (<= (inc end) v-pos))
+        (throw (suss.bootstrap/error (str_ "Index " n " out of bounds [0," (-count coll) "]")))
+        (build-subvec meta (assoc v v-pos val) start (let [next-end (inc v-pos)] (if (> end next-end) end next-end)) nil))))
+
+  IReduce
+  (-reduce [coll f]
+    (if (implements? APersistentVector v)
+      (pv-reduce v f start end)
+      (ci-reduce coll f)))
+  (-reduce [coll f init]
+    (if (implements? APersistentVector v)
+      (pv-reduce v f init start end)
+      (ci-reduce coll f init)))
+
+  IKVReduce
+  (-kv-reduce [coll f init]
+    (loop [i start j 0 init init]
+      (if (< i end)
+        (let [init (f init j (-nth v i))]
+          (if (reduced? init)
+            @init
+            (recur (inc i) (inc j) init)))
+        init)))
+
+  IFn
+  (-invoke [coll k]
+    (-nth coll k))
+  (-invoke [coll k not-found]
+    (-nth coll k not-found))
+
+  IIterable
+  (-iterator [coll]
+    (if (implements? APersistentVector v)
+      (ranged-iterator v start end)
+      (seq-iter coll))))
+
+(def build-subvec (fn [meta v start end __hash]
+  (if (instance? Subvec v)
+    (recur meta (.-v v) (+ (.-start v) start) (+ (.-start v) end) __hash)
+    (do
+      (when-not (vector? v)
+        (throw (suss.bootstrap/error "v must satisfy IVector")))
+      (when (or (neg? start)
+                (< end start)
+                (> end (count v)))
+        (throw (suss.bootstrap/error "Index out of bounds")))
+      (Subvec. meta v start end __hash)))))
+
+(def subvec (fn
+  ([v start]
+   (subvec v start (count v)))
+  ([v start end]
+   (when (or (nil? start) (nil? end))
+     (throw (suss.bootstrap/error "Assert failed: (and (not (nil? start)) (not (nil? end)))")))
+   (build-subvec nil v (bit-or start 0) (bit-or end 0) nil))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

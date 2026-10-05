@@ -3577,4 +3577,22 @@
    :classification :adapted :rationale "Retained pinned set/KeySeq prerequisites with explicit bootstrap adapters; all acceptance remains in-progress until executing regressions and primary comparison pass."
    :status :in-progress :adaptation-path "docs/compatibility/patches/hash-set-disjbang.json" :alternative nil
    :tests ["crates/suss-cli/tests/compiled_macro_sets.rs" "crates/suss-cli/tests/portable_error_predicate.rs"]}
+  "runtime:Subvec:6077"
+  {:source-sha256 "461779bbd85a1a3e838660672bbe389a182a3330b7409c888e5706c7f4cd3754" :visibility :public :arities nil
+   :dependencies ["PersistentVector" "IVector" "retained sequence, metadata, hash and reduction protocols" "build-subvec" "pending seq-iter"]
+   :classification :adapted :rationale "Retain the complete pinned declaration and all methods. Replace JavaScript Error construction with the typed portable runtime error adapter. Expand unchecked-max over already evaluated locals into an equivalent ordered conditional; lazy sequence, reduction and iterator dependencies remain explicit and require separate execution evidence."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/vector-subvec-type.json" :alternative nil
+   :tests ["crates/suss-compile/tests/portable_aot_lists.rs"]}
+  "runtime:build-subvec:6218"
+  {:source-sha256 "489934fa5fb6315cca595b2cfcef0f0f345f61dfe0efab6a0c63bcc9647e9498" :visibility :private :arities {:fixed [5] :variadic-min nil}
+   :dependencies ["PersistentVector" "IVector" "retained sequence, metadata, hash and reduction protocols" "build-subvec" "pending seq-iter"]
+   :classification :adapted :rationale "Retain the complete pinned declaration and all methods. Replace JavaScript Error construction with the typed portable runtime error adapter. Use the explicit def/fn bootstrap while preserving tail recurrence, nested view offsets, vector validation and range diagnostics."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/vector-build-subvec.json" :alternative nil
+   :tests ["crates/suss-compile/tests/portable_aot_lists.rs"]}
+  "runtime:subvec:6230"
+  {:source-sha256 "afe5c911525ef228ccd942a2774ab5d33ab6d980e46166bf5b29606046d3921a" :visibility :public :arities {:fixed [2 3] :variadic-min nil}
+   :dependencies ["PersistentVector" "IVector" "retained sequence, metadata, hash and reduction protocols" "build-subvec" "pending seq-iter"]
+   :classification :adapted :rationale "Retain the complete pinned declaration and all methods. Replace JavaScript Error construction with the typed portable runtime error adapter. Use the explicit def/fn bootstrap, replace assert with an explicit typed failure on nil bounds, and replace the pinned int coercion with equivalent bit-or-zero coercion. Keep both public arities."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/vector-subvec.json" :alternative nil
+   :tests ["crates/suss-compile/tests/portable_aot_lists.rs"]}
 }}
