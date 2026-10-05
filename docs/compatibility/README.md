@@ -101,11 +101,13 @@ whether a test passes. Decoder layout knowledge is intentionally isolated in
 `tests/support/decode.rs` and must change with the runtime ABI.
 
 The separate [compiled expression observer](../runtime/compiled-expression-observations.md)
-reads ABI2 storage directly. Seventeen focused decoder checks pass, including
-an actual before/after ChunkedSeq repair. Its unchanged201-case harness records
-182 passes and19 unresolved-core-name failures with zero skips. Those failures
-remain outstanding. This does not retire the prototype compiler/evaluator or
-establish compiled expression compatibility.
+reads ABI2 storage directly. The unchanged 201-case harness now executes all
+201 cases successfully, and twenty-three focused decoder checks pass, including
+an actual before/after ChunkedSeq repair. The original 182-pass/19-failure run
+remains recorded as historical evidence; its unresolved core names have been
+repaired without changing the catalog. This establishes the bounded Session
+corpus, not retirement of the prototype compiler/evaluator or migration of the
+public expression/cache APIs.
 
 When intentionally adding/changing test inputs, regenerate `cases.json` with
 `cargo test -p suss-compile --test conformance record_case_catalog -- --ignored --exact`
@@ -893,10 +895,11 @@ inference, compiled macro acceptance or any inventory item; see
 
 
 The new compiled Session expression harness executes all 201 unchanged reviewed
-cases successfully and independently observes ABI2 storage after GC. Eighteen
+cases successfully and independently observes ABI2 storage after GC. Twenty-three
 focused decoder regressions pass, including malformed ChunkedSeq rejection.
-Thirty-nine fresh pinned numeric/stack observations match. A separately executed
-parity error-message regression remains failing; a retained internal formatting
-dependency is prepared but unexecuted. Public expression/cache migration and
-production evaluator retirement remain incomplete. See
-[compiled expression observations](../runtime/compiled-expression-observations.md).
+All 56 fresh pinned numeric/stack/internal-string observations match. The original
+parity message regression now passes after the retained formatting dependency and
+immutable descriptor-checked Error.message read; private concatenation errors are
+catchable language errors with operands evaluated once in source order. Public
+expression/cache migration and production evaluator retirement remain incomplete.
+See [compiled expression observations](../runtime/compiled-expression-observations.md).

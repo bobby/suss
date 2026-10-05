@@ -620,3 +620,92 @@ fn chunk_sequences_reject_malformed_storage_and_ignore_unobserved_prefix_values(
         Observation::List(vec![Observation::Number(7.0_f64.to_bits())])
     );
 }
+
+#[test]
+fn vector_decoder_rejects_count_exceeding_trie_capacity() {
+    let mut session = Session::new_repl().unwrap();
+    session.set_operation_fuel(1_000_000_000);
+    let mut decoder = Decoder::capture(&mut session, 100_000).unwrap();
+    // A genuine 1025-element vector has a shift-5 root containing 1024
+    // entries. Raising count without growing that root wraps branch selection
+    // at index1024 and must not turn malformed storage into observed values.
+    let value = session.eval("(let [v (loop [i 0 v []] (if (= i 1025) v (recur (inc i) (conj v i))))] (new suss.core/PersistentVector nil 1057 5 (.-root v) (array 7) nil))").unwrap();
+    session.collect().unwrap();
+    let Err(error) = decoder.decode_session(&mut session, &value) else {
+        panic!("decoder accepted a vector count exceeding its trie capacity");
+    };
+    assert!(
+        error
+            .to_string()
+            .contains("Vector count exceeds trie capacity"),
+        "{error}"
+    );
+}
+
+#[test]
+fn scalar_decoder_rejects_mutable_number_impostor() {
+    let mut session = Session::new_repl().unwrap();
+    let anchor = session.eval("42").unwrap();
+    session
+        .inspect(&anchor, |mut store, canonical| {
+            let canonical_type = canonical
+                .unwrap_anyref()
+                .unwrap()
+                .as_struct(&store)?
+                .unwrap()
+                .ty(&store)?;
+            let ty = wasmtime::StructType::new(
+                store.engine(),
+                [wasmtime::FieldType::new(
+                    wasmtime::Mutability::Var,
+                    wasmtime::StorageType::ValType(wasmtime::ValType::F64),
+                )],
+            )?;
+            assert!(
+                !wasmtime::StructType::eq(&canonical_type, &ty),
+                "the mutable impostor must be a different Wasm type"
+            );
+            let allocator = wasmtime::StructRefPre::new(&mut store, ty);
+            let object =
+                wasmtime::StructRef::new(&mut store, &allocator, &[Val::F64(42.0_f64.to_bits())])?;
+            let value = Val::AnyRef(Some(object.to_anyref()));
+            assert!(
+                Decoder::new(16).decode(&mut store, &value).is_err(),
+                "a mutable unary f64 structure is not an ABI2 boxed number"
+            );
+            Ok(())
+        })
+        .unwrap();
+}
+
+#[test]
+fn string_decoder_rejects_immutable_utf16_array_impostor() {
+    let mut session = Session::new_repl().unwrap();
+    let anchor = session.eval("\"A\"").unwrap();
+    session
+        .inspect(&anchor, |mut store, canonical| {
+            let canonical_type = canonical
+                .unwrap_anyref()
+                .unwrap()
+                .as_array(&store)?
+                .unwrap()
+                .ty(&store)?;
+            let ty = wasmtime::ArrayType::new(
+                store.engine(),
+                wasmtime::FieldType::new(wasmtime::Mutability::Const, wasmtime::StorageType::I16),
+            );
+            assert!(
+                !wasmtime::ArrayType::eq(&canonical_type, &ty),
+                "the immutable impostor must be a different Wasm type"
+            );
+            let allocator = wasmtime::ArrayRefPre::new(&mut store, ty);
+            let object = wasmtime::ArrayRef::new(&mut store, &allocator, &Val::I32(65), 1)?;
+            let value = Val::AnyRef(Some(object.to_anyref()));
+            assert!(
+                Decoder::new(16).decode(&mut store, &value).is_err(),
+                "an immutable i16 array is not an ABI2 language string"
+            );
+            Ok(())
+        })
+        .unwrap();
+}

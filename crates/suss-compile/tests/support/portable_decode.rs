@@ -41,6 +41,7 @@ enum Class {
 struct Canonical {
     anchor: SessionValue,
     descriptor: OwnedRooted<AnyRef>,
+    owner_type: wasmtime::StructType,
     class: Class,
 }
 
@@ -115,7 +116,11 @@ impl Decoder {
             ),
         ] {
             let anchor = session.eval(source)?;
-            let descriptor = session.inspect(&anchor, |mut store, value| {
+            let (descriptor, owner_type) = session.inspect(&anchor, |mut store, value| {
+                let owner_type = non_null_ref(&value)?
+                    .as_struct(&store)?
+                    .ok_or_else(|| wasmtime::Error::msg("Invalid canonical object storage"))?
+                    .ty(&store)?;
                 let object = fields(&mut store, &value, 4)?;
                 let descriptor = &object[0];
                 let storage = fields(&mut store, descriptor, 5)?;
@@ -124,11 +129,15 @@ impl Decoder {
                         "Invalid canonical descriptor identity",
                     ));
                 }
-                non_null_ref(descriptor)?.to_owned_rooted(&mut store)
+                Ok((
+                    non_null_ref(descriptor)?.to_owned_rooted(&mut store)?,
+                    owner_type,
+                ))
             })?;
             decoder.canonical.push(Canonical {
                 anchor,
                 descriptor,
+                owner_type,
                 class,
             });
         }
@@ -185,7 +194,11 @@ impl Decoder {
             };
         }
         if let Some(array) = reference.as_array(&*store)? {
-            if !matches!(array.ty(&*store)?.element_type(), StorageType::I16) {
+            let ty = array.ty(&*store)?;
+            if !matches!(ty.element_type(), StorageType::I16)
+                || ty.mutability() != wasmtime::Mutability::Var
+                || ty.finality() != wasmtime::Finality::Final
+            {
                 return Err(wasmtime::Error::msg("Expected UTF-16 language string"));
             }
             self.spend(array.len(&*store)? as usize)?;
@@ -202,8 +215,8 @@ impl Decoder {
         }
         if let Some(structure) = reference.as_struct(&*store)? {
             let fields = structure.fields(&mut *store)?.collect::<Vec<_>>();
-            if let [Val::F64(bits)] = fields.as_slice() {
-                return Ok(Observation::Number(*bits));
+            if let [Val::F64(_)] = fields.as_slice() {
+                return Ok(Observation::Number(number_bits(store, value)?));
             }
             if fields.len() == 4 {
                 let (class, args) = self.object(store, value)?;
@@ -278,6 +291,13 @@ impl Decoder {
         for canonical in &self.canonical {
             let captured = canonical.descriptor.to_rooted(&mut *store);
             if Rooted::ref_eq(&*store, descriptor, &captured)? {
+                let ty = non_null_ref(value)?
+                    .as_struct(&*store)?
+                    .unwrap()
+                    .ty(&*store)?;
+                if !wasmtime::StructType::eq(&ty, &canonical.owner_type) {
+                    return Err(wasmtime::Error::msg("Malformed nominal owner layout"));
+                }
                 let args = non_null_ref(&owner[1])?
                     .as_array(&*store)?
                     .ok_or_else(|| wasmtime::Error::msg("Malformed nominal field storage"))?;
@@ -374,6 +394,9 @@ impl Decoder {
         } else {
             ((count - 1) >> 5) << 5
         };
+        if tail_start as u64 > (1_u64 << (shift + 5)) {
+            return Err(wasmtime::Error::msg("Vector count exceeds trie capacity"));
+        }
         let tail = self.source_array(store, &data[4], count - tail_start)?;
         let (root_class, root_data) = self.object(store, &data[3])?;
         if root_class != Class::Node
@@ -590,9 +613,13 @@ impl Decoder {
         let index = count_field(store, &data[1])?;
         let backing = non_null_ref(&data[0])?;
         let (array, string) = if let Some(array) = backing.as_array(&*store)? {
-            if !matches!(array.ty(&*store)?.element_type(), StorageType::I16) {
+            let ty = array.ty(&*store)?;
+            if !matches!(ty.element_type(), StorageType::I16)
+                || ty.mutability() != wasmtime::Mutability::Var
+                || ty.finality() != wasmtime::Finality::Final
+            {
                 return Err(wasmtime::Error::msg(
-                    "Indexed string requires UTF16 storage",
+                    "Indexed string requires ABI2 UTF16 storage",
                 ));
             }
             (array, true)
@@ -739,12 +766,32 @@ fn fields(
     Ok(fields)
 }
 
-fn count_field(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<usize> {
-    let data = fields(store, value, 1)?;
-    let [Val::F64(bits)] = data.as_slice() else {
-        return Err(wasmtime::Error::msg("Expected boxed collection integer"));
+fn number_bits(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u64> {
+    let structure = non_null_ref(value)?
+        .as_struct(&*store)?
+        .ok_or_else(|| wasmtime::Error::msg("Expected ABI2 number box"))?;
+    let ty = structure.ty(&*store)?;
+    let field = ty
+        .field(0)
+        .ok_or_else(|| wasmtime::Error::msg("Malformed ABI2 number box"))?;
+    if ty.fields().len() != 1
+        || ty.finality() != wasmtime::Finality::Final
+        || field.mutability() != wasmtime::Mutability::Const
+        || !matches!(
+            field.element_type(),
+            StorageType::ValType(wasmtime::ValType::F64)
+        )
+    {
+        return Err(wasmtime::Error::msg("Malformed ABI2 number box"));
+    }
+    let Val::F64(bits) = structure.field(&mut *store, 0)? else {
+        return Err(wasmtime::Error::msg("Malformed ABI2 number box"));
     };
-    let number = f64::from_bits(*bits);
+    Ok(bits)
+}
+
+fn count_field(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<usize> {
+    let number = f64::from_bits(number_bits(store, value)?);
     if !number.is_finite() || number < 0.0 || number.fract() != 0.0 || number > 1_000_000.0 {
         return Err(wasmtime::Error::msg("Invalid bounded collection integer"));
     }
@@ -764,11 +811,7 @@ fn internal_absent(store: &StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Re
     Ok(matches!(sentinel(store, value)?, Some(0 | 6)))
 }
 fn signed_word(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u32> {
-    let data = fields(store, value, 1)?;
-    let [Val::F64(bits)] = data.as_slice() else {
-        return Err(wasmtime::Error::msg("Expected boxed hash word"));
-    };
-    let number = f64::from_bits(*bits);
+    let number = f64::from_bits(number_bits(store, value)?);
     if !number.is_finite()
         || number.fract() != 0.0
         || number < i32::MIN as f64
@@ -777,4 +820,75 @@ fn signed_word(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Re
         return Err(wasmtime::Error::msg("Invalid signed hash word"));
     }
     Ok(number as i32 as u32)
+}
+
+#[cfg(test)]
+mod adversarial_owner {
+    use super::*;
+    #[test]
+    fn indexed_string_rejects_immutable_utf16_backing() {
+        let mut session = Session::new_repl().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 4096).unwrap();
+        let anchor = session
+            .eval("(new suss.core/IndexedSeq \"A\" 0 nil)")
+            .unwrap();
+        session
+            .inspect(&anchor, |mut store, canonical| {
+                let owner = fields(&mut store, &canonical, 4)?;
+                let data = non_null_ref(&owner[1])?.as_array(&store)?.unwrap();
+                let ty = wasmtime::ArrayType::new(
+                    store.engine(),
+                    wasmtime::FieldType::new(wasmtime::Mutability::Const, StorageType::I16),
+                );
+                let allocator = wasmtime::ArrayRefPre::new(&mut store, ty);
+                let backing = wasmtime::ArrayRef::new(&mut store, &allocator, &Val::I32(65), 1)?;
+                data.set(&mut store, 0, Val::AnyRef(Some(backing.to_anyref())))?;
+                assert!(
+                    decoder.value(&mut store, &canonical, 0).is_err(),
+                    "an indexed language string needs mutable ABI2 UTF16 backing"
+                );
+                Ok(())
+            })
+            .unwrap();
+    }
+    #[test]
+    fn canonical_descriptor_does_not_validate_foreign_owner_layout() {
+        let mut session = Session::new_repl().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 4096).unwrap();
+        let anchor = session.eval(":ready").unwrap();
+        session
+            .inspect(&anchor, |mut store, canonical| {
+                let data = fields(&mut store, &canonical, 4)?;
+                let canonical_type = canonical
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_struct(&store)?
+                    .unwrap()
+                    .ty(&store)?;
+                let ty = wasmtime::StructType::new(
+                    store.engine(),
+                    (0..4).map(|_| {
+                        wasmtime::FieldType::new(
+                            wasmtime::Mutability::Const,
+                            wasmtime::StorageType::ValType(wasmtime::ValType::Ref(
+                                wasmtime::RefType::EQREF,
+                            )),
+                        )
+                    }),
+                )?;
+                assert!(!wasmtime::StructType::eq(&canonical_type, &ty));
+                let allocator = wasmtime::StructRefPre::new(&mut store, ty);
+                let owner = wasmtime::StructRef::new(&mut store, &allocator, &data)?;
+                // This internal raw fixture shares the inspected Store and retains
+                // the genuine descriptor and fields. Only the owner Wasm layout is
+                // foreign; no ownership bypass is exposed by the decoder API.
+                let value = Val::AnyRef(Some(owner.to_anyref()));
+                assert!(
+                    decoder.value(&mut store, &value, 0).is_err(),
+                    "a canonical descriptor must not validate a foreign owner layout"
+                );
+                Ok(())
+            })
+            .unwrap();
+    }
 }

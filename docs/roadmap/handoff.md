@@ -19798,3 +19798,53 @@ its independent source review light-only, then obtain reviewer fixes/full/finalC
 Public expression/cache and component-target evaluator retirement, complete
 macro/source schemas/dependencycache and pending-I/O scheduler/lifecycle gates
 remain the next original unblocked M3 requirements. No PR merged.
+
+
+## PR #207 independent review repairs, 2026-10-05
+
+Reviewer checkout /private/tmp/suss-pr207-review at ab3fd207 reproduced five
+observer acceptance defects without changing any original input or expectation:
+oversized vector count with an undersized trie, mutable f64 box, immutable UTF16
+array, foreign owner with a genuine descriptor, and immutable IndexedSeq string
+backing. Initial focused21235 ACTUALterminal101: original18 passed, new4 failed
+at acceptance assertions. Separate indexed63958 ACTUALterminal101:0pass1fail,
+22filtered, rejected-storage assertion failed. Logs
+/private/tmp/suss-pr207-review-negatives-before.log and
+/private/tmp/suss-pr207-review-indexed-string-before.log. No setup error was
+misclassified as a decoder defect.
+
+Review fixes enforce number/string ABI storage shape and mutability, canonical
+owner Wasm type in addition to descriptor reference identity, and vector count
+within trie capacity. Numeric collection fields use the same strict box check.
+Existing scalar bits, canonical types, UTF16 units and sequence/collection
+observations remain unchanged. Compatibility README stale unresolved-name and
+parity-failure statements now agree with actual evidence while retaining the
+historical failed run and original M3 limits.
+
+Pinned RUSTUP_TOOLCHAIN=1.98.0, CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target,
+CARGO_BUILD_JOBS=2; no RUSTFLAGS. Affected80778 ACTUALterminal0:
+cargo test -p suss-compile --locked --test portable_value_decoder
+--test portable_expression_conformance --test portable_core_expression_dependencies
+--test runtime_abi -- --test-threads=2. All85pass0fail0ignore0filter:
+core7, harness6, decoder23, ABI49. Two internal raw-storage checks execute in each
+observer-using integration binary. Actual /private/tmp/suss-pr207-reviewed-corpus.json
+contains201passing records; independently checked every source and expected value
+against unchanged docs/compatibility/cases.json. Log
+/private/tmp/suss-pr207-review-affected.log. Same22 initial decoder checks first
+passed unchanged after fixes in5438 terminal0; the fifth regression then ran red
+before its repair. All178 Python checks passed independently in5.172s; pinned
+inventory1065, overlay385reviewed/680unassessed, extraction288files verified.
+
+Verifier66334 ACTUALterminal0: scripts/verify-bootstrap.sh with Java/Node absent,
+TWO fresh BOTHphase Wasm/JSON pairs byte-exact against each other and tracked
+assets, checkout-independent compiler identity/invalidation checks and bootstrap
+ALL4pass0fail0ignore0filter10.40s. Log /private/tmp/suss-pr207-review-verify.log.
+Only test support, regressions and documentation changed; crate src fingerprints
+and tracked images remain unchanged. Original PR207 CI37372307426 attempt1
+terminated before any runner steps, not a source failure; same-head attempt2 was
+retried and remained queued at last read. Reviewer will push fixes with an explicit
+expected-head lease. Exact final-head full cargo test --workspace --locked --
+--test-threads=2 and final-head CI remain required before readiness. No merge or
+issue/milestone closure. Next shared resource window belongs to root for separate
+public expression/cache compiler migration after reviewer release; complete M3
+schemas, evaluator retirement and pending-I/O scheduler/lifecycle gates remain open.

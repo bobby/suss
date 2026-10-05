@@ -114,3 +114,24 @@ M3 requirements. This executing Session corpus does not establish migration of
 those public APIs or completion of source schemas and asynchronous lifecycle
 acceptance. Independent review, the exact full workspace baseline and final-head
 CI remain required before a new PR is ready.
+
+
+Independent PR #207 review reproduced five acceptance defects in the observer:
+a vector count exceeding its trie capacity, a mutable unary f64 structure,
+an immutable I16 string array, immutable I16 IndexedSeq backing, and a foreign
+owner structure carrying a genuine nominal descriptor. The original eighteen
+decoder regressions passed while all four initial new negatives failed; the
+IndexedSeq negative failed separately. These were acceptance failures, not
+fixture construction errors. No expected value or original assertion changed.
+
+The observer now checks boxed-number immutability and layout, language string
+storage mutability, exact canonical owner Wasm type alongside descriptor identity,
+and vector count against trie capacity before traversal. Equivalent canonical
+Wasm types remain valid. The same new negatives pass alongside all existing
+checks. The affected run passes 85 tests across four groups: seven core-dependency,
+six expression-harness, twenty-three decoder and forty-nine runtime-ABI tests,
+with no failures, ignores or filters. The two internal raw owner/storage checks
+execute in each integration binary importing the observer. Actual scratch JSON
+contains all 201 passing observations with every original catalog input and
+expectation unchanged. Final-head full CI remains required before readiness;
+public compiler migration and original M3 requirements remain unfinished.
