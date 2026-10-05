@@ -18649,3 +18649,27 @@ heavy slot and will first execute prepared exact64 focus, then explicitly transf
 the slot for the repaired list full baseline. No reviewer heavy process is live.
 Original M3 issues12–15 remain open; full source schemas, public/compiler evaluator
 retirement, exact64 and rooted pending-I/O lifecycle acceptance remain incomplete.
+
+## Stack #202 conflict repair — 2026-10-05
+
+Ran `gh stack checkout 202` and `gh stack rebase` using the existing stack
+worktrees. Checkout identified `/private/tmp/suss-m3-list-adapters`; the first
+rebase conflicted while replaying already-merged PR191–195 ancestors onto
+main d55f8e8. Preserved the merged collection/control/method/function/host fixes,
+including source-order regressions and tracked bootstrap pairs. Reconciled
+handoff appendices and restored the remote PR200 independent-review section
+missing from its stale local branch. No source/test/asset changes were needed.
+
+Rebased trees are byte-identical to the original remote tips: PR197 da468e8
+versus25cb06d; PR198 0c4256c versus e35fdce; PR199 d960073 versus5a15d3a;
+PR200 21a39ff versus8feaa0c; PR201 67b4b18 versus330e750. Independent reviews
+were dispatched for each PR. `git diff --check` passes. These comparisons
+preserve prior evidence provenance; no fresh Cargo baseline is claimed.
+`python3 scripts/verify_bootstrap_identity.py` could not verify local compiled
+identity: the default target lacks a compiled build-script matching the shipped
+compiler identity. This is not recorded as a successful bootstrap check.
+
+Push with `gh stack push`, then verify remote heads and final-head CI. New-head
+CI remains required before readiness; no PR is merged or issue closed. Next
+unblocked action is to inspect those CI results, retaining all existing M3
+acceptance limitations and the prior exact64/file-project continuation.
