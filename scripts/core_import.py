@@ -192,8 +192,13 @@ def build(root=ROOT):
     loader_sources = {}
     loader_records = {}
     if loader_recipe is not None:
-        exact(loader_recipe, 'before after', 'loader')
-        for stage, selection in loader_recipe.items():
+        exact(loader_recipe, 'before after' + (' original' if 'original' in loader_recipe else ''), 'loader')
+        # Fixed stage order, independent of JSON key order. Original extensions
+        # remain separate from licensed standalone upstream setup forms.
+        for stage in ('before', 'after', 'original'):
+            if stage not in loader_recipe:
+                continue
+            selection = loader_recipe[stage]
             exact(selection, 'path sha256', 'loader input')
             raw = repository_file(root, selection['path']).read_bytes()
             if selection['sha256'] != digest(raw):
@@ -210,6 +215,7 @@ def build(root=ROOT):
     output += f'(ns {recipe["namespace"]})\n\n'
     output += loader_sources.get('before', '') + '\n\n'.join(adapted_forms) + '\n'
     output += loader_sources.get('after', '')
+    output += loader_sources.get('original', '')
     outputs[artifact] = output.encode()
     for name in ('LICENSE', 'epl-v10.html'):
         outputs[name] = pinned_file(root, name)

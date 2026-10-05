@@ -1378,6 +1378,10 @@
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
       "sha256": "2808c764c2500c1c9f2e18a924930272ac460fdbe8ecd4022fce4f458c71b22d"
+    },
+    "original": {
+      "path": "docs/compatibility/bootstrap/exact-integers.sus",
+      "sha256": "0dbd4fe0230aa066c7554ea941864af8c75d113a8463471e2d593e5f3a5d841f"
     }
   }
 }

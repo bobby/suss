@@ -120,6 +120,33 @@ class CoreImportBuildTests(unittest.TestCase):
         self.assertEqual(manifest['forms'][0]['source-sha256'], self.digest)
         self.assertIsNone(manifest['forms'][0]['patch'])
 
+    def test_original_loader_is_ordered_hashed_and_rejects_unknown_stages(self):
+        import hashlib, json
+        inputs = {}
+        # Deliberately reverse JSON order: execution still follows stage order.
+        for stage in ('original', 'after', 'before'):
+            path = self.root / f'{stage}.sus'
+            text = f'(def {stage}-marker 1)\n'
+            path.write_text(text)
+            inputs[stage] = {'path': path.name,
+                             'sha256': hashlib.sha256(text.encode()).hexdigest()}
+        self.recipe['loader'] = inputs
+        self.recipe_path.write_text(json.dumps(self.recipe))
+        output = self.build()
+        source = output['suss/core.sus'].decode()
+        self.assertLess(source.index('before-marker'), source.index('(defn identity'))
+        self.assertLess(source.index('(defn identity'), source.index('after-marker'))
+        self.assertLess(source.index('after-marker'), source.index('original-marker'))
+        manifest = json.loads(output['manifest.json'])
+        self.assertEqual(manifest['loader']['original'], inputs['original'])
+        (self.root / 'original.sus').write_text('(def tampered 1)')
+        with self.assertRaisesRegex(ValueError, 'stale loader input hash: original'):
+            self.build()
+        inputs['unexpected'] = inputs['original']
+        self.recipe_path.write_text(json.dumps(self.recipe))
+        with self.assertRaises(ValueError):
+            self.build()
+
     def test_stale_review_and_unreviewed_selection_fail(self):
         original = self.reviews.read_text()
         self.reviews.write_text(original.replace(self.digest, '0' * 64))
