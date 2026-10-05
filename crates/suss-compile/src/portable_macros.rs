@@ -61,7 +61,7 @@ impl CompiledMacros {
     pub fn new() -> Result<Self, SessionError> {
         let mut session = Session::new_macro()?;
         let bridge = FormBridge::new(&mut session)?;
-        Ok(Self {
+        let mut macros = Self {
             session,
             bridge,
             declaration_values: Default::default(),
@@ -70,7 +70,11 @@ impl CompiledMacros {
             loaded_sources: BTreeMap::new(),
             incomplete_sources: BTreeSet::new(),
             artifact_cache: Default::default(),
-        })
+        };
+        macros.enter_namespace("suss.core")?;
+        macros.define(crate::portable_defn::SOURCE)?;
+        macros.enter_namespace("user")?;
+        Ok(macros)
     }
     pub(crate) fn binding_checkpoint(&mut self) -> Result<(crate::portable_session::BindingCheckpoint, BTreeMap<(String, String), SessionValue>, BTreeMap<(String, String), String>), SessionError> {
         Ok((self.session.binding_checkpoint()?, self.definitions.clone(), self.declaration_sources.clone()))
@@ -419,6 +423,20 @@ impl ExpansionHost for CompiledMacros {
         let target = context
             .environment
             .resolve_source_macro(context.phase, name)
+            .or_else(|| {
+                // Standalone source definitions are registered in the host
+                // before the Runtime snapshot has a macro-export entry.
+                let own = (
+                    context.environment.current_namespace(context.phase).to_owned(),
+                    name.name.clone(),
+                );
+                (name.namespace.is_none() && self.definitions.contains_key(&own)).then_some(own)
+            })
+            .or_else(|| {
+                context.environment
+                    .resolves_bootstrap_name(context.phase, name, "defn")
+                    .then(|| ("suss.core".into(), "defn".into()))
+            })
             .unwrap_or_else(|| {
                 (
                     name.namespace

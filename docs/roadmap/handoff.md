@@ -17921,3 +17921,79 @@ Public Compiler methods still use legacy expansion; this ownership prerequisite
 does not retire MacroEvaluator or complete original #12–#15, portable schemas,
 pending-I/O cancellation or live heap/code accounting. No readiness, merge,
 issue closure or milestone completion is claimed.
+
+
+## Public source compiler migration (2026-10-05)
+
+Branch portable/m3-public-compiler-pipeline starts at reviewed195b6870b7.
+Native Compiler::compile now resolves one selected WIT world and checks adapter
+capabilities before Macro effects, prepares through compiled source macros and
+assembles through portable AOT without the old expansion/codegen fallback.
+Runtime initializers run only at component instantiation. Shared preflight also
+protects native file/project preparation; unsupported nested shapes retain their
+names. Mapping/component failures keep separate categories. Wasm-host macro
+execution remains explicitly unsupported. Other public file/namespace/main/
+project/expression/cache methods and production MacroEvaluator remain legacy.
+
+Compiled defn executes in the isolated Macro Store, retaining docs/attributes/
+arglists and native fixed/variadic dispatch. Pinned source/range/adapted hashes,
+explicit JS-property/error adaptations and EPL packaging are recorded in
+compiled-defn-provenance.json and verified. No complete portable port or inventory
+reclassification. Explicit imported macros and standalone own macro roots precede
+automatic core defn; lexical shadowing stays in HIR. See
+[public pipeline scope](../runtime/public-compiled-compiler.md).
+
+Serial bounded root evidence, shared /private/tmp/suss-m3-pr143-target, jobs2,
+no RUSTFLAGS; all Cargo/JVM/Node handles below ACTUAL TERMINAL:
+
+- Parent43940 exit101: eight new regressions all failed,0passed/8failed/0ignored/
+  0filtered,3.27s. Failures exposed hidden print imports, rejected function recur,
+  missing lexical macro data/async support and macro errors preceding WIT errors.
+  Log /private/tmp/suss-public-compiler-parent.log.
+- Initial replacement43873 exit101:4passed/4failed (unresolved defn). Added the
+  compiled macro without weakening tests. Next93620 exit101:7passed/1failed from
+  a cumulative fuel allowance across two deep calls. Each call now gets its own
+  bounded200million allowance;0/1/2 checks added, both100000/100001 calls and the
+  explicit2MiB Wasm stack limit remain. Final8passed13642, then metadata/arity
+  coverage9passed61549. All source changes remain subject to final full review.
+- Shadow17728 exit101:0passed/1failed/10intentionalfiltered; user defmacro defn
+  entered the core macro and produced a located exception. Precedence repair
+  preserves the unchanged regression. Final17611 exit0: public11passed/0failed/
+  0ignored/0filtered,16.32s, plus toolchain8passed/0failed/0ignored/0filtered,5.05s.
+  Executes lexical macro data, persistent atom effects across GC, deferred throw42,
+  deep recurrence/parallel rebinding, async state, docs/private/multiple/variadic
+  arities, aliases, lexical/user-macro shadowing, exclusions and WIT preflight.
+  Log /private/tmp/suss-public-compiler-shadow-runtime-final.log.
+- Original toolchain18160 exit101:7passed/1failed because async rejection received
+  an actual component. Only after typed async execution passed, replaced that
+  obsolete limitation test with0/42/u32::MAX calls and GC. All unsupported-shape
+  assertions remain. Logs /private/tmp/suss-public-compiler-toolchain-{first,final}.log.
+- Latest generation71045 exit0 regenerated BOTH phase Wasm/JSON pairs. Final
+  Java/Node-free verifier17668 exit0: both pairs byte-exact, checkout-independent
+  identity and bootstrap4passed/0failed/0ignored/0filtered,13.42s. Logs
+  /private/tmp/suss-public-compiler-shadow-bootstrap-{generate,verify}.log.
+- Frontends77215 exit0: nine groups70passed/0failed/0ignored/0filtered. Macro
+  environments79252 exit0: four groups9passed/0failed/0ignored/0filtered, including
+  the475.87s declaration corpus, before the lookup repair. Final macro-loading
+  checks72832 exit0: imports5/reload7/source4=16passed/0failed/0ignored/0filtered.
+  Logs /private/tmp/suss-public-compiler-{frontends,macro-environments}.log and
+  /private/tmp/suss-public-compiler-shadow-macro-loading.log.
+- Python61881 exit0:177passed,5.257s. Verification75857 exit0: inventory1065,
+  overlay371reviewed/694unassessed,core-import274,reader catalog,apply4 licensed
+  generators,sequence21 setup forms,bitwise pin/range,WIT15files/6packages and
+  numeric manifest verified. Rust syntax/touched test formatting/diff checks pass.
+
+Publish as a draft stacked on195 and dispatch independent review; significant
+fixes, exact unfiltered cargo test --workspace --locked -- --test-threads=2 and
+final reviewed-head CI remain required before readiness. Refs12/13/14 only.
+No merge, issue closure or M3 completion. Next migrate remaining public artifacts
+with executing/independent value assertions, retire production evaluators and
+finish the original rich source schemas and #15 rooted continuations/pending-I/O
+cancellation/live heap-versus-code accounting; those requirements remain open.
+
+PR194 reviewed53643bf final CI37246670463 passed: raw workspace step exactly
+matches148local tuples1218/0/17 and all four doctest suites. Ready35010 exit0,
+unmerged. PR195 reviewedb6870b7 local full6497 exit0:149groups1220/0/17/all4docs;
+final CI37249501965/watcher32987 remains live. Issue14 comment5985901498 records
+these actual gates without closure. Root owns the heavy slot until draft review
+transfer; no local heavy command remains live.

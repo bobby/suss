@@ -80,6 +80,28 @@ impl From<Scalar> for PrimitiveValType {
         }
     }
 }
+fn boundary_description(resolve: &Resolve, ty: Type, depth: usize) -> String {
+    if depth >= 64 {
+        return "type nesting exceeds 64".into();
+    }
+    match ty {
+        Type::Id(id) => match &resolve.types[id].kind {
+            wit_parser::TypeDefKind::Type(next) => boundary_description(resolve, *next, depth + 1),
+            wit_parser::TypeDefKind::List(next) => {
+                format!("list<{}>", boundary_description(resolve, *next, depth + 1))
+            }
+            wit_parser::TypeDefKind::Map(key, value) => format!(
+                "map<{}, {}>",
+                boundary_description(resolve, *key, depth + 1),
+                boundary_description(resolve, *value, depth + 1)
+            ),
+            kind => kind.as_str().into(),
+        },
+        Type::ErrorContext => "error-context".into(),
+        other => format!("{other:?}").to_ascii_lowercase(),
+    }
+}
+
 fn scalar(resolve: &Resolve, mut ty: Type) -> Result<Scalar, Diagnostic> {
     for _ in 0..64 {
         return match ty {
@@ -97,16 +119,78 @@ fn scalar(resolve: &Resolve, mut ty: Type) -> Result<Scalar, Diagnostic> {
                     ty = *next;
                     continue;
                 }
-                _ => Err(error(
-                    "Portable AOT composite boundary adapters remain unimplemented",
-                )),
+                _ => Err(error(format!(
+                    "Portable AOT {} boundary adapters remain unimplemented",
+                    boundary_description(resolve, ty, 0)
+                ))),
             },
-            _ => Err(error(
-                "Portable AOT adapter currently supports bool/f32/f64 and small integers only",
-            )),
+            _ => Err(error(format!(
+                "Portable AOT {} boundary adapters remain unimplemented; supported scalar types are bool/f32/f64 and small integers",
+                boundary_description(resolve, ty, 0)
+            ))),
         };
     }
     Err(error("WIT scalar alias nesting exceeds 64"))
+}
+
+/// Check only implemented WIT adapter capabilities, before source macro effects.
+/// Source mappings, code generation and artifact validation have separate errors.
+pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(), Diagnostic> {
+    let selected = &resolve.worlds[world];
+    if !selected.imports.is_empty() {
+        return Err(error(
+            "Portable AOT imported WIT adapters remain unimplemented",
+        ));
+    }
+    let validate_function = |function: &wit_parser::Function| -> Result<(), Diagnostic> {
+        if function.external_id.is_some() {
+            return Err(error(
+                "Portable AOT function external-id adapters remain unimplemented",
+            ));
+        }
+        if !matches!(
+            function.kind,
+            FunctionKind::Freestanding | FunctionKind::AsyncFreestanding
+        ) {
+            return Err(error(
+                "Portable AOT resource function adapters remain unimplemented",
+            ));
+        }
+        for parameter in &function.params {
+            scalar(resolve, parameter.ty)?;
+        }
+        if let Some(result) = function.result {
+            scalar(resolve, result)?;
+        }
+        Ok(())
+    };
+    for item in selected.exports.values() {
+        match item {
+            WorldItem::Function(function) => validate_function(function)?,
+            WorldItem::Interface {
+                id, external_id, ..
+            } => {
+                if external_id.is_some() {
+                    return Err(error(
+                        "Portable AOT interface external-id adapters remain unimplemented",
+                    ));
+                }
+                let interface = &resolve.interfaces[*id];
+                if !interface.types.is_empty() {
+                    return Err(error(
+                        "Portable AOT interface type exports remain unimplemented",
+                    ));
+                }
+                for function in interface.functions.values() {
+                    validate_function(function)?;
+                }
+            }
+            WorldItem::Type { .. } => {
+                return Err(error("Portable AOT type exports remain unimplemented"));
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Fill missing selected-world mappings from retained source declaration export
@@ -244,33 +328,16 @@ pub fn component(
     world: WorldId,
     mappings: &[(String, Symbol)],
 ) -> Result<Vec<u8>, Diagnostic> {
+    validate_boundary(resolve, world)?;
     let last = fragments
         .last()
         .ok_or_else(|| error("AOT needs a prepared source fragment"))?;
     let selected = &resolve.worlds[world];
-    if !selected.imports.is_empty() {
-        return Err(error(
-            "Portable AOT imported WIT adapters remain unimplemented",
-        ));
-    }
     let mut exports = Vec::new();
     let mut public_exports = Vec::new();
     let mut used = std::collections::BTreeSet::new();
     let mut add_function =
         |name: String, function: &wit_parser::Function| -> Result<u32, Diagnostic> {
-            if function.external_id.is_some() {
-                return Err(error(
-                    "Portable AOT function external-id adapters remain unimplemented",
-                ));
-            }
-            if !matches!(
-                function.kind,
-                FunctionKind::Freestanding | FunctionKind::AsyncFreestanding
-            ) {
-                return Err(error(
-                    "Portable AOT resource function adapters remain unimplemented",
-                ));
-            }
             let matching = mappings
                 .iter()
                 .filter(|(export, _)| export == &name)
@@ -309,20 +376,8 @@ pub fn component(
                 let index = add_function(name.clone(), function)?;
                 public_exports.push(PublicExport::Function { name, index });
             }
-            WorldItem::Interface {
-                id, external_id, ..
-            } => {
-                if external_id.is_some() {
-                    return Err(error(
-                        "Portable AOT interface external-id adapters remain unimplemented",
-                    ));
-                }
+            WorldItem::Interface { id, .. } => {
                 let interface = &resolve.interfaces[*id];
-                if !interface.types.is_empty() {
-                    return Err(error(
-                        "Portable AOT interface type exports remain unimplemented",
-                    ));
-                }
                 let mut functions = Vec::new();
                 for (function_name, function) in &interface.functions {
                     let index = add_function(format!("{name}#{function_name}"), function)?;

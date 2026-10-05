@@ -39,3 +39,11 @@ executing scope and remaining M4 acceptance work. No complete core-port claim fo
 The legacy adapted conformance corpus retains its own
 [attribution](../../reference/cljs-tests/README.md); it is a small curated baseline,
 not proof of complete source provenance or upstream differential compatibility.
+
+The native compiled `defn` macro has a separate
+[pinned-source adaptation record](compiled-defn-provenance.json), including
+source/range/adapted hashes and the distributed EPL file. Its source executes in
+the Macro Store and delegates arity dispatch to native function lowering.
+Selected public component regressions execute docs/attributes, fixed/variadic
+calls, core aliases and lexical shadowing. This is in-progress evidence and does
+not reclassify the inventory or establish complete portable `defn` acceptance.

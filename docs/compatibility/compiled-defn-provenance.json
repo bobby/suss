@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "upstream-commit": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "upstream-source": "clojurescript/src/main/clojure/cljs/core.cljc",
+  "source-file-sha256": "46d23d8934ca57c7a1b318f500ca2fd962ed673cb664b15651eaf277b67b53d9",
+  "upstream-lines": [
+    3364,
+    3434
+  ],
+  "upstream-range-sha256": "fa3aeae65314942683a95b0f692b2bed4d437723e83edd8048a2fdfafa918cc8",
+  "adapted-source": "crates/suss-compile/src/portable_defn.rs",
+  "adapted-file-sha256": "1a63de269b3fa0a99899de633629cfe333483cdc80f76c19907eed78c83c23b0",
+  "license": "EPL-1.0",
+  "adaptations": [
+    "Execute macro as compiled Suss in the isolated native Macro Store.",
+    "Use existing native fn multi-arity/variadic lowering instead of JavaScript function properties and jsdoc.",
+    "Accumulate signatures/arglists through retained sequence/vector operations instead of compiler-specific sigs helper.",
+    "Use language ex-info for invalid definition diagnostics; upstream uses JavaScript Error."
+  ],
+  "status": "in-progress; selected public component regressions execute; complete portable defn acceptance remains open",
+  "license-file": "runtime/core-import/epl-v10.html",
+  "executing-tests": [
+    "crates/suss-compile/tests/public_compiled_pipeline.rs::compiled_defn_preserves_docs_attributes_arities_and_lexical_shadowing",
+    "crates/suss-compile/tests/public_compiled_pipeline.rs::public_compiler_function_recur_uses_bounded_stack_and_simultaneous_rebinding"
+  ]
+}
