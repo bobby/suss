@@ -49,10 +49,47 @@ on the unchanged parent and pass on the replacement; the phase-isolation test
 already passed. Existing typed and CLI command fixtures also pass. Independent
 review, the full baseline and final-head CI remain required for this increment.
 
-Other public methods, including file, namespace, project, expression and
-cache entry points, still use prototype paths. Production evaluator retirement
-is incomplete. Native file/project preparation shares the new capability
-preflight, but that does not migrate `Compiler::compile_files` or its peers.
+The file/project increment routes native `Compiler::compile_files`,
+`Compiler::compile_with_namespaces` and `Compiler::compile_project` through the
+same compiled source preparation and portable AOT assembly. File origins and
+configured namespace search paths are retained. Project selection uses the
+configured WIT world and explicit export mappings and returns artifacts without
+publishing them. Published dependency loading remains unsupported and is
+diagnosed rather than silently ignored. Typed I/O, parse, WIT, capability,
+mapping and assembly errors are preserved at the public library boundary.
+
+All nine final file/project regressions fail on the unchanged reviewed parent
+and pass on the replacement. The unsupported-type fixture uses
+list<map<string,u32>> because list<u32> is now supported. They cover
+actual typed exports in fresh Stores, retained atom effects across calls and GC,
+source macro origins and lexical data, namespace dependencies, project selection,
+diagnostic ordering and decoded initializer exception payloads. Both bootstrap
+pairs regenerate and reproduce byte-exact without Java/Node; all four bootstrap
+tests pass.
+
+All thirty existing component tests now pass, including a new file-compiled
+exact-integer execution regression covering endpoints, values beyond2^53,
+low-word carries, signed overflow and GC. Fixtures use the accepted tagged-option
+and exact-integer contracts, canonical namespace paths, declarations and typed
+catch syntax; original host assertions remain. Earlier adapter and fixture
+failures are recorded in the handoff. Independent review, the full workspace
+baseline and final-head CI remain required for this increment.
+
+Independent file/project review found two existing full-baseline regressions:
+ordinary recursive file exports exhausted the stack, and the retained `mod`
+dependency was absent. Eligible calls now tail-transfer their already evaluated
+callee/arguments through the shared invocation and closure dispatch paths. New
+file tests execute 100,000 ordinary tail calls, retain outer and per-frame finally
+cleanup, and observe a live redefinition through a captured old function.
+The pinned two-argument `mod` algorithm/docstring is retained with a hash-bound
+bootstrap patch and EPL source provenance; negative divisors, fractions and signed
+zero execute correctly. The original 320 `compile_expr` assertions and its 12
+manual ignores now pass unchanged; all 30 component, 12 file/project and 12 public
+pipeline tests pass. The initial failed full baseline remains recorded; the
+replacement full baseline and final-head CI are still required.
+
+Expression and cache entry points still use prototype paths. Production
+evaluator retirement is incomplete, including the component-target CLI route.
 Issues #12–#15 and M3 remain open. Each increment requires independent review,
 the unfiltered workspace baseline and final reviewed-head CI before readiness.
 
@@ -64,6 +101,7 @@ cargo test -p suss-compile --locked --test toolchain_profile -- --test-threads=2
 cargo test -p suss-compile --locked --test portable_command -- --test-threads=2
 cargo test -p suss-cli --locked --test public_compiled_command -- --test-threads=2
 cargo test -p suss-cli --locked --test compiled_official_command -- --test-threads=2
+cargo test -p suss-compile --locked --test public_compiled_files -- --test-threads=2
 sh scripts/verify-bootstrap.sh
 ```
 

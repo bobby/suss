@@ -77,6 +77,7 @@ fn test_internal_function_not_exported() {
     // This test verifies that helper functions without ^:export are compiled
     // but not exported in the WASM output
     let suss = r#"
+(declare helper)
 (defn ^:export add [a b] (helper (+ a b)))
 (defn helper [x] x)
 "#;
@@ -162,7 +163,7 @@ fn test_project_compilation() {
     let base_path = temp_dir.path();
 
     // Create directory structure
-    std::fs::create_dir_all(base_path.join("src")).expect("failed to create src dir");
+    std::fs::create_dir_all(base_path.join("src/app")).expect("failed to create src dir");
     std::fs::create_dir_all(base_path.join("wit")).expect("failed to create wit dir");
     std::fs::create_dir_all(base_path.join("target")).expect("failed to create target dir");
 
@@ -196,7 +197,7 @@ world v1 {
 
 (defn ^:export add [a b] (+ a b))
 "#;
-    let mut suss_file = std::fs::File::create(base_path.join("src/core.sus"))
+    let mut suss_file = std::fs::File::create(base_path.join("src/app/core.sus"))
         .expect("failed to create sus file");
     suss_file.write_all(suss.as_bytes()).expect("failed to write sus file");
 
@@ -423,7 +424,7 @@ world multi-string {
 #[test]
 fn test_i64_export() {
     let suss = r#"
-(defn ^:export big [] 999999999999)
+(defn ^:export big [] (suss.core/wit-s64 "999999999999"))
 "#;
     let wit = r#"
 package test:int64;
@@ -447,7 +448,13 @@ world int64-world {
 #[test]
 fn test_i64_param_return() {
     let suss = r#"
-(defn ^:export inc64 [x] (+ x 1))
+(defn ^:export inc64 [x]
+  (let [high (.-high x) low (.-low x)]
+    (if (== low 4294967295)
+      (if (== high 2147483647)
+        (throw "Signed 64-bit increment overflow")
+        (new suss.core/WitSigned64 (if (== high 4294967295) 0 (+ high 1)) 0))
+      (new suss.core/WitSigned64 high (+ low 1)))))
 "#;
     let wit = r#"
 package test:int64;
@@ -523,7 +530,7 @@ world float64-world {
 #[test]
 fn test_option_s32_export() {
     let suss = r#"
-(defn ^:export maybe-val [x] (if (> x 0) x nil))
+(defn ^:export maybe-val [x] (if (> x 0) [:some x] [:none]))
 "#;
     let wit = r#"
 package test:optional;
@@ -547,7 +554,7 @@ world optional-world {
 #[test]
 fn test_option_string_export() {
     let suss = r#"
-(defn ^:export maybe-greet [x] (if (> x 0) "hello" nil))
+(defn ^:export maybe-greet [x] (if (> x 0) [:some "hello"] [:none]))
 "#;
     let wit = r#"
 package test:optional;
@@ -571,7 +578,7 @@ world optional-world {
 #[test]
 fn test_option_s32_param() {
     let suss = r#"
-(defn ^:export unwrap-or [x default] (if (nil? x) default x))
+(defn ^:export unwrap-or [x default] (if (= (nth x 0) :none) default (nth x 1)))
 "#;
     let wit = r#"
 package test:optional;
@@ -595,7 +602,7 @@ world optional-world {
 #[test]
 fn test_option_bool_export() {
     let suss = r#"
-(defn ^:export maybe-true [x] (if (> x 0) true nil))
+(defn ^:export maybe-true [x] (if (> x 0) [:some true] [:none]))
 "#;
     let wit = r#"
 package test:optional;
@@ -692,9 +699,8 @@ world lists-world {
     assert!(result.is_ok(), "list<string> export should compile: {:?}", result.err());
 }
 
-/// Encoding and validation do not prove boundary conversions execute correctly.
-/// These prototype fixtures explicitly provide its current private print import;
-/// removing that import from pure libraries remains M5-01.
+/// Execute file-compiled components using the shared compiled pipeline.
+/// Pure fixtures must have no hidden host imports.
 fn instantiate_fixture(
     source: &str,
     exports: &str,
@@ -707,26 +713,28 @@ fn instantiate_fixture(
             wit.path().to_str().unwrap(),
         )
         .unwrap();
-    let mut config = wasmtime::Config::new();
-    config
-        .wasm_gc(true)
-        .wasm_function_references(true)
-        .wasm_tail_call(true)
-        .wasm_exceptions(true)
-        .wasm_component_model(true)
-        .cranelift_opt_level(wasmtime::OptLevel::None);
-    let engine = wasmtime::Engine::new(&config).unwrap();
-    let component = wasmtime::component::Component::new(&engine, bytes).unwrap();
-    let mut linker = wasmtime::component::Linker::new(&engine);
-    linker
-        .instance("test:execution/suss")
-        .unwrap()
-        .func_wrap("print-str", |_, _: (u32, u32)| -> wasmtime::Result<()> {
-            panic!("pure fixture unexpectedly printed")
-        })
-        .unwrap();
-    let mut store = wasmtime::Store::new(&engine, ());
+    static ENGINE: std::sync::OnceLock<wasmtime::Engine> = std::sync::OnceLock::new();
+    let engine = ENGINE.get_or_init(|| {
+        let mut config = wasmtime::Config::new();
+        config
+            .wasm_gc(true)
+            .gc_heap_initial_size(8 * 1024 * 1024)
+            .wasm_function_references(true)
+            .wasm_tail_call(true)
+            .wasm_exceptions(true)
+            .wasm_component_model(true)
+            .wasm_component_model_async(true)
+            .consume_fuel(true)
+            .cranelift_opt_level(wasmtime::OptLevel::None);
+        wasmtime::Engine::new(&config).unwrap()
+    });
+    let component = wasmtime::component::Component::new(engine, bytes).unwrap();
+    assert_eq!(component.component_type().imports(engine).count(), 0);
+    let linker = wasmtime::component::Linker::new(engine);
+    let mut store = wasmtime::Store::new(engine, ());
+    store.set_fuel(100_000_000).unwrap();
     let instance = linker.instantiate(&mut store, &component).unwrap();
+    store.set_fuel(100_000_000).unwrap();
     (store, instance)
 }
 
@@ -751,7 +759,7 @@ fn execute_wit_exports_with_internal_calls_and_float_params() {
 #[test]
 fn execute_wit_exports_with_flattened_option_and_list_return() {
     let (mut store, instance) = instantiate_fixture(
-        "(defn ^:export unwrap-or [x default] (if (nil? x) default x)) (defn ^:export make-list [] [1 2 3])",
+        "(defn ^:export unwrap-or [x default] (if (= (nth x 0) :none) default (nth x 1))) (defn ^:export make-list [] [1 2 3])",
         "export unwrap-or: func(x: option<s32>, default: s32) -> s32; export make-list: func() -> list<s32>;",
     );
     let unwrap = instance
@@ -771,7 +779,7 @@ fn execute_wit_exports_with_flattened_option_and_list_return() {
 #[test]
 fn execute_wit_export_closure_and_protocol_results() {
     let (mut store, instance) = instantiate_fixture(
-        "(defn ^:export closure [x] ((fn [n] (+ n 1)) x)) (defn ^:export first-of [xs] (-first xs))",
+        "(defn ^:export closure [x] ((fn [n] (+ n 1)) x)) (defn ^:export first-of [xs] (-first (seq xs)))",
         "export closure: func(x: s32) -> s32; export first-of: func(xs: list<s32>) -> s32;",
     );
     let closure = instance.get_typed_func::<(i32,), (i32,)>(&mut store, "closure").unwrap();
@@ -785,7 +793,7 @@ fn execute_wit_export_closure_and_protocol_results() {
 #[test]
 fn execute_wit_export_catch_and_finally_with_flattened_params() {
     let (mut store, instance) = instantiate_fixture(
-        "(defn ^:export caught [x fallback] (try (throw fallback) (catch error (+ error 1)))) (defn ^:export cleanup [x fallback] (try fallback (finally (+ fallback 1))))",
+        "(defn ^:export caught [x fallback] (try (throw fallback) (catch :default error (+ error 1)))) (defn ^:export cleanup [x fallback] (try fallback (finally (+ fallback 1))))",
         "export caught: func(x: option<s32>, fallback: s32) -> s32; export cleanup: func(x: option<s32>, fallback: s32) -> s32;",
     );
     for name in ["caught", "cleanup"] {
@@ -798,4 +806,38 @@ fn execute_wit_export_catch_and_finally_with_flattened_params() {
             function.post_return(&mut store).unwrap();
         }
     }
+}
+
+
+#[test]
+fn execute_file_compiled_exact_integer_wrappers_and_word_carries() {
+    let (mut store, instance) = instantiate_fixture(
+        r#"(defn ^:export big [] (suss.core/wit-s64 "9223372036854775807"))
+        (defn ^:export inc64 [x]
+          (let [high (.-high x) low (.-low x)]
+            (if (== low 4294967295)
+              (if (== high 2147483647)
+                (throw "Signed 64-bit increment overflow")
+                (new suss.core/WitSigned64 (if (== high 4294967295) 0 (+ high 1)) 0))
+              (new suss.core/WitSigned64 high (+ low 1)))))"#,
+        "export big: func() -> s64; export inc64: func(x: s64) -> s64;",
+    );
+    let big = instance.get_typed_func::<(), (i64,)>(&mut store, "big").unwrap();
+    assert_eq!(big.call(&mut store, ()).unwrap(), (i64::MAX,));
+    big.post_return(&mut store).unwrap();
+    let increment = instance.get_typed_func::<(i64,), (i64,)>(&mut store, "inc64").unwrap();
+    for value in [i64::MIN, -9007199254740993, -1, 0, 4294967295, 9007199254740993, i64::MAX - 1] {
+        assert_eq!(increment.call(&mut store, (value,)).unwrap(), (value + 1,));
+        increment.post_return(&mut store).unwrap();
+        store.gc(None).unwrap();
+    }
+    assert!(increment.call(&mut store, (i64::MAX,)).is_err());
+    let exception = wasmtime::AsContextMut::as_context_mut(&mut store)
+        .take_pending_exception()
+        .expect("signed overflow must be a language exception");
+    let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
+    let message = fields[0].unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    let units = message.elems(&mut store).unwrap()
+        .map(|value| value.unwrap_i32() as u16).collect::<Vec<_>>();
+    assert_eq!(String::from_utf16(&units).unwrap(), "Signed 64-bit increment overflow");
 }

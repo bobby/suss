@@ -1,5 +1,7 @@
 //! Source files use the same staged compilation as scripts before AOT assembly.
+use crate::portable::{self, PreparedFragment, modules::ModuleIdentity, resolve::Phase};
 use crate::{
+    CompileError, CompileResult,
     portable_macros::CompiledMacros,
     portable_repl::{PreparedScript, prepare_script_compiled_batch, read_script_forms},
     portable_session::{CompilationSnapshot, SessionError},
@@ -8,7 +10,6 @@ use std::{
     collections::BTreeSet,
     path::{Path, PathBuf},
 };
-use crate::portable::{self, PreparedFragment, modules::ModuleIdentity, resolve::Phase};
 use suss_reader::Symbol;
 
 /// An immutable, already selected and validated project input.
@@ -28,6 +29,17 @@ pub fn compile_file(
     source_paths: &[PathBuf],
     mappings: &[(String, Symbol)],
 ) -> Result<Vec<u8>, String> {
+    compile_file_typed(source_path, wit_path, wit_world, source_paths, mappings)
+        .map_err(|error| error.to_string())
+}
+
+pub(crate) fn compile_file_typed(
+    source_path: &Path,
+    wit_path: &Path,
+    wit_world: Option<&str>,
+    source_paths: &[PathBuf],
+    mappings: &[(String, Symbol)],
+) -> CompileResult<Vec<u8>> {
     compile_input(
         source_path,
         wit_path,
@@ -46,7 +58,12 @@ pub fn compile_main(
 ) -> Result<Vec<u8>, String> {
     let source = std::fs::read_to_string(source_path)
         .map_err(|error| format!("Failed to read {}: {error}", source_path.display()))?;
-    compile_main_source(&source, Some(source_path.to_owned()), namespace, source_paths)
+    compile_main_source(
+        &source,
+        Some(source_path.to_owned()),
+        namespace,
+        source_paths,
+    )
 }
 
 /// Compile source text to the same official command profile as file mode.
@@ -89,8 +106,19 @@ pub fn compile_namespace(
     source_paths: &[PathBuf],
     mappings: &[(String, Symbol)],
 ) -> Result<Vec<u8>, String> {
+    compile_namespace_typed(namespace, wit_path, wit_world, source_paths, mappings)
+        .map_err(|error| error.to_string())
+}
+
+pub(crate) fn compile_namespace_typed(
+    namespace: &str,
+    wit_path: &Path,
+    wit_world: Option<&str>,
+    source_paths: &[PathBuf],
+    mappings: &[(String, Symbol)],
+) -> CompileResult<Vec<u8>> {
     let path = portable::resolve::locate_source(namespace, source_paths, 0..0)
-        .map_err(|error| error.to_string())?;
+        .map_err(|error| CompileError::Semantic(error.to_string()))?;
     compile_input(
         &path,
         wit_path,
@@ -108,15 +136,18 @@ fn compile_input(
     source_paths: &[PathBuf],
     mappings: &[(String, Symbol)],
     namespace: Option<&str>,
-) -> Result<Vec<u8>, String> {
-    let source = std::fs::read_to_string(source_path)
-        .map_err(|error| format!("Failed to read {}: {error}", source_path.display()))?;
-    let forms = read_script_forms(&source).map_err(|error| error.to_string())?;
+) -> CompileResult<Vec<u8>> {
+    let source = std::fs::read_to_string(source_path).map_err(|error| {
+        CompileError::Io(format!("Failed to read {}: {error}", source_path.display()))
+    })?;
+    let forms = read_script_forms(&source)
+        .map_err(|error| CompileError::Parse(format!("{}: {error}", source_path.display())))?;
     if let Some(namespace) = namespace {
-        portable::modules::validate_namespace_source(namespace, &forms, Phase::Runtime)
-            .map_err(|error| error.to_string())?;
+        portable::modules::validate_namespace_source(namespace, &forms, Phase::Runtime).map_err(
+            |error| CompileError::Semantic(format!("{}: {error}", source_path.display())),
+        )?;
     }
-    compile_inputs(
+    compile_inputs_typed(
         &[SourceInput {
             source,
             path: Some(source_path.to_owned()),
@@ -130,26 +161,33 @@ fn compile_input(
     )
 }
 
-pub(crate) fn compile_inputs(
+pub(crate) fn compile_inputs_typed(
     inputs: &[SourceInput],
     wit_path: &Path,
     wit_world: Option<&str>,
     source_paths: &[PathBuf],
     mappings: &[(String, Symbol)],
-) -> Result<Vec<u8>, String> {
+) -> CompileResult<Vec<u8>> {
     let mut resolve = portable::aot::Resolve::new();
-    let (package, _) = resolve
-        .push_path(wit_path)
-        .map_err(|error| format!("Failed to resolve WIT {}: {error:#}", wit_path.display()))?;
+    let (package, _) = resolve.push_path(wit_path).map_err(|error| {
+        let message = format!("Failed to resolve WIT {}: {error:#}", wit_path.display());
+        if error.downcast_ref::<std::io::Error>().is_some() {
+            CompileError::Io(message)
+        } else {
+            CompileError::Wit(message)
+        }
+    })?;
     let world = resolve
         .select_world(&[package], wit_world)
-        .map_err(|error| format!("Failed to select WIT world: {error:#}"))?;
-    portable::aot::validate_boundary(&resolve, world).map_err(|error| error.to_string())?;
-    let fragments = prepare_inputs(inputs, source_paths).map_err(|error| error.to_string())?;
+        .map_err(|error| CompileError::Wit(format!("Failed to select WIT world: {error:#}")))?;
+    portable::aot::validate_boundary(&resolve, world)
+        .map_err(|error| CompileError::Unsupported(error.to_string()))?;
+    let fragments = prepare_inputs(inputs, source_paths)
+        .map_err(|error| CompileError::Semantic(error.to_string()))?;
     let mappings = portable::aot::source_export_mappings(&fragments, &resolve, world, mappings)
-        .map_err(|error| error.to_string())?;
+        .map_err(|error| CompileError::ExportMismatch(error.to_string()))?;
     portable::aot::component(&fragments, &resolve, world, &mappings)
-        .map_err(|error| error.to_string())
+        .map_err(|error| CompileError::Component(error.to_string()))
 }
 
 /// Prepare a complete source input and its Runtime dependencies without running

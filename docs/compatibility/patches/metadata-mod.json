@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "9b4da4cf1a510d97cde4786ac20a838ff91a5c8f28dc9496e16e0a99927b517c",
+  "replacement": "(def mod\n  \"Modulus of num and div. Truncates toward negative infinity.\"\n  (fn [n d]\n    (suss.bootstrap/f64-remainder (+ (suss.bootstrap/f64-remainder n d) d) d)))",
+  "rationale": "Explicit defn bootstrap retains the pinned signature, docstring and modulo evaluation order. Pinned macro:js-mod:1220 expands to numeric JavaScript remainder directly, so both calls use the binary64 remainder intrinsic rather than the separately redefinable runtime js-mod var. This preserves captured mod behavior after public js-mod redefinition, including negative divisor, fraction and signed-zero results. Source/EPL is retained; full object coercion and public core acceptance remain open."
+}

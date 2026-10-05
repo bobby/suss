@@ -23,14 +23,26 @@ Header parameters have conservative Value types because replacement may change
 Number, String, nil or closure identity. A synthetic loop in each fixed function
 body preserves incoming parameters and immutable outer captures. Closures created
 in an earlier iteration capture that iteration's values, surviving subsequent
-replacement and GC. Recurrence uses a backedge rather than recursive invocation.
+replacement and GC. Both loop recurrence and function-level recur use a backedge
+rather than recursive invocation, so iterations do not grow the call stack. This
+guarantee does not extend to ordinary recursive function calls.
+
+Ordinary closure calls also receive a tail-transfer optimization when verified IR
+forwards their result unchanged through empty blocks to a return. The already
+evaluated callee and arguments pass to `return_call`; runtime invocation and
+fixed/variadic closure dispatch use tail transfers too. This preserves live global
+lookups and captured old functions rather than rewriting self calls to `recur`.
+An enclosing `try`/dynamic-scope helper retains its pending cleanup frame;
+non-tail calls and per-recursion pending cleanup are not discarded. This is an
+optimization at eligible call sites, not a blanket guarantee for ordinary
+recursive source calls.
 
 Lowering represents terminating recurrence with no result. An if joins only arms
 that produce values; two recurring arms produce no unreachable join or fabricated
 nil. Public HIR validation independently checks lexical target, arity and tail
 positions. IR dominance, parameter shape/type and reachability checks still run
-before actual Wasm validation and execution. ABI v1 and its shared Invoke type are
-unchanged. Infinite zero-binding/function recurrence produces a distinct host fuel
+before actual Wasm validation and execution. The current shared ABI is version 2;
+recurrence uses the existing shared Invoke type without a recurrence-specific ABI. Infinite zero-binding/function recurrence produces a distinct host fuel
 trap; a subsequent native Session input executes normally.
 
 Evidence includes the original failing source regression, executing compiler
@@ -39,4 +51,10 @@ fresh pinned recurrence observations in the 194-case common source corpus. Corpu
 values are independently decoded from actual Wasm after GC. These checks do not
 certify destructuring, extended function signatures, general exception/effect/
 suspension control flow, compiled macros, full core import or frontend migration.
-Keep issues #9/#10 and M2–M9 open until their complete acceptance gates pass.
+Public Compiler execution regressions also run 100,000 loop iterations and
+100,001 function recurrences with a 2 MiB Wasm stack limit, independently checking
+typed results and simultaneous replacement. These are
+`public_compiler_loop_recur_executes_deep_iterations_with_bounded_stack` and
+`public_compiler_function_recur_uses_bounded_stack_and_simultaneous_rebinding` in
+`crates/suss-compile/tests/public_compiled_pipeline.rs`. Keep issues #9/#10 and
+M2–M9 open until their complete acceptance gates pass.

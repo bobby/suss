@@ -18906,3 +18906,352 @@ require new final-head CI. PR #204 follows this rebased parent once its already
 running frozen-head baseline terminates; its additional mod redefinition review
 remains pending. No merge or issue closure; all original M3 acceptance work
 remains open.
+## Remaining public file/namespace/project migration started (2026-10-05)
+
+New isolated worktree /private/tmp/suss-m3-public-file-project-compiler, branch
+portable/m3-public-file-project-compiler at PR198 head92b9e92. Added seven
+regressions in crates/suss-compile/tests/public_compiled_files.rs BEFORE any
+production routing change. They will validate actual typed f64 artifacts in two
+fresh Stores with forced GC, preserved &form filename/&env lexical data and
+persistent effects, WIT-before-Macro error categories, .cljs/.cljc dependencies
+and macro imports, deterministic ambiguous namespace diagnostics, configured
+project namespace/selected world/explicit export mappings without publication,
+explicit unimplemented published-dependency diagnostics, and independently
+decoded deferred initializer exception payload42. These tests are UNEXECUTED;
+Rustfmt parses/formats them and git diff --check passes. No success inferred.
+
+Public compile_files/compile_with_namespaces/compile_project remain legacy.
+Next execute unchanged regressions before replacing routes; preserve structured
+WIT/IO/capability errors rather than flattening every failure into Semantic.
+Existing prototype component tests include encoding-only composite cases; inspect
+and execute their supported replacements, retain honest unsupported boundaries,
+and do not blanket-skip or silently erase value assertions. Runtime/core/WIT
+release scope and original M3 evaluator/schema/lifecycle gates remain unchanged.
+
+Reviewer197 sole heavy owner: full47430 ACTUALLY LIVE on same-handle polling at
+clean25cb06d; CI37257364671 watcher63455 live. Reviewer198 completed independent
+static review at92b9e92 with no significant defect found; focused execution/exact
+full/all4docs/final CI37258059664 remain pending and no heavy slot is authorized
+to198 yet. No root Cargo/JVM/Node runs compete. Both PRs are draft/unmerged.
+
+Subsequent pending implementation: compile_files and compile_with_namespaces
+now delegate to the existing shared compiled AOT pipeline through typed internal
+helpers. Source path/namespace validation/phase dependencies and deferred Runtime
+initialization remain shared with CLI; I/O, parse, WIT, capability, semantic,
+export-mapping and component errors retain distinct CompileError categories.
+WIT resolver I/O is classified by its actual anyhow downcast, not message parsing
+(local locked wit-parser0.258.0 push_path/push_file source inspected). String-based
+CLI embedding signatures are preserved by thin wrappers. This code is UNEXECUTED
+and both bootstrap pairs are stale until regeneration; no success claimed.
+Project/expression/cache APIs and evaluator retirement remain unfinished.
+
+Added eighth regression for missing source/WIT I/O versus unsupported composite
+boundary preflight before Macro effects. Detached unchanged parent
+/private/tmp/suss-public-files-before at92b9e92 has only the identical new test
+file. Rust syntax/touched test formatting/diff checks pass; parent/replacement
+execution and affected old component fixtures must still run once slot available.
+
+Subsequent pending project migration: native public Compiler::compile_project
+now delegates to the existing portable project host through a typed internal
+entry, retaining its HashMap return API and no-output-publication behavior.
+Shared selection honors namespace entries, selected WIT worlds, export mappings,
+canonical source discovery and output-collision preflight; published :deps remain
+explicitly Unsupported until their loader exists. Source/config/I/O/WIT/capability
+errors retain categories. Existing CLI String result signatures are wrappers.
+Deleted the old private compile_world/collect_source_files/recursive collector/
+world grouping/header extractor; search found no remaining calls. Expression/
+core-cache and component-target evaluator paths remain production work.
+
+ALL new file/namespace/project code and eight regressions remain UNEXECUTED,
+BOTH bootstrap pairs stale. Rust syntax parses and diff check passes; this is
+not a runtime claim. Parent /private/tmp/suss-public-files-before92b9e92 has the
+identical new test file. Next run that unchanged parent first, regenerate/reproduce
+replacement pairs, execute new/affected fixtures (including old component tests),
+then independent review/unfiltered full/final CI before readiness.
+
+## Prepared file/project audit checkpoint
+
+Root inspected current source and formatted the two touched host modules with
+`rustfmt --edition 2024 --config skip_children=true`. `git diff --check` passes.
+The runtime scope document and acceptance audit now distinguish these prepared,
+unexecuted file/namespace/project routes from still-active expression/cache
+evaluator routes. No runtime, bootstrap or milestone acceptance is inferred.
+
+Existing component fixtures include option/list encoding assertions and a forward
+helper reference; run them alongside the new actual-artifact regressions after
+the reviewer releases the sole heavy slot. Preserve honest capability diagnostics
+and actual value assertions; do not blanket-skip these fixtures.
+
+PR197 reviewer verified full47430 actually live while source-apply tests ran,
+with no observed failures. Root polled CI watchers63455 (197) and42843 (198),
+both actually live. Neither result is final acceptance.
+
+## Namespace diagnostic source-origin follow-up
+
+Prepared test count is now nine. Added a mismatched namespace regression requiring
+the actual filename and requested/declaration names before an effectful macro can
+run. File and configured-project source parsing/namespace validation now retain
+source filenames in typed Parse/Semantic errors. The unchanged-parent worktree
+contains byte-identical regression source. Touched files parse under rustfmt;
+`git diff --check` passes. All nine tests remain unexecuted and both bootstrap
+pairs require regeneration.
+
+Reviewer confirmed full47430 live after compiler conformance completed and
+portable frontend HIR/IR tests began. It retains the sole heavy slot. Root CI
+watchers63455 and42843 were polled and remain live; neither is acceptance.
+
+## Executed file/project migration prerequisites
+
+Parent89661 terminated101:0passed/9failed/0ignored/0filtered,0.74s; replacement
+98275 terminated0:9passed/0failed/0ignored/0filtered,10.35s. Logs:
+/private/tmp/suss-public-files-parent.log and suss-public-files-fixed.log.
+Both bootstrap pairs regenerated58885 terminal0,build6.26s.
+
+Existing component98951 terminated101:9passed/20failed/0ignored/0filtered,5.86s.
+Log /private/tmp/suss-public-files-component.log. Eighteen failures are missing
+portable string/option/list/exact64 adapters, including three already executing
+option/list fixtures. One fixture puts namespace app.core in src/core.sus rather
+than src/app/core.sus; one forward helper call lacks a declaration. Preserve
+actual typed fixture assertions while repairing prerequisites. No fallback to
+production prototype expansion, blanket skips, issue closure or milestone claim.
+
+PR197 independent full47430 terminal0 is root-audited:150groups1232passed/0failed/
+17existingignored/0filtered, all four doctest suites, frozen25cb06d. Its public PR
+body now records completed review/full and pending final reviewed-head CI.
+
+Bootstrap verifier32887 terminal0:both pairs byte-exact across two fresh generations and against tracked artifacts, checkout-independent identity and bootstrap4passed13.56s. All root heavy sessions terminal; sole slot explicitly transferred to independent PR198 reviewer. Root next work is portable adapter prerequisites, preserving the existing real execution fixtures. Issue14 progress comment5985901498 updated with verified results and remaining failures.
+
+## Pending fixture alignment before public file/project acceptance
+
+The held migration's existing component fixture sources now follow designsection8:
+option producers/consumers use `[:none]` / `[:some value]`, preserving all typed
+host results. The protocol fixture calls `-first` on `(seq xs)`, because WIT lists
+become persistent vectors. The project fixture places `(ns app.core)` at
+`src/app/core.sus`; the forward helper fixture adds `(declare helper)`. No host
+assertion, test, or failure is removed or skipped. These source-fixture edits have
+not run; strings/lists/exact64 remain unsupported until their adapter repairs.
+Reviewer199 owns the local test slot. Next integrate reviewed tagged-option and
+remaining adapter prerequisites, then rerun the existing component suite with all
+actual execution assertions and new public9 regressions before publication.
+
+
+Held public file/project preparation2026-10-05: source-only edits preserve the
+original two s64 compilation assertions while adapting their Suss source to the
+accepted exact wrapper contract. The big fixture constructs wit-s64 from decimal;
+inc64 increments two validated-width words with low-word carry and explicit
+signed overflow. A new actual file-compiled execution regression calls s64MAX
+constructor and increments MIN, negative/positive values beyond2^53, minus1,
+zero, low-word rollover and MAXminus1, with typed decoding and GC after calls.
+It is UNEXECUTED, as are the updated original fixtures on the eventual integrated
+parent. No success inferred from these edits. The component helper now shares one
+Wasmtime engine, bounds fuel, enables the async canonical profile, requires zero
+imports and provides no hidden print import; original typed assertions preserved.
+
+This worktree is still based on olderPR198 and remains UNCOMMITTED/UNPUSHED/noPR.
+Do not run it before integrating validated199/200/201/exact64 and regenerating
+BOTH bootstrap pairs. Reviewer201 full87529 is actually live at330e7507 and owns
+sole heavy slot; root started no Cargo/JVM/Node. The public expression/component
+host evaluator, complete source schemas and pending-I/O/live-GC requirements
+remain open. All original component tests and new public_files regressions must
+execute unfiltered before a migration PR; no blanket skips or milestone closure.
+
+
+Production evaluator retirement audit2026-10-05 (read-only source evidence):
+Compiler::ensure_core_loaded still calls expand::expand_all on prototype core;
+compile_expr_cached calls it on combined cached core/user forms;
+compile_expr_with_info calls it on combined freshly loaded forms. compile_expr
+continues to delegate to that legacy expression route. Native command migration
+therefore does not retire public compiler expression production. Component-target
+CLI main selects component.rs under feature=component AND target_family=wasm;
+that file calls evaluator::eval_to_string for expression/file/REPL execution.
+The route is active target-selected production, not a test-only historical module.
+
+Preserve existing conformance/oracle coverage when retiring these paths:
+tests/conformance.rs expects compile_expr_cached to produce an actual core eval
+artifact and independently decodes its returned value. tests/support/decode.rs
+currently derives prototype dispatch IDs from ensure_core_loaded, uses integer
+sentinel encodings and I8/UTF8 strings. It cannot certify ABI2 boxed binary64,
+I16/UTF16 or nominal objects by accepting opaque structures. A replacement must
+independently inspect actual shared-ABI values and captured canonical descriptors,
+retain exact failure stages/bits/UTF16 units and preserve all original corpus
+cases. Existing compiled source transport has bounded class-specific decoding but
+is production code; it is not itself independent conformance evidence.
+
+Next after exact64/file prerequisites: execute existing expression/conformance
+cases through the compiled host with a strict independent ABI2 decoder, gather
+actual mismatches and fix them, migrate/retire legacy expression/cache APIs and
+remove production expand/MacroEvaluator only with executing replacement coverage.
+Do not treat a typed scalar WIT adapter or a printer roundtrip as generic-value
+parity. Wasm-target frontend replacement and original rooted lifecycle acceptance
+remain separate unfinished requirements. Root heavy commands remain stopped while
+reviewer201 full87529 is authoritatively live; no success from static inspection.
+
+
+Held public file/project migration rebased2026-10-05 from92b9e920 onto reviewed
+adapter parent330e7507. Source/test changes preserved via explicit stash backup
+d14a8a394a3e4644a4fbfdc35b1305f359b2026b; only handoff append conflict required
+resolution, retaining both histories. Both earlier generated phase pairs restored
+before rebase; current tracked images are parent images and STALE for prepared
+frontend changes. No source compilation/runtime execution on this parent yet.
+Uncommitted/unpushed/noPR. Exact64 prerequisite remains separate preparation;
+integrate its eventual reviewed head before final BOTHphase regeneration and
+unfiltered existing component + public_files validation. Reviewer201 full87529
+is actually live at330e7507 and retains sole heavy slot. No merge/Closes/acceptance
+claim. Original expression/Wasm evaluator retirement and lifecycle gates remain.
+
+
+Held file/project migration rebased onto reviewer-pushed exact parentaf7608f
+2026-10-05. Explicit backup2c05c57e326b018544f980613cec4cc7a9007b39 preserves all
+source/test prep; only handoff conflict occurred and both histories retained.
+Existing scalar/string/option/list/exact adapters and both significant exact
+private dispatch/number predicate fixes now share the held frontend parent.
+Current parent bootstrap pairs are STALE for changed public frontend source;
+regenerate BOTH before executing migration support. All source and original
+component fixtures remain UNEXECUTED on this integrated head, noPR/push yet.
+
+PR203 reviewer focus20841 ACTUALterminal0:76/0/0/0filtered across7groups; verifier
+4145 ACTUALterminal0:two fresh BOTHphase pairs byteexact with tracked images,
+identity checks/bootstrap4 pass. Significant fixes committed/pushedaf7608f.
+Exact unfiltered full97754 ACTUALLY LIVE; final-head CI37341621088 confirmed
+IN_PROGRESS. Reviewer203 retains sole heavy slot, root light only. After actual
+terminal release: decoder repaired8 rerun, frontend bothphase regeneration and
+unfiltered all existing component plus public_files regressions. Fix real failures
+before linked migration draft/review/full/finalCI. All original M3 gates remain.
+
+
+Recurrence clarification2026-10-05: current stacked accepted design already
+requires loop/function recur without call-stack growth (PR198); older primary
+workspace copy caused a stale chat answer, since corrected. Runtime recurrence
+doc now states that guarantee, distinguishes ordinary recursive calls, corrects
+its stale ABIv1 reference to current ABI2, and names existing executing public
+100000/100001 iteration regressions under2MiB stack. These tests are part of
+reviewer203 passing public pipeline focus, not evidence of arbitrary call TCO.
+No additional code behavior or milestone acceptance inferred.
+
+
+Frontend integrated BOTHphase regeneration49396 ACTUALterminal0, build6.36s,
+log /private/tmp/suss-public-files-integrated-bootstrap.log. Then rebasedheld
+branch fromaf7608f onto reviewer203872089e (parent2015987bc9). Explicit stash
+57866126d3fbf0de5dc44b3375f74f5f3f67a405 preservesallsource/test/generated
+assets; only handoffappend conflict, bothhistoriesretained. Parent source/tests/
+bootstrapbyteidentical apartfromhandoff; regenerated frontend assets carried
+without sourcechange. Cleanlocalexactbranch alsoaligned872089e. Newfinal203CI
+37347172257 IN_PROGRESS; previous37341621088 CANCELLEDsuperseded. No merge.
+Next actualunfiltered existingcomponent30 +public_files9 onintegratedhead;
+original fixture assertions retained. Decoder16passes afteractual11/5red,
+then13/3fixturefuelfailures andboundedfixturebudgetrepair, allrecordedseparately.
+
+
+Integrated frontend69568 ACTUALterminal101: component29pass1fail0ignored
+0filtered14.09s, build7.93s; Cargo stopped beforepublic_files9. New actual
+fileexact64 construction/carry/overflow fixture passes. Remaining catch fixture
+used prototype shorthand `(catch error body)`; accepted ClojureScript requires
+type+local. Source fixture repaired to `(catch :default error body)` preserving
+all typed option/fallback/caught42/cleanup41 assertions. Compiler correctly
+diagnosed shorthand; no backend compatibility exception added. Next rerunall
+component30 andpublic_files9 unfiltered. Bootstrapidentity first invoked without
+sharedtarget env failed matching a compiled builder; same script with explicit
+CARGO_TARGET_DIR passed checkout-independent/numeric/WIT invalidation checks.
+
+
+Integrated rerun49304 ACTUALterminal101: component30/0/0/0filtered23.06s,
+public_files8pass1fail0ignored0filtered13.88s. The unsupported-file fixture
+still used list<u32>, which is now supported byPR201; macro correctlyexecuted
+and threw17, so oldUnsupported expectation stale. ChangedonlyWITfixture to
+actualunsupported list<map<string,u32>>, retaining errorvariant/pre-effect
+macrothrowassertion andaddingfullouterboundarymessage assertion. No backend
+change or ignoredtest. Next rerununfiltered public_files9; allcomponent30
+actualpassing assertions remainunchanged. Original M3 gates remainopen.
+
+
+Final integrated file/project evidence2026-10-05 onreviewedparent872089e:
+- Parent47968 ACTUALterminal101:0pass9fail0ignored0filtered0.81s. Isolated
+  /private/tmp/suss-public-files-final-parent contains byteidenticalfinal9 test
+  only, no otherchanges; suss-public-files-final-parent.log.
+- Replacementcomponent30passed49304; finalpublic9passed54410 (20.76s)
+  with unchangedruntimeassertions andactual unsupportednestedmap fixture.
+- Existingcompiler54041 ACTUALterminal0:portable_aot13/publicpipeline12,
+  total25/0/0/0filtered. ExistingCLI56522 ACTUALterminal0:compiled_aot1/
+  namespace4/project7/publiccommand5, total17/0/0/0filtered.
+- Verifier6731 ACTUALterminal0:Java/Nodeabsent, TWO fresh BOTHphase pairs
+  byteexact againsttracked assets, identity/invalidation andbootstrap4passed
+  10.39s. Generation49396 actualterminal0 build6.36s.
+Logs /private/tmp/suss-public-files-integrated-{focus-2,public-final,
+compiler-regressions,cli-regressions,verify}.log; focusauditJSON stored.
+Next publishlinkedmigrationdraft, dispatchindependentreview withsignificant
+fixes pushed byreviewer, requirefullworkspace/finalheadCI. Expression/cache/
+Wasmfrontend/evaluatorretirement andoriginal M3remainingcriteria stayopen.
+No merge/Closes/acceptancecompletion. Rootheavy commands allterminalnow.
+
+
+Independent PR #204 review, 2026-10-05: initial frozen b48e8bf full13173
+ACTUAL terminal101,112groups/938pass/2fail/12existingignores/0filtered;
+Cargo stopped before remaining groups and all four doctest suites. Existing
+compile_expr test_tco_deep_recursion trapped call-stack exhausted;
+test_tco_mutual_recursion_style failed unresolved Runtime mod. These failures
+are not ignored or converted into accepted failures. Reviewer explicitly released
+the heavy slot while root ran independent decoder work, then reacquired it.
+Extra source regressions58825 ACTUALterminal101:public_files12,10pass2fail,
+0ignored0filtered. Deep ordinary tailcalls and missing mod failed; live global
+redefinition control and original9 passed.
+
+Reviewer repair retains already evaluated callee/argument values and recognizes
+only empty verified IR return-forwarding edges. Emit return_call through runtime
+invoke (return_call_ref) and fixed/variadic closure dispatch. No live self-name
+lookup is replaced with a recurrence backedge. Pending Try/dynamic-scope helper
+frames remain, preserving cleanup. Added100000-tailcall, outer and per-frame
+finally, captured old function/live self-name, negative modulo/fraction/signed-zero
+regressions; original public9 and legacy compile_expr assertions remain.
+Retain pinned runtime:mod:2976 body/doc via metadata-mod.json hash-bound defn
+adaptation after existing js-mod dependency, preserving extracted file indices
+and EPL provenance; generated278files strict, overlay375reviewed690unassessed.
+
+Generation85729 failed a Rust shared-lifetime helper compile check; repaired and
+87616 ACTUALterminal0 BOTHpairs7.00s build. Focus31996 ACTUALterminal0:
+compile_expr320pass0fail12unchangedmanualignores78.66s; component30/0/0/0filtered
+13.75s; public_files12/0/0/0filtered16.82s; public_pipeline12/0/0/0filtered17.06s.
+Python unittest discovery178passed. Verifier3547 ACTUALterminal0: Java/Node
+absent, TWO fresh BOTHpairs byteexact with tracked artifacts, identity/invalidation
+checks and bootstrap4/0/0/0filtered passed; next reviewer-push repair,
+freeze source and run exact unfiltered workspace replacement plus final-head CI
+raw group/doc/ignore audit. PR204 remains draft/unmerged; original M3 expression/
+cache/Wasm evaluator retirement/full schema/lifecycle gates remain open.
+Logs /private/tmp/suss-pr204-review-{full,extra-red,repair-bootstrap,
+repair-bootstrap-2,repair-focus,repair-verify,python}.log and audit JSON retained.
+
+
+PR204 review continuation, 2026-10-05: frozen33a90fa exact unfiltered
+`cargo test --workspace --locked -- --test-threads=2` replacement2763 ACTUAL
+terminal0:156groups/1300pass/0fail/17unchanged parent ignores/0filtered, ALL
+four suss_cli/suss_compile/suss_core/suss_reader doctest groups reached.
+Full log/audit /private/tmp/suss-pr204-review-replacement-full{.log,-audit.json}.
+After terminal, rebased204 onto2039d88322 (main4dc4694); pushed c43b83d.
+Complete tree diff against33a90fa contains only parent handoff append; all
+source, tests and bootstrap assets remain byte-identical. No ready/merge claim.
+
+Additional captured-mod/live js-mod regression: first10110 terminal101 hit
+macro &env graph materialization bound at bytes87..133 in core namespace, before
+execution. Preserved that failure separately; it is not a modulo observation.
+Using explicit def/fn* avoids unrelated defn materialization for this regression.
+Second37057 terminal101 reaches actual Wasm execution and returns99 instead of
+expected-1 after runtime js-mod redefinition. Original numeric assertions kept.
+Pinned macro:js-mod:1220 expands directly to JavaScript numeric remainder; port
+now uses suss.bootstrap/f64-remainder at both sites, preserving evaluation order,
+source hash/EPL and avoiding runtime var rebinding in captured compiled mod.
+Full object coercion/public core acceptance remains open.
+
+Regeneration2567 terminal0 BOTHpairs (build5.96s); strict importer278files and
+overlay375reviewed690unassessed verified. Focus87413 terminal0, unfiltered:
+component30/public_files13/public_pipeline12, total55pass0fail0ignore0filter;
+Python178 passed5.759s. Logs /private/tmp/suss-pr204-review-mod-{redefinition-red,
+redefinition-red-2,regen,focus,python,verify}.log preserve actual stages.
+Next verify both pairs, push significant primitive-mod repair, release local
+heavy slot for root focused core/decoder window, then obtain exact replacement
+full and raw final-head CI group/doc/ignore equivalence before readiness.
+All original M3 expression/cache/Wasm frontend/evaluator retirement/schema/
+lifecycle acceptance remains open; PR204 remains draft/unmerged, no Closes.
+
+Verifier10439 ACTUALterminal0: Java/Node absent, TWO fresh BOTHphase pairs
+byteexact tracked assets, identity/invalidation and bootstrap4pass0fail0ignore
+0filter10.30s. Primitive-mod repair ready to push; final fixed-source full/CI
+remain pending after root focused window.

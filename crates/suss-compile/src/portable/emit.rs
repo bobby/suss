@@ -417,8 +417,7 @@ fn emit_dispatcher(
             .instruction(&If(BlockType::Empty))
             .instruction(&LocalGet(0))
             .instruction(&LocalGet(1))
-            .instruction(&Call((names.len() + 1 + index) as u32))
-            .instruction(&Return)
+            .instruction(&ReturnCall((names.len() + 1 + index) as u32))
             .instruction(&End);
     }
     if let Some(method) = body.methods.iter().find(|method| method.variadic) {
@@ -510,8 +509,7 @@ fn emit_dispatcher(
             .instruction(&LocalGet(0))
             .instruction(&LocalGet(3))
             .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
-            .instruction(&Call((names.len() + 1 + body_index) as u32))
-            .instruction(&Return)
+            .instruction(&ReturnCall((names.len() + 1 + body_index) as u32))
             .instruction(&End);
     }
     let error = names
@@ -521,6 +519,31 @@ fn emit_dispatcher(
     function.instruction(&Call(error as u32)).instruction(&End);
     function
 }
+/// A call can leave its frame only when its result is forwarded unchanged to
+/// return through empty blocks. Argument/callee evaluation already happened in
+/// verified IR; live globals and pending effects are never reconstructed here.
+fn returns_unchanged<'a>(ir: &'a IrFunction, mut terminator: &'a Terminator, mut value: ir::ValueId) -> bool {
+    for _ in 0..=ir.blocks.len() {
+        match terminator {
+            Terminator::Return(result) => return *result == value,
+            Terminator::Jump { target, arguments } => {
+                let Some(position) = arguments.iter().position(|argument| *argument == value)
+                else {
+                    return false;
+                };
+                let next = &ir.blocks[*target];
+                if !next.instructions.is_empty() {
+                    return false;
+                }
+                value = next.parameters[position];
+                terminator = &next.terminator;
+            }
+            _ => return false,
+        }
+    }
+    false
+}
+
 fn emit_function(
     ir: &IrFunction,
     capture_count: Option<usize>,
@@ -708,9 +731,15 @@ fn emit_function(
                         .instruction(&ArrayNewFixed {
                             array_type_index: runtime_abi::ARGS,
                             array_size: size,
-                        })
-                        .instruction(&Call(index("invoke")))
-                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                        });
+                    let tail = block.instructions.last().is_some_and(|last| std::ptr::eq(last, inst))
+                        && returns_unchanged(ir, &block.terminator, inst.result);
+                    if tail {
+                        function.instruction(&ReturnCall(index("invoke")));
+                    } else {
+                        function.instruction(&Call(index("invoke")))
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    }
                 }
                 Operation::MakeClosure { body, captures } => {
                     for value in captures {

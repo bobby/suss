@@ -1,11 +1,8 @@
 //! Deterministic native project selection over the ordinary compiled AOT pipeline.
 use crate::{
+    CompileError, CompileResult,
     portable_aot::{self, SourceInput},
     portable_repl::read_script_forms,
-};
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    path::{Path, PathBuf},
 };
 use crate::{
     SussConfig,
@@ -14,13 +11,18 @@ use crate::{
         resolve::{self, Phase},
     },
 };
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    path::{Path, PathBuf},
+};
 
-fn source(path: PathBuf) -> Result<(SourceInput, Option<String>), String> {
+fn source(path: PathBuf) -> CompileResult<(SourceInput, Option<String>)> {
     let text = std::fs::read_to_string(&path)
-        .map_err(|error| format!("Failed to read {}: {error}", path.display()))?;
-    let forms = read_script_forms(&text).map_err(|error| error.to_string())?;
+        .map_err(|error| CompileError::Io(format!("Failed to read {}: {error}", path.display())))?;
+    let forms = read_script_forms(&text)
+        .map_err(|error| CompileError::Parse(format!("{}: {error}", path.display())))?;
     let declaration = modules::project_namespace_source(&forms)
-        .map_err(|error| format!("{}: {error}", path.display()))?;
+        .map_err(|error| CompileError::Semantic(format!("{}: {error}", path.display())))?;
     let (namespace, world) =
         declaration.map_or((None, None), |(namespace, world)| (Some(namespace), world));
     Ok((
@@ -38,18 +40,24 @@ fn collect(
     path: &Path,
     directories: &mut BTreeSet<PathBuf>,
     files: &mut BTreeSet<PathBuf>,
-) -> Result<(), String> {
-    let path = std::fs::canonicalize(path)
-        .map_err(|error| format!("Failed to resolve source path {}: {error}", path.display()))?;
+) -> CompileResult<()> {
+    let path = std::fs::canonicalize(path).map_err(|error| {
+        CompileError::Io(format!(
+            "Failed to resolve source path {}: {error}",
+            path.display()
+        ))
+    })?;
     if path.is_dir() {
         if !directories.insert(path.clone()) {
             return Ok(());
         }
         let mut entries = std::fs::read_dir(&path)
-            .map_err(|error| format!("Failed to read {}: {error}", path.display()))?
+            .map_err(|error| {
+                CompileError::Io(format!("Failed to read {}: {error}", path.display()))
+            })?
             .map(|entry| entry.map(|entry| entry.path()))
             .collect::<Result<Vec<_>, _>>()
-            .map_err(|error| error.to_string())?;
+            .map_err(|error| CompileError::Io(error.to_string()))?;
         entries.sort();
         for entry in entries {
             collect(&entry, directories, files)?;
@@ -66,15 +74,18 @@ fn collect(
 // Resolve existing symlinks and lexical aliases even when an output or its
 // parent directories do not exist yet. This is a preflight identity only;
 // publication continues to use the configured path.
-fn output_identity(path: &Path) -> Result<PathBuf, String> {
+fn output_identity(path: &Path) -> CompileResult<PathBuf> {
     output_identity_with_links(path, 0)
 }
-fn output_identity_with_links(path: &Path, links: usize) -> Result<PathBuf, String> {
+fn output_identity_with_links(path: &Path, links: usize) -> CompileResult<PathBuf> {
     if links >= 40 {
-        return Err(format!("Too many output symlinks: {}", path.display()));
+        return Err(CompileError::Config(format!(
+            "Too many output symlinks: {}",
+            path.display()
+        )));
     }
     let absolute = std::env::current_dir()
-        .map_err(|error| format!("Failed to resolve output directory: {error}"))?
+        .map_err(|error| CompileError::Io(format!("Failed to resolve output directory: {error}")))?
         .join(path);
     let mut resolved = PathBuf::new();
     for component in absolute.components() {
@@ -96,10 +107,10 @@ fn output_identity_with_links(path: &Path, links: usize) -> Result<PathBuf, Stri
                         }
                     }
                     Err(error) => {
-                        return Err(format!(
+                        return Err(CompileError::Io(format!(
                             "Failed to resolve output {}: {error}",
                             resolved.display()
-                        ));
+                        )));
                     }
                 }
             }
@@ -115,14 +126,23 @@ pub fn compile_project(
     config: &SussConfig,
     selected: Option<&str>,
 ) -> Result<BTreeMap<String, Vec<u8>>, String> {
+    compile_project_typed(config, selected).map_err(|error| error.to_string())
+}
+
+pub(crate) fn compile_project_typed(
+    config: &SussConfig,
+    selected: Option<&str>,
+) -> CompileResult<BTreeMap<String, Vec<u8>>> {
     if !config.deps.is_empty() {
-        return Err("Published project dependency loading remains unimplemented; project :deps cannot be ignored".into());
+        return Err(CompileError::Unsupported("Published project dependency loading remains unimplemented; project :deps cannot be ignored".into()));
     }
     let worlds = if let Some(name) = selected {
         let world = config.worlds.get(name).ok_or_else(|| {
             let mut names = config.worlds.keys().cloned().collect::<Vec<_>>();
             names.sort();
-            format!("World '{name}' not found in deps.sus. Available: {names:?}")
+            CompileError::Config(format!(
+                "World '{name}' not found in deps.sus. Available: {names:?}"
+            ))
         })?;
         BTreeMap::from([(name.to_owned(), world)])
     } else {
@@ -134,15 +154,13 @@ pub fn compile_project(
     };
     let mut outputs = BTreeMap::new();
     for name in worlds.keys() {
-        let path = config
-            .output_path(name)
-            .map_err(|error| error.to_string())?;
+        let path = config.output_path(name)?;
         let identity = output_identity(&path)?;
         if let Some(previous) = outputs.insert(identity, name) {
-            return Err(format!(
+            return Err(CompileError::Config(format!(
                 "Project worlds {previous} and {name} share output {}",
                 path.display()
-            ));
+            )));
         }
     }
     let mut discovered = BTreeMap::<String, Vec<SourceInput>>::new();
@@ -163,20 +181,22 @@ pub fn compile_project(
     for (name, world) in worlds {
         let inputs = if let Some(namespace) = &world.namespace {
             let path = resolve::locate_source(namespace, &config.src_paths, 0..0)
-                .map_err(|error| error.to_string())?;
-            let (input, target) = source(path)?;
+                .map_err(|error| CompileError::Semantic(error.to_string()))?;
+            let (input, target) = source(path.clone())?;
             modules::validate_namespace_source(namespace, &input.forms, Phase::Runtime)
-                .map_err(|error| error.to_string())?;
+                .map_err(|error| CompileError::Semantic(format!("{}: {error}", path.display())))?;
             if target.as_ref().is_some_and(|target| target != &name) {
-                return Err(format!(
+                return Err(CompileError::Config(format!(
                     "Namespace {namespace} targets {}, not selected project world {name}",
                     target.unwrap()
-                ));
+                )));
             }
             vec![input]
         } else {
             discovered.remove(&name).ok_or_else(|| {
-                format!("No source files found with (gen-world {name}) for world '{name}'")
+                CompileError::Config(format!(
+                    "No source files found with (gen-world {name}) for world '{name}'"
+                ))
             })?
         };
         for input in &inputs {
@@ -185,17 +205,17 @@ pub fn compile_project(
                 .as_deref()
                 .expect("selected project namespace");
             let canonical = resolve::locate_source(namespace, &config.src_paths, 0..0)
-                .map_err(|error| error.to_string())?;
+                .map_err(|error| CompileError::Semantic(error.to_string()))?;
             if input.path.as_ref() != Some(&canonical) {
-                return Err(format!(
+                return Err(CompileError::Semantic(format!(
                     "Declared namespace {namespace} does not match source path {}",
                     input.path.as_ref().unwrap().display()
-                ));
+                )));
             }
         }
-        let bytes = portable_aot::compile_inputs(
+        let bytes = portable_aot::compile_inputs_typed(
             &inputs,
-            &config.wit_path(&name).map_err(|error| error.to_string())?,
+            &config.wit_path(&name)?,
             world.wit_world.as_deref(),
             &config.src_paths,
             &world.exports,
