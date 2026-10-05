@@ -18869,3 +18869,23 @@ head and run cargo test --workspace --locked -- --test-threads=2 with sharedtarg
 /private/tmp/suss-m3-pr143-target and CARGO_BUILD_JOBS=2, then independently audit
 exact final-head CI including all4doctests and unchanged17ignores. These gates
 remain pending. No merge or issue closure; original M3 issues12–15 scope remains.
+
+
+## PR #203 stack-base alignment — 2026-10-05
+
+Independent reviewer rebased the original implementation and significant-review
+repair commits onto new PR2015987bc989ef155db3ee8f34461ed7ba6585ba9f4. The sole
+conflict was handoff history; both complete appended histories are preserved.
+Direct git tree diff proves every source, test, manifest and BOTH Runtime/Macro
+bootstrap Wasm/JSON file byte-identical to reviewed af7608fe9da1c30ac743c1415dde07dc8b65a13c;
+only this documented handoff changes. No Cargo/JVM/Node started during alignment.
+
+Reviewed source full97754 actually terminated0:155groups1287passed/0failed/
+17unchangedignores/0filtered, ALL4doctests; all17ignored identities independently
+match preceding full baselines. Review focus76/0 and Java/Node-free reproducible
+bootstrap4/0 remain source-equivalent evidence, not a new-head local test run.
+Audit /private/tmp/suss-pr203-review-full-audit.json and original logs retained.
+Explicit old-head lease protects the published branch during push. NEW exact
+final-head CI and independent raw tuple/doc/ignore audit are required before
+readiness; oldaf7608f CI cannot establish the rebased head. Draft/unmerged, no
+issue closure. Root owns sole heavy slot for independent decoder execution.
