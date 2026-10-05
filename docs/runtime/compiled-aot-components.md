@@ -201,7 +201,8 @@ The list adapter working increment transfers lists of supported small scalar
 values and strings as owned persistent vectors. A private compiled schema
 captures the first Runtime core nominal identities before user initializers,
 builds real vector trie layers and accepts retained `Subvec` views on output.
-It checks physical array/node storage and view bounds, then validates every
+It checks physical array/node storage and every intermediate view's full bounds,
+even when the returned outer slice is narrower, then validates every
 result element before allocating output buffers. Canonical nested string buffers
 are released before the outer list buffer; synchronous post-return and
 non-suspending asynchronous task-return perform the same cleanup. Supported

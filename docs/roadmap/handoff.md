@@ -18578,3 +18578,40 @@ PR1995a15d3a CI37273014852 and PR2008feaa0c1 CI37273792377 were confirmed actual
 in_progress; no readiness or merge. Full M3 issues12–15 remain open. Next after
 list gates implement exact64 to unblock held public file/project fixtures, then
 resume full source schemas/evaluator retirement/rooted lifecycle acceptance.
+
+## PR #201 independent list adapter review — 2026-10-05
+
+Independent review of 0be602fe found a malformed nested-view acceptance: a
+one-element outer Subvec hid an inner end beyond its backing vector's count.
+The executing negative regression failed as expected (77136 terminal101,
+0passed/1failed/9filtered). Private normalization now validates each full
+intermediate view against its immediate backing collection as well as the
+requested output slice. Regressions cover invalid backing-vector and intermediate
+view ranges, and a valid nested view returns exactly [2]. The scalar-list
+round-trip test additionally executes canonical u8/s8/u16/s16/f32 layouts with
+integer extrema and floating-point bits; no semantic/cleanup assertions removed.
+
+Original complete focus69766 terminal0:53passed/0failed/0ignored/0filtered.
+Python/provenance38514 terminal0:177 Python tests,1065 inventory declarations,
+374 reviewed/691 unassessed and277 generated import files. A formatting-only
+workspace incident was independently checked:107 unrelated files each equaled
+rustfmt(HEAD) byte-for-byte, then restored; none is included in this fix. Results
+from that transient formatted tree are supplemental, not final-head evidence.
+Restored-source regenerate/focus/verifier8067 terminal0:both phase pairs rebuilt,
+53passed/0failed/0ignored/0filtered; Java/Node absent verifier reproduced both
+Wasm/JSON pairs twice byte-exact with tracked assets and bootstrap4passed/0failed.
+Logs /private/tmp/suss-pr201-review-{nested-red,python,final-regenerate,
+final-focused,final-bootstrap}.log. Expanded narrow-width list assertions have
+an additional unfiltered ten-test run4311 terminal0:10passed/0failed/0ignored/
+0filtered in60.00s (/private/tmp/suss-pr201-review-final-lists.log).
+
+Review worktree /private/tmp/suss-pr201-review owns the sole local heavy slot.
+Use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2;
+focused command cargo test -p suss-compile --locked --test portable_aot_lists
+--test portable_aot --test portable_aot_async --test portable_aot_options
+--test portable_aot_strings -- --test-threads=2; verifier sh scripts/verify-bootstrap.sh.
+Required next: freeze repaired head and run exact unfiltered cargo test --workspace
+--locked -- --test-threads=2, audit all four doctest suites and unchanged17 ignores,
+and require final-head CI before readiness. PR remains draft/unmerged; M3 issues
+12–15 stay open. Exact64, held public file/project migration, production evaluator
+retirement, full portable source schemas and rooted pending-I/O lifecycle remain.

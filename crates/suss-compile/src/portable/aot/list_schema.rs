@@ -34,11 +34,15 @@ pub(super) const SOURCE: &str = r#"
           (throw "WIT list requires an integral vector length")))
       normalize
       (fn [value]
-        (loop [value value offset 0 requested nil depth 0]
+        (loop [value value offset 0 requested nil parent-end nil depth 0]
           (if (suss.core/> depth 64)
             (throw "WIT list exceeds the bounded subvector view depth")
             (if (suss.core/instance? vector-class value)
               (let [count (bounded-length (.-cnt value))
+                    parent-range-check
+                    (if (identical nil parent-end) nil
+                      (if (suss.core/> parent-end count)
+                        (throw "WIT list subvector range exceeds its vector") nil))
                     length (if (identical nil requested) count requested)
                     tail-start (if (suss.core/<= count 32) 0
                                  (suss.core/bit-and (suss.core/- count 1) -32))
@@ -51,10 +55,14 @@ pub(super) const SOURCE: &str = r#"
                 (let [start (bounded-length (.-start value))
                       end (bounded-length (.-end value))
                       length (bounded-length (suss.core/- end start))
+                      parent-range-check
+                      (if (identical nil parent-end) nil
+                        (if (suss.core/> parent-end length)
+                          (throw "WIT list subvector range exceeds its view") nil))
                       requested (if (identical nil requested) length requested)]
                   (if (suss.core/> (suss.core/+ offset requested) length)
                     (throw "WIT list subvector range exceeds its view")
-                    (recur (.-v value) (suss.core/+ start offset) requested
+                    (recur (.-v value) (suss.core/+ start offset) requested end
                            (suss.core/+ depth 1))))
                 (throw "WIT list requires a persistent vector"))))))
       construct

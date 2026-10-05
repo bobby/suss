@@ -4,8 +4,8 @@
 use std::sync::OnceLock;
 use suss_compile::Compiler;
 use wasmtime::{
-    component::{Component, Instance, Linker},
     AsContextMut, Config, Engine, ResourceLimiter, Store, StoreLimits, StoreLimitsBuilder,
+    component::{Component, Instance, Linker},
 };
 
 struct BoundaryLimits {
@@ -134,8 +134,8 @@ fn complete<F: std::future::Future>(future: F) -> F::Output {
 #[test]
 fn lists_preserve_checked_scalar_values_and_mixed_parameter_order() {
     let (mut store, instance) = instantiate(
-        "(defn ^:export echo [a marker b flag] (if flag a b)) (defn ^:export count-list [xs] (count xs)) (defn ^:export unsigned [xs] xs) (defn ^:export booleans [xs] xs) (defn ^:export floats [xs] xs)",
-        "export echo: func(a: list<s32>, marker: f64, b: list<s32>, flag: bool) -> list<s32>; export count-list: func(xs: list<s32>) -> s32; export unsigned: func(xs: list<u32>) -> list<u32>; export booleans: func(xs: list<bool>) -> list<bool>; export floats: func(xs: list<f64>) -> list<f64>;",
+        "(defn ^:export echo [a marker b flag] (if flag a b)) (defn ^:export count-list [xs] (count xs)) (defn ^:export unsigned [xs] xs) (defn ^:export booleans [xs] xs) (defn ^:export floats [xs] xs) (defn ^:export u8s [xs] xs) (defn ^:export s8s [xs] xs) (defn ^:export u16s [xs] xs) (defn ^:export s16s [xs] xs) (defn ^:export f32s [xs] xs)",
+        "export echo: func(a: list<s32>, marker: f64, b: list<s32>, flag: bool) -> list<s32>; export count-list: func(xs: list<s32>) -> s32; export unsigned: func(xs: list<u32>) -> list<u32>; export booleans: func(xs: list<bool>) -> list<bool>; export floats: func(xs: list<f64>) -> list<f64>; export u8s: func(xs: list<u8>) -> list<u8>; export s8s: func(xs: list<s8>) -> list<s8>; export u16s: func(xs: list<u16>) -> list<u16>; export s16s: func(xs: list<s16>) -> list<s16>; export f32s: func(xs: list<f32>) -> list<f32>;",
     );
     let echo = instance
         .get_typed_func::<(&[i32], f64, &[i32], bool), (Vec<i32>,)>(&mut store, "echo")
@@ -190,6 +190,30 @@ fn lists_preserve_checked_scalar_values_and_mixed_parameter_order() {
         values.iter().map(|v| v.to_bits()).collect::<Vec<_>>()
     );
     floats.post_return(&mut store).unwrap();
+    macro_rules! integer_list {
+        ($name:literal, $ty:ty, $values:expr) => {{
+            let function = instance
+                .get_typed_func::<(&[$ty],), (Vec<$ty>,)>(&mut store, $name)
+                .unwrap();
+            let values = $values;
+            assert_eq!(function.call(&mut store, (&values,)).unwrap().0, values);
+            function.post_return(&mut store).unwrap();
+        }};
+    }
+    integer_list!("u8s", u8, [0, 128, u8::MAX]);
+    integer_list!("s8s", i8, [i8::MIN, -1, 0, i8::MAX]);
+    integer_list!("u16s", u16, [0, 32768, u16::MAX]);
+    integer_list!("s16s", i16, [i16::MIN, -1, 0, i16::MAX]);
+    let floats32 = instance
+        .get_typed_func::<(&[f32],), (Vec<f32>,)>(&mut store, "f32s")
+        .unwrap();
+    let values = [-0.0, f32::MIN, f32::MAX, f32::INFINITY, f32::NEG_INFINITY];
+    let actual = floats32.call(&mut store, (&values,)).unwrap().0;
+    assert_eq!(
+        actual.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+        values.iter().map(|v| v.to_bits()).collect::<Vec<_>>()
+    );
+    floats32.post_return(&mut store).unwrap();
 }
 
 #[test]
@@ -239,14 +263,19 @@ fn incoming_lists_build_real_vector_tries_and_retain_owned_values_after_gc() {
 #[test]
 fn list_results_accept_persistent_vectors_and_subvector_views() {
     let (mut store, instance) = instantiate(
-        "(defn ^:export values [] [1 2 3]) (defn ^:export view [xs start end] (subvec xs start end))",
-        "export values: func() -> list<s32>; export view: func(xs: list<s32>, start: s32, end: s32) -> list<s32>;",
+        "(defn ^:export values [] [1 2 3]) (defn ^:export nested [] (new suss.core/Subvec nil (new suss.core/Subvec nil [0 1 2 3] 1 4 nil) 1 2 nil)) (defn ^:export view [xs start end] (subvec xs start end))",
+        "export values: func() -> list<s32>; export nested: func() -> list<s32>; export view: func(xs: list<s32>, start: s32, end: s32) -> list<s32>;",
     );
     let values = instance
         .get_typed_func::<(), (Vec<i32>,)>(&mut store, "values")
         .unwrap();
     assert_eq!(values.call(&mut store, ()).unwrap().0, [1, 2, 3]);
     values.post_return(&mut store).unwrap();
+    let nested = instance
+        .get_typed_func::<(), (Vec<i32>,)>(&mut store, "nested")
+        .unwrap();
+    assert_eq!(nested.call(&mut store, ()).unwrap().0, [2]);
+    nested.post_return(&mut store).unwrap();
     let view = instance
         .get_typed_func::<(&[i32], i32, i32), (Vec<i32>,)>(&mut store, "view")
         .unwrap();
@@ -352,6 +381,14 @@ fn malformed_list_shapes_and_elements_raise_decoded_language_errors() {
             "s32",
         ),
         ("(new suss.core/Subvec nil [1] 0 2 nil)", "s32"),
+        (
+            "(new suss.core/Subvec nil (new suss.core/Subvec nil [1] 0 2 nil) 0 1 nil)",
+            "s32",
+        ),
+        (
+            "(new suss.core/Subvec nil (new suss.core/Subvec nil (new suss.core/Subvec nil [1 2] 0 1 nil) 0 2 nil) 0 1 nil)",
+            "s32",
+        ),
     ] {
         let source = format!("(defn ^:export bad [] {payload})");
         let (mut store, instance) =
