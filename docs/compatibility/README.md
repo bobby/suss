@@ -861,3 +861,15 @@ regenerate and reproduce without Java. Full portable schemas, evaluator retireme
 and original M3 acceptance remain open; independent review, full workspace
 baseline and final-head CI are still required. See
 [collection source facts](../runtime/compiled-macro-collection-source-asts.md).
+
+
+## Control source analysis
+
+Fifteen selected pinned control AST observations have independently decoded
+compiled macro evidence in both caller phases after GC. Original source operands,
+binding/method declarations and analyzed synthetic bodies are retained before
+lowering. The raw reference corpus is unchanged; compiler-private catch names
+have one explicit, bounded alpha correspondence. This does not establish complete
+AST schemas/inference or classify additional inventory entries. Public compiler
+migration, evaluator retirement and the original M3 gates remain required. See
+[control source AST evidence](../runtime/compiled-macro-control-source-asts.md).

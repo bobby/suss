@@ -1462,7 +1462,7 @@ impl<'a> AnalysisGraph<'a> {
             .map_err(|error| SessionError::Host(wasmtime::Error::msg(error.message)))?
         {
             entries.push(("tag", self.form(&tag, depth + 1)?));
-        } else if matches!(binding.source_kind(), hir::LocalKind::Argument { .. }) {
+        } else if binding.initializer.is_some() || matches!(binding.source_kind(), hir::LocalKind::Argument { .. }) {
             entries.push(("tag", self.scalar(Literal::Nil)?));
         }
         if !matches!(binding.source_role, SourceRole::PrivateCatch { .. }) {
@@ -1499,6 +1499,8 @@ impl<'a> AnalysisGraph<'a> {
         }
         if let Some(initializer) = &binding.initializer {
             entries.push(("init", self.ast(initializer, depth + 1)?));
+            let init = self.keyword("init")?;
+            entries.push(("children", self.vector(&[init])?));
         }
         if let Some(shadow) = &binding.shadow {
             entries.push(("shadow", self.local(shadow, depth + 1)?));
@@ -1803,11 +1805,41 @@ impl<'a> AnalysisGraph<'a> {
             }
             fields.push(("children", self.vector(&names)?));
         }
+        if let Some(node) = &source.node
+            && let hir::SourceNode::Bindings { is_loop, bindings, body } = node.as_ref()
+        {
+            fields.push(("op", self.keyword(if *is_loop { "loop" } else { "let" })?));
+            let mut records = Vec::new();
+            for binding in bindings.iter() { records.push(self.local(binding, depth + 1)?); }
+            fields.push(("bindings", self.vector(&records)?));
+            fields.push(("body", self.ast(body, depth + 1)?));
+            let bindings = self.keyword("bindings")?;
+            let body = self.keyword("body")?;
+            fields.push(("children", self.vector(&[bindings, body])?));
+        }
+        if let Some(hir::SourceNode::Try { body, handler, cleanup, payload }) = source.node.as_deref() {
+            fields.push(("op", self.keyword("try")?));
+            fields.push(("body", self.ast(body, depth + 1)?));
+            fields.push(("catch", self.ast(handler, depth + 1)?));
+            let name = if let Some(payload) = payload { self.form(&payload.declaration, depth + 1)? }
+                else { self.scalar(Literal::Nil)? };
+            fields.push(("name", name));
+            let mut children = vec![self.keyword("body")?, self.keyword("catch")?];
+            let finally = if let Some(cleanup) = cleanup {
+                children.push(self.keyword("finally")?);
+                self.ast(cleanup, depth + 1)?
+            } else { self.scalar(Literal::Nil)? };
+            fields.push(("finally", finally));
+            fields.push(("children", self.vector(&children)?));
+        }
         if let Some(node) = &source.node {
             // These are original analyzed operands retained before dispatch or
             // storage lowering, not children reconstructed from physical HIR.
             let (operation, many, one) = match node.as_ref() {
                 hir::SourceNode::Do { statements, result } => ("do", vec![("statements", statements.as_ref())], vec![("ret", result.as_ref())]),
+                hir::SourceNode::If { condition, consequent, alternative } => ("if", vec![], vec![("test", condition.as_ref()), ("then", consequent.as_ref()), ("else", alternative.as_ref())]),
+                hir::SourceNode::Recur(arguments) => ("recur", vec![("exprs", arguments.as_ref())], vec![]),
+                hir::SourceNode::Throw(exception) => ("throw", vec![], vec![("exception", exception.as_ref())]),
                 hir::SourceNode::Assign { target, value } => ("set!", vec![], vec![("target", target.as_ref()), ("val", value.as_ref())]),
                 hir::SourceNode::Invoke { callee, arguments } => ("invoke", vec![("args", arguments.as_ref())], vec![("fn", callee.as_ref())]),
                 _ => ("", vec![], vec![]),
@@ -1817,6 +1849,9 @@ impl<'a> AnalysisGraph<'a> {
                 // Preserve the public analyzer's declared edge order.
                 let names: &[&str] = match operation {
                     "do" => &["statements", "ret"],
+                    "if" => &["test", "then", "else"],
+                    "recur" => &["exprs"],
+                    "throw" => &["exception"],
                     "set!" => &["target", "val"],
                     "invoke" => &["fn", "args"],
                     _ => unreachable!(),
@@ -1989,6 +2024,30 @@ impl<'a> AnalysisGraph<'a> {
         }
         if let Some(callable) = &source.callable {
             fields.push(("suss/source-function", self.callable(callable)?));
+            if !matches!(source.node.as_deref(), Some(hir::SourceNode::WithMeta { .. })) {
+                fields.push(("op", self.keyword("fn")?));
+                let mut methods = Vec::new();
+                for method in &callable.methods {
+                    let mut parameters = Vec::new();
+                    for declaration in &method.declarations { parameters.push(self.local(declaration, depth + 1)?); }
+                    let parameters = self.vector(&parameters)?;
+                    let body = self.ast(&method.body, depth + 1)?;
+                    let form = self.form(&method.form, depth + 1)?;
+                    let op = self.keyword("fn-method")?;
+                    let params = self.keyword("params")?;
+                    let body_key = self.keyword("body")?;
+                    let children = self.vector(&[params, body_key])?;
+                    let variadic = self.flag(method.variadic)?;
+                    let arity = method.parameters.len().checked_sub(usize::from(method.variadic))
+                        .ok_or_else(|| SessionError::Host(wasmtime::Error::msg("Invalid source method parameter list")))?;
+                    let fixed = self.number(arity)?;
+                    methods.push(self.map(vec![("op", op), ("form", form), ("params", parameters),
+                        ("body", body), ("children", children), ("variadic?", variadic), ("fixed-arity", fixed)])?);
+                }
+                fields.push(("methods", self.vector(&methods)?));
+                let methods = self.keyword("methods")?;
+                fields.push(("children", self.vector(&[methods])?));
+            }
         }
         let value = self.map(fields)?;
         Ok(value)

@@ -17346,3 +17346,183 @@ core4/definitions13/modules11/pipeline17/resolution14, log
 change; both reproduced bootstrap pairs remain current. Freeze/push this stronger
 catalog assertion and repeat the exact full baseline on the resulting head before
 any readiness claim. Reviewer continues to own the sole local heavy slot.
+
+
+## Control source analysis and PR191 readiness — 2026-10-04
+
+User merged the preceding stack (PR186/187/189). Main65a7968 has the complete tree
+of reviewed oldbase0ac036d. PR191 rebased cleanly to1621ea3; reviewer independently
+confirmed all four unchanged patches and identical reviewed8fada46/rebased1621ea3
+complete tree333a1be67efa7e52eb8fd7011327cb1a03802899. Local full59848 terminated0:
+145groups1199passed/0failed/17existingignored/0measured/0filtered, all4doctest suites.
+Exact CI37231163221 completed SUCCESS at1621ea3. Root inspected its complete
+workspace step and every result group exactly matches local evidence; raw log
+/private/tmp/suss-pr191-ci-complete.log, isolated workspace log
+/private/tmp/suss-pr191-ci-workspace.log, local
+/private/tmp/suss-pr191-review-full-final.log. Separate CI bootstrap group4passes.
+Updated body and marked PR191 ready through gh; no merge or issue closure.
+Issue14 readiness comment5984676225. Superseded CI37230572931 cancelled, not accepted.
+
+Next branch portable/m3-control-source-asts bases on1621ea3. Backup stashes
+control-source-asts-before-8fada-review-head and control-source-asts-before-main-rebased-191
+remain intact. Scope is Refs #14, retaining original M3 requirements. See
+[control AST evidence](../runtime/compiled-macro-control-source-asts.md).
+
+Implementation:
+
+- Bare let* is a primitive special form, with sequential once-only binding
+  initialization and empty-body nil. A lexical let* value cannot replace it.
+  Bounded unshadowed bootstrap let/loop actually expand to let*/loop* before
+  source analysis; unsupported destructuring remains a located error.
+- Original if/recur/throw operands and actual binding declarations/initializers
+  are retained before lowering. Synthetic do bodies are genuinely analyzed in
+  their lexical context. Method forms retain original metadata/spans, actual
+  parameter identities, variadic syntax and duplicate source methods before
+  physical normalization/elimination. No reconstruction from recurrence wrappers.
+- Genuine generated try handler syntax is analyzed before closure packaging;
+  finally/catches/body macro visitation and body/handler/cleanup runtime order
+  stay separate. Typed checks use canonical cljs.core/instance? despite lexical
+  shadows. Catch aliases retain original private-local initializers and distinct
+  declaration identities while sharing the physical payload ID; unrelated lets
+  remain separate. Bare try retains its analyzed fallback throw nil and an absent
+  physical handler. Initialized unknown binding tags are present nil; unknown
+  reference tags remain absent. Function metadata retains wrapper/inner edges.
+- Generated body and fixed primitive rewrite frames use existing stacker256KiB
+  headroom/4MiB segment guards without charging an extra source nesting level.
+  Source and arbitrary macro recursion keep the unchanged64-frame bounds.
+
+Primary/native evidence:
+
+The unchanged raw15case corpus originated from actual pinned analyzer/Node output
+atc4295f303100bbf5afac449242d30bca1126f1a1, effects2. Fresh traces and Node still agree
+raw/exactly. Upstream compilation changed its private catch counter e16497→e15746;
+first strict wrapper63610 properly failed, log
+/private/tmp/suss-control-source-asts-primary-final.log. Frozen corpus is unchanged.
+The checker now alpha-compares only the two validated private payload forms in
+separate copies, retaining all other fields exactly. Analyzer-versus-Node remains
+raw/exact even for generated names. Inconsistent names, user names, extra uses,
+missing fields/cases/cardinality and effect changes fail. Final wrapper4473
+terminal0 /private/tmp/suss-control-source-asts-primary-final-alpha.log; checker11
+pass /private/tmp/suss-control-source-asts-checker-alpha.log. Native separately
+validates exactly two numeric $exception uses and their default-let source form
+before one explicit correspondence to the raw reference. This is not an exact
+spelling match or blanket normalization. Both caller phases survive GC/effects2.
+
+Commands/results (all Cargo/JVM/Node serial; shared target
+/private/tmp/suss-m3-pr143-target, CARGO_BUILD_JOBS=2, never RUSTFLAGS):
+
+- Primitive compiler31129 terminal0:1focused pass/17filtered; native27940
+  terminal0:1pass7.15s, direct/compiled/hygienic syntax quote in both phases,
+  independently decoded42 and ordered digit trace12.
+- Conditional compiler15240 terminal0:19pass across2groups; native2095 terminal0
+  proved6do/if cases in both phases. Binding/compiler27387 terminal0:53pass across
+  closures/collections/control/pipeline/resolution. Generated-depth regression
+  uses valid expansion-owned forms to reach compiler64 limit in both phases;
+  arbitrary recursive macro also fails with located bounds as expected.
+- Recur compiler89913 terminal0:25pass across control/pipeline/comparison.
+  Function compiler93598 terminal0:37pass across closures/control/pipeline;
+  method identity/body tests later6pass. Affected native51097 terminal0:7groups
+  22pass/0fail/0ignore/0filter, including binding records, declaration functions,
+  function scopes, method roles, self locals, source tags and callable metadata;
+  /private/tmp/suss-control-function-affected-native.log.
+- Final compiler98283 terminal0:4groups18pass/0fail/0ignore/0filter:
+  control9, exceptions2, dynamic2, nominal5. Exact original explicit method Form
+  equality includes metadata/spans. Log
+  /private/tmp/suss-control-source-asts-compiler-final-corrected.log.
+- Newest compiler images regenerated8985 terminal0; Java-free reproduction41385
+  terminal0/bootstrap4pass12.89s, logs
+  /private/tmp/suss-control-source-asts-method-metadata-bootstrap-{generate,verify}.log.
+- Complete native97454 terminal0:3groups15pass/0fail/0ignore/0filter (binding8,
+  control6, primitive1), /private/tmp/suss-control-source-asts-native-final-current.log.
+  Removed three temporary prefix-only tests once full15 passes; all cases remain
+  mandatory. Final control90000 terminal0:3pass13.89s/0filter, full15bothphases,
+  function metadata and negative alpha checks; log
+  /private/tmp/suss-control-source-asts-native-final-checked-arity.log.
+- Python78081 terminal0:161tests pass4.895s, log
+  /private/tmp/suss-control-source-asts-python-final.log. Inventory1065verified,
+  overlay371reviewed/694unassessed unchanged. Shell syntax, touched test formatting
+  and git diff checks pass. No new upstream forms copied or inventory item completed.
+
+Failure/repair history (raw terminal failures remain available):
+
+- Primitive parent85468 fails unresolved let*, /private/tmp/suss-control-let-star-parent.log.
+  Full control23922 fails if children;63175 fails let binding/body/unexpanded form;
+  90411 fails recur;50828 fails function methods;82040 fails try source schema.
+  Logs /private/tmp/suss-control-source-asts-native-{parent,if,bindings,recur,functions}.log.
+  No case was removed or skipped while these failures were active.
+- Extra generated frames initially hit bootstrap analysis depth at nested apply
+  dispatcher:98330/58508 terminal1, binding bootstrap logs. Removed only extra
+  compiler-generated nesting charges; source/macro limits retained. Depth test
+  fixture failures (private Symbol API, Debug bound, reader depth before compiler)
+  were corrected to exercise the intended boundary, not weaken expectations.
+- Throw parent68504 missing exception operand, terminal101. Throw bootstrap51119
+  and isolated catalog reproduce native stack overflow, SIGABRT; logs
+  /private/tmp/suss-control-throw-bootstrap-{verify,catalog-repro}.log. Debugger
+  could not produce a backtrace; root terminated only its three stalled owned
+  processes (exec81816 terminal143). Generated-frame stack guards repair actual
+  byte reproduction and all4bootstrap tests83389 terminal0. No custom thread
+  stack or increased source depth. Log generated-frame-stack-bootstrap-verify.
+- Try parent30362 missing source regions despite correct visitation, terminal101.
+  Native85389 sees present-nil binding tag gap plus private spelling variance;
+ 39686 passes full15 after repair/explicit correspondence. Logs
+  /private/tmp/suss-control-source-asts-native-try-{first,alpha}.log.
+- Existing catch record59477 fails stale initializer absence (7pass/1fail);
+  strengthened original initializer/context/payload identity check now passes.
+  A documentation comment in fingerprinted compiler source correctly invalidated
+  images10916:1pass/7manifest mismatch failures; both images were regenerated and
+  reproduced before successful native repetition. Explicit method metadata test
+  first used relative reader spans; corrected full-source Form equality, preserving
+  all metadata and spans. Logs native-final-focused/try-binding-records-first and
+  compiler-final; no failure replaced by success.
+
+Readiness remains pending independent PR review, pushed significant fixes,
+unfiltered cargo test --workspace --locked -- --test-threads=2 (actual terminal
+result/all4doctest suites), and CI on the exact final reviewed head. No merge.
+This bounded projection does not establish full fn-method env/body?/type/recurs,
+complete source AST schemas/inference/constant-expression policy, or evaluator
+retirement. Native commands do not certify public Compiler::compile_with_namespaces
+or its first-root .sus-only ns_to_path/expand_all/MacroEvaluator paths. Session
+pending-I/O/cooperative cancellation/rooted continuations/live heap accounting
+remain #15 requirements; fuel traps are not cancellation. Issues12–15 remain open.
+Next independent review/full acceptance for this PR, then complete genuine method
+and remaining source schemas and integrate/retire the public old compiler/evaluator,
+followed by original lifecycle acceptance. Do not mark future work complete.
+
+### PR #192 independent control source review
+
+Independent reviewer isolated /private/tmp/suss-pr192-review at initial6564099,
+base reviewed1621ea3. Read accepted design, roadmap/inventory/current handoff;
+reviewed genuine pre-lowering source operands, primitive expansion/stack guards,
+method forms/declaration identity, synthetic try regions and catch aliases,
+nullable binding tags, graph charging/GC, and exact private alpha boundaries.
+Pinned parse-try/method/let sources agree with the selected control facts. No
+significant scoped production defect found; full method/environment/schema,
+public compiler/evaluator migration and original lifecycle gates remain open.
+
+Affected native27331 reached actual terminal101: graph10passed/1failed in17.46s,
+/private/tmp/suss-pr192-review-native.log. Existing nested-method query incorrectly
+traversed compiler-only :suss/children on a body now carrying genuine source :do.
+Aligned and strengthened it to traverse source :ret, require source do/fn ops and
+[:statements :ret], and independently require the physical lowering remain do.
+All original method parameters/metadata, duplicate arities, shared catalog identity
+and actual executed81 assertions remain. No raw corpus or projection is removed.
+
+Corrected native65289 terminal0:4groups23pass/0fail/0ignored/0measured/0filtered,
+graph11/binding8/control3/primitive1, log
+/private/tmp/suss-pr192-review-native-corrected.log. Compiler83277 terminal0:
+4groups18pass/0fail/0ignored/0measured/0filtered, control9/exceptions2/dynamic2/
+nominal5, log /private/tmp/suss-pr192-review-compiler-corrected.log. An initial
+compiler invocation named nonexistent portable_dynamic and failed before tests;
+corrected target portable_dynamic_bindings supplies actual results. Strict Python
+checker11pass in0.079s (/private/tmp/suss-pr192-review-python.log). Reviewer also
+reran the strict checker against root's freshly executed traces: analyzer/Node15
+agree raw, effects2, with only the checked recorded-corpus private correspondence.
+Raw fifteen-case observations remain unchanged. No compiler inputs changed during
+review, so root's newest BOTH phase image regeneration/Java-free proof remains
+current; native bootstrap acceptance executes those actual images.
+
+Next freeze/push this regression alignment, execute the exact unfiltered
+cargo test --workspace --locked -- --test-threads=2 through actual terminal and
+all four doctest suites, and gate readiness on exact final reviewed-head CI.
+Reviewer retains the sole local Cargo/JVM/Node slot until explicit terminal
+release. No PR readiness, merge, issue closure or M3 completion is claimed.

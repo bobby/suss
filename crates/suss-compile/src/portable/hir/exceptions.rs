@@ -31,9 +31,11 @@ impl Analyzer<'_> {
     ) -> Result<Hir, Diagnostic> {
         let locals = self.locals.clone();
         let target = self.target.take();
+        let aliases = self.catch_aliases.clone();
         let result = self.try_regions(form, args, context);
         self.locals = locals;
         self.target = target;
+        self.catch_aliases = aliases;
         result
     }
     fn try_regions(
@@ -107,94 +109,123 @@ impl Analyzer<'_> {
         } else {
             context.returning()
         };
-        let cleanup = if let Some((cleanup, forms)) = cleanup {
-            let body = self.body(
+        // Build and analyze genuine source regions before packaging closures.
+        // The generated forms are originals; no source tree is recovered from
+        // a runtime handler or re-analyzed after lowering.
+        fn call(name: &str, arguments: Vec<Form>, span: Range<usize>) -> Form {
+            let mut items = vec![Form {
+                kind: Kind::Symbol(name.split_once('/').map_or_else(
+                    || suss_reader::Symbol::new(name),
+                    |(namespace, name)| suss_reader::Symbol::namespaced(namespace, name),
+                )),
+                span: span.clone(),
+                metadata: vec![],
+            }];
+            items.extend(arguments);
+            Form {
+                kind: Kind::List(items),
+                span,
+                metadata: vec![],
+            }
+        }
+        let source_cleanup = if let Some((cleanup, forms)) = cleanup {
+            Some(self.analyzed_body(
                 forms,
                 cleanup.span.clone(),
                 super::super::AnalysisContext::Statement,
                 false,
-            )?;
-            self.exception_region(cleanup, vec![], body)
+            )?)
+        } else {
+            None
+        };
+        let cleanup = if let Some(body) = &source_cleanup {
+            self.exception_region(form, vec![], body.clone())
         } else {
             self.literal_form(form, Literal::Nil)
         };
-        let handler = if catches.is_empty() {
-            self.literal_form(form, Literal::Nil)
+        let payload = if catches.is_empty() {
+            None
         } else {
             let id = BindingId(self.next);
             self.next += 1;
             let mut hidden_name = format!("$exception{}", id.0);
             while self.locals.contains_key(&hidden_name)
                 || self.fields.contains_key(&hidden_name)
-                || catches.iter().any(|(_, items, _)| matches!(&items[1].kind, Kind::Symbol(name) if name.name == hidden_name)) {
+                || catches.iter().any(|(_, items, _)| {
+                    matches!(&items[1].kind,
+                    Kind::Symbol(name) if name.name == hidden_name)
+                })
+            {
                 hidden_name.push('$');
             }
-            let parameter = Parameter {
-                id,
-                name: hidden_name.clone(),
-                metadata: Vec::new(),
+            let declaration = Form {
                 span: form.span.clone(),
-            };
-            let hidden_declaration = Form {
-                span: form.span.clone(), metadata: Vec::new(),
+                metadata: vec![],
                 kind: Kind::Symbol(suss_reader::Symbol::new(&hidden_name)),
             };
-            self.insert_local(&hidden_declaration, id, Type::Value, LocalKind::Catch, None);
-            self.locals.get_mut(&hidden_name).unwrap().source_role = SourceRole::PrivateCatch { anchor: form.span.clone() };
-            let hidden = std::sync::Arc::new(self.locals[&hidden_name].clone());
-            let payload = self.local(form, id);
-            let mut selected = Hir {
-                source: None,
-                span: form.span.clone(),
-                metadata: Vec::new(),
-                ty: Type::Value,
-                kind: Expression::Throw(Box::new(payload.clone())),
+            self.insert_local(&declaration, id, Type::Value, LocalKind::Catch, None);
+            self.locals.get_mut(&hidden_name).unwrap().source_role = SourceRole::PrivateCatch {
+                anchor: form.span.clone(),
             };
-            // Analyze in source order so declarations/resolution stay deterministic.
-            let mut analyzed = Vec::new();
-            for (catch, items, default) in catches {
-                let test = if default {
-                    None
-                } else {
-                    let class = self.form(&items[0])?;
-                    Some(self.nominal(catch, Nominal::Instance, vec![class, payload.clone()]))
-                };
-                let Kind::Symbol(name) = &items[1].kind else {
-                    unreachable!()
-                };
-                let previous =
-                    self.insert_local(&items[1], id, Type::Value, LocalKind::Catch, None);
-                self.locals.get_mut(&name.name).unwrap().source_role = SourceRole::CatchBinding { hidden: hidden.clone(), access: payload.clone() };
-                let body = self.body(&items[2..], catch.span.clone(), context, false);
-                if let Some(previous) = previous {
-                    self.locals.insert(name.name.clone(), previous);
-                } else {
-                    self.locals.remove(&name.name);
-                }
-                analyzed.push((catch, test, body?));
-            }
-            for (catch, test, body) in analyzed.into_iter().rev() {
-                selected = if let Some(test) = test {
-                    Hir {
-                        source: None,
-                        span: catch.span.clone(),
-                        metadata: Vec::new(),
-                        ty: Type::Value,
-                        kind: Expression::If {
-                            condition: Box::new(test),
-                            consequent: Box::new(body),
-                            alternative: Box::new(selected),
-                        },
-                    }
-                } else {
-                    body
-                };
-            }
-            self.locals.remove(&hidden_name);
-            self.exception_region(form, vec![parameter], selected)
+            Some(std::sync::Arc::new(self.locals[&hidden_name].clone()))
         };
-        let body = self.body(&args[..body_end], form.span.clone(), context, false)?;
-        let body = self.exception_region(form, vec![], body);
+        let exception = payload.as_ref().map_or_else(
+            || Form {
+                kind: Kind::Nil,
+                span: form.span.clone(),
+                metadata: vec![],
+            },
+            |payload| payload.declaration.clone(),
+        );
+        let mut handler_form = call("throw", vec![exception.clone()], form.span.clone());
+        for (catch, items, default) in catches.into_iter().rev() {
+            let hidden = payload.as_ref().expect("catch payload").clone();
+            self.catch_aliases.push((items[1].clone(), hidden));
+            let bindings = Form {
+                kind: Kind::Vector(vec![items[1].clone(), exception.clone()]),
+                span: catch.span.clone(),
+                metadata: vec![],
+            };
+            let mut forms = vec![bindings];
+            forms.extend_from_slice(&items[2..]);
+            let body = call("let*", forms, catch.span.clone());
+            handler_form = if default {
+                body
+            } else {
+                let test = call(
+                    "cljs.core/instance?",
+                    vec![items[0].clone(), exception.clone()],
+                    catch.span.clone(),
+                );
+                call("if", vec![test, body, handler_form], catch.span.clone())
+            };
+        }
+        let source_handler = self.form_in(&handler_form, context, false)?;
+        let handler = if let Some(payload) = &payload {
+            let Kind::Symbol(name) = &payload.declaration.kind else {
+                unreachable!()
+            };
+            self.locals.remove(&name.name);
+            let parameter = Parameter {
+                id: payload.id,
+                name: name.name.clone(),
+                metadata: vec![],
+                span: payload.declaration.span.clone(),
+            };
+            self.exception_region(form, vec![parameter], source_handler.clone())
+        } else {
+            self.literal_form(form, Literal::Nil)
+        };
+        let source_body =
+            self.analyzed_body(&args[..body_end], form.span.clone(), context, false)?;
+        let body = self.exception_region(form, vec![], source_body.clone());
+        *self.source_nodes.last_mut().expect("source node fact slot") =
+            Some(std::sync::Arc::new(SourceNode::Try {
+                body: std::sync::Arc::new(source_body),
+                handler: std::sync::Arc::new(source_handler),
+                cleanup: source_cleanup.map(std::sync::Arc::new),
+                payload,
+            }));
         Ok(Hir {
             source: None,
             span: form.span.clone(),

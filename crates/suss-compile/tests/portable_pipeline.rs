@@ -708,6 +708,28 @@ fn lexical_bindings_hide_the_bootstrap_let_macro() {
 }
 
 #[test]
+fn primitive_let_star_keeps_sequential_bindings_and_special_form_identity() {
+    // Pinned analyzer.cljc parse let*2594: primitive lexical binding syntax.
+    // These tests are original; no upstream implementation is copied.
+    assert_eq!(number("(let* [base 40 copy (+ base 2)] copy)"), 42.0);
+    assert_eq!(
+        number("(let [let* 99] (let* [base 40 copy (+ base 2)] copy))"),
+        42.0
+    );
+    let (store, value) = execute("(let* [copy 42])");
+    assert_eq!(
+        value
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&store)
+            .unwrap()
+            .unwrap()
+            .get_u32(),
+        0
+    );
+}
+
+#[test]
 fn public_hir_negation_executes_and_malformed_arithmetic_is_rejected() {
     use portable::hir::{Arithmetic, Expression, Hir, Literal, Type};
     let make = |operator, count| Hir {

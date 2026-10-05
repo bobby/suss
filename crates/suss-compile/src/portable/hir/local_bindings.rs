@@ -92,7 +92,7 @@ pub struct LocalBinding {
     pub kind: LocalKind,
     pub declaration_context: super::super::AnalysisContext,
     pub source_role: SourceRole,
-    /// Actual analyzed initializer; absent for parameters/self/catch bindings.
+    /// Actual analyzed initializer; absent for parameters/self/private payloads.
     pub initializer: Option<Arc<Hir>>,
     /// Previous lexical declaration, excluding compiler-only ID remapping.
     pub shadow: Option<Arc<LocalBinding>>,
