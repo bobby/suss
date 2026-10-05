@@ -18261,3 +18261,34 @@ Java/Node-free verifier45590 ACTUAL TERMINAL0: BOTH phase pairs match two fresh
 builds byte-for-byte, checkout-independent compiler identity passes and bootstrap4
 passes with0failed/0ignored/0filtered,12.96s. Log
 /private/tmp/suss-pr199-review-bootstrap-verify.log. No new ignores or skips.
+
+## PR199 final CI allowance review (2026-10-05)
+
+Final-head CI 37265512292 at 14137b70 reached the job's 90-minute cap:
+04:55:06 through 06:25:19 UTC. The workspace step began at 04:56:37 and its
+first tests ran at 04:57:20. Raw `/private/tmp/suss-pr199-final-ci-raw.log`
+contains 137 completed workspace result groups, exactly matching the prefix of
+reviewed local full 79823: 1,102 passed, 0 failed, 15 existing ignores and no
+measured/filtered tests. The job was cancelled while `portable_pipeline` still
+ran; the remaining 15 groups, including all four doctest suites, did not finish.
+Cancellation is not a passing baseline or CI gate. No test failure is inferred.
+
+Completed CI test durations total 5,095.80 seconds against 1,869.31 seconds
+locally (2.73 times slower). Remaining local groups total 78.83 seconds,
+approximately 3.6 additional minutes at that aggregate slowdown. Increase the
+bounded CI job allowance from 90 to 120 minutes, providing roughly 25 minutes of
+runner/cache/remaining-test headroom beyond projected completion. Preserve
+`CARGO_BUILD_JOBS=2` and the exact unfiltered
+`cargo test --workspace --locked -- --test-threads=2` command, inventory checks,
+Java-free bootstrap reproduction and every existing assertion/ignore. Changes
+are limited to the workflow allowance and this evidence record. Compiler/crates,
+bootstrap assets, manifests and test sources are byte-identical to 14137b70.
+
+Reviewed local full 79823 remains actual source evidence: 152 groups, 1,255
+passed, 0 failed, 17 unchanged ignores, 0 filtered and all four doctest suites.
+It did not run at the follow-up workflow head. Replacement final-head CI must
+execute the complete unfiltered suite and every other gate before readiness.
+No result is carried forward as passing new-head CI. Root owns the sole heavy
+slot; this follow-up runs no Cargo/JVM/Node and claims no new local baseline.
+No merge, issue closure or M3 completion. Record new head/CI and any replacement
+local execution independently, preserving the old result's provenance.

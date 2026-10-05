@@ -14,9 +14,9 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # The expanded suite reached the 60-minute job cap with tests still running.
-    # Keep a bounded allowance for the complete baseline and cache cleanup.
-    timeout-minutes: 90
+    # Run 37265512292 reached 90 minutes after 137 passing workspace groups.
+    # Allow the remaining groups/doc-tests plus bounded runner/cache headroom.
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
         with:
