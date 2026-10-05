@@ -76,6 +76,9 @@ impl CompiledMacros {
         macros.enter_namespace("suss.core")?;
         macros.define(crate::portable_defn::SOURCE)?;
         macros.enter_namespace("user")?;
+        // Bootstrap code is already rooted in the Store. User source cache
+        // accounting starts empty, including after an explicit session reset.
+        macros.artifact_cache = Default::default();
         Ok(macros)
     }
     pub(crate) fn binding_checkpoint(&mut self) -> Result<(crate::portable_session::BindingCheckpoint, BTreeMap<(String, String), SessionValue>, BTreeMap<(String, String), String>), SessionError> {

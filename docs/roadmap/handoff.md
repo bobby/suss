@@ -18041,3 +18041,31 @@ both original Stores and successful reset removing old definitions. Log
 /private/tmp/suss-pr197-review-reset-frontends.log. Push/freeze this significant
 repair and review evidence before exact unfiltered workspace validation; final
 reviewed-head CI remains root-owned and pending.
+
+
+PR197 first exact full63838 ACTUAL TERMINAL101 at a853b140:58completed groups,
+239passed/1failed/0ignored/0filtered, no doctest suites reached. Existing
+source_artifact_cache_tracks_new_dependencies_failed_discovery_and_reset exposed
+that reinstalled core defn created one internal source-cache entry on reset
+instead of the expected empty user source cache. Log
+/private/tmp/suss-pr197-review-full-final.log; this is not accepted full evidence.
+Deliberately discard the internal bootstrap emission cache after initialization;
+compiled macro Store code, rooted value, binding cells and residency statistics
+remain intact. Added construction/reset cache assertions to the new executing
+lifecycle regression. The existing failing assertion is unchanged.
+
+Final generation78027 ACTUAL TERMINAL0 regenerated BOTH bootstrap phase pairs;
+Java/Node-free verifier77974 ACTUAL TERMINAL0: both pairs byte-exact, independent
+identity and bootstrap4passed13.50s, no failures/ignores/filters. Existing source
+cache6 and REPL macros6 pass1058 ACTUAL TERMINAL0 (3.76s/20.62s), including empty
+reset cache and failed-reset atomicity. Final public12 and toolchain8 pass1579
+ACTUAL TERMINAL0, no failures/ignores/filters. Logs
+/private/tmp/suss-pr197-review-bootstrap-verify-final.log,
+/private/tmp/suss-pr197-review-cache-final.log and
+/private/tmp/suss-pr197-review-public-final.log.
+
+Push/freeze this repair. The required exact unfiltered full baseline must restart
+on the final reviewed head and reach all four doctest suites; prior full failure
+and superseded CI are not acceptance. Temporarily release the sole local heavy
+slot to root for the next bounded implementation checks before coordinating
+reviewer full restart. No PR readiness, merge, closure or M3 completion.

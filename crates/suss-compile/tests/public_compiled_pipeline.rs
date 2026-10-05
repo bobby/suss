@@ -357,6 +357,7 @@ fn compiled_core_defn_survives_atomic_two_phase_reset() {
     use suss_compile::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
     let mut runtime = Session::new_repl().unwrap();
     let mut macros = CompiledMacros::new().unwrap();
+    assert_eq!(macros.artifact_cache_stats(), Default::default());
     portable_repl::evaluate_compiled(&mut runtime, &mut macros, "(defn before [x] (+ x 1))")
         .unwrap();
     assert_eq!(
@@ -365,6 +366,7 @@ fn compiled_core_defn_survives_atomic_two_phase_reset() {
     );
     portable_repl::evaluate_compiled(&mut runtime, &mut macros, "(defmacro stale [] 17)").unwrap();
     portable_repl::reset_compiled(&mut runtime, &mut macros).unwrap();
+    assert_eq!(macros.artifact_cache_stats(), Default::default());
     assert!(portable_repl::evaluate_compiled(&mut runtime, &mut macros, "(stale)").is_err());
     assert!(portable_repl::evaluate_compiled(&mut runtime, &mut macros, "(before 41)").is_err());
     portable_repl::evaluate_compiled(&mut runtime, &mut macros, "(defn after [x] (+ x 2))")
