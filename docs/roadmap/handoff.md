@@ -17627,3 +17627,124 @@ cargo test --workspace --locked -- --test-threads=2, capture actual terminal
 result and all four doctest suites, then require exact final-head CI. Reviewer
 retains sole local Cargo/JVM/Node slot until explicit terminal release. Full
 baseline and CI remain pending here; no readiness, merge or closure is claimed.
+
+
+## M3 genuine function-name ASTs (2026-10-04)
+
+Root worktree /private/tmp/suss-m3-function-name-asts on
+portable/m3-function-name-asts starts at reviewed PR193 head6179f776428bb38ea19b56e96fa6e391c7347232.
+SourceCallable retains its actual FunctionScope before function-scope cleanup.
+Anonymous nodes expose present :name nil and omit :local; named/hinted nodes
+share name/local binding ASTs and declare [:local :methods] children. Method-entry
+scopes share the same record. Source bindings expose genuine op/form/name/local,
+fn-self-name, namespace/parents, nullable shadow and raw non-nil ret-tag including
+false. Hints allocate no lexical binding ID; anonymous children keep inherited
+environments without acquiring an enclosing name. Runtime control flow unchanged.
+Original code informed by pinned analyzer.cljc2279–2300/2304–2378; no source forms
+ported or inventory classifications changed. Full function/env/type/protocol and
+inference schemas remain unfinished.
+
+Serial root validation, target /private/tmp/suss-m3-pr143-target, jobs2; no
+RUSTFLAGS. Every following handle is actually terminal:
+
+- sh scripts/probe-function-name-asts.sh2897 terminal0: initial original projection
+  seven actual raw analyzer traces equal Node, all functions return42. Later native
+  harness88746 terminal101 stopped before AST comparison because public str is not
+  yet available. Projection now uses the available name API. First attempted
+  adaptation53237 terminal1 incorrectly changed the development JSON emitter's
+  str call; corrected emitter remains development-only str.
+- Fresh corrected probe84005 terminal0, log
+  /private/tmp/suss-function-name-primary-portable-names-corrected.log. Inspected
+  seven21-field raw rows and exact matching Node outputs, all executions42; froze
+  actual results in tests/oracle/function-name-ast-observations.json. Strict checker
+  passes with no alpha rewriting or case removal. Wrapper sequences forced fresh
+  probing before comparison. No JVM/Node dependency in shipped code.
+- Isolated parent /private/tmp/suss-function-name-before-fix at6179f77, native
+  exact regression38344 terminal101,5.27s: execution42 but anonymous :name presence
+  is false instead of true. Log /private/tmp/suss-function-name-native-parent-semantic.log.
+  Earlier46921 terminal101 lacked the fixture after a wrong-working-directory
+  preparation; not semantic evidence. Earlier88746 str failure also not AST proof.
+- Compiler control suite88773 terminal0:12passed/0failed/0ignored/0measured/0filtered,
+  .02s. Actual source name/scope/shadow identities, definition hints and anonymous
+  nested environment covered in both phases. Log /private/tmp/suss-function-name-compiler-first.log.
+- Bootstrap generate56089 terminal0 regenerated BOTH phase pairs. Java/Node-free
+  sh scripts/verify-bootstrap.sh91753 terminal0 reproduces both pairs byte-for-byte
+  and executes bootstrap4/0/0/0/0 in13.20s. Logs
+  /private/tmp/suss-function-name-bootstrap-{generate,verify}.log.
+- Native30357 terminal0, six groups30passed/0failed/0ignored/0measured/0filtered:
+  graph11/bindings8/control5/scopes2/self-local2/tags2. Shared primary name cases
+  pass both caller phases after GC; full prior corpus retained. Self-local75.46s,
+  tags13.82s. Log /private/tmp/suss-function-name-native-first.log.
+- Python checker9passed; full Python177passed in5.514s (82762 terminal0).
+  Log /private/tmp/suss-function-name-python.log. Inventory1065 verified;
+  overlay371reviewed/694unassessed unchanged. Checker rejects missing cases/fields,
+  invalid types/children, erased false tags, changed identity and boolean execution.
+- git diff --check and shell syntax pass; modified Rust files parse. An early
+  py_compile external-cache write failed; read-only Python syntax check passed.
+
+Stack gates: reviewer71855 ACTUAL TERMINAL0 on frozen clean6179f77/tree4c91fd49b4961a30507ab4ce9d4309861627f679:
+148groups/1216passed/0failed/17existingignored/0measured/0filtered, all four doctests.
+Independent root parsed every result tuple and checked clean frozen head. Reviewer
+explicitly released all heavy handles. PR193 remains draft pending exact-final
+CI37243419746 at6179f77. Log /private/tmp/suss-pr193-review-full-final.log.
+PR192 exact-final CI37240247637 at e35276e completed SUCCESS. Root raw job audit
+confirms the exact unfiltered workspace command, every148 group tuple equals
+local1213passed/0failed/17ignored/0filtered and all four doctests. Raw job log
+/private/tmp/suss-pr192-final-ci-job.log. Watcher79359 terminal0; PR192 marked
+ready (93538 terminal0), unmerged. No issue closed.
+
+New function-name change still requires independently dispatched review, pushed
+significant fixes, exact unfiltered workspace baseline and final reviewed-head CI;
+no readiness or full M3 acceptance is claimed. Next unblocked source work is the
+remaining fn/method annotation/env/inference schemas and public compiler migration.
+Audit reconfirms public Compiler entry points call legacy expand_all/MacroEvaluator;
+native macro/session/AOT host ownership in suss-cli creates a cycle if compile
+simply depends on CLI. No architecture migration has been implemented here.
+Original #12–#15 public frontend/evaluator retirement and lifecycle acceptance,
+including pending-I/O cancellation and live heap/code accounting, remain open.
+
+
+## Independent PR194 function-name review (2026-10-04)
+
+Reviewed initial6cb786f80a2c47427280b0fdd42dea5173d46496 against6179f77 in
+isolated /private/tmp/suss-pr194-review. Read accepted design, roadmap, inventory
+and handoff; compared pinned analyzer.cljc2279–2300/2304–2378. No significant
+scoped production defect found. Actual callable captures its newly entered scope
+before cleanup; anonymous children do not inherit parent names. Declaration
+hints allocate no lexical ID. Canonical scope tasks preserve name/local/method
+entry identity, real outer declaration snapshots/shadows and present nullable
+shadow; raw non-nil return metadata retains false. Metadata wrappers keep inner
+function edges. Queue tasks charge existing aggregate bounds and materialize
+shared records through rooted graph values; existing bound/GC tests remain active.
+
+Serial reviewer checks, CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target,
+CARGO_BUILD_JOBS=2, no RUSTFLAGS:
+
+- Compiler17098 terminal0: cargo test -p suss-compile --locked
+  --test portable_control_source_analysis -- --test-threads=2;12passed/0failed/
+  0ignored/0measured/0filtered,.02s. Log /private/tmp/suss-pr194-review-compiler.log.
+- First native invocation terminal101 before tests: nonexistent target
+  compiled_macro_self_locals. Corrected to actual compiled_macro_self_local_methods;
+  no semantic failure or skipped case is claimed from the harness typo.
+  Log /private/tmp/suss-pr194-review-native.log.
+- Corrected22509 ACTUAL TERMINAL0: cargo test -p suss-cli --locked
+  --test compiled_macro_control_source_asts --test compiled_macro_analysis_graph
+  --test compiled_macro_function_scopes --test compiled_macro_self_local_methods
+  --test compiled_macro_source_tags -- --test-threads=2;5groups22passed/0failed/
+  0ignored/0measured/0filtered (graph11/control5/scopes2/selflocals2/tags2).
+  Log /private/tmp/suss-pr194-review-native-corrected.log.
+- Python name checker9passed,.002s, terminal0;
+  /private/tmp/suss-pr194-review-python.log. Independently compared root's existing
+  fresh raw seven analyzer traces with actual Node output and frozen corpus;
+  exact match/all executions42, no alpha rewriting. This verifies recorded
+  executed evidence, not a fresh JVM invocation.
+- git diff --check passes. No compiler/bootstrap input changed during review;
+  root's BOTH phase regeneration and Java-free reproduction remain applicable.
+
+Freeze/push this scoped review record before exact unfiltered
+cargo test --workspace --locked -- --test-threads=2. Full terminal results and
+all four doctest suites, then final reviewed-head CI, remain required. Reviewer
+retains the sole local Cargo/JVM/Node slot until every handle is terminal and
+explicit release. Full portable schemas/inference, public Compiler/evaluator
+retirement and original #12–#15 lifecycle remain open; no M3 completion, PR
+readiness, merge or issue closure is claimed.

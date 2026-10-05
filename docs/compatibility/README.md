@@ -875,3 +875,11 @@ in both phases after GC, with separately executed42 results. This does not estab
 AST schemas/inference or classify additional inventory entries. Public compiler
 migration, evaluator retirement and the original M3 gates remain required. See
 [control source AST evidence](../runtime/compiled-macro-control-source-asts.md).
+
+
+Selected function-name source AST evidence now matches seven fresh pinned
+analyzer/Node cases and independently decoded native execution in both caller
+phases after GC. Presence, name/local/method-scope identity, shadows and raw
+false-versus-nil return tags are covered. This does not complete source schemas,
+inference, compiled macro acceptance or any inventory item; see
+[function scope facts](../runtime/compiled-macro-function-scopes.md).

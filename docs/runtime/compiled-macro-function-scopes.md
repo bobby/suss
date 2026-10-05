@@ -1,7 +1,8 @@
 # Compiler function scope facts
 
 This is partial issue #14 work toward genuine compiled macro `&env`. Source macros
-still do not receive the rich environment. The expansion host now borrows actual
+receive rooted source graph records; the full portable schema remains incomplete.
+The expansion host borrows actual
 named function scopes, preserving declarations, source origins, phase namespace,
 parent scopes and lexical/field shadows.
 
@@ -33,9 +34,40 @@ cargo test -p suss-cli --locked --test compiled_macro_function_scopes \
   --test compiled_macro_field_records -- --test-threads=2
 ```
 
-Compiler and oracle additions are original code; no upstream core import or
-license count changes. No Java or JavaScript dependency is added to shipped code.
-Independent source review and focused native validation are complete. The complete
-baseline and exact-head CI remain required. Canonical rich environment transport, logical method receiver
-roles, syntax quote/bootstrap/cache/evaluator removal and original M3 acceptance
-remain open.
+Function ASTs now retain the genuine name scope before function analysis restores
+its enclosing scope. Anonymous functions expose present `:name nil`, omit
+`:local`, and declare `[:methods]` children. Named functions and definition hints
+share one binding AST between `:name` and `:local`, with `[:local :methods]`
+children. This record is also shared with the method-entry function scope.
+An anonymous nested function retains its enclosing environment without acquiring
+its parent's name AST.
+
+The binding AST carries actual `:op :binding`, source `:form`/`:name`, `:local :fn`
+and declaration environment. Its `:info` records `:fn-self-name`, namespace,
+parent scopes and present nullable shadow. `:ret-tag` preserves raw non-nil name
+metadata, including false; nil does not create this key. Definition hints keep
+actual declarations and scopes without inventing lexical binding IDs.
+
+Seven fresh pinned analyzer observations agree exactly with raw Node output.
+They inspect21 selected fields for anonymous/named/shadowed functions, number,
+false and nil return tags, and multiple methods; all executions return42.
+The native regression consumes that same corpus in both caller phases after GC.
+The isolated parent executes42 but fails on absent anonymous `:name` presence.
+Compiler regressions additionally check shared actual scope identity, definition
+hints and an anonymous nested function's inherited environment.
+
+```sh
+scripts/test-function-name-ast-oracle.sh
+cargo test -p suss-compile --locked --test portable_control_source_analysis \
+  -- --test-threads=2
+cargo test -p suss-cli --locked --test compiled_macro_control_source_asts \
+  --test compiled_macro_function_scopes -- --test-threads=2
+```
+
+Original code is informed by pinned analyzer.cljc2279–2300 and2304–2378.
+No upstream forms were copied, inventory classifications changed, or Java/Node
+dependencies added to shipped code. This bounded schema does not establish full
+function/type/protocol annotations, source environments or inference. Public
+compiler migration/evaluator retirement and original M3 lifecycle acceptance
+remain required. Independent review, unfiltered full baseline and final-head CI
+are required for the new function-name change before readiness.

@@ -448,6 +448,8 @@ pub enum SourceBinding {
 /// arity elimination. These are compiler facts, not portable inferred tags.
 #[derive(Debug, Clone)]
 pub struct SourceCallable {
+    /// Genuine source name scope, including declaration hints without lexical IDs.
+    pub name: Option<std::sync::Arc<FunctionScope>>,
     pub methods: Vec<SourceMethod>,
 }
 /// Actual method-entry environment, captured before parameter allocation.
@@ -1262,6 +1264,12 @@ impl Analyzer<'_> {
     ) -> Result<Hir, Diagnostic> {
         let outer_scope_count = self.function_scopes.len();
         let result = self.function_inner(form, args, bootstrap_macro, name_hint);
+        if result.is_ok() {
+            let name = self.function_scopes.get(outer_scope_count).cloned();
+            if let Some(callable) = self.source_callables.last_mut().and_then(Option::as_mut) {
+                std::sync::Arc::make_mut(callable).name = name;
+            }
+        }
         self.function_scopes.truncate(outer_scope_count);
         result
     }
@@ -1280,6 +1288,7 @@ impl Analyzer<'_> {
             self.enter_function_scope(form, name_hint, None);
             let (function, source_method) = self.fixed_function(form, args, bootstrap_macro)?;
             *self.source_callables.last_mut().expect("source function fact slot") = Some(std::sync::Arc::new(SourceCallable {
+                name: None,
                 methods: vec![source_method],
             }));
             return Ok(function);
@@ -1439,7 +1448,7 @@ impl Analyzer<'_> {
             },
         };
         let function = self.attach_callable_signatures(form, function)?;
-        *self.source_callables.last_mut().expect("source function fact slot") = Some(std::sync::Arc::new(SourceCallable { methods: source_methods }));
+        *self.source_callables.last_mut().expect("source function fact slot") = Some(std::sync::Arc::new(SourceCallable { name: None, methods: source_methods }));
         Ok(function)
     }
     fn general_method(
