@@ -8,7 +8,7 @@ use std::{
     collections::{BTreeMap, HashMap, VecDeque},
     sync::{Arc, Weak},
 };
-use suss_compile::portable::{
+use crate::portable::{
     self,
     hir::{
         self, Expression, FieldBinding, FunctionScope, Hir, Literal, LocalBinding, SourceNamespace,

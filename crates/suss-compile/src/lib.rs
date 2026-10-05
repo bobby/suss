@@ -50,6 +50,25 @@ pub mod worlds;
 pub mod runtime_abi;
 pub mod portable;
 
+// Native compiled phase/session host for compiler embedding and CLI paths.
+// Wasm target assembly remains in portable; these modules require Wasmtime.
+#[cfg(not(target_family = "wasm"))]
+mod portable_module_cache;
+#[cfg(not(target_family = "wasm"))]
+pub mod portable_macro_data;
+#[cfg(not(target_family = "wasm"))]
+pub mod portable_macro_graph;
+#[cfg(not(target_family = "wasm"))]
+pub mod portable_macros;
+#[cfg(not(target_family = "wasm"))]
+pub mod portable_repl;
+#[cfg(not(target_family = "wasm"))]
+pub mod portable_session;
+#[cfg(not(target_family = "wasm"))]
+pub mod portable_aot;
+#[cfg(not(target_family = "wasm"))]
+pub mod portable_project;
+
 pub use config::{SussConfig, WorldConfig};
 pub use error::{CompileError, CompileResult};
 

@@ -2,7 +2,7 @@
 //! Macro bodies execute in Wasm; this module constructs and reads nominal data.
 use crate::portable_session::{Session, SessionError, SessionValue};
 use std::{collections::BTreeMap, ops::Range};
-use suss_compile::portable::Diagnostic;
+use crate::portable::Diagnostic;
 use suss_reader::forms::{Form, Kind};
 use wasmtime::{AnyRef, Rooted, StoreContextMut, Val};
 
@@ -174,7 +174,7 @@ impl FormBridge {
     pub fn scalar(
         &self,
         session: &mut Session,
-        literal: &suss_compile::portable::hir::Literal,
+        literal: &crate::portable::hir::Literal,
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
         session.data_scalar(literal)
@@ -194,7 +194,7 @@ impl FormBridge {
         // Bulk construction is original host code. Retained factories resolve
         // public class cells dynamically, so capturing their closures alone is
         // insufficient to keep compiler data canonical after core redefinition.
-        let nil = self.scalar(session, &suss_compile::portable::hir::Literal::Nil)?;
+        let nil = self.scalar(session, &crate::portable::hir::Literal::Nil)?;
         let mut pairs: Vec<(u32, SessionValue, SessionValue)> = Vec::new();
         let mut hashes: BTreeMap<u32, Vec<usize>> = BTreeMap::new();
         let mut nil_value = None;
@@ -251,7 +251,7 @@ impl FormBridge {
         let count = pairs.len() + usize::from(nil_value.is_some());
         let count = self.scalar(
             session,
-            &suss_compile::portable::hir::Literal::Number(count as f64),
+            &crate::portable::hir::Literal::Number(count as f64),
         )?;
         if entries.len() <= 8 {
             let mut data = pairs
@@ -270,7 +270,7 @@ impl FormBridge {
             let root = self.map_node(session, &pairs, 0, &nil)?;
             let has_nil = self.scalar(
                 session,
-                &suss_compile::portable::hir::Literal::Bool(nil_value.is_some()),
+                &crate::portable::hir::Literal::Bool(nil_value.is_some()),
             )?;
             session.data_construct(
                 &self.roots[self.constructors[&Class::PersistentHashMap]],
@@ -310,7 +310,7 @@ impl FormBridge {
         shift: u32,
         nil: &SessionValue,
     ) -> Result<SessionValue, SessionError> {
-        use suss_compile::portable::hir::Literal;
+        use crate::portable::hir::Literal;
         if pairs.is_empty() {
             return Ok(nil.clone());
         }
@@ -366,7 +366,7 @@ impl FormBridge {
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
         if items.is_empty() { return Ok(self.factories["empty-set"].clone()); }
-        let nil = self.scalar(session, &suss_compile::portable::hir::Literal::Nil)?;
+        let nil = self.scalar(session, &crate::portable::hir::Literal::Nil)?;
         self.set_with_metadata(session, items, &nil)
     }
     fn set_with_metadata(
@@ -376,7 +376,7 @@ impl FormBridge {
         metadata: &SessionValue,
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
-        let nil = self.scalar(session, &suss_compile::portable::hir::Literal::Nil)?;
+        let nil = self.scalar(session, &crate::portable::hir::Literal::Nil)?;
         let entries = items.iter().map(|item| (item.clone(), nil.clone())).collect::<Vec<_>>();
         let map = self.map_values(session, &entries)?;
         session.data_construct(
@@ -393,7 +393,7 @@ impl FormBridge {
         if items.len() > 65_536 {
             return Err(SessionError::Host(error("Compiler vector construction exceeds 65536 entries")));
         }
-        use suss_compile::portable::hir::Literal;
+        use crate::portable::hir::Literal;
         let nil = self.scalar(session, &Literal::Nil)?;
         let tail_offset = if items.is_empty() {
             0
@@ -443,12 +443,12 @@ impl FormBridge {
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
-        let nil = self.scalar(session, &suss_compile::portable::hir::Literal::Nil)?;
+        let nil = self.scalar(session, &crate::portable::hir::Literal::Nil)?;
         let mut tail = self.factories["empty-list"].clone();
         for (index, value) in items.iter().enumerate().rev() {
             let count = self.scalar(
                 session,
-                &suss_compile::portable::hir::Literal::Number((items.len() - index) as f64),
+                &crate::portable::hir::Literal::Number((items.len() - index) as f64),
             )?;
             tail = session.data_construct(
                 &self.roots[self.constructors[&Class::List]],
@@ -466,18 +466,18 @@ impl FormBridge {
         metadata: Option<&SessionValue>,
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
-        let nil = self.scalar(session, &suss_compile::portable::hir::Literal::Nil)?;
+        let nil = self.scalar(session, &crate::portable::hir::Literal::Nil)?;
         let ns = if let Some(namespace) = namespace {
             self.scalar(
                 session,
-                &suss_compile::portable::hir::Literal::String(namespace.encode_utf16().collect()),
+                &crate::portable::hir::Literal::String(namespace.encode_utf16().collect()),
             )?
         } else {
             nil.clone()
         };
         let name_value = self.scalar(
             session,
-            &suss_compile::portable::hir::Literal::String(name.encode_utf16().collect()),
+            &crate::portable::hir::Literal::String(name.encode_utf16().collect()),
         )?;
         let fqn = namespace.map_or_else(
             || name.to_owned(),
@@ -485,12 +485,12 @@ impl FormBridge {
         );
         let fqn = self.scalar(
             session,
-            &suss_compile::portable::hir::Literal::String(fqn.encode_utf16().collect()),
+            &crate::portable::hir::Literal::String(fqn.encode_utf16().collect()),
         )?;
         let hash = self.scalar(
             session,
-            &suss_compile::portable::hir::Literal::Number(
-                suss_compile::portable::hir::identifier_hash(namespace, name, keyword) as f64,
+            &crate::portable::hir::Literal::Number(
+                crate::portable::hir::identifier_hash(namespace, name, keyword) as f64,
             ),
         )?;
         if keyword {
@@ -527,7 +527,7 @@ impl FormBridge {
         depth: usize,
         budget: &mut Budget,
     ) -> Result<SessionValue, SessionError> {
-        use suss_compile::portable::hir::Literal;
+        use crate::portable::hir::Literal;
         let failure = |message: &str| {
             SessionError::Compile(Diagnostic {
                 span: form.span.clone(),
@@ -628,7 +628,7 @@ impl FormBridge {
         ) {
             return Err(failure("Metadata requires a symbol or collection"));
         }
-        let pairs = suss_compile::portable::hir::reader_metadata_pairs(form)
+        let pairs = crate::portable::hir::reader_metadata_pairs(form)
             .map_err(SessionError::Compile)?;
         let metadata = Form {
             span: form.span.clone(),

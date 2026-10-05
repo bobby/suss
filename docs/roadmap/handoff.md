@@ -17748,3 +17748,131 @@ retains the sole local Cargo/JVM/Node slot until every handle is terminal and
 explicit release. Full portable schemas/inference, public Compiler/evaluator
 retirement and original #12–#15 lifecycle remain open; no M3 completion, PR
 readiness, merge or issue closure is claimed.
+
+
+### Native compiler host ownership preparation (2026-10-04)
+
+New isolated /private/tmp/suss-m3-compiler-host-ownership on
+portable/m3-compiler-host-ownership starts at independently reviewed PR194
+head53643bfdf7d469f3815057677eb3c45d91052ab0. Uncommitted and unverified; no PR yet.
+Moved eight native session/macro/data/graph/display/AOT/project/module-cache host
+modules from suss-cli into suss-compile, normalizing only self-crate import paths.
+CLI exports are reexported from the compiler to retain embedding entry paths.
+The compiler adds the existing workspace Wasmtime dependency only for native
+(non-wasm) targets. No new crate or CLI-to-compiler dependency cycle is introduced.
+This prepares public compiler migration; the existing Compiler methods still
+call legacy expand_all/MacroEvaluator and have NOT been migrated or retired.
+
+Read accepted design/ROADMAP/inventory/current handoff before this ownership work.
+All eight moved modules are byte-exact to their original source except
+suss_compile:: -> crate::. Rust syntax parsing passes for all moved modules and
+both library roots; git diff --check passes. No Cargo/JVM/Node run, bootstrap
+regeneration, target execution, commit or push on this branch yet. No API/ABI
+compatibility or milestone completion claim follows from syntax or file movement.
+
+Independent reviewer /root/review_pr194 owns sole heavy slot: frozen clean53643bf,
+full81551 live, log /private/tmp/suss-pr194-review-full-final.log. Root must not
+start heavy commands until explicit terminal release. Next for ownership: focused
+compiler/client build, regenerate and reproduce both bootstrap phase pairs, run
+existing native embedding/frontend/AOT suites; then complete public Compiler
+routing and remove obsolete production evaluator after its replacement gates.
+No legacy acceptance case may be dropped, skipped or changed to hide failure.
+
+Compiler embedding regression prepared in
+crates/suss-compile/tests/native_compiled_host.rs. It invokes a compiled macro,
+mutates one atom across fragments, retains a rooted closure through GC and checks
+foreign phase-Store root rejection directly from the compiler library. Rust
+syntax/format passes; this test has NOT executed. All private host cross-module
+callers moved together; no remaining CLI source/test access to their private
+snapshot/preparation helpers was found. Type checking and runtime verification
+remain pending until reviewer81551 explicitly releases the heavy slot.
+
+Ownership follow-up source audit: moved host modules have no include_str!,
+include_bytes! or CARGO_MANIFEST_DIR paths that require relocation. The compiler
+build script recursively fingerprints its Rust sources, including these newly
+owned modules. Both bootstrap phase identities therefore require regeneration;
+the old images cannot validate this branch. Compile the new client test without
+running it first, then regenerate/reproduce both phase pairs before executing
+the client and existing frontend/AOT suites. Source equivalence and diff checks
+were repeated successfully; no runtime result is inferred from those checks.
+
+PR193 exact-final CI37243419746 now SUCCESS6179f77. Root downloaded raw job log
+/private/tmp/suss-pr193-final-ci-job.log (13547 terminal0), verified exact unfiltered
+workspace command, every148 result tuple equals local1216/0/17/0/0, and all four
+doctests. Remote head was rechecked exactly6179 before body/readiness update;
+72579 ACTUAL TERMINAL0, PR193 now ready and unmerged. Root GHwatch38455 terminal0.
+PR194 final-head CI37246670463 at53643bf remains pending; reviewer81551 live.
+
+Prepared second direct compiler-client regression: compiled macro expansion
+feeds an AOT source containing a throwing Runtime initializer. Preparation and
+component assembly must succeed without executing that initializer; actual
+instantiation must carry the independently decoded language payload42. This
+checks the phase boundary through compiler-library exports. Rustfmt/diff checks
+pass; both new client tests remain UNEXECUTED while reviewer81551 owns the slot.
+
+Public API migration audit: ensure_core_loaded, compile_expr_cached,
+compile_expr_with_info, compile, compile_files, compile_with_namespaces,
+compile_for_main and compile_project still reach expand_all/MacroEvaluator.
+Moving the host does not retire any of these paths. Existing compile_expr
+acceptance includes ordinary tail-recursive countdown10000; preserve that
+executed behavior when replacing the entry points, in addition to loop/recur
+semantics. Portable emit.rs implements IR Jump by loading all replacements,
+assigning target locals and branching inside its Wasm loop. This is source
+evidence only; no fresh execution or broad TCO support is claimed here.
+
+Ownership Python validation: initial full suite failed with7 setup errors
+because this new worktree lacked its pinned ClojureScript checkout (173 tests
+ran; not semantic evidence). Prepared a shared local clone from the verified
+existing checkout; git rev-parse now equals the tracked pin
+c4295f303100bbf5afac449242d30bca1126f1a1. Unchanged full command
+python3 -m unittest discover -s scripts -p 'test_*.py' now passes177 tests in
+5.498s; session37006 ACTUAL TERMINAL0, log
+/private/tmp/suss-host-ownership-python-final.log. Repaired the runtime ABI
+acceptance document link to the compiler-owned session source. No Rust runtime
+checks or bootstrap regeneration have run yet; reviewer81551 still owns the slot.
+
+Ownership source-manifest gates ACTUAL TERMINAL0: cljs_inventory.py --check
+verified1065 declarations; cljs_reviews.py verified371 reviewed/694 unassessed;
+core_import.py --check verified274 files (72771 terminal0);
+apply_bootstrap.py --check verified the bounded apply bootstrap and four
+complete licensed generators. No inventory status changed. These source gates
+do not replace pending compiler build/bootstrap reproduction/runtime execution.
+
+Ownership runtime validation now has executed evidence. Root received the
+reviewer194 explicit release only after full81551 ACTUAL TERMINAL0 and all four
+doctest suites; independent root parse confirms148groups/1218pass/0fail/17ignore.
+Ownership compiler-client no-run66454 terminal0, build6.93s. Both bootstrap pairs
+regenerated28349 terminal0; Java-free verifier85768 terminal0, byte-exact phase
+pairs/checkout-independent compiler identity and bootstrap4passed12.51s. Actual
+client18123 terminal0:2passed/0failed/0ignored/0filtered7.72s, including macro,
+persistent atom/GC closure, foreign Store rejection and deferred AOT throw42.
+Logs /private/tmp/suss-host-ownership-{client-build,bootstrap-generate,
+bootstrap-verify,client-runtime}.log. Commands use the shared bounded target and
+CARGO_BUILD_JOBS=2, never RUSTFLAGS. Existing nine frontend suites now running
+87487, /private/tmp/suss-host-ownership-frontends.log; no terminal result yet.
+PR194 exact-head CI remains pending; its body and existing issue14 progress
+comment5985901498 now record completed independent review/full and ownership
+focused progress truthfully. Next finish frontend gates, review moved unit tests,
+then commit/push a draft ownership PR with Refs #12/#13/#14 and dispatch its
+independent review/full/final-head CI. Public Compiler/evaluator retirement and
+original M3 lifecycle/scheduler/live-heap acceptance still remain open.
+
+Ownership frontend87487 ACTUAL TERMINAL0:70passed/0failed/0ignored/0filtered
+across all nine selected suites (source preparation4, macro AOT1, file command4,
+namespace command4, project command7, native entries10, phase3, namespace4,
+persistent session33). Original assertions retained. Isolated parent53643bf
+with only the new client test copied:20835 ACTUAL TERMINAL101 before execution,
+missing compiler-library portable_macro_data/macros/session/aot exports. This
+proves the prior public API gap, not a runtime semantic failure. Parent log
+/private/tmp/suss-host-ownership-client-parent.log. Moved native module unit
+checks now run under compiler library, log/private/tmp/suss-host-ownership-unit.log.
+No full ownership baseline, independent review or final-head CI yet.
+
+Moved native module unit41656 ACTUAL TERMINAL0:17passed/0failed/0ignored,
+81 unrelated compiler tests filtered by the intentional portable_ focus,7.10s.
+No filter will be used for the required final reviewed-head workspace baseline.
+All root Cargo/JVM/Node handles are actually terminal. Source implementations
+remain byte-exact to parent except self-crate imports. Root next commits/pushes
+this ownership prerequisite as a draft stacked on194, dispatches independent
+review with significant fixes and requires exact full/final-head CI. Original
+public Compiler/evaluator retirement and full M3 acceptance remain unfulfilled.

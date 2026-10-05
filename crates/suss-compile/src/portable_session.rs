@@ -9,7 +9,7 @@ use std::{
         Arc, OnceLock,
     },
 };
-use suss_compile::{
+use crate::{
     portable::{
         self,
         modules::{ModuleDiagnostic, ModuleIdentity, PreparedModule},
