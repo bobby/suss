@@ -4909,6 +4909,11 @@
    (when (or (nil? start) (nil? end))
      (throw (suss.bootstrap/error "Assert failed: (and (not (nil? start)) (not (nil? end)))")))
    (build-subvec nil v (bit-or start 0) (bit-or end 0) nil))))
+
+(def mod
+  "Modulus of num and div. Truncates toward negative infinity."
+  (fn [n d]
+    (js-mod (+ (js-mod n d) d) d)))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

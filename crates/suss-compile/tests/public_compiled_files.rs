@@ -148,7 +148,10 @@ fn public_file_keeps_io_and_unsupported_boundary_errors_distinct() {
         .compile_files(source.to_str().unwrap(), wit.to_str().unwrap())
         .unwrap_err();
     assert!(matches!(error, CompileError::Unsupported(_)), "{error}");
-    assert!(error.to_string().contains("list<map<string, u32>>"), "{error}");
+    assert!(
+        error.to_string().contains("list<map<string, u32>>"),
+        "{error}"
+    );
 }
 
 #[test]
@@ -341,5 +344,84 @@ fn public_file_defers_runtime_initialization_and_preserves_exception_payload() {
     assert_eq!(
         payload.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
         42.0_f64.to_bits()
+    );
+}
+
+#[test]
+fn public_file_ordinary_tail_calls_keep_bounded_stack_and_finally_cleanup() {
+    let root = tempfile::tempdir().unwrap();
+    write(
+        root.path(),
+        "app.sus",
+        r#"
+      (def cleaned (atom 0))
+      (defn walk [n total]
+        (if (<= n 0) total (walk (dec n) (+ total 1))))
+      (defn pending [n]
+        (if (<= n 0) 0
+          (try (pending (dec n)) (finally (swap! cleaned inc)))))
+      (defn ^:export calculate [x]
+        (let [answer (try (if (< x 0) (pending (- x)) (walk x 0))
+                      (finally (swap! cleaned inc)))]
+          (+ answer @cleaned)))
+    "#,
+    );
+    write(root.path(), "api.wit", WIT);
+    let bytes = Compiler::new()
+        .compile_files(
+            root.path().join("app.sus").to_str().unwrap(),
+            root.path().join("api.wit").to_str().unwrap(),
+        )
+        .unwrap();
+    execute(
+        bytes,
+        None,
+        &[(100_000.0, 100_001.0), (0.0, 2.0), (7.0, 10.0), (-3.0, 7.0)],
+    );
+}
+
+#[test]
+fn public_file_tail_calls_read_live_global_after_redefinition() {
+    let root = tempfile::tempdir().unwrap();
+    write(
+        root.path(),
+        "app.sus",
+        r#"
+      (defn original [n]
+        (if (== n 0) 7
+          (do (set! original (fn [m] (+ m 40))) (original (dec n)))))
+      (def saved original)
+      (defn ^:export calculate [x] (saved x))
+    "#,
+    );
+    write(root.path(), "api.wit", WIT);
+    let bytes = Compiler::new()
+        .compile_files(
+            root.path().join("app.sus").to_str().unwrap(),
+            root.path().join("api.wit").to_str().unwrap(),
+        )
+        .unwrap();
+    execute(bytes, None, &[(3.0, 42.0), (2.0, 41.0), (0.0, 7.0)]);
+}
+
+#[test]
+fn public_file_mod_preserves_negative_divisor_fraction_and_signed_zero() {
+    let root = tempfile::tempdir().unwrap();
+    write(
+        root.path(),
+        "app.sus",
+        "(defn ^:export calculate [x] (mod x -3))",
+    );
+    write(root.path(), "api.wit", WIT);
+    let bytes = Compiler::new()
+        .compile_files(
+            root.path().join("app.sus").to_str().unwrap(),
+            root.path().join("api.wit").to_str().unwrap(),
+        )
+        .unwrap();
+    execute(
+        bytes,
+        None,
+        &[(5.0, -1.0), (-5.0, -2.0), (1.5, -1.5), (0.0, -0.0)],
     );
 }

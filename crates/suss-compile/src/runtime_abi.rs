@@ -540,7 +540,7 @@ fn build_module() -> Vec<u8> {
             struct_type_index: 4,
             field_index: 1,
         },
-        CallRef(INVOKE),
+        ReturnCallRef(INVOKE),
     ]);
     let mut arity_error = vec![GlobalGet(0)];
     arity_error.extend(message.iter().map(|unit| I32Const(*unit as i32)));

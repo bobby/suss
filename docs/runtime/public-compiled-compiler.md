@@ -75,6 +75,19 @@ catch syntax; original host assertions remain. Earlier adapter and fixture
 failures are recorded in the handoff. Independent review, the full workspace
 baseline and final-head CI remain required for this increment.
 
+Independent file/project review found two existing full-baseline regressions:
+ordinary recursive file exports exhausted the stack, and the retained `mod`
+dependency was absent. Eligible calls now tail-transfer their already evaluated
+callee/arguments through the shared invocation and closure dispatch paths. New
+file tests execute 100,000 ordinary tail calls, retain outer and per-frame finally
+cleanup, and observe a live redefinition through a captured old function.
+The pinned two-argument `mod` algorithm/docstring is retained with a hash-bound
+bootstrap patch and EPL source provenance; negative divisors, fractions and signed
+zero execute correctly. The original 320 `compile_expr` assertions and its 12
+manual ignores now pass unchanged; all 30 component, 12 file/project and 12 public
+pipeline tests pass. The initial failed full baseline remains recorded; the
+replacement full baseline and final-head CI are still required.
+
 Expression and cache entry points still use prototype paths. Production
 evaluator retirement is incomplete, including the component-target CLI route.
 Issues #12–#15 and M3 remain open. Each increment requires independent review,

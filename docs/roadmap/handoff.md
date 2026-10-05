@@ -19182,3 +19182,39 @@ Next publishlinkedmigrationdraft, dispatchindependentreview withsignificant
 fixes pushed byreviewer, requirefullworkspace/finalheadCI. Expression/cache/
 Wasmfrontend/evaluatorretirement andoriginal M3remainingcriteria stayopen.
 No merge/Closes/acceptancecompletion. Rootheavy commands allterminalnow.
+
+
+Independent PR #204 review, 2026-10-05: initial frozen b48e8bf full13173
+ACTUAL terminal101,112groups/938pass/2fail/12existingignores/0filtered;
+Cargo stopped before remaining groups and all four doctest suites. Existing
+compile_expr test_tco_deep_recursion trapped call-stack exhausted;
+test_tco_mutual_recursion_style failed unresolved Runtime mod. These failures
+are not ignored or converted into accepted failures. Reviewer explicitly released
+the heavy slot while root ran independent decoder work, then reacquired it.
+Extra source regressions58825 ACTUALterminal101:public_files12,10pass2fail,
+0ignored0filtered. Deep ordinary tailcalls and missing mod failed; live global
+redefinition control and original9 passed.
+
+Reviewer repair retains already evaluated callee/argument values and recognizes
+only empty verified IR return-forwarding edges. Emit return_call through runtime
+invoke (return_call_ref) and fixed/variadic closure dispatch. No live self-name
+lookup is replaced with a recurrence backedge. Pending Try/dynamic-scope helper
+frames remain, preserving cleanup. Added100000-tailcall, outer and per-frame
+finally, captured old function/live self-name, negative modulo/fraction/signed-zero
+regressions; original public9 and legacy compile_expr assertions remain.
+Retain pinned runtime:mod:2976 body/doc via metadata-mod.json hash-bound defn
+adaptation after existing js-mod dependency, preserving extracted file indices
+and EPL provenance; generated278files strict, overlay375reviewed690unassessed.
+
+Generation85729 failed a Rust shared-lifetime helper compile check; repaired and
+87616 ACTUALterminal0 BOTHpairs7.00s build. Focus31996 ACTUALterminal0:
+compile_expr320pass0fail12unchangedmanualignores78.66s; component30/0/0/0filtered
+13.75s; public_files12/0/0/0filtered16.82s; public_pipeline12/0/0/0filtered17.06s.
+Python unittest discovery178passed. Verifier3547 ACTUALterminal0: Java/Node
+absent, TWO fresh BOTHpairs byteexact with tracked artifacts, identity/invalidation
+checks and bootstrap4/0/0/0filtered passed; next reviewer-push repair,
+freeze source and run exact unfiltered workspace replacement plus final-head CI
+raw group/doc/ignore audit. PR204 remains draft/unmerged; original M3 expression/
+cache/Wasm evaluator retirement/full schema/lifecycle gates remain open.
+Logs /private/tmp/suss-pr204-review-{full,extra-red,repair-bootstrap,
+repair-bootstrap-2,repair-focus,repair-verify,python}.log and audit JSON retained.

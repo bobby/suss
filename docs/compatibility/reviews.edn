@@ -3170,6 +3170,12 @@
    :classification :adapted :rationale "Retain full pinned wrapper with exact binary64 remainder needed by real vector iterators and chunk offsets. General object coercion remains unfinished; no full public core acceptance claim."
    :status :in-progress :adaptation-path "docs/compatibility/patches/metadata-js-mod.json" :alternative nil
    :tests ["crates/suss-cli/tests/compiled_macro_metadata.rs"]}
+  "runtime:mod:2976"
+  {:source-sha256 "9b4da4cf1a510d97cde4786ac20a838ff91a5c8f28dc9496e16e0a99927b517c" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["js-mod" "+"]
+   :classification :adapted :rationale "Retain the pinned modulo algorithm, signature and docstring with only explicit defn bootstrap. Binary64 remainder/addition preserve negative divisor, fraction and signed-zero behavior. Full object coercion and public core acceptance remain open."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/metadata-mod.json" :alternative nil
+   :tests ["crates/suss-compile/tests/public_compiled_files.rs" "crates/suss-compile/tests/compile_expr.rs"]}
   "runtime:bounded-count:3928"
   {:source-sha256 "d63700971866bf77e738fe14d1e4bf7479485d353c577543c79efff07b58b5ea" :visibility :public :arities {:fixed [2] :variadic-min nil}
    :dependencies ["retained seq/first/next/cons/count and INext"]
