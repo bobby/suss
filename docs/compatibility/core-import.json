@@ -1353,12 +1353,27 @@
       "id": "runtime:seq?:2340",
       "source-sha256": "e7e3b05d641a03c16af4b0870169d35fcd6bad6a1aa22c4e7e10e62268aa86dd",
       "patch": "docs/compatibility/patches/syntax-quote-seq-predicate.json"
+    },
+    {
+      "id": "runtime:Subvec:6077",
+      "source-sha256": "461779bbd85a1a3e838660672bbe389a182a3330b7409c888e5706c7f4cd3754",
+      "patch": "docs/compatibility/patches/vector-subvec-type.json"
+    },
+    {
+      "id": "runtime:build-subvec:6218",
+      "source-sha256": "489934fa5fb6315cca595b2cfcef0f0f345f61dfe0efab6a0c63bcc9647e9498",
+      "patch": "docs/compatibility/patches/vector-build-subvec.json"
+    },
+    {
+      "id": "runtime:subvec:6230",
+      "source-sha256": "afe5c911525ef228ccd942a2774ab5d33ab6d980e46166bf5b29606046d3921a",
+      "patch": "docs/compatibility/patches/vector-subvec.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "9f8426ed85331627fb12823d389e824487bfb2cc6d54c6c0d98f09ce18a6e45f"
+      "sha256": "2704e150f7a4f8fcbb045ead215c55a5f76b5bdf8cb69edfa2cf80408f6da55d"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",

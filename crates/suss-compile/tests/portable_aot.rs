@@ -485,8 +485,9 @@ fn portable_component_rejects_missing_duplicate_unknown_and_unsupported_mappings
             .is_err()
         );
     }
-    let (resolve, selected) =
-        world("package test:unsupported; world api { export f: func(x: list<string>) -> list<string>; }");
+    let (resolve, selected) = world(
+        "package test:unsupported; world api { export f: func(x: list<list<string>>) -> list<list<string>>; }",
+    );
     assert!(
         portable::aot::component(
             std::slice::from_ref(&fragment),

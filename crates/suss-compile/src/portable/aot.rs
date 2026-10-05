@@ -7,6 +7,8 @@ use wasm_encoder::*;
 use wit_parser::{FunctionKind, Type, WorldItem};
 pub use wit_parser::{Resolve, WorldId};
 
+mod list_schema;
+mod lists;
 mod strings;
 
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
@@ -43,31 +45,47 @@ enum Scalar {
     S32,
 }
 #[derive(Clone, Copy)]
+enum ListElement {
+    Scalar(Scalar),
+    String,
+}
+
+#[derive(Clone, Copy)]
 enum Boundary {
     Scalar(Scalar),
     Option(Scalar),
     String,
     StringOption,
+    List(ListElement),
 }
 impl Boundary {
     fn flat(self) -> Vec<ValType> {
         match self {
             Self::Scalar(ty) => vec![ty.core()],
             Self::Option(ty) => vec![ValType::I32, ty.core()],
-            Self::String => vec![ValType::I32, ValType::I32],
+            Self::String | Self::List(_) => vec![ValType::I32, ValType::I32],
             Self::StringOption => vec![ValType::I32; 3],
         }
     }
     fn core_result(self) -> ValType {
         match self {
             Self::Scalar(ty) => ty.core(),
-            Self::Option(_) | Self::String | Self::StringOption => ValType::I32,
+            Self::Option(_) | Self::String | Self::StringOption | Self::List(_) => ValType::I32,
         }
     }
     fn component(self, types: &mut ComponentTypeSection) -> ComponentValType {
         match self {
             Self::Scalar(ty) => ty.component(),
             Self::String => PrimitiveValType::String.into(),
+            Self::List(element) => {
+                let index = types.len();
+                let element = match element {
+                    ListElement::Scalar(ty) => ty.component(),
+                    ListElement::String => PrimitiveValType::String.into(),
+                };
+                types.defined_type().list(element);
+                ComponentValType::Type(index)
+            }
             Self::StringOption => {
                 let index = types.len();
                 types.defined_type().option(PrimitiveValType::String);
@@ -84,13 +102,25 @@ impl Boundary {
         matches!(self, Self::String)
     }
     fn uses_strings(self) -> bool {
-        matches!(self, Self::String | Self::StringOption)
+        matches!(
+            self,
+            Self::String | Self::StringOption | Self::List(ListElement::String)
+        )
+    }
+    fn uses_memory(self) -> bool {
+        self.uses_strings() || self.list().is_some()
+    }
+    fn list(self) -> Option<ListElement> {
+        match self {
+            Self::List(element) => Some(element),
+            _ => None,
+        }
     }
     fn string_option(self) -> bool {
         matches!(self, Self::StringOption)
     }
     fn indirect_result(self) -> bool {
-        self.optional() || self.string()
+        self.optional() || self.string() || self.list().is_some()
     }
     fn optional(self) -> bool {
         matches!(self, Self::Option(_) | Self::StringOption)
@@ -104,6 +134,23 @@ fn boundary(resolve: &Resolve, mut ty: Type) -> Result<Boundary, Diagnostic> {
                 wit_parser::TypeDefKind::Type(next) => {
                     ty = *next;
                     continue;
+                }
+                wit_parser::TypeDefKind::List(payload) => {
+                    let mut payload = *payload;
+                    for _ in 0..64 {
+                        if payload == Type::String {
+                            return Ok(Boundary::List(ListElement::String));
+                        }
+                        if let Type::Id(id) = payload {
+                            if let wit_parser::TypeDefKind::Type(next) = &resolve.types[id].kind {
+                                payload = *next;
+                                continue;
+                            }
+                        }
+                        return scalar(resolve, payload)
+                            .map(|ty| Boundary::List(ListElement::Scalar(ty)));
+                    }
+                    return Err(error("Portable AOT list element alias depth exceeds64"));
                 }
                 wit_parser::TypeDefKind::Option(payload) => {
                     let mut payload = *payload;
@@ -261,11 +308,25 @@ fn scalar(resolve: &Resolve, mut ty: Type) -> Result<Scalar, Diagnostic> {
     Err(error("WIT scalar alias nesting exceeds 64"))
 }
 
+// World-local aliases appear as type imports in the resolved WIT graph.
+// Supported value types introduce no runtime capability import; their adapters
+// use the resolved underlying type. Function/interface/resource imports remain
+// subject to the existing unsupported-feature diagnostic.
+fn has_unsupported_imports(resolve: &Resolve, world: WorldId) -> bool {
+    resolve.worlds[world]
+        .imports
+        .values()
+        .any(|item| match item {
+            WorldItem::Type { id, .. } => boundary(resolve, Type::Id(*id)).is_err(),
+            WorldItem::Function(_) | WorldItem::Interface { .. } => true,
+        })
+}
+
 /// Check only implemented WIT adapter capabilities, before source macro effects.
 /// Source mappings, code generation and artifact validation have separate errors.
 pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(), Diagnostic> {
     let selected = &resolve.worlds[world];
-    if !selected.imports.is_empty() {
+    if has_unsupported_imports(resolve, world) {
         return Err(error(
             "Portable AOT imported WIT adapters remain unimplemented",
         ));
@@ -345,7 +406,7 @@ pub fn source_export_mappings(
         .last()
         .ok_or_else(|| error("AOT needs a prepared source fragment"))?;
     let selected = &resolve.worlds[world];
-    if !selected.imports.is_empty() {
+    if has_unsupported_imports(resolve, world) {
         return Ok(explicit.to_vec());
     }
     let mut missing = Vec::new();
@@ -545,6 +606,10 @@ pub fn component(
         export.params.iter().any(|(_, ty)| ty.optional())
             || export.result.is_some_and(Boundary::optional)
     });
+    let list_schema = exports.iter().any(|export| {
+        export.params.iter().any(|(_, ty)| ty.list().is_some())
+            || export.result.is_some_and(|ty| ty.list().is_some())
+    });
     let mut fragments = fragments.to_vec();
     if option_schema {
         fragments.push(super::prepare_fragment(
@@ -580,6 +645,13 @@ pub fn component(
             Phase::Runtime,
         )?);
     }
+    if list_schema {
+        fragments.push(super::prepare_fragment(
+            list_schema::SOURCE,
+            &fragments[0].environment,
+            Phase::Runtime,
+        )?);
+    }
     // Reject every artifact before assembling any initialization start function.
     for fragment in &fragments {
         runtime_abi::verify_artifact(&fragment.wasm, &runtime_abi::Manifest::default())
@@ -598,11 +670,11 @@ pub fn component(
         .flat_map(|fragment| fragment.cells.iter().cloned())
         .collect::<Vec<_>>();
     let bindings = core_bindings::compile_with_cells(Phase::Runtime, &cells)?;
-    let has_strings = exports.iter().any(|export| {
-        export.params.iter().any(|(_, ty)| ty.uses_strings())
-            || export.result.is_some_and(Boundary::uses_strings)
+    let has_memory = exports.iter().any(|export| {
+        export.params.iter().any(|(_, ty)| ty.uses_memory())
+            || export.result.is_some_and(Boundary::uses_memory)
     });
-    let adapter = adapter(&exports, fragments.len(), option_schema)?;
+    let adapter = adapter(&exports, fragments.len(), option_schema, list_schema)?;
     let asynchronous = exports
         .iter()
         .filter(|export| export.asynchronous)
@@ -618,7 +690,7 @@ pub fn component(
             data: &module,
         });
     }
-    if has_strings {
+    if has_memory {
         let memory = super::command::memory::module();
         component.section(&RawSection {
             id: ComponentSectionId::CoreModule.into(),
@@ -626,7 +698,7 @@ pub fn component(
         });
     }
     if !asynchronous.is_empty() {
-        let bridge = async_adapter(&asynchronous, has_strings);
+        let bridge = async_adapter(&asynchronous, has_memory);
         component.section(&RawSection {
             id: ComponentSectionId::CoreModule.into(),
             data: &bridge,
@@ -654,7 +726,7 @@ pub fn component(
             ModuleArg::Instance(2 + index as u32),
         )
     }));
-    if has_strings {
+    if has_memory {
         let allocator_instance = 2 + fragments.len() as u32;
         instances.instantiate(
             3 + fragments.len() as u32,
@@ -665,7 +737,7 @@ pub fn component(
             ModuleArg::Instance(allocator_instance),
         ));
     }
-    let adapter_instance = 2 + fragments.len() as u32 + u32::from(has_strings);
+    let adapter_instance = 2 + fragments.len() as u32 + u32::from(has_memory);
     instances.instantiate(2 + fragments.len() as u32, args);
     component.section(&instances);
     let mut types = ComponentTypeSection::new();
@@ -690,7 +762,7 @@ pub fn component(
     // Memory must be aliased before canonical task-return uses Unicode results.
     // Alias realloc first so its core function index is stable across sync/async.
     let mut memory_aliases = ComponentAliasSection::new();
-    if has_strings
+    if has_memory
         || exports
             .iter()
             .any(|export| export.result.is_some_and(Boundary::indirect_result))
@@ -701,7 +773,7 @@ pub fn component(
             name: "suss.canonical.memory",
         });
     }
-    if has_strings {
+    if has_memory {
         memory_aliases.alias(Alias::CoreInstanceExport {
             instance: adapter_instance - 1,
             kind: ExportKind::Func,
@@ -711,7 +783,7 @@ pub fn component(
     if !memory_aliases.is_empty() {
         component.section(&memory_aliases);
     }
-    let completion_base = u32::from(has_strings);
+    let completion_base = u32::from(has_memory);
     // Task-return builtins precede bridge instantiation, so the bridge can call
     // the canonical completion operation directly without a mutable shim.
     let mut completion = CanonicalFunctionSection::new();
@@ -727,7 +799,7 @@ pub fn component(
             if string_boundary {
                 options.push(CanonicalOption::UTF16);
             }
-            if export.result.is_some_and(Boundary::uses_strings) {
+            if export.result.is_some_and(Boundary::uses_memory) {
                 options.push(CanonicalOption::Memory(0));
             }
             completion.task_return(result_types[index], options);
@@ -746,7 +818,7 @@ pub fn component(
             )
         }));
         bridge_instances.instantiate(
-            3 + fragments.len() as u32 + u32::from(has_strings),
+            3 + fragments.len() as u32 + u32::from(has_memory),
             [
                 ("suss.aot", ModuleArg::Instance(adapter_instance)),
                 ("suss.completion", ModuleArg::Instance(adapter_instance + 1)),
@@ -793,12 +865,13 @@ pub fn component(
         let string_boundary = export.params.iter().any(|(_, ty)| ty.uses_strings())
             || export.result.is_some_and(Boundary::uses_strings);
         let mut options = vec![];
-        if string_boundary {
-            options.extend([
-                CanonicalOption::Memory(0),
-                CanonicalOption::Realloc(0),
-                CanonicalOption::UTF16,
-            ]);
+        if export.params.iter().any(|(_, ty)| ty.uses_memory())
+            || export.result.is_some_and(Boundary::uses_memory)
+        {
+            options.extend([CanonicalOption::Memory(0), CanonicalOption::Realloc(0)]);
+            if string_boundary {
+                options.push(CanonicalOption::UTF16);
+            }
         } else if !export.asynchronous && export.result.is_some_and(Boundary::indirect_result) {
             options.push(CanonicalOption::Memory(0));
         }
@@ -807,7 +880,7 @@ pub fn component(
                 CanonicalOption::Async,
                 CanonicalOption::Callback(callback.unwrap()),
             ]);
-        } else if export.result.is_some_and(Boundary::uses_strings) {
+        } else if export.result.is_some_and(Boundary::uses_memory) {
             let post_name = format!("post.{}", export.name);
             aliases.alias(Alias::CoreInstanceExport {
                 instance: adapter_instance,
@@ -914,14 +987,14 @@ fn async_adapter(exports: &[&Export], dynamic_memory: bool) -> Vec<u8> {
     let mut posts = std::collections::BTreeMap::new();
     if exports
         .iter()
-        .any(|export| export.result.is_some_and(Boundary::uses_strings))
+        .any(|export| export.result.is_some_and(Boundary::uses_memory))
     {
         let ty = types.len();
         types.ty().function([ValType::I32], []);
         for (index, export) in exports
             .iter()
             .enumerate()
-            .filter(|(_, export)| export.result.is_some_and(Boundary::uses_strings))
+            .filter(|(_, export)| export.result.is_some_and(Boundary::uses_memory))
         {
             let function = 2 * exports.len() as u32 + posts.len() as u32;
             let name = format!("post.{}", export.name);
@@ -970,7 +1043,7 @@ fn async_adapter(exports: &[&Export], dynamic_memory: bool) -> Vec<u8> {
                 .instruction(&Instruction::LocalGet(flat_params as u32))
                 .instruction(&ty.payload_load());
         }
-        if export.result.is_some_and(Boundary::uses_strings) {
+        if export.result.is_some_and(Boundary::uses_memory) {
             body.instruction(&Instruction::LocalSet(flat_params as u32));
             let optional = export.result.is_some_and(Boundary::string_option);
             if optional {
@@ -1032,12 +1105,13 @@ fn adapter(
     exports: &[Export],
     fragment_count: usize,
     option_schema: bool,
+    list_schema: bool,
 ) -> Result<Vec<u8>, Diagnostic> {
-    let has_strings = exports.iter().any(|export| {
-        export.params.iter().any(|(_, ty)| ty.uses_strings())
-            || export.result.is_some_and(Boundary::uses_strings)
+    let has_memory = exports.iter().any(|export| {
+        export.params.iter().any(|(_, ty)| ty.uses_memory())
+            || export.result.is_some_and(Boundary::uses_memory)
     });
-    let helpers = if has_strings { HELPERS + 4 } else { HELPERS };
+    let helpers = if has_memory { HELPERS + 4 } else { HELPERS } + if list_schema { 2 } else { 0 };
     let mut types = runtime_abi::prelude();
     let mut imports = ImportSection::new();
     let mut signatures = vec![
@@ -1052,7 +1126,7 @@ fn adapter(
             vec![ValType::I32],
         ),
     ];
-    if has_strings {
+    if has_memory {
         signatures.extend([
             ("string-length", vec![VALUE], vec![ValType::I32]),
             ("string-unit", vec![VALUE, ValType::I32], vec![ValType::I32]),
@@ -1066,7 +1140,7 @@ fn adapter(
             EntityType::Function(runtime_abi::TYPE_COUNT + index as u32),
         );
     }
-    if has_strings {
+    if has_memory {
         for (index, (name, params, results)) in [
             ("cabi_realloc", vec![ValType::I32; 4], vec![ValType::I32]),
             ("release", vec![ValType::I32; 2], vec![]),
@@ -1092,6 +1166,22 @@ fn adapter(
                 page_size_log2: None,
             }),
         );
+    }
+    if list_schema {
+        for (index, (name, params)) in [
+            ("source-array-new", vec![VALUE]),
+            ("source-array-set", vec![VALUE; 3]),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            types.ty().function(params, [VALUE]);
+            imports.import(
+                "suss.runtime",
+                name,
+                EntityType::Function(runtime_abi::TYPE_COUNT + 10 + index as u32),
+            );
+        }
     }
     types.ty().function([VALUE], []);
     imports.import(
@@ -1160,6 +1250,8 @@ fn adapter(
             (1, ValType::I32),
             (1, ValType::F64),
             (4, ValType::I32),
+            (2, VALUE),
+            (4, ValType::I32),
         ]);
         let string_locals = strings::Locals {
             value: result,
@@ -1175,11 +1267,36 @@ fn adapter(
             set_unit: 5,
             realloc: 8,
         };
+        let list_locals = lists::Locals {
+            value: result,
+            container: unit + 1,
+            array: unit + 2,
+            pointer: unit + 3,
+            length: unit + 4,
+            index: unit + 5,
+            output: unit + 6,
+            integer,
+            number,
+        };
+        let list_root = global_indices.len() as u32 + u32::from(option_schema);
         body.instruction(&Instruction::GlobalGet(global_indices[&export.global]))
             .instruction(&Instruction::Call(0));
         let mut parameter = 0;
         for (_, ty) in &export.params {
             match ty {
+                Boundary::List(element) => {
+                    lists::copy_in(
+                        &mut body,
+                        *element,
+                        parameter,
+                        &list_locals,
+                        &string_locals,
+                        &string_helpers,
+                        list_root,
+                        &export.name,
+                    );
+                    parameter += 2;
+                }
                 Boundary::String => {
                     body.instruction(&Instruction::LocalGet(parameter))
                         .instruction(&Instruction::LocalSet(pointer))
@@ -1252,6 +1369,9 @@ fn adapter(
         // buffers before invoking code that can throw a language exception.
         let mut parameter = 0;
         for (_, ty) in &export.params {
+            if let Some(element) = ty.list() {
+                lists::release_input(&mut body, element, parameter, &list_locals);
+            }
             if ty.string() {
                 body.instruction(&Instruction::LocalGet(parameter))
                     .instruction(&Instruction::LocalGet(parameter + 1))
@@ -1275,6 +1395,17 @@ fn adapter(
             .instruction(&Instruction::LocalSet(result));
         match export.result {
             None => {}
+            Some(Boundary::List(element)) => {
+                lists::copy_out(
+                    &mut body,
+                    element,
+                    &list_locals,
+                    &string_locals,
+                    &string_helpers,
+                    list_root,
+                    &export.name,
+                );
+            }
             Some(Boundary::String) => {
                 strings::validate(&mut body, &string_locals, &string_helpers, |body| {
                     boundary_error_message(
@@ -1436,7 +1567,8 @@ fn adapter(
     types.ty().function([], []);
     functions.function(start_type);
     let mut start = Function::new([]);
-    for index in 0..fragment_count - usize::from(option_schema) {
+    let schema_count = usize::from(option_schema) + usize::from(list_schema);
+    for index in 0..fragment_count - schema_count {
         start
             .instruction(&Instruction::Call(helpers + index as u32))
             .instruction(&Instruction::Drop);
@@ -1445,15 +1577,24 @@ fn adapter(
             // closures and constructors before any user initializer can redefine
             // those public cells. This private root is never exported.
             start
-                .instruction(&Instruction::Call(helpers + fragment_count as u32 - 1))
+                .instruction(&Instruction::Call(
+                    helpers + (fragment_count - schema_count) as u32,
+                ))
                 .instruction(&Instruction::GlobalSet(global_indices.len() as u32));
+        }
+        if list_schema && index == 0 {
+            start
+                .instruction(&Instruction::Call(helpers + fragment_count as u32 - 1))
+                .instruction(&Instruction::GlobalSet(
+                    global_indices.len() as u32 + u32::from(option_schema),
+                ));
         }
     }
     start.instruction(&Instruction::End);
     code.function(&start);
     for export in exports
         .iter()
-        .filter(|export| export.result.is_some_and(Boundary::uses_strings))
+        .filter(|export| export.result.is_some_and(Boundary::uses_memory))
     {
         // TypeSection counts the shared recursive group as one entry, while
         // core type indices count all TYPE_COUNT members of that group.
@@ -1462,7 +1603,13 @@ fn adapter(
         let index = imported + functions.len();
         functions.function(ty);
         public.export(&format!("post.{}", export.name), ExportKind::Func, index);
-        let mut post = Function::new([]);
+        let mut post = Function::new([(3, ValType::I32)]);
+        if let Some(element) = export.result.and_then(Boundary::list) {
+            lists::post_return(&mut post, element);
+            post.instruction(&Instruction::End);
+            code.function(&post);
+            continue;
+        }
         let optional = export.result.is_some_and(Boundary::string_option);
         if optional {
             post.instruction(&Instruction::LocalGet(0))
@@ -1500,7 +1647,7 @@ fn adapter(
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !has_strings
+    if !has_memory
         && exports
             .iter()
             .any(|export| export.result.is_some_and(Boundary::optional))
@@ -1515,23 +1662,25 @@ fn adapter(
         });
         module.section(&memory);
     }
-    if has_strings
+    if has_memory
         || exports
             .iter()
             .any(|export| export.result.is_some_and(Boundary::optional))
     {
         public.export("suss.canonical.memory", ExportKind::Memory, 0);
     }
-    if option_schema {
+    if option_schema || list_schema {
         let mut globals = GlobalSection::new();
-        globals.global(
-            GlobalType {
-                val_type: VALUE,
-                mutable: true,
-                shared: false,
-            },
-            &ConstExpr::extended([Instruction::I32Const(0), Instruction::RefI31]),
-        );
+        for _ in 0..schema_count {
+            globals.global(
+                GlobalType {
+                    val_type: VALUE,
+                    mutable: true,
+                    shared: false,
+                },
+                &ConstExpr::extended([Instruction::I32Const(0), Instruction::RefI31]),
+            );
+        }
         module.section(&globals);
     }
     module

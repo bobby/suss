@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "489934fa5fb6315cca595b2cfcef0f0f345f61dfe0efab6a0c63bcc9647e9498",
+  "replacement": "(def build-subvec (fn [meta v start end __hash]\n  (if (instance? Subvec v)\n    (recur meta (.-v v) (+ (.-start v) start) (+ (.-start v) end) __hash)\n    (do\n      (when-not (vector? v)\n        (throw (suss.bootstrap/error \"v must satisfy IVector\")))\n      (when (or (neg? start)\n                (< end start)\n                (> end (count v)))\n        (throw (suss.bootstrap/error \"Index out of bounds\")))\n      (Subvec. meta v start end __hash)))))",
+  "rationale": "Retain the complete pinned declaration and all methods. Replace JavaScript Error construction with the typed portable runtime error adapter. Use the explicit def/fn bootstrap while preserving tail recurrence, nested view offsets, vector validation and range diagnostics."
+}

@@ -4,7 +4,7 @@
 executable component using the same shared runtime and compiled core/source
 binding initializer as native sessions. The caller supplies a resolved WIT world
 and explicit export-to-source-var mappings. This development increment supports
-pure bool, u8/s8/u16/s16/u32/s32 and f32/f64 functions, scalar options, strings and string options
+pure bool, u8/s8/u16/s16/u32/s32 and f32/f64 functions, scalar options, strings and string options, scalar/string lists
 and void results. Parameters use direct canonical signatures with at most16
 flattened fields; larger signatures receive an explicit unsupported diagnostic
 before effectful source macros. Other WIT boundary shapes also receive explicit
@@ -195,3 +195,38 @@ This source is original Rust, with no new upstream forms or ABI layout changes.
 Bootstrap reproduction, independent review, full baseline and final-head CI are
 still required for this working increment. Imports, lists, exact64, nested
 composites, source suspension and the original M3 acceptance remain unfinished.
+
+
+The list adapter working increment transfers lists of supported small scalar
+values and strings as owned persistent vectors. A private compiled schema
+captures the first Runtime core nominal identities before user initializers,
+builds real vector trie layers and accepts retained `Subvec` views on output.
+It checks physical array/node storage and view bounds, then validates every
+result element before allocating output buffers. Canonical nested string buffers
+are released before the outer list buffer; synchronous post-return and
+non-suspending asynchronous task-return perform the same cleanup. Supported
+world-local type aliases do not introduce runtime imports.
+
+The executing ten-test suite passes without ignored or filtered tests. Evidence
+includes trie lengths 0/1/31/32/33/1024/1056/1057/2048, atoms and forced GC,
+subvector ranges, exact numeric bits and checked boundaries, Unicode/NUL/empty
+strings, repeated sync/async transfers under an independent 128 KiB canonical
+memory limit, nominal core redefinition, malformed storage/elements and
+pre-macro rejection of signatures exceeding sixteen flattened fields. The
+universal compiled source closure ABI currently costs 199,101,049 fuel for a
+1,057-element round trip; large test calls each receive a bounded 500-million
+fuel budget, separately from the unchanged memory/cleanup assertions. This is
+executing development evidence, not a performance acceptance claim.
+
+Pinned Subvec, build-subvec and subvec declarations retain their source hashes,
+EPL provenance, extracted originals and explicit adaptation patches through the
+strict core import pipeline. The type retains every upstream method; lazy-seq
+uses the retained LazySeq constructor/thunk, JavaScript errors use typed runtime
+errors, and bootstrap defn/assert/int/max operations have explicit adaptations.
+These declarations remain in-progress: full subvector sequence/reduction/hash/
+metadata/iterator compatibility needs separate evidence. List storage is bounded
+to one million entries and nested view normalization to 64 levels with explicit
+diagnostics. Nested/composite lists, exact64, resource/import adapters, source
+suspension, cancellation and the original M3 acceptance gates remain unfinished.
+Independent review, complete workspace baseline, bootstrap reproduction and
+final-head CI are required before publishing this increment as ready.

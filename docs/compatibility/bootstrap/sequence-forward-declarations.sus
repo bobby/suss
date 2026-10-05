@@ -40,3 +40,6 @@
  inode-kv-reduce nil-iter equiv-map every? reduce-kv)
 
 (declare KeySeq keys ISet ITransientSet PersistentHashSet TransientHashSet HashSetIter set set? hash-set disj disj! es6-set-entries-iterator)
+
+;; Original declarations for retained subvector mutual references.
+(declare Subvec build-subvec subvec seq-iter)

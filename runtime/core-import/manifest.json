@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "79383adb9a2784baac0b8e7650f5ecc23ab1a620c116d42e14b25830c3770485",
-  "reviews-sha256": "46a83a4a83a6064406b493fd392b6d5029bdf94c0b39e76c113da893618e8c1e",
+  "recipe-sha256": "0e1dabc6dcd03959b9ea0062805061e08950a6d97719c83d8ba3ad21f6b5d80d",
+  "reviews-sha256": "88f2cc42c4f9ea518cde0f44af61318015f5350a9cd1fc1978221dc2b1843b5e",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -8392,12 +8392,108 @@
       "semantic-tests": [
         "crates/suss-cli/tests/compiled_macro_syntax_quote.rs"
       ]
+    },
+    {
+      "id": "runtime:Subvec:6077",
+      "name": "Subvec",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6077,
+      "end-line": 6214,
+      "byte-start": 166229,
+      "byte-end": 169761,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "461779bbd85a1a3e838660672bbe389a182a3330b7409c888e5706c7f4cd3754",
+      "extracted": "extracted/0270.cljs",
+      "extracted-sha256": "42f5ecb356593f48edfe0428996f37f50e35c0f5c3867175283046bb495c9f85",
+      "patch": "docs/compatibility/patches/vector-subvec-type.json",
+      "patch-sha256": "fce8f2602a30e4f85397eb86efc71d827654479ee9f6fa45ec46324e5f56f743",
+      "adapted-form-sha256": "c4ee2a561134f5e7c74d17b86b71c11910f67dbc96559754142e29720ab3386a",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "PersistentVector",
+        "IVector",
+        "retained sequence, metadata, hash and reduction protocols",
+        "build-subvec",
+        "pending seq-iter"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/portable_aot_lists.rs"
+      ]
+    },
+    {
+      "id": "runtime:build-subvec:6218",
+      "name": "build-subvec",
+      "kind": "defn-",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6218,
+      "end-line": 6228,
+      "byte-start": 169786,
+      "byte-end": 170210,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "489934fa5fb6315cca595b2cfcef0f0f345f61dfe0efab6a0c63bcc9647e9498",
+      "extracted": "extracted/0271.cljs",
+      "extracted-sha256": "d921e850b3b8d49e530640e91acd8631410a57afc78adb69e9788386e77bf0c8",
+      "patch": "docs/compatibility/patches/vector-build-subvec.json",
+      "patch-sha256": "b46e99e45bb70c461923f8c9d736e5f1572627d1ddb2d6a9557935c9730fed51",
+      "adapted-form-sha256": "532f66b50cd3f5a0923b53c8632de0514a39d19728bfc36fd82baf2dda3b6348",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "PersistentVector",
+        "IVector",
+        "retained sequence, metadata, hash and reduction protocols",
+        "build-subvec",
+        "pending seq-iter"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/portable_aot_lists.rs"
+      ]
+    },
+    {
+      "id": "runtime:subvec:6230",
+      "name": "subvec",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 6230,
+      "end-line": 6240,
+      "byte-start": 170212,
+      "byte-end": 170672,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "afe5c911525ef228ccd942a2774ab5d33ab6d980e46166bf5b29606046d3921a",
+      "extracted": "extracted/0272.cljs",
+      "extracted-sha256": "20b34070e72d8766f1ad9037b18199054814cc72535c2671fcf5bae82e075fbe",
+      "patch": "docs/compatibility/patches/vector-subvec.json",
+      "patch-sha256": "67ee9482fecf404bb0f02286944dfacb4f4fa91b2e8c185d70d688a9481a6ef9",
+      "adapted-form-sha256": "ac3b8ac0d96a3a15144f7f7314df4e37bc6083eb094b2c3a8776fe97a0879457",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "PersistentVector",
+        "IVector",
+        "retained sequence, metadata, hash and reduction protocols",
+        "build-subvec",
+        "pending seq-iter"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/portable_aot_lists.rs"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "9f8426ed85331627fb12823d389e824487bfb2cc6d54c6c0d98f09ce18a6e45f"
+      "sha256": "2704e150f7a4f8fcbb045ead215c55a5f76b5bdf8cb69edfa2cf80408f6da55d"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -8677,6 +8773,9 @@
     "extracted/0267.cljs": "c5eb428571378eeaf54c7b259ffe4b4414b9fdb5939bf72f9d952e36633d8f44",
     "extracted/0268.cljs": "e8e06c108ba48615b1df252d66bcda82f72229e1d8b34eae7b71578df5398fb5",
     "extracted/0269.cljs": "fd4ddae696e1e5560ef7b70964892b8ad138bc2539bec694839cdef2e8c30d0d",
-    "suss/core.sus": "951f10ae94c559496026e687476d4902e483b958fdbdc2c4e7e993c37431565a"
+    "extracted/0270.cljs": "42f5ecb356593f48edfe0428996f37f50e35c0f5c3867175283046bb495c9f85",
+    "extracted/0271.cljs": "d921e850b3b8d49e530640e91acd8631410a57afc78adb69e9788386e77bf0c8",
+    "extracted/0272.cljs": "20b34070e72d8766f1ad9037b18199054814cc72535c2671fcf5bae82e075fbe",
+    "suss/core.sus": "f7f3ee6b26cf2eac4903a32dc94b091ed349a48b1b29500b2c01fb0e75ed12de"
   }
 }
