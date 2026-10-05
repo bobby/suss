@@ -18134,3 +18134,31 @@ Use Refs12/13/14 only. No merge/issue closure/M3 completion. Next migrate remain
 public file/namespace/project/expression/cache and component-target evaluator
 routes, complete source schemas and original pending-I/O/rooted continuation/
 cancellation/live-GC versus resident-code acceptance without narrowing scope.
+
+
+## Independent PR198 command compiler review (2026-10-05)
+
+Reviewed initial92b9e920c1d96edba221db308959d6495ebde8af against25cb06d in
+isolated /private/tmp/suss-pr198-review. Read applicable AGENTS, accepted design,
+roadmap, compatibility inventory and handoff. Native public command routing uses
+the existing compiled pipeline; shared file preparation retains exact source
+path/search paths and namespace validation precedes effectful Macro construction.
+Runtime initialization stays deferred. Official async result shape, user argument
+order, reachable imports, explicit exit checks and phase isolation remain covered
+by executing assertions. Removed extractor has no remaining uses. Wasm-target
+entry reports Unsupported. Independently inspected pinned compiler.cljc at
+c4295f3: recurrence evaluates temporaries, assigns parameters and emits continue,
+supporting the explicit constant-stack clarification. No significant finding or
+source change; original #12–#15 acceptance scope remains open.
+
+After explicit exclusive heavy-slot transfer from root, serial independent tests
+use shared /private/tmp/suss-m3-pr143-target, jobs2, no RUSTFLAGS:
+- Host28176 ACTUAL TERMINAL0: portable_command6passed/0failed/0ignored/0filtered,
+  7.79s; /private/tmp/suss-pr198-review-focused-host.log.
+- CLI49104 ACTUAL TERMINAL0: existing official6passed70.13s and public5passed
+  50.61s, no failures/ignores/filters; /private/tmp/suss-pr198-review-focused-cli.log.
+
+Freeze this docs-only review head before the exact unfiltered workspace baseline.
+Compiler/bootstrap source identity is unchanged. Full baseline/all four doctest
+suites and final-head CI remain required; reviewer retains the exclusive heavy
+slot until actual terminal audit/release. No merge, issue closure or M3 completion.
