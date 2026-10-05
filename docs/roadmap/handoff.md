@@ -19218,3 +19218,40 @@ raw group/doc/ignore audit. PR204 remains draft/unmerged; original M3 expression
 cache/Wasm evaluator retirement/full schema/lifecycle gates remain open.
 Logs /private/tmp/suss-pr204-review-{full,extra-red,repair-bootstrap,
 repair-bootstrap-2,repair-focus,repair-verify,python}.log and audit JSON retained.
+
+
+PR204 review continuation, 2026-10-05: frozen33a90fa exact unfiltered
+`cargo test --workspace --locked -- --test-threads=2` replacement2763 ACTUAL
+terminal0:156groups/1300pass/0fail/17unchanged parent ignores/0filtered, ALL
+four suss_cli/suss_compile/suss_core/suss_reader doctest groups reached.
+Full log/audit /private/tmp/suss-pr204-review-replacement-full{.log,-audit.json}.
+After terminal, rebased204 onto2039d88322 (main4dc4694); pushed c43b83d.
+Complete tree diff against33a90fa contains only parent handoff append; all
+source, tests and bootstrap assets remain byte-identical. No ready/merge claim.
+
+Additional captured-mod/live js-mod regression: first10110 terminal101 hit
+macro &env graph materialization bound at bytes87..133 in core namespace, before
+execution. Preserved that failure separately; it is not a modulo observation.
+Using explicit def/fn* avoids unrelated defn materialization for this regression.
+Second37057 terminal101 reaches actual Wasm execution and returns99 instead of
+expected-1 after runtime js-mod redefinition. Original numeric assertions kept.
+Pinned macro:js-mod:1220 expands directly to JavaScript numeric remainder; port
+now uses suss.bootstrap/f64-remainder at both sites, preserving evaluation order,
+source hash/EPL and avoiding runtime var rebinding in captured compiled mod.
+Full object coercion/public core acceptance remains open.
+
+Regeneration2567 terminal0 BOTHpairs (build5.96s); strict importer278files and
+overlay375reviewed690unassessed verified. Focus87413 terminal0, unfiltered:
+component30/public_files13/public_pipeline12, total55pass0fail0ignore0filter;
+Python178 passed5.759s. Logs /private/tmp/suss-pr204-review-mod-{redefinition-red,
+redefinition-red-2,regen,focus,python,verify}.log preserve actual stages.
+Next verify both pairs, push significant primitive-mod repair, release local
+heavy slot for root focused core/decoder window, then obtain exact replacement
+full and raw final-head CI group/doc/ignore equivalence before readiness.
+All original M3 expression/cache/Wasm frontend/evaluator retirement/schema/
+lifecycle acceptance remains open; PR204 remains draft/unmerged, no Closes.
+
+Verifier10439 ACTUALterminal0: Java/Node absent, TWO fresh BOTHphase pairs
+byteexact tracked assets, identity/invalidation and bootstrap4pass0fail0ignore
+0filter10.30s. Primitive-mod repair ready to push; final fixed-source full/CI
+remain pending after root focused window.

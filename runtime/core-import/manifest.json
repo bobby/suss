@@ -9,7 +9,7 @@
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
   "recipe-sha256": "27122e12c24466f4bc596746d0ce150d1b900aecf83b58726c6f99d8e7853700",
-  "reviews-sha256": "265759a06cf54989bfab3e9876add837829cefb646c0c5fddde053d10be46e7a",
+  "reviews-sha256": "e3df1db81f0446f1302b7c50b8916ef81aeb982209806e64379b3a7d329f7fb5",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -8505,13 +8505,14 @@
       "extracted": "extracted/0273.cljs",
       "extracted-sha256": "f987e3ff92c4ebf7fd4242d7f47a62dca09d5bfa0d5548f65810d6e1ee5cffed",
       "patch": "docs/compatibility/patches/metadata-mod.json",
-      "patch-sha256": "d2ef777030a4cd43359f245989689ad0a8d145b724fa31aff171772e00357c94",
-      "adapted-form-sha256": "4759d4c892c8867d91890f6af760f008a51f6b6d6240b96e8ee29cef2eff5da9",
+      "patch-sha256": "d3aab57fd51de7ec09574cbe0c525aad363aaa11841ce25687c0a9e3054e4972",
+      "adapted-form-sha256": "0830d605399a505cec3c227cbfeb54b5b7894c7c2a095c07423524f1d22fb0e8",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
       "dependencies": [
-        "js-mod",
+        "macro:js-mod:1220 numeric remainder expansion",
+        "suss.bootstrap/f64-remainder",
         "+"
       ],
       "semantic-tests": [
@@ -8811,6 +8812,6 @@
     "extracted/0271.cljs": "d921e850b3b8d49e530640e91acd8631410a57afc78adb69e9788386e77bf0c8",
     "extracted/0272.cljs": "20b34070e72d8766f1ad9037b18199054814cc72535c2671fcf5bae82e075fbe",
     "extracted/0273.cljs": "f987e3ff92c4ebf7fd4242d7f47a62dca09d5bfa0d5548f65810d6e1ee5cffed",
-    "suss/core.sus": "54c4b52fcb8664afadbe8b1ba7d366ac38e4c5bb45031fb1989f73c5608ceb58"
+    "suss/core.sus": "685476806105bc0ebe24dba6a0512303be17e3babdcb25e23a389f7ad9efff4d"
   }
 }

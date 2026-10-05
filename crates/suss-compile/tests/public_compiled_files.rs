@@ -4,8 +4,8 @@
 use std::{path::Path, sync::OnceLock};
 use suss_compile::{Compiler, SussConfig};
 use wasmtime::{
-    AsContextMut, Config, Engine, Store,
     component::{Component, Linker},
+    AsContextMut, Config, Engine, Store,
 };
 
 fn engine() -> Engine {
@@ -324,11 +324,9 @@ fn public_file_defers_runtime_initialization_and_preserves_exception_payload() {
     assert_eq!(component.component_type().imports(&engine).count(), 0);
     let mut store = Store::new(&engine, ());
     store.set_fuel(100_000_000).unwrap();
-    assert!(
-        Linker::new(&engine)
-            .instantiate(&mut store, &component)
-            .is_err()
-    );
+    assert!(Linker::new(&engine)
+        .instantiate(&mut store, &component)
+        .is_err());
     let exception = store
         .as_context_mut()
         .take_pending_exception()
@@ -411,6 +409,33 @@ fn public_file_mod_preserves_negative_divisor_fraction_and_signed_zero() {
         root.path(),
         "app.sus",
         "(defn ^:export calculate [x] (mod x -3))",
+    );
+    write(root.path(), "api.wit", WIT);
+    let bytes = Compiler::new()
+        .compile_files(
+            root.path().join("app.sus").to_str().unwrap(),
+            root.path().join("api.wit").to_str().unwrap(),
+        )
+        .unwrap();
+    execute(
+        bytes,
+        None,
+        &[(5.0, -1.0), (-5.0, -2.0), (1.5, -1.5), (0.0, -0.0)],
+    );
+}
+
+#[test]
+fn public_file_mod_retains_compiled_numeric_macro_semantics_after_js_mod_redefinition() {
+    let root = tempfile::tempdir().unwrap();
+    write(
+        root.path(),
+        "app.sus",
+        r#"
+      (ns suss.core)
+      (def saved-mod mod)
+      (def js-mod (fn* [n d] 99))
+      (def ^:export calculate (fn* [x] (saved-mod x -3)))
+    "#,
     );
     write(root.path(), "api.wit", WIT);
     let bytes = Compiler::new()

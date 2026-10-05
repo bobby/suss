@@ -1,15 +1,15 @@
 {
   "format_version": 1,
   "phase": "macro",
-  "source_sha256": "54c4b52fcb8664afadbe8b1ba7d366ac38e4c5bb45031fb1989f73c5608ceb58",
+  "source_sha256": "685476806105bc0ebe24dba6a0512303be17e3babdcb25e23a389f7ad9efff4d",
   "compiler_source_sha256": "cc4f73d421612ea9b28e98a3c2d82c4ccc40be46f5e88e51c59628969a10c7c5",
-  "dependency_graph_sha256": "2e7f4aa87b9c444e0dc0481b3b275861e3ce3710c75538dfa0932f7e4e0aa4cc",
+  "dependency_graph_sha256": "0ac963a7c9d820bbef6a1c8256c577226208a5900476621a7d5782b7a94dac9e",
   "runtime_abi": 2,
   "compiler": "0.1.0+portable.2",
   "wasm_tools": "0.258.0",
   "target": "portable-wasm-gc-shared-abi",
   "flags": [],
-  "wasm_sha256": "b4dd6db857fcdd8cd821d8b1f63f098c21d34eb0b5f8463821dac44075574276",
+  "wasm_sha256": "42950cd513da9568f7eb48ba88ab1f2da851d14f3cd482ed0486b24f38d66344",
   "cells": [
     "suss.bindings.macro:suss.core/*",
     "suss.bindings.macro:suss.core/+",
