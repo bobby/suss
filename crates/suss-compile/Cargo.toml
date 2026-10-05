@@ -23,6 +23,9 @@ serde = { version = "1", features = ["derive"] }
 [build-dependencies]
 sha2 = "=0.10.9"
 
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+wasmtime = { workspace = true }
+
 [dev-dependencies]
 wasmtime = { workspace = true }
 pretty_assertions = { workspace = true }

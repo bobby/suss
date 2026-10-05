@@ -7,7 +7,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     path::{Path, PathBuf},
 };
-use suss_compile::{
+use crate::{
     SussConfig,
     portable::{
         modules,

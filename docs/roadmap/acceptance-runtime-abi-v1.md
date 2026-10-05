@@ -25,7 +25,7 @@ Tests are in [runtime_abi.rs](../../crates/suss-compile/tests/runtime_abi.rs),
 [portable_closures.rs](../../crates/suss-compile/tests/portable_closures.rs),
 [portable_pipeline.rs](../../crates/suss-compile/tests/portable_pipeline.rs),
 [persistent_session.rs](../../crates/suss-cli/tests/persistent_session.rs) and
-[portable_session.rs](../../crates/suss-cli/src/portable_session.rs).
+[portable_session.rs](../../crates/suss-compile/src/portable_session.rs).
 
 The original ten-type recursive ABI covers Number, UTF-16, argument array, Invoke,
 closure, binding cell, descriptor, user object, exception and dynamic frame.

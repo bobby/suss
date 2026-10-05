@@ -144,7 +144,7 @@ fn render_data(
                 text.push_str("##-Inf");
             } else {
                 let value =
-                    session.data_scalar(&suss_compile::portable::hir::Literal::Number(*value))?;
+                    session.data_scalar(&crate::portable::hir::Literal::Number(*value))?;
                 text.push_str(&session.number_text(&value)?);
             }
         }
@@ -238,12 +238,12 @@ pub fn evaluate_compiled_with_display(
     let forms = suss_reader::forms::read_forms(source)
         .and_then(suss_reader::forms::resolve_conditionals)
         .map_err(|error| {
-            SessionError::Compile(suss_compile::portable::Diagnostic {
+            SessionError::Compile(crate::portable::Diagnostic {
                 span: error.span,
                 message: error.message,
             })
         })?;
-    let origin = suss_compile::portable::SourceOrigin::new(source, None);
+    let origin = crate::portable::SourceOrigin::new(source, None);
     evaluate_forms_compiled(runtime, macros, forms, source.len(), &origin, display, true)
 }
 
@@ -256,7 +256,7 @@ pub fn evaluate_script_compiled(
     path: Option<std::path::PathBuf>,
 ) -> Result<String, SessionError> {
     let forms = read_script_forms(source)?;
-    let origin = suss_compile::portable::SourceOrigin::new(source, path);
+    let origin = crate::portable::SourceOrigin::new(source, path);
     let prepared = prepare_script_compiled(
         runtime.compilation_snapshot(), macros, forms, source.len(), &origin,
     )?;
@@ -286,7 +286,7 @@ pub(crate) fn read_script_forms(
     suss_reader::forms::read_forms(source)
         .and_then(suss_reader::forms::resolve_conditionals)
         .map_err(|error| {
-            SessionError::Compile(suss_compile::portable::Diagnostic {
+            SessionError::Compile(crate::portable::Diagnostic {
                 span: error.span,
                 message: error.message,
             })
@@ -296,7 +296,7 @@ pub(crate) fn read_script_forms(
 /// Shared staged source preparation: compiler facts and compiled macro effects,
 /// with no Runtime execution or Store requirement.
 pub(crate) enum PreparedScript {
-    Runtime(suss_compile::portable::modules::PreparedInput),
+    Runtime(crate::portable::modules::PreparedInput),
     Macro(String),
 }
 pub(crate) fn prepare_script_compiled(
@@ -304,7 +304,7 @@ pub(crate) fn prepare_script_compiled(
     macros: &mut crate::portable_macros::CompiledMacros,
     forms: Vec<suss_reader::forms::Form>,
     source_len: usize,
-    origin: &suss_compile::portable::SourceOrigin,
+    origin: &crate::portable::SourceOrigin,
 ) -> Result<Vec<PreparedScript>, SessionError> {
     prepare_script_compiled_batch(snapshot, macros, forms, source_len, origin)
         .map(|(prepared, _)| prepared)
@@ -316,7 +316,7 @@ pub(crate) fn prepare_script_compiled_batch(
     macros: &mut crate::portable_macros::CompiledMacros,
     forms: Vec<suss_reader::forms::Form>,
     source_len: usize,
-    origin: &suss_compile::portable::SourceOrigin,
+    origin: &crate::portable::SourceOrigin,
 ) -> Result<(Vec<PreparedScript>, crate::portable_session::CompilationSnapshot), SessionError> {
     let checkpoint = macros.binding_checkpoint()?;
     let mut staged_macros = Vec::new();
@@ -341,9 +341,9 @@ pub(crate) fn prepare_script_compiled_batch(
                     ..
                 }) = items.get(1)
                 {
-                    let global = suss_compile::portable::resolve::Environment::default()
+                    let global = crate::portable::resolve::Environment::default()
                         .declare_cell(
-                            suss_compile::portable::resolve::Phase::Macro,
+                            crate::portable::resolve::Phase::Macro,
                             namespace,
                             &name.name,
                         )
@@ -391,7 +391,7 @@ fn evaluate_forms_compiled(
     macros: &mut crate::portable_macros::CompiledMacros,
     mut forms: Vec<suss_reader::forms::Form>,
     source_len: usize,
-    origin: &suss_compile::portable::SourceOrigin,
+    origin: &crate::portable::SourceOrigin,
     display: &mut NativeDisplay,
     display_result: bool,
 ) -> Result<String, SessionError> {

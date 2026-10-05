@@ -5,7 +5,7 @@ use crate::{
     portable_session::{Session, SessionError, SessionValue},
 };
 use std::collections::{BTreeMap, BTreeSet};
-use suss_compile::portable::{Diagnostic, ExpansionContext, ExpansionHost};
+use crate::portable::{Diagnostic, ExpansionContext, ExpansionHost};
 use suss_reader::forms::{Form, Kind, read_forms};
 pub struct CompiledMacros {
     session: Session,
@@ -15,7 +15,7 @@ pub struct CompiledMacros {
     declaration_sources: BTreeMap<(String, String), String>,
     loaded_sources: BTreeMap<String, String>,
     incomplete_sources: BTreeSet<String>,
-    artifact_cache: suss_compile::portable::artifact_cache::ArtifactCache,
+    artifact_cache: crate::portable::artifact_cache::ArtifactCache,
 }
 fn symbol(name: &str, span: std::ops::Range<usize>) -> Form {
     Form {
@@ -75,7 +75,7 @@ impl CompiledMacros {
     pub(crate) fn binding_checkpoint(&mut self) -> Result<(crate::portable_session::BindingCheckpoint, BTreeMap<(String, String), SessionValue>, BTreeMap<(String, String), String>), SessionError> {
         Ok((self.session.binding_checkpoint()?, self.definitions.clone(), self.declaration_sources.clone()))
     }
-    pub(crate) fn restore_bindings(&mut self, checkpoint: (crate::portable_session::BindingCheckpoint, BTreeMap<(String, String), SessionValue>, BTreeMap<(String, String), String>), globals: &[suss_compile::portable::resolve::Global]) -> Result<(), SessionError> {
+    pub(crate) fn restore_bindings(&mut self, checkpoint: (crate::portable_session::BindingCheckpoint, BTreeMap<(String, String), SessionValue>, BTreeMap<(String, String), String>), globals: &[crate::portable::resolve::Global]) -> Result<(), SessionError> {
         self.session.restore_bindings(checkpoint.0, globals)?;
         for global in globals {
             let key = (global.namespace().to_owned(), global.name().to_owned());
@@ -105,17 +105,17 @@ impl CompiledMacros {
                 message: "Expected exactly one source defmacro".into(),
             }));
         }
-        self.define_form_with_origin(forms.into_iter().next().unwrap(), 0..source.len(), Some(&suss_compile::portable::SourceOrigin::new(source, None)))
+        self.define_form_with_origin(forms.into_iter().next().unwrap(), 0..source.len(), Some(&crate::portable::SourceOrigin::new(source, None)))
             .map(|_| ())
     }
     fn load_source_namespace(
         &mut self,
         namespace: &str,
-        policy: suss_compile::portable::MacroReload,
+        policy: crate::portable::MacroReload,
     ) -> Result<Vec<String>, SessionError> {
-        use suss_compile::portable::{modules, resolve::Phase};
+        use crate::portable::{modules, resolve::Phase};
         if matches!(namespace, "suss.core" | "cljs.core")
-            && policy != suss_compile::portable::MacroReload::Once
+            && policy != crate::portable::MacroReload::Once
         {
             return Err(SessionError::Compile(Diagnostic {
                 span: 0..0,
@@ -124,14 +124,14 @@ impl CompiledMacros {
         }
         let mut snapshot = self.session.compilation_snapshot();
         match policy {
-            suss_compile::portable::MacroReload::Once => {}
-            suss_compile::portable::MacroReload::Reload => {
+            crate::portable::MacroReload::Once => {}
+            crate::portable::MacroReload::Reload => {
                 snapshot.provided.remove(
                     &modules::ModuleIdentity::new(Phase::Macro, namespace)
                         .map_err(SessionError::Compile)?,
                 );
             }
-            suss_compile::portable::MacroReload::ReloadAll => {
+            crate::portable::MacroReload::ReloadAll => {
                 snapshot
                     .provided
                     .retain(|identity| identity.namespace() == "suss.core");
@@ -160,9 +160,9 @@ impl CompiledMacros {
         let caller = self.session.current_namespace().to_owned();
         let result = (|| {
             for unit in graph {
-                let source_identity = suss_compile::portable::bootstrap::sha256(
+                let source_identity = crate::portable::bootstrap::sha256(
                     format!("{:?}:{:?}:{}", unit.path, unit.dependencies, unit.source).as_bytes());
-                let origin = suss_compile::portable::SourceOrigin::new(unit.source.as_str(), Some(unit.path.clone()));
+                let origin = crate::portable::SourceOrigin::new(unit.source.as_str(), Some(unit.path.clone()));
                 // Source snapshots are already selected and dependency-first. Each
                 // form executes once in Macro phase; definitions compile to the
                 // same native function pipeline and become available to later forms.
@@ -224,14 +224,14 @@ impl CompiledMacros {
         &mut self,
         form: Form,
         span: std::ops::Range<usize>,
-        origin: Option<&suss_compile::portable::SourceOrigin>,
+        origin: Option<&crate::portable::SourceOrigin>,
     ) -> Result<String, SessionError> {
         let value = self.define_form_with_origin(form, span, origin)?;
         crate::portable_repl::display(&mut self.session, &value)
     }
     fn define_form_with_origin(
         &mut self, form: Form, span: std::ops::Range<usize>,
-        origin: Option<&suss_compile::portable::SourceOrigin>,
+        origin: Option<&crate::portable::SourceOrigin>,
     ) -> Result<SessionValue, SessionError> {
         let form = &form;
         let Kind::List(items) = &form.kind else {
@@ -314,7 +314,7 @@ impl CompiledMacros {
         self.definitions
             .insert((namespace.clone(), name.name.clone()), value.clone());
         let provenance = format!("{form:?}:{}:{:?}", origin.map_or("", |origin| origin.text()), origin.and_then(|origin| origin.path()));
-        self.declaration_sources.insert((namespace.clone(), name.name.clone()), suss_compile::portable::bootstrap::sha256(provenance.as_bytes()));
+        self.declaration_sources.insert((namespace.clone(), name.name.clone()), crate::portable::bootstrap::sha256(provenance.as_bytes()));
         let exports = self
             .definitions
             .keys()
@@ -326,22 +326,22 @@ impl CompiledMacros {
     }
 }
 impl CompiledMacros {
-    pub fn artifact_cache_stats(&self) -> suss_compile::portable::artifact_cache::CacheStats {
+    pub fn artifact_cache_stats(&self) -> crate::portable::artifact_cache::CacheStats {
         self.artifact_cache.stats()
     }
 }
 impl ExpansionHost for CompiledMacros {
     fn emit_fragment(
-        &mut self, function: &suss_compile::portable::ir::Function,
-        phase: suss_compile::portable::resolve::Phase, forms: &[Form],
-        origin: Option<&suss_compile::portable::SourceOrigin>,
+        &mut self, function: &crate::portable::ir::Function,
+        phase: crate::portable::resolve::Phase, forms: &[Form],
+        origin: Option<&crate::portable::SourceOrigin>,
     ) -> Result<Vec<u8>, Diagnostic> {
         let dependencies = self.artifact_dependencies();
         self.artifact_cache.emit(function, phase, forms, origin, dependencies.as_deref())
     }
     fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> {
         if !self.incomplete_sources.is_empty() { return None; }
-        let mut dependencies = vec![("bootstrap".into(), suss_compile::portable::bootstrap::sha256(suss_compile::portable::bootstrap::SOURCE.as_bytes()))];
+        let mut dependencies = vec![("bootstrap".into(), crate::portable::bootstrap::sha256(crate::portable::bootstrap::SOURCE.as_bytes()))];
         dependencies.extend(self.loaded_sources.iter().map(|(name, source)| (format!("module:{name}"), source.clone())));
         dependencies.extend(self.declaration_sources.iter().map(|((namespace, name), source)| (format!("macro:{namespace}/{name}"), source.clone())));
         Some(dependencies)
@@ -358,7 +358,7 @@ impl ExpansionHost for CompiledMacros {
         namespace: &str,
         span: std::ops::Range<usize>,
     ) -> Result<Vec<String>, Diagnostic> {
-        self.load_source_namespace(namespace, suss_compile::portable::MacroReload::Once)
+        self.load_source_namespace(namespace, crate::portable::MacroReload::Once)
             .map_err(|error| Diagnostic {
                 span,
                 message: format!("Compiled macro namespace loading failed: {error}"),
@@ -368,7 +368,7 @@ impl ExpansionHost for CompiledMacros {
     fn load_macro_namespace_with_policy(
         &mut self,
         namespace: &str,
-        policy: suss_compile::portable::MacroReload,
+        policy: crate::portable::MacroReload,
         span: std::ops::Range<usize>,
     ) -> Result<Vec<String>, Diagnostic> {
         self.load_source_namespace(namespace, policy)

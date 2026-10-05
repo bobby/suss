@@ -1,18 +1,8 @@
-//! Native embedding host for the portable compiler and shared runtime.
+//! Native frontend exports for the shared compiler host.
+//!
+//! Retain embedding paths while host ownership lives with the compiler pipeline.
 #[cfg(not(target_family = "wasm"))]
-mod portable_module_cache;
-#[cfg(not(target_family = "wasm"))]
-pub mod portable_macro_data;
-#[cfg(not(target_family = "wasm"))]
-pub mod portable_macro_graph;
-#[cfg(not(target_family = "wasm"))]
-pub mod portable_macros;
-#[cfg(not(target_family = "wasm"))]
-pub mod portable_repl;
-#[cfg(not(target_family = "wasm"))]
-pub mod portable_session;
-
-#[cfg(not(target_family = "wasm"))]
-pub mod portable_aot;
-#[cfg(not(target_family = "wasm"))]
-pub mod portable_project;
+pub use suss_compile::{
+    portable_aot, portable_macro_data, portable_macro_graph, portable_macros,
+    portable_project, portable_repl, portable_session,
+};

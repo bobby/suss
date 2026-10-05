@@ -8,7 +8,7 @@ use std::{
     collections::BTreeSet,
     path::{Path, PathBuf},
 };
-use suss_compile::portable::{self, PreparedFragment, modules::ModuleIdentity, resolve::Phase};
+use crate::portable::{self, PreparedFragment, modules::ModuleIdentity, resolve::Phase};
 use suss_reader::Symbol;
 
 /// An immutable, already selected and validated project input.
