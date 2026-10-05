@@ -19255,3 +19255,83 @@ Verifier10439 ACTUALterminal0: Java/Node absent, TWO fresh BOTHphase pairs
 byteexact tracked assets, identity/invalidation and bootstrap4pass0fail0ignore
 0filter10.30s. Primitive-mod repair ready to push; final fixed-source full/CI
 remain pending after root focused window.
+
+
+## Prepared bounded source provenance index, 2026-10-05
+
+Isolated branch portable/m3-source-provenance-index starts at reviewed PR204
+b210bbba22739c1c204f847ceb131452bb3c552e. No published PR or executing proof yet.
+During the unchanged exact workspace baseline53957, a one-second read-only
+macOS sample of test PID70216 identified repeated original_form_data syntax-tree
+scans. Sampling command: sample 70216 1 100 -file
+/private/tmp/suss-pr204-metadata-sample.txt; actual terminal0. The declaration
+metadata suite subsequently passed all3 tests in943.63s. This is hotspot evidence,
+not a completed optimization or a test hang. The reviewer retains the sole local
+heavy slot; no root Cargo was launched for this preparation.
+
+Prepared immutable span indexes contain paths into the existing owned snapshots,
+not cloned subtrees or self references. Candidate ranks preserve root order,
+reverse code-child visitation followed by reverse metadata-child visitation,
+exact syntax/metadata/number bits, and logical traversal-budget charges. Indexing
+retains only the first1,048,576 reachable nodes, permitting early matches without
+rejecting the whole source for later nodes. Five focused unit regressions compare
+with the unchanged test-only linear matcher, checking returned pointer identity,
+remaining budgets/errors, source/located metadata, colliding spans, NaN payloads,
+signed zero, truncation, and one candidate for a unique late span. Rustfmt and
+git diff --check passed; Rust compilation/tests are NOT yet executed.
+
+Next after reviewer releases53957: run focused provenance_index unit tests,
+correct any actual failures, then rerun the executing declaration metadata suite.
+Regenerate and reproduce both bootstrap pairs if compiler fingerprints change;
+independent PR review, required full baseline and final-head CI remain mandatory.
+Original M3 schemas, expression/cache and component-host migration, evaluator
+retirement, scheduler/cancellation and live-heap acceptance remain open.
+
+
+Provenance-index first execution, 2026-10-05: exact reviewer PR204 full53957
+ended1 at first suss_cli doctest E0514 after the mutable stable toolchain changed
+from rustc1.98.0 to rustdoc1.99.0 during the run. All152 native groups finished
+1301pass0fail15unchanged native ignores0filtered; ALL4 doc groups were NOT
+reached, so this is NOT a passing full baseline. Original log preserved at
+/private/tmp/suss-pr204-review-final-b210-full.log. Reviewer explicitly released
+the sole heavy slot; a compiler-consistent exact replacement remains required.
+Installed explicit rustc/rustdoc1.98.0 identities both88d9e12ae verified. Root
+commands now set RUSTUP_TOOLCHAIN=1.98.0, shared CARGO_TARGET_DIR and jobs2,
+without setting RUSTFLAGS. This pins the existing installed compiler for tests;
+it does not change the repository release toolchain contract.
+
+Focused35786 ACTUALterminal0: cargo test -p suss-compile --lib provenance_index
+--locked -- --test-threads=2, five passed0failed0ignored98filtered in0.62s. This
+includes pointer-identical first matches and shared original/located snapshot
+budget equivalence, source-located metadata, colliding spans, signed-zero and
+NaN-bit differences, and bounded-prefix exhaustion. Bootstrap99114 ACTUAL
+terminal0 regenerated BOTH phase pairs. Logs /private/tmp/suss-provenance-index-
+{focus,bootstrap}.log. Executing unchanged declaration/source-metadata suites
+54182 is now live; no benchmark result yet. Fresh Java/Node-free reproduction,
+independent review, exact full baseline and final-head CI remain pending.
+
+
+PR203 final-head CI37360099484 ACTUALsuccess at9d88322, 2026-10-05.
+Raw log /private/tmp/suss-pr203-ci-37360099484.log independently audited by
+/private/tmp/suss-full-audit-streams.py:155groups1287pass0fail17unchanged
+ignores0filtered, ALL4doc groups, exact mandated full command and every ordered
+group plus test name/outcome match reviewed local full. Current9d vs872 tree
+diff is ONLY handoff, consistent with independent rebase review. Raw audit JSON
+/private/tmp/suss-pr203-ci-37360099484-audit.json. PR body updated and GH ready
+transition completed; authoritative head9d/isDraftfalse/mergeStateCLEAN.
+No merge, issue closure or original M3 completion claim.
+
+
+Provenance metadata54182 ACTUALterminal0: unchanged declaration3pass0fail/
+ignore/filter in360.82s; source-metadata10pass0fail/ignore/filter in24.51s.
+Prior frozen b210 full declaration3 passed943.63s; earlier33 baseline501.21s,
+so retain all timings rather than claiming a fixed speedup. New read-only
+sample46105 terminal0 observes AnalysisGraph::materialize_with_work/FormBridge,
+not original_form_data scanning; no second optimization applied. Verifier16009
+ACTUALterminal0: Java/Node absent, TWO fresh BOTHphase Wasm/JSON pairs byteexact
+tracked assets, compiler identity/invalidation and bootstrap4pass0fail0ignore
+0filter10.33s. Logs /private/tmp/suss-provenance-index-{metadata-focus,verify}.log.
+See docs/runtime/source-provenance-index.md. Next commit/push/open partial14 PR
+for independently dispatched review and exact full/final-head CI, then execute
+pending expression runtime regressions before public compiler migration.
+Original issues12-15 acceptance remains open; no merge.
