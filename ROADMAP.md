@@ -89,7 +89,10 @@ any release gate complete.
   Genuine control source analysis now retains conditional/recur/throw operands,
   binding declarations and analyzed function/try bodies before lowering. Fifteen
   selected primary/native cases pass in both caller phases after GC, with an
-  explicit compiler-private catch-name correspondence. Full schemas/inference,
+  explicit compiler-private catch-name correspondence. Seven additional method
+  observations now agree in both phases: entry snapshots before parameters,
+  body markers and accepted own-target recurrence; all executions return42.
+  Full schemas/inference,
   evaluator retirement and milestone acceptance remain open; see
   [control source ASTs](docs/runtime/compiled-macro-control-source-asts.md).
 - **M3-04 — Session lifecycle and interruption** (in-progress). Define reset, roots, code residency and cancellation while interactive I/O is pending. Native session reset/owned handles/fuel recovery/residency counters now have executing evidence; interactive cancellation and live heap accounting remain.

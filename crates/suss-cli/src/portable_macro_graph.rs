@@ -1759,6 +1759,7 @@ impl<'a> AnalysisGraph<'a> {
         )?;
         let lowering = self.lowering(hir, depth + 1)?;
         let mut fields = vec![("form", form), ("env", env), ("suss/lowering", lowering)];
+        if source.is_body { fields.push(("body?", self.flag(true)?)); }
         // Genuine scalar source constants follow pinned analyzer.cljc's
         // analyze-keyword/analyze-form contract, not the physical HIR value.
         // Metadata wrappers, quotes and compound source ASTs need their own
@@ -2033,6 +2034,9 @@ impl<'a> AnalysisGraph<'a> {
                     let parameters = self.vector(&parameters)?;
                     let body = self.ast(&method.body, depth + 1)?;
                     let form = self.form(&method.form, depth + 1)?;
+                    let entry = &method.environment;
+                    let env = self.environment(&entry.namespace_snapshot, &entry.scope,
+                        &entry.locals, &entry.fields, &entry.function_scopes, entry.context, depth + 1)?;
                     let op = self.keyword("fn-method")?;
                     let params = self.keyword("params")?;
                     let body_key = self.keyword("body")?;
@@ -2041,8 +2045,12 @@ impl<'a> AnalysisGraph<'a> {
                     let arity = method.parameters.len().checked_sub(usize::from(method.variadic))
                         .ok_or_else(|| SessionError::Host(wasmtime::Error::msg("Invalid source method parameter list")))?;
                     let fixed = self.number(arity)?;
-                    methods.push(self.map(vec![("op", op), ("form", form), ("params", parameters),
-                        ("body", body), ("children", children), ("variadic?", variadic), ("fixed-arity", fixed)])?);
+                    let recurs = match method.recurs {
+                        Some(value) => self.flag(value)?,
+                        None => self.scalar(Literal::Nil)?,
+                    };
+                    methods.push(self.map(vec![("op", op), ("form", form), ("env", env), ("params", parameters),
+                        ("body", body), ("children", children), ("variadic?", variadic), ("fixed-arity", fixed), ("recurs", recurs)])?);
                 }
                 fields.push(("methods", self.vector(&methods)?));
                 let methods = self.keyword("methods")?;

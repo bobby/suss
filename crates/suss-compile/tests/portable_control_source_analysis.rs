@@ -118,6 +118,8 @@ fn binding_children_share_real_declarations_and_analyzed_body_scope() {
                 assert!(matches!(facts.form.kind, Kind::Number(value) if value == expected));
             }
             let facts = body.source.as_ref().unwrap();
+            assert!(facts.is_body);
+            assert!(!initializer.is_body);
             assert_eq!(facts.context, portable::AnalysisContext::Return);
             let hir::SourceNode::Do { statements, result } = facts.node.as_ref().unwrap().as_ref()
             else {
@@ -471,6 +473,10 @@ fn try_source_regions_are_analyzed_once_in_pinned_visitation_order() {
         else {
             panic!("genuine try region nodes required")
         };
+        assert!(body.source.as_ref().unwrap().is_body);
+        assert!(cleanup.as_ref().unwrap().source.as_ref().unwrap().is_body);
+        assert!(!handler.source.as_ref().unwrap().is_body);
+        assert!(!facts.is_body);
         assert_eq!(
             body.source.as_ref().unwrap().context,
             portable::AnalysisContext::Return
@@ -495,6 +501,7 @@ fn try_source_regions_are_analyzed_once_in_pinned_visitation_order() {
             panic!("actual analyzed catch let required")
         };
         assert!(!is_loop);
+        assert!(catch_body.source.as_ref().unwrap().is_body);
         assert_eq!(bindings.len(), 1);
         let hidden = payload.as_ref().unwrap();
         assert_eq!(bindings[0].id, hidden.id);
@@ -596,5 +603,136 @@ fn typed_catch_uses_canonical_type_test_and_bare_try_retains_analyzed_fallback()
             exception.source.as_ref().unwrap().form.kind,
             Kind::Nil
         ));
+    }
+}
+
+#[test]
+fn method_recurrence_records_only_accepted_edges_to_its_own_target() {
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let mut environment = Environment::default();
+        for name in ["IndexedSeq", "first", "rest", "next", "seq"] {
+            environment.declare_cell(phase, "suss.core", name).unwrap();
+        }
+        for (function, expected) in [
+            ("(fn [x] x)", vec![None]),
+            ("(fn [x] (if x (recur nil) 42))", vec![Some(true)]),
+            ("(fn [x] (loop [y x] (if y (recur nil) 42)))", vec![None]),
+            ("(fn [x] (fn [y] (if y (recur nil) x)))", vec![None]),
+            ("(fn ([x] (recur nil)) ([x y] y))", vec![Some(true), None]),
+            ("(fn [x & xs] (recur nil xs))", vec![Some(true)]),
+            // Recurrence is an analysis fact even in a runtime-unselected arm.
+            ("(fn [x] (if false (recur x) 42))", vec![Some(true)]),
+        ] {
+            let source = format!("(let [copy {function}] (inspect copy))");
+            let mut host = Observe::default();
+            portable::prepare_fragment_forms_with_expander(
+                read_forms(&source).unwrap(),
+                0..source.len(),
+                &environment,
+                phase,
+                &mut host,
+            )
+            .unwrap();
+            let facts = host.initializer.unwrap();
+            let callable = facts.callable.as_ref().expect("source methods");
+            assert_eq!(
+                callable
+                    .methods
+                    .iter()
+                    .map(|method| method.recurs)
+                    .collect::<Vec<_>>(),
+                expected,
+                "{function}"
+            );
+        }
+        for function in ["(fn [x] (do (recur x) x))", "(fn [x] (recur))"] {
+            let source = format!("(let [copy {function}] (inspect copy))");
+            let mut host = Observe::default();
+            assert!(
+                portable::prepare_fragment_forms_with_expander(
+                    read_forms(&source).unwrap(),
+                    0..source.len(),
+                    &environment,
+                    phase,
+                    &mut host,
+                )
+                .is_err(),
+                "invalid recurrence must remain a diagnostic: {function}"
+            );
+            assert!(host.initializer.is_none());
+        }
+    }
+}
+
+#[test]
+fn method_entry_environment_precedes_parameters_and_body_markers_are_explicit() {
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let source = "(let [x 7 copy (fn* [x] x)] (inspect copy))";
+        let mut host = Observe::default();
+        portable::prepare_fragment_forms_with_expander(
+            read_forms(source).unwrap(),
+            0..source.len(),
+            &Environment::default(),
+            phase,
+            &mut host,
+        )
+        .unwrap();
+        let source = host.initializer.unwrap();
+        assert!(!source.is_body);
+        let method = &source.callable.as_ref().unwrap().methods[0];
+        let entry = &method.environment;
+        assert_eq!(entry.context, portable::AnalysisContext::Expression);
+        assert_eq!(entry.locals["x"].kind, hir::LocalKind::Let);
+        assert!(!entry.locals.contains_key("copy"));
+        let parameter = &method.declarations[0];
+        assert!(!Arc::ptr_eq(
+            &entry.locals["x"].identity,
+            &parameter.identity
+        ));
+        assert!(Arc::ptr_eq(
+            &parameter.shadow.as_ref().unwrap().identity,
+            &entry.locals["x"].identity
+        ));
+        let body = method.body.source.as_ref().unwrap();
+        assert!(body.is_body);
+        assert_eq!(body.context, portable::AnalysisContext::Return);
+        assert!(Arc::ptr_eq(&body.locals["x"].identity, &parameter.identity));
+        let hir::SourceNode::Do { result, .. } = body.node.as_deref().unwrap() else {
+            panic!("source do body")
+        };
+        assert!(!result.source.as_ref().unwrap().is_body);
+
+        for (text, expected) in [
+            ("(fn* [x] x)", portable::AnalysisContext::Statement),
+            (
+                "(fn* ([x] x) ([x y] y))",
+                portable::AnalysisContext::Expression,
+            ),
+        ] {
+            let analyzed = hir::analyze_in(
+                &read_forms(text).unwrap(),
+                0..text.len(),
+                &Environment::default(),
+                phase,
+            )
+            .unwrap();
+            let hir::Expression::Do(items) = &analyzed.kind else {
+                panic!("fragment body")
+            };
+            let callable = items
+                .last()
+                .unwrap()
+                .source
+                .as_ref()
+                .unwrap()
+                .callable
+                .as_ref()
+                .unwrap();
+            for method in &callable.methods {
+                assert_eq!(method.environment.context, expected, "{text}");
+                assert!(!method.environment.locals.contains_key("x"));
+                assert!(method.body.source.as_ref().unwrap().is_body);
+            }
+        }
     }
 }
