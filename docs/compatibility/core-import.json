@@ -1423,6 +1423,21 @@
       "id": "runtime:str_:3106",
       "source-sha256": "7f1141ecc6677515afd91ecdf0ee94f574cdd04cc989027da7c1182ee5ea5ccf",
       "patch": "docs/compatibility/patches/expression-internal-str.json"
+    },
+    {
+      "id": "runtime:Var:1187",
+      "source-sha256": "5ca19b6580d26841019772cf2abbe7d925e6280785f44dbb93c82d398349e265",
+      "patch": "docs/compatibility/patches/expression-Var.json"
+    },
+    {
+      "id": "runtime:var?:1163",
+      "source-sha256": "0a9c23320fd575756ec652d6ea71e44759efde674c6fb55ca841c019d976dda4",
+      "patch": "docs/compatibility/patches/expression-var-predicate.json"
+    },
+    {
+      "id": "runtime:symbol:1168",
+      "source-sha256": "a028c666e38cc95c26ecbdeb7ef2a37bde44619d80fad92d6d20b9193d8aba2b",
+      "patch": "docs/compatibility/patches/expression-symbol.json"
     }
   ],
   "loader": {

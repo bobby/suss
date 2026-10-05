@@ -43,18 +43,24 @@ NaN payloads, except the two canonical arithmetic NaN signs are accepted as
 permitted by WebAssembly. Raw bits remain in the observations, and storage/
 boundary tests require exact NaN bits. This is observation comparison, not guest
 numeric equality.
-Malformed transport and absent cases fail. `known-failures.json` separately
-records seven reviewed failures with exact stages/diagnostics or expected/actual
-observations. A changed failure, new failure or unexpected pass fails the suite.
-The present corpus reports **9 passing, 7 failing, 0 skipped**. A stable baseline
-does not establish compatibility or satisfy the future numeric/string ABI.
+Malformed transport and absent cases fail. `known-failures.json` records reviewed exact failures; a changed failure, new
+failure or unexpected pass fails the suite. The migrated native expression
+artifact now reports **16 passing, 0 failing, 0 skipped** against both the retained
+reference and a fresh pinned compiler/Node execution. The fresh reference exactly
+matches the retained JSON values, numeric bits, UTF-16 units and effects. All
+original corpus expressions remain unchanged. The host wrapper now uses portable
+`(catch :default error ...)` syntax; the prototype wrapper omitted `:default`.
+The direct observer reads canonical ABI2 storage, including nominal ExceptionInfo
+message/data/cause, without guest printing or equality.
 
-Failures: large integer arithmetic returns 1 instead of the binary64-rounded
-9007199254740992; unary subtraction loses negative zero; surrogate escape forms
-fail parsing; quoted sequence and variadic rest values decode as vectors; and
-`ex-info` is undefined. The old 201-case legacy baseline is unchanged. Manual
-observation capture uses the explicitly ignored `record_observations` Cargo test
-with `SUSS_ORACLE_OUTPUT`; it never updates expected failures automatically.
+The seven former failures—binary64 rounding, signed zero, surrogate escape forms,
+quoted sequence and variadic rest collection kinds, and ExceptionInfo—are resolved
+in this bounded corpus. Their original failure records remain in Git at parent
+`88abea7` and the migration handoff retains the actual unexpected-pass failure
+before baseline reconciliation. An empty current failure file proves this corpus
+only; it does not establish full core compatibility or complete M3 acceptance.
+Manual observation capture still uses the explicitly ignored `record_observations`
+Cargo test with `SUSS_ORACLE_OUTPUT`; it never updates expected failures automatically.
 
 These source files and transport tests are original repository code. The
 development compiler uses the existing pinned upstream submodule, whose source

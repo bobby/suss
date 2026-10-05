@@ -427,3 +427,13 @@ regenerate and reproduce without Java. Full portable schemas, evaluator retireme
 and original M3 acceptance remain open; independent review, full workspace
 baseline and final-head CI are still required. See
 [collection source facts](docs/runtime/compiled-macro-collection-source-asts.md).
+
+
+Native cached-expression artifacts now prepare isolated compiled macros and owned
+ABI2 bootstrap/dependency plans, then execute in the caller's persistent Runtime
+Store. Focused public/preflight/GC tests pass; the unchanged201 corpus and fresh16
+lossless differential expressions agree. Retained symbol/Var dependencies match
+40 fresh pinned observations in both phases. Bootstrap pairs reproduce without
+Java/Node. Independent review, exact full/final-head CI and the remaining uncached/
+cache/component/schema/lifecycle migration gates remain open. This is partial
+issue #14 work; see [expression artifacts](docs/runtime/compiled-expression-artifacts.md).

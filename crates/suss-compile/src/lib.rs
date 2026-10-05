@@ -69,6 +69,8 @@ pub mod portable_session;
 #[cfg(not(target_family = "wasm"))]
 pub mod portable_aot;
 #[cfg(not(target_family = "wasm"))]
+pub mod portable_expression;
+#[cfg(not(target_family = "wasm"))]
 pub mod portable_project;
 
 pub use config::{SussConfig, WorldConfig};
@@ -77,10 +79,33 @@ pub use error::{CompileError, CompileResult};
 /// Result of compiling an expression
 #[derive(Debug)]
 pub struct CompiledExpr {
-    /// The compiled WASM bytes
+    /// Entry module bytes. Shared-ABI expressions also require the dependency
+    /// bundle in `prepared`; use `execute` rather than instantiating these alone.
     pub wasm: Vec<u8>,
     /// Whether this is a WASM Component (true) or core module (false)
     pub is_component: bool,
+    #[cfg(not(target_family = "wasm"))]
+    pub prepared: Option<portable_expression::ExpressionArtifact>,
+}
+
+#[cfg(not(target_family = "wasm"))]
+impl CompiledExpr {
+    pub fn execute(
+        self,
+        session: &mut portable_session::Session,
+    ) -> Result<Option<portable_session::SessionValue>, portable_session::SessionError> {
+        self.execute_with_core(session, |_| Ok(())).map(|(value, ())| value)
+    }
+
+    pub fn execute_with_core<T>(
+        self,
+        session: &mut portable_session::Session,
+        core_ready: impl FnOnce(&mut portable_session::Session) -> Result<T, portable_session::SessionError>,
+    ) -> Result<(Option<portable_session::SessionValue>, T), portable_session::SessionError> {
+        self.prepared.ok_or_else(|| portable_session::SessionError::Host(
+            wasmtime::Error::msg("This prototype artifact has no shared-ABI expression bundle"),
+        ))?.execute_with_core(session, core_ready)
+    }
 }
 
 /// Bundled WASI version
@@ -195,6 +220,18 @@ fn inject_suss_interface(wit_source: &str) -> String {
 }
 
 impl Compiler {
+    /// Prepare host-owned ABI2 expression artifacts through isolated compiled
+    /// macros. Runtime initializers run only when the returned artifact executes.
+    /// The legacy byte-only expression methods remain pending migration.
+    #[cfg(not(target_family = "wasm"))]
+    pub fn prepare_expression(
+        &mut self,
+        source: &str,
+        source_paths: &[std::path::PathBuf],
+    ) -> CompileResult<portable_expression::ExpressionArtifact> {
+        portable_expression::prepare(source, source_paths)
+            .map_err(|error| CompileError::Semantic(error.to_string()))
+    }
     /// Create a new compiler instance
     ///
     /// For REPL usage, create one Compiler and reuse it for all expressions.
@@ -245,7 +282,17 @@ impl Compiler {
         Ok(())
     }
 
-    /// Compile expression using cached core.sus (fast path for REPL)
+    /// Compile an expression bundle using the cached compiled core bootstrap.
+    /// User macros execute in an isolated compiled phase; Runtime initialization
+    /// is deferred. This is a fresh compilation, not a source-replaying REPL.
+    #[cfg(not(target_family = "wasm"))]
+    pub fn compile_expr_cached(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
+        let prepared = self.prepare_expression(expr_source, &[std::path::PathBuf::from("src")])?;
+        let wasm = prepared.modules().last().expect("expression bootstrap module").to_vec();
+        Ok(CompiledExpr { wasm, is_component: false, prepared: Some(prepared) })
+    }
+
+    /// Prototype compiler-on-Wasm route, pending compiled host support.
     ///
     /// This method uses pre-analyzed core.sus definitions, avoiding the cost of
     /// re-parsing and re-analyzing core.sus on every expression. For a typical
@@ -258,6 +305,7 @@ impl Compiler {
     /// # Returns
     ///
     /// Compiled WASM bytes and metadata
+    #[cfg(target_family = "wasm")]
     pub fn compile_expr_cached(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
         // Ensure core.sus is cached
         let core = self.ensure_core_loaded()?.clone();
@@ -326,6 +374,8 @@ impl Compiler {
             Ok(CompiledExpr {
                 wasm,
                 is_component: false,
+                #[cfg(not(target_family = "wasm"))]
+                prepared: None,
             })
         } else {
             // WASI calls detected - compile as component with imports
@@ -335,11 +385,14 @@ impl Compiler {
             Ok(CompiledExpr {
                 wasm,
                 is_component: true,
+                #[cfg(not(target_family = "wasm"))]
+                prepared: None,
             })
         }
     }
 
     /// Compile expression as core WASM module from pre-analyzed definitions
+    #[cfg(target_family = "wasm")]
     fn compile_expr_core_from_analyzed(
         &mut self,
         expr: Edn,
@@ -384,6 +437,7 @@ impl Compiler {
     }
 
     /// Compile expression as WASM Component with WASI imports from pre-analyzed definitions
+    #[cfg(target_family = "wasm")]
     fn compile_expr_with_wasi_from_analyzed(
         &mut self,
         expr: Edn,
@@ -500,6 +554,8 @@ impl Compiler {
             Ok(CompiledExpr {
                 wasm,
                 is_component: false,
+                #[cfg(not(target_family = "wasm"))]
+                prepared: None,
             })
         } else {
             // WASI calls detected - compile as component with imports
@@ -507,6 +563,8 @@ impl Compiler {
             Ok(CompiledExpr {
                 wasm,
                 is_component: true,
+                #[cfg(not(target_family = "wasm"))]
+                prepared: None,
             })
         }
     }

@@ -19897,3 +19897,303 @@ full workspace test and CI remain pending, PR stays draft/unmerged, all original
 M3 gates and issues remain open. Next: inherit/rebase this source repair, verify
 public expression/cache consumer migration; no async/scheduler or source-schema
 completion is inferred from these counts.
+
+
+## Expression artifact loader preparation — 2026-10-05
+
+Isolated branch portable/m3-expression-artifacts starts at PR207 ab3fd20; it
+does not modify frozen review trees or published PR heads. Fresh Git fetch and
+GitHub REST confirm main4dc4694; PR2039d88322 already contains it and PR204b210
+descends from203. Both final-head checks passed; no further rebase or merge.
+Existing issue14 progress comment5985901498 updated from current evidence at
+2026-10-05T21:01:30Z. PR206 full SAME73562 authoritatively live, declaration3
+passed337.11s and source-metadata10 passed; CI attempt2 running. PR207 CI queued
+atab3fd20. Reviewer206 retains sole local heavy ownership.
+
+Prepared, UNEXECUTED: ExpressionArtifact owns the compiled bootstrap and full
+PreparedInput dependency plans rather than flattening them into a last-module
+byte vector. Compiler::prepare_expression calls the common staged source/compiled
+macro pipeline; Runtime effects are deferred. The loader requires an empty
+Runtime Session, verifies/compiles every module before any initializer, then
+uses existing eval_prepared initialization and load-once identities. Returned
+roots and language-exception payloads stay inspectable in the caller's Store.
+Four integration regressions cover real lexical macro expansion, persistent
+atom state/GC roots, dependencies after source deletion, exception recovery,
+and rejecting an already populated Store; one unit negative corrupts the last
+module and requires no published binding/resident fragment. These tests have
+NOT been executed. rustfmt for new files and git diff --check passed only.
+
+This is a loader prerequisite for migrating the existing byte-only expression/
+cache APIs, not their retirement. Those prototype APIs and component-target
+CLI evaluator still remain. The host-owned bundle is not a standalone module
+or a serialized distributable format. Source macro compiler state does not
+escape into the Runtime session; later macro inputs need the existing separate
+compiled Macro session. No completion or public compatibility claim.
+
+Next: after reviewer206 actually terminates/releases and reviewer207 obtains
+its focused review window, run the prepared focused tests; repair actual
+failures, regenerate both phase pairs for this changed compiler fingerprint
+and reproduce them without Java/Node. Then migrate existing expression API
+consumers onto this compiled artifact boundary and replace prototype-dependent
+fixtures without changing semantic assertions. Independently review/push fixes,
+run exact full and require final-head CI before readiness. Preserve original
+M3 schemas/cache/lifecycle requirements and issues12-15.
+
+
+Expression artifact API preparation continued, 2026-10-05: native public
+compile_expr_cached now prepares compiled macro/Runtime dependency bundles;
+CompiledExpr carries its owned bundle plus entry-module bytes and an execution
+API. Compiler-on-Wasm cached and uncached byte-only prototype routes remain
+explicitly unfinished. The native migration is not full evaluator retirement.
+The retained cfg(test)-only source-replaying CLI fixture now deliberately calls
+the unchanged prototype compile_expr_with_info instead of the migrated API;
+shipped native CLI remains on its persistent compiled session.
+
+UNEXECUTED source changes also adapt original conformance201 and differential16
+consumers to execute the native cached artifact, with pre-user canonical core
+descriptor capture, forced GC and direct ABI2 storage observation. The oracle
+retains every original source body/wrapper and adds direct nominal ExceptionInfo
+message/data/cause storage; same-layout impostors must fail. Historic independent
+prototype integer representability tests remain. Existing known-failure files
+are UNCHANGED; update only from actual fresh execution, preserving original red
+evidence. Added cached deferred-throw and nominal ExceptionInfo/impostor tests;
+now six integration tests plus one unit corrupt-last-module negative are prepared.
+No Cargo/JVM/Node run, bootstrap regeneration or success claim yet.
+
+PR207 CI37372307426 attempt1 authoritatively terminal infrastructure failure:
+job111972216613 cancelled at21:06:23Z, no steps/no tests. Independent reviewer
+retried only that terminal attempt: attempt2 job111977709289 queued atab3fd20.
+PR206 local SAME73562 still authoritatively live; existing compile_expr suite
+now executing after earlier groups advanced cleanly. Sole heavy ownership stays
+with206; reviewer207's focus window comes next, then coordinate root compiler
+regeneration/focus. No published head changed and no PR merged.
+
+
+Expression migration actual evidence and identifier repair preparation, 2026-10-05:
+root inherited reviewer-fixed PR207 head1436bfdd into the isolated unpublished
+portable/m3-expression-artifacts branch. All retained stashes remain intact;
+append-only handoff histories from root and reviewer were preserved. No PR was
+merged. Root's earlier local handles are all terminal, not presumed stopped.
+
+With RUSTUP_TOOLCHAIN=1.98.0 CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target
+CARGO_BUILD_JOBS=2 (no RUSTFLAGS):
+- cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+  handle90330 terminal0 generated BOTH phase image pairs. Log
+  /private/tmp/suss-expression-artifacts-bootstrap.log.
+- cargo test -p suss-compile --test public_expression_artifacts --locked -- --test-threads=2
+  handle99825 terminal0,9 passed,0 failed/ignored/filtered,8.47s; seven integration
+  checks plus two inline independent decoder guard checks. Log
+  /private/tmp/suss-expression-artifacts-public-focus.log.
+- cargo test -p suss-compile --test conformance --test oracle --test portable_expression_conformance --test portable_value_decoder --locked -- --test-threads=2
+  handle30964 terminal101. ONLY conformance ran:10 passed,1 failed,2 unchanged
+  manual ignores,0 filtered,86.46s. The unchanged original201 baseline test
+  passed through the migrated native cached artifact. Additional unchanged
+  decoder_observes_nested_values_and_trie_boundaries failed on missing Runtime
+  symbol at bytes29..35; its later1057-vector fixture was not reached. This was
+  not a fuel failure. Oracle and both later selected binaries DID NOT EXECUTE.
+  Log /private/tmp/suss-expression-artifacts-consumer-focus.log. No full gate.
+
+Actual final1436 PR207 CI37375708301 failed the complete core namespace
+materialization regression with Analysis graph exceeds materialization work bound.
+Reviewer207 owns the sole local heavy slot and is repairing graph work charging
+under unchanged graph/occurrence bounds; it retains complete source records and
+existing reader-effect/no-callback/recovery assertions. Root has no heavy process.
+Do not rerun a live test, increase a bound, weaken the core assertion or treat an
+API observation failure as test termination. PR206 CI37369849678 attempt2 was
+repolled authoritatively IN_PROGRESS; its reviewer local full73562 terminal0
+has156 groups/1306 passes/17 unchanged ignores/no failures or filtered tests,
+including all four docs. It is not CI-ready yet.
+
+Root prepared an explicit full-dependency port for the actual missing-symbol
+failure. The pinned checkout within this isolated worktree was populated with
+an ordinary shared local git clone at c4295f303100bbf5afac449242d30bca1126f1a1;
+source importer containment and clean pinned-byte checks remain intact. Retained
+symbol preserves both public arities and every original conversion branch;
+var? remains a nominal Var predicate and the ENTIRE pinned Var source preserves
+all fields/protocols/Object methods and22 invocation signatures. No false Var
+predicate or string-only special case. Private original string-index-of and
+bounded string-slice use actual UTF-16 array storage, typed invalid-input errors
+and existing ordered operand lowering. New portable_symbol_conversion regressions
+cover identity, keyword/Var conversion, namespace edge cases, lone/paired
+surrogates, metadata/live thunks/hash/equality, all invocation arities, invalid
+bounds and once-only source-order effects. This new Rust source is UNEXECUTED.
+Bootstrap pairs from90330 now have a STALE fingerprint for these new sources;
+regenerate only after inheriting the reviewer's pushed graph-budget repair.
+
+Source validation: python3 scripts/core_import.py wrote291 files and --check
+verified291; python3 scripts/cljs_reviews.py verified388 reviewed/677 unassessed;
+python3 -m unittest discover -s scripts -p 'test_*.py' handle57535 terminal0,
+178 passed7.281s. An initial unsupported cljs_reviews.py --check flag failed
+argument parsing; the documented no-flag command then passed. New runtime/test
+files rustfmt passed; git diff --check passed. These Python/source checks do not
+prove the Rust artifacts execute. Original oracle known-failure files unchanged.
+
+Next: after reviewer207's original full-core regression actually terminates and
+its significant fix is pushed, retain-stash root edits/rebase onto that head,
+regenerate BOTH image pairs, run symbol/Var/storage tests and the originally
+failed consumer command plus the corrupt-last-module unit. Repair actual
+failures, execute fresh pinned oracle evidence, verify Java/Node-free two-build
+reproduction and run independent review/exact full/final-head CI for a new
+partial-issue14 PR. Continue uncached/cache/component route retirement, complete
+macro/source schemas, dependency policy and pending-I/O lifecycle acceptance.
+No M3 scope or issue acceptance criteria have changed; all remain unfinished.
+
+
+Root inherited reviewer207's pushed graph repair88abea7 using retained stash
+ e43a89cdd601f8c814a76e0426765edaa716626d (not dropped). The first unprivileged
+stash attempt failed to write the index; the authorized retry succeeded. Rebase
+succeeded; append-only handoff resolution verified1372919 shared bytes and
+preserved reviewer3200/root9502 appended bytes. Generated bootstrap conflicts
+were restored to new HEAD for regeneration, not arbitrarily merged. Reviewer
+released all heavy after its terminal verifier; root now owns sole local heavy.
+
+Actual identifier integration failures preserved:
+- bootstrap90372 terminal1 after successful Rust compilation; retained Var's
+  general dot property-read spelling failed computed/munged-property diagnostics
+  at149960..149986. Added explicit provenance-tracked expression-Var.json patch
+  normalizing only (. (val) -cljs$lang$macro) to (.-cljs$lang$macro (val)); all
+  fields/protocols/22methods/branches remain present. Overlay adapted, not portable.
+- importer291/review388+677 passed; bootstrap8730 terminal0 regenerated BOTHpairs.
+- portable_symbol_conversion48820 terminal101:0pass5fail0ignore/filter3.08s;
+  all failed at bootstrap loading because emitted string-slice import had two
+  parameters while runtime export correctly had three. Log
+  /private/tmp/suss-expression-artifacts-symbol-focus.log. These are real loader
+  failures, not failed scalar expectations or evidence of successful Var behavior.
+- emitter string-slice import signature repaired to three VALUE parameters.
+  BOTHpair regeneration56286 actually running; must poll this same handle to
+  terminal before testing, never infer success from compilation output alone.
+
+Next after56286 terminal0: execute unchanged symbol/Var/storage assertions, the
+  original consumer failure and public artifact suite. Add fresh pinned reference
+  observations for the retained conversion branches; preserve existing oracle
+  sources and require actual observations before changing known failures.
+
+
+Identifier execution follow-through, root sole-heavy window:
+bootstrap56286 terminal0 regenerated BOTHpairs after fixing the3-VALUE import.
+Symbol focus63091 terminal101,2pass3fail4.81s: two expected fixtures used the
+prototype EDN parser, which cannot represent empty strings/lone UTF-16 units;
+the third asserted23 direct Var arguments rather than the pinned rest-method
+apply convention. Inspected pinned core.cljc add-ifn-methods1542..1564: apply
+packs arguments beyond20 into the rest argument, while ordinary call remains
+fixed-arity. Changed ONLY the new fixture to (apply v [0..22]), preserving its23
+argument observation and full22-method coverage. Expected observations now read
+portable forms and compare exact independent storage, including empty strings
+and surrogate units; no guest equality/printing. Focus69054 terminal101,
+4pass1fail6.32s: dynamic symbol name d/e is valid storage but cannot be a reader
+symbol c/d/e. Its new fixture now observes exact namespace c/name d/e fields
+rather than attempting to read that dynamic symbol as source syntax.
+
+Final unchanged repaired assertions focus77767 ACTUALterminal0:
+RUSTUP_TOOLCHAIN=1.98.0 CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test -p suss-compile --test portable_symbol_conversion --locked -- --test-threads=2
+5passed0failed0ignored0filtered8.87s: both-phase retained conversions and full
+Var invocation/metadata/thunk/hash tests, private UTF-16 storage invalid-bound/
+evaluation-order tests and2 independent nominal-owner/backing-layout guards.
+Log /private/tmp/suss-expression-artifacts-symbol-focus-final.log. Earlier red
+logs preserved; this does not establish broad Var/core compatibility or full M3.
+Fresh pinned oracle execution and BOTHpair Java/Node-free reproduction pending.
+
+Actual original-consumer rerun22698 now live, same pinned environment:
+cargo test -p suss-compile --test conformance --test oracle --test portable_expression_conformance --test portable_value_decoder --test public_expression_artifacts --locked -- --test-threads=2
+Log /private/tmp/suss-expression-artifacts-consumer-symbol-fixed.log. Observe
+this same handle to actual terminal; later binaries execute only if earlier ones
+pass. Do not infer an oracle result before its binary actually runs. Both M3 PR
+CI jobs remain authoritatively live; no local heavy delegated back yet.
+
+
+Original consumer rerun22698 ACTUALterminal101: conformance10pass1fail,
+2unchanged manual ignores0filter84.82s. Original201 baseline PASSED again.
+The unchanged nested-value/string/Symbol fixtures now execute successfully;
+its later1057-vector loop actually reached execution and exhausted20M fuel.
+No speculative fuel diagnosis: the terminal failure explicitly reports all fuel
+consumed by WebAssembly. Only that bounded extra trie fixture now uses100M;
+original201 corpus remains20M, unchanged source/expected1057element vector.
+Focused trie20389 ACTUALterminal0,1passed12filtered7.28s; no skip or assertion
+weakening. This separately focused pass is not an exact full gate.
+
+Remaining consumers38379 ACTUALterminal101, only oracle ran:
+3passed3failed1unchangedmanual ignore0filter11.02s. All16 case observations had
+actual compile failures because the historical prototype observation wrapper
+used invalid portable (catch error ...), omitting :default and treating the
+result vector as catch local. The thrown-value/fuel regressions failed at that
+same compile diagnostic, not their intended runtime assertions. Normalized ONLY
+that wrapper to (catch :default error [true error]); every original16 source
+body, Boolean outcome discriminator, partial effect trace and exact observed
+payload remain unchanged. Do not make the compiler accept invalid source to
+preserve a prototype wrapper. Earlier handoff assertions about keeping the
+wrapper verbatim are superseded by this explicitly recorded standard syntax
+adaptation. portable_expression_conformance/portable_value_decoder/public artifact
+binaries did not execute in38379.
+
+Oracle56427 is now actually live on that repaired wrapper; inspect this same
+handle to terminal before claiming16 agreement, and keep original7 known-failure
+records until actual fresh pinned reference/source observations justify changes.
+Root retains sole local heavy; no JVM/Node or other Cargo process started.
+
+
+Oracle portable-catch56427 ACTUALterminal101:5pass1fail1unchangedmanual ignore,
+0filter16.84s. Fuel/caught-value guards passed, strict16 differential had ZERO
+actual failures, but baseline correctly rejected seven historical unexpected
+passes. No baseline success was fabricated. Fresh pinned scripts/test-oracle.sh
+72397 ACTUALterminal101 after JVM/Node reference generation and transport16
+verification succeeded:5pass1fail1ignore0filter21.05s; strict comparison against
+that FRESH reference again printed16 differential passing/0failing/0skipped,
+actual_failures{}. Its only failure remained the unchanged old7 expected failures.
+Fresh reference deep-equals retained reference exactly; formatting hashes differ:
+freshd010661d4a59f3d7855389c4641bcbeedb4084acd49a5196fdd1726a80f62e29,
+retained1083e3f3b27f241f6a46c97b72ffbc72b7281b4071777b6232711c8abfa9cc37.
+Fresh bytes saved /private/tmp/suss-expression-artifacts-fresh-reference.json;
+full log /private/tmp/suss-expression-artifacts-fresh-oracle.log.
+
+ONLY after these actual fresh16 observations, tests/oracle/known-failures.json
+was reconciled to{}. The original seven failures are preserved in parent88abea7
+Git history and /private/tmp/suss-expression-artifacts-original-seven-failures.json.
+No source body/expected value/effect/case identity was changed or skipped. This
+is bounded16 compatibility evidence, not full core/M3 completion. Final passing
+suite, fresh symbol/Var primary evidence, bootstrap reproduction, full workspace
+and independent review/final-head CI remain required.
+
+
+Migration publication preparation final focused evidence, root all handles terminal:
+- remaining-consumers55899 ACTUALterminal0: oracle6pass/1unchangedmanual ignore
+  (strict16diff0fail), compiled-expression harness6pass78.88s including unchanged
+  actual201 observations, value-decoder23pass4.59s, public-artifact9pass12.08s.
+  Every group0fail/0filter, no other ignores. Log
+  /private/tmp/suss-expression-artifacts-remaining-consumers-final.log.
+- Fresh pinned symbol-conversion oracle17362 ACTUALterminal0:
+  CLJ_CONFIG=/tmp/suss-oracle-clojure-config CLJ_CACHE=/tmp/suss-oracle-clojure-cache clojure -Srepro -M -m cljs.main -co '{:target :nodejs :output-to "out/symbol-conversion.js" :output-dir "out/symbol-conversion-cljs" :optimizations :none :source-map false}' -c suss-oracle.symbol-conversion
+  node out/symbol-conversion.js > out/symbol-conversion-observations.json
+  python3 ../../scripts/symbol_conversion_oracle.py compare
+  40primary observations EXACTLY match the new shared source/expected corpus.
+  Native44917 ACTUALterminal0:6pass0fail/ignore/filter10.97s, including all40
+  shared cases in EACH caller phase afterGC. No substituted native reference.
+  Log /private/tmp/suss-expression-artifacts-symbol-pinned-final.log.
+- scripts/verify-bootstrap.sh22543 ACTUALterminal0 under the pinned Rust1.98/
+  sharedtarget/jobs2 environment: TWO fresh BOTHphase Wasm/JSONpairs byte-exact
+  to each other and tracked images, JavaNode absent fromPATH, independent identity/
+  invalidation checks pass, bootstrap4pass14.36s0fail/ignore/filter.
+  Log /private/tmp/suss-expression-artifacts-final-bootstrap-verify.log.
+- corrupt-last-module47244 ACTUALterminal0,1pass104filtered6.02s:
+  cargo test -p suss-compile --lib expression_artifact_invalid_last_module_rejects_entire_bundle --locked -- --test-threads=2
+  Same pinned environment. Log
+  /private/tmp/suss-expression-artifacts-invalid-module-focus.log.
+- Final Python51247 ACTUALterminal0:178pass8.178s; importer --check291files,
+  overlay388reviewed/677unassessed and git diff --check pass.
+
+No root Cargo/JVM/Node process remains live. Focused results above are not an
+exact full gate. Next publish this partial issue14 migration as a DRAFT PR atop
+reviewer-fixed20788abea7, dispatch independent review with significant fix-push
+ownership, then exact pinned cargo test --workspace --locked -- --test-threads=2
+and final-head CI/raw audit before readiness. Remaining production uncached/
+CoreCache/compiler-on-Wasm/component routes and original schema/cache/lifecycle
+requirements remain unfinished. Do not merge or close any M3 issue.
+
+
+Added a final phase-ownership guard: an EMPTY Macro session must reject a Runtime
+bundle before bootstrap/callback effects, retain0 resident fragments/its Macro
+phase and still evaluate42. Final public focus12972 ACTUALterminal0,
+10pass0fail/ignore/filter11.85s, preserving all prior9 tests plus that guard.
+Log /private/tmp/suss-expression-artifacts-public-final-phase-guard.log.
+All root Cargo/JVM/Node and Python handles are now authoritatively terminal.
+Root will release sole heavy to the independently dispatched new-PR reviewer;
+no passing exact full or final CI is claimed from focused runs.

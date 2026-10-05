@@ -1,13 +1,20 @@
-//! Strict prototype baseline. Known failures are tracked, never counted as passes.
+//! Strict compiled expression baseline. Known failures remain exact evidence.
+#[path = "support/portable_compare.rs"]
+mod portable_compare;
+#[path = "support/portable_decode.rs"]
+mod portable_decode;
 mod support;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::OnceLock;
 use support::decode::{Decoder, values_match};
-use suss_compile::Compiler;
+use suss_compile::{
+    Compiler,
+    portable_session::{Session, SessionError, SessionOptions},
+};
 use suss_core::Edn;
 use suss_reader::{ParserState, parse_all};
-use wasmtime::{Config, Engine, Linker, Module, Store, Val};
+use wasmtime::{Config, Engine, Module, Store, Val};
 
 type Failure = (String, String);
 type Baseline = BTreeMap<String, Failure>;
@@ -169,44 +176,58 @@ fn failure(kind: &str, err: impl std::fmt::Display) -> Failure {
 }
 
 fn run(compiler: &mut Compiler, engine: &Engine, case: &Case) -> Result<(), Failure> {
+    run_with_fuel(compiler, engine, case, 20_000_000)
+}
+
+fn run_with_fuel(compiler: &mut Compiler, engine: &Engine, case: &Case, fuel: u64) -> Result<(), Failure> {
     let compiled = compiler
         .compile_expr_cached(&case.expr)
-        .map_err(|e| failure("compile", e))?;
-    if compiled.is_component {
-        return Err(failure("artifact", "expected core module"));
-    }
-    let module =
-        Module::new(engine, &compiled.wasm).map_err(|e| failure("validation", format!("{e:#}")))?;
-    let mut store = Store::new(engine, ());
-    store.set_fuel(20_000_000).unwrap();
-    let mut linker = Linker::new(engine);
-    linker
-        .func_wrap("suss", "print_str", |_: i32, _: i32| {})
-        .unwrap();
-    let instance = linker
-        .instantiate(&mut store, &module)
-        .map_err(|e| failure("instantiate", format!("{e:#}")))?;
-    let eval = instance
-        .get_func(&mut store, "eval")
-        .ok_or_else(|| failure("artifact", "missing eval"))?;
-    let mut results = [Val::null_any_ref()];
-    eval.call(&mut store, &[], &mut results).map_err(|e| {
-        let stage = if e.downcast_ref::<wasmtime::Trap>().is_some() {
-            "trap"
-        } else {
-            "execution"
-        };
-        failure(stage, format!("{e:#}"))
-    })?;
-    let actual = Decoder::new(compiler)
-        .decode(&mut store, &results[0])
-        .map_err(|e| failure("decode", e))?;
-    if values_match(&case.expected, &actual) {
+        .map_err(|error| failure("compile", error))?;
+    let mut session = Session::with_engine(
+        engine.clone(),
+        SessionOptions {
+            fuel_per_operation: fuel,
+            ..Default::default()
+        },
+    )
+    .map_err(|error| failure("host", error))?;
+    let mut decoder = None;
+    let result = compiled.execute_with_core(&mut session, |session| {
+        decoder = Some(portable_decode::Decoder::capture(session, 100_000)?);
+        Ok(())
+    });
+    let value = match result {
+        Ok((Some(value), ())) => value,
+        Ok((None, ())) => return Err(failure("artifact", "expression has no Runtime result")),
+        Err(SessionError::Language(payload)) => {
+            session.collect().map_err(|error| failure("gc", error))?;
+            let detail = match decoder
+                .as_mut()
+                .expect("core observations precede user code")
+                .decode_session(&mut session, &payload)
+            {
+                Ok(actual) => format!("uncaught payload {actual:?}"),
+                Err(error) => format!("uncaught payload could not be decoded: {error}"),
+            };
+            return Err(failure("execution", detail));
+        }
+        Err(SessionError::Trap(error)) => return Err(failure("trap", format!("{error:#}"))),
+        Err(SessionError::Compile(error)) => return Err(failure("compile", error)),
+        Err(SessionError::Module(error)) => return Err(failure("dependency", error)),
+        Err(error) => return Err(failure("host", error)),
+    };
+    session.collect().map_err(|error| failure("gc", error))?;
+    let actual = decoder
+        .as_mut()
+        .expect("core observations precede user code")
+        .decode_session(&mut session, &value)
+        .map_err(|error| failure("decode", error))?;
+    if portable_compare::matches(&case.expected, &actual) {
         Ok(())
     } else {
         Err(failure(
             "value",
-            format!("expected {:?}; actual {:?}", case.expected, actual),
+            format!("expected {:?}; actual {actual:?}", case.expected),
         ))
     }
 }
@@ -310,7 +331,10 @@ fn decoder_observes_nested_values_and_trie_boundaries() {
     let items = (0..1057)
         .map(|n| Edn::Number(suss_core::Number::from_i64(n)))
         .collect();
-    run(
+    // The retained collection loop exhausted the prototype 20M instruction
+    // allowance. Keep this larger trie fixture bounded without changing the
+    // original corpus allowance, source or exact 1057-element observation.
+    run_with_fuel(
         &mut compiler,
         &engine,
         &Case {
@@ -318,6 +342,7 @@ fn decoder_observes_nested_values_and_trie_boundaries() {
             expr: "(loop [v [] i 0] (if (< i 1057) (recur (conj v i) (inc i)) v))".into(),
             expected: Edn::Vector(items),
         },
+        100_000_000,
     )
     .unwrap();
 }

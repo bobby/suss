@@ -295,7 +295,9 @@ impl SessionState {
         // Cache miss - compile
         self.cache_misses += 1;
         let compiled = self.compiler
-            .compile_expr_cached(&full_source)
+            // This module is retained only as prototype regression fixtures.
+            // The shipped REPL uses portable_session, never this source replay.
+            .compile_expr_with_info(&full_source)
             .map_err(|e| format!("{}", e))?;
 
         let wasm = compiled.wasm.clone();
