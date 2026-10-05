@@ -18162,3 +18162,60 @@ Freeze this docs-only review head before the exact unfiltered workspace baseline
 Compiler/bootstrap source identity is unchanged. Full baseline/all four doctest
 suites and final-head CI remain required; reviewer retains the exclusive heavy
 slot until actual terminal audit/release. No merge, issue closure or M3 completion.
+
+
+## Portable scalar option adapter prerequisite
+
+Isolated `/private/tmp/suss-m3-option-adapters`, branch
+`portable/m3-option-adapters`, is rebased onto PR198 reviewed e35fdce. The public
+file/project migration remains separate and unpublished: its existing component
+suite exposed20 failures, including three previously executing typed fixtures.
+These adapter prerequisites preserve those assertions; strings/lists/exact64,
+indirect arguments and composite options remain unfinished.
+
+Twelve new actual-component tests were copied byte-identically to unchanged
+parent `/private/tmp/suss-public-files-before`. Final parent run28205 exited101:
+0passed/12failed/0ignored/0filtered, all due to missing option capability or
+its missing precise pre-effect diagnostic. Replacement run89229 exited0:
+option12, existing scalar AOT13 and async AOT3 all passed with no ignores/filters.
+Command: `CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2
+cargo test -p suss-compile --locked --test portable_aot_options --test portable_aot
+--test portable_aot_async -- --test-threads=2`. Logs are
+`/private/tmp/suss-option-parent.log` and `/private/tmp/suss-option-fixed.log`.
+
+Adapters resolve scalar-option graphs, flatten tag/payload parameters and use
+aligned bounded canonical result memory. Sync lifts use indirect scalar-option
+results; async completion forwards flattened tag/payload through exact task-return
+signatures. Tests cover None/Some(false), integer bounds/alignment, bit-exact f64
+NaN and signed zero, f32, mixed component type indices, eight optional arguments,
+repeated calls/GC/post-return and source pre-effect capability diagnostics.
+Nested/composite payloads and over-sixteen-flat arguments remain explicitly
+unsupported; this is not complete generic WIT support or final M3 acceptance.
+
+Generation12605 exited0 after correcting encoder iterator lengths. Both phase
+Wasm/JSON pairs were regenerated. Java/Node-free `sh scripts/verify-bootstrap.sh`
+run5400 exited0: both pairs match two fresh generations, checkout-independent
+identity checks passed and bootstrap4 passed. Log:
+`/private/tmp/suss-option-bootstrap-verify.log`.
+
+Initial replacement35466 passed11 and failed one incorrect same-instance host
+re-entry expectation after a successful language-exception decode. Pinned
+Wasmtime locks a component instance after a failed canonical lifted call, as the
+existing integer tests already document. The corrected test decodes every invalid
+payload exception in a fresh instance, asserts that lock and checks repeated
+successful Some/None/post-return/GC calls before failure. The corrected source
+was rerun unchanged against both parent and replacement. This is not persistent
+REPL exception recovery evidence, rooted suspension or pending-I/O cancellation.
+
+Independent review, exact unfiltered full baseline and final reviewed-head CI
+remain required before this increment is ready. The reviewed PR198 base is integrated with its independent review evidence.
+Next publish a draft with Refs12/13/14 and dispatch independent review. Preserve
+all original M3 requirements: public expression/cache and component-target evaluator
+retirement, complete portable source schemas, rooted pending-I/O continuations,
+cancellation/cleanup and live heap versus resident code accounting remain open.
+
+PR197 final CI37257364671 succeeded at reviewed25cb06d. Root downloaded and
+audited150 full-workspace result groups against local full47430:1232passed,
+0failed,17existing ignores,0filtered and all four doctest suites; separate CI
+bootstrap4 also passed. PR197 is ready and unmerged. PR198 independent full91839
+passed1239/0/17 across151groups/all four docs; final CI watcher88840 remains live.
