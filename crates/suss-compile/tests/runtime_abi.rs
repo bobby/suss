@@ -4016,3 +4016,51 @@ fn runtime_abi_language_error_predicate_uses_rooted_descriptor_identity_after_gc
         assert_eq!(result[0].unwrap_i32(), expected);
     }
 }
+
+
+#[test]
+fn runtime_abi_error_message_read_rejects_copied_nominal_descriptor_after_gc() {
+    fn text(store: &mut Store<()>, runtime: Instance, units: &[u16]) -> Val {
+        let value = nominal_value(store, runtime, "string-new", &[Val::I32(units.len() as i32)]);
+        let array = value.unwrap_anyref().unwrap().as_array(&*store).unwrap().unwrap();
+        for (index, unit) in units.iter().enumerate() {
+            array.set(&mut *store, index as u32, Val::I32(*unit as i32)).unwrap();
+        }
+        value
+    }
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+    let expected = [0xd83d, 0x0000, 0xdc00];
+    let message = text(&mut store, runtime, &expected);
+    let key = text(&mut store, runtime, &"message".encode_utf16().collect::<Vec<_>>());
+    let error = nominal_value(&mut store, runtime, "language-error-new", &[message]);
+    let payload = error.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+    let mut fields = payload.fields(&mut store).unwrap().collect::<Vec<_>>();
+    let descriptor = fields[0].unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+    let descriptor_fields = descriptor.fields(&mut store).unwrap().collect::<Vec<_>>();
+    let ty = descriptor.ty(&store).unwrap();
+    let pre = wasmtime::StructRefPre::new(&mut store, ty);
+    // Even every descriptor field, including the numeric nominal ID, is copied.
+    let copied = wasmtime::StructRef::new(&mut store, &pre, &descriptor_fields).unwrap();
+    fields[0] = Val::AnyRef(Some(copied.to_anyref()));
+    let ty = payload.ty(&store).unwrap();
+    let pre = wasmtime::StructRefPre::new(&mut store, ty);
+    let forged = wasmtime::StructRef::new(&mut store, &pre, &fields).unwrap();
+    store.gc(None).unwrap();
+    let getter = runtime.get_func(&mut store, "named-property-get").unwrap();
+    let failure = getter.call(&mut store, &[Val::AnyRef(Some(forged.to_anyref())), key.clone()],
+                              &mut [Val::null_any_ref()]).unwrap_err();
+    assert!(failure.is::<wasmtime::ThrownException>(), "{failure:#}");
+    assert!(!failure.is::<wasmtime::Trap>());
+    let exception = store.take_pending_exception().unwrap();
+    assert!(wasmtime::Tag::eq(&exception.tag(&mut store).unwrap(),
+        &runtime.get_tag(&mut store, "language-exception").unwrap(), &store));
+    let mut output = [Val::null_any_ref()];
+    getter.call(&mut store, &[error, key], &mut output).unwrap();
+    store.gc(None).unwrap();
+    let array = output[0].unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    let units = array.elems(&mut store).unwrap().map(|value| value.unwrap_i32() as u16).collect::<Vec<_>>();
+    assert_eq!(units, expected);
+    assert!(!store.has_pending_exception());
+}

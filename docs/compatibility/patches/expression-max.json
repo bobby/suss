@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "57789ce1db49c2ea5760853c2f0e5ea98f85514f0b13fbcf4ea19a1f92e82885",
+  "replacement": "(def ^number max\n\"Returns the greatest of the nums.\"\n(fn ([x] x)\n  ([x y]\n   (cond\n     (NaN? x) x\n     (NaN? y) y\n     (> x y) x\n     :else y))\n  ([x y & more]\n   (reduce max (cljs.core/max x y) more))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus."
+}

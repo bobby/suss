@@ -1,0 +1,621 @@
+{
+  "schema": 1,
+  "upstream": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cases": [
+    {
+      "id": "expression-core-00",
+      "source": "(abs -0.0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "expression-core-01",
+      "source": "(abs 0.0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "expression-core-02",
+      "source": "(abs nil)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "expression-core-03",
+      "source": "(abs \"-2\")",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "expression-core-04",
+      "source": "(abs ##-Inf)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff0000000000000"
+      }
+    },
+    {
+      "id": "expression-core-05",
+      "source": "(abs ##NaN)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "expression-core-06",
+      "source": "(NaN? \"not a number\")",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "expression-core-07",
+      "source": "(NaN? nil)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "expression-core-08",
+      "source": "(NaN? false)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "expression-core-09",
+      "source": "(NaN? ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "expression-core-10",
+      "source": "(integer? -0.0)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "expression-core-11",
+      "source": "(integer? 1.5)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "expression-core-12",
+      "source": "(integer? 1e20)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "expression-core-13",
+      "source": "(integer? 1e21)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "expression-core-14",
+      "source": "(integer? -1e21)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "expression-core-15",
+      "source": "(integer? ##NaN)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "expression-core-16",
+      "source": "(integer? ##Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "expression-core-17",
+      "source": "(integer? ##-Inf)",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "expression-core-18",
+      "source": "(integer? \"1\")",
+      "expected": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "id": "expression-core-19",
+      "source": "(max 42)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "expression-core-20",
+      "source": "(max 1 5 3 4)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4014000000000000"
+      }
+    },
+    {
+      "id": "expression-core-21",
+      "source": "(min 42)",
+      "expected": {
+        "tag": "f64",
+        "bits": "4045000000000000"
+      }
+    },
+    {
+      "id": "expression-core-22",
+      "source": "(min 5 1 3 4)",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "expression-core-23",
+      "source": "(max 0.0 -0.0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      }
+    },
+    {
+      "id": "expression-core-24",
+      "source": "(min -0.0 0.0)",
+      "expected": {
+        "tag": "f64",
+        "bits": "0000000000000000"
+      }
+    },
+    {
+      "id": "expression-core-25",
+      "source": "(max ##NaN 1)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "expression-core-26",
+      "source": "(min 1 ##NaN)",
+      "expected": {
+        "tag": "f64",
+        "bits": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "expression-core-27",
+      "source": "(max \"2\" 1)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          50
+        ]
+      }
+    },
+    {
+      "id": "expression-core-28",
+      "source": "(min \"2\" 3)",
+      "expected": {
+        "tag": "string",
+        "units": [
+          50
+        ]
+      }
+    },
+    {
+      "id": "expression-core-29",
+      "source": "(even? 1e20)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "expression-core-30",
+      "source": "(even? -2)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "expression-core-31",
+      "source": "(odd? -3)",
+      "expected": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "id": "expression-core-32",
+      "source": "(peek nil)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "expression-core-33",
+      "source": "(pop nil)",
+      "expected": {
+        "tag": "nil"
+      }
+    },
+    {
+      "id": "expression-core-34",
+      "source": "(peek '(1 2))",
+      "expected": {
+        "tag": "f64",
+        "bits": "3ff0000000000000"
+      }
+    },
+    {
+      "id": "expression-core-35",
+      "source": "(pop '(1 2))",
+      "expected": {
+        "tag": "seq",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "expression-core-36",
+      "source": "(peek [1 2])",
+      "expected": {
+        "tag": "f64",
+        "bits": "4000000000000000"
+      }
+    },
+    {
+      "id": "expression-core-37",
+      "source": "(pop [1 2])",
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "expression-core-parity-error",
+      "source": "(try (even? 1.5) (catch :default error (.-message error)))",
+      "expected": {
+        "tag": "string",
+        "units": [
+          65,
+          114,
+          103,
+          117,
+          109,
+          101,
+          110,
+          116,
+          32,
+          109,
+          117,
+          115,
+          116,
+          32,
+          98,
+          101,
+          32,
+          97,
+          110,
+          32,
+          105,
+          110,
+          116,
+          101,
+          103,
+          101,
+          114,
+          58,
+          32,
+          49,
+          46,
+          53
+        ]
+      }
+    },
+    {
+      "id": "internal-string-00",
+      "source": "(apply cljs.core/str_ [])",
+      "expected": {
+        "tag": "string",
+        "units": []
+      }
+    },
+    {
+      "id": "internal-string-01",
+      "source": "(apply cljs.core/str_ [nil])",
+      "expected": {
+        "tag": "string",
+        "units": []
+      }
+    },
+    {
+      "id": "internal-string-02",
+      "source": "(apply cljs.core/str_ [nil 1])",
+      "expected": {
+        "tag": "string",
+        "units": []
+      }
+    },
+    {
+      "id": "internal-string-03",
+      "source": "(apply cljs.core/str_ [false])",
+      "expected": {
+        "tag": "string",
+        "units": [
+          102,
+          97,
+          108,
+          115,
+          101
+        ]
+      }
+    },
+    {
+      "id": "internal-string-04",
+      "source": "(apply cljs.core/str_ [true])",
+      "expected": {
+        "tag": "string",
+        "units": [
+          116,
+          114,
+          117,
+          101
+        ]
+      }
+    },
+    {
+      "id": "internal-string-05",
+      "source": "(apply cljs.core/str_ [-0.0])",
+      "expected": {
+        "tag": "string",
+        "units": [
+          48
+        ]
+      }
+    },
+    {
+      "id": "internal-string-06",
+      "source": "(apply cljs.core/str_ [1.5])",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49,
+          46,
+          53
+        ]
+      }
+    },
+    {
+      "id": "internal-string-07",
+      "source": "(apply cljs.core/str_ [1e20])",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48,
+          48
+        ]
+      }
+    },
+    {
+      "id": "internal-string-08",
+      "source": "(apply cljs.core/str_ [1e21])",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49,
+          101,
+          43,
+          50,
+          49
+        ]
+      }
+    },
+    {
+      "id": "internal-string-09",
+      "source": "(apply cljs.core/str_ [1e-6])",
+      "expected": {
+        "tag": "string",
+        "units": [
+          48,
+          46,
+          48,
+          48,
+          48,
+          48,
+          48,
+          49
+        ]
+      }
+    },
+    {
+      "id": "internal-string-10",
+      "source": "(apply cljs.core/str_ [1e-7])",
+      "expected": {
+        "tag": "string",
+        "units": [
+          49,
+          101,
+          45,
+          55
+        ]
+      }
+    },
+    {
+      "id": "internal-string-11",
+      "source": "(apply cljs.core/str_ [5e-324])",
+      "expected": {
+        "tag": "string",
+        "units": [
+          53,
+          101,
+          45,
+          51,
+          50,
+          52
+        ]
+      }
+    },
+    {
+      "id": "internal-string-12",
+      "source": "(apply cljs.core/str_ [##NaN])",
+      "expected": {
+        "tag": "string",
+        "units": [
+          78,
+          97,
+          78
+        ]
+      }
+    },
+    {
+      "id": "internal-string-13",
+      "source": "(apply cljs.core/str_ [##Inf])",
+      "expected": {
+        "tag": "string",
+        "units": [
+          73,
+          110,
+          102,
+          105,
+          110,
+          105,
+          116,
+          121
+        ]
+      }
+    },
+    {
+      "id": "internal-string-14",
+      "source": "(apply cljs.core/str_ [##-Inf])",
+      "expected": {
+        "tag": "string",
+        "units": [
+          45,
+          73,
+          110,
+          102,
+          105,
+          110,
+          105,
+          116,
+          121
+        ]
+      }
+    },
+    {
+      "id": "internal-string-15",
+      "source": "(apply cljs.core/str_ [\"prefix\" nil true -0.0 1e21 ##NaN ##Inf])",
+      "expected": {
+        "tag": "string",
+        "units": [
+          112,
+          114,
+          101,
+          102,
+          105,
+          120,
+          116,
+          114,
+          117,
+          101,
+          48,
+          49,
+          101,
+          43,
+          50,
+          49,
+          78,
+          97,
+          78,
+          73,
+          110,
+          102,
+          105,
+          110,
+          105,
+          116,
+          121
+        ]
+      }
+    },
+    {
+      "id": "internal-string-16",
+      "source": "(apply cljs.core/str_ [:key])",
+      "expected": {
+        "tag": "string",
+        "units": [
+          58,
+          107,
+          101,
+          121
+        ]
+      }
+    }
+  ]
+}

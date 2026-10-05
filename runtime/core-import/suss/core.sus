@@ -4914,6 +4914,87 @@
   "Modulus of num and div. Truncates toward negative infinity."
   (fn [n d]
     (suss.bootstrap/f64-remainder (+ (suss.bootstrap/f64-remainder n d) d) d)))
+
+(def ^{:doc "Returns the absolute value of a."
+   :added "1.11.10"} ^number abs
+(fn [a] (let [n (suss.bootstrap/f64-coerce a)] (if (cljs.core/== n 0) 0 (if (cljs.core/< n 0) (cljs.core/- n) n)))))
+
+(def NaN?
+"Returns true if num is NaN, else false"
+(fn [val]
+  (let [n (suss.bootstrap/f64-coerce val)] (not (cljs.core/== n n)))))
+
+(def integer?
+"Returns true if n is a JavaScript number with no decimal part."
+(fn [n] (and (number? n) (suss.bootstrap/f64-finite n) (cljs.core/== n (suss.bootstrap/f64-floor n)) (cljs.core/< n 1e21) (cljs.core/> n -1e21))))
+
+(def ^number max
+"Returns the greatest of the nums."
+(fn ([x] x)
+  ([x y]
+   (cond
+     (NaN? x) x
+     (NaN? y) y
+     (> x y) x
+     :else y))
+  ([x y & more]
+   (reduce max (cljs.core/max x y) more))))
+
+(def ^number min
+"Returns the least of the nums."
+(fn ([x] x)
+  ([x y]
+   (cond
+     (NaN? x) x
+     (NaN? y) y
+     (< x y) x
+     :else y))
+  ([x y & more]
+   (reduce min (cljs.core/min x y) more))))
+
+(def even?
+"Returns true if n is even, throws an exception if n is not an integer"
+(fn [n] (if (integer? n)
+         (zero? (bit-and n 1))
+         (throw (suss.bootstrap/error (str_ "Argument must be an integer: " n))))))
+
+(def odd?
+"Returns true if n is odd, throws an exception if n is not an integer"
+(fn [n] (not (even? n))))
+
+(def peek
+"For a list or queue, same as first, for a vector, same as, but much
+  more efficient than, last. If the collection is empty, returns nil."
+(fn [coll]
+  (when-not (nil? coll)
+    (-peek coll))))
+
+(def pop
+"For a list or queue, returns a new list/queue without the first
+  item, for a vector, returns a new vector without the last item.
+  Note - not the same as next/butlast."
+(fn [coll]
+  (when-not (nil? coll)
+    (-pop coll))))
+
+(def ^:private str_
+"Implementation detail. Internal str without circularity on IndexedSeq.
+  @param x
+  @param {...*} var_args"
+  (let [seq seq first first next next number? number? string? string? identical? identical?]
+    (fn
+      ([] "")
+      ([x] (if (nil? x) ""
+             (if (or (string? x) (number? x) (or (identical? x true) (identical? x false)))
+               (suss.bootstrap/coerce-string x)
+               (.toString x))))
+      ([x & more]
+       (if (nil? x) ""
+         (loop [result (str_ x) remaining (seq more)]
+           (if remaining
+             (recur (suss.bootstrap/concat-string result (str_ (first remaining)))
+                    (next remaining))
+             result)))))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

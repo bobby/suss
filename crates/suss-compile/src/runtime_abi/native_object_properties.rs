@@ -299,8 +299,43 @@ pub(super) fn functions(b: &mut Builder) {
             If(BlockType::Empty),
         ];
         nominal::error(&mut code);
+        code.push(End);
+        if !writing {
+            // Typed language errors have their own ABI layout. Validate nominal
+            // identity before reading it; an equal structural layout is not an
+            // Error. Message storage remains immutable and does not use the
+            // mutable native-object property table.
+            code.extend([
+                LocalGet(0),
+                RefTestNonNull(HeapType::Concrete(8)),
+                If(BlockType::Empty),
+                LocalGet(0),
+                Call(b.names["language-error-is"]),
+                I32Eqz,
+                If(BlockType::Empty),
+            ]);
+            nominal::error(&mut code);
+            code.extend([End, LocalGet(1)]);
+            let units: Vec<_> = "message".encode_utf16().collect();
+            code.extend(units.iter().map(|unit| I32Const(*unit as i32)));
+            code.extend([
+                ArrayNewFixed {
+                    array_type_index: STRING,
+                    array_size: units.len() as u32,
+                },
+                Call(b.names["property-key-equal"]),
+                If(BlockType::Empty),
+                LocalGet(0),
+                RefCastNonNull(HeapType::Concrete(8)),
+                StructGet { struct_type_index: 8, field_index: 1 },
+                Return,
+                End,
+            ]);
+            // Other host Error properties still require an explicit adapter.
+            nominal::error(&mut code);
+            code.push(End);
+        }
         code.extend([
-            End,
             LocalGet(0),
             Call(b.names["native-object?"]),
             If(BlockType::Result(VALUE)),

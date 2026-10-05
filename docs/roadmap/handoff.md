@@ -19257,6 +19257,437 @@ byteexact tracked assets, identity/invalidation and bootstrap4pass0fail0ignore
 remain pending after root focused window.
 
 
+## Prepared independent ABI2 decoder — 2026-10-05
+
+Isolated worktree /private/tmp/suss-m3-expression-decoder on330e7507,
+branchportable/m3-expression-decoder, UNCOMMITTED/UNPUSHED/noPR. New test-only
+support/portable_decode.rs directly reads GC values without production FormBridge,
+guest printing/equality or the legacy CoreCache/type-ID table. Initial source
+supports only exact nil/boolean sentinels, boxed binary64 bits and raw UTF16
+units, rejecting null/unboxed/unknown sentinels, non-string arrays and unknown
+nominal layouts. Traversal budget is checked before string allocation.
+
+Five UNEXECUTED regressions prepare actual compiled Session values/GC plus forged
+unknown sentinel/null/unboxed cases. Scalar source includes minuszero/NaN/infinities;
+UTF16 source includes astral text and separated lone high/low surrogates. Unknown
+objects and raw argument arrays must fail, and exact string budget edges are
+checked. Rustfmt/diff checks only; NO Rust compilation/execution claim yet.
+Canonical nominal collections, exception shapes and remaining corpus values are
+unfinished. This foundation is not full conformance, replacement expression
+acceptance, public API migration or production evaluator retirement.
+
+Reviewer201 replacement full87529 remains authoritatively live at frozen330e7507,
+sole heavy owner. First next heavy tasks remain final exact parent9, bothphase
+regeneration, final exact9+existing boundaries/public and reproducibility; then
+validated held file/project migration. Decoder focus is queued after resource
+release with cargo test -p suss-compile --locked --test portable_value_decoder
+-- --test-threads=2 under sharedtarget/jobs2. Retain ALL existing corpus cases and
+actual failure distinctions when extending this strict independent decoder and
+routing expression/conformance execution through the compiled pipeline. M3 remains
+open, no Closes links or merge.
+
+
+Independent decoder source preparation now extends to canonical Keyword/Symbol
+values. It captures first-core class closure environments as owned descriptor
+roots, compares actual GC reference identity, retains class roots and checks
+session/reset ownership before descriptor access. Numeric IDs and field shapes
+alone are not nominal acceptance. The direct context-only primitive API rejects
+use with captured classes, requiring the ownership-checked session entry point.
+Prepared regressions preserve namespace/name UTF16, GC/redefinition retention,
+reject same-name/same-field impostors, reject foreign/reset owners explicitly as
+ForeignValue, and reject malformed identifier names/namespaces/depth. EIGHT
+regressions are now UNEXECUTED; rustfmt/diff checks only, no compilation evidence.
+Collection/exception decoding and complete existing corpus migration remain open.
+Root continues no Cargo/JVM/Node while reviewer201 full87529 is actually live;
+its completed metadata/macro/REPL groups have no failure footer so far.
+
+
+First decoder focus5114 ACTUALterminal101:5passed/3failed/0ignored/0filtered
+2.21s (/private/tmp/suss-decoder-focus-1.log), Rust compiled6.33s. Primitive bit,
+UTF16/lone-surrogate, malformed/sentinel/array and budget assertions passed. The
+three canonical-identifier tests failed setup because assuming a direct descriptor
+in class closure environment ignored closure-owned function property wrapping.
+No assertions weakened. Independent capture now constructs known first-core
+Keyword/Symbol instances before fixtures and reads their nominal object field0
+descriptor directly, retaining instance anchors and owned descriptor references.
+The same exact identity/GC/impostor/malformed/ForeignValue assertions remain.
+Rerun is PENDING; source repair/rustfmt are not executing success.
+
+Root explicitly released sole heavy slot after5114 terminal. Reviewer203 now owns
+it. PR203f8ff7e9 linked draft is published; CI37340137185 confirmed IN_PROGRESS.
+Reviewer reproduced significant live identical? dispatch and live number? validator
+dependencies (separate red tests), repaired source privately and regenerated BOTH
+phases; final focus20841 is ACTUALLY LIVE. Root light only. Reviewer independently
+verified <=/== use fixed BootstrapComparison HIR with no global callee lookup;
+no speculative arithmetic fix. Root exact9 baseline proof remains preserved;
+reviewer significant fixes must be pushed, full workspace/all4docs/unchanged17
+ignores and exact final-head CI pass before readiness. No merge/M3closure.
+
+
+Independent decoder preparation2026-10-05: added three UNEXECUTED collection
+regressions alongside all eight existing foundation assertions. Positive cases
+require independent vector trie decoding at counts0/1/31/32/33/1024/1025/1057,
+nested boxed-number/UTF16/keyword/symbol/vector values and empty/List/Cons
+representations after GC. Negative cases reject nominal impostors, negative
+counts, absent backing arrays, inconsistent list counts and non-sequential tails.
+Observation vector/list variants are present but decoder support is NOT yet
+implemented; these positive cases should fail until supported. No guest printer,
+equality or production decoder calls added. Run all11 unfiltered after live
+reviewer203 full97754 actually terminates, preserving earlier5114 5pass/3fail
+evidence and known-instance identifier repair. No Cargo/JVM/Node started here.
+
+Independent collection decoder implementation staged2026-10-05 at
+/private/tmp/suss-decoder-with-collections.rs, formatted but NOT compiled/run or
+applied. Current repository support remains pre-collection version, also backed
+up at /private/tmp/suss-decoder-before-collections.rs. First run all11 actual
+regressions against current pre-collection decoder after heavy release; preserve
+actual errors, then apply staged implementation and rerun SAME11. Staged code
+uses descriptor ref identity from known owned canonical instances, captures
+SourceArray/VectorNode/List/EmptyList/Cons separately, follows raw trie/tail and
+list links, validates suffix counts and bounds traversal. No guest printer/eq or
+production decoder calls. Fixtures additionally reject active root edit tokens
+and check retained vectors after public constructor redefinition. UNVERIFIED;
+do not claim support until actual tests. Full conformance maps/sets/sequences/
+exceptions and expression production migration still required.
+
+
+Independent expression-decoder work now preserves the original eight foundation checks and adds three unexecuted collection regressions. They cover vector trie transitions through1,057 elements, nested lossless values, List/EmptyList/Cons (including a vector tail), GC and retained canonical descriptors after redefinition. Malformed storage, counts, nominal impostors and active root edit tokens must fail. An independent raw-storage implementation is staged separately, not yet applied or executed; the next step is to run all11 against the pre-collection decoder, then apply it and rerun unchanged assertions. Maps/sets/other sequence representations/exceptions and all201 existing expression corpus cases remain required before public expression/evaluator retirement can be claimed. Reviewer203 full97754 remains authoritatively live; the slow metadata group completed3/0 after540.70s without interruption, later groups are passing, and final-head CI37341621088 is in progress. No baseline restart, merge, issue closure or milestone completion.
+
+Decoder prep latest2026-10-05 supersedes pending count11: now13 unfiltered
+tests, original8 plus5 collection/sequence regressions. Added canonical
+IndexedSeq over source arrays and UTF16 strings (astral individual surrogate
+units plus lone surrogate), MapEntry as two-element vector, Cons tail IndexedSeq
+and explicit Cons vector tail. Invalid offsets/storage must fail. These preserve
+representations supported by the old prototype decoder; still UNEXECUTED.
+Repository support remains PRE-collection; formatted staged implementation
+/private/tmp/suss-decoder-with-collections.rs adds raw traversal for all these,
+not yet applied/compiled. Next heavy release: run actual13 pre-collection first
+(record foundation identifier repair outcome + actual collection reds), apply
+staged support, rerun SAME13; fix real failures without weakening assertions.
+Maps/sets/other sequences/exceptions/all201 corpus + production retirement remain.
+Reviewer203 SAME97754 actualpollLIVE, metadata3passed540.70s and subsequent
+macro maps/self-local-methods groups passing; no full acceptance until terminal.
+No local heavy launched, no merges or closure.
+
+Decoder preparation latest2026-10-05 supersedes pending13: now16 unfiltered
+tests (original8 retained +8 collection/sequence tests), including ArrayMap/
+HashMap/HashSet/nil-key/nested/large trie observations and malformed map counts,
+flags, Bitmap/Array/CollisionNode backing. Aa/BB map fixture is included but no
+claim of actual collision-node coverage until representation inspection.
+Host unordered comparison consumes each expected element once, preserving
+multiplicities. Formatted staged /private/tmp/suss-decoder-with-collections.rs
+now includes raw canonical HAMT traversal with node depth/population/count checks;
+private unused storage may contain undefined6, which remains invalid as an
+observed language value. No calls to production decoder/guest equality/printer.
+Staged code NOT applied/compiled/executed; repo support remains pre-collection,
+backup refreshed at /private/tmp/suss-decoder-before-collections.rs (includes
+new Observation variants only). Next: actual unfiltered16 pre-collection run
+after heavy release, preserve real foundation/collection results, apply staged
+code and rerun SAME16. Other sequence types/exceptions/all201 original corpus/
+production retirement + original M3 gates remain. Reviewer203 full97754 remains
+authoritatively live, progressed into portable bootstrap tests, no failure
+reported; final CI stillpending. Root no heavy launched and no merge/closure.
+
+Current M3 scope verified against live GitHub issues12/13/14/15 on2026-10-05:
+allOPEN in milestone4. Issue12 requires persistent atoms/closures, no initializer
+replay, usable old values/stableABI;13 live globals/stable captured functions/
+compile+initializer failure isolation/deterministic namespace errors;14 compiled
+phase/evaluator removal/syntaxquote/gensyms/&form/&env/phase dependencies/
+reproducible Java-free bootstrap/cache invalidation;15 prompt recovery/cancel
+cleanup/reset/state release/separate resident-code and live-heap evidence.
+Milestone4 description cleaned of obsolete wording (PATCHactualterminal0),
+identity/title/acceptance preserved. Decoder currently16 UNEXECUTED tests and
+stagednotapplied raw storage implementation; no support or milestone closure
+inferred. SAMEreviewer203 full97754 LIVE currently portable_string_cache after
+source_apply5passed, no failures reported, soleheavy ownership retained.
+
+Executed decoder progress2026-10-05: pre-collection71939 ACTUALterminal101,
+11pass5fail0ignored0filtered2.38s, Rustbuild7.20s. All original8 foundation
+assertions nowpass including known-instance identifier capture repair; five
+positive collection cases fail unsupportedABI2layout. Staged independent code
+applied; replacement20962 ACTUALterminal10113pass3fail0ignore0filter2.66s.
+Three large fixture constructors hit default interactive10Mfuel BEFOREdecoder
+(map/vector/set); no layout assertion removed. These three fixtures now use
+separate bounded1B operationfuel, same counts/source/results/decoderbounds.
+Replacement44470 ACTUALterminal0:16pass0fail0ignore0filter2.72s, build0.79s.
+Logs suss-decoder-collections-{before,after-1,after-2}.log. Canonical roots/raw
+vector/list/Cons/IndexedSeq/MapEntry/ArrayMap/HashMap/HashSet actualstorage now
+executed with GC/nominalredefinitions/malformeddata/bits/UTF16. Otherseqtypes/
+exceptions/all201 corpus and publicexpression/evaluatorretirement remainopen.
+
+PR203 reviewer full97754 ACTUALterminal0 frozenaf7608f, root independently
+audited155groups1287pass0fail17unchangedignores0filteredALL4docs, artifact
+/private/tmp/suss-pr203-root-full-audit.json. Reviewerreleasedheavy, rootowns.
+GitHub parent201 has rebased to5987bc9: reviewer directendpointdiff confirms
+only handoff24lines changed, allsource/tests/bootstrap identical to330e.
+PR203 nowconflicts; reviewerauthorized isolated docs-conflict rebase+leasepush,
+newfinalheadCIrequired. OldCI37341621088inprogress is not finalrebase evidence.
+Root starts heldfrontend BOTHbootstrap regeneration on af7608f-equivalent
+source; align held branch afterreviewer reports final head. No merges/closure.
+
+Compiled expression acceptance harness prepared2026-10-05 in isolated
+portable/m3-expression-decoder worktree. Adds portable_expression_conformance.rs
+and support/portable_compare.rs; retains strict case schema/duplicate checks and
+all201 exact reviewed expressions and expected values from cases.json. Each case
+gets fresh compiled Macro/Runtime sessions, rooted ABI2 observation after GC,
+and lossless host comparison without guest equality/printing. Failures record
+compile, explicit emitter validation, dependency, trap, language exception, host,
+ownership, decoder or value stage; no baseline failures become success. Adds
+comparison regressions for >2^53 rounding, signed zero, canonical NaN bits,
+UTF16 and unordered duplicate reuse, and stage-classifier regression. These
+NEW harness tests are formatted ONLY, not yet compiled/executed. Decoder16 has
+prior actual passing evidence; no expression migration or retirement claim.
+Reviewer204 SAMEfull13173 authoritatively polled LIVE at frozenb48e8bf; retains
+sole local heavy slot. Next: after terminal release, align this held worktree
+onto reviewed frontend head with all local source/handoff preserved; run decoder
+and entire201 harness unfiltered, record every observed failure and repair actual
+gaps before replacing production expression routes. No merge or issue closure.
+
+Decoder/harness alignment2026-10-05: isolated branch now based on published
+frontendb48e8bf. Preserved complete prior parent handoff plus decoder evidence
+and prepared201 harness. Stash8ce09d081b7c6ce4f50563ca403b0be6b5eee8b1 retained.
+No source/generated assets changed during alignment; new harness unexecuted.
+
+Expression harness preparation now also independently inspects rooted uncaught
+exception payloads after GC, keeping payload decode failures visible under the
+language-exception stage. Adds actual-run negative fixture throw42 and unresolved
+source name. These new checks, like the entire201 harness, are still UNEXECUTED
+while reviewer204 samefull13173 retains the local heavy slot.
+
+The prepared201 harness can write SUSS_COMPILED_CORPUS_EVIDENCE to an explicitly
+requested scratch JSON path, retaining each unchanged input/expectation and real
+pass observation or exact failure stage/detail BEFORE asserting allpass. It never
+reads that output as a baseline or converts failure into success. Planned focused
+command: SUSS_COMPILED_CORPUS_EVIDENCE=/private/tmp/suss-compiled-corpus-observed.json
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2 cargo test
+-p suss-compile --locked --test portable_value_decoder
+--test portable_expression_conformance -- --test-threads=2 --nocapture.
+NOT EXECUTED while204full13173 remains authoritatively live.
+
+Added runtime/compiled-expression-observations.md and compatibility link with
+precise earlier-head decoder16 evidence, unchanged201 corpus, direct rootedABI2
+observation/comparison policy and still-unexecuted aligned acceptance command.
+Production expression/cache/component routes remain legacy; no retirement or
+M3 closure inferred. Root has launched no local heavy process while reviewer204
+actual samefull13173 advances through compiled metadata/local/map suites.
+
+Prepared an additional ChunkedSeq regression (decoder now17 tests; new one
+UNEXECUTED) after checking pinned core.cljs5968/6069: vector rest produces
+ChunkedSeq[vec,node,i,off,meta,hash]. Observer currently has NO ChunkedSeq class
+or branch, so retained corpus rest/Cons-tail inputs have a likely decoding gap.
+New unchanged-source checks cover sizes1/3/31/32/33/65/80, Cons-tail flattening,
+GC and retained descriptor after public constructor redefinition. No decoder
+implementation changed and no actual failure/pass claimed yet; first unfiltered
+17+harness4 run after reviewer204full13173 terminal remains the next action.
+
+
+Actual compiled expression run26575 TERMINAL101 at alignedb48:Rustbuild7.63s,
+harness3pass1fail0ignore0filter52.63s; entire201 corpus182pass19fail0skip.
+ScratchJSON/private/tmp/suss-compiled-corpus-observed.json retains every input/
+expectation/actual or stage. All19failures compile unresolvedabs/max/min/mod/
+even?/odd?/peek/pop; no corpusdecodefailure. Cargo stopped before decoder.
+Separatedecoder64036 ACTUALterminal10116pass1fail0ignore0filter2.64s: new
+large-vector rest/Cons-tail fixtureunsupportedABI2layout. Added captured canonical
+ChunkedSeq class/rawchunkboundedoffset reads and vector range observation; same
+17 replacement5089 ACTUALterminal0 17pass0fail0ignore0filter2.66s. Original
+assertions unchanged; backup/private/tmp/suss-decoder-before-chunked-seq.rs.
+Reviewer204 full13173 ACTUALterminal101112groups938pass2fail12ignore0filter
+NOdocs; existingdeepordinaryrecursion stackexhaustion and Runtime modmissing.
+Root rawaudit/private/tmp/suss-pr204-root-failed-full-audit.json. Reviewerowns
+mod retained-source import and tailcall fix with live-global/finally guards;
+rootprepares remaining7 names separately. Rootheavy26575/64036/5089 ALLterminal;
+EXPLICITsoleheavy transferred backreviewer204 for reds/fixes/focus/bootstrap/
+replacementfull/finalCI. Root no Cargo/JVM/Node until release. No merge/closure.
+
+Expression work aligned2026-10-05 onto reviewerfix33a90fa, preserving all
+original17 decoder assertions/harness201 inputs and both review/decoder handoff
+histories. Stash54536a678197863c9a02b6c4f63118b4e9286077 retained. Recipe merges
+reviewer-appended retainedmod with nine prepared rootforms (283 source selections),
+all hashed/adapted source identities and partial review entries preserved. No
+rootgeneration/execution of newnineforms yet; bothimages currently reviewed
+parent bytes and must regenerate after reviewerheavy release.
+
+
+Expression core prerequisites prepared2026-10-05 at aligned33a90fa: nine
+hash-bound retained source adaptations abs/NaN?/integer?/max/min/even?/odd?/
+peek/pop appended after reviewedmod. Pinned source bytes independently checked
+against c4295f3; explicit defn bootstrap preserves metadata/docs/complete arities.
+Abs/NaN use existing private scalar coercion, signed-zero handling and primitive
+operations. Integer preserves pinned parseFloat/parseInt scientific-format
+boundary (strictmagnitude<1e21), not arbitrary JVM integer semantics. Even
+retains original str_ error formatting dependency, presently unimplemented;
+new parity-error fixture must establish its actual behavior before acceptance.
+Strict overlay validator384reviewed/681unassessed ACTUALpass, recipe283unique
+source selections. These NEW nine adaptations have NOT generated bootstrap
+images or executed; existing trackedbothpairs belong to reviewedparent33a90fa.
+Added portable_core_expression_dependencies.rs with38 scalar/stack cases in
+both phases plus actual parity-error branch; UNCOMPILED/UNEXECUTED. Prepared
+39 fresh pinned oracleinputs/expectedtags in expression-core-cases.json, runner
+expression_core.cljs and strict expression_core_oracle.py. Python generator
+ACTUALterminal0 validates fixture schema and writes development thunks only;
+NO JVM/Node execution or match claimed. Original201 catalog unchanged.
+Reviewer204 replacementfull2763 authoritatively LIVE at33a90fa, solelocalheavy
+retained; finalCI37355871660 IN_PROGRESS. Rootno Cargo/JVM/Node. Next after
+terminalrelease: regenerate/reproduce BOTHpairs, execute all201+decoder17+new
+core edge/error checks and fresh39 pinned observations; preserve real failures
+and repair dependencies before public expression migration/evaluator retirement.
+
+Actual light source-generation progress2026-10-05: pinned leanclone initialized
+inside isolateddecoder worktree; core_import.py ACTUALterminal0 writes287files,
+--check ACTUALterminal0 verifies287 including EPL/original forms. Overlayactual
+384reviewed/681unassessed, importer14 Python tests ACTUALpass0.069s. No Cargo/
+JVM/Node run; newninecoredefs not yet Wasm-generated or executed. Added18th
+decoder test (UNEXECUTED) malformedChunkedSeq bounds/backing plus observedsuffix
+that skips opaque values in prefix/backing vector. Original17 priorpassunchanged.
+Next after reviewer204actualheavyrelease same recordedgeneration/focus/full
+corpus+fresh39oracle. Replacement2763 actualLIVE knownslowmetadata group.
+Issue14 existingprogresscomment rewritten as concisecurrentevidence+gates;
+issuebody/acceptance untouched, historicalhandoff/logs preserved.
+
+
+## Compiled expression corpus execution after Stack #205 rebase — 2026-10-05
+
+Preserved all uncommitted expression work in stash
+9cdbf35b3ebf6d121d753786d0da663e9e2d47e8 and aligned onto reviewed PR #204
+b210bbba22739c1c204f847ceb131452bb3c552e. Both complete handoff histories
+are preserved; generated source was regenerated from the merged recipe.
+Bootstrap81642 actually terminated0. Core focus30125 terminated101:
+one numeric/stack test passed in BOTH phases; parity error-message test failed
+with an actual language exception. No assertion weakened or skip introduced.
+
+Subsequent cargo test -p suss-compile --locked --test portable_value_decoder
+--test portable_expression_conformance -- --test-threads=2 --nocapture completed:
+all201 original cases pass with zero failures/skips, expression4/0 and decoder18/0,
+zero ignores/filters; full raw log
+/private/tmp/suss-expression-reviewed-corpus-decoder-focus.log and scratch
+/private/tmp/suss-compiled-corpus-reviewed-core-observed.json retain actual values.
+The original182/19 result remains preserved. Focus process75015 handle was
+missing on later observation; complete final raw suite summaries establish
+completion rather than assuming an observation timeout meant success.
+
+Fresh pinned oracle build48238 actually terminated0 after a preserved earlier
+missing-generated-namespace setup failure; Node execution and compare both
+terminated0:39 pinned observations match exactly. Core/parity red log and pinned
+build logs retained. Root explicitly released local heavy slot to reviewer204
+for final b210 full; no new root Cargo/JVM/Node until explicit release.
+
+Prepared hash-bound private runtime str_ adaptation and private coerce-string/
+concat-string lowering to existing runtime exports. Strict importer288 files,
+overlay385reviewed/680unassessed and14 importer tests pass. This NEW tenth
+source dependency, modified HIR/emitter, new runtime-helper test and expanded56
+oracle are UNEXECUTED; tracked phase pairs still contain only the nine earlier
+core additions. Regeneration and actual unchanged parity-error assertion plus
+all201/decoder18 and fresh56 oracle remain next after local slot release.
+Complete public expression/cache artifact migration, evaluator retirement,
+source schemas/cache and rooted async lifecycle remain original M3 work.
+No issue closed, PR merged, or milestone completion claimed.
+
+
+## Internal formatting execution and typed-error property red — 2026-10-05
+
+Initial tenth-dependency bootstrap3907 terminated1 with unresolved boolean?;
+retained source now captures existing number?/string?/identical? functions and
+recognizes both boolean sentinels without introducing an unknown helper.
+Replacement generation65690 ACTUALterminal0, BOTHphase pairs generated.
+Core focus57947 ACTUALterminal101:2pass/1fail/0ignore/0filter5.98s. All17runtime
+string edges and38numeric/stack cases pass in BOTHphases; original parity
+message assertion stillfails unchanged. Red retained, no blanket skip.
+
+Diagnostic50214 ACTUALterminal101:0pass/1fail/3filtered. First assertion via
+ex-message observed exact actual "Argument must be an integer: 1.5"; second
+assertion .-message on a known typed Error failed with uncaught language exception.
+Thus runtime formatting works but named-property-get lacks ABI Error8 handling.
+Prepared descriptor-checked immutable message read in native_object_properties.rs
+and expanded same regression to bothphases, retained Error across GC and a lone
+surrogate message. This new runtime change is NOT executed; previously tracked
+phase pairs predate it and require regeneration after local build-slot release.
+Expanded56oracle new17cases are still expected-only, not fresh observations.
+All178Python tests ACTUALpass5.275s, importer14 ACTUALpass0.065s.
+
+Root explicitly released local heavy after diagnostic50214terminal. Reviewer204
+ACTUALLY launched finalb210 unfiltered full53957, log
+/private/tmp/suss-pr204-review-final-b210-full.log; latest actual poll LIVE after
+build, earlyCLI suites passing. Reviewer holds soleheavy; rootno liveCargo/JVM/Node.
+Next after reviewerfullterminal: regenerate runtime change, run unchanged parity,
+all4coretests/all201/decoder18/fresh56oracle and two-build bootstrap verifier.
+Then publish linked draft with independentreview/full/finalCI; publicexpression
+artifact/cache migration/evaluator retirement remains next originalM3 work.
+
+
+## Descriptor and operand-order regression preparation — 2026-10-05
+
+While reviewer204 finalb210 baseline53957 remains authoritatively LIVE, root
+added a direct runtime-ABI regression for copied Error descriptors. It duplicates
+every descriptor field, including nominal numeric ID, then requires typed language
+rejection rather than a Wasm trap. The valid descriptor/message is read after GC
+and independently compared as UTF-16 units including NUL/lone surrogates.
+This test is PREPARED/UNEXECUTED, not a new pass.
+
+Added a fifth core-dependency regression for private concatenation with a wrong
+second operand: both effectful operands must run once in order before typed
+language rejection, which is catchable. Runtime string-concat currently has
+unchecked internal casts; the new private lowering exposes it to source, so this
+negative test needs actual red and an appropriate typed guard before acceptance.
+No guard silently added or assertion weakened; regression is UNEXECUTED.
+
+Next after reviewer53957actualterminal/release: regenerate prepared typed-message
+runtime, run focused runtime-ABI nominal guard and all5core regressions (preserve
+real red including concat), repair any actual failure, then unchanged201/decoder18,
+fresh56oracle and two-build verifier before publication. Root noCargo/JVM/Node.
+Full M3 production compiler/cache/evaluator/schema/lifecycle scope unchanged.
+
+
+Expression runtime dependency execution, 2026-10-05, installed pinned Rust1.98
+(no RUSTFLAGS): Error-property bootstrap67278 ACTUALterminal0 BOTHpairs.
+Unfiltered core5 before47157 ACTUALterminal101:4pass1fail0ignore0filter7.01s,
+actual privateconcat cast Trap before catch; parity, both-phase Error-property/
+GC/lone-surrogate and numeric38/internalstr17 tests pass. Retained original
+assertions, added RefTest guards on BOTH concat operands before casts; their
+caller effects still occur once in source order before the call. Guard regen
+29782 terminal0 BOTHpairs; after94761 terminal0 SAME5pass0fail0ignore0filter
+7.01s. Both bad-left/right and nil/nil cases retain [:left :right] effects.
+
+Forged Error-descriptor message-read focus97839 terminal0:1pass0fail0ignore
+48filtered0.13s; independently copied all descriptor fields/numericID rejects
+as language exception, NOT Trap, then genuine message preserves UTF16 surrogate/
+zero units after GC and no pending exception. Entire ABI82463 terminal0:49pass
+0fail0ignore0filter4.33s. Corpus/decoder43134 terminal0:4harness pass53.77s
+(the all-case assertion requires every unchanged201input/expected and zero
+failures/skips), decoder18pass2.86s, all0ignore/filter. This run did not request
+scratch JSON; previous actual201 JSON remains prior-head evidence. Python85367
+terminal0:178pass4.962s. Fresh pinned build49103 terminal0 (expected private
+str_ oracle warnings), Node execution and strict compare terminal0: ALL56
+pinned observations exact, including new17runtime-helper cases. Verifier33675
+terminal0: Java/Node absent, TWO fresh BOTHpairs byteexact with tracked assets,
+identity/invalidation and bootstrap4pass0fail0ignore0filter10.57s. Logs
+/private/tmp/suss-expression-{error-property-bootstrap,error-concat-before,
+concat-guard-bootstrap,error-concat-after,error-forged-descriptor-focus,
+error-concat-runtime-abi,error-concat-corpus-decoder,error-concat-python,
+core-56-pinned-build,error-concat-verify}.log. No new source-port PR yet;
+review/full baseline/final-head CI and public compiler migration remain required.
+
+Provenance PR206 c1e8c308 pushed/opened draft, Refs14, independently dispatched
+reviewer /root/review_pr206. Read-only source review finds no significant defect;
+no reviewer heavy launched. FinalCI37369849678 queued at reviewer's last read.
+Root actual five-equivalence/declaration3/source-metadata10/bootstrap4 results
+remain scoped evidence; required full and finalCI pending.
+
+PR204 final b210 CI37361727259 ACTUAL SUCCESS: exact mandated full156groups
+1301pass0fail17unchanged ignores0filter ALL4docs, EVERY ordered native suite
+row and test-name/outcome agrees with failed-local53957's152 completed native
+groups. Pinned1.98 doc-only remedy62544 ACTUALterminal0 ALL4localdocgroups,
+0fail2unchanged doc ignores0filter, EVERY doc outcome agrees with finalCI.
+This verifies the E0514 compiler/rustdoc mismatch remedy;53957 remains a
+failed local full, native+docs are recorded separately, never relabeled a single
+passing local run. Authoritative final-head CI executes the required exact full
+gate, so repeating152 unchanged native groups is unnecessary. Reviewer updated
+PRbody and marked204 ready at unchanged b210, OPEN/isDraftfalse/CLEAN; no merge.
+Audits /private/tmp/suss-pr204-review-final-b210-ci{.log,-audit.json}, compiled
+reviewer findings/fixes and pinned-doc evidence retained. Reviewer explicitly
+released soleheavy after62544; root prepares next source alignment before206
+reviewer's full handoff. Original M3 requirements/issues12-15 remain open.
+
+
 ## Prepared bounded source provenance index, 2026-10-05
 
 Isolated branch portable/m3-source-provenance-index starts at reviewed PR204
@@ -19335,3 +19766,35 @@ See docs/runtime/source-provenance-index.md. Next commit/push/open partial14 PR
 for independently dispatched review and exact full/final-head CI, then execute
 pending expression runtime regressions before public compiler migration.
 Original issues12-15 acceptance remains open; no merge.
+
+
+Expression alignment atop provenance PR206, 2026-10-05: saved full tracked/
+untracked own changes as RETAINED stash07569e87bd828d7e5c335a99efe2bfaed868c1f7;
+rebased unpublished branch portable/m3-expression-decoder fromb210 to c1e8c308.
+Only handoff and generated phase artifacts conflicted. Both handoff histories
+were proved append-only against commonb210 and preserved in full; generated
+pairs reset to newparent then regenerated, not merged as binary source. No
+semantic source conflict; all earlier retained stashes remain.
+
+Aligned regen34693 ACTUALterminal0 BOTHphase pairs. Combined-source affected
+91739 ACTUALterminal0: core5/harness4/decoder18/ABI49, total76pass0fail0ignore
+0filter. Independently inspected /private/tmp/suss-compiled-corpus-index-aligned-
+observed.json:201records ALLactualstatuspass, original inputs/expected/catalog/
+emptyfailurebaseline untouched. Current rawlog /private/tmp/suss-expression-
+index-aligned-focus.log. Verifier14107 ACTUALterminal0: Java/Node absent, TWO
+fresh BOTHphase Wasm/JSON pairs byteexact trackedassets, identity/invalidation
+and bootstrap4pass0fail0ignore0filter10.35s. Fresh56pinned and Python178 results
+above remain same unmodified source-corpus/script proof. Source ports/statuses
+remain partial/inprogress; no inventory or milestone completion claim.
+
+Root EXPLICITLY released localheavy after every root handle terminal. Reviewer
+206 ACTUALLY claimed/started exact pinned1.98 full SAME73562 at frozen c1e8;
+/private/tmp/suss-pr206-review-full.log. Root LIGHT ONLY until explicitrelease,
+no further Cargo/JVM/Node. 206 finalCI37369849678 attempt1 ended before tests
+(hostedrunnerneveracquired, jobcancelled/runner0/no steps); reviewer retried
+that authoritative terminal attempt at samehead. Attempt2 queued at lastread,
+no success inferred. Next publish partial14 expression-observation PR, dispatch
+its independent source review light-only, then obtain reviewer fixes/full/finalCI.
+Public expression/cache and component-target evaluator retirement, complete
+macro/source schemas/dependencycache and pending-I/O scheduler/lifecycle gates
+remain the next original unblocked M3 requirements. No PR merged.

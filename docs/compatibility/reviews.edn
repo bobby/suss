@@ -3601,4 +3601,116 @@
    :classification :adapted :rationale "Retain the complete pinned declaration and all methods. Replace JavaScript Error construction with the typed portable runtime error adapter. Use the explicit def/fn bootstrap, replace assert with an explicit typed failure on nil bounds, and replace the pinned int coercion with equivalent bit-or-zero coercion. Keep both public arities."
    :status :in-progress :adaptation-path "docs/compatibility/patches/vector-subvec.json" :alternative nil
    :tests ["crates/suss-compile/tests/portable_aot_lists.rs"]}
+
+  "runtime:abs:2807"
+  {:source-sha256 "769da73fd0eb759e012a484e5b6df7003a56139f65e383fb5107048f3785e25b"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["private scalar coercion/comparison/negation"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus. Math.abs uses the existing private binary64 scalar coercion, primitive comparisons/negation and explicit positive-zero normalization. Object-to-primitive conversion retains the existing unsupported diagnostic; no safe-integer restriction."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/expression-abs.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs"]}
+  "runtime:NaN?:2812"
+  {:source-sha256 "54323d6088584a272d40861fba10ebb4ed166fb04afaf6f141e44621bada3dca"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["private scalar coercion/comparison" "not"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus. Global JavaScript isNaN coerces scalar input before its NaN test; use the existing private coercion once and primitive numeric self-comparison."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/expression-NaN-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs"]}
+  "runtime:integer?:2370"
+  {:source-sha256 "74e5ab5c584965506e3382864c3e43c33d3cf67ce65ce2e881369b23c2fd505f"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["number?" "private finite/floor/comparisons" "ECMAScript number-format exponent threshold"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus. Preserve the pinned parseFloat/parseInt predicate for binary64: finite integral values only, with strict magnitude below1e21 because ECMAScript number-to-string switches to exponent notation at that boundary and parseInt consumes its leading digit. This is the pinned contract, not a JVM or arbitrary-integer test. Coercion/object and mutable host-global interop remain unsupported."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/expression-integer-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs"]}
+  "runtime:max:2817"
+  {:source-sha256 "57789ce1db49c2ea5760853c2f0e5ea98f85514f0b13fbcf4ea19a1f92e82885"
+   :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["NaN?" ">" "reduce" "max"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/expression-max.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs"]}
+  "runtime:min:2829"
+  {:source-sha256 "818bb4159df03778f744249e72befe75e3c6af92542d4b1f7008e4b18c4eecbe"
+   :visibility :public
+   :arities {:fixed [1 2] :variadic-min 2}
+   :dependencies ["NaN?" "<" "reduce" "min"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/expression-min.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs"]}
+  "runtime:even?:4444"
+  {:source-sha256 "bd00f047245484ff36abd6e6b3a7e5dabfebf825a44ce335dafadf3b66c63460"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["integer?" "zero?" "bit-and" "runtime:str_:3106 (error formatting in progress)" "typed GC Error"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus. Replace only host Error construction with the existing typed GC Error adapter; retain the original str_ error-formatting dependency, whose retained runtime adaptation is prepared but not yet executed. Invalid-input formatting is not certified by valid corpus cases."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/expression-even-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs"]}
+  "runtime:odd?:4450"
+  {:source-sha256 "aeef116f58fcbbca7301e8c4757b7dc88c50ca625c7a5ad2d69dde222f92e73d"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["even?" "not"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/expression-odd-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs"]}
+  "runtime:peek:2181"
+  {:source-sha256 "cbe02e42f5edb48cbe2f44fe6bf6b7ac3bf51208312d5fbc7de36f38c4792d3f"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["nil?" "IStack/-peek"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/expression-peek.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs"]}
+  "runtime:pop:2188"
+  {:source-sha256 "6a336adb40cf014d6006b70357959ed8d27a6a047411e64528a75bf39eae3606"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["nil?" "IStack/-pop"]
+   :classification :adapted
+   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/expression-pop.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs"]}
+
+  "runtime:str_:3106"
+  {:source-sha256 "7f1141ecc6677515afd91ecdf0ee94f574cdd04cc989027da7c1182ee5ea5ccf"
+   :visibility :private
+   :arities {:fixed [0 1] :variadic-min 1}
+   :dependencies ["existing coerce-string/string-concat runtime exports" "captured seq/first/next and scalar predicates" "nominal toString methods"]
+   :classification :adapted
+   :rationale "Retain the pinned private declaration, documentation, nil-first return and scalar/object toString behavior. Replace JavaScript arguments/StringBuffer machinery with explicit zero/one/variadic closure arities and ordered concatenation using existing UTF-16 runtime exports; capture sequence traversal and scalar-predicate dependencies to avoid adding mutable public helper dependencies. The existing numeric helper supplies ECMAScript binary64 formatting. Nominal objects retain method dispatch; complete host-object coercion and the separate compiler str_ macro adaptation remain unfinished. This runtime dependency is in progress, not complete public printing compatibility."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/expression-internal-str.json"
+   :alternative nil
+   :tests ["crates/suss-compile/tests/portable_core_expression_dependencies.rs" "tests/oracle/expression-core-cases.json"]}
 }}

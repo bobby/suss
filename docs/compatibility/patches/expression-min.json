@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "818bb4159df03778f744249e72befe75e3c6af92542d4b1f7008e4b18c4eecbe",
+  "replacement": "(def ^number min\n\"Returns the least of the nums.\"\n(fn ([x] x)\n  ([x y]\n   (cond\n     (NaN? x) x\n     (NaN? y) y\n     (< x y) x\n     :else y))\n  ([x y & more]\n   (reduce min (cljs.core/min x y) more))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus."
+}

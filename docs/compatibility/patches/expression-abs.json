@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "769da73fd0eb759e012a484e5b6df7003a56139f65e383fb5107048f3785e25b",
+  "replacement": "(def ^{:doc \"Returns the absolute value of a.\"\n   :added \"1.11.10\"} ^number abs\n(fn [a] (let [n (suss.bootstrap/f64-coerce a)] (if (cljs.core/== n 0) 0 (if (cljs.core/< n 0) (cljs.core/- n) n)))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus. Math.abs uses the existing private binary64 scalar coercion, primitive comparisons/negation and explicit positive-zero normalization. Object-to-primitive conversion retains the existing unsupported diagnostic; no safe-integer restriction."
+}

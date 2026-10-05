@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "54323d6088584a272d40861fba10ebb4ed166fb04afaf6f141e44621bada3dca",
+  "replacement": "(def NaN?\n\"Returns true if num is NaN, else false\"\n(fn [val]\n  (let [n (suss.bootstrap/f64-coerce val)] (not (cljs.core/== n n)))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus. Global JavaScript isNaN coerces scalar input before its NaN test; use the existing private coercion once and primitive numeric self-comparison."
+}

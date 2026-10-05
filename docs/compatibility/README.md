@@ -100,6 +100,13 @@ are decode errors. It does not invoke the Suss printer or equality to decide
 whether a test passes. Decoder layout knowledge is intentionally isolated in
 `tests/support/decode.rs` and must change with the runtime ABI.
 
+The separate [compiled expression observer](../runtime/compiled-expression-observations.md)
+reads ABI2 storage directly. Seventeen focused decoder checks pass, including
+an actual before/after ChunkedSeq repair. Its unchanged201-case harness records
+182 passes and19 unresolved-core-name failures with zero skips. Those failures
+remain outstanding. This does not retire the prototype compiler/evaluator or
+establish compiled expression compatibility.
+
 When intentionally adding/changing test inputs, regenerate `cases.json` with
 `cargo test -p suss-compile --test conformance record_case_catalog -- --ignored --exact`
 and review removed cases and changed expectations.
@@ -883,3 +890,13 @@ phases after GC. Presence, name/local/method-scope identity, shadows and raw
 false-versus-nil return tags are covered. This does not complete source schemas,
 inference, compiled macro acceptance or any inventory item; see
 [function scope facts](../runtime/compiled-macro-function-scopes.md).
+
+
+The new compiled Session expression harness executes all 201 unchanged reviewed
+cases successfully and independently observes ABI2 storage after GC. Eighteen
+focused decoder regressions pass, including malformed ChunkedSeq rejection.
+Thirty-nine fresh pinned numeric/stack observations match. A separately executed
+parity error-message regression remains failing; a retained internal formatting
+dependency is prepared but unexecuted. Public expression/cache migration and
+production evaluator retirement remain incomplete. See
+[compiled expression observations](../runtime/compiled-expression-observations.md).

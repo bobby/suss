@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "6a336adb40cf014d6006b70357959ed8d27a6a047411e64528a75bf39eae3606",
+  "replacement": "(def pop\n\"For a list or queue, returns a new list/queue without the first\n  item, for a vector, returns a new vector without the last item.\n  Note - not the same as next/butlast.\"\n(fn [coll]\n  (when-not (nil? coll)\n    (-pop coll))))",
+  "rationale": "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus."
+}
