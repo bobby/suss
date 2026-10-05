@@ -18889,3 +18889,20 @@ Explicit old-head lease protects the published branch during push. NEW exact
 final-head CI and independent raw tuple/doc/ignore audit are required before
 readiness; oldaf7608f CI cannot establish the rebased head. Draft/unmerged, no
 issue closure. Root owns sole heavy slot for independent decoder execution.
+
+
+## PR #203 alignment after Stack #202 merge — 2026-10-05
+
+Rebased the three PR #203 commits onto main 4dc4694, which contains the merged
+PR #201 slice. Before adding this note, the complete resulting tree at d6b97d6
+was byte-identical to prior reviewed head 872089e, including all sources, tests,
+manifest files and both Runtime/Macro bootstrap pairs. Prior-head CI run
+37347172257 completed successfully; it does not establish the new head's CI.
+The reviewed full baseline remains 155 groups, 1287 passes, no failures,
+17 unchanged ignores, no filtered tests and all four doc-test suites.
+
+Push with the explicit prior-head lease, independently review the rebase and
+require new final-head CI. PR #204 follows this rebased parent once its already
+running frozen-head baseline terminates; its additional mod redefinition review
+remains pending. No merge or issue closure; all original M3 acceptance work
+remains open.
