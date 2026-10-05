@@ -14,7 +14,7 @@ fn access(offset: u64) -> MemArg {
 
 /// A separate memory instance lets canonical lowering allocate before the source
 /// adapter is instantiated. No borrowed linear-memory pointer enters a GC value.
-pub(super) fn module() -> Vec<u8> {
+pub(crate) fn module() -> Vec<u8> {
     use Instruction::*;
     let mut types = TypeSection::new();
     types

@@ -18292,3 +18292,173 @@ No result is carried forward as passing new-head CI. Root owns the sole heavy
 slot; this follow-up runs no Cargo/JVM/Node and claims no new local baseline.
 No merge, issue closure or M3 completion. Record new head/CI and any replacement
 local execution independently, preserving the old result's provenance.
+
+## String boundary regressions prepared
+
+Isolated `/private/tmp/suss-m3-string-adapters`, branch
+`portable/m3-string-adapters`, now based on repaired PR199 head14137b7.
+Do not claim the initial option implementation as design compliant: independent
+review found section8 requires `[:none]` / `[:some value]`, not nil/raw scalar.
+Reviewer199 repaired that contract and the transitive core-redefinition bypass;
+focused option16/scalar13/async3 and both-pair reproduction/bootstrap4 passed.
+Reviewer199 owns the sole heavy slot for exact full79823 at frozen14137b7.
+No root Cargo/JVM/Node until actual terminal audit and explicit release.
+
+Added seven actual-component string tests first, with no production changes. They
+check host typed values, Unicode/empty/NUL/combining/astral text and source UTF-16
+length, mixed flat argument positions, retained incoming strings in two fresh
+Stores across GC/post-return/buffer reuse, canonical async delivery and independently
+decoded language exceptions for lone surrogates and wrong source result types.
+Only rustfmt parsing and diff checks have run. No Cargo/typecheck/runtime result
+is claimed. Next execute these unchanged against the repaired option parent,
+implement resolved string adapters with validated Unicode and correct transfer/
+realloc/free/post-return lifetime, then regenerate/reproduce both phase pairs.
+Preserve original typed file/project fixture assertions. Lists/exact64/indirect
+composites and all original M3 evaluator/schema/lifecycle criteria remain open.
+
+Prepared original `portable/aot/strings.rs` copy/validation emission helpers in
+a separate unregistered module. They copy incoming canonical UTF-16 bytes to owned
+GC strings, validate source result type and surrogate pairing before allocation,
+check canonical byte-size bounds and allocate/copy outgoing bytes. Caller integration
+must supply exact runtime/allocator function indices and locals, release inputs
+after copying all arguments, and retain output buffers through post-return or
+async task-return consumption. This is prepared source, not a working adapter:
+component signatures, shared allocator wiring and lifetime integration remain
+unimplemented. Rustfmt parses it; no typecheck/runtime result follows. Both
+bootstrap pairs must be regenerated after integration/source identity changes.
+
+Prepared core adapter integration now resolves string boundaries and emits two
+flattened fields, imports stable runtime string helpers plus the shared canonical
+allocator signatures, copies all inputs before release/invocation, validates
+outgoing Unicode before allocation, writes aligned pointer/length results and
+emits post-return frees. Error messages remain language exceptions. Added a
+seventh actual-component regression for caught string payloads and once-only
+finally effects. These changes remain UNEXECUTED and uncommitted: Rustfmt parses
+source/tests and diff checks pass, but outer component allocator instantiation,
+canonical memory/realloc/UTF-16/post-return options and async string completion
+are not yet wired. No support or full acceptance is claimed, and both phase
+pairs are stale. Reviewer199 resumed the same79823 after capacity interruption;
+actual baseline remains live, with all four doc suites still pending.
+
+Prepared outer component wiring now instantiates the shared owned command
+allocator before the source adapter, aliases its memory/realloc before canonical
+completion, and emits UTF-16/memory/realloc plus sync post-return options. Async
+bridges load string pointer/length, call task-return with memory/UTF-16 options
+and release the output afterward. Callback/type/function indices now account for
+multiple cleanup imports and mixed scalar/option/string exports. An eighth new
+actual-component regression covers that mix. The existing unsupported-shape
+fixture now selects still-unsupported `list<string>` instead of the newly targeted
+string shape; all mapping checks and actual scalar expectations remain intact.
+This is UNEXECUTED source, not verified support. Both phase pairs are stale;
+next run identical parent regressions, regenerate both pairs, execute replacement
+string8/scalar13/async3/option16, reproduce images, then review/full/final CI.
+Reviewer199 full79823 remains actually live at14137b7 and owns the test slot.
+
+Static lifetime audit inspected pinned Wasmtime49 `concurrent.rs::task_return`: it
+compares string encoding against the lifted export even for scalar/void results,
+then invokes the result lifting closure before completing/returning. Fixed prepared
+completion options to inherit UTF-16 whenever a string parameter or result uses
+that encoding. A ninth pending regression covers async string inputs with scalar
+and void outputs, retained state after GC and sync Unicode recall. This is static
+source evidence, not runtime acceptance. The test source is byte-identical in
+unchanged parent `/private/tmp/suss-string-before` at14137b7 (SHA256
+79d74e3d916c1b37fafaa1dba9479179753724ba373f0af71dadd25d0b439059).
+Both phase pairs remain stale in replacement. Next execute parent9, regenerate
+both pairs, replacement9 and affected scalar/async/option suites, then reproduce,
+dispatch review, exact full and final reviewed-head CI. No heavy root command
+while reviewer199 holds same actual live79823; root CI watcher53805 is also live.
+
+Added two pending tagged `option<string>` regressions, bringing the prepared
+string suite to11. They preserve the accepted `[:none]`/`[:some value]` source
+contract and typed None/Some(empty)/Some(Unicode), with GC/post-return and repeated
+async transfers beyond the128KiB memory quota. The held file/compiler fixture
+requires this payload type, so bare strings alone do not complete the prerequisite.
+Current prepared backend still rejects option<string>; next extend the resolved
+option payload graph, aligned tag/pointer/length layout, conditional input release
+and sync/async output cleanup before executing the complete unchanged suite.
+No typecheck/runtime success is claimed. Both pairs remain stale.
+
+Prepared `option<string>` adapter source now resolves bounded payload aliases,
+uses three flat fields (tag/pointer/length), creates the accepted private tagged
+source vectors and copies Some input bytes before conditional release. Results
+validate the original tagged shape and Unicode payload, store the one-byte tag
+with aligned pointer/length at4/8, clear None payload fields and skip None frees.
+Sync post-return and async task-return cleanup now include allocated string
+options; encoding/allocator/type/function indices account for these result types.
+This remains UNEXECUTED source. Rustfmt parsing and diff checks pass; parent11,
+both bootstrap regenerations, replacement11/affected suites and reproduction
+are still required before any support claim. Generic nested/composite options,
+lists, exact64 and the original M3 evaluator/schema/lifecycle gates remain open.
+Reviewer199 same79823 remains actually live and retains the sole heavy slot.
+
+
+## String boundary execution checkpoint — 2026-10-05
+
+Independent PR199 review completed at clean14137b70 with actual terminal0 for
+full79823:152 result groups,1255passed/0failed/17 unchanged ignores/0filtered,
+all four doc suites. Final reviewed-head CI37265512292 remains in progress.
+Root now owns the sole local heavy slot; no merge or M3 completion claim.
+
+Executed unchanged parent14137b7 with byte-identical string11 regressions:
+8730 terminal101,0passed/11failed/0ignored, all rejected unsupported strings.
+Corrected new fixture catch syntax to accepted `(catch :default payload payload)`
+in both test copies without changing assertions; final parent28594 terminal101,
+0/11/0. Logs /private/tmp/suss-string-parent{,-final}.log.
+
+Initial bootstrap31034 terminal101 exposed private STRING/allocator visibility;
+made those shared helpers crate-visible, preserving ABI layout and allocation code.
+Regeneration97723 terminal0. Focus84089 terminal101: existing scalar13/async3/
+option16 passed, string1passed/10failed from adapter module/instance index mixup.
+Corrected adapter module selection, regenerated60801 terminal0. String89130
+terminal101:1passed/10failed, post-return function type selected recursive-group
+entry count instead of concrete type count. Corrected the TYPE_COUNT offset and
+new catch fixture; regeneration16740 terminal0. Current focus93708 is live;
+replacement string runtime support is still unproven. Both phase images are now
+rebuilt for current source, but byte-exact verifier, final focus/full/review/CI
+remain required. Lists/exact64/public file frontend/evaluator retirement/full
+source AST schemas/lifecycle/cancellation and original M3 acceptance remain open.
+
+
+## Verified string adapter working head — 2026-10-05
+
+Final replacement38228 ACTUAL TERMINAL0: string11passed/0failed/0ignored/0filtered
+in32.09s, /private/tmp/suss-string-focused-5.log. Parent15925 terminal101:
+0passed/11failed/0ignored/0filtered with byte-identical final test source,
+/private/tmp/suss-string-parent-final-2.log. All original scalar13/async3/option16
+passed in final-source focus93708; its string failures preceded test-limit repair.
+No production edits followed those final-source existing-suite passes.
+
+The new128KiB transfer budget initially also blocked the retained numeric helper's
+17-page image and Wasmtime GC growth. Diagnostic31829/67951/5367 terminal101
+established actual memory declarations and limiter requests, not source success.
+The final fixture asserts numeric17/canonical1 initial pages, configures8MiB GC
+initial storage and bounds numeric/GC separately from canonical transfers.
+One-case5893 terminal0 preceded final11. The same fixture/expectations now exist
+in unchanged parent. Canonical cumulative transfers exceed128KiB while individual
+calls remain bounded; no transfer budget or semantic assertion was relaxed.
+
+Verifier33400 ACTUAL TERMINAL0: Java/Node absent from PATH; both Runtime/Macro
+Wasm/JSON byte-exact against two fresh builds and tracked images, checkout build
+identity checks and bootstrap4passed/0failed/0ignored. Log
+/private/tmp/suss-string-bootstrap-verify.log. Diff checks pass.
+Next commit/push draft string PR against reviewed PR199 and dispatch independent
+review, push significant fixes, exact unfiltered full baseline and final-head CI.
+No merge/M3 completion. Lists/exact64/public file/compiler/component host routes,
+evaluator retirement/full source schemas/lifecycle/cancellation remain open.
+
+## PR200 independent review and integration evidence — 2026-10-05
+
+Independent review at original clean330127a03447ca57f55017c10c44735cbb58f7a0
+found no significant scoped defect. Focus23281 ACTUAL TERMINAL0:
+scalar13/async3/options16/strings11,43passed/0failed/0ignored/0filtered. Exact
+`cargo test --workspace --locked -- --test-threads=2`, full50870 ACTUAL TERMINAL0:
+153result groups,1266passed/0failed/17unchanged ignores/0filtered, all four
+doctest suites. Logs /private/tmp/suss-pr200-review-{focused,full}.log and
+structured audit /private/tmp/suss-pr200-review-full-audit.json preserve evidence.
+
+Rebase onto PR199 workflow allowance repair5a15d3a preserves compiler, tests,
+bootstrap assets and runtime docs byte-for-byte against original330127a. Both
+handoff evidence sections are retained. This is reviewed-source equivalence,
+not a new-head local baseline. Root retains the sole heavy slot for list work;
+reviewer runs no Cargo/JVM/Node during this integration. Replacement final-head
+CI remains mandatory before readiness. No merge, issue closure or M3 completion.
