@@ -736,3 +736,128 @@ fn method_entry_environment_precedes_parameters_and_body_markers_are_explicit() 
         }
     }
 }
+
+#[test]
+fn function_name_facts_share_actual_scopes_without_inheriting_anonymous_parent() {
+    for phase in [Phase::Runtime, Phase::Macro] {
+        for (function, expected_name, shadowed) in [
+            ("(fn* [x] x)", None, false),
+            ("(fn* n [x] x)", Some("n"), false),
+            ("(let [n 7] (fn* n [x] x))", Some("n"), true),
+            ("(fn* n ([x] x) ([x y] y))", Some("n"), false),
+        ] {
+            let text = format!("(let [copy {function}] (inspect copy))");
+            let mut host = Observe::default();
+            portable::prepare_fragment_forms_with_expander(
+                read_forms(&text).unwrap(),
+                0..text.len(),
+                &Environment::default(),
+                phase,
+                &mut host,
+            )
+            .unwrap();
+            let source = host.initializer.unwrap();
+            let source = if shadowed {
+                let hir::SourceNode::Bindings { body, .. } = source.node.as_deref().unwrap() else {
+                    panic!("let source")
+                };
+                let hir::SourceNode::Do { result, .. } =
+                    body.source.as_ref().unwrap().node.as_deref().unwrap()
+                else {
+                    panic!("body source")
+                };
+                result.source.as_ref().unwrap()
+            } else {
+                &source
+            };
+            let callable = source.callable.as_ref().unwrap();
+            assert_eq!(
+                callable.name.as_ref().map(|scope| {
+                    let Kind::Symbol(name) = &scope.declaration.kind else {
+                        panic!("name declaration")
+                    };
+                    name.name.as_str()
+                }),
+                expected_name
+            );
+            if let Some(scope) = &callable.name {
+                assert_eq!(scope.phase, phase);
+                assert_eq!(scope.shadow.is_some(), shadowed);
+                assert!(scope.self_binding.is_some());
+                for method in &callable.methods {
+                    assert!(Arc::ptr_eq(
+                        scope,
+                        method.environment.function_scopes.last().unwrap()
+                    ));
+                }
+            }
+        }
+        let text = "(def hinted (fn* [x] x))";
+        let analyzed = hir::analyze_in(
+            &read_forms(text).unwrap(),
+            0..text.len(),
+            &Environment::default(),
+            phase,
+        )
+        .unwrap();
+        let hir::Expression::Do(items) = &analyzed.kind else {
+            panic!("fragment")
+        };
+        let hir::Expression::Definition {
+            initializer: Some(initializer),
+            ..
+        } = &items[0].kind
+        else {
+            panic!("definition")
+        };
+        let hinted = initializer
+            .source
+            .as_ref()
+            .unwrap()
+            .callable
+            .as_ref()
+            .unwrap();
+        let scope = hinted.name.as_ref().unwrap();
+        assert!(
+            scope.self_binding.is_none(),
+            "a definition hint must not allocate a lexical binding"
+        );
+        assert!(!hinted.methods[0].environment.locals.contains_key("hinted"));
+        assert!(Arc::ptr_eq(
+            scope,
+            &hinted.methods[0].environment.function_scopes[0]
+        ));
+        let text = "(fn* outer [] (fn* [] 42))";
+        let analyzed = hir::analyze_in(
+            &read_forms(text).unwrap(),
+            0..text.len(),
+            &Environment::default(),
+            phase,
+        )
+        .unwrap();
+        let hir::Expression::Do(items) = &analyzed.kind else {
+            panic!("fragment")
+        };
+        let outer = items[0].source.as_ref().unwrap().callable.as_ref().unwrap();
+        let hir::SourceNode::Do { result, .. } = outer.methods[0]
+            .body
+            .source
+            .as_ref()
+            .unwrap()
+            .node
+            .as_deref()
+            .unwrap()
+        else {
+            panic!("method body")
+        };
+        let inner = result.source.as_ref().unwrap().callable.as_ref().unwrap();
+        assert!(
+            inner.name.is_none(),
+            "an anonymous child must not inherit its parent's name"
+        );
+        assert!(Arc::ptr_eq(
+            outer.name.as_ref().unwrap(),
+            &inner.methods[0].environment.function_scopes[0]
+        ));
+    }
+}

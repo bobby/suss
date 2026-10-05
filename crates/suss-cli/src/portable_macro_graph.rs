@@ -1639,6 +1639,8 @@ impl<'a> AnalysisGraph<'a> {
             portable::resolve::Phase::Macro => "macro",
         })?;
         let mut info = vec![
+            ("fn-self-name", self.flag(true)?),
+            ("ns", self.symbol(&scope.namespace)?),
             ("fn-scope", parents),
             ("suss/explicit-self", explicit),
             (
@@ -1651,15 +1653,26 @@ impl<'a> AnalysisGraph<'a> {
             info.push(("shadow", self.local(shadow, depth + 1)?));
         } else if let Some(shadow) = &scope.shadow_field {
             info.push(("shadow", self.field(shadow, depth + 1)?));
+        } else {
+            info.push(("shadow", self.scalar(Literal::Nil)?));
         }
         let info = self.map(info)?;
-        let value = self.map(vec![
+        let mut entries = vec![
+            ("op", self.keyword("binding")?),
+            ("form", name),
             ("name", name),
             ("local", kind),
             ("env", env),
             ("info", info),
-        ])?;
-        Ok(value)
+        ];
+        let metadata = hir::reader_metadata_pairs(&scope.declaration).map_err(SessionError::Compile)?;
+        if let Some(tag) = metadata.chunks_exact(2).find_map(|pair| {
+            matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "tag")
+                .then_some(&pair[1])
+        }).filter(|tag| !matches!(tag.kind, Kind::Nil)) {
+            entries.push(("ret-tag", self.form(tag, depth + 1)?));
+        }
+        self.map(entries)
     }
     fn ast(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
@@ -2054,7 +2067,17 @@ impl<'a> AnalysisGraph<'a> {
                 }
                 fields.push(("methods", self.vector(&methods)?));
                 let methods = self.keyword("methods")?;
-                fields.push(("children", self.vector(&[methods])?));
+                let children = if let Some(scope) = &callable.name {
+                    let name = self.scope(scope, depth + 1)?;
+                    fields.push(("name", name));
+                    fields.push(("local", name));
+                    let local = self.keyword("local")?;
+                    self.vector(&[local, methods])?
+                } else {
+                    fields.push(("name", self.scalar(Literal::Nil)?));
+                    self.vector(&[methods])?
+                };
+                fields.push(("children", children));
             }
         }
         let value = self.map(fields)?;

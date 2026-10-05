@@ -385,3 +385,83 @@ fn method_recurrence_flags_survive_gc_in_both_caller_phases() {
         }
     }
 }
+
+#[test]
+fn function_name_asts_match_primary_identity_presence_and_shadow_after_gc() {
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../tests/oracle/function-name-ast-observations.json");
+    let corpus: Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    assert_eq!(corpus["schema"], 1);
+    assert_eq!(
+        corpus["upstream"],
+        "c4295f303100bbf5afac449242d30bca1126f1a1"
+    );
+    let cases = corpus["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 7);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros
+            .define(
+                r#"(defmacro inspect-name [binding]
+          (let [ast (get (get (get &env :locals) binding) :init)
+                local (get ast :local)
+                info (get local :info)
+                tag (get local :ret-tag)]
+            (list 'quote
+              [(contains? ast :name) (nil? (get ast :name))
+               (contains? ast :local) (identical? (get ast :name) local)
+               (loop [children (seq (get ast :children)) names []]
+                 (if children (recur (next children) (conj names (name (first children)))) names))
+               (if (get local :op) (name (get local :op)) nil)
+               (if (get local :form) (name (get local :form)) nil)
+               (if (get local :name) (name (get local :name)) nil)
+               (if (get local :local) (name (get local :local)) nil)
+               (contains? info :fn-self-name) (get info :fn-self-name)
+               (contains? info :ns) (if (get info :ns) (name (get info :ns)) nil)
+               (contains? info :shadow) (nil? (get info :shadow))
+               (if (get (get info :shadow) :name) (name (get (get info :shadow) :name)) nil)
+               (contains? local :ret-tag) (if (symbol? tag) (name tag) tag)
+               (contains? info :fn-scope)
+               (loop [scopes (seq (get info :fn-scope)) names []]
+                 (if scopes (recur (next scopes) (conj names (name (get (first scopes) :name)))) names))
+               (identical? local (loop [scopes (seq (get (get (first (get ast :methods)) :env) :fn-scope)) value nil]
+                  (if scopes (recur (next scopes) (first scopes)) value)))])))"#,
+            )
+            .unwrap();
+        session
+            .eval_with_macros("(ns suss-oracle.function-name-ast-runner)", &mut macros)
+            .unwrap();
+        for (index, (label, function, call, prefix)) in [
+            ("anonymous", "(fn* [x] x)", "(copy 42)", ""),
+            ("named", "(fn* n [x] x)", "(copy 42)", ""),
+            ("shadowed", "(fn* n [x] x)", "(copy 42)", "n 7 "),
+            ("tagged", "(fn* ^number n [x] x)", "(copy 42)", ""),
+            ("false-tag", "(fn* ^{:tag false} n [x] x)", "(copy 42)", ""),
+            ("nil-tag", "(fn* ^{:tag nil} n [x] x)", "(copy 42)", ""),
+            (
+                "multiple-methods",
+                "(fn* n ([x] x) ([x y] y))",
+                "(copy 1 42)",
+                "",
+            ),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            assert_eq!(cases[index][0][0], label);
+            let text = format!("(let [{prefix}copy {function}] [(user/inspect-name copy) {call}])");
+            let value = session.eval_with_macros(&text, &mut macros).unwrap();
+            session.collect().unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let actual = bridge.read(&mut session, &value, 0..text.len()).unwrap();
+            let mut fields = cases[index][0][1].as_array().unwrap().clone();
+            fields[4] = json!(["vector", fields[4]]);
+            fields[19] = json!(["vector", fields[19]]);
+            assert_eq!(
+                datum(&actual),
+                json!(["vector", [["vector", fields], 42.0]]),
+                "{label}"
+            );
+        }
+    }
+}
