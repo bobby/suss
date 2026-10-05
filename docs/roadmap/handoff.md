@@ -17876,3 +17876,48 @@ remain byte-exact to parent except self-crate imports. Root next commits/pushes
 this ownership prerequisite as a draft stacked on194, dispatches independent
 review with significant fixes and requires exact full/final-head CI. Original
 public Compiler/evaluator retirement and full M3 acceptance remain unfulfilled.
+
+
+## Independent PR195 native compiler host review (2026-10-05)
+
+Reviewed initial8725f2c18c3a2847d7009e6db21694fb0c1d396c against frozen
+53643bf in isolated /private/tmp/suss-pr195-review. Read applicable AGENTS,
+accepted design, roadmap, compatibility inventory and handoff. Independently
+verified all eight moved host modules byte-for-byte after only replacing
+suss_compile:: with crate::. No significant scoped production finding.
+The CLI reexports retain module paths and concrete type identity; native modules
+and the regular Wasmtime dependency are consistently guarded against wasm
+targets. All crate-private host helper callers moved together. No relocated
+include path or CLI dependency remains in the moved modules. The compiler source
+fingerprint includes these modules and manifests, so both regenerated bootstrap
+identities are necessary. No new target support is inferred from the cfg guards.
+
+Serial reviewer evidence, shared /private/tmp/suss-m3-pr143-target and
+CARGO_BUILD_JOBS=2, no RUSTFLAGS:
+
+- Client50287 ACTUAL TERMINAL0: cargo test -p suss-compile --locked
+  --test native_compiled_host -- --test-threads=2;2passed/0failed/0ignored/
+  0measured/0filtered,7.59s. Executes macro, persistent atom/GC rooted closure,
+  foreign Store rejection and deferred AOT initializer exception payload42.
+  Log /private/tmp/suss-pr195-review-client.log.
+- Frontends82250 ACTUAL TERMINAL0: cargo test -p suss-cli --locked
+  --test compiled_aot --test compiled_phase_session -- --test-threads=2;
+  two groups4passed/0failed/0ignored/0measured/0filtered. Actual compiled source
+  component and separate phase loading/reload/reset/root tests pass.
+  Log /private/tmp/suss-pr195-review-frontends.log.
+- Bootstrap46179 ACTUAL TERMINAL0: sh scripts/verify-bootstrap.sh; BOTH
+  Wasm/JSON pairs reproduce byte-exact twice and match committed files with
+  Java/Node absent, checkout-independent identity verifies, bootstrap4passed/
+  0failed/0ignored/0measured/0filtered,13.26s.
+  Log /private/tmp/suss-pr195-review-bootstrap.log.
+- git diff --check passes. No production/compiler/bootstrap input changed
+  during this independent review.
+
+Push/freeze this review record before the exact unfiltered
+cargo test --workspace --locked -- --test-threads=2. Full terminal results,
+all four doctest suites and exact reviewed-head CI remain required. Reviewer
+retains the sole local Cargo/JVM/Node slot until explicit terminal release.
+Public Compiler methods still use legacy expansion; this ownership prerequisite
+does not retire MacroEvaluator or complete original #12–#15, portable schemas,
+pending-I/O cancellation or live heap/code accounting. No readiness, merge,
+issue closure or milestone completion is claimed.
