@@ -17997,3 +17997,47 @@ unmerged. PR195 reviewedb6870b7 local full6497 exit0:149groups1220/0/17/all4docs
 final CI37249501965/watcher32987 remains live. Issue14 comment5985901498 records
 these actual gates without closure. Root owns the heavy slot until draft review
 transfer; no local heavy command remains live.
+
+
+## Independent PR197 public compiler review (2026-10-05)
+
+Reviewed initial8eb6798b357d6efd5829a916fdd205938ee14590 against b6870b7
+in isolated /private/tmp/suss-pr197-review. Read applicable AGENTS, accepted
+contract, roadmap, inventory and handoff. Checked native public entry routing,
+shared capability preflight/error categories, selected-world mapping, cfg guards,
+compiled defn metadata/arity adaptation and own/import/core macro precedence.
+Independently verified pinned whole-file/range and adapted defn SHA-256 values
+and retained EPL notice/license. Other public APIs and production evaluators
+remain explicitly legacy; this PR does not satisfy original M3 acceptance.
+
+Significant finding: successful two-phase reset constructed CompiledMacros with
+an empty macro definitions map, losing the newly installed core defn. Added an
+executing compiler-library regression that calls defn before/after reset and
+checks removal of prior Runtime bindings and user macros. Before27841 ACTUAL
+TERMINAL101:0passed/1failed/11intentionalfilters, unresolved Runtime defn after
+reset,5.71s; /private/tmp/suss-pr197-review-reset-before.log. Fixed by sharing
+with_bootstrap(Session) between new and replacement, retaining the existing
+Session::replacement engine/options/source-path provision and two-phase atomic
+publication. No old user roots/cache/source definitions are carried forward.
+
+Serial reviewer evidence uses shared /private/tmp/suss-m3-pr143-target, jobs2,
+no RUSTFLAGS:
+- Initial focused88301 ACTUAL TERMINAL0: public11 and toolchain8 passed.
+- Generation89269 ACTUAL TERMINAL0 regenerated BOTH phase Wasm/JSON pairs.
+- Java/Node-free verifier94903 ACTUAL TERMINAL0: BOTH phase pairs byte-exact,
+  checkout-independent identity and bootstrap4passed/0failed/0ignored/0filtered,
+  13.41s; /private/tmp/suss-pr197-review-bootstrap-verify.log.
+- Fixed50005 ACTUAL TERMINAL0: public12passed/0failed/0ignored/0filtered18.01s,
+  toolchain8passed/0failed/0ignored/0filtered5.17s;
+  /private/tmp/suss-pr197-review-fixed.log. Original assertions unchanged.
+
+Existing reset/import frontend tests, exact unfiltered workspace baseline and
+final reviewed-head CI remain required. Reviewer retains sole heavy slot until
+actual terminal release. No merge, issue closure or milestone completion.
+
+Reviewer reset/import frontend92284 ACTUAL TERMINAL0: both unfiltered groups
+pass (macro imports5 and compiled REPL macros6), including failed reset retaining
+both original Stores and successful reset removing old definitions. Log
+/private/tmp/suss-pr197-review-reset-frontends.log. Push/freeze this significant
+repair and review evidence before exact unfiltered workspace validation; final
+reviewed-head CI remains root-owned and pending.

@@ -59,7 +59,9 @@ fn add_implicit_arguments(parts: &[Form], form: &Form) -> Result<Vec<Form>, Sess
 }
 impl CompiledMacros {
     pub fn new() -> Result<Self, SessionError> {
-        let mut session = Session::new_macro()?;
+        Self::with_bootstrap(Session::new_macro()?)
+    }
+    fn with_bootstrap(mut session: Session) -> Result<Self, SessionError> {
         let bridge = FormBridge::new(&mut session)?;
         let mut macros = Self {
             session,
@@ -211,18 +213,7 @@ impl CompiledMacros {
         self.session.set_operation_fuel(fuel);
     }
     pub(crate) fn replacement(&self) -> Result<Self, SessionError> {
-        let mut session = self.session.replacement()?;
-        let bridge = FormBridge::new(&mut session)?;
-        Ok(Self {
-            session,
-            bridge,
-            declaration_values: Default::default(),
-            definitions: BTreeMap::new(),
-            declaration_sources: BTreeMap::new(),
-            loaded_sources: BTreeMap::new(),
-            incomplete_sources: BTreeSet::new(),
-            artifact_cache: Default::default(),
-        })
+        Self::with_bootstrap(self.session.replacement()?)
     }
     pub(crate) fn define_form_display(
         &mut self,
