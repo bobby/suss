@@ -4,11 +4,12 @@
 (deftype WitSigned64 [high low])
 (deftype WitUnsigned64 [high low])
 (def wit-valid-word?
-  (fn [word]
+  (let [number? number?]
+    (fn [word]
     (if (number? word)
       (if (<= 0 word)
         (if (<= word 4294967295)
-          (== word (suss.bootstrap/f64-floor word)) false) false) false)))
+          (== word (suss.bootstrap/f64-floor word)) false) false) false))))
 (def wit-checked-words
   (let [signed-class WitSigned64 unsigned-class WitUnsigned64 valid-word wit-valid-word?]
     (fn [value]

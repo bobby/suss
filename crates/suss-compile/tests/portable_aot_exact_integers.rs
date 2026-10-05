@@ -426,3 +426,40 @@ fn exact_option_and_list_schemas_keep_separate_roots_and_mixed_flat_positions() 
         store.gc(None).unwrap();
     }
 }
+
+#[test]
+fn private_exact_dispatch_survives_public_identity_redefinition() {
+    let source = "(def original-class suss.core/WitSigned64) (defn ^:export signed [x] x) (defn ^:export unsigned [x] x) (defn ^:export bad [] (new original-class 0 1.5)) (ns suss.core) (def identical? (fn* [a b] false)) (ns user)";
+    let exports = "export signed: func(x: s64) -> s64; export unsigned: func(x: u64) -> u64; export bad: func() -> s64;";
+    let (mut store, instance) = instantiate(source, exports);
+    let signed = instance
+        .get_typed_func::<(i64,), (i64,)>(&mut store, "signed")
+        .unwrap();
+    let unsigned = instance
+        .get_typed_func::<(u64,), (u64,)>(&mut store, "unsigned")
+        .unwrap();
+    assert_eq!(signed.call(&mut store, (i64::MIN,)).unwrap(), (i64::MIN,));
+    signed.post_return(&mut store).unwrap();
+    assert_eq!(unsigned.call(&mut store, (u64::MAX,)).unwrap(), (u64::MAX,));
+    unsigned.post_return(&mut store).unwrap();
+    let (store, instance) = instantiate(source, exports);
+    assert_language_error(store, instance, &[]);
+}
+#[test]
+fn private_exact_validation_survives_public_number_predicate_redefinition() {
+    let source = "(def original-class suss.core/WitSigned64) (defn ^:export signed [x] x) (defn ^:export unsigned [x] x) (defn ^:export bad [] (new original-class 0 1.5)) (ns suss.core) (def number? (fn* [a] false)) (ns user)";
+    let exports = "export signed: func(x: s64) -> s64; export unsigned: func(x: u64) -> u64; export bad: func() -> s64;";
+    let (mut store, instance) = instantiate(source, exports);
+    let signed = instance
+        .get_typed_func::<(i64,), (i64,)>(&mut store, "signed")
+        .unwrap();
+    let unsigned = instance
+        .get_typed_func::<(u64,), (u64,)>(&mut store, "unsigned")
+        .unwrap();
+    assert_eq!(signed.call(&mut store, (i64::MIN,)).unwrap(), (i64::MIN,));
+    signed.post_return(&mut store).unwrap();
+    assert_eq!(unsigned.call(&mut store, (u64::MAX,)).unwrap(), (u64::MAX,));
+    unsigned.post_return(&mut store).unwrap();
+    let (store, instance) = instantiate(source, exports);
+    assert_language_error(store, instance, &[]);
+}

@@ -31,7 +31,8 @@ and carries exactly. `wit-to-number` validates nominal identity and both words,
 and accepts only the inclusive range `[-9007199254740991,9007199254740991]`.
 
 The private generated adapter captures the first core's nominal descriptors and
-word validator before user initializers. WIT input creates that nominal wrapper;
+word validator and identity dispatch before user initializers. The validator also
+captures its numeric predicate so public redefinition cannot alter its checks. WIT input creates that nominal wrapper;
 output checks the selected signedness and finite integral words in
 `[0,4294967295]` before reconstructing the `i64` bits. Public class or validator
 redefinition cannot bypass this boundary validation. Generic constructor misuse
@@ -46,7 +47,7 @@ or license is reclassified by these additions.
 
 ## Executing evidence and remaining validation
 
-The nine `portable_aot_exact_integers` tests instantiate actual components with
+The eleven `portable_aot_exact_integers` tests instantiate actual components with
 Wasmtime, decode typed Rust values, bound fuel/memory, require zero hidden imports,
 assert required memory layouts and explicitly decode language failures. They
 exercise both endpoints, 128 varied bit patterns, values beyond the safe-number
@@ -91,3 +92,24 @@ compiler migration and execute all original typed component fixtures. Public
 expression/component production evaluator retirement, complete portable source
 schemas/inference and rooted pending-I/O/live-GC lifecycle acceptance remain M3
 requirements. Refs #12, #13, #14, #15; no issue closing claim.
+
+
+## Independent review repair
+
+Independent review reproduced two public-redefinition failures at `f8ff7e9`:
+replacing `identical?` corrupted the private operation dispatch, and replacing
+`number?` made the captured word validator reject valid input. Both separate
+regressions failed on full-width signed echo before the repair. The private schema
+now captures identity dispatch, and the original word validator captures its
+numeric predicate. The regressions retain signed/unsigned endpoint transfers and
+explicit malformed-word language failures. Nominal `instance?` lowers directly to
+the descriptor operation; it does not read a mutable public function cell.
+Both Runtime/Macro bootstrap pairs were regenerated after the validator change.
+Review logs use `/private/tmp/suss-pr203-review-{dispatch-red,validator-red,
+bootstrap,focus,verify,full}.log`. Full workspace and final-head CI remain required.
+
+Reviewer final-source focus passed76 tests across7groups, including all11 exact
+regressions and65 existing adapter/public-pipeline tests, with zero failures,
+ignores or filtered tests. The Java/Node-free verifier reproduced both phase
+Wasm/JSON pairs twice byte-exact with tracked assets; compiler identity and all4
+bootstrap tests passed. Full workspace/final-head CI are still pending.

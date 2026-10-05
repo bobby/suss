@@ -18836,3 +18836,36 @@ DRAFT exact prerequisite, independent reviewer must push significant fixes and
 run exact unfiltered full/finalCI; do not merge. Then integrate reviewed exact
 parent into held file/project branch and regenerate/run all original typed cases.
 Decoder8 preparation and ALL original M3 evaluator/schema/lifecycle gates remain.
+
+
+## PR #203 independent review repair — 2026-10-05
+
+Independent reviewer found and reproduced two significant redefinition bugs at
+frozen f8ff7e9. New dispatch regression89722 terminated101:0passed/1failed/
+0ignored/9filtered4.46s; redefining public identical? to false made valid signed
+MIN input throw before echo. Separate validator regression9168 terminated101:
+0passed/1failed/0ignored/10filtered4.36s; redefining public number? to false made
+valid full-width output fail validation. No original assertion was weakened.
+Logs /private/tmp/suss-pr203-review-{dispatch-red,validator-red}.log.
+
+Reviewer repairs capture identical in the private exact schema and capture the
+numeric predicate inside the original word validator. Nominal instance? directly
+lowers to descriptor tests. Word-bound <=/== resolve_bootstrap_macro to fixed
+Expression::Comparison IR without a callee/global lookup, so no live comparison
+function-cell dependency is introduced. Both independent regressions preserve
+signed/unsigned endpoint transfer and explicit malformed-word language rejection.
+
+Bootstrap9248 terminated0 and regenerated BOTH Runtime/Macro Wasm/JSON pairs.
+Strict core importer277files and14 importer Python tests pass. Final-source
+focus20841 terminated0:7groups76passed/0failed/0ignored/0filtered, exact11 plus
+existing scalar13/async3/options16/strings11/lists10/publicpipeline12. Audit
+/private/tmp/suss-pr203-review-focus-audit.json. Java/Node-free verifier4145
+terminated0: bothphase Wasm/JSON pairs reproduce byte-exact between two fresh
+processes and tracked assets, compiler identity passes and bootstrap4/0/0/
+0filtered11.24s. Logs /private/tmp/suss-pr203-review-{bootstrap,focus,verify}.log.
+
+Reviewer pushes significant fixes before merge readiness. Next freeze reviewed
+head and run cargo test --workspace --locked -- --test-threads=2 with sharedtarget
+/private/tmp/suss-m3-pr143-target and CARGO_BUILD_JOBS=2, then independently audit
+exact final-head CI including all4doctests and unchanged17ignores. These gates
+remain pending. No merge or issue closure; original M3 issues12–15 scope remains.
