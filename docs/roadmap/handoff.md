@@ -18615,3 +18615,37 @@ Required next: freeze repaired head and run exact unfiltered cargo test --worksp
 and require final-head CI before readiness. PR remains draft/unmerged; M3 issues
 12–15 stay open. Exact64, held public file/project migration, production evaluator
 retirement, full portable source schemas and rooted pending-I/O lifecycle remain.
+
+## PR #201 outer list diagnostic repair — 2026-10-05
+
+The exact frozen-head b5ba2d4 full baseline6745 terminated101 after142 completed
+groups:1165passed/2failed/15existingignores/0filtered, with zero doctest suites
+reached. Its two public_compiled_pipeline failures require the full outer
+list<map<string, u32>> diagnostic, while list payload resolution reported only
+map<string, u32>. This was a diagnostic regression; the two exact assertions and
+throw99 pre-macro fixtures remain unchanged. Audit and full log retained at
+/private/tmp/suss-pr201-review-full-audit.json and
+/private/tmp/suss-pr201-review-full.log.
+
+Independent reviewer repaired only list resolution's unsupported diagnostic to
+render the whole resolved outer boundary type. Root executed regeneration60990
+terminal0, focus93512 terminal0 (public12+AOT13+list10=35passed/0failed/0ignored/
+0filtered), and verifier46143 terminal0. Reviewer independently inspected all
+three logs and the source diff: both Runtime/Macro Wasm/JSON pairs reproduced
+byte-exact with two fresh builds and tracked assets while Java/Node were absent;
+compiler identity checks and all4 bootstrap cases passed. Logs:
+/private/tmp/suss-pr201-diagnostic-{bootstrap,focus,verify}.log. Commands retain
+CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2, no RUSTFLAGS;
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap;
+cargo test -p suss-compile --locked --test public_compiled_pipeline
+--test portable_aot --test portable_aot_lists -- --test-threads=2;
+sh scripts/verify-bootstrap.sh.
+
+Reviewer commits/pushes this significant finding fix and both regenerated phase
+pairs. The replacement exact unfiltered cargo test --workspace --locked --
+--test-threads=2 and final-head CI remain required; the failed prior run is not
+acceptance evidence and this PR remains draft/unmerged. Root owns the sole local
+heavy slot and will first execute prepared exact64 focus, then explicitly transfer
+the slot for the repaired list full baseline. No reviewer heavy process is live.
+Original M3 issues12–15 remain open; full source schemas, public/compiler evaluator
+retirement, exact64 and rooted pending-I/O lifecycle acceptance remain incomplete.

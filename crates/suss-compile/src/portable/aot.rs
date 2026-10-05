@@ -148,7 +148,13 @@ fn boundary(resolve: &Resolve, mut ty: Type) -> Result<Boundary, Diagnostic> {
                             }
                         }
                         return scalar(resolve, payload)
-                            .map(|ty| Boundary::List(ListElement::Scalar(ty)));
+                            .map(|ty| Boundary::List(ListElement::Scalar(ty)))
+                            .map_err(|_| {
+                                error(format!(
+                                    "Portable AOT {} boundary adapters remain unimplemented",
+                                    boundary_description(resolve, ty, 0)
+                                ))
+                            });
                     }
                     return Err(error("Portable AOT list element alias depth exceeds64"));
                 }
