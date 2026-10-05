@@ -85,18 +85,68 @@ fn prototype_reports_unsupported_boundary_shapes_instead_of_unknown_types() {
 }
 
 #[test]
-fn prototype_reports_async_exports_before_encoding() {
-    let error = suss_compile::Compiler::new()
+fn public_compiler_executes_declared_async_scalar_export() {
+    use std::{
+        future::Future,
+        pin::pin,
+        sync::Arc,
+        task::{Context, Poll, Wake, Waker},
+    };
+    use wasmtime::component::{Component, Linker};
+    use wasmtime::{Config, Engine, Store};
+
+    let bytes = suss_compile::Compiler::new()
         .compile(
             "(defn ^:export echo [x] x)",
-            "package test:unsupported; world boundary { export echo: async func(x: u32) -> u32; }",
+            "package test:async-export; world boundary { export echo: async func(x: u32) -> u32; }",
         )
-        .expect_err("async language lowering remains unimplemented");
-    assert!(
-        matches!(error, suss_compile::CompileError::Unsupported(_)),
-        "{error}"
-    );
-    assert!(error.to_string().contains("async"), "{error}");
+        .expect("compiled scalar canonical async adapter");
+    let mut config = Config::new();
+    config
+        .wasm_gc(true)
+        .wasm_function_references(true)
+        .wasm_tail_call(true)
+        .wasm_exceptions(true)
+        .wasm_component_model(true)
+        .wasm_component_model_async(true)
+        .consume_fuel(true);
+    let engine = Engine::new(&config).unwrap();
+    let component = Component::new(&engine, bytes).unwrap();
+    assert_eq!(component.component_type().imports(&engine).count(), 0);
+    let mut store = Store::new(&engine, ());
+    store.set_fuel(100_000_000).unwrap();
+    let instance = Linker::new(&engine)
+        .instantiate(&mut store, &component)
+        .unwrap();
+    let echo = instance
+        .get_typed_func::<(u32,), (u32,)>(&mut store, "echo")
+        .unwrap();
+    assert!(echo.func().ty(&store).async_());
+    struct WakeCurrent(std::thread::Thread);
+    impl Wake for WakeCurrent {
+        fn wake(self: Arc<Self>) {
+            self.0.unpark();
+        }
+    }
+    let waker = Waker::from(Arc::new(WakeCurrent(std::thread::current())));
+    let mut context = Context::from_waker(&waker);
+    for value in [0, 42, u32::MAX] {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+        let result = {
+            let mut call = pin!(echo.call_async(&mut store, (value,)));
+            loop {
+                match call.as_mut().poll(&mut context) {
+                    Poll::Ready(result) => break result.unwrap().0,
+                    Poll::Pending => {
+                        assert!(std::time::Instant::now() < deadline, "async call timed out");
+                        std::thread::park_timeout(std::time::Duration::from_millis(100));
+                    }
+                }
+            }
+        };
+        assert_eq!(result, value);
+        store.gc(None).unwrap();
+    }
 }
 
 #[test]

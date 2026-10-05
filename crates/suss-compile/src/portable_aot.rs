@@ -132,6 +132,7 @@ pub(crate) fn compile_inputs(
     let world = resolve
         .select_world(&[package], wit_world)
         .map_err(|error| format!("Failed to select WIT world: {error:#}"))?;
+    portable::aot::validate_boundary(&resolve, world).map_err(|error| error.to_string())?;
     let fragments = prepare_inputs(inputs, source_paths).map_err(|error| error.to_string())?;
     let mappings = portable::aot::source_export_mappings(&fragments, &resolve, world, mappings)
         .map_err(|error| error.to_string())?;

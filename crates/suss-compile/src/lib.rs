@@ -55,6 +55,8 @@ pub mod portable;
 #[cfg(not(target_family = "wasm"))]
 mod portable_module_cache;
 #[cfg(not(target_family = "wasm"))]
+mod portable_defn;
+#[cfg(not(target_family = "wasm"))]
 pub mod portable_macro_data;
 #[cfg(not(target_family = "wasm"))]
 pub mod portable_macro_graph;
@@ -1268,46 +1270,33 @@ impl Compiler {
     ///
     /// The compiled WASM component bytes
     pub fn compile(&mut self, source: &str, wit_source: &str) -> CompileResult<Vec<u8>> {
-        // Load core.sus (auto-injected before user code per Clojure semantics)
-        let core_exprs = load_core_exprs()?;
-
-        // Parse the Suss source
-        let mut parser_state = ParserState::new("suss");
-        let user_exprs = suss_reader::parse_all(source, &mut parser_state)
-            .map_err(|e| CompileError::Parse(e.to_string()))?;
-
-        // Combine core + user expressions
-        let mut all_exprs = core_exprs;
-        all_exprs.extend(user_exprs);
-
-        // Expand macros
-        let exprs = expand::expand_all(all_exprs, None)?;
-
-        // Parse the WIT definition
-        let mut resolve = Resolve::new();
-        let pkg_id = resolve
-            .push_str("world.wit", wit_source)
-            .map_err(|e| CompileError::Wit(e.to_string()))?;
-
-        // Get the world from the package
-        let pkg = &resolve.packages[pkg_id];
-        let world_id = pkg
-            .worlds
-            .values()
-            .next()
-            .ok_or_else(|| CompileError::Wit("No world found in WIT file".to_string()))?;
-
-        // Analyze the source
-        let module = analyze::analyze(&exprs, &resolve, *world_id)?;
-
-        // Lower to IR (Component mode - no runtime helpers in output)
-        let ir = lower::lower_for_component(&module)?;
-
-        // Generate core WASM module
-        let core_wasm = codegen::generate(&ir, &resolve, *world_id)?;
-
-        // Wrap as WASM Component
-        component::encode_component(&core_wasm, &resolve, *world_id)
+        #[cfg(not(target_family = "wasm"))]
+        {
+            // Resolve the world before entering the effectful Macro phase.
+            let mut resolve = Resolve::new();
+            let package = resolve
+                .push_str("world.wit", wit_source)
+                .map_err(|error| CompileError::Wit(error.to_string()))?;
+            let world = resolve
+                .select_world(&[package], None)
+                .map_err(|error| CompileError::Wit(error.to_string()))?;
+            portable::aot::validate_boundary(&resolve, world)
+                .map_err(|error| CompileError::Unsupported(error.to_string()))?;
+            let fragments =
+                portable_aot::prepare_source(source, None, &[std::path::PathBuf::from("src")])
+                    .map_err(|error| CompileError::Semantic(error.to_string()))?;
+            let mappings = portable::aot::source_export_mappings(&fragments, &resolve, world, &[])
+                .map_err(|error| CompileError::ExportMismatch(error.to_string()))?;
+            portable::aot::component(&fragments, &resolve, world, &mappings)
+                .map_err(|error| CompileError::Component(error.to_string()))
+        }
+        #[cfg(target_family = "wasm")]
+        {
+            let _ = (source, wit_source);
+            Err(CompileError::Unsupported(
+                "Compiled source macro execution requires the native compiler host".into(),
+            ))
+        }
     }
 
     /// Compile from file paths

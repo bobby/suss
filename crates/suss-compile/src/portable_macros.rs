@@ -59,9 +59,11 @@ fn add_implicit_arguments(parts: &[Form], form: &Form) -> Result<Vec<Form>, Sess
 }
 impl CompiledMacros {
     pub fn new() -> Result<Self, SessionError> {
-        let mut session = Session::new_macro()?;
+        Self::with_bootstrap(Session::new_macro()?)
+    }
+    fn with_bootstrap(mut session: Session) -> Result<Self, SessionError> {
         let bridge = FormBridge::new(&mut session)?;
-        Ok(Self {
+        let mut macros = Self {
             session,
             bridge,
             declaration_values: Default::default(),
@@ -70,7 +72,14 @@ impl CompiledMacros {
             loaded_sources: BTreeMap::new(),
             incomplete_sources: BTreeSet::new(),
             artifact_cache: Default::default(),
-        })
+        };
+        macros.enter_namespace("suss.core")?;
+        macros.define(crate::portable_defn::SOURCE)?;
+        macros.enter_namespace("user")?;
+        // Bootstrap code is already rooted in the Store. User source cache
+        // accounting starts empty, including after an explicit session reset.
+        macros.artifact_cache = Default::default();
+        Ok(macros)
     }
     pub(crate) fn binding_checkpoint(&mut self) -> Result<(crate::portable_session::BindingCheckpoint, BTreeMap<(String, String), SessionValue>, BTreeMap<(String, String), String>), SessionError> {
         Ok((self.session.binding_checkpoint()?, self.definitions.clone(), self.declaration_sources.clone()))
@@ -207,18 +216,7 @@ impl CompiledMacros {
         self.session.set_operation_fuel(fuel);
     }
     pub(crate) fn replacement(&self) -> Result<Self, SessionError> {
-        let mut session = self.session.replacement()?;
-        let bridge = FormBridge::new(&mut session)?;
-        Ok(Self {
-            session,
-            bridge,
-            declaration_values: Default::default(),
-            definitions: BTreeMap::new(),
-            declaration_sources: BTreeMap::new(),
-            loaded_sources: BTreeMap::new(),
-            incomplete_sources: BTreeSet::new(),
-            artifact_cache: Default::default(),
-        })
+        Self::with_bootstrap(self.session.replacement()?)
     }
     pub(crate) fn define_form_display(
         &mut self,
@@ -419,6 +417,20 @@ impl ExpansionHost for CompiledMacros {
         let target = context
             .environment
             .resolve_source_macro(context.phase, name)
+            .or_else(|| {
+                // Standalone source definitions are registered in the host
+                // before the Runtime snapshot has a macro-export entry.
+                let own = (
+                    context.environment.current_namespace(context.phase).to_owned(),
+                    name.name.clone(),
+                );
+                (name.namespace.is_none() && self.definitions.contains_key(&own)).then_some(own)
+            })
+            .or_else(|| {
+                context.environment
+                    .resolves_bootstrap_name(context.phase, name, "defn")
+                    .then(|| ("suss.core".into(), "defn".into()))
+            })
             .unwrap_or_else(|| {
                 (
                     name.namespace
