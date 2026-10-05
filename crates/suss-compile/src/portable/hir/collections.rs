@@ -92,6 +92,8 @@ impl Analyzer<'_> {
             .iter()
             .map(|item| self.form(item))
             .collect::<Result<Vec<_>, _>>()?;
+        *self.source_nodes.last_mut().expect("source node fact slot") =
+            Some(std::sync::Arc::new(SourceNode::Vector(entries.clone().into())));
         self.vector_values(form, entries)
     }
 
@@ -137,6 +139,8 @@ impl Analyzer<'_> {
             .iter()
             .map(|item| self.form(item))
             .collect::<Result<Vec<_>, _>>()?;
+        *self.source_nodes.last_mut().expect("source node fact slot") =
+            Some(std::sync::Arc::new(SourceNode::Map(entries.clone().into())));
         self.map_values(form, items, entries)
     }
 
@@ -197,6 +201,8 @@ impl Analyzer<'_> {
 
     pub(super) fn set_literal(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
         let entries = items.iter().map(|item| self.form(item)).collect::<Result<Vec<_>, _>>()?;
+        *self.source_nodes.last_mut().expect("source node fact slot") =
+            Some(std::sync::Arc::new(SourceNode::Set(entries.clone().into())));
         self.set_values(form, items, entries)
     }
 

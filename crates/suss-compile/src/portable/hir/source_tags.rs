@@ -398,7 +398,7 @@ pub(super) fn source_tags(
                 Expression::Definition { initializer, .. } => initializer
                     .as_ref()
                     .map_or(Ok(None), |init| inferred(init, 0))?,
-                Expression::Assign { value, .. } => inferred(value, 0)?,
+                Expression::Assign { .. } => None,
                 Expression::Call { callee, arguments } => {
                     let methods = callable_before_dispatch(callee).or_else(|| resolved_callable(resolved));
                     let method = methods.and_then(|methods| {
@@ -491,4 +491,9 @@ mod quoted_tag_tests {
             );
         }
     }
+}
+
+// analyze-wrap-meta has no own :tag; get-tag may still read a source hint.
+pub(super) fn metadata_wrapper_tags(form: &Form) -> Result<SourceTags, Diagnostic> {
+    Ok(SourceTags { inferred: hint(form)?, ..Default::default() })
 }

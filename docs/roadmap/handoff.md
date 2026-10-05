@@ -16992,3 +16992,357 @@ handle2979 reached actual terminal0:1passed/0failed/0ignored/0measured/0filtered
 head, execute required cargo test --workspace --locked -- --test-threads=2 through
 all doctests and independently verify exact final-head CI. Reviewer retains sole
 heavy slot until explicit release. No merge or readiness claimed here.
+
+
+## Source collection AST oracle prepared, unexecuted
+
+Created isolated portable/m3-collection-source-asts at reviewed field checkpoint
+c0665d9 in /private/tmp/suss-m3-collection-source-asts. Read accepted design5/7,
+current roadmap/inventory/handoff and pinned analyze-map/vector/set source.
+SourceAnalysis currently records genuine node facts but has no explicit source
+collection child list; physical constructor lowering is not portable AST schema.
+Added original collection_source_asts.clj and runner: eleven candidate observations
+cover empty/nonempty vector/map/set, nesting, local/quoted children, metadata and an
+effectful do child. Projection retains op/tag/form/children/literal/val presence,
+vector child edges and expr/meta/ret edges, bounded depth8, without reanalysis.
+No expected-results corpus created, no JVM/Node/native execution or success claim.
+Unordered child edge order is retained in the primary probe; user-approved textual
+order variance must be documented from actual evidence, not guessed/reordered to
+hide it. Effect counter must be independently executed and observed.
+
+Reviewer187 remains sole heavy owner full25885, current long declaration metadata;
+root starts no Cargo/JVM/Node. Next fresh forced/cache-disabled pinned oracle after
+actual slot release, then native source-child regression and actual capture/graph
+repair. Separate root acceptance tree retains the unexecuted combined namespace
+REPL/AOT test and public legacy namespace/API retirement gap. Original M3 scope
+remains active; do not close issues or merge PRs from this preparation.
+
+
+Before executing the collection probe, refined child traversal to follow the
+actual analyzer :children list generically (many versus one). This includes do
+statements/ret and invocation/assignment child edges rather than omitting their
+keys. Literal const :val is serialized as data; set! :val is traversed as an AST
+edge, avoiding recursive serialization of entire analyzer env/info maps. There
+are still no observations/expectations or success claims for this candidate.
+
+
+### Collection probe runnable preparation
+
+Shared pinned ClojureScript checkout cloned from reviewed field tree, rev-parse
+verified c4295f303100bbf5afac449242d30bca1126f1a1. Added executable development-only
+scripts/probe-collection-source-asts.sh: verifies exact pin, truncates candidate
+trace, force/cache-disabled compilation and actual Node execution. No corpus
+checker runs because no expected observations exist yet. Source inspection confirms
+vector/map/set literal helpers analyze each original child exactly once before
+constructor/factory lowering. The source record must retain those genuine child
+nodes at that boundary; deriving children from factory/storage HIR would be wrong,
+especially large-map splitting and source metadata wrappers. No compiler/graph
+changes made from this inspection and no primary/native acceptance claimed.
+Reviewer187 full25885 reported live past reload into set transport. Next execute
+prepared namespace acceptance and collection probe after actual heavy-slot release.
+
+
+### Collection primary observations executed and extended intact
+
+After reviewer187 actually released sole slot, root first completed namespace
+acceptance79455, then collection primary44713 actual terminal0. Eleven fresh
+analyzer rows exactly matched executed Node results and effects1, preserved at
+/private/tmp/suss-collection-ast-initial-verified.json. Added factory-threshold
+vector33/map9/set9 cases, fresh forced/cache-disabled probe9866 actual terminal0.
+All fourteen traces equal fourteen executed Node rows, effects remains1, and all
+original eleven rows remain byte-for-value unchanged. Frozen actual corpus is
+collection-source-ast-observations.json; no native conformance is claimed.
+Logs /private/tmp/suss-collection-ast-primary-{initial,expanded}.log.
+
+Actual metadata vector is op with-meta with absent top tag and meta/expr child
+edges; empty collections retain their own op/tag/empty child vectors. Effect-child
+has genuine do/set!/var nodes and a host-specific js node from pinned core + macro
+expansion. That is an explicit adaptation boundary: do not fabricate a JS AST in
+Suss or drop/weaken the original observation to make native comparison pass.
+Unordered child ordering remains raw primary evidence; accepted textual-order
+variance must be documented and tested explicitly during native capture/graph work.
+Next strict corpus validation and native source-node/edge regression, genuine child
+capture before constructor lowering, BOTH bootstrap pair regeneration/Javafree
+for compiler changes, focused execution and independent/full/exactCI gates.
+
+
+### Collection corpus checker
+
+Strict checker validates fourteen labels, exact data/presence/order, generic source
+child cardinality and correspondence to the declared :children vector, depth8/
+4096nodes and exact effects1. Fresh existing trace/Node data passes the checker.
+Eight unit checks passed in0.009s, rejecting effect replay/bool masquerading as1,
+child omission/cardinality changes, case loss, absent tag with value, source value
+change and wrong schema type. New test-collection-source-asts-oracle.sh composes
+fresh probe with checker; its full composed execution remains pending. No native
+AST comparison or production compiler/graph repair has happened yet.
+
+### Collection projection fixture repair prepared
+
+Parent31078 terminated101 with Unresolved Macro name vector before semantic
+assertions. Replaced only the fixture's vector helper call with a vector literal,
+sequence-normalized child keys so an empty vector terminates iteration, and added
+the same depth8 rejection bound as the pinned projection. Frozen14 primary
+observations, edge ordering and all comparison/effect assertions are unchanged.
+This repair is unexecuted; reviewer189 owns the sole local heavy slot. Next run
+the repaired parent probe after explicit release and classify actual failure.
+
+### Collection oracle checker revalidated during acceptance review
+
+Fresh discovery command python3 -m unittest discover -s scripts -p
+'test_collection_source_asts_oracle.py' terminated0:8 tests passed in0.009s.
+The initial module-path invocation failed import before running checker tests;
+corrected discovery supplied the intended scripts import path. No assertions or
+frozen observations changed. Native fixture repair remains unexecuted while
+reviewer189's unfiltered handle32693 owns the sole heavy slot.
+
+### Collection projection boundary inspection
+
+Frozen primary14 observations retain vector/map/set source ops and child vectors,
+including empty vectors and constructor/factory thresholds. Metadata-vector has
+with-meta with absent top tag and meta/expr children. Primary set children use
+hash iteration: the three-entry set orders1,:key,false and factory-set orders
+0,7,1,4,6,3,2,5,8. Preserve these raw observations; native textual ordering follows
+the user's approved variance and needs explicit correspondence and execution
+checks, not a generic sorting pass over effectful child edges.
+Primary effect-child contains do/set!/var and a host-specific js AST emitted by
+core arithmetic expansion. No fabricated JS source AST, dropped case or blanket
+skip may turn that boundary into compatibility success. Determine and document
+the portable correspondence from genuine analyzed children and executed effects.
+Native parent fixture remains pending actual semantic execution after review189
+releases full32693. No production source-child implementation is claimed yet.
+
+### Compiler expansion regression prepared; field PR ready
+
+New portable_collection_source_analysis compiler regression observes custom
+expansion callbacks for each vector/map/set entry across empty and small/large
+literals in Runtime/Macro phases. It requires original enclosing forms/spans and
+source tags to survive lowering and each marker to expand exactly once in textual
+order. It is supplemental compiler analysis evidence, not execution of runtime
+initializers or a substitute for the native AST child regression. Unexecuted while
+reviewer189 retains full32693; no compiler implementation changed.
+
+PR187 exactCI37218388969 completed/success at c0665d97d1ec86d9b7be5d53c1bc9e851b582945.
+Downloaded /private/tmp/suss-pr187-ci-complete.log and isolated workspace step to
+/private/tmp/suss-pr187-ci-workspace.log. Root independently verified142groups/
+1191passed/0failed/17ignored/0measured/0filtered, exact full command and all4
+doctests, matching complete local reviewer log. PRbody updated and PR187 marked
+ready; issue14 evidence5982923389. No merge or issue closure. PR189 finalhead
+0ac036d remains under live full review and CI37222726440.
+
+### Collection primary evidence now rejects silent edge reordering
+
+Added a negative checker regression reversing the pinned map keys/vals together
+and both small/factory set children. Despite unchanged unordered contents, strict
+primary comparison must reject each mutation. Fresh Python discovery terminated0:
+9 tests passed in0.018s. Raw14 observations remain unchanged; this guards against
+rewriting reference evidence to match the approved native textual-order variance.
+New compiled-macro-collection-source-asts.md records actual pinned shapes, metadata
+wrapper/JS boundaries, executed primary commands, unexecuted compiler/native
+regressions and required next gates. No production source-child implementation or
+native conformance is claimed. Reviewer189 still owns full32693, now official
+command groups after namespace acceptance passed; root no heavy job.
+
+### Actual collection parent semantic failure; compiler expansion guard passes
+
+Reviewer189 full32693 actual terminal0 released sole slot. Root independently
+parsed complete log143groups/1192passed/0failed/17ignored/0measured/0filtered
+through all4doctests. Final0ac036d unchanged; exactCI37222726440 remains pending.
+
+Root native repaired-parent handle7560 actual terminal101:0passed/1failed/
+0ignored/0filtered in6.22s. It reached the empty-vector semantic assertion,
+showing absent op/children/items versus pinned vector/[:items]/[]. Log
+/private/tmp/suss-collection-ast-native-parent-repaired.log. No unresolved-helper
+error remains. All14 frozen assertions/effects/order remain unchanged.
+Compiler-only handle97528 actual terminal0:1passed/0failed/0ignored/0filtered
+in0.02s, log /private/tmp/suss-collection-ast-compiler-parent.log. Expansion
+callbacks prove original enclosing source forms/tags and once-only textual order
+across9sizes/kinds in both phases. This is analysis evidence, not runtime proof.
+
+No production compiler/graph repair yet. Next capture original analyzed collection
+children before constructor/factory lowering, expose charged bounded graph edges,
+handle metadata wrappers from genuine expr/meta analyses, and retain explicit
+unordered-source-order and hostJS adaptation boundaries. BOTH phase regeneration/
+Javafree before native acceptance for compiler changes. Root owns sole slot now;
+all root/reviewer handles terminal. No PR merge or M3 completion.
+
+### Original collection child capture implemented; bounded native ordering failure
+
+SourceCollection records in SourceAnalysis retain vector/map/set analyzed entries
+before physical constructor/factory lowering. Nested fact slots pop on success or
+failure; quoted-data _values constructors never fabricate expression children.
+Metadata now analyzes its actual merged map through a separate source frame, so
+it does not overwrite the parent collection. Graph derives metadata-free source
+ops and charged child vectors from these actual records, not physical HIR shape.
+Metadata wrapper capture/exposure remains unfinished.
+
+Compiler capture78830 actualterminal0:1pass0.02s; strengthened children test
+subsequent direct Cargo actualterminal0:1pass0.02s, log
+/private/tmp/suss-collection-ast-compiler-children.log. Checks expanded children
+count/order/phase/context as well as original outer forms and once-only callbacks.
+Both phase pair generation53475 actualterminal0; Javafree46946 actualterminal0,
+bootstrap4pass12.91s. Logs /private/tmp/suss-collection-ast-bootstrap-{generate,verify}.log.
+
+Native basic93966 terminated101 at factory-vector macro projection, prior to
+comparison. Temporary diagnostic96983 terminated101 confirmed rootcause OutOfFuel;
+logging removed and portable_macros.rs has no remaining diff. Raising only the
+fixture macro budget to40M allowed projection but caller quote construction hit
+default10M fuel (74988 terminal101). Both finite fixture budgets are now40M;
+87088 actualterminal101 reaches semantic small-set child ordering difference in
+8.42s. Log /private/tmp/suss-collection-ast-native-both-bounded.log. Prior5Runtime
+comparisons match; native1,false,:key differs from rawprimary1,:key,false as user
+approved. No raw observations/assertions changed and no second-phase/full/native
+acceptance is claimed. Next implement explicit textual-order correspondence,
+metadata expr/meta source records and portable do/set!/arithmetic boundary facts
+without inventingJS, then all14cases/effects/bothphases, affected/bounds/Python,
+review/full/finalCI. All root/reviewer heavy handles terminal; root owns slot.
+PR189 local fullpassed143groups1192/0/17/0/0 final0ac036d; CI37222726440 pending.
+Root acceptance worktree clean fast-forwarded to reviewed0ac036d. No new PR for
+collection increment yet, no merge/issueclosure/M3 completion.
+
+
+### Collection metadata and effect source records — focused verification
+
+Previous compiler handle56695 reached actual terminal0:1passed/0failed in0.02s.
+The metadata capture now retains distinct expression and metadata-map analyses,
+original forms, lexical entry snapshots and expression contexts. The helper also
+handles function metadata; inner collection facts are optional, preventing an
+invalid collection assumption. New regression initially failed to compile because
+SourceNamespace has no PartialEq, then required the actual Keyword dependency;
+corrected identity assertions/declarations passed both cases. No production
+success was inferred from these fixture errors.
+
+Metadata generation53397 actual terminal0; Javafree46871 actual terminal0,
+bootstrap4pass12.93s. Native41295 actual terminal101 at effect-child7.96s:
+metadata-vector and the preceding cases now match; do lacks op/child records.
+Logs /private/tmp/suss-collection-ast-metadata-{compiler,bootstrap-generate,
+bootstrap-verify}.log and /private/tmp/suss-collection-ast-native-metadata.log.
+
+SourceNode now records explicit do statements/return, global set! target/value,
+and source invocation callee/arguments before storage/intrinsic/dispatch lowering.
+Assignment raw/inferred tags are absent unless hinted, following pinned get-tag/
+infer-tag/parse-set!; the value retains its own tag. No JS AST is invented.
+The native expected copy explicitly replaces the sole pinned JS addition node
+with the genuine Suss (+ effects1) invocation, retains both full argument records,
+and asserts the exact raw JS form first. The actual intrinsic callee has no source
+declaration tag; complete intrinsic declaration metadata remains open. Three
+constant unordered fixture permutations retain whole children and paired map
+keys/vals, without changing raw primary evidence or sorting effects.
+
+Compiler60272 actual terminal0:2pass0.02s. Control generation67069 actual terminal0;
+Javafree87463 actual terminal0:bootstrap4pass12.87s. Native80629 terminal101 found
+an incorrectly ordered wildcard match arm; moved it after Map. Native99851 actual
+terminal0:1pass15.04s, all14cases in both caller phases after GC and effects1.
+Compiler10722 actual terminal0:3pass0.02s, adding actual do/assignment/callee/arg
+captures and once-only expansion assertions. Logs /private/tmp/suss-collection-ast-
+control-{compiler,compiler-final,bootstrap-generate,bootstrap-verify}.log and
+/private/tmp/suss-collection-ast-native-controls.log.
+
+Added executed unordered AST/effect test for9set entries and9map pairs, requiring
+textual source child order and all18map effects exactly once in both Stores.
+Initial affected97053 terminal101 had incorrect fixture Session/FormBridge APIs;
+corrected to actual collect/read APIs without weakening assertions. Affected64485
+actual terminal0:8groups28passed/0failed/0ignored/0measured/0filtered, including
+context, graph bounds, both collection source tests, quote, source tags/hints,
+callable metadata and collection literal effects. Log
+/private/tmp/suss-collection-ast-affected.log. Python26125 actual terminal0:
+150checks in5.461s (/private/tmp/suss-collection-ast-python-all.log); collection
+checker independently9pass0.018s. All root heavy handles are terminal/released.
+
+Next stack this increment onto reviewed session acceptance0ac036d, open a draft
+Refs#14 PR, dispatch independent review/significant fixes, run the exact unfiltered
+workspace baseline and require exact final-head CI before ready. PR189 exact CI
+37222726440 remains in_progress at last authoritative poll; no ready claim.
+Complete portable AST/metadata/inference, production evaluator retirement,
+public legacy namespace/frontend migration and original lifecycle/pending-I/O
+acceptance remain open. No issue closure, PR merge or M3 completion.
+
+Collection changes are now stacked on reviewed0ac036d. Stash application conflicted
+only in the append-only handoff; resolution preserves the complete reviewed
+handoff (including resolver attribution correction) plus every new collection
+section. Backup stash is retained. Final stacked native verification95601 is live
+at this checkpoint, log /private/tmp/suss-collection-ast-native-stacked.log. No
+terminal result is inferred. Draft/review/full/finalCI are the next gates.
+
+### PR #191 independent source-node review and empty-do correction
+
+Independent reviewer uses detached /private/tmp/suss-pr191-review, base reviewed
+#189 0ac036d, initial #191 1150381. Reviewed collection source capture before
+constructor/factory lowering, metadata expression/map/function records, explicit
+do/global assignment/invocation operands, source tag boundaries, graph identity/
+bounds/GC, strict raw corpus and the documented textual-order/JS correspondences.
+No other significant scoped defect found. Complete portable schemas, evaluator
+retirement and original M3 acceptance remain open.
+
+Found a genuine empty-do context defect: its synthetic nil :ret was analyzed
+as Expression even when the source do was Statement or Return. Pinned analyzer
+parse-do2450 preserves the enclosing context for zero/one forms; infer-tag1642
+uses the analyzed :ret. New compiler regression first failed at the semantic
+Statement assertion (95605 terminal101, 0pass/1fail/3filtered), log
+/private/tmp/suss-pr191-review-empty-do-parent.log. Repair uses form_in with the
+actual enclosing context/tail flag. Both empty do and nil retain clj-nil raw and
+inferred tags, genuine source scope and phase in all three contexts/both phases.
+This is original Rust code with pinned semantic references, no upstream copy.
+
+Focused compiler97873 terminal0:4pass/0fail/0ignored/0measured/0filtered in0.02s,
+/private/tmp/suss-pr191-review-compiler.log. Both bootstrap phase pairs regenerated
+72003 terminal0; Java-free16886 terminal0 reproduced both pairs and bootstrap4
+passed in12.74s, logs /private/tmp/suss-pr191-review-bootstrap-{generate,verify}.log.
+Native6686 terminal0:three groups15pass/0fail/0ignored/0measured/0filtered;
+context1 in5.19s, graph11 in18.18s, collection3 in66.56s, log
+/private/tmp/suss-pr191-review-native.log. New executing empty-do projections check
+Expression/Statement contexts, nil/tag/const/val presence in both Stores after GC;
+Return context is independently covered by actual function-method compiler
+analysis. Strict collection Python checker9pass in0.018s, log
+/private/tmp/suss-pr191-review-python.log. Original14 corpus is unchanged.
+
+Next freeze and push this review fix, then run the required unfiltered
+cargo test --workspace --locked -- --test-threads=2 through all four doctests on
+that head. Reviewer retains sole Cargo/JVM/Node slot until actual terminal result
+and explicit release. Exact final-head CI remains a separate root gate. No PR
+readiness, merge, issue closure or M3 completion is claimed here.
+
+### PR #191 full baseline exposed stale nonconstant operation assertions
+
+Review full98416 on2307c12 reached actual terminal101 at scalar source AST tests:
+2passed/1failed in12.06s. Log preserved as
+/private/tmp/suss-pr191-review-full-first.log. The negative scalar regression
+expected arithmetic :op absent, but this PR intentionally exposes genuine source
+:invoke. Updated it to require :invoke, declared [:fn :args], the exact source
++ callee/local-read/numeric argument forms, while retaining absent scalar :val
+and separately present lowering. Scalar30667 terminal0:3pass/0fail/0ignored/
+0measured/0filtered in12.28s, /private/tmp/suss-pr191-review-scalars.log.
+
+Inspected other absence assertions and reproduced the analogous unchanged local
+invocation regression33511 terminal101:0pass/1fail/1filtered in5.62s, log
+/private/tmp/suss-pr191-review-local-parent.log. Its new expectation requires
+:invoke while all local/arg-id/variadic fields remain absent on the invocation.
+Additional projection asserts genuine :local/:let callee with canonical shared
+info identity and present empty args; independently executed result42/effects1
+remain exact. The six pinned local-reference rows are unchanged. Local50643
+terminal0:2pass/0fail/0ignored/0measured/0filtered in10.59s, log
+/private/tmp/suss-pr191-review-locals.log. No production/compiler input changed;
+regenerated/reproduced images remain current. Next push the aligned regressions,
+freeze a new head and repeat the entire unfiltered baseline through all doctests.
+No partial baseline, ignored test or weakened assertion supplies acceptance.
+
+### PR #191 canonical intrinsic catalog regression aligned
+
+Repeated full62325 on5915fb4 reached actual terminal101 in compiled_core_bindings:
+3pass/1fail in0.54s, after native groups and legacy compiler320pass/12existing
+ignores. Log preserved /private/tmp/suss-pr191-review-full-second.log. Preparation
+now genuinely analyzes the arithmetic source callee, materializing canonical +
+alongside user f/visits. The old regression wrongly treated every preparation
+catalog cell as an unbound user definition. Emitter still collects only physical
+IR globals; this source fact does not add an unused runtime global import.
+
+Aligned the test to assert the exact three phase-qualified identities and bound
+states: canonical core + initialized4, user f/visits unbound2. It retains repeated
+cell deduplication and actual first1/second2 closure execution across fragments/GC.
+No source cell is filtered away and no runtime initialization check is omitted.
+Affected compiler62745 terminal0:5groups59pass/0fail/0ignored/0measured/0filtered,
+core4/definitions13/modules11/pipeline17/resolution14, log
+/private/tmp/suss-pr191-review-cell-catalog.log. No production/compiler input
+change; both reproduced bootstrap pairs remain current. Freeze/push this stronger
+catalog assertion and repeat the exact full baseline on the resulting head before
+any readiness claim. Reviewer continues to own the sole local heavy slot.

@@ -404,3 +404,16 @@ pinned observations match both native caller phases after GC; complete source
 schemas and original M3 acceptance remain open. Independent review, unfiltered
 baseline and final-head CI are required. See
 [field reference facts](docs/runtime/compiled-macro-field-reference-asts.md).
+
+
+Selected collection source ASTs now retain original vector/map/set entries before
+constructor/factory lowering, metadata expression/map children, and effectful
+`do`/global `set!`/invocation operands. Fourteen pinned projections agree with
+native compiled macro results in both caller phases after GC, using explicit
+textual-order and arithmetic adaptations while preserving raw reference evidence.
+Nine effectful set entries and nine map pairs execute once in textual order;
+all28affected native and150Python checks pass. Both bootstrap phase pairs
+regenerate and reproduce without Java. Full portable schemas, evaluator retirement
+and original M3 acceptance remain open; independent review, full workspace
+baseline and final-head CI are still required. See
+[collection source facts](docs/runtime/compiled-macro-collection-source-asts.md).

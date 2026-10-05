@@ -207,7 +207,21 @@ impl Analyzer<'_> {
         if entries.is_empty() {
             return Ok(value);
         }
-        let metadata = self.map_literal(form, &entries)?;
+        // Analyze the actual merged metadata map in its own source frame. It
+        // must not overwrite the enclosing literal's original child records.
+        let metadata_form = Form {
+            span: form.span.clone(),
+            metadata: vec![],
+            kind: Kind::Map(entries),
+        };
+        let metadata = self.form(&metadata_form)?;
+        let slot = self.source_nodes.last_mut().expect("source node fact slot");
+        let inner = slot.take();
+        *slot = Some(std::sync::Arc::new(SourceNode::WithMeta {
+            expression: std::sync::Arc::new(value.clone()),
+            metadata: std::sync::Arc::new(metadata.clone()),
+            inner,
+        }));
         self.data_core_call(form, "with-meta", vec![value, metadata])
     }
     pub(super) fn attach_constant_metadata(

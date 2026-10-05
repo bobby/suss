@@ -1770,6 +1770,81 @@ impl<'a> AnalysisGraph<'a> {
             fields.push(("op", self.keyword("const")?));
             fields.push(("val", form));
         }
+        // Source entries were analyzed exactly once before physical collection
+        // construction. Empty and factory literals keep these same source ops.
+        // Metadata wrappers are handled separately; do not infer their schema
+        // from the enclosing form or its lowered with-meta call.
+        if let Some(collection) = &source.node
+            && matches!(collection.as_ref(), hir::SourceNode::Vector(_) | hir::SourceNode::Map(_) | hir::SourceNode::Set(_))
+        {
+            let (operation, children) = match collection.as_ref() {
+                hir::SourceNode::Vector(items) => ("vector", vec![("items", items.iter().collect::<Vec<_>>())]),
+                hir::SourceNode::Set(items) => ("set", vec![("items", items.iter().collect::<Vec<_>>())]),
+                hir::SourceNode::Map(items) => {
+                    if items.len() % 2 != 0 {
+                        return Err(SessionError::Host(wasmtime::Error::msg("Unpaired source map children")));
+                    }
+                    ("map", vec![
+                        ("keys", items.iter().step_by(2).collect::<Vec<_>>()),
+                        ("vals", items.iter().skip(1).step_by(2).collect::<Vec<_>>()),
+                    ])
+                }
+                _ => unreachable!("non-collection handled separately"),
+            };
+            fields.push(("op", self.keyword(operation)?));
+            let mut names = Vec::new();
+            for (name, children) in children {
+                names.push(self.keyword(name)?);
+                let mut records = Vec::new();
+                for child in children {
+                    records.push(self.ast(child, depth + 1)?);
+                }
+                fields.push((name, self.vector(&records)?));
+            }
+            fields.push(("children", self.vector(&names)?));
+        }
+        if let Some(node) = &source.node {
+            // These are original analyzed operands retained before dispatch or
+            // storage lowering, not children reconstructed from physical HIR.
+            let (operation, many, one) = match node.as_ref() {
+                hir::SourceNode::Do { statements, result } => ("do", vec![("statements", statements.as_ref())], vec![("ret", result.as_ref())]),
+                hir::SourceNode::Assign { target, value } => ("set!", vec![], vec![("target", target.as_ref()), ("val", value.as_ref())]),
+                hir::SourceNode::Invoke { callee, arguments } => ("invoke", vec![("args", arguments.as_ref())], vec![("fn", callee.as_ref())]),
+                _ => ("", vec![], vec![]),
+            };
+            if !operation.is_empty() {
+                fields.push(("op", self.keyword(operation)?));
+                // Preserve the public analyzer's declared edge order.
+                let names: &[&str] = match operation {
+                    "do" => &["statements", "ret"],
+                    "set!" => &["target", "val"],
+                    "invoke" => &["fn", "args"],
+                    _ => unreachable!(),
+                };
+                for (name, children) in many {
+                    let mut records = Vec::new();
+                    for child in children { records.push(self.ast(child, depth + 1)?); }
+                    fields.push((name, self.vector(&records)?));
+                }
+                for (name, child) in one { fields.push((name, self.ast(child, depth + 1)?)); }
+                let mut keywords = Vec::new();
+                for name in names { keywords.push(self.keyword(name)?); }
+                fields.push(("children", self.vector(&keywords)?));
+            }
+        }
+        if let Some(node) = &source.node
+            && let hir::SourceNode::WithMeta { expression, metadata, .. } = node.as_ref()
+        {
+            if expression.source.is_none() || metadata.source.is_none() {
+                return Err(SessionError::Host(wasmtime::Error::msg("Incomplete metadata source children")));
+            }
+            fields.push(("op", self.keyword("with-meta")?));
+            fields.push(("meta", self.ast(metadata, depth + 1)?));
+            fields.push(("expr", self.ast(expression, depth + 1)?));
+            let meta = self.keyword("meta")?;
+            let expr = self.keyword("expr")?;
+            fields.push(("children", self.vector(&[meta, expr])?));
+        }
         // Pinned analyzer.cljc2630–2655 retains quote syntax separately
         // from its literal const child. Use the actual retained source datum;
         // quoted collection constructor HIR is not a source child AST.
