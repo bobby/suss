@@ -7,6 +7,8 @@ use wasm_encoder::*;
 use wit_parser::{FunctionKind, Type, WorldItem};
 pub use wit_parser::{Resolve, WorldId};
 
+mod exact;
+mod exact_schema;
 mod list_schema;
 mod lists;
 mod strings;
@@ -53,6 +55,7 @@ enum ListElement {
 #[derive(Clone, Copy)]
 enum Boundary {
     Scalar(Scalar),
+    Exact(bool),
     Option(Scalar),
     String,
     StringOption,
@@ -62,6 +65,7 @@ impl Boundary {
     fn flat(self) -> Vec<ValType> {
         match self {
             Self::Scalar(ty) => vec![ty.core()],
+            Self::Exact(_) => vec![ValType::I64],
             Self::Option(ty) => vec![ValType::I32, ty.core()],
             Self::String | Self::List(_) => vec![ValType::I32, ValType::I32],
             Self::StringOption => vec![ValType::I32; 3],
@@ -70,12 +74,19 @@ impl Boundary {
     fn core_result(self) -> ValType {
         match self {
             Self::Scalar(ty) => ty.core(),
+            Self::Exact(_) => ValType::I64,
             Self::Option(_) | Self::String | Self::StringOption | Self::List(_) => ValType::I32,
         }
     }
     fn component(self, types: &mut ComponentTypeSection) -> ComponentValType {
         match self {
             Self::Scalar(ty) => ty.component(),
+            Self::Exact(signed) => if signed {
+                PrimitiveValType::S64
+            } else {
+                PrimitiveValType::U64
+            }
+            .into(),
             Self::String => PrimitiveValType::String.into(),
             Self::List(element) => {
                 let index = types.len();
@@ -96,6 +107,12 @@ impl Boundary {
                 types.defined_type().option(ty.component());
                 ComponentValType::Type(index)
             }
+        }
+    }
+    fn exact(self) -> Option<bool> {
+        match self {
+            Self::Exact(signed) => Some(signed),
+            _ => None,
         }
     }
     fn string(self) -> bool {
@@ -179,6 +196,9 @@ fn boundary(resolve: &Resolve, mut ty: Type) -> Result<Boundary, Diagnostic> {
         }
         if ty == Type::String {
             return Ok(Boundary::String);
+        }
+        if ty == Type::S64 || ty == Type::U64 {
+            return Ok(Boundary::Exact(ty == Type::S64));
         }
         return scalar(resolve, ty).map(Boundary::Scalar);
     }
@@ -616,6 +636,10 @@ pub fn component(
         export.params.iter().any(|(_, ty)| ty.list().is_some())
             || export.result.is_some_and(|ty| ty.list().is_some())
     });
+    let exact_schema = exports.iter().any(|export| {
+        export.params.iter().any(|(_, ty)| ty.exact().is_some())
+            || export.result.is_some_and(|ty| ty.exact().is_some())
+    });
     let mut fragments = fragments.to_vec();
     if option_schema {
         fragments.push(super::prepare_fragment(
@@ -658,6 +682,13 @@ pub fn component(
             Phase::Runtime,
         )?);
     }
+    if exact_schema {
+        fragments.push(super::prepare_fragment(
+            exact_schema::SOURCE,
+            &fragments[0].environment,
+            Phase::Runtime,
+        )?);
+    }
     // Reject every artifact before assembling any initialization start function.
     for fragment in &fragments {
         runtime_abi::verify_artifact(&fragment.wasm, &runtime_abi::Manifest::default())
@@ -680,7 +711,13 @@ pub fn component(
         export.params.iter().any(|(_, ty)| ty.uses_memory())
             || export.result.is_some_and(Boundary::uses_memory)
     });
-    let adapter = adapter(&exports, fragments.len(), option_schema, list_schema)?;
+    let adapter = adapter(
+        &exports,
+        fragments.len(),
+        option_schema,
+        list_schema,
+        exact_schema,
+    )?;
     let asynchronous = exports
         .iter()
         .filter(|export| export.asynchronous)
@@ -1112,6 +1149,7 @@ fn adapter(
     fragment_count: usize,
     option_schema: bool,
     list_schema: bool,
+    exact_schema: bool,
 ) -> Result<Vec<u8>, Diagnostic> {
     let has_memory = exports.iter().any(|export| {
         export.params.iter().any(|(_, ty)| ty.uses_memory())
@@ -1285,11 +1323,16 @@ fn adapter(
             number,
         };
         let list_root = global_indices.len() as u32 + u32::from(option_schema);
+        let exact_root = list_root + u32::from(list_schema);
         body.instruction(&Instruction::GlobalGet(global_indices[&export.global]))
             .instruction(&Instruction::Call(0));
         let mut parameter = 0;
         for (_, ty) in &export.params {
             match ty {
+                Boundary::Exact(signed) => {
+                    exact::lift(&mut body, *signed, parameter, exact_root);
+                    parameter += 1;
+                }
                 Boundary::List(element) => {
                     lists::copy_in(
                         &mut body,
@@ -1401,6 +1444,9 @@ fn adapter(
             .instruction(&Instruction::LocalSet(result));
         match export.result {
             None => {}
+            Some(Boundary::Exact(signed)) => {
+                exact::lower(&mut body, signed, result, list_locals.container, exact_root);
+            }
             Some(Boundary::List(element)) => {
                 lists::copy_out(
                     &mut body,
@@ -1573,7 +1619,8 @@ fn adapter(
     types.ty().function([], []);
     functions.function(start_type);
     let mut start = Function::new([]);
-    let schema_count = usize::from(option_schema) + usize::from(list_schema);
+    let schema_count =
+        usize::from(option_schema) + usize::from(list_schema) + usize::from(exact_schema);
     for index in 0..fragment_count - schema_count {
         start
             .instruction(&Instruction::Call(helpers + index as u32))
@@ -1590,9 +1637,18 @@ fn adapter(
         }
         if list_schema && index == 0 {
             start
-                .instruction(&Instruction::Call(helpers + fragment_count as u32 - 1))
+                .instruction(&Instruction::Call(
+                    helpers + fragment_count as u32 - 1 - u32::from(exact_schema),
+                ))
                 .instruction(&Instruction::GlobalSet(
                     global_indices.len() as u32 + u32::from(option_schema),
+                ));
+        }
+        if exact_schema && index == 0 {
+            start
+                .instruction(&Instruction::Call(helpers + fragment_count as u32 - 1))
+                .instruction(&Instruction::GlobalSet(
+                    global_indices.len() as u32 + u32::from(option_schema) + u32::from(list_schema),
                 ));
         }
     }
@@ -1675,7 +1731,7 @@ fn adapter(
     {
         public.export("suss.canonical.memory", ExportKind::Memory, 0);
     }
-    if option_schema || list_schema {
+    if option_schema || list_schema || exact_schema {
         let mut globals = GlobalSection::new();
         for _ in 0..schema_count {
             globals.global(

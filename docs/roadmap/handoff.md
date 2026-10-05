@@ -18673,3 +18673,166 @@ Push with `gh stack push`, then verify remote heads and final-head CI. New-head
 CI remains required before readiness; no PR is merged or issue closed. Next
 unblocked action is to inspect those CI results, retaining all existing M3
 acceptance limitations and the prior exact64/file-project continuation.
+
+## Prepared exact-integer prerequisite — 2026-10-05
+
+Previous goal turn made verified progress: linked draftPR201 lists10 and existing
+boundary43 passed, both bootstrap pairs reproduced without Java/Node and177Python
+checks passed. Independent review confirmed a significant malformed nestedSubvec
+range defect; new negative regression failed unchanged, then complete per-view
+range validation fixed both malformed nesting cases while retaining valid nested
+view output and all previous expectations. Reviewer extended narrow list layouts
+u8/s8/u16/s16/f32 with extrema/sign/bit execution assertions. Fixed final list4311
+terminal0:10passed/0failed/0ignored/0filtered; final restored-source existing43
+and Java/Node-free two-build bootstrap4 pass. Repaired draftPR201 is pushed at
+b5ba2d4b8cffc3a07914379cfca7693aea8666d0. Full6745 ACTUALLY LIVE; reviewer retains
+sole local heavy slot. Exact reviewed-head CI37275946277 confirmed IN_PROGRESS;
+PR19937273014852 and PR20037273792377 also confirmed IN_PROGRESS. No readiness,
+merge, issue closure or M3 completion claim.
+
+Original exact64 preparation in /private/tmp/suss-m3-exact-integer-adapters,
+branchportable/m3-exact-integer-adapters on repairedPR201b5ba2d4, is UNCOMMITTED/
+UNPUSHED with noPR and NO executing support claim. Nine actual-component
+regressions are prepared and byte-identical in unchanged
+/private/tmp/suss-exact-before atb5ba2d4. They cover full signed/unsigned endpoints,
+values beyond2^53,128 varied bit patterns, atom ownership/GC, strict decimal
+constructors, nominal distinction, checked safe-range to-number, malformed
+wrappers/storage/decimal/range diagnostics, async mixed completion/parameter
+positions, resolved aliases and public constructor redefinition. They are
+UNEXECUTED. Root has started NO Cargo/JVM/Node command while reviewer owns6745.
+
+Prepared original source uses two unsigned32-bit words in ordinary nominal
+objects through the existing ten-type shared GC ABI: suss.core/WitSigned64 and
+WitUnsigned64 with decimal-string wit-s64/wit-u64 constructors, predicates and explicit
+safe-integer to-number. Decimal arithmetic stays exact within binary64 for each
+bounded word/carry; the complete64-bit integer never passes through a float.
+Private AOT schema captures first-core classes and validators before user
+initializers, validates nominal identity/word bounds before reconstructing I64,
+and separates its rooted closure from existing option/list schemas. Scalar
+s64/u64 canonical direct/async signatures are prepared; nested lists/options
+ofexact64 remain explicit unsupported development features. Original helpers
+are in the loader-after source, with updated hash and strict core-import277-file
+reproduction; no new upstream declarations or provenance relabeling.
+Rustfmt/diffcheck and lexical Scanner12forms are evidence of text only, NOT
+Suss parsing/analysis/Wasm validation/execution. BOTH bootstrap pairs remain
+STALE relative to prepared Rust and source, and must be regenerated before support.
+
+After reviewer201 explicit heavy release: run identical parent9; regenerate
+BOTH phases with CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target
+CARGO_BUILD_JOBS=2 cargo run --profile test -p suss-cli --bin suss-bootstrap
+--locked -- runtime/bootstrap; run replacement exact9 and existing list10/
+string11/options16/scalar13/async3; fix real failures and reproduce with
+sh scripts/verify-bootstrap.sh. Publish linked draft only with evidence,
+dispatch independent review/fixes/exact full/final-head CI. Then integrate these
+prerequisites into held public file/project migration, preserve actual typed
+fixtures and update old64 source to explicit wrappers under the accepted design.
+Original M3 issues12–15 remain open: public expression/component host/evaluator
+retirement, complete source AST/inference schemas and rooted continuations/
+pending-I/O cancellation/live-GC vs resident-code acceptance remain required.
+
+
+Exact64 preparation strengthened while reviewer201 full6745 remains live:
+NINE byte-identical, still UNEXECUTED actual-component regressions now include
+simultaneous exact/option/list schema roots and mixed flat positions in sync/async
+calls, plus malformed word rejection after public validator/constructor
+redefinition. The original signed/unsigned endpoints, varied bit patterns,
+decimal/range checks, GC and ownership assertions remain intact. Strict importer
+277files and diff checks pass; these do NOT prove runtime behavior. Both image
+pairs remain stale, no exact64 PR/push/support claim. Root starts no Cargo/JVM/Node
+while independent reviewer owns6745. Source checkpoint remains based on repaired
+PR201b5ba2d4. CI37273014852/37273792377/37275946277 were all confirmed actually
+in_progress on their exact respective reviewed heads. Full M3 scope unchanged.
+
+
+## Exact-integer executing checkpoint — 2026-10-05
+
+Parent80150 actually terminated101:0passed/9failed/0ignored/0filtered;
+/private/tmp/suss-exact-parent.log. That parent test source predates canonical
+helper naming and strict canonical-memory assertion; rerun the final identical
+parent fixture before publication. First bootstrap88357 terminated1 after Rust
+compiled: mid-fragment namespace directive was unresolved. Original helpers now
+live in canonical suss.core as WitSigned64/WitUnsigned64, wit-s64/wit-u64,
+wit-s64?/wit-u64? and checked wit-to-number. Bootstrap98244 terminated0 and
+regenerated BOTH Runtime/Macro Wasm/JSON pairs. These are real results, not support
+inferred from source or Rust compilation.
+
+Exact focus36654 actually terminated0:9passed/0failed/0ignored/0filtered in45.97s
+(/private/tmp/suss-exact-focus-1.log). Command cargo test -p suss-compile --locked
+--test portable_aot_exact_integers -- --test-threads=2. This first focus inadvertently
+used the worktree-local target instead of the shared target; subsequent commands
+must use CARGO_TARGET_DIR=/private/tmp/suss-m3-pr143-target CARGO_BUILD_JOBS=2.
+Execution covers full signed/unsigned endpoints,128 varied bit patterns, values
+beyond2^53, strict decimal ranges/errors, nominal/storage validation, safe-number
+conversion, retained values after GC, public constructor/validator redefinition,
+and mixed exact/option/list roots and async flat positions.
+
+Preparation rebased onto reviewed PR201330e7507. Preserve explicit stash backup
+f2d4394231a2f06d048cc1071b9d4291a06c0e4d. Both exact image pairs were deliberately
+restored before rebase and are now STALE relative to exact preparation; regenerate
+both and repeat final-source focus plus existing boundary53 and public12 and
+Java/Node-free verifier before publication. No exact64 PR/push/support claim yet.
+PR201 final CI37322463439 independently audited154groups1276passed/0failed/
+17unchangedignores/0filtered including ALL4docs; replacement local full87529 is
+actually live at frozen330e7507 under reviewer201 sole heavy ownership. Root light
+work only until explicit terminal release. Original failed full6745 remains
+recorded. M3 issues12–15 stay open and all original acceptance scope remains.
+
+
+Exact64 light packaging validation after rebase found a real provenance failure:
+Python177 ran with1failure/1error because original helpers had been appended to
+the strictly licensed sequence initializer. No assertion was weakened. Restored
+that file byte-identical to parent and moved original helpers to separately
+hashed docs/compatibility/bootstrap/exact-integers.sus. Importer adds optional
+loader.original with explicit stage order before/forms/after/original and rejects
+unknown stages. New regression checks ordering, manifest hash, stale input and
+unknown key rejection. Packaging18955 terminal0:178Python tests pass and21 complete
+licensed setup forms verified; strict core importer277files reproduced/check pass.
+/private/tmp/suss-exact-python-{checkpoint,packaging}.log preserve failure/repair.
+Malformed exact tests now additionally cover NaN/infinity/boolean word storage,
+non-string constructors and trailing whitespace. Final parent copy byte-identical;
+these new cases and packaging have NOT yet executed. BOTH bootstrap pairs remain
+stale pending reviewer87529 terminal heavy release. See
+[exact-integer API/evidence](../runtime/portable-exact-integers.md). PR199/200 ready
+flags set only after independent raw final-CI audits; neither is merged. PR201
+local replacement full87529 remains live, no readiness claim.
+
+
+## Exact64 final-parent execution — 2026-10-05
+
+PR201 replacement full87529 actually terminated0 at frozen330e7507:
+154groups1276passed/0failed/17unchangedignores/0filtered, ALL4doctest suites.
+Independent final-head CI37322463439 has matching full scope; reviewer fixes are
+pushed and audited, PR201 marked ready without merge. Reviewer explicitly released
+sole heavy slot; ROOT now owns it. Earlier failed6745 remains a recorded failure.
+
+Final byte-identical parent86760 at330e7507 actually terminated101:0passed/9failed/
+0ignored/0filtered3.20s (/private/tmp/suss-exact-final-parent.log). Unsupported
+s64/u64 boundaries and absent canonical helper names are actual parent failures;
+no old fixture substituted. Bothphase regeneration46559 actually terminated0:
+Rust compilation6.01s and Runtime/Macro Wasm/JSON rebuilt on exact preparation
+with separately hashed original loader; /private/tmp/suss-exact-final-bootstrap.log.
+Earlier packaging/provenance failures remain recorded, no assertion weakened.
+
+Final-source focus50296 is ACTUALLY LIVE under sharedtarget/jobs2: exact9 plus
+existing scalar13/async3/options16/strings11/list10/publicpipeline12. Do not infer
+completion from partial output. After focus terminal: fix real failures if any,
+Java/Node-free two-build verifier, update API evidence, publish linked draft and
+dispatch independent reviewer/fixes/full workspace/final-head CI. Exact branch
+remains uncommitted/unpushed/noPR during validation. Original M3scope intact;
+publicfiles migration/strict ABI2 complete corpus/evaluator retirement/rooted
+pending-I/O lifecycle still require actual acceptance. No issue closing/merge.
+
+
+Exact final focus50296 ACTUALterminal0:7groups74passed/0failed/0ignored/0filtered,
+including final expanded exact9(49.02s), existing boundary53 and publicpipeline12.
+Structured audit /private/tmp/suss-exact-final-focus-audit.json. Java/Node-free
+verifier82713 ACTUALterminal0: BOTHphase Wasm/JSON twice fresh byte-exact with
+tracked assets, compiler identity check and bootstrap4/0/0/0filtered10.22s.
+Logs /private/tmp/suss-exact-final-{parent,bootstrap,focus,verify}.log preserve
+final identical red0/9 then repaired9/0 and all existing assertions. No assertion
+weakened. Source packaging/provenance178Python/21forms/277files proof remains.
+Root sole heavy owner; no live Cargo/JVM/Node after82713 terminal. Publish linked
+DRAFT exact prerequisite, independent reviewer must push significant fixes and
+run exact unfiltered full/finalCI; do not merge. Then integrate reviewed exact
+parent into held file/project branch and regenerate/run all original typed cases.
+Decoder8 preparation and ALL original M3 evaluator/schema/lifecycle gates remain.

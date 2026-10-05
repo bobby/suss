@@ -5079,3 +5079,85 @@
               t (-as-transient (.-EMPTY PersistentHashSet))]
           (loop [i 0] (when (< i len) (-conj! t (aget items i)) (recur (inc i))))
           (-persistent! t))))
+;; Original Suss WIT integer foundations, not extracted upstream source.
+;; Exact storage uses two unsigned 32-bit words in the existing nominal ABI.
+;; Decimal parsing never converts the complete integer through binary64.
+(deftype WitSigned64 [high low])
+(deftype WitUnsigned64 [high low])
+(def wit-valid-word?
+  (fn [word]
+    (if (number? word)
+      (if (<= 0 word)
+        (if (<= word 4294967295)
+          (== word (suss.bootstrap/f64-floor word)) false) false) false)))
+(def wit-checked-words
+  (let [signed-class WitSigned64 unsigned-class WitUnsigned64 valid-word wit-valid-word?]
+    (fn [value]
+      (if (if (instance? signed-class value) true (instance? unsigned-class value))
+        (let [high (.-high value) low (.-low value)]
+          (if (if (valid-word high) (valid-word low) false)
+            (array high low)
+            (throw (suss.bootstrap/error "Invalid exact integer 64-bit word storage"))))
+        (throw (suss.bootstrap/error "Expected exact integer 64-bit wrapper"))))))
+(def wit-parse-words
+  (fn [text signed]
+    (if (string? text)
+      (let [length (count text)]
+        (if (zero? length)
+          (throw (suss.bootstrap/error "Expected decimal string for exact integer 64-bit constructor"))
+          (let [negative (== (.charCodeAt text 0) 45)
+                first (if negative 1 0)]
+            (if (if negative (if signed false true) false)
+              (throw (suss.bootstrap/error "Unsigned 64-bit constructor rejects negative input"))
+              (if (== first length)
+                (throw (suss.bootstrap/error "Expected decimal digits for exact integer 64-bit constructor"))
+                (loop [index first high 0 low 0]
+                  (if (< index length)
+                    (let [digit (- (.charCodeAt text index) 48)]
+                      (if (if (<= 0 digit) (<= digit 9) false)
+                        (let [wide-low (+ (* low 10) digit)
+                              carry (suss.bootstrap/f64-floor (/ wide-low 4294967296))
+                              next-low (- wide-low (* carry 4294967296))
+                              next-high (+ (* high 10) carry)]
+                          (if (> next-high 4294967295)
+                            (throw (suss.bootstrap/error "Exact integer 64-bit decimal input out of range"))
+                            (recur (inc index) next-high next-low)))
+                        (throw (suss.bootstrap/error "Invalid decimal digit for exact integer 64-bit constructor"))))
+                    (if signed
+                      (if negative
+                        (if (if (< high 2147483648) true
+                              (if (== high 2147483648) (zero? low) false))
+                          (if (if (zero? high) (zero? low) false)
+                            (array 0 0)
+                            (if (zero? low)
+                              (array (- 4294967296 high) 0)
+                              (array (- 4294967295 high) (- 4294967296 low))))
+                          (throw (suss.bootstrap/error "Signed 64-bit decimal input out of range")))
+                        (if (< high 2147483648) (array high low)
+                          (throw (suss.bootstrap/error "Signed 64-bit decimal input out of range"))))
+                      (array high low)))))))))
+      (throw (suss.bootstrap/error "Expected decimal string for exact integer 64-bit constructor")))))
+(def wit-s64
+  (let [class WitSigned64 parse wit-parse-words get aget]
+    (fn [text]
+      (let [words (parse text true)]
+        (new class (get words 0) (get words 1))))))
+(def wit-u64
+  (let [class WitUnsigned64 parse wit-parse-words get aget]
+    (fn [text]
+      (let [words (parse text false)]
+        (new class (get words 0) (get words 1))))))
+(def wit-s64? (let [class WitSigned64] (fn [value] (instance? class value))))
+(def wit-u64? (let [class WitUnsigned64] (fn [value] (instance? class value))))
+(def wit-to-number
+  (let [signed-class WitSigned64 checked wit-checked-words get aget]
+    (fn [value]
+      (let [words (checked value) high (get words 0) low (get words 1)
+            negative (if (instance? signed-class value) (>= high 2147483648) false)
+            magnitude-high (if negative
+                             (if (zero? low) (- 4294967296 high) (- 4294967295 high)) high)
+            magnitude-low (if negative (if (zero? low) 0 (- 4294967296 low)) low)]
+        (if (< magnitude-high 2097152)
+          (let [number (+ (* magnitude-high 4294967296) magnitude-low)]
+            (if negative (- number) number))
+          (throw (suss.bootstrap/error "Exact integer 64-bit wit-to-number exceeds safe binary64 integer range")))))))

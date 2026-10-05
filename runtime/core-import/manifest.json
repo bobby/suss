@@ -4,11 +4,11 @@
   "namespace": "suss.core",
   "phase": "runtime",
   "tool": "scripts/core_import.py",
-  "tool-sha256": "9c5e2ad8c98f28bc09012e52c2915637c71c50ee918b6fb96da32bbabc69f263",
+  "tool-sha256": "b34411c7b816e19ef21f291d5070e71f7031f3b81d085a59d58126f13b6c1d68",
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "032693e064c56df842b414f094fbf0383aec761ae63959888d20e703caa6965f",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "0e1dabc6dcd03959b9ea0062805061e08950a6d97719c83d8ba3ad21f6b5d80d",
+  "recipe-sha256": "457c1af62b84db5bd3b7dc5e81e2600a10b51dcc0b85dda1e6feda3d84b56886",
   "reviews-sha256": "88f2cc42c4f9ea518cde0f44af61318015f5350a9cd1fc1978221dc2b1843b5e",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
@@ -8498,6 +8498,10 @@
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
       "sha256": "2808c764c2500c1c9f2e18a924930272ac460fdbe8ecd4022fce4f458c71b22d"
+    },
+    "original": {
+      "path": "docs/compatibility/bootstrap/exact-integers.sus",
+      "sha256": "7915e3f90b3c136a4e95a873315adb3bef41af21bf862f8094cb8bf7b6ce6f3b"
     }
   },
   "files": {
@@ -8776,6 +8780,6 @@
     "extracted/0270.cljs": "42f5ecb356593f48edfe0428996f37f50e35c0f5c3867175283046bb495c9f85",
     "extracted/0271.cljs": "d921e850b3b8d49e530640e91acd8631410a57afc78adb69e9788386e77bf0c8",
     "extracted/0272.cljs": "20b34070e72d8766f1ad9037b18199054814cc72535c2671fcf5bae82e075fbe",
-    "suss/core.sus": "f7f3ee6b26cf2eac4903a32dc94b091ed349a48b1b29500b2c01fb0e75ed12de"
+    "suss/core.sus": "3bea36443c686ff92ea632b66c1e0a1600429dbfbcbd9ea73840fda29bdc44ed"
   }
 }
